@@ -2,9 +2,9 @@
 
 Settled with the author one question at a time, 2026-10-13.
 
-## D1. The copilot panel is built here
+## D1. The chat gets its own floating panel, sharing code with the copilot's
 
-Plan 004's copilot (W17) was designed but never built; only its colour tokens shipped. This plan builds the floating panel the chat lives in, following `design/design.md` for dragging and minimising, with the chat's own colours and its dock at the bottom left.
+Plan 004's copilot (W17) was designed but never built; only its colour tokens shipped. The chat's panel follows `design/design.md` for dragging and minimising. The drag, minimise and dock behaviour is written once and used by both panels (see D11); whichever of the copilot or the chat is built first writes it.
 
 ## D2. Pure pub/sub, no history
 
@@ -41,6 +41,15 @@ Every control-room page open on the invited machine shows the modal; the first t
 ## D10. Messages are plain text with clickable links
 
 Line breaks are kept and URLs become links; nothing else is rendered. A message holds up to 4,000 characters.
+
+## D11. Two panels, never mixed up
+
+The AI copilot (c3po-operator, W17) and the chat with other machines are two separate panels, and both can be open at once:
+
+- the copilot docks at the bottom right in its blue (`--copilot-head`, `--copilot-body`), minimising to its tab on the right edge;
+- the chat docks at the bottom left in orange (`#D9420B` header, white body, darker orange footer), minimising to its tab on the left edge.
+
+Their colours stay distinct so one is never taken for the other. Chosen by the author over one panel with an AI tab and a Chat tab.
 
 ## Left to the planner
 
