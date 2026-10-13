@@ -24,6 +24,15 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first
   end
 
+  it "tells an agent in a worktree that its checkout's .plans is a snapshot" do
+    expect(text).to include("snapshot the harness overwrites")
+  end
+
+  it "says nothing of a snapshot when the plan is inside the repository root" do
+    text = described_class.new(agent:, subject: plan, root: File.dirname(plans_root), profile:).to_s
+    expect(text).not_to include("snapshot the harness overwrites")
+  end
+
   it "opens with the agent's own definition" do
     expect(text).to start_with(agent.prompt)
   end

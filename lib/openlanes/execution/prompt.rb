@@ -65,6 +65,7 @@ module OpenLanes
           Repository root: #{root}
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
+          #{snapshot_note}
           #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
@@ -121,6 +122,18 @@ module OpenLanes
       private
 
       attr_reader :agent, :subject, :root, :profile, :round, :successor, :partners, :control
+
+      # In a worktree the repository root holds its own `.plans`, a snapshot
+      # the publisher refreshes for the pull request. An agent that edited or
+      # signed it would be writing to a copy the next publish throws away.
+      #
+      # @return [String, nil]
+      def snapshot_note
+        return nil if File.expand_path(subject.feature.path).start_with?("#{File.expand_path(root)}/")
+
+        "The plan lives only at the plan folder above. Any `.plans` under the repository root is a\n" \
+          "snapshot the harness overwrites when it publishes: never read the plan from it or write to it."
+      end
 
       # Only a CLI that actually refuses the commands may be described as
       # refusing them.

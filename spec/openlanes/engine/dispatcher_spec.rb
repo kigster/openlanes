@@ -180,6 +180,28 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       it_behaves_like "a chain that moves the folder"
     end
+
+    # What a publish leaves in the worktree is a snapshot. A stale one
+    # claiming the plan is further on must not steer the run, nor be touched.
+    context "with a stale snapshot of the plan in its worktree" do
+      let(:stale) do
+        feature = tree.reload.subjects.first.feature
+        path = OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil).checkout_for(feature).path
+        File.join(path, ".plans", "040.00-🟢 → minesweeper")
+      end
+
+      before do
+        FileUtils.mkdir_p(stale)
+        File.write(File.join(stale, "spec.md"), "stale\n")
+      end
+
+      it_behaves_like "a chain that moves the folder"
+
+      it "leaves the snapshot alone" do
+        run_in_worktrees
+        expect(Dir.children(stale)).to eq(["spec.md"])
+      end
+    end
   end
 
   describe "a Completed the folder cannot honour" do
