@@ -70,7 +70,7 @@ function setup({ open = true, store = new AskStore() }: { open?: boolean; store?
   return { ...view, client, sent, onCommand, store, stream };
 }
 
-const reply = (id: string, text = "c3po-operator is not built yet, so nobody is listening here."): CopilotTurn => ({
+const reply = (id: string, text = "001 is waiting on you: luke-backend asked B1."): CopilotTurn => ({
   id, from: "copilot", kind: "text", text, at: "2026-10-13T09:06:00Z", usage: null,
 });
 const chat = () => screen.getByRole("log", { name: "Conversation with c3po-operator" });
@@ -120,7 +120,7 @@ it("sends a message, shows it at once, reads until the answer arrives, and draws
   await stream({ id, from: "you", kind: "text", text: "What costs most?", at: "2026-10-13T09:05:00Z", usage: null });
   await stream(reply(`${id}.1`));
   expect(within(chat()).getAllByText("What costs most?")).toHaveLength(1);
-  expect(screen.getByText(/nobody is listening here/)).toBeInTheDocument();
+  expect(screen.getByText(/001 is waiting on you/)).toBeInTheDocument();
   expect(screen.queryByText("Reading the board…")).toBeNull();
 });
 
