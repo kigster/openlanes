@@ -6,6 +6,7 @@ import type { Board as BoardData, Car, Plan } from "./api/types";
 import { useBoard, type ConnectionState } from "./api/useBoard";
 import { useSendCommand } from "./api/useSendCommand";
 import { Board, MachineBoard } from "./board/Board";
+import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
 import { isWorking, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
 import { useLifecycle } from "./board/useLifecycle";
@@ -262,6 +263,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onOpenMachine={id => setTab(machineTab(id))}
         onDropGone={life.dropFromBar}
       />
+      <Copilot onCommand={onCommand} models={me.models} />
     </>
   );
 }

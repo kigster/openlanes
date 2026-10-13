@@ -1,0 +1,28 @@
+/* The copilot's conversation and composer (design.md, "Header and copilot"). The panel itself, its header, dragging
+   and tab are floating.css's; the colours come in through COPILOT_COLORS. */
+.copilot .fp-body { display: flex; flex-direction: column; gap: 14px; }
+.cp-intro { margin: 0; color: var(--ink-soft); }
+.cp-who { margin: 0 0 2px; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+.cp-said p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cp-turn.is-you .cp-said { padding: 8px 12px; border-radius: 10px; background: var(--enamel); }
+.cp-turn.is-thinking .cp-said { color: var(--ink-soft); }
+
+/* Cards. Red to confirm what cannot be undone; quiet for a draft. Darker alarm red than the page's, for black text on sage. */
+.cp-card { --alarm: #A3161C; margin-top: 8px; padding: 12px; border-radius: 10px;
+           border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); background: color-mix(in srgb, var(--alarm) 10%, transparent); }
+.cp-card .btn-alarm { --alarm: #A3161C; background: rgb(255 255 255 / 70%); }
+.cp-card.is-draft { border-color: var(--hairline); background: var(--enamel); }
+.cp-draft { margin: 0 0 10px; font-style: italic; }
+.cp-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cp-card-note { margin: 8px 0 0; font-weight: 600; }
+.cp-card-note.is-refused { color: #A3161C; }
+
+/* The composer sits on the header's blue; its text box and Send keep the inverted surface's colours. */
+.cp-composer { --plate: var(--inv-plate); --enamel: var(--inv-enamel); --ink: var(--inv-ink); --ink-soft: var(--inv-ink-soft);
+               --hairline: var(--inv-hairline); color-scheme: var(--inv-scheme); }
+.cp-composer textarea { box-sizing: border-box; width: 100%; min-height: 64px; resize: none; padding: 10px; border-radius: 8px;
+                        border: 1px solid var(--hairline); background: var(--enamel); color: var(--ink); font: inherit; }
+.cp-composer textarea::placeholder { color: var(--ink-soft); }
+.cp-composer textarea:focus-visible { outline: 2px solid var(--inv-focus); outline-offset: 1px; }
+.cp-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.cp-error { margin: 6px 0 0; color: #7A0D12; font-weight: 700; }
