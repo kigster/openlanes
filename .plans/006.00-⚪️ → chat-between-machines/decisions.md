@@ -30,5 +30,9 @@ Everyone in a chat sees **Invite to Chat** on the machines that are not in it ye
 
 Typing in the chat, sending, or clicking or focusing inside the panel resets a 60-second clock. When it runs out, the others see "<name> is idle"; the next touch shows "<name> is back".
 
+## D8. The Name dialog is prefilled, and still asked every time
+
+The dialog appears on every Start Chat and every accepted invite, prefilled with the name last used in this browser, or with the machine's user on first use. Enter confirms.
+
 ## Open
 
