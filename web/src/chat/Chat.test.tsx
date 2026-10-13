@@ -38,6 +38,7 @@ beforeEach(() => {
   resetSession();
   localStorage.clear();
   sessionStorage.clear();
+  chatBus.opened(); // the stream's chat_cursor, which the page waits for before it reads the chat
   state = { chat: null, invites: [], outgoing: [] };
   posts = [];
   answer = (action, body) => {
@@ -405,6 +406,30 @@ describe("an invite", () => {
     state = { chat: { id: CHAT, me: me(), participants: [me()] }, invites: [], outgoing: [] };
     act(() => chatBus.opened());
     await waitFor(() => expect(document.getElementById("chat")).not.toBeNull());
+  });
+});
+
+describe("reading the chat", () => {
+  const invite: ChatInvite = { id: "inv-8", chat: CHAT, from: person(), machine: "m", label: "dana@studio", expires_at: "2026-10-13T09:01:00Z" };
+
+  it("holds events that arrive while the read is in flight, and applies them on top of it", async () => {
+    let answerRead: (r: Response) => void = () => {};
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(resolve => (answerRead = resolve))));
+    render(<Harness />);
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    // The read began before the invite was closed; its answer must not bring the modal back.
+    send({ kind: "invite_closed", invite: "inv-8", answer: "declined" });
+    await act(async () => answerRead(json(200, { chat: null, invites: [invite], outgoing: [] })));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("reads once per open, so an open during a read does not start a second", async () => {
+    const pending = vi.fn(() => new Promise<Response>(() => {}));
+    vi.stubGlobal("fetch", pending);
+    render(<Harness />);
+    await waitFor(() => expect(pending).toHaveBeenCalledTimes(1));
+    act(() => chatBus.opened());
+    expect(pending).toHaveBeenCalledTimes(1);
   });
 });
 
