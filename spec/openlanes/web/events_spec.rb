@@ -175,8 +175,12 @@ RSpec.describe OpenLanes::Web::Events do
         end
       end
 
+      it "opens with a chat cursor once the page is attached" do
+        expect(frames.map { it[/event: (\w+)/, 1] }.compact.first(3)).to eq(%w[cursor copilot_cursor chat_cursor])
+      end
+
       it "relays the chat's events as chat events with no id" do
-        expect(frames.grep(/event: chat/).map { JSON.parse(it[/data: (.*)$/, 1])["kind"] }).to eq(%w[unanswered joined])
+        expect(frames.grep(/event: chat\n/).map { JSON.parse(it[/data: (.*)$/, 1])["kind"] }).to eq(%w[unanswered joined])
       end
 
       it "counts the page as gone once its stream ends" do
@@ -190,7 +194,7 @@ RSpec.describe OpenLanes::Web::Events do
       before { run_ticks }
 
       it "relays no chat" do
-        expect(frames.grep(/event: chat/)).to be_empty
+        expect(frames.grep(/event: chat\n/)).to be_empty
       end
     end
 

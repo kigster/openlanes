@@ -20,7 +20,10 @@ module OpenLanes
     # browser that drops before the first reply still has one to send;
     # without it, replies written during that gap were skipped.
     #
-    # A `chat` event (plan 006) carries no `id:` either: the chat between
+    # A `chat` event (plan 006) carries no `id:` either, and like the
+    # copilot's the stream opens with a `chat_cursor` when it carries a
+    # page's chat, so the page reads `GET /api/chat` only once relaying has
+    # begun. Nor is there a cursor id to carry: the chat between
     # machines keeps no history (D2), so there is nothing to catch up on.
     # The stream is how {Live::Chat} knows the page is still open; when it
     # closes, the page has {Live::Chat::GRACE} to reconnect before it counts
@@ -67,6 +70,9 @@ module OpenLanes
         out << self.class.frame("cursor", { id: cursor }, id: cursor)
         said = @copilot.newest
         out << self.class.frame("copilot_cursor", { id: said }) unless out.closed?
+        # The page is attached, so every chat event from here on is queued for
+        # it: a `GET /api/chat` the page starts on this misses nothing.
+        out << self.class.frame("chat_cursor", {}) if @chat && @page && !out.closed?
         seqs = nil
         until over?(out, started)
           seqs = board(out, seqs)
