@@ -957,11 +957,15 @@ module OpenLanes
                   end
         attempt = attempt.with(note: "#{attempt.note}; #{problems.join(", ")}") unless problems.empty?
         attempt = attempt.with(to: fresh(task)&.status&.key || attempt.to)
+        # One outcome, written to both records. The engine's state file once
+        # defaulted a failed round to Completed while state.json said
+        # Interrupted, so the page and the plan disagreed about the same round.
+        outcome = attempt.status || (attempt.ok ? "Completed" : "Interrupted")
         if (settled = fresh(task))
           stage!(settled,
             agent,
             task.round,
-            status:      attempt.status || (attempt.ok ? "Completed" : "Interrupted"),
+            status:      outcome,
             to:          attempt.to.to_s,
             finished_at: Time.now.iso8601,
             up:          attempt.up.to_i,
@@ -972,7 +976,7 @@ module OpenLanes
         @state&.record(ordinal,
           agent:    agent.name,
           round:    task.round,
-          status:   attempt.status || "Completed",
+          status:   outcome,
           exit:     attempt.ok ? "ok" : attempt.note,
           ended_at: Time.now.iso8601,
           up:       attempt.up,
@@ -1094,7 +1098,7 @@ module OpenLanes
 
           attempt = published.attempt
           subject = published.subject
-          return attempt.with(ok: false, note: "ledger says Completed but #{Plans::STATUS_BY_KEY.fetch(target)} is not justified: #{Plans::STATUS_BY_KEY.fetch(target).violation(subject)}") unless subject.machine.may?(target)
+          return unjustified(job, attempt, subject, target) unless subject.machine.may?(target)
 
           subject.machine.promote!(target)
           attempt = attempt.with(to: target)
@@ -1103,6 +1107,22 @@ module OpenLanes
         handoff = Plans::Ledger.handoff_after(reading, entry)
         attempt = honour(handoff, subject, attempt) if handoff
         attempt
+      end
+
+      # The agent signed Completed, but what it left does not justify the
+      # state it advances to. The folder stays, its `next:` is not honoured,
+      # and the round is recorded as Interrupted, which is what the page
+      # lists under Needs you once the agent's rounds run out. Taking the
+      # signature at its word instead parked the plan: nobody else handles
+      # the state it is still in, and its own agent counted itself done.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def unjustified(job, attempt, subject, target)
+        status = Plans::STATUS_BY_KEY.fetch(target)
+        remember(plan_of(job), job.task.agent.name, job.state, "Interrupted", job.task.round)
+        attempt.with(ok: false,
+          status: "Interrupted",
+          note: "ledger says Completed but #{status} is not justified: #{status.violation(subject)}")
       end
 
       # A build finished in a run that opens no pull request: 🟢 needs one,

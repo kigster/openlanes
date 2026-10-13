@@ -106,6 +106,37 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  describe "a Completed the folder cannot honour" do
+    let!(:built) { plans { |t| t.plan "031.00", :new, "unresearched", files: { "spec.md" => spec_body } } }
+    let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("031.00")) }
+
+    # leah signs and names yoda, but writes no `## Research` chapter.
+    let!(:attempts) do
+      [calls, stamp]
+      handoff = OpenLanes::Plans::Ledger.render_handoff(OpenLanes::Plans::Ledger::Handoff.new(at: Time.now, next: "yoda-writer", file: "", line: 0))
+      executor = lambda { |agent, subject, round: 1, **|
+        calls << agent.name
+        OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
+          "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]",
+          handoff)
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+      runner_with(executor, agents: agents.only("leah-researcher", "yoda-writer"), rounds: 1).call
+    end
+
+    it "keeps the folder, hands off to nobody, and records the round as Interrupted" do
+      stage = OpenLanes::Plans::PlanState.for(plan.feature.path).stages.last
+      aggregate_failures do
+        expect(plan.status.key).to eq(:new)
+        expect(calls).to eq(["leah-researcher"])
+        expect(attempts.first).to have_attributes(ok: false, status: "Interrupted")
+        expect(attempts.first.note).to include("Researched is not justified")
+        expect(stage).to include("status" => "Interrupted", "to" => "new")
+        expect(state.stages("031.00").last).to include("status" => "Interrupted")
+      end
+    end
+  end
+
   describe "the 020.00 regression" do
     let!(:built) do
       plans { |t| t.plan "020.00", :researched, "qualified-at", files: { "spec.md" => "#{spec_body}\n## Research\n\nFound.\n" } }
