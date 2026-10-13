@@ -18,7 +18,7 @@ This repo is the tool. It does not keep plans of its own, and it has no `.plans/
 
 ## Repository state, read this before running anything
 
-The suite is green: `bundle exec rspec` reports 0 failures, with 3 pending seeding examples in `spec/openlanes/vcs/worktree_spec.rb` (they need `bin/setup-worktree`, which did not come along from the `~/.agents` monorepo). A failure anywhere is yours.
+The suite is green: `bundle exec rspec` reports 0 failures and nothing pending. A failure anywhere is yours.
 
 ## Commands
 
