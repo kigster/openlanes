@@ -44,6 +44,18 @@ module OpenLanes
     # @!attribute [r] slash_commands
     #   @return [Boolean] keep the CLI's slash commands even when lean, which
     #     only the `/compact` sent into a resumed session needs
+    # @!attribute [r] dirs
+    #   @return [Array<String>] directories beyond {#root} the agent may read,
+    #     such as the trace directory the copilot reads transcripts from
+    # @!attribute [r] brief
+    #   @return [Boolean] whether the agent reports through the CLI's
+    #     one-line status tool, which only a car on the board has a use for
+    # @!attribute [r] tools
+    #   @return [Array<String>, nil] the only built-in tools the agent has, with
+    #     no settings file able to add one; nil leaves the CLI's own set
+    # @!attribute [r] system
+    #   @return [String, nil] standing instructions, sent as system prompt on
+    #     every invocation so a compacted conversation does not lose them
     Invocation = Data.define(:prompt,
       :root,
       :model,
@@ -54,9 +66,14 @@ module OpenLanes
       :network,
       :lean,
       :resume,
-      :slash_commands) do
+      :slash_commands,
+      :dirs,
+      :brief,
+      :tools,
+      :system) do
       def initialize(allowed_tools: [], denied_tools: [], denied_commands: [], network: false, lean: true,
-        model: nil, effort: nil, resume: nil, slash_commands: false, **rest)
+        model: nil, effort: nil, resume: nil, slash_commands: false, dirs: [], brief: true, tools: nil, system: nil,
+        **rest)
         super
       end
     end
