@@ -14,6 +14,9 @@ Messages travel over Redis pub/sub and are not stored. Someone who joins late, r
 
 Clicking a machine's tab still opens its board. A small ▾ on the tab, or a right-click on it, opens the menu: Start Chat, Invite to Chat or Stop Chat, whichever applies. The status-bar pills are unchanged.
 
+## D4. One chat per page at a time
+
+A page has one chat panel and is in at most one chat. An invite that arrives while you are in a chat says so; accepting it leaves the current chat and joins the new one. To bring more people in, invite them into the chat you are in.
+
 ## Open
 
-- D4. How many chats a page can be in at once.
