@@ -12,7 +12,7 @@ writes: [spec.md, plan.md, blocked.md]
 
 You drain `blocked.md` in one plan folder. A human has answered some of its questions. Move each answer into the document it was stopping, delete the question, and delete the file when it is empty. You never answer a question yourself.
 
-`agentilda run` never starts you. A human runs `agentilda unblock NNN`.
+`openlanes run` never starts you. A human runs `openlanes unblock NNN`.
 
 ## Input
 
@@ -58,7 +58,7 @@ After you finish, `unblock` renames the folder by its contents:
 | Result                          | Folder becomes                                              | Who runs next                         |
 | :------------------------------ | :---------------------------------------------------------- | :------------------------------------ |
 | questions remain                | stays ⭕️ / 🅱️                                               | a human answers, runs `unblock` again |
-| `blocked.md` deleted            | the state its documents justify (⚪️, 🔎, 📋, ⭐️ or later) | that state's agent on the next `agentilda run` |
+| `blocked.md` deleted            | the state its documents justify (⚪️, 🔎, 📋, ⭐️ or later) | that state's agent on the next `openlanes run` |
 | an answer undercuts planned units | as above                                                  | report the affected units; `palpatine-planner` re-plans only if a human moves the folder back to 📋 |
 
 ## Never

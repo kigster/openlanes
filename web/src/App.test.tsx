@@ -77,7 +77,7 @@ describe("under ?fixture", () => {
     await user.click(tab);
     expect(screen.getByRole("tab", { name: "Board" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "All machines" })).toHaveAttribute("aria-pressed", "true");
-    expect(localStorage.getItem("agentilda-merged")).toBe("1");
+    expect(localStorage.getItem("openlanes-merged")).toBe("1");
     await waitFor(() => expect(screen.getByTestId("announcer")).toHaveTextContent("Showing every machine's plans."));
     await user.click(screen.getByRole("button", { name: "All machines" }));
     expect(screen.getByRole("button", { name: "All machines" })).toHaveAttribute("aria-pressed", "false");
@@ -188,7 +188,7 @@ describe("live", () => {
     first.me.plans[2].cars[0].state = "failed"; // 006: nothing left to stop
     first.others[0].plans[0].pr = samplePr({ state: "merged" });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(first)));
-    localStorage.setItem("agentilda-merged", "1");
+    localStorage.setItem("openlanes-merged", "1");
     renderApp();
     await screen.findByRole("tab", { name: "Board" });
     // Their merged row is still on the merged board, not dropped on sight.
@@ -203,7 +203,7 @@ describe("live", () => {
       const first = sampleBoard();
       first.others[0].plans[0].pr = samplePr({ state: "merged" });
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(first)));
-      localStorage.setItem("agentilda-merged", "1");
+      localStorage.setItem("openlanes-merged", "1");
       renderApp();
       await screen.findByRole("tab", { name: "Board" });
       const row = () => document.querySelector('.plan.is-theirs[data-plan="010.00"]');

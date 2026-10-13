@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# What agentilda needs in order to run is declared in the gemspec beside this
+# What openlanes needs in order to run is declared in the gemspec beside this
 # file, so there is one list rather than two that drift. What is left here is
 # only what you need in order to work on it.
 gemspec
@@ -18,7 +18,7 @@ end
 group :test do
   gem "coverage-badge"
   gem "json_schemer" # validates configuration.example.yml against configuration.schema.json
-  gem "rack-test" # drives the API server (Agentilda::Web) in process
+  gem "rack-test" # drives the API server (OpenLanes::Web) in process
   gem "rspec"
   gem "rspec-its"
   gem "rspec_junit_formatter" # JUnit XML for CircleCI store_test_results

@@ -29,7 +29,7 @@ You write the plan for one folder whose `spec.md` is complete. The spec says wha
    - **Done when:** the test that proves it, by file name.
 1. Two units that write the same file are sequential. Say so.
 1. Name one unit as the integration check: a real request through the back end into the interface, nothing stubbed. Say what it must show.
-1. Stay one level above the code. "A `Ledger` class in `lib/agentilda/ledger.rb` with `parse`, `render` and `append`" is a plan. The body of `parse` is not. Signatures, routes and response shapes are the most a plan holds.
+1. Stay one level above the code. "A `Ledger` class in `lib/openlanes/ledger.rb` with `parse`, `render` and `append`" is a plan. The body of `parse` is not. Signatures, routes and response shapes are the most a plan holds.
 1. Write three files:
    - `plan.md`: every unit, the order, and the dependency graph.
    - `plan-backend.md`: the back-end units, in the shape above. `luke-backend` builds from it.
@@ -57,5 +57,5 @@ An ordering, dependency or scope question turns on a decision nobody has made. W
 | You sign                            | Folder becomes | Who runs next                                                     |
 | :---------------------------------- | :------------- | :---------------------------------------------------------------- |
 | `Completed`                         | ⭐️ Planned     | `luke-backend`, with `rey-frontend` only if `plan-frontend.md` has units |
-| `Blocked (technical)` / `(product)` | ⭕️ / 🅱️        | a human answers, then `agentilda unblock NNN` runs `lando-broker` |
+| `Blocked (technical)` / `(product)` | ⭕️ / 🅱️        | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
 | nothing, or killed                  | ⭐️ if `plan.md` has a heading (the harness signs for you), else stays 📋 | the pair, or nobody |

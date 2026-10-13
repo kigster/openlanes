@@ -29,7 +29,7 @@ import {
 } from "./panels";
 import "./shell/shell.css";
 
-const MERGED_KEY = "agentilda-merged";
+const MERGED_KEY = "openlanes-merged";
 const machineTab = (nodeId: string) => `node:${nodeId}`;
 
 function readMerged(): boolean {
@@ -73,7 +73,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const [openCar, setOpenCar] = useState<OpenCar | null>(null);
   const [unblocking, setUnblocking] = useState<string | null>(null);
   const [logsSeenAt, setLogsSeenAt] = useState<string | null>(null);
-  // #start in the URL opens the idea dialog, so `tilda start` can send the browser straight to it (W19).
+  // #start in the URL opens the idea dialog, so `openlanes start` can send the browser straight to it (W19).
   const [ideaOpen, setIdeaOpen] = useState(() => window.location.hash === "#start");
   const pressedSelected = useRef(false);
 
@@ -269,10 +269,10 @@ export default function App() {
           <ControlRoom board={board} connection={connection} fixture={fixture} />
         ) : error ? (
           <main className="loading is-error" role="alert">
-            Could not load the board: {error.message}. Is tilda run (or tilda web --demo) running?
+            Could not load the board: {error.message}. Is openlanes run (or openlanes web --demo) running?
           </main>
         ) : (
-          // The server answered with no engine on the board yet (`tilda web` before `tilda run`): the stream brings
+          // The server answered with no engine on the board yet (`openlanes web` before `openlanes run`): the stream brings
           // the first snapshot, and the page draws itself then.
           <main className="loading" aria-busy="true">
             {waiting ? "Waiting for the engine to publish…" : "Connecting to the engine…"}

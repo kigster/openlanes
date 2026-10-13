@@ -55,7 +55,7 @@ ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
-require "agentilda"
+require "openlanes"
 
 require "stringio"
 
@@ -81,7 +81,7 @@ RSpec.configure do |config|
 
   # Pastel memoizes `enabled:` at construction, so an example that stubs
   # `tty?` or `color?` would otherwise poison every example that ran after it.
-  config.before { Agentilda::UI.reset! }
+  config.before { OpenLanes::UI.reset! }
 
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.
@@ -95,8 +95,8 @@ RSpec.configure do |config|
   # Every example tagged `:tree` gets its own throwaway `.plans` directory, so
   # the suite never reads or writes a real project.
   config.around(:each, :tree) do |example|
-    Dir.mktmpdir("agentilda") do |tmp|
-      @plans_root = File.join(tmp, Agentilda::PLANS_DIR)
+    Dir.mktmpdir("openlanes") do |tmp|
+      @plans_root = File.join(tmp, OpenLanes::PLANS_DIR)
       FileUtils.mkdir_p(@plans_root)
       example.run
     end

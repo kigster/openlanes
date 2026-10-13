@@ -18,7 +18,7 @@ it("shows every source but debug lines by default, accessibly", async () => {
   expect(within(list()).getAllByRole("listitem")).toHaveLength(3);
   expect(screen.getByRole("button", { name: "redis" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("button", { name: "debug" })).toHaveAttribute("aria-pressed", "false");
-  expect(screen.getByText("Tailing .agentilda/log/engine.log and .agentilda/log/api.log")).toBeInTheDocument();
+  expect(screen.getByText("Tailing .openlanes/log/engine.log and .openlanes/log/api.log")).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });
 

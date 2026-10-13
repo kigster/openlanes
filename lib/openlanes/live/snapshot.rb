@@ -1,0 +1,322 @@
+# frozen_string_literal: true
+
+module OpenLanes
+  module Live
+    # Everything the page shows about this node, as one hash in exactly the
+    # shape of `Snapshot` in `web/src/api/types.ts`.
+    #
+    # Built from what already says it: the dispatcher's {Engine::Board} for
+    # who is running and what they spent, the `.plans` tree for each plan's
+    # state, questions and pull requests, the registry for the stations, the
+    # adapter for the models and their prices. Nothing here is a second copy
+    # of any of them. `spec/openlanes/live/snapshot_spec.rb` holds the keys
+    # to the page's fixture, level by level, so a field renamed on one side
+    # fails the other's suite.
+    class Snapshot
+      # How an agent marks a question as answerable with Yes or No (W30), on
+      # its own line under the question's heading. The agents' prompt shows
+      # it, and {#questions} looks for it; neither spells it twice.
+      YES_NO_MARK = "answers: yes, no"
+
+      # {YES_NO_MARK}, read forgivingly: brackets, case and spacing vary.
+      YES_NO = /answers:\s*\[?\s*yes\s*,\s*no\s*\]?/i
+
+      # Any Markdown heading, which ends the body of the question above it.
+      HEADING = /^[ \t]{0,3}\#{1,6}[ \t]/
+
+      # Plan states finished with, kept off "Choose an existing plan".
+      FINISHED = %i[approved deployed discarded].freeze
+
+      # @param board [OpenLanes::Engine::Board]
+      # @param tree [OpenLanes::Plans::Tree]
+      # @param agents [OpenLanes::Agents::Registry]
+      # @param node [OpenLanes::Live::Node]
+      # @param repo [String]
+      # @param project [String]
+      # @param description [String, nil]
+      # @param seq [Integer]
+      # @param at [Time]
+      # @param started_at [Time, nil] the run's start, wall clock
+      # @param claims [OpenLanes::Live::Claims, nil]
+      # @param run_state [OpenLanes::Live::RunState]
+      # @param meter [OpenLanes::Live::Meter]
+      # @param log [Array<Hash>] `LogLine`s, newest last
+      # @param adapter [OpenLanes::Adapters::Base] whose models the page offers
+      def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
+        started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
+        adapter: Adapters.for(Adapters::DEFAULT))
+        @board = board
+        @tree = tree
+        @agents = agents
+        @node = node
+        @repo = repo
+        @project = project
+        @description = description
+        @seq = seq
+        @at = at
+        @started_at = started_at
+        @claims = claims
+        @run_state = run_state
+        @meter = meter
+        @log = log
+        @adapter = adapter
+      end
+
+      # @return [Hash]
+      def to_h
+        subjects = @tree.reload.subjects
+        mine = ours(subjects)
+        { seq:         @seq,
+          at:          iso(@at),
+          node:        @node.wire(heartbeat_at: @at, me: true),
+          repo:        @repo,
+          project:     @project,
+          description: @description,
+          run:         run(mine),
+          stations:    Stations.all(@agents).map(&:wire),
+          plans:       mine,
+          backlog:     backlog(subjects, mine.map { it[:ordinal] }),
+          models:      @adapter.models.map(&:wire),
+          autocompact: Adapters::AUTOCOMPACT / 100.0,
+          log:         @log }
+      end
+
+      private
+
+      # ---- run --------------------------------------------------------------
+
+      # @param plans [Array<Hash>]
+      # @return [Hash]
+      def run(plans)
+        { status:         run_status,
+          started_at:     @started_at && iso(@started_at),
+          up:             @board.up.to_i,
+          down:           @board.down.to_i,
+          cost:           plans.sum { it[:cost] }.round(4),
+          agents_working: @board.running.to_i }
+      end
+
+      # @return [String]
+      def run_status
+        return "idle" if @board.running.to_i.zero? && @board.rows.empty? && @board.status == :running
+
+        @board.status.to_s
+      end
+
+      # ---- plans ------------------------------------------------------------
+
+      # The plans this node is working on: the board's, and any it has
+      # claimed but not yet started.
+      #
+      # @param subjects [Array<OpenLanes::Plans::Subject>]
+      # @return [Array<Hash>]
+      def ours(subjects)
+        ordinals = (@board.plans + Array(@claims&.held)).uniq
+        subjects.select { |s| ordinals.include?(s.feature.ordinal.to_s) }.map { |s| plan(s) }
+      end
+
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Hash] `Plan`
+      def plan(subject)
+        ordinal = subject.feature.ordinal.to_s
+        state = Plans::PlanState.for(subject.feature.path)
+        stages = state.stages
+        rows = @board.rows.select { it.ordinal == ordinal }
+        spent = @meter.for(ordinal, method(:price))
+        started = @meter.started_at(ordinal)
+        { ordinal:,
+          title:       subject.feature.title,
+          slug:        subject.feature.slug,
+          status:      status(subject.status),
+          lane:        Plans::Spec.for(subject).lane.to_s,
+          station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
+          up:          spent[:up],
+          down:        spent[:down],
+          cost:        spent[:cost],
+          started_at:  started && iso(started),
+          elapsed:     started ? (@at - started).round : 0,
+          cars:        rows.map { car(it, subject, stages) },
+          pr:          pull_request(subject),
+          questions:   questions(subject, state),
+          interrupted: interrupted(stages, rows),
+          claimed_by:  claimed_by(ordinal) }
+      end
+
+      # @param status [OpenLanes::Plans::Status]
+      # @return [Hash] `Status`
+      def status(status) = { key: status.key.to_s, emoji: status.emoji, label: status.label }
+
+      # @param subjects [Array<OpenLanes::Plans::Subject>]
+      # @param taken [Array<String>] ordinals already on the board
+      # @return [Array<Hash>] plans a person could add to this run
+      def backlog(subjects, taken)
+        subjects.reject { |s| taken.include?(s.feature.ordinal.to_s) || FINISHED.include?(s.status.key) }
+                .reject { |s| foreign?(s.feature.ordinal.to_s) }
+                .map do |s|
+          { ordinal: s.feature.ordinal.to_s, title: s.feature.title, status: status(s.status),
+            lane: Plans::Spec.for(s).lane.to_s }
+        end
+      end
+
+      # ---- cars -------------------------------------------------------------
+
+      # @param row [OpenLanes::Engine::Board::Row]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param stages [Array<Hash>]
+      # @return [Hash] `Car`
+      def car(row, subject, stages)
+        { key:           row.key,
+          agent:         row.agent,
+          role:          row.role.to_s,
+          round:         row.round,
+          rounds:        row.rounds,
+          model:         model_id(row.model),
+          effort:        stages.rfind { it["agent"] == row.agent }&.fetch("effort", nil),
+          state:         car_state(row, subject),
+          phase:         row.phase&.to_s,
+          message:       row.message.to_s,
+          history:       Array(row.history).first(Engine::Board::Row::HISTORY),
+          up:            row.up.to_i,
+          down:          row.down.to_i,
+          context:       row.context,
+          context_limit: price(row.model)&.context,
+          elapsed:       row.elapsed.to_i,
+          remaining:     row.remaining,
+          held:          @run_state.car_held?(row.key),
+          next_model:    next_model(row) }
+      end
+
+      # The model a person queued for the agent's next round, until a round
+      # runs on it: from then on it is the model, not the next one.
+      #
+      # @param row [OpenLanes::Engine::Board::Row]
+      # @return [String, nil]
+      def next_model(row)
+        queued = @run_state.model_for(row.key)
+        queued unless queued == model_id(row.model)
+      end
+
+      # A running agent on a plan that has stopped for a question is stuck,
+      # not working: the page says so rather than spinning.
+      #
+      # @return [String]
+      def car_state(row, subject)
+        return "stuck" if row.running? && %i[blocked product_blocked].include?(subject.status.key)
+
+        row.state.to_s
+      end
+
+      # @param label [String, nil] a {Agents::Profile#label}: `opus`, or `codex:gpt-5`
+      # @return [String] the full model id when the adapter knows it
+      def model_id(label)
+        name = label.to_s.split(":", 2).last
+        adapter_for(label)&.model_entry(name)&.id || name
+      end
+
+      # The catalogue's entry for a model: its prices, and its context window.
+      #
+      # @param label [String, nil]
+      # @return [OpenLanes::Adapters::Model, nil]
+      def price(label) = adapter_for(label)&.model_entry(label.to_s.split(":", 2).last)
+
+      # @param label [String, nil]
+      # @return [OpenLanes::Adapters::Base, nil]
+      def adapter_for(label)
+        prefix = label.to_s.include?(":") ? label.to_s.split(":", 2).first : Adapters::DEFAULT
+        Adapters.known?(prefix) ? Adapters.for(prefix) : nil
+      end
+
+      # ---- pull request, interruption, claim --------------------------------
+
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Hash, nil] `PullRequest`
+      def pull_request(subject)
+        pr = subject.pull_requests.find(&:open?) || subject.pull_requests.last or return nil
+        { number: pr.number.to_s[/\d+/].to_i, url: pr.url, state: pr_state(pr, subject), ci: nil, merged_at: nil }
+      end
+
+      # @return [String]
+      def pr_state(pr, subject)
+        return "merged" if pr.merged?
+        return "closed" unless pr.open?
+
+        { rejected: "rejected", approved: "approved" }.fetch(subject.status.key, "open")
+      end
+
+      # The latest stage, when it is an interruption nobody has resumed.
+      #
+      # @param stages [Array<Hash>]
+      # @param rows [Array<OpenLanes::Engine::Board::Row>]
+      # @return [Hash, nil]
+      def interrupted(stages, rows)
+        last = stages.last
+        return nil unless last && last["status"] == "Interrupted" && rows.none? { it.agent == last["agent"] && it.running? }
+
+        { agent: last["agent"], at: last["finished_at"] || last["started_at"], note: last["note"].to_s }
+      end
+
+      # @param ordinal [String]
+      # @return [String, nil] the node id, without its checkout
+      def claimed_by(ordinal) = @claims&.held_by(ordinal)&.then { it.split(":").first }
+
+      # @param ordinal [String]
+      # @return [Boolean]
+      def foreign?(ordinal) = !@claims.nil? && @claims.foreign?(ordinal)
+
+      # ---- questions --------------------------------------------------------
+
+      # The questions `blocked.md` still asks, each with its body, whether it
+      # is a yes/no question, and who asked.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param state [OpenLanes::Plans::PlanState]
+      # @return [Array<Hash>] `Question`
+      def questions(subject, state)
+        open = Lifecycle::Unblocker.questions(subject).reject(&:answered)
+        return [] if open.empty?
+
+        bodies = bodies(subject.read("blocked.md").to_s)
+        asker = state.signatures.rfind { it["status"] == "Blocked" }
+        asked_at = asker&.fetch("at", nil) || iso(File.mtime(File.join(subject.feature.path, "blocked.md")))
+        open.map { |q| question(subject, q, bodies.fetch(q.number, ""), asker, asked_at) }
+      end
+
+      # @return [Hash]
+      def question(subject, open, body, asker, asked_at)
+        id = "#{subject.feature.ordinal}/B#{open.number}"
+        yes_no = open.heading.match?(YES_NO) || body.match?(YES_NO)
+        { id:,
+          number:   open.number,
+          heading:  open.heading.sub(YES_NO, "").strip,
+          body:     body.lines.grep_v(/\A\s*#{YES_NO.source}\s*\z/i).join.strip,
+          agent:    asker&.fetch("agent", nil),
+          owner:    subject.status.key == :product_blocked ? "product" : "technical",
+          answers:  yes_no ? %w[yes no] : nil,
+          held:     @run_state.question_held?(id),
+          asked_at: }
+      end
+
+      # @param text [String] the whole of blocked.md
+      # @return [Hash{Integer => String}] each open question's number to the
+      #   lines under its heading, up to the next heading
+      def bodies(text)
+        found = {}
+        current = nil
+        text.each_line do |line|
+          if (number = line[Plans::OPEN_BLOCK, 1])
+            current = found[number.to_i] = +""
+          elsif line.match?(HEADING) || line.match?(Plans::ANSWER_BLOCK)
+            current = nil
+          elsif current
+            current << line
+          end
+        end
+        found
+      end
+
+      # @param time [Time]
+      # @return [String]
+      def iso(time) = time.utc.iso8601
+    end
+  end
+end

@@ -48,7 +48,7 @@ The task turns out not to be mechanical: it needs a design decision, touches mor
 | You sign    | Folder becomes      | Who runs next                                                           |
 | :---------- | :------------------ | :---------------------------------------------------------------------- |
 | `Completed` | 🟢 Ready for Review | the harness pushes the branch and opens the PR; then `hansolo-reviewer` |
-| `Blocked`   | ⭕️ Technical Block  | a human answers, then `agentilda unblock NNN` runs `lando-broker`       |
+| `Blocked`   | ⭕️ Technical Block  | a human answers, then `openlanes unblock NNN` runs `lando-broker`       |
 
 ## Never
 

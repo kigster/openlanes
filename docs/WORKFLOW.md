@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **This file is auto generated.**
 >
-> To regenerate it, run `agentilda docs` (which by the default writes to `${HOME}/.agents/context/workflow.md`). To override the destination, use the `-o | --output <file>` option.
+> To regenerate it, run `openlanes docs` (which by the default writes to `${HOME}/.agents/context/workflow.md`). To override the destination, use the `-o | --output <file>` option.
 >
 > After changing the state machine. Editing it by hand puts it back into the condition it was written to end: three copies of the same table, quietly disagreeing.
 
@@ -17,7 +17,7 @@ There are three phases, and each one has a file that proves it happened:
 | **plan**  | ⭐️ Planned        | `plan.md`               |
 | **build** | 🟡 → 🟢 → 👀 → ✅ | `pull-requests.md`      |
 
-Those files are not paperwork. They are what the tool checks: a folder may not claim a phase whose file is missing, and `agentilda resync dirs` renames any folder whose emoji its contents do not support.
+Those files are not paperwork. They are what the tool checks: a folder may not claim a phase whose file is missing, and `openlanes resync dirs` renames any folder whose emoji its contents do not support.
 
 ## The number
 
@@ -34,7 +34,7 @@ The shape is always `NNN.MM`:
 
 - **`NNN` counts from `000`.** The first plan of a project is `000.00`; after that it is the highest major plus one, zero-padded to three digits.
 - **`MM` is `00` for an ordinary plan** — one specified before it was built.
-- **`MM` from `01` to `99` marks a retroactive plan**: work that shipped with no specification, documented after the fact. `agentilda create --after 001` takes the next free slot in the gap after 001.
+- **`MM` from `01` to `99` marks a retroactive plan**: work that shipped with no specification, documented after the fact. `openlanes create --after 001` takes the next free slot in the gap after 001.
 
 `001.01` is a **sibling of 001 that arrived later, not a part of 001**. The dot reads as containment in almost every other numbering scheme, and here it does not — which is worth saying wherever the scheme is described, because the containment reading is the one a new reader brings.
 
@@ -47,7 +47,7 @@ Two digits, always. One would sort into the middle of the two-digit range — `0
 
 ## Starting a feature that does not exist yet
 
-`agentilda create <two to five words>` mints the folder at ⚪️ New and, for a genuinely new feature, scaffolds `spec.md` with a title and four headings, verbatim:
+`openlanes create <two to five words>` mints the folder at ⚪️ New and, for a genuinely new feature, scaffolds `spec.md` with a title and four headings, verbatim:
 
 - `## What we are trying to achieve`
 - `## Why it matters`
@@ -93,14 +93,14 @@ So nothing re-derives one of them from a folder's contents — otherwise every �
 
 ## When a plan is stopped, and how it starts again
 
-⭕️ Technical Block and 🅱️ Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `agentilda run` leaves alone (✅ 😎 ❌ ⭕️ 🅱️ ☢️), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
+⭕️ Technical Block and 🅱️ Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `openlanes run` leaves alone (✅ 😎 ❌ ⭕️ 🅱️ ☢️), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
 
 Questions are numbered `B1`, `B2`, and that numbering is how the file gets referenced in conversation and in pull requests. **`blocked.md` holds open questions and nothing else.** That is what the ⭕️/🅱️ invariant reads, so a file naming no question justifies neither state and `resync dirs` renames the folder out of it.
 
 Which is how a block drains, in pieces:
 
 1. A human writes each answer under `## Answers` as it arrives, dated and attributed to whoever decided.
-1. `agentilda unblock NNN` hands the folder to `lando-broker`. Nothing else reaches it: answers arriving is not a fact the tool can observe, so a human running the command *is* the signal.
+1. `openlanes unblock NNN` hands the folder to `lando-broker`. Nothing else reaches it: answers arriving is not a fact the tool can observe, so a human running the command *is* the signal.
 1. `lando-broker` folds each answered question into the document that question was stopping — `spec.md` when the answer changes what we are building or why, `plan.md` when it changes how or in what order — and deletes the question and its answer from `blocked.md`.
 1. When the last question goes, the file goes with it, and the folder leaves ⭕️ on the resync that follows.
 
@@ -277,7 +277,7 @@ A pull request that implements a plan says so in its title:
 
 `pull-requests.md` is generated from these titles, so the prefix is the join key between a pull request and a plan, not decoration. Name branches `<user>/NNN.MM-slug` and the number carries itself from branch creation through to a merged, squashed pull request with nobody having to remember it.
 
-`agentilda resync prs` fills in missing prefixes. It reads the branch name first and falls back to the diff only when that touches exactly one plan folder. **It refuses rather than guessing.** A wrong number does not announce itself: it files the work under a plan that did not do it, and leaves the plan that did looking untouched.
+`openlanes resync prs` fills in missing prefixes. It reads the branch name first and falls back to the diff only when that touches exactly one plan folder. **It refuses rather than guessing.** A wrong number does not announce itself: it files the work under a plan that did not do it, and leaves the plan that did looking untouched.
 
 ### `[dev]` when there is no plan
 
@@ -308,4 +308,4 @@ Two things to hold to when that day comes:
 
 ______________________________________________________________________
 
-Generated by `agentilda docs` — version 2.0.0-alpha.
+Generated by `openlanes docs` — version 2.0.0-alpha.

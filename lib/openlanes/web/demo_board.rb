@@ -1,0 +1,286 @@
+# frozen_string_literal: true
+
+require "json"
+
+module OpenLanes
+  module Web
+    # The demo's run, as plain snapshot hashes the shape of
+    # `web/src/api/fixtures/board.json`: what {Demo} publishes, and what its
+    # commands change. No plan folder is touched and no agent runs.
+    #
+    # Each command kind is one method, named as {Live::Commands} names its
+    # handlers, raising {Refusal} with the reason the engine would give.
+    class DemoBoard
+      # A command the demo will not apply.
+      class Refusal < StandardError; end
+
+      # Activity lines a running car cycles through, so the board moves.
+      CHATTER = [
+        "Reading the plan's work units",
+        "Running the suite: 412 examples",
+        "Editing lib/openlanes/web/app.rb",
+        "Writing the spec for the event stream",
+        "Checking rubocop: no offenses",
+        "Waiting on the reviewer's mailbox"
+      ].freeze
+
+      # The status a plan takes once its last question is answered.
+      UNBLOCKED = { "key" => "building", "emoji" => "🟡", "label" => "Building" }.freeze
+
+      # What each car-signal kind does to the car.
+      SIGNALS = {
+        "hold"    => { "held" => true },
+        "wrap_up" => { "phase" => "wrap_up" },
+        "compact" => { "phase" => "calm" },
+        "stop"    => { "phase" => "stopped", "state" => "done" }
+      }.freeze
+
+      # @param fixture [String] path to a `Board` JSON
+      # @param random [Random]
+      def initialize(fixture: FIXTURE, random: Random.new(4747))
+        board = JSON.parse(File.read(fixture))
+        @me = board.fetch("me")
+        @others = board.fetch("others")
+        @random = random
+        @ticks = 0
+      end
+
+      # @return [Hash] this node's snapshot
+      attr_reader :me
+
+      # @return [Array<Hash>] the other nodes' snapshots
+      attr_reader :others
+
+      # One second of pretend work: tokens grow, clocks run, messages turn.
+      #
+      # @param now [Time]
+      # @return [void]
+      def advance(now)
+        @ticks += 1
+        [@me, *@others].each { |snapshot| advance_snapshot(snapshot, now) }
+      end
+
+      # @param command [OpenLanes::Live::Command]
+      # @return [String, nil] a reason to show beside "done"
+      # @raise [Refusal]
+      def apply(command)
+        send(Live::Commands::HANDLERS.fetch(command.kind), command)
+      end
+
+      private
+
+      # @return [void]
+      def advance_snapshot(snapshot, now)
+        stamp = now.utc.iso8601
+        snapshot["at"] = stamp
+        snapshot["node"]["heartbeat_at"] = stamp
+        snapshot["plans"].each { |plan| advance_plan(plan) }
+        run = snapshot["run"]
+        run["up"] = snapshot["plans"].sum { it["up"] }
+        run["down"] = snapshot["plans"].sum { it["down"] }
+        run["agents_working"] = running(snapshot).size
+      end
+
+      # @return [void]
+      def advance_plan(plan)
+        plan["cars"].select { it["state"] == "running" && !it["held"] }.each do |car|
+          up = @random.rand(800..2400)
+          down = @random.rand(60..240)
+          car["up"] += up
+          car["down"] += down
+          plan["up"] += up
+          plan["down"] += down
+          car["elapsed"] += 1
+          car["remaining"] = [car["remaining"] - 1, 0].max if car["remaining"]
+          chatter(car) if (@ticks % 4).zero?
+        end
+        plan["elapsed"] += 1 if plan["cars"].any? { it["state"] == "running" }
+      end
+
+      # @return [void]
+      def chatter(car)
+        car["message"] = CHATTER[(@ticks / 4) % CHATTER.size]
+        car["history"] = [car["message"], *car["history"]].first(50)
+      end
+
+      # @return [Array<Hash>] cars still at work
+      def running(snapshot) = snapshot["plans"].flat_map { it["cars"] }.select { it["state"] == "running" }
+
+      # ---- questions --------------------------------------------------------
+
+      # @return [nil]
+      def answer(command)
+        plan, question = question!(command)
+        plan["questions"].delete(question)
+        unblock(plan) if plan["questions"].empty?
+        nil
+      end
+
+      # @return [nil]
+      def hold_blocked(command) = hold_question(command, true)
+
+      # @return [nil]
+      def release_hold(command) = hold_question(command, false)
+
+      # @return [nil]
+      def hold_question(command, held)
+        question!(command).last["held"] = held
+        nil
+      end
+
+      # @return [void]
+      def unblock(plan)
+        plan["status"] = UNBLOCKED.dup if %w[blocked product_blocked].include?(plan.dig("status", "key"))
+        plan["cars"].each { it["state"] = "running" if it["state"] == "stuck" }
+      end
+
+      # @return [Array(Hash, Hash)] the plan and its question
+      def question!(command)
+        plan = plan!(command)
+        number = command["question"][/\AB?(\d+)\z/i, 1] or raise Refusal, "#{command["question"]} is not a question number like B2"
+        question = plan["questions"].find { it["number"] == number.to_i } or
+          raise Refusal, "#{command.plan} has no open question B#{number}"
+        [plan, question]
+      end
+
+      # ---- agents -----------------------------------------------------------
+
+      # @return [String]
+      def resume(command)
+        plan = plan!(command)
+        interrupted = plan["interrupted"] or raise Refusal, "#{command.plan} has no interrupted agent to resume"
+        plan["interrupted"] = nil
+        "#{interrupted["agent"]} resumes on #{command.plan} at its next turn"
+      end
+
+      # Every agent on the plan stops and the interruption is forgotten; the
+      # engine also resets the worktree and sends the plan back one state,
+      # which a board with no folders behind it has nothing to show for.
+      #
+      # @return [String]
+      def discard(command)
+        plan = plan!(command)
+        plan["cars"].each { it.merge!(SIGNALS.fetch("stop")) }
+        plan["interrupted"] = nil
+        "discarded the work on #{command.plan}; its agents stopped"
+      end
+
+      # @return [nil]
+      def message(command)
+        plan = plan!(command)
+        cars = plan["cars"].select { command.agent.to_s.empty? || it["agent"] == command.agent }
+        raise Refusal, "no agent named, and none is working #{command.plan}" if cars.empty?
+
+        cars.each do |car|
+          car["history"] = ["human: #{command["text"]}", *car["history"]].first(50)
+          car["held"] = false
+        end
+        nil
+      end
+
+      # @return [nil]
+      def signal(command)
+        car!(command).merge!(SIGNALS.fetch(command.kind)).tap { it["held"] = command.kind == "hold" }
+        nil
+      end
+
+      # The demo has no session to compact; the car calms as a real one would
+      # once its context is shed.
+      #
+      # @return [nil]
+      def compact(command) = signal(command)
+
+      # @return [String]
+      def stop_all(_command)
+        cars = running(@me)
+        cars.each { it.merge!(SIGNALS.fetch("stop")) }
+        @me["run"]["status"] = "quitting"
+        "stopping #{cars.size} agent#{"s" unless cars.size == 1} on #{@me.dig("node", "user")}@#{@me.dig("node", "host")}"
+      end
+
+      # Queues the model for the next round and leaves the running one
+      # alone, as Live::Snapshot reports it: `next_model` until a round runs
+      # on it, and nil when it is the model already running.
+      #
+      # @return [String]
+      def set_model(command) # rubocop:disable Naming/AccessorMethodName -- named for the command kind, as in Live::Commands
+        car = car!(command)
+        model = model!(command["model"])
+        car["next_model"] = (model unless model == car["model"])
+        "#{command.agent} runs on #{model} from its next round"
+      end
+
+      # @return [String]
+      def switch_model(command)
+        car = car!(command)
+        raise Refusal, "#{command.car} is not running; use set_model for its next round" unless car["state"] == "running"
+
+        car["model"] = model!(command["model"])
+        # The switch is the model now, so nothing is queued behind it.
+        car["next_model"] = nil
+        "#{command.agent} compacted and carries on on #{car["model"]}"
+      end
+
+      # @return [String] the model's full id
+      def model!(name)
+        entry = @me["models"].find { [it["id"], it["label"]].include?(name) } or raise Refusal, "claude offers no model #{name}"
+        entry["id"]
+      end
+
+      # ---- plans ------------------------------------------------------------
+
+      # @return [nil]
+      def add_plan(command)
+        ordinal = Plans::Ordinal.parse(command["ordinal"])&.to_s or raise Refusal, "#{command["ordinal"]} is not a plan number"
+        entry = @me["backlog"].find { it["ordinal"] == ordinal } or raise Refusal, "there is no plan #{ordinal}"
+        @me["backlog"].delete(entry)
+        @me["plans"] << plan_from(entry)
+        nil
+      end
+
+      # @return [String]
+      def create_plans(command)
+        ordinals = [*@me["plans"], *@me["backlog"]].map { it["ordinal"].to_i }
+        ordinal = format("%03d.00", ordinals.max.to_i + 1)
+        title = command["idea"].lines.first.to_s.strip.delete_prefix("#").strip
+        @me["plans"] << plan_from({ "ordinal" => ordinal,
+                                    "title" => title,
+                                    "status" => { "key" => "new", "emoji" => "⚪️", "label" => "New" },
+                                    "lane" => "full" })
+        "created #{ordinal} #{slug(title)}"
+      end
+
+      # @return [Hash] a `Plan` at its status's station, with nobody on it yet
+      def plan_from(entry)
+        station = @me["stations"].find { it["key"] == entry.dig("status", "key") }&.fetch("key") || @me["stations"].first["key"]
+        entry.merge("slug" => slug(entry["title"]),
+          "station" => station,
+          "up" => 0,
+          "down" => 0,
+          "cost" => 0,
+          "started_at" => nil,
+          "elapsed" => 0,
+          "cars" => [],
+          "pr" => nil,
+          "questions" => [],
+          "interrupted" => nil,
+          "claimed_by" => @me.dig("node", "id"))
+      end
+
+      # @return [String]
+      def slug(title) = title.downcase.gsub(/[^a-z0-9]+/, "-").delete_prefix("-").delete_suffix("-")
+
+      # ---- lookups ----------------------------------------------------------
+
+      # @return [Hash]
+      def plan!(command)
+        @me["plans"].find { it["ordinal"] == command.plan } or raise Refusal, "there is no plan #{command.plan}"
+      end
+
+      # @return [Hash]
+      def car!(command)
+        plan!(command)["cars"].find { it["key"] == command.car } or raise Refusal, "#{command.car} is not running"
+      end
+    end
+  end
+end

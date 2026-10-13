@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+RSpec.describe OpenLanes::Live::Keys do
+  subject(:keys) { described_class.new(repo: "github.com/o/n", node: "abc:def") }
+
+  it "lays out every key as contract.md does" do
+    expect([keys.nodes, keys.snapshot, keys.board, keys.commands, keys.replies, keys.done, keys.claim("004.00")])
+      .to eq(%w[openlanes:github.com/o/n:nodes openlanes:github.com/o/n:abc:def:snapshot
+                openlanes:github.com/o/n:abc:def:board openlanes:github.com/o/n:abc:def:commands
+                openlanes:github.com/o/n:abc:def:replies openlanes:github.com/o/n:abc:def:done
+                openlanes:github.com/o/n:claim:004.00])
+  end
+
+  it "keeps the run state in a hash of its own, per node" do
+    expect([keys.run, keys.run("x:y")]).to eq(%w[openlanes:github.com/o/n:abc:def:run openlanes:github.com/o/n:x:y:run])
+  end
+
+  it "names another node's keys through the same methods" do
+    expect([keys.snapshot("x:y"), keys.board("x:y")]).to eq(%w[openlanes:github.com/o/n:x:y:snapshot openlanes:github.com/o/n:x:y:board])
+  end
+end

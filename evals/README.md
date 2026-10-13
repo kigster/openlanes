@@ -5,15 +5,15 @@ Every agent is checked twice (decision D8 in `docs/decisions/decisions-on-agent-
 1. **Did it finish the task?** State reached, artifacts present, ledger signed.
 2. **Did it work at the depth requested?** Size and section bounds, sources cited, diff size, time and tokens, all bounded per depth (`fast`, `medium`, `deep`). Too shallow for `deep` fails; overdone or slow for `fast` fails too.
 
-The code lives in `lib/agentilda/evals/` (`Agentilda::Evals`).
+The code lives in `lib/openlanes/evals/` (`OpenLanes::Evals`).
 
 ## Running
 
 ```bash
 just eval                                   # score every case's pass/ recording; exit 1 on any FAIL
-exe/agentilda eval --recording fail         # score the fail/ recordings; every one should FAIL
-exe/agentilda eval -a leah-researcher --depth deep   # hold recordings to another depth's bounds
-exe/agentilda eval --live -c research-fast --max-tokens 100000
+exe/openlanes eval --recording fail         # score the fail/ recordings; every one should FAIL
+exe/openlanes eval -a leah-researcher --depth deep   # hold recordings to another depth's bounds
+exe/openlanes eval --live -c research-fast --max-tokens 100000
 ```
 
 - Offline (the default) runs no agent and spends nothing. CI runs it through the spec suite.
@@ -66,7 +66,7 @@ cases/<agent>/<id>/pass/run.json   {"seconds": 142, "tokens": 38150, "state": "r
 cases/<agent>/<id>/fail/...        the same, after a run that fails for the reason the case targets
 ```
 
-`run.json` carries `state` because `plan/` has no status emoji in its name. Changed paths and lines are computed by comparing `repo/` with `fixture.repo`, so a recorded `repo/` must hold every file, changed or not. `spec/agentilda/evals/corpus_spec.rb` asserts every `pass/` passes and every `fail/` fails: the corpus is the scorers' test suite.
+`run.json` carries `state` because `plan/` has no status emoji in its name. Changed paths and lines are computed by comparing `repo/` with `fixture.repo`, so a recorded `repo/` must hold every file, changed or not. `spec/openlanes/evals/corpus_spec.rb` asserts every `pass/` passes and every `fail/` fails: the corpus is the scorers' test suite.
 
 Keep recordings small and synthetic. No real names, emails or private source.
 

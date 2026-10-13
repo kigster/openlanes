@@ -9,7 +9,7 @@ import { MarkdownEditor } from "./MarkdownEditor";
 import { IDEA_DEFAULTS, type IdeaFrontmatter } from "./frontmatter";
 import { sendKeys, type SendCommand } from "./support";
 
-// What each choice means, shown under its control. Depth's efforts are the defaults .tilda.yml will be able to remap (W25).
+// What each choice means, shown under its control. Depth's efforts are the defaults .openlanes.yml will be able to remap (W25).
 const HELP = {
   lane: {
     full: "Complex feature engaging all agents; costs the most in tokens.",

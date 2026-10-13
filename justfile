@@ -1,8 +1,8 @@
 # Tell 'just' to run bash, source our setup script, then execute the recipe
 set shell := ["bash", "-c"]
 
-version := `grep VERSION lib/agentilda/version.rb | awk '{print $3}' | tr -d '"' | tr -d '\n'`
-repo := 'git@github.com:kigster/agentilda.git'
+version := `grep VERSION lib/openlanes/version.rb | awk '{print $3}' | tr -d '"' | tr -d '\n'`
+repo := 'git@github.com:kigster/openlanes.git'
 
 rbenv := 'eval "$(rbenv init - bash 2>/dev/null || true)"; bundle exec '
 
@@ -17,7 +17,7 @@ rbenv := 'eval "$(rbenv init - bash 2>/dev/null || true)"; bundle exec '
 op := '/opt/homebrew/bin/op'
 otp_ref := 'op://open-source-repos/ruby-gems/one-time password?attribute=otp'
 
-gem_name := 'agentilda'
+gem_name := 'openlanes'
 gem_file := 'pkg/' + gem_name + '-' + version + '.gem'
 gem_url := 'https://rubygems.org/gems/' + gem_name
 
@@ -40,35 +40,35 @@ web-install:
 web-build:
     cd web && npm run build
 
-# The page's dev server beside `agentilda web --demo`; Vite proxies /api to it
+# The page's dev server beside `openlanes web --demo`; Vite proxies /api to it
 web-dev:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
-    bundle exec exe/agentilda web --demo --no-open &
+    bundle exec exe/openlanes web --demo --no-open &
     trap 'kill %1 2>/dev/null || true' EXIT
     cd web && npm run dev
 
-# The API server over the demo engine, serving the built page on 127.0.0.1:4747
+# The API server over the demo engine, serving the built page on 127.0.0.1:11000
 web-demo *args:
-    {{ rbenv }} exe/agentilda web --demo {{ args }}
+    {{ rbenv }} exe/openlanes web --demo {{ args }}
 
 # Cypress against the demo server; run `just web-build` first
 web-e2e:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
-    bundle exec exe/agentilda web --demo --no-open --redis-url "${E2E_REDIS_URL:-redis://localhost:6379/14}" &
+    bundle exec exe/openlanes web --demo --no-open --redis-url "${E2E_REDIS_URL:-redis://localhost:6379/14}" &
     trap 'kill %1 2>/dev/null || true' EXIT
-    until curl -sf http://127.0.0.1:4747/healthz >/dev/null; do sleep 0.2; done
+    until curl -sf http://127.0.0.1:11000/healthz >/dev/null; do sleep 0.2; done
     cd web && npx cypress run
 
-# Real agents build a tic-tac-toe page through `tilda start`; spends tokens, needs AGENTILDA_FACTORY_E2E=1
+# Real agents build a tic-tac-toe page through `openlanes start`; spends tokens, needs OPENLANES_FACTORY_E2E=1
 factory-e2e:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ "${AGENTILDA_FACTORY_E2E:-}" != "1" ]]; then
-        echo "factory-e2e runs real agents and spends real tokens; run it as AGENTILDA_FACTORY_E2E=1 just factory-e2e" >&2
+    if [[ "${OPENLANES_FACTORY_E2E:-}" != "1" ]]; then
+        echo "factory-e2e runs real agents and spends real tokens; run it as OPENLANES_FACTORY_E2E=1 just factory-e2e" >&2
         exit 64
     fi
     (cd web && npm run build)
@@ -90,7 +90,7 @@ format:
     /usr/bin/find . -name '*.md' -exec mdformat --wrap no {} \; -print
 
 update-workflow:
-    bundle exec tilda docs -o docs/WORKFLOW.md
+    bundle exec openlanes docs -o docs/WORKFLOW.md
 
 # Run all the tests
 test *args:
@@ -98,7 +98,7 @@ test *args:
 
 # Score every agent's eval cases against their recordings
 eval *args:
-    {{ rbenv }} exe/agentilda eval {{ args }}
+    {{ rbenv }} exe/openlanes eval {{ args }}
 
 # Run tests with coverage
 test-coverage *args:
@@ -139,7 +139,7 @@ doc:
 #   just publish            # read the code from 1Password
 #   just publish 123456     # use this code
 #
-# `just publish-all` in agentilda-tools passes one, because a TOTP is single-use:
+# `just publish-all` in openlanes-tools passes one, because a TOTP is single-use:
 # four gems reading the same 30-second window would have the second push
 # rejected as a replay.
 #

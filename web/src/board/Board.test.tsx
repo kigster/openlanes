@@ -85,7 +85,7 @@ describe("MachineBoard", () => {
   it("opens with the read-only note and draws their plans", () => {
     const board = sampleBoard();
     render(<MachineBoard their={board.others[0]} me={board.me} />);
-    expect(screen.getByText(/is working on these in \/srv\/checkouts\/agentilda; this machine will not start them. Last seen 0s ago./)).toBeInTheDocument();
+    expect(screen.getByText(/is working on these in \/srv\/checkouts\/openlanes; this machine will not start them. Last seen 0s ago./)).toBeInTheDocument();
     expect(screen.getByText("(10.0.4.37)", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("on sam@ci-runner-2")).toBeInTheDocument();
   });

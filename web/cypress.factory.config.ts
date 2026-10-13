@@ -1,6 +1,6 @@
-// The factory integration test (bin/factory-e2e): Cypress drives the control room of a real `tilda start` while real
+// The factory integration test (bin/factory-e2e): Cypress drives the control room of a real `openlanes start` while real
 // agents build a tic-tac-toe page, then plays it. It spends tokens, so it is its own config and spec folder, which the
-// everyday cypress.config.ts never picks up, and it refuses to start without AGENTILDA_FACTORY_E2E=1.
+// everyday cypress.config.ts never picks up, and it refuses to start without OPENLANES_FACTORY_E2E=1.
 import { defineConfig } from "cypress";
 import { createReadStream, existsSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -48,7 +48,7 @@ let serving: { root: string; url: Promise<string>; server: Server } | null = nul
  * would be a fresh origin, reloading forever.
  */
 function serve(dir: string): Promise<string> {
-  // Canonical, so the containment check below compares like with like: the temp dir arrives as `T//agentilda-…`,
+  // Canonical, so the containment check below compares like with like: the temp dir arrives as `T//openlanes-…`,
   // and on macOS under the /var -> /private/var symlink.
   const root = realpathSync(resolve(dir));
   if (serving?.root === root) return serving.url;
@@ -82,8 +82,8 @@ export default defineConfig({
     screenshotOnRunFailure: true,
     screenshotsFolder: "cypress/screenshots/factory",
     setupNodeEvents(on, config) {
-      if (process.env.AGENTILDA_FACTORY_E2E !== "1") {
-        throw new Error("The factory test runs real agents and spends tokens. Run it with AGENTILDA_FACTORY_E2E=1 just factory-e2e.");
+      if (process.env.OPENLANES_FACTORY_E2E !== "1") {
+        throw new Error("The factory test runs real agents and spends tokens. Run it with OPENLANES_FACTORY_E2E=1 just factory-e2e.");
       }
       if (!config.env.projectDir) throw new Error("projectDir is not set; bin/factory-e2e sets it to the throwaway repository.");
       on("task", {

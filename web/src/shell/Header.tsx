@@ -39,17 +39,17 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
   const { theme, toggle } = useTheme();
   const { node, run } = snapshot;
   const minutes = Math.floor(secondsBetween(run.started_at, snapshot.at) / 60);
-  // The project is agentilda itself when the tool works on its own repository, and the logo already says so (W18).
-  const titled = snapshot.project.toLowerCase() !== "agentilda";
+  // The project is openlanes itself when the tool works on its own repository, and the logo already says so (W18).
+  const titled = snapshot.project.toLowerCase() !== "openlanes";
   const themeLabel = theme === "dark" ? "Switch to light theme" : "Switch to dark theme";
   return (
     <header className="topbar">
-      <span className="logo" title="agentilda: the self-running software factory">
-        <img className="on-light" src={onLight} alt="agentilda" height={30} />
-        <img className="on-dark" src={onDark} alt="agentilda" height={30} />
+      <span className="logo" title="openlanes: the self-running software factory">
+        <img className="on-light" src={onLight} alt="openlanes" height={30} />
+        <img className="on-dark" src={onDark} alt="openlanes" height={30} />
       </span>
       <div className="project">
-        {titled ? <h1 className="project-title">{snapshot.project}</h1> : <h1 className="sr-only">Agentilda control room</h1>}
+        {titled ? <h1 className="project-title">{snapshot.project}</h1> : <h1 className="sr-only">OpenLanes control room</h1>}
         <p className="project-meta">
           {snapshot.description && <span>{snapshot.description}</span>}
           <span className="project-path">{node.checkout}</span>

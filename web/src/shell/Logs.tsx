@@ -93,7 +93,7 @@ export function Logs({ lines }: { lines: LogLine[] }) {
           <li className="log-empty">No lines match. Loosen the filters above.</li>
         )}
       </ol>
-      <p className="log-path">Tailing .agentilda/log/engine.log and .agentilda/log/api.log</p>
+      <p className="log-path">Tailing .openlanes/log/engine.log and .openlanes/log/api.log</p>
     </>
   );
 }

@@ -58,7 +58,7 @@ A unit larger than the plan implied is not a block. Split it in `plan-frontend.m
 | :------------------------------ | :------------------- | :---------------------------------------------------------------- |
 | luke still running              | unchanged            | luke finishes; its `Completed` moves the folder on                |
 | luke already done               | 🟢 Ready for Review  | the harness pushes the branch and opens the PR; then `hansolo-reviewer` |
-| you sign `Blocked`              | ⭕️ / 🅱️              | a human answers, then `agentilda unblock NNN` runs `lando-broker` |
+| you sign `Blocked`              | ⭕️ / 🅱️              | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
 
 ## Never
 

@@ -1,4 +1,4 @@
-// The factory, end to end, through the page: an idea typed into the control room of a real `tilda start` becomes a
+// The factory, end to end, through the page: an idea typed into the control room of a real `openlanes start` becomes a
 // quick-lane plan, real agents build it, and any question they ask is answered from Needs you. 2-product.cy.ts then
 // plays the page they built. Run by bin/factory-e2e (just factory-e2e), never by the everyday suite.
 

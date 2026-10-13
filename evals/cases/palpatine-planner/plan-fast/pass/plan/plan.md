@@ -4,7 +4,7 @@ One unit; it is also the integration check, since there is no front end.
 
 ## Order
 
-1. U1 Reject empty titles. Integration: `exe/agentilda create ""` exits 2 and `.plans` is unchanged.
+1. U1 Reject empty titles. Integration: `exe/openlanes create ""` exits 2 and `.plans` is unchanged.
 
 > [!NOTE]
 >

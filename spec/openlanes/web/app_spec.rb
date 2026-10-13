@@ -1,0 +1,311 @@
+# frozen_string_literal: true
+
+require "rack/test"
+
+# Every route of contract.md, "HTTP", driven in process through rack-test
+# over the in-memory store: no Puma, no Redis, no browser.
+RSpec.describe OpenLanes::Web::App, :tree do
+  include Rack::Test::Methods
+
+  let(:store) { OpenLanes::Live.memory_store }
+  let(:keys) { OpenLanes::Live::Keys.new(repo: "github.com/acme/widgets", node: "aaaa:bbbb") }
+  let(:dist) do
+    File.join(File.dirname(plans_root), "dist").tap do |dir|
+      FileUtils.mkdir_p(File.join(dir, "assets"))
+      File.write(File.join(dir, "index.html"), "<!doctype html><title>control room</title>")
+      File.write(File.join(dir, "assets", "app.js"), "console.log('hi')")
+    end
+  end
+  let(:node) do
+    OpenLanes::Live::Node.new(id: "aaaa", user: "pat", host: "box", ip: nil, checkout: "~/widgets", checkout_id: "bbbb")
+  end
+  let(:context) do
+    OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store),
+      keys:,
+      plans_dir: plans_root,
+      url: "redis://user:hunter2@localhost:6379/3",
+      dist:,
+      node:,
+      tick: 0.01,
+      lifetime: 0.2)
+  end
+  let(:app) { OpenLanes::Web.app(context) }
+  let(:snapshot) { { seq: 7, node: { id: "aaaa", user: "pat", host: "box", checkout: "~/widgets", me: true }, plans: [] } }
+  let(:command) { { id: "01JCMD", kind: "stop_all", plan: nil, agent: nil, payload: {} } }
+  let(:body) { JSON.parse(last_response.body) }
+
+  before { header "Host", "127.0.0.1:11000" }
+
+  def post_command(payload, token: context.csrf)
+    header "X-CSRF-Token", token if token
+    post "/api/commands", payload.is_a?(String) ? payload : JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+  end
+
+  describe "GET /healthz" do
+    before { get "/healthz" }
+
+    it "answers ok with the Redis address, password masked" do
+      expect([last_response.status, last_response.body]).to eq([200, "ok redis://user:***@localhost:6379/3\n"])
+    end
+
+    context "when Redis stops answering" do
+      before do
+        allow(store).to receive(:ping).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://localhost is unavailable")
+        get "/healthz"
+      end
+
+      it "answers 503 with the reason" do
+        expect([last_response.status, body["error"]]).to eq([503, "Redis at redis://localhost is unavailable"])
+      end
+    end
+  end
+
+  describe "GET /api/session" do
+    before { get "/api/session" }
+
+    it "hands out the token, the node and the repository" do
+      expect(body).to include("csrf" => context.csrf, "repo" => "github.com/acme/widgets", "node" => include("user" => "pat"))
+    end
+
+    it "is never cached" do
+      expect(last_response.headers["Cache-Control"]).to include("no-store")
+    end
+
+    context "when the engine has published" do
+      before do
+        store.set(keys.snapshot, JSON.generate(snapshot))
+        get "/api/session"
+      end
+
+      it "names the node as the engine describes it" do
+        expect(body["node"]).to include("checkout" => "~/widgets", "me" => true)
+      end
+    end
+  end
+
+  describe "GET /api/board" do
+    before do
+      store.set(keys.snapshot, JSON.generate(snapshot))
+      get "/api/board"
+    end
+
+    it "answers the Board now" do
+      expect(body).to eq("me" => JSON.parse(JSON.generate(snapshot)), "others" => [])
+    end
+  end
+
+  describe "POST /api/commands" do
+    context "with the session's token" do
+      before { post_command(command) }
+
+      it "queues the command and answers 202 accepted" do
+        aggregate_failures do
+          expect(last_response.status).to eq(202)
+          expect(body).to include("id" => "01JCMD", "status" => "accepted")
+          expect(store.xlen(keys.commands)).to eq(1)
+        end
+      end
+    end
+
+    context "without a token" do
+      before { post_command(command, token: nil) }
+
+      it "answers 403 and queues nothing" do
+        expect([last_response.status, store.xlen(keys.commands)]).to eq([403, 0])
+      end
+    end
+
+    context "with a stale token" do
+      before { post_command(command, token: "0" * 64) }
+
+      it "answers 403" do
+        expect(last_response.status).to eq(403)
+      end
+    end
+
+    context "with an invalid command" do
+      before { post_command(command.merge(kind: "launch_missiles")) }
+
+      it "answers 422 refused, with the reason, under the command's id" do
+        expect([last_response.status, body["id"], body["status"], body["reason"]])
+          .to match([422, "01JCMD", "refused", /unknown kind "launch_missiles"/])
+      end
+    end
+
+    context "with a body that is not JSON" do
+      before { post_command("{nope") }
+
+      it "answers 422 with no id to name" do
+        expect([last_response.status, body["id"], body["status"]]).to eq([422, "", "refused"])
+      end
+    end
+
+    context "with a JSON body that is not an object" do
+      before { post_command("[1, 2]") }
+
+      it "answers 422" do
+        expect(last_response.status).to eq(422)
+      end
+    end
+  end
+
+  describe "GET /api/events" do
+    before do
+      store.set(keys.snapshot, JSON.generate(snapshot))
+      get "/api/events"
+    end
+
+    it "is an event stream" do
+      expect(last_response.headers["Content-Type"]).to start_with("text/event-stream")
+    end
+
+    it "opens with the reply cursor, then the board" do
+      expect(last_response.body).to start_with("id: 0-0\nevent: cursor\ndata: {\"id\":\"0-0\"}\n\nevent: board\ndata: {\"me\":{\"seq\":7")
+    end
+  end
+
+  describe "POST /api/demo/reset" do
+    context "without a demo" do
+      before do
+        header "X-CSRF-Token", context.csrf
+        post "/api/demo/reset"
+      end
+
+      it "does not exist" do
+        expect(last_response.status).to eq(404)
+      end
+    end
+
+    context "with a demo" do
+      let(:demo) { instance_double(OpenLanes::Web::Demo, reset: nil) }
+      let(:context) do
+        OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, url: "memory://", demo:)
+      end
+
+      it "puts the board back with the token" do
+        header "X-CSRF-Token", context.csrf
+        post "/api/demo/reset"
+        expect(demo).to have_received(:reset)
+      end
+
+      it "answers 204" do
+        header "X-CSRF-Token", context.csrf
+        post "/api/demo/reset"
+        expect(last_response.status).to eq(204)
+      end
+
+      it "refuses without it" do
+        post "/api/demo/reset"
+        expect(last_response.status).to eq(403)
+      end
+    end
+  end
+
+  describe "GET /api/plans/:ordinal/files/:name" do
+    before do
+      plans do |t|
+        t.plan("004.00", :new, "web-control-room", files: { "spec.md" => "# The spec\n", "secret.txt" => "no" })
+      end
+    end
+
+    it "serves a plan file as Markdown" do
+      get "/api/plans/004/files/spec.md"
+      expect([last_response.status, last_response.content_type, last_response.body])
+        .to eq([200, "text/markdown;charset=utf-8", "# The spec\n"])
+    end
+
+    it "refuses a file that is not a plan document" do
+      get "/api/plans/004.00/files/secret.txt"
+      expect(last_response.status).to eq(404)
+    end
+
+    it "refuses a plan document the plan does not have" do
+      get "/api/plans/004.00/files/plan.md"
+      expect(body["error"]).to eq("004.00 has no plan.md")
+    end
+
+    it "refuses a plan that does not exist" do
+      get "/api/plans/009.00/files/spec.md"
+      expect(body["error"]).to eq("there is no plan 009.00")
+    end
+
+    it "refuses an ordinal that is not one" do
+      get "/api/plans/abc/files/spec.md"
+      expect(body["error"]).to eq("not a plan number")
+    end
+
+    %w[..%2F..%2F..%2Fetc%2Fpasswd ..%2Fspec.md %2Fetc%2Fpasswd].each do |name|
+      it "never reads outside the plan folder for #{name}" do
+        get "/api/plans/004.00/files/#{name}"
+        expect(last_response.status).to eq(404)
+      end
+    end
+
+    it "never reads outside the plans for a traversing ordinal" do
+      get "/api/plans/..%2F..%2Fetc/files/spec.md"
+      expect(last_response.status).to eq(404)
+    end
+  end
+
+  describe "an unknown API path" do
+    before { get "/api/nothing" }
+
+    it "answers 404 as JSON" do
+      expect([last_response.status, body]).to eq([404, { "error" => "no such endpoint" }])
+    end
+  end
+
+  describe "the page" do
+    it "serves index.html at /" do
+      get "/"
+      expect([last_response.status, last_response.body]).to eq([200, "<!doctype html><title>control room</title>"])
+    end
+
+    it "serves index.html for the page's own routes" do
+      get "/plans/004/drawer"
+      expect(last_response.body).to include("control room")
+    end
+
+    it "serves the built assets" do
+      get "/assets/app.js"
+      expect(last_response.body).to eq("console.log('hi')")
+    end
+
+    it "answers 404 for an asset that is not there, rather than the page" do
+      get "/assets/missing.js"
+      expect(last_response.status).to eq(404)
+    end
+
+    context "when the page was never built" do
+      let(:dist) { File.join(File.dirname(plans_root), "no-dist") }
+
+      before { get "/" }
+
+      it "answers 503 and says how to build it" do
+        expect([last_response.status, last_response.body]).to match([503, %r{Run <code>just web-build</code> first}])
+      end
+    end
+  end
+
+  describe "the Host header" do
+    before do
+      header "Host", "attacker.example"
+      get "/api/board"
+    end
+
+    it "is refused unless it names this machine" do
+      expect(last_response.status).to eq(403)
+    end
+  end
+
+  describe "a write from another origin" do
+    before do
+      header "Origin", "http://attacker.example"
+      post_command(command)
+    end
+
+    it "is refused before the token is looked at" do
+      expect([last_response.status, store.xlen(keys.commands)]).to eq([403, 0])
+    end
+  end
+end

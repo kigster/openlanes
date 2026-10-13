@@ -20,7 +20,7 @@ button, textarea { font: inherit; color: inherit; }
 }
 :root[data-theme="dark"] .logo .on-dark { display: block; }
 :root[data-theme="dark"] .logo .on-light { display: none; }
-/* The project being worked on is the page's title; agentilda is only the tool showing it. */
+/* The project being worked on is the page's title; openlanes is only the tool showing it. */
 .project { min-width: 0; max-width: 52ch; }
 .project-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
 .project-meta { margin: 0; font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 0 12px; }

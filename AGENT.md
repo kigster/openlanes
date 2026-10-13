@@ -1,6 +1,6 @@
-# Agentilda repository guide
+# OpenLanes repository guide
 
-Agentilda is a Ruby gem whose `tilda` CLI creates feature briefs and coordinates specialist coding agents toward pull requests. Human operators merge. The seven role definitions live in `agents/`.
+OpenLanes is a Ruby gem whose `openlanes` CLI creates feature briefs and coordinates specialist coding agents toward pull requests. Human operators merge. The seven role definitions live in `agents/`.
 
 ## Setup and verification
 
@@ -23,7 +23,7 @@ just ci
 ```text
 exe/                 CLI entry points
 agents/              seven Markdown agent definitions and permissions
-lib/agentilda/
+lib/openlanes/
   cli/               commands and options
   runner.rb          execution dependencies and task preparation
   dispatcher.rb      admission, attempts and lifecycle loop
@@ -48,6 +48,6 @@ Commands do the work they are named for and preview with `-n` / `--dry-run`; con
 
 ## Distribution
 
-This is a gem, not a deployed web service. `just build` runs setup; `gem build agentilda.gemspec` builds a package. `just publish` publishes to RubyGems and uses 1Password or an explicit OTP. `just release` tags and publishes a GitHub release and currently force-updates tags. Publishing and release require an explicit release request. Update the guide when those commands change.
+This is a gem, not a deployed web service. `just build` runs setup; `gem build openlanes.gemspec` builds a package. `just publish` publishes to RubyGems and uses 1Password or an explicit OTP. `just release` tags and publishes a GitHub release and currently force-updates tags. Publishing and release require an explicit release request. Update the guide when those commands change.
 
 Keep `.env` and credential values out of commits, prompts and telemetry. Preserve pre-existing local changes when preparing a PR.

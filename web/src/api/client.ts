@@ -24,7 +24,7 @@ export class ApiError extends Error {
 
 /**
  * `?fixture` on the page's URL serves web/src/api/fixtures/board.json and never touches the network, so the board can
- * be worked on without `tilda web --demo` running.
+ * be worked on without `openlanes web --demo` running.
  */
 export function isFixtureMode(search: string = window.location.search): boolean {
   return new URLSearchParams(search).has("fixture");

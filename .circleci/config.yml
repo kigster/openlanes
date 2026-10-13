@@ -5,7 +5,7 @@ executors:
   ruby:
     docker:
       - image: cimg/ruby:4.0.6
-    working_directory: ~/agentilda
+    working_directory: ~/openlanes
 
 commands:
   install_packages:
@@ -66,7 +66,7 @@ jobs:
       - image: cimg/ruby:4.0.6
       # The Live store's shared examples run against a real Redis as well as the in-memory fake.
       - image: cimg/redis:7.4
-    working_directory: ~/agentilda
+    working_directory: ~/openlanes
     steps:
       - checkout
       - install_packages
@@ -82,7 +82,7 @@ jobs:
   web:
     docker:
       - image: cimg/node:22.21
-    working_directory: ~/agentilda
+    working_directory: ~/openlanes
     steps:
       - checkout
       - restore_cache:
@@ -111,14 +111,14 @@ jobs:
       - store_artifacts:
           path: web/coverage
 
-  # The page in a browser against `agentilda web --demo`: the built web/dist, the API server and a real Redis, driven
+  # The page in a browser against `openlanes web --demo`: the built web/dist, the API server and a real Redis, driven
   # by Cypress. Unlike `web`, this job installs the Cypress binary, so CYPRESS_INSTALL_BINARY is left alone here.
   e2e:
     resource_class: medium
     docker:
       - image: cimg/ruby:4.0.6-browsers
       - image: cimg/redis:7.4
-    working_directory: ~/agentilda
+    working_directory: ~/openlanes
     environment:
       E2E_REDIS_URL: redis://localhost:6379/14
     steps:
@@ -161,10 +161,10 @@ jobs:
       - run:
           name: Serve the demo
           background: true
-          command: bundle exec exe/agentilda web --demo --no-open --redis-url "$E2E_REDIS_URL"
+          command: bundle exec exe/openlanes web --demo --no-open --redis-url "$E2E_REDIS_URL"
       - run:
           name: Wait for the demo
-          command: timeout 60 bash -c 'until curl -sf http://127.0.0.1:4747/healthz; do sleep 1; done'
+          command: timeout 60 bash -c 'until curl -sf http://127.0.0.1:11000/healthz; do sleep 1; done'
       - run:
           name: Cypress
           working_directory: web

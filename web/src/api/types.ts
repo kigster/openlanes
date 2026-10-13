@@ -1,5 +1,5 @@
-// The wire contract between the engine (Ruby) and the page. Ruby's Agentilda::Live::Snapshot builds exactly this shape,
-// and spec/agentilda/live/snapshot_spec.rb checks it against web/src/api/fixtures/snapshot.json, so a field renamed on
+// The wire contract between the engine (Ruby) and the page. Ruby's OpenLanes::Live::Snapshot builds exactly this shape,
+// and spec/openlanes/live/snapshot_spec.rb checks it against web/src/api/fixtures/snapshot.json, so a field renamed on
 // one side fails the other side's suite. Change both, and the fixture, together.
 
 export type Iso = string; // ISO 8601 wall-clock time, UTC
@@ -145,7 +145,7 @@ export interface Board {
 
 /**
  * A board as `GET /api/board` and the stream deliver it. `me` is null until this machine's engine first publishes
- * (`tilda web` started before `tilda run`, or the run's snapshot expired), so the page never assumes it is there.
+ * (`openlanes web` started before `openlanes run`, or the run's snapshot expired), so the page never assumes it is there.
  */
 export interface WireBoard {
   me: Snapshot | null;

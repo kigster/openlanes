@@ -27,13 +27,13 @@ You review one plan's pull request. Try to refute it, not to confirm it: start f
 1. `plan.md` and `implementation-plan.md` describe what was built.
 1. The tests can fail. Try to construct an input that breaks the code and no test covers.
 1. The integration proof and end-to-end results pasted in `pull-requests.md` exist and pass.
-1. `agentilda list-plans` shows the folder's state matching its pull requests.
+1. `openlanes list-plans` shows the folder's state matching its pull requests.
 
 Each finding gives the file and line, what is wrong, and a failing scenario: input, expected, actual. A finding without a scenario is an opinion; drop it. If you find nothing after trying, say "no findings".
 
 ## Verdict
 
-Count your earlier rejections of this PR: the `rejected` notes in `agentilda state show --plan NNN` (under `signatures`), plus any `(rejected` notes in `pull-requests.md` from before signatures moved there. Then pick one:
+Count your earlier rejections of this PR: the `rejected` notes in `openlanes state show --plan NNN` (under `signatures`), plus any `(rejected` notes in `pull-requests.md` from before signatures moved there. Then pick one:
 
 | Condition                                        | Do                                                                                       | Sign                                    |
 | :----------------------------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------------------- |

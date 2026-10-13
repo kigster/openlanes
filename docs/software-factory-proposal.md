@@ -1,4 +1,4 @@
-# A bounded software factory for Agentilda
+# A bounded software factory for OpenLanes
 
 Status: proposed architecture and implementation backlog, 2026-09-24. Runtime behavior is unchanged. This document answers the request for a plan that a lead and one or two engineers can implement as reviewed PRs.
 
@@ -18,7 +18,7 @@ Success means less time and spend per correct, reviewable PR. Starting more agen
 | `agents/yoda-writer.md`: re-read README, other plans and code; mandatory alternative framing and at least three non-goals | Already adequate briefs pay for another discovery and rewriting pass | Invoke only to repair missing acceptance criteria or ambiguity |
 | `agents/palpatine-planner.md`: always write backend and frontend plans | Empty frontend work still becomes an agent assignment | Dispatch only tasks actually present |
 | `agents/luke-backend.md`: explicitly uncapped subagents; both builders run full suites | Nested concurrency escapes the visible worker count and repeats validation | Coordinator owns all worker admission and validation |
-| `lib/agentilda/cli/run/run.rb`: default jobs are CPU-derived, up to 12; tokens default to unmetered | Hardware capacity substitutes for a spending policy | Finite defaults, independent limits for plans and workers |
+| `lib/openlanes/cli/run/run.rb`: default jobs are CPU-derived, up to 12; tokens default to unmetered | Hardware capacity substitutes for a spending policy | Finite defaults, independent limits for plans and workers |
 | `Dispatcher#dispatch` and `#next_dispatchable`: running jobs and role eligibility determine admission | No separate repository-wide active-plan budget or declared dependency graph | Persistent scheduler with an active-plan cap and task claims |
 | `Executor#invocation`: hard-coded `claude`; model override applies to every role | A different name does not provide independent review | Provider adapters and a reviewer identity policy |
 | `Dispatcher#verify_and_sign`, `Status::PLAN_HEADING`: interrupted work can advance from a heading | A partial artifact can look complete | Validated task results and acceptance evidence |
@@ -69,7 +69,7 @@ Use two distinct limits: `max_active_plans: 1` and `max_workers: 2` as proposed 
 
 An active plan occupies admission from planning through review and repair. A plan awaiting CI keeps its plan slot but releases process capacity. Ready, blocked, deferred and merged plans release active capacity. Start with `max_unmerged_prs: 2` so human review delays do not create an unlimited queue. Ready-but-unmerged plans retain conflict reservations: another plan touching their interfaces or owned paths waits for merge, even though the active slot is free.
 
-Queue order is explicit user priority, then age. Repairs finish before fresh admissions. Do not use Jev to invent the user's business priorities. Persist admission, attempts, reservations, dependency satisfaction and budgets across process restarts. A second `tilda` for the same Git common directory must acquire the same exclusive scheduler lease or refuse to start. Detect live owners before recovering stale leases.
+Queue order is explicit user priority, then age. Repairs finish before fresh admissions. Do not use Jev to invent the user's business priorities. Persist admission, attempts, reservations, dependency satisfaction and budgets across process restarts. A second `openlanes` for the same Git common directory must acquire the same exclusive scheduler lease or refuse to start. Detect live owners before recovering stale leases.
 
 Start with one writer per plan worktree. Enable two writers only after file claims and frozen interfaces exist. Disjoint filenames are necessary but insufficient: schema changes, shared contracts, generated files, dependency manifests, lockfiles, routes and test databases can couple work. Claim paths and named resources. A broad rename claims its affected directory. A schema migration claims the schema resource. Only the lead changes contracts and shared manifests between worker waves.
 
@@ -198,7 +198,7 @@ This is a PR-sized delivery plan. Each item has a separate review boundary. Use 
 
 ### PR 2: Trace what actually runs
 
-- [ ] Add `telemetry.rb`, modify `transcript.rb`, `executor.rb`, `runner.rb` and `agentilda.gemspec`. Pin the selected Braintrust version after Ruby 4.0.6 compatibility verification.
+- [ ] Add `telemetry.rb`, modify `transcript.rb`, `executor.rb`, `runner.rb` and `openlanes.gemspec`. Pin the selected Braintrust version after Ruby 4.0.6 compatibility verification.
 - [ ] Emit run/attempt spans and normalized usage without exporting raw content. Add decision and validation hooks that later PRs can call. Define `Telemetry#span(name, attributes:)` with a no-op implementation when disabled.
 - [ ] Use recorded transcript fixtures to verify partial/final events are counted once, child events correlate correctly, concurrent threads retain their own parents, secrets are redacted and export failure does not rerun work.
 - [ ] Add one explicitly enabled live smoke procedure; local replay tests require no credentials.
@@ -234,7 +234,7 @@ This is a PR-sized delivery plan. Each item has a separate review boundary. Use 
 
 ### PR 7: Make quality and spend measurable
 
-- [x] Turn `evals/cases.jsonl` into executable cases under `evals/cases/`, with deterministic per-depth scorers, pass/fail recordings, `agentilda eval` (offline by default, `--live` under a token cap) and `just eval`. The offline run is part of the spec suite.
+- [x] Turn `evals/cases.jsonl` into executable cases under `evals/cases/`, with deterministic per-depth scorers, pass/fail recordings, `openlanes eval` (offline by default, `--live` under a token cap) and `just eval`. The offline run is part of the spec suite.
 - [ ] For code tasks, create tiny repositories with failing acceptance tests and expected ownership. Evaluate actual resulting code rather than whether the response claims success. Use replay fakes for GitHub mutations.
 - [ ] Run each of the seven agent roles and all workflow gates against positive, negative and ambiguous cases. Add injected secret strings, misleading repo instructions, interrupted processes and stale-commit cases.
 - [ ] Produce a Braintrust comparison with model/prompt/config versions, cost caps and held-out results. Block releases on deterministic safety failures; treat the small starter corpus as insufficient evidence for statistical claims.

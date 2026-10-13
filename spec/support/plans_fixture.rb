@@ -34,8 +34,8 @@ module PlansFixture
     # @param prs [Array<Hash>] rows for `pull-requests.md`
     # @return [String] absolute path to the folder
     def plan(ordinal, status, slug, files: {}, prs: nil)
-      resolved = Agentilda::Plans.status(status) or raise ArgumentError, "unknown status: #{status}"
-      path = File.join(root, Agentilda::Plans.plan_dirname(ordinal, resolved, slug))
+      resolved = OpenLanes::Plans.status(status) or raise ArgumentError, "unknown status: #{status}"
+      path = File.join(root, OpenLanes::Plans.plan_dirname(ordinal, resolved, slug))
       FileUtils.mkdir_p(path)
 
       files.each { |name, body| File.write(File.join(path, name), body) }
@@ -95,7 +95,7 @@ module PlansFixture
     # @return [String]
     def pull_requests_table(rows)
       body = rows.map { |r|
-        "| #{r[:number]} | [#{Agentilda::Plans::PullRequests.escape(r[:title])}](#{r[:url]}) | #{r[:state]} |"
+        "| #{r[:number]} | [#{OpenLanes::Plans::PullRequests.escape(r[:title])}](#{r[:url]}) | #{r[:state]} |"
       }
       <<~MARKDOWN
         # Pull Requests

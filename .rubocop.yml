@@ -100,3 +100,9 @@ Style/SingleArgumentDig:
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
 
+
+# The gem is `openlanes` while the namespace is `OpenLanes`; without this the
+# cop wants every spec under spec/open_lanes/.
+RSpec/SpecFilePathFormat:
+  CustomTransform:
+    OpenLanes: openlanes

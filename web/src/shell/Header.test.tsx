@@ -24,7 +24,7 @@ it("names this machine and prints the run's totals as plain text, accessibly", a
     <Header {...props({ snapshot })} actionMenu={<button type="button">Action</button>} stopAll={<button type="button">Stop All Local</button>}
       help={<button type="button" aria-label="How this works">?</button>} />,
   );
-  expect(screen.getByRole("heading", { level: 1, name: "Agentilda control room" })).toHaveClass("sr-only");
+  expect(screen.getByRole("heading", { level: 1, name: "OpenLanes control room" })).toHaveClass("sr-only");
   expect(screen.getByText("dana@studio-mini")).toBeInTheDocument();
   expect(screen.getByText("18 min")).toBeInTheDocument();
   expect(screen.getByText("4")).toBeInTheDocument();
@@ -33,11 +33,11 @@ it("names this machine and prints the run's totals as plain text, accessibly", a
   expect(screen.queryByText("Sample data")).toBeNull();
   expect(screen.queryByText("Fixture data")).toBeNull();
   expect(screen.getByRole("button", { name: "Stop All Local" })).toBeInTheDocument();
-  expect(screen.getAllByRole("img", { name: "agentilda" })).toHaveLength(2);
+  expect(screen.getAllByRole("img", { name: "openlanes" })).toHaveLength(2);
   expect(await axe(container)).toHaveNoViolations();
 });
 
-it("titles a project that is not agentilda itself and leaves out a missing description", () => {
+it("titles a project that is not openlanes itself and leaves out a missing description", () => {
   const snapshot = sampleBoard().me;
   snapshot.project = "Ledger";
   snapshot.description = null;

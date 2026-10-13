@@ -80,7 +80,7 @@ export function HelpDialog(openable: Openable) {
       <Dialog.Trigger className="btn btn-quiet help-pill" aria-label="How this works">?</Dialog.Trigger>
       <Frame className="help" title="How this works" description={<Dialog.Description asChild><p>Draft copy, to be replaced by the author's.</p></Dialog.Description>}>
         <div className="help-body">
-          <p><strong>This is a distributed software factory.</strong> Every machine that runs agentilda on this repository and points at the same Redis works on the same set of plans, side by side.</p>
+          <p><strong>This is a distributed software factory.</strong> Every machine that runs openlanes on this repository and points at the same Redis works on the same set of plans, side by side.</p>
           <p><strong>You join by sharing <code>$REDIS_URL</code>.</strong> There is no other mechanism: no invitation, no accounts. Anyone who connects to that Redis from a clone of the same GitHub repository is in, and shows up here as a machine of their own.</p>
           <p><strong>Nobody can be kept out or kicked out.</strong> This is not a policy enforcement system. It assumes everyone around is friendly: other machines are shown read only, and a plan one machine is working on is left alone by the rest, by agreement, not by force.</p>
           <p><strong>Stop All Local</strong> stops the agents on this machine only. The other machines keep running.</p>

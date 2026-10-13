@@ -16,7 +16,7 @@ export function sampleCar(over: Partial<Car> = {}): Car {
     effort: "high",
     state: "running",
     phase: "calm",
-    message: "Editing lib/agentilda/engine/dispatcher.rb",
+    message: "Editing lib/openlanes/engine/dispatcher.rb",
     history: [],
     up: 1200,
     down: 80,

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/kigster/agentilda/blob/main/schemas/plan-state.schema.json",
-  "title": "Agentilda plan state",
-  "description": "state.json in a .plans folder: the harness's stages, the agents' signatures, and the messages between agents. Written only through agentilda, never by hand.",
+  "$id": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "title": "OpenLanes plan state",
+  "description": "state.json in a .plans folder: the harness's stages, the agents' signatures, and the messages between agents. Written only through openlanes, never by hand.",
   "type": "object",
   "required": ["version", "plan", "stages", "signatures", "messages"],
   "additionalProperties": false,
@@ -59,7 +59,7 @@
       }
     },
     "signatures": {
-      "description": "Ledger lines, written by agents through `agentilda state sign`.",
+      "description": "Ledger lines, written by agents through `openlanes state sign`.",
       "type": "array",
       "items": {
         "type": "object",
@@ -76,7 +76,7 @@
       }
     },
     "messages": {
-      "description": "What agents on this plan said to each other, through `agentilda mail send`.",
+      "description": "What agents on this plan said to each other, through `openlanes mail send`.",
       "type": "array",
       "items": {
         "type": "object",

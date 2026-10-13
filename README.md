@@ -1,6 +1,6 @@
-# Agentilda
+# Open Lanes Depot
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kigster/agentilda/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/kigster/agentilda/tree/main) ![Coverage](docs/badges/coverage_badge.svg)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kigster/openlanes/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/kigster/openlanes/tree/main) ![Coverage](docs/badges/coverage_badge.svg)
 
 
 
@@ -10,24 +10,24 @@ This repo is a collection of installers (BASH and Ruby) which ensure a consisten
 
 Here is a screenshot of agents working on two plans at the same time, but on two different phases of the process:
 
-![workflow](docs/img/agentilda-two-plan-work.png)
+![workflow](docs/img/openlanes-two-plan-work.png)
 
 > [!NOTE]
 >
-> 1. [`agentilda`](<>) (also known as `tilda` executable) is the Ruby Gem, which is a CLI tool that creates and manages the `.plans` folder, and comes with eight or so specialized agents that take a spec.md file and work through it until it's a set of PRs open, reviewed, and passing on your CI. It does not automatically merge anything.
+> 1. [`openlanes`](<>) (also known as `openlanes` executable) is the Ruby Gem, which is a CLI tool that creates and manages the `.plans` folder, and comes with eight or so specialized agents that take a spec.md file and work through it until it's a set of PRs open, reviewed, and passing on your CI. It does not automatically merge anything.
 > 1. [`agentilda-ai-setup`](https://kigster/agentilda-ai-setup) is the GitHub repo that's a mixture of BASH and Ruby installers. It's comes with the [`configuration.yml`](https://github.com/kigster/agentilda-ai-setup/blob/main/configuration.example.yml) file, which lists the installation commands for the coding agents you'd like to install locally, any other executables you might want (for instance, it installs `bt` — braintrust's CLI utility), and then you can list any number of Github Repos and use them to install skills, plugins, commands from them, specifying exactly which you want to install and which you want to exclude. Moreover you can specify a sub-directory of a github repo to install from.
 > 1. The final piece of the puzzle is the locking gem **[`agent-lock`](https://github.com/kigster/agent-lock)**. This flexible gem comes with the executable `alock` and a skill teaching agents how to use it. Using `alock` agents can work in parallel in the same worktree but on different files, sub-folders, and so on. The gem uses locally running Redis as the default backend, and if that's not available, it uses the file system. The choice of the backend happens once and is saved in the git-ignored file in your local working repo.
 >
 > Together, the three repos, after installation provide you with the consistent way to replicate your `~/.agents` and `~/.claude` folders on multiple computers, and to enable a consistent agentic software team workflow across any number of many projects.
 
-Agentilda turns a short feature description into a reviewed pull request. You write the brief; a team of seven Claude Code agents researches it, specifies it, plans it, builds it and reviews it. You merge.
+OpenLanes turns a short feature description into a reviewed pull request. You write the brief; a team of seven Claude Code agents researches it, specifies it, plans it, builds it and reviews it. You merge.
 
 ## Install
 
 ```bash
-gem install agentilda agent-lock -N
+gem install openlanes agent-lock -N
 hash -r
-tilda --help
+openlanes --help
 ```
 
 `agent-lock` (the `alock` command) stops agents sharing a checkout from overwriting each other's files.
@@ -35,15 +35,15 @@ tilda --help
 Both commands have tab completion. Add this to `~/.zshrc` (or use `bash` in `~/.bashrc`):
 
 ```bash
-eval "$(tilda completion zsh)"
+eval "$(openlanes completion zsh)"
 eval "$(alock completion zsh)"
 ```
 
-To give your coding agents the bundled `tilda` skills, copy them into the shared skill store. There are seven: `tilda` (how the factory works, and which of the others to load), `tilda-setup` (put a project on tilda), `tilda-spec` (create a plan and write its spec), `tilda-documents` (the files in a plan folder and the formats tilda parses), `tilda-run` (`tilda start` and `tilda run`, clear blocks), `tilda-status` (where plans stand, the control room) and `tilda-sync` (folder names, PR titles, Linear).
+To give your coding agents the bundled `openlanes` skills, copy them into the shared skill store. There are seven: `openlanes` (how the factory works, and which of the others to load), `openlanes-setup` (put a project on openlanes), `openlanes-spec` (create a plan and write its spec), `openlanes-documents` (the files in a plan folder and the formats openlanes parses), `openlanes-run` (`openlanes start` and `openlanes run`, clear blocks), `openlanes-status` (where plans stand, the control room) and `openlanes-sync` (folder names, PR titles, Linear).
 
 ```bash
-tilda skills install          # copies skills/* into ~/.agents/skills; -h lists them
-tilda skills install -n       # what it would install, keep or replace
+openlanes skills install          # copies skills/* into ~/.agents/skills; -h lists them
+openlanes skills install -n       # what it would install, keep or replace
 ```
 
 It copies rather than links, so re-run it with `--overwrite` after upgrading the gem.
@@ -55,28 +55,28 @@ It copies rather than links, so re-run it with `--overwrite` after upgrading the
 Run these anywhere inside your project:
 
 ```bash
-tilda init                  # writes .tilda.yml and creates .plans/; asks on a terminal, -y asks nothing
-tilda create tax rule dsl   # creates .plans/000.00-⚪️ → tax-rule-dsl/spec.md and opens it
+openlanes init                  # writes .openlanes.yml and creates .plans/; asks on a terminal, -y asks nothing
+openlanes create tax rule dsl   # creates .plans/000.00-⚪️ → tax-rule-dsl/spec.md and opens it
                             # finish the brief in spec.md, then save it
-tilda run -n                # dry run: shows which agent would take which plan
-tilda start                 # the factory and its control room, up until every plan is finished
+openlanes run -n                # dry run: shows which agent would take which plan
+openlanes start                 # the factory and its control room, up until every plan is finished
 
-tilda list-plans            # every plan, its state and its pull requests
+openlanes list-plans            # every plan, its state and its pull requests
 ```
 
 The agents stop at an approved pull request. Merging it is up to you.
 
-### Project settings: `.tilda.yml`
+### Project settings: `.openlanes.yml`
 
-Every command that reads or writes plans first finds the project root and works from there, so it does not matter which subdirectory you type it in. The root is the nearest directory above you holding `.tilda.yml` or `.plans/`; failing that, the nearest holding `.git`. Your home directory counts only if it holds `.tilda.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
+Every command that reads or writes plans first finds the project root and works from there, so it does not matter which subdirectory you type it in. The root is the nearest directory above you holding `.openlanes.yml` or `.plans/`; failing that, the nearest holding `.git`. Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
 
-`tilda init` writes `.tilda.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--lane`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, and an existing file is kept unless `--overwrite`.
+`openlanes init` writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--lane`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, and an existing file is kept unless `--overwrite`.
 
 ```yaml
 project: Equilibris App   # heading for INDEX.md; default: the root's directory name
-lane: full                # default lane for `tilda create`: full | plan | quick
+lane: full                # default lane for `openlanes create`: full | plan | quick
 frontend: false           # a spec's `frontend:` when spec.md says nothing; omit to let each plan decide
-jobs: 4                   # how many plans `tilda run` works on at once
+jobs: 4                   # how many plans `openlanes run` works on at once
 commands:                 # option defaults for any command, by the name you type it as
   run:
     timeout: 1800
@@ -84,7 +84,7 @@ commands:                 # option defaults for any command, by the name you typ
     adopt: false
 ```
 
-A typed flag beats the plan's `spec.md` frontmatter, which beats `.tilda.yml`, which beats the built-in default. `jobs`, `lane` and `project` are the same settings as `commands.run.jobs`, `commands.create.lane` and `commands.index.project`; set either spelling, not both. An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65): a setting silently ignored is a timeout that stops applying with no signal. `dry_run` cannot be a default. `~/.local/config/agentilda.json` is no longer read; move its `run` section under `commands:`.
+A typed flag beats the plan's `spec.md` frontmatter, which beats `.openlanes.yml`, which beats the built-in default. `jobs`, `lane` and `project` are the same settings as `commands.run.jobs`, `commands.create.lane` and `commands.index.project`; set either spelling, not both. An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65): a setting silently ignored is a timeout that stops applying with no signal. `dry_run` cannot be a default. `~/.local/config/openlanes.json` is no longer read; move its `run` section under `commands:`.
 
 ## How it works
 
@@ -103,7 +103,7 @@ Every feature is one folder under `.plans/`, named `NNN.MM-<emoji> → <slug>`:
 - **The emoji** is the state. A folder may only claim a state its files prove, such as `spec.md`, `plan.md` or `pull-requests.md`, and the tool refuses any other move.
 - **The name** contains spaces and emoji, so quote it in a shell.
 
-`tilda states` draws every state and transition. [`docs/WORKFLOW.md`](docs/WORKFLOW.md), generated by `tilda docs`, is the full reference.
+`openlanes states` draws every state and transition. [`docs/WORKFLOW.md`](docs/WORKFLOW.md), generated by `openlanes docs`, is the full reference.
 
 ### The lifecycle
 
@@ -148,7 +148,7 @@ A plan can also leave the main path. It stops at ⭕️ Technical Block or 🅱�
 | `lando-broker`      | ⭕️, 🅱️         | ⭐️                  | `plan.md`                              | Folds your answers from `blocked.md` back into the spec and plan                         |
 | `r2d2-mechanic`     | ⭐️, 🟡, 🔴     | 🟢                  | `plan.md`, `pull-requests.md`          | Quick lane only: does one short mechanical task straight from `spec.md`                  |
 
-Luke and Rey work at the same time, in the same worktree, toward one pull request. They talk through `tilda mail send` and `tilda mail read`. Rey only starts when `plan-frontend.md` has work units, so a back-end-only plan costs one builder, not two.
+Luke and Rey work at the same time, in the same worktree, toward one pull request. They talk through `openlanes mail send` and `openlanes mail read`. Rey only starts when `plan-frontend.md` has work units, so a back-end-only plan costs one builder, not two.
 
 | Agent               | Model / effort | Why                                    |
 | :------------------ | :------------- | :------------------------------------- |
@@ -161,7 +161,7 @@ Luke and Rey work at the same time, in the same worktree, toward one pull reques
 | `lando-broker`      | haiku / low    | clerical                               |
 | `r2d2-mechanic`     | haiku / medium | short mechanical tasks                 |
 
-No agent runs above Opus: the Claude adapter clamps Fable and anything costlier to Opus. Agents start without your personal plugins, skills, hooks and MCP servers, which on a typical setup cuts a quarter of every turn's context and half the start-up time. `tilda run --user-config` lets them back in.
+No agent runs above Opus: the Claude adapter clamps Fable and anything costlier to Opus. Agents start without your personal plugins, skills, hooks and MCP servers, which on a typical setup cuts a quarter of every turn's context and half the start-up time. `openlanes run --user-config` lets them back in.
 
 ### Lanes, and what spec.md can ask for
 
@@ -183,9 +183,9 @@ implementation_suggestions:   # text or a list: language, libraries, an approach
 implementation_requirements:  # text or a list: binding, exactly as written
   - The database is PG-strict
 task-completed-when:          # what must be true for the task to be finished
-  - "`tilda create` opens an editor and writes no draft"
+  - "`openlanes create` opens an editor and writes no draft"
 how-to-verify:                # the commands or checks that show it
-  - bundle exec rspec spec/agentilda/cli/create_spec.rb
+  - bundle exec rspec spec/openlanes/cli/create_spec.rb
 ---
 ```
 
@@ -201,17 +201,17 @@ how-to-verify:                # the commands or checks that show it
 | `plan`  | palpatine → luke (+ rey) → han                               | a spec you already trust; skip research and rewrite |
 | `quick` | r2d2-mechanic → han                                          | "split the big migration into smaller ones"       |
 
-`tilda create --lane quick split big migration` writes the frontmatter for you. Precedence for model and effort, highest first: `run --model`, then `phases.<phase>`, then `depth`, then the agent's own definition.
+`openlanes create --lane quick split big migration` writes the frontmatter for you. Precedence for model and effort, highest first: `run --model`, then `phases.<phase>`, then `depth`, then the agent's own definition.
 
-Run `tilda agents list` for the same table, or `tilda describe <agent>` to read one agent's prompt.
+Run `openlanes agents list` for the same table, or `openlanes describe <agent>` to read one agent's prompt.
 
 ### Unblocking a plan
 
 The loop never assigns a blocked plan (⭕️ or 🅱️) to an agent. Write your answers into the plan's `blocked.md`, then:
 
 ```bash
-tilda unblock 003 -n         # what is 003 still waiting on?
-tilda unblock 003            # fold the answered questions into spec.md and plan.md
+openlanes unblock 003 -n         # what is 003 still waiting on?
+openlanes unblock 003            # fold the answered questions into spec.md and plan.md
 ```
 
 Partial answers are fine. The plan stays blocked until the last question is answered.
@@ -219,23 +219,23 @@ Partial answers are fine. The plan stays blocked until the last question is answ
 ## Commands
 
 ```bash
-tilda init                             # .tilda.yml and .plans/ at the project root
-tilda create tax rule dsl              # a new plan: 003.00-⚪️ → tax-rule-dsl
-tilda create --lane quick split big migration  # one agent, straight to a pull request
-tilda create --from notes/dsl.md       # a new plan named by the file's frontmatter title
-tilda create --after 002 k1 sync       # a retroactive plan: 002.01-🕰️ → k1-sync
-tilda list-plans                       # every plan, its state and its pull requests
-tilda index                            # write .plans/INDEX.md
-tilda states                           # the state machine, as a diagram
-tilda docs -o docs/WORKFLOW.md         # regenerate the conventions from the code
-tilda start                            # the factory as a service: agents plus the control room, until every plan is finished
-tilda run --plan 003                   # run the agents on specific plans, until no plan changes state
-tilda unblock 003                      # fold answered blocks back in
-tilda worktree 003                     # create and seed a worktree for one plan
-tilda resync dirs                      # rename folders whose emoji their contents contradict
-tilda resync prs                       # add missing [NNN.MM] prefixes to pull request titles
-tilda linear import TAX -p 'Tax DSL'   # mirror the plans into Linear
-tilda skills install                   # copy the bundled skills into ~/.agents/skills
+openlanes init                             # .openlanes.yml and .plans/ at the project root
+openlanes create tax rule dsl              # a new plan: 003.00-⚪️ → tax-rule-dsl
+openlanes create --lane quick split big migration  # one agent, straight to a pull request
+openlanes create --from notes/dsl.md       # a new plan named by the file's frontmatter title
+openlanes create --after 002 k1 sync       # a retroactive plan: 002.01-🕰️ → k1-sync
+openlanes list-plans                       # every plan, its state and its pull requests
+openlanes index                            # write .plans/INDEX.md
+openlanes states                           # the state machine, as a diagram
+openlanes docs -o docs/WORKFLOW.md         # regenerate the conventions from the code
+openlanes start                            # the factory as a service: agents plus the control room, until every plan is finished
+openlanes run --plan 003                   # run the agents on specific plans, until no plan changes state
+openlanes unblock 003                      # fold answered blocks back in
+openlanes worktree 003                     # create and seed a worktree for one plan
+openlanes resync dirs                      # rename folders whose emoji their contents contradict
+openlanes resync prs                       # add missing [NNN.MM] prefixes to pull request titles
+openlanes linear import TAX -p 'Tax DSL'   # mirror the plans into Linear
+openlanes skills install                   # copy the bundled skills into ~/.agents/skills
 ```
 
 > [!IMPORTANT]
@@ -243,43 +243,43 @@ tilda skills install                   # copy the bundled skills into ~/.agents/
 
 ## Running the agents
 
-### `tilda start`: the factory with its control room
+### `openlanes start`: the factory with its control room
 
 ```bash
-tilda start                                # engine plus control room on http://127.0.0.1:4747
-tilda start --no-open --port 4848          # print the URL instead of opening it, on another port
-tilda start --rescan 10                    # look for new or hand-edited plans every 10 s while idle
+openlanes start                                # engine plus control room on http://127.0.0.1:11000
+openlanes start --no-open --port 4848          # print the URL instead of opening it, on another port
+openlanes start --rescan 10                    # look for new or hand-edited plans every 10 s while idle
 ```
 
-`tilda start` is `tilda run` that does not stop at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `tilda create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s, or at once after anything you do on the page).
+`openlanes start` is `openlanes run` that does not stop at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `openlanes create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s, or at once after anything you do on the page).
 
 Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All** stops the agents but keeps the engine and page up; the next answer, added plan or resume starts agents again. The terminal only prints the URL and the progress log.
 
 It ends on its own, with exit 0, once every plan in scope is finished: ✅ Approved & Merged, 😎 Deployed or ❌ Discarded. A project with no plans waits for the first. Ctrl-C or `SIGTERM` stops it early, with the same graceful stop as `run`. It takes `run`'s flags except `-n` and `--no-web`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
 
-### `tilda run`: to a fixed point
+### `openlanes run`: to a fixed point
 
 ```bash
-tilda run -n                               # dry run: who would take what
-tilda run                                  # the whole tree, one worktree per plan, in parallel
-tilda run -j 4                             # at most four agents at once
-tilda run --plan 003,005.01                # only these plans
-tilda run --agent yoda-writer --prompt "Rework the risks section first"
-tilda run --skip hansolo-reviewer          # everyone but the reviewer; its plans wait
-tilda run --model opus                     # one model for every agent
-tilda run --user-config                    # agents load your personal plugins and skills too
-tilda run --timeout 600                    # at most ten minutes per agent
-tilda run --agent luke-backend --prompt steer.md  # a short --prompt naming a file is read
-tilda run --rounds 1                       # at most one round per agent per plan
-tilda run --max-tokens 200000              # token budget per agent invocation
-tilda run --isolation shared               # one checkout, one agent at a time, no git needed
+openlanes run -n                               # dry run: who would take what
+openlanes run                                  # the whole tree, one worktree per plan, in parallel
+openlanes run -j 4                             # at most four agents at once
+openlanes run --plan 003,005.01                # only these plans
+openlanes run --agent yoda-writer --prompt "Rework the risks section first"
+openlanes run --skip hansolo-reviewer          # everyone but the reviewer; its plans wait
+openlanes run --model opus                     # one model for every agent
+openlanes run --user-config                    # agents load your personal plugins and skills too
+openlanes run --timeout 600                    # at most ten minutes per agent
+openlanes run --agent luke-backend --prompt steer.md  # a short --prompt naming a file is read
+openlanes run --rounds 1                       # at most one round per agent per plan
+openlanes run --max-tokens 200000              # token budget per agent invocation
+openlanes run --isolation shared               # one checkout, one agent at a time, no git needed
 ```
 
 If you just created several plans, run them with a single `--plan` list. Separate bare `run` calls each loop over the whole tree, so their worktrees would overlap.
 
 Below is the screenshot of multiple agents running, working on two separate plans. The fist plan has both Luke and Rey (backend and frontend developers) runnign, while the second plan is only at the research phase with Leah.
 
-![agents-running](docs/img/agentilda-running.avif)
+![agents-running](docs/img/openlanes-running.avif)
 
 The loop stops when a full round changes no plan's state. It also stops when every plan in scope is done, blocked, or out of rounds.
 
@@ -303,11 +303,11 @@ Flags can only tighten what an agent declares, never loosen it. Each agent is to
 
 As its time runs out, the agent is warned at 10, 5 and 1 minute left, then asked to stop. If it is still running 60 seconds after that, it is killed. A token budget works the same way: the agent is told the number, and the tool aborts it once it goes over.
 
-Defaults for `run` live in the project's `.tilda.yml`, under `jobs` and `commands.run` (see [Project settings](#project-settings-tildayml)). A typed flag beats the file, and the file beats the built-in default.
+Defaults for `run` live in the project's `.openlanes.yml`, under `jobs` and `commands.run` (see [Project settings](#project-settings-openlanesyml)). A typed flag beats the file, and the file beats the built-in default.
 
 ### Following a run, and stopping it
 
-Every command that runs agents (`run`, `unblock` and `create`) shows each agent as a spinner line on STDERR on a terminal, and writes the same progress to its log everywhere else (a pipe, a dry run, cron). When Redis answers, `run` also serves a web control room on `http://127.0.0.1:4747` and opens it, from which a person can watch the board and message, interrupt, kill or extend an agent (`--no-web`, `--no-open`, `--port`, `--redis-url`). Without Redis the run goes on headless. `tilda web` serves the page on its own, and `tilda web --demo` shows a sample run.
+Every command that runs agents (`run`, `unblock` and `create`) shows each agent as a spinner line on STDERR on a terminal, and writes the same progress to its log everywhere else (a pipe, a dry run, cron). When Redis answers, `run` also serves a web control room on `http://127.0.0.1:11000` and opens it, from which a person can watch the board and message, interrupt, kill or extend an agent (`--no-web`, `--no-open`, `--port`, `--redis-url`). Without Redis the run goes on headless. `openlanes web` serves the page on its own, and `openlanes web --demo` shows a sample run.
 
 Ctrl-C once asks each running agent to write a `RESUME:` note into its plan's `mailbox.md` and sign `Interrupted`; every agent reads its mail before it starts, so a later run picks up where this one stopped instead of redoing the work. A second press aborts immediately. It works through a `SIGINT` handler.
 
@@ -316,12 +316,12 @@ Ctrl-C once asks each running agent to write a `RESUME:` note into its plan's `m
 An agent never renames its plan folder. Instead, it signs the plan's `state.json`, and the harness moves the folder based on the signature:
 
 ```bash
-agentilda state sign --plan 003 --agent leah-researcher --round 1 --status Started
-agentilda state sign --plan 003 --agent leah-researcher --round 1 --status Completed --next yoda-writer
-agentilda state show --plan 003 | jq '.stages[] | {agent, round, status, model, seconds}'
+openlanes state sign --plan 003 --agent leah-researcher --round 1 --status Started
+openlanes state sign --plan 003 --agent leah-researcher --round 1 --status Completed --next yoda-writer
+openlanes state show --plan 003 | jq '.stages[] | {agent, round, status, model, seconds}'
 ```
 
-`state.json` lives in every plan folder and is committed with it. It holds the harness's record of each round (adapter, model, effort, tokens, seconds), the agents' signatures, and the messages between them (`tilda mail`). Its shape is `schemas/plan-state.schema.json`. Writes go through a lock, so two agents on one plan cannot overwrite each other. Signatures written the old way, as `> [!NOTE]` lines in the markdown, are still read.
+`state.json` lives in every plan folder and is committed with it. It holds the harness's record of each round (adapter, model, effort, tokens, seconds), the agents' signatures, and the messages between them (`openlanes mail`). Its shape is `schemas/plan-state.schema.json`. Writes go through a lock, so two agents on one plan cannot overwrite each other. Signatures written the old way, as `> [!NOTE]` lines in the markdown, are still read.
 
 | Status                            | What the harness does                                               |
 | :-------------------------------- | :------------------------------------------------------------------ |
@@ -329,7 +329,7 @@ agentilda state show --plan 003 | jq '.stages[] | {agent, round, status, model, 
 | `Blocked`                         | parks the folder at ⭕️, or at 🅱️ when the note says `product`       |
 | `Almost completed`, `Interrupted` | gives the agent another round, up to its limit                      |
 
-Suppose an agent stops without signing, because it crashed, timed out or was killed. The harness signs `Interrupted` for it. If the work is on disk anyway, the harness also signs `Completed` for it. A round left `Started` by a harness that has since died is found in `state.json` (and in the run's own gitignored `.plans/agentilda-state.json`), marked `Interrupted`, and picked up by the next run.
+Suppose an agent stops without signing, because it crashed, timed out or was killed. The harness signs `Interrupted` for it. If the work is on disk anyway, the harness also signs `Completed` for it. A round left `Started` by a harness that has since died is found in `state.json` (and in the run's own gitignored `.plans/openlanes-state.json`), marked `Interrupted`, and picked up by the next run.
 
 ## GitHub and Linear
 
@@ -355,20 +355,20 @@ The executables in `exe/` find their own `Gemfile`, so they behave the same whet
 
 ### Factory integration test
 
-`just factory-e2e` proves the whole factory through the page. It makes a throwaway git repository with no remote, runs `tilda init` and `tilda start --isolation shared` there (port 4777, Redis db 11), and Cypress (`web/cypress/factory/`) then:
+`just factory-e2e` proves the whole factory through the page. It makes a throwaway git repository with no remote, runs `openlanes init` and `openlanes start --isolation shared` there (port 4777, Redis db 11), and Cypress (`web/cypress/factory/`) then:
 
 1. types a tic-tac-toe idea into the New idea dialog, in the quick lane at depth fast, with no front end;
 1. watches the board, answering any question under Needs you from a canned list;
 1. waits for `r2d2-mechanic` to finish the build. With no remote there is no pull request, so the plan stays at 🟡 Building, done for the run: 🟢 needs an open pull request, and 👀 and ✅ need a person;
 1. serves the `index.html` the agent wrote, plays a game X wins, checks the win is announced, and checks Restart clears the board.
 
-It runs real `claude` agents, so it costs tokens: one Haiku build, about a cent and under a minute of agent time. It refuses to run without `AGENTILDA_FACTORY_E2E=1`, and nothing in `just test`, `just web-e2e` or CircleCI runs it:
+It runs real `claude` agents, so it costs tokens: one Haiku build, about a cent and under a minute of agent time. It refuses to run without `OPENLANES_FACTORY_E2E=1`, and nothing in `just test`, `just web-e2e` or CircleCI runs it:
 
 ```bash
-AGENTILDA_FACTORY_E2E=1 just factory-e2e
+OPENLANES_FACTORY_E2E=1 just factory-e2e
 ```
 
-`FACTORY_PORT`, `FACTORY_REDIS_URL`, `FACTORY_MODEL` (default `haiku`), `FACTORY_TIMEOUT` (seconds per agent, default 600) and `FACTORY_MINUTES` (the wait for the build, default 15) override the defaults. A port already in use is refused, never taken over. The temp repository and the `tilda start` it launched are removed on every exit, and what is worth reading afterwards (the board, each plan's `state.json`, the progress log, the built page and the tail of each agent's trace) is kept in `log/factory-e2e/`.
+`FACTORY_PORT`, `FACTORY_REDIS_URL`, `FACTORY_MODEL` (default `haiku`), `FACTORY_TIMEOUT` (seconds per agent, default 600) and `FACTORY_MINUTES` (the wait for the build, default 15) override the defaults. A port already in use is refused, never taken over. The temp repository and the `openlanes start` it launched are removed on every exit, and what is worth reading afterwards (the board, each plan's `state.json`, the progress log, the built page and the tail of each agent's trace) is kept in `log/factory-e2e/`.
 
 ______________________________________________________________________
 

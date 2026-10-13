@@ -6,7 +6,7 @@ Review, 2026-10-06: the author kept all ten decisions, D1 to D10, unchanged.
 
 ## Why runs were slow: measured, not guessed
 
-From the seven traces of plan `025.00` (`$TMPDIR/agentilda-traces/20261006-*`):
+From the seven traces of plan `025.00` (`$TMPDIR/openlanes-traces/20261006-*`):
 
 | Agent | Model | Effort | Wall | API time | Turns | Cost |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -28,7 +28,7 @@ From the seven traces of plan `025.00` (`$TMPDIR/agentilda-traces/20261006-*`):
 
 ### D1. Agents run lean by default
 
-The Claude adapter passes `--setting-sources project,local`, `--strict-mcp-config --mcp-config '{"mcpServers":{}}'` and `--disable-slash-commands`. The project's own `CLAUDE.md` and settings still load. `agentilda run --user-config` restores the old behaviour for a run that needs a personal plugin. `--bare` was rejected: it reads only `ANTHROPIC_API_KEY`, and the executor deliberately scrubs that so subscription auth is used.
+The Claude adapter passes `--setting-sources project,local`, `--strict-mcp-config --mcp-config '{"mcpServers":{}}'` and `--disable-slash-commands`. The project's own `CLAUDE.md` and settings still load. `openlanes run --user-config` restores the old behaviour for a run that needs a personal plugin. `--bare` was rejected: it reads only `ANTHROPIC_API_KEY`, and the executor deliberately scrubs that so subscription auth is used.
 
 ### D2. Models and effort, capped at Opus
 
@@ -65,7 +65,7 @@ phases:            # optional per-phase overrides
 - `full`: leah → yoda → palpatine → luke (+ rey) → han. Today's behaviour.
 - `plan`: skips research and rewriting. The harness writes a blank `plan.md` and moves the folder ⚪️ → 📋 itself (an existing edge), and palpatine plans from the spec as written.
 - `quick`: skips research, rewriting and planning. The harness writes a one-unit `plan.md` (`## Task`) and moves the folder ⚪️ → ⭐️ through the existing `plan` event, where `r2d2-mechanic` is the only builder serving the lane. It takes the plan 🟡 → 🟢, and Han still reviews. No new state and no new edge were needed.
-- `agentilda create --lane quick "split large migration"` writes the frontmatter.
+- `openlanes create --lane quick "split large migration"` writes the frontmatter.
 
 Agents declare the lanes they serve (`lanes: [full]`, …). Absent means every lane.
 
@@ -75,7 +75,7 @@ Agent frontmatter gains `adapter:` (claude, codex or pi; claude by default) and 
 
 ### D6. Adapters
 
-`Agentilda::Adapters` holds `Base` (the interface), plus `Claude`, `Codex` and `Pi`. An adapter turns an `Invocation` (prompt, root, model, effort, tool grants, network) into an argv and a transcript parser. Each one translates effort into its own vocabulary (`--effort`, `-c model_reasoning_effort=…`, `--thinking`). The autonomy boundary's post-check (HEAD unmoved, no new remote ref) is CLI-independent, so it still holds for every adapter. Codex runs with `--sandbox workspace-write`, which has no network by default. Pi has no sandbox, so the post-check is its only guard, and the docs say so.
+`OpenLanes::Adapters` holds `Base` (the interface), plus `Claude`, `Codex` and `Pi`. An adapter turns an `Invocation` (prompt, root, model, effort, tool grants, network) into an argv and a transcript parser. Each one translates effort into its own vocabulary (`--effort`, `-c model_reasoning_effort=…`, `--thinking`). The autonomy boundary's post-check (HEAD unmoved, no new remote ref) is CLI-independent, so it still holds for every adapter. Codex runs with `--sandbox workspace-write`, which has no network by default. Pi has no sandbox, so the post-check is its only guard, and the docs say so.
 
 ### D7. `state.json` in every plan folder
 
@@ -86,11 +86,11 @@ Every plan folder gets a committed `state.json`, validated against `schemas/plan
 - the message log between agents
 - the stage running now, with pid and run id, so a crashed harness can be resumed
 
-Writes are atomic: a lock file, a temp file, then a rename. Agents never edit it by hand. They call `agentilda state sign` and `agentilda mail send`, which write through the lock. The dispatcher reads signatures from `state.json` first and falls back to the markdown ledger, so existing plans keep working. Messages now land in `state.json`, and `mailbox.md` is still read for older plans. Folder names stay the source of truth for state; `state.json` records the last state the harness moved the folder to, and `resync dirs` updates it.
+Writes are atomic: a lock file, a temp file, then a rename. Agents never edit it by hand. They call `openlanes state sign` and `openlanes mail send`, which write through the lock. The dispatcher reads signatures from `state.json` first and falls back to the markdown ledger, so existing plans keep working. Messages now land in `state.json`, and `mailbox.md` is still read for older plans. Folder names stay the source of truth for state; `state.json` records the last state the harness moved the folder to, and `resync dirs` updates it.
 
 ### D8. Evals per agent, at the requested depth
 
-`evals/cases/<agent>/<case>.yml` describes a fixture plan (and repository files), the depth asked for, and the checks. `agentilda eval` (and `just eval`) scores each case. Every agent is checked twice:
+`evals/cases/<agent>/<case>.yml` describes a fixture plan (and repository files), the depth asked for, and the checks. `openlanes eval` (and `just eval`) scores each case. Every agent is checked twice:
 
 - **did it finish the task:** the state reached, files present or absent, required sections, the ledger signed, the paths it changed and the paths it left alone
 - **did it work at the depth requested:** words and pattern counts (sources, units, findings) between per-depth bounds, plus `max_seconds` and `max_tokens`. Too shallow fails at `deep`; too slow or too large fails at `fast`.

@@ -134,7 +134,7 @@ it over unfinished work starts them on unfinished work.
 
 Inline, in the markdown the agent was already writing, exactly as sketched above. Not in a separate ledger file.
 
-The reason is the reason this codebase gives everywhere else: a second copy of a fact is a copy that drifts. The provenance a human wants to see when reading `spec.md` and the provenance the state machine routes on are the same fact, so they are stored once. `Agentilda::Provenance` scans every `*.md` in the plan folder, which are files the harness already reads.
+The reason is the reason this codebase gives everywhere else: a second copy of a fact is a copy that drifts. The provenance a human wants to see when reading `spec.md` and the provenance the state machine routes on are the same fact, so they are stored once. `OpenLanes::Provenance` scans every `*.md` in the plan folder, which are files the harness already reads.
 
 > [!CAUTION]
 > An agent that rewrites `spec.md` wholesale can drop earlier entries. `Watch` absorbs every entry it sees on each poll and writes a JSON timeline outside the repository, which no agent can rewrite, for the same reason traces live there. The ledger is the live signal; the timeline is the durable record.
@@ -148,7 +148,7 @@ flowchart LR
     A["Agent writes<br/>started / accomplished / chain"] --> L[("Ledger<br/>inline in *.md")]
     L --> D["Dispatcher<br/>polls every 10s"]
     L --> B["Subject#best_fit<br/>justified state"]
-    L --> W["Agentilda::Watch<br/>stage timeline"]
+    L --> W["OpenLanes::Watch<br/>stage timeline"]
     D --> N["Starts the named<br/>successor immediately"]
     W --> J[("JSON timeline<br/>trace dir")]
     W --> BARS["Top and bottom bars"]
@@ -158,7 +158,7 @@ Three consumers, none of which guess any more:
 
 - **The dispatcher** on the main thread polls for a trailing `chain` entry and starts the named successor immediately. See section 1.1.
 - **`Subject#best_fit`** derives the justified state from the last `accomplished` entry, so `Resync::Dirs` stops renaming a folder backwards past work that genuinely happened. The emoji in the folder name becomes a rendering of the ledger rather than an independent claim about it.
-- **`Agentilda::Watch`** builds its stage timeline from the same entries, which is why a run that dies still leaves a readable history.
+- **`OpenLanes::Watch`** builds its stage timeline from the same entries, which is why a run that dies still leaves a readable history.
 
 ## 1.1 The dispatcher
 
@@ -203,9 +203,9 @@ Ten seconds is a deliberate number: fast enough that a handoff feels immediate a
 
 | File                          | Holds                                                                                                                                                                |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/agentilda/provenance.rb` | `Entry` (a `Data`), the one regex, the renderer, `Provenance.for(feature)` returning entries in file-then-line order. Nothing else in the codebase knows the syntax. |
-| `lib/agentilda/dispatcher.rb` | The 10 second poll, the honoured-`chain` set, and the decision to start a successor                                                                                  |
-| `lib/agentilda/watch.rb`      | Stages, the JSON timeline, and what the bars read                                                                                                                    |
+| `lib/openlanes/provenance.rb` | `Entry` (a `Data`), the one regex, the renderer, `Provenance.for(feature)` returning entries in file-then-line order. Nothing else in the codebase knows the syntax. |
+| `lib/openlanes/dispatcher.rb` | The 10 second poll, the honoured-`chain` set, and the decision to start a successor                                                                                  |
+| `lib/openlanes/watch.rb`      | Stages, the JSON timeline, and what the bars read                                                                                                                    |
 
 ______________________________________________________________________
 
@@ -334,7 +334,7 @@ The pairing itself is not new. What is new is that step 1 and step 2 are named a
 
 ______________________________________________________________________
 
-## 5. `Agentilda::Watch`
+## 5. `OpenLanes::Watch`
 
 One object, owned by the main thread, holding every stage of every plan.
 

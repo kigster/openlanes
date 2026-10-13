@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # vim: ft=bash
 #
-# The factory integration test: a throwaway git repository, `tilda start`
+# The factory integration test: a throwaway git repository, `openlanes start`
 # serving it, and Cypress building a tic-tac-toe page through the control
 # room with real agents. It spends real tokens, so it refuses to run unless
-# AGENTILDA_FACTORY_E2E=1 says so, and nothing in `just test`, `just web-e2e`
+# OPENLANES_FACTORY_E2E=1 says so, and nothing in `just test`, `just web-e2e`
 # or CircleCI calls it.
 #
-#   AGENTILDA_FACTORY_E2E=1 just factory-e2e
+#   OPENLANES_FACTORY_E2E=1 just factory-e2e
 #
 # Settings, each with a default:
 #
@@ -19,7 +19,7 @@
 #
 # What it leaves behind is log/factory-e2e/: the progress log, the last
 # board, every plan's state.json and spec.md, the built index.html, and the
-# tail of each agent's trace. The temp repository and the `tilda start` it
+# tail of each agent's trace. The temp repository and the `openlanes start` it
 # launched are always torn down, pass or fail; nothing it did not start is
 # touched.
 
@@ -27,9 +27,9 @@ set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [[ "${AGENTILDA_FACTORY_E2E:-}" != "1" ]]; then
+if [[ "${OPENLANES_FACTORY_E2E:-}" != "1" ]]; then
   echo "factory-e2e runs real agents and spends real tokens." >&2
-  echo "Set AGENTILDA_FACTORY_E2E=1 to run it: AGENTILDA_FACTORY_E2E=1 just factory-e2e" >&2
+  echo "Set OPENLANES_FACTORY_E2E=1 to run it: OPENLANES_FACTORY_E2E=1 just factory-e2e" >&2
   exit 64
 fi
 
@@ -45,7 +45,7 @@ if command -v redis-cli >/dev/null && ! redis-cli -u "${redis_url}" ping >/dev/n
   echo "Redis does not answer on ${redis_url}." >&2
   exit 69
 fi
-# Another server on the port (the user's own `tilda web` on 4747, say) is
+# Another server on the port (the user's own `openlanes web` on 11000, say) is
 # left alone: the run refuses rather than share or kill it.
 if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
   echo "Port ${port} is taken; set FACTORY_PORT to a free one." >&2
@@ -53,12 +53,12 @@ if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
 fi
 [[ -f "${repo}/web/dist/index.html" ]] || { echo "web/dist is missing; run just web-build first." >&2; exit 66; }
 
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/agentilda-factory.XXXXXX")"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/openlanes-factory.XXXXXX")"
 project="${tmp}/tictactoe"
 started_at="${tmp}/.started"
 pid=""
 
-tilda() { "${repo}/exe/agentilda" "$@"; }
+openlanes() { "${repo}/exe/openlanes" "$@"; }
 
 collect() {
   rm -rf "${artifacts}"
@@ -79,7 +79,7 @@ collect() {
   # The traces live outside every repository (Executor::TRACE_DIR); keep the
   # tail of the ones this run wrote.
   traces="${TMPDIR:-/tmp}"
-  traces="${traces%/}/agentilda-traces"
+  traces="${traces%/}/openlanes-traces"
   if [[ -d "${traces}" ]]; then
     find "${traces}" -type f -newer "${started_at}" | while read -r trace; do
       tail -n 40 "${trace}" >"${artifacts}/traces/$(basename "${trace}")"
@@ -92,7 +92,7 @@ teardown() {
   trap - EXIT INT TERM
   collect || true
   if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
-    # TERM is `tilda start`'s graceful stop: its agents are told to stop and
+    # TERM is `openlanes start`'s graceful stop: its agents are told to stop and
     # its control room goes down with it. KILL only if it outlives that.
     kill -TERM "${pid}" 2>/dev/null || true
     for _ in $(seq 1 30); do kill -0 "${pid}" 2>/dev/null || break; sleep 1; done
@@ -108,7 +108,7 @@ trap 'exit 143' TERM
 
 touch "${started_at}"
 
-# A repository with one commit and `tilda init`, and no remote: nothing this
+# A repository with one commit and `openlanes init`, and no remote: nothing this
 # run does can reach GitHub.
 mkdir -p "${project}"
 (
@@ -125,9 +125,9 @@ test runner; check a change by reading it and opening the page.
 MARKDOWN
   git add README.md
   git commit -q -m "Initial commit"
-  tilda init -y -q --project "Tic Tac Toe" -j 1
+  openlanes init -y -q --project "Tic Tac Toe" -j 1
   git add -A
-  git commit -q -m "Initialize tilda"
+  git commit -q -m "Initialize openlanes"
 )
 
 # `--isolation shared` is the existing local-only mode: one tree, no branch
@@ -136,7 +136,7 @@ MARKDOWN
 # Ready for Review needs an open pull request.
 (
   cd "${project}"
-  exec "${repo}/exe/agentilda" start --no-open \
+  exec "${repo}/exe/openlanes" start --no-open \
     --port "${port}" --redis-url "${redis_url}" \
     --isolation shared -j 1 \
     --model "${model}" --timeout "${timeout}" \
@@ -146,7 +146,7 @@ pid=$!
 
 for _ in $(seq 1 120); do
   curl -sf "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
-  kill -0 "${pid}" 2>/dev/null || { echo "tilda start exited:" >&2; cat "${tmp}/start.log" >&2; exit 1; }
+  kill -0 "${pid}" 2>/dev/null || { echo "openlanes start exited:" >&2; cat "${tmp}/start.log" >&2; exit 1; }
   sleep 0.5
 done
 curl -sf "http://127.0.0.1:${port}/healthz" >/dev/null || { echo "The control room never answered on ${port}." >&2; exit 1; }

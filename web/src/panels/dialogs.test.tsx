@@ -47,7 +47,7 @@ describe("HelpDialog", () => {
     renderPanel(<HelpDialog />);
     await user.click(screen.getByRole("button", { name: "How this works" }));
     const dialog = await screen.findByRole("dialog", { name: "How this works" });
-    expect(dialog).toHaveTextContent("This is a distributed software factory. Every machine that runs agentilda on this repository and points at the same Redis works on the same set of plans, side by side.");
+    expect(dialog).toHaveTextContent("This is a distributed software factory. Every machine that runs openlanes on this repository and points at the same Redis works on the same set of plans, side by side.");
     expect(dialog).toHaveTextContent("You join by sharing $REDIS_URL. There is no other mechanism: no invitation, no accounts.");
     expect(dialog).toHaveTextContent("Stop All Local stops the agents on this machine only. The other machines keep running.");
     await user.click(screen.getByRole("button", { name: "Got it" }));
