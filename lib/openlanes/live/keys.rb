@@ -70,6 +70,15 @@ module OpenLanes
       # @return [String]
       def copilot(of = node) = "#{base}:#{of}:copilot"
 
+      # Hash: `session`, `model`, `up` and `down`, the copilot's `claude`
+      # session id and what it has spent in it. Kept beside {#copilot} so a
+      # reloaded page or a restarted server carries on the same conversation
+      # (W17: one session, resumed on each message).
+      #
+      # @param of [String]
+      # @return [String]
+      def copilot_session(of = node) = "#{base}:#{of}:copilot-session"
+
       # String: the node name holding a plan, `SET NX EX`.
       #
       # @param ordinal [#to_s] e.g. "004.00"
