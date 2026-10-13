@@ -22,5 +22,9 @@ A page has one chat panel and is in at most one chat. An invite that arrives whi
 
 Everyone in a chat sees **Invite to Chat** on the machines that are not in it yet. There is no host, which fits the help dialog's "nobody can be kept out".
 
+## D6. Stop Chat leaves; the chat ends with its last participant
+
+**Stop Chat** takes you out of the chat. The others see "<name> left" and carry on. Closing the tab counts as leaving. The chat ends when its last participant leaves.
+
 ## Open
 
