@@ -12,4 +12,5 @@ Messages travel over Redis pub/sub and are not stored. Someone who joins late, r
 
 ## Open
 
-- D3. How many chats a page can be in at once.
+- D3. Which element opens the chat dropdown, given that a machine's tab and its status-bar pill already open its board on click.
+- D4. How many chats a page can be in at once.

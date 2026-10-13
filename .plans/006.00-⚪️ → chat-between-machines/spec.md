@@ -22,7 +22,7 @@ Machines on one Redis already work side by side on the same plans (W26, W29), bu
 
 ## What already exists
 
-- The header lists other machines on the same Redis (`OtherMachines`/node metadata, W26).
+- Other machines on the same Redis (W26) already appear twice: as a tab each beside Board and Logs (`web/src/App.tsx`, `machineTab`), and as pills on the status bar (`web/src/shell/StatusBar.tsx`). Clicking either opens that machine's read-only board.
 - The copilot panel was designed in plan 004 (`design/design.md`, "Header and copilot"; decision W17) but never built: the spec deferred it, and only its colour tokens (`--copilot-head`, `--copilot-body`) are in `web/src/styles/tokens.css`. This plan builds the floating panel.
 - The live run already talks to Redis through `Live::Session`, and the page gets server state over SSE.
 
