@@ -124,7 +124,7 @@ RSpec.describe OpenLanes::Web::Events do
     end
 
     context "when the copilot conversation moves" do
-      let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
+      let(:copilot) { OpenLanes::Live.copilot(store:, keys:, responder: OpenLanes::Web::Demo::COPILOT) }
       let(:copilot_mark) { copilot.newest }
 
       before do
@@ -149,7 +149,7 @@ RSpec.describe OpenLanes::Web::Events do
     # The race the boundary closes: a turn written after the page's own
     # read but before the stream opened was in neither.
     context "when a turn lands just before the stream opens" do
-      let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
+      let(:copilot) { OpenLanes::Live.copilot(store:, keys:, responder: OpenLanes::Web::Demo::COPILOT) }
 
       before do
         copilot.answer(copilot.say({ "id" => "01JGAP", "text" => "in the gap" }))

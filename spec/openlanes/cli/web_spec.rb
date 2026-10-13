@@ -66,6 +66,19 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     expect(server).to have_received(:stop)
   end
 
+  it "answers the copilot with c3po-operator, in this server, on this checkout's keys" do
+    result
+    copilot = built[:server][:context].copilot
+    expect([copilot, copilot.argv("x", nil).include?("--restricted")]).to match([be_a(OpenLanes::Live::Copilot::Operator), true])
+  end
+
+  it "stops c3po-operator on the way out" do
+    operator = instance_double(OpenLanes::Live::Copilot::Operator, stop: nil)
+    allow(OpenLanes::Live::Copilot::Operator).to receive(:new).and_return(operator)
+    result
+    expect(operator).to have_received(:stop)
+  end
+
   it "says nothing with --quiet" do
     expect(unwrapped(run(quiet: true)[1])).not_to include("Control room")
   end
@@ -150,6 +163,11 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     it "keeps the demo's keys apart from a real run's" do
       result
       expect(built[:server][:context].keys.repo).to start_with("demo/")
+    end
+
+    it "answers the copilot with the demo's line, not with an agent" do
+      result
+      expect(built[:server][:context].copilot).to eq(OpenLanes::Web::Demo::COPILOT)
     end
 
     it "says it is the demo" do

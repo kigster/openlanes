@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 # The copilot's conversation over the in-memory store: the person's turn,
-# the placeholder's answer, and the cards the page draws from typed turns.
+# the responder's answer, and the cards the page draws from typed turns.
 RSpec.describe OpenLanes::Live::Copilot do
-  subject(:copilot) { described_class.new(store:, keys:) }
+  subject(:copilot) { described_class.new(store:, keys:, responder: echo) }
+
+  # Answers every message with one line, as the demo does.
+  let(:echo) { ->(turn) { [turn_class.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: "heard #{turn.text}")] } }
 
   let(:store) { OpenLanes::Live.memory_store }
   let(:keys) { OpenLanes::Live::Keys.new(repo: "github.com/acme/widgets", node: "aaaa:bbbb") }
@@ -28,6 +31,19 @@ RSpec.describe OpenLanes::Live::Copilot do
       expect(copilot.say({ "id" => "01JH", "text" => "hi" }).text).to eq("hi")
     end
 
+    it "has no placeholder left to answer in the agent's place" do
+      expect(described_class.const_defined?(:PLACEHOLDER)).to be(false)
+    end
+
+    context "with nobody to answer" do
+      subject(:copilot) { described_class.new(store:, keys:) }
+
+      it "refuses the message and stores nothing, rather than leave it waiting for ever" do
+        expect { copilot.say({ "id" => "01JX", "text" => "anyone?" }) }.to raise_error(described_class::Unanswered, /not running/)
+        expect(store.xlen(keys.copilot)).to eq(0)
+      end
+    end
+
     it "never calls the responder" do
       responder = ->(_) { raise "answered inside the request" }
       expect { described_class.new(store:, keys:, responder:).say({ "id" => "01JR", "text" => "hello" }) }.not_to raise_error
@@ -50,13 +66,9 @@ RSpec.describe OpenLanes::Live::Copilot do
   describe "#answer" do
     let(:turn) { copilot.say({ "id" => "01JMSG", "text" => "hello" }) }
 
-    it "stores the placeholder's answer after the message, naming it" do
+    it "stores the responder's answer after the message, naming it" do
       copilot.answer(turn)
-      expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JMSG you], %w[01JMSG.1 copilot]])
-    end
-
-    it "answers that nobody is listening yet" do
-      expect(copilot.answer(turn).first.text).to start_with("c3po-operator is not built yet, so nobody is listening here.")
+      expect(stored.map { it.values_at("id", "from", "text") }).to eq([%w[01JMSG you hello], ["01JMSG.1", "copilot", "heard hello"]])
     end
 
     it "hands the person's turn to the responder and stores what it answers" do
