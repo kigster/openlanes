@@ -12,3 +12,11 @@ window.matchMedia ??= ((query: string) => ({ matches: false, media: query, oncha
 Element.prototype.scrollIntoView ??= function () {};
 Element.prototype.hasPointerCapture ??= () => false;
 Element.prototype.releasePointerCapture ??= function () {};
+// jsdom has no PointerEvent, so fireEvent.pointer* would build a bare Event without coordinates or a button.
+globalThis.PointerEvent ??= class PointerEvent extends MouseEvent {
+  readonly pointerId: number;
+  constructor(type: string, init: PointerEventInit = {}) {
+    super(type, init);
+    this.pointerId = init.pointerId ?? 0;
+  }
+} as unknown as typeof PointerEvent;

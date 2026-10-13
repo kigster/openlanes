@@ -1,0 +1,67 @@
+/* A floating panel (FloatingPanel.tsx): docked in a bottom corner above the status bar, minimising to a tab fixed to
+   that side's edge. Each panel brings its own colours through the --fp-* properties; the defaults here are the page's
+   ink on its plate, so a panel that sets none still reads. The header, body and footer each turn the page's tokens
+   (--ink, --hairline, --enamel …) to their own ink, so buttons and text inside them follow without restyling. */
+.fp {
+  --fp-head: var(--plate); --fp-head-ink: var(--ink);
+  --fp-body: var(--plate); --fp-body-ink: var(--ink);
+  --fp-foot: var(--fp-head); --fp-foot-ink: var(--fp-head-ink);
+  position: fixed; z-index: 20; bottom: calc(var(--statusbar-h) + 12px);
+  width: min(var(--fp-w, 440px), calc(100vw - 32px)); height: min(var(--fp-h, 560px), calc(100vh - var(--statusbar-h) - 32px));
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--fp-body); border: 1px solid rgb(0 0 0 / 22%); border-radius: 14px;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 28%);
+  transition: box-shadow .15s ease;
+  animation: fp-in .16s ease-out;
+}
+.fp[hidden] { display: none; }
+.fp[data-dock="right"] { right: 20px; }
+.fp[data-dock="left"] { left: 20px; }
+/* Dragged: the inline left and top take over from the docked corner. */
+.fp.is-placed { right: auto; bottom: auto; }
+.fp.is-dragging { box-shadow: 0 24px 64px rgb(0 0 0 / 36%); }
+
+.fp-head, .fp-body, .fp-foot {
+  --ink-soft: color-mix(in srgb, var(--ink) 68%, transparent);
+  --hairline: color-mix(in srgb, var(--ink) 16%, transparent);
+  --enamel: rgb(255 255 255 / 55%);
+  color: var(--ink);
+}
+.fp-head { --ink: var(--fp-head-ink); --plate: var(--fp-head); background: var(--fp-head);
+           display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 14px; border-bottom: 1px solid var(--hairline);
+           cursor: grab; touch-action: none; user-select: none; }
+.fp.is-dragging .fp-head { cursor: grabbing; }
+.fp-body { --ink: var(--fp-body-ink); --plate: var(--fp-body); background: var(--fp-body);
+           flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px; }
+.fp-foot { --ink: var(--fp-foot-ink); --plate: var(--fp-foot); background: var(--fp-foot);
+           padding: 12px 16px 14px; border-top: 1px solid var(--hairline); }
+
+.fp-grip { flex: none; display: grid; place-items: center; width: 28px; height: 36px; margin-left: -6px; padding: 0;
+           border: 0; border-radius: 6px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 16px;
+           letter-spacing: -2px; cursor: inherit; }
+.fp-grip:hover { color: var(--ink); }
+.fp-titles { min-width: 0; }
+.fp-titles h2 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.fp-titles h2:focus { outline: none; }
+.fp-titles p { margin: 0; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.fp-minimise { margin-left: auto; min-height: 36px; }
+/* The page's focus blue is chosen against its own plates; on a panel's light colours the light theme's darker one reads. */
+.fp-head :focus-visible, .fp-body :focus-visible, .fp-body:focus-visible { outline: 2px solid #1F5FD1; outline-offset: 1px; }
+
+/* Minimised: a tab on the dock side's edge, its label reading upwards. */
+.fp-tab { --fp-tab: var(--ink); --fp-tab-ink: var(--plate);
+          position: fixed; z-index: 20; bottom: calc(var(--statusbar-h) + 100px);
+          display: flex; flex-direction: column; align-items: center; gap: 8px; width: 40px; padding: 14px 0;
+          border: 1px solid var(--hairline); background: var(--fp-tab); color: var(--fp-tab-ink);
+          cursor: pointer; font: inherit; font-weight: 800; font-size: 13px; transition: width .12s ease; }
+.fp-tab[hidden] { display: none; }
+.fp-tab[data-dock="right"] { right: 0; border-right: 0; border-radius: 10px 0 0 10px; }
+.fp-tab[data-dock="left"] { left: 0; border-left: 0; border-radius: 0 10px 10px 0; }
+.fp-tab:hover { width: 46px; }
+.fp-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.02em; }
+.fp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--go); }
+
+@keyframes fp-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .fp, .fp-tab { transition: none; animation: none; }
+}
