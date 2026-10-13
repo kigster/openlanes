@@ -3,7 +3,7 @@
 # The event stream's loop, run for a few ticks against the in-memory store
 # with a clock the example moves, so pings and lifetimes cost no real time.
 RSpec.describe OpenLanes::Web::Events do
-  subject(:events) { described_class.new(context:, store:, last_id:, clock:, sleeper:) }
+  subject(:events) { described_class.new(context:, store:, last_id:, page:, clock:, sleeper:) }
 
   # An `out` the loop writes to, which can be closed from inside a write.
   let(:out_class) do
@@ -30,6 +30,7 @@ RSpec.describe OpenLanes::Web::Events do
   let(:store) { OpenLanes::Live.memory_store }
   let(:keys) { OpenLanes::Live::Keys.new(repo: "github.com/acme/widgets", node: "aaaa:bbbb") }
   let(:last_id) { nil }
+  let(:page) { nil }
   let(:now) { [0.0] }
   let(:clock) { -> { now.first } }
   let(:lifetime) { 1.25 }
@@ -159,6 +160,37 @@ RSpec.describe OpenLanes::Web::Events do
       it "puts it at or before the boundary, which the page reads only once the stream says where that is" do
         boundary = JSON.parse(frames[1][/data: (.*)$/, 1])["id"]
         expect([boundary, copilot.since(boundary)]).to eq([copilot.newest, []])
+      end
+    end
+
+    context "when the page is in a chat" do
+      let(:page) { "page-0001" }
+      let(:chat) { context.chat }
+
+      before do
+        chat.step
+        run_ticks do |tick|
+          chat.start_chat(page:, name: "Pat", machine: "1" * 24, label: "kim@x") if tick == 1
+          chat.step
+        end
+      end
+
+      it "relays the chat's events as chat events with no id" do
+        expect(frames.grep(/event: chat/).map { JSON.parse(it[/data: (.*)$/, 1])["kind"] }).to eq(%w[unanswered joined])
+      end
+
+      it "counts the page as gone once its stream ends" do
+        expect(chat.instance_variable_get(:@pages)[page].streams).to eq(0)
+      end
+    end
+
+    context "with a page id that is not one" do
+      let(:page) { "../../x" }
+
+      before { run_ticks }
+
+      it "relays no chat" do
+        expect(frames.grep(/event: chat/)).to be_empty
       end
     end
 

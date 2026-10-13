@@ -36,6 +36,9 @@ module OpenLanes
     # @!attribute [r] background
     #   @return [#call] runs the block it is given apart from the request, a
     #     thread by default; the suite passes one that runs it when told
+    # @!attribute [r] chat
+    #   @return [OpenLanes::Live::Chat, nil] the chat between machines (plan 006),
+    #     relayed to this server's pages; nil where nothing serves it
     # @!attribute [r] stopping
     #   @return [Concurrent::AtomicBoolean] set when the server shuts down, so
     #     open streams end within a tick
@@ -51,8 +54,9 @@ module OpenLanes
       :lifetime,
       :demo,
       :background,
+      :chat,
       :stopping) do
-      def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil,
+      def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil, chat: nil,
         background: Context::THREAD, stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end

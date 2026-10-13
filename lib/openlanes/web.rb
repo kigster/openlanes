@@ -38,7 +38,20 @@ module OpenLanes
     # @param rest [Hash] {Context}'s other fields
     # @return [OpenLanes::Web::Context]
     def context(stores:, keys:, plans_dir:, url:, **rest)
+      rest[:chat] ||= chat(stores:, keys:, node: rest[:node])
       Context.new(stores:, keys:, plans_dir:, url:, csrf: SecureRandom.hex(32), **rest)
+    end
+
+    # The chat between machines for one server (plan 006). Its machine is
+    # the node id in +keys+, so it answers for the same machine the board does.
+    #
+    # @param stores [OpenLanes::Web::Stores]
+    # @param keys [OpenLanes::Live::Keys]
+    # @param node [OpenLanes::Live::Node, nil]
+    # @return [OpenLanes::Live::Chat]
+    def chat(stores:, keys:, node: nil, **)
+      machine = keys.node.split(":").first
+      Live::Chat.new(stores:, keys:, machine:, label: node&.label || machine, **)
     end
 
     # @param context [OpenLanes::Web::Context]

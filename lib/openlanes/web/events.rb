@@ -20,6 +20,12 @@ module OpenLanes
     # browser that drops before the first reply still has one to send;
     # without it, replies written during that gap were skipped.
     #
+    # A `chat` event (plan 006) carries no `id:` either: the chat between
+    # machines keeps no history (D2), so there is nothing to catch up on.
+    # The stream is how {Live::Chat} knows the page is still open; when it
+    # closes, the page has {Live::Chat::GRACE} to reconnect before it counts
+    # as having left (D6).
+    #
     # A copilot turn carries no `id:`, so it never moves that cursor. The
     # conversation has a boundary of its own instead: the stream samples the
     # newest turn, says so in a `copilot_cursor` event, and from then on
@@ -32,15 +38,18 @@ module OpenLanes
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param last_id [String, nil] the `Last-Event-ID` the browser sent
+      # @param page [String, nil] the page's own id, `?page=` on the stream, for its chat
       # @param clock [Proc] seconds, monotonic
       # @param sleeper [Proc] waits the given seconds between ticks
-      def initialize(context:, store:, last_id: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
+      def initialize(context:, store:, last_id: nil, page: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
         sleeper: ->(seconds) { sleep seconds })
         @context = context
         @store = store
         @keys = context.keys
         @copilot = Live.copilot(store:, keys: @keys)
         @last_id = last_id.to_s.match?(/\A\d+-\d+\z/) ? last_id : nil
+        @chat = context.chat
+        @page = page.to_s.match?(Live::Chat::PAGE) ? page : nil
         @clock = clock
         @sleeper = sleeper
       end
@@ -51,6 +60,7 @@ module OpenLanes
       # @param out [#<<, #closed?]
       # @return [void]
       def run(out)
+        @chat&.attach(@page) if @page
         started = @clock.call
         pinged = started
         cursor = @last_id || newest_reply
@@ -62,6 +72,7 @@ module OpenLanes
           seqs = board(out, seqs)
           cursor = replies(out, cursor)
           said = copilot(out, said)
+          chat(out)
           pinged = ping(out) if @clock.call - pinged >= @context.ping_every
           @sleeper.call(@context.tick)
         end
@@ -69,6 +80,8 @@ module OpenLanes
         # Ending the stream is the right answer: the page reconnects with
         # backoff and shows itself as reconnecting meanwhile.
         out << ": #{e.message.tr("\n", " ")}\n\n"
+      ensure
+        @chat&.detach(@page) if @page
       end
 
       # @param event [String]
@@ -108,6 +121,13 @@ module OpenLanes
           said = id
         end
         said
+      end
+
+      # @return [void]
+      def chat(out)
+        return unless @chat && @page
+
+        @chat.drain(@page).each { out << self.class.frame("chat", it) }
       end
 
       # @return [Float] when it pinged
