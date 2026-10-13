@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Board, Snapshot, WireBoard } from "./types";
+import type { Board, CopilotLog, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { openStream, type ConnectionState } from "./events";
-import { BOARD_KEY } from "./queryClient";
+import { BOARD_KEY, COPILOT_KEY } from "./queryClient";
+import { withTurn } from "./copilot";
 import { replies } from "./replies";
 
 export type { ConnectionState } from "./events";
@@ -74,8 +75,13 @@ export function useBoard(): BoardState {
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
       },
       onReply: reply => replies.deliver(reply),
+      // Before the conversation's first GET answers there is nothing to add to; that GET brings the turn itself.
+      onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => (old ? withTurn(old, turn) : old)),
       onState: setConnection,
-      onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
+      onReconnect: () => {
+        void client.refetchQueries({ queryKey: BOARD_KEY });
+        void client.refetchQueries({ queryKey: COPILOT_KEY });
+      },
     });
   }, [client, fixture]);
 

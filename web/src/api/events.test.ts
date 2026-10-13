@@ -37,6 +37,15 @@ it("routes board and reply events", () => {
   expect(h.onBoard).toHaveBeenCalledTimes(1);
 });
 
+it("routes copilot turns to their handler, and passes them over when there is none", () => {
+  const h = { ...handlers(), onCopilot: vi.fn() };
+  openStream(h);
+  calls[0].onmessage?.({ id: "", event: "copilot", data: '{"id":"01J.1"}', retry: undefined });
+  expect(h.onCopilot).toHaveBeenCalledWith({ id: "01J.1" });
+  openStream(handlers());
+  expect(() => calls[1].onmessage?.({ id: "", event: "copilot", data: "{}", retry: undefined })).not.toThrow();
+});
+
 it("passes over the opening cursor event, whose id the library keeps for Last-Event-ID", () => {
   const h = handlers();
   openStream(h);

@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { createQueryClient } from "./queryClient";
+import { COPILOT_KEY, createQueryClient } from "./queryClient";
+import type { CopilotLog } from "./types";
 import { reconcile, useBoard } from "./useBoard";
 import { replies } from "./replies";
 import type { StreamHandlers } from "./events";
-import { loadFixtureBoard } from "./client";
+import { fetchCopilot, loadFixtureBoard } from "./client";
 
 const streams: StreamHandlers[] = [];
 const closed = vi.fn();
@@ -56,6 +57,21 @@ it("loads the board, follows the stream, and refetches on reconnect", async () =
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   unmount();
   expect(closed).toHaveBeenCalled();
+});
+
+it("adds the stream's copilot turns to the conversation, once it is loaded, and rereads it on reconnect", async () => {
+  const client = createQueryClient();
+  fetchMock.mockImplementation(async (path: string) => json(path === "/api/copilot" ? { turns: [], usage: { model: null, up: 0, down: 0 } } : loadFixtureBoard()));
+  renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+  const turn = { id: "01J.1", from: "copilot", kind: "text", text: "hi", at: "t", usage: null } as const;
+  act(() => streams[0].onCopilot?.(turn));
+  expect(client.getQueryData(COPILOT_KEY)).toBeUndefined(); // nothing loaded yet: the GET will bring it
+  await client.fetchQuery({ queryKey: COPILOT_KEY, queryFn: () => fetchCopilot() });
+  act(() => streams[0].onCopilot?.(turn));
+  expect(client.getQueryData<CopilotLog>(COPILOT_KEY)?.turns).toEqual([turn]);
+  const refetch = vi.spyOn(client, "refetchQueries");
+  act(() => streams[0].onReconnect());
+  expect(refetch).toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
 });
 
 it("reports a failed first load", async () => {

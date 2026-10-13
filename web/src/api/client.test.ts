@@ -1,4 +1,4 @@
-import { ApiError, fetchBoard, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postCommand, resetSession } from "./client";
+import { ApiError, fetchBoard, fetchCopilot, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postCommand, postCopilot, resetSession } from "./client";
 import type { Command } from "./types";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -109,5 +109,48 @@ describe("postCommand", () => {
   it("throws on anything else", async () => {
     fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(500, {}));
     await expect(postCommand(command)).rejects.toMatchObject({ status: 500 });
+  });
+});
+
+describe("the copilot", () => {
+  const message = { id: "01JMSG", text: "Why has 001 not moved?" };
+  const turn = { ...message, from: "you", kind: "text", at: "x", usage: null };
+
+  it("reads the conversation", async () => {
+    fetchMock.mockResolvedValue(json(200, { turns: [], usage: null }));
+    await expect(fetchCopilot()).resolves.toEqual({ turns: [], usage: null });
+    expect(fetchMock).toHaveBeenCalledWith("/api/copilot", expect.anything());
+  });
+
+  it("posts a message with the token and returns the stored turn", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(202, turn));
+    await expect(postCopilot(message)).resolves.toEqual(turn);
+    const [path, init] = fetchMock.mock.calls[1];
+    expect([path, init.headers["X-CSRF-Token"], JSON.parse(init.body)]).toEqual(["/api/copilot", "tok-1", message]);
+  });
+
+  it("refreshes a stale token once, like a command", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json(200, session))
+      .mockResolvedValueOnce(json(403, {}))
+      .mockResolvedValueOnce(json(200, { ...session, csrf: "tok-2" }))
+      .mockResolvedValueOnce(json(202, turn));
+    await expect(postCopilot(message)).resolves.toEqual(turn);
+    expect(fetchMock.mock.calls[3][1].headers["X-CSRF-Token"]).toBe("tok-2");
+  });
+
+  it("rejects with the server's reason on 422, and with the status otherwise", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(422, { error: "a message needs text" }));
+    await expect(postCopilot(message)).rejects.toThrow("a message needs text");
+    fetchMock.mockResolvedValueOnce(json(422, {}));
+    await expect(postCopilot(message)).rejects.toThrow("POST /api/copilot answered 422");
+    fetchMock.mockResolvedValueOnce(json(500, {}));
+    await expect(postCopilot(message)).rejects.toMatchObject({ status: 500 });
+  });
+
+  it("names the path when a 403 cannot be recovered from", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(403, {})).mockResolvedValueOnce(json(500, {}));
+    await expect(postCopilot(message)).rejects.toThrow("POST /api/copilot answered 403 and no new session could be fetched");
+    expect(ApiError).toBeDefined();
   });
 });

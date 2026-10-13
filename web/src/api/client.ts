@@ -1,7 +1,7 @@
 // The page's only door to the API server (contract.md, "HTTP"). Everything that crosses the network goes through
 // here, so the tests mock fetch once and every caller is covered.
 import { ulid } from "ulid";
-import type { Board, Command, Node, Reply, WireBoard } from "./types";
+import type { Board, Command, CopilotLog, CopilotMessage, CopilotTurn, Node, Reply, WireBoard } from "./types";
 import fixtureBoard from "./fixtures/board.json";
 
 export interface Session {
@@ -43,6 +43,8 @@ async function getJson<T>(path: string): Promise<T> {
 
 export const fetchBoard = (): Promise<WireBoard> => getJson<WireBoard>("/api/board");
 
+export const fetchCopilot = (): Promise<CopilotLog> => getJson<CopilotLog>("/api/copilot");
+
 let session: Promise<Session> | null = null;
 
 /** The session, fetched once per page; a failed fetch is forgotten so the next caller tries again. */
@@ -63,13 +65,28 @@ export function mintCommand(input: CommandInput): Command {
   return { id: ulid(), ...input };
 }
 
-async function send(command: Command, csrf: string): Promise<Response> {
-  return fetch("/api/commands", {
+async function send(path: string, body: unknown, csrf: string): Promise<Response> {
+  return fetch(path, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrf },
-    body: JSON.stringify(command),
+    body: JSON.stringify(body),
   });
+}
+
+/**
+ * POSTs with the session's token. A 403 means the token went stale (the server restarted), so it fetches a new one
+ * and sends the same body, same id, once more.
+ */
+async function post(path: string, body: unknown): Promise<Response> {
+  const res = await send(path, body, (await getSession()).csrf);
+  if (res.status !== 403) return res;
+  resetSession();
+  // The write was refused, so failing to get a fresh token is as definite as the 403 itself.
+  const fresh = await getSession().catch(() => {
+    throw new ApiError(`POST ${path} answered 403 and no new session could be fetched`, 403);
+  });
+  return send(path, body, fresh.csrf);
 }
 
 /**
@@ -78,15 +95,18 @@ async function send(command: Command, csrf: string): Promise<Response> {
  * same command, same id, once more; the id is the idempotency key, so the engine cannot apply it twice.
  */
 export async function postCommand(command: Command): Promise<Reply> {
-  let res = await send(command, (await getSession()).csrf);
-  if (res.status === 403) {
-    resetSession();
-    // The command was refused, so failing to get a fresh token is as definite as the 403 itself.
-    const fresh = await getSession().catch(() => {
-      throw new ApiError("POST /api/commands answered 403 and no new session could be fetched", 403);
-    });
-    res = await send(command, fresh.csrf);
-  }
+  const res = await post("/api/commands", command);
   if (res.status === 202 || res.status === 422) return (await res.json()) as Reply;
   throw new ApiError(`POST /api/commands answered ${res.status}`, res.status);
+}
+
+/**
+ * Sends the person's message to the copilot and resolves with its turn as stored (202). The copilot's answers arrive
+ * on the event stream. A 422 carries the server's reason, which becomes the error's message.
+ */
+export async function postCopilot(message: CopilotMessage): Promise<CopilotTurn> {
+  const res = await post("/api/copilot", message);
+  if (res.status === 202) return (await res.json()) as CopilotTurn;
+  const reason = res.status === 422 ? ((await res.json()) as { error?: string }).error : undefined;
+  throw new ApiError(reason ?? `POST /api/copilot answered ${res.status}`, res.status);
 }
