@@ -7,8 +7,11 @@
 RSpec.describe "the shipped eval corpus" do
   let(:cases) { OpenLanes::Evals.cases }
 
-  it "covers every agent" do
-    expect(cases.map(&:agent).uniq).to match_array(OpenLanes::Agents.registry.all.map(&:name))
+  # Every agent that works plans. An eval case is a plan fixture moved from
+  # one state to the next, so an agent that handles no state (c3po-operator,
+  # the copilot) has nothing a case could score; its own spec covers it.
+  it "covers every agent that works a plan" do
+    expect(cases.map(&:agent).uniq).to match_array(OpenLanes::Agents.registry.all.reject { it.handles.empty? }.map(&:name))
   end
 
   it "holds leah, palpatine and r2d2 to two different depths each" do
