@@ -6,20 +6,19 @@ button, textarea { font: inherit; color: inherit; }
 
 /* Top bar */
 .topbar {
+  --logo-plate-w: 158px;
+  position: relative;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px 28px;
-  padding: 14px 24px; background: var(--plate); border-bottom: 1px solid var(--hairline);
+  padding: 14px 24px 14px calc(var(--logo-plate-w) + 28px); background: var(--plate); border-bottom: 1px solid var(--hairline);
 }
-/* The logo without its tagline, which is unreadable at this height. Light letters on the dark theme, ink letters on
-   the light one; the theme can be set by the OS or the toggle. */
-.logo { display: flex; align-items: center; align-self: stretch; padding-right: 20px; border-right: 1px solid var(--hairline); }
+/* The logo sits on its own orange, the same in both themes, as one block with the image. It is pinned to the bar's
+   full height rather than stretched: the bar wraps to two rows on narrower screens, and a stretched item would
+   only fill the first. The bar's left padding leaves room for it. */
+.logo {
+  position: absolute; inset: 0 auto 0 0; width: var(--logo-plate-w);
+  display: flex; align-items: center; justify-content: center; background: var(--logo-plate);
+}
 .logo img { height: 30px; width: auto; display: block; }
-.logo .on-dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .logo .on-dark { display: block; }
-  :root:not([data-theme="light"]) .logo .on-light { display: none; }
-}
-:root[data-theme="dark"] .logo .on-dark { display: block; }
-:root[data-theme="dark"] .logo .on-light { display: none; }
 /* The project being worked on is the page's title; openlanes is only the tool showing it. */
 .project { min-width: 0; max-width: 52ch; }
 .project-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }

@@ -3,8 +3,7 @@ import type { Snapshot } from "../api/types";
 import type { ConnectionState } from "../api/events";
 import { dollars, fmt, secondsBetween, who } from "../board/format";
 import { useTheme } from "./useTheme";
-import onLight from "../assets/logo-on-light.png";
-import onDark from "../assets/logo-on-dark.png";
+import logo from "../assets/logo.png";
 
 export interface HeaderProps {
   snapshot: Snapshot;
@@ -45,8 +44,7 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
   return (
     <header className="topbar">
       <span className="logo" title="openlanes: the self-running software factory">
-        <img className="on-light" src={onLight} alt="openlanes" height={30} />
-        <img className="on-dark" src={onDark} alt="openlanes" height={30} />
+        <img src={logo} alt="openlanes" height={30} />
       </span>
       <div className="project">
         {titled ? <h1 className="project-title">{snapshot.project}</h1> : <h1 className="sr-only">OpenLanes control room</h1>}

@@ -14,6 +14,8 @@
   --merged: #8250DF;
   /* The highlight colour: the orange of the logo's mark, RGB (211, 87, 40). The same in both themes. */
   --highlight: #D35728; --on-highlight: #FFFFFF;
+  /* The logo's own orange, behind it in both themes: what docs/logos/rectangle-logo-600x442.png renders as in sRGB. */
+  --logo-plate: #D9420B;
   /* The copilot's header and conversation: the same light colours in both themes, with black text. */
   --copilot-head: #88b6ffe3; --copilot-body: #bad6bf;
   /* The copilot floats on an inverted surface: dark-ish here, light-ish in the dark theme. */
