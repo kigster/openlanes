@@ -1,4 +1,6 @@
 // The header's commands and the drawer: adding a plan, stopping everything here, switching a model, the machine tab.
+import { MODAL } from "../support/selectors";
+
 describe("the controls", () => {
   beforeEach(() => cy.openBoard());
 
@@ -12,16 +14,16 @@ describe("the controls", () => {
 
   it("stops all local agents after asking first", () => {
     cy.contains("button", "Stop All Local").click();
-    cy.get('[role="dialog"]').invoke("text").should("match", /Are you sure you want to shut down \d+ agents currently working on \d+ plans/);
-    cy.get('[role="dialog"]').contains("button", "Stop them").click();
-    cy.get('[role="dialog"]').should("not.exist");
+    cy.get(MODAL).invoke("text").should("match", /Are you sure you want to shut down \d+ agents currently working on \d+ plans/);
+    cy.get(MODAL).contains("button", "Stop them").click();
+    cy.get(MODAL).should("not.exist");
     cy.boardEventually((me) => me.run.status === "quitting" && me.plans.every((p) => p.cars.every((c) => c.state !== "running")));
   });
 
   it("cancels Stop All Local without stopping anything", () => {
     cy.contains("button", "Stop All Local").click();
-    cy.get('[role="dialog"]').contains("button", "Cancel").click();
-    cy.get('[role="dialog"]').should("not.exist");
+    cy.get(MODAL).contains("button", "Cancel").click();
+    cy.get(MODAL).should("not.exist");
     cy.request("/api/board").its("body.me.run.status").should("eq", "running");
   });
 
