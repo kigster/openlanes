@@ -26,5 +26,9 @@ Everyone in a chat sees **Invite to Chat** on the machines that are not in it ye
 
 **Stop Chat** takes you out of the chat. The others see "<name> left" and carry on. Closing the tab counts as leaving. The chat ends when its last participant leaves.
 
+## D7. Idle means 60 seconds without typing, sending or clicking in the chat
+
+Typing in the chat, sending, or clicking or focusing inside the panel resets a 60-second clock. When it runs out, the others see "<name> is idle"; the next touch shows "<name> is back".
+
 ## Open
 
