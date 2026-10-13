@@ -33,6 +33,79 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   def path_of(ordinal) = tree.reload.find(OpenLanes::Plans::Ordinal.parse(ordinal)).feature.path
 
+  # The minesweeper trial: two jobs, and each agent's file written well
+  # before it signed. The next tick read the half-finished folder as the next
+  # state and started that state's agent beside the one still writing, the
+  # first then held the folder for its "partner", and the whole chain ran
+  # inside ⚪️ New.
+  describe "an agent whose work shows before it signs" do
+    let!(:built) { plans { |t| t.plan "030.00", :new, "minesweeper", files: { "spec.md" => spec_body } } }
+    let(:live) { Hash.new(0) }
+    let(:overlaps) { [] }
+    let(:seen) { [] }
+    let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("030.00")) }
+
+    let!(:attempts) do
+      [stamp, live, overlaps, seen]
+      runner = OpenLanes::Engine::Runner.new(tree:,
+        executor:  slow_executor,
+        agents:    agents.only("leah-researcher", "yoda-writer"),
+        isolation: :shared,
+        jobs:      2,
+        state:,
+        sleeper:   ->(_) { sleep(0.02) })
+      allow(runner).to receive(:jobs).and_return(2)
+      runner.call
+    end
+
+    def slow_executor
+      guard = Mutex.new
+      lambda { |agent, subject, round: 1, **|
+        ordinal = subject.feature.ordinal.to_s
+        guard.synchronize do
+          overlaps << [agent.name, live[ordinal]] if live[ordinal].positive?
+          live[ordinal] += 1
+          seen << [agent.name, subject.status.key]
+        end
+        write_work(agent, subject.feature.path)
+        sleep(0.3) # several ticks pass with the work on disk and no signature
+        OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
+          "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
+        guard.synchronize { live[ordinal] -= 1 }
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+    end
+
+    def write_work(agent, dir)
+      case agent.name
+      when "leah-researcher" then File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n")
+      when "yoda-writer" then File.write(File.join(dir, "plan.md"), "")
+      end
+    end
+
+    it "starts nobody else on the plan until the agent in it has finished" do
+      expect(overlaps).to be_empty
+    end
+
+    it "moves the folder at each Completed, so each agent starts from the state it handles" do
+      aggregate_failures do
+        expect(seen).to eq([["leah-researcher", :new], ["yoda-writer", :researched]])
+        expect(attempts.map { [it.agent, it.from, it.to] })
+          .to eq([["leah-researcher", :new, :researched], ["yoda-writer", :researched, :ready_for_planning]])
+        expect(plan.status.key).to eq(:ready_for_planning)
+      end
+    end
+
+    it "records every stage as finished, in state.json and in the engine's state file alike" do
+      stages = OpenLanes::Plans::PlanState.for(plan.feature.path).stages
+      aggregate_failures do
+        expect(stages.map { [it["agent"], it["status"], it["from"], it["to"]] })
+          .to eq([%w[leah-researcher Completed new researched], %w[yoda-writer Completed researched ready_for_planning]])
+        expect(state.stages("030.00").map { it["status"] }.uniq).to eq(["Completed"])
+      end
+    end
+  end
+
   describe "the 020.00 regression" do
     let!(:built) do
       plans { |t| t.plan "020.00", :researched, "qualified-at", files: { "spec.md" => "#{spec_body}\n## Research\n\nFound.\n" } }

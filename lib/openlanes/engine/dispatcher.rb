@@ -703,20 +703,51 @@ module OpenLanes
       def next_dispatchable
         reconcile
         @runner.in_scope.each do |subject|
+          working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
           # After {#reconcile} this is the folder's name. On a dry run, which
-          # renames nothing, it is what the name would have become.
-          state = Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
+          # renames nothing, it is what the name would have become. A plan an
+          # agent is in right now is never reconciled, so its contents are
+          # not asked: see {#partners_only}.
+          state = if working.empty?
+                    Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
+                  else
+                    subject.status
+                  end
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
 
-          candidates = Agents::Routing.filter(@runner.agents.for_status(state), subject)
+          candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
           candidates = candidates.sort_by { |a| a.name == preferred ? 0 : 1 } if preferred
           agent = candidates.find { |a| eligible?(a, subject) }
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # One agent at a time on a plan, except a pair working the same state.
+      #
+      # A plan with an agent in it is judged by its folder's name, never by
+      # what its contents would justify. Asking the contents is how the
+      # minesweeper trial ran its whole chain inside ⚪️ New: leah wrote her
+      # `## Research` chapter, the next tick saw a Researched plan and started
+      # yoda beside her, and leah's own Completed then found a partner running
+      # and held the folder where it was. Every later agent repeated it, so
+      # the folder never moved and luke and rey were building on a plan whose
+      # name still said nobody had researched it.
+      #
+      # @param candidates [Array<OpenLanes::Agents::Agent>]
+      # @param working [Array<OpenLanes::Agents::Agent>] already on the plan
+      # @param state [OpenLanes::Plans::Status] the folder's state
+      # @return [Array<OpenLanes::Agents::Agent>]
+      def partners_only(candidates, working, state)
+        return candidates if working.empty?
+
+        team = @runner.agents.team_for(state).map(&:name)
+        return [] unless working.all? { team.include?(it.name) }
+
+        candidates.select { team.include?(it.name) }
       end
 
       # A folder's name can lag its contents: a run killed before its rename,
