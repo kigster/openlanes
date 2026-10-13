@@ -475,6 +475,11 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
     end
 
+    it "names the plan after an idea's heading, once" do
+      send_command("create_plans", idea: "# Minesweeper\n\nMinesweeper is played on a grid of covered squares.")
+      expect(apply.map(&:reason)).to eq(["created 002.00 minesweeper"])
+    end
+
     it "creates one plan however often its command is applied" do
       send_command("create_plans", idea: "Export the ledger as CSV", id: "01JC")
       allow(store).to receive(:multi).and_raise(OpenLanes::Live::Unavailable, "gone")

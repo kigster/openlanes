@@ -424,7 +424,7 @@ module OpenLanes
           return created(made.feature, dispatcher)
         end
 
-        path = Lifecycle.create(dir: tree.dir, words: idea.split.first(8)).either(
+        path = Lifecycle.create(dir: tree.dir, words: Lifecycle::Creator.topic(idea)).either(
           ->(created) { created },
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
         )
