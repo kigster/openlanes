@@ -28,11 +28,14 @@ module OpenLanes
       # Key, label and the states folded into it, in spine order. ⭐️ Planned
       # sits with 🟡 Building and 🟢 Ready for Review with 👀 In Review,
       # because on the board each pair is one stop with the same agents.
+      # 🔴 Rejected sits at Building too: luke and rey rework it there, and
+      # placed by the spine alone it showed them at Building UI, a stop whose
+      # agent list leaves luke out.
       GROUPS = [
         [:new, "New", %i[new]],
         [:researched, "Researched", %i[researched retroactive]],
         [:ready_for_planning, "Planning", %i[ready_for_planning]],
-        [:building, "Building", %i[planned building]],
+        [:building, "Building", %i[planned building rejected]],
         [:building_ui, "Building UI", %i[building_ui]],
         [:in_review, "Review", %i[ready_for_review in_review]],
         [:pr, "Pull request", %i[approved deployed]]
