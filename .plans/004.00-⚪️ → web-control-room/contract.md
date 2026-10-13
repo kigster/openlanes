@@ -21,6 +21,7 @@ The shapes are in `web/src/api/types.ts`, the single source of truth. `web/src/a
 | `P:<node>:<checkout>:commands` | stream | API server | `{json}` one `Command`; engine reads with group `engine` |
 | `P:<node>:<checkout>:replies` | stream | engine | `{json}` one `Reply`, `MAXLEN ~ 1000` |
 | `P:<node>:<checkout>:done` | hash | engine | command id → `Reply` JSON, for redelivery (W13); trimmed after a day, unreadable entries dropped |
+| `P:<node>:<checkout>:copilot` | stream | API server (until c3po-operator exists) | `{json}` one `CopilotTurn`, the person's and the copilot's in the order said, `MAXLEN ~ 500` (W17) |
 | `P:<node>:<checkout>:run` | hash | engine | `seq` and `json`: the run state a person set (held questions, held cars, queued models), written in the same `MULTI` as the reply that changed it; mirrored into `.plans/agentilda-state.json` under `live`, and on start the copy with the higher `seq` wins (W6) |
 | `P:claim:<ordinal>` | string | engine | `<node>:<checkout>`, `SET NX EX 90`, renewed by heartbeat, released by compare-and-delete |
 
@@ -32,13 +33,27 @@ A node is alive while its `snapshot` key exists. Whoever reads `P:nodes` drops t
 | --- | --- |
 | `GET /` and static | `web/dist`; `index.html` for unknown non-API paths |
 | `GET /api/board` | `Board` JSON now |
-| `GET /api/events` | SSE: first `event: cursor` with `id:` and `{id}` set to the newest reply id (`0-0` when there is none), so a reconnect always has a `Last-Event-ID`; then `event: board` with a `Board` whenever any snapshot's `seq` changes (checked every 250 ms), `event: reply` with each `Reply`; a `: ping` comment every 15 s |
+| `GET /api/events` | SSE: first `event: cursor` with `id:` and `{id}` set to the newest reply id (`0-0` when there is none), so a reconnect always has a `Last-Event-ID`; then `event: board` with a `Board` whenever any snapshot's `seq` changes (checked every 250 ms), `event: reply` with each `Reply`; `event: copilot` with each new `CopilotTurn`, with no `id:` so it never moves the reply cursor; a `: ping` comment every 15 s |
 | `POST /api/commands` | body `Command`; header `X-CSRF-Token` must equal the token in `GET /api/session`; `202` with `Reply{status: "accepted"}` once queued, `422` with `Reply{status: "refused"}` for an invalid command |
+| `GET /api/copilot` | `CopilotLog`: the newest 100 turns, oldest first, and the copilot's latest `usage` (`{model: null, up: 0, down: 0}` before it has any) |
+| `POST /api/copilot` | body `CopilotMessage` `{id, text}`, text at most 4000 characters; same `X-CSRF-Token` rule; `202` with the person's `CopilotTurn` once stored, `422` with `{error}` otherwise. The answers arrive as `event: copilot` |
 | `GET /api/session` | `{csrf, node, repo}` |
 | `GET /api/plans/:ordinal/files/:name` | the Markdown of a plan file (spec.md, plan.md, blocked.md), for the drawer and preview |
 | `GET /healthz` | `ok` and the Redis address, password masked |
 
-The page reconnects with `@microsoft/fetch-event-source`, and on reconnect fetches `/api/board` once.
+The page reconnects with `@microsoft/fetch-event-source`, and on reconnect fetches `/api/board` and `/api/copilot` once.
+
+## Copilot (W17)
+
+The conversation with c3po-operator travels like everything else: messages go in by POST, answers come out on the one event stream. A `CopilotTurn` is `{id, from: "you" | "copilot", kind, text, at, usage}`; a reply's id is the message's id, a dot and its place (`01J….1`), so it names what it answers. `kind` is one of:
+
+| kind | extra fields | the page draws |
+| --- | --- | --- |
+| `text` | none | the words |
+| `confirm` | `command` (a `Command` without its id), `confirm` (the button's label), `done` (what the card says once accepted) | a red card; the command is sent through `POST /api/commands` only when the person presses the button (stop, discard, stop all) |
+| `draft` | `question` (a `Question.id`), `draft` | a quiet card that puts the draft in that question's answer box without sending it |
+
+The server refuses to store a card missing its fields, or a confirm card whose command `POST /api/commands` would refuse. **Placeholder:** until c3po-operator is built, the API server answers every message itself with one `text` turn saying nobody is listening, and `usage` stays null. Replacing the responder in `Live::Copilot` is the whole of that change; the stream, routes and page stay.
 
 ## Commands, as the engine applies them
 
