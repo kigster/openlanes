@@ -194,6 +194,39 @@ RSpec.shared_examples "a live store" do
     end
   end
 
+  describe "pub/sub" do
+    let(:subscriber) { store.subscriber(channels: ["chat:inbox"], patterns: ["chat:room:*"]) }
+
+    after { subscriber.close }
+
+    it "delivers to a channel and to a pattern, and counts who received it" do
+      subscriber
+      aggregate_failures do
+        expect(store.publish("chat:inbox", "hello")).to eq(1)
+        expect(store.publish("chat:room:42", "hi all")).to eq(1)
+        expect(subscriber.next_message(1)).to eq(["chat:inbox", "hello"])
+        expect(subscriber.next_message(1)).to eq(["chat:room:42", "hi all"])
+      end
+    end
+
+    it "receives nothing published elsewhere, and says so once the wait is over" do
+      subscriber
+      aggregate_failures do
+        expect(store.publish("chat:other", "not for us")).to eq(0)
+        expect(subscriber.next_message(0.05)).to be_nil
+      end
+    end
+
+    it "stops receiving once closed" do
+      subscriber.close
+      expect(store.publish("chat:inbox", "gone")).to eq(0)
+    end
+
+    it "names its database, which channels carry because pub/sub ignores it" do
+      expect(store.db).to be_a(Integer)
+    end
+  end
+
   it "answers PING" do
     expect(store.ping).to be(true)
   end
