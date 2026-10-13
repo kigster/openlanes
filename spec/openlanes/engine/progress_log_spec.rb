@@ -22,7 +22,7 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       )
 
       expect(line).to eq(
-        "[16:22:14 | 003.00 | ⭐️ Planned       | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
+        "[16:22:14 | 003.00 | ⭐️  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
       )
     end
 
@@ -46,7 +46,7 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       )
 
       aggregate_failures do
-        expect(header).to eq("[16:22:14 |        |                  |                      |    |   91234 |       ] round 1 - 3 plans")
+        expect(header).to eq("[16:22:14 |        |                        |                      |    |   91234 |       ] round 1 - 3 plans")
         expect(OpenLanes::UI.display_width(prefix_of(header))).to eq(OpenLanes::UI.display_width(prefix_of(full)))
         expect(OpenLanes::UI.display_width(prefix_of(header))).to eq(described_class::LINE_WIDTH)
       end
@@ -98,13 +98,16 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
   end
 
   describe "the column widths" do
-    # Five cells shy of the widest state on purpose: the emoji already names
-    # the state, so the longest labels lose their tails rather than every
-    # line paying for "Scrapped by Review" in full.
-    it "tracks the widest state the machine defines, minus the deliberate trim" do
-      widest = OpenLanes::Plans::STATUSES.map { |status| OpenLanes::UI.display_width(status.to_s) }.max
+    it "fits the widest state the machine defines, label in full" do
+      widest = OpenLanes::Plans::STATUSES.map { |status| OpenLanes::UI.display_width(status.label) }.max
 
-      expect(described_class::STATUS_WIDTH).to eq(widest - 5)
+      expect(described_class::STATUS_WIDTH).to eq(2 + 2 + widest)
+    end
+
+    it "leaves two spaces between a status's emoji and its label" do
+      line = described_class.render("x", status: "🔴 Changes Requested", at: Time.local(2026, 10, 13, 14, 24, 11))
+
+      expect(line).to include("| 🔴  Changes Requested ")
     end
 
     it "fits the longest specialist name on disk" do
