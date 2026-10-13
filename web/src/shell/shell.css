@@ -68,7 +68,8 @@ button, textarea { font: inherit; color: inherit; }
 .tab-count:empty { display: none; }
 .tab-machine::before { content: "🖥️"; margin-right: 6px; font-size: 13px; }
 /* Other machines sit at the far right of the tab bar, away from this machine's own views. */
-.tabs > :not(.tab-machine, .tab-machine-wrap) + :is(.tab-machine, .tab-machine-wrap) { margin-left: auto; }
+.tabs > :not(.tab-machine-wrap) + .tab-machine-wrap { margin-left: auto; }
+.tabs-list { display: flex; align-items: center; gap: 8px; }
 .run-chip { margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
             background: var(--hairline); color: var(--ink-soft); }
 @media (max-width: 960px) { .tabs { padding: 8px 16px 0; } }

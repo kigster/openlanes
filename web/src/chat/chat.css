@@ -36,3 +36,5 @@
 .chat-name-input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--enamel);
                    color: var(--ink); font: inherit; font-size: 16px; }
 .chat-name-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+/* Softened ink fails 4.5:1 on the orange header, so its subtitle and grip keep the header's full black. */
+.chat .fp-titles p, .chat .fp-grip { color: var(--fp-head-ink); }

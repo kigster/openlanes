@@ -177,55 +177,60 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         help={<HelpDialog />}
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab}>
-        <Tabs.List className="tabs" aria-label="Views">
-          <Tabs.Trigger className="tab" value="board">
-            Board
-          </Tabs.Trigger>
-          <Tabs.Trigger className="tab" value="logs">
-            Logs
-            <span className="tab-count" title="Warnings and errors since you last looked">
-              {alerts || ""}
-            </span>
-          </Tabs.Trigger>
-          {runs.map(run => (
-            <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
-              {testTabLabel(run, runs)}
-              <span className="run-chip">
-                {run.done} of {run.total}
+        {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3). */}
+        <div className="tabs">
+          <Tabs.List className="tabs-list" aria-label="Views">
+            <Tabs.Trigger className="tab" value="board">
+              Board
+            </Tabs.Trigger>
+            <Tabs.Trigger className="tab" value="logs">
+              Logs
+              <span className="tab-count" title="Warnings and errors since you last looked">
+                {alerts || ""}
               </span>
             </Tabs.Trigger>
-          ))}
-          {others.map(o => {
-            const value = machineTab(o.node.id);
-            // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
-            const note = () => {
-              pressedSelected.current = current === value;
-            };
-            return (
-              <span key={value} className="tab-machine-wrap">
-                <Tabs.Trigger
-                  className="tab tab-machine"
-                  value={value}
-                  title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
-                  onPointerDown={note}
-                  onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
-                  onClick={() => {
-                    if (pressedSelected.current) setMerged(true);
-                    pressedSelected.current = false;
-                  }}
-                  onContextMenu={e => {
-                    if (fixture) return;
-                    e.preventDefault();
-                    setMenuFor(o.node.id);
-                  }}
-                >
-                  {who(o.node)}
-                </Tabs.Trigger>
-                <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
-              </span>
-            );
-          })}
-        </Tabs.List>
+            {runs.map(run => (
+              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
+                {testTabLabel(run, runs)}
+                <span className="run-chip">
+                  {run.done} of {run.total}
+                </span>
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
+            {others.map(o => {
+              const value = machineTab(o.node.id);
+              // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
+              const note = () => {
+                pressedSelected.current = current === value;
+              };
+              return (
+                <span key={value} className="tab-machine-wrap">
+                  <Tabs.List className="tabs-list" aria-label={`Machine ${who(o.node)}`}>
+                    <Tabs.Trigger
+                      className="tab tab-machine"
+                      value={value}
+                      title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
+                      onPointerDown={note}
+                      onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
+                      onClick={() => {
+                        if (pressedSelected.current) setMerged(true);
+                        pressedSelected.current = false;
+                      }}
+                      onContextMenu={e => {
+                        if (fixture) return;
+                        e.preventDefault();
+                        setMenuFor(o.node.id);
+                      }}
+                    >
+                      {who(o.node)}
+                    </Tabs.Trigger>
+                  </Tabs.List>
+                  <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
+                </span>
+              );
+            })}
+        </div>
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <main className="layout">
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
