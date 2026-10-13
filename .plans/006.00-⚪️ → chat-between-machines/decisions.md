@@ -38,5 +38,10 @@ The dialog appears on every Start Chat and every accepted invite, prefilled with
 
 Every control-room page open on the invited machine shows the modal; the first to accept or decline settles it for all of them. With no answer within 60 seconds, or no page open there, the inviter sees "<machine> did not answer".
 
-## Open
+## D10. Messages are plain text with clickable links
 
+Line breaks are kept and URLs become links; nothing else is rendered. A message holds up to 4,000 characters.
+
+## Left to the planner
+
+How the page reaches pub/sub (a browser cannot talk to Redis, so the API server subscribes and relays over SSE, and sends arrive by POST), the channel names, and the floating panel's component boundaries.
