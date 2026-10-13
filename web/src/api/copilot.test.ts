@@ -25,6 +25,35 @@ it("lays a fetched log over the held one without losing what the stream added", 
   expect(merged.turns.map(t => t.id)).toEqual(["01JA", "01JA.1"]);
 });
 
+// GET /api/copilot holds only the newest 100 turns. After a long session the page holds older ones too; a reconnect's
+// fetch must not move those after the newest, nor let their old usage replace the current totals.
+it("keeps a long conversation in order, and its newest usage, when a fetch holds only the newest turns", () => {
+  const turn = (n: number, usage: CopilotTurn["usage"] = null): CopilotTurn => ({
+    id: `01J${String(n).padStart(4, "0")}`, from: usage ? "copilot" : "you", kind: "text", text: `t${n}`,
+    at: `2026-10-13T09:${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}Z`, usage,
+  } as CopilotTurn);
+  const all = Array.from({ length: 150 }, (_, n) => turn(n, n % 2 ? { model: "m", up: n * 10, down: n } : null));
+  const held: CopilotLog = { turns: all, usage: { model: "m", up: 1490, down: 149 } };
+  const fetched: CopilotLog = { turns: all.slice(50), usage: { model: "m", up: 1490, down: 149 } };
+  const merged = mergeLogs(held, fetched);
+  expect(merged.turns.map(t => t.text)).toEqual(all.map(t => t.text));
+  expect(merged.usage).toEqual({ model: "m", up: 1490, down: 149 });
+  // A stream turn delivered after the fetch left lands in its place, and its usage becomes the header's.
+  const late = turn(150, { model: "m", up: 9999, down: 999 });
+  const withLate = mergeLogs({ turns: [...all, late], usage: late.usage! }, fetched);
+  expect(withLate.turns.at(-1)).toBe(late);
+  expect(withLate.usage).toEqual(late.usage);
+  // An old turn arriving late goes before the newer ones and does not regress the usage.
+  const old = turn(0, null);
+  expect(withTurn({ turns: all.slice(1), usage: held.usage }, old).turns[0]).toBe(old);
+  expect(withTurn(merged, turn(1, { model: "m", up: 1, down: 1 })).usage).toEqual(held.usage); // same id: kept as was
+  expect(withTurn(merged, { ...turn(1, { model: "m", up: 1, down: 1 }), id: "01J0001b" } as CopilotTurn).usage).toEqual(held.usage);
+});
+
+it("falls back to the server's usage when no turn it has carries one", () => {
+  expect(mergeLogs(EMPTY_LOG, { turns: [you], usage: { model: "m", up: 7, down: 1 } }).usage).toEqual({ model: "m", up: 7, down: 1 });
+});
+
 it("knows which turns answer a message", () => {
   expect(answers(said, "01JA")).toBe(true);
   expect(answers(you, "01JA")).toBe(false);
