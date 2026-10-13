@@ -18,4 +18,14 @@ RSpec.describe OpenLanes::Live::Keys do
   it "names another node's keys through the same methods" do
     expect([keys.snapshot("x:y"), keys.board("x:y")]).to eq(%w[openlanes:github.com/o/n:x:y:snapshot openlanes:github.com/o/n:x:y:board])
   end
+
+  it "puts the Redis database in every chat channel, since pub/sub reaches every database" do
+    expect([keys.chat_room("c1", db: 13), keys.chat_inbox("m1", db: 13), keys.chat_rooms(db: 13), keys.chat_room("c1", db: 0)])
+      .to eq(%w[openlanes:github.com/o/n:chat:13:room:c1 openlanes:github.com/o/n:chat:13:machine:m1
+                openlanes:github.com/o/n:chat:13:room:* openlanes:github.com/o/n:chat:0:room:c1])
+  end
+
+  it "keeps an invite's answer as a key, which a database does separate" do
+    expect(keys.chat_answer("i1")).to eq("openlanes:github.com/o/n:chat:invite:i1")
+  end
 end
