@@ -5,7 +5,7 @@ description: The openlanes software factory (`openlanes` CLI) that drives `.plan
 
 # openlanes: the software factory
 
-`openlanes` (alias `depot`) turns a few words into a merged pull request. A human writes intent into `spec.md`; specialist agents research, plan, build and review it; `openlanes` moves the plan from state to state until nothing changes. Merge and deploy stay human.
+`openlanes` (aliases `depot` and `lanes`) turns a few words into a merged pull request. A human writes intent into `spec.md`; specialist agents research, plan, build and review it; `openlanes` moves the plan from state to state until nothing changes. Merge and deploy stay human.
 
 ## Which skill does the job
 

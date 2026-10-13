@@ -49,9 +49,10 @@ Gem::Specification.new do |spec|
   end
 
   spec.bindir = "exe"
-  # `depot` is a symlink to `openlanes` in the checkout; named here so that
-  # installing the gem writes both, rather than only the one git recorded.
-  spec.executables = %w[openlanes depot]
+  # `depot` and `lanes` are symlinks to `openlanes` in the checkout; named here
+  # so that installing the gem writes all three, rather than only the one git
+  # recorded.
+  spec.executables = %w[openlanes depot lanes]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "aasm"
