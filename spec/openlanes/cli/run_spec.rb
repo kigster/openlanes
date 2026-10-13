@@ -686,6 +686,71 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
+  # Where the run writes, what it publishes to and where its page is: one
+  # Info box with a labelled line each, not a box per line, and a line that
+  # does not apply left out rather than drawn empty.
+  describe "the startup box" do
+    subject(:err) { result[1] }
+
+    let(:result) { run(dry_run: false, rounds: 1) }
+
+    before do
+      building_plan
+      with_executor
+    end
+
+    def boxes = err.scan("─ Info ─").size
+
+    it "holds the log, the board and the control room in one box, labels aligned" do
+      aggregate_failures do
+        expect(boxes).to eq(1)
+        expect(err).to match(%r{│  Progress:     /\S+}).and include("progress.log")
+        expect(err).to match(%r{│  Live board:   memory:// as \S+})
+        expect(err).to include('│  Control room: http://127.0.0.1:11000')
+      end
+    end
+
+    context "with --no-web" do
+      let(:result) { run(dry_run: false, rounds: 1, web: false) }
+
+      it "leaves the control room out" do
+        expect([boxes, err]).to match([1, satisfy { !it.include?("Control room") && it.include?("Live board:") }])
+      end
+    end
+
+    context "without Redis" do
+      before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
+
+      it "says only where the log is" do
+        expect([boxes, err]).to match([1, satisfy { !it.include?("Live board") && it.include?("Progress:") }])
+      end
+    end
+
+    context "when the engine stays up with its page" do
+      before do
+        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! })
+        end
+      end
+
+      after { OpenLanes::Execution::Control.reset! }
+
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false) }
+
+      it "says so in the same box" do
+        expect([boxes, unwrapped(err)]).to match([1, include("Control room:", "The engine stays up with its control room")])
+      end
+    end
+
+    context "with --quiet" do
+      let(:result) { run(dry_run: false, rounds: 1, quiet: true) }
+
+      it "draws none" do
+        expect(boxes).to eq(0)
+      end
+    end
+  end
+
   describe "the control room" do
     subject(:stderr) { unwrapped(result[1]) }
 

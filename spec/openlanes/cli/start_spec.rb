@@ -118,6 +118,13 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       end
     end
 
+    it "opens with one Info box: the log, the board and the control room" do
+      aggregate_failures do
+        expect(result[1].scan("─ Info ─").size).to eq(1)
+        expect(result[1]).to include("Progress:", "Live board:", "Control room: http://127.0.0.1:11000")
+      end
+    end
+
     it "opens its report with one blank line, not three, when no agent ran" do
       expect(result.first).to start_with("\n0 plans addressed")
     end
