@@ -10,7 +10,10 @@ Plan 004's copilot (W17) was designed but never built; only its colour tokens sh
 
 Messages travel over Redis pub/sub and are not stored. Someone who joins late, reloads the page, or loses the connection for a moment does not see what was said while they were away. Chosen by the author over a Redis Stream that would have kept a backlog.
 
+## D3. A caret on the machine's tab opens the chat menu
+
+Clicking a machine's tab still opens its board. A small ▾ on the tab, or a right-click on it, opens the menu: Start Chat, Invite to Chat or Stop Chat, whichever applies. The status-bar pills are unchanged.
+
 ## Open
 
-- D3. Which element opens the chat dropdown, given that a machine's tab and its status-bar pill already open its board on click.
 - D4. How many chats a page can be in at once.

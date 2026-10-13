@@ -4,7 +4,7 @@
 
 People whose machines share one `$REDIS_URL` can chat with each other from the control room.
 
-- The other machines already show in the top right of the header. Clicking one opens a dropdown with **Start Chat**, which becomes **Stop Chat** once a chat is running.
+- Each other machine's tab gets a ▾ (or a right-click) that opens a menu with **Start Chat**, which becomes **Stop Chat** once a chat is running.
 - **Start Chat** opens a centred dialog asking for a **Name**, how the person wants to appear in the chat. (An avatar URL comes later, not in this plan.)
 - The first person to start a chat mints a UUID for it and starts streaming over Redis pub/sub. After that, each other machine's dropdown says **Invite to Chat**.
 - An invited person gets a centred modal naming who invited them. **Decline** closes it, and no chat with that person happens. **Accept** shows the same Name dialog, and **Join** puts them in the chat.
