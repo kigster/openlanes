@@ -33,7 +33,7 @@ it("names this machine and prints the run's totals as plain text, accessibly", a
   expect(screen.queryByText("Sample data")).toBeNull();
   expect(screen.queryByText("Fixture data")).toBeNull();
   expect(screen.getByRole("button", { name: "Stop All Local" })).toBeInTheDocument();
-  expect(screen.getAllByRole("img", { name: "openlanes" })).toHaveLength(2);
+  expect(screen.getByRole("img", { name: "openlanes" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });
 
