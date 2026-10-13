@@ -123,6 +123,23 @@ RSpec.describe OpenLanes::Web::Events do
       end
     end
 
+    context "when the copilot conversation moves" do
+      let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
+
+      before do
+        copilot.say({ "id" => "01JOLD", "text" => "before" })
+        run_ticks { |tick| copilot.say({ "id" => "01JNEW", "text" => "after" }) if tick == 1 }
+      end
+
+      it "sends each new turn as a copilot event, leaving out what was said before it connected" do
+        expect(frames.grep(/event: copilot/).map { JSON.parse(it[/data: (.*)$/, 1])["id"] }).to eq(%w[01JNEW 01JNEW.1])
+      end
+
+      it "gives a copilot event no id, so the reply cursor stays where it was" do
+        expect(frames.grep(/event: copilot/)).to all(start_with("event: copilot\n"))
+      end
+    end
+
     context "when another node appears" do
       before do
         run_ticks { |tick| publish(1, node: "cccc:dddd") if tick == 1 }

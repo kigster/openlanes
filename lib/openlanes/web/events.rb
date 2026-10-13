@@ -6,7 +6,8 @@ module OpenLanes
   module Web
     # One page's event stream (contract.md, `GET /api/events`): a `board`
     # event whenever any node's snapshot `seq` changes, a `reply` event for
-    # each reply the engine writes, and a `: ping` comment so proxies and the
+    # each reply the engine writes, a `copilot` event for each turn of the
+    # conversation with the copilot (W17), and a `: ping` comment so proxies and the
     # browser keep the connection open.
     #
     # Polled rather than blocked on: a blocking read would hold the thread's
@@ -18,6 +19,11 @@ module OpenLanes
     # opens with a `cursor` event carrying the id it starts from, so a
     # browser that drops before the first reply still has one to send;
     # without it, replies written during that gap were skipped.
+    #
+    # A copilot turn carries no `id:`, so it never moves that cursor. The
+    # page catches up on the conversation by reading `GET /api/copilot`
+    # after a reconnect, as it does the board, so its own cursor starts at
+    # the newest turn when the stream opens and lives only as long as it.
     class Events
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -29,6 +35,7 @@ module OpenLanes
         @context = context
         @store = store
         @keys = context.keys
+        @copilot = Live.copilot(store:, keys: @keys)
         @last_id = last_id.to_s.match?(/\A\d+-\d+\z/) ? last_id : nil
         @clock = clock
         @sleeper = sleeper
@@ -44,10 +51,12 @@ module OpenLanes
         pinged = started
         cursor = @last_id || newest_reply
         out << self.class.frame("cursor", { id: cursor }, id: cursor)
+        said = @copilot.newest
         seqs = nil
         until over?(out, started)
           seqs = board(out, seqs)
           cursor = replies(out, cursor)
+          said = copilot(out, said)
           pinged = ping(out) if @clock.call - pinged >= @context.ping_every
           @sleeper.call(@context.tick)
         end
@@ -85,6 +94,15 @@ module OpenLanes
           cursor = id
         end
         cursor
+      end
+
+      # @return [String] the last copilot turn's stream id sent
+      def copilot(out, said)
+        @copilot.since(said).each do |id, turn|
+          out << self.class.frame("copilot", turn)
+          said = id
+        end
+        said
       end
 
       # @return [Float] when it pinged

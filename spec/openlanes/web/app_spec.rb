@@ -149,6 +149,58 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "POST /api/copilot" do
+    def post_message(payload, token: context.csrf)
+      header "X-CSRF-Token", token if token
+      post "/api/copilot", payload.is_a?(String) ? payload : JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    context "with the session's token" do
+      before { post_message({ id: "01JMSG", text: "Why has 001 not moved?" }) }
+
+      it "answers 202 with the person's turn" do
+        expect([last_response.status, body]).to match([202, include("id" => "01JMSG", "from" => "you", "kind" => "text")])
+      end
+
+      it "stores the message and the placeholder's answer" do
+        expect(store.xlen(keys.copilot)).to eq(2)
+      end
+    end
+
+    context "without a token" do
+      before { post_message({ id: "01JMSG", text: "hi" }, token: nil) }
+
+      it "answers 403 and stores nothing" do
+        expect([last_response.status, store.xlen(keys.copilot)]).to eq([403, 0])
+      end
+    end
+
+    context "with no text" do
+      before { post_message({ id: "01JMSG", text: "" }) }
+
+      it "answers 422 with the reason" do
+        expect([last_response.status, body["error"]]).to eq([422, "a message needs text"])
+      end
+    end
+  end
+
+  describe "GET /api/copilot" do
+    before do
+      header "X-CSRF-Token", context.csrf
+      post "/api/copilot", JSON.generate(id: "01JMSG", text: "hello"), "CONTENT_TYPE" => "application/json"
+      get "/api/copilot"
+    end
+
+    it "answers the conversation, oldest first, with the copilot's usage" do
+      expect([body["turns"].map { it["id"] }, body["usage"]])
+        .to eq([%w[01JMSG 01JMSG.1], { "model" => nil, "up" => 0, "down" => 0 }])
+    end
+
+    it "is never cached" do
+      expect(last_response.headers["Cache-Control"]).to include("no-store")
+    end
+  end
+
   describe "GET /api/events" do
     before do
       store.set(keys.snapshot, JSON.generate(snapshot))

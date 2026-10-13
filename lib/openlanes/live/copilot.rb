@@ -1,0 +1,194 @@
+# frozen_string_literal: true
+
+require "json"
+require "time"
+
+module OpenLanes
+  module Live
+    # The conversation with the run's copilot, c3po-operator (W17): one Redis
+    # stream per node ({Keys#copilot}) holding every turn, the person's and
+    # the copilot's, in the order they were said. The page reads it once with
+    # {#history} and then follows it on the event stream it already has
+    # (`event: copilot`), so the copilot needs no transport of its own.
+    #
+    # The copilot itself is not built yet. Until it is, {#say} hands every
+    # message to {PLACEHOLDER}, which answers it with one line saying so.
+    # The agent replaces the responder, not this class: whatever answers
+    # writes {Turn}s, and {Turn.parse} refuses a card that lacks what the
+    # page needs to draw it, whoever wrote it.
+    class Copilot
+      # A message the person may not send as written.
+      class Invalid < Error; end
+
+      # Who spoke a turn.
+      SPEAKERS = %w[you copilot].freeze
+
+      # What a turn is: words, a red card asking to confirm a command that
+      # cannot be undone, or a quiet card holding a drafted answer.
+      KINDS = %w[text confirm draft].freeze
+
+      # The fields each card cannot be drawn without.
+      FIELDS = {
+        "text"    => [],
+        "confirm" => %w[command confirm done],
+        "draft"   => %w[question draft]
+      }.freeze
+
+      # Characters one message may carry. A longer one is a paste gone
+      # wrong, and the agent would pay for every token of it.
+      LIMIT = 4000
+
+      # What answers while c3po-operator does not exist.
+      PLACEHOLDER_TEXT = "c3po-operator is not built yet, so nobody is listening here. " \
+                         "Your message is kept in this conversation, but nothing acts on it."
+
+      # The responder used until the agent exists: one plain reply per message.
+      PLACEHOLDER = lambda do |turn|
+        [Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: PLACEHOLDER_TEXT)]
+      end
+
+      # Tokens and model before the copilot has said anything that counts them.
+      NO_USAGE = { model: nil, up: 0, down: 0 }.freeze
+
+      # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
+      # @param keys [OpenLanes::Live::Keys]
+      # @param responder [#call] the person's {Turn} in, the copilot's {Turn}s out
+      def initialize(store:, keys:, responder: PLACEHOLDER)
+        @store = store
+        @keys = keys
+        @responder = responder
+      end
+
+      # Record the person's message, then whatever the responder answers.
+      #
+      # @param input [String, Hash] `CopilotMessage`: `{id, text}`
+      # @return [OpenLanes::Live::Copilot::Turn] the person's turn
+      # @raise [OpenLanes::Live::Copilot::Invalid] for the API server's 422
+      def say(input)
+        turn = message(input)
+        append(turn)
+        @responder.call(turn).each { append(it) }
+        turn
+      end
+
+      # The conversation as the page draws it on load: the newest turns,
+      # oldest first, and the copilot's latest model and tokens.
+      #
+      # @param count [Integer]
+      # @return [Hash] `CopilotLog`: `{turns:, usage:}`
+      def history(count: 100)
+        turns = @store.xrevrange(@keys.copilot, count:).reverse.map { JSON.parse(it.fields["json"]) }
+        usage = turns.reverse_each.map { it["usage"] }.find(&:itself)
+        { turns:, usage: usage || NO_USAGE }
+      end
+
+      # Turns written after +after+, oldest first, with their stream ids.
+      #
+      # @param after [String] a stream id
+      # @return [Array<Array(String, Hash)>]
+      def since(after)
+        @store.xread(@keys.copilot, id: after).map { |entry| [entry.id, JSON.parse(entry.fields["json"])] }
+      end
+
+      # @return [String] the newest turn's stream id, `0-0` when there is none
+      def newest = @store.xrevrange(@keys.copilot, count: 1).first&.id || "0-0"
+
+      private
+
+      # @return [OpenLanes::Live::Copilot::Turn]
+      def message(input)
+        data = input.is_a?(String) ? JSON.parse(input) : input
+        raise Invalid, "a message is a JSON object" unless data.is_a?(Hash)
+
+        id = data["id"].to_s
+        text = data["text"].to_s.strip
+        raise Invalid, "id must be 1 to 64 letters, digits, - or _" unless id.match?(Command::ID)
+        raise Invalid, "a message needs text" if text.empty?
+        raise Invalid, "a message is at most #{LIMIT} characters" if text.length > LIMIT
+
+        Turn.new(id:, from: "you", kind: "text", text:)
+      rescue JSON::ParserError => e
+        raise Invalid, "not a message: #{e.message.lines.first.to_s.strip}"
+      end
+
+      # @return [void]
+      def append(turn)
+        @store.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH)
+      end
+    end
+
+    class Copilot
+      # One thing said in the conversation: `CopilotTurn` in `types.ts`.
+      #
+      # @!attribute [r] id
+      #   @return [String] the person's message id; a reply's is that id, a
+      #     dot and its place among the replies, so a reply names what it answers
+      # @!attribute [r] from
+      #   @return [String] one of {SPEAKERS}
+      # @!attribute [r] kind
+      #   @return [String] one of {KINDS}
+      # @!attribute [r] text
+      #   @return [String]
+      # @!attribute [r] at
+      #   @return [Time]
+      # @!attribute [r] usage
+      #   @return [Hash, nil] `{model, up, down}`, the copilot's running total
+      #     after this turn; nil on the person's turns and the placeholder's
+      # @!attribute [r] fields
+      #   @return [Hash{String => Object}] what a card needs, per {FIELDS}
+      Turn = Data.define(:id, :from, :kind, :text, :at, :usage, :fields) do
+        def initialize(at: Time.now, usage: nil, fields: {}, **rest)
+          super
+          Turn.check(self)
+        end
+
+        # @return [Hash] as the wire carries it
+        def wire = { id:, from:, kind:, text:, at: at.utc.iso8601, usage: }.merge(fields.transform_keys(&:to_sym))
+
+        # @return [String]
+        def to_json(*) = JSON.generate(wire)
+      end
+
+      class Turn
+        # The keys every turn has; anything else belongs to {FIELDS}.
+        BASE = %w[id from kind text at usage].freeze
+
+        # @param data [Hash] a turn as the wire carries it
+        # @return [OpenLanes::Live::Copilot::Turn]
+        # @raise [OpenLanes::Live::Copilot::Invalid]
+        def self.parse(data)
+          data = data.transform_keys(&:to_s)
+          new(id: data["id"].to_s,
+            from: data["from"].to_s,
+            kind: data["kind"].to_s,
+            text: data["text"].to_s,
+            at: data["at"] ? Time.iso8601(data["at"]) : Time.now,
+            usage: data["usage"],
+            fields: data.except(*BASE))
+        rescue ArgumentError => e
+          raise Invalid, "not a turn: #{e.message}"
+        end
+
+        # @param turn [OpenLanes::Live::Copilot::Turn]
+        # @return [void]
+        # @raise [OpenLanes::Live::Copilot::Invalid] naming what is wrong
+        def self.check(turn)
+          raise Invalid, "unknown speaker #{turn.from.inspect}" unless SPEAKERS.include?(turn.from)
+          raise Invalid, "unknown kind #{turn.kind.inspect}; known: #{KINDS.join(", ")}" unless KINDS.include?(turn.kind)
+          raise Invalid, "only the copilot draws cards" if turn.from == "you" && turn.kind != "text"
+
+          missing = FIELDS.fetch(turn.kind) - turn.fields.keys.map(&:to_s)
+          raise Invalid, "a #{turn.kind} card needs #{missing.join(" and ")}" unless missing.empty?
+          return unless turn.kind == "confirm"
+
+          # A confirm card is sent through the same gate as the page's own
+          # buttons (W13), so it has to be a command that gate would take.
+          command = turn.fields.transform_keys(&:to_s)["command"]
+          Command.parse(command.to_h.merge("id" => "card"))
+        rescue Command::Invalid => e
+          raise Invalid, "a confirm card's command is not one: #{e.message}"
+        end
+      end
+    end
+  end
+end

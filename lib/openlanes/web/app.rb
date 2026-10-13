@@ -63,6 +63,9 @@ module OpenLanes
         # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
         def store = context.store
 
+        # @return [OpenLanes::Live::Copilot]
+        def copilot = Live.copilot(store:, keys: context.keys)
+
         # @param data [Object]
         # @return [String]
         def json(data)
@@ -134,6 +137,24 @@ module OpenLanes
       rescue Live::Command::Invalid => e
         status 422
         json(Live::Reply.new(id: id_in(body), status: "refused", reason: e.message).wire)
+      end
+
+      get "/api/copilot" do
+        json(copilot.history)
+      end
+
+      # The person's message to the copilot (W17). Its answers come on the
+      # event stream as `event: copilot`, like a command's replies do; until
+      # c3po-operator exists the answer is the placeholder's, written here.
+      post "/api/copilot" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        turn = copilot.say(request.body.read)
+        status 202
+        json(turn.wire)
+      rescue Live::Copilot::Invalid => e
+        status 422
+        json(error: e.message)
       end
 
       # Demo only: the board back to the fixture, for a test that wants a
