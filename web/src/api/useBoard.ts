@@ -78,10 +78,10 @@ export function useBoard(): BoardState {
       // Before the conversation's first GET answers there is nothing to add to; that GET brings the turn itself.
       onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => (old ? withTurn(old, turn) : old)),
       onState: setConnection,
-      onReconnect: () => {
-        void client.refetchQueries({ queryKey: BOARD_KEY });
-        void client.refetchQueries({ queryKey: COPILOT_KEY });
-      },
+      // Read the conversation only once the stream has said where it starts; a read begun earlier could miss a turn
+      // written before the stream opened, which the stream would then never send either.
+      onCopilotCursor: () => void client.refetchQueries({ queryKey: COPILOT_KEY }),
+      onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
     });
   }, [client, fixture]);
 

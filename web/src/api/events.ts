@@ -10,6 +10,11 @@ export interface StreamHandlers {
   onReply(reply: Reply): void;
   /** A turn of the copilot conversation (W17). Carries no id, so it never moves the reply cursor. */
   onCopilot?(turn: CopilotTurn): void;
+  /**
+   * The stream's boundary in the copilot conversation: every turn after it comes as `onCopilot`, so a read of
+   * `GET /api/copilot` started now covers the rest. Sent on every open, so it also stands for a reconnect.
+   */
+  onCopilotCursor?(): void;
   onState(state: ConnectionState): void;
   /** Called on every open after the first: whatever happened while the stream was down is fetched once. */
   onReconnect(): void;
@@ -49,6 +54,7 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
       if (message.event === "board") handlers.onBoard(JSON.parse(message.data) as WireBoard);
       else if (message.event === "reply") handlers.onReply(JSON.parse(message.data) as Reply);
       else if (message.event === "copilot") handlers.onCopilot?.(JSON.parse(message.data) as CopilotTurn);
+      else if (message.event === "copilot_cursor") handlers.onCopilotCursor?.();
     },
     onclose() {
       // The server closed a stream that should never end (a restart): treat it like any other drop.

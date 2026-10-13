@@ -110,8 +110,8 @@ RSpec.describe OpenLanes::Web::Events do
         end
       end
 
-      it "sends the cursor, a board event, then the new board, then the reply" do
-        expect(frames.reject { it == ": ping\n\n" }.map { it[/event: (\w+)/, 1] }).to eq(%w[cursor board board reply])
+      it "sends the cursors, a board event, then the new board, then the reply" do
+        expect(frames.reject { it == ": ping\n\n" }.map { it[/event: (\w+)/, 1] }).to eq(%w[cursor copilot_cursor board board reply])
       end
 
       it "opens with a cursor at the newest reply already written" do
@@ -125,18 +125,40 @@ RSpec.describe OpenLanes::Web::Events do
 
     context "when the copilot conversation moves" do
       let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
+      let(:copilot_mark) { copilot.newest }
 
       before do
         copilot.answer(copilot.say({ "id" => "01JOLD", "text" => "before" }))
+        copilot_mark
         run_ticks { |tick| copilot.answer(copilot.say({ "id" => "01JNEW", "text" => "after" })) if tick == 1 }
       end
 
       it "sends each new turn as a copilot event, leaving out what was said before it connected" do
-        expect(frames.grep(/event: copilot/).map { JSON.parse(it[/data: (.*)$/, 1])["id"] }).to eq(%w[01JNEW 01JNEW.1])
+        expect(frames.grep(/event: copilot\n/).map { JSON.parse(it[/data: (.*)$/, 1])["id"] }).to eq(%w[01JNEW 01JNEW.1])
+      end
+
+      it "names its boundary first: the newest turn when it opened, with no id of its own" do
+        expect(frames[1]).to eq("event: copilot_cursor\ndata: #{JSON.generate(id: copilot_mark)}\n\n")
       end
 
       it "gives a copilot event no id, so the reply cursor stays where it was" do
-        expect(frames.grep(/event: copilot/)).to all(start_with("event: copilot\n"))
+        expect(frames.grep(/event: copilot\n/)).to all(start_with("event: copilot\n"))
+      end
+    end
+
+    # The race the boundary closes: a turn written after the page's own
+    # read but before the stream opened was in neither.
+    context "when a turn lands just before the stream opens" do
+      let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
+
+      before do
+        copilot.answer(copilot.say({ "id" => "01JGAP", "text" => "in the gap" }))
+        run_ticks
+      end
+
+      it "puts it at or before the boundary, which the page reads only once the stream says where that is" do
+        boundary = JSON.parse(frames[1][/data: (.*)$/, 1])["id"]
+        expect([boundary, copilot.since(boundary)]).to eq([copilot.newest, []])
       end
     end
 
@@ -209,7 +231,7 @@ RSpec.describe OpenLanes::Web::Events do
       end
 
       it "says so in a comment and ends, for the page to reconnect" do
-        expect(frames.drop(1)).to eq([": Redis at x is unavailable\n\n"])
+        expect(frames.drop(2)).to eq([": Redis at x is unavailable\n\n"])
       end
     end
   end

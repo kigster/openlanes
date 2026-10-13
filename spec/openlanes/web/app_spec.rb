@@ -234,7 +234,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
 
     it "opens with the reply cursor, then the board" do
-      expect(last_response.body).to start_with("id: 0-0\nevent: cursor\ndata: {\"id\":\"0-0\"}\n\nevent: board\ndata: {\"me\":{\"seq\":7")
+      expect(last_response.body).to start_with("id: 0-0\nevent: cursor\ndata: {\"id\":\"0-0\"}\n\nevent: copilot_cursor\ndata: {\"id\":\"0-0\"}\n\nevent: board\ndata: {\"me\":{\"seq\":7")
     end
   end
 

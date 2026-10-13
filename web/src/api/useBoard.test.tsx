@@ -59,7 +59,7 @@ it("loads the board, follows the stream, and refetches on reconnect", async () =
   expect(closed).toHaveBeenCalled();
 });
 
-it("adds the stream's copilot turns to the conversation, once it is loaded, and rereads it on reconnect", async () => {
+it("adds the stream's copilot turns to the conversation, once it is loaded", async () => {
   const client = createQueryClient();
   fetchMock.mockImplementation(async (path: string) => json(path === "/api/copilot" ? { turns: [], usage: { model: null, up: 0, down: 0 } } : loadFixtureBoard()));
   renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
@@ -69,8 +69,18 @@ it("adds the stream's copilot turns to the conversation, once it is loaded, and 
   await client.fetchQuery({ queryKey: COPILOT_KEY, queryFn: () => fetchCopilot() });
   act(() => streams[0].onCopilot?.(turn));
   expect(client.getQueryData<CopilotLog>(COPILOT_KEY)?.turns).toEqual([turn]);
+});
+
+// The stream's copilot_cursor is the boundary between what the GET reads and what the stream sends. A read made on
+// reconnect, before that boundary is known, could miss a turn written in between; so only the cursor starts one.
+it("reads the conversation when the stream names its copilot boundary, and not on a bare reconnect", () => {
+  const client = createQueryClient();
+  fetchMock.mockResolvedValue(json(loadFixtureBoard()));
+  renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
   const refetch = vi.spyOn(client, "refetchQueries");
   act(() => streams[0].onReconnect());
+  expect(refetch).not.toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
+  act(() => streams[0].onCopilotCursor?.());
   expect(refetch).toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
 });
 

@@ -21,9 +21,13 @@ module OpenLanes
     # without it, replies written during that gap were skipped.
     #
     # A copilot turn carries no `id:`, so it never moves that cursor. The
-    # page catches up on the conversation by reading `GET /api/copilot`
-    # after a reconnect, as it does the board, so its own cursor starts at
-    # the newest turn when the stream opens and lives only as long as it.
+    # conversation has a boundary of its own instead: the stream samples the
+    # newest turn, says so in a `copilot_cursor` event, and from then on
+    # sends every turn after it. The page reads `GET /api/copilot` when that
+    # event arrives, never before it, so the read covers everything up to
+    # the boundary and the stream everything after. A turn written between a
+    # read the page started on its own and the stream opening fell in the
+    # gap between the two and was never shown.
     class Events
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -52,6 +56,7 @@ module OpenLanes
         cursor = @last_id || newest_reply
         out << self.class.frame("cursor", { id: cursor }, id: cursor)
         said = @copilot.newest
+        out << self.class.frame("copilot_cursor", { id: said }) unless out.closed?
         seqs = nil
         until over?(out, started)
           seqs = board(out, seqs)
