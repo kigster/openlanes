@@ -54,6 +54,10 @@ module OpenLanes
       # is still waiting on.
       SECONDS_WIDTH = 6
 
+      # The keywords {.render} takes besides the message. {UI.log} hands its
+      # taps more than these, and the file only these.
+      FIELDS = %i[plan status agent seconds round pid at].freeze
+
       # Between columns, inside the brackets.
       SEPARATOR = " | "
 

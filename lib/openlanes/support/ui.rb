@@ -280,7 +280,10 @@ module OpenLanes
         log_taps.each { |tap| tap.call(message, fields) }
         path = log_path or return
 
-        line = Engine::ProgressLog.render(message, **fields)
+        # Taps hear every field; the file takes only its own columns, so a
+        # field meant for the terminal (the state a plan moved to) adds
+        # nothing to the file's format.
+        line = Engine::ProgressLog.render(message, **fields.slice(*Engine::ProgressLog::FIELDS))
         (@log_mutex ||= Mutex.new).synchronize do
           FileUtils.mkdir_p(File.dirname(path))
           File.open(path, "a") { |f| f.puts(line) }

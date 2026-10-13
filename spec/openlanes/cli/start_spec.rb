@@ -29,6 +29,9 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     }
   end
 
+  # STDERR as it was written, before strip_ansi: what a terminal received.
+  let(:raw) { {} }
+
   before do
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
       original.call(**keywords, sleeper:)
@@ -56,6 +59,7 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     ensure
       $stdout, $stderr = original_out, original_err
     end
+    raw[:err] = err.string
     [strip_ansi(out.string), strip_ansi(err.string), status]
   end
 
@@ -101,6 +105,21 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
 
     it "idles rather than ends, and says on the terminal why" do
       expect(result[1]).to include("idle: waiting for answers on 002.00")
+    end
+
+    # The page is the board. The terminal gets each idle reason once per
+    # change, as a plain line, however many ticks it idles for, and nothing
+    # that moves the cursor or redraws a line.
+    it "says the idle reason once, as a plain line, and never redraws" do
+      aggregate_failures do
+        expect(result[1].scan(/^\d\d:\d\d:\d\d  idle: waiting for answers on 002\.00$/).size).to eq(1)
+        expect(raw[:err]).not_to match(/\r|\e\[/)
+        expect(result[1]).not_to include("|        |")
+      end
+    end
+
+    it "opens its report with one blank line, not three, when no agent ran" do
+      expect(result.first).to start_with("\n0 plans addressed")
     end
 
     it "runs the engine in stay mode, rescanning every five seconds" do

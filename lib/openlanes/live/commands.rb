@@ -131,6 +131,9 @@ module OpenLanes
           return answer_again(entry, first)
         end
 
+        # Said on the terminal and in the log: what a person asked for from
+        # the page is part of the run's story, beside what the agents did.
+        UI.log("from the page: #{command.kind.tr("_", " ")}", **{ plan: command.plan, agent: command.agent }.compact)
         status, reason = apply(command, dispatcher)
         return reply(entry, command.id, status, reason) unless status == :pending
 
