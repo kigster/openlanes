@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Engine::Narrator do
   describe "#render" do
     it "keeps only the fields a line has, in the order a person reads them" do
       expect(narrator.render("started", plan: "003.00", status: "⭐️ Planned", agent: "yoda-writer", round: "01"))
-        .to eq("003.00 ⭐️ Planned  yoda-writer r01  started")
+        .to eq("003.00 ⭐️  Planned  yoda-writer r01  started")
     end
 
     # The log file's columns, echoed to the terminal, drew this line as a
@@ -21,7 +21,18 @@ RSpec.describe OpenLanes::Engine::Narrator do
 
     it "names the state a plan moved to" do
       expect(narrator.render("finished: completed", plan: "003.00", to: "🟡 Building"))
-        .to eq("003.00  finished: completed → 🟡 Building")
+        .to eq("003.00  finished: completed → 🟡  Building")
+    end
+
+    # Many fonts draw a colour emoji wider than its two cells; one space
+    # after it let "🟡Building" and "🔴Changes" run together.
+    it "fits each emoji to two cells and puts two spaces before its label" do
+      expect(narrator.render("started", plan: "002.00", status: "⚪️ New", agent: "leah-researcher", round: "01", to: "🔴 Changes Requested"))
+        .to eq("002.00 ⚪️  New  leah-researcher r01  started → 🔴  Changes Requested")
+    end
+
+    it "passes a status with no label through as it is" do
+      expect(described_class.status_cell("🟡")).to eq("🟡")
     end
 
     it "takes out what would move the cursor: a carriage return, an escape, a newline" do
@@ -61,7 +72,7 @@ RSpec.describe OpenLanes::Engine::Narrator do
       OpenLanes::UI.log("finished: ok", plan: "003.00", to: "🟡 Building")
       OpenLanes::UI.untap_log(tap)
 
-      expect(lines).to eq(["13:39:10  003.00  finished: ok → 🟡 Building"])
+      expect(lines).to eq(["13:39:10  003.00  finished: ok → 🟡  Building"])
     end
   end
 end

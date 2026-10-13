@@ -487,8 +487,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       _out, err, = run(dry_run: false, rounds: 1)
 
       aggregate_failures do
-        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡 Building  luke-backend r01  started$/)
-        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡 Building  luke-backend r01  failed: /)
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  started$/)
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  failed: /)
         expect(raw[:err]).not_to match(/\r|\e\[/)
         expect(err).not_to include("|        |")
       end
@@ -502,7 +502,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       }
       _out, err, = run(dry_run: false, agent: "luke-backend")
 
-      expect(err).to match(/luke-backend r01  finished: .* → 🟢 Ready for Review$/)
+      expect(err).to match(/luke-backend r01  finished: .* → 🟢  Ready for Review$/)
     end
 
     it "keeps the terminal silent about events under --quiet, and the log file in its columns" do

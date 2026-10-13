@@ -23,11 +23,20 @@ module OpenLanes
     #   narrator = Narrator.new
     #   UI.tap_log(narrator)
     #   UI.log("started", plan: "003.00", status: "⭐️ Planned", agent: "yoda-writer", round: "01")
-    #   # 13:39:10  003.00 ⭐️ Planned  yoda-writer r01  started
+    #   # 13:39:10  003.00 ⭐️  Planned  yoda-writer r01  started
     class Narrator
       # Between the parts of a line. Two spaces read as columns without
       # holding open the ones a line does not have.
       GAP = "  "
+
+      # Cells a status emoji is given, and what follows it before the label.
+      # Many terminal fonts draw a colour emoji wider than the two cells it
+      # claims, and with one space after it "🟡 Building" reads "🟡Building".
+      # Mirrors ProgressLog::EMOJI_WIDTH and EMOJI_GAP from the list-plans
+      # fix; once that lands, {.status_cell} gives way to
+      # ProgressLog.status_cell.
+      EMOJI_WIDTH = 2
+      EMOJI_GAP = "  "
 
       # A carriage return, an escape sequence, or any other control
       # character but a tab: what would let one message overwrite another.
@@ -77,12 +86,24 @@ module OpenLanes
       # @param agent [String, nil]
       # @param round [String, nil] e.g. "01"
       # @param to [String, nil] the state the plan moved to, emoji and label
-      # @return [String] e.g. `003.00 ⭐️ Planned  yoda-writer r01  finished → 🟡 Building`
+      # @return [String] e.g. `003.00 ⭐️  Planned  yoda-writer r01  finished → 🟡  Building`
       def render(message, plan: nil, status: nil, agent: nil, round: nil, to: nil, **)
         said = clean(message)
-        said = "#{said} → #{clean(to)}" if to
-        [[plan, status].compact.join(" "), [agent, ("r#{round}" if round)].compact.join(" "), said]
+        said = "#{said} → #{self.class.status_cell(clean(to))}" if to
+        [[plan, (self.class.status_cell(status) if status)].compact.join(" "), [agent, ("r#{round}" if round)].compact.join(" "), said]
           .reject(&:empty?).join(GAP)
+      end
+
+      # The emoji fitted to {EMOJI_WIDTH} cells and followed by {EMOJI_GAP},
+      # then the label. A value with no label passes through as it is.
+      #
+      # @param status [String] emoji and label, e.g. "⭐️ Planned"
+      # @return [String] e.g. "⭐️  Planned"
+      def self.status_cell(status)
+        emoji, label = status.to_s.split(" ", 2)
+        return status.to_s if label.nil?
+
+        "#{UI.fit(emoji, EMOJI_WIDTH)}#{EMOJI_GAP}#{label}"
       end
 
       private
