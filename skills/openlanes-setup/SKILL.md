@@ -61,4 +61,4 @@ and offer `openlanes-run` to start the agents.
 - [ ] `openlanes status` lists the plan.
 - [ ] `openlanes run -n --plan 000` names its first agent.
 - [ ] With Redis up, `openlanes web --demo` opens the control room on a sample run (Ctrl-C to stop).
-- [ ] `openlanes start` is running: the factory and its control room, up until every plan is finished. From here the user works on the page (see `openlanes-run`).
+- [ ] `openlanes start` is running: the factory and its control room, up until Stop All Local or Ctrl-C. From here the user works on the page (see `openlanes-run`).

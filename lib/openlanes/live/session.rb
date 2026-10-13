@@ -83,7 +83,6 @@ module OpenLanes
         @publisher.on_lost { |ordinals| dispatcher.fence(ordinals) }
         dispatcher.before_tick(&@record)
         dispatcher.before_tick(&@commands)
-        dispatcher.hold_open { @commands.pending? }
       end
 
       # The run is over: the run state is written down, claims go back, and

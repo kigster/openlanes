@@ -59,7 +59,7 @@ openlanes init                  # writes .openlanes.yml and creates .plans/; ask
 openlanes create tax rule dsl   # creates .plans/000.00-⚪️ → tax-rule-dsl/spec.md and opens it
                             # finish the brief in spec.md, then save it
 openlanes run -n                # dry run: shows which agent would take which plan
-openlanes start                 # the factory and its control room, up until every plan is finished
+openlanes start                 # the factory and its control room, up until Stop All Local or Ctrl-C
 
 openlanes list-plans            # every plan, its state and its pull requests
 ```
@@ -228,8 +228,8 @@ openlanes list-plans                       # every plan, its state and its pull 
 openlanes index                            # write .plans/INDEX.md
 openlanes states                           # the state machine, as a diagram
 openlanes docs -o docs/WORKFLOW.md         # regenerate the conventions from the code
-openlanes start                            # the factory as a service: agents plus the control room, until every plan is finished
-openlanes run --plan 003                   # run the agents on specific plans, until no plan changes state
+openlanes start                            # the factory as a service: agents plus the control room, until Stop All Local
+openlanes run --until-settled --plan 003   # run the agents on specific plans, until no plan changes state
 openlanes unblock 003                      # fold answered blocks back in
 openlanes worktree 003                     # create and seed a worktree for one plan
 openlanes resync dirs                      # rename folders whose emoji their contents contradict
@@ -253,11 +253,13 @@ openlanes start --rescan 10                    # look for new or hand-edited pla
 
 `openlanes start` is `openlanes run` that does not stop at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `openlanes create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s, or at once after anything you do on the page).
 
-Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All** stops the agents but keeps the engine and page up; the next answer, added plan or resume starts agents again. The terminal only prints the URL and the progress log.
+Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All Local** stops this machine's agents, then its engine and the page. The terminal only prints the URL and the progress log.
 
-It ends on its own, with exit 0, once every plan in scope is finished: ✅ Approved & Merged, 😎 Deployed or ❌ Discarded. A project with no plans waits for the first. Ctrl-C or `SIGTERM` stops it early, with the same graceful stop as `run`. It takes `run`'s flags except `-n` and `--no-web`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
+It never ends on its own, not even once every plan is finished, since the page can create the next one. A project with no plans waits for the first. Stop All Local, Ctrl-C or `SIGTERM` ends it, with exit 0 and the same graceful stop as `run`. It takes `run`'s flags except `-n`, `--no-web` and `--until-settled`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
 
-### `openlanes run`: to a fixed point
+### `openlanes run`: headless, or to a fixed point
+
+`openlanes run` serves the control room too when Redis answers, and then stays up exactly like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which always ends there.
 
 ```bash
 openlanes run -n                               # dry run: who would take what

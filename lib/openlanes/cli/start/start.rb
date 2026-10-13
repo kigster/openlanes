@@ -2,38 +2,35 @@
 
 module OpenLanes
   module CLI
-    # `openlanes start` — the factory as a long-lived service: `run` with the
-    # control room on, idling instead of ending at a fixed point.
+    # `openlanes start` — the factory as a long-lived service: the engine and
+    # the control room together, with or without any plans.
     #
-    # `run` ends the moment nothing is dispatchable, which is also the moment
-    # palpatine-planner blocks on a question: the engine stops, the page
-    # with the question on it dies with it, and the answer has nowhere to
-    # go. `start` stays. It keeps the board published and the commands read,
-    # rescans the tree, and starts agents as soon as an answer, a new plan
-    # or a hand edit makes something dispatchable. It ends on its own only
-    # when every plan in scope is finished (✅ 😎 ❌), and early on Ctrl-C or
-    # SIGTERM.
+    # It keeps the board published and the commands read, rescans the tree,
+    # and starts agents as soon as an answer, a new plan or a hand edit makes
+    # something dispatchable. It never ends on its own, not even once every
+    # plan is finished: the page creates the next plan. It ends on Stop All
+    # Local in the page, Ctrl-C or SIGTERM.
     #
     # The page is the only way in: every decision a person makes goes through
     # it, and the terminal is output only. So there is no headless fallback
     # (Redis and the control room are required, not hoped for), no dry run,
-    # and no `--no-web`.
+    # no `--no-web` and no `--until-settled`.
     class Start < Run
-      desc "Run the factory until every plan is finished, with the control room; questions wait on the page"
+      desc "web + run in one: the engine and its control room, with or without plans, until Stop All Local"
 
       # Inherited from `run`, and meaningless here: a dry run publishes no
       # board, and a run without its page cannot be answered.
-      @options = options.reject { %i[dry_run web].include?(it.name) }
+      @options = options.reject { %i[dry_run web until_settled].include?(it.name) }
 
       option :rescan,
         default: Engine::Dispatcher::RESCAN.to_s,
         desc:    "Seconds between rescans of .plans while idle; a command from the page rescans at once"
 
       example [
-        "                       # engine and control room, until every plan is finished",
+        "                       # engine and control room, until Stop All Local or Ctrl-C",
         "--no-open              # print the control room's URL, open no browser",
         "--port 4848 -j 4       # somewhere other than 11000, four agents at a time",
-        "--plan 005             # only plan 005; ends once it is finished"
+        "--plan 005             # only plan 005, until stopped"
       ]
 
       # Exit status when Redis or the control room is not there to serve.
@@ -62,14 +59,9 @@ module OpenLanes
       private
 
       # @param _options [Hash]
+      # @param _web [OpenLanes::Web::Launcher]
       # @return [Hash]
-      def staying(_options) = { stay: true, rescan: @rescan }
-
-      # TERM too: a service manager stops a service that way, and it gets
-      # the same graceful stop as Ctrl-C.
-      #
-      # @return [Array<String>]
-      def signals = %w[INT TERM]
+      def staying(_options, _web) = { stay: true, rescan: @rescan }
 
       # @return [void]
       def without_live(message, _options)
@@ -95,9 +87,9 @@ module OpenLanes
         open.empty? ? "#{web.url}#start" : web.url
       end
 
-      # What the service did, and exit 0: stopping it on purpose, or seeing
-      # every plan through, is not a failure, and the failed attempts it
-      # lived through are listed above the box.
+      # What the service did, and exit 0: stopping it on purpose is not a
+      # failure, and the failed attempts it lived through are listed above
+      # the box.
       #
       # @return [void]
       def finish(runner, attempts, options, seconds:)
@@ -105,9 +97,8 @@ module OpenLanes
         puts attempt_lines(attempts)
         puts("", Engine.tally(attempts:, seconds:).render)
         unless quiet?(options)
-          stopped = Execution::Control.quit?
           blocked = runner.blocked.map { it.feature.ordinal }
-          lines = [stopped ? "Stopped. Unfinished plans keep their state; openlanes start picks them up again." : "Every plan is finished."]
+          lines = ["Stopped. Unfinished plans keep their state; openlanes start picks them up again."]
           lines << "Still waiting for answers: #{blocked.join(", ")}" unless blocked.empty?
           success("#{attempts.size} invocation#{"s" unless attempts.size == 1}, " \
                   "#{attempts.count(&:advanced?)} advanced\n\n#{lines.join("\n")}")

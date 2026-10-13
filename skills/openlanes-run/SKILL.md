@@ -1,6 +1,6 @@
 ---
 name: openlanes-run
-description: Start the openlanes factory with `openlanes start` (engine plus control room, up until every plan is finished, questions answered on the page), or run openlanes's specialist agents to a fixed point with `openlanes run` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕️ / 🅱️ plan.
+description: Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop All Local or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents to a fixed point with `openlanes run --until-settled` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕️ / 🅱️ plan.
 ---
 
 # openlanes-run: drive the plans
@@ -17,18 +17,18 @@ openlanes start --no-open    # print the URL only
 ```
 
 - It takes `run`'s flags except `-n` and `--no-web`. It needs Redis and refuses without it (exit 69).
-- Every human decision goes through the page: answers, hold, wrap up, stop, models, new plans. **Stop All** stops the agents and keeps the engine up; the next answer, added plan or resume starts agents again. The terminal is output only.
-- It ends on its own once every plan in scope is finished (✅ Approved & Merged, 😎 Deployed or ❌ Discarded), with exit 0. A project with no plans waits for the first. Ctrl-C or `kill -TERM` stop it early; agents get the graceful stop and the page goes down with it.
+- Every human decision goes through the page: answers, hold, wrap up, stop, models, new plans. **Stop All Local** stops this machine's agents, then its engine and the page; nothing else on the page ends the run. The terminal is output only.
+- It never ends on its own, not even once every plan is finished: the page can create the next one. A project with no plans waits for the first. Stop All Local, Ctrl-C or `kill -TERM` end it, with exit 0; agents get the graceful stop and the page goes down with it.
 - Start it in the background, give the user the URL, and leave the answering to them on the page. Steps 1 to 5 below are the scripted, headless alternative.
 
-`openlanes run` loops in rounds. Each round hands every movable plan to the agent its state and lane call for and renames the folder when the agent finishes. When a builder lands a plan at 🟢 Ready for Review, `openlanes` pushes its branch and opens the pull request, titled `[NNN.MM]`; `hansolo-reviewer` then reviews that pull request. It stops at a **fixed point**: a round in which no plan changed state. Your job is to start it, watch it, and turn what it stops on into questions for the human.
+`openlanes run` loops in rounds. Each round hands every movable plan to the agent its state and lane call for and renames the folder when the agent finishes. When a builder lands a plan at 🟢 Ready for Review, `openlanes` pushes its branch and opens the pull request, titled `[NNN.MM]`; `hansolo-reviewer` then reviews that pull request. With `--until-settled` it stops at a **fixed point**: a round in which no plan changed state. Without it, a run whose control room came up stays up like `start` and never returns, so a scripted run always passes `--until-settled` (or `--no-web`). Your job is to start it, watch it, and turn what it stops on into questions for the human.
 
 ## 1. Scope and preview
 
 Decide the scope from what the user asked: the whole tree, or `--plan 003,005.01`. Then preview, unless the user has already told you to run:
 
 ```bash
-openlanes run -n --plan <NNN,...>
+openlanes run -n --until-settled --plan <NNN,...>
 ```
 
 Each line names a plan, the agent it would get, and the round. Show the user the lines that matter in a few bullets and ask once: "Run these?" One yes covers the whole loop below.
@@ -49,12 +49,12 @@ Keep the defaults (`--isolation worktree`, pushing on) whenever the user wants p
 ## 2. Run it
 
 ```bash
-openlanes run --plan <NNN,...>
+openlanes run --until-settled --plan <NNN,...>
 ```
 
 A run takes minutes to hours: each agent may take up to 15 minutes per round, over several rounds. Start it in the background and wait for it to exit; it prints its progress log path at the start, which is what to read when the user asks how it is going. Avoid polling in a tight loop.
 
-When Redis answers, the run also serves the control room on `http://127.0.0.1:11000` and opens it in the browser: the user watches the board there and can message, interrupt or stop an agent. Without Redis the run warns once and goes on headless; that is not a failure. To get the page, start `redis-server` (or pass `--redis-url`) before the run; `openlanes-setup` has the details.
+When Redis answers, the run also serves the control room (it still ends at the fixed point, because of `--until-settled`) on `http://127.0.0.1:11000` and opens it in the browser: the user watches the board there and can message, interrupt or stop an agent. Without Redis the run warns once and goes on headless; that is not a failure. To get the page, start `redis-server` (or pass `--redis-url`) before the run; `openlanes-setup` has the details.
 
 A warning about `ANTHROPIC_API_KEY` (or a similar variable) at the start means every agent will authenticate with that key instead of the user's claude.ai login. Stop and ask before running with it; a stale key fails every agent with `401` after minutes each.
 

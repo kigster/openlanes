@@ -85,8 +85,8 @@ module OpenLanes
       # typed in another terminal, a `blocked.md` answered in an editor.
       RESCAN = 5
 
-      # Plans with nothing left to do, which is what a staying run waits for
-      # every plan to reach before it ends on its own. Not `Status#terminal?`:
+      # Plans with nothing left to do, which an idle staying run reports
+      # reaching rather than ending on. Not `Status#terminal?`:
       # only ❌ has no way out, while ✅ and 😎 can still roll back, and a
       # project whose plans all merged is finished in every sense a person
       # means. The page's backlog draws the same line.
@@ -101,8 +101,8 @@ module OpenLanes
       # @param rounds [Integer, nil] `--rounds`, a cap that only tightens
       # @param sleeper [Proc] how a tick waits; the suite passes a no-op
       # @param on_board [Proc, nil] receives a {Board} each tick
-      # @param stay [Boolean] keep running past a fixed point, idle, until a
-      #   person stops the run or every plan in scope is {FINISHED}
+      # @param stay [Boolean] keep running past every fixed point, idle, until
+      #   a person stops the run
       # @param rescan [Integer] idle ticks, about a second each, between
       #   rescans of the tree while staying
       def initialize(runner:, state: nil, rounds: nil, sleeper: ->(seconds) { sleep(seconds) }, on_board: nil,
@@ -113,11 +113,7 @@ module OpenLanes
         @idle = false
         @idle_ticks = 0
         @wake = false
-        @paused = false
-        @held = []
-        @complete = false
         @said = nil
-        @holds = []
         @state = state
         @rounds_cap = rounds
         @sleeper = sleeper
@@ -179,19 +175,19 @@ module OpenLanes
       end
 
       # A run ends at a fixed point: nothing running and nothing left to
-      # start. A staying run (`openlanes start`) does not: it idles through every
-      # fixed point a blocked plan or an empty tree makes, and ends on its own
-      # only once every plan in scope is {FINISHED}, decided on a tick that
-      # rescanned the tree and with no command still at work. A quit ends
-      # either, once the agents have gone.
+      # start. A staying run (the engine with its control room) never ends on
+      # its own, not even once every plan is {FINISHED}: the page can create
+      # the next plan at any moment, and a run that had quit would leave it
+      # nowhere to go. Only a quit ends it (Stop All Local, Ctrl-C, SIGTERM),
+      # once the agents have gone.
       #
       # @return [Boolean]
       def done?
         return false unless quiet?
         return true if Execution::Control.quit?
-        return next_dispatchable.nil? unless @stay
+        return false if @stay
 
-        @complete && @holds.none?(&:call)
+        next_dispatchable.nil?
       end
 
       # @return [Boolean] whether this run idles past its fixed points
@@ -202,39 +198,6 @@ module OpenLanes
       #
       # @return [void]
       def wake! = @wake = true
-
-      # Something that keeps a staying run open while it answers true, such
-      # as a command still at work; checked before the run ends on its own.
-      #
-      # @yieldreturn [Boolean]
-      # @return [void]
-      def hold_open(&check) = @holds << check
-
-      # Stop every running agent and start no more on the plans there are
-      # now, without ending the run: the page's Stop All under `openlanes start`,
-      # where the engine and the page stay up. STOP, not a kill, so each
-      # agent leaves its work written down. The next command that asks for
-      # work, an answer, a plan added or created, a resume, lifts the pause;
-      # a plan that appears later by any other route (`openlanes create`, a
-      # folder written by hand) was never held, so a rescan starts it.
-      #
-      # @return [Integer] how many agents were told to stop
-      def stop_all
-        @paused = true
-        @held = @runner.in_scope.map { it.feature.ordinal.to_s }
-        @running.each { it.handle.request_stop! }
-        @running.size
-      end
-
-      # @return [void]
-      def unpause!
-        @paused = false
-        @held = []
-        wake!
-      end
-
-      # @return [Boolean] whether a Stop All is holding new agents back
-      def paused? = @paused
 
       # Kill from a view: STOP, {KILL_GRACE} seconds, SIGKILL, on a thread
       # so the tick is not held for fifteen seconds.
@@ -697,15 +660,14 @@ module OpenLanes
       end
 
       # After a dispatch that started nobody: idle when nothing else is under
-      # way, complete when every plan in scope is finished, and said once per
-      # change, so the log reads as a story rather than a heartbeat.
+      # way, and said once per change, so the log reads as a story rather
+      # than a heartbeat.
       #
       # @param started [Integer] agents this dispatch started
       # @return [void]
       def settle_idle(started)
         @idle = started.zero? && quiet?
         subjects = @runner.in_scope
-        @complete = @idle && !subjects.empty? && subjects.all? { FINISHED.include?(it.status.key) }
         said = @idle ? idle_reason(subjects) : nil
         UI.log(said) if said && said != @said
         @said = said
@@ -714,8 +676,10 @@ module OpenLanes
       # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
       # @return [String] what an idle run is waiting for
       def idle_reason(subjects)
-        return "idle: every plan is finished" if @complete
         return "idle: no plans yet; create one from the page or with openlanes create" if subjects.empty?
+        if subjects.all? { FINISHED.include?(it.status.key) }
+          return "idle: every plan is finished; create the next one from the page"
+        end
 
         blocked = waiting
         return "idle: waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
@@ -744,7 +708,6 @@ module OpenLanes
           state = Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
-          next if @held.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
 
           candidates = Agents::Routing.filter(@runner.agents.for_status(state), subject)

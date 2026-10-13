@@ -390,7 +390,8 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     it "stops everything on this node" do
       send_command("stop_all")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(["stopping 1 agent on dana@studio-mini"])
+        expect(apply.map(&:reason))
+          .to eq(["stopping 1 agent on dana@studio-mini; the engine and the control room shut down once they have gone"])
         expect(OpenLanes::Execution::Control.quit?).to be(true)
       end
     end

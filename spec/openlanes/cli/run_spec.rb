@@ -47,7 +47,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   # over the built-in defaults, as a real run sees them.
   def typed(*argv)
     Dry::CLI::Parser.call(described_class, argv, "openlanes run").arguments
-                    .except(:dir, :isolation).merge(dry_run: false)
+                    .except(:dir, :isolation).merge(dry_run: false, until_settled: true)
   end
 
   def run(**)
@@ -60,10 +60,13 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     begin
       # The log always lands in the example's own temp dir, never in the
       # shared system one where parallel suites would interleave into it.
+      # --until-settled, because a run with its control room up otherwise
+      # stays until it is stopped; "the control room" says what it does.
       command.call(dir: plans_root,
         isolation: "shared",
         log: File.join(plans_root, "..", "progress.log"),
         dry_run: true,
+        until_settled: true,
 **)
     rescue SystemExit => e
       status = e.status
@@ -670,6 +673,36 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(web).to have_received(:stop)
     end
 
+    context "without --until-settled" do
+      # Stops the run the way Stop All Local does, once it has idled a while.
+      before do
+        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+          ticks = 0
+          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! if (ticks += 1) > 3 })
+        end
+      end
+
+      after { OpenLanes::Execution::Control.reset! }
+
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false) }
+
+      it "keeps the engine up past the fixed point, until it is stopped" do
+        result
+        aggregate_failures do
+          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
+          expect(stderr).to include("The engine stays up with its control room: Stop All Local or Ctrl-C ends it.")
+          expect(web).to have_received(:stop)
+        end
+      end
+    end
+
+    context "with --until-settled" do
+      it "ends at the fixed point, as CI wants" do
+        result
+        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
+      end
+    end
+
     context "with --no-open" do
       let(:result) { run(dry_run: false, rounds: 1, open: false) }
 
@@ -684,9 +717,12 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     context "with --no-web" do
       let(:result) { run(dry_run: false, rounds: 1, web: false) }
 
-      it "runs headless" do
+      it "runs headless, and ends at the fixed point" do
         result
-        expect(OpenLanes::Web).not_to have_received(:launcher)
+        aggregate_failures do
+          expect(OpenLanes::Web).not_to have_received(:launcher)
+          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
+        end
       end
     end
 

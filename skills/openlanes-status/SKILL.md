@@ -29,4 +29,4 @@ Load the `openlanes` skill first if it is not in context. Every command here onl
 
 ## The control room
 
-`openlanes web` serves the page and its API on `127.0.0.1:11000` (`--port` to move it, `--no-open` to print the URL instead of opening a browser). It shows the board a live `openlanes run` publishes to Redis, so with no run in progress, or Redis down, it has nothing to show; `--demo` serves a moving sample instead, from memory when Redis does not answer. Where it finds Redis: `openlanes web --help`.
+`openlanes web` serves the page and its API on `127.0.0.1:11000` (`--port` to move it, `--no-open` to print the URL instead of opening a browser). It shows the board a live `openlanes run` publishes to Redis, so with no run in progress it says so on the page and names `openlanes start` and `openlanes run`, and with Redis down it has nothing to show; `--demo` serves a moving sample instead, from memory when Redis does not answer. Where it finds Redis: `openlanes web --help`.

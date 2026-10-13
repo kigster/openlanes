@@ -61,6 +61,13 @@ module OpenLanes
       description <<~TEXT
         Drives the agentic flow: spec → plan → build → review → tune/fix → approve.
 
+        Most days need two commands. `openlanes init` sets a project up, once.
+        `openlanes start` is `web` + `run` in one: the engine and its control room
+        in the browser, where you create plans, answer the agents' questions and
+        watch them work. Both stay up, with or without plans, until Stop All Local
+        in the page or Ctrl-C. The headless commands do the same work from the
+        terminal, for scripts and CI.
+
         Keeps the .plans folders in step with GitHub pull requests and Linear issues.
         The final merge and deploy stay manual.
       TEXT
@@ -77,8 +84,21 @@ module OpenLanes
       # Wrap at column 90, or two short of the terminal when it is narrower.
       width [90, TTY::Screen.width - 2].min
 
-      group "Plans", "init", "create", "list-plans", "index", "resync", "unblock", "worktree"
-      group "Agents", "start", "run", "web", "agents", "describe", "mail", "state", "eval"
+      # Most used first: what a person types every day, then what scripts do.
+      group "OpenLanes Default Web Operation", "init", "start", "web"
+      group "Headless Operation",
+        "create",
+        "run",
+        "list-plans",
+        "index",
+        "resync",
+        "unblock",
+        "worktree",
+        "agents",
+        "describe",
+        "mail",
+        "state",
+        "eval"
       group "Reference", "docs", "states", "linear", "skills", "completion", "version"
     end
 

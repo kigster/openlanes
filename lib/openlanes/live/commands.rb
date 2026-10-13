@@ -96,10 +96,6 @@ module OpenLanes
       # @return [Proc] for {Engine::Dispatcher#before_tick}
       def to_proc = method(:call).to_proc
 
-      # @return [Boolean] whether a command is still at work, which keeps a
-      #   staying run from ending under it
-      def pending? = !@pending.empty?
-
       private
 
       # @return [void]
@@ -234,7 +230,7 @@ module OpenLanes
                      "Answered by #{@node.user} on #{@clock.call.strftime("%Y-%m-%d")}\n#{marker(command)}\n")
         end
         @run_state.hold_question(question_id(subject, question), held: false)
-        dispatcher.unpause!
+        dispatcher.wake!
         nil
       end
 
@@ -282,7 +278,7 @@ module OpenLanes
           command: command.id)
         dispatcher.resume(subject.feature.ordinal, agent)
         dispatcher.runner.add_plan(subject.feature.ordinal)
-        dispatcher.unpause!
+        dispatcher.wake!
         "#{agent} resumes on #{command.plan} at its next turn"
       end
 
@@ -324,20 +320,18 @@ module OpenLanes
         nil
       end
 
-      # Under `openlanes start` the engine and the page outlive the agents: they
-      # are stopped, nothing new starts until a person asks for work again,
-      # and the run idles. A plain `openlanes run` ends, as q would end it.
+      # Stop All Local: every agent on this machine is told to stop, and once
+      # they have gone the engine ends, and the control room with it. That is
+      # the one way a run with its control room ends from the page; it never
+      # ends on its own, since the page can always create more work.
+      # Other machines keep running.
       #
       # @return [String]
       def stop_all(_command, dispatcher)
-        if dispatcher.stay?
-          count = dispatcher.stop_all
-          return "stopping #{count} agent#{"s" unless count == 1} on #{@node.label}; the engine stays up, " \
-                 "and starts agents again at the next answer, plan or resume"
-        end
-
         Execution::Control.quit!
-        "stopping #{dispatcher.running.size} agent#{"s" unless dispatcher.running.size == 1} on #{@node.label}"
+        count = dispatcher.running.size
+        "stopping #{count} agent#{"s" unless count == 1} on #{@node.label}; " \
+          "the engine and the control room shut down once they have gone"
       end
 
       # The model for the agent's next round on this plan (W24).
@@ -416,7 +410,7 @@ module OpenLanes
 
         claim!(ordinal)
         dispatcher.runner.add_plan(ordinal)
-        dispatcher.unpause!
+        dispatcher.wake!
         nil
       end
 
@@ -469,7 +463,7 @@ module OpenLanes
       def created(feature, dispatcher)
         claim!(feature.ordinal)
         dispatcher.runner.add_plan(feature.ordinal)
-        dispatcher.unpause!
+        dispatcher.wake!
         "created #{feature.ordinal} #{feature.slug}"
       end
 

@@ -2,7 +2,8 @@
 
 # `openlanes start` is `run` that stays: the same options and code, the
 # control room required rather than hoped for, and an end that comes from
-# every plan being finished or from a signal, never from a fixed point.
+# Stop All Local or a signal, never from a fixed point, and not from every
+# plan being finished either.
 #
 # Like run_spec, every example runs `--isolation shared` over a bare temp
 # tree, publishes to a store in this process, and never spawns the server,
@@ -80,6 +81,10 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       expect(parse("--no-web").error?).to be(true)
     end
 
+    it "leaves out --until-settled, since it never ends on its own" do
+      expect(parse("--until-settled").error?).to be(true)
+    end
+
     it "is listed with the agents in help" do
       expect(OpenLanes::CLI.get(["start"]).command).to eq(described_class)
     end
@@ -116,11 +121,24 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       plans { |t| t.plan "001.00", :deployed, "shipped", files: { "spec.md" => spec_body, "deployed.md" => "v1\n" } }
     end
 
-    let(:sleeper) { ->(_) {} }
     let!(:result) { start }
 
-    it "ends on its own, exit 0" do
-      expect([result.last, result[1]]).to match([0, include("Every plan is finished.")])
+    it "stays up, waiting for the next plan, until SIGTERM" do
+      expect([result.last, result[1]])
+        .to match([0, include("idle: every plan is finished; create the next one from the page", "Stopped.")])
+    end
+
+    it "opens the control room on the idea dialog" do
+      expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000#start")
+    end
+  end
+
+  describe "no plans at all" do
+    let!(:result) { start }
+
+    it "starts anyway, and waits for the first plan from the page" do
+      expect([result.last, result[1]])
+        .to match([0, include("idle: no plans yet; create one from the page or with openlanes create", "Stopped.")])
     end
 
     it "opens the control room on the idea dialog" do

@@ -6,7 +6,7 @@ module OpenLanes
   module CLI
     # `openlanes run` — drive the specialist agents until the tree settles.
     class Run < Base
-      desc "Run specialist agents over the plans until nothing changes"
+      desc "Run specialist agents over the plans; with the control room up it stays, else it ends when nothing changes"
 
       dry_run_option "Invoke no agent; print which agent would take which plan"
       option :rounds,
@@ -68,6 +68,11 @@ module OpenLanes
       option :port,
         default: OpenLanes::Web::DEFAULT_PORT.to_s,
         desc:    "Port the control room listens on, on 127.0.0.1"
+      option :until_settled,
+        type:    :boolean,
+        default: false,
+        desc:    "End at the first fixed point even with the control room up, as CI wants; " \
+                 "without it the engine and the page stay up until Stop All Local or Ctrl-C"
 
       example [
         "-n                     # show which agent would take which plan",
@@ -76,7 +81,8 @@ module OpenLanes
         "--isolation shared     # one tree, serial — no git required",
         "--rounds 3             # …capping every agent at three rounds per plan",
         "--plan 005,006,007     # only the plans a batch step just created",
-        "--no-web               # headless: no control room, no browser"
+        "--no-web               # headless: no control room, no browser; ends when the tree settles",
+        "--until-settled        # with the control room, but ending when the tree settles"
       ]
 
       # Option precedence, quietest to loudest: the built-in default, then
@@ -157,7 +163,7 @@ module OpenLanes
           publisher: publisher_for(root, isolation, options),
           on_board:  live&.on_board,
           claims:    live&.claims,
-          **staying(options)
+          **staying(options, web)
         )
 
         started  = UI.monotonic
@@ -172,17 +178,28 @@ module OpenLanes
 
       private
 
-      # What the runner is told about idling past its fixed points. `run`
-      # ends at one; {Start} stays.
+      # What the runner is told about idling past its fixed points. With its
+      # control room up the engine stays, since the page can answer a blocked
+      # plan or create the next one at any moment, and a run that had ended
+      # would leave the page talking to nobody. Headless, or with
+      # `--until-settled`, it ends at the first fixed point.
       #
-      # @param _options [Hash]
+      # @param options [Hash]
+      # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
       # @return [Hash] `stay:` and `rescan:` for {Engine::Runner}, or nothing
-      def staying(_options) = {}
+      def staying(options, web)
+        return {} if web.nil? || options[:until_settled]
+
+        info("The engine stays up with its control room: Stop All Local or Ctrl-C ends it.") unless quiet?(options)
+        { stay: true, rescan: Engine::Dispatcher::RESCAN }
+      end
 
       # Signals that stop the run gracefully, the way the first Ctrl-C does.
+      # TERM too: a run with its control room stays up like a service, and a
+      # service manager stops a service that way.
       #
       # @return [Array<String>]
-      def signals = %w[INT]
+      def signals = %w[INT TERM]
 
       # The closing report, and the exit status: 1 when any attempt failed.
       #

@@ -47,8 +47,8 @@ module OpenLanes
       # @param on_board [Proc, nil]
       # @param claims [OpenLanes::Live::Claims, nil] plan claims shared with
       #   other machines; nil when the run is not live, and every plan is ours
-      # @param stay [Boolean] idle past fixed points until every plan is
-      #   finished or a person stops it; see {Dispatcher#done?}
+      # @param stay [Boolean] idle past fixed points until a person stops
+      #   the run; see {Dispatcher#done?}
       # @param rescan [Integer] seconds between rescans while idle
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
@@ -146,8 +146,8 @@ module OpenLanes
         true
       end
 
-      # Run until nothing is dispatchable, or, staying, until every plan is
-      # finished or a person stops it.
+      # Run until nothing is dispatchable, or, staying, until a person stops
+      # it.
       #
       # @yieldparam dispatcher [OpenLanes::Engine::Dispatcher] before it runs, so a
       #   console can attach itself and reach the running jobs

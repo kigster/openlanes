@@ -269,13 +269,24 @@ export default function App() {
           <ControlRoom board={board} connection={connection} fixture={fixture} />
         ) : error ? (
           <main className="loading is-error" role="alert">
-            Could not load the board: {error.message}. Is openlanes run (or openlanes web --demo) running?
+            Could not load the board: {error.message}. Is openlanes start (or openlanes run) running?
           </main>
         ) : (
-          // The server answered with no engine on the board yet (`openlanes web` before `openlanes run`): the stream brings
-          // the first snapshot, and the page draws itself then.
+          // The server answered with no engine on the board yet (`openlanes web` on its own): the stream brings the first
+          // snapshot, and the page draws itself then. Until it does, a bare "waiting" read as a broken page, so it says
+          // what would start one.
           <main className="loading" aria-busy="true">
-            {waiting ? "Waiting for the engine to publish…" : "Connecting to the engine…"}
+            {waiting ? (
+              <>
+                <p>No engine is running for this checkout, so there is no board to show yet.</p>
+                <p>
+                  Please use <code>openlanes start</code>, or start an engine in another terminal by running{" "}
+                  &quot;<code>openlanes run</code>&quot;.
+                </p>
+              </>
+            ) : (
+              "Connecting to the engine…"
+            )}
           </main>
         )}
       </AnnouncerProvider>
