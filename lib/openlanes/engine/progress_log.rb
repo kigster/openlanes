@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "tmpdir"
+
 module OpenLanes
   module Engine
     # One line of `run --log FILE`, laid out as fixed-width columns.
@@ -67,7 +70,25 @@ module OpenLanes
       # @see COLUMN_WIDTHS
       LINE_WIDTH = COLUMN_WIDTHS.sum + (SEPARATOR.length * (COLUMN_WIDTHS.size - 1)) + 2
 
+      # Hex digits of the checkout's path in a default log's name.
+      CHECKOUT_DIGITS = 6
+
       class << self
+        # Where a run's log goes when `--log` names nowhere: the temp
+        # directory, under the checkout's directory name and a short digest
+        # of its full path. The name alone collided: `~/a/minesweeper` and
+        # `~/b/minesweeper` both appended to `openlanes-minesweeper.log`, and
+        # two runs' lines read as one.
+        #
+        # @param root [String] the checkout
+        # @param kind [String, nil] which process logs, e.g. "web"
+        # @return [String] e.g. "/tmp/openlanes-minesweeper-3f9a1c.log"
+        def default_path(root, kind: nil)
+          root = File.expand_path(root)
+          digest = Digest::SHA256.hexdigest(root)[0, CHECKOUT_DIGITS]
+          File.join(Dir.tmpdir, "#{["openlanes", kind, File.basename(root), digest].compact.join("-")}.log")
+        end
+
         # Render one log line: bracketed fixed-width columns, then the message.
         #
         # No colour. The line goes to a file, where an escape sequence is neither
