@@ -6,7 +6,8 @@ import type { CopilotLog } from "./types";
 import { reconcile, useBoard } from "./useBoard";
 import { replies } from "./replies";
 import type { StreamHandlers } from "./events";
-import { fetchCopilot, loadFixtureBoard } from "./client";
+import { loadFixtureBoard } from "./client";
+import { useCopilot } from "../copilot/useCopilot";
 
 const streams: StreamHandlers[] = [];
 const closed = vi.fn();
@@ -59,16 +60,26 @@ it("loads the board, follows the stream, and refetches on reconnect", async () =
   expect(closed).toHaveBeenCalled();
 });
 
-it("adds the stream's copilot turns to the conversation, once it is loaded", async () => {
+// The GET and the stream run at once. A turn the stream delivers while the GET is in flight, which that GET read too
+// early to include, must survive the GET's answer.
+it("keeps a copilot turn that arrives while the conversation's GET is in flight", async () => {
   const client = createQueryClient();
-  fetchMock.mockImplementation(async (path: string) => json(path === "/api/copilot" ? { turns: [], usage: { model: null, up: 0, down: 0 } } : loadFixtureBoard()));
-  renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
-  const turn = { id: "01J.1", from: "copilot", kind: "text", text: "hi", at: "t", usage: null } as const;
+  let answer: (r: Response) => void = () => {};
+  const older = { id: "01JA", from: "you", kind: "text", text: "earlier", at: "2026-10-13T09:00:00Z", usage: null } as const;
+  fetchMock.mockImplementation((path: string) =>
+    path === "/api/copilot" ? new Promise<Response>(resolve => (answer = resolve)) : Promise.resolve(json(loadFixtureBoard())),
+  );
+  const { result } = renderHook(() => (useBoard(), useCopilot()), {
+    wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+  });
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/copilot", expect.anything()));
+  const turn = { id: "01JB.1", from: "copilot", kind: "text", text: "late", at: "2026-10-13T09:00:05Z", usage: { model: "m", up: 9, down: 1 } } as const;
   act(() => streams[0].onCopilot?.(turn));
-  expect(client.getQueryData(COPILOT_KEY)).toBeUndefined(); // nothing loaded yet: the GET will bring it
-  await client.fetchQuery({ queryKey: COPILOT_KEY, queryFn: () => fetchCopilot() });
-  act(() => streams[0].onCopilot?.(turn));
-  expect(client.getQueryData<CopilotLog>(COPILOT_KEY)?.turns).toEqual([turn]);
+  await act(async () => answer(json({ turns: [older], usage: { model: null, up: 0, down: 0 } })));
+  await waitFor(() => expect(result.current.log.turns.map(t => t.text)).toEqual(["earlier", "late"]));
+  expect(result.current.log.usage).toEqual(turn.usage);
+  act(() => streams[0].onCopilot?.(turn)); // the same turn again changes nothing
+  expect(client.getQueryData<CopilotLog>(COPILOT_KEY)?.turns).toHaveLength(2);
 });
 
 // The stream's copilot_cursor is the boundary between what the GET reads and what the stream sends. A read made on

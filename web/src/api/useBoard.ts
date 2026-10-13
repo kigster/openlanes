@@ -4,7 +4,7 @@ import type { Board, CopilotLog, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { openStream, type ConnectionState } from "./events";
 import { BOARD_KEY, COPILOT_KEY } from "./queryClient";
-import { withTurn } from "./copilot";
+import { EMPTY_LOG, withTurn } from "./copilot";
 import { replies } from "./replies";
 
 export type { ConnectionState } from "./events";
@@ -75,8 +75,9 @@ export function useBoard(): BoardState {
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
       },
       onReply: reply => replies.deliver(reply),
-      // Before the conversation's first GET answers there is nothing to add to; that GET brings the turn itself.
-      onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => (old ? withTurn(old, turn) : old)),
+      // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
+      // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
+      onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
       onState: setConnection,
       // Read the conversation only once the stream has said where it starts; a read begun earlier could miss a turn
       // written before the stream opened, which the stream would then never send either.
