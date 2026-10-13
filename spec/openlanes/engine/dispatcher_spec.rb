@@ -106,6 +106,82 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  # The trial's own shape: worktree isolation in a real repository, two
+  # jobs, agents writing into the plan folder in the main tree, as the prompt
+  # tells them to. Whether `.plans` is committed or not, each plan's agents
+  # run one at a time and every Completed moves the folder.
+  describe "worktree isolation in a real repository" do
+    let(:repo) { File.dirname(plans_root) }
+    let(:order) { Queue.new }
+    let(:worktrees) { Dir.mktmpdir("openlanes-wt") }
+    let(:executor) do
+      sign = ->(agent, dir, round) {
+        OpenLanes::Plans::Ledger.append(File.join(dir, agent.ledger.first),
+          "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
+      }
+      lambda { |agent, subject, root:, round: 1, **|
+        order << [agent.name, subject.status.key, File.directory?(root)]
+        dir = subject.feature.path
+        File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n") if agent.name == "leah-researcher"
+        File.write(File.join(dir, "plan.md"), "") if agent.name == "yoda-writer"
+        sleep(0.2)
+        sign.call(agent, dir, round)
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+    end
+
+    def git(*) = system("git", "-C", repo, *, out: File::NULL, err: File::NULL)
+
+    def run_in_worktrees
+      [stamp, order]
+      OpenLanes::Engine::Runner.new(tree:,
+        executor:,
+        agents:    agents.only("leah-researcher", "yoda-writer"),
+        isolation: :worktree,
+        jobs:      2,
+        worktree:  OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil),
+        state:,
+        sleeper:   ->(_) { sleep(0.02) }).call
+    end
+
+    before do
+      plans { |t| t.plan "040.00", :new, "minesweeper", files: { "spec.md" => spec_body } }
+      git("init", "-q", "--initial-branch=main")
+      git("config", "user.email", "ada@example.com")
+      git("config", "user.name", "Ada")
+      File.write(File.join(repo, "README.md"), "# trial\n")
+      git("add", "README.md")
+      git("commit", "-qm", "initial")
+    end
+
+    after { FileUtils.rm_rf(worktrees) }
+
+    shared_examples "a chain that moves the folder" do
+      it "runs leah then yoda, each from the state it handles, and leaves the plan 📋" do
+        attempts = run_in_worktrees
+        seen = Array.new(order.size) { order.pop }
+        aggregate_failures do
+          expect(seen).to eq([["leah-researcher", :new, true], ["yoda-writer", :researched, true]])
+          expect(attempts.map { [it.from, it.to] }).to eq([%i[new researched], %i[researched ready_for_planning]])
+          expect(tree.reload.subjects.first.status.key).to eq(:ready_for_planning)
+        end
+      end
+    end
+
+    context "with .plans untracked" do
+      it_behaves_like "a chain that moves the folder"
+    end
+
+    context "with .plans committed" do
+      before do
+        git("add", ".plans")
+        git("commit", "-qm", "plans")
+      end
+
+      it_behaves_like "a chain that moves the folder"
+    end
+  end
+
   describe "a Completed the folder cannot honour" do
     let!(:built) { plans { |t| t.plan "031.00", :new, "unresearched", files: { "spec.md" => spec_body } } }
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("031.00")) }
