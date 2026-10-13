@@ -6,6 +6,8 @@ import { openStream, type ConnectionState } from "./events";
 import { BOARD_KEY, COPILOT_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
 import { replies } from "./replies";
+import { chatBus } from "../chat/bus";
+import { eventsUrl } from "../chat/page";
 
 export type { ConnectionState } from "./events";
 export type { WireBoard } from "./types";
@@ -78,12 +80,15 @@ export function useBoard(): BoardState {
       // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
       // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
       onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
+      onChat: event => chatBus.deliver(event),
+      // Like the copilot's: the chat is read once the stream has started relaying it, on every open.
+      onChatCursor: () => chatBus.opened(),
       onState: setConnection,
       // Read the conversation only once the stream has said where it starts; a read begun earlier could miss a turn
       // written before the stream opened, which the stream would then never send either.
       onCopilotCursor: () => void client.refetchQueries({ queryKey: COPILOT_KEY }),
       onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
-    });
+    }, eventsUrl());
   }, [client, fixture]);
 
   const data = query.data;

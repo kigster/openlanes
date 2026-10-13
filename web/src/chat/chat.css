@@ -1,0 +1,38 @@
+/* The chat between machines (plan 006, D11). The panel, its header, dragging and tab are floating.css's; the colours
+   come in through CHAT_COLORS, from the --chat-* tokens. */
+.chat .fp-body { padding: 12px 16px; }
+.chat-log { display: flex; flex-direction: column; gap: 12px; }
+.chat-notice { margin: 0; font-size: 13px; font-style: italic; color: var(--ink-soft); text-align: center; }
+.chat-who { margin: 0 0 2px; font-size: 12px; font-weight: 800; }
+.chat-where { font-weight: 500; color: var(--ink-soft); }
+.chat-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-text a { color: #0B4FB3; text-decoration: underline; }
+.chat-said.is-mine .chat-text { padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--chat-head) 12%, #fff); }
+
+/* The composer on the darker orange: a white text box with the conversation's ink, so what is typed reads the same. */
+.chat-composer textarea { box-sizing: border-box; width: 100%; min-height: 64px; resize: none; padding: 10px; border-radius: 8px;
+                          border: 1px solid rgb(0 0 0 / 30%); background: var(--chat-body); color: var(--chat-body-ink); font: inherit; }
+.chat-composer textarea::placeholder { color: #5c5c5c; }
+.chat-composer textarea:focus-visible { outline: 2px solid #000; outline-offset: 1px; }
+.chat-composer .btn-primary { background: #000; border-color: #000; color: #fff; }
+.chat-composer .btn-primary:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.chat-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.chat-count { font-size: 12px; font-variant-numeric: tabular-nums; }
+.chat-count.is-over { font-weight: 800; }
+.chat-error { margin: 6px 0 0; color: #5A0A00; font-weight: 700; }
+.fp-foot .chat-error { color: #fff; }
+
+/* The ▾ that opens a machine's chat menu, sitting on the tab's right like part of it. */
+.tab-machine-wrap { display: inline-flex; align-items: center; flex: none; }
+.tab-machine-wrap .tab-machine { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: 10px; }
+.tab-caret { display: inline-grid; place-items: center; min-height: 40px; min-width: 32px; margin-left: -1px; padding: 0 8px;
+             border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent); border-radius: 0 999px 999px 0;
+             background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink-soft); font: inherit; cursor: pointer; }
+.tab-caret:hover, .tab-caret[data-state="open"] { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
+.tab-caret:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.chat-name .help-body { display: flex; flex-direction: column; gap: 6px; }
+.chat-label { font-weight: 700; }
+.chat-name-input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--hairline); background: var(--enamel);
+                   color: var(--ink); font: inherit; font-size: 16px; }
+.chat-name-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import type { Board, LogLine } from "./api/types";
@@ -43,6 +43,14 @@ it("has a fixture that satisfies the Board contract", () => {
 
 describe("under ?fixture", () => {
   beforeEach(() => window.history.replaceState(null, "", "/?fixture"));
+
+  it("offers no chat, since nothing is connected to chat with", async () => {
+    renderApp();
+    const tab = await screen.findByRole("tab", { name: "sam@ci-runner-2" });
+    fireEvent.contextMenu(tab);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Chat with/ })).toBeNull();
+  });
 
   it("draws the header, the tabs, the board and the status bar", async () => {
     renderApp();
@@ -192,6 +200,23 @@ describe("live", () => {
     act(() => stream.onBoard(structuredClone(next)));
     await userEvent.click(pills().getByRole("button", { name: /^001 / }));
     expect(screen.getByRole("button", { name: "luke-backend" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("opens a machine's chat menu from its caret or a right-click, while a click still opens its board", async () => {
+    const first = sampleBoard();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(first)));
+    renderApp();
+    await screen.findByRole("tab", { name: "Board" });
+    const label = `${first.others[0].node.user}@${first.others[0].node.host}`;
+    const tab = screen.getByRole("tab", { name: label });
+    fireEvent.contextMenu(tab);
+    expect(await screen.findByRole("menuitem", { name: /Start Chat/ })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: `Chat with ${label}` }));
+    expect(await screen.findByRole("menuitem", { name: /Start Chat/ })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(tab);
+    expect(tab).toHaveAttribute("aria-selected", "true");
   });
 
   it("counts only agents still at work in Stop All Local, and keeps their merged rows ten seconds", async () => {

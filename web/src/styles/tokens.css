@@ -18,6 +18,9 @@
   --logo-plate: #D9420B;
   /* The copilot's header and conversation: the same light colours in both themes, with black text. */
   --copilot-head: #88b6ffe3; --copilot-body: #bad6bf;
+  /* The chat between machines (plan 006, D11): the logo's orange header with black text, a white conversation in #222,
+     a darker orange footer, white on it (black would not reach 4.5:1). The same in both themes, and never the copilot's blue. */
+  --chat-head: #D9420B; --chat-head-ink: #000; --chat-body: #fff; --chat-body-ink: #222; --chat-foot: #B23507; --chat-foot-ink: #fff;
   /* The copilot floats on an inverted surface: dark-ish here, light-ish in the dark theme. */
   --inv-plate: #1B2539; --inv-enamel: #111A2B; --inv-ink: #E4EAF3; --inv-ink-soft: #9AA7BC;
   --inv-hairline: #2D3B57; --inv-alarm: #F06A6F; --inv-go: #45D08A; --inv-focus: #8DB2FF; --inv-scheme: dark;

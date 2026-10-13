@@ -16,13 +16,14 @@ function useOpen({ open, onOpenChange }: Openable): [boolean, (open: boolean) =>
   return [open ?? own, (next) => { setOwn(next); onOpenChange?.(next); }];
 }
 
-export function Frame({ className, title, description, children, onOpenAutoFocus }: {
+export function Frame({ className, title, description, children, onOpenAutoFocus, onCloseAutoFocus }: {
   className: string; title: string; description?: ReactNode; children: ReactNode; onOpenAutoFocus?: (e: Event) => void;
+  onCloseAutoFocus?: (e: Event) => void;
 }) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="dialog-overlay" />
-      <Dialog.Content className={`start ${className}`} onOpenAutoFocus={onOpenAutoFocus}>
+      <Dialog.Content className={`start ${className}`} onOpenAutoFocus={onOpenAutoFocus} onCloseAutoFocus={onCloseAutoFocus}>
         <div className="start-head">
           <Dialog.Title asChild><h2>{title}</h2></Dialog.Title>
           {description}

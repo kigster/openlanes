@@ -225,3 +225,53 @@ export interface CopilotMessage {
   id: string;
   text: string;
 }
+
+/** One page in a chat between machines (plan 006): `id` is the page's own, kept in its session storage. */
+export interface ChatParticipant {
+  id: string;
+  name: string; // what the person typed in the Name dialog
+  machine: string; // the Node.id of the machine the page is on
+  label: string; // that machine's "user@host"
+  idle: boolean; // 60 s without touching the chat (D7)
+}
+
+/** An invite to a chat, open to every page on the invited machine until one answers or 60 s pass (D9). */
+export interface ChatInvite {
+  id: string; // UUID
+  chat: string; // the chat's UUID
+  from: ChatParticipant;
+  machine: string; // the invited Node.id
+  label: string; // the invited machine's "user@host"
+  expires_at: Iso;
+}
+
+/** An invite this page sent and is still waiting on. */
+export interface ChatOutgoing {
+  id: string;
+  machine: string;
+  label: string;
+}
+
+/** `GET /api/chat?page=`: the chat this page is in, the invites open to its machine, the ones it waits on. */
+export interface ChatState {
+  chat: { id: string; me: ChatParticipant; participants: ChatParticipant[] } | null;
+  invites: ChatInvite[];
+  outgoing: ChatOutgoing[];
+}
+
+/** `event: chat` on the page's stream. Nothing is stored (D2): what is missed is gone. */
+export type ChatEvent =
+  | { kind: "joined" | "left" | "idle" | "back"; chat: string; who: ChatParticipant; participants: ChatParticipant[] }
+  | { kind: "roster"; chat: string; participants: ChatParticipant[] }
+  | { kind: "said"; chat: string; who: ChatParticipant; id: string; text: string; at: Iso }
+  | { kind: "invited"; invite: ChatInvite }
+  | { kind: "invite_closed"; invite: string; answer: "accepted" | "declined" | "expired" }
+  | { kind: "declined" | "unanswered"; invite: string; machine: string; label: string };
+
+/** What `POST /api/chat/say` answers: the message as sent. */
+export interface ChatSaid {
+  id: string;
+  text: string;
+  at: Iso;
+  who: ChatParticipant;
+}

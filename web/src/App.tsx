@@ -6,6 +6,7 @@ import type { Board as BoardData, Car, Plan } from "./api/types";
 import { useBoard, type ConnectionState } from "./api/useBoard";
 import { useSendCommand } from "./api/useSendCommand";
 import { Board, MachineBoard } from "./board/Board";
+import { ChatRoom, MachineMenu } from "./chat";
 import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
 import { isWorking, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
@@ -84,6 +85,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
     const { pathname, search } = window.location;
     window.history.replaceState(window.history.state, "", pathname + search);
   }, []);
+  // The machine whose chat menu is open (D3): its ▾, or a right-click on its tab.
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const runs = useMemo(() => testRuns(me.plans), [me.plans]);
   const tabs = ["board", "logs", ...runs.map(testTabValue), ...others.map(o => machineTab(o.node.id))];
@@ -162,7 +165,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const busy = me.plans.map(p => p.cars.filter(isWorking).length).filter(n => n > 0);
 
   return (
-    <>
+    <ChatRoom user={me.node.user} enabled={!fixture}>
       <Header
         snapshot={me}
         connection={connection}
@@ -199,20 +202,27 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               pressedSelected.current = current === value;
             };
             return (
-              <Tabs.Trigger
-                key={value}
-                className="tab tab-machine"
-                value={value}
-                title={`Read only: what ${who(o.node)} is working on. Press again to see every machine.`}
-                onPointerDown={note}
-                onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
-                onClick={() => {
-                  if (pressedSelected.current) setMerged(true);
-                  pressedSelected.current = false;
-                }}
-              >
-                {who(o.node)}
-              </Tabs.Trigger>
+              <span key={value} className="tab-machine-wrap">
+                <Tabs.Trigger
+                  className="tab tab-machine"
+                  value={value}
+                  title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
+                  onPointerDown={note}
+                  onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
+                  onClick={() => {
+                    if (pressedSelected.current) setMerged(true);
+                    pressedSelected.current = false;
+                  }}
+                  onContextMenu={e => {
+                    if (fixture) return;
+                    e.preventDefault();
+                    setMenuFor(o.node.id);
+                  }}
+                >
+                  {who(o.node)}
+                </Tabs.Trigger>
+                <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
+              </span>
             );
           })}
         </Tabs.List>
@@ -264,7 +274,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onDropGone={life.dropFromBar}
       />
       <Copilot onCommand={onCommand} models={me.models} />
-    </>
+    </ChatRoom>
   );
 }
 
