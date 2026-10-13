@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "006.00",
+    "slug": "chat-between-machines"
+  },
+  "state": "new",
+  "updated_at": "2026-10-13T12:53:47-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}
