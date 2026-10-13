@@ -27,8 +27,13 @@ RSpec.describe OpenLanes::Web::App, :tree do
       dist:,
       node:,
       tick: 0.01,
-      lifetime: 0.2)
+      lifetime: 0.2,
+      background:)
   end
+  # Work the app starts apart from a request waits here until the example
+  # runs it, so an example can look between the 202 and the answer.
+  let(:later) { [] }
+  let(:background) { ->(&work) { later << work } }
   let(:app) { OpenLanes::Web.app(context) }
   let(:snapshot) { { seq: 7, node: { id: "aaaa", user: "pat", host: "box", checkout: "~/widgets", me: true }, plans: [] } }
   let(:command) { { id: "01JCMD", kind: "stop_all", plan: nil, agent: nil, payload: {} } }
@@ -162,7 +167,23 @@ RSpec.describe OpenLanes::Web::App, :tree do
         expect([last_response.status, body]).to match([202, include("id" => "01JMSG", "from" => "you", "kind" => "text")])
       end
 
-      it "stores the message and the placeholder's answer" do
+      it "answers before the copilot does: only the message is stored when the 202 goes out" do
+        expect([store.xlen(keys.copilot), later.size]).to eq([1, 1])
+      end
+
+      it "then stores the placeholder's answer apart from the request" do
+        later.each(&:call)
+        expect(store.xrange(keys.copilot).map { JSON.parse(it.fields["json"])["id"] }).to eq(%w[01JMSG 01JMSG.1])
+      end
+    end
+
+    context "with the default background" do
+      let(:background) { OpenLanes::Web::Context::THREAD }
+
+      it "answers on a thread of its own" do
+        post_message({ id: "01JMSG", text: "hi" })
+        wait_until = Time.now + 2
+        sleep 0.01 until store.xlen(keys.copilot) == 2 || Time.now > wait_until
         expect(store.xlen(keys.copilot)).to eq(2)
       end
     end
@@ -188,6 +209,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
     before do
       header "X-CSRF-Token", context.csrf
       post "/api/copilot", JSON.generate(id: "01JMSG", text: "hello"), "CONTENT_TYPE" => "application/json"
+      later.each(&:call)
       get "/api/copilot"
     end
 

@@ -127,8 +127,8 @@ RSpec.describe OpenLanes::Web::Events do
       let(:copilot) { OpenLanes::Live.copilot(store:, keys:) }
 
       before do
-        copilot.say({ "id" => "01JOLD", "text" => "before" })
-        run_ticks { |tick| copilot.say({ "id" => "01JNEW", "text" => "after" }) if tick == 1 }
+        copilot.answer(copilot.say({ "id" => "01JOLD", "text" => "before" }))
+        run_ticks { |tick| copilot.answer(copilot.say({ "id" => "01JNEW", "text" => "after" })) if tick == 1 }
       end
 
       it "sends each new turn as a copilot event, leaving out what was said before it connected" do

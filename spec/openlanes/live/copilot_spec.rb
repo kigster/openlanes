@@ -19,12 +19,8 @@ RSpec.describe OpenLanes::Live::Copilot do
         expect(turn.wire).to include(id: "01JMSG", from: "you", kind: "text", text: "Why has 001 not moved?")
       end
 
-      it "stores the message, then the placeholder's answer naming it" do
-        expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JMSG you], %w[01JMSG.1 copilot]])
-      end
-
-      it "answers that nobody is listening yet" do
-        expect(stored.last["text"]).to start_with("c3po-operator is not built yet, so nobody is listening here.")
+      it "stores the message and does not answer it: that is #answer's, run apart from the request" do
+        expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JMSG you]])
       end
     end
 
@@ -32,11 +28,9 @@ RSpec.describe OpenLanes::Live::Copilot do
       expect(copilot.say({ "id" => "01JH", "text" => "hi" }).text).to eq("hi")
     end
 
-    it "hands the person's turn to the responder and stores what it answers" do
-      heard = []
-      responder = ->(turn) { heard << turn.text and [turn_class.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: "ok")] }
-      described_class.new(store:, keys:, responder:).say({ "id" => "01JR", "text" => "hello" })
-      expect([heard, stored.last["text"]]).to eq([["hello"], "ok"])
+    it "never calls the responder" do
+      responder = ->(_) { raise "answered inside the request" }
+      expect { described_class.new(store:, keys:, responder:).say({ "id" => "01JR", "text" => "hello" }) }.not_to raise_error
     end
 
     {
@@ -50,6 +44,31 @@ RSpec.describe OpenLanes::Live::Copilot do
         expect { copilot.say(body) }.to raise_error(described_class::Invalid, reason)
         expect(store.xlen(keys.copilot)).to eq(0)
       end
+    end
+  end
+
+  describe "#answer" do
+    let(:turn) { copilot.say({ "id" => "01JMSG", "text" => "hello" }) }
+
+    it "stores the placeholder's answer after the message, naming it" do
+      copilot.answer(turn)
+      expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JMSG you], %w[01JMSG.1 copilot]])
+    end
+
+    it "answers that nobody is listening yet" do
+      expect(copilot.answer(turn).first.text).to start_with("c3po-operator is not built yet, so nobody is listening here.")
+    end
+
+    it "hands the person's turn to the responder and stores what it answers" do
+      heard = []
+      responder = ->(said) { heard << said.text and [turn_class.new(id: "#{said.id}.1", from: "copilot", kind: "text", text: "ok")] }
+      described_class.new(store:, keys:, responder:).answer(turn)
+      expect([heard, stored.last["text"]]).to eq([["hello"], "ok"])
+    end
+
+    it "answers for a responder that fails, under the id the page waits for" do
+      described_class.new(store:, keys:, responder: ->(_) { raise "claude exited 1" }).answer(turn)
+      expect(stored.last.values_at("id", "text")).to eq(["01JMSG.1", "c3po-operator could not answer: claude exited 1"])
     end
   end
 
@@ -81,9 +100,9 @@ RSpec.describe OpenLanes::Live::Copilot do
     end
 
     it "reads what came after a stream id" do
-      copilot.say({ "id" => "01JA", "text" => "one" })
+      copilot.answer(copilot.say({ "id" => "01JA", "text" => "one" }))
       mark = copilot.newest
-      copilot.say({ "id" => "01JB", "text" => "two" })
+      copilot.answer(copilot.say({ "id" => "01JB", "text" => "two" }))
       expect(copilot.since(mark).map { it.last["id"] }).to eq(%w[01JB 01JB.1])
     end
   end

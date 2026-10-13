@@ -59,16 +59,33 @@ module OpenLanes
         @responder = responder
       end
 
-      # Record the person's message, then whatever the responder answers.
+      # Record the person's message, and nothing more. Answering is
+      # {#answer}'s, run apart from the request that brought the message: a
+      # real responder is a `claude -p` call, and a POST held open for the
+      # whole of it would keep the page from showing the message, or that
+      # the copilot is reading, until the answer was already written.
       #
       # @param input [String, Hash] `CopilotMessage`: `{id, text}`
       # @return [OpenLanes::Live::Copilot::Turn] the person's turn
       # @raise [OpenLanes::Live::Copilot::Invalid] for the API server's 422
       def say(input)
-        turn = message(input)
-        append(turn)
-        @responder.call(turn).each { append(it) }
-        turn
+        message(input).tap { append(it) }
+      end
+
+      # Store whatever the responder answers to +turn+. A responder that
+      # fails is answered for, under the reply id the page waits for, so the
+      # failure shows in the conversation rather than as a page reading
+      # forever.
+      #
+      # @param turn [OpenLanes::Live::Copilot::Turn] the person's, from {#say}
+      # @return [Array<OpenLanes::Live::Copilot::Turn>] what was stored
+      def answer(turn)
+        replies = begin
+          @responder.call(turn)
+        rescue StandardError => e
+          [Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: "c3po-operator could not answer: #{e.message}")]
+        end
+        replies.each { append(it) }
       end
 
       # The conversation as the page draws it on load: the newest turns,
