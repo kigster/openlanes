@@ -76,6 +76,13 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   // #start in the URL opens the idea dialog, so `openlanes start` can send the browser straight to it (W19).
   const [ideaOpen, setIdeaOpen] = useState(() => window.location.hash === "#start");
   const pressedSelected = useRef(false);
+  // The hash is spent on the first load: left in the address bar, every refresh reopened the dialog over a board
+  // that by then had its plan. Stripped in an effect, not the initializer, which StrictMode runs twice.
+  useEffect(() => {
+    if (window.location.hash !== "#start") return;
+    const { pathname, search } = window.location;
+    window.history.replaceState(window.history.state, "", pathname + search);
+  }, []);
 
   const runs = useMemo(() => testRuns(me.plans), [me.plans]);
   const tabs = ["board", "logs", ...runs.map(testTabValue), ...others.map(o => machineTab(o.node.id))];
