@@ -37,6 +37,8 @@ A node is alive while its `snapshot` key exists. Whoever reads `P:nodes` drops t
 | `POST /api/commands` | body `Command`; header `X-CSRF-Token` must equal the token in `GET /api/session`; `202` with `Reply{status: "accepted"}` once queued, `422` with `Reply{status: "refused"}` for an invalid command |
 | `GET /api/copilot` | `CopilotLog`: the newest 100 turns, oldest first, and the copilot's latest `usage` (`{model: null, up: 0, down: 0}` before it has any) |
 | `POST /api/copilot` | body `CopilotMessage` `{id, text}`, text at most 4000 characters; same `X-CSRF-Token` rule; `202` with the person's `CopilotTurn` once stored, `422` with `{error}` otherwise. The answers arrive as `event: copilot` |
+| `GET /api/chat?page=<id>` | `ChatState` (plan 006): `{chat: {id, me, participants} or null, invites, outgoing}` for that page; `422` for a page id that is not 8–64 letters, digits, `-` or `_` |
+| `POST /api/chat/:action` | `start {page, name, machine}`, `invite {page, machine}`, `accept {page, invite, name}`, `decline {page, invite}`, `leave {page}`, `say {page, id, text}` (at most 4000 characters), `presence {page, idle}`; same `X-CSRF-Token` rule; `202` with the action's answer, `422` with `{error}` when refused, `409` for an invite already answered or expired. Everyone hears of it as `event: chat` |
 | `GET /api/session` | `{csrf, node, repo}` |
 | `GET /api/plans/:ordinal/files/:name` | the Markdown of a plan file (spec.md, plan.md, blocked.md), for the drawer and preview |
 | `GET /healthz` | `ok` and the Redis address, password masked |
@@ -54,6 +56,18 @@ The conversation with c3po-operator travels like everything else: messages go in
 | `draft` | `question` (a `Question.id`), `draft` | a quiet card that puts the draft in that question's answer box without sending it |
 
 The server refuses to store a card missing its fields, or a confirm card whose command `POST /api/commands` would refuse. **Placeholder:** until c3po-operator is built, the API server answers every message itself with one `text` turn saying nobody is listening, and `usage` stays null. Replacing the responder in `Live::Copilot` is the whole of that change; the stream, routes and page stay.
+
+## Chat between machines (plan 006)
+
+Pages on machines sharing one Redis chat through Redis pub/sub; nothing said is stored. Each API server subscribes once, relays to its pages over the event stream, and takes their actions by POST.
+
+| Channel or key | Type | Carries |
+| --- | --- | --- |
+| `P:chat:<db>:room:<chat>` | pub/sub, every server through `PSUBSCRIBE P:chat:<db>:room:*` | `join`, `here`, `say`, `idle`, `back`, `leave`, each `{kind, from: ChatParticipant, …}` |
+| `P:chat:<db>:machine:<node>` | pub/sub, every server for that node id | `invite {invite: ChatInvite}`, `absent {invite}`, `settled {invite, answer}` |
+| `P:chat:invite:<invite>` | string, `SET NX EX 120` | `accepted`, `declined` or `expired`: the first answer wins |
+
+`<db>` is the Redis database number, because `PUBLISH` reaches every database. `<node>` is the 24-hex node id, so an invite reaches every page open on that machine. A `ChatEvent` is one of `joined`, `left`, `idle`, `back`, `roster`, `said`, `invited`, `invite_closed`, `declined`, `unanswered` (types in `web/src/api/types.ts`). A page whose stream closes counts as gone after 10 s; invites expire after 60 s; a participant not heard from (a `here` every 20 s) for 60 s counts as gone.
 
 ## Commands, as the engine applies them
 

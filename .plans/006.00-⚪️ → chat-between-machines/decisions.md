@@ -54,3 +54,16 @@ Their colours stay distinct so one is never taken for the other. Chosen by the a
 ## Left to the planner
 
 How the page reaches pub/sub (a browser cannot talk to Redis, so the API server subscribes and relays over SSE, and sends arrive by POST), the channel names, and the floating panel's component boundaries.
+
+## Implementation choices
+
+Made while building, 2026-10-13. None changes D1–D11; they fill in what was left to the planner.
+
+- **Transport.** Each API server holds one `Live::Chat` hub with one Redis subscription of its own. It relays to its pages over the existing `GET /api/events` stream (`event: chat`, no `id:`), and pages act by `POST /api/chat/:action` under the usual CSRF rule. The page names itself with an id kept in session storage (`?page=` on the stream), so a reload is the same participant.
+- **Channels.** `openlanes:<repo>:chat:<db>:room:<chat uuid>` per chat (each server takes them all through one `PSUBSCRIBE …:room:*`), and `openlanes:<repo>:chat:<db>:machine:<node id>` per machine (`SUBSCRIBE`). Redis delivers `PUBLISH` across databases, so the database number is in every name: nodes on different databases never hear each other. The first answer to an invite is a key, `openlanes:<repo>:chat:invite:<uuid>`, `SET NX EX 120`.
+- **Roster without storage.** A joiner publishes `join`; every server with a participant there answers `here`; each server repeats `here` every 20 s, and a participant not heard from in 60 s is shown as having left. Nothing said is kept (D2).
+- **Leaving.** Stop Chat leaves at once. A page whose stream closes has 10 s to come back (a reload or a blip) before the others see "<name> left" (D6). A server that stops says goodbye for its pages.
+- **Invites.** Start Chat on a machine's tab starts the chat and invites that machine. Every server for the invited machine shows the modal on all its open pages; one with no page answers `absent`, and when every server that heard the invite is absent, or none heard it, the inviter sees "<machine> did not answer" at once rather than after 60 s. A decline tells the inviter "<machine> declined". Cancelling the Name dialog after Accept declines.
+- **Menu.** Outside a chat: Start Chat. In one: Stop Chat on a machine already in it; Invite to Chat (greyed while an invite waits) and Stop Chat on one that is not.
+- **Panel.** The tab exists only while the page is in a chat. Starting or joining opens the panel; a page that loads into a chat starts minimised. Your own idling is not announced to you. The footer's few words are white: black on the darker orange is under 4.5:1.
+- **Component boundaries.** `Live::Chat` (hub), `Live::Subscriber`/`MemorySubscriber` (pub/sub on both stores), `Web::Events` (relay), `Web::App` (routes). On the page: `chat/useChat` (state), `chat/bus` (stream to state), `ChatRoom` (provider, dialogs, panel), `MachineMenu`, `ChatPanel` on the shared `FloatingPanel`.
