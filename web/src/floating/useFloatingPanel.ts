@@ -22,13 +22,20 @@ export const BIG_STEP = 80;
  */
 export const statusBarHeight = (): number => document.querySelector<HTMLElement>(".statusbar")?.offsetHeight ?? 0;
 
+/** The window less its scrollbars, which a panel must not sit under; the whole window where nothing is laid out. */
+const viewport = () => ({
+  width: document.documentElement.clientWidth || window.innerWidth,
+  height: document.documentElement.clientHeight || window.innerHeight,
+});
+
 /**
  * Keeps a panel of the given size inside the window and above the bottom inset. When the window is smaller than the
  * panel, its top-left corner wins: the header, which carries the grip and Minimise, stays reachable.
  */
 export function clamp(pos: { x: number; y: number }, size: { width: number; height: number }, inset: number): { x: number; y: number } {
-  const x = Math.max(MARGIN, Math.min(pos.x, window.innerWidth - size.width - MARGIN));
-  const y = Math.max(MARGIN, Math.min(pos.y, window.innerHeight - inset - size.height - MARGIN));
+  const { width, height } = viewport();
+  const x = Math.max(MARGIN, Math.min(pos.x, width - size.width - MARGIN));
+  const y = Math.max(MARGIN, Math.min(pos.y, height - inset - size.height - MARGIN));
   return { x, y };
 }
 

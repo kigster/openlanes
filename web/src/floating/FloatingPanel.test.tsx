@@ -258,3 +258,12 @@ it("measures the status bar it must stay above", () => {
   expect(statusBarHeight()).toBe(60);
   bar.remove();
 });
+
+it("keeps clear of the window's scrollbars", () => {
+  const root = document.documentElement;
+  Object.defineProperty(root, "clientWidth", { configurable: true, value: 1185 });
+  Object.defineProperty(root, "clientHeight", { configurable: true, value: 885 });
+  expect(clamp({ x: 5000, y: 5000 }, { width: WIDTH, height: HEIGHT }, INSET)).toEqual({ x: 1185 - WIDTH - MARGIN, y: 885 - INSET - HEIGHT - MARGIN });
+  Object.defineProperty(root, "clientWidth", { configurable: true, value: 0 });
+  Object.defineProperty(root, "clientHeight", { configurable: true, value: 0 });
+});
