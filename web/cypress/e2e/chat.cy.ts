@@ -1,4 +1,5 @@
 import type { Result } from "axe-core";
+import { MODAL } from "../support/selectors";
 
 // The chat between machines (plan 006), against the demo: its other machine is pretend, so nothing listens for it.
 // That is the case the spec covers end to end here: a chat starts, a message goes round, and the invite says at once
@@ -9,7 +10,9 @@ describe("the chat between machines", () => {
   it("starts a chat from a machine's ▾, sends a message, and hears that nobody answered", () => {
     cy.get('button[aria-label="Chat with sam@ci-runner-2"]').click();
     cy.contains('[role="menuitem"]', "Start Chat").click();
-    cy.get("#chat-name").clear().type("Dana{enter}");
+    // The Name dialog is a modal; the chat panel is a non-modal dialog that stays in the DOM, so scope to MODAL.
+    cy.get(MODAL).should("contain", "Chat with sam@ci-runner-2").find("#chat-name").clear().type("Dana{enter}");
+    cy.get(MODAL).should("not.exist");
     cy.get("#chat").should("be.visible").and("have.attr", "data-dock", "left");
     cy.get("#chat h2").should("have.text", "Dana");
     cy.get("#chat").should("contain", "sam@ci-runner-2 did not answer");
