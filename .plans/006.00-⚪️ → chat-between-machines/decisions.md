@@ -18,5 +18,9 @@ Clicking a machine's tab still opens its board. A small ▾ on the tab, or a rig
 
 A page has one chat panel and is in at most one chat. An invite that arrives while you are in a chat says so; accepting it leaves the current chat and joins the new one. To bring more people in, invite them into the chat you are in.
 
+## D5. Any participant may invite
+
+Everyone in a chat sees **Invite to Chat** on the machines that are not in it yet. There is no host, which fits the help dialog's "nobody can be kept out".
+
 ## Open
 
