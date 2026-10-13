@@ -34,5 +34,9 @@ Typing in the chat, sending, or clicking or focusing inside the panel resets a 6
 
 The dialog appears on every Start Chat and every accepted invite, prefilled with the name last used in this browser, or with the machine's user on first use. Enter confirms.
 
+## D9. An invite reaches every open page on the machine, and expires after 60 seconds
+
+Every control-room page open on the invited machine shows the modal; the first to accept or decline settles it for all of them. With no answer within 60 seconds, or no page open there, the inviter sees "<machine> did not answer".
+
 ## Open
 
