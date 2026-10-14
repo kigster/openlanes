@@ -169,4 +169,70 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       expect([moved.signatures.size, moved.state]).to eq([1, "building_ui"])
     end
   end
+
+  describe "last-known-state" do
+    def entry(source, round, **) = OpenLanes::Plans::LastKnownState.new(source:, round:, status: "Interrupted", **)
+
+    it "is empty when no agent was ever interrupted" do
+      expect([state.last_known_states, state.last_known("luke-backend")]).to eq([{}, nil])
+    end
+
+    it "keeps one entry per agent, the last one written" do
+      state.record_last_known("luke-backend", entry("agent", 1, next_step: "first"))
+      state.record_last_known("luke-backend", entry("agent", 3, next_step: "third"))
+
+      aggregate_failures do
+        expect(written["last-known-state"].keys).to eq(["luke-backend"])
+        expect(state.last_known("luke-backend").next_step).to eq("third")
+      end
+    end
+
+    it "keeps the agent entry when the harness writes for the same round" do
+      state.record_last_known("luke-backend", entry("agent", 1, next_step: "run rspec"))
+      kept = state.record_last_known("luke-backend", entry("harness", 1, note: "harness died"))
+
+      aggregate_failures do
+        expect(kept.source).to eq("agent")
+        expect(state.last_known("luke-backend").next_step).to eq("run rspec")
+      end
+    end
+
+    it "lets an agent entry replace a harness one" do
+      state.record_last_known("rey-frontend", entry("harness", 1, note: "harness died"))
+      state.record_last_known("rey-frontend", entry("agent", 1, done: ["F1"]))
+
+      expect(state.last_known("rey-frontend").source).to eq("agent")
+    end
+
+    it "refuses an agent name that is not one token" do
+      expect { state.record_last_known("two words", entry("agent", 1)) }.to raise_error(OpenLanes::Error, /agent name/)
+    end
+
+    it "writes both shapes in a form the schema accepts" do
+      state.record_last_known("luke-backend",
+        entry("agent", 1, done: ["B1"], remaining: ["B2"], next_step: "go", files_touched: ["a.rb"]))
+      state.record_last_known("rey-frontend", entry("harness", 1, note: "harness died"))
+
+      expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+    end
+
+    %w[pid tokens exit].each do |field|
+      it "rejects an entry carrying machine detail: #{field}" do
+        state.record_last_known("luke-backend", entry("agent", 1))
+        data = written
+        data["last-known-state"]["luke-backend"][field] = 1
+
+        expect(schema.validate(data).to_a).not_to be_empty
+      end
+    end
+
+    it "accepts a document written before the section existed" do
+      state.sign!(agent: "luke-backend", round: 1, status: "Started")
+
+      aggregate_failures do
+        expect(written).not_to have_key("last-known-state")
+        expect(schema.validate(written).to_a).to be_empty
+      end
+    end
+  end
 end

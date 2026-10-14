@@ -46,7 +46,18 @@ module OpenLanes
       #   @return [String] the agent it is for
       # @!attribute [r] body
       #   @return [String]
-      Message = Data.define(:number, :at, :from, :to, :body) do
+      # @!attribute [r] read
+      #   @return [String] "yes" once its recipient ran `mail ack`, "no" until
+      #     then. Set by the reader, never by delivery: a stream ack says the
+      #     bytes arrived, not that anybody read them.
+      Message = Data.define(:number, :at, :from, :to, :body, :read) do
+        # A message written before acks existed carries no `read`, and reads
+        # as unread: nobody ever said they read it.
+        def initialize(number:, at:, from:, to:, body:, read: "no") = super
+
+        # @return [Boolean]
+        def read? = read == "yes"
+
         # @return [String] as it stands in the file
         def to_s = "## #{number}#{SEPARATOR}#{at}#{SEPARATOR}#{from} → #{to}\n\n#{body.strip}\n"
       end
@@ -109,6 +120,73 @@ module OpenLanes
         from_state(state.message!(from:, to:, body: text, at:, after: legacy.map(&:number).max.to_i, command:))
       end
 
+      # Keep a message the harness drained from Redis, unless this plan
+      # already has its number, here or in `mailbox.md`.
+      #
+      # @param message [Hash] as {Live::Mail#drain} returns it
+      # @return [OpenLanes::Plans::Mailbox::Message, nil] as written, nil when
+      #   it was already here
+      # @raise [OpenLanes::Error] for one with no positive number, no body,
+      #   or a sender or recipient that is not one agent name
+      def deliver(message)
+        number = message["number"]
+        raise Error, "a delivered message needs a positive number" unless number.is_a?(Integer) && number.positive?
+        raise Error, "a message needs a body" if message["body"].to_s.strip.empty?
+        raise Error, "a message needs --from and --to, each one agent name" unless name?(message["from"]) && name?(message["to"])
+        return nil if legacy.any? { |m| m.number == number }
+
+        state.deliver!(message)&.then { from_state(it) }
+      end
+
+      # How many messages nobody has acked. The dashboard shows it, and
+      # nothing else reads it: an unacked message is a warning, never an input
+      # to a round (D3).
+      #
+      # @param recipient [String, nil] one reader, or everybody
+      # @return [Integer]
+      def unacked(recipient = nil)
+        messages.count { |m| !m.read? && (recipient.nil? || m.to == recipient) }
+      end
+
+      # Mark one message read.
+      #
+      # @param number [Integer]
+      # @param by [String] the reader, who must be its recipient
+      # @return [OpenLanes::Plans::Mailbox::Message] as it stands now
+      # @raise [OpenLanes::Error] for a number with no message, or a reader
+      #   it was not addressed to
+      def ack(number, by:)
+        number = Integer(number.to_s, exception: false)
+        raise Error, "a message number is a positive integer" unless number&.positive?
+
+        if (old = legacy.find { |m| m.number == number })
+          raise Error, "message ##{number} is for #{old.to}, not #{by}" unless old.to == by
+
+          return old
+        end
+
+        message = state.ack!(number, by:)
+        raise Error, "no message ##{number} in #{File.basename(dir)}" unless message
+
+        from_state(message)
+      end
+
+      # The whole exchange as Markdown, for a person after the round. Returns
+      # the text and writes nothing: the JSON is the record, and a rendered
+      # copy beside it would be a second one to drift.
+      #
+      # @return [String]
+      def render
+        title = "# Mailbox: #{File.basename(dir)}\n"
+        return "#{title}\nNo messages.\n" if messages.empty?
+
+        entries = messages.map do |m|
+          "## #{m.number}#{SEPARATOR}#{m.at}#{SEPARATOR}#{m.from} → #{m.to}#{SEPARATOR}" \
+            "#{m.read? ? "read" : "unread"}\n\n#{m.body.strip}\n"
+        end
+        ([title] + entries).join("\n")
+      end
+
       private
 
       # @return [OpenLanes::Plans::PlanState]
@@ -129,7 +207,12 @@ module OpenLanes
         rescue ArgumentError
           message["at"].to_s
         end
-        Message.new(number: message["number"], at:, from: message["from"], to: message["to"], body: message["body"])
+        Message.new(number: message["number"],
+          at:,
+          from: message["from"],
+          to: message["to"],
+          body: message["body"],
+          read: message["read"] == "yes" ? "yes" : "no")
       end
 
       # @param value [Object]
@@ -149,7 +232,14 @@ module OpenLanes
         text.to_s.each_line(chomp: true) do |line|
           if (heading = HEADING.match(line))
             messages << current.with(body: body.join("\n").strip) if current
-            current = Message.new(number: heading[1].to_i, at: heading[2], from: heading[3], to: heading[4], body: "")
+            # mailbox.md predates acking, and nobody is left to ack it: it
+            # is history, so it counts as read rather than as a warning forever.
+            current = Message.new(number: heading[1].to_i,
+              at: heading[2],
+              from: heading[3],
+              to: heading[4],
+              body: "",
+              read: "yes")
             body = []
           elsif current
             body << line

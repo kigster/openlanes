@@ -129,4 +129,134 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
       expect(messages.map(&:body).uniq.size).to eq(40)
     end
   end
+
+  describe "read receipts" do
+    it "writes a new message unread" do
+      luke_to_rey("first")
+
+      aggregate_failures do
+        expect(mailbox.messages.first.read).to eq("no")
+        expect(OpenLanes::Plans::PlanState.for(folder).messages.first["read"]).to eq("no")
+      end
+    end
+
+    it "flips only the message its reader acks" do
+      luke_to_rey("first")
+      luke_to_rey("second")
+      mailbox.ack(2, by: "rey-frontend")
+
+      expect(mailbox.messages.map { |m| [m.number, m.read] }).to eq([[1, "no"], [2, "yes"]])
+    end
+
+    it "acks an already-read message without complaint" do
+      luke_to_rey("first")
+      mailbox.ack(1, by: "rey-frontend")
+
+      expect(mailbox.ack("1", by: "rey-frontend")).to be_read
+    end
+
+    it "counts a message written before acks existed as unacked" do
+      OpenLanes::Plans::PlanState.for(folder).update do |data|
+        data["messages"] << { "number" => 1, "at" => Time.now.iso8601, "from" => "luke-backend", "to" => "rey-frontend", "body" => "old" }
+      end
+
+      aggregate_failures do
+        expect(mailbox.messages.first).not_to be_read
+        expect(mailbox.unacked).to eq(1)
+      end
+    end
+
+    it "counts unacked mail for everybody or for one reader" do
+      luke_to_rey("one")
+      luke_to_rey("two")
+      rey_to_luke("three")
+      mailbox.ack(1, by: "rey-frontend")
+
+      aggregate_failures do
+        expect(mailbox.unacked).to eq(2)
+        expect(mailbox.unacked("rey-frontend")).to eq(1)
+        expect(mailbox.unacked("luke-backend")).to eq(1)
+      end
+    end
+
+    it "treats mailbox.md history as read, since nobody is left to ack it" do
+      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+
+      aggregate_failures do
+        expect(mailbox.unacked).to eq(0)
+        expect(mailbox.ack(1, by: "rey-frontend")).to be_read
+        expect { mailbox.ack(1, by: "luke-backend") }.to raise_error(OpenLanes::Error, /for rey-frontend/)
+      end
+    end
+
+    it "refuses an unknown number, a non-number, and a reader the message was not for" do
+      luke_to_rey("first")
+
+      aggregate_failures do
+        expect { mailbox.ack(9, by: "rey-frontend") }.to raise_error(OpenLanes::Error, /no message #9/)
+        expect { mailbox.ack("x", by: "rey-frontend") }.to raise_error(OpenLanes::Error, /positive integer/)
+        expect { mailbox.ack(1, by: "luke-backend") }.to raise_error(OpenLanes::Error, /for rey-frontend, not luke-backend/)
+        expect(mailbox.messages.first).not_to be_read
+      end
+    end
+  end
+
+  describe "#render" do
+    it "says so when there is nothing" do
+      expect(mailbox.render).to include("No messages.")
+    end
+
+    it "prints every message with whether it was read" do
+      luke_to_rey("The endpoint is up.")
+      rey_to_luke("Seen.")
+      mailbox.ack(1, by: "rey-frontend")
+
+      aggregate_failures do
+        expect(mailbox.render).to match(/## 1 · .+ · luke-backend → rey-frontend · read\n\nThe endpoint is up\./)
+        expect(mailbox.render).to match(/## 2 · .+ · rey-frontend → luke-backend · unread\n\nSeen\./)
+      end
+    end
+  end
+
+  # What the harness keeps of a message drained from Redis (plan 003, B4).
+  describe "#deliver" do
+    let(:drained) do
+      { "number" => 4, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "up",
+        "read" => "yes" }
+    end
+
+    it "keeps it under its own number, unread whatever it arrived saying" do
+      delivered = mailbox.deliver(drained)
+
+      aggregate_failures do
+        expect(delivered).to have_attributes(number: 4, body: "up", read: "no")
+        expect(mailbox.deliver(drained)).to be_nil
+        expect(mailbox.messages.map(&:number)).to eq([4])
+      end
+    end
+
+    it "keeps them in number order whatever order they arrive in" do
+      mailbox.deliver(drained)
+      mailbox.deliver(drained.merge("number" => 2))
+
+      expect(OpenLanes::Plans::PlanState.for(folder).messages.map { it["number"] }).to eq([2, 4])
+    end
+
+    it "skips a number mailbox.md already holds" do
+      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+
+      aggregate_failures do
+        expect(mailbox.deliver(drained)).to be_nil
+        expect(OpenLanes::Plans::PlanState.for(folder).messages).to eq([])
+      end
+    end
+
+    it "refuses one with no number, no body, or no single sender" do
+      aggregate_failures do
+        expect { mailbox.deliver(drained.merge("number" => "4")) }.to raise_error(OpenLanes::Error, /positive number/)
+        expect { mailbox.deliver(drained.merge("body" => " ")) }.to raise_error(OpenLanes::Error, /body/)
+        expect { mailbox.deliver(drained.merge("from" => "two words")) }.to raise_error(OpenLanes::Error, /one agent name/)
+      end
+    end
+  end
 end

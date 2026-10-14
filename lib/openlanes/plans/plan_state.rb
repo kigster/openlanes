@@ -192,11 +192,97 @@ module OpenLanes
           next if message
 
           number = [data["messages"].map { |m| m["number"] }.max.to_i, after].max + 1
-          message = { "number" => number, "at" => at.iso8601, "from" => from, "to" => to, "body" => body }
+          message = { "number" => number, "at" => at.iso8601, "from" => from, "to" => to, "body" => body, "read" => "no" }
           message["command"] = command if command
           data["messages"] << message
         end
         message
+      end
+
+      # Keep a message that arrived with its number already given, as one
+      # drained from Redis does (B4). A number this file already holds is
+      # the same message: `mail send` writes here before it publishes, so in
+      # the usual case nothing is written at all, and the file's mtime stays.
+      #
+      # @param message [Hash] as {#message!} writes it, string keys
+      # @return [Hash, nil] the message as written, nil when it was here
+      def deliver!(message)
+        number = message["number"]
+        return nil if messages.any? { |m| m["number"] == number }
+
+        delivered = nil
+        update do |data|
+          next if data["messages"].any? { |m| m["number"] == number }
+
+          # Unread whatever it arrived saying: only `mail ack` in this file
+          # says its reader read it.
+          delivered = message.slice("number", "at", "from", "to", "body", "command").merge("read" => "no")
+          data["messages"] << delivered
+          data["messages"].sort_by! { |m| m["number"].to_i }
+        end
+        delivered
+      end
+
+      # Mark one message read, under the lock, so an ack and a send in the
+      # same second cannot lose each other. Only its recipient may ack it:
+      # `read` says the reader read it, not that somebody did.
+      #
+      # @param number [Integer]
+      # @param by [String] the agent acking, who must be the recipient
+      # @return [Hash, nil] the message as written, nil when there is no
+      #   such number
+      # @raise [OpenLanes::Error] when +by+ is not the recipient
+      def ack!(number, by:)
+        message = nil
+        update do |data|
+          message = data["messages"].find { |m| m["number"] == number }
+          next unless message
+          raise Error, "message ##{number} is for #{message["to"]}, not #{by}" unless message["to"] == by
+
+          message["read"] = "yes"
+        end
+        message
+      end
+
+      # ---- last-known-state -------------------------------------------------
+
+      # Where the resume records live in the document.
+      LAST_KNOWN = "last-known-state"
+
+      # Keep one agent's resume record, keyed by agent, so an agent
+      # interrupted in rounds 1 and 3 leaves one entry, not two nobody prunes.
+      # A harness entry does not replace the agent's own of the same round or
+      # later: see {LastKnownState#supersedes?}.
+      #
+      # @param agent [String]
+      # @param entry [OpenLanes::Plans::LastKnownState]
+      # @return [OpenLanes::Plans::LastKnownState] the entry kept, which is
+      #   the existing one when the new one may not replace it
+      # @raise [OpenLanes::Error] on an agent name that is not one token
+      def record_last_known(agent, entry)
+        raise Error, "a resume record needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+
+        kept = entry
+        update do |data|
+          section = (data[LAST_KNOWN] ||= {})
+          existing = section[agent] && LastKnownState.from_h(section[agent])
+          if entry.supersedes?(existing)
+            section[agent] = entry.to_json_h
+          else
+            kept = existing
+          end
+        end
+        kept
+      end
+
+      # @param agent [String]
+      # @return [OpenLanes::Plans::LastKnownState, nil]
+      def last_known(agent) = last_known_states[agent]
+
+      # @return [Hash{String => OpenLanes::Plans::LastKnownState}] empty when
+      #   no agent was ever interrupted
+      def last_known_states
+        (read[LAST_KNOWN] || {}).transform_values { |h| LastKnownState.from_h(h) }
       end
 
       # The signatures as ledger entries, so the dispatcher reads them exactly
