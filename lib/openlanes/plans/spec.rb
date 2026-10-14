@@ -129,8 +129,10 @@ module OpenLanes
       # without: plan.md must carry its copy.
       HOW_TO_TELL = HOW_TO_VERIFY_HEADING
 
-      # The heading on a line of its own, whatever follows it.
-      HOW_TO_VERIFY_LINE = /^#{Regexp.escape(HOW_TO_VERIFY_HEADING)}[ \t]*$/
+      # The heading on a line of its own. An author's editor may type a curly apostrophe (`it’s`) or leave the
+      # question mark off; either must still find the section, not drop the
+      # checks without a word.
+      HOW_TO_VERIFY_LINE = /^##[ \t]+how to tell it['‘’]s working\??[ \t]*$/i
 
       FILENAME = "spec.md"
 

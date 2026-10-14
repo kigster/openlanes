@@ -76,6 +76,10 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(described_class.parse("# T\n\n#{heading}\n\nOpen the board.\n").how_to_test).to eq(["Open the board."])
     end
 
+    it "finds the heading with a curly apostrophe and no question mark" do
+      expect(described_class.parse("# T\n\n## How to tell it\u2019s working\n\n- run it\n").how_to_test).to eq(["run it"])
+    end
+
     it "falls back to how-to-verify when the heading is missing" do
       expect(parse("how-to-verify: bundle exec rspec").how_to_test).to eq(["bundle exec rspec"])
     end
