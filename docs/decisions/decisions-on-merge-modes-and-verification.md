@@ -28,7 +28,7 @@ Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 | --- | --- | --- |
 | `ready-for-review` | `c2e0c6` | PR open, review not started |
 | `review-in-progress` | `fff3b0` light yellow | hansolo is reviewing |
-| `review-passed` | `0b6e2e` deep green | passed with non-critical findings still open |
+| `review-passed` | `1d76db` blue | passed with non-critical findings still open |
 | `ready-to-merge` | `2ea043` bright green | passed with nothing open |
 | `review-rejected` | `b60205` deep red | changes needed |
 | `ok-to-merge` | `1a7f37` | chewie verified it |

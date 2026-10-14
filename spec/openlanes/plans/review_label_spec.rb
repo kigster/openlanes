@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
     expect(described_class::ALL.to_h { |l| [l.name, l.colour] }).to eq(
       "ready-for-review"   => "c2e0c6",
       "review-in-progress" => "fff3b0",
-      "review-passed"      => "0b6e2e",
+      "review-passed"      => "1d76db",
       "ready-to-merge"     => "2ea043",
       "review-rejected"    => "b60205",
       "ok-to-merge"        => "1a7f37"

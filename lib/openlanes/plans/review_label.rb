@@ -20,7 +20,7 @@ module OpenLanes
         new(name: "ready-for-review", colour: "c2e0c6", meaning: "PR open, review not started", passing: false),
         new(name: "review-in-progress", colour: "fff3b0", meaning: "hansolo is reviewing", passing: false),
         new(name: "review-passed",
-          colour: "0b6e2e",
+          colour: "1d76db",
           meaning: "passed with non-critical findings still open",
           passing: true),
         new(name: "ready-to-merge", colour: "2ea043", meaning: "passed with nothing open", passing: true),
