@@ -65,6 +65,13 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(spec.how_to_test).to eq(["run it", "see green"])
     end
 
+    # Copied into plan.md as `- item`; a step's command must arrive with it.
+    it "keeps a step's indented lines and fenced block with that step" do
+      body = "#{heading}\n\n- Run this:\n\n  ```bash\n  bin/setup\n\n  - not an item\n  ```\n- see green\n  in the board\n"
+      expect(described_class.parse(body).how_to_test)
+        .to eq(["Run this:\n```bash\nbin/setup\n\n- not an item\n```", "see green\nin the board"])
+    end
+
     it "takes plain lines when the section has no bullets" do
       expect(described_class.parse("# T\n\n#{heading}\n\nOpen the board.\n").how_to_test).to eq(["Open the board."])
     end
