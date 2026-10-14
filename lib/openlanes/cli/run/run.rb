@@ -192,12 +192,31 @@ module OpenLanes
       #
       # @param options [Hash]
       # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
-      # @return [Hash] `stay:` and `rescan:` for {Engine::Runner}, or nothing
+      # A staying run is also the one that watches the pull requests a person
+      # merges (M4): it is still up when they do. A run that ends cannot wait
+      # for a merge, so it names the pull requests it leaves unwatched instead.
+      #
+      # @return [Hash] `stay:`, `rescan:` and `watch:` for {Engine::Runner}, or nothing
       def staying(options, web)
         return {} if web.nil? || options[:until_settled]
 
         @stays = "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
-        { stay: true, rescan: Engine::Dispatcher::RESCAN }
+        watch = Engine::PrWatch.new(github: Vcs.github) if Config.current.human_merges? && !dry_run?(options)
+        { stay: true, rescan: Engine::Dispatcher::RESCAN, watch: }
+      end
+
+      # The open pull requests a run that does not stay leaves for a person,
+      # logged so the next `openlanes start` is known to be the one to watch them.
+      #
+      # @param runner [OpenLanes::Engine::Runner]
+      # @return [void]
+      def unwatched(runner)
+        return if @stays || !Config.current.human_merges?
+
+        open = runner.in_scope.flat_map { |s| s.pull_requests.select(&:open?).map { "#{s.feature.ordinal} ##{it.number}" } }
+        return if open.empty?
+
+        UI.log("not watching #{open.join(", ")}: openlanes start watches pull requests until they merge")
       end
 
       # Signals that stop the run gracefully, the way the first Ctrl-C does.
@@ -215,6 +234,7 @@ module OpenLanes
       # @param seconds [Float]
       # @return [void]
       def finish(runner, attempts, options, seconds:)
+        unwatched(runner)
         report(runner, attempts, options, seconds:)
         exit(failures(attempts).empty? ? 0 : 1)
       end

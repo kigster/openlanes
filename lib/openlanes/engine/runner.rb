@@ -50,9 +50,11 @@ module OpenLanes
       # @param stay [Boolean] idle past fixed points until a person stops
       #   the run; see {Dispatcher#done?}
       # @param rescan [Integer] seconds between rescans while idle
+      # @param watch [OpenLanes::Engine::PrWatch, nil] see {Dispatcher#initialize}
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
-        sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN)
+        sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
+        watch: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -68,6 +70,7 @@ module OpenLanes
         @claims = claims
         @stay = stay
         @rescan = rescan
+        @watch = watch
         @attempts = []
         @dropped = []
         @jobs = isolated? ? jobs : 1
@@ -159,7 +162,8 @@ module OpenLanes
           sleeper:  @sleeper,
           on_board: @on_board,
           stay:     @stay,
-          rescan:   @rescan)
+          rescan:   @rescan,
+          watch:    @watch)
         yield dispatcher if block_given?
         @attempts = dispatcher.run
       end

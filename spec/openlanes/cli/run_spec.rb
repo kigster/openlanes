@@ -807,6 +807,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
         result
         aggregate_failures do
           expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
+          expect(OpenLanes::Engine::Runner).to have_received(:new)
+            .with(hash_including(watch: an_instance_of(OpenLanes::Engine::PrWatch)))
           expect(stderr).to include("The engine stays up with its control room: Stop All Local or Ctrl-C ends it.")
           expect(web).to have_received(:stop)
         end
@@ -814,9 +816,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
 
     context "with --until-settled" do
-      it "ends at the fixed point, as CI wants" do
+      it "ends at the fixed point, as CI wants, watching no pull request" do
         result
-        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
+        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay, :watch))
       end
     end
 

@@ -170,12 +170,28 @@ module OpenLanes
         @mutex.synchronize { @data["live"] = data }
       end
 
+      # Pull requests open and waiting on a person, by plan, as the
+      # human-mode watch last saw them. Here so `openlanes list-plans`, a
+      # process of its own, can say who owes what while the engine runs.
+      #
+      # @return [Hash{String => Array<Integer>}]
+      def waiting_on = @mutex.synchronize { (@data["waiting_on"] || {}).transform_values(&:dup) }
+
+      # @param data [Hash{String => Array<Integer>}] written by the next {#save}
+      # @return [void]
+      def waiting_on=(data)
+        @mutex.synchronize { @data["waiting_on"] = data.transform_keys(&:to_s) }
+      end
+
       # @param ordinal [String]
       # @return [Array<Hash>]
       def stages(ordinal) = @mutex.synchronize { (@data.dig("plans", ordinal.to_s, "stages") || []).map(&:dup) }
 
       # @return [Array<String>] every ordinal with a stage recorded
       def plans = @mutex.synchronize { @data["plans"].keys }
+
+      # @return [Boolean] whether a run wrote this file and is still alive
+      def running? = !@data.dig("run", "pid").nil? && !previous_run_dead?
 
       # @return [Boolean] whether the run that last wrote this file is gone
       def previous_run_dead?

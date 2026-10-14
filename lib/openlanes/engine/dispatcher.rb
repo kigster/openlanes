@@ -105,9 +105,15 @@ module OpenLanes
       #   a person stops the run
       # @param rescan [Integer] idle ticks, about a second each, between
       #   rescans of the tree while staying
+      # @param watch [OpenLanes::Engine::PrWatch, nil] the human-mode watch
+      #   over open pull requests (M4); nil when nobody merges by hand or the
+      #   run does not stay
       def initialize(runner:, state: nil, rounds: nil, sleeper: ->(seconds) { sleep(seconds) }, on_board: nil,
-        stay: false, rescan: RESCAN)
+        stay: false, rescan: RESCAN, watch: nil)
         @runner = runner
+        @watch = watch
+        @watching = nil
+        @waiting_on = {}
         @stay = stay
         @rescan = rescan
         @idle = false
@@ -176,6 +182,7 @@ module OpenLanes
         unblock_answered
         poll
         drain_mail
+        watch_pull_requests
         # On threads: a kill waits out TERM before KILL, and the board must not.
         @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
         dispatch unless Execution::Control.quit? || resting?
@@ -378,7 +385,8 @@ module OpenLanes
           root: @runner.root,
           running: @running.size,
           live_up: @running.sum { |j| j.up.to_i },
-          live_down: @running.sum { |j| j.down.to_i })
+          live_down: @running.sum { |j| j.down.to_i },
+          waiting_on: @waiting_on.dup)
       end
 
       private
@@ -422,6 +430,52 @@ module OpenLanes
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Boolean]
       def locked_elsewhere?(subject) = Plans::Lock.read(subject.feature.path)&.held_elsewhere? || false
+
+      # ---- pull requests a person owes (M4) ---------------------------------
+
+      # The `gh` call runs on a thread of its own, so a slow GitHub never
+      # stretches the one-second tick; its outcomes are applied on the first
+      # tick after it returns, here, where every other rename happens.
+      #
+      # @return [void]
+      def watch_pull_requests
+        return unless @watch
+
+        if @watching && !@watching.alive?
+          settle_watch(@watching.value)
+          @watching = nil
+        end
+        return if @watching || !@watch.due?
+
+        subjects = @runner.in_scope.reject { untouchable.include?(it.feature.ordinal.to_s) }
+        @watching = Thread.new do
+          @watch.poll(subjects)
+        rescue OpenLanes::Error => e
+          UI.log("pull requests unwatched this time: #{e.message.lines.first.to_s.strip}")
+          nil
+        end
+      end
+
+      # @param outcomes [Array<OpenLanes::Engine::PrWatch::Outcome>, nil] nil when the poll failed
+      # @return [void]
+      def settle_watch(outcomes)
+        return if outcomes.nil?
+
+        @waiting_on = outcomes.select { it.kind == :waiting }.group_by(&:plan).transform_values { it.map(&:pr) }
+        # Every agent defined, not this run's roster: the mail waits in the
+        # plan folder for whichever run next starts the builders, and a run
+        # typed with `--agent hansolo-reviewer` must not lose it.
+        effects = PrOutcomes.new(tree_dir: @runner.tree.dir, agents: Agents::Registry.new(dir: @runner.agents.dir))
+        outcomes.each do |outcome|
+          next if outcome.kind == :waiting || untouchable.include?(outcome.plan)
+
+          applied = effects.apply(outcome) or next
+          @finished_plans.delete(applied.plan) if applied.to
+          UI.log("#{applied.plan}: #{applied.note}#{" → #{Plans::STATUS_BY_KEY.fetch(applied.to)}" if applied.to}")
+          wake!
+        end
+        @state&.waiting_on = @waiting_on
+      end
 
       # ---- discarding -------------------------------------------------------
 
@@ -1364,7 +1418,9 @@ module OpenLanes
           Published.new(attempt: attempt.with(ok: false, note: "#{attempt.note}; publish refused: #{publication.refusal}"), subject:, refused: true)
         elsif publication&.published?
           verb = publication.updated ? "pushed to" : "opened"
-          Published.new(attempt: attempt.with(note: "#{attempt.note}; #{verb} #{publication.url}"), subject: fresh(task) || subject, refused: false)
+          note = "#{attempt.note}; #{verb} #{publication.url}"
+          note += "; #{Plans::ReviewLabel::INITIAL} not applied: #{publication.label_error}" if publication.label_error
+          Published.new(attempt: attempt.with(note:), subject: fresh(task) || subject, refused: false)
         else
           unchanged
         end
