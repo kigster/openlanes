@@ -1,12 +1,16 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 28 | [\[003.00\] Inter Agent Communication](https://github.com/kigster/openlanes/pull/28) | open |
+
 ## Verification, 2026-10-14
 
 Run in the worktree on branch `kig/003.00-inter-agent-communication`, rebased on `origin/main`:
 
 | Command | Result |
 | :-- | :-- |
-| `bundle exec rspec` | 2307 examples, 0 failures, coverage 98.67% |
+| `just test` (`bundle exec rspec`) | 2309 examples, 0 failures, coverage 98.65% |
 | `just lint` (`bundle exec rubocop`) | 317 files, no offenses |
 | `cd web && npx vitest run` | 29 files, 296 tests passed |
 | `cd web && npx eslint .` | clean |
