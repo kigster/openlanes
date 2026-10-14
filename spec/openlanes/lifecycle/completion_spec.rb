@@ -29,6 +29,15 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
       MARKDOWN
     end
 
+    context "when a check spans lines" do
+      let(:frontmatter) { "---\nhow-to-verify: |\n  run the CLI\n  check its output\n---\n" }
+
+      it "copies it as one item, its continuation indented under it" do
+        described_class.copy(subject_plan)
+        expect(subject_plan.read("plan.md")).to end_with("## How to verify\n\n- run the CLI\n  check its output\n")
+      end
+    end
+
     context "when resync dirs has moved how-to-verify: into the body (M10)" do
       let(:frontmatter) { "---\ntask-completed-when:\n  - the editor opens\n---\n" }
       let(:spec_text) { "#{frontmatter}#{spec_body}\n## How to tell it's working?\n\n- bundle exec rspec\n" }

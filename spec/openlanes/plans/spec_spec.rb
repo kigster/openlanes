@@ -198,6 +198,44 @@ RSpec.describe OpenLanes::Plans::Spec do
       end
     end
 
+    # A regex took the blank line for the end of the entry and left `- b`
+    # behind in the frontmatter, now under `lane:`.
+    it "removes the whole list when a blank line separates its items" do
+      before = "---\nhow-to-verify:\n  - a\n\n  - b\nlane: quick\n---\n# T\n"
+
+      expect(migrate(before)).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n- b\n")
+    end
+
+    # A quoted key passed `meta.key?` but no regex removed it, so every
+    # resync appended the checks again.
+    it "removes a quoted key, and a second migration changes nothing" do
+      ["\"how-to-verify\"", "'how-to-verify'"].each do |key|
+        once = migrate("---\n#{key}: [a]\nlane: quick\n---\n# T\n")
+
+        aggregate_failures do
+          expect(once).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n")
+          expect(migrate(once)).to equal(once)
+        end
+      end
+    end
+
+    it "leaves a flow-mapping frontmatter alone rather than cut a shared line" do
+      text = "---\n{lane: quick, how-to-verify: a}\n---\n# T\n"
+
+      expect(migrate(text)).to equal(text)
+    end
+
+    # A `|` block keeps its lines; the section must too, and read them back
+    # as one check.
+    it "keeps a multi-line check as one item, and reads it back whole" do
+      migrated = migrate("---\nhow-to-verify: |\n  run the CLI\n  check its output\n---\n# T\n")
+
+      aggregate_failures do
+        expect(migrated).to eq("# T\n\n## How to tell it's working?\n\n- run the CLI\n  check its output\n")
+        expect(described_class.parse(migrated).how_to_verify).to eq(["run the CLI\ncheck its output"])
+      end
+    end
+
     it "reads the checks from the section once the key has moved" do
       migrated = migrate("---\nhow-to-verify:\n  - bundle exec rspec\n---\n# T\n")
 

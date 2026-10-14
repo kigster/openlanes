@@ -124,9 +124,6 @@ module OpenLanes
       # The heading on a line of its own, whatever follows it.
       HOW_TO_VERIFY_LINE = /^#{Regexp.escape(HOW_TO_VERIFY_HEADING)}[ \t]*$/
 
-      # The key and the indented or listed lines that continue its value.
-      HOW_TO_VERIFY_YAML = /^#{Regexp.escape(HOW_TO_VERIFY_KEY)}:.*\n(?:[ \t-].*\n)*/
-
       FILENAME = "spec.md"
 
       class << self
@@ -159,19 +156,28 @@ module OpenLanes
         # dropped.
         #
         # @param text [String] a whole spec.md
-        # @return [String] +text+ itself when there is no key to move
+        # @return [String] +text+ itself when there is no key to move, or no
+        #   way to remove it that leaves the other keys exactly as they were
         def migrate_how_to_verify(text)
           match = Frontmatter::PATTERN.match(text) or return text
           meta, = Frontmatter.split(text)
           return text unless meta.key?(HOW_TO_VERIFY_KEY)
 
+          front = without_key("#{match[1]}\n", HOW_TO_VERIFY_KEY, meta) or return text
           items = notes(meta, HOW_TO_VERIFY_KEY, [])
-          front = "#{match[1]}\n".sub(HOW_TO_VERIFY_YAML, "")
           head = front.strip.empty? ? "" : "---\n#{front}---\n"
           "#{head}#{append_checks(match[2], items)}"
         rescue Psych::Exception
           text
         end
+
+        # One check as a Markdown list item. A check written as a YAML block
+        # scalar spans lines; its continuation lines are indented under the
+        # item, so they stay part of it rather than becoming loose prose.
+        #
+        # @param item [String]
+        # @return [String] without a trailing newline
+        def list_item(item) = "- #{item.gsub("\n", "\n  ")}"
 
         # @param meta [Hash]
         # @return [OpenLanes::Plans::Spec]
@@ -191,23 +197,62 @@ module OpenLanes
 
         private
 
+        # The YAML source of +yaml+ with +key+'s entry cut out, from the
+        # key's line to the end of its value as Psych located them. A regex
+        # over the text took a blank line between list items for the end of
+        # the entry, leaving the later items behind, and never matched a
+        # quoted key at all. The cut is kept only when what is left loads as
+        # the same mapping less that key; anything else (a flow mapping, a key
+        # sharing a line) is not cut.
+        #
+        # @param yaml [String]
+        # @param key [String]
+        # @param meta [Hash] +yaml+, loaded
+        # @return [String, nil]
+        def without_key(yaml, key, meta)
+          root = Psych.parse(yaml)&.root
+          return nil unless root.is_a?(Psych::Nodes::Mapping)
+
+          name, value = root.children.each_slice(2).find { |k, _| k.is_a?(Psych::Nodes::Scalar) && k.value == key }
+          return nil unless name
+
+          stop = value.end_column.zero? ? value.end_line : value.end_line + 1
+          lines = yaml.lines
+          rest = (lines[0...name.start_line] + lines[stop..].to_a).join
+          left, = Frontmatter.split("---\n#{rest}\n---\n")
+          rest if left == meta.except(key)
+        end
+
         # The list items under `## How to tell it's working?`, up to the next
         # heading of the same level. Prose there is the author's, and stays
-        # theirs; only items are checks.
+        # theirs; only items are checks. An indented line under an item
+        # continues it, as {list_item} writes a multi-line check.
         #
         # @param body [String]
         # @return [Array<String>]
         def section_items(body)
           start = body =~ HOW_TO_VERIFY_LINE or return []
           section = body[start..].lines.drop(1).take_while { !it.start_with?("## ") }
-          section.filter_map { it[/\A\s*(?:[-*]|\d+\.)\s+(.+)/, 1]&.strip }
+          items = []
+          open = false
+          section.each do |line|
+            if (item = line[/\A\s*(?:[-*]|\d+\.)\s+(.+)/, 1])
+              items << item.strip
+              open = true
+            elsif open && line.match?(/\A[ \t]+\S/)
+              items[-1] = "#{items.last}\n#{line.strip}"
+            elsif !line.strip.empty?
+              open = false
+            end
+          end
+          items
         end
 
         # @param body [String]
         # @param items [Array<String>]
         # @return [String]
         def append_checks(body, items)
-          list = items.map { "- #{it}\n" }.join
+          list = items.map { "#{list_item(it)}\n" }.join
           body = "#{body}\n" unless body.end_with?("\n")
           start = body =~ HOW_TO_VERIFY_LINE
           return "#{body.rstrip}\n\n#{HOW_TO_VERIFY_HEADING}\n\n#{list}" unless start
