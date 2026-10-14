@@ -75,6 +75,27 @@ describe("under ?fixture", () => {
     expect(screen.getByRole("heading", { name: /001 Clean agent boundaries and transitions: tests/ })).toBeInTheDocument();
   });
 
+  it("walks every tab with the arrow keys, the machines' tabs included", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const run = await screen.findByRole("tab", { name: /001 tests/ });
+    const sam = screen.getByRole("tab", { name: "sam@ci-runner-2" });
+    act(() => run.focus());
+    await user.keyboard("{ArrowRight}");
+    expect(sam).toHaveFocus();
+    expect(sam).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: "Board" })).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(sam).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(run).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(sam).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(screen.getByRole("tab", { name: "Board" })).toHaveFocus();
+  });
+
   it("toggles a machine tab: first its board, then every machine on the Board", async () => {
     const user = userEvent.setup();
     renderApp();

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import * as Tabs from "@radix-ui/react-tabs";
 import { MotionConfig, useReducedMotion } from "motion/react";
@@ -53,6 +53,25 @@ function writeMerged(on: boolean): void {
 interface OpenCar {
   plan: string;
   agent: string;
+}
+
+const STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
+
+/**
+ * The tabs sit in several tablists (each machine's in its own, beside its ▾), each a roving-focus group of its own.
+ * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list;
+ * focusing a tab selects it, so the keys still switch views.
+ */
+function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
+  const from = e.target;
+  const step = STEPS[e.key];
+  const edge = e.key === "Home" || e.key === "End";
+  if ((!step && !edge) || !(from instanceof HTMLElement) || from.getAttribute("role") !== "tab") return;
+  const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]'));
+  const at = tabs.indexOf(from);
+  const to = edge ? (e.key === "Home" ? 0 : tabs.length - 1) : (at + step + tabs.length) % tabs.length;
+  e.preventDefault(); // the group's own handler stands down for a prevented event
+  tabs[to]?.focus();
 }
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
@@ -177,8 +196,9 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         help={<HelpDialog />}
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab}>
-        {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3). */}
-        <div className="tabs">
+        {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
+            the arrow keys still walk every tab as one row. */}
+        <div className="tabs" onKeyDownCapture={acrossTabs}>
           <Tabs.List className="tabs-list" aria-label="Views">
             <Tabs.Trigger className="tab" value="board">
               Board
