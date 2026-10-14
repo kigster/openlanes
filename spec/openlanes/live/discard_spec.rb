@@ -73,7 +73,7 @@ RSpec.describe "Discarding a plan", :tree do
     it "resets the worktree, sends the plan back one state, answers done, and starts it again from there" do
       aggregate_failures do
         expect(reply_to("01JD")).to include("status" => "done",
-          "reason" => "001.00 reset, and went back from 🟡 Building to ⭐️ Planned")
+          "reason" => "001.00 reset, and went back from 🟡 Building to ⭐ Planned")
         expect(File.read(File.join(checkout, "app.rb"))).to eq("puts :ok\n")
         expect(File.exist?(File.join(checkout, "scratch.rb"))).to be(false)
         expect(executor.calls.size).to be > 2

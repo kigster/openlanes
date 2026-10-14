@@ -69,7 +69,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
       expect(tree.reload && unblocker.resolve(["001,002"]).size).to eq(2)
     end
 
-    # ⭕️ is derived from `blocked.md`, so gating the drain on the emoji made
+    # ⭕ is derived from `blocked.md`, so gating the drain on the emoji made
     # the tool circular: a file numbered some other way never earned the emoji,
     # so `unblock` refused it, so it could never be fixed.
     it "gates on the file, not on the folder's emoji" do
@@ -132,7 +132,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
       expect(outcome).to be_cleared
     end
 
-    # The folder is renamed out of ⭕️ by the same resync pass the run loop
+    # The folder is renamed out of ⭕ by the same resync pass the run loop
     # makes, so the outcome has to describe the folder as it stands now.
     it "reads the folder back under whatever name the drain left it with" do
       subject_plan = blocked_plan
@@ -168,7 +168,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
       subject_plan = blocked_plan
       described_class.new(tree:, agent:, executor: folding(1, 2), commit: false).call([subject_plan])
 
-      expect(File.basename(tree.reload.find("001.00").feature.path)).to include("⭕️")
+      expect(File.basename(tree.reload.find("001.00").feature.path)).to include("⭕")
     end
 
     it "has nothing to say about an empty list" do

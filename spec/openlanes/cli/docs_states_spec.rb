@@ -33,13 +33,13 @@ RSpec.describe "derived-output commands" do
     it "prints the whole conventions document when no output is named" do
       out, = run(command, output: nil)
 
-      expect(out).to include("⚪️", "spec.md")
+      expect(out).to include("⚪", "spec.md")
     end
 
     it "prints the document for -o -" do
       out, = run(command, output: "-")
 
-      expect(out).to include("⚪️", "spec.md")
+      expect(out).to include("⚪", "spec.md")
     end
 
     it "defaults to STDOUT, never a file in the home directory" do

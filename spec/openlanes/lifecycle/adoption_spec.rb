@@ -62,13 +62,13 @@ RSpec.describe OpenLanes::Lifecycle::Adoption, :tree do
     # Branches are not all rebased onto the same main, and the number should
     # follow where the work actually started.
     it "uses what the pull request touched when its branch cannot be read" do
-      touching = pull(95, "Sweeping", files: [".plans/001.00-⚪️ → initial-spec/spec.md"])
+      touching = pull(95, "Sweeping", files: [".plans/001.00━━⚪━━❯initial-spec/spec.md"])
 
       expect(adoption.plan([touching]).first.ordinal.to_s).to eq("001.01")
     end
 
     it "names the folder from the pull request's title, prefix stripped" do
-      expect(adoption.plan([pull(95, "[dev] Add the health checks")]).first.dirname).to eq("024.01-🕰️ → add-the-health-checks")
+      expect(adoption.plan([pull(95, "[dev] Add the health checks")]).first.dirname).to eq("024.01━━⏪━━❯add-the-health-checks")
     end
 
     it "refuses to run past the last retroactive slot rather than wrapping" do
@@ -86,12 +86,12 @@ RSpec.describe OpenLanes::Lifecycle::Adoption, :tree do
       adoption.call(pulls)
 
       aggregate_failures do
-        expect(Dir.children(plans_root)).to include("024.01-🕰️ → health-checks", "024.02-🕰️ → structured-logging")
-        expect(File.read(File.join(plans_root, "024.01-🕰️ → health-checks", "pull-requests.md"))).to include("/pull/95", "What 95 did.")
+        expect(Dir.children(plans_root)).to include("024.01━━⏪━━❯health-checks", "024.02━━⏪━━❯structured-logging")
+        expect(File.read(File.join(plans_root, "024.01━━⏪━━❯health-checks", "pull-requests.md"))).to include("/pull/95", "What 95 did.")
       end
     end
 
-    # 🕰️ Retroactive means "live, but neither specified nor planned", and its
+    # ⏪ Retroactive means "live, but neither specified nor planned", and its
     # invariant demands recorded pull requests and no spec.md.
     it "produces folders whose contents justify the state they claim" do
       adoption.call(pulls)
@@ -104,7 +104,7 @@ RSpec.describe OpenLanes::Lifecycle::Adoption, :tree do
     it "leaves spec.md to the writer" do
       adoption.call(pulls)
 
-      expect(Dir.children(File.join(plans_root, "024.01-🕰️ → health-checks"))).to eq(["pull-requests.md"])
+      expect(Dir.children(File.join(plans_root, "024.01━━⏪━━❯health-checks"))).to eq(["pull-requests.md"])
     end
   end
 end

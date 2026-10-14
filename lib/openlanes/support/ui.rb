@@ -576,9 +576,22 @@ module OpenLanes
       # @return [String] decorated when colour is on, bare otherwise
       def paint(text, *styles) = color? ? pastel.decorate(text.to_s, *styles) : text.to_s
 
+      # A character followed by the emoji variation selector U+FE0F.
+      EMOJI_PRESENTATION = /\P{M}\u{FE0F}/
+
+      # `unicode-display_width` counts 🅱️, ☢️ and 🕰️ as one cell, while
+      # terminals with Unicode 9 widths draw them two, and every padded column
+      # came out one cell short (decision N2). A character the text explicitly
+      # asks to see as an emoji is two cells here, whatever the gem says.
+      #
       # @param text [String]
       # @return [Integer] how many terminal cells the text occupies
-      def display_width(text) = ::Unicode::DisplayWidth.of(text.to_s)
+      def display_width(text)
+        text = text.to_s
+        return ::Unicode::DisplayWidth.of(text) unless text.include?("\u{FE0F}")
+
+        text.scan(EMOJI_PRESENTATION).sum { 2 - ::Unicode::DisplayWidth.of(it) } + ::Unicode::DisplayWidth.of(text)
+      end
 
       # Pad or truncate to an exact number of terminal *cells*.
       #

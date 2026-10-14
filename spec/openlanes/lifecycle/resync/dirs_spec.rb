@@ -37,7 +37,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       it "skips it however wrong its name is" do
         changes = described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root), except: ["001.00"]).plan
 
-        expect(changes.map(&:dirname)).to eq(["002.00-⚪️ → second"])
+        expect(changes.map(&:dirname)).to eq(["002.00━━⚪━━❯second"])
       end
     end
 
@@ -53,7 +53,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       end
 
       it "keeps the number and the slug, changing only the emoji" do
-        expect(File.basename(changes.first.target)).to eq("001.00-⭐️ → initial-spec")
+        expect(File.basename(changes.first.target)).to eq("001.00━━⭐━━❯initial-spec")
       end
     end
 
@@ -63,12 +63,12 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
     context "when a folder's number was written before the NNN.MM rule" do
       let!(:tree) do
         plans do |t|
-          t.raw "018-⚪️--verify-returns", files: { "spec.md" => spec_body }
+          t.raw "018-⚪--verify-returns", files: { "spec.md" => spec_body }
         end
       end
 
       it "pads the number and migrates the separator, leaving the emoji and the slug alone" do
-        expect(File.basename(changes.first.target)).to eq("018.00-⚪️ → verify-returns")
+        expect(File.basename(changes.first.target)).to eq("018.00━━⚪━━❯verify-returns")
       end
 
       it "does not pretend the state changed" do
@@ -82,19 +82,19 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       it "renames it when committing" do
         resync.call(commit: true)
 
-        expect(names).to eq(["018.00-⚪️ → verify-returns"])
+        expect(names).to eq(["018.00━━⚪━━❯verify-returns"])
       end
     end
 
     context "when a retroactive number is written with one digit" do
       let!(:tree) do
         plans do |t|
-          t.raw "18.1-⚪️--schedule-k1", files: { "spec.md" => spec_body }
+          t.raw "18.1-⚪--schedule-k1", files: { "spec.md" => spec_body }
         end
       end
 
       it "pads both halves" do
-        expect(File.basename(changes.first.target)).to eq("018.01-⚪️ → schedule-k1")
+        expect(File.basename(changes.first.target)).to eq("018.01━━⚪━━❯schedule-k1")
       end
     end
 
@@ -104,13 +104,13 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
     context "when a folder is both unpadded and wearing the wrong emoji" do
       let!(:tree) do
         plans do |t|
-          t.raw "007-⚪️--tenancy", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }
+          t.raw "007-⚪--tenancy", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }
         end
       end
 
       it "migrates the spelling first, then the status" do
         expect(changes.map { |c| File.basename(c.target) })
-          .to eq(["007.00-⚪️ → tenancy", "007.00-⭐️ → tenancy"])
+          .to eq(["007.00━━⚪━━❯tenancy", "007.00━━⭐━━❯tenancy"])
       end
 
       it "chains the status rename off the spelling rename, not the original path" do
@@ -125,7 +125,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       it "lands on the final name when committed, with no orphan in between" do
         resync.call(commit: true)
 
-        expect(names).to eq(["007.00-⭐️ → tenancy"])
+        expect(names).to eq(["007.00━━⭐━━❯tenancy"])
       end
     end
 
@@ -134,12 +134,12 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
     context "when a folder's only defect is the old double-dash separator" do
       let!(:tree) do
         plans do |t|
-          t.raw "004.00-⚪️--legacy", files: { "spec.md" => spec_body }
+          t.raw "004.00-⚪--legacy", files: { "spec.md" => spec_body }
         end
       end
 
       it "proposes exactly one rename, to the arrow spelling" do
-        expect(changes.map { |c| File.basename(c.target) }).to eq(["004.00-⚪️ → legacy"])
+        expect(changes.map { |c| File.basename(c.target) }).to eq(["004.00━━⚪━━❯legacy"])
       end
 
       it "does not pretend the state changed" do
@@ -157,15 +157,15 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
     context "when the padded name is already taken by another folder" do
       let!(:tree) do
         plans do |t|
-          t.raw "005-⚪️--ledger", files: { "spec.md" => spec_body }
-          t.raw "005.00-⚪️--ledger", files: { "spec.md" => spec_body }
+          t.raw "005-⚪--ledger", files: { "spec.md" => spec_body }
+          t.raw "005.00-⚪--ledger", files: { "spec.md" => spec_body }
         end
       end
 
       # The unpadded twin sorts first and claims the canonical name; the
       # padded twin's own migration then finds it taken.
       it "refuses rather than silently leaving the folder misnamed" do
-        expect { resync.call(commit: true) }.to raise_error(OpenLanes::Error, /005\.00-⚪️--ledger.*already exists/)
+        expect { resync.call(commit: true) }.to raise_error(OpenLanes::Error, /005\.00-⚪--ledger.*already exists/)
       end
     end
 
@@ -192,7 +192,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       end
     end
 
-    # ⭕️ and 🅱️ share an invariant deliberately; only the folder name says
+    # ⭕ and 🛑 share an invariant deliberately; only the folder name says
     # which human must decide, and resync must not overwrite that.
     it "never reclassifies between the two blocked states" do
       plans do |t|
@@ -251,19 +251,19 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
     it "changes nothing without an explicit commit" do
       resync.call
 
-      expect(names).to eq(["001.00-⚪️ → initial-spec"])
+      expect(names).to eq(["001.00━━⚪━━❯initial-spec"])
     end
 
     it "renames the folder when committed" do
       resync.call(commit: true)
 
-      expect(names).to eq(["001.00-⭐️ → initial-spec"])
+      expect(names).to eq(["001.00━━⭐━━❯initial-spec"])
     end
 
     it "preserves the folder's contents across the rename" do
       resync.call(commit: true)
 
-      expect(File.exist?(File.join(plans_root, "001.00-⭐️ → initial-spec", "plan.md"))).to be(true)
+      expect(File.exist?(File.join(plans_root, "001.00━━⭐━━❯initial-spec", "plan.md"))).to be(true)
     end
 
     it "reports what it did" do

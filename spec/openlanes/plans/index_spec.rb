@@ -34,8 +34,8 @@ RSpec.describe OpenLanes::Plans::Index, :tree do
     end
 
     # The whole reason this is generated rather than written.
-    it "percent-encodes the emoji, spaces and arrow in a folder name, which a raw href breaks on" do
-      expect(document).to include('href="001.00-%E2%9A%AA%EF%B8%8F%20%E2%86%92%20initial-spec/spec.md"')
+    it "percent-encodes the emoji, rules and pointer in a folder name, which a raw href breaks on" do
+      expect(document).to include('href="001.00%E2%94%81%E2%94%81%E2%9A%AA%E2%94%81%E2%94%81%E2%9D%AFinitial-spec/spec.md"')
     end
 
     it "links every pull request a plan records" do
@@ -69,7 +69,7 @@ RSpec.describe OpenLanes::Plans::Index, :tree do
       expect(document).to include("Approved &amp; Merged")
     end
 
-    # A ⭕️ folder holding `blocked.md` is consistent, so the fixture needs a
+    # A ⭕ folder holding `blocked.md` is consistent, so the fixture needs a
     # folder that actually lies: ✅ Approved & Merged with a pull request open.
     context "when a folder's name is not justified by its contents" do
       let!(:tree) do

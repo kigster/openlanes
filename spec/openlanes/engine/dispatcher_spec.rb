@@ -37,7 +37,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   # before it signed. The next tick read the half-finished folder as the next
   # state and started that state's agent beside the one still writing, the
   # first then held the folder for its "partner", and the whole chain ran
-  # inside ⚪️ New.
+  # inside ⚪ New.
   describe "an agent whose work shows before it signs" do
     let!(:built) { plans { |t| t.plan "030.00", :new, "minesweeper", files: { "spec.md" => spec_body } } }
     let(:live) { Hash.new(0) }
@@ -187,7 +187,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       let(:stale) do
         feature = tree.reload.subjects.first.feature
         path = OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil).checkout_for(feature).path
-        File.join(path, ".plans", "040.00-🟢 → minesweeper")
+        File.join(path, ".plans", "040.00━━🟢━━❯minesweeper")
       end
 
       before do
@@ -242,7 +242,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     # yoda finishes, leaves a blank plan.md, signs Completed and names
     # palpatine. The harness renames to 📋, starts palpatine, palpatine
-    # writes a plan and signs, the harness renames to ⭐️, luke and rey
+    # writes a plan and signs, the harness renames to ⭐, luke and rey
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
     it "moves yoda's finished work to 📋 and starts palpatine, then the pair" do
@@ -372,7 +372,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
-  # The 001.00 transcript, the other way round: a folder still named ⚪️
+  # The 001.00 transcript, the other way round: a folder still named ⚪
   # whose spec.md carries its research and whose plan.md already holds work
   # units. The old loop read the name, offered it to leah-researcher, and
   # she researched a plan that was ready to build.
@@ -402,7 +402,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       aggregate_failures do
         expect(calls.map(&:first)).to contain_exactly("luke-backend", "rey-frontend")
-        expect(Dir.children(plans_root)).to include("001.00-⚪️ → already-planned")
+        expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯already-planned")
       end
     end
   end
@@ -519,7 +519,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         expect(seen.map(&:first).uniq).to eq(%w[r2d2-mechanic])
       end
 
-      it "writes a one-unit plan.md so the folder may claim ⭐️ and then 🟡" do
+      it "writes a one-unit plan.md so the folder may claim ⭐ and then 🟡" do
         runner_with(executor).call
         expect(tree.reload.subjects.first.read("plan.md")).to include("## Task")
       end
@@ -676,7 +676,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "parks a Blocked plan at ⭕️ when blocked.md names a question" do
+    it "parks a Blocked plan at ⭕ when blocked.md names a question" do
       executor = executor_with do |_, subject, _|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich?\n")
         "Blocked"
@@ -685,7 +685,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:blocked)
     end
 
-    it "parks a product block at 🅱️ when the note says so" do
+    it "parks a product block at 🛑 when the note says so" do
       executor = lambda { |_agent, subject, round: 1, **|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich colour?\n")
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "spec.md"),

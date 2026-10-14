@@ -36,29 +36,29 @@ RSpec.describe "openlanes resync", :tree do
 
     context "with a folder whose contents outgrew its name" do
       before do
-        # A ⚪️ folder that has grown a plan.md with work units best-fits ⭐️ whatever its name says.
+        # A ⚪ folder that has grown a plan.md with work units best-fits ⭐ whatever its name says.
         plans { |t| t.plan("001.00", :new, "outgrown", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       end
 
       it "prints the rename as a machine-readable row and leaves the disk alone" do
         out, err, = run(command)
 
-        expect(out).to include("001.00-⚪️ → outgrown\t001.00-⭐️ → outgrown")
-        expect(Dir.children(plans_root)).to include("001.00-⚪️ → outgrown")
+        expect(out).to include("001.00━━⚪━━❯outgrown\t001.00━━⭐━━❯outgrown")
+        expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯outgrown")
         expect(unwrapped(err)).to include("1 rename pending", "without --dry-run")
       end
 
       it "renames without --dry-run and says how many folders moved" do
         _out, err, = run(command, dry_run: false)
 
-        expect(Dir.children(plans_root)).to include("001.00-⭐️ → outgrown")
+        expect(Dir.children(plans_root)).to include("001.00━━⭐━━❯outgrown")
         expect(unwrapped(err)).to include("Renamed 1 folder")
       end
 
       it "keeps the rows and drops the prose under --quiet" do
         out, err, = run(command, quiet: true)
 
-        expect(out).to include("001.00-⚪️ → outgrown")
+        expect(out).to include("001.00━━⚪━━❯outgrown")
         expect(err).to eq("")
       end
     end

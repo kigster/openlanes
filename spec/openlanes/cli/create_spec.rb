@@ -68,10 +68,10 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
     it "prints the folder path on STDOUT, where a script can read it" do
       out, = run("tax", "rule", "dsl", draft: false, open: false)
 
-      expect(out.strip).to eq(File.join(plans_root, "000.00-⚪️ → tax-rule-dsl"))
+      expect(out.strip).to eq(File.join(plans_root, "000.00━━⚪━━❯tax-rule-dsl"))
     end
 
-    it "writes the four-heading scaffold, so the folder is honest about ⚪️" do
+    it "writes the four-heading scaffold, so the folder is honest about ⚪" do
       out, = run("tax", "rule", "dsl", draft: false, open: false)
 
       expect(File.read(File.join(out.strip, "spec.md"))).to include(
@@ -108,10 +108,10 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
   end
 
   describe "--status" do
-    it "opens the folder in the named state instead of ⚪️" do
+    it "opens the folder in the named state instead of ⚪" do
       out, = run("billing", "sync", status: "planned", draft: false, open: false)
 
-      expect(File.basename(out.strip)).to include("⭐️")
+      expect(File.basename(out.strip)).to include("⭐")
     end
   end
 
@@ -153,7 +153,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
       with_brief(result: [false, "timed out after 240s"])
       out, err, status = run("tax", "rule", "dsl", open: false)
 
-      expect(out.strip).to end_with("000.00-⚪️ → tax-rule-dsl")
+      expect(out.strip).to end_with("000.00━━⚪━━❯tax-rule-dsl")
       expect(unwrapped(err)).to include("timed out after 240s", "Fill them in by hand")
       expect(status).to eq(0)
     end
@@ -176,7 +176,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
     it "names the folder from the frontmatter title, no words needed" do
       out, = run(from: seeded, draft: false, open: false)
 
-      expect(File.basename(out.strip)).to eq("000.00-⚪️ → tax-rule-dsl")
+      expect(File.basename(out.strip)).to eq("000.00━━⚪━━❯tax-rule-dsl")
     end
 
     it "opens spec.md with the author's own prose, ahead of the headings" do
@@ -234,7 +234,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
       MD
       out, _err, status = run(from: dated, draft: false, open: false)
 
-      expect(File.basename(out.strip)).to eq("000.00-⚪️ → tax-rule-dsl")
+      expect(File.basename(out.strip)).to eq("000.00━━⚪━━❯tax-rule-dsl")
       expect(status).to eq(0)
     end
 
@@ -315,8 +315,8 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
         with_executor { |subject| File.write(File.join(subject.feature.path, "spec.md"), spec_body) }
         out, err, = run("verify", after: "002", prs: "12", open: false)
 
-        # 🕰️ is only true while there is no spec.md, so the settle renames.
-        expect(File.basename(out.strip)).to include("⚪️")
+        # ⏪ is only true while there is no spec.md, so the settle renames.
+        expect(File.basename(out.strip)).to include("⚪")
         expect(unwrapped(err)).to include("check it against what actually shipped")
       end
 

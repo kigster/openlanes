@@ -670,10 +670,13 @@ RSpec.describe OpenLanes::UI do
       expect(described_class.fit("⚪️", 2)).to eq("⚪️")
     end
 
-    # And the case that motivated all of this: two characters, but only one
-    # cell, so it needs a space to sit in the same column as its neighbours.
-    it "pads an emoji that draws narrower than it is written" do
-      expect(described_class.fit("🅱️", 2)).to eq("🅱️ ")
+    # The case that motivated decision N2: the gem counts these one cell, while
+    # a terminal with Unicode 9 widths draws two. Two it is.
+    %w[🅱️ ☢️ 🕰️].each do |emoji|
+      it "measures #{emoji} as the two cells a terminal draws" do
+        expect(described_class.display_width(emoji)).to eq(2)
+        expect(described_class.fit(emoji, 2)).to eq(emoji)
+      end
     end
 
     it "never returns something wider than the column it was given" do

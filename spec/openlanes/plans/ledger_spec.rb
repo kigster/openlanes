@@ -75,7 +75,7 @@ RSpec.describe OpenLanes::Plans::Ledger do
   describe ".read", :tree do
     it "reads the files in the order given and skips the ones that do not exist" do
       path = plans { |t| t.plan "001.00", :new, "x", files: { "spec.md" => document } }
-      dir = File.join(path, "001.00-⚪️ → x")
+      dir = File.join(path, "001.00━━⚪━━❯x")
       reading = described_class.read(dir, %w[plan-backend.md spec.md])
       expect(reading.entries.map(&:file).uniq).to eq(["spec.md"])
     end
