@@ -91,3 +91,14 @@ amended: hansolo's executor example (`spec/openlanes/execution/executor_spec.rb`
 After B1 to B5 and PrWatch: `bundle exec rspec` 2281 examples, 0 failures; `bundle exec rubocop` 0 offenses.
 
 After round 2: `bundle exec rspec` 2310 examples, 0 failures; `bundle exec rubocop` 0 offenses.
+
+### Decisions from the review of #26
+
+8. `GitHub#swap_label`: when the combined edit fails, the labels are re-read and the edit retried, removing only those still present. The earlier add-only fallback could leave two review labels at once. A failing retry raises.
+9. A resubmission (`publish` to an already open pull request) resets the label to `ready-for-review`, removing every other review label. Otherwise a stale `review-rejected` reads to the watch as a fresh rejection and sends the 🟢 plan back to 🔴.
+10. Pull request numbers come from `GitHub.number_of`: the `/pull/N` segment of a URL or a bare or `#`-prefixed number. Anything else raises, so `…/pull/7#issuecomment-1234` labels #7, not #1234.
+11. `StateFile#begin_run!` clears `waiting_on`. A run that does not watch never rewrites it, and a live pid alone would have kept showing the previous run's entries.
+12. `PrWatch#poll` asks `gh pr view` for each watched pull request missing from `gh pr list` (capped at its limit); one that cannot be read is skipped for that poll only. `GitHub#pull_request` now carries `open:` and `labels:` like a row of `#pulls`.
+13. `## How to tell it's working?` list items keep their continuation lines and fenced blocks, re-indented under the item. Kept small: open PR #24 replaces this reader with its own in `Spec#how_to_verify`.
+
+After the review fixes: `bundle exec rspec` 2322 examples, 0 failures; `bundle exec rubocop` 0 offenses.
