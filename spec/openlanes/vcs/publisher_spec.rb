@@ -142,6 +142,23 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       expect(body).to include("## How to test\n\n- open the editor")
     end
 
+    context "when plan.md predates the rename and says How to verify" do
+      before { File.write(File.join(plan.feature.path, "plan.md"), "# Plan\n\n## How to verify\n\n- open the editor\n") }
+
+      it "publishes it, its steps under How to test" do
+        body = nil
+        allow(command).to receive(:run) do |*argv, **|
+          body = File.read(argv[argv.index("-F") + 1]) if argv[0, 3] == %w[gh pr create]
+          result
+        end
+
+        aggregate_failures do
+          expect(publisher.publish(checkout:, subject: plan).refusal).to be_nil
+          expect(body).to include("## How to test\n\n- open the editor")
+        end
+      end
+    end
+
     context "when plan.md has no How to test section" do
       before { File.write(File.join(plan.feature.path, "plan.md"), "# Plan\n\n## U1\n") }
 

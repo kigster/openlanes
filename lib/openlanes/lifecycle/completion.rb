@@ -14,6 +14,11 @@ module OpenLanes
       COMPLETED_WHEN_HEADING = "## Task completed when"
       HOW_TO_TEST = "## How to test"
 
+      # The heading {HOW_TO_TEST} replaced. A plan.md written before the
+      # rename still carries it, and without recognising it the harness would
+      # append a second copy of the same steps under the new name.
+      FORMER_HOW_TO_TEST = "## How to verify"
+
       module_function
 
       # The sections for the spec's criteria, in the order a reader needs them.
@@ -25,7 +30,7 @@ module OpenLanes
       def markdown(spec, present: "")
         [
           section(COMPLETED_WHEN_HEADING, spec.completed_when, present),
-          section(HOW_TO_TEST, spec.how_to_test, present)
+          section(HOW_TO_TEST, spec.how_to_test, present, also: FORMER_HOW_TO_TEST)
         ].compact.join("\n")
       end
 
@@ -46,9 +51,10 @@ module OpenLanes
         true
       end
 
+      # @param also [String, nil] an older heading that counts as present
       # @return [String, nil]
-      def section(heading, items, present)
-        return nil if items.empty? || present.match?(/^#{Regexp.escape(heading)}\s*$/i)
+      def section(heading, items, present, also: nil)
+        return nil if items.empty? || [heading, also].compact.any? { present.match?(/^#{Regexp.escape(it)}\s*$/i) }
 
         "#{heading}\n\n#{items.map { Plans::Spec.list_item(it) }.join("\n")}\n"
       end

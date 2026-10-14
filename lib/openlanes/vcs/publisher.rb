@@ -291,11 +291,15 @@ module OpenLanes
         "publish refused — plan.md has no `#{Lifecycle::Completion::HOW_TO_TEST}` section"
       end
 
+      # A plan.md written before the rename says `## How to verify`; the
+      # harness no longer appends a duplicate to it, so its steps are read
+      # here under either heading rather than refused.
+      #
       # @return [String] the section's body, without its heading
       def how_to_test(subject)
-        heading = Lifecycle::Completion::HOW_TO_TEST
+        headings = [Lifecycle::Completion::HOW_TO_TEST, Lifecycle::Completion::FORMER_HOW_TO_TEST]
         lines = subject.read("plan.md").to_s.lines
-        start = lines.index { |l| l.strip.casecmp?(heading) } or return ""
+        start = lines.index { |l| headings.any? { l.strip.casecmp?(it) } } or return ""
         lines[(start + 1)..].take_while { |l| !l.start_with?("## ", "# ") }.join.strip
       end
 

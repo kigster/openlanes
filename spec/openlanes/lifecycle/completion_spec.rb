@@ -96,6 +96,15 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
       end
     end
 
+    context "when plan.md predates the rename and says How to verify" do
+      let(:plan_text) { "# Plan\n\n## How to verify\n\n- bundle exec rspec\n" }
+
+      it "does not add a second copy under How to test" do
+        described_class.copy(subject_plan)
+        expect(subject_plan.read("plan.md")).not_to include("## How to test")
+      end
+    end
+
     it "is idempotent" do
       described_class.copy(subject_plan)
       expect { described_class.copy(subject_plan) }.not_to(change { subject_plan.read("plan.md") })
