@@ -6,6 +6,8 @@ require "dry/cli"
 require "dry/cli/help"
 
 require "dry/inflector"
+# Every command workflow answers a Dry::Monads::Result (see OpenLanes::Refusal).
+require "dry/monads"
 require "fileutils"
 require "shellwords"
 require "zeitwerk"
