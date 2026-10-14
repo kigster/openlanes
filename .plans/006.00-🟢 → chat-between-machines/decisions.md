@@ -67,3 +67,12 @@ Made while building, 2026-10-13. None changes D1–D11; they fill in what was le
 - **Menu.** Outside a chat: Start Chat. In one: Stop Chat on a machine already in it; Invite to Chat (greyed while an invite waits) and Stop Chat on one that is not.
 - **Panel.** The tab exists only while the page is in a chat. Starting or joining opens the panel; a page that loads into a chat starts minimised. Your own idling is not announced to you. The footer's few words are white: black on the darker orange is under 4.5:1.
 - **Component boundaries.** `Live::Chat` (hub), `Live::Subscriber`/`MemorySubscriber` (pub/sub on both stores), `Web::Events` (relay), `Web::App` (routes). On the page: `chat/useChat` (state), `chat/bus` (stream to state), `ChatRoom` (provider, dialogs, panel), `MachineMenu`, `ChatPanel` on the shared `FloatingPanel`.
+
+## Round 2, after A1
+
+Decided 2026-10-14 by the owner: I1's second participant is a second `openlanes web --demo` process with its own declared `username@hostname`. Filled in while building:
+
+- **The flag.** `--identity USER@HOST`, demo only. It goes through `Live::Node`, the name every process already joins Redis under, not a second scheme.
+- **One writer per node.** A demo with a declared identity publishes only itself; the pretend other machine stays with the demo that has none.
+- **Holding the second page open.** A server counts a page as present only while its event stream is open, which `cy.request` cannot hold, so a Cypress task holds it and collects its `chat` events. Every verb still goes through `cy.request`.
+- **Ports.** `just web-e2e` runs on 11100 and 11101, overridable, and refuses to start on a port that answers, so it never meets an `openlanes web` on 11000.
