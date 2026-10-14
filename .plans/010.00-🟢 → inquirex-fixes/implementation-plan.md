@@ -4,16 +4,16 @@ Written by plan-010 (luke-backend's units) on 2026-10-14, after A1 in `blocked.m
 
 ## Units
 
-- [ ] B1 Version alignment. Core is already at 0.11.0 (A1); the `inquirex-llm` and `inquirex-tty` halves wait for the owner's Ruby 4.1 migration.
-- [ ] B2 Current Claude model ids. Waits on the owner (`inquirex-llm`).
+- [x] B1 Version alignment. All three at 0.12.0: core in inquirex/inquirex#13 (`b77136d`); `inquirex-llm` requires `inquirex ~> 0.12` (https://github.com/inquirex/inquirex-llm/pull/8, `de07837`); `inquirex-tty` requires both `~> 0.12` (https://github.com/inquirex/inquirex-tty/pull/13, `1b949c9`).
+- [x] B2 Current Claude model ids. https://github.com/inquirex/inquirex-llm/pull/8, commit `92827bd`.
 - [x] B3 `Engine#back` snapshot stack. inquirex/inquirex#13, commits `c1fb77a`, `9171af0`.
 - [x] B4 Headless answer driver in core. inquirex/inquirex#13, commit `0398dd1`.
-- [ ] F1 Ctrl-B back in the TTY renderer. Waits on the owner (`inquirex-tty`).
-- [ ] F2 `run --answers`, `--yes`, results on stdout. Waits on the owner (`inquirex-tty`).
-- [ ] F3 READMEs and the Ruby 4.1.0-preview1 record. Waits on F1, F2.
-- [ ] B5 Release. Picks 0.11.1 or 0.12.0 for core; the owner confirms.
+- [x] F1 Ctrl-B back in the TTY renderer. https://github.com/inquirex/inquirex-tty/pull/13, commit `4fc7c41`.
+- [x] F2 `run --answers`, `--yes`, results on stdout. https://github.com/inquirex/inquirex-tty/pull/13, commit `c7d5ed7`; integration check `spec/integration/headless_run_spec.rb`.
+- [x] F3 READMEs and the Ruby 4.1.0-preview1 record. inquirex-tty `d21131f`, inquirex-llm `92827bd`; record in `verification.md`.
+- [x] B5 Release, version part only: 0.12.0 everywhere (owner, 2026-10-14) and a hand-written 0.12.0 CHANGELOG section in `inquirex-llm` (`a518294`) and `inquirex-tty` (`fc8e3ac`). Nothing published, tagged or released.
 
-The folder stays ⭕️: B2, F1, F2, F3 and B5 need `inquirex-llm` and `inquirex-tty`, whose checkouts hold the owner's unpushed Ruby 4.1 migration.
+Every unit is built. The owner's 2026-10-14 instruction unblocked `inquirex-llm` and `inquirex-tty`: worktrees branched from each repository's `origin/main`, leaving the checkouts with the unpushed Ruby 4.1 migration untouched.
 
 ## The contract F1 and F2 call (inquirex core)
 
@@ -38,3 +38,13 @@ The folder stays ⭕️: B2, F1, F2, F3 and B5 need `inquirex-llm` and `inquirex
 ## Verification
 
 `inquirex` on Ruby 4.1.0-preview1: `just test` 987 examples, 0 failures (was 946), line coverage 97.48% (was 97.37%); `just lint` no offenses; YARD 100% documented.
+
+## Amendments by plan-010b (2026-10-14)
+
+- amended: version 0.12.0 for all three, not 0.11.0 (the owner; core 0.11.0 shipped without B3/B4).
+- amended: `AnthropicAdapter` omits `temperature` for the ids in `MODELS`. The current models answer any sampling parameter with HTTP 400, so B2's new default would otherwise have failed every request. An explicitly named older id still gets the DSL's temperature.
+- amended: Gemfiles resolve the family from RubyGems in what is committed. The `path:` overrides B1 described stay local and uncommitted, so no absolute path reaches either repository; CI goes green once 0.12.0 is published.
+- amended: the curated release notes went into each gem's `CHANGELOG.md` as a hand-written 0.12.0 section. Only core has an `INQUIREX_VERSION_LOG.md`, and it is core's PR.
+- amended: `inquirex-tty`'s first progress line read "Step 2"; fixed in F2's file (`f0a3764`).
+- amended: sample person is Alan Turing / `alan.turing@manchester.edu`, the owner's canonical placeholder, rather than `Ada Example`.
+- added: each gem has a `gemspec_spec.rb` that reads `lib/` for its requires and fails on one that neither ships with the running Ruby nor is a runtime dependency (owner, Ruby 4.1 and prism). Both gems needed nothing new; `inquirex-tty` already declared `ostruct`.

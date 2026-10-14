@@ -5,8 +5,8 @@
     "ordinal": "010.00",
     "slug": "inquirex-fixes"
   },
-  "state": "blocked",
-  "updated_at": "2026-10-13T19:57:01-07:00",
+  "state": "ready_for_review",
+  "updated_at": "2026-10-14T12:07:50-07:00",
   "stages": [
     {
       "agent": "leah-researcher",

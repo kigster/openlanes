@@ -1,6 +1,6 @@
 # Plan 010.00: Inquirex Fixes
 
-All work is in `/Users/kig/github/inquirex`, which holds three separate git repositories: `inquirex/`, `inquirex-llm/`, `inquirex-tty/`. Each unit works on a branch `kig/010.00-inquirex-fixes` in every repository it touches, and claims its files with `alock` run inside that repository. Nothing in openlanes changes (spec, Non-Goals).
+All work is in `/Users/kig/github/inquirex`, which holds three separate git repositories: `inquirex/`, `inquirex-llm/`, `inquirex-tty/`. Each unit works on a branch `kig/010.00-inquirex-fixes` in every repository it touches, and claims its files with `alock` run inside that repository. The branch lives in a git worktree per repository, `<repo>.worktrees/010.00-inquirex-fixes`, branched from that repository's `main`; the existing checkouts hold the owner's unpushed Ruby 4.1 migration and are not touched (blocked.md B1, answered A1 by the owner on 2026-10-14). Nothing in openlanes changes (spec, Non-Goals).
 
 "Back end" is the `inquirex` engine and the `inquirex-llm` library. "Front end" is the terminal UI and CLI of `inquirex-tty`. Units are detailed in `plan-backend.md` (luke-backend) and `plan-frontend.md` (rey-frontend).
 
@@ -13,7 +13,7 @@ These are the spec's stated assumptions. Build to them; do not reopen them.
 - Copyright lines stay; only sample data changes (OQ4).
 - `--yes` on an LLM step: skip it with its default, never call the adapter (OQ5).
 - `Engine#back` at the first collecting step returns `false` and changes nothing (OQ7).
-- New version for all three gems: **0.11.0** (OQ9).
+- New version for all three gems: **0.12.0**. The spec assumed 0.11.0 (OQ9), but core 0.11.0 shipped without B3/B4, and the owner set 0.12.0 on 2026-10-14.
 - How a prompt is interrupted by the back key (OQ2): F1 decides, and records it in its spec file's top comment.
 
 ## Units
