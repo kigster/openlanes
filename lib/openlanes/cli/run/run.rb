@@ -120,9 +120,8 @@ module OpenLanes
         # whether a round prints anything at all) is read the whole time the
         # loop runs, not just when `report` prints its closing summary.
         quiet?(options)
-        UI.log_path = options[:log] ||
-                      File.join(Dir.tmpdir, "openlanes-#{File.basename(root)}.log")
-        info("Progress: #{UI.log_path}") unless quiet?(options)
+        UI.log_path = options[:log] || Engine::ProgressLog.default_path(root)
+        startup("Progress", UI.log_path)
         credentials_warning if !dry_run?(options) && !quiet?(options)
         spec_warning(tree, plans) unless quiet?(options)
 
@@ -165,11 +164,18 @@ module OpenLanes
           claims:    live&.claims,
           **staying(options, web)
         )
+        startup_box(options)
 
+        # The terminal hears the run as it happens, one appended line per
+        # event, whether or not a control room is up: the page is the board,
+        # and the terminal is its log. Nothing here redraws, so nothing can
+        # draw over a box or over another line.
+        narrator = UI.tap_log(Engine::Narrator.new) unless quiet?(options)
         started  = UI.monotonic
         attempts = begin
           Execution.on_interrupt(signals:) { runner.call { |dispatcher| live&.attach(dispatcher) } }
         ensure
+          UI.untap_log(narrator) if narrator
           live&.close
           web&.stop
         end
@@ -190,7 +196,7 @@ module OpenLanes
       def staying(options, web)
         return {} if web.nil? || options[:until_settled]
 
-        info("The engine stays up with its control room: Stop All Local or Ctrl-C ends it.") unless quiet?(options)
+        @stays = "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
         { stay: true, rescan: Engine::Dispatcher::RESCAN }
       end
 
@@ -268,7 +274,7 @@ module OpenLanes
         config = Config.current
         store = Live.connect(Live.redis_url(option: options[:redis_url], config:))
         Live.session(store:, root:, tree:, agents:, project: config.project).tap do |session|
-          info("Live board: #{session.describe}") unless quiet?(options)
+          startup("Live board", session.described)
         end
       rescue Live::Unavailable => e
         without_live(e.message, options)
@@ -297,9 +303,29 @@ module OpenLanes
           return without_web(web, live, options)
         end
 
-        info("Control room: #{web.url}") unless quiet?(options)
+        startup("Control room", web.url)
         OpenLanes::Web.open(browser_url(web, tree)) unless options[:open] == false
         web
+      end
+
+      # One line of the startup box, kept until {#startup_box} draws it.
+      #
+      # @param label [String]
+      # @param value [String, Array<String>] parts a narrow box may break between
+      # @return [void]
+      def startup(label, value) = (@startup ||= []) << [label, value]
+
+      # Where the run writes, what it publishes to, and where its page is:
+      # one Info box, drawn once all three are known. Each used to be a box
+      # of its own, three frames for three lines. A line that does not apply
+      # (no Redis, no control room) is left out, not drawn empty.
+      #
+      # @param options [Hash]
+      # @return [void]
+      def startup_box(options)
+        return if quiet?(options) || @startup.to_a.empty?
+
+        info([UI.labelled(@startup), @stays].compact.join("\n\n"))
       end
 
       # The attempts list, padded into columns.
@@ -461,6 +487,20 @@ module OpenLanes
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def failures(attempts) = attempts.reject(&:ok)
 
+      # The attempts and the bill, one blank line before each part that has
+      # anything in it. `puts []` prints an empty line, so a run with no
+      # attempts used to open its report with two blank lines and a third
+      # before the tally.
+      #
+      # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
+      # @param tally [String, nil] nil prints none
+      # @return [void]
+      def puts_report(attempts, tally)
+        lines = attempt_lines(attempts)
+        puts("", *lines) unless lines.empty?
+        puts("", tally) if tally
+      end
+
       # The one thing this harness does that leaves the machine — pushing a
       # branch and opening its pull request — so it takes one more thing to
       # turn on than everything else here: not being a dry run is not enough,
@@ -497,18 +537,10 @@ module OpenLanes
       # @param seconds [Float] wall clock for the whole loop
       # @return [void]
       def report(runner, attempts, options, seconds: 0.0)
-        # A leading blank line, because the spinners this replaces write to
-        # STDERR and the last of them may have left the cursor mid-line:
-        # without it the first attempt starts wherever that line stopped,
-        # indented by however much it had drawn.
-        puts ""
-        puts attempt_lines(attempts)
-
         # What the run cost, on STDOUT with the attempts it belongs to, so a run
         # redirected to a file keeps its bill. A dry run spent nothing and gets
         # none of this.
-        tally = Engine.tally(attempts:, seconds:)
-        puts("", tally.render) unless dry_run?(options)
+        puts_report(attempts, (Engine.tally(attempts:, seconds:).render unless dry_run?(options)))
 
         return if quiet?(options)
 

@@ -33,6 +33,10 @@ module OpenLanes
     # @!attribute [r] demo
     #   @return [OpenLanes::Web::Demo, nil] the demo engine, under `--demo`,
     #     which `POST /api/demo/reset` puts back to the start
+    # @!attribute [r] copilot
+    #   @return [#call, nil] who answers the copilot's messages (W17):
+    #     {Live::Copilot::Operator} beside a real run, {Demo::COPILOT} under
+    #     `--demo`, nil where nothing does, and `POST /api/copilot` says so
     # @!attribute [r] background
     #   @return [#call] runs the block it is given apart from the request, a
     #     thread by default; the suite passes one that runs it when told
@@ -53,10 +57,11 @@ module OpenLanes
       :ping_every,
       :lifetime,
       :demo,
+      :copilot,
       :background,
       :chat,
       :stopping) do
-      def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil, chat: nil,
+      def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
         background: Context::THREAD, stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end

@@ -21,7 +21,8 @@ The shapes are in `web/src/api/types.ts`, the single source of truth. `web/src/a
 | `P:<node>:<checkout>:commands` | stream | API server | `{json}` one `Command`; engine reads with group `engine` |
 | `P:<node>:<checkout>:replies` | stream | engine | `{json}` one `Reply`, `MAXLEN ~ 1000` |
 | `P:<node>:<checkout>:done` | hash | engine | command id → `Reply` JSON, for redelivery (W13); trimmed after a day, unreadable entries dropped |
-| `P:<node>:<checkout>:copilot` | stream | API server (until c3po-operator exists) | `{json}` one `CopilotTurn`, the person's and the copilot's in the order said, `MAXLEN ~ 500` (W17) |
+| `P:<node>:<checkout>:copilot` | stream | API server | `{json}` one `CopilotTurn`, the person's and the copilot's in the order said, `MAXLEN ~ 500` (W17) |
+| `P:<node>:<checkout>:copilot-session` | hash | API server | `session` (c3po-operator's `claude` session id), `model`, `up`, `down`: the conversation to resume and what it has spent (W17) |
 | `P:<node>:<checkout>:run` | hash | engine | `seq` and `json`: the run state a person set (held questions, held cars, queued models), written in the same `MULTI` as the reply that changed it; mirrored into `.plans/agentilda-state.json` under `live`, and on start the copy with the higher `seq` wins (W6) |
 | `P:claim:<ordinal>` | string | engine | `<node>:<checkout>`, `SET NX EX 90`, renewed by heartbeat, released by compare-and-delete |
 
@@ -36,7 +37,7 @@ A node is alive while its `snapshot` key exists. Whoever reads `P:nodes` drops t
 | `GET /api/events` | SSE: first `event: cursor` with `id:` and `{id}` set to the newest reply id (`0-0` when there is none), so a reconnect always has a `Last-Event-ID`; then `event: board` with a `Board` whenever any snapshot's `seq` changes (checked every 250 ms), `event: reply` with each `Reply`; then `event: copilot_cursor` with `{id}`, the newest copilot turn's stream id (`0-0` when there is none), and `event: copilot` with each `CopilotTurn` written after it, neither with an `id:` so they never move the reply cursor; with `?page=<id>`, `event: chat_cursor` once that page is attached to its chat (the page reads `GET /api/chat` on it), then `event: chat` with each `ChatEvent` for the page, no `id:`; a `: ping` comment every 15 s |
 | `POST /api/commands` | body `Command`; header `X-CSRF-Token` must equal the token in `GET /api/session`; `202` with `Reply{status: "accepted"}` once queued, `422` with `Reply{status: "refused"}` for an invalid command |
 | `GET /api/copilot` | `CopilotLog`: the newest 100 turns, oldest first, and the copilot's latest `usage` (`{model: null, up: 0, down: 0}` before it has any) |
-| `POST /api/copilot` | body `CopilotMessage` `{id, text}`, text at most 4000 characters; same `X-CSRF-Token` rule; `202` with the person's `CopilotTurn` once stored, `422` with `{error}` otherwise. The answers arrive as `event: copilot` |
+| `POST /api/copilot` | body `CopilotMessage` `{id, text}`, text at most 4000 characters; same `X-CSRF-Token` rule; `202` with the person's `CopilotTurn` once stored, `422` with `{error}` for a message it refuses, `503` with `{error}` when nothing in this server answers the copilot (the message is not stored). The answers arrive as `event: copilot` |
 | `GET /api/chat?page=<id>` | `ChatState` (plan 006): `{chat: {id, me, participants} or null, invites, outgoing}` for that page; `422` for a page id that is not 8–64 letters, digits, `-` or `_` |
 | `POST /api/chat/:action` | `start {page, name, machine}`, `invite {page, machine}`, `accept {page, invite, name}`, `decline {page, invite}`, `leave {page}`, `say {page, id, text}` (at most 4000 characters), `presence {page, idle}`; same `X-CSRF-Token` rule; `202` with the action's answer, `422` with `{error}` when refused, `409` for an invite already answered or expired. Everyone hears of it as `event: chat` |
 | `GET /api/session` | `{csrf, node, repo}` |
@@ -55,7 +56,40 @@ The conversation with c3po-operator travels like everything else: messages go in
 | `confirm` | `command` (a `Command` without its id), `confirm` (the button's label), `done` (what the card says once accepted) | a red card; the command is sent through `POST /api/commands` only when the person presses the button (stop, discard, stop all) |
 | `draft` | `question` (a `Question.id`), `draft` | a quiet card that puts the draft in that question's answer box without sending it |
 
-The server refuses to store a card missing its fields, or a confirm card whose command `POST /api/commands` would refuse. **Placeholder:** until c3po-operator is built, the API server answers every message itself with one `text` turn saying nobody is listening, and `usage` stays null. Replacing the responder in `Live::Copilot` is the whole of that change; the stream, routes and page stay.
+The server refuses to store a card missing its fields, or a confirm card whose command `POST /api/commands` would refuse.
+
+### Where c3po-operator runs
+
+In the API server, not the engine. The conversation already arrives there and is stored there, and W17 asks for nothing the engine alone has: the agent reads the board, the plan folders, the mailboxes and the transcripts, all of which the server can reach. Running there also means it answers under `openlanes web` with no run going, and after a run has ended. `openlanes web --demo` answers with one canned line instead (`Web::Demo::COPILOT`); a server with no responder answers `POST /api/copilot` with `503`.
+
+- **One message at a time.** `POST /api/copilot` stores the person's turn and returns `202` at once; the server then calls `Copilot#answer` on its background path (`Context#background`, a thread with its own Redis connection), whose responder is `Live::Copilot::Operator`. The operator answers one message after another, so two `claude` processes never resume one session; a failure is written as a `text` turn by `Copilot#answer`.
+- **One session, resumed.** Each message is one `claude -p`, with `--resume <session>` from `copilot-session` when there is one, so a reloaded page or a restarted server carries on the same conversation. A session `claude` no longer has fails before spending anything; the operator then starts a fresh one and keeps its id. A message still queued when the server stops is not answered.
+- **What it is told.** Its definition (`agents/c3po-operator.md`) goes as `--append-system-prompt` on every call, so compaction cannot lose it. Each message carries the board as the server read it from Redis (this node's plans, cars, questions and recent log, other machines in one line each), where to read further, and the person's words.
+- **Its boundary.** `--restricted --tools Read,Grep,Glob,Bash --permission-mode dontAsk`: no other built-in tool exists for it, no settings file can widen what is allowed, and anything not allowed is refused rather than prompted for. Bash runs only the read-only `openlanes` queries its definition lists. `Executor#denied_for` adds the network tools and every command that leaves the machine, and `Edit`, `Write`, `MultiEdit`, `NotebookEdit`, `Task` and `Agent` are denied on top. It reads the checkout and the trace directory (`--add-dir`), on its definition's model (`haiku`), with a 180 s limit per answer.
+- **Usage.** Every turn it writes carries `usage`: the model's full id and the session's running `up` and `down`, which the header shows.
+- **Failures** come back as a `text` turn saying why ("c3po-operator could not answer: …"), never as silence.
+
+### Cards c3po-operator writes
+
+The agent answers in prose. Where it wants a card it writes a fenced block whose info string is exactly `c3po`, holding one JSON object:
+
+````text
+```c3po
+{"card": "confirm", "text": "…", "command": {"kind": "stop", "plan": "002", "agent": "luke-backend"}, "confirm": "Stop luke-backend", "done": "…"}
+```
+```c3po
+{"card": "draft", "question": "002/B1", "text": "…", "draft": "…"}
+```
+````
+
+`Live::Copilot::Cards` cuts the answer into turns in the order written (`<id>.1`, `<id>.2`, …) and draws a card only when all of these hold; otherwise the block becomes a `text` turn giving the reason and the block's body, and nothing is offered:
+
+- it parses as one JSON object, and `card` is `confirm` or `draft`;
+- a confirm card's `command.kind` is `stop`, `discard` or `stop_all`, `Command.parse` accepts it, and the plan (and for `stop` the agent) is on this node's board; its payload is dropped, so the card carries only what its button says; `confirm` is 1 to 60 characters and `done` 1 to 200;
+- a draft card's `question` is an id on this node's board, and `draft` is not empty;
+- the answer has offered no more than three cards.
+
+`message`, `hold` and every other kind are refused as cards: the engine files a `message` in the mailbox as from `human`, and the copilot's words must not reach an agent under the person's name. A fence with another info string, or one never closed, stays prose. The server never sends a card's command itself: the page does, through `POST /api/commands`, when the person presses the button.
 
 ## Chat between machines (plan 006)
 

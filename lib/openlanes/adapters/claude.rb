@@ -64,10 +64,14 @@ module OpenLanes
         # it the stream reports a settled input count and a placeholder output
         # count — 2 for a four-thousand-token answer — and a spinner counting
         # what came back would read zero all run.
-        argv = ["claude", "-p", invocation.prompt, "--add-dir", invocation.root,
-                "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--brief"]
+        argv = ["claude", "-p", invocation.prompt, "--add-dir", invocation.root]
+        invocation.dirs.each { argv += ["--add-dir", it] }
+        argv += ["--output-format", "stream-json", "--verbose", "--include-partial-messages"]
+        argv << "--brief" if invocation.brief
         argv += ["--resume", invocation.resume] if invocation.resume
         argv += LEAN.reject { invocation.slash_commands && it == SLASH_COMMANDS_OFF } if invocation.lean
+        argv += restricted(invocation.tools) if invocation.tools
+        argv += ["--append-system-prompt", invocation.system] if invocation.system
         argv += ["--disallowedTools", invocation.denied_tools.join(",")] unless invocation.denied_tools.empty?
         argv += ["--allowedTools", invocation.allowed_tools.join(",")] unless invocation.allowed_tools.empty?
         model = model(invocation.model)
@@ -78,6 +82,18 @@ module OpenLanes
 
       # @return [OpenLanes::Execution::Transcript]
       def transcript(trace: nil, &) = Execution::Transcript.new(trace:, &)
+
+      # A fixed tool set. `--tools` takes every other built-in tool away, and
+      # `--restricted` stops the project's and the operator's settings files
+      # from granting more: an allow rule in `.claude/settings.json` would
+      # otherwise widen what `--allowedTools` permits, and `--disallowedTools`
+      # only removes what somebody thought to name. `dontAsk` refuses whatever
+      # the allow list does not cover, rather than waiting on a prompt that
+      # nobody under `-p` can answer.
+      #
+      # @param tools [Array<String>]
+      # @return [Array<String>]
+      def restricted(tools) = ["--restricted", "--tools", tools.join(","), "--permission-mode", "dontAsk"]
 
       # @param model [String, nil] an alias (`sonnet`) or a full id
       #   (`claude-fable-5-1`)
@@ -91,6 +107,9 @@ module OpenLanes
 
       # @return [Boolean]
       def enforces_tool_denial? = true
+
+      # @return [Boolean] `--resume <session id>` carries a conversation on
+      def resumes? = true
 
       # `claude -p --resume <id> "/compact"` compacts the session and prints a
       # `compact_boundary` event; the agent cannot run it on itself, because

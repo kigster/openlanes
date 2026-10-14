@@ -70,6 +70,15 @@ module OpenLanes
       # @return [String]
       def copilot(of = node) = "#{base}:#{of}:copilot"
 
+      # Hash: `session`, `model`, `up` and `down`, the copilot's `claude`
+      # session id and what it has spent in it. Kept beside {#copilot} so a
+      # reloaded page or a restarted server carries on the same conversation
+      # (W17: one session, resumed on each message).
+      #
+      # @param of [String]
+      # @return [String]
+      def copilot_session(of = node) = "#{base}:#{of}:copilot-session"
+
       # Pub/sub channel: one chat's messages, joins, leaves and idle notices
       # (plan 006). Redis delivers a `PUBLISH` to every database's
       # subscribers, so the database is part of every chat channel's name: a

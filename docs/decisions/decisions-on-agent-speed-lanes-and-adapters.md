@@ -109,3 +109,16 @@ Two stacked pull requests: the module reorganisation (pure move plus facades, #4
 - **Interface segregation.** The CLI depends on each namespace's facade (`Plans.tree`, `Agents.registry`, …) rather than on its classes.
 - **Dependency inversion.** The executor depends on the adapter interface, not on `claude`. `spawn:` and the `GitHub` and `Linear::API` seams stay injectable.
 - **Not done.** `Engine::Dispatcher` (~770 lines) still mixes dispatch, settlement and crash recovery. Settlement shares six pieces of dispatcher state, so extracting it is a refactor of its own and was left out to keep this pull request reviewable.
+
+### D11. The plan folder travels with its pull request (2026-10-13)
+
+The plan folder travels with its PR. The publisher copies it in, and the main checkout remains the only writer.
+
+A live trial ran with `.plans` untracked on `main`, so the plan's worktree had no plan folder at all. Its pull request would have carried code with no spec, plan or history next to it. Committing `.plans` to `main` when a plan is created was considered and rejected: it writes to the user's main branch behind their back.
+
+- The engine reads, signs and renames the plan only in the main checkout. Agents are given that folder's absolute path. A `.plans` inside a worktree is a snapshot, and nothing in the run reads it.
+- Right before the publisher commits, it removes every copy of that plan number from the worktree's `.plans` and copies the folder in under its current name. Every later publish does the same, so a folder renamed since the last push does not leave its old name in the branch, and a file deleted on main is deleted in the branch too.
+- `state.json` travels. It is the plan's history: stages, signatures and the agents' messages (D7). Half-written `*.tmp` files from its atomic writes do not travel.
+- Nothing is copied when the checkout is the main checkout, or when the plans live outside the repository.
+- Agents in a worktree are told that its `.plans` is a snapshot the next publish overwrites.
+

@@ -58,6 +58,13 @@ module OpenLanes
       #   carried on in the same session
       def compacts? = !compact_prompt.nil?
 
+      # Whether {#argv} honours {Invocation#resume}. The copilot (W17) keeps
+      # one conversation across messages only on a CLI that says yes; on any
+      # other each message starts afresh, and says so.
+      #
+      # @return [Boolean]
+      def resumes? = false
+
       # Whether the CLI itself refuses the denied tools, rather than only being
       # asked not to use them. The prompt says which, because telling an agent
       # a guard exists when it does not is how it stops being careful.

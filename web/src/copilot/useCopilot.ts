@@ -6,8 +6,11 @@ import { EMPTY_LOG, answers, asLog, mergeLogs, withTurn } from "../api/copilot";
 import { COPILOT_KEY } from "../api/queryClient";
 import type { CopilotLog, CopilotTurn } from "../api/types";
 
-/** How long the panel shows the copilot as reading before it stops waiting for an answer. */
-export const ANSWER_TIMEOUT_MS = 60_000;
+/**
+ * How long the panel shows the copilot as reading before it stops waiting for an answer: a little past the 180 s
+ * c3po-operator's definition allows one answer, after which the server writes why it gave up.
+ */
+export const ANSWER_TIMEOUT_MS = 200_000;
 
 /** What `?fixture` answers, since nothing is connected to answer for real. */
 export const FIXTURE_REPLY = "This page is showing fixture data, so nothing is connected to answer you.";

@@ -280,7 +280,10 @@ module OpenLanes
         log_taps.each { |tap| tap.call(message, fields) }
         path = log_path or return
 
-        line = Engine::ProgressLog.render(message, **fields)
+        # Taps hear every field; the file takes only its own columns, so a
+        # field meant for the terminal (the state a plan moved to) adds
+        # nothing to the file's format.
+        line = Engine::ProgressLog.render(message, **fields.slice(*Engine::ProgressLog::FIELDS))
         (@log_mutex ||= Mutex.new).synchronize do
           FileUtils.mkdir_p(File.dirname(path))
           File.open(path, "a") { |f| f.puts(line) }
@@ -611,6 +614,77 @@ module OpenLanes
       # @param message [String]
       # @return [void]
       def box(kind, message) = console.public_send(kind, message.to_s)
+
+      # Labelled lines for a box, the labels padded to one width:
+      #
+      #   Progress:     /var/folders/…/openlanes-minesweeper.log
+      #   Live board:   redis://host:6379 as kig@host
+      #                 (c016…:734c…)
+      #
+      # A value given as several parts is joined with spaces while it fits
+      # the box, and each part that does not starts a continuation line
+      # under the values, so a long id breaks where it was meant to rather
+      # than wherever the box's own wrap runs out of room.
+      #
+      # @param rows [Array<Array(String, String | Array<String>)>] label and value
+      # @param room [Integer] text columns inside the box
+      # @return [String]
+      def labelled(rows, room: box_room)
+        pad = rows.map { |label, _| display_width("#{label}:") }.max.to_i + 1
+        free = [room - pad, 1].max
+        rows.flat_map { |label, parts|
+          lines = Array(parts).map(&:to_s).each_with_object([]) do |part, acc|
+            if acc.any? && display_width("#{acc.last} #{part}") <= free
+              acc[-1] = "#{acc.last} #{part}"
+            else
+              acc.concat(broken(part, free))
+            end
+          end
+          lines.each_with_index.map { |text, i| (i.zero? ? fit("#{label}:", pad) : " " * pad) + text }
+        }.join("\n")
+      end
+
+      # A value wider than its column, cut into pieces that fit: after a
+      # `/` where it can be, so a path breaks between directories, and
+      # anywhere when one name is wider than the column on its own. Left
+      # to the box, a path wider than the room after its label wrapped
+      # onto the next line whole, under the label rather than beside it,
+      # and was then cut mid-name with no indent.
+      #
+      # @param text [String]
+      # @param free [Integer] columns
+      # @return [Array<String>] the pieces, each at most +free+ wide
+      def broken(text, free)
+        return [text] if display_width(text) <= free
+
+        text.split(%r{(?<=/)}).flat_map { cells(it, free) }.each_with_object([+""]) do |piece, acc|
+          acc.last.empty? || display_width(acc.last + piece) <= free ? acc.last << piece : acc << piece.dup
+        end
+      end
+
+      # A piece cut by terminal cells rather than characters, one grapheme
+      # cluster at a time, so a wide name such as `界界界` is never cut into
+      # a chunk wider than +free+ (nor a combining mark off its letter).
+      #
+      # @param text [String]
+      # @param free [Integer] columns
+      # @return [Array<String>]
+      def cells(text, free)
+        text.each_grapheme_cluster.with_object([+""]) do |grapheme, acc|
+          acc << +"" unless acc.last.empty? || display_width(acc.last + grapheme) <= free
+          acc.last << grapheme
+        end
+      end
+
+      # Text columns inside a box, as dry-cli-ui works them out: the box is
+      # {.width} or the terminal less two, whichever is narrower, and a
+      # border and two columns of padding go on either side.
+      #
+      # @return [Integer]
+      def box_room
+        terminal = tty? ? TTY::Screen.width : Dry::CLI::UI::Terminal::DEFAULT_WIDTH
+        [width, terminal - 2].min - 6
+      end
 
       # A framed panel centered on the screen, for the keyboard help. Unlike
       # {.box} it positions itself absolutely, so it overlays whatever the

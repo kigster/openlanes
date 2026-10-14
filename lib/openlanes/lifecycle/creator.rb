@@ -61,6 +61,30 @@ module OpenLanes
         end
       end
 
+      # How many words of an idea name its plan.
+      TOPIC_WORDS = 8
+
+      # The words a free-form idea's plan is named after: a frontmatter
+      # `title:`, else its first line, a heading's `#` marks dropped.
+      #
+      # Taking the first words of the raw text named the minesweeper trial's
+      # plan `minesweeper-minesweeper-is-played-on-a-grid`: the idea opened
+      # with `# Minesweeper` and then a paragraph starting with the same
+      # word, and the heading's `#` was dropped while its word was kept.
+      #
+      # @param idea [String] Markdown, as the page's idea dialog sends it
+      # @return [Array<String>] at most {TOPIC_WORDS} words, possibly none
+      def self.topic(idea)
+        meta, body = begin
+          Frontmatter.split(idea.to_s)
+        rescue Psych::Exception
+          [{}, idea.to_s.sub(Frontmatter::PATTERN, '\\2')]
+        end
+        title = meta["title"].to_s.strip
+        line = title.empty? ? body.lines.map(&:strip).find { !it.empty? }.to_s : title
+        line.sub(/\A\#{1,6}\s+/, "").split.first(TOPIC_WORDS)
+      end
+
       # Turn free text into the kebab tail of a folder name.
       #
       # @param words [Array<String>, String]

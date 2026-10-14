@@ -85,8 +85,12 @@ export function useBoard(): BoardState {
       onChatCursor: () => chatBus.opened(),
       onState: setConnection,
       // Read the conversation only once the stream has said where it starts; a read begun earlier could miss a turn
-      // written before the stream opened, which the stream would then never send either.
-      onCopilotCursor: () => void client.refetchQueries({ queryKey: COPILOT_KEY }),
+      // written before the stream opened, which the stream would then never send either. A read still in flight began
+      // before the boundary, so cancel it first: refetchQueries alone reuses it while the log has no data yet.
+      onCopilotCursor: () => {
+        void client.cancelQueries({ queryKey: COPILOT_KEY });
+        void client.refetchQueries({ queryKey: COPILOT_KEY });
+      },
       onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
     }, eventsUrl());
   }, [client, fixture]);

@@ -131,6 +131,9 @@ module OpenLanes
           return answer_again(entry, first)
         end
 
+        # Said on the terminal and in the log: what a person asked for from
+        # the page is part of the run's story, beside what the agents did.
+        UI.log("from the page: #{command.kind.tr("_", " ")}", **{ plan: command.plan, agent: command.agent }.compact)
         status, reason = apply(command, dispatcher)
         return reply(entry, command.id, status, reason) unless status == :pending
 
@@ -424,7 +427,7 @@ module OpenLanes
           return created(made.feature, dispatcher)
         end
 
-        path = Lifecycle.create(dir: tree.dir, words: idea.split.first(8)).either(
+        path = Lifecycle.create(dir: tree.dir, words: Lifecycle::Creator.topic(idea)).either(
           ->(created) { created },
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
         )

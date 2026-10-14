@@ -19,6 +19,16 @@ module OpenLanes
       # The other machine's checkout id, fixed so its keys are stable.
       OTHER_CHECKOUT = Live::Node.digest("openlanes-demo-other", Live::Node::CHECKOUT_LENGTH)
 
+      # What the copilot answers in the demo, where no agent runs and the
+      # board is made up: one plain line, so the panel can still be tried.
+      COPILOT_TEXT = "This is the demo run: c3po-operator does not run here, so nothing reads this or acts on it."
+
+      # The copilot's responder under `--demo` (W17), in place of
+      # {Live::Copilot::Operator}.
+      COPILOT = lambda do |turn|
+        [Live::Copilot::Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: COPILOT_TEXT)]
+      end
+
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param keys [OpenLanes::Live::Keys] this node's
       # @param board [OpenLanes::Web::DemoBoard]
