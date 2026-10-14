@@ -19,6 +19,7 @@ module OpenLanes
         [
           header,
           numbering,
+          places,
           starting,
           status_table,
           blocking,
@@ -79,11 +80,16 @@ module OpenLanes
           The shape is always `NNN.MM`:
 
           ```
-          #{OpenLanes::PLANS_DIR}/000.00-#{status(:new).emoji}-initial-spec
-          #{OpenLanes::PLANS_DIR}/001.00-#{status(:approved).emoji}-dev-foundation
-          #{OpenLanes::PLANS_DIR}/001.01-#{status(:approved).emoji}-schedule-k1-backfill   <- shipped between 001 and 002,
-          #{OpenLanes::PLANS_DIR}/002.00-#{status(:planned).emoji}-tenancy-households        specified afterwards
+          #{OpenLanes::PLANS_DIR}/#{name("000.00", :new, "initial-spec")}
+          #{OpenLanes::PLANS_DIR}/#{name("001.00", :building, "dev-foundation")}
+          #{OpenLanes::PLANS_DIR}/#{name("001.01", :retroactive, "schedule-k1-backfill")}   <- shipped between 001 and 002,
+          #{OpenLanes::PLANS_DIR}/#{name("002.00", :planned, "tenancy-households")}        specified afterwards
           ```
+
+          A folder name holds no space, so it needs no quoting in a shell, and every
+          state emoji is a single code point, so it measures the same in every terminal.
+          Older spellings (`NNN.MM-<emoji> → <slug>`, `NNN-<emoji>--<slug>`) and the
+          emoji they used are still read; `openlanes resync dirs` renames them.
 
           - **`NNN` counts from `000`.** The first plan of a project is `000.00`; after
             that it is the highest major plus one, zero-padded to three digits.
@@ -119,6 +125,52 @@ module OpenLanes
 
         MARKDOWN
       end
+
+      # Where a plan lives, derived from {Plans::Tree::INACTIVE_DIRS}.
+      #
+      # @return [String]
+      def places
+        rows = OpenLanes::Plans::Tree::INACTIVE_DIRS.group_by { |_, dir| dir }.map do |dir, pairs|
+          states = pairs.map { |key, _| "#{status(key).emoji} #{status(key).label}" }.join(", ")
+          "| `#{OpenLanes::PLANS_DIR}/#{dir}/` | #{states} |"
+        end
+        dated = name("001.00", :approved, "dev-foundation", archived_on: Date.new(2026, 9, 1))
+
+        <<~MARKDOWN
+          ## Where a plan lives
+
+          The top of `#{OpenLanes::PLANS_DIR}` holds only plans somebody may still work on.
+          A plan in one of these states moves into a subfolder, and its name gains the
+          date it got there:
+
+          | Folder | States |
+          | --- | --- |
+          #{rows.join("\n")}
+
+          ```
+          #{OpenLanes::PLANS_DIR}/#{OpenLanes::Plans::Tree.subfolder_for(status(:approved))}/#{dated}
+          ```
+
+          `openlanes resync dirs` does the moving, with `git mv`, and moves a plan back
+          to the top, undated, once its state is open again. The date is the folder's
+          last rename in git, else `state.json`'s `updated_at`, else today. Numbers span
+          the subfolders: a number in `archive/` is never handed out again.
+          `openlanes list-plans` shows the open plans; `--all` adds the rest.
+
+          While an agent works in a plan, the folder holds a git-ignored
+          `#{OpenLanes::Plans::Lock::FILENAME}` (pid, host, start time) and `list-plans`
+          shows 🔑. The folder is never renamed while it is locked. `resync dirs` clears a
+          lock whose process is gone from this machine, and only reports one from another.
+
+        MARKDOWN
+      end
+
+      # @param ordinal [String]
+      # @param key [Symbol]
+      # @param slug [String]
+      # @param archived_on [Date, nil]
+      # @return [String] a folder name, spelled the one way {Plans.plan_dirname} spells it
+      def name(ordinal, key, slug, archived_on: nil) = OpenLanes::Plans.plan_dirname(ordinal, status(key), slug, archived_on:)
 
       # @return [String]
       def starting
