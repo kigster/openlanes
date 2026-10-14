@@ -93,4 +93,51 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       expect(deps.reason("004.00")).to eq("waiting on 001.00")
     end
   end
+
+  # 034 shipped while it still named 050, and 050 still names 034. The
+  # dependency on a done plan is met, so there is no deadlock to report.
+  context "when one side of a former cycle is done" do
+    before do
+      plans do |t|
+        t.plan "034.00", :approved, "a", files: { "spec.md" => needs("050.00") }, prs: [t.merged(34, "Ship")]
+        t.plan "050.00", :planned, "b", files: { "spec.md" => needs("034.00") }
+      end
+    end
+
+    it "lets the open side start" do
+      expect(deps.cycles).to be_empty
+      expect(deps.reason("050.00")).to be_nil
+    end
+  end
+
+  context "with a plan that names itself" do
+    before { plans { |t| t.plan "007.00", :planned, "self", files: { "spec.md" => needs("007.00") } } }
+
+    it "reports a one-plan cycle" do
+      expect(deps.cycle_of("007.00")).to eq(%w[007.00 007.00])
+    end
+  end
+
+  # Enumerating every path visited each plan once per path to it, which is
+  # exponential here: 28 plans took 2.6 seconds.
+  context "with a long chain where each plan waits on the two before it" do
+    before do
+      plans do |t|
+        (1..40).each do |i|
+          before = [i - 1, i - 2].select(&:positive?).map { format("%03d.00", it) }
+          t.plan format("%03d.00", i), :planned, "p#{i}", files: { "spec.md" => needs(*before) }
+        end
+      end
+    end
+
+    it "visits each plan once" do
+      graph = described_class.new(tree)
+      visits = Hash.new(0)
+      allow(graph).to(receive(:waiting_on).and_wrap_original { |m, o| visits[o.to_s] += 1 and m.call(o) })
+
+      expect(graph.cycles).to be_empty
+      expect(visits.values.max).to eq(1)
+      expect(graph.reason("040.00")).to eq("waiting on 038.00, 039.00")
+    end
+  end
 end
