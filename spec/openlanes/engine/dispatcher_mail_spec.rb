@@ -53,8 +53,34 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     expect(numbers).to eq([7])
   end
 
+  # A worktree's `mail send` reaches the main checkout only through the
+  # stream, and the stream forgets it after an hour, so the drain cannot
+  # wait for an agent to run on the plan.
+  it "keeps mail for a plan with nobody running on it" do
+    building("002.00", "idle-plan")
+    mail.publish(plan: "002.00",
+      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "hi" })
+    dispatcher.tick
+
+    expect(OpenLanes::Plans::PlanState.for(path_of("002.00")).messages.map { it["body"] }).to eq(["hi"])
+  end
+
+  it "leaves a message pending while its plan cannot be found, and keeps it once it can" do
+    mail.publish(plan: "002.00",
+      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "hi" })
+    dispatcher.tick
+
+    aggregate_failures do
+      expect(store.xreadgroup(keys.mail, keys.mail_group("002.00"), "harness", id: "0").size).to eq(1)
+      building("002.00", "late-plan")
+      dispatcher.tick
+      expect(OpenLanes::Plans::PlanState.for(path_of("002.00")).messages.map { it["body"] }).to eq(["hi"])
+      expect(store.xreadgroup(keys.mail, keys.mail_group("002.00"), "harness", id: "0")).to eq([])
+    end
+  end
+
   it "carries on with the tick when Redis goes away" do
-    allow(mail).to receive(:drain).and_raise(OpenLanes::Live::Unavailable, "Redis at memory:// is unavailable")
+    allow(mail).to receive(:plans_since).and_raise(OpenLanes::Live::Unavailable, "Redis at memory:// is unavailable")
 
     expect { dispatcher.tick }.not_to raise_error
   end

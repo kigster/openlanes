@@ -19,8 +19,10 @@ module OpenLanes
     # vanishing. Every publish trims what is older than {Keys::MAIL_TTL}
     # and renews the key's expiry, so the stream never outgrows an hour.
     #
-    # Delivery is acked as it is read. That says the bytes arrived, nothing
-    # more: a message is read when its recipient runs `openlanes mail ack`,
+    # Delivery is acked once the drain's block kept it, never before: an
+    # entry acked ahead of a failed write would be gone from the stream with
+    # only a log line left. An entry not kept stays pending and is offered
+    # again on the next drain. An ack says the bytes arrived, nothing more: a message is read when its recipient runs `openlanes mail ack`,
     # and that lands in `state.json`, never here.
     class Mail
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -46,19 +48,52 @@ module OpenLanes
         end
       end
 
-      # Every message for +plan+ that this plan's group has not been given
-      # yet, acked as delivered. Entries for other plans are acked in this
-      # plan's group too, which leaves theirs untouched.
+      # Every message for +plan+ that this plan's group has not had kept
+      # yet: first the ones offered before and left pending, then the new.
+      # Entries for other plans, and entries that are not messages, are
+      # acked in this plan's group straight away, which leaves other plans'
+      # groups untouched.
+      #
+      # With a block, each message is yielded and acked only when the block
+      # returns truthy; one it returns false for, or raises on, stays pending
+      # for the next drain. Without one, each is acked as it is returned.
       #
       # @param plan [#to_s]
       # @param consumer [String] who is draining, e.g. the agent's name
-      # @return [Array<Hash>] messages as `state.json` holds them, oldest first
+      # @yieldparam message [Hash] as `state.json` holds it
+      # @yieldreturn [Boolean] whether it was kept
+      # @return [Array<Hash>] messages as `state.json` holds them, oldest
+      #   first; with a block, the ones left pending
       def drain(plan:, consumer:)
         group = @keys.mail_group(plan)
         @store.expire(@keys.mail, Keys::MAIL_TTL) if @store.xgroup_create(@keys.mail, group)
-        entries = @store.xreadgroup(@keys.mail, group, consumer)
-        @store.xack(@keys.mail, group, *entries.map(&:id))
-        entries.filter_map { |entry| message_in(entry, plan.to_s) }
+        entries = @store.xreadgroup(@keys.mail, group, consumer, id: "0") + @store.xreadgroup(@keys.mail, group, consumer)
+        entries.filter_map do |entry|
+          message = message_in(entry, plan.to_s)
+          kept = message.nil? || !block_given? || yield(message)
+          @store.xack(@keys.mail, group, entry.id) if kept
+          message if message && (kept ? !block_given? : true)
+        end
+      end
+
+      # Which plans have mail in the stream after +cursor+, so a drain can
+      # reach a plan with nobody running on it: a worktree's `mail send` has
+      # no other way into the main checkout's `state.json`, and the stream
+      # forgets it after {Keys::MAIL_TTL}.
+      #
+      # @param cursor [String] the last stream id already looked at, "0" for
+      #   all of it
+      # @return [Array(Array<String>, String)] the plans, and the new cursor
+      def plans_since(cursor)
+        plans = []
+        loop do
+          entries = @store.xread(@keys.mail, id: cursor)
+          break if entries.empty?
+
+          cursor = entries.last.id
+          plans.concat(entries.filter_map { plan_in(it) })
+        end
+        [plans.uniq, cursor]
       end
 
       private
@@ -83,6 +118,15 @@ module OpenLanes
         Time.parse(at.to_s).iso8601
       rescue ArgumentError
         at&.to_s
+      end
+
+      # @param entry [OpenLanes::Live::Store::Entry]
+      # @return [String, nil] the plan the entry is for
+      def plan_in(entry)
+        data = JSON.parse(entry.fields["json"].to_s)
+        data["plan"] if data.is_a?(Hash) && data["plan"].is_a?(String)
+      rescue JSON::ParserError
+        nil
       end
 
       # @param entry [OpenLanes::Live::Store::Entry]

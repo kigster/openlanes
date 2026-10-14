@@ -40,6 +40,30 @@ RSpec.describe OpenLanes::Live::Mail do
     expect(store.xreadgroup(keys.mail, keys.mail_group("003.00"), "rey-frontend", id: "0")).to eq([])
   end
 
+  it "acks only what the block kept, and offers the rest again on the next drain" do
+    mail.publish(plan: "003.00", message:)
+    mail.publish(plan: "003.00", message: message.with(number: 8))
+
+    aggregate_failures do
+      expect(mail.drain(plan: "003.00", consumer: "harness") { it["number"] == 7 }.map { it["number"] }).to eq([8])
+      expect { mail.drain(plan: "003.00", consumer: "harness") { raise "disk full" } }.to raise_error("disk full")
+      expect(mail.drain(plan: "003.00", consumer: "harness") { true }).to eq([])
+      expect(store.xreadgroup(keys.mail, keys.mail_group("003.00"), "harness", id: "0")).to eq([])
+    end
+  end
+
+  it "names the plans the stream has mail for, from a cursor on" do
+    mail.publish(plan: "003.00", message:)
+    mail.publish(plan: "004.00", message:)
+    plans, cursor = mail.plans_since("0")
+    mail.publish(plan: "005.00", message:)
+
+    aggregate_failures do
+      expect(plans).to eq(%w[003.00 004.00])
+      expect(mail.plans_since(cursor).first).to eq(%w[005.00])
+    end
+  end
+
   it "leaves another plan's messages for that plan's own drain" do
     mail.publish(plan: "004.00", message:)
 
