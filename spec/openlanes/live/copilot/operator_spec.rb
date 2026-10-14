@@ -158,11 +158,20 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       end
     end
 
+    # What `claude -p --resume` prints for a session it does not have: the
+    # reason on stderr, and a result event with no result.
+    def missing(id)
+      { ok: false, lines: ["No conversation found with session ID: #{id}",
+                           JSON.generate(type: "result",
+                             subtype: "error_during_execution",
+                             is_error: true,
+                             session_id: id,
+                             usage: { input_tokens: 0, output_tokens: 0 },
+                             errors: ["No conversation found with session ID: #{id}"])] }
+    end
+
     context "when claude no longer has the session" do
-      let(:runs) do
-        [run(session: nil, sent: 0, said: 0, result: "No conversation found with session ID: sess-0", exited: false, error: true),
-         run(session: "sess-2", sent: 900, said: 40, result: "Starting afresh.")]
-      end
+      let(:runs) { [missing("sess-0"), run(session: "sess-2", sent: 900, said: 40, result: "Starting afresh.")] }
 
       before do
         store.hset(keys.copilot_session, "session", "sess-0")
@@ -176,6 +185,33 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
 
       it "answers from the new one" do
         expect(stored.last["text"]).to eq("Starting afresh.")
+      end
+    end
+
+    context "when the fresh conversation fails as well" do
+      let(:runs) { [missing("sess-0"), run(session: nil, sent: 0, said: 0, result: "Not logged in", exited: false, error: true)] }
+
+      before do
+        store.hset(keys.copilot_session, "session", "sess-0")
+        say("hello")
+      end
+
+      it "forgets the session claude does not have" do
+        expect([spawned.size, store.hget(keys.copilot_session, "session")]).to eq([2, nil])
+      end
+    end
+
+    context "when a resumed run fails before spending anything, for another reason" do
+      let(:runs) { [run(session: nil, sent: 0, said: 0, result: "Invalid API key", exited: false, error: true)] }
+
+      before do
+        store.hset(keys.copilot_session, "session", "sess-0")
+        say("hello")
+      end
+
+      it "reports it rather than starting again" do
+        expect([spawned.size, store.hget(keys.copilot_session, "session"), stored.last["text"]])
+          .to match([1, "sess-0", /claude reported: Invalid API key/])
       end
     end
 
@@ -233,6 +269,42 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       operator.stop
       say("hi")
       expect([spawned, stored.last["text"]]).to eq([[], "c3po-operator could not answer: the server is stopping"])
+    end
+  end
+
+  context "when the server stops while claude is starting" do
+    let(:child) do
+      instance_double(OpenLanes::Execution::Child,
+        pid:        1,
+        terminate:  nil,
+        each_chunk: nil,
+        wait:       instance_double(Process::Status, success?: false, exitstatus: nil))
+    end
+    let(:spawn) do
+      lambda do |argv, **|
+        spawned << argv
+        operator.stop
+        child
+      end
+    end
+
+    it "ends the child it was too late to see" do
+      say("hi")
+      expect(child).to have_received(:terminate).with(grace: 1, drain: 1)
+    end
+  end
+
+  context "when claude cannot be started" do
+    let(:spawn) { ->(*, **) { raise Errno::ENOENT, "claude" } }
+    let(:transcripts) { [] }
+
+    before do
+      allow(OpenLanes::Execution::Transcript).to(receive(:new).and_wrap_original { |m, **kw| m.call(**kw).tap { transcripts << it } })
+    end
+
+    it "closes the trace it opened" do
+      say("hi")
+      expect(transcripts.map { it.instance_variable_get(:@trace) }).to eq([nil])
     end
   end
 

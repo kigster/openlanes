@@ -40,6 +40,9 @@ module OpenLanes
         # start with tools of its own.
         WRITE_TOOLS = %w[Edit Write MultiEdit NotebookEdit Task Agent].freeze
 
+        # What `claude -p --resume` prints, on stderr, for a session it does not have.
+        MISSING = /No conversation found with session ID/
+
         # Seconds an answer may take when the definition names none.
         TIMEOUT = 180
 
@@ -91,7 +94,10 @@ module OpenLanes
           # A session `claude` no longer has (its history was cleared, or the
           # conversation was started on another machine) fails at once; the
           # conversation starts again rather than staying broken.
-          run = invoke(brief.to_s, nil) if stale?(run, record)
+          if stale?(run, record)
+            store.hdel(@keys.copilot_session, "session")
+            run = invoke(brief.to_s, nil)
+          end
           usage = spend(run, record)
           return [failure(turn, run, usage)] unless run.ok
 
@@ -103,8 +109,11 @@ module OpenLanes
         #
         # @return [void]
         def stop
-          @stopped = true
-          @mutex.synchronize { @child }&.terminate(grace: 1, drain: 1)
+          child = @mutex.synchronize do
+            @stopped = true
+            @child
+          end
+          child&.terminate(grace: 1, drain: 1)
         end
 
         # The argv one answer runs, exposed so a spec can check the boundary
@@ -155,11 +164,17 @@ module OpenLanes
               rand(0x10000)))
           transcript = profile.adapter.transcript(trace:)
           child = @spawn.call(argv(prompt, session), chdir: @root, env: profile.adapter.environment)
-          @mutex.synchronize { @child = child }
+          # {#stop} may have run while this was starting, and seen no child to end.
+          stopping = @mutex.synchronize do
+            @child = child
+            @stopped
+          end
+          child.terminate(grace: 1, drain: 1) if stopping
           status = watched(child) { child.each_chunk { transcript.push(it) } }
           transcript.finish
           Run.new(ok: status.success? && !transcript.failed? && !@timed_out, transcript:, note: note(status, transcript, trace))
         ensure
+          transcript&.finish
           @mutex.synchronize { @child = nil }
         end
 
@@ -182,9 +197,11 @@ module OpenLanes
           watchdog&.kill
         end
 
-        # @return [Boolean] whether the run failed before it began, on a session
-        #   it was asked to resume
-        def stale?(run, record) = !run.ok && !@timed_out && record["session"] && run.transcript.up.zero?
+        # @return [Boolean] whether `claude` said it has no such session, on one
+        #   it was asked to resume; any other failure is reported, not retried
+        def stale?(run, record)
+          !run.ok && record["session"] && [run.transcript.error, *run.transcript.plain].any? { it.to_s.match?(MISSING) }
+        end
 
         # @return [Integer] seconds
         def timeout = @agent.timeout || TIMEOUT
