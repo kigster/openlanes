@@ -32,10 +32,12 @@ module PlansFixture
     # @param slug [String] the kebab tail
     # @param files [Hash{String => String}] extra files to write
     # @param prs [Array<Hash>] rows for `pull-requests.md`
+    # @param under [String, nil] an inactive subfolder, e.g. "archive"
+    # @param archived_on [Date, nil] the date its name carries
     # @return [String] absolute path to the folder
-    def plan(ordinal, status, slug, files: {}, prs: nil)
+    def plan(ordinal, status, slug, files: {}, prs: nil, under: nil, archived_on: nil)
       resolved = OpenLanes::Plans.status(status) or raise ArgumentError, "unknown status: #{status}"
-      path = File.join(root, OpenLanes::Plans.plan_dirname(ordinal, resolved, slug))
+      path = File.join(root, *under, OpenLanes::Plans.plan_dirname(ordinal, resolved, slug, archived_on:))
       FileUtils.mkdir_p(path)
 
       files.each { |name, body| File.write(File.join(path, name), body) }

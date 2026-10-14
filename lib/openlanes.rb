@@ -118,7 +118,8 @@ module OpenLanes
     true
   end
 
-  # Plan numbers visible in `.plans` on a git ref, without checking it out.
+  # Plan numbers visible in `.plans` on a git ref, without checking it out,
+  # the inactive subfolders included: an archived plan keeps its number.
   #
   # A pull request's branch is the only place that knows how far the sequence
   # had got when the work started, and branches are not all rebased onto the
@@ -129,7 +130,8 @@ module OpenLanes
   # @return [Array<OpenLanes::Plans::Ordinal>] possibly empty
   def self.plans_on_ref(root, ref)
     ["origin/#{ref}", ref].each do |candidate|
-      out = `git -C #{root.shellescape} ls-tree -d --name-only #{candidate.shellescape} #{PLANS_DIR}/ 2>/dev/null`
+      dirs = [PLANS_DIR, *Plans::Tree::SUBFOLDERS.map { "#{PLANS_DIR}/#{it}" }].map { "#{it}/".shellescape }.join(" ")
+      out = `git -C #{root.shellescape} ls-tree -d --name-only #{candidate.shellescape} #{dirs} 2>/dev/null`
       next if out.to_s.strip.empty?
 
       return out.lines.filter_map { |line| Plans::Ordinal.from_dirname(File.basename(line.strip)) }

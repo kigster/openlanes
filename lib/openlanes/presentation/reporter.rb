@@ -54,7 +54,7 @@ module OpenLanes
       def label_width = @label_width ||= tree.subjects.map { |s| UI.display_width(s.status.label) }.max.to_i + 4
 
       # @return [Integer] widest feature name
-      def title_width = @title_width ||= tree.subjects.map { |s| UI.display_width(s.feature.title) }.max.to_i + 2
+      def title_width = @title_width ||= tree.subjects.map { |s| UI.display_width(title_for(s)) }.max.to_i + 2
 
       # The one place the table's shape is written down. The heading, the plan
       # rows, the continuation lines and the violations all come through here, so
@@ -102,15 +102,17 @@ module OpenLanes
         [UI.paint(text, :bold), UI.paint(rule, :bright_yellow)].join("\n")
       end
 
-      # A plan an agent is working on wears 🔑 before its name. In the title
-      # cell rather than a column of its own, so the pull requests stay where
-      # every other row puts them.
+      # A plan an agent is working on wears 🔑 before its name, and a plan
+      # moved aside carries the date it was moved. In the title cell rather
+      # than columns of their own, so the pull requests stay where every other
+      # row puts them.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @return [String]
       def title_for(subject)
-        title = subject.feature.title
-        Plans::Lock.read(subject.feature.path) ? "🔑 #{title}" : title
+        feature = subject.feature
+        title = feature.archived_on ? "#{feature.title} [#{feature.archived_on.strftime("%F")}]" : feature.title
+        Plans::Lock.read(feature.path) ? "🔑 #{title}" : title
       end
 
       # One line per plan, plus a continuation line for each extra pull request

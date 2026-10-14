@@ -41,6 +41,40 @@ RSpec.describe OpenLanes::CLI::ListPlans, :tree do
     expect(status).to eq(1)
   end
 
+  describe "--all" do
+    before do
+      plans do |t|
+        t.plan "003.00", :new, "still-open", files: { "spec.md" => spec_body }
+        t.plan "001.00", :approved, "shipped-one", under: "archive", archived_on: Date.new(2026, 9, 1)
+        t.plan "002.00",
+          :deferred,
+          "parked",
+          under:       "deferred",
+          archived_on: Date.new(2026, 9, 2),
+          files:       { "delayed.md" => "When the API ships.\n" }
+      end
+    end
+
+    it "hides archived and deferred plans by default" do
+      out, = run
+
+      aggregate_failures do
+        expect(out).to include("Still Open")
+        expect(out).not_to include("Shipped One", "Parked")
+      end
+    end
+
+    it "lists them after the open plans, with the date they were moved aside" do
+      out, = run(all: true)
+
+      aggregate_failures do
+        expect(out).to include("Shipped One [2026-09-01]", "Parked [2026-09-02]")
+        expect(out.index("Still Open")).to be < out.index("Shipped One")
+        expect(out.index("Shipped One")).to be < out.index("Parked")
+      end
+    end
+  end
+
   it "says so when the tree is empty rather than printing a bare header" do
     out, _err, status = run
 

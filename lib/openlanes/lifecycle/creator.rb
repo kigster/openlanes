@@ -50,16 +50,11 @@ module OpenLanes
         Failure(e.message)
       end
 
+      # Archived, deferred and abandoned plans keep their numbers (N3), so a
+      # number that lives only in `archive/` is still taken.
+      #
       # @return [Array<OpenLanes::Plans::Ordinal>] every number already taken
-      def existing
-        @existing ||= begin
-          return [] unless File.directory?(dir)
-
-          Dir.children(dir)
-             .select { |c| File.directory?(File.join(dir, c)) }
-             .filter_map { |c| Plans::Ordinal.from_dirname(c) }
-        end
-      end
+      def existing = @existing ||= Plans::Tree.new(dir:).taken
 
       # How many words of an idea name its plan.
       TOPIC_WORDS = 8

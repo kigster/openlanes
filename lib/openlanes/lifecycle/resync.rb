@@ -346,7 +346,7 @@ module OpenLanes
           match = BRANCH_PATTERN.match(pull[:branch].to_s) or return nil
           ordinal = Plans::Ordinal.parse(match[1])
 
-          unless tree.include?(ordinal)
+          unless tree.everything.include?(ordinal)
             return flag(pull, "branch names #{ordinal}, which has no folder in #{File.basename(tree.dir)}")
           end
 
@@ -369,13 +369,9 @@ module OpenLanes
         # @param path [String] a path from the diff
         # @return [OpenLanes::Plans::Ordinal, nil]
         def ordinal_for_path(path)
-          parts = path.to_s.split("/")
-          index = parts.index(OpenLanes::PLANS_DIR) or return nil
-          folder = parts[index + 1] or return nil
-          return nil if parts.length <= index + 2 # a file directly under .plans belongs to no plan
-
+          folder = Plans::Tree.plan_folder(path) or return nil
           ordinal = Plans::Ordinal.from_dirname(folder)
-          ordinal if ordinal && tree.include?(ordinal)
+          ordinal if ordinal && tree.everything.include?(ordinal)
         end
 
         # @param pull [Hash]

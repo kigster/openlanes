@@ -30,6 +30,12 @@ RSpec.describe OpenLanes::Lifecycle::Creator, :tree do
         expect(File.directory?(creator.create(words:).value!)).to be(true)
       end
 
+      it "allocates past a number that lives only in an inactive subfolder" do
+        plans { |t| t.plan "007.00", :approved, "archived", under: "archive", archived_on: Date.new(2026, 9, 1) }
+
+        expect(created).to eq("008.00━━⚪━━❯tax-rule-dsl")
+      end
+
       it "ignores retroactive siblings when choosing the next number" do
         plans { |t| t.plan "002.01", :approved, "backfill", prs: [t.merged(9, "x")] }
 
