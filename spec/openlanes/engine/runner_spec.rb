@@ -280,5 +280,29 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
           "050.00" => "cycle: 050.00 → 034.00 → 050.00")
       end
     end
+
+    # A dry run renames nothing, so 034's folder still says In Review. The
+    # dispatcher judges it by the ✅ its merged pull request justifies, and
+    # the report must agree rather than call 050 waiting.
+    context "when a dry run would reconcile the prerequisite to done" do
+      subject(:runner) { described_class.new(tree:, executor:, agents:, dry_run: true, sleeper: ->(_) {}) }
+
+      let!(:built) do
+        plans do |t|
+          t.plan "034.00", :in_review, "parser", files: { "spec.md" => spec_body, **ready }, prs: [t.merged(34, "Ship")]
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00"), **ready }
+        end
+      end
+
+      it "starts 050 and holds nothing, leaving 034's folder name alone" do
+        runner.call
+
+        aggregate_failures do
+          expect(calls.map(&:last).uniq).to eq(["050.00"])
+          expect(runner.held).to be_empty
+          expect(tree.reload.find("034.00").status.key).to eq(:in_review)
+        end
+      end
+    end
   end
 end

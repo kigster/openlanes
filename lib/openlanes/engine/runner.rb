@@ -172,9 +172,10 @@ module OpenLanes
       # A plan with no `depends_on:` key is never held, nor is one already
       # parked, whose own state says more than its dependencies do.
       #
+      # @param deps [OpenLanes::Plans::Dependencies] the graph to ask; the
+      #   dispatcher passes the one it gated with, so both say the same thing
       # @return [Hash{String => String}] ordinal => "waiting on 034.00" or "cycle: ..."
-      def held
-        deps = tree.dependencies
+      def held(deps = dependencies)
         in_scope.each_with_object({}) do |subject, out|
           next if Plans::StateMachine::SETTLED.include?(subject.status.key)
 
@@ -182,6 +183,35 @@ module OpenLanes
           reason = deps.reason(ordinal) and out[ordinal] = reason
         end
       end
+
+      # The dependency graph judged by the states this run acts on. A real run
+      # has reconciled every folder name before it asks, so the names are the
+      # states. A dry run renames nothing, so it judges each plan by the state
+      # reconciliation would give it, as {Dispatcher} does when it picks an
+      # agent; otherwise an In Review prerequisite whose pull requests have
+      # all merged would read as done to one and open to the other.
+      #
+      # @param except [Array<String>] ordinals reconciliation leaves alone
+      #   (an agent is in them), judged by their folder's name; plans another
+      #   machine holds are always left alone
+      # @return [OpenLanes::Plans::Dependencies]
+      def dependencies(except: [])
+        return tree.dependencies unless dry_run?
+
+        leave = except.map(&:to_s)
+        Plans::Dependencies.new(tree,
+          status_of: lambda { |subject|
+            untouched = leave.include?(subject.feature.ordinal.to_s) || foreign?(subject)
+            untouched ? subject.status : effective_status(subject)
+          })
+      end
+
+      # The state a plan's contents justify, which reconciliation would rename
+      # its folder to: its lane's skip first, then what `resync dirs` reads.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [OpenLanes::Plans::Status]
+      def effective_status(subject) = Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
 
       # @return [Boolean]
       def settled? = in_scope.all? { |s| Plans::StateMachine::SETTLED.include?(s.status.key) }
