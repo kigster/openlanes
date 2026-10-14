@@ -36,24 +36,13 @@ module OpenLanes
       # Exit status when Redis or the control room is not there to serve.
       UNAVAILABLE = 69
 
-      # The progress log, echoed to the terminal: the terminal is where a
-      # person watches `start` from when the page is closed, and it takes
-      # no input.
-      #
       # @param options [Hash]
       # @return [void]
       def call(**options)
         @rescan = Integer(options.fetch(:rescan, Engine::Dispatcher::RESCAN), exception: false)
         refuse("--rescan takes a whole number of seconds, at least 1.", 64) unless @rescan&.positive?
 
-        tap = UI.tap_log(lambda { |message, fields|
-          next if UI.quiet
-
-          Kernel.warn(Engine::ProgressLog.render(message, **fields.slice(:plan, :status, :agent, :seconds, :round)))
-        })
         super
-      ensure
-        UI.untap_log(tap) if tap
       end
 
       private
@@ -93,9 +82,7 @@ module OpenLanes
       #
       # @return [void]
       def finish(runner, attempts, options, seconds:)
-        puts ""
-        puts attempt_lines(attempts)
-        puts("", Engine.tally(attempts:, seconds:).render)
+        puts_report(attempts, Engine.tally(attempts:, seconds:).render)
         unless quiet?(options)
           blocked = runner.blocked.map { it.feature.ordinal }
           lines = ["Stopped. Unfinished plans keep their state; openlanes start picks them up again."]

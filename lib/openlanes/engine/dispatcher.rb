@@ -920,7 +920,11 @@ module OpenLanes
             remaining: nil,
             phase: nil,
             bold: !attempt.ok) }
-          UI.log(attempt.ok ? "finished: #{attempt.note}" : "failed: #{attempt.note}", **job.task.log_fields)
+          # `to:` is for the terminal's line; the log file keeps its columns.
+          moved = Plans::STATUS_BY_KEY[attempt.to]&.to_s if attempt.advanced?
+          UI.log(attempt.ok ? "finished: #{attempt.note}" : "failed: #{attempt.note}",
+            **job.task.log_fields,
+            **{ to: moved }.compact)
         end
       end
 

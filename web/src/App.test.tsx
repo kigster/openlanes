@@ -125,6 +125,18 @@ it("opens the idea dialog when the page is loaded at #start", async () => {
   window.history.replaceState(null, "", "/?fixture#start");
   renderApp();
   expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  expect(window.location.hash).toBe("");
+  expect(window.location.search).toBe("?fixture");
+});
+
+it("does not reopen the idea dialog on a reload once #start is spent", async () => {
+  window.history.replaceState(null, "", "/?fixture#start");
+  const first = renderApp();
+  await screen.findByRole("dialog");
+  first.unmount();
+  renderApp();
+  await screen.findByRole("button", { name: "All machines" });
+  expect(screen.queryByRole("dialog")).toBeNull();
 });
 
 it("works in a private window, where storage throws", async () => {

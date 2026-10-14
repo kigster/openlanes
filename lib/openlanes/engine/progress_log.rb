@@ -22,8 +22,7 @@ module OpenLanes
     # @example
     #   ProgressLog.render("editing spec.md", plan: "003.00", status: "⭐️ Planned",
     #     agent: "yoda-writer", seconds: 42, round: "01", pid: 91_234)
-
-    #   #=> "[16:22:14 | 003.00 | ⭐️ Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
+    #   #=> "[16:22:14 | 003.00 | ⭐️  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
     module ProgressLog
       # Wall clock only. A log line answers "when", and the date is the file's.
       TIME_FORMAT = "%H:%M:%S"
@@ -34,12 +33,17 @@ module OpenLanes
       # "003.00".
       PLAN_WIDTH = 6
 
-      # Derived from the widest state as {Status#to_s} renders it, emoji
-      # included, so a state added to {STATUSES} with a longer label cannot
-      # silently knock the columns after it out of line — then trimmed by five
-      # cells: the emoji already names the state, so the longest labels can
-      # afford to lose their tails to keep the line short.
-      STATUS_WIDTH = Plans::STATUSES.map { |status| UI.display_width(status.to_s) }.max - 5
+      # Cells given to the emoji, and the gap after it. Many terminal fonts draw
+      # a colour emoji wider than its two cells, and with one space it overlapped
+      # the label's first letter ("🔴Changes").
+      EMOJI_WIDTH = 2
+      EMOJI_GAP = "  "
+
+      # Derived from the widest state as {.status_cell} renders it, so a state
+      # added to {STATUSES} with a longer label cannot silently knock the columns
+      # after it out of line. Untrimmed: cut to fit, "Changes Requested" and
+      # "Ready for Planning" read as "Changes Reque" and "Ready for Pla".
+      STATUS_WIDTH = Plans::STATUSES.map { |status| EMOJI_WIDTH + EMOJI_GAP.length + UI.display_width(status.label) }.max
 
       # The longest specialist name in `agents/` is `palpatine-planner` at 17,
       # and the names are hyphenated words rather than a bounded vocabulary, so
@@ -56,6 +60,10 @@ module OpenLanes
       # "  907s". Anything longer than four digits of seconds is an agent nobody
       # is still waiting on.
       SECONDS_WIDTH = 6
+
+      # The keywords {.render} takes besides the message. {UI.log} hands its
+      # taps more than these, and the file only these.
+      FIELDS = %i[plan status agent seconds round pid at].freeze
 
       # Between columns, inside the brackets.
       SEPARATOR = " | "
@@ -108,7 +116,7 @@ module OpenLanes
           columns = [
             left(at.strftime(TIME_FORMAT), TIME_WIDTH),
             left(plan, PLAN_WIDTH),
-            left(status, STATUS_WIDTH),
+            left(status_cell(status), STATUS_WIDTH),
             left(agent, AGENT_WIDTH),
             right(round, ROUND_WIDTH),
             right(pid, PID_WIDTH),
@@ -118,6 +126,18 @@ module OpenLanes
           text = message.to_s
           prefix = "[#{columns.join(SEPARATOR)}]"
           text.empty? ? prefix : "#{prefix} #{text}"
+        end
+
+        # The emoji fitted to {EMOJI_WIDTH} and followed by {EMOJI_GAP}, then the
+        # label. A value with no label (or none at all) passes through.
+        #
+        # @param status [String, nil] emoji and label, e.g. "⭐️ Planned"
+        # @return [String, nil]
+        def status_cell(status)
+          emoji, label = status.to_s.split(" ", 2)
+          return status if label.nil?
+
+          "#{UI.fit(emoji, EMOJI_WIDTH)}#{EMOJI_GAP}#{label}"
         end
 
         # @param seconds [Numeric, nil]

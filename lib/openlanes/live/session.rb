@@ -101,7 +101,13 @@ module OpenLanes
       end
 
       # @return [String] where, with the password masked, and as whom
-      def describe = "#{Live.mask(@store.url)} as #{@node.label} (#{@node.name})"
+      def describe = described.join(" ")
+
+      # The same, in the two parts a narrow box may break it between: the
+      # node id is long, and wraps mid-word when left to the box.
+      #
+      # @return [Array(String, String)] `"redis://… as kig@host"` and `"(<node id>)"`
+      def described = ["#{Live.mask(@store.url)} as #{@node.label}", "(#{@node.name})"]
     end
   end
 end
