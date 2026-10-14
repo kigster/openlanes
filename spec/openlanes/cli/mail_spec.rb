@@ -130,6 +130,18 @@ RSpec.describe "openlanes mail", :tree do
       end
     end
 
+    it "says an ack on a mailbox.md message wrote nothing, rather than that it was recorded" do
+      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+      _out, err, status = ack(number: "1", plan: "001.00", for: "rey-frontend")
+
+      aggregate_failures do
+        expect(status).to eq(0)
+        expect(err).to include("#1 is a legacy message", "nothing was written")
+        expect(err).not_to include("read by")
+        expect(OpenLanes::Plans::PlanState.for(folder)).not_to exist
+      end
+    end
+
     it "exits non-zero on a number with no message" do
       _out, err, status = ack(number: "7", plan: "001.00", for: "rey-frontend")
 

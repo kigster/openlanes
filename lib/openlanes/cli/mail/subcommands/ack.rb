@@ -36,6 +36,14 @@ module OpenLanes
 
           return if quiet?(options)
 
+          # A mailbox.md message is history and already counts as read, so
+          # nothing was written; saying "read by" would claim a record that
+          # does not exist.
+          if mailbox.legacy?(message.number)
+            return UI.line("##{message.number} is a legacy message in #{File.basename(mailbox.dir)}/#{Plans::Mailbox::FILENAME}, " \
+                           "already counted as read; nothing was written")
+          end
+
           UI.line("##{message.number} read by #{message.to}, in #{File.basename(mailbox.dir)}/#{Plans::PlanState::FILENAME}")
         end
       end
