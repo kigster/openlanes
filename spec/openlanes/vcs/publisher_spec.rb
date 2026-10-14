@@ -116,7 +116,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
       aggregate_failures do
         expect(github).to have_received(:swap_label)
-          .with(number: 7, repo: "example/repo", add: OpenLanes::Plans::ReviewLabel::INITIAL)
+          .with(number: 7, repo: "example/repo", add: OpenLanes::Plans::ReviewLabel::INITIAL, remove: [])
         expect(publication.label_error).to be_nil
       end
     end
@@ -216,6 +216,16 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
           expect(command).to have_received(:run).with("git", "push", "-u", "origin", checkout.branch, hash_including(:chdir))
           expect(command).not_to have_received(:run).with("gh", any_args)
         end
+      end
+
+      # The last verdict, typically review-rejected, would otherwise read to
+      # the watch as a new rejection and send the plan back to 🔴.
+      it "resets the review label to ready-for-review, taking off the previous verdict" do
+        expect(github).to have_received(:swap_label)
+          .with(number: 7,
+            repo: "example/repo",
+            add: OpenLanes::Plans::ReviewLabel::INITIAL,
+            remove: OpenLanes::Plans::ReviewLabel.names)
       end
 
       it "reports that pull request, marked as updated" do

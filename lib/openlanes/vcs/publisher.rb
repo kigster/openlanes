@@ -104,7 +104,7 @@ module OpenLanes
         commit(checkout, title)
         push(checkout)
         url = open ? open.url : create_pull_request(checkout, subject, title)
-        label_error = open || url.nil? ? nil : label_for_review(url)
+        label_error = url.nil? ? nil : label_for_review(url, resubmitted: !open.nil?)
 
         Publication.new(**base_fields(subject, checkout, title), url:, refusal: nil, updated: !open.nil?, label_error:)
       rescue TTY::Command::ExitError => e
@@ -299,10 +299,18 @@ module OpenLanes
         lines[(start + 1)..].take_while { |l| !l.start_with?("## ", "# ") }.join.strip
       end
 
+      # Put `ready-for-review` on the pull request. A resubmission also takes
+      # off whatever verdict the last review left: a `review-rejected` still
+      # there after the fixes are pushed reads to the watch as a fresh
+      # rejection, and the 🟢 plan would be sent straight back to 🔴.
+      #
+      # @param url [String]
+      # @param resubmitted [Boolean] whether the pull request was already open
       # @return [String, nil] the error, when labelling failed
-      def label_for_review(url)
+      def label_for_review(url, resubmitted: false)
         number = GitHub.number_of(url)
-        @github.swap_label(number:, repo: GitHub.repo_of(url), add: Plans::ReviewLabel::INITIAL)
+        remove = resubmitted ? Plans::ReviewLabel.names : []
+        @github.swap_label(number:, repo: GitHub.repo_of(url), add: Plans::ReviewLabel::INITIAL, remove:)
         nil
       rescue Error => e
         e.message
