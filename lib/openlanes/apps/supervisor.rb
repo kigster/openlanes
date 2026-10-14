@@ -116,7 +116,7 @@ module OpenLanes
 
         publish(spec, "restarting")
         halt(spec.name, quietly: true)
-        bring_up(spec, "restarting")
+        bring_up(spec, nil)
       end
 
       # @return [Array<OpenLanes::Apps::Status>] the latest of each process, in start order
@@ -152,10 +152,11 @@ module OpenLanes
       # Spawn, then wait until it is ready, it exits, or time runs out.
       #
       # @param spec [OpenLanes::Apps::ProcessSpec]
-      # @param state [String] what to say while it comes up
+      # @param state [String, nil] what to say while it comes up; nil when
+      #   that was said already, as a restart does before it stops the old one
       # @return [Boolean] ready
       def bring_up(spec, state)
-        publish(spec, state)
+        publish(spec, state) if state
         running = spawn(spec)
         outcome = await(spec, running)
         return publish(spec, "failed", reason: reason(spec, running, outcome)).then { false } unless outcome == :ready
