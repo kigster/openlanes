@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Board, CopilotLog, Snapshot, WireBoard } from "./types";
+import type { AppStatus, Board, CopilotLog, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { openStream, type ConnectionState } from "./events";
-import { BOARD_KEY, COPILOT_KEY } from "./queryClient";
+import { APPS_KEY, BOARD_KEY, COPILOT_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
 import { replies } from "./replies";
 import { chatBus } from "../chat/bus";
+import { withApp } from "../preview/model";
 import { eventsUrl } from "../chat/page";
 
 export type { ConnectionState } from "./events";
@@ -81,6 +82,8 @@ export function useBoard(): BoardState {
       // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
       onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
       onChat: event => chatBus.deliver(event),
+      onApps: apps => client.setQueryData<AppStatus[]>(APPS_KEY, apps),
+      onApp: app => client.setQueryData<AppStatus[]>(APPS_KEY, old => withApp(old ?? [], app)),
       // Like the copilot's: the chat is read once the stream has started relaying it, on every open.
       onChatCursor: () => chatBus.opened(),
       onState: setConnection,

@@ -1,7 +1,7 @@
 // The event stream (contract.md, `GET /api/events`) through @microsoft/fetch-event-source, which reconnects after a
 // dropped connection instead of giving up the way a bare EventSource does on a non-200.
 import { fetchEventSource, type EventSourceMessage } from "@microsoft/fetch-event-source";
-import type { ChatEvent, CopilotTurn, Reply, WireBoard } from "./types";
+import type { AppStatus, ChatEvent, CopilotTurn, Reply, WireBoard } from "./types";
 
 export type ConnectionState = "live" | "reconnecting" | "offline";
 
@@ -19,6 +19,13 @@ export interface StreamHandlers {
   onChat?(event: ChatEvent): void;
   /** The stream is relaying this page's chat from here on: a read of `GET /api/chat` started now misses nothing. */
   onChatCursor?(): void;
+  /**
+   * Every app running on this machine (plan 012). Called with `[]` on every open, before any event: the server sends
+   * `apps` only when there is one, so a stream that opens without it means none.
+   */
+  onApps?(apps: AppStatus[]): void;
+  /** One process of an app changed state; `stopped` means it is gone. */
+  onApp?(app: AppStatus): void;
   onState(state: ConnectionState): void;
   /** Called on every open after the first: whatever happened while the stream was down is fetched once. */
   onReconnect(): void;
@@ -47,6 +54,7 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
         throw new Retry(`GET ${url} answered ${res.status}`);
       }
       failures = 0;
+      handlers.onApps?.([]);
       handlers.onState("live");
       if (opened) handlers.onReconnect();
       opened = true;
@@ -61,6 +69,8 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
       else if (message.event === "copilot_cursor") handlers.onCopilotCursor?.();
       else if (message.event === "chat") handlers.onChat?.(JSON.parse(message.data) as ChatEvent);
       else if (message.event === "chat_cursor") handlers.onChatCursor?.();
+      else if (message.event === "apps") handlers.onApps?.((JSON.parse(message.data) as { apps: AppStatus[] }).apps);
+      else if (message.event === "app") handlers.onApp?.(JSON.parse(message.data) as AppStatus);
     },
     onclose() {
       // The server closed a stream that should never end (a restart): treat it like any other drop.

@@ -17,6 +17,9 @@ import { StatusBar } from "./shell/StatusBar";
 import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
 import { useBoardNews } from "./shell/useBoardNews";
+import { PreviewTab } from "./preview/PreviewTab";
+import { appTabLabel, appTabValue } from "./preview/model";
+import { useApps } from "./preview/useApps";
 import {
   ActionMenu,
   AgentDrawer,
@@ -120,7 +123,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const runs = useMemo(() => testRuns(me.plans), [me.plans]);
-  const tabs = ["board", "logs", ...runs.map(testTabValue), ...others.map(o => machineTab(o.node.id))];
+  const apps = useApps();
+  const tabs = ["board", "logs", ...apps.map(appTabValue), ...runs.map(testTabValue), ...others.map(o => machineTab(o.node.id))];
   // A tab whose run finished or whose machine left falls back to the Board.
   const current = tabs.includes(tab) ? tab : "board";
 
@@ -221,6 +225,11 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                 {alerts || ""}
               </span>
             </Tab>
+            {apps.map(app => (
+              <Tab key={appTabValue(app)} className="tab tab-app" value={appTabValue(app)} title={`The app plan ${app.plan} builds, on port ${app.preview.port}`}>
+                {appTabLabel(app)}
+              </Tab>
+            ))}
             {runs.map(run => (
               <Tab key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
                 {testTabLabel(run, runs)}
@@ -285,6 +294,11 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
           <Tabs.Content value="logs" className="logs" forceMount hidden={current !== "logs"}>
             <Logs lines={me.log} />
           </Tabs.Content>
+          {apps.map(app => (
+            <Tabs.Content key={appTabValue(app)} value={appTabValue(app)} className="preview-tab">
+              <PreviewTab app={app} />
+            </Tabs.Content>
+          ))}
           {runs.map(run => (
             <Tabs.Content key={testTabValue(run)} value={testTabValue(run)} className="tests">
               <TestsPanel run={run} />

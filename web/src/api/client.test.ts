@@ -1,4 +1,4 @@
-import { ApiError, fetchBoard, fetchCopilot, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postCommand, postCopilot, resetSession } from "./client";
+import { ApiError, fetchBoard, fetchCopilot, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postAppCommand, postCommand, postCopilot, resetSession } from "./client";
 import type { Command } from "./types";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -152,5 +152,23 @@ describe("the copilot", () => {
     fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(403, {})).mockResolvedValueOnce(json(500, {}));
     await expect(postCopilot(message)).rejects.toThrow("POST /api/copilot answered 403 and no new session could be fetched");
     expect(ApiError).toBeDefined();
+  });
+});
+
+describe("the Preview tab's commands", () => {
+  const command = { plan: "012.00", action: "restart" as const, target: "backend" };
+
+  it("posts one with the token and returns what the server queued", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(202, command));
+    await expect(postAppCommand(command)).resolves.toEqual(command);
+    const [path, init] = fetchMock.mock.calls[1];
+    expect([path, init.headers["X-CSRF-Token"], JSON.parse(init.body)]).toEqual(["/api/apps/commands", "tok-1", command]);
+  });
+
+  it("rejects with the server's reason on 422, and with the status otherwise", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(422, { error: "action must be one of restart, stop" }));
+    await expect(postAppCommand(command)).rejects.toThrow("action must be one of restart, stop");
+    fetchMock.mockResolvedValueOnce(json(500, {}));
+    await expect(postAppCommand(command)).rejects.toThrow("POST /api/apps/commands answered 500");
   });
 });

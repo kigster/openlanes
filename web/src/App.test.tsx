@@ -2,7 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
-import type { Board, LogLine } from "./api/types";
+import type { AppStatus, Board, LogLine } from "./api/types";
+import apps from "./api/fixtures/apps.json";
 import board from "./api/fixtures/board.json";
 import { createQueryClient } from "./api/queryClient";
 import type { StreamHandlers } from "./api/events";
@@ -233,6 +234,21 @@ describe("live", () => {
     act(() => stream.onBoard(structuredClone(next)));
     await userEvent.click(pills().getByRole("button", { name: /^001 / }));
     expect(screen.getByRole("button", { name: "luke-backend" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("shows a Preview tab only while an app with a preview process runs (plan 012)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(sampleBoard())));
+    renderApp();
+    await screen.findByRole("tab", { name: "Board" });
+    expect(screen.queryByRole("tab", { name: /▶/ })).toBeNull();
+    const stream = streams.at(-1)!;
+    act(() => stream.onApps?.(apps.apps as AppStatus[]));
+    const tab = await screen.findByRole("tab", { name: "▶ 012 · kig/012.00-app-runner-and-preview · :11101" });
+    await userEvent.click(tab);
+    expect(screen.getByTitle("web of plan 012")).toHaveAttribute("src", "http://127.0.0.1:11101/");
+    act(() => stream.onApp?.({ ...(apps.apps[1] as AppStatus), state: "stopped" }));
+    await waitFor(() => expect(screen.queryByRole("tab", { name: /▶/ })).toBeNull());
+    expect(screen.getByRole("tab", { name: "Board" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("opens a machine's chat menu from its caret or a right-click, while a click still opens its board", async () => {

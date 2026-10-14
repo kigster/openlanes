@@ -1,7 +1,7 @@
 // The page's only door to the API server (contract.md, "HTTP"). Everything that crosses the network goes through
 // here, so the tests mock fetch once and every caller is covered.
 import { ulid } from "ulid";
-import type { Board, ChatState, Command, CopilotLog, CopilotMessage, CopilotTurn, Node, Reply, WireBoard } from "./types";
+import type { AppCommand, Board, ChatState, Command, CopilotLog, CopilotMessage, CopilotTurn, Node, Reply, WireBoard } from "./types";
 import fixtureBoard from "./fixtures/board.json";
 
 export interface Session {
@@ -109,6 +109,17 @@ export async function postCopilot(message: CopilotMessage): Promise<CopilotTurn>
   if (res.status === 202) return (await res.json()) as CopilotTurn;
   const reason = res.status === 422 ? ((await res.json()) as { error?: string }).error : undefined;
   throw new ApiError(reason ?? `POST /api/copilot answered ${res.status}`, res.status);
+}
+
+/**
+ * One request from the Preview tab's toolbar (plan 012). Resolves with what the server queued (202); the runner's
+ * answer is the app's next states on the event stream. A 422 carries the server's reason.
+ */
+export async function postAppCommand(command: AppCommand): Promise<AppCommand> {
+  const res = await post("/api/apps/commands", command);
+  if (res.status === 202) return (await res.json()) as AppCommand;
+  const reason = res.status === 422 ? ((await res.json()) as { error?: string }).error : undefined;
+  throw new ApiError(reason ?? `POST /api/apps/commands answered ${res.status}`, res.status);
 }
 
 export const fetchChat = (page: string): Promise<ChatState> => getJson<ChatState>(`/api/chat?page=${encodeURIComponent(page)}`);

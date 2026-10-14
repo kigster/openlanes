@@ -1,0 +1,28 @@
+{
+  "apps": [
+    {
+      "plan": "012.00",
+      "branch": "kig/012.00-app-runner-and-preview",
+      "process": "api",
+      "state": "ready",
+      "port": 11100,
+      "preview": false,
+      "url": "http://127.0.0.1:11100/",
+      "framing": null,
+      "reason": null,
+      "at": "2026-10-14T19:00:00Z"
+    },
+    {
+      "plan": "012.00",
+      "branch": "kig/012.00-app-runner-and-preview",
+      "process": "web",
+      "state": "ready",
+      "port": 11101,
+      "preview": true,
+      "url": "http://127.0.0.1:11101/",
+      "framing": "frame",
+      "reason": null,
+      "at": "2026-10-14T19:00:01Z"
+    }
+  ]
+}
