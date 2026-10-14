@@ -199,7 +199,9 @@ module OpenLanes
         return tree.dependencies unless dry_run?
 
         leave = except.map(&:to_s)
-        Plans::Dependencies.new(tree,
+        # Every plan, archived ones included, as {Plans::Tree#dependencies}
+        # does: a shipped prerequisite sits in `archive/`.
+        Plans::Dependencies.new(tree.everything,
           status_of: lambda { |subject|
             untouched = leave.include?(subject.feature.ordinal.to_s) || foreign?(subject)
             untouched ? subject.status : effective_status(subject)

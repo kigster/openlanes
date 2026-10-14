@@ -112,9 +112,14 @@ module OpenLanes
       # @return [Boolean] whether a plan with this number exists on disk
       def include?(ordinal) = !find(ordinal).nil?
 
+      # Built from {#everything}, not from the open plans alone. A shipped
+      # plan is moved into `archive/`, and read from the top level only, the
+      # prerequisite a dependent waits for would vanish the moment it was
+      # done: unknown, never done, and its dependent held forever.
+      #
       # @return [OpenLanes::Plans::Dependencies] who waits for whom, read from
-      #   every `depends_on:` in this tree
-      def dependencies = @dependencies ||= Dependencies.new(self)
+      #   every `depends_on:` in this tree, the inactive subfolders included
+      def dependencies = @dependencies ||= Dependencies.new(everything)
 
       # @param ordinal [OpenLanes::Plans::Ordinal, String]
       # @return [Array<String>] every plan that waits for this one; derived, never stored

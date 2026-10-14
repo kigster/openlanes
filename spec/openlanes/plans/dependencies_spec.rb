@@ -45,6 +45,66 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
     end
   end
 
+  # A shipped plan moves into archive/. Read from the top level only, the
+  # prerequisite vanished the moment it was done, and 050 was held forever
+  # as waiting on it.
+  context "when the prerequisite has shipped and sits in archive/" do
+    before do
+      plans do |t|
+        t.plan "034.00",
+          :approved,
+          "parser",
+          files:       { "spec.md" => spec_body },
+          prs:         [t.merged(1, "Ship")],
+          under:       "archive",
+          archived_on: Date.new(2026, 10, 1)
+        t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00") }
+      end
+    end
+
+    it "does not hold the dependent" do
+      aggregate_failures do
+        expect(tree.find("034.00")).to be_nil
+        expect(deps.unknown("050.00")).to be_empty
+        expect(deps.waiting_on("050.00")).to be_empty
+        expect(deps.closed("050.00")).to eq(["034.00"])
+        expect(deps.reason("050.00")).to be_nil
+      end
+    end
+
+    it "still names the archived plan's dependents" do
+      expect(tree.blocks_of("034.00")).to eq(["050.00"])
+    end
+  end
+
+  context "when an archived plan itself declared a dependency" do
+    before do
+      plans do |t|
+        t.plan "010.00",
+          :approved,
+          "base",
+          files:       { "spec.md" => spec_body },
+          prs:         [t.merged(1, "Base")],
+          under:       "archive",
+          archived_on: Date.new(2026, 9, 1)
+        t.plan "020.00",
+          :approved,
+          "top",
+          files:       { "spec.md" => needs("010.00") },
+          prs:         [t.merged(2, "Top")],
+          under:       "archive",
+          archived_on: Date.new(2026, 9, 2)
+      end
+    end
+
+    it "answers blocks_of for the archived plan" do
+      aggregate_failures do
+        expect(tree.blocks_of("010.00")).to eq(["020.00"])
+        expect(deps.depends_on("020.00")).to eq(["010.00"])
+      end
+    end
+  end
+
   context "with a done, a blocked and an unknown dependency" do
     before do
       plans do |t|

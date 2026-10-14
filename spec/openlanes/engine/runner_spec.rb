@@ -264,6 +264,33 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       end
     end
 
+    # The dry-run graph is built apart from Tree#dependencies, so it must
+    # read archive/ too, or `run -n` holds 050 that a real run starts.
+    context "when a dry run finds the prerequisite already archived" do
+      subject(:runner) { described_class.new(tree:, executor:, agents:, dry_run: true, sleeper: ->(_) {}) }
+
+      let!(:built) do
+        plans do |t|
+          t.plan "034.00",
+            :approved,
+            "parser",
+            prs:         [t.merged(34, "Ship")],
+            under:       "archive",
+            archived_on: Date.new(2026, 10, 1)
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00"), **ready }
+        end
+      end
+
+      it "starts 050 and holds nothing" do
+        runner.call
+
+        aggregate_failures do
+          expect(calls.map(&:last).uniq).to eq(["050.00"])
+          expect(runner.held).to be_empty
+        end
+      end
+    end
+
     context "when 034 and 050 wait on each other" do
       let!(:built) do
         plans do |t|
