@@ -1,3 +1,8 @@
+> [!NOTE]
+>
+> [2026-10-14 11:51:30 AM PDT] [ agent: rey-frontend   status: Started, round 1 ]
+> [2026-10-14 12:28:44 PM PDT] [ agent: rey-frontend   status: Completed, round 1 ]
+
 # 012.00 App Runner and Preview, front end
 
 `rey-frontend` builds these, against the `apps` / `app` event shape fixed in `plan-backend.md` B1 and the `POST /api/apps/commands` route in B6. F1 needs only B1's shape to start.
@@ -15,7 +20,7 @@
 
 - **Discipline:** front end
 - **Covers spec items:** the three "How to tell it's working?" checks
-- **Owns:** `web/cypress/e2e/preview.cy.ts`, `web/cypress.preview.config.ts` (its own config: base URL on port 11050, the spec pattern for `preview.cy.ts` only, tasks that touch a fixture file and swap the fixture), `justfile` (a `preview-e2e` recipe), `spec/fixtures/apps/preview_project/` (an `.openlanes.yml` with an `api` and a `web` process reusing `spec/fixtures/apps/servers/`, plus a `deny` variant whose web process sends `X-Frame-Options: DENY`)
+- **Owns:** `web/cypress/preview/preview.cy.ts` (amended: not `cypress/e2e/`, which the demo suite's config runs against port 11000), `web/cypress.preview.config.ts` (its own config: base URL on port 11050, the spec pattern for `preview.cy.ts` only, tasks that touch a fixture file and swap the fixture), `justfile` (a `preview-e2e` recipe), `spec/fixtures/apps/preview_project/` (an `.openlanes.yml` with an `api` and a `web` process reusing `spec/fixtures/apps/servers/`, plus a `deny` variant whose web process sends `X-Frame-Options: DENY`)
 - **Must not touch:** `lib/`, `web/src/`, `spec/fixtures/apps/servers/` (B4 owns it), `web/cypress.config.ts` (the demo suite's)
 - **Depends on:** B6, F1
 - **Done when:** `just preview-e2e` passes against a real `openlanes web --demo` on 11050 (Redis database 13) and a real `openlanes app start --demo`, nothing intercepted, and shows:

@@ -91,5 +91,5 @@ Against a real `openlanes web` on a port other than 11000 and a real `openlanes 
 
 - `bundle exec rspec spec/openlanes/apps spec/openlanes/config_spec.rb spec/openlanes/web/events_spec.rb spec/openlanes/cli/app_spec.rb`
 - `cd web && npx vitest run src/preview`
-- `just preview-e2e` (F2): `openlanes web` on 11050 and the fixture app, then `cypress run --spec cypress/e2e/preview.cy.ts`.
+- `just web-build && just preview-e2e` (F2): `openlanes web --demo` on 11050 and the fixture app, then `cypress run --config-file cypress.preview.config.ts`.
 - By hand: add the `app:` block from `plan-backend.md` B1 to a project, run `openlanes app start`, open the control room, and see the Preview tab.

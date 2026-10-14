@@ -1,3 +1,8 @@
+> [!NOTE]
+>
+> [2026-10-14 11:51:30 AM PDT] [ agent: luke-backend   status: Started, round 1 ]
+> [2026-10-14 12:28:44 PM PDT] [ agent: luke-backend   status: Completed, round 1 ]
+
 # 012.00 App Runner and Preview, back end
 
 `luke-backend` builds these. Namespace is `OpenLanes::Apps` (`lib/openlanes/apps.rb` facade, `lib/openlanes/apps/`), plural like `Agents` and `Adapters`, so it never collides with `Web::App`. B1 lands first: `rey-frontend` builds against its event shape.
@@ -103,7 +108,7 @@ Signatures:
 
 - **Discipline:** back end
 - **Covers spec items:** 8, 11 (re-check after restart)
-- **Owns:** `lib/openlanes/apps/watcher.rb`, `spec/openlanes/apps/watcher_spec.rb`, `spec/openlanes/apps/restart_spec.rb`; also edits `lib/openlanes/apps/supervisor.rb` (adds `#restart(name)`)
+- **Owns:** `lib/openlanes/apps/watcher.rb`, `spec/openlanes/apps/watcher_spec.rb`, `spec/openlanes/apps/restart_spec.rb`; also edits `lib/openlanes/apps/supervisor.rb` (adds `#restart(name)`; amended: landed with B4, whose `halt` and `bring_up` it reuses)
 - **Must not touch:** `ports.rb`, `probe.rb`, `config.rb`, `web/`
 - **Depends on:** B4 (sequential: both write `supervisor.rb`)
 - **Done when:** `watcher_spec.rb` drives the poller with an injected clock and sleeper and reports only the process whose glob matched; `restart_spec.rb` records pids before and after a `restart_on` edit and sees only that process's pid change, its siblings' unchanged, a `restarting` then `ready` status, and a fresh framing verdict when the preview process restarts.

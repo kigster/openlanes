@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "planned",
-  "updated_at": "2026-10-14T11:51:28-07:00",
+  "updated_at": "2026-10-14T12:28:58-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -126,7 +126,35 @@
       "agent": "rey-frontend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-14T12:28:58-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "rey-frontend"
+    },
+    {
+      "at": "2026-10-14T12:28:58-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
     }
   ],
-  "messages": []
+  "messages": [
+    {
+      "number": 1,
+      "at": "2026-10-14T12:28:44-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done: B1-B6. apps/app events and POST /api/apps/commands as in implementation-plan.md; app start --demo publishes where web --demo reads."
+    },
+    {
+      "number": 2,
+      "at": "2026-10-14T12:28:44-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: F1 (src/preview/*.test.tsx, App.test.tsx) and F2 (just preview-e2e, 2 passing)."
+    }
+  ]
 }
