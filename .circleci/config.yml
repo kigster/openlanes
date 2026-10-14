@@ -86,10 +86,14 @@ jobs:
             git fetch --no-tags origin main
             bin/coverage-changed --base origin/main
       # Names the draft used and the code never did; the demo board's RNG seed is the one legitimate 4747.
+      # Whole words only, so a port like 14747 or a hash passes; the exemption names one path, not every
+      # file that shares its basename, as grep's --exclude would.
       - run:
           name: No retired names
           command: |
-            if grep -rnE '\btilda\b|4747|agentilda:' README.md lib web/src --exclude=demo_board.rb; then
+            hits=$(grep -rnE '\btilda\b|\b4747\b|agentilda:' README.md lib web/src | grep -v '^lib/openlanes/web/demo_board\.rb:' || true)
+            if [ -n "$hits" ]; then
+              echo "$hits"
               echo "retired name found: the binary is openlanes, the port 11000, the Redis prefix openlanes:" >&2
               exit 1
             fi
