@@ -60,6 +60,7 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
       else if (message.event === "copilot") handlers.onCopilot?.(JSON.parse(message.data) as CopilotTurn);
       else if (message.event === "copilot_cursor") handlers.onCopilotCursor?.();
       else if (message.event === "chat") handlers.onChat?.(JSON.parse(message.data) as ChatEvent);
+      else if (message.event === "chat_cursor") handlers.onChatCursor?.();
     },
     onclose() {
       // The server closed a stream that should never end (a restart): treat it like any other drop.
