@@ -2,6 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
+| 38 | [\[012.00\] App Runner and Preview](https://github.com/kigster/openlanes/pull/38) | Open 🟡 |
 
 ## Verification (luke-backend and rey-frontend, 2026-10-14)
 
