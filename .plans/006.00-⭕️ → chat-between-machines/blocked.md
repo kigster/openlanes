@@ -14,3 +14,11 @@ Recommendation: option 1. `luke-backend` owns `lib/` and `justfile`.
 - F1: `just web-test` is green (289 tests, 0 failures). `Chat.test.tsx` covers every listed item; coverage of `web/src/chat/` is 96.96% statements.
 - F2: `FloatingPanel.test.tsx` covers both docks, drag, and restore; `web/src/floating/` coverage is 98.01%. All pointer handlers live in `web/src/floating/useFloatingPanel.ts`.
 - I1: steps 1 and 5 are in `chat.cy.ts` with no `cy.intercept`. Steps 2 to 4 wait on this question. Cypress itself has not been run.
+
+## A1
+
+Answered by the owner, 2026-10-14: **(a)**, a second demo process.
+
+- `just web-e2e` starts a second `openlanes web --demo` on another port, sharing the same Redis and repository.
+- Every process that joins Redis declares its name as `username@hostname`. The second demo process fakes that identity (for example `demo@second-machine`) so it registers as a distinct machine; the demo flag that sets it is luke-backend's.
+- Cypress drives the second participant through `cy.request`: it accepts the invite, sends a message, and leaves (I1 steps 2 to 4).
