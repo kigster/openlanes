@@ -1,6 +1,7 @@
 // The factory, end to end, through the page: an idea typed into the control room of a real `openlanes start` becomes a
 // quick-lane plan, real agents build it, and any question they ask is answered from Needs you. 2-product.cy.ts then
 // plays the page they built. Run by bin/factory-e2e (just factory-e2e), never by the everyday suite.
+import { MODAL } from "../support/selectors";
 
 const IDEA =
   "A tic-tac-toe game in a single static index.html: two players take turns, it announces the winner or a draw, " +
@@ -72,7 +73,7 @@ describe("the factory builds a tic-tac-toe page", () => {
     cy.visit("/");
     cy.contains("button", "Action").click();
     cy.contains('[role="menuitem"]', "New idea").click();
-    cy.get('[role="dialog"]').within(() => {
+    cy.get(MODAL).within(() => {
       // One builder (r2d2-mechanic), no research, no planner: the cheapest route that still builds the page.
       cy.contains("fieldset", "Lane").contains("label", "Quick").click();
       cy.contains("fieldset", "Front end").contains("label", "No").click();
@@ -80,7 +81,7 @@ describe("the factory builds a tic-tac-toe page", () => {
       cy.get(".cm-content").click().type(IDEA, { delay: 0 });
       cy.contains("button", "Break it into plans").click();
     });
-    cy.get('[role="dialog"]').should("not.exist");
+    cy.get(MODAL).should("not.exist");
 
     cy.contains(".plan-title", /tic.?tac.?toe/i, { timeout: 30000 }).should("be.visible")
       .closest("[data-plan]").find(".lane").should("contain", "Quick");

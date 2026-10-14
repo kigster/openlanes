@@ -137,7 +137,7 @@ module OpenLanes
       def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       # @return [String]
-      def default_log(root) = File.join(Dir.tmpdir, "openlanes-web-#{File.basename(root)}.log")
+      def default_log(root) = Engine::ProgressLog.default_path(root, kind: "web")
     end
   end
 end

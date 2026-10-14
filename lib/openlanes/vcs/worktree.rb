@@ -20,11 +20,43 @@ module OpenLanes
     # carries itself from worktree creation through to a merged pull request with
     # nobody having to remember it.
     class Worktree
-      # `bin/setup-worktree`, which copies in the ignored-but-required files a new
-      # checkout does not get. Shelling out rather than reimplementing the rules
-      # here keeps one answer to "what does a worktree need", and keeps that answer
-      # usable from a shell on a machine that has never run `bundle install`.
-      SEEDER = File.expand_path("../../../bin/setup-worktree", __dir__)
+      # `setup-worktree`, which copies in the ignored-but-required files a new
+      # checkout does not get. It is the user's own script, not this gem's:
+      # shelling out rather than reimplementing the rules here keeps one answer
+      # to "what does a worktree need", usable from a shell on a machine that
+      # has never run `bundle install`.
+      SEEDER_NAME = "setup-worktree"
+
+      # Names the seeder outright, ahead of every place {.seeder} searches.
+      SEEDER_ENV = "OPENLANES_SETUP_WORKTREE"
+
+      # Searched after `PATH`, where the user's own tooling keeps it.
+      SEEDER_HOMES = %w[~/.claude/bin ~/.agents/bin].freeze
+
+      class << self
+        # The seeder to run, or nil when none is installed.
+        #
+        # It used to be `bin/setup-worktree` beside this file, which the gem
+        # never shipped, so every installed run seeded nothing and said so
+        # once per agent.
+        #
+        # @param env [Hash] the environment, for `PATH` and {SEEDER_ENV}
+        # @return [String, nil] an executable path
+        def seeder(env = ENV) = seeder_candidates(env).find { File.file?(it) && File.executable?(it) }
+
+        # Every place {.seeder} looks, in order.
+        #
+        # @param env [Hash]
+        # @return [Array<String>]
+        def seeder_candidates(env = ENV)
+          on_path = env.fetch("PATH", "").split(File::PATH_SEPARATOR).reject(&:empty?).map { File.join(it, SEEDER_NAME) }
+          homes = SEEDER_HOMES.map { File.join(File.expand_path(it), SEEDER_NAME) }
+          [env[SEEDER_ENV].to_s, *on_path, *homes].reject(&:empty?).uniq
+        end
+
+        # @return [String] where {.seeder} looks, for a person
+        def seeder_search = "$#{SEEDER_ENV}, #{SEEDER_NAME} on PATH, #{SEEDER_HOMES.join(", ")}"
+      end
 
       # One plan's isolated checkout.
       #
@@ -50,9 +82,11 @@ module OpenLanes
       # @param root [String] the main repository
       # @param dir [String, nil] where worktrees go; defaults to a sibling
       # @param user [String] branch namespace
-      def initialize(root:, dir: nil, user: ENV["USER"] || "agent")
+      # @param seeder [String, nil] the seeder to run; nil runs none
+      def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder)
         @root = File.expand_path(root)
         @user = user
+        @seeder = seeder
         @dir = File.expand_path(dir || default_dir)
       end
 
@@ -118,12 +152,13 @@ module OpenLanes
       # @param path [String] the worktree to seed
       # @return [Boolean] whether the seeder ran and succeeded
       def seed(path)
-        unless File.executable?(SEEDER)
-          UI.log("worktree: #{SEEDER} is missing, so #{path} has no .env or credential keys")
+        unless @seeder && File.executable?(@seeder)
+          UI.log("worktree: no #{SEEDER_NAME} found (searched #{self.class.seeder_search}), " \
+                 "so #{path} has no .env or credential keys")
           return false
         end
 
-        return true if system(SEEDER, "--quiet", path, out: File::NULL, err: File::NULL)
+        return true if system(@seeder, "--quiet", path, out: File::NULL, err: File::NULL)
 
         UI.log("worktree: could not seed #{path}; its suite may fail on a missing key")
         false
