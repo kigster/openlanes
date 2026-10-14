@@ -6,7 +6,7 @@ depends_on: []
 
 ## What we are trying to achieve
 
-Folder names without spaces (`NNN.MM━━<emoji>━━❯<slug>`), single-code-point state emoji, inactive plans in dated `archive/`, `deferred/` and `abandoned/` subfolders, and locks in a git-ignored `locked-by.pid`. `resync dirs` migrates every repository on its first run.
+Folder names without spaces (`NNN.MM━━<emoji>━━❯<slug>`), single-code-point state emoji, inactive plans in dated `archive/`, `deferred/` and `abandoned/` subfolders, and locks in a git-ignored `locked-by.pid`. `resync dirs` migrates every repository on its first run, including moving a spec's `how-to-verify:` key into `## How to tell it's working?` (M10).
 
 ## Why it matters
 

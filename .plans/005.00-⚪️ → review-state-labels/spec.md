@@ -17,9 +17,9 @@ Every pull request a plan opens carries exactly one review-state label, which sh
 | `review-rejected` | `b60205` deep red | changes needed | hansolo, or chewie-verifier (plan 014) |
 | `ok-to-merge` | `1a7f37` | verified by running the app | chewie-verifier (plan 014) |
 
-Missing labels are created before first use. A new label replaces the previous one. No verdict is given while CI is red; there is no label for approving over red CI. Labels are set through `openlanes review`, not raw `gh pr edit`.
+Missing labels are created before first use. A new label replaces the previous one. No passing verdict is given while CI is red (a rejection is); there is no label for approving over red CI. Labels are set through `openlanes review`, not raw `gh pr edit`.
 
-In human merge mode the engine polls open PRs every 15 seconds: `review-rejected` with comments sends the plan to 🔴 and the comments to luke and rey; a merged PR makes the plan ✅; a PR closed unmerged makes it ❌. Needs you shows "waiting on you: PR #N".
+In human merge mode the engine polls every PR it opened, every 15 seconds, until it is merged or closed: `review-rejected` with comments sends the plan to 🔴 and the comments to luke and rey; a merged PR makes the plan ✅; a PR closed unmerged makes it ❌. Needs you shows "waiting on you: PR #N".
 
 Every spec says how to tell the work is done: `spec.md` gains `## How to tell it's working?`, which becomes `## How to test` in `plan.md` and in the PR body, replacing the `how-to-verify:` frontmatter key. The publisher refuses a PR without it.
 

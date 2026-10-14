@@ -1,12 +1,12 @@
 # Decisions on merge modes, verification and project setup
 
-Settled 2026-10-13 in a grilling session. Not built yet. Plans 005 and 010–016 implement it; their specs point here.
+Settled 2026-10-13 in a grilling session. Not built yet. Plans 005 and 007–016 implement it; their specs point here.
 
 Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 
 - **L1:** the six labels are replaced by M3's six. `approved-despite-ci` is dropped, so there is no longer any way to approve over red CI.
-- **L4:** reduced to its first half: no verdict over red CI.
-- **W25:** depth still maps to effort, but a plan's default depth now comes from `build_quality` (M5).
+- **L4:** reduced to its first half: no passing verdict over red CI. A rejection is still allowed.
+- **W25:** only the default depth changes: it now comes from `build_quality` (M5). W25's mapping (Fast → `low`, Medium → `high`, Deep → `xhigh`) stands.
 
 ## Merging
 
@@ -34,14 +34,14 @@ Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 | `ok-to-merge` | `1a7f37` | chewie verified it |
 
 - Missing labels are created on first use. A new label replaces the previous one.
-- No verdict is given while CI is red.
+- No passing verdict (`review-passed`, `ready-to-merge`, `ok-to-merge`) is given while CI is red; `review-rejected` is.
 - Labels are set through `openlanes review`, never raw `gh pr edit` (L3 stands).
 
 ### M4. Human mode is identical except for the merge
 
 - `init` asks "Who merges PRs? A human, or an agent?" and stores `merge.by` in `.openlanes.yml`.
 - Both modes run the same pipeline: review, the arbitrator, verification, labels and screenshots. In human mode the engine never merges; the human does.
-- In human mode the engine polls open PRs every 15 seconds:
+- In human mode the engine polls every PR it opened, every 15 seconds, until the PR is merged or closed:
   - `review-rejected` with comments: the plan goes to 🔴, and luke and rey get the comments;
   - merged: ✅;
   - closed unmerged: ❌.
@@ -53,7 +53,7 @@ Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 
 | | `top_notch` | `high` | `medium` | `mvp` |
 | --- | --- | --- | --- | --- |
-| PRs that reach merge | `ready-to-merge` only | `ready-to-merge` only | also `review-passed`, after the arbitrator's check (M9) | also `review-passed`, after the arbitrator's check |
+| Verdicts that go on to verification (M1) | `ready-to-merge` only | `ready-to-merge` only | also `review-passed`, after the arbitrator's check (M9) | also `review-passed`, after the arbitrator's check |
 | Default depth | deep | medium | medium | fast |
 | luke, rey | Opus | Opus | Sonnet | Sonnet |
 | hansolo | Opus, max effort | Opus | Sonnet | Sonnet |
@@ -61,7 +61,7 @@ Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 | `max_rejections` | 3 | 2 | 2 | 1 |
 | Coverage minimum | 95% | 95% | 95% | 95% |
 
-- Where only `ready-to-merge` reaches merge, a `review-passed` PR goes back to luke and rey.
+- Where only `ready-to-merge` goes on to verification, a `review-passed` PR goes back to luke and rey. Every merge still needs `ok-to-merge` (M2).
 - The coverage minimum is the same at every level. MVP speed comes from cheaper models and fewer rounds, not fewer tests.
 
 ### M6. Rejections are capped
@@ -91,7 +91,7 @@ Spec drift is left to plan aging (`decisions-on-plan-folder-naming.md`, N8). Blo
 At `medium` and `mvp` the arbitrator reads hansolo's open findings on every `review-passed` PR and rules:
 
 - **fair:** the label stands;
-- **too harsh:** every open issue is cosmetic, so it becomes `ready-to-merge`;
+- **too harsh:** every open issue is cosmetic, so those findings are struck and it becomes `ready-to-merge`;
 - **too lenient:** at least one open issue is critical, so it becomes `review-rejected` with that finding marked critical, and it counts toward the cap.
 
 At `top_notch` and `high` the check is skipped, because a `review-passed` PR goes back for fixes anyway.
@@ -102,7 +102,7 @@ At `top_notch` and `high` the check is skipped, because a `review-passed` PR goe
 
 - `spec.md` gains a `## How to tell it's working?` section. It becomes `## How to test` in `plan.md` and in the PR body.
 - It replaces the `how-to-verify:` frontmatter key. Plan 007's `resync dirs` migrates old specs.
-- The idea dialog has an optional "How will you tell it's working?" box. If it is left empty, yoda fills the section in.
+- The idea dialog has a "How will you tell it's working?" box. In the full lane it is optional: if it is left empty, yoda fills the section in. The `plan` and `quick` lanes skip yoda, so there the box is required, and the lane move (`Lifecycle::Lanes`) leaves a spec without the section at ⚪️.
 - A plan cannot reach 📋 Ready for Planning without the section (status invariant).
 - The publisher refuses to open a PR without `## How to test`, and hansolo rejects steps too vague to follow.
 
@@ -117,7 +117,7 @@ At `top_notch` and `high` the check is skipped, because a `review-passed` PR goe
 ### M12. luke writes how to run the app
 
 - The stack questionnaire (M16) records decisions, not commands, in `docs/decisions/stack.md` and as a `stack:` summary in `.openlanes.yml`.
-- On the first build luke writes `app:` into `.openlanes.yml`: `kind`, and a list of `processes`, each with `name`, `start`, `ready`, `restart_on`, and `preview: true` on the one to show. hansolo rejects a first build without it.
+- On the first build its builder (luke, or r2d2 in the `quick` lane) writes `app:` into `.openlanes.yml`: `kind`, and a list of `processes`, each with `name`, `start`, `ready`, `restart_on`, and `preview: true` on the one to show. hansolo rejects a first build without it.
 - The engine starts the processes in order and waits for each to be ready. Each gets a free port from 11100 upward (`$PORT_<NAME>`). A process is restarted when its `restart_on` files change. Works with any stack: a TypeScript app, Astro, React with a Rust API, FastAPI, Go.
 
 ### M13. The Preview tab
@@ -127,10 +127,11 @@ At `top_notch` and `high` the check is skipped, because a `review-passed` PR goe
 - An app that refuses to be framed opens in a separate browser window instead.
 - While chewie drives its headless browser, the tab mirrors it with a screenshot about every 2 seconds.
 
-### M14. Screenshots are AVIF, committed with the plan
+### M14. Screenshots are PNG, committed with the plan
 
-- `.plans/<plan>/verification/<round>/step-NN.avif`, converted with `vips` or `magick`, committed to the PR branch and linked from the comment by commit SHA, so they render in private repos too.
+- `.plans/<plan>/verification/<round>/step-NN.png`, optimised with `vips` or `magick`, committed to the PR branch and linked from the comment by commit SHA, so they render in private repos too.
 - Only the failing step and the final state are kept.
+- PNG, not AVIF: GitHub does not render AVIF inline in Markdown or PR comments.
 
 ### M15. Coverage is read from a declared report
 
@@ -156,7 +157,7 @@ minimum: 95
 - Extraction needs `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. With neither, `init` says so once and asks every question. openlanes picks the adapter itself, so inquirex's `NullAdapter` never fills in placeholder answers.
 - inquirex-tty offers dropdowns, single and multiple selects. Between questions it prints a green tip: "Press Cmd-Backspace to go backwards and change your answers". Before relying on that key, check that iTerm and Terminal.app deliver Cmd-Backspace to the program; if they don't, pick a key that arrives. The web widget already has a back button.
 - `lanes init --reconfigure` re-runs the interview with the current answers as defaults and shows what changed. `.openlanes.yml` is re-read every round, so a hand edit takes effect without a restart.
-- v2.0: the same questionnaire in the web copilot, using a flow built in qualified.at with its JS loaded locally, with extraction in the browser. That is acceptable only while the page is served on localhost, because the API key reaches the browser.
+- v2.0: the same questionnaire in the web copilot, using a flow built in qualified.at with its JS loaded locally, with extraction done by the openlanes server behind a narrow localhost endpoint. The API key never reaches the browser, where any script or extension could read it.
 
 ### M17. The inquirex gems are fixed upstream
 
