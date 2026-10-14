@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# A stand-in for GitHub's `gh`, put first on PATH by the integration specs.
+# The Ruby that answers is the one running the suite, never whichever `ruby`
+# a version manager would pick in the temp repository.
+exec "${FAKE_GH_RUBY:?the spec sets FAKE_GH_RUBY}" "$(dirname "$0")/fake_gh.rb" "$@"
