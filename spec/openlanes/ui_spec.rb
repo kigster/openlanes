@@ -778,5 +778,15 @@ RSpec.describe OpenLanes::UI do
         expect(described_class.display_width("")).to eq(0)
       end
     end
+
+    # The selector inside a ZWJ sequence added a cell for a pair that is not
+    # drawn on its own, so a title holding one was padded a cell too far.
+    it "measures a ZWJ sequence as the two cells a terminal draws" do
+      aggregate_failures do
+        expect(described_class.display_width("🏳️‍🌈")).to eq(2)
+        expect(described_class.display_width("a ❤️‍🔥 b")).to eq(6)
+        expect(described_class.display_width("🅱️ x")).to eq(4)
+      end
+    end
   end
 end
