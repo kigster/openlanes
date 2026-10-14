@@ -10,11 +10,6 @@ gemspec
 gem "rake"
 gem "yard"
 
-group :development do
-  gem "colored2"
-  gem "irb"
-end
-
 group :test do
   gem "coverage-badge"
   gem "json_schemer" # validates configuration.example.yml against configuration.schema.json
