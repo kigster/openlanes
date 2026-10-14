@@ -50,7 +50,7 @@ module OpenLanes
       # A state as its words alone, deliberately without the emoji that every
       # other rendering of a state carries. The table widget pads a cell to a
       # width it measures in characters, while the terminal draws a status emoji
-      # in two cells; the variation-selector ones (⭕️ 🅱️ ⚪️ ⭐️ 🕰️) are two
+      # in two cells; the variation-selector ones (⭕ 🛑 ⚪ ⭐ ⏪) are two
       # characters drawn in two cells, so no single count is right for all of
       # them. A row carrying one lands short or long and the frame stops lining
       # up. The label says the same thing unambiguously, and is worth more than

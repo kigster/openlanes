@@ -4,7 +4,7 @@ module OpenLanes
   module Engine
     # What a `run` cost, once it is over.
     #
-    # The loop reports movement — which plan went from ⭐️ to 🟡, which agent
+    # The loop reports movement — which plan went from ⭐ to 🟡, which agent
     # failed and why — and says nothing about the bill. A round of five agents
     # against a large repository spends several million tokens and the better
     # part of an hour, and until this existed the only record of that was a

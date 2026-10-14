@@ -33,7 +33,7 @@ module OpenLanes
       # @param after [String, nil] anchor for a retroactive plan, e.g. "002"
       # @param status [String, Symbol, nil] override the default state
       # @param prs [Array<Hash>, nil] pull requests to record, already fetched;
-      #   their presence is what makes the folder 🕰️ Retroactive rather than ⚪️
+      #   their presence is what makes the folder ⏪ Retroactive rather than ⚪
       # @return [Dry::Monads::Result] Success(absolute path) or Failure(message)
       def create(words:, after: nil, status: nil, prs: nil)
         resolved = resolve_status(status, after) or
@@ -112,7 +112,7 @@ module OpenLanes
         Plans::Ordinal.next_minor(existing, major: anchor.major)
       end
 
-      # Write the pull requests the folder was created from, so 🕰️ Retroactive
+      # Write the pull requests the folder was created from, so ⏪ Retroactive
       # is justified the moment the folder exists — that state means "the work is
       # live and undocumented", and it is the recorded pull requests that make
       # the first half of that true.

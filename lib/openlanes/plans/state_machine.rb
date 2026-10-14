@@ -52,7 +52,7 @@ module OpenLanes
 
       # One step back along the spine, for the one move that goes backwards: a
       # person discarding an interrupted round (W9) sends the plan back to the
-      # state the work started from. Derived from {SPINE}, walking it from ⚪️:
+      # state the work started from. Derived from {SPINE}, walking it from ⚪:
       # each state on that path steps back to the one before it, as far as 👀,
       # the last state an agent works in. States off the path (🔴 💩 ⏪ and
       # the birth state) have no single state behind them and step back
@@ -77,10 +77,10 @@ module OpenLanes
       # family the current name always wins, because re-deriving it would be a
       # guess dressed up as a correction.
       #
-      # ⭕️ and 🅱️ both mean "a human must decide before this moves"; *which*
+      # ⭕ and 🛑 both mean "a human must decide before this moves"; *which*
       # human is recorded nowhere but the emoji.
       #
-      # ⭐️ 🟡 🎨 look identical on disk: a `spec.md` and a `plan.md` with work
+      # ⭐ 🟡 🎨 look identical on disk: a `spec.md` and a `plan.md` with work
       # units in it. Whether nobody has started, the back end is under way, or
       # the interface is, is recorded only by the agent that renamed the folder
       # when it started. 🟢 👀 🔴 add an open pull request and are just as
@@ -96,7 +96,7 @@ module OpenLanes
       ].freeze
 
       # States the agent loop leaves alone: work that is finished (✅ 😎), work
-      # that was dropped (❌), and work waiting on a human (⭕️ 🅱️ ☢️).
+      # that was dropped (❌), and work waiting on a human (⭕ 🛑 💤).
       # Everything else is fair game for a specialist.
       #
       # ✅ Approved is here deliberately. `hansolo-reviewer` advancing a plan to
@@ -136,8 +136,8 @@ module OpenLanes
 
         # The specification is done and the planner has not started. Entered
         # by the harness when `yoda-writer` completes; `resync` reaches it on
-        # a blank `plan.md`. Without it ⭐️ Planned required a file only the
-        # agent handling ⭐️ Planned writes, and nothing could enter it.
+        # a blank `plan.md`. Without it ⭐ Planned required a file only the
+        # agent handling ⭐ Planned writes, and nothing could enter it.
         event :ready_to_plan, guard: :justified? do
           transitions from: %i[researched new retroactive shit blocked product_blocked deferred],
             to: :ready_for_planning
@@ -372,21 +372,21 @@ module OpenLanes
       # The state a folder's contents justify — the answer to "well, what should
       # it be, then?". This is what `resync dirs` renames toward.
       #
-      # Invariants are *minimum* requirements, not exact matches: a ⚪️ folder
-      # that has since grown a `plan.md` still satisfies ⚪️, and is nonetheless
-      # ⭐️ now. So the furthest-justified state wins, and the caller compares it
+      # Invariants are *minimum* requirements, not exact matches: a ⚪ folder
+      # that has since grown a `plan.md` still satisfies ⚪, and is nonetheless
+      # ⭐ now. So the furthest-justified state wins, and the caller compares it
       # against the current one to decide whether anything should move.
       #
       # The exception is a {FAMILIES family}, whose members contents cannot tell
       # apart. Two rules cover it:
       #
       # - **Already inside one** — the current name wins. Re-deriving it would be
-      #   a guess dressed up as a correction, and every ⭕️ would become 🅱️.
+      #   a guess dressed up as a correction, and every ⭕ would become 🛑.
       # - **Arriving from outside** — the *weakest* member the contents fit
       #   wins, not the furthest. A 📋 folder whose `plan.md` grew work units
-      #   lands on ⭐️, not 🟡, because nobody has started. A ✅ folder found
+      #   lands on ⭐, not 🟡, because nobody has started. A ✅ folder found
       #   with an open pull request is demonstrably back in the PR phase, and
-      #   ⭐️ refuses an open pull request, so it lands on 🟡 rather than
+      #   ⭐ refuses an open pull request, so it lands on 🟡 rather than
       #   claiming 🔴.
       #
       # @return [OpenLanes::Plans::Status, nil] nil when nothing fits at all

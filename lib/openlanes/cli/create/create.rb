@@ -57,12 +57,12 @@ module OpenLanes
 
       # noinspection RubyMismatchedArgumentType
       example [
-        "tax rule dsl                        # 003.00-⚪️ → tax-rule-dsl, spec.md scaffolded and drafted",
+        "tax rule dsl                        # 003.00━━⚪━━❯tax-rule-dsl, spec.md scaffolded and drafted",
         "tax rule dsl --no-draft --no-open   # scaffold only, nothing shelled out, nothing opened",
-        "--after 002 schedule k1             # 002.01-🕰️-schedule-k1 (documented after the fact)",
+        "--after 002 schedule k1             # 002.01━━⏪━━❯schedule-k1 (documented after the fact)",
         "--after 018 --prs 12,15 verify      # …and write spec.md from what those PRs did",
         "--after 018 --pr https://…/pull/12 verify # verify the pull request by number or URL",
-        "--status ready billing sync         # opens at ⭐️ instead of ⚪️",
+        "--status ready billing sync         # opens at ⭐ instead of ⚪",
         "--from notes/tax-dsl.md             # title and opening prose from the file's frontmatter and body",
         "--lane quick split big migration    # r2d2-mechanic does it and opens the PR; no research, spec or plan"
       ]
@@ -202,7 +202,7 @@ module OpenLanes
 
       # Hand the folder to the writer that already knows how to write a
       # retroactive specification, then let `resync dirs` decide what the
-      # folder has become — 🕰️ is only true while there is no `spec.md`.
+      # folder has become — ⏪ is only true while there is no `spec.md`.
       #
       # @param path [String]
       # @param options [Hash]
@@ -227,7 +227,7 @@ module OpenLanes
       # does not exist yet. {Brief} writes the four headings a human still has
       # to answer, makes a best-effort pass at them from what the project
       # already has on disk, and — unless told not to — opens the result for
-      # a human to finish. The folder's state never moves: ⚪️ New only ever
+      # a human to finish. The folder's state never moves: ⚪ New only ever
       # claimed that a specification exists, not that it is complete.
       #
       # @param path [String] the path to the folder

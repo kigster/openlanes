@@ -14,14 +14,14 @@ module OpenLanes
       #
       # - **The emoji is wrong** — the contents justify a different state. A
       #   folder whose status already holds is left alone, which is what stops
-      #   ⭕️ Blocked and 🅱️ Product Blocked — deliberately identical invariants,
+      #   ⭕ Blocked and 🛑 Product Blocked — deliberately identical invariants,
       #   distinguished only by the name — from collapsing into one.
-      # - **The spelling is not canonical** — a folder written `018-⚪️--foo`
-      #   before the `NNN.MM` padding rule or the ` → ` separator, or
-      #   `18.1-⚪️--foo` by hand. Unpadded numbers read fine and sort wrong —
+      # - **The spelling is not canonical** — a folder written `018-⚪--foo`
+      #   before the `NNN.MM` padding rule or the `━━❯` separator, or
+      #   `18.1-⚪--foo` by hand. Unpadded numbers read fine and sort wrong —
       #   `018.09` < `018.1` < `018.10` puts a single mixed-width folder in the
-      #   middle of the range. Both are renamed, to `018.00-⚪️ → foo` and
-      #   `018.01-⚪️ → foo`.
+      #   middle of the range. Both are renamed, to `018.00━━⚪━━❯foo` and
+      #   `018.01━━⚪━━❯foo`.
       #
       # - **The folder is in the wrong place** — a plan in an inactive state
       #   (✅ 😎 💤 ❌) belongs in the subfolder {Plans::Tree::INACTIVE_DIRS}
@@ -285,7 +285,7 @@ module OpenLanes
         # A rename that finds its target occupied has not happened, and saying
         # nothing about it would leave the folder misnamed with a report
         # claiming otherwise. Two folders can want the same canonical name —
-        # `018-⚪️--foo` and `018.00-⚪️ → foo` are the same plan written twice.
+        # `018-⚪--foo` and `018.00━━⚪━━❯foo` are the same plan written twice.
         #
         # @param change [OpenLanes::Lifecycle::Resync::Dirs::Change]
         # @return [void]

@@ -144,7 +144,7 @@ module OpenLanes
       # The main checkout stays the only writer. The engine reads, signs and
       # renames the plan there and nowhere else; the worktree gets a snapshot,
       # refreshed on every publish. Every copy of the same plan number is
-      # removed first, so a folder renamed since the last publish (⭐️ to 🟢,
+      # removed first, so a folder renamed since the last publish (⭐ to 🟢,
       # say) does not leave its old name behind in the branch, and a file
       # deleted in the main checkout is deleted in the branch too.
       #

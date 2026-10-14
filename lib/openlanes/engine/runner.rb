@@ -8,7 +8,7 @@ module OpenLanes
     # The loop itself is {Dispatcher}. This holds what the loop needs about
     # the run: the tree and its scope, the roster, the executor, how many run
     # at once, where each plan is checked out, and how a finished plan is
-    # published. Blocked plans (⭕️ 🅱️) are stepped around, never assigned.
+    # published. Blocked plans (⭕ 🛑) are stepped around, never assigned.
     class Runner
       # What one agent did to one plan.
       Attempt = Data.define(:ordinal,

@@ -53,8 +53,8 @@ loader.setup
 # Three phases, each with a file that proves it happened, and a guarded state
 # machine that refuses to let a plan folder claim a phase it has not reached.
 #
-#   spec   ⚪️ New          spec.md
-#   plan   ⭐️ Ready        plan.md
+#   spec   ⚪ New          spec.md
+#   plan   ⭐ Ready        plan.md
 #   build  🟡 → ✅         pull-requests.md
 #
 # The conventions are not documented anywhere else by hand: the status

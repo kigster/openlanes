@@ -5,7 +5,7 @@ module OpenLanes
     # `openlanes unblock NNN…` — hand a stopped plan to the agent that
     # drains its `blocked.md`.
     #
-    # Deliberately not part of `run`. ⭕️ and 🅱️ are {StateMachine::SETTLED}, so
+    # Deliberately not part of `run`. ⭕ and 🛑 are {StateMachine::SETTLED}, so
     # the loop never offers a blocked plan to anybody, and that is the property
     # that makes the state mean anything: the plan waits for a human, and no
     # agent quietly decides otherwise. Answers arriving is not a fact the tool

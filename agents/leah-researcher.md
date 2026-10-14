@@ -51,8 +51,8 @@ A question needs a decision that is not yours: a product tradeoff, a price, a co
 | You sign                               | Folder becomes | Who runs next                                                |
 | :------------------------------------- | :------------- | :----------------------------------------------------------- |
 | `Completed`                            | 🔎 Researched  | `yoda-writer`                                                |
-| `Blocked (technical)` / `(product)`    | ⭕️ / 🅱️        | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
-| nothing, or killed at the time limit   | 🔎 if `## Research` exists (the harness signs for you), else stays ⚪️ | `yoda-writer`, or nobody |
+| `Blocked (technical)` / `(product)`    | ⭕ / 🛑        | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
+| nothing, or killed at the time limit   | 🔎 if `## Research` exists (the harness signs for you), else stays ⚪ | `yoda-writer`, or nobody |
 
 ## Never
 

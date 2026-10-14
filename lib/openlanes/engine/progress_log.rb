@@ -20,9 +20,9 @@ module OpenLanes
     # with no plan or agent of its own lines up with the lines underneath it.
     #
     # @example
-    #   ProgressLog.render("editing spec.md", plan: "003.00", status: "⭐️ Planned",
+    #   ProgressLog.render("editing spec.md", plan: "003.00", status: "⭐ Planned",
     #     agent: "yoda-writer", seconds: 42, round: "01", pid: 91_234)
-    #   #=> "[16:22:14 | 003.00 | ⭐️  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
+    #   #=> "[16:22:14 | 003.00 | ⭐  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
     module ProgressLog
       # Wall clock only. A log line answers "when", and the date is the file's.
       TIME_FORMAT = "%H:%M:%S"
@@ -104,7 +104,7 @@ module OpenLanes
         #
         # @param message [String] the free-form tail, the only variable-width part
         # @param plan [String, nil] the plan's ordinal, e.g. "003.00"
-        # @param status [String, nil] emoji and label, e.g. "⭐️ Planned"
+        # @param status [String, nil] emoji and label, e.g. "⭐ Planned"
         # @param agent [String, nil] the specialist's name, e.g. "yoda-writer"
         # @param seconds [Numeric, nil] how long this agent has been alive
         # @param round [String, nil] which pass over the tree, e.g. "01"
@@ -131,7 +131,7 @@ module OpenLanes
         # The emoji fitted to {EMOJI_WIDTH} and followed by {EMOJI_GAP}, then the
         # label. A value with no label (or none at all) passes through.
         #
-        # @param status [String, nil] emoji and label, e.g. "⭐️ Planned"
+        # @param status [String, nil] emoji and label, e.g. "⭐ Planned"
         # @return [String, nil]
         def status_cell(status)
           emoji, label = status.to_s.split(" ", 2)

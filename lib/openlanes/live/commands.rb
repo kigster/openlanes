@@ -217,7 +217,7 @@ module OpenLanes
 
       # `## A<n>` under the question, signed, for `lando-broker` to fold in
       # (W10). The dispatcher hands the plan to the broker once every
-      # question has an answer, and the plan leaves ⭕️ when the file is
+      # question has an answer, and the plan leaves ⭕ when the file is
       # drained. The answer carries the command's id in a comment, so a
       # command applied again after a crash finds it and writes nothing.
       #
@@ -417,7 +417,7 @@ module OpenLanes
         nil
       end
 
-      # The idea becomes a ⚪️ plan whose spec.md opens with it, then joins the run.
+      # The idea becomes a ⚪ plan whose spec.md opens with it, then joins the run.
       #
       # @return [String]
       def create_plans(command, dispatcher)

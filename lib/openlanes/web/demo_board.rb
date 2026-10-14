@@ -253,7 +253,7 @@ module OpenLanes
         title = command["idea"].lines.first.to_s.strip.delete_prefix("#").strip
         @me["plans"] << plan_from({ "ordinal" => ordinal,
                                     "title" => title,
-                                    "status" => { "key" => "new", "emoji" => "⚪️", "label" => "New" },
+                                    "status" => { "key" => "new", "emoji" => "⚪", "label" => "New" },
                                     "lane" => "full" })
         "created #{ordinal} #{slug(title)}"
       end

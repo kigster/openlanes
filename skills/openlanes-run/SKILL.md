@@ -1,6 +1,6 @@
 ---
 name: openlanes-run
-description: Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop All Local or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents to a fixed point with `openlanes run --until-settled` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕️ / 🅱️ plan.
+description: Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop All Local or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents to a fixed point with `openlanes run --until-settled` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕ / 🛑 plan.
 ---
 
 # openlanes-run: drive the plans
@@ -63,7 +63,7 @@ A warning about `ANTHROPIC_API_KEY` (or a similar variable) at the start means e
 When it exits, `openlanes status` shows where each plan stands. Sort them into three groups:
 
 - **Advanced to a human gate**: at ✅ Approved & Merged the reviewer has approved, and merging and deploying are the human's. Report the PR links (`gh pr list`).
-- **Blocked** ⭕️ / 🅱️: go to step 4.
+- **Blocked** ⭕ / 🛑: go to step 4.
 - **Unmoved without a block**: an agent failed or ran out of rounds. Read the plan's history with `openlanes state show --plan <NNN>` and say which agent stopped and why. Re-run with a fix (`--agent`, `--prompt`, `--timeout`) only after telling the user what you will change.
 
 ## 4. Unblock
@@ -71,7 +71,7 @@ When it exits, `openlanes status` shows where each plan stands. Sort them into t
 For each blocked plan:
 
 1. `openlanes unblock <NNN> -n` prints the open questions.
-1. Put them to the human **one at a time**. ⭕️ questions are for an engineer, 🅱️ for product; say which.
+1. Put them to the human **one at a time**. ⭕ questions are for an engineer, 🛑 for product; say which.
 1. Write each answer into the plan's `blocked.md` under `## A<n>`, matching its `## B<n>` (the format is in `openlanes-documents`). An answer counts only when it names who decided (a role is enough), carries today's date, and settles the question. "Leaning towards B" does not count, and the broker will leave it in place.
 
    ```markdown

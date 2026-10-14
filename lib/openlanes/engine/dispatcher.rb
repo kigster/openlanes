@@ -15,8 +15,8 @@ module OpenLanes
     class Dispatcher
       # One running invocation. `from` is the state the plan showed when the
       # agent was picked; `state` is the one it ran under, after any
-      # `starts_as` rename. History is keyed by `state`: luke picked at ⭐️
-      # works at 🟡, and keying by ⭐️ would offer him 🟡 afterwards as though
+      # `starts_as` rename. History is keyed by `state`: luke picked at ⭐
+      # works at 🟡, and keying by ⭐ would offer him 🟡 afterwards as though
       # he had never been there (the 020.00 regression, run twice over).
       Job = Struct.new(:key,
         :task,
@@ -764,7 +764,7 @@ module OpenLanes
       #
       # A plan with an agent in it is judged by its folder's name, never by
       # what its contents would justify. Asking the contents is how the
-      # minesweeper trial ran its whole chain inside ⚪️ New: leah wrote her
+      # minesweeper trial ran its whole chain inside ⚪ New: leah wrote her
       # `## Research` chapter, the next tick saw a Researched plan and started
       # yoda beside her, and leah's own Completed then found a partner running
       # and held the folder where it was. Every later agent repeated it, so
@@ -787,7 +787,7 @@ module OpenLanes
       # A folder's name can lag its contents: a run killed before its rename,
       # a plan.md written by hand, a resync nobody ran. So the names are
       # reconciled before every dispatch, the way `resync dirs` would, and a
-      # ⚪️ folder that already holds a plan goes to the pair under its honest
+      # ⚪ folder that already holds a plan goes to the pair under its honest
       # name rather than to leah-researcher under its stale one. Plans an
       # agent is working in right now are left alone: the prompt names the
       # folder by path, and moving it under a running agent would strand

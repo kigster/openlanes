@@ -63,5 +63,5 @@ An open question needs a decision that is not yours: a product tradeoff, a confl
 | You sign                            | Folder becomes           | Who runs next                                                     |
 | :---------------------------------- | :----------------------- | :---------------------------------------------------------------- |
 | `Completed`, with blank `plan.md`   | 📋 Ready for Planning    | `palpatine-planner`                                               |
-| `Blocked (technical)` / `(product)` | ⭕️ / 🅱️                  | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
+| `Blocked (technical)` / `(product)` | ⭕ / 🛑                  | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
 | nothing, or killed                  | 📋 if a blank `plan.md` exists (the harness signs for you), else unchanged | `palpatine-planner`, or nobody |

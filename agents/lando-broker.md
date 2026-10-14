@@ -36,8 +36,8 @@ An `## A<n>` failing any of these stays, and so does its `## B<n>`.
 For each answer that counts:
 
 1. Write the decision into the document it stops, as settled fact in that document's voice, followed by one provenance line: `Decided 2026-08-21 by the CTO: rates are read from the vendor feed, never cached across a filing period.`
-   - What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most 🅱️ blocks.
-   - How, in what order, or by which unit: `plan.md`. Most ⭕️ blocks. Only if `plan.md` already exists.
+   - What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most 🛑 blocks.
+   - How, in what order, or by which unit: `plan.md`. Most ⭕ blocks. Only if `plan.md` already exists.
    - Both: write both.
 1. Delete the `## B<n>` and its `## A<n>` together.
 
@@ -57,14 +57,14 @@ After you finish, `unblock` renames the folder by its contents:
 
 | Result                          | Folder becomes                                              | Who runs next                         |
 | :------------------------------ | :---------------------------------------------------------- | :------------------------------------ |
-| questions remain                | stays ⭕️ / 🅱️                                               | a human answers, runs `unblock` again |
-| `blocked.md` deleted            | the state its documents justify (⚪️, 🔎, 📋, ⭐️ or later) | that state's agent on the next `openlanes run` |
+| questions remain                | stays ⭕ / 🛑                                               | a human answers, runs `unblock` again |
+| `blocked.md` deleted            | the state its documents justify (⚪, 🔎, 📋, ⭐ or later) | that state's agent on the next `openlanes run` |
 | an answer undercuts planned units | as above                                                  | report the affected units; `palpatine-planner` re-plans only if a human moves the folder back to 📋 |
 
 ## Never
 
 - Answer, infer or "reasonably assume" a decision.
 - Promote the block's recommendation into the decision.
-- Delete a question because it looks stale. Retiring one is a human's call (☢️ Deferred or ❌ Discarded).
+- Delete a question because it looks stale. Retiring one is a human's call (💤 Deferred or ❌ Discarded).
 - Re-plan work units.
 - Commit or push.

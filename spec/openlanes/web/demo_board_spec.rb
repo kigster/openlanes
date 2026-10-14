@@ -234,7 +234,7 @@ RSpec.describe OpenLanes::Web::DemoBoard do
 
     it "adds a new plan after the highest number" do
       said
-      expect(me["plans"].last.values_at("ordinal", "title", "status")).to eq(["014.00", "Dark mode toggle", { "key" => "new", "emoji" => "⚪️", "label" => "New" }])
+      expect(me["plans"].last.values_at("ordinal", "title", "status")).to eq(["014.00", "Dark mode toggle", { "key" => "new", "emoji" => "⚪", "label" => "New" }])
     end
 
     it "says what it created" do

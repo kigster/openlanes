@@ -18,7 +18,7 @@ module OpenLanes
       example [
         "002                         # create/seed the worktree for plan 002.00",
         "002.01                      # create/seed the worktree for plan 002.01",
-        "002.00-⚪️ → update-dsl      # find the plan by its folder name",
+        "002.00━━⚪━━❯update-dsl      # find the plan by its folder name",
         "--skip-seed 003             # create the worktree but don't seed it"
       ]
 
