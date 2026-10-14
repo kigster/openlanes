@@ -90,6 +90,18 @@ describe("MachineBoard", () => {
     expect(screen.getByText("on sam@ci-runner-2")).toBeInTheDocument();
   });
 
+  it("draws every plan of a peer node with no control to press", () => {
+    const board = sampleBoard();
+    const their = board.others[0];
+    const { container } = render(<MachineBoard their={their} me={board.me} />);
+    expect(screen.getAllByRole("article")).toHaveLength(their.plans.length);
+    expect(their.plans.flatMap(p => p.cars).length).toBeGreaterThan(0);
+    // No agent button, no model select, no unblock: a car on this tab is text, and every car says so.
+    expect(container.querySelectorAll(".car-open, .model-trigger, [role='combobox']")).toHaveLength(0);
+    expect(container.querySelectorAll(".car")).toHaveLength(container.querySelectorAll(".car.is-readonly").length);
+    expect(within(container).queryAllByRole("button")).toHaveLength(0);
+  });
+
   it("leaves the IP out when the node has none", () => {
     const board = sampleBoard();
     board.others[0].node.ip = null;

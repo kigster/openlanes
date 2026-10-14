@@ -240,6 +240,38 @@ describe("live", () => {
     expect(tab).toHaveAttribute("aria-selected", "true");
   });
 
+  it("renders a peer node's tab read only and sends no command from it", async () => {
+    const first = sampleBoard();
+    const fetchMock = vi.fn().mockResolvedValue(json(first));
+    vi.stubGlobal("fetch", fetchMock);
+    renderApp();
+    await screen.findByRole("tab", { name: "Board" });
+    const label = `${first.others[0].node.user}@${first.others[0].node.host}`;
+    await userEvent.click(screen.getByRole("tab", { name: label }));
+    const panel = screen.getByRole("tabpanel", { name: label });
+    expect(within(panel).getByText(/Read only\./)).toBeInTheDocument();
+    expect(within(panel).getAllByRole("article")).toHaveLength(first.others[0].plans.length);
+    expect(within(panel).queryAllByRole("button")).toHaveLength(0);
+    expect(panel.querySelectorAll(".car-open, .model-trigger")).toHaveLength(0);
+    // Pressing the plan and the car text does nothing: no POST ever left the page.
+    for (const car of Array.from(panel.querySelectorAll(".car-agent, article"))) await userEvent.click(car);
+    const posts = fetchMock.mock.calls.filter(([, init]) => (init as RequestInit | undefined)?.method === "POST");
+    expect(posts).toHaveLength(0);
+  });
+
+  it("does not switch views when Tab only moves focus onto a machine's tab", async () => {
+    const first = sampleBoard();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(first)));
+    renderApp();
+    const boardTab = await screen.findByRole("tab", { name: "Board" });
+    const label = `${first.others[0].node.user}@${first.others[0].node.host}`;
+    act(() => screen.getByRole("tab", { name: label }).focus());
+    expect(boardTab).toHaveAttribute("aria-selected", "true");
+    // Enter on it is the deliberate press that switches.
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("tab", { name: label })).toHaveAttribute("aria-selected", "true");
+  });
+
   it("counts only agents still at work in Stop All Local, and keeps their merged rows ten seconds", async () => {
     const first = sampleBoard();
     first.me.plans[1].cars[0].state = "done"; // 005: its reviewer finished, the car lingers

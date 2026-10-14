@@ -59,10 +59,12 @@ const STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
 
 /**
  * The tabs sit in several tablists (each machine's in its own, beside its ▾), each a roving-focus group of its own.
- * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list;
- * focusing a tab selects it, so the keys still switch views.
+ * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list, and
+ * switch to the tab they land on. Focus alone does not switch (activationMode manual): with it automatic, pressing Tab
+ * to walk past the row focused the first machine's tab, which selected it and swapped the Board out from under the
+ * person, who then could never Tab to a car.
  */
-function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
+function acrossTabs(e: KeyboardEvent<HTMLElement>, activate: (tab: HTMLElement) => void): void {
   const from = e.target;
   const step = STEPS[e.key];
   const edge = e.key === "Home" || e.key === "End";
@@ -71,7 +73,9 @@ function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
   const at = tabs.indexOf(from);
   const to = edge ? (e.key === "Home" ? 0 : tabs.length - 1) : (at + step + tabs.length) % tabs.length;
   e.preventDefault(); // the group's own handler stands down for a prevented event
-  tabs[to]?.focus();
+  const target = tabs[to];
+  target?.focus();
+  if (target) activate(target);
 }
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
@@ -195,22 +199,22 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
       />
-      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab}>
+      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}
-        <div className="tabs" onKeyDownCapture={acrossTabs}>
+        <div className="tabs" onKeyDownCapture={e => acrossTabs(e, tab => tab.dataset.tab && setTab(tab.dataset.tab))}>
           <Tabs.List className="tabs-list" aria-label="Views">
-            <Tabs.Trigger className="tab" value="board">
+            <Tabs.Trigger className="tab" value="board" data-tab="board">
               Board
             </Tabs.Trigger>
-            <Tabs.Trigger className="tab" value="logs">
+            <Tabs.Trigger className="tab" value="logs" data-tab="logs">
               Logs
               <span className="tab-count" title="Warnings and errors since you last looked">
                 {alerts || ""}
               </span>
             </Tabs.Trigger>
             {runs.map(run => (
-              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
+              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} data-tab={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
                 {testTabLabel(run, runs)}
                 <span className="run-chip">
                   {run.done} of {run.total}
@@ -230,6 +234,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                     <Tabs.Trigger
                       className="tab tab-machine"
                       value={value}
+                      data-tab={value}
                       title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
                       onPointerDown={note}
                       onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
