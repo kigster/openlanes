@@ -1,0 +1,27 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "014.00",
+    "slug": "chewie-verifier"
+  },
+  "state": "new",
+  "updated_at": "2026-10-14T11:53:19-07:00",
+  "stages": [],
+  "signatures": [
+    {
+      "at": "2026-10-14T11:51:21-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:53:19-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    }
+  ],
+  "messages": []
+}
