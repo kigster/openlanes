@@ -99,20 +99,27 @@ export function pillState(plan: Plan, stations: Station[], gone = false): PillSt
   if (pr && isMerged(plan)) return { cls: "is-merged", mark: "✅", say: `PR #${pr.number} merged on GitHub, plan complete`, blocked: false };
   if (pr && isApproved(plan)) return { cls: "is-done", mark: "✓", say: `reviewed, PR #${pr.number} ready to merge`, blocked: false };
   if (plan.interrupted) {
-    return { cls: "is-blocked", mark: "⭕️", say: "needs a decision: keep or discard the interrupted agent's work", blocked: true };
+    return { cls: "is-blocked", mark: "⭕", say: "needs a decision: keep or discard the interrupted agent's work", blocked: true };
   }
   const held = plan.questions.find(q => q.held);
   if (held) return { cls: "is-blocked is-held", mark: "⏸", say: `held blocked by you: ${held.body || held.heading}`, blocked: true };
   const open = plan.questions[0];
   if (open) {
     return open.owner === "product"
-      ? { cls: "is-blocked", mark: "🅱️", say: `needs product decision: ${open.body || open.heading}`, blocked: true }
-      : { cls: "is-blocked", mark: "⭕️", say: `needs technical decision: ${open.body || open.heading}`, blocked: true };
+      ? { cls: "is-blocked", mark: "🛑", say: `needs product decision: ${open.body || open.heading}`, blocked: true }
+      : { cls: "is-blocked", mark: "⭕", say: `needs technical decision: ${open.body || open.heading}`, blocked: true };
   }
   const stuck = plan.cars.find(c => c.state === "stuck" || c.state === "failed");
-  if (stuck) return { cls: "is-blocked", mark: "⭕️", say: `needs technical decision: ${stuck.message}`, blocked: true };
+  if (stuck) return { cls: "is-blocked", mark: "⭕", say: `needs technical decision: ${stuck.message}`, blocked: true };
   const at = stations.find(s => s.key === plan.station)?.label ?? plan.station;
   return { cls: "", mark: "🛠️", say: `working, at ${at}`, blocked: false };
+}
+
+/** The mark a plan wears while a process holds its folder lock, and what hovering it says. Null when unlocked. */
+export function lockMark(plan: Plan): { mark: string; title: string } | null {
+  if (!plan.locked) return null;
+  const { pid, host, started_at } = plan.locked;
+  return { mark: "🔑", title: `locked by pid ${pid} on ${host}, since ${started_at}` };
 }
 
 /** A plan with something for a person to answer: a question or an interrupted agent. Its red pill opens the widget. */

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan } from "../api/types";
 import { clock, fmt } from "./format";
-import { carLook, modelLabel } from "./model";
+import { carLook, lockMark, modelLabel } from "./model";
 
 interface CarProps {
   plan: Plan;
@@ -22,6 +22,7 @@ interface CarProps {
 export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarProps) {
   const look = carLook(plan, car);
   const readOnly = !onOpen;
+  const lock = lockMark(plan);
   const cls = ["car", look.blocked && "is-blocked", readOnly && "is-readonly"].filter(Boolean).join(" ");
   return (
     <div className={cls} data-car={car.key}>
@@ -32,6 +33,11 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
           <button type="button" className="car-open" aria-expanded={open} onClick={() => onOpen(plan, car)}>
             {car.agent}
           </button>
+        )}
+        {lock && (
+          <span className="car-lock" title={lock.title} aria-label={lock.title}>
+            {lock.mark}
+          </span>
         )}
         {look.label ? (
           <span className="car-model">{look.label}</span>

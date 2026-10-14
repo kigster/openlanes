@@ -152,3 +152,19 @@ describe("PlanRow", () => {
     expect(screen.getByText("rspec crashed")).toHaveAttribute("title", "rspec crashed");
   });
 });
+
+describe("locked plan", () => {
+  const stations = sampleBoard().me.stations;
+  const models = sampleBoard().me.models;
+
+  it("shows 🔑 on its car, titled with the holder", () => {
+    const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z" };
+    render(<PlanRow plan={samplePlan({ locked })} stations={stations} models={models} />);
+    expect(screen.getByLabelText(/locked by pid 4242 on studio-mini/)).toHaveTextContent("🔑");
+  });
+
+  it("shows no 🔑 when the plan is unlocked", () => {
+    render(<PlanRow plan={samplePlan({ locked: null })} stations={stations} models={models} />);
+    expect(screen.queryByText("🔑")).toBeNull();
+  });
+});

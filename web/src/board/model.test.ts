@@ -5,6 +5,7 @@ import {
   hasRequest,
   isFinished,
   isWorking,
+  lockMark,
   nodePlanKey,
   modelLabel,
   pillState,
@@ -102,13 +103,13 @@ describe("pillState", () => {
     expect(st({ pr: null }, true).say).toContain("PR #?");
     expect(st({ pr: samplePr({ state: "merged" }) })).toMatchObject({ cls: "is-merged", mark: "✅" });
     expect(st({ pr: samplePr({ state: "approved" }) })).toMatchObject({ cls: "is-done", mark: "✓", say: "reviewed, PR #44 ready to merge" });
-    expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ cls: "is-blocked", mark: "⭕️" });
+    expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ cls: "is-blocked", mark: "⭕" });
     expect(st({ questions: [sampleQuestion({ held: true })] })).toMatchObject({ cls: "is-blocked is-held", mark: "⏸" });
-    expect(st({ questions: [sampleQuestion({ owner: "product" })] })).toMatchObject({ mark: "🅱️", say: expect.stringContaining("product") });
-    expect(st({ questions: [sampleQuestion({ body: "" })] })).toMatchObject({ mark: "⭕️", say: "needs technical decision: B1 Redis key layout" });
+    expect(st({ questions: [sampleQuestion({ owner: "product" })] })).toMatchObject({ mark: "🛑", say: expect.stringContaining("product") });
+    expect(st({ questions: [sampleQuestion({ body: "" })] })).toMatchObject({ mark: "⭕", say: "needs technical decision: B1 Redis key layout" });
     expect(st({ questions: [sampleQuestion({ held: true, body: "" })] }).say).toContain("B1 Redis");
     expect(st({ questions: [sampleQuestion({ owner: "product", body: "" })] }).say).toContain("B1 Redis");
-    expect(st({ cars: [sampleCar({ state: "stuck", message: "no reply" })] })).toMatchObject({ mark: "⭕️", blocked: true });
+    expect(st({ cars: [sampleCar({ state: "stuck", message: "no reply" })] })).toMatchObject({ mark: "⭕", blocked: true });
     expect(st({})).toMatchObject({ cls: "", mark: "🛠️", say: "working, at Building" });
     expect(st({ station: "elsewhere" }).say).toBe("working, at elsewhere");
   });
@@ -143,5 +144,14 @@ describe("predicates and labels", () => {
     expect(testTabValue(runs[0])).toBe("tests:001.00/luke-backend");
     expect(testTabLabel(runs[0], runs)).toBe("001 tests, luke");
     expect(testTabLabel(runs[0], [runs[0]])).toBe("001 tests");
+  });
+});
+
+describe("lockMark", () => {
+  it("shows 🔑 with who holds the lock, and nothing for an unlocked plan", () => {
+    const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z" };
+    expect(lockMark(samplePlan({ locked }))).toEqual({ mark: "🔑", title: expect.stringContaining("4242") });
+    expect(lockMark(samplePlan({ locked }))?.title).toContain("studio-mini");
+    expect(lockMark(samplePlan({ locked: null }))).toBeNull();
   });
 });

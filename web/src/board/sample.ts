@@ -81,6 +81,7 @@ export function samplePlan(over: Partial<Plan> = {}): Plan {
     claimed_by: null,
     unacked: 0,
     last_known: [],
+    locked: null,
     ...over,
   };
 }
