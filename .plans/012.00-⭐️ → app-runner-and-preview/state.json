@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "planned",
-  "updated_at": "2026-10-14T11:50:09-07:00",
+  "updated_at": "2026-10-14T11:51:28-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -114,6 +114,18 @@
       "status": "Completed",
       "round": 2,
       "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-14T11:51:27-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:51:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": []
