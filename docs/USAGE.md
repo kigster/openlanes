@@ -123,7 +123,9 @@ openlanes run --isolation shared               # one checkout, one agent at a ti
 - The loop stops when a full round changes no plan's state, or when every plan in scope is done, blocked, or out of rounds.
 - Agents start without your personal plugins, skills, hooks and MCP servers, which saves context and start-up time on every turn. `--user-config` lets them back in.
 
-![agents-running](img/openlanes-running.avif)
+![A terminal view of a run: luke-backend and rey-frontend building plan 001.00 together while leah-researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)
+
+![Two plans in different phases in a terminal view: luke-backend self-checking plan 000.00 while palpatine-planner, luke-backend and rey-frontend work on plan 001.00](img/openlanes-two-plan-work.png)
 
 ### Limits
 

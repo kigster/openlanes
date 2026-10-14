@@ -4,7 +4,7 @@
 
 `openlanes` is a CLI software factory. You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `depot`.
 
-![two plans in flight](docs/img/openlanes-two-plan-work.png)
+![The openlanes control room: plan 000 on the board between Planning and Building, with luke-backend and rey-frontend working on it side by side, and the luke-backend panel open showing its model, tokens, context use and a box to message it](docs/img/openlanes-one-plan.avif)
 
 ```mermaid
 flowchart LR
