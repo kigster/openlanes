@@ -2,6 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
+| 35 | [\[002.00\] Implement Zeitwerk Loading](https://github.com/kigster/openlanes/pull/35) | Open 🟡 |
 
 ## Verification (luke-backend, 2026-10-14)
 
