@@ -53,15 +53,32 @@ web-dev:
 web-demo *args:
     {{ rbenv }} exe/openlanes web --demo {{ args }}
 
-# Cypress against the demo server; run `just web-build` first
+# Cypress against two demo servers, the second as demo@second-machine; run `just web-build` first
 web-e2e:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
-    bundle exec exe/openlanes web --demo --no-open --redis-url "${E2E_REDIS_URL:-redis://localhost:6379/14}" &
-    trap 'kill %1 2>/dev/null || true' EXIT
-    until curl -sf http://127.0.0.1:11000/healthz >/dev/null; do sleep 0.2; done
-    cd web && npx cypress run
+    port="${E2E_PORT:-11100}"
+    peer="${E2E_PEER_PORT:-11101}"
+    redis="${E2E_REDIS_URL:-redis://localhost:6379/14}"
+    for p in "$port" "$peer"; do
+        if curl -s -o /dev/null "http://127.0.0.1:$p/"; then
+            echo "port $p is taken; set E2E_PORT and E2E_PEER_PORT to free ones" >&2
+            exit 69
+        fi
+    done
+    pids=()
+    stop() { kill "${pids[@]}" 2>/dev/null || true; wait "${pids[@]}" 2>/dev/null || true; }
+    trap stop EXIT
+    bundle exec exe/openlanes web --demo --no-open --port "$port" --redis-url "$redis" &
+    pids+=($!)
+    bundle exec exe/openlanes web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine &
+    pids+=($!)
+    for p in "$port" "$peer"; do
+        for _ in $(seq 150); do curl -sf "http://127.0.0.1:$p/healthz" >/dev/null && break; sleep 0.2; done
+        curl -sf "http://127.0.0.1:$p/healthz" >/dev/null || { echo "the demo on port $p never answered" >&2; exit 69; }
+    done
+    cd web && npx cypress run --config "baseUrl=http://127.0.0.1:$port" --env "peer=http://127.0.0.1:$peer"
 
 # Real agents build a tic-tac-toe page through `openlanes start`; spends tokens, needs OPENLANES_FACTORY_E2E=1
 factory-e2e:
