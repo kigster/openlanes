@@ -243,9 +243,55 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "reads both while a spec has the key and the section, without repeating an item" do
-      text = "---\nhow-to-verify: [a, b]\n---\n# T\n\n## How to tell it's working?\n\nProse is not a check.\n\n1. b\n* c\n"
+      text = "---\nhow-to-verify: [a, b]\n---\n# T\n\n## How to tell it's working?\n\nOpen the board.\n\n1. b\n* c\n"
 
-      expect(described_class.parse(text).how_to_verify).to eq(%w[a b c])
+      expect(described_class.parse(text).how_to_verify).to eq(["a", "b", "Open the board.", "c"])
+    end
+  end
+
+  # Owner, 2026-10-14: the more specific how-to-test is, the better, and prose
+  # can be specific too, so a paragraph is a check like any item.
+  describe "the checks under `## How to tell it's working?`" do
+    let(:heading) { "## How to tell it's working?" }
+
+    def checks(section) = described_class.parse("# T\n\n#{heading}\n\n#{section}").how_to_verify
+
+    it "reads each prose paragraph as one check, its lines as written" do
+      expect(checks("Open the board.\nIt shows the plan in green.\n\nThen stop the run.\n\n## Next\n\nNot a check.\n"))
+        .to eq(["Open the board.\nIt shows the plan in green.", "Then stop the run."])
+    end
+
+    it "keeps prose and items in document order" do
+      expect(checks("Start the factory.\n\n- the board loads\n- a plan moves\n\nStop it with Ctrl-C.\n"))
+        .to eq(["Start the factory.", "the board loads", "a plan moves", "Stop it with Ctrl-C."])
+    end
+
+    # Copied into plan.md as `- item`; a step's command must arrive with it.
+    it "keeps a step's indented lines and fenced block with that step" do
+      section = "- Run this:\n\n  ```bash\n  bin/setup\n\n  - not an item\n  ```\n- see green\n  in the board\n"
+
+      expect(checks(section))
+        .to eq(["Run this:\n```bash\nbin/setup\n\n- not an item\n```", "see green\nin the board"])
+    end
+
+    it "keeps a command's own indentation inside the fence" do
+      expect(checks("- Run:\n  ```ruby\n  if ok\n    go\n  end\n  ```\n")).to eq(["Run:\n```ruby\nif ok\n  go\nend\n```"])
+    end
+
+    it "gives a fence outside any item to the paragraph before it" do
+      expect(checks("Run the suite:\n\n```sh\njust test\n\n## not a heading\n```\n"))
+        .to eq(["Run the suite:\n```sh\njust test\n\n## not a heading\n```"])
+    end
+
+    it "makes a fence with no paragraph before it a check of its own" do
+      expect(checks("- a\n\n~~~~\njust lint\n~~~\n~~~~\n")).to eq(["a", "~~~~\njust lint\n~~~\n~~~~"])
+    end
+
+    it "reads back what list_item writes, one item per check" do
+      originals = ["Open the board.\nIt is green.", "Run:\n```bash\nbin/setup\n\n- not an item\n```", "plain"]
+      section = originals.map { described_class.list_item(it) }.join("\n")
+
+      expect(checks("#{section}\n")).to eq(originals)
     end
   end
 end

@@ -50,6 +50,31 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
       end
     end
 
+    # Prose is a check too, and a fenced block travels with its check: what
+    # plan.md gets must read back as the same checks.
+    context "when the section holds prose and a fenced block" do
+      let(:frontmatter) { "" }
+      let(:section) do
+        "Open the board.\nIt shows the plan.\n\n- Run this:\n\n  ```bash\n  bin/setup\n\n  - not an item\n  ```\n"
+      end
+      let(:checks) { ["Open the board.\nIt shows the plan.", "Run this:\n```bash\nbin/setup\n\n- not an item\n```"] }
+
+      before do
+        File.write(File.join(subject_plan.feature.path, "spec.md"), "# T\n\n## How to tell it's working?\n\n#{section}")
+      end
+
+      it "writes each check as one item that reads back unchanged" do
+        described_class.copy(subject_plan)
+        copied = subject_plan.read("plan.md")[/^## How to verify\n.*/m]
+        reread = OpenLanes::Plans::Spec.parse(copied.sub("## How to verify", "## How to tell it's working?"))
+
+        aggregate_failures do
+          expect(OpenLanes::Plans::Spec.parse("# T\n\n## How to tell it's working?\n\n#{section}").how_to_verify).to eq(checks)
+          expect(reread.how_to_verify).to eq(checks)
+        end
+      end
+    end
+
     it "keeps what the planner already wrote" do
       described_class.copy(subject_plan)
       expect(subject_plan.read("plan.md")).to start_with(plan_text)

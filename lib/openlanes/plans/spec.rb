@@ -126,6 +126,12 @@ module OpenLanes
 
       FILENAME = "spec.md"
 
+      # A list item under the heading; +marker+ ends at its content column.
+      LIST_ITEM = /\A(?<marker>\s*(?:[-*]|\d+\.)\s+)(?<text>.+)/
+
+      # The opening of a fenced code block, and its fence.
+      FENCE = /\A(\s*)(`{3,}|~{3,})/
+
       class << self
         # @param subject [#read]
         # @return [OpenLanes::Plans::Spec]
@@ -223,30 +229,88 @@ module OpenLanes
           rest if left == meta.except(key)
         end
 
-        # The list items under `## How to tell it's working?`, up to the next
-        # heading of the same level. Prose there is the author's, and stays
-        # theirs; only items are checks. An indented line under an item
-        # continues it, as {list_item} writes a multi-line check.
+        # The checks under `## How to tell it's working?`, in document order,
+        # up to the next heading of the same level. The owner wants how-to-test
+        # as specific and technical as it can be, and prose can be just as
+        # specific as a bullet (2026-10-14, on M10), so prose is a check too
+        # rather than the author's aside that the agents never see:
+        #
+        # - A list item is one check, with its indented continuation lines and
+        #   any fenced block indented under it, blank lines in the fence
+        #   included. Its lines lose the item's indent and keep the rest, so
+        #   a command's own indentation survives.
+        # - A prose paragraph (consecutive non-blank, non-list lines) is one
+        #   check, its lines as written.
+        # - A fenced block not indented under an item joins the prose
+        #   paragraph just before it, or is a check of its own.
+        #
+        # Inside a fence nothing is a list item or a heading, so a
+        # `- not an item` line there stays in the code. {list_item} writes any
+        # of these back as one item, which this reads back unchanged.
         #
         # @param body [String]
         # @return [Array<String>]
         def section_items(body)
           start = body =~ HOW_TO_VERIFY_LINE or return []
-          section = body[start..].lines.drop(1).take_while { !it.start_with?("## ") }
-          items = []
-          open = false
-          section.each do |line|
-            if (item = line[/\A\s*(?:[-*]|\d+\.)\s+(.+)/, 1])
-              items << item.strip
-              open = true
-            elsif open && line.match?(/\A[ \t]+\S/)
-              items[-1] = "#{items.last}\n#{line.strip}"
-            elsif !line.strip.empty?
-              open = false
+          checks = []
+          state = { kind: nil, indent: 0, fence: nil }
+          body[start..].lines.drop(1).each do |line|
+            line = line.chomp
+            if state[:fence]
+              fence_line(checks, state, line)
+            elsif line.start_with?("## ")
+              break
+            else
+              section_line(checks, state, line)
             end
           end
-          items
+          checks.map(&:strip)
         end
+
+        # A line inside a fenced block, the closing fence included.
+        def fence_line(checks, state, line)
+          checks[-1] = "#{checks.last}\n#{state[:kind] == :item ? dedent(line, state[:indent]) : line}"
+          fence = state[:fence]
+          state[:fence] = nil if line.strip.match?(/\A#{Regexp.escape(fence[0])}{#{fence.length},}\z/)
+        end
+
+        # A line outside any fence: it opens a fence, an item or a paragraph,
+        # or continues the one it follows.
+        def section_line(checks, state, line)
+          if (fence = line[FENCE, 2])
+            open_fence(checks, state, line, fence)
+          elsif (item = line.match(LIST_ITEM))
+            checks << item[:text]
+            state.merge!(kind: :item, indent: item.end(:marker))
+          elsif line.strip.empty?
+            state[:kind] = :after_prose if state[:kind] == :prose
+          elsif state[:kind] == :item && line.match?(/\A[ \t]/)
+            checks[-1] = "#{checks.last}\n#{dedent(line, state[:indent])}"
+          elsif state[:kind] == :prose
+            checks[-1] = "#{checks.last}\n#{line}"
+          else
+            checks << line
+            state[:kind] = :prose
+          end
+        end
+
+        # An indented fence under an open item belongs to it; any other joins
+        # the paragraph before it, or starts a check of its own.
+        def open_fence(checks, state, line, fence)
+          if state[:kind] == :item && line.match?(/\A[ \t]/)
+            checks[-1] = "#{checks.last}\n#{dedent(line, state[:indent])}"
+          elsif %i[prose after_prose].include?(state[:kind])
+            checks[-1] = "#{checks.last}\n#{line}"
+            state[:kind] = :prose
+          else
+            checks << line
+            state[:kind] = :prose
+          end
+          state[:fence] = fence
+        end
+
+        # +line+ less up to +indent+ leading blanks.
+        def dedent(line, indent) = line.sub(/\A[ \t]{0,#{indent}}/, "")
 
         # @param body [String]
         # @param items [Array<String>]
