@@ -15,6 +15,13 @@ module OpenLanes
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
+  #   app:                      # how to run the app a plan builds (M12)
+  #     kind: web
+  #     processes:
+  #       - name: web
+  #         start: npx vite --port $PORT_WEB --strictPort
+  #         ready: /
+  #         preview: true
   #
   # Precedence, loudest first: a flag typed on the command line, the plan's
   # spec.md frontmatter, this file, the built-in default. The file supplies
@@ -47,9 +54,13 @@ module OpenLanes
   #     typed: "run", "resync dirs"
   # @!attribute [r] merge_by
   #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
-  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands, :merge_by) do
+  # @!attribute [r] app
+  #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes app
+  #     start` runs; nil when the project declares none, and then nothing
+  #     about apps happens anywhere
+  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands, :merge_by, :app) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil)
+      merge_by: nil, app: nil)
       super
     end
 
@@ -87,6 +98,7 @@ module OpenLanes
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url, "merge" => merge_by && { "by" => merge_by.to_s } }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
+      settings["app"] = app.to_h if app
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
   end
@@ -96,7 +108,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url merge commands].freeze
+    KEYS = %w[project lane frontend jobs redis_url merge commands app].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -154,7 +166,8 @@ module OpenLanes
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
           merge_by:  merge_by(settings["merge"], path),
-          commands:  commands(settings["commands"], path))
+          commands:  commands(settings["commands"], path),
+          app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil)
         conflicts!(config, path)
         config
       rescue Psych::Exception => e

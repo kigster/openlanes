@@ -68,12 +68,52 @@ RSpec.describe OpenLanes::Config do
       "commands that are not a map"    => ["commands: run\n", /commands: must be a mapping/],
       "a command that is not a map"    => ["commands:\n  run: 3\n", /commands.run: must be a mapping/],
       "broken YAML"                    => ["commands: [\n", /not valid YAML/],
-      "jobs said twice"                => ["jobs: 2\ncommands:\n  run:\n    jobs: 3\n", /jobs and commands.run.jobs are the same setting/]
+      "jobs said twice"                => ["jobs: 2\ncommands:\n  run:\n    jobs: 3\n", /jobs and commands.run.jobs are the same setting/],
+      "an unknown key inside app"      => ["app:\n  processes:\n    - {name: web, start: x, port: 1}\n", /app.processes\[0\]: unknown key port/],
+      "an app process without start"   => ["app:\n  processes:\n    - name: web\n", /app.processes.web: needs start:/],
+      "an app process without a name"  => ["app:\n  processes:\n    - start: bin/web\n", /app.processes\[0\]: needs name:/]
     }.each do |what, (text, message)|
       it "refuses #{what}, naming the file" do
         openlanes_yml(text)
         expect { config }.to raise_error(OpenLanes::Error, /\A#{Regexp.escape(path)}: .*#{message}/m)
       end
+    end
+  end
+
+  describe "app:" do
+    subject(:config) { described_class.load(root) }
+
+    before do
+      openlanes_yml(<<~YAML)
+        app:
+          kind: web
+          processes:
+            - name: api
+              start: bin/rails s -p $PORT_API
+              ready: /up
+              restart_on: ["app/**/*.rb", "config/**/*"]
+            - name: web
+              start: npx vite --port $PORT_WEB --strictPort
+              ready: /
+              preview: true
+      YAML
+    end
+
+    it "loads the processes in declared order" do
+      expect(config.app.processes.map(&:name)).to eq(%w[api web])
+    end
+
+    it "is what Apps.definition answers" do
+      expect(OpenLanes::Apps.definition(config).preview.name).to eq("web")
+    end
+
+    it "is written back by to_yaml, so init keeps it" do
+      expect(described_class.parse(config.to_yaml, path:).app).to eq(config.app)
+    end
+
+    it "is nil in a project that declares none" do
+      openlanes_yml("jobs: 2\n")
+      expect(described_class.load(root).app).to be_nil
     end
   end
 
