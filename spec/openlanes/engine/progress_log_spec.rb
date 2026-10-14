@@ -26,6 +26,23 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       )
     end
 
+    it "matches the line the module's @example documents" do
+      source = File.read(File.expand_path("../../../lib/openlanes/engine/progress_log.rb", __dir__))
+      documented = source[/^\s*#\s+#=> "(.*)"$/, 1]
+      line = described_class.render(
+        "editing spec.md",
+        plan:    "003.00",
+        status:  "⭐️ Planned",
+        agent:   "yoda-writer",
+        seconds: 42,
+        round:   "01",
+        pid:     91_234,
+        at:
+      )
+
+      expect(documented).to eq(line)
+    end
+
     it "returns one line, with no trailing newline" do
       line = described_class.render("editing spec.md", at:)
 

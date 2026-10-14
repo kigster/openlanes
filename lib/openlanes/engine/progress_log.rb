@@ -19,8 +19,7 @@ module OpenLanes
     # @example
     #   ProgressLog.render("editing spec.md", plan: "003.00", status: "⭐️ Planned",
     #     agent: "yoda-writer", seconds: 42, round: "01", pid: 91_234)
-
-    #   #=> "[16:22:14 | 003.00 | ⭐️ Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
+    #   #=> "[16:22:14 | 003.00 | ⭐️  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
     module ProgressLog
       # Wall clock only. A log line answers "when", and the date is the file's.
       TIME_FORMAT = "%H:%M:%S"
