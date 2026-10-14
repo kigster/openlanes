@@ -15,6 +15,7 @@ export { UnblockWidget, type UnblockWidgetProps } from "./UnblockWidget";
 export { ModelSelect, type ModelSelectProps } from "./ModelSelect";
 export { AgentActionMenu, type AgentActionMenuProps, type AgentAction } from "./AgentActionMenu";
 export { AgentDrawer, type AgentDrawerProps } from "./AgentDrawer";
+export { LastKnownTable } from "./LastKnownTable";
 export { ActionMenu, type ActionMenuProps } from "./ActionMenu";
 export { IdeaDialog, FrontmatterForm, type IdeaDialogProps } from "./IdeaDialog";
 export { IDEA_DEFAULTS, type IdeaFrontmatter } from "./frontmatter";

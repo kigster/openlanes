@@ -29,6 +29,21 @@ interface PlanRowProps extends CarHandlers {
 
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
 
+/**
+ * Mail between the plan's agents that nobody has acked yet: a warning for a person, never an input to a round (D2).
+ * Nothing at zero, so a quiet plan's meta line stays as it was.
+ */
+export function UnackedBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  const said = `${count} unacked ${count === 1 ? "message" : "messages"}`;
+  return (
+    <span className="unacked is-warning" title={`${said} between this plan's agents`}>
+      <span aria-hidden="true">✉ {count}</span>
+      <span className="sr-only">{said}</span>
+    </span>
+  );
+}
+
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
 export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
   const lane = LANES[plan.lane];
@@ -90,6 +105,7 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
         <h3 className="plan-title">{plan.title}</h3>
         <div className="plan-meta">
           <span className="lane">{lane.label}</span>
+          <UnackedBadge count={plan.unacked} />
           {owner ? (
             <span>on {who(owner)}</span>
           ) : (

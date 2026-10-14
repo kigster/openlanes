@@ -7,6 +7,7 @@ import { AnswerBox, Choices } from "./AskCard";
 import { useAsk } from "./asks";
 import { refusal, useCommand, type Outcome } from "./command";
 import { Feedback } from "./feedback";
+import { LastKnownTable } from "./LastKnownTable";
 import { useQuestion } from "./question";
 import { renderMarkdown } from "./markdown";
 import { ModelSelect } from "./ModelSelect";
@@ -143,6 +144,7 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
           <b title="Autocompacts here" style={{ left: `${autocompact * 100}%` }} />
         </div>
       </div>
+      <LastKnownTable entries={plan.last_known} />
       {stuck && <QuestionBlock plan={plan} question={question} onCommand={onCommand} onAnswered={(t) => push(`You answered: ${t}`)} />}
       <ol className="transcript" aria-live="polite" aria-label={`Transcript of ${car.agent}`}>
         {[...lines, ...car.history].map((line, i) => <li key={i}>{line}</li>)}

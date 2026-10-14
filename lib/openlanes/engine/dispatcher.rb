@@ -549,7 +549,8 @@ module OpenLanes
           history: job.history || [],
           context: job.context,
           since: job.started_at,
-          session: job.handle.session)
+          session: job.handle.session,
+          unacked: Board::Row.unacked_in(task.subject.feature.path))
       end
 
       # @param task [OpenLanes::Engine::Runner::Task]
