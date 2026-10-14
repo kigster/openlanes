@@ -166,4 +166,48 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(parse("depends_on: []")).not_to be_default
     end
   end
+
+  # M10: `how-to-verify:` leaves the frontmatter for a section of the body.
+  describe ".migrate_how_to_verify" do
+    def migrate(text) = described_class.migrate_how_to_verify(text)
+
+    it "adds the section at the end when the spec has none, and keeps the other keys as written" do
+      before = "---\nlane: quick # the short one\nhow-to-verify:\n  - bundle exec rspec\n  - just lint\n---\n# Title\n\n## Goal\n\nWork.\n"
+
+      expect(migrate(before)).to eq(
+        "---\nlane: quick # the short one\n---\n# Title\n\n## Goal\n\nWork.\n\n" \
+        "## How to tell it's working?\n\n- bundle exec rspec\n- just lint\n"
+      )
+    end
+
+    it "appends to the section the spec already has, before the next heading, and drops an emptied frontmatter" do
+      before = "---\nhow-to-verify: run the CLI\n---\n# Title\n\n## How to tell it's working?\n\n- the page loads\n\n## Framing\n\nTwo ways.\n"
+
+      expect(migrate(before)).to eq(
+        "# Title\n\n## How to tell it's working?\n\n- the page loads\n- run the CLI\n\n## Framing\n\nTwo ways.\n"
+      )
+    end
+
+    it "fills an empty section at the very end of the file" do
+      expect(migrate("---\nhow-to-verify: [a]\n---\n# T\n\n## How to tell it's working?")).to eq("# T\n\n## How to tell it's working?\n\n- a\n")
+    end
+
+    it "leaves a spec without the key untouched" do
+      ["# Plain\n", "---\nlane: quick\n---\n# T\n", "---\n: [\n---\n# Broken\n"].each do |text|
+        expect(migrate(text)).to equal(text)
+      end
+    end
+
+    it "reads the checks from the section once the key has moved" do
+      migrated = migrate("---\nhow-to-verify:\n  - bundle exec rspec\n---\n# T\n")
+
+      expect(described_class.parse(migrated).how_to_verify).to eq(["bundle exec rspec"])
+    end
+
+    it "reads both while a spec has the key and the section, without repeating an item" do
+      text = "---\nhow-to-verify: [a, b]\n---\n# T\n\n## How to tell it's working?\n\nProse is not a check.\n\n1. b\n* c\n"
+
+      expect(described_class.parse(text).how_to_verify).to eq(%w[a b c])
+    end
+  end
 end

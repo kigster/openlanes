@@ -410,4 +410,39 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       end
     end
   end
+
+  describe "a spec with how-to-verify: in its frontmatter (M10)" do
+    let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
+    let(:spec_md) { File.join(plans_root, "001.00━━⚪━━❯checked", "spec.md") }
+
+    before do
+      plans { |t| t.plan "001.00", :new, "checked", files: { "spec.md" => "---\nhow-to-verify: [just test]\n---\n#{spec_body}" } }
+    end
+
+    it "previews the rewrite and changes nothing" do
+      resync = described_class.new(tree:)
+
+      aggregate_failures do
+        expect(resync.rewrites.map(&:dirname)).to eq(["001.00━━⚪━━❯checked"])
+        expect(resync.call).to be_empty
+        expect(File.read(spec_md)).to start_with("---\nhow-to-verify")
+      end
+    end
+
+    it "moves the key into the body when committed, and finds nothing the second time" do
+      described_class.new(tree:).call(commit: true)
+
+      aggregate_failures do
+        expect(File.read(spec_md)).to end_with("## How to tell it's working?\n\n- just test\n")
+        expect(File.read(spec_md)).not_to include("how-to-verify:")
+        expect(described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).rewrites).to be_empty
+      end
+    end
+
+    it "leaves a locked plan's spec alone" do
+      OpenLanes::Plans::Lock.write(File.dirname(spec_md))
+
+      expect(described_class.new(tree:).rewrites).to be_empty
+    end
+  end
 end

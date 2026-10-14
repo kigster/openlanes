@@ -20,11 +20,13 @@ module OpenLanes
         def call(**options)
           resync = OpenLanes::Lifecycle.resync_dirs(tree: tree_for(options))
           locks = resync.locks
+          rewrites = resync.rewrites
           changes = resync.call(commit: !dry_run?(options))
 
           report_locks(locks, options)
+          report_rewrites(rewrites, options)
 
-          if changes.empty?
+          if changes.empty? && rewrites.empty?
             unless quiet?(options)
               success("Every folder is already named NNN.MM━━<emoji>━━❯<slug>, in its place, and the emoji matches.")
             end
@@ -41,14 +43,26 @@ module OpenLanes
 
           return if quiet?(options)
 
+          total = changes.size + rewrites.size
           if dry_run?(options)
-            dry_run_footer(changes.size, "rename#{"s" unless changes.size == 1}")
+            dry_run_footer(total, "change#{"s" unless total == 1}")
           else
-            success("Renamed #{changes.size} folder#{"s" unless changes.size == 1}.")
+            success("Renamed #{changes.size} folder#{"s" unless changes.size == 1}, " \
+                    "rewrote #{rewrites.size} spec#{"s" unless rewrites.size == 1}.")
           end
         end
 
         private
+
+        # @param rewrites [Array<OpenLanes::Lifecycle::Resync::Dirs::Rewrite>]
+        # @param options [Hash]
+        # @return [void]
+        def report_rewrites(rewrites, options)
+          rewrites.each do |rewrite|
+            puts "#{rewrite.dirname}/spec.md\t#{rewrite.dirname}/spec.md\t#{rewrite.reason}"
+            say("#{rewrite.dirname}/spec.md: #{paint(rewrite.reason, :yellow)}") unless quiet?(options)
+          end
+        end
 
         # A lock keeps its folder's name, so a folder that did not move needs
         # a word about why. A dead local lock is cleared by a real run; one

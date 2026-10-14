@@ -34,6 +34,16 @@ RSpec.describe "openlanes resync", :tree do
       expect(unwrapped(err)).to include("already named")
     end
 
+    it "lists a spec whose how-to-verify: key moves, and rewrites it for real" do
+      plans { |t| t.plan("001.00", :new, "checked", files: { "spec.md" => "---\nhow-to-verify: [x]\n---\n#{spec_body}" }) }
+      out, err, = run(command)
+      expect(out).to include("001.00━━⚪━━❯checked/spec.md")
+      expect(unwrapped(err)).to include("1 change pending")
+
+      _out, err, = run(command, dry_run: false)
+      expect(unwrapped(err)).to include("Renamed 0 folders, rewrote 1 spec.")
+    end
+
     describe "lock files" do
       let(:dir) { plans { |t| t.plan("001.00", :new, "held", files: { "spec.md" => spec_body }) } && Dir.glob(File.join(plans_root, "001.00*")).first }
 
@@ -77,7 +87,7 @@ RSpec.describe "openlanes resync", :tree do
 
         expect(out).to include("001.00━━⚪━━❯outgrown\t001.00━━⭐━━❯outgrown")
         expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯outgrown")
-        expect(unwrapped(err)).to include("1 rename pending", "without --dry-run")
+        expect(unwrapped(err)).to include("1 change pending", "without --dry-run")
       end
 
       it "renames without --dry-run and says how many folders moved" do

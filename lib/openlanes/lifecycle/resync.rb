@@ -70,6 +70,20 @@ module OpenLanes
           end
         end
 
+        # A spec.md whose `how-to-verify:` key moves into its body (M10).
+        #
+        # @!attribute [r] dirname
+        #   @return [String] the plan folder, as it stands
+        # @!attribute [r] path
+        #   @return [String] the spec, absolute
+        Rewrite = Data.define(:dirname, :path) do
+          # @return [String]
+          def reason = "how-to-verify: moves into #{Plans::Spec::HOW_TO_VERIFY_HEADING}"
+
+          # @return [String]
+          def to_s = "#{dirname}/#{File.basename(path)}  (#{reason})"
+        end
+
         # A lock file found on the way.
         #
         # @!attribute [r] dirname
@@ -115,11 +129,23 @@ module OpenLanes
         #
         # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::Change>]
         def plan
-          held = locks.reject(&:stale?).map(&:path)
-          tree.everything.subjects.flat_map do |subject|
-            next [] if @except.include?(subject.feature.ordinal.to_s) || held.include?(subject.feature.path)
+          held = held_paths
+          tree.everything.subjects.flat_map { |subject| left_alone?(subject, held) ? [] : changes_for(subject) }
+        end
 
-            changes_for(subject)
+        # Specs that still carry `how-to-verify:` in their frontmatter.
+        #
+        # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::Rewrite>]
+        def rewrites
+          held = held_paths
+          tree.everything.subjects.filter_map do |subject|
+            next if left_alone?(subject, held)
+
+            path = File.join(subject.feature.path, Plans::Spec::FILENAME)
+            next unless File.file?(path)
+
+            text = File.read(path, encoding: "UTF-8")
+            Rewrite.new(dirname: subject.feature.dirname, path:) unless Plans::Spec.migrate_how_to_verify(text).equal?(text)
           end
         end
 
@@ -140,12 +166,29 @@ module OpenLanes
           return changes unless commit
 
           locks.select(&:stale?).each { |held| Plans::Lock.remove(held.path) }
+          rewrites.each { |rewrite| rewrite_spec(rewrite.path) }
           UI.stepping(changes, "Renaming") { |change| rename(change) }
           tree.reload
           changes
         end
 
         private
+
+        # @return [Array<String>] plan folders a live or foreign lock holds
+        def held_paths = locks.reject(&:stale?).map(&:path)
+
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param held [Array<String>]
+        # @return [Boolean] whether an agent may be inside it right now
+        def left_alone?(subject, held)
+          @except.include?(subject.feature.ordinal.to_s) || held.include?(subject.feature.path)
+        end
+
+        # @param path [String] a spec.md
+        # @return [void]
+        def rewrite_spec(path)
+          File.write(path, Plans::Spec.migrate_how_to_verify(File.read(path, encoding: "UTF-8")))
+        end
 
         # A folder moves when the name it has is not the name it should have.
         # {target} says what that name is; this says how to get there, as up

@@ -116,6 +116,17 @@ module OpenLanes
       # reads a bare `[034]` as octal 28, a silent wrong answer.
       DEPENDS_ON_KEY = "depends_on"
 
+      # Where `how-to-verify:` lives now (decision M10): a section of the
+      # spec's body, written by its author like every other, rather than a
+      # key in its frontmatter. `resync dirs` moves the key's items here.
+      HOW_TO_VERIFY_HEADING = "## How to tell it's working?"
+
+      # The heading on a line of its own, whatever follows it.
+      HOW_TO_VERIFY_LINE = /^#{Regexp.escape(HOW_TO_VERIFY_HEADING)}[ \t]*$/
+
+      # The key and the indented or listed lines that continue its value.
+      HOW_TO_VERIFY_YAML = /^#{Regexp.escape(HOW_TO_VERIFY_KEY)}:.*\n(?:[ \t-].*\n)*/
+
       FILENAME = "spec.md"
 
       class << self
@@ -133,10 +144,33 @@ module OpenLanes
         # @param text [String] a whole spec.md
         # @return [OpenLanes::Plans::Spec]
         def parse(text)
-          meta, = Frontmatter.split(text)
-          from(meta)
+          meta, body = Frontmatter.split(text)
+          spec = from(meta)
+          checks = (spec.how_to_verify + section_items(body)).uniq
+          checks == spec.how_to_verify ? spec : spec.with(how_to_verify: checks)
         rescue Psych::Exception => e
           new(problems: ["spec.md frontmatter is not valid YAML (#{e.message.lines.first.strip})"])
+        end
+
+        # Move a `how-to-verify:` frontmatter key into the body (M10): its
+        # items are appended to `## How to tell it's working?`, which is added
+        # at the end when the spec has none. The rest of the frontmatter is
+        # kept as written, comments and all, and a frontmatter left empty is
+        # dropped.
+        #
+        # @param text [String] a whole spec.md
+        # @return [String] +text+ itself when there is no key to move
+        def migrate_how_to_verify(text)
+          match = Frontmatter::PATTERN.match(text) or return text
+          meta, = Frontmatter.split(text)
+          return text unless meta.key?(HOW_TO_VERIFY_KEY)
+
+          items = notes(meta, HOW_TO_VERIFY_KEY, [])
+          front = "#{match[1]}\n".sub(HOW_TO_VERIFY_YAML, "")
+          head = front.strip.empty? ? "" : "---\n#{front}---\n"
+          "#{head}#{append_checks(match[2], items)}"
+        rescue Psych::Exception
+          text
         end
 
         # @param meta [Hash]
@@ -156,6 +190,36 @@ module OpenLanes
         end
 
         private
+
+        # The list items under `## How to tell it's working?`, up to the next
+        # heading of the same level. Prose there is the author's, and stays
+        # theirs; only items are checks.
+        #
+        # @param body [String]
+        # @return [Array<String>]
+        def section_items(body)
+          start = body =~ HOW_TO_VERIFY_LINE or return []
+          section = body[start..].lines.drop(1).take_while { !it.start_with?("## ") }
+          section.filter_map { it[/\A\s*(?:[-*]|\d+\.)\s+(.+)/, 1]&.strip }
+        end
+
+        # @param body [String]
+        # @param items [Array<String>]
+        # @return [String]
+        def append_checks(body, items)
+          list = items.map { "- #{it}\n" }.join
+          body = "#{body}\n" unless body.end_with?("\n")
+          start = body =~ HOW_TO_VERIFY_LINE
+          return "#{body.rstrip}\n\n#{HOW_TO_VERIFY_HEADING}\n\n#{list}" unless start
+
+          heading_end = start + body[start..].index("\n").to_i + 1
+          rest = body[heading_end..].to_s
+          stop = rest =~ /^## / || rest.length
+          section = rest[0...stop].rstrip
+          joined = section.empty? ? "\n#{list}" : "#{section}\n#{list}"
+          tail = stop < rest.length ? "\n#{rest[stop..]}" : ""
+          "#{body[0...heading_end]}#{joined}#{tail}"
+        end
 
         # @return [Symbol, nil]
         def choice(meta, key, allowed, default, problems)
