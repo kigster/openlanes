@@ -99,3 +99,10 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 - B6 done. `Presentation::ApiDocs#call(tree)` and `openlanes api docs`: found files on STDOUT with an `npx @redocly/cli build-docs` line, problems on STDERR as `path: reason`, exit 65 when any file is bad.
 - F1 done (decisions D1, D2). `Board::Row#unacked`, filled in `Dispatcher#row_for` through `Board::Row.unacked_in`; `UnackedBadge` on the plan row; `LastKnownTable` in the agent drawer. Snapshot key is `last_known` (amended: D1 said `last_known_state`; the shorter key shipped with B2 and the page reads it).
 - F2 done: `spec/integration/mail_round_trip_spec.rb`.
+
+## Review fixes (Grok on PR 28, 2026-10-14)
+
+- Amends B4: a drained message is deduped by identity, not number. `mail send` writes an `id` (UUID) into each message (schema updated); `PlanState#deliver!` matches on `id` when both sides have one, else on from, to, at and body. A different message whose number is taken (a worktree's `state.json` numbers independently) is kept under the next free number. `mailbox.md` messages are matched by content too.
+- Amends B3/B4: `Live::Mail#drain` acks an entry only after the dispatcher kept it; one whose plan this checkout cannot find stays pending and is retried each tick. An invalid message is acked and logged, since a retry cannot make it valid.
+- Amends B4: the drain covers every plan the stream has mail for (`Live::Mail#plans_since`, a cursor from "0" at startup), not only plans with an agent running, so a worktree's message is kept before the one-hour trim.
+- `mail ack` on a `mailbox.md` number says it is a legacy message and that nothing was written.
