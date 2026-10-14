@@ -37,6 +37,8 @@ require_relative "cli/state/subcommands/sign"
 require_relative "cli/state/subcommands/show"
 require_relative "cli/state/subcommands/resume"
 require_relative "cli/skills/subcommands/install"
+require_relative "cli/api/api"
+require_relative "cli/api/subcommands/docs"
 
 module OpenLanes
   # The command line. Every command is a thin shell over one library class:
@@ -102,7 +104,7 @@ module OpenLanes
         "mail",
         "state",
         "eval"
-      group "Reference", "docs", "states", "linear", "skills", "completion", "version"
+      group "Reference", "docs", "api", "states", "linear", "skills", "completion", "version"
     end
 
     register "init", Init
@@ -161,6 +163,11 @@ module OpenLanes
     # Copies the skills bundled with the gem; see {OpenLanes::Skills}.
     register "skills" do |prefix|
       prefix.register "install", Skills::Install
+    end
+
+    # Lists and checks the OpenAPI contracts plans carry; see {OpenLanes::Presentation::ApiDocs}.
+    register "api" do |prefix|
+      prefix.register "docs", API::Docs
     end
 
     register "completion", ::Dry::CLI::Autocomplete::Command[::OpenLanes::CLI]
