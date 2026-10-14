@@ -397,9 +397,9 @@ module OpenLanes
       # @return [String] empty when the spec says neither
       def completion_section
         spec = Plans::Spec.for(subject)
-        return "" if spec.completed_when.empty? && spec.how_to_verify.empty?
+        return "" if spec.completed_when.empty? && spec.how_to_test.empty?
 
-        lists = [["The task is finished when", spec.completed_when], ["How to verify it", spec.how_to_verify]]
+        lists = [["The task is finished when", spec.completed_when], ["How to test it", spec.how_to_test]]
         body = lists.reject { |_, items| items.empty? }.map do |title, items|
           "#{title}:\n\n#{items.map { Plans::Spec.list_item(it) }.join("\n")}\n"
         end
@@ -407,7 +407,7 @@ module OpenLanes
         "\n## Completion criteria — from the spec's author\n\n" \
           "Do not sign Completed until the first list holds, and run each check in the second. " \
           "If you write plan.md, copy both lists into it verbatim, under `## Task completed when` and " \
-          "`## How to verify`; the harness adds them if you do not. A reviewer rejects work that fails a check.\n\n" \
+          "`#{Lifecycle::Completion::HOW_TO_TEST}`; the harness adds them if you do not. A reviewer rejects work that fails a check.\n\n" \
           "#{body.join("\n")}"
       end
 

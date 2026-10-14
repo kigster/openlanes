@@ -54,6 +54,9 @@ module OpenLanes
     #   @return [Array<String>, nil] canonical `NNN.MM` ordinals of the plans
     #     this one waits for. nil when the key is absent ("not checked yet"),
     #     which is not the same as `[]` ("checked, none").
+    # @!attribute [r] how_to_test
+    #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
+    #     {#how_to_verify} when the spec has no such section (until plan 007).
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
     Spec = Data.define(:lane,
@@ -65,9 +68,10 @@ module OpenLanes
       :completed_when,
       :how_to_verify,
       :depends_on,
+      :how_to_test,
       :problems) do
       def initialize(lane: :full, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], depends_on: nil, problems: [])
+        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, problems: [])
         super
       end
 
@@ -121,6 +125,10 @@ module OpenLanes
       # key in its frontmatter. `resync dirs` moves the key's items here.
       HOW_TO_VERIFY_HEADING = "## How to tell it's working?"
 
+      # The same section, by the name the publisher refuses a pull request
+      # without: plan.md must carry its copy.
+      HOW_TO_TELL = HOW_TO_VERIFY_HEADING
+
       # The heading on a line of its own, whatever follows it.
       HOW_TO_VERIFY_LINE = /^#{Regexp.escape(HOW_TO_VERIFY_HEADING)}[ \t]*$/
 
@@ -149,8 +157,11 @@ module OpenLanes
         def parse(text)
           meta, body = Frontmatter.split(text)
           spec = from(meta)
-          checks = (spec.how_to_verify + section_items(body)).uniq
-          checks == spec.how_to_verify ? spec : spec.with(how_to_verify: checks)
+          told = section_items(body.to_s)
+          checks = (spec.how_to_verify + told).uniq
+          # how_to_test prefers the body's own section; the frontmatter key
+          # stands in until plan 007 migrates old specs.
+          spec.with(how_to_verify: checks, how_to_test: told.empty? ? spec.how_to_verify : told)
         rescue Psych::Exception => e
           new(problems: ["spec.md frontmatter is not valid YAML (#{e.message.lines.first.strip})"])
         end
@@ -198,6 +209,7 @@ module OpenLanes
             completed_when: notes(meta, COMPLETED_WHEN_KEY, problems),
             how_to_verify: notes(meta, HOW_TO_VERIFY_KEY, problems),
             depends_on: depends_on(meta, problems),
+            how_to_test: notes(meta, HOW_TO_VERIFY_KEY, []),
             problems:)
         end
 

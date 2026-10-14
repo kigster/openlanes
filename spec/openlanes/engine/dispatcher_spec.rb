@@ -284,7 +284,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         runner_with(executor).call
         text = File.read(File.join(path_of("020.00"), "plan.md"))
         expect(text.scan("## Task completed when").size).to eq(1)
-        expect(text).to include("- it works", "## How to verify", "- run it")
+        expect(text).to include("- it works", "## How to test", "- run it")
       end
     end
 

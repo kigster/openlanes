@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
 
         - the editor opens
 
-        ## How to verify
+        ## How to test
 
         - bundle exec rspec
       MARKDOWN
@@ -91,7 +91,8 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
         described_class.copy(subject_plan)
         text = subject_plan.read("plan.md")
         expect(text.scan("## Task completed when").size).to eq(1)
-        expect(text).to include("In its own words.", "## How to verify")
+        expect(text).to include("In its own words.", "## How to test")
+        expect(text).not_to include("## How to verify")
       end
     end
 

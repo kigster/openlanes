@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Lifecycle
-    # Copies the spec's `task-completed-when` and `how-to-verify` into
+    # Copies the spec's `task-completed-when` and how to test it into
     # `plan.md`, so the builders and the reviewer read them in the document
     # they work from rather than only in the frontmatter of another one.
     #
@@ -12,7 +12,7 @@ module OpenLanes
     # agent signs, and a section the agent wrote is never touched.
     module Completion
       COMPLETED_WHEN_HEADING = "## Task completed when"
-      HOW_TO_VERIFY_HEADING = "## How to verify"
+      HOW_TO_TEST = "## How to test"
 
       module_function
 
@@ -25,7 +25,7 @@ module OpenLanes
       def markdown(spec, present: "")
         [
           section(COMPLETED_WHEN_HEADING, spec.completed_when, present),
-          section(HOW_TO_VERIFY_HEADING, spec.how_to_verify, present)
+          section(HOW_TO_TEST, spec.how_to_test, present)
         ].compact.join("\n")
       end
 

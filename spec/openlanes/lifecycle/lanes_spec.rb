@@ -51,7 +51,7 @@ RSpec.describe OpenLanes::Lifecycle::Lanes, :tree do
     it "carries the completion criteria into the plan it writes" do
       plan_with("lane: quick\ntask-completed-when: it works\nhow-to-verify: run it")
       described_class.advance(subject_plan, commit: true)
-      expect(subject_plan.read("plan.md")).to include("## Task", "## Task completed when\n\n- it works", "## How to verify\n\n- run it")
+      expect(subject_plan.read("plan.md")).to include("## Task", "## Task completed when\n\n- it works", "## How to test\n\n- run it")
     end
 
     it "keeps a plan.md the author already wrote" do
