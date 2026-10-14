@@ -98,6 +98,7 @@ module OpenLanes
         "index",
         "resync",
         "unblock",
+        "review",
         "worktree",
         "agents",
         "describe",
@@ -117,6 +118,7 @@ module OpenLanes
     register "start", Start
     register "web", Web
     register "unblock", Unblock
+    register "review", Review
     register "eval", Eval
     register "worktree", Worktree
     register "docs", Docs

@@ -24,4 +24,9 @@ RSpec.describe "openlanes --help" do
   it "says that start is web and run in one" do
     expect(screen).to include("web + run in one")
   end
+
+  it "lists review under headless operation" do
+    headless = screen[/HEADLESS OPERATION\n(.*?)\n\n/m, 1]
+    expect(headless).to include("  review ")
+  end
 end
