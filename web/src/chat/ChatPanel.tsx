@@ -27,7 +27,8 @@ export function ChatPanel({ chat }: { chat: Chat }) {
     if (open) setSeen(chat.heard);
   }, [open, chat.heard]);
 
-  // Clicking or focusing anywhere in the panel counts as being there (D7), the header and its buttons included.
+  // Clicking, focusing or pressing any key anywhere in the panel counts as being there (D7), the header and its
+  // buttons included: an arrow key moves no text, and is still somebody at the keyboard.
   const { touch } = chat;
   const present = room !== null;
   useEffect(() => {
@@ -35,9 +36,11 @@ export function ChatPanel({ chat }: { chat: Chat }) {
     if (!panel || !present) return;
     panel.addEventListener("pointerdown", touch);
     panel.addEventListener("focusin", touch);
+    panel.addEventListener("keydown", touch);
     return () => {
       panel.removeEventListener("pointerdown", touch);
       panel.removeEventListener("focusin", touch);
+      panel.removeEventListener("keydown", touch);
     };
   }, [touch, present]);
 

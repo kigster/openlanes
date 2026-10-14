@@ -325,6 +325,17 @@ describe("going idle", () => {
     fireEvent.pointerDown(within(panel()).getByRole("heading", { level: 2 }));
     await waitFor(() => expect(posted("presence")).toEqual([{ page: pageId(), idle: true }, { page: pageId(), idle: false }]));
   });
+
+  it("counts a key that changes no text as a touch", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await startChat();
+    act(() => {
+      vi.advanceTimersByTime(IDLE_AFTER_MS);
+    });
+    await waitFor(() => expect(posted("presence")).toEqual([{ page: pageId(), idle: true }]));
+    fireEvent.keyDown(within(panel()).getByLabelText("Message everyone in the chat"), { key: "ArrowLeft" });
+    await waitFor(() => expect(posted("presence")).toEqual([{ page: pageId(), idle: true }, { page: pageId(), idle: false }]));
+  });
 });
 
 describe("an invite", () => {
