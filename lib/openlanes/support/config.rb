@@ -10,6 +10,8 @@ module OpenLanes
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
+  #   merge:
+  #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
@@ -43,10 +45,23 @@ module OpenLanes
   # @!attribute [r] commands
   #   @return [Hash{String => Hash{Symbol => Object}}] by command name, as
   #     typed: "run", "resync dirs"
-  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands) do
-    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {})
+  # @!attribute [r] merge_by
+  #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
+  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands, :merge_by) do
+    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
+      merge_by: nil)
       super
     end
+
+    # Who merges a pull request once its review passed (M4). A person, unless
+    # the file says otherwise, since merging is the one thing no agent may do.
+    #
+    # @return [Symbol] `:human` or `:auto`
+    def merger = merge_by || Config::MERGERS.first
+
+    # @return [Boolean] whether the engine waits on a person to merge, and so
+    #   watches the pull requests it opened
+    def human_merges? = merger == :human
 
     # One command's option defaults, the top-level spelling folded in.
     #
@@ -70,7 +85,7 @@ module OpenLanes
     # @return [String]
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
-                   "redis_url" => redis_url }
+                   "redis_url" => redis_url, "merge" => merge_by && { "by" => merge_by.to_s } }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
@@ -81,7 +96,10 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url commands].freeze
+    KEYS = %w[project lane frontend jobs redis_url merge commands].freeze
+
+    # Who may merge, the default first.
+    MERGERS = %i[human auto].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -135,6 +153,7 @@ module OpenLanes
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
+          merge_by:  merge_by(settings["merge"], path),
           commands:  commands(settings["commands"], path))
         conflicts!(config, path)
         config
@@ -189,6 +208,21 @@ module OpenLanes
         return value.strip if value.is_a?(String) && REDIS_SCHEMES.include?(value.strip[/\A([a-z]+):/, 1])
 
         fail_with(path, "redis_url: #{value.inspect} is not a #{REDIS_SCHEMES.map { "#{it}://" }.join(", ")} URL")
+      end
+
+      # @return [Symbol, nil]
+      def merge_by(value, path)
+        return nil if value.nil?
+
+        fail_with(path, "merge: must be a mapping, e.g. `merge: { by: human }`") unless value.is_a?(Hash)
+
+        unknown = value.keys.map(&:to_s) - %w[by]
+        fail_with(path, "merge: unknown key #{unknown.join(", ")}; known: by") unless unknown.empty?
+
+        by = value.transform_keys(&:to_s)["by"].to_s.strip.downcase.to_sym
+        return by if MERGERS.include?(by)
+
+        fail_with(path, "merge.by: #{value.transform_keys(&:to_s)["by"].inspect} is not one of #{MERGERS.join(", ")}")
       end
 
       # @return [Hash{String => Hash{Symbol => Object}}]
