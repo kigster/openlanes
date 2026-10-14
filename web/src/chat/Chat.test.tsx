@@ -356,8 +356,33 @@ describe("an invite", () => {
     expect(modal).toHaveTextContent("Sam on sam@ci-runner-2 invites you to a chat.");
     expect(await axe(document.body)).toHaveNoViolations();
     await userEvent.click(within(modal).getByRole("button", { name: "Decline" }));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(posted("decline")).toEqual([{ page: pageId(), invite: "inv-7" }]);
+  });
+
+  it("keeps the modal open, and says why, when a decline fails; a 409 closes it", async () => {
+    render(<Harness />);
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    send({ kind: "invited", invite });
+    const modal = await screen.findByRole("dialog", { name: "Invitation to chat" });
+    answer = () => json(503, {});
+    await userEvent.click(within(modal).getByRole("button", { name: "Decline" }));
+    expect(await within(modal).findByRole("alert")).toHaveTextContent("Not declined: POST /api/chat/decline answered 503");
+    answer = () => json(409, { error: "that invite is no longer open" });
+    await userEvent.click(within(modal).getByRole("button", { name: "Decline" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("leaves Join open to retry when an accept fails", async () => {
+    render(<Harness />);
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    send({ kind: "invited", invite });
+    await userEvent.click(await screen.findByRole("button", { name: "Accept" }));
+    await screen.findByLabelText("Name");
+    answer = () => json(503, {});
+    await userEvent.click(screen.getByRole("button", { name: "Join" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("POST /api/chat/accept answered 503");
+    expect(screen.getByRole("button", { name: "Join" })).toBeEnabled();
   });
 
   it("Accept asks for a name, and Join puts you in the chat", async () => {

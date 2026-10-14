@@ -26,6 +26,17 @@ export function ChatRoom({ user, enabled = true, children }: ChatRoomProps) {
   // An invite answered elsewhere or expired while its Name dialog was open: the dialog has nothing left to join.
   const accepting = naming?.kind === "accept" ? naming.invite : null;
   const stale = accepting !== null && !chat.invites.some(i => i.id === accepting.id);
+  // A decline the server did not take: the invite stays open, and its modal says why.
+  const [declineFailed, setDeclineFailed] = useState<{ id: string; message: string } | null>(null);
+  const decline = useCallback(
+    (i: ChatInvite) => {
+      setDeclineFailed(null);
+      chat.decline(i).catch((failure: unknown) =>
+        setDeclineFailed({ id: i.id, message: `Not declined: ${failure instanceof Error ? failure.message : String(failure)}` }),
+      );
+    },
+    [chat],
+  );
 
   return (
     <ChatContext.Provider value={ui}>
@@ -37,7 +48,7 @@ export function ChatRoom({ user, enabled = true, children }: ChatRoomProps) {
             user={user}
             gone={stale ? "That invite is no longer open: it was answered on another page, or it expired." : null}
             onCancel={() => {
-              if (naming?.kind === "accept") void chat.decline(naming.invite);
+              if (naming?.kind === "accept") decline(naming.invite);
               setNaming(null);
             }}
             onConfirm={async name => {
@@ -50,7 +61,8 @@ export function ChatRoom({ user, enabled = true, children }: ChatRoomProps) {
           <InviteDialog
             invite={invite}
             inChat={chat.room !== null}
-            onDecline={(i: ChatInvite) => void chat.decline(i)}
+            error={invite && declineFailed?.id === invite.id ? declineFailed.message : null}
+            onDecline={decline}
             onAccept={(i: ChatInvite) => setNaming({ kind: "accept", invite: i })}
           />
           {chat.room && <ChatPanel chat={chat} />}

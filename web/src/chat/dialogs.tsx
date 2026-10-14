@@ -119,11 +119,13 @@ export interface InviteDialogProps {
   invite: ChatInvite | null;
   /** This page is in a chat already: accepting leaves it (D4). */
   inChat: boolean;
+  /** Why the last Decline failed; the invite is still open. */
+  error?: string | null;
   onDecline(invite: ChatInvite): void;
   onAccept(invite: ChatInvite): void;
 }
 
-export function InviteDialog({ invite, inChat, onDecline, onAccept }: InviteDialogProps) {
+export function InviteDialog({ invite, inChat, error = null, onDecline, onAccept }: InviteDialogProps) {
   // The last invite shown, so the dialog keeps its words while it closes.
   const shown = useRef<ChatInvite | null>(null);
   if (invite) shown.current = invite;
@@ -143,6 +145,11 @@ export function InviteDialog({ invite, inChat, onDecline, onAccept }: InviteDial
             </Dialog.Description>
           }
         >
+          {error && (
+            <p className="chat-error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="help-foot">
             <button type="button" className="btn btn-quiet" onClick={() => onDecline(i)}>
               Decline

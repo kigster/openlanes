@@ -4,7 +4,7 @@
 // told apart by the message's id.
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { ulid } from "ulid";
-import { fetchChat, postChat } from "../api/client";
+import { ApiError, fetchChat, postChat } from "../api/client";
 import type { ChatEvent, ChatInvite, ChatOutgoing, ChatParticipant, ChatSaid, ChatState } from "../api/types";
 import { chatBus } from "./bus";
 import { pageId } from "./page";
@@ -66,6 +66,9 @@ type Action =
 
 let notices = 0;
 const notice = (text: string): Entry => ({ type: "notice", id: `notice-${++notices}`, text });
+
+/** The server's 409: the invite was answered elsewhere, expired, or never reached it. Anything else may be retried. */
+const settled = (failure: unknown): boolean => failure instanceof ApiError && failure.status === 409;
 
 /** The participant as the person reads them: "You" for this page. */
 const add = (view: ChatView, entry: Entry): ChatView => ({ ...view, entries: [...view.entries, entry] });
@@ -259,22 +262,30 @@ export function useChat(enabled = true): Chat {
 
   const accept = useCallback(
     async (inv: ChatInvite, name: string) => {
+      // Dropped only once the server has answered for it: a failed POST leaves the invite open there, and here too,
+      // so Join can be tried again.
+      let answer: { chat: string };
       try {
-        const answer = await postChat<{ chat: string }>("accept", { page, invite: inv.id, name });
-        await enter(answer.chat, name);
-      } finally {
-        dispatch({ type: "drop-invite", id: inv.id });
+        answer = await postChat<{ chat: string }>("accept", { page, invite: inv.id, name });
+      } catch (failure) {
+        if (settled(failure)) dispatch({ type: "drop-invite", id: inv.id });
+        throw failure;
       }
+      dispatch({ type: "drop-invite", id: inv.id });
+      await enter(answer.chat, name);
     },
     [page, enter],
   );
 
   const decline = useCallback(
     async (inv: ChatInvite) => {
+      try {
+        await postChat("decline", { page, invite: inv.id });
+      } catch (failure) {
+        // A 409 is an invite already answered elsewhere: closed either way. Anything else leaves it open to retry.
+        if (!settled(failure)) throw failure;
+      }
       dispatch({ type: "drop-invite", id: inv.id });
-      await postChat("decline", { page, invite: inv.id }).catch(() => {
-        // Already answered elsewhere: the modal is closed either way.
-      });
     },
     [page],
   );
