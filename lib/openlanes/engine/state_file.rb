@@ -124,10 +124,16 @@ module OpenLanes
         end
       end
 
+      # Also forgets the previous run's `waiting_on`. A live pid only says some
+      # run is up, not that it watches: a plain `run`, or one with `merge.by:
+      # auto`, never writes the map, so the last watch's entries would read as
+      # current for as long as this run lasted.
+      #
       # @param root [String]
       # @return [void]
       def begin_run!(root:)
         @mutex.synchronize do
+          @data.delete("waiting_on")
           @data["run"] = { "pid" => @pid, "root" => root, "started_at" => Time.now.iso8601,
                           "heartbeat_at" => Time.now.iso8601 }
         end

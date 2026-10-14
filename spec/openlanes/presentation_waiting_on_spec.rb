@@ -27,6 +27,16 @@ RSpec.describe OpenLanes::Presentation, :tree do
     end
   end
 
+  # A run that does not watch (no stay, or merge.by: auto) never rewrites the
+  # map, so what the previous run's watch saw must not survive its start.
+  it "says nothing once a new run begins, until its own watch reports" do
+    later = OpenLanes::Engine::StateFile.new(path: state.path, pid:).load
+    later.begin_run!(root: File.dirname(plans_root))
+    later.save
+
+    expect(described_class.waiting_on(tree)).to eq({})
+  end
+
   it "says nothing with no state file at all" do
     File.delete(state.path)
 
