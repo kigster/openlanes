@@ -21,7 +21,8 @@ Gaps found against the spec's in-scope checks:
 | B3 | Degrade on a refused subscription | back end | `lib/openlanes/live/subscriber.rb`, `spec/openlanes/live/subscriber_spec.rb` | nothing | `spec/openlanes/live/subscriber_spec.rb` |
 | F1 | Web suite green, chat held to the spec | front end | `web/src/chat/**` | B1 | `web/src/chat/Chat.test.tsx`, `just web-test` |
 | F2 | One floating panel for both | front end | `web/src/floating/**`, `web/src/copilot/Copilot.tsx` | nothing | `web/src/floating/FloatingPanel.test.tsx` |
-| I1 | **Integration check**, two participants through the real server | front end | `web/cypress/e2e/chat.cy.ts` | B1, B2, B3, F1, F2 | `web/cypress/e2e/chat.cy.ts`, `just web-e2e` |
+| B4 | A second demo machine | back end | `lib/openlanes/live/node.rb`, `lib/openlanes/cli/web/web.rb`, `lib/openlanes/web/demo*.rb`, `justfile`, their specs | nothing | `spec/openlanes/live/node_spec.rb`, `spec/openlanes/web/demo_spec.rb`, `spec/openlanes/cli/web_spec.rb` |
+| I1 | **Integration check**, two participants through the real server | front end | `web/cypress/e2e/chat.cy.ts`, `web/cypress.config.ts` | B1, B2, B3, B4, F1, F2 | `web/cypress/e2e/chat.cy.ts`, `just web-e2e` |
 
 The full shape of each unit (owns, must not touch, depends on, done when) is in `plan-backend.md` (B1–B3) and `plan-frontend.md` (F1, F2, I1).
 
@@ -29,6 +30,7 @@ The full shape of each unit (owns, must not touch, depends on, done when) is in 
 
 1. **First, together:** B1, B2, B3 and F2. None of them shares a file with another.
 1. **After B1:** F1. It tests the page against the contract B1 writes.
+1. **After B4's question was answered:** B4.
 1. **Last:** I1, after every other unit.
 
 Sequential because of shared files or shared ground:
@@ -45,6 +47,7 @@ flowchart LR
   B1 --> I1
   B2[B2 isolation specs] --> I1
   B3[B3 subscribe degrade] --> I1
+  B4[B4 second demo machine] --> I1
   F1 --> I1
   F2[F2 floating panel] --> I1
   I1[I1 integration: Cypress, nothing stubbed]
@@ -52,7 +55,11 @@ flowchart LR
 
 ## Integration check
 
-I1 owns it. Cypress drives a real page on the demo server: real `Web::App`, real `Live::Chat`, real SSE, and no `cy.intercept` on chat or events. A second page id joins through `POST /api/chat/:action`. The run must show these steps:
+I1 owns it. Cypress drives a real page on the demo server: real `Web::App`, real `Live::Chat`, real SSE, and no `cy.intercept` on chat or events. The second participant is a page on a second demo process: `just web-e2e` starts a second `openlanes web --demo` on another port, sharing the same Redis and repository, which declares its own `username@hostname` (for example `demo@second-machine`) so it registers as a distinct machine. Every process that joins Redis declares its name as `username@hostname`; the demo flag that fakes it is B4's. Cypress drives that participant through `cy.request` against the second port: it accepts the invite, sends a message, and leaves (steps 2 to 4).
+
+Decided 2026-10-14 by the owner: a second `openlanes web --demo` process with its own declared identity hosts the second participant, rather than the demo answering for its pretend machine or narrowing I1.
+
+The run must show these steps:
 
 - start from the ▾ menu;
 - the Name dialog;
