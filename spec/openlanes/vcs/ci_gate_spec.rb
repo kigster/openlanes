@@ -11,4 +11,5 @@ RSpec.describe OpenLanes::Vcs::CiGate do
   it("treats a skipped job as neutral") { expect(verdict("pass", "skipping")).to eq(:green) }
   it("counts a bucket it does not know as red") { expect(verdict("pass", "stale")).to eq(:red) }
   it("says none when no check reported") { expect(verdict).to eq(:none) }
+  it("says none when every check was skipped, as when CI did not run") { expect(verdict("skipping", "skipping")).to eq(:none) }
 end

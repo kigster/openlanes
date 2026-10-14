@@ -46,8 +46,9 @@ module OpenLanes
         result
       end
 
-      # Zero checks counts as green (open question 2), said out loud.
-      NO_CHECKS = "no CI checks reported; treated as green"
+      # Zero checks, or only skipped ones, counts as green (open question 2),
+      # said out loud.
+      NO_CHECKS = "no CI checks ran; treated as green"
 
       private
 

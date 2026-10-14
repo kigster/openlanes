@@ -13,11 +13,14 @@ module OpenLanes
       # later must not wave a passing label through.
       #
       # @param checks [Array<Hash>] `{name:, bucket:}`, as {GitHub#checks} returns
-      # @return [Symbol] `:green`, `:red`, `:pending` or `:none`
+      # @return [Symbol] `:green`, `:red`, `:pending`, or `:none` when no
+      #   check ran
       def verdict(checks)
-        return :none if checks.empty?
-
         buckets = checks.map { |c| c[:bucket].to_s }
+        # Every job skipped means CI did not run (a spent Actions budget can
+        # report it this way), which is the same as no checks, not a pass.
+        return :none if buckets.all?("skipping")
+
         return :red if buckets.any? { |b| b != "pending" && !NEUTRAL.include?(b) }
         return :pending if buckets.include?("pending")
 
