@@ -126,4 +126,17 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
       expect(described_class.ensure_ignored!(File.dirname(plans_root))).to be(false)
     end
   end
+
+  describe ".ensure_ignored! and the plan lock" do
+    it "makes git ignore a plan's lock file, even where the state file was ignored already" do
+      Dir.mktmpdir do |root|
+        system("git", "-C", root, "init", "-q")
+        File.write(File.join(root, ".gitignore"), "#{described_class::IGNORE.first}\n")
+
+        expect(described_class.ensure_ignored!(root)).to be(true)
+        expect(system("git", "-C", root, "check-ignore", "-q", ".plans/001.00━━⚪━━❯x/locked-by.pid")).to be(true)
+        expect(described_class.ensure_ignored!(root)).to be(false)
+      end
+    end
+  end
 end

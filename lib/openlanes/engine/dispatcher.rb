@@ -873,9 +873,14 @@ module OpenLanes
           file:       agent.ledger.first,
           started_at: Time.now.iso8601)
         UI.log("started", **task.log_fields)
+        plan_dir = subject.feature.path
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
+            # The lock says the folder is in use, so nothing renames it while
+            # the agent holds its path; it goes when the agent does, however
+            # the agent went.
+            Plans::Lock.write(plan_dir) unless @runner.dry_run?
             @runner.executor.call(agent, subject, root: task.root, round:, successor:, handle:, partners:) { |progress|
               job.up = progress.up
               job.down = progress.down
@@ -886,6 +891,8 @@ module OpenLanes
             }
           rescue StandardError => e
             e
+          ensure
+            Plans::Lock.remove(plan_dir) unless @runner.dry_run?
           end
         end
         @running << job

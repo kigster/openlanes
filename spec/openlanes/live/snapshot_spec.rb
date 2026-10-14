@@ -117,6 +117,14 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     let(:blocked_plan) { snapshot[:plans].find { it[:ordinal] == "001.00" } }
     let(:by_ordinal) { snapshot[:plans].to_h { [it[:ordinal], it] } }
 
+    it "reports a plan's lock, and null for a plan without one" do
+      dir = Dir.glob(File.join(plans_root, "001.00*")).first
+      OpenLanes::Plans::Lock.write(dir, now: Time.utc(2026, 10, 13, 9))
+
+      expect(by_ordinal["001.00"][:locked]).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z")
+      expect(by_ordinal.except("001.00").values.map { it[:locked] }.uniq).to eq([nil])
+    end
+
     it "has the fixture's keys at every level" do
       expect(shape(JSON.parse(JSON.generate(snapshot)))).to eq(shape(fixture))
     end

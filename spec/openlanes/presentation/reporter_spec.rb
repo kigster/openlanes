@@ -199,4 +199,15 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
       expect { reporter.render }.not_to output.to_stderr
     end
   end
+
+  describe "a locked plan" do
+    it "wears 🔑 before its name, and keeps its folder name" do
+      plans { |t| t.plan "009.00", :new, "locked-one", files: { "spec.md" => "# Spec" } }
+      dir = OpenLanes::Plans::Tree.new(dir: plans_root).find("009.00").feature.path
+      OpenLanes::Plans::Lock.write(dir)
+
+      expect(described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).render).to include("🔑 Locked")
+      expect(Dir.children(plans_root)).to include(File.basename(dir))
+    end
+  end
 end

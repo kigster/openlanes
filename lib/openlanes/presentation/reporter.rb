@@ -102,6 +102,17 @@ module OpenLanes
         [UI.paint(text, :bold), UI.paint(rule, :bright_yellow)].join("\n")
       end
 
+      # A plan an agent is working on wears 🔑 before its name. In the title
+      # cell rather than a column of its own, so the pull requests stay where
+      # every other row puts them.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [String]
+      def title_for(subject)
+        title = subject.feature.title
+        Plans::Lock.read(subject.feature.path) ? "🔑 #{title}" : title
+      end
+
       # One line per plan, plus a continuation line for each extra pull request
       # so that every URL is visible and clickable rather than truncated.
       #
@@ -116,7 +127,7 @@ module OpenLanes
           UI.paint(UI.fit(feature.ordinal.to_s, ORDINAL_WIDTH), :bold),
           UI.fit(feature.status.emoji, EMOJI_WIDTH),
           UI.paint(UI.fit(feature.status.label, label_width), :yellow),
-          UI.paint(UI.fit(feature.title, title_width), :blue, :bold),
+          UI.paint(UI.fit(title_for(subject), title_width), :blue, :bold),
           [prs.empty? ? UI.paint("[none yet]", :bright_red) : link(prs.first), *blocks_note(feature.ordinal)].join("  ")
         )
 

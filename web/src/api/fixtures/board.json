@@ -155,7 +155,8 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
-        "last_known": []
+        "last_known": [],
+        "locked": null
       },
       {
         "ordinal": "005.00",
@@ -209,7 +210,8 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
-        "last_known": []
+        "last_known": [],
+        "locked": null
       },
       {
         "ordinal": "006.00",
@@ -272,7 +274,8 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
-        "last_known": []
+        "last_known": [],
+        "locked": null
       }
     ],
     "backlog": [
@@ -462,7 +465,8 @@
           "interrupted": null,
           "claimed_by": "c07d5e1a99b2f3046e8a1d7b",
           "unacked": 0,
-          "last_known": []
+          "last_known": [],
+          "locked": null
         }
       ],
       "backlog": [
