@@ -20,7 +20,8 @@ commands:
           name: Install packages
           command: |
             sudo apt-get update
-            sudo apt-get install --no-install-recommends -y curl libjemalloc2 libvips
+            # lsof: spec/integration finds the engine's API server by its port, and skips without it.
+            sudo apt-get install --no-install-recommends -y curl libjemalloc2 libvips lsof
 
   bundle_deps:
     description: >-

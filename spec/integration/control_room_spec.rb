@@ -14,8 +14,8 @@ RSpec.describe "the control room, end to end", :redis do
   let(:blocked) { "## B1 Which queue?\n\nRedis streams or SQS. Recommend streams.\n" }
 
   around do |example|
-    skip "no Redis answers at #{url}" unless ControlRoomProcess.redis?(url)
-    skip "web/dist is missing: run just web-build first" unless ControlRoomProcess.dist?
+    reason = ControlRoomProcess.unmet(url)
+    skip reason if reason
 
     PlansFixture::Builder.new(plans).plan("003.00", :blocked, "queue-choice", files: { "blocked.md" => blocked })
     room.start_engine

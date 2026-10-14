@@ -118,10 +118,51 @@ class ControlRoomProcess
   # @return [Boolean]
   def self.dist? = File.file?(DIST)
 
+  # The harness finds the engine's own API server, a child in a process group
+  # of its own, by the port it listens on. Without `lsof` that lookup came
+  # back nil and `kill(:server)` died on a TypeError that named nothing.
+  #
+  # @param path [String] the PATH to search
+  # @return [Boolean]
+  def self.lsof?(path = ENV.fetch("PATH", ""))
+    path.split(File::PATH_SEPARATOR).any? { File.executable?(File.join(it, "lsof")) }
+  end
+
+  # Why an integration spec cannot run here, or nil when it can. Cheapest
+  # check first, so a missing tool is reported without dialing Redis.
+  #
+  # @param url [String]
+  # @param path [String]
+  # @return [String, nil] the reason to skip
+  def self.unmet(url, path: ENV.fetch("PATH", ""))
+    return "lsof is not on PATH: the harness finds the API server by its port" unless lsof?(path)
+    return "web/dist is missing: run just web-build first" unless dist?
+    return "no Redis answers at #{url}" unless redis?(url)
+
+    nil
+  end
+
+  # Databases below this are left alone: {#stop_all} runs FLUSHDB, and a
+  # laptop's own Redis keeps its data in the low ones (openlanes itself
+  # defaults to 0), so a harness pointed there would wipe it.
+  FIRST_TEST_DATABASE = 10
+
+  # @param url [String]
+  # @return [Boolean] whether the URL names a database this harness may flush
+  def self.dedicated?(url)
+    db = URI(url).path.delete_prefix("/")
+    db.match?(/\A\d+\z/) && db.to_i >= FIRST_TEST_DATABASE
+  end
+
   # @param root [String] the checkout, holding `.plans`
   # @param redis_url [String]
   # @param port [Integer, nil] picked free when nil
+  # @raise [ArgumentError] when the URL names no database {.dedicated?} allows
   def initialize(root:, redis_url:, port: nil)
+    unless self.class.dedicated?(redis_url)
+      raise ArgumentError, "refusing #{redis_url}: stop_all flushes it; use a database >= #{FIRST_TEST_DATABASE}"
+    end
+
     @root = root
     @redis_url = redis_url
     @port = port || free_port
@@ -188,6 +229,8 @@ class ControlRoomProcess
   # @return [void]
   def kill(which, signal: "KILL")
     pid = which == :server ? server_pid : @pids.fetch(which)
+    raise ArgumentError, "no server listens on #{port}" unless pid
+
     Process.kill(signal, pid)
     reap(pid)
     @pids.delete(which)

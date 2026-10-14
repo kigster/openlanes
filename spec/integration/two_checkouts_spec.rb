@@ -13,8 +13,8 @@ RSpec.describe "two checkouts on one Redis", :redis do
   let(:rooms) { roots.map { ControlRoomProcess.new(root: it, redis_url: url) } }
 
   around do |example|
-    skip "no Redis answers at #{url}" unless ControlRoomProcess.redis?(url)
-    skip "web/dist is missing: run just web-build first" unless ControlRoomProcess.dist?
+    reason = ControlRoomProcess.unmet(url)
+    skip reason if reason
 
     roots.each do |root|
       builder = PlansFixture::Builder.new(File.join(root, ".plans"))

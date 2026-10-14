@@ -17,8 +17,8 @@ RSpec.describe "the control room across a restart", :redis do
   end
 
   around do |example|
-    skip "no Redis answers at #{url}" unless ControlRoomProcess.redis?(url)
-    skip "web/dist is missing: run just web-build first" unless ControlRoomProcess.dist?
+    reason = ControlRoomProcess.unmet(url)
+    skip reason if reason
 
     PlansFixture::Builder.new(plans).plan("003.00", :blocked, "queue-choice", files: { "blocked.md" => blocked })
     room.start_engine
