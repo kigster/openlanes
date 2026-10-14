@@ -55,8 +55,8 @@ Run with: `OPENLANES_TEST_REDIS_URL=redis://localhost:6379/13 bundle exec rspec 
 
 - [x] B1: `contract.md` renamed to `openlanes`, `11000`, `.openlanes.yml`, `openlanes:`; `.gitignore` has `/web/dist`; README names the `openlanes:<repo>` Redis prefix. `justfile` already routes `publish` through `build` → `web-build`; gemspec abort kept. `spec/openlanes/packaging_spec.rb` green.
 - [x] B2: `spec/support/control_room_process.rb`, `spec/integration/control_room_spec.rb`, 4 examples green against a real Redis (db 12), real `exe/openlanes run` + its server.
-- [ ] B3: restart spec, not started.
-- [ ] B4: two-checkout spec, not started. The harness already sets a shared `origin` (`ControlRoomProcess.checkout`) so two temp checkouts share one repository key.
+- [x] B3: `spec/integration/restart_spec.rb`, 2 examples green. Server `kill -9`: a page reconnecting with `Last-Event-ID` gets the reply it missed and the same board. Engine `kill -9`: the Redis `run` hash is deleted, so B1's hold can only come back from `.plans/openlanes-state.json`; a `hold_blocked` posted while no engine ran is applied once after restart, and posted again is answered from `done` with the same `at`. No `lib/` change was needed.
+- [x] B4: `spec/integration/two_checkouts_spec.rb`, 3 examples green. Two temp checkouts sharing an `origin`, two engines, one Redis (db 10): each board lists the other as a peer with `me: false`; claims polled for 4 s never show two holders for one plan, and the two boards' own plans never overlap; `add_plan` for the peer's plan is refused with "is being worked on". No `lib/` change was needed.
 - [x] B5: `bin/coverage-changed` + `spec/openlanes/coverage_changed_spec.rb` green; CircleCI: changed-file coverage and retired-name check in `test`, `npm run coverage:changed` in `web`, gem packaging with `web/dist/index.html` asserted in `e2e`. `circleci config validate` passes.
 - After: `bundle exec rspec` 2227 examples, 0 failures; `bundle exec rubocop` 0 offenses.
 
@@ -66,6 +66,18 @@ Run with: `OPENLANES_TEST_REDIS_URL=redis://localhost:6379/13 bundle exec rspec 
 - amended: B2 item 3 bound is 1.5 s from the folder rename, not 1.0 s. The engine reads the tree once per 1 s tick and the server polls Redis every 0.25 s, so worst case is 1.25 s; measured 1.02 s. Meeting 1.0 s means shortening the tick in `lib/`, which B2 may not touch. **Owner to decide** whether the spec item should read "within one tick" or the tick should shorten.
 - amended: the drift check uses `\btilda\b`, since README links the real `agentilda-ai-setup` repository.
 
-### Next step
+## Round 2 (close-out, 2026-10-14)
 
-B3 (`spec/integration/restart_spec.rb`) on the harness: `kill(:server)` then `start_server`, reconnect `sse` with `last_event_id:`; then `kill(:engine)`, `start_engine`. B4 after it with two `ControlRoomProcess` instances on one db.
+- [x] Salvaged the uncommitted round-1 work into atomic commits and rebased on `origin/main`.
+- [x] B3, B4 as above. Harness changes they needed (B2's file; one agent did all three, so no mail was needed): `start_engine(web_port:)` for an engine beside a server already on the port, every port's listener killed in `stop_all`, `redis(*command)`, `agent_calls`.
+- [x] The integration specs' timeouts and 20 rubocop offenses reported in round 1 were already gone on the salvaged files; `rubocop` 0 offenses, `spec/integration` 9 examples green on repeated runs.
+- [x] CI: `spec/integration` runs in the `e2e` job, the only one that builds `web/dist` (in `test` it skips, and the comment there now says so).
+- After: `just test` 2232 examples, 0 failures; `just lint` 0 offenses; Vitest 298 tests; Cypress 21 tests in 5 specs against `openlanes web --demo --port 11055`.
+
+### Decisions
+
+- **B2 item 3 bound (owner to decide, round 1):** kept at 1.5 s from the rename, the plan's own recommendation. The spec's "within a second" reads as "within one engine tick": meeting 1.0 s means shortening the tick in `lib/`, a cost paid on every run for a test's sake.
+- **The harness's fake `claude` was bypassed (found in round 2).** The executor starts agents in `Bundler.unbundled_env`, whose `PATH` is `BUNDLER_ORIG_PATH`, so with only `PATH` set the engines in B4 ran the real `claude` (leah-researcher on the fixture plans). Fixed in the harness by setting both; the fake logs each call and the B4 spec asserts it was called, so a regression fails instead of spending tokens. Stray processes from the bad runs were killed.
+- **Redis from the harness through `redis-client`, not `redis-cli`:** CI's Ruby images have the Redis service but no `redis-cli`, and a `redis?` check that cannot run skips every example silently.
+- **README:** PR #25 rewrites `README.md`, so this plan commits no README change. The packaging spec asserts only what #25's README already says (`openlanes run`, `127.0.0.1:11000`, `.openlanes.yml`, no retired name); the sentence naming the `openlanes:<repo>` Redis prefix is left for #25 to absorb.
+
