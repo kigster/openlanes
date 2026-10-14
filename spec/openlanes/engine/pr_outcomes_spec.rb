@@ -121,6 +121,14 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
     end
   end
 
+  it "names the problem when no pull request state words an outcome" do
+    stub_const("OpenLanes::Plans::PullRequests::STATES", [[/\bopen\b/i, "Open 🟡"]].freeze)
+    plans { |t| t.plan "007.00", :in_review, "reworded", files:, prs: [t.open(19, "i")] }
+
+    expect { effects.apply(outcome("007.00", 19, :merged)) }
+      .to raise_error(OpenLanes::Error, /no pull request state matches "merged"/)
+  end
+
   it "ignores a plan that is gone" do
     expect(effects.apply(outcome("099.00", 1, :merged))).to be_nil
   end

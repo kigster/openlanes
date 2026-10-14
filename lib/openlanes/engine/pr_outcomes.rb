@@ -106,7 +106,9 @@ module OpenLanes
       # {Plans::PullRequests::STATES} words it, leaving every other row and
       # every line around the table alone.
       def record(subject, number, word)
-        state = Plans::PullRequests::STATES.find { |pattern, _| pattern.match?(word) }.last
+        pair = Plans::PullRequests::STATES.find { |pattern, _| pattern.match?(word) } or
+          raise(Error, "no pull request state matches #{word.inspect}; Plans::PullRequests::STATES must word it")
+        state = pair.last
         rows = subject.pull_requests.map do |pr|
           mine = pr.number.to_s.delete("#").to_i == number
           { number: pr.number, title: pr.title, url: pr.url, state: mine ? state : pr.state }
