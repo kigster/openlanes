@@ -6,7 +6,7 @@ Settled 2026-10-13 in a grilling session. Not built yet; this file is the specif
 
 `NNN.MM━━<emoji>━━❯<slug>`, for example `028.00━━🟡━━❯state-tax-coverage`.
 
-- `━` is U+2501 and `❯` is U+276F. Neither is an emoji, so each is one cell wide. `━` is East Asian "ambiguous" width, so a terminal set to draw ambiguous characters double width draws it two cells wide.
+- `━` is U+2501 and `❯` is U+276F; neither is an emoji. `❯` is always one cell wide. `━` is East Asian "ambiguous" width: one cell by default, two in a terminal set to draw ambiguous characters double width.
 - Why: names with spaces need quoting in every shell command and break Tab completion.
 - The parser keeps reading the old form, `NNN.MM-<emoji> → <slug>`. `resync dirs` renames old folders to the new form (N5).
 
