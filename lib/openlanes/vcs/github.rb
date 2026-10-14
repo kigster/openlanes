@@ -198,20 +198,15 @@ module OpenLanes
         ensure_label(add, repo:)
         removing = remove.map(&:to_s) - [add.name]
         begin
-          @command.run("gh",
-            "pr",
-            "edit",
-            number.to_s,
-            "--add-label",
-            add.name,
-            *removing.flat_map { |r| ["--remove-label", r] },
-            *repo_flag(repo))
-        rescue TTY::Command::ExitError => e
-          # Removing a label the pull request does not carry is not a failure
-          # (open question 6): add alone, which is what was wanted.
-          raise Error, "could not label ##{number}: #{first_line(e)}" if removing.empty?
+          edit_labels(number, add, removing, repo)
+        rescue Error
+          raise if removing.empty?
 
-          add_only(number, add, repo)
+          # Removing a label the pull request does not carry fails the whole
+          # edit (open question 6). Adding alone would leave any of `removing`
+          # it does carry beside the new one, two verdicts at once, so ask what
+          # is still there and take exactly that off. A second failure is real.
+          edit_labels(number, add, labels(number:, repo:) & removing, repo)
         end
         labels(number:, repo:)
       end
@@ -279,8 +274,15 @@ module OpenLanes
         stderr.empty? ? error.message.lines.first.to_s.strip : stderr
       end
 
-      def add_only(number, add, repo)
-        @command.run("gh", "pr", "edit", number.to_s, "--add-label", add.name, *repo_flag(repo))
+      def edit_labels(number, add, removing, repo)
+        @command.run("gh",
+          "pr",
+          "edit",
+          number.to_s,
+          "--add-label",
+          add.name,
+          *removing.flat_map { |r| ["--remove-label", r] },
+          *repo_flag(repo))
       rescue TTY::Command::ExitError => e
         raise Error, "could not label ##{number}: #{first_line(e)}"
       end

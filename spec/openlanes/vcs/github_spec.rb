@@ -309,19 +309,47 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
-    it "tolerates removing a label the pull request lacks, by adding alone" do
+    it "tolerates removing a label the pull request lacks, by retrying without it" do
       calls = 0
       allow(command).to receive(:run) do |*argv|
         argvs << argv
         calls += 1
-        raise exit_error("'ready-for-review' not found") if calls == 2
+        raise exit_error("'review-rejected' not found") if calls == 2
 
         instance_double(TTY::Command::Result, out: JSON.generate("labels" => []))
       end
 
       github.swap_label(number: 12, add: label, remove: %w[review-rejected])
 
-      expect(argvs[2]).to eq(%w[gh pr edit 12 --add-label ready-for-review])
+      aggregate_failures do
+        expect(argvs[2]).to eq(%w[gh pr view 12 --json labels])
+        expect(argvs[3]).to eq(%w[gh pr edit 12 --add-label ready-for-review])
+      end
+    end
+
+    it "still takes off a stale review label the pull request does carry when the first edit fails" do
+      calls = 0
+      allow(command).to receive(:run) do |*argv|
+        argvs << argv
+        calls += 1
+        raise exit_error("'review-passed' not found") if calls == 2
+
+        instance_double(TTY::Command::Result, out: JSON.generate("labels" => [{ "name" => "review-rejected" }]))
+      end
+
+      github.swap_label(number: 12, add: label, remove: %w[review-rejected review-passed])
+
+      expect(argvs[3]).to eq(%w[gh pr edit 12 --add-label ready-for-review --remove-label review-rejected])
+    end
+
+    it "surfaces a retry that fails too, rather than reporting success" do
+      allow(command).to receive(:run).with("gh", "label", any_args)
+      carried = instance_double(TTY::Command::Result, out: JSON.generate("labels" => [{ "name" => "review-rejected" }]))
+      allow(command).to receive(:run).with("gh", "pr", "view", any_args).and_return(carried)
+      allow(command).to receive(:run).with("gh", "pr", "edit", any_args).and_raise(exit_error("HTTP 403"))
+
+      expect { github.swap_label(number: 12, add: label, remove: %w[review-rejected]) }
+        .to raise_error(OpenLanes::Error, /could not label #12: HTTP 403/)
     end
 
     it "fails loudly when the add itself fails" do
