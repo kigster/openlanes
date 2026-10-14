@@ -21,6 +21,9 @@ RSpec.describe OpenLanes::Apps::Supervisor do
       ready_timeout:,
       poll: 0.05)
   end
+  # Child keeps one list for the whole process, so other examples' children
+  # are in it too; only the ones this example started count.
+  let!(:children_before) { OpenLanes::Execution::Child.live }
 
   after do
     supervisor.stop
@@ -108,7 +111,7 @@ RSpec.describe OpenLanes::Apps::Supervisor do
       expect { supervisor.start }.to raise_error(described_class::StartFailed, /web exited with status 3 before it was ready.*web starting as/m)
       expect(transitions).to include(%w[api stopped], %w[web failed])
       expect(registry.entries).to be_empty
-      expect(OpenLanes::Execution::Child.live.select(&:alive?)).to be_empty
+      expect((OpenLanes::Execution::Child.live - children_before).select(&:alive?)).to be_empty
     end
   end
 
@@ -118,7 +121,7 @@ RSpec.describe OpenLanes::Apps::Supervisor do
 
     it "fails once the timeout passes, naming the port it was given" do
       expect { supervisor.start }.to raise_error(described_class::StartFailed, /web was given port \d+ and nothing answered there within 0.5 s/)
-      expect(OpenLanes::Execution::Child.live.select(&:alive?)).to be_empty
+      expect((OpenLanes::Execution::Child.live - children_before).select(&:alive?)).to be_empty
     end
   end
 
