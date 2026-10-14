@@ -89,13 +89,16 @@ module OpenLanes
       end
 
       # The conversation as the page draws it on load: the newest turns,
-      # oldest first, and the copilot's latest model and tokens.
+      # oldest first, and the copilot's latest model and tokens. The usage is
+      # looked for in the whole retained stream when the newest turns carry
+      # none, so a run of unmetered turns does not reset the header to zero.
       #
       # @param count [Integer]
       # @return [Hash] `CopilotLog`: `{turns:, usage:}`
       def history(count: 100)
-        turns = @store.xrevrange(@keys.copilot, count:).reverse.map { JSON.parse(it.fields["json"]) }
-        usage = turns.reverse_each.map { it["usage"] }.find(&:itself)
+        turns = newest_turns(count)
+        usage = latest_usage(turns)
+        usage ||= latest_usage(newest_turns(Keys::COPILOT_LENGTH)) if turns.size == count
         { turns:, usage: usage || NO_USAGE }
       end
 
@@ -127,6 +130,14 @@ module OpenLanes
       rescue JSON::ParserError => e
         raise Invalid, "not a message: #{e.message.lines.first.to_s.strip}"
       end
+
+      # @return [Array<Hash>] up to +count+ turns, oldest first
+      def newest_turns(count)
+        @store.xrevrange(@keys.copilot, count:).reverse.map { JSON.parse(it.fields["json"]) }
+      end
+
+      # @return [Hash, nil]
+      def latest_usage(turns) = turns.reverse_each.map { it["usage"] }.find(&:itself)
 
       # @return [void]
       def append(turn)
@@ -194,14 +205,46 @@ module OpenLanes
           raise Invalid, "unknown kind #{turn.kind.inspect}; known: #{KINDS.join(", ")}" unless KINDS.include?(turn.kind)
           raise Invalid, "only the copilot draws cards" if turn.from == "you" && turn.kind != "text"
 
-          missing = FIELDS.fetch(turn.kind) - turn.fields.keys.map(&:to_s)
-          raise Invalid, "a #{turn.kind} card needs #{missing.join(" and ")}" unless missing.empty?
-          return unless turn.kind == "confirm"
+          fields = turn.fields.transform_keys(&:to_s)
+          check_names(turn.kind, fields.keys)
+          check_text(turn.kind, fields)
+          check_command(fields["command"]) if turn.kind == "confirm"
+        end
 
-          # A confirm card is sent through the same gate as the page's own
-          # buttons (W13), so it has to be a command that gate would take.
-          command = turn.fields.transform_keys(&:to_s)["command"]
-          Command.parse(command.to_h.merge("id" => "card"))
+        # A card holds exactly its own fields: a missing one cannot be drawn,
+        # and an extra one could shadow a base key such as `id` on the wire.
+        #
+        # @return [void]
+        def self.check_names(kind, names)
+          wanted = FIELDS.fetch(kind)
+          missing = wanted - names
+          raise Invalid, "a #{kind} card needs #{missing.join(" and ")}" unless missing.empty?
+
+          extra = names - wanted
+          raise Invalid, "a #{kind} card has no #{extra.join(" or ")}" unless extra.empty?
+        end
+
+        # Every field but a command is drawn as text, so it has to be one.
+        #
+        # @return [void]
+        def self.check_text(kind, fields)
+          wrong = (FIELDS.fetch(kind) - %w[command]).reject { fields[it].is_a?(String) }
+          raise Invalid, "a #{kind} card's #{wrong.join(" and ")} must be text" unless wrong.empty?
+        end
+
+        # A confirm card is sent through the same gate as the page's own
+        # buttons (W13), so it has to be a command that gate would take. It
+        # carries no id: the page mints one when the person presses, and an id
+        # supplied here would replace it and could repeat one already done.
+        #
+        # @return [void]
+        def self.check_command(command)
+          raise Invalid, "a confirm card's command is a JSON object" unless command.is_a?(Hash)
+
+          command = command.transform_keys(&:to_s)
+          raise Invalid, "a confirm card's command carries no id; the page mints one" if command.key?("id")
+
+          Command.parse(command.merge("id" => "card"))
         rescue Command::Invalid => e
           raise Invalid, "a confirm card's command is not one: #{e.message}"
         end

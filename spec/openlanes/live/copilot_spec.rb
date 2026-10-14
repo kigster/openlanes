@@ -91,6 +91,11 @@ RSpec.describe OpenLanes::Live::Copilot do
       it "keeps only the newest when asked for fewer" do
         expect(copilot.history(count: 2)[:turns].map { it["kind"] }).to eq(%w[text confirm])
       end
+
+      it "still reports the latest usage when the newest turns carry none" do
+        3.times { copilot.say({ "id" => "01JN#{it}", "text" => "more" }) }
+        expect(copilot.history(count: 2)[:usage]).to eq(fixture["usage"])
+      end
     end
   end
 
@@ -122,7 +127,16 @@ RSpec.describe OpenLanes::Live::Copilot do
       { from: "you", kind: "draft", fields: { "question" => "001.00/B1", "draft" => "x" } } => "only the copilot draws cards",
       { from: "copilot", kind: "draft", fields: { "draft" => "x" } } => "a draft card needs question",
       { from: "copilot", kind: "confirm", fields: { "command" => { "kind" => "stop" }, "confirm" => "Stop", "done" => "ok" } } =>
-        /a confirm card's command is not one: stop needs a plan/
+        /a confirm card's command is not one: stop needs a plan/,
+      { from: "copilot", kind: "draft", fields: { "question" => "001.00/B1", "draft" => {} } } =>
+        "a draft card's draft must be text",
+      { from: "copilot", kind: "draft", fields: { "question" => "001.00/B1", "draft" => "x", "id" => "2" } } =>
+        "a draft card has no id",
+      { from: "copilot", kind: "confirm", fields: { "command" => "stop_all", "confirm" => "Stop", "done" => "ok" } } =>
+        "a confirm card's command is a JSON object",
+      { from: "copilot", kind: "confirm",
+        fields: { "command" => { "id" => "01JOLD", "kind" => "stop_all" }, "confirm" => "Stop", "done" => "ok" } } =>
+        "a confirm card's command carries no id; the page mints one"
     }.each do |attrs, reason|
       it "refuses #{attrs.except(:fields)} as #{reason}" do
         expect { described_class.new(id: "1", text: "x", **attrs) }.to raise_error(OpenLanes::Live::Copilot::Invalid, reason)
