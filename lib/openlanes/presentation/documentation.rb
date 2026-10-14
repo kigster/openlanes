@@ -320,15 +320,22 @@ module OpenLanes
           | :--- | :---------- |
           | `spec.md` | the specification; written first |
           | `plan.md` | the execution plan; written from the spec |
-          | `implementation-plan.md` | the contract between the two halves of building |
+          | `contract.md` | the contract between the two halves of building |
+          | `openapi.yaml` | the HTTP surface, when the plan has one |
           #{known.reject { |r| r.start_with?("| `spec.md`", "| `plan.md`") }.join("\n")}
 
-          `implementation-plan.md` is the one file no state requires. `luke-backend`
-          writes it before it writes code, and `rey-frontend` builds from it a round
-          later: the interfaces the back end landed, their shapes and their errors,
-          which files each half owns, which units may run concurrently, and the one
-          test that proves the halves are joined rather than merely both present. No
-          state requires it because a plan with no back-end work never needs one.
+          `contract.md` is the one file no state requires. `luke-backend` writes it
+          before it writes code, and `rey-frontend` builds from it a round later: the
+          interfaces the back end landed, their shapes and their errors, which files
+          each half owns, which units may run concurrently, and the one test that
+          proves the halves are joined rather than merely both present. No state
+          requires it because a plan with no back-end work never needs one. When
+          `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it,
+          linked from it, and `openlanes api docs` lists every one in the project.
+
+          The units themselves live in `plan.md`, under `## Backend` and
+          `## Frontend`. `rey-frontend` is started only when `## Frontend` holds a
+          unit heading.
 
           Nothing else belongs there. A folder holding notes, diagrams or scratch files
           is a folder nobody can audit at a glance.

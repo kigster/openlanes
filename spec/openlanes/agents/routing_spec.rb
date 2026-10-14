@@ -21,6 +21,35 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
     expect(routed).to eq(%w[luke-backend])
   end
 
+  # Units live in plan.md since plan 003; the front end's are the `###`
+  # headings under its `## Frontend`.
+  describe "a plan.md with a ## Frontend section" do
+    it "gives the pair a section that holds a unit" do
+      plan_with("plan.md" => "# P\n\n## Backend\n\n### B1\n\n## Frontend\n\n### F1 Badge\n")
+      expect(routed).to eq(%w[luke-backend rey-frontend])
+    end
+
+    it "starts nobody for a section that says there is no front end" do
+      plan_with("plan.md" => "# P\n\n## Backend\n\n### B1\n\n## Frontend\n\nNone.\n\n## Order\n\n### Wave 1\n")
+      expect(routed).to eq(%w[luke-backend])
+    end
+
+    it "matches the section name whatever its case" do
+      plan_with("plan.md" => "## FRONTEND ##\n\n### F1\n")
+      expect(routed).to eq(%w[luke-backend rey-frontend])
+    end
+
+    it "prefers the section to a legacy plan-frontend.md" do
+      plan_with("plan.md" => "## Frontend\n\nNone.\n", "plan-frontend.md" => "## F1\n")
+      expect(routed).to eq(%w[luke-backend])
+    end
+
+    it "reads a legacy plan-frontend.md when plan.md has no such section" do
+      plan_with("plan.md" => "# P\n\n## U1\n", "plan-frontend.md" => "## F1\n")
+      expect(routed).to eq(%w[luke-backend rey-frontend])
+    end
+  end
+
   it "gives a quick-lane plan to r2d2-mechanic alone" do
     plan_with("spec.md" => "---\nlane: quick\n---\n#{spec_body}")
     expect(routed).to eq(%w[r2d2-mechanic])

@@ -21,12 +21,12 @@ Ask the tool, never a copy of its table:
 | File | For | Written by |
 | --- | --- | --- |
 | `spec.md` | what and why; its frontmatter says how to route and judge the work | `openlanes create`, the human, `leah-researcher` (`## Research`), `yoda-writer` |
-| `plan.md` | units, order, the integration check; blank means "waiting for the planner" | `yoda-writer` creates it empty, `palpatine-planner` fills it |
-| `plan-backend.md`, `plan-frontend.md` | each builder's units; a front-end file with no unit heading starts nobody | `palpatine-planner` |
+| `plan.md` | units under `## Backend` and `## Frontend`, order, the integration check; blank means "waiting for the planner"; a `## Frontend` with no unit heading starts nobody | `yoda-writer` creates it empty, `palpatine-planner` fills it |
+| `contract.md`, `openapi.yaml` | the interfaces between the halves; the HTTP surface when there is one | `luke-backend` |
 | `blocked.md` | open questions a human must decide | any agent, or a human |
 | `pull-requests.md` | the pull request table the review states are judged by | `openlanes run` when it opens the PR, `openlanes create --prs`, `openlanes resync prs` |
 | `rewrite.md`, `delayed.md`, `discarded.md`, `deployed.md`, `rollback.md` | why the plan left the main path | the reviewer (`rewrite.md`), otherwise a human |
-| `state.json` | stages, signatures, mailbox | the harness only; read it with `openlanes state show --plan <NNN>` |
+| `state.json` | stages, signatures, mailbox, read receipts, resume records (`last-known-state`) | the harness only; read it with `openlanes state show --plan <NNN>` |
 
 Agents also sign a ledger inside the document they own: a `> [!NOTE]` block of `[ agent: … status: Started, round 1 ]` lines. Leave those blocks as they are; the harness reads them to decide who finished.
 

@@ -149,6 +149,14 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       )
     end
 
+    # Delivery says nothing about reading; only the reader can, so the
+    # prompt asks for the ack right after the read (plan 003, B5).
+    it "asks the reader to ack each message it reads" do
+      paired = executor.invocation(agents.find("luke-backend"), subject_plan, partners: [agents.find("rey-frontend")])[2]
+
+      expect(paired).to include("openlanes mail ack --dir \"#{plans_root}\" --plan 000.00 --for luke-backend N")
+    end
+
     # `alock` signs a lock with the process fingerprint, which every sub-agent
     # of one `claude` shares, so the prompt names the holder explicitly.
     it "tells the agent to claim files with alock, under its own name" do
@@ -236,13 +244,21 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       expect(prompt).to include("WARN:", "WRAP_UP:", "STOP")
     end
 
-    # What makes a restart after ctrl-c idempotent: a note on the way out,
-    # and every agent reading its mail on the way in.
+    # What makes a restart after ctrl-c idempotent: a resume record on the
+    # way out, and every agent reading it on the way in.
     context "with a control file" do
       let(:controlled) { executor.invocation(agent, subject_plan, control: "/tmp/control-000.00-yoda-writer")[2] }
 
-      it "asks an interrupted agent for a resume note, and every agent to read one first" do
-        expect(controlled).to include("INTERRUPT", "RESUME:", "--from yoda-writer --to yoda-writer", "mail read", "Interrupted")
+      it "asks an interrupted agent for a resume record, and every agent to read one first" do
+        expect(controlled).to include("INTERRUPT",
+          "Interrupted",
+          "openlanes state resume --dir \"#{plans_root}\" --plan 000.00 --agent yoda-writer --round 1",
+          "\"last-known-state\".\"yoda-writer\"",
+          "mail read")
+      end
+
+      it "no longer asks for a RESUME mail to itself" do
+        expect(controlled).not_to include("--from yoda-writer --to yoda-writer")
       end
     end
   end

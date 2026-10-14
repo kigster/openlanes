@@ -133,8 +133,8 @@ RSpec.describe OpenLanes::Agents::Registry do
     it "lists the documents each agent signs, in order" do
       aggregate_failures do
         expect(agents.find("leah-researcher").ledger).to eq(%w[spec.md])
-        expect(agents.find("luke-backend").ledger).to eq(%w[plan-backend.md pull-requests.md])
-        expect(agents.find("rey-frontend").ledger).to eq(%w[plan-frontend.md pull-requests.md])
+        expect(agents.find("luke-backend").ledger).to eq(%w[plan.md pull-requests.md plan-backend.md])
+        expect(agents.find("rey-frontend").ledger).to eq(%w[plan.md pull-requests.md plan-frontend.md])
         expect(agents.find("hansolo-reviewer").ledger).to eq(%w[pull-requests.md])
         # Not plan.md: signing a spec-stage block into a new plan.md would
         # justify 📋 and skip research and specification.
@@ -170,7 +170,7 @@ RSpec.describe OpenLanes::Agents::Registry do
     it "reads the adapter, phase, lanes, needs and toggle" do
       rey = agents.find("rey-frontend")
       expect([rey.adapter, rey.phase, rey.lanes, rey.needs, rey.toggle])
-        .to eq(["claude", "frontend", %i[full plan], ["plan-frontend.md"], "frontend"])
+        .to eq(["claude", "frontend", %i[full plan], ["plan.md#frontend"], "frontend"])
     end
 
     it "refuses an effort outside the scale" do
