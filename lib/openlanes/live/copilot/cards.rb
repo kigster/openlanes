@@ -156,6 +156,10 @@ module OpenLanes
         def draft(data, board)
           question = data["question"].to_s
           raise Invalid, "#{question.inspect} is not a question id like 002/B1" unless question.match?(QUESTION)
+
+          # The board writes ids in full (`002.00/B1`); the agent may write `002/B1`.
+          plan, number = question.split("/")
+          question = "#{ordinal(plan)}/#{number}"
           raise Invalid, "no question #{question} is waiting on this board" unless questions(board).include?(question)
 
           draft = words(data["draft"], LIMIT) or raise Invalid, "a draft card needs the draft"

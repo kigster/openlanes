@@ -87,6 +87,14 @@ RSpec.describe OpenLanes::Live::Copilot::Cards do
       expect([kinds, turns.first.fields, turns.first.text])
         .to eq([%w[draft], { "question" => "002.00/B1", "draft" => "Ninety days." }, "A draft:"])
     end
+
+    context "when the question is written short, as the agent's prompt shows it" do
+      let(:answer) { card(draft.merge(question: "002/B1")) }
+
+      it "finds it on the board and names it in full" do
+        expect([kinds, turns.first.fields["question"]]).to eq([%w[draft], "002.00/B1"])
+      end
+    end
   end
 
   # Each of these must degrade to text: a reason, the card's body, and no card.
