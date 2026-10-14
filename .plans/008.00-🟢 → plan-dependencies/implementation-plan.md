@@ -59,6 +59,6 @@ B1 → B2 → (B3 ‖ F1) → B4.
 
 ## Assumptions
 
-- Amended after review of #23: cycle detection follows only open edges (a dependency on a ✅ plan cannot deadlock), and uses Tarjan's strongly connected components plus a breadth-first ring per plan. The first version enumerated every path and took 2.6 s on 28 plans each waiting on the two before.
+- Amended after review of #23: cycle detection follows only open edges (a dependency on a ✅ plan cannot deadlock), and uses Tarjan's strongly connected components plus a breadth-first ring per plan. The first version enumerated every path and took 2.6 s on 28 plans each waiting on the two before. Amended after Grok's review: the Tarjan walk is iterative, with its own frame stack, so a chain of thousands of plans cannot raise `SystemStackError` in a dispatcher tick.
 
 - A dependency on a 🗑 discarded plan counts as not done: the dependent waits and the report says so. A human drops the entry.

@@ -145,4 +145,19 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       expect(graph.reason("040.00")).to eq("waiting on 038.00, 039.00")
     end
   end
+
+  # A recursive walk recursed once per plan in a chain, so a long enough
+  # chain raised SystemStackError inside the dispatcher tick.
+  context "with a chain far deeper than the Ruby stack" do
+    before { plans { |t| t.plan "001.00", :planned, "only" } }
+
+    it "finds every component without recursing" do
+      graph = described_class.new(tree)
+      chain = (0...50_000).to_h { |i| [format("%06d", i), i.zero? ? [] : [format("%06d", i - 1)]] }
+      chain["000000"] = ["049999"]
+      allow(graph).to receive(:open_edges).and_return(chain)
+
+      expect(graph.send(:components).map(&:size)).to eq([50_000])
+    end
+  end
 end

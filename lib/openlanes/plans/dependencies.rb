@@ -130,7 +130,9 @@ module OpenLanes
       # plan is visited once. Enumerating every path instead revisited shared
       # subgraphs on each one: 28 plans each waiting on the two before took
       # 2.6 seconds and two million visits, and the dispatcher asks on every
-      # tick.
+      # tick. The walk keeps its own stack of frames rather than recursing,
+      # so a chain of a few thousand plans cannot raise SystemStackError
+      # inside a dispatcher tick.
       #
       # @return [Array<Array<String>>] each component sorted
       def components
@@ -140,25 +142,39 @@ module OpenLanes
           stack = []
           on_stack = {}
           out = []
-          strong = lambda do |v|
-            index[v] = low[v] = index.size
-            stack << v
-            on_stack[v] = true
-            open_edges.fetch(v).each do |w|
-              if !index.key?(w)
-                strong.call(w)
-                low[v] = [low[v], low[w]].min
-              elsif on_stack[w]
-                low[v] = [low[v], index[w]].min
-              end
-            end
-            next unless low[v] == index[v]
+          open_edges.keys.sort.each do |root|
+            next if index.key?(root)
 
-            group = []
-            group << stack.pop.tap { on_stack.delete(it) } until group.last == v
-            out << group.sort
+            frames = [[root, 0]]
+            index[root] = low[root] = index.size
+            stack << root
+            on_stack[root] = true
+            until frames.empty?
+              v, i = frames.last
+              w = open_edges.fetch(v)[i]
+              if w
+                frames.last[1] += 1
+                if !index.key?(w)
+                  index[w] = low[w] = index.size
+                  stack << w
+                  on_stack[w] = true
+                  frames << [w, 0]
+                elsif on_stack[w]
+                  low[v] = [low[v], index[w]].min
+                end
+                next
+              end
+
+              frames.pop
+              parent = frames.last&.first
+              low[parent] = [low[parent], low[v]].min if parent
+              next unless low[v] == index[v]
+
+              group = []
+              group << stack.pop.tap { on_stack.delete(it) } until group.last == v
+              out << group.sort
+            end
           end
-          open_edges.keys.sort.each { strong.call(it) unless index.key?(it) }
           out
         end
       end
