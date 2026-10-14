@@ -19,6 +19,18 @@ module OpenLanes
     # @return [OpenLanes::Lifecycle::Resync::Prs]
     def resync_prs(**) = Resync::Prs.new(**)
 
+    # `resync prs` as one step: retitle (and adopt) on GitHub, or say why not.
+    #
+    # @param commit [Boolean] false previews and changes nothing
+    # @param options [Hash] passed to {Resync::Prs#initialize}
+    # @return [Dry::Monads::Result] Success(Array<Resync::Prs::Change>), or
+    #   Failure({Refusal}) with status 69 when GitHub refused
+    def retitle_prs(commit:, **)
+      Dry::Monads::Result::Success.new(Resync::Prs.new(**).call(commit:))
+    rescue OpenLanes::Error => e
+      Dry::Monads::Result::Failure.new(Refusal.new(message: e.message, status: 69))
+    end
+
     # @return [OpenLanes::Lifecycle::Brief]
     def brief(**) = Brief.new(**)
 
