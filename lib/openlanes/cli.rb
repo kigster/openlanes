@@ -7,6 +7,7 @@ require "tty-screen"
 # the shared flags and plumbing, so it loads first; the rest only meet each
 # other here, at registration.
 require_relative "cli/base"
+require_relative "cli/coverage/coverage"
 require_relative "cli/create/create"
 require_relative "cli/index/index"
 require_relative "cli/init/init"
@@ -99,6 +100,7 @@ module OpenLanes
         "resync",
         "unblock",
         "worktree",
+        "coverage",
         "agents",
         "describe",
         "mail",
@@ -119,6 +121,7 @@ module OpenLanes
     register "unblock", Unblock
     register "eval", Eval
     register "worktree", Worktree
+    register "coverage", Coverage
     register "docs", Docs
     register "states", States, aliases: %w[diagram]
     register "index", Index, aliases: %w[idx]
