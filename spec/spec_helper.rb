@@ -65,6 +65,7 @@ require_relative "support/plans_fixture"
 require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"
+require_relative "support/coverage_fixtures"
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"

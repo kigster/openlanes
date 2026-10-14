@@ -1,0 +1,5 @@
+{"total": {"lines":{"total":4000,"covered":3800,"skipped":0,"pct":95},
+"statements":{"total":4100,"covered":3700,"skipped":0,"pct":90.24},
+"functions":{"total":10,"covered":10,"skipped":0,"pct":100},
+"branches":{"total":10,"covered":5,"skipped":0,"pct":50}},
+"/src/a.ts": {"lines":{"total":4000,"covered":3800,"skipped":0,"pct":95}}}
