@@ -12,6 +12,10 @@ module OpenLanes
     # @return [Dry::Monads::Result] Success(path) or Failure(message)
     def create(dir:, **) = Creator.new(dir:).create(**)
 
+    # @param options [Hash] passed to {CreateWorkflow#initialize}
+    # @return [OpenLanes::Lifecycle::CreateWorkflow] `openlanes create`, without the command
+    def create_plan(**) = CreateWorkflow.new(**)
+
     # @param tree [OpenLanes::Plans::Tree]
     # @return [OpenLanes::Lifecycle::Resync::Dirs]
     def resync_dirs(tree:, **) = Resync::Dirs.new(tree:, **)
