@@ -30,15 +30,6 @@ module OpenLanes
       # holding open the ones a line does not have.
       GAP = "  "
 
-      # Cells a status emoji is given, and what follows it before the label.
-      # Many terminal fonts draw a colour emoji wider than the two cells it
-      # claims, and with one space after it "🟡 Building" reads "🟡Building".
-      # Mirrors ProgressLog::EMOJI_WIDTH and EMOJI_GAP from the list-plans
-      # fix; once that lands, {.status_cell} gives way to
-      # ProgressLog.status_cell.
-      EMOJI_WIDTH = 2
-      EMOJI_GAP = "  "
-
       # A carriage return, an escape sequence, or any other control
       # character but a tab: what would let one message overwrite another.
       CONTROL = %r{\e\[[0-9;?]*[ -/]*[@-~]|[\x00-\x08\x0a-\x1f\x7f]}
@@ -99,17 +90,12 @@ module OpenLanes
           .reject(&:empty?).join(GAP)
       end
 
-      # The emoji fitted to {EMOJI_WIDTH} cells and followed by {EMOJI_GAP},
-      # then the label. A value with no label passes through as it is.
+      # The emoji fitted to two cells and followed by two spaces, then the
+      # label, exactly as the progress log draws it.
       #
       # @param status [String] emoji and label, e.g. "⭐️ Planned"
       # @return [String] e.g. "⭐️  Planned"
-      def self.status_cell(status)
-        emoji, label = status.to_s.split(" ", 2)
-        return status.to_s if label.nil?
-
-        "#{UI.fit(emoji, EMOJI_WIDTH)}#{EMOJI_GAP}#{label}"
-      end
+      def self.status_cell(status) = ProgressLog.status_cell(status).to_s
 
       private
 
