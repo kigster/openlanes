@@ -42,6 +42,25 @@ RSpec.describe OpenLanes::Live::Node do
     expect(described_class.current(root:)).to have_attributes(user: described_class.login, host: Socket.gethostname)
   end
 
+  describe ".declared" do
+    subject(:declared) { described_class.declared("demo@second-machine", root:, home:, ip: nil) }
+
+    it "is named as any user@host is, so it is another machine with the same checkout" do
+      expect([declared.id, declared.label, declared.checkout_id])
+        .to eq([Digest::SHA256.hexdigest("demo@second-machine")[0, 24], "demo@second-machine", node.checkout_id])
+    end
+
+    it "ignores the spaces around it" do
+      expect(described_class.declared("  demo@second-machine\n", root:).label).to eq("demo@second-machine")
+    end
+
+    ["demo", "@host", "demo@", "a@b@c", "de mo@host", ""].each do |bad|
+      it "refuses #{bad.inspect}" do
+        expect { described_class.declared(bad, root:) }.to raise_error(described_class::Invalid, /user@host/)
+      end
+    end
+  end
+
   it "reads an address that is not loopback, if the machine has one" do
     expect(described_class.address).to be_nil.or(match(/\A\d+\.\d+\.\d+\.\d+\z/))
   end

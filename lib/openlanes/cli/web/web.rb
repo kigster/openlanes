@@ -23,11 +23,15 @@ module OpenLanes
         default: false,
         desc:    "Serve a sample run that moves and answers commands, with no agents. " \
                  "Uses Redis when it answers, an in-memory store when it does not"
+      option :identity,
+        desc: "With --demo: register as USER@HOST instead of this login and host, so a second demo on " \
+              "another port is another machine on the same Redis"
 
       example [
         "                 # serve the live run of this checkout",
         "--demo --no-open # the sample run, for Cypress and npm run dev",
-        "--port 4848      # somewhere other than 11000"
+        "--port 4848      # somewhere other than 11000",
+        "--demo --port 11101 --identity demo@second-machine # a second machine for the chat"
       ]
 
       # @param options [Hash]
@@ -36,11 +40,11 @@ module OpenLanes
         tree = tree_for(options)
         root = File.dirname(tree.dir)
         url = Live.redis_url(option: redis_url_option(options), config: Config.current)
+        node = node_for(root, options)
         stores = stores_for(url, options)
-        node = Live::Node.current(root:)
         keys = Live.keys(root:, node:)
         keys = keys.with(repo: "demo/#{keys.repo}") if options[:demo]
-        demo = OpenLanes::Web.demo(store: stores.current, keys:).start if options[:demo]
+        demo = OpenLanes::Web.demo(store: stores.current, keys:, node: declared(node, options)).start if options[:demo]
         copilot = demo ? OpenLanes::Web::Demo::COPILOT : copilot_for(root:, tree:, stores:, keys:)
         context = OpenLanes::Web.context(stores:, keys:, plans_dir: tree.dir, url: stores.current.url, node:, demo:, copilot:)
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port])
@@ -62,6 +66,27 @@ module OpenLanes
       def redis_url_option(options, env: ENV)
         [options[:redis_url], env[OpenLanes::Web::Launcher::REDIS_URL_ENV]].find { !it.to_s.strip.empty? }
       end
+
+      # This machine, or under `--demo` the one `--identity` declares. A live
+      # server is refused one: its node id is what claims and commands are
+      # keyed by, and a run under a borrowed name would answer for a machine
+      # it is not.
+      #
+      # @param root [String]
+      # @param options [Hash]
+      # @return [OpenLanes::Live::Node]
+      def node_for(root, options)
+        identity = options[:identity].to_s.strip
+        return Live::Node.current(root:) if identity.empty?
+
+        refuse("--identity is for the demo only; pass --demo with it.", 64) unless options[:demo]
+        Live::Node.declared(identity, root:)
+      rescue Live::Node::Invalid => e
+        refuse("--identity: #{e.message}", 64)
+      end
+
+      # @return [OpenLanes::Live::Node, nil] the node the demo publishes as, when declared
+      def declared(node, options) = options[:identity].to_s.strip.empty? ? nil : node
 
       # @return [OpenLanes::Web::Stores]
       def stores_for(url, options)

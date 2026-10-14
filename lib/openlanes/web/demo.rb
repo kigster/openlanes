@@ -31,13 +31,16 @@ module OpenLanes
 
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param keys [OpenLanes::Live::Keys] this node's
-      # @param board [OpenLanes::Web::DemoBoard]
+      # @param board [OpenLanes::Web::DemoBoard, nil] the fixture's, by default
+      # @param node [OpenLanes::Live::Node, nil] a declared identity
+      #   (`--identity`), which the board, and every reset of it, is published as
       # @param interval [Float]
       # @param clock [Proc] wall time
-      def initialize(store:, keys:, board: DemoBoard.new, interval: INTERVAL, clock: -> { Time.now })
+      def initialize(store:, keys:, board: nil, node: nil, interval: INTERVAL, clock: -> { Time.now })
         @store = store
         @keys = keys
-        @board = board
+        @node = node
+        @board = board || DemoBoard.new(node:)
         @interval = interval
         @clock = clock
         @seqs = {}
@@ -53,7 +56,7 @@ module OpenLanes
       # same board whatever the last one answered or stopped.
       #
       # @return [void]
-      def reset = @mutex.synchronize { @board = DemoBoard.new }
+      def reset = @mutex.synchronize { @board = DemoBoard.new(node: @node) }
 
       # Publish and answer every {INTERVAL}, on a thread of its own.
       #
@@ -75,8 +78,9 @@ module OpenLanes
       def stop
         @running = false
         @thread&.join(@interval * 2)
-        @store.del(@keys.snapshot, @keys.snapshot(other))
-        @store.hdel(@keys.nodes, @keys.node, other)
+        names = [@keys.node, other].compact
+        @store.del(*names.map { @keys.snapshot(it) })
+        @store.hdel(@keys.nodes, *names)
       rescue Live::Unavailable
         nil
       end
@@ -100,8 +104,8 @@ module OpenLanes
 
       private
 
-      # @return [String] the pretend other machine's node name
-      def other = "#{@board.others.first&.dig("node", "id")}:#{OTHER_CHECKOUT}"
+      # @return [String, nil] the pretend other machine's node name, when this demo has one
+      def other = @board.others.first&.dig("node", "id")&.then { "#{it}:#{OTHER_CHECKOUT}" }
 
       # @return [void]
       def publish(name, snapshot)
