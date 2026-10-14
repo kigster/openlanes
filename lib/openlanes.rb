@@ -44,9 +44,11 @@ loader.collapse("#{__dir__}/openlanes/cli/resync/subcommands")
 loader.collapse("#{__dir__}/openlanes/cli/skills/subcommands")
 loader.collapse("#{__dir__}/openlanes/cli/api/subcommands")
 loader.ignore("#{__dir__}/openlanes/cli/api/api.rb")
+loader.collapse("#{__dir__}/openlanes/cli/app/subcommands")
 loader.ignore("#{__dir__}/openlanes/cli/linear/linear.rb")
 loader.ignore("#{__dir__}/openlanes/cli/mail/mail.rb")
 loader.ignore("#{__dir__}/openlanes/cli/state/state.rb")
+loader.ignore("#{__dir__}/openlanes/cli/app/app.rb")
 loader.ignore("#{__dir__}/openlanes/linear/mapping.rb")
 loader.setup
 
