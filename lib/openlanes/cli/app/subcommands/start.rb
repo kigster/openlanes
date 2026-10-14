@@ -49,7 +49,8 @@ module OpenLanes
             say:        ->(line) { UI.line("#{ordinal} #{line}") },
             supervisor: { ready_timeout: Float(options[:ready_timeout]), origin: options[:control_room],
                           output: ->(name, line) { UI.line("#{name}: #{line}", bullet: "│") } })
-          %w[INT TERM].each { |name| Signal.trap(name) { runner.stopping.make_true } }
+          # A trap may not take a lock, and the flag takes one.
+          %w[INT TERM].each { |name| Signal.trap(name) { Thread.new { runner.stopping.make_true } } }
           UI.line("Starting #{ordinal}'s app in #{root} (#{branch}); Ctrl-C stops it")
           runner.call
         rescue Apps::Supervisor::StartFailed => e
