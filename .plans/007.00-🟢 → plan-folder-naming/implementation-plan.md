@@ -52,9 +52,28 @@ B1 → B2 → (B3 ∥ B4) → B5 → B6 → B7. F1 may start now against the sha
 - [x] B2 writers: `NNN.MM━━<emoji>━━❯<slug>` and dated form; N2 emoji in `STATUSES`; `UI.display_width` counts char+U+FE0F as 2; `bin/plan-number` reads subfolders; index href spec updated; old-name expectations in 20 spec files moved to the new form.
 - [x] B4 lock: `Plans::Lock`, dispatcher writes/removes it around the executor (`ensure`), `StateFile.ensure_ignored!` adds `locked-by.pid`, reporter 🔑, snapshot `locked`. Specs: `lock_spec.rb`, reporter, state_file.
 - [x] B4 snapshot spec `locked` example.
-- [ ] B4 remaining spec: `dispatcher_spec.rb` (file present during the agent, gone after, incl. raised error).
-- [ ] B3 tree subfolders, `INACTIVE_DIRS`, `list-plans --all`, creator allocation across subfolders, `created:`, `lib/openlanes.rb` ls-tree.
-- [ ] B5 `resync dirs` moves + `Vcs::RenameDate` + lock clearing.
-- [ ] B6 M10 `how-to-verify:` migration.
-- [ ] B7 docs, README, integration spec.
+- [x] B4 remaining spec: `dispatcher_spec.rb` "the plan lock": present during the agent, gone after, gone after a raise, never written on a dry run.
+- [x] B3 tree subfolders, `INACTIVE_DIRS`, `list-plans --all`, creator allocation across subfolders, `created:`, `lib/openlanes.rb` ls-tree.
+- [x] B5 `resync dirs` moves + `Vcs::RenameDate` + lock clearing.
+- [x] B6 M10 `how-to-verify:` migration.
+- [x] B7 docs, README, integration spec.
+- [x] F1 control room: old and new block emoji, 🔑 for `locked`.
 - `bundle exec rspec`: 2305 examples, 0 failures. `bundle exec rubocop`: no offenses.
+
+### Round 2 status (salvage and finish, 2026-10-14)
+
+Round 1's uncommitted work was committed as atomic commits and rebased onto `main`; B3–B7 were then built.
+
+- `bundle exec rspec`: 2355 examples, 0 failures. `bundle exec rubocop`: 310 files, no offenses.
+- `web`: vitest 27 files / 293 tests passed; eslint and `tsc -b --noEmit` clean.
+
+Decisions taken where the docs were silent:
+
+- **`created:` is written by `Brief`, not `Creator`.** `Creator` writes no `spec.md`. `Brief#stamp!` merges settings into the frontmatter and restores `created:` after a draft; `create` and the control room's idea dialog both use it, which also fixed the dialog prepending a second frontmatter block.
+- **`resync dirs` reads the whole tree, subfolders included** (`Tree#everything`), so it can revive plans and date archived names. Every other reader (runner, snapshot, reporter) keeps the top level only; number allocation, duplicates and `resync prs` use `Tree#taken` / `#everything`.
+- **The rename-date probe** is `spec.md`, `plan.md` or `pull-requests.md`, else any file in the folder: a ❌ plan may hold only `discarded.md`.
+- **Locked folders** (live local, or any foreign lock) are skipped by `resync dirs` for renames and the M10 rewrite alike.
+- **M10 reading:** `Spec.parse` reads checks from the frontmatter key and from list items under `## How to tell it's working?`, deduplicated, so `Completion` and the prompt work before and after the migration.
+- **Idle message:** with every plan archived the top level is empty; the dispatcher checks the subfolders before saying "no plans yet".
+- **Not done here:** this repository's own `.plans/` was not migrated (out of scope); `CLAUDE.md` still shows the old folder example.
+
