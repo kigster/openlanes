@@ -13,13 +13,13 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     css: false,
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/vite-env.d.ts", "src/api/types.ts"],
       thresholds: { statements: 95, branches: 90, functions: 95, lines: 95 },
-      reporter: ["text-summary", "html", "lcov"],
+      reporter: ["text-summary", "html", "lcov", "json"],
     },
   },
 });
