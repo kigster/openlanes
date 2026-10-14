@@ -37,6 +37,27 @@ RSpec.describe OpenLanes::Lifecycle::Creator, :tree do
       end
     end
 
+    describe ".topic" do
+      it "names a plan after the idea's opening heading, not the heading and its paragraph" do
+        idea = "# Minesweeper\n\nMinesweeper is played on a grid of covered squares.\n"
+        expect(described_class.slugify(described_class.topic(idea))).to eq("minesweeper")
+      end
+
+      it "prefers a frontmatter title" do
+        idea = "---\ntitle: web based minesweeper game\n---\nBuild a classic Minesweeper game that runs in the browser.\n"
+        expect(described_class.topic(idea)).to eq(%w[web based minesweeper game])
+      end
+
+      it "takes the first eight words of a plain first line" do
+        expect(described_class.topic("\n  Export the ledger as CSV for the accountant every month\nmore"))
+          .to eq(%w[Export the ledger as CSV for the accountant])
+      end
+
+      it "skips frontmatter that is not YAML" do
+        expect(described_class.topic("---\n: [\n---\nBody text")).to eq(%w[Body text])
+      end
+    end
+
     describe "slugification" do
       it "lowercases, joins on hyphens and drops punctuation" do
         aggregate_failures do

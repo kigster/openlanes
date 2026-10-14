@@ -17,7 +17,11 @@ RSpec.describe OpenLanes::Live::Stations do
   end
 
   it "shows a state off the spine where the spine takes it next" do
-    expect(%i[rejected shit rolled_back].map { described_class.key_for(it) }).to eq(%i[building_ui building in_review])
+    expect(%i[shit rolled_back].map { described_class.key_for(it) }).to eq(%i[building in_review])
+  end
+
+  it "shows a rejected plan at Building, where luke and rey rework it" do
+    expect(described_class.key_for(:rejected, before: :in_review)).to eq(:building)
   end
 
   it "shows a blocked plan where it was, or at the first stop when nobody knows" do

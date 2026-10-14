@@ -67,7 +67,7 @@ module OpenLanes
       #
       # @return [String]
       def row(flag, ordinal, emoji, label, title, tail)
-        format("%s %s  %s %s  %s %s", flag, ordinal, emoji, label, title, tail)
+        format("%s %s  %s  %s  %s %s", flag, ordinal, emoji, label, title, tail)
       end
 
       # Cell at which the pull requests start, so a plan's second and third pull
@@ -162,7 +162,7 @@ module OpenLanes
 
       # @return [String]
       def footer
-        counts = totals.map { |key, n| "#{Plans::STATUS_BY_KEY.fetch(key).emoji} #{n}" }.join("   ")
+        counts = totals.map { |key, n| "#{Plans::STATUS_BY_KEY.fetch(key).emoji}  #{n}" }.join("   ")
         lines = ["  #{tree.subjects.size} #{tree.subjects.size == 1 ? "plan" : "plans"}   #{counts}"]
 
         unless inconsistent.empty?

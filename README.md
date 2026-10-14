@@ -313,6 +313,7 @@ The loop stops when a full round changes no plan's state. It also stops when eve
 - **Isolation.** By default every plan gets its own git worktree and branch, `<user>/NNN.MM-slug`, so agents on different plans share nothing. Parallel runs require it: `--isolation shared` runs one agent at a time.
 - **Agents cannot publish.** They may write source, tests and their plan's documents, but may not commit, push or touch a pull request. The tool enforces this twice: it withholds those commands from the agent, and afterwards checks that `HEAD` did not move.
 - **The harness publishes.** When a plan finishes, the harness commits the branch, pushes it and opens a pull request titled like `[002.00](A) Tenancy Households`. Pass `--no-git-push` to leave the work uncommitted in its worktree.
+- **The plan travels with its pull request.** Before each commit, the publisher copies the plan folder (spec, plan, `state.json`) from the main checkout into the worktree under its current name, replacing any older copy. The main checkout's folder stays the only one the tool reads or writes.
 - **Nothing merges automatically.** An approval leaves the plan at 👀 until you merge.
 - **Disk over claims.** A plan moves only when the files its new state requires exist. If an agent reports success but wrote nothing, the tool records it as interrupted.
 
@@ -332,7 +333,7 @@ Defaults for `run` live in the project's `.openlanes.yml`, under `jobs` and `com
 
 ### Following a run, and stopping it
 
-Every command that runs agents (`run`, `unblock` and `create`) shows each agent as a spinner line on STDERR on a terminal, and writes the same progress to its log everywhere else (a pipe, a dry run, cron). When Redis answers, `run` also serves a web control room on `http://127.0.0.1:11000` and opens it, from which a person can watch the board and message, interrupt, kill or extend an agent (`--no-web`, `--no-open`, `--port`, `--redis-url`). Without Redis the run goes on headless. `openlanes web` serves the page on its own, and `openlanes web --demo` shows a sample run.
+`unblock` and `create` show each agent as a spinner line on STDERR on a terminal. `run` and `start` draw no live board in the terminal: they print one appended line per event on STDERR (an agent started or finished, a plan changed state, a command came from the page, the reason the engine idles, said once per change), the same on a terminal as in a pipe, and `--quiet` silences them. Every command that runs agents also writes its progress to its log. When Redis answers, `run` also serves a web control room on `http://127.0.0.1:11000` and opens it, from which a person can watch the board and message, interrupt, kill or extend an agent (`--no-web`, `--no-open`, `--port`, `--redis-url`). Without Redis the run goes on headless. `openlanes web` serves the page on its own, and `openlanes web --demo` shows a sample run.
 
 Ctrl-C once asks each running agent to write a `RESUME:` note into its plan's `mailbox.md` and sign `Interrupted`; every agent reads its mail before it starts, so a later run picks up where this one stopped instead of redoing the work. A second press aborts immediately. It works through a `SIGINT` handler.
 
