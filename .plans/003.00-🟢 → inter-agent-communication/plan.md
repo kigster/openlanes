@@ -77,6 +77,6 @@ Eight units is the ceiling. B5 is the widest (about fifteen files) but mechanica
 
 ## Done when
 
-- [ ] Every unit's done-when spec passes.
-- [ ] `bundle exec rspec` 0 failures, `just lint` zero offenses, coverage at or above 98.63%.
-- [ ] `rg implementation-plan lib agents` is empty.
+- [x] Every unit's done-when spec passes.
+- [x] `bundle exec rspec` 0 failures, `just lint` zero offenses, coverage at or above 98.63%.
+- [ ] `rg implementation-plan lib agents` is empty. Not met on purpose: the agent prompts name the legacy files for folders planned before this change (decision D3).
