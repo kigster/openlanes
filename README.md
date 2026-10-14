@@ -4,10 +4,80 @@
 
 `openlanes` is a CLI software factory. You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `depot`.
 
+## Picture is worth a few words ;) 
+
+Here is the screenshot of the web component of open lanes. When you run `lanes start` locally, this web UI automatcally opens and you can add your specifications here, or add existing plans to be executed in parallel with other plans.
+
+The software uses distributed locking using redis, so `$REDIS_URL`  is the only thing you need to configure.
+
+Once you boot the web UI, you may notice swim lanes (those are plans that existed already in the `.plans` folder, or you created via "Action -> New Idea" menu.)
+
+One of the coolest parts of this, is if you have another laptop or a desktop, you can git clone your project there too, and start `openlanes` there as well. As long as `$REDIS_URL` is same as the first instance, and the github URL of the project matches, the two instances will cooperate and a single web UI will show remote nodes in a read-only mode.
+
+Shortly we'll provide a video of this in action.
+
+## Quick Walkthrough the UI
+
+It might help explain what various parts are.
+Starting top left and going clockwise: 
+
+### Top Nav
+
+* OpenLanes logo
+* The project being worked on (minesweeper) and it's URL and the node/machine
+* How long this particular UI has been running, and how many agents are working
+* Next it shows you the total number of tokens up and down, and the estimated price in USD, but this is assuming you pay by token. If you are on a Claude subscription this does count towards it, but it doesn't represent the actual cost you are paying (it might represent the cost Anthropic is paying though)
+* Next is the button: "All Machines" → if other nodes join your project, there user@hostname
+  * Action button that offers you to create a "New Idea" which it turns into a `.plans/<idea-folder>`  or to select from existing plans not already taken by remote nodes.
+* Further is the dark/light switch.
+* The button "Stop All Local"  terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
+
+### Secondary Nav
+
+Where you see the "Board" (our agents) and "Logs", and where to the right of the screen you'd see remote machines connected and working on other plans represented by small buttons/pills.
+
+### Main Swim Lanes Area
+
+The swim lanes is the core of the "what's going on" feature of OpenLanes. Each represents a single plan, and you can see that in the screenshot only a single plan is being worked on — 001, and it's purpose is to "Create a Web Based Minesweeper Game".
+
+Depending on how you setup your project with `lanes init` command, the `new` and `researhed` stages may or may  not be part of the flow.  OpenLanes offers three levels of feature investigation:
+
+1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, Palpatine. Palpatine's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (Luke) and a frontend-engineer (Rey). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "hansolo". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "obi-wan-kenobi", makes a final call if this PR is good to go.
+2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes palpatine → luke (+ rey) → hansolo, for a spec you already trust.
+3. Quick — is a short mechanical tasks executed by a faster/simpler `r2d2-mechanic` → `hansolo`.
+
+While the project select the default, each plan can override this on a case by case basis.
+
+### Right Drawer Area
+
+This is where you can communicate with the agents if they get stuck. You can also pop out a copilot window that allows you to chat with the main dispatcher AI.
+
+### More Features
+
+Are coming soon!
+
+
+
 ![The openlanes control room: plan 000 on the board between Planning and Building, with luke-backend and rey-frontend working on it side by side, and the luke-backend panel open showing its model, tokens, context use and a box to message it](docs/img/openlanes-one-plan.avif)
 
+## What it is
+
+**OpenLanes®** is an open source software factory written in Ruby. At the moment it only supports Claude code. It shells out via `claude -p` which saves on loading any of your configuration, skills, and plugins.
+
+For each feature it then creates a folder under  `.plans` and then a series of specialized AI agents turn that into a finished feature, that the dispatcher then creates as a PR, and Hans Solo reviews.
+
+The state diagram looks something like this:
+
+
+
 ```mermaid
-flowchart LR
+---
+config:
+  layout: elk
+  theme: forest
+  look: handDrawn
+---
+flowchart TB
   B[You: brief in spec.md] --> L[leah-researcher<br/>research]
   L --> Y[yoda-writer<br/>full spec]
   Y --> P[palpatine-planner<br/>plan.md]
