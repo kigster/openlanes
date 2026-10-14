@@ -12,7 +12,7 @@ module OpenLanes
     # repository.
     class GitHub
       # Fields asked of `gh pr list`.
-      FIELDS = %w[number title url headRefName files state isDraft mergedAt].freeze
+      FIELDS = %w[number title url headRefName files state isDraft mergedAt labels].freeze
 
       # @param command [TTY::Command] runner, injectable for tests
       # @param limit [Integer] how many pull requests to fetch
@@ -53,7 +53,8 @@ module OpenLanes
             branch: pr["headRefName"].to_s,
             files:  Array(pr["files"]).map { |f| f["path"] }.compact,
             state:  self.class.state_label(pr),
-            open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN"
+            open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+            labels: Array(pr["labels"]).map { |l| l["name"] }
           }
         end
       rescue TTY::Command::ExitError, JSON::ParserError => e
@@ -162,9 +163,126 @@ module OpenLanes
         raise Error, "could not retitle ##{number}: #{e.message.lines.first.to_s.strip}"
       end
 
+      # Create a review label when the repository lacks it. Never `--force`:
+      # a colour somebody changed by hand on GitHub is theirs to keep.
+      #
+      # @param label [Plans::ReviewLabel]
+      # @param repo [String, nil] "owner/repo"; nil means the current checkout's
+      # @return [void]
+      # @raise [OpenLanes::Error]
+      def ensure_label(label, repo: nil)
+        @command.run("gh",
+          "label",
+          "create",
+          label.name,
+          "--color",
+          label.colour,
+          "--description",
+          label.meaning,
+          *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        return if e.message.match?(/already exists/i)
+
+        raise Error, "could not create label #{label.name}: #{first_line(e)}"
+      end
+
+      # Put one label on a pull request and take others off, in one edit.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @param add [Plans::ReviewLabel]
+      # @param remove [Array<String>] label names to take off
+      # @return [Array<String>] the labels the pull request is left with
+      # @raise [OpenLanes::Error]
+      def swap_label(number:, add:, repo: nil, remove: [])
+        ensure_label(add, repo:)
+        removing = remove.map(&:to_s) - [add.name]
+        begin
+          @command.run("gh",
+            "pr",
+            "edit",
+            number.to_s,
+            "--add-label",
+            add.name,
+            *removing.flat_map { |r| ["--remove-label", r] },
+            *repo_flag(repo))
+        rescue TTY::Command::ExitError => e
+          # Removing a label the pull request does not carry is not a failure
+          # (open question 6): add alone, which is what was wanted.
+          raise Error, "could not label ##{number}: #{first_line(e)}" if removing.empty?
+
+          add_only(number, add, repo)
+        end
+        labels(number:, repo:)
+      end
+
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [Array<String>] label names on the pull request
+      def labels(number:, repo: nil)
+        out = @command.run("gh", "pr", "view", number.to_s, "--json", "labels", *repo_flag(repo)).out
+        Array(JSON.parse(out)["labels"]).map { |l| l["name"] }
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not read labels of ##{number}: #{first_line(e)}"
+      end
+
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [Array<Hash>] `{name:, bucket:}`, bucket as `gh` reports it
+      def checks(number:, repo: nil)
+        # `gh pr checks` exits non-zero when a check failed or is pending, and
+        # the JSON it printed is still the answer, so its status is no verdict.
+        result = @command.run!("gh", "pr", "checks", number.to_s, "--json", "name,state,bucket", *repo_flag(repo))
+        out = result.out.to_s
+        if out.strip.empty?
+          return [] if result.success? || result.err.to_s.match?(/no checks reported/i)
+
+          raise Error, "could not read checks of ##{number}: #{result.err.to_s.lines.first.to_s.strip}"
+        end
+
+        JSON.parse(out).map { |c| { name: c["name"].to_s, bucket: c["bucket"].to_s } }
+      rescue JSON::ParserError => e
+        raise Error, "could not read checks of ##{number}: #{e.message.lines.first.to_s.strip}"
+      end
+
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [Array<Hash>] `{author:, body:, url:}`, conversation comments then reviews
+      def review_comments(number:, repo: nil)
+        out = @command.run("gh", "pr", "view", number.to_s, "--json", "comments,reviews", *repo_flag(repo)).out
+        data = JSON.parse(out)
+        (Array(data["comments"]) + Array(data["reviews"])).filter_map do |c|
+          next if c["body"].to_s.strip.empty?
+
+          { author: c.dig("author", "login").to_s, body: c["body"].to_s, url: c["url"].to_s }
+        end
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not read comments of ##{number}: #{first_line(e)}"
+      end
+
+      # @param url [String] a pull request URL
+      # @return [String, nil] "owner/repo", or nil when the URL is not GitHub's
+      def self.repo_of(url) = url.to_s[%r{github\.com/([^/]+/[^/]+)/pull/}, 1]
+
       # @return [Boolean] whether `gh` is installed and authenticated
       def available?
         @command.run!("gh", "auth", "status").success?
+      end
+
+      private
+
+      def repo_flag(repo) = repo ? ["-R", repo] : []
+
+      # The first line `gh` wrote to stderr, which is the one naming the problem.
+      def first_line(error)
+        stderr = error.message[/stderr: (.*)/, 1].to_s.strip
+        stderr.empty? ? error.message.lines.first.to_s.strip : stderr
+      end
+
+      def add_only(number, add, repo)
+        @command.run("gh", "pr", "edit", number.to_s, "--add-label", add.name, *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not label ##{number}: #{first_line(e)}"
       end
     end
   end

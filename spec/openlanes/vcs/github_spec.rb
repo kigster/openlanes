@@ -39,7 +39,7 @@ RSpec.describe OpenLanes::Vcs::GitHub do
         "--limit",
         "200",
         "--json",
-        "number,title,url,headRefName,files,state,isDraft,mergedAt"
+        "number,title,url,headRefName,files,state,isDraft,mergedAt,labels"
       )
     end
 
@@ -59,7 +59,8 @@ RSpec.describe OpenLanes::Vcs::GitHub do
         branch: "kig/018.01-resend",
         files:  [".plans/018.01-🟡--deploy/plan.md", "rails/Gemfile"],
         state:  "Unknown",
-        open:   false
+        open:   false,
+        labels: []
       )
     end
 
@@ -249,6 +250,147 @@ RSpec.describe OpenLanes::Vcs::GitHub do
 
     it "returns the same normalised hashes as a single fetch would" do
       expect(github.pull_requests(["12"]).first).to include(number: 12, state: "Open 🟡")
+    end
+  end
+
+  describe "review labels, checks and comments" do
+    let(:label) { OpenLanes::Plans::ReviewLabel::INITIAL }
+    let(:argvs) { [] }
+
+    def exit_error(stderr)
+      TTY::Command::ExitError.new("gh",
+        instance_double(TTY::Command::Result, exit_status: 1, out: "", err: stderr))
+    end
+
+    before do
+      allow(command).to receive(:run) do |*argv|
+        argvs << argv
+        instance_double(TTY::Command::Result, out: JSON.generate("labels" => [{ "name" => "review-in-progress" }]))
+      end
+    end
+
+    it "carries each pull request's labels on #pulls" do
+      allow(command).to receive(:run).and_return(
+        instance_double(TTY::Command::Result,
+          out: JSON.generate([{ "number" => 1, "state" => "MERGED", "mergedAt" => "x", "labels" => [{ "name" => "ok-to-merge" }] }]))
+      )
+      expect(github.pulls.first).to include(labels: ["ok-to-merge"], state: "Merged 🟣", open: false)
+    end
+
+    it "creates a missing label with its colour and meaning, never --force" do
+      github.ensure_label(label, repo: "o/r")
+
+      expect(argvs).to eq([["gh", "label", "create", "ready-for-review", "--color", "c2e0c6",
+                            "--description", "PR open, review not started", "-R", "o/r"]])
+    end
+
+    it "leaves an existing label alone" do
+      allow(command).to receive(:run).and_raise(exit_error("label with name \"ready-for-review\" already exists"))
+
+      expect { github.ensure_label(label) }.not_to raise_error
+    end
+
+    it "surfaces the first stderr line when creating fails otherwise" do
+      allow(command).to receive(:run).and_raise(exit_error("HTTP 403: forbidden\nmore"))
+
+      expect { github.ensure_label(label) }.to raise_error(OpenLanes::Error, "could not create label ready-for-review: HTTP 403: forbidden")
+    end
+
+    it "swaps labels in one edit, with -R, and returns what is left" do
+      left = github.swap_label(number: 12,
+        repo: "o/r",
+        add: OpenLanes::Plans::ReviewLabel.fetch("review-in-progress"),
+        remove: %w[ready-for-review review-in-progress])
+
+      aggregate_failures do
+        expect(argvs[1]).to eq(%w[gh pr edit 12 --add-label review-in-progress --remove-label ready-for-review -R o/r])
+        expect(left).to eq(["review-in-progress"])
+        expect(argvs.flatten).not_to include("--force")
+      end
+    end
+
+    it "tolerates removing a label the pull request lacks, by adding alone" do
+      calls = 0
+      allow(command).to receive(:run) do |*argv|
+        argvs << argv
+        calls += 1
+        raise exit_error("'ready-for-review' not found") if calls == 2
+
+        instance_double(TTY::Command::Result, out: JSON.generate("labels" => []))
+      end
+
+      github.swap_label(number: 12, add: label, remove: %w[review-rejected])
+
+      expect(argvs[2]).to eq(%w[gh pr edit 12 --add-label ready-for-review])
+    end
+
+    it "fails loudly when the add itself fails" do
+      allow(command).to receive(:run).with("gh", "label", any_args)
+      allow(command).to receive(:run).with("gh", "pr", "edit", any_args).and_raise(exit_error("no such PR"))
+
+      expect { github.swap_label(number: 12, add: label) }.to raise_error(OpenLanes::Error, /could not label #12: no such PR/)
+    end
+
+    describe "#checks" do
+      def checks_result(out:, err: "", success: false)
+        instance_double(TTY::Command::Result, out:, err:, success?: success)
+      end
+
+      it "parses buckets, whatever gh's exit status" do
+        allow(command).to receive(:run!).and_return(checks_result(out: JSON.generate([{ "name" => "rspec", "state" => "FAILURE", "bucket" => "fail" }])))
+
+        expect(github.checks(number: 3, repo: "o/r")).to eq([{ name: "rspec", bucket: "fail" }])
+        expect(command).to have_received(:run!).with("gh", "pr", "checks", "3", "--json", "name,state,bucket", "-R", "o/r")
+      end
+
+      it "returns none when gh reports no checks" do
+        allow(command).to receive(:run!).and_return(checks_result(out: "", err: "no checks reported on the 'x' branch"))
+
+        expect(github.checks(number: 3)).to eq([])
+      end
+
+      it "raises on any other silent failure" do
+        allow(command).to receive(:run!).and_return(checks_result(out: "", err: "HTTP 401\n"))
+
+        expect { github.checks(number: 3) }.to raise_error(OpenLanes::Error, "could not read checks of #3: HTTP 401")
+      end
+
+      it "raises on output it cannot parse" do
+        allow(command).to receive(:run!).and_return(checks_result(out: "nope"))
+
+        expect { github.checks(number: 3) }.to raise_error(OpenLanes::Error, /could not read checks of #3/)
+      end
+    end
+
+    it "reads conversation comments and reviews, skipping empty bodies" do
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result,
+        out: JSON.generate(
+          "comments" => [{ "author" => { "login" => "octo" }, "body" => "Fix the nil", "url" => "u1" }],
+          "reviews"  => [{ "author" => { "login" => "hansolo" }, "body" => "", "url" => "u2" },
+                         { "author" => { "login" => "hansolo" }, "body" => "Rejected", "url" => "u3" }]
+        )))
+
+      expect(github.review_comments(number: 4)).to eq([
+                                                        { author: "octo", body: "Fix the nil", url: "u1" },
+                                                        { author: "hansolo", body: "Rejected", url: "u3" }
+                                                      ])
+    end
+
+    it "surfaces a failed comment read" do
+      allow(command).to receive(:run).and_raise(exit_error("boom"))
+
+      expect { github.review_comments(number: 4) }.to raise_error(OpenLanes::Error, /could not read comments of #4: boom/)
+    end
+
+    it "surfaces a failed label read" do
+      allow(command).to receive(:run).and_raise(exit_error("boom"))
+
+      expect { github.labels(number: 4) }.to raise_error(OpenLanes::Error, /could not read labels of #4: boom/)
+    end
+
+    it "takes owner/repo out of a pull request URL" do
+      expect(described_class.repo_of("https://github.com/o/r/pull/9")).to eq("o/r")
+      expect(described_class.repo_of("12")).to be_nil
     end
   end
 end
