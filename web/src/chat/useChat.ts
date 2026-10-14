@@ -50,9 +50,14 @@ export interface ChatView {
   heard: number;
   /** Bumped when this page starts or joins a chat, so the panel opens. */
   entered: number;
+  /**
+   * Invites of this page's that closed before its own POST had answered for them (one nobody receives expires at
+   * once), with the notice each one is owed. The `invited` that follows tells both, and adds nothing to `outgoing`.
+   */
+  closed: Record<string, string>;
 }
 
-const EMPTY: ChatView = { room: null, entries: [], invites: [], outgoing: [], heard: 0, entered: 0 };
+const EMPTY: ChatView = { room: null, entries: [], invites: [], outgoing: [], heard: 0, entered: 0, closed: {} };
 
 type Action =
   | { type: "loaded"; state: ChatState }
@@ -88,9 +93,9 @@ function onEvent(view: ChatView, e: ChatEvent): ChatView {
       return { ...view, invites: view.invites.filter(i => i.id !== e.invite) };
     case "declined":
     case "unanswered": {
-      const outgoing = view.outgoing.filter(o => o.id !== e.invite);
       const text = e.kind === "declined" ? `${e.label} declined` : `${e.label} did not answer`;
-      return add({ ...view, outgoing }, notice(text));
+      if (!view.outgoing.some(o => o.id === e.invite)) return { ...view, closed: { ...view.closed, [e.invite]: text } };
+      return add({ ...view, outgoing: view.outgoing.filter(o => o.id !== e.invite) }, notice(text));
     }
   }
   // Everything else belongs to one chat: a straggler from a chat this page has left is not news.
@@ -143,8 +148,14 @@ function reduce(view: ChatView, action: Action): ChatView {
       if (!view.room || view.entries.some(x => x.type === "said" && x.id === said.id)) return view;
       return add(view, { type: "said", id: said.id, who: said.who, text: said.text, at: said.at, mine: true });
     }
-    case "invited":
-      return add({ ...view, outgoing: [...view.outgoing, action.outgoing] }, notice(`You invited ${action.outgoing.label}`));
+    case "invited": {
+      const { outgoing } = action;
+      const sent = add(view, notice(`You invited ${outgoing.label}`));
+      const { [outgoing.id]: owed, ...closed } = view.closed;
+      if (owed !== undefined) return add({ ...sent, outgoing: view.outgoing.filter(o => o.id !== outgoing.id), closed }, notice(owed));
+      // The read that followed a start may have listed it already.
+      return view.outgoing.some(o => o.id === outgoing.id) ? sent : { ...sent, outgoing: [...view.outgoing, outgoing] };
+    }
     case "notice":
       return add(view, notice(action.text));
     case "drop-invite":

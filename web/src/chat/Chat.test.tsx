@@ -217,12 +217,26 @@ describe("starting a chat", () => {
     expect(within(panel()).getByRole("heading", { level: 2 })).toHaveTextContent("Dana, Kim");
   });
 
-  it("says when the invited machine declined or did not answer", async () => {
+  it("says when the invited machine did not answer, and nothing of an invite it never sent", async () => {
     await startChat();
     send({ kind: "unanswered", invite: "inv-1", machine: SAM.id, label: "sam@ci-runner-2" });
-    send({ kind: "declined", invite: "inv-9", machine: "kim", label: "kim@lab" });
+    send({ kind: "declined", invite: "inv-9", machine: "kim", label: "kim@lab" }); // not this page's invite
     expect(within(panel()).getByText("sam@ci-runner-2 did not answer")).toBeInTheDocument();
-    expect(within(panel()).getByText("kim@lab declined")).toBeInTheDocument();
+    expect(within(panel()).queryByText("kim@lab declined")).toBeNull();
+  });
+
+  it("keeps an invite closed that the stream closed before its POST answered", async () => {
+    const start = answer;
+    answer = (action, body) => {
+      // Nobody listens for the machine: the server says so before the page has heard back from its start.
+      if (action === "start") chatBus.deliver({ kind: "unanswered", invite: "inv-1", machine: SAM.id, label: "sam@ci-runner-2" });
+      return start(action, body);
+    };
+    await startChat();
+    expect(await within(panel()).findByText("sam@ci-runner-2 did not answer")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Chat with sam@ci-runner-2" }));
+    expect(await screen.findByRole("menuitem", { name: /Invite to Chat/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Waiting for/ })).toBeNull();
   });
 
   it("invites another machine from its menu, then shows Stop Chat, which leaves", async () => {
