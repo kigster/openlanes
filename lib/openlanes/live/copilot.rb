@@ -224,11 +224,12 @@ module OpenLanes
           raise Invalid, "a #{kind} card has no #{extra.join(" or ")}" unless extra.empty?
         end
 
-        # Every field but a command is drawn as text, so it has to be one.
+        # Every field but a command is drawn as text, so it has to be some:
+        # a blank one would draw an unnamed button or an empty draft.
         #
         # @return [void]
         def self.check_text(kind, fields)
-          wrong = (FIELDS.fetch(kind) - %w[command]).reject { fields[it].is_a?(String) }
+          wrong = (FIELDS.fetch(kind) - %w[command]).reject { fields[it].is_a?(String) && !fields[it].strip.empty? }
           raise Invalid, "a #{kind} card's #{wrong.join(" and ")} must be text" unless wrong.empty?
         end
 

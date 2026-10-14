@@ -130,6 +130,10 @@ RSpec.describe OpenLanes::Live::Copilot do
         /a confirm card's command is not one: stop needs a plan/,
       { from: "copilot", kind: "draft", fields: { "question" => "001.00/B1", "draft" => {} } } =>
         "a draft card's draft must be text",
+      { from: "copilot", kind: "draft", fields: { "question" => "001.00/B1", "draft" => "  " } } =>
+        "a draft card's draft must be text",
+      { from: "copilot", kind: "confirm", fields: { "command" => { "kind" => "stop_all" }, "confirm" => "", "done" => "ok" } } =>
+        "a confirm card's confirm must be text",
       { from: "copilot", kind: "draft", fields: { "question" => "001.00/B1", "draft" => "x", "id" => "2" } } =>
         "a draft card has no id",
       { from: "copilot", kind: "confirm", fields: { "command" => "stop_all", "confirm" => "Stop", "done" => "ok" } } =>
