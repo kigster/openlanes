@@ -6,5 +6,5 @@
 #
 # © 2026 Konstantin Gredeskoul
 module OpenLanes
-  VERSION = "3.0.0"
+  VERSION = "3.0.1"
 end
