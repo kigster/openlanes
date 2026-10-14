@@ -50,7 +50,7 @@ RSpec.describe "the control room, end to end", :redis do
   it "carries a state change in the engine to the stream within one second" do
     stream = room.sse("/api/events")
     stream.wait_for(deadline: 15) { it.name == "board" && plan_on(it.data, "003.00") }
-    from = Dir[File.join(plans, "003.00-*")].first
+    from = Dir[File.join(plans, "003.00*")].first
     to = File.join(plans,
       OpenLanes::Plans.plan_dirname("003.00",
         OpenLanes::Plans.status(:product_blocked),
