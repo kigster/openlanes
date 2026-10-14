@@ -1,7 +1,7 @@
 // The event stream (contract.md, `GET /api/events`) through @microsoft/fetch-event-source, which reconnects after a
 // dropped connection instead of giving up the way a bare EventSource does on a non-200.
 import { fetchEventSource, type EventSourceMessage } from "@microsoft/fetch-event-source";
-import type { CopilotTurn, Reply, WireBoard } from "./types";
+import type { ChatEvent, CopilotTurn, Reply, WireBoard } from "./types";
 
 export type ConnectionState = "live" | "reconnecting" | "offline";
 
@@ -15,6 +15,10 @@ export interface StreamHandlers {
    * `GET /api/copilot` started now covers the rest. Sent on every open, so it also stands for a reconnect.
    */
   onCopilotCursor?(): void;
+  /** What happened in the chat between machines (plan 006). No id either: the chat keeps no history. */
+  onChat?(event: ChatEvent): void;
+  /** The stream is relaying this page's chat from here on: a read of `GET /api/chat` started now misses nothing. */
+  onChatCursor?(): void;
   onState(state: ConnectionState): void;
   /** Called on every open after the first: whatever happened while the stream was down is fetched once. */
   onReconnect(): void;
@@ -55,6 +59,8 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
       else if (message.event === "reply") handlers.onReply(JSON.parse(message.data) as Reply);
       else if (message.event === "copilot") handlers.onCopilot?.(JSON.parse(message.data) as CopilotTurn);
       else if (message.event === "copilot_cursor") handlers.onCopilotCursor?.();
+      else if (message.event === "chat") handlers.onChat?.(JSON.parse(message.data) as ChatEvent);
+      else if (message.event === "chat_cursor") handlers.onChatCursor?.();
     },
     onclose() {
       // The server closed a stream that should never end (a restart): treat it like any other drop.

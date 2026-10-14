@@ -1,7 +1,7 @@
 // The page's only door to the API server (contract.md, "HTTP"). Everything that crosses the network goes through
 // here, so the tests mock fetch once and every caller is covered.
 import { ulid } from "ulid";
-import type { Board, Command, CopilotLog, CopilotMessage, CopilotTurn, Node, Reply, WireBoard } from "./types";
+import type { Board, ChatState, Command, CopilotLog, CopilotMessage, CopilotTurn, Node, Reply, WireBoard } from "./types";
 import fixtureBoard from "./fixtures/board.json";
 
 export interface Session {
@@ -109,4 +109,20 @@ export async function postCopilot(message: CopilotMessage): Promise<CopilotTurn>
   if (res.status === 202) return (await res.json()) as CopilotTurn;
   const reason = res.status === 422 ? ((await res.json()) as { error?: string }).error : undefined;
   throw new ApiError(reason ?? `POST /api/copilot answered ${res.status}`, res.status);
+}
+
+export const fetchChat = (page: string): Promise<ChatState> => getJson<ChatState>(`/api/chat?page=${encodeURIComponent(page)}`);
+
+/** What a page does in a chat (contract.md, "Chat between machines"). */
+export type ChatAction = "start" | "invite" | "accept" | "decline" | "leave" | "say" | "presence";
+
+/**
+ * One chat action. Resolves with the server's 202 answer; a 409 (an invite already answered or expired) and a 422 (a
+ * request the server refused) carry the reason, which becomes the error's message.
+ */
+export async function postChat<T = Record<string, never>>(action: ChatAction, body: Record<string, unknown>): Promise<T> {
+  const res = await post(`/api/chat/${action}`, body);
+  if (res.status === 202) return (await res.json()) as T;
+  const reason = res.status === 409 || res.status === 422 ? ((await res.json()) as { error?: string }).error : undefined;
+  throw new ApiError(reason ?? `POST /api/chat/${action} answered ${res.status}`, res.status);
 }

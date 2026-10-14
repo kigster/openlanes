@@ -215,6 +215,24 @@ module OpenLanes
         found.uniq.sort
       end
 
+      # ---- pub/sub ----------------------------------------------------------
+
+      # @param channel [String]
+      # @param message [String]
+      # @return [Integer] how many subscriptions received it
+      def publish(channel, message) = call("PUBLISH", channel, message)
+
+      # A connection of its own, subscribed to +channels+ and +patterns+.
+      #
+      # @return [OpenLanes::Live::Subscriber]
+      def subscriber(channels: [], patterns: []) = Subscriber.new(url:, channels:, patterns:)
+
+      # The database in the URL. Pub/sub ignores databases, so whoever names
+      # a channel puts this in it (see {Keys#chat_room}).
+      #
+      # @return [Integer]
+      def db = @client.config.db.to_i
+
       # ---- transactions -----------------------------------------------------
 
       # The writes the block makes, applied atomically.

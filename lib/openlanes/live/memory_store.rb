@@ -22,6 +22,7 @@ module OpenLanes
         @groups = Hash.new { |h, k| h[k] = {} }
         @last_ms = 0
         @last_seq = 0
+        @subscribers = []
       end
 
       # @return [String] what {Live.mask} shows for it
@@ -192,6 +193,29 @@ module OpenLanes
 
       # @return [Array<String>]
       def scan(prefix) = locked { @data.keys.select { |k| k.start_with?(prefix) && !live(k).nil? }.sort }
+
+      # ---- pub/sub ----------------------------------------------------------
+
+      # @return [Integer] how many subscriptions received it
+      def publish(channel, message)
+        receivers = locked { @subscribers.dup }
+        receivers.sum do |subscriber|
+          subscriber.deliver(channel, message.to_s)
+          subscriber.matches(channel)
+        end
+      end
+
+      # @return [OpenLanes::Live::MemorySubscriber]
+      def subscriber(channels: [], patterns: [])
+        MemorySubscriber.new(store: self, channels:, patterns:).tap { |s| locked { @subscribers << s } }
+      end
+
+      # @param subscriber [OpenLanes::Live::MemorySubscriber]
+      # @return [void]
+      def unsubscribe(subscriber) = locked { @subscribers.delete(subscriber) }
+
+      # @return [Integer] always 0: one process, one keyspace
+      def db = 0
 
       # ---- transactions -----------------------------------------------------
 

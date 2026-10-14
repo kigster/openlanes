@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import * as Tabs from "@radix-ui/react-tabs";
 import { MotionConfig, useReducedMotion } from "motion/react";
@@ -6,6 +6,7 @@ import type { Board as BoardData, Car, Plan } from "./api/types";
 import { useBoard, type ConnectionState } from "./api/useBoard";
 import { useSendCommand } from "./api/useSendCommand";
 import { Board, MachineBoard } from "./board/Board";
+import { ChatRoom, MachineMenu } from "./chat";
 import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
 import { isWorking, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
@@ -54,6 +55,25 @@ interface OpenCar {
   agent: string;
 }
 
+const STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
+
+/**
+ * The tabs sit in several tablists (each machine's in its own, beside its ▾), each a roving-focus group of its own.
+ * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list;
+ * focusing a tab selects it, so the keys still switch views.
+ */
+function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
+  const from = e.target;
+  const step = STEPS[e.key];
+  const edge = e.key === "Home" || e.key === "End";
+  if ((!step && !edge) || !(from instanceof HTMLElement) || from.getAttribute("role") !== "tab") return;
+  const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]'));
+  const at = tabs.indexOf(from);
+  const to = edge ? (e.key === "Home" ? 0 : tabs.length - 1) : (at + step + tabs.length) % tabs.length;
+  e.preventDefault(); // the group's own handler stands down for a prevented event
+  tabs[to]?.focus();
+}
+
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
   const { me, others } = board;
   const { announce } = useAnnounce();
@@ -84,6 +104,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
     const { pathname, search } = window.location;
     window.history.replaceState(window.history.state, "", pathname + search);
   }, []);
+  // The machine whose chat menu is open (D3): its ▾, or a right-click on its tab.
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const runs = useMemo(() => testRuns(me.plans), [me.plans]);
   const tabs = ["board", "logs", ...runs.map(testTabValue), ...others.map(o => machineTab(o.node.id))];
@@ -162,7 +184,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const busy = me.plans.map(p => p.cars.filter(isWorking).length).filter(n => n > 0);
 
   return (
-    <>
+    <ChatRoom user={me.node.user} enabled={!fixture}>
       <Header
         snapshot={me}
         connection={connection}
@@ -174,48 +196,61 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         help={<HelpDialog />}
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab}>
-        <Tabs.List className="tabs" aria-label="Views">
-          <Tabs.Trigger className="tab" value="board">
-            Board
-          </Tabs.Trigger>
-          <Tabs.Trigger className="tab" value="logs">
-            Logs
-            <span className="tab-count" title="Warnings and errors since you last looked">
-              {alerts || ""}
-            </span>
-          </Tabs.Trigger>
-          {runs.map(run => (
-            <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
-              {testTabLabel(run, runs)}
-              <span className="run-chip">
-                {run.done} of {run.total}
+        {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
+            the arrow keys still walk every tab as one row. */}
+        <div className="tabs" onKeyDownCapture={acrossTabs}>
+          <Tabs.List className="tabs-list" aria-label="Views">
+            <Tabs.Trigger className="tab" value="board">
+              Board
+            </Tabs.Trigger>
+            <Tabs.Trigger className="tab" value="logs">
+              Logs
+              <span className="tab-count" title="Warnings and errors since you last looked">
+                {alerts || ""}
               </span>
             </Tabs.Trigger>
-          ))}
-          {others.map(o => {
-            const value = machineTab(o.node.id);
-            // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
-            const note = () => {
-              pressedSelected.current = current === value;
-            };
-            return (
-              <Tabs.Trigger
-                key={value}
-                className="tab tab-machine"
-                value={value}
-                title={`Read only: what ${who(o.node)} is working on. Press again to see every machine.`}
-                onPointerDown={note}
-                onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
-                onClick={() => {
-                  if (pressedSelected.current) setMerged(true);
-                  pressedSelected.current = false;
-                }}
-              >
-                {who(o.node)}
+            {runs.map(run => (
+              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
+                {testTabLabel(run, runs)}
+                <span className="run-chip">
+                  {run.done} of {run.total}
+                </span>
               </Tabs.Trigger>
-            );
-          })}
-        </Tabs.List>
+            ))}
+          </Tabs.List>
+            {others.map(o => {
+              const value = machineTab(o.node.id);
+              // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
+              const note = () => {
+                pressedSelected.current = current === value;
+              };
+              return (
+                <span key={value} className="tab-machine-wrap">
+                  <Tabs.List className="tabs-list" aria-label={`Machine ${who(o.node)}`}>
+                    <Tabs.Trigger
+                      className="tab tab-machine"
+                      value={value}
+                      title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
+                      onPointerDown={note}
+                      onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
+                      onClick={() => {
+                        if (pressedSelected.current) setMerged(true);
+                        pressedSelected.current = false;
+                      }}
+                      onContextMenu={e => {
+                        if (fixture) return;
+                        e.preventDefault();
+                        setMenuFor(o.node.id);
+                      }}
+                    >
+                      {who(o.node)}
+                    </Tabs.Trigger>
+                  </Tabs.List>
+                  <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
+                </span>
+              );
+            })}
+        </div>
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <main className="layout">
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
@@ -264,7 +299,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onDropGone={life.dropFromBar}
       />
       <Copilot onCommand={onCommand} models={me.models} />
-    </>
+    </ChatRoom>
   );
 }
 

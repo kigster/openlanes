@@ -219,6 +219,77 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "the chat between machines" do
+    let(:kim) { "1" * 24 }
+    let(:page) { "page-0001" }
+
+    def chat_post(action, payload = nil, token: context.csrf, **fields)
+      payload ||= fields
+      header "X-CSRF-Token", token if token
+      post "/api/chat/#{action}", payload.is_a?(String) ? payload : JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    before do
+      other = "#{kim}:cccc"
+      store.hset(keys.nodes, other, "{}")
+      store.set(keys.snapshot(other), JSON.generate(seq: 1, node: { id: kim, user: "kim", host: "lab", checkout: "~/w" }))
+      context.chat.step
+    end
+
+    it "starts a chat with a machine on the board, naming it as user@host" do
+      chat_post("start", page:, name: "Pat", machine: kim)
+      context.chat.step
+      get "/api/chat", page: page
+      expect(body).to include("chat" => include("participants" => [include("name" => "Pat")]), "invites" => [])
+    end
+
+    it "refuses a machine that is not on the board" do
+      chat_post("start", page:, name: "Pat", machine: "2" * 24)
+      expect([last_response.status, body["error"]]).to eq([422, "no machine #{"2" * 24} is on this Redis now"])
+    end
+
+    it "sends, idles and leaves" do
+      chat_post("start", page:, name: "Pat", machine: kim)
+      chat_post("say", page:, id: "01JMSG", text: "hi https://example.com")
+      sent = [last_response.status, body["text"]]
+      chat_post("presence", page:, idle: true)
+      chat_post("leave", page:)
+      expect(sent + [last_response.status, JSON.parse(last_response.body)]).to eq([202, "hi https://example.com", 202, {}])
+    end
+
+    it "answers 422 for a message over 4,000 characters" do
+      chat_post("start", page:, name: "Pat", machine: kim)
+      chat_post("say", page:, id: "01JMSG", text: "x" * 4001)
+      expect([last_response.status, body["error"]]).to eq([422, "a message is at most 4000 characters"])
+    end
+
+    it "answers 409 for an invite that is not open, and 404 for an action it does not know" do
+      chat_post("accept", page:, invite: "nope", name: "Pat")
+      settled = last_response.status
+      chat_post("decline", page:, invite: "nope")
+      declined = last_response.status
+      chat_post("wave", page:)
+      expect([settled, declined, last_response.status]).to eq([409, 409, 404])
+    end
+
+    it "refuses a body that is not a JSON object" do
+      chat_post("say", "[1]")
+      array = body["error"]
+      chat_post("say", "{nope")
+      expect([array, last_response.status, JSON.parse(last_response.body)["error"]]).to match(["the body is a JSON object", 422, start_with("not JSON")])
+    end
+
+    it "refuses a write without the token" do
+      chat_post("leave", page:, token: nil)
+      expect(last_response.status).to eq(403)
+    end
+
+    it "refuses a page id that is not one" do
+      get "/api/chat", page: "x"
+      expect([last_response.status, body["error"]]).to match([422, start_with("page must be")])
+    end
+  end
+
   describe "GET /api/copilot" do
     before do
       header "X-CSRF-Token", context.csrf

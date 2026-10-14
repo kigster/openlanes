@@ -79,6 +79,29 @@ module OpenLanes
           end
         end
 
+        # @return [OpenLanes::Live::Chat]
+        def chat = context.chat || halt(404, json(error: "this server has no chat"))
+
+        # The request's JSON object, or a 422.
+        #
+        # @return [Hash]
+        def body_json
+          data = JSON.parse(request.body.read)
+          data.is_a?(Hash) ? data : halt(422, json(error: "the body is a JSON object"))
+        rescue JSON::ParserError => e
+          halt 422, json(error: "not JSON: #{e.message.lines.first.to_s.strip}")
+        end
+
+        # Another machine on the board, as `user@host`, so an invite names
+        # who it went to and is only sent to a machine that is there.
+        #
+        # @param id [String] a node id
+        # @return [String]
+        def machine_label(id)
+          node = Live.board(store:, keys: context.keys)[:others].map { it["node"] }.find { it["id"] == id }
+          node ? "#{node["user"]}@#{node["host"]}" : halt(422, json(error: "no machine #{id} is on this Redis now"))
+        end
+
         # @param data [Object]
         # @return [String]
         def json(data)
@@ -136,7 +159,7 @@ module OpenLanes
       get "/api/events" do
         content_type "text/event-stream"
         headers "Cache-Control" => "no-cache, no-transform", "X-Accel-Buffering" => "no"
-        events = Events.new(context:, store:, last_id: request.env["HTTP_LAST_EVENT_ID"])
+        events = Events.new(context:, store:, last_id: request.env["HTTP_LAST_EVENT_ID"], page: params[:page])
         stream { |out| events.run(out) }
       end
 
@@ -172,6 +195,43 @@ module OpenLanes
         json(error: e.message)
       rescue Live::Copilot::Unanswered => e
         status 503
+        json(error: e.message)
+      end
+
+      # The chat between machines (plan 006): this page's chat, the invites
+      # open to this machine, and the ones this page waits on.
+      get "/api/chat" do
+        json(chat.state(page: params[:page]))
+      rescue Live::Chat::Invalid => e
+        status 422
+        json(error: e.message)
+      end
+
+      # What a page does in a chat. Everyone hears of it as `event: chat`
+      # on their own stream, this page included.
+      post "/api/chat/:action" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        data = body_json
+        page = data["page"]
+        machine = data["machine"].to_s
+        answer = case params[:action]
+                 when "start" then chat.start_chat(page:, name: data["name"], machine:, label: machine_label(machine))
+                 when "invite" then chat.invite(page:, machine:, label: machine_label(machine))
+                 when "accept" then chat.accept(page:, invite: data["invite"].to_s, name: data["name"])
+                 when "decline" then chat.decline(page:, invite: data["invite"].to_s).then { {} }
+                 when "leave" then chat.leave(page:).then { {} }
+                 when "say" then chat.say(page:, id: data["id"], text: data["text"])
+                 when "presence" then chat.presence(page:, idle: data["idle"]).then { {} }
+                 else halt 404, json(error: "no such chat action: #{params[:action]}")
+                 end
+        status 202
+        json(answer)
+      rescue Live::Chat::Invalid => e
+        status 422
+        json(error: e.message)
+      rescue Live::Chat::Settled => e
+        status 409
         json(error: e.message)
       end
 

@@ -79,6 +79,43 @@ module OpenLanes
       # @return [String]
       def copilot_session(of = node) = "#{base}:#{of}:copilot-session"
 
+      # Pub/sub channel: one chat's messages, joins, leaves and idle notices
+      # (plan 006). Redis delivers a `PUBLISH` to every database's
+      # subscribers, so the database is part of every chat channel's name: a
+      # chat between nodes on database 13 never reaches a page on database 0.
+      #
+      # @param id [String] the chat's UUID
+      # @param db [Integer] the Redis database the nodes share
+      # @return [String]
+      def chat_room(id, db:) = "#{chat_base(db)}:room:#{id}"
+
+      # Pub/sub pattern matching every {#chat_room} on +db+, which each API
+      # server subscribes to once, so joining a chat needs no new subscription.
+      #
+      # @param db [Integer]
+      # @return [String]
+      def chat_rooms(db:) = "#{chat_base(db).gsub(/[*?\[\]\\]/) { "\\#{it}" }}:room:*"
+
+      # Pub/sub channel: one machine's chat inbox, where invites to it and
+      # their answers arrive. Every API server for that machine listens, so
+      # an invite reaches every page open there (D9).
+      #
+      # @param machine [String] a node id, 24 hex digits of `user@host`
+      # @param db [Integer]
+      # @return [String]
+      def chat_inbox(machine, db:) = "#{chat_base(db)}:machine:#{machine}"
+
+      # String: how an invite was settled (`accepted`, `declined`, `expired`),
+      # `SET NX EX`, so the first answer from any page wins (D9).
+      #
+      # @param invite [String] the invite's UUID
+      # @return [String]
+      def chat_answer(invite) = "#{base}:chat:invite:#{invite}"
+
+      # @param db [Integer]
+      # @return [String]
+      def chat_base(db) = "#{base}:chat:#{db}"
+
       # String: the node name holding a plan, `SET NX EX`.
       #
       # @param ordinal [#to_s] e.g. "004.00"

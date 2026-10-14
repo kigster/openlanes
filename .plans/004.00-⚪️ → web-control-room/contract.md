@@ -34,10 +34,12 @@ A node is alive while its `snapshot` key exists. Whoever reads `P:nodes` drops t
 | --- | --- |
 | `GET /` and static | `web/dist`; `index.html` for unknown non-API paths |
 | `GET /api/board` | `Board` JSON now |
-| `GET /api/events` | SSE: first `event: cursor` with `id:` and `{id}` set to the newest reply id (`0-0` when there is none), so a reconnect always has a `Last-Event-ID`; then `event: board` with a `Board` whenever any snapshot's `seq` changes (checked every 250 ms), `event: reply` with each `Reply`; then `event: copilot_cursor` with `{id}`, the newest copilot turn's stream id (`0-0` when there is none), and `event: copilot` with each `CopilotTurn` written after it, neither with an `id:` so they never move the reply cursor; a `: ping` comment every 15 s |
+| `GET /api/events` | SSE: first `event: cursor` with `id:` and `{id}` set to the newest reply id (`0-0` when there is none), so a reconnect always has a `Last-Event-ID`; then `event: board` with a `Board` whenever any snapshot's `seq` changes (checked every 250 ms), `event: reply` with each `Reply`; then `event: copilot_cursor` with `{id}`, the newest copilot turn's stream id (`0-0` when there is none), and `event: copilot` with each `CopilotTurn` written after it, neither with an `id:` so they never move the reply cursor; with `?page=<id>`, `event: chat_cursor` once that page is attached to its chat (the page reads `GET /api/chat` on it), then `event: chat` with each `ChatEvent` for the page, no `id:`; a `: ping` comment every 15 s |
 | `POST /api/commands` | body `Command`; header `X-CSRF-Token` must equal the token in `GET /api/session`; `202` with `Reply{status: "accepted"}` once queued, `422` with `Reply{status: "refused"}` for an invalid command |
 | `GET /api/copilot` | `CopilotLog`: the newest 100 turns, oldest first, and the copilot's latest `usage` (`{model: null, up: 0, down: 0}` before it has any) |
 | `POST /api/copilot` | body `CopilotMessage` `{id, text}`, text at most 4000 characters; same `X-CSRF-Token` rule; `202` with the person's `CopilotTurn` once stored, `422` with `{error}` for a message it refuses, `503` with `{error}` when nothing in this server answers the copilot (the message is not stored). The answers arrive as `event: copilot` |
+| `GET /api/chat?page=<id>` | `ChatState` (plan 006): `{chat: {id, me, participants} or null, invites, outgoing}` for that page; `422` for a page id that is not 8–64 letters, digits, `-` or `_` |
+| `POST /api/chat/:action` | `start {page, name, machine}`, `invite {page, machine}`, `accept {page, invite, name}`, `decline {page, invite}`, `leave {page}`, `say {page, id, text}` (at most 4000 characters), `presence {page, idle}`; same `X-CSRF-Token` rule; `202` with the action's answer, `422` with `{error}` when refused, `409` for an invite already answered or expired. Everyone hears of it as `event: chat` |
 | `GET /api/session` | `{csrf, node, repo}` |
 | `GET /api/plans/:ordinal/files/:name` | the Markdown of a plan file (spec.md, plan.md, blocked.md), for the drawer and preview |
 | `GET /healthz` | `ok` and the Redis address, password masked |
@@ -88,6 +90,18 @@ The agent answers in prose. Where it wants a card it writes a fenced block whose
 - the answer has offered no more than three cards.
 
 `message`, `hold` and every other kind are refused as cards: the engine files a `message` in the mailbox as from `human`, and the copilot's words must not reach an agent under the person's name. A fence with another info string, or one never closed, stays prose. The server never sends a card's command itself: the page does, through `POST /api/commands`, when the person presses the button.
+
+## Chat between machines (plan 006)
+
+Pages on machines sharing one Redis chat through Redis pub/sub; nothing said is stored. Each API server subscribes once, relays to its pages over the event stream, and takes their actions by POST.
+
+| Channel or key | Type | Carries |
+| --- | --- | --- |
+| `P:chat:<db>:room:<chat>` | pub/sub, every server through `PSUBSCRIBE P:chat:<db>:room:*` | `join`, `here`, `say`, `idle`, `back`, `leave`, each `{kind, from: ChatParticipant, …}` |
+| `P:chat:<db>:machine:<node>` | pub/sub, every server for that node id | `invite {invite: ChatInvite}`, `absent {invite}`, `settled {invite, answer}` |
+| `P:chat:invite:<invite>` | string, `SET NX EX 120` | `accepted`, `declined` or `expired`: the first answer wins |
+
+`<db>` is the Redis database number, because `PUBLISH` reaches every database. `<node>` is the 24-hex node id, so an invite reaches every page open on that machine. A `ChatEvent` is one of `joined`, `left`, `idle`, `back`, `roster`, `said`, `invited`, `invite_closed`, `declined`, `unanswered` (types in `web/src/api/types.ts`). A page whose stream closes counts as gone after 10 s; invites expire after 60 s; a participant not heard from (a `here` every 20 s) for 60 s counts as gone.
 
 ## Commands, as the engine applies them
 

@@ -50,6 +50,7 @@ module OpenLanes
           log_writer:           Puma::LogWriter.new(File.open(File::NULL, "w"), @log))
         @puma.add_tcp_listener(@host, @port)
         @thread = @puma.run
+        @context.chat&.start
         self
       end
 
@@ -69,6 +70,7 @@ module OpenLanes
       # @return [void]
       def stop
         @context.stopping.make_true
+        @context.chat&.stop
         @puma&.stop(true)
         @context.stores.close
       end

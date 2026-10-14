@@ -54,6 +54,13 @@ it("passes the copilot boundary on", () => {
   expect(h.onCopilotCursor).toHaveBeenCalledTimes(1);
 });
 
+it("passes the chat boundary on", () => {
+  const h = { ...handlers(), onChatCursor: vi.fn() };
+  openStream(h);
+  calls[0].onmessage?.({ id: "", event: "chat_cursor", data: "{}", retry: undefined });
+  expect(h.onChatCursor).toHaveBeenCalledTimes(1);
+});
+
 it("passes over the opening cursor event, whose id the library keeps for Last-Event-ID", () => {
   const h = handlers();
   openStream(h);
