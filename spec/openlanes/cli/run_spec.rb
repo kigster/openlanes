@@ -21,6 +21,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     instance_double(OpenLanes::Web::Launcher, ready?: true, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
   end
 
+  # STDERR as it was written, before strip_ansi: what a terminal received.
+  let(:raw) { {} }
+
   before do
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
       original.call(**keywords, sleeper: ->(_) {})
@@ -74,6 +77,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       $stdout, $stderr = original_out, original_err
     end
 
+    raw[:err] = err.string
     [strip_ansi(out.string), strip_ansi(err.string), status]
   end
 
@@ -475,6 +479,43 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(unwrapped(err)).to include("1 advanced")
     end
 
+    # The terminal is told each event as it happens, one whole line each,
+    # with only the fields that line has: never a cursor move, a carriage
+    # return, or the log file's empty columns.
+    it "says each event on the terminal as one plain, appended line" do
+      with_executor
+      _out, err, = run(dry_run: false, rounds: 1)
+
+      aggregate_failures do
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  started$/)
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  failed: /)
+        expect(raw[:err]).not_to match(/\r|\e\[/)
+        expect(err).not_to include("|        |")
+      end
+    end
+
+    it "names the state a plan moved to on its finished line" do
+      with_executor { |subject|
+        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "pull-requests.md"), "| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 1 | [x](https://github.com/example/repo/pull/1) | Open 🟡 |\n")
+        [true, "completed"]
+      }
+      _out, err, = run(dry_run: false, agent: "luke-backend")
+
+      expect(err).to match(/luke-backend r01  finished: .* → 🟢  Ready for Review$/)
+    end
+
+    it "keeps the terminal silent about events under --quiet, and the log file in its columns" do
+      with_executor
+      _out, err, = run(dry_run: false, rounds: 1, quiet: true)
+      log = File.read(File.join(plans_root, "..", "progress.log"))
+
+      aggregate_failures do
+        expect(err).not_to include("started")
+        expect(log).to include("| luke-backend         | 01 |")
+      end
+    end
+
     it "exits non-zero and names the failure when an agent fails" do
       with_executor { [false, "claude exited 1: 401 API key is invalid"] }
       out, err, status = run(dry_run: false, rounds: 1)
@@ -641,6 +682,71 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       it "starts no control room" do
         result
         expect(OpenLanes::Web).not_to have_received(:launcher)
+      end
+    end
+  end
+
+  # Where the run writes, what it publishes to and where its page is: one
+  # Info box with a labelled line each, not a box per line, and a line that
+  # does not apply left out rather than drawn empty.
+  describe "the startup box" do
+    subject(:err) { result[1] }
+
+    let(:result) { run(dry_run: false, rounds: 1) }
+
+    before do
+      building_plan
+      with_executor
+    end
+
+    def boxes = err.scan("─ Info ─").size
+
+    it "holds the log, the board and the control room in one box, labels aligned" do
+      aggregate_failures do
+        expect(boxes).to eq(1)
+        expect(err).to match(%r{│  Progress:     /\S+}).and include("progress.log")
+        expect(err).to match(%r{│  Live board:   memory:// as \S+})
+        expect(err).to include('│  Control room: http://127.0.0.1:11000')
+      end
+    end
+
+    context "with --no-web" do
+      let(:result) { run(dry_run: false, rounds: 1, web: false) }
+
+      it "leaves the control room out" do
+        expect([boxes, err]).to match([1, satisfy { !it.include?("Control room") && it.include?("Live board:") }])
+      end
+    end
+
+    context "without Redis" do
+      before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
+
+      it "says only where the log is" do
+        expect([boxes, err]).to match([1, satisfy { !it.include?("Live board") && it.include?("Progress:") }])
+      end
+    end
+
+    context "when the engine stays up with its page" do
+      before do
+        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! })
+        end
+      end
+
+      after { OpenLanes::Execution::Control.reset! }
+
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false) }
+
+      it "says so in the same box" do
+        expect([boxes, unwrapped(err)]).to match([1, include("Control room:", "The engine stays up with its control room")])
+      end
+    end
+
+    context "with --quiet" do
+      let(:result) { run(dry_run: false, rounds: 1, quiet: true) }
+
+      it "draws none" do
+        expect(boxes).to eq(0)
       end
     end
   end

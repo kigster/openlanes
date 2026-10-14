@@ -69,6 +69,14 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       expect(OpenLanes::UI).to have_received(:log).with("commands not read: gone")
     end
 
+    it "says what came from the page, once, naming the plan and agent it addresses" do
+      allow(OpenLanes::UI).to receive(:log)
+      apply
+      apply
+      expect(OpenLanes::UI).to have_received(:log)
+        .with("from the page: hold", plan: "001.00", agent: dispatcher.running.first.task.agent.name).once
+    end
+
     it "is a block the dispatcher calls at the top of its tick" do
       dispatcher.before_tick(&commands)
       dispatcher.tick
