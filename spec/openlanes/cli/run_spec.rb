@@ -547,22 +547,6 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
-  describe "the publisher" do
-    subject(:publisher) { command.send(:publisher_for, plans_root, :worktree, options) }
-
-    context "with the default options" do
-      let(:options) { { dry_run: false } }
-
-      it { is_expected.to be_a(OpenLanes::Vcs::Publisher) }
-    end
-
-    context "with --no-git-push" do
-      let(:options) { { dry_run: false, git_push: false } }
-
-      it { is_expected.to be_nil }
-    end
-  end
-
   describe "the state file" do
     before { building_plan }
 

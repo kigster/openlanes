@@ -6,6 +6,14 @@ module OpenLanes
   module Engine
     module_function
 
+    # @param options [Hash] passed to {RunWorkflow#initialize}
+    # @return [OpenLanes::Engine::RunWorkflow] `openlanes run`, without the command
+    def run(**) = RunWorkflow.new(**)
+
+    # @param options [Hash] passed to {StartWorkflow#initialize}
+    # @return [OpenLanes::Engine::StartWorkflow] `openlanes start`, without the command
+    def start(**) = StartWorkflow.new(**)
+
     # @return [OpenLanes::Engine::Runner]
     def runner(**) = Runner.new(**)
 
