@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       t.plan "000.00",
         :building,
         "folder-capitalized-not-downcased",
-        files: { "spec.md" => spec_body(goal: "Make the thing work.") }
+        files: { "spec.md" => spec_body(goal: "Make the thing work."), "plan.md" => "# Plan\n\n## How to test\n\n- open the editor\n" }
     end
   end
 
@@ -26,7 +26,10 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       dirty?: true)
   end
 
-  before { allow(command).to receive(:run).and_return(result) }
+  before do
+    allow(command).to receive(:run).and_return(result)
+    allow(github).to receive(:swap_label).and_return(["ready-for-review"])
+  end
 
   describe "#title_for" do
     it "matches the convention: [NNN.MM](A) with the folder title-cased" do
@@ -106,6 +109,50 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
     it "returns the URL gh printed" do
       expect(publisher.publish(checkout:, subject: plan).url).to eq("https://github.com/example/repo/pull/7")
+    end
+
+    it "labels the new pull request ready-for-review" do
+      publication = publisher.publish(checkout:, subject: plan)
+
+      aggregate_failures do
+        expect(github).to have_received(:swap_label)
+          .with(number: 7, repo: "example/repo", add: OpenLanes::Plans::ReviewLabel::INITIAL)
+        expect(publication.label_error).to be_nil
+      end
+    end
+
+    it "keeps the pull request open when labelling fails, and says why" do
+      allow(github).to receive(:swap_label).and_raise(OpenLanes::Error, "could not label #7: HTTP 403")
+      publication = publisher.publish(checkout:, subject: plan)
+
+      aggregate_failures do
+        expect(publication).to be_published
+        expect(publication.label_error).to eq("could not label #7: HTTP 403")
+      end
+    end
+
+    it "copies the How to test section into the pull request body" do
+      body = nil
+      allow(command).to receive(:run) do |*argv, **|
+        body = File.read(argv[argv.index("-F") + 1]) if argv[0, 3] == %w[gh pr create]
+        result
+      end
+      publisher.publish(checkout:, subject: plan)
+
+      expect(body).to include("## How to test\n\n- open the editor")
+    end
+
+    context "when plan.md has no How to test section" do
+      before { File.write(File.join(plan.feature.path, "plan.md"), "# Plan\n\n## U1\n") }
+
+      it "refuses to open the pull request" do
+        publication = publisher.publish(checkout:, subject: plan)
+
+        aggregate_failures do
+          expect(publication.refusal).to include("## How to test")
+          expect(command).not_to have_received(:run).with("gh", "pr", "create", any_args)
+        end
+      end
     end
 
     # The bracketed prefix is a join key for pull request titles. Repeating it
