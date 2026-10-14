@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 26 | [\[005.00\] Review State Labels](https://github.com/kigster/openlanes/pull/26) | Open 🟡 |
+
 ## Verification
 
 Run in the worktree `kig/005.00-review-state-labels`, rebased on `origin/main`, on 2026-10-14.
