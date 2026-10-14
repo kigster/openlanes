@@ -103,7 +103,7 @@ Every feature is one folder under `.plans/`, named `NNN.MM━━<emoji>━━❯
 - **The emoji** is the state. A folder may only claim a state its files prove, such as `spec.md`, `plan.md` or `pull-requests.md`, and the tool refuses any other move.
 - **The name** has no spaces, so Tab completion works and nothing needs quoting. Each state emoji is a single code point that terminals draw two cells wide; in iTerm, turn on Unicode version 9+ widths so the columns line up.
 
-Folders named before this convention (`NNN.MM-<emoji> → <slug>`, or with the older emoji ⚪️ ⭐️ ⭕️ 🅱️ ☢️ 🕰️) are still read, with a one-line reminder to migrate them. `openlanes resync dirs --from-old-schema` does the migration in one pass: it renames every folder to the new form and moves finished, deferred and discarded plans into their subfolders. Preview it with `-n`.
+Folders named before this convention (`NNN.MM-<emoji> → <slug>`, or with the older emoji ⚪️ ⭐️ ⭕️ 🅱️ ☢️ 🕰️) are still read. `openlanes resync dirs` renames them to the new form, and moves finished, deferred and discarded plans into their subfolders. Preview it with `-n`.
 
 #### Finished, deferred and abandoned plans
 

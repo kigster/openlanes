@@ -8,7 +8,7 @@ Settled 2026-10-13 in a grilling session. Not built yet; this file is the specif
 
 - `━` is U+2501 and `❯` is U+276F. Neither is an emoji, so each is one cell wide. `━` is East Asian "ambiguous" width, so a terminal set to draw ambiguous characters double width draws it two cells wide.
 - Why: names with spaces need quoting in every shell command and break Tab completion.
-- The parser keeps reading the old form, `NNN.MM-<emoji> → <slug>`. `resync dirs --from-old-schema` renames old folders to the new form (N5).
+- The parser keeps reading the old form, `NNN.MM-<emoji> → <slug>`. `resync dirs` renames old folders to the new form (N5).
 
 ## N2. Every state emoji is one code point that is an emoji by default
 
@@ -50,19 +50,53 @@ Settled 2026-10-13 in a grilling session. Not built yet; this file is the specif
 - `resync dirs` removes a lock whose process is gone, but only for locks taken on this host.
 - Rejected alternative: appending `━━🔑` to the folder name. Every agent run would add two tracked renames, paths in prompts, ledgers and mail would change under running agents, and a worktree's lock would not show in the main checkout.
 
-## N5. Migration is an explicit, temporary command
+## N5. `resync dirs` does the migration, with no special flag
 
-`openlanes resync dirs --from-old-schema` migrates a repository in one pass:
+Plain `openlanes resync dirs` brings every folder to its canonical form, every time it runs:
 
-- renames every folder from `NNN.MM-<emoji> → <slug>` to `NNN.MM━━<emoji>━━❯<slug>`, swapping the six old emoji (N2);
+- renames any folder whose name has a space, or an old emoji, to `NNN.MM━━<emoji>━━❯<slug>` (N1, N2);
 - moves ✅ and 😎 plans to `archive/`, 💤 to `deferred/` and ❌ to `abandoned/`, dated by the git commit that last renamed the folder, which is when it reached that state (N3);
-- uses `git mv`, so each folder keeps its history, and leaves the result uncommitted for review;
+- uses `git mv`, so each folder keeps its history;
 - previews with `-n` / `--dry-run`, printing old name → new name.
 
-Plain `resync dirs` never touches old-schema names. Until a repository is migrated, every command reads old names and prints a single line suggesting the migration, so nothing renames a whole tree by surprise.
+`run` and `start` call `resync dirs` before and after every round, so a repository migrates on its first run without anyone asking. That was chosen over a separate `--from-old-schema` flag.
 
-The flag is temporary. It is removed once the repositories in use have migrated, and the old-schema parser goes with it.
+## N6. Plans declare what they depend on; `blocks` is computed
 
-## Open
+- `spec.md` frontmatter carries `depends_on: [034, 045]`. `depends_on: []` means "checked, depends on nothing"; a missing key means "not checked yet".
+- Only open plans belong in it. A ✅ plan is already on `main`, so depending on it changes nothing, and `[*]` would serialise every plan.
+- Only direct dependencies: if 050 needs 045 and 045 needs 034, 050 lists 045. `Plans::Tree` computes the rest.
+- `blocks` is never written down. `Plans::Tree` builds it from every `depends_on:`, and `list-plans`, the board, the agents' prompts, priority and the 💣 rule all read that one index. A stored `blocks:` would go stale the first time a dependency was dropped.
+- A plan others depend on is assigned before plans nobody waits for.
+- A plan whose dependencies are not all ✅ stays where it is; the engine does not start it.
 
-- Whether a plan blocked for N days moves to 💤 on its own, or is only offered on a "Stale" card in the control room.
+## N7. `ewoki-linker` fills in `depends_on:`
+
+- A new agent, not tied to a state, so no folder name changes. The engine runs it on any plan whose spec lacks the `depends_on:` key, before the plan's first build agent, in every lane: after yoda in `full`, before palpatine in `plan`, before r2d2 in `quick`.
+- Reads this plan's spec plus the title and goals of every open plan. Writes only `depends_on:`, and a dated ledger note with one reason per dependency.
+- A dependency must name what it needs: a table, model, endpoint, module, config, or a product decision. No named thing, no dependency. Touching the same files is a merge risk, not a dependency.
+- Haiku, low effort. A plan cannot enter 🟡 Building without the key (invariant). A hand-written `depends_on:` wins; ewoki skips plans that already have the key.
+- More than 3 direct dependencies puts the plan under Needs you with a choice: keep them all, split the plan, drop some, or type an answer. The human's pick is kept and not raised again.
+
+## N8. Blocked plans age
+
+| Blocked plan | After | Then |
+| --- | --- | --- |
+| Others depend on it | 7 days unanswered | becomes 💣, and the run halts |
+| Nothing depends on it | 14 days unanswered | moves to `deferred/` as 💤 |
+
+- The clock starts at the later of the date the plan became blocked (the git date of its rename into ⭕ or 🛑) and `plans.aging_since` in `.openlanes.yml`. Setting `aging_since` after a pause keeps the paused weeks from counting.
+- 💣 is a new state (U+1F4A3), with the invariant "blocked, has dependents, unanswered past the limit".
+
+## N9. What 💣 halts
+
+- Agents already working finish their current step. Nothing new starts on any plan while a 💣 exists.
+- `lanes run` exits non-zero, naming the plan. `lanes start` stays up and idle.
+- Answering the block (lando folds it in) returns the plan to its path, and work resumes on the next round.
+- Escape hatch: `lanes run --ignore-bombs`, or "Resume anyway for 24 h" in the control room.
+
+## N10. The 💣 notice
+
+- A full-width notice in the control room, split in two: on the left, `blocked.md` rendered as Markdown; on the right, a Markdown answer box with **Respond** at the bottom and **Pause and Discuss** above it.
+- Respond writes the answers into `blocked.md`.
+- Pause and Discuss stops every agent and opens the copilot with the blocked plan loaded. Re-spec, split or discard happens there, on the human's say-so; nothing changes on disk until then.
