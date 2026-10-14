@@ -172,6 +172,25 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe ".number_of" do
+    it "reads a bare, a #-prefixed and a URL reference" do
+      aggregate_failures do
+        expect(described_class.number_of("12")).to eq(12)
+        expect(described_class.number_of(12)).to eq(12)
+        expect(described_class.number_of("#12")).to eq(12)
+        expect(described_class.number_of("https://github.com/o/r/pull/7/")).to eq(7)
+        expect(described_class.number_of("https://github.com/o/r/pull/7/files")).to eq(7)
+        expect(described_class.number_of("https://github.com/o/r/pull/7#issuecomment-1234")).to eq(7)
+      end
+    end
+
+    it "refuses anything else rather than guessing from trailing digits" do
+      %w[https://github.com/o/r/issues/1234 pr-12 nope].each do |ref|
+        expect { described_class.number_of(ref) }.to raise_error(OpenLanes::Error, /not a pull request number or URL: #{ref}/)
+      end
+    end
+  end
+
   describe ".state_label" do
     it "translates gh's enums into the words the state machine parses" do
       aggregate_failures do

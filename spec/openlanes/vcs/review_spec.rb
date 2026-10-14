@@ -54,6 +54,19 @@ RSpec.describe OpenLanes::Vcs::Review do
     expect(github.writes.last.first(2)).to eq([7, "example/repo"])
   end
 
+  it "reads the number from /pull/N, not from a fragment's trailing digits" do
+    review.call(pr: "https://github.com/example/repo/pull/7#issuecomment-1234", label: "review-in-progress")
+
+    expect(github.writes.last.first(2)).to eq([7, "example/repo"])
+  end
+
+  it "refuses a reference that names no pull request, before asking GitHub anything" do
+    allow(github).to receive(:labels)
+    expect { review.call(pr: "https://github.com/example/repo/issues/1234", label: "review-passed") }
+      .to raise_error(OpenLanes::Error, /not a pull request number or URL/)
+    expect(github).not_to have_received(:labels)
+  end
+
   context "when CI is red" do
     before { github.buckets = %w[pass fail] }
 

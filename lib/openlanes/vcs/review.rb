@@ -23,10 +23,11 @@ module OpenLanes
       # @param label [String] a {Plans::ReviewLabel} name
       # @param dry_run [Boolean] compute the result, write nothing
       # @return [Result]
-      # @raise [OpenLanes::Error] on an unknown label, before any `gh` call
+      # @raise [OpenLanes::Error] on an unknown label or a reference naming no
+      #   pull request, before any `gh` call
       def call(pr:, label:, dry_run: false) # rubocop:disable Naming/MethodParameterName -- `pr` is the contract with CLI::Review
         to = Plans::ReviewLabel.fetch(label)
-        number = pr.to_s[%r{(\d+)/?\z}, 1].to_i
+        number = GitHub.number_of(pr)
         repo = GitHub.repo_of(pr)
 
         from = @github.labels(number:, repo:) & Plans::ReviewLabel.names

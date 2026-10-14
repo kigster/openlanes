@@ -259,6 +259,22 @@ module OpenLanes
       # @return [String, nil] "owner/repo", or nil when the URL is not GitHub's
       def self.repo_of(url) = url.to_s[%r{github\.com/([^/]+/[^/]+)/pull/}, 1]
 
+      # The number a pull request reference names: the `/pull/N` segment of a
+      # URL, or a bare or `#`-prefixed number. Never "the trailing digits",
+      # which read `…/pull/7#issuecomment-1234` as #1234 and relabel a
+      # different pull request.
+      #
+      # @param ref [String, Integer] "12", "#12" or a pull request URL
+      # @return [Integer]
+      # @raise [OpenLanes::Error] when `ref` names no pull request
+      def self.number_of(ref)
+        text = ref.to_s.strip
+        found = text[%r{\Ahttps?://\S+?/(?:pull|merge_requests)/(\d+)(?:[/?#]\S*)?\z}, 1] || text[/\A#?(\d+)\z/, 1]
+        raise Error, "not a pull request number or URL: #{ref}" unless found
+
+        found.to_i
+      end
+
       # @return [Boolean] whether `gh` is installed and authenticated
       def available?
         @command.run!("gh", "auth", "status").success?

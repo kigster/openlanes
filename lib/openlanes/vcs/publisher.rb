@@ -301,7 +301,7 @@ module OpenLanes
 
       # @return [String, nil] the error, when labelling failed
       def label_for_review(url)
-        number = url[%r{/(\d+)\z}, 1].to_i
+        number = GitHub.number_of(url)
         @github.swap_label(number:, repo: GitHub.repo_of(url), add: Plans::ReviewLabel::INITIAL)
         nil
       rescue Error => e
