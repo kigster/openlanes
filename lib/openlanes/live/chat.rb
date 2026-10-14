@@ -160,7 +160,7 @@ module OpenLanes
       rescue Unavailable => e
         close_subscriber
         first = @lock.synchronize { @unavailable.nil?.tap { @unavailable = e.message } }
-        UI.log("chat unavailable: #{e.message}") if first
+        warn_unavailable(e.message) if first
         false
       end
 
@@ -610,6 +610,19 @@ module OpenLanes
 
       # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber]
       def subscriber = @subscriber ||= store.subscriber(channels: [inbox], patterns: [@keys.chat_rooms(db:)])
+
+      # {UI.log} alone reaches only a log file or a tap, and `openlanes web`
+      # sets up neither, so there the one warning an outage gets would be
+      # dropped and nobody would learn why the chat went dark. With nothing
+      # listening it goes to STDERR instead.
+      #
+      # @param reason [String]
+      # @return [void]
+      def warn_unavailable(reason)
+        message = "chat unavailable: #{reason}"
+        UI.log(message)
+        UI.line(message, bullet: "!") unless UI.log_path || UI.log_taps.any?
+      end
 
       # @return [void]
       def close_subscriber

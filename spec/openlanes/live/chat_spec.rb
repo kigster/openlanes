@@ -334,6 +334,16 @@ RSpec.describe OpenLanes::Live::Chat do
       end
     end
 
+    it "puts the warning on STDERR when no log file or tap would hear it" do
+      allow(OpenLanes::UI).to receive_messages(log_path: nil, log_taps: [])
+      expect { 2.times { hub.listen } }.to output(/chat unavailable: NOPERM/).to_stderr
+    end
+
+    it "leaves STDERR alone when the log has somewhere to go" do
+      allow(OpenLanes::UI).to receive_messages(log_path: nil, log_taps: [proc {}])
+      expect { hub.listen }.not_to output.to_stderr
+    end
+
     it "clears the reason once a step goes through again" do
       hub.listen
       allow(refusing).to receive(:subscriber) { |**opts| store.subscriber(**opts) }

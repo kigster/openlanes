@@ -26,7 +26,7 @@ B1, B2, B3 have no dependencies on each other. F1 depends on B1. I1 depends on a
 
 - B1: `contract.md`; `app_spec.rb` "accepts exactly the verbs in the contract's verb table" probes the seven verbs plus three unknown ones.
 - B2: `chat_spec.rb` "isolation on one Redis": item 7 (widgets vs gadgets) and item 8 (db 1 vs db 10, via a store reporting its db). The thread example waits with `Thread.pass`; `rg -n sleep spec/openlanes/live/chat_spec.rb` prints nothing. The other timing examples already move the injected clock.
-- B3: a real bug. redis-client returns a refused `PSUBSCRIBE` (`NOPERM`) as an error object instead of raising, so `Subscriber#confirm` hit `event.first` and the hub's thread died with a NoMethodError. `Subscriber#read` now raises it as `Unavailable`. `Chat#listen` wraps `#step`: one `UI.log` warning per outage, `unavailable` in `state`, cleared when a step goes through. The thread uses `listen`.
+- B3: a real bug. redis-client returns a refused `PSUBSCRIBE` (`NOPERM`) as an error object instead of raising, so `Subscriber#confirm` hit `event.first` and the hub's thread died with a NoMethodError. `Subscriber#read` now raises it as `Unavailable`. `Chat#listen` wraps `#step`: one `UI.log` warning per outage (also on STDERR when no log file or tap would hear it, as under `openlanes web`), `unavailable` in `state`, cleared when a step goes through. The thread uses `listen`. A `Subscriber` whose confirmation fails closes its own connection before raising, since no caller ever holds it to close.
 
 ## Integration proof
 
