@@ -657,8 +657,22 @@ module OpenLanes
       def broken(text, free)
         return [text] if display_width(text) <= free
 
-        text.split(%r{(?<=/)}).flat_map { it.scan(/.{1,#{free}}/) }.each_with_object([+""]) do |piece, acc|
-          display_width(acc.last + piece) <= free ? acc.last << piece : acc << piece.dup
+        text.split(%r{(?<=/)}).flat_map { cells(it, free) }.each_with_object([+""]) do |piece, acc|
+          acc.last.empty? || display_width(acc.last + piece) <= free ? acc.last << piece : acc << piece.dup
+        end
+      end
+
+      # A piece cut by terminal cells rather than characters, one grapheme
+      # cluster at a time, so a wide name such as `界界界` is never cut into
+      # a chunk wider than +free+ (nor a combining mark off its letter).
+      #
+      # @param text [String]
+      # @param free [Integer] columns
+      # @return [Array<String>]
+      def cells(text, free)
+        text.each_grapheme_cluster.with_object([+""]) do |grapheme, acc|
+          acc << +"" unless acc.last.empty? || display_width(acc.last + grapheme) <= free
+          acc.last << grapheme
         end
       end
 

@@ -718,6 +718,12 @@ RSpec.describe OpenLanes::UI do
       expect(text.lines(chomp: true)).to eq(["Id: #{"x" * 10}", "    #{"x" * 10}", "    #{"x" * 5}"])
     end
 
+    it "cuts a wide name by terminal cells, not characters" do
+      text = described_class.labelled([["Id", "界" * 7]], room: 10)
+
+      expect(text.lines(chomp: true)).to eq(["Id: 界界界", "    界界界", "    界"])
+    end
+
     it "fits inside the box dry-cli-ui draws" do
       allow(described_class).to receive(:tty?).and_return(false)
       expect(described_class.box_room).to eq([described_class.width, 78].min - 6)

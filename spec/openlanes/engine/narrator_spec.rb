@@ -38,6 +38,11 @@ RSpec.describe OpenLanes::Engine::Narrator do
     it "takes out what would move the cursor: a carriage return, an escape, a newline" do
       expect(narrator.render("working\rOVER\e[2Kwritten\nhere")).to eq("working OVER written here")
     end
+
+    it "takes the same out of every field, since a page command's plan and agent go unchecked" do
+      expect(narrator.render("stop", plan: "003\e[2K.00", agent: "x\ry", status: "⚪️ N\new", round: "0\e[1A1"))
+        .to eq("003 .00 ⚪️  N ew  x y r0 1  stop")
+    end
   end
 
   describe "#call" do
@@ -59,6 +64,13 @@ RSpec.describe OpenLanes::Engine::Narrator do
       Array.new(8) { |i| Thread.new { 25.times { |n| narrator.call("event #{i}-#{n}", { plan: "00#{i}.00" }) } } }.each(&:join)
 
       expect(lines).to all(match(/\A13:39:10  00\d\.00  event \d-\d+\z/))
+    end
+
+    it "writes the timestamp unpainted, even on a terminal that takes colour" do
+      allow(OpenLanes::UI).to receive(:color?).and_return(true)
+      narrator.call("started", {})
+
+      expect(lines.join).not_to include("\e[")
     end
 
     it "never raises into the thread that logged" do

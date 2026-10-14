@@ -13,9 +13,10 @@ module OpenLanes
     # is what drew an idle line as a row of empty columns,
     # `[13:39:10 |        |  …  |   83054 |       ] idle: …`.
     #
-    # Nothing here moves the cursor. A line is written whole, under a lock,
-    # with any carriage return or escape sequence in the message (an agent's
-    # note is free text) taken out first, so two threads logging at once
+    # Nothing here moves the cursor or colours anything. A line is written
+    # whole, under a lock, with any carriage return or escape sequence in any
+    # field (an agent's note is free text, a page command's plan is unchecked)
+    # taken out first, so two threads logging at once
     # cannot splice their lines, and no message can rewrite the one above.
     # The same lines serve a terminal, a pipe and a CI log alike.
     #
@@ -67,7 +68,8 @@ module OpenLanes
           next if text == @last
 
           @last = text
-          (@stream || $stderr).puts("#{UI.paint(@clock.call.strftime(ProgressLog::TIME_FORMAT), :bright_black)}#{GAP}#{text}")
+          # Unpainted, so a terminal gets the same bytes as a pipe or a CI log.
+          (@stream || $stderr).puts("#{@clock.call.strftime(ProgressLog::TIME_FORMAT)}#{GAP}#{text}")
         end
       rescue StandardError
         # A tap runs on the logging thread and must never take it down;
@@ -88,6 +90,9 @@ module OpenLanes
       # @param to [String, nil] the state the plan moved to, emoji and label
       # @return [String] e.g. `003.00 ⭐️  Planned  yoda-writer r01  finished → 🟡  Building`
       def render(message, plan: nil, status: nil, agent: nil, round: nil, to: nil, **)
+        # Every field, not just the message: a page command's plan and agent
+        # are logged before anything checks that they name real ones.
+        plan, status, agent, round = [plan, status, agent, round].map { clean(it) if it }
         said = clean(message)
         said = "#{said} → #{self.class.status_cell(clean(to))}" if to
         [[plan, (self.class.status_cell(status) if status)].compact.join(" "), [agent, ("r#{round}" if round)].compact.join(" "), said]
