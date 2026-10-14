@@ -102,3 +102,13 @@ After round 2: `bundle exec rspec` 2310 examples, 0 failures; `bundle exec ruboc
 13. `## How to tell it's working?` list items keep their continuation lines and fenced blocks, re-indented under the item. Kept small: open PR #24 replaces this reader with its own in `Spec#how_to_verify`.
 
 After the review fixes: `bundle exec rspec` 2322 examples, 0 failures; `bundle exec rubocop` 0 offenses.
+
+### Decisions from Grok's review of #26
+
+14. The watch thread rescues any `StandardError`, not only `OpenLanes::Error`, and logs it the same way; `Thread#value` would otherwise re-raise it and end the run.
+15. `PrOutcomes#record` raises a named `OpenLanes::Error` when no `PullRequests::STATES` pattern words the outcome.
+16. Closing every pull request: `discarded.md` is still written before the move (❌ requires it), removed again if the move is refused, and never overwritten on a plan already at ❌.
+17. `## How to verify`, the heading `## How to test` replaced, still counts as present in plan.md, for `Completion` and for the publisher, so an in-flight plan neither gets a duplicate section nor a refusal.
+18. `## How to tell it's working?` in spec.md matches with a curly apostrophe and without the question mark.
+19. CI whose every check is `skipping` is `:none`, like zero checks: green, with the warning. Neither refuses a passing label yet.
+20. `review-passed` is blue (`1d76db`), so the three passing labels are not three greens. A label already on GitHub keeps its colour.
