@@ -34,6 +34,10 @@ module OpenLanes
     # @return [OpenLanes::Lifecycle::Brief]
     def brief(**) = Brief.new(**)
 
+    # @param options [Hash] passed to {UnblockWorkflow#initialize}
+    # @return [OpenLanes::Lifecycle::UnblockWorkflow] `openlanes unblock`, without the command
+    def unblock(**) = UnblockWorkflow.new(**)
+
     # @return [OpenLanes::Lifecycle::Unblocker]
     def unblocker(**) = Unblocker.new(**)
   end

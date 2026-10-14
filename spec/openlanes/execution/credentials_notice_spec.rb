@@ -15,7 +15,8 @@ RSpec.describe OpenLanes::Execution, ".credentials_notice" do
     let(:names) { ["ANTHROPIC_API_KEY"] }
 
     it "names it, the failure it predicts, and the fix" do
-      expect(notice).to include("ANTHROPIC_API_KEY is set in this shell", "401 API key is invalid",
+      expect(notice).to include("ANTHROPIC_API_KEY is set in this shell",
+        "401 API key is invalid",
         "unset ANTHROPIC_API_KEY")
     end
   end

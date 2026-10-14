@@ -6,8 +6,14 @@ RSpec.describe OpenLanes::Presentation::PrChanges do
   let(:dry_run) { false }
 
   def change(number, new_title, reason: "branch", ambiguous: false, assumed: false, adopted: false, ordinal: nil)
-    OpenLanes::Lifecycle::Resync::Prs::Change.new(number:, title: "Title #{number}", new_title:, ordinal:,
-      reason:, ambiguous:, assumed:, adopted:)
+    OpenLanes::Lifecycle::Resync::Prs::Change.new(number:,
+      title: "Title #{number}",
+      new_title:,
+      ordinal:,
+      reason:,
+      ambiguous:,
+      assumed:,
+      adopted:)
   end
 
   def report
@@ -50,7 +56,7 @@ RSpec.describe OpenLanes::Presentation::PrChanges do
       )
     end
 
-    context "on a dry run" do
+    context "with a dry run" do
       let(:dry_run) { true }
 
       it "says it would, and that nothing changed" do
@@ -58,7 +64,7 @@ RSpec.describe OpenLanes::Presentation::PrChanges do
       end
     end
 
-    context "on a dry run where nothing applies" do
+    context "with a dry run where nothing applies" do
       let(:dry_run) { true }
       let(:changes) { [change(4, nil, reason: "two plans claim it", ambiguous: true)] }
 

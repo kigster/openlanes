@@ -5,8 +5,11 @@ RSpec.describe OpenLanes::Lifecycle, ".retitle_prs", :tree do
   let(:github) { instance_double(OpenLanes::Vcs::GitHub) }
 
   def retitle(commit: false)
-    described_class.retitle_prs(tree: OpenLanes::Plans.tree(plans_root), github:, adopt: false,
-      root: File.dirname(plans_root), commit:)
+    described_class.retitle_prs(tree: OpenLanes::Plans.tree(plans_root),
+      github:,
+      adopt: false,
+      root: File.dirname(plans_root),
+      commit:)
   end
 
   before { plans { |t| t.plan("001.00", :new, "done-already") } }
