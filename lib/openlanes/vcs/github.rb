@@ -80,7 +80,7 @@ module OpenLanes
 
       # Fields asked of `gh pr view`, which unlike `pr list` can be told about
       # one pull request in another repository.
-      VIEW_FIELDS = %w[number title url headRefName state isDraft mergedAt body].freeze
+      VIEW_FIELDS = %w[number title url headRefName state isDraft mergedAt body labels].freeze
 
       # A reference to one pull request: a bare number, a `#`-prefixed number,
       # or a full URL to a GitHub pull request or a GitLab merge request.
@@ -108,7 +108,8 @@ module OpenLanes
       # One pull request, by number or URL.
       #
       # @param ref [String] "12", "#12" or "https://github.com/o/r/pull/12"
-      # @return [Hash] `{number:, title:, url:, branch:, state:, body:}`
+      # @return [Hash] `{number:, title:, url:, branch:, state:, open:, labels:, body:}`,
+      #   the keys {#pulls} gives a row plus the body
       # @raise [OpenLanes::Error]
       def pull_request(ref)
         out = @command.run("gh", "pr", "view", ref.to_s, "--json", VIEW_FIELDS.join(",")).out
@@ -121,6 +122,8 @@ module OpenLanes
           url:    pr["url"].to_s,
           branch: pr["headRefName"].to_s,
           state:  self.class.state_label(pr),
+          open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+          labels: Array(pr["labels"]).map { |l| l["name"] },
           body:   pr["body"].to_s
         }
       rescue TTY::Command::ExitError, JSON::ParserError => e

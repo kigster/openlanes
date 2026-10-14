@@ -212,7 +212,7 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     let(:payload) do
       { number: 12, title: "Add health checks", url: "https://github.com/o/r/pull/12",
        state: "MERGED", isDraft: false, mergedAt: "2026-08-01T10:00:00Z",
-       body: "Adds /healthz." }.to_json
+       body: "Adds /healthz.", labels: [{ name: "ok-to-merge" }] }.to_json
     end
 
     it "reads one pull request by number or URL" do
@@ -220,6 +220,15 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
 
       expect(described_class.new(command:).pull_request("12")).to include(number: 12, state: "Merged 🟣", body: "Adds /healthz.")
+    end
+
+    # PrWatch asks for a pull request `gh pr list` left out, and reads it as
+    # it reads a row of #pulls.
+    it "carries the open flag and labels a row of #pulls carries" do
+      command = instance_double(TTY::Command)
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
+
+      expect(described_class.new(command:).pull_request("12")).to include(open: false, labels: ["ok-to-merge"])
     end
 
     it "blames authentication rather than reporting a parse error when gh says nothing" do

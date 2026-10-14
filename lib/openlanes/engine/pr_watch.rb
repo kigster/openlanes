@@ -34,7 +34,8 @@ module OpenLanes
         now - @last >= @interval
       end
 
-      # One `gh pr list` for every watched plan.
+      # One `gh pr list` for every watched plan, and one `gh pr view` for each
+      # watched pull request that list left out.
       #
       # @param subjects [Array<Plans::Subject>]
       # @return [Array<Outcome>] one per open pull request a plan records
@@ -45,12 +46,25 @@ module OpenLanes
 
         by_number = @github.pulls(state: "all").to_h { |row| [row[:number], row] }
         watched.filter_map do |subject, number|
-          row = by_number[number] or next
+          row = by_number[number] || lookup(number) or next
           outcome(subject, number, row)
         end
       end
 
       private
+
+      # `gh pr list` returns only the newest pull requests, up to its limit,
+      # so a plan whose pull request is older than that would drop out of
+      # every poll and its merge or rejection would never be applied. Asked
+      # by number instead. One that cannot be read is skipped this poll and
+      # asked again on the next, rather than stopping the watch for all.
+      #
+      # @return [Hash, nil] a row shaped like {Vcs::GitHub#pulls}
+      def lookup(number)
+        @github.pull_request(number.to_s)
+      rescue Error
+        nil
+      end
 
       def outcome(subject, number, row)
         plan = subject.feature.ordinal.to_s

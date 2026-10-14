@@ -60,6 +60,33 @@ RSpec.describe OpenLanes::Engine::PrWatch, :tree do
     end
   end
 
+  it "asks for no single pull request when the list has every watched one" do
+    allow(github).to receive(:pull_request)
+    watch.poll(subjects)
+
+    expect(github).not_to have_received(:pull_request)
+  end
+
+  # `gh pr list` stops at its limit, newest first: an older pull request still
+  # open must not drop out of the watch.
+  context "when the list leaves out a watched pull request" do
+    let(:rows) { [{ number: 12, open: true, state: "Open 🟡", labels: [] }] }
+
+    let(:older) do
+      { "11" => { number: 11, open: true, state: "Open 🟡", labels: %w[review-rejected] },
+        "13" => { number: 13, open: false, state: "Merged 🟣", labels: [] } }
+    end
+
+    before do
+      older.each { |ref, row| allow(github).to receive(:pull_request).with(ref).and_return(row) }
+      allow(github).to receive(:pull_request).with("14").and_raise(OpenLanes::Error, "could not read pull request 14: offline")
+    end
+
+    it "asks for it by number, and skips only one it cannot read" do
+      expect(kinds).to eq(11 => :rejected, 12 => :waiting, 13 => :merged)
+    end
+  end
+
   it "asks GitHub nothing when no plan has an open pull request" do
     plans { |t| t.plan "009.00", :approved, "only", prs: [t.merged(1, "x")] }
 
