@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+#
+# coverage-changed - line coverage of the lib/ files a branch changed, gated.
+#
+#   bin/coverage-changed                          # files changed against origin/main
+#   bin/coverage-changed --base main              # ...against another ref
+#   bin/coverage-changed --files lib/a.rb,lib/b.rb
+#   bin/coverage-changed --resultset path/to/.resultset.json --minimum 90
+#
+# Reads SimpleCov's coverage/.resultset.json, so run it after rspec. Prints
+# each changed file's line coverage, then exits 1 naming every file below the
+# minimum (95 by default), 0 when all meet it or nothing under lib/ changed.
+#
+# == Why per file, and not the whole library
+#
+# The whole-library figure sits near 99%, so a new file with half its lines
+# untested moves it by a tenth of a point and the gate never notices. A
+# changed file SimpleCov never loaded counts as 0%, not as absent: that is
+# the file nobody tested at all.
+
+require "json"
+require "optparse"
+
+options = { base: "origin/main", resultset: "coverage/.resultset.json", minimum: 95.0, files: nil }
+OptionParser.new do |opts|
+  opts.banner = "usage: bin/coverage-changed [--base REF] [--files A,B] [--resultset PATH] [--minimum PERCENT]"
+  opts.on("--base REF", "compare against REF (default origin/main)") { options[:base] = it }
+  opts.on("--files LIST", Array, "these files instead of git's list") { options[:files] = it }
+  opts.on("--resultset PATH", "SimpleCov's .resultset.json") { options[:resultset] = it }
+  opts.on("--minimum PERCENT", Float, "lowest acceptable line coverage") { options[:minimum] = it }
+end.parse!
+
+files = options[:files] || begin
+  listed = IO.popen(["git", "diff", "--name-only", "--diff-filter=d", "#{options[:base]}...HEAD", "--", "lib/"], &:read)
+  abort "coverage-changed: git diff against #{options[:base]} failed" unless $?.success?
+  listed.split("\n")
+end
+files = files.map(&:strip).select { it.start_with?("lib/") && it.end_with?(".rb") }
+
+if files.empty?
+  puts "coverage-changed: no changed files under lib/"
+  exit 0
+end
+
+abort "coverage-changed: #{options[:resultset]} is missing; run rspec first" unless File.file?(options[:resultset])
+
+# Every command in the resultset (RSpec, and any other suite merged in) counts:
+# a line hit by any of them is covered.
+lines = Hash.new { |table, path| table[path] = [] }
+JSON.parse(File.read(options[:resultset])).each_value do |run|
+  run.fetch("coverage").each do |path, entry|
+    counts = entry.is_a?(Hash) ? entry.fetch("lines") : entry
+    merged = lines[path]
+    counts.each_with_index do |hits, index|
+      merged[index] = hits.nil? && merged[index].nil? ? nil : merged[index].to_i + hits.to_i
+    end
+  end
+end
+
+below = files.filter_map do |file|
+  counts = lines.find { |path, _| path == file || path.end_with?("/#{file}") }&.last || []
+  relevant = counts.compact
+  # A loaded file with no executable lines is fully covered; an unloaded one is not.
+  percent = if relevant.any? then 100.0 * relevant.count(&:positive?) / relevant.size
+            elsif counts.any? then 100.0
+            else 0.0
+            end
+  puts format("%6.2f%%  %s", percent, file)
+  file if percent < options[:minimum]
+end
+
+if below.empty?
+  puts format("coverage-changed: %d file(s), all at or above %.0f%%", files.size, options[:minimum])
+else
+  warn format("coverage-changed: below %.0f%%: %s", options[:minimum], below.join(", "))
+  exit 1
+end
