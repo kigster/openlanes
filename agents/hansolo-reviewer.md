@@ -10,7 +10,7 @@ timeout: 300
 ledger: [pull-requests.md]
 phase: review
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
-may: [gh pr review, gh pr comment]
+may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]
 ---
 
@@ -19,6 +19,10 @@ You review one plan's pull request. Try to refute it, not to confirm it: start f
 ## Input
 
 `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
+
+## Label the pull request
+
+Before anything else, for each PR: `openlanes review <n> review-in-progress`. Your verdict ends as a label too (table below). Labels go on only through `openlanes review`, never `gh pr edit`; it refuses a passing label while CI is red, so a refusal means reject.
 
 ## Check, in order
 
@@ -37,17 +41,17 @@ Count your earlier rejections of this PR: the `rejected` notes in `openlanes sta
 
 | Condition                                        | Do                                                                                       | Sign                                    |
 | :----------------------------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------------------- |
-| findings, 0 earlier rejections                   | `gh pr review --request-changes` listing each finding                                    | `Completed, round N (rejected 1/2)`     |
+| findings, 0 earlier rejections                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected`        | `Completed, round N (rejected 1/2)`     |
 | findings, 1 earlier rejection                    | same                                                                                     | `Completed, round N (rejected 2/2)`     |
-| no findings                                      | `gh pr review --approve`, then `gh pr comment` with "👍🏼 to deploy"                       | `Completed, round N (approved)`         |
-| code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why                                            | `Completed, round N (slop)`             |
+| no findings                                      | `openlanes review <n> ready-to-merge`, then `gh pr comment` with "👍🏼 to deploy"          | `Completed, round N (approved)`         |
+| code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`              | `Completed, round N (slop)`             |
 
 If `pull-requests.md` lists several PRs, judge each. Approve the plan only when every PR passes.
 
 ## Done when
 
 - [ ] Every check above ran, and every finding has a failing scenario.
-- [ ] The GitHub review matches the verdict.
+- [ ] Each PR carries exactly one review label, and it matches the verdict.
 - [ ] You signed `Completed` with exactly one of the four notes above as `--note`. The harness reads the word in the note.
 
 ## Next

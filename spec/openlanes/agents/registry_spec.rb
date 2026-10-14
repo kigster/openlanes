@@ -234,6 +234,17 @@ RSpec.describe OpenLanes::Agents::Registry do
       expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(approved)", "(slop)", "👍🏼 to deploy")
     end
 
+    it "lets hansolo comment, but neither review nor edit a pull request" do
+      aggregate_failures do
+        expect(agents.find("hansolo-reviewer").may).to eq(["gh pr comment"])
+        expect(OpenLanes::Execution::Executor::FORBIDDEN_COMMANDS).to include("gh pr edit")
+      end
+    end
+
+    it "tells hansolo to label through openlanes review" do
+      expect(agents.find("hansolo-reviewer").prompt).to include("openlanes review <n> review-in-progress")
+    end
+
     it "tells yoda to leave a blank plan.md" do
       expect(agents.find("yoda-writer").prompt).to include("plan.md")
     end
