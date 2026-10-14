@@ -5,8 +5,8 @@
     "ordinal": "014.00",
     "slug": "chewie-verifier"
   },
-  "state": "new",
-  "updated_at": "2026-10-14T11:53:19-07:00",
+  "state": "ready_for_planning",
+  "updated_at": "2026-10-14T11:55:45-07:00",
   "stages": [],
   "signatures": [
     {
@@ -21,6 +21,19 @@
       "status": "Completed",
       "round": 1,
       "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-14T11:53:27-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:55:45-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
     }
   ],
   "messages": []
