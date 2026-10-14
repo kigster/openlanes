@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import * as Tabs from "@radix-ui/react-tabs";
 import { MotionConfig, useReducedMotion } from "motion/react";
@@ -76,6 +76,14 @@ function acrossTabs(e: KeyboardEvent<HTMLElement>, activate: (tab: HTMLElement) 
   const target = tabs[to];
   target?.focus();
   if (target) activate(target);
+}
+
+/**
+ * A tab whose `data-tab` is its `value`: acrossTabs switches by `data-tab`, Radix by `value`, and a tab written with
+ * only the one would take focus from the arrow keys and never show its panel.
+ */
+function Tab({ value, ...rest }: ComponentProps<typeof Tabs.Trigger>) {
+  return <Tabs.Trigger {...rest} value={value} data-tab={value} />;
 }
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
@@ -204,22 +212,22 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             the arrow keys still walk every tab as one row. */}
         <div className="tabs" onKeyDownCapture={e => acrossTabs(e, tab => tab.dataset.tab && setTab(tab.dataset.tab))}>
           <Tabs.List className="tabs-list" aria-label="Views">
-            <Tabs.Trigger className="tab" value="board" data-tab="board">
+            <Tab className="tab" value="board">
               Board
-            </Tabs.Trigger>
-            <Tabs.Trigger className="tab" value="logs" data-tab="logs">
+            </Tab>
+            <Tab className="tab" value="logs">
               Logs
               <span className="tab-count" title="Warnings and errors since you last looked">
                 {alerts || ""}
               </span>
-            </Tabs.Trigger>
+            </Tab>
             {runs.map(run => (
-              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} data-tab={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
+              <Tab key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
                 {testTabLabel(run, runs)}
                 <span className="run-chip">
                   {run.done} of {run.total}
                 </span>
-              </Tabs.Trigger>
+              </Tab>
             ))}
           </Tabs.List>
             {others.map(o => {
@@ -231,10 +239,9 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               return (
                 <span key={value} className="tab-machine-wrap">
                   <Tabs.List className="tabs-list" aria-label={`Machine ${who(o.node)}`}>
-                    <Tabs.Trigger
+                    <Tab
                       className="tab tab-machine"
                       value={value}
-                      data-tab={value}
                       title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
                       onPointerDown={note}
                       onKeyDown={e => (e.key === "Enter" || e.key === " ") && note()}
@@ -249,7 +256,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                       }}
                     >
                       {who(o.node)}
-                    </Tabs.Trigger>
+                    </Tab>
                   </Tabs.List>
                   <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
                 </span>

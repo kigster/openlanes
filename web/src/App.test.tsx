@@ -96,6 +96,18 @@ describe("under ?fixture", () => {
     expect(screen.getByRole("tab", { name: "Board" })).toHaveFocus();
   });
 
+  it("selects every tab the arrow keys land on, each of every kind", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const tabs = await screen.findAllByRole("tab");
+    act(() => tabs[0].focus());
+    for (const tab of [...tabs.slice(1), tabs[0]]) {
+      await user.keyboard("{ArrowRight}");
+      expect(tab).toHaveFocus();
+      expect(tab).toHaveAttribute("aria-selected", "true");
+    }
+  });
+
   it("toggles a machine tab: first its board, then every machine on the Board", async () => {
     const user = userEvent.setup();
     renderApp();
