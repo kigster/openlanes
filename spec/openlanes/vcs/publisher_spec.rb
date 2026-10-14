@@ -67,6 +67,20 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
   end
 
   describe "#publish" do
+    # Worktrees share refs/remotes, so the tracking ref this push moves would
+    # otherwise be blamed on whichever agent is still running next door.
+    it "declares its push to the autonomy boundary before making it" do
+      seen = []
+      allow(OpenLanes::Execution::Boundary).to receive(:sanction) { |*args| seen << [:sanction, *args] }
+      allow(command).to receive(:run) do |*argv, **|
+        seen << [:push] if argv.first(2) == %w[git push]
+        result
+      end
+      publisher.publish(checkout:, subject: plan)
+
+      expect(seen).to eq([[:sanction, checkout.path, "origin", checkout.branch], [:push]])
+    end
+
     it "commits, pushes the branch, then opens the pull request" do
       publisher.publish(checkout:, subject: plan)
 

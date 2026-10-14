@@ -234,7 +234,12 @@ module OpenLanes
 
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
       # @return [void]
-      def push(checkout) = run(checkout, "git", "push", "-u", "origin", checkout.branch)
+      def push(checkout)
+        # Declared first, so an agent still running in another worktree is
+        # not blamed for the tracking ref this push moves under it.
+        Execution::Boundary.sanction(checkout.path, "origin", checkout.branch)
+        run(checkout, "git", "push", "-u", "origin", checkout.branch)
+      end
 
       # @return [String, nil] the pull request URL
       def create_pull_request(checkout, subject, title)
