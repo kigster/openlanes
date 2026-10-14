@@ -99,6 +99,28 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
     end
   end
 
+  describe "discarded.md" do
+    it "leaves a hand-written note on a plan already at ❌ alone" do
+      plans do |t|
+        t.plan "005.00", :discarded, "gone", files: files.merge("discarded.md" => "# Discarded\n\nBy hand.\n"),
+          prs: [t.open(17, "g")]
+      end
+      effects.apply(outcome("005.00", 17, :closed))
+
+      expect(plan("005.00").read("discarded.md")).to eq("# Discarded\n\nBy hand.\n")
+    end
+
+    it "is taken back when the machine refuses the move" do
+      plans { |t| t.plan "006.00", :in_review, "refused", files:, prs: [t.open(18, "h")] }
+      allow(effects).to receive(:walk).and_return(nil)
+
+      aggregate_failures do
+        expect(effects.apply(outcome("006.00", 18, :closed))).to have_attributes(to: nil)
+        expect(plan("006.00").read("discarded.md")).to be_nil
+      end
+    end
+  end
+
   it "ignores a plan that is gone" do
     expect(effects.apply(outcome("099.00", 1, :merged))).to be_nil
   end

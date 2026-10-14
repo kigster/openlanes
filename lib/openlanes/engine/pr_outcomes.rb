@@ -83,12 +83,19 @@ module OpenLanes
         prs = subject.pull_requests
         return applied(outcome, nil, "closed unmerged") if prs.any? { it.open? || it.merged? }
 
-        File.write(File.join(subject.feature.path, "discarded.md"), <<~MARKDOWN)
+        return applied(outcome, nil, "closed unmerged") if subject.status.key == :discarded
+
+        note = File.join(subject.feature.path, "discarded.md")
+        written = !File.exist?(note) && File.write(note, <<~MARKDOWN)
           # Discarded
 
           Every pull request was closed on GitHub without merging: #{prs.map { "##{it.number}" }.join(", ")}.
         MARKDOWN
         to = walk(subject, :discarded) ? :discarded : nil
+        # ❌ requires the note, so it is written before the move; a refused
+        # move takes it back, or the folder would carry a discarded note
+        # while claiming some other state.
+        File.delete(note) if written && to.nil?
         applied(outcome, to, "closed unmerged")
       end
 
