@@ -66,6 +66,19 @@ module OpenLanes
         true
       end
 
+      # @return [Boolean] written on this machine by a process that is gone
+      def stale? = local? && !alive?
+
+      # @return [Boolean] written by this very process, as a pair's partner finds it
+      def ours? = local? && pid == Process.pid
+
+      # Another run is in this folder: a live local process that is not this
+      # one, or any process on another machine. Such a folder is neither
+      # dispatched nor renamed here.
+      #
+      # @return [Boolean]
+      def held_elsewhere? = !ours? && !stale?
+
       # @return [Hash] what the file and the snapshot carry
       def to_json_hash = { pid:, host:, started_at: started_at.utc.iso8601 }
     end

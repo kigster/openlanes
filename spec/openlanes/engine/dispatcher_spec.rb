@@ -728,6 +728,35 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    # Another run's lock keeps this one out entirely: no agent, and no
+    # start-time rename under the holder's feet.
+    {
+      "a live process on this host" => -> { { "pid" => Process.ppid, "host" => Socket.gethostname } },
+      "a process on another host"   => -> { { "pid" => 1, "host" => "elsewhere.invalid" } }
+    }.each do |holder, data|
+      it "neither dispatches nor renames a plan locked by #{holder}" do
+        File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+          JSON.generate(data.call.merge("started_at" => "2026-10-13T09:00:00Z")))
+        runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+
+        aggregate_failures do
+          expect(calls).to be_empty
+          expect(File.basename(path_of("001.00"))).to eq("001.00━━⚪━━❯locked")
+          expect(OpenLanes::Plans::Lock.read(path_of("001.00")).pid).to eq(data.call["pid"])
+        end
+      end
+    end
+
+    it "dispatches over a stale lock left by a dead process on this host" do
+      pid = Process.spawn("true")
+      Process.wait(pid)
+      File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+        JSON.generate("pid" => pid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+
+      expect(calls.map(&:first)).to eq(["leah-researcher"])
+    end
+
     it "writes no lock on a dry run" do
       executor = executor_with do |_, subject, _|
         seen << OpenLanes::Plans::Lock.read(subject.feature.path)

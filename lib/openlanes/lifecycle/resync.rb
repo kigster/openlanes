@@ -94,7 +94,7 @@ module OpenLanes
         #   @return [OpenLanes::Plans::Lock]
         HeldLock = Data.define(:dirname, :path, :lock) do
           # @return [Boolean] written on this machine by a process that is gone
-          def stale? = lock.local? && !lock.alive?
+          def stale? = lock.stale?
 
           # @return [Boolean] written on another machine, so never cleared here
           def foreign? = !lock.local?

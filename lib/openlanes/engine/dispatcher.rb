@@ -132,6 +132,7 @@ module OpenLanes
         @fenced = []
         @unblocking = []
         @unblock_tried = {}
+        @locks = PlanLocks.new
       end
 
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
@@ -403,13 +404,24 @@ module OpenLanes
       def plan_of(job) = job.task.subject.feature.ordinal.to_s
 
       # Plans no agent may be started on and no rename may touch: one being
-      # discarded or drained, and one another machine holds (W26).
+      # discarded or drained, one another machine holds (W26), and one whose
+      # `locked-by.pid` another run wrote.
       #
       # @return [Array<String>]
       def untouchable
         busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal)
-        busy + @runner.tree.subjects.select { @runner.foreign?(it) }.map { it.feature.ordinal.to_s }
+        busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) }.map { it.feature.ordinal.to_s }
       end
+
+      # The Redis claim covers machines that share one; the lock file covers
+      # a second run on this machine, or one that never reached Redis.
+      # Without this check such a run renamed the folder at start, wrote its
+      # own lock over the holder's, and deleted it when its agent finished.
+      # This run's own lock is not a reason to stay out: a pair shares it.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean]
+      def locked_elsewhere?(subject) = Plans::Lock.read(subject.feature.path)&.held_elsewhere? || false
 
       # ---- discarding -------------------------------------------------------
 
@@ -731,6 +743,7 @@ module OpenLanes
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
+          next if locked_elsewhere?(subject)
 
           candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
@@ -877,14 +890,14 @@ module OpenLanes
           file:       agent.ledger.first,
           started_at: Time.now.iso8601)
         UI.log("started", **task.log_fields)
-        plan_dir = subject.feature.path
+        # The lock says the folder is in use, so nothing renames it while the
+        # agent holds its path. It is taken here, before the thread, so the
+        # next tick already sees it; it goes when the last agent in the plan
+        # does, however that agent went.
+        @locks.hold(ordinal, subject.feature.path) unless @runner.dry_run?
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
-            # The lock says the folder is in use, so nothing renames it while
-            # the agent holds its path; it goes when the agent does, however
-            # the agent went.
-            Plans::Lock.write(plan_dir) unless @runner.dry_run?
             @runner.executor.call(agent, subject, root: task.root, round:, successor:, handle:, partners:) { |progress|
               job.up = progress.up
               job.down = progress.down
@@ -896,7 +909,7 @@ module OpenLanes
           rescue StandardError => e
             e
           ensure
-            Plans::Lock.remove(plan_dir) unless @runner.dry_run?
+            @locks.release(ordinal) unless @runner.dry_run?
           end
         end
         @running << job
