@@ -686,7 +686,11 @@ module OpenLanes
       # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
       # @return [String] what an idle run is waiting for
       def idle_reason(subjects)
-        return "idle: no plans yet; create one from the page or with openlanes create" if subjects.empty?
+        # Finished plans move into archive/ (N3), so an empty top level after
+        # a run that shipped everything is "finished", not "no plans yet".
+        if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
+          return "idle: no plans yet; create one from the page or with openlanes create"
+        end
         if subjects.all? { FINISHED.include?(it.status.key) }
           return "idle: every plan is finished; create the next one from the page"
         end

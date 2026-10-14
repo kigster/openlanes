@@ -97,6 +97,8 @@ module OpenLanes
   def self.move_directory(source, target)
     return false if File.exist?(target)
 
+    # Into archive/ and friends, which the first move there creates.
+    FileUtils.mkdir_p(File.dirname(target))
     parent = File.dirname(source)
     tracked = system("git",
       "-C",

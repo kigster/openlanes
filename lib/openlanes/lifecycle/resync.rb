@@ -23,14 +23,26 @@ module OpenLanes
       #   middle of the range. Both are renamed, to `018.00-⚪️ → foo` and
       #   `018.01-⚪️ → foo`.
       #
-      # The repairs are applied in that order reversed, as **up to two renames
-      # per folder**: first the spelling, under the status the folder already
-      # claims — which is how a `--`-era folder migrates to the ` → ` form —
-      # and only then the status its contents justify. Both renames aim at
-      # {Feature.plan_dirname}, so they cannot disagree about the final name;
-      # splitting them keeps each auditable on its own, instead of one report
-      # line where a spelling migration also appears to have opinions about
-      # the state of the work.
+      # - **The folder is in the wrong place** — a plan in an inactive state
+      #   (✅ 😎 💤 ❌) belongs in the subfolder {Plans::Tree::INACTIVE_DIRS}
+      #   names, under a name dated by {Vcs::RenameDate}; a plan in any other
+      #   state belongs at the top level, undated. Moving a plan back out is
+      #   how one is revived: the state machine renames it in place, and the
+      #   next resync brings it home (decision N3).
+      #
+      # The repairs are applied as **up to three renames per folder**: first
+      # the spelling, under the status the folder already claims — which is
+      # how an older folder migrates to the `NNN.MM━━<emoji>━━❯<slug>` form —
+      # then the status its contents justify, then the move. All of them aim
+      # at {Feature.plan_dirname}, so they cannot disagree about the final
+      # name; splitting them keeps each auditable on its own, instead of one
+      # report line where a spelling migration also appears to have opinions
+      # about the state of the work.
+      #
+      # A folder an agent holds a lock on ({Plans::Lock}) keeps its name, the
+      # same as one passed in +except+. A lock left by a process that is gone
+      # from this machine is removed by a committing run; one from another
+      # machine is reported and never touched, since its pid means nothing here.
       class Dirs
         # A proposed rename.
         #
@@ -49,7 +61,32 @@ module OpenLanes
         Change = Data.define(:dirname, :from, :to, :source, :target, :reason) do
           # @return [String] a single auditable line — `⇒` rather than `→`,
           #   which the folder names themselves now contain
-          def to_s = "#{dirname} ⇒ #{File.basename(target)}  (#{reason})"
+          def to_s = "#{dirname} ⇒ #{target_name}  (#{reason})"
+
+          # @return [String] the new name, with its subfolder when it is in one
+          def target_name
+            parent = File.basename(File.dirname(target))
+            Plans::Tree::SUBFOLDERS.include?(parent) ? "#{parent}/#{File.basename(target)}" : File.basename(target)
+          end
+        end
+
+        # A lock file found on the way.
+        #
+        # @!attribute [r] dirname
+        #   @return [String] the plan folder it is in
+        # @!attribute [r] path
+        #   @return [String] the plan folder, absolute
+        # @!attribute [r] lock
+        #   @return [OpenLanes::Plans::Lock]
+        HeldLock = Data.define(:dirname, :path, :lock) do
+          # @return [Boolean] written on this machine by a process that is gone
+          def stale? = lock.local? && !lock.alive?
+
+          # @return [Boolean] written on another machine, so never cleared here
+          def foreign? = !lock.local?
+
+          # @return [String]
+          def to_s = "#{dirname}: locked by pid #{lock.pid} on #{lock.host} since #{lock.started_at.utc.iso8601}"
         end
 
         # The state a folder's contents justify, or the one it claims when
@@ -78,17 +115,31 @@ module OpenLanes
         #
         # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::Change>]
         def plan
-          tree.subjects.flat_map do |subject|
-            @except.include?(subject.feature.ordinal.to_s) ? [] : changes_for(subject)
+          held = locks.reject(&:stale?).map(&:path)
+          tree.everything.subjects.flat_map do |subject|
+            next [] if @except.include?(subject.feature.ordinal.to_s) || held.include?(subject.feature.path)
+
+            changes_for(subject)
           end
         end
 
-        # @param commit [Boolean] actually rename
+        # Every lock file in the tree, inactive subfolders included.
+        #
+        # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::HeldLock>]
+        def locks
+          tree.everything.subjects.filter_map do |subject|
+            lock = Plans::Lock.read(subject.feature.path) or next
+            HeldLock.new(dirname: subject.feature.dirname, path: subject.feature.path, lock:)
+          end
+        end
+
+        # @param commit [Boolean] actually rename, and clear stale local locks
         # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::Change>] what was proposed
         def call(commit: false)
           changes = plan
           return changes unless commit
 
+          locks.select(&:stale?).each { |held| Plans::Lock.remove(held.path) }
           UI.stepping(changes, "Renaming") { |change| rename(change) }
           tree.reload
           changes
@@ -113,40 +164,71 @@ module OpenLanes
 
           spelled = feature.dirname_as(subject.status)
           if spelled != feature.dirname
-            steps << step(feature,
-              from:   subject.status,
+            steps << step(from:   subject.status,
               to:     subject.status,
               source: feature.path,
+              target: beside(feature.path, spelled),
               reason: spelling_reason(feature))
           end
 
           if fit.key != subject.status.key
             source = steps.empty? ? feature.path : steps.last.target
-            steps << step(feature,
-              from:   subject.status,
+            steps << step(from:   subject.status,
               to:     fit,
               source:,
+              target: beside(source, feature.dirname_as(fit)),
               reason: subject.violation || "contents now justify #{fit.label}")
           end
+
+          source = steps.empty? ? feature.path : steps.last.target
+          home = home_for(feature, fit)
+          steps << step(from: fit, to: fit, source:, target: home, reason: placement_reason(feature, fit)) if home != source
 
           steps
         end
 
-        # @param feature [OpenLanes::Plans::Feature]
         # @param from [OpenLanes::Plans::Status]
         # @param to [OpenLanes::Plans::Status]
         # @param source [String] absolute path the rename starts from
+        # @param target [String] absolute path it ends at
         # @param reason [String]
         # @return [OpenLanes::Lifecycle::Resync::Dirs::Change]
-        def step(feature, from:, to:, source:, reason:)
-          Change.new(
-            dirname: File.basename(source),
-            from:    from.key,
-            to:      to.key,
-            source:,
-            target:  File.join(File.dirname(feature.path), feature.dirname_as(to)),
-            reason:
-          )
+        def step(from:, to:, source:, target:, reason:)
+          Change.new(dirname: File.basename(source), from: from.key, to: to.key, source:, target:, reason:)
+        end
+
+        # @param path [String]
+        # @param name [String]
+        # @return [String] +name+ in the same directory as +path+
+        def beside(path, name) = File.join(File.dirname(path), name)
+
+        # Where a plan in this state lives, and under which name: an inactive
+        # plan in its subfolder, dated, keeping a date it already carries
+        # there; any other plan at the top level, undated.
+        #
+        # @param feature [OpenLanes::Plans::Feature]
+        # @param status [OpenLanes::Plans::Status]
+        # @return [String] absolute
+        def home_for(feature, status)
+          subfolder = Plans::Tree.subfolder_for(status)
+          return File.join(tree.dir, feature.dirname_as(status, archived_on: nil)) unless subfolder
+
+          parent = File.join(tree.dir, subfolder)
+          date = (feature.archived_on if File.dirname(feature.path) == parent) || Vcs::RenameDate.for(feature.path)
+          File.join(parent, feature.dirname_as(status, archived_on: date))
+        end
+
+        # @param feature [OpenLanes::Plans::Feature]
+        # @param status [OpenLanes::Plans::Status]
+        # @return [String]
+        def placement_reason(feature, status)
+          subfolder = Plans::Tree.subfolder_for(status)
+          here = File.dirname(feature.path)
+          return "#{status.label} lives in #{subfolder}/" if subfolder && here != File.join(tree.dir, subfolder)
+          return "a plan moved aside carries the date it was moved" if subfolder
+          return "#{status.label} is not inactive; back to #{File.basename(tree.dir)}/" if here != tree.dir
+
+          "an open plan's name carries no date"
         end
 
         # @param feature [OpenLanes::Plans::Feature]
@@ -154,7 +236,7 @@ module OpenLanes
         def spelling_reason(feature)
           return "#{feature.dirname_ordinal} is not padded to #{feature.ordinal}" unless feature.padded?
 
-          "name is not in canonical NNN.MM-<emoji> → <slug> form"
+          "name is not in canonical NNN.MM━━<emoji>━━❯<slug> form"
         end
 
         # A rename that finds its target occupied has not happened, and saying

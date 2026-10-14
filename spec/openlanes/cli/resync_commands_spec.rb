@@ -34,6 +34,38 @@ RSpec.describe "openlanes resync", :tree do
       expect(unwrapped(err)).to include("already named")
     end
 
+    describe "lock files" do
+      let(:dir) { plans { |t| t.plan("001.00", :new, "held", files: { "spec.md" => spec_body }) } && Dir.glob(File.join(plans_root, "001.00*")).first }
+
+      def lock(pid:, host:)
+        File.write(File.join(dir, OpenLanes::Plans::Lock::FILENAME),
+          JSON.generate(pid:, host:, started_at: "2026-10-13T09:00:00Z"))
+      end
+
+      it "names another machine's lock and leaves it" do
+        lock(pid: 1, host: "elsewhere.example")
+        _out, err, = run(command, dry_run: false)
+
+        expect(unwrapped(err)).to include("locked by pid 1 on elsewhere.example", "another machine's lock; left alone")
+      end
+
+      it "says a dead local lock would be cleared, and clears it for real" do
+        lock(pid: Process.wait(Process.spawn("true")), host: Socket.gethostname)
+        _out, err, = run(command)
+        expect(unwrapped(err)).to include("its process is gone; would clear it")
+
+        _out, err, = run(command, dry_run: false)
+        expect(unwrapped(err)).to include("its process is gone; cleared")
+      end
+
+      it "says a live lock keeps the folder's name" do
+        lock(pid: Process.pid, host: Socket.gethostname)
+        _out, err, = run(command)
+
+        expect(unwrapped(err)).to include("an agent is working in it; not renamed")
+      end
+    end
+
     context "with a folder whose contents outgrew its name" do
       before do
         # A ⚪ folder that has grown a plan.md with work units best-fits ⭐ whatever its name says.
