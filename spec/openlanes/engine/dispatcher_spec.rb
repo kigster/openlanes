@@ -697,6 +697,48 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  describe "the plan lock" do
+    let!(:built) { plans { |t| t.plan "001.00", :new, "locked", files: { "spec.md" => spec_body } } }
+    let(:seen) { [] }
+
+    it "holds locked-by.pid while the agent works, and drops it after" do
+      executor = executor_with do |_, subject, _|
+        seen << [OpenLanes::Plans::Lock.read(subject.feature.path), File.basename(subject.feature.path)]
+        "Almost completed"
+      end
+      runner_with(executor, agents: agents.only("leah-researcher")).call
+
+      aggregate_failures do
+        expect(seen.first.first).to have_attributes(pid: Process.pid, host: Socket.gethostname)
+        expect(seen.map(&:last).uniq).to eq(["001.00━━⚪━━❯locked"])
+        expect(Dir.glob(File.join(plans_root, "**", OpenLanes::Plans::Lock::FILENAME))).to be_empty
+      end
+    end
+
+    it "drops the lock when the agent raises" do
+      executor = lambda { |_agent, subject, **|
+        seen << OpenLanes::Plans::Lock.read(subject.feature.path)
+        raise "the agent fell over"
+      }
+      runner_with(executor, agents: agents.only("leah-researcher")).call
+
+      aggregate_failures do
+        expect(seen.first).not_to be_nil
+        expect(Dir.glob(File.join(plans_root, "**", OpenLanes::Plans::Lock::FILENAME))).to be_empty
+      end
+    end
+
+    it "writes no lock on a dry run" do
+      executor = executor_with do |_, subject, _|
+        seen << OpenLanes::Plans::Lock.read(subject.feature.path)
+        "Almost completed"
+      end
+      runner_with(executor, agents: agents.only("leah-researcher"), dry_run: true).call
+
+      expect(seen).to eq([nil])
+    end
+  end
+
   describe "verify and sign" do
     let!(:built) { plans { |t| t.plan "001.00", :new, "cut-off", files: { "spec.md" => spec_body } } }
 
