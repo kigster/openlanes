@@ -29,7 +29,7 @@ Each item names its check. Numbers follow the 008.00 spec.
 
 6. **`agents/ewoki-linker.md`** with frontmatter `precedes: [ready_for_planning, planned]`, `handles: []`, Haiku, low effort. `Agents::Registry`, `Roster` and `Executor` all read `precedes:`. Check: `Registry` loads it, `Roster` lists it, and its tool grants match a read-only agent that may edit `spec.md` frontmatter only.
 1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to palpatine (or r2d2 in `quick`).
-1. **Ewoki output contract**: writes only the `depends_on:` key (quoted canonical `"NNN.MM"` strings, `[]` when none) and a dated ledger note with one reason per dependency, each naming the thing the plan needs (N7: shared files are a merge risk, not a dependency). Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that only the frontmatter key and the ledger changed.
+1. **Ewoki output contract**: writes only two things, both in `spec.md`: the `depends_on:` frontmatter key (quoted canonical `"NNN.MM"` strings, `[]` when none), and its ledger entries in the `> [!NOTE]` block that `Plans::Ledger` reads (Started, then Completed), with one reason per dependency on the lines below its Completed entry, each naming the thing the plan needs (N7: shared files are a merge risk, not a dependency). Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that the diff to `spec.md` touches only the frontmatter key and the NOTE block, and that no other file in the folder changed except the harness's own `state.json` signature.
 1. **Hand-written key wins**: a plan that already has the key, even `[]`, is skipped. Check: runner spec.
 
 ## How to tell it's working?
@@ -42,10 +42,10 @@ Each item names its check. Numbers follow the 008.00 spec.
 ## Open questions
 
 1. Whether ewoki also runs for a plan already at 🟡 Building or later that lacks the key. Assumed no: those plans are grandfathered (008.00 Settled decisions), and 008.02 decides the invariant.
-1. What happens when ewoki fails or is killed. Assumed: the plan is not held; the next round tries again, at most once per round, and the attempt is recorded like any other.
+1. What happens when ewoki fails or is killed. Assumed: the next round tries again, at most once per round, and each attempt is recorded like any other. After **3** failed attempts on the same plan, the harness writes a ⭕️ `blocked.md` question ("ewoki could not link this plan: write `depends_on:` by hand, or retry") instead of retrying forever; a human-written key then ends the gate as usual. The limit is a constant in one place.
 
 ## Risks
 
 - **Dispatcher size.** The gate touches candidate building, which every plan goes through. Keep it in its own method with a spec per lane.
 - **Over-linking.** Haiku at low effort may link plans that merely share files. The eval cases carry that guarantee; the prompt alone does not.
-- **`precedes:` read in three places.** Missing one hides ewoki from a report or a run.
+- **`precedes:` read in several places.** Removed by design: `Agents::Registry#preceding` is the only reader (item 6).
