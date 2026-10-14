@@ -2,6 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
+| 36 | [\[013.00\] Coverage Gate](https://github.com/kigster/openlanes/pull/36) | Open 🟡 |
 
 ## Verification (luke-backend, 2026-10-14)
 
