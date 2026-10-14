@@ -450,7 +450,10 @@ module OpenLanes
         subjects = @runner.in_scope.reject { untouchable.include?(it.feature.ordinal.to_s) }
         @watching = Thread.new do
           @watch.poll(subjects)
-        rescue OpenLanes::Error => e
+        # StandardError, not only OpenLanes::Error: `#value` re-raises whatever
+        # ended the thread, so a stray JSON::ParserError or Errno from `gh`
+        # would otherwise end the whole run on the next tick.
+        rescue StandardError => e
           UI.log("pull requests unwatched this time: #{e.message.lines.first.to_s.strip}")
           nil
         end

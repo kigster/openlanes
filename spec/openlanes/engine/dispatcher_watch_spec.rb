@@ -108,6 +108,17 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  it "carries on when the poll dies of an error that is not an OpenLanes::Error" do
+    allow(github).to receive(:pulls).and_raise(JSON::ParserError, "unexpected token")
+    dispatcher.tick
+    clock[0] = 115.0
+
+    aggregate_failures do
+      expect { tick_until_settled }.not_to raise_error
+      expect(status_of("001.00")).to eq(:in_review)
+    end
+  end
+
   it "never watches without a watch, as under plain openlanes run" do
     plain = described_class.new(runner:, state:, sleeper: ->(_) {}, stay: false)
     plain.tick
