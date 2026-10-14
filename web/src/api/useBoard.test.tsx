@@ -95,6 +95,27 @@ it("reads the conversation when the stream names its copilot boundary, and not o
   expect(refetch).toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
 });
 
+// A GET sampled before the stream's boundary may miss a turn written between its read and the stream opening. The
+// cursor's refetch cancels that GET (refetchQueries' cancelRefetch defaults to true) and reads again, past the boundary.
+it("reads again past the copilot boundary when the first GET is still in flight", async () => {
+  const client = createQueryClient();
+  const answers: ((r: Response) => void)[] = [];
+  fetchMock.mockImplementation((path: string) =>
+    path === "/api/copilot" ? new Promise<Response>(resolve => answers.push(resolve)) : Promise.resolve(json(loadFixtureBoard())),
+  );
+  const { result } = renderHook(() => (useBoard(), useCopilot()), {
+    wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+  });
+  await waitFor(() => expect(answers).toHaveLength(1));
+  act(() => streams[0].onCopilotCursor?.());
+  await waitFor(() => expect(answers).toHaveLength(2));
+  const missed = { id: "01JB", from: "you", kind: "text", text: "in between", at: "2026-10-13T09:00:05Z", usage: null } as const;
+  const none = { model: null, up: 0, down: 0 };
+  await act(async () => answers[0](json({ turns: [], usage: none })));
+  await act(async () => answers[1](json({ turns: [missed], usage: none })));
+  await waitFor(() => expect(result.current.log.turns.map(t => t.text)).toEqual(["in between"]));
+});
+
 it("reports a failed first load", async () => {
   fetchMock.mockResolvedValue(new Response("{}", { status: 500 }));
   const client = createQueryClient();
