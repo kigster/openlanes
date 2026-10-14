@@ -243,6 +243,18 @@ RSpec.describe OpenLanes::Web::App, :tree do
       expect(body).to include("chat" => include("participants" => [include("name" => "Pat")]), "invites" => [])
     end
 
+    # The verb table in plan 006's contract.md, which rey-frontend's page is
+    # written against. An unknown verb is the route's own 404; every other
+    # status means the verb reached the hub.
+    it "accepts exactly the verbs in the contract's verb table" do
+      contract = %w[start invite accept decline leave say presence]
+      probed = (contract + %w[stop join shout]).to_h do |verb|
+        chat_post(verb, page:)
+        [verb, last_response.status == 404 && body["error"].to_s.start_with?("no such chat action")]
+      end
+      expect(probed.reject { |_, unknown| unknown }.keys).to eq(contract)
+    end
+
     it "refuses a machine that is not on the board" do
       chat_post("start", page:, name: "Pat", machine: "2" * 24)
       expect([last_response.status, body["error"]]).to eq([422, "no machine #{"2" * 24} is on this Redis now"])

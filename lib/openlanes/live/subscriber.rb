@@ -36,7 +36,7 @@ module OpenLanes
       # @raise [OpenLanes::Live::Unavailable]
       def next_message(timeout)
         loop do
-          event = guarded { @pubsub.next_event([timeout, SHORTEST].max) } or return nil
+          event = read([timeout, SHORTEST].max) or return nil
           case event.first
           when "message" then return [event[1], event[2]]
           when "pmessage" then return [event[2], event[3]]
@@ -56,9 +56,23 @@ module OpenLanes
       def confirm(expected, timeout)
         confirmed = 0
         while confirmed < expected
-          event = @pubsub.next_event(timeout) or raise Unavailable, "Redis at #{Live.mask(@url)} did not confirm a subscription"
+          event = read(timeout) or raise Unavailable, "Redis at #{Live.mask(@url)} did not confirm a subscription"
           confirmed += 1 if %w[subscribe psubscribe].include?(event.first)
         end
+      end
+
+      # The next event on the connection. redis-client hands a refusal back
+      # as an error object rather than raising it, so a `NOPERM` from an ACL
+      # that withholds `PSUBSCRIBE` would otherwise reach `event.first` as a
+      # NoMethodError and kill the hub's thread without a word.
+      #
+      # @param timeout [Float]
+      # @return [Array, nil]
+      # @raise [OpenLanes::Live::Unavailable]
+      def read(timeout)
+        event = guarded { @pubsub.next_event(timeout) }
+        guarded { raise event } if event.is_a?(RedisClient::Error)
+        event
       end
 
       # @return [Object] the block's value

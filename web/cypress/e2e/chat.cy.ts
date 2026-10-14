@@ -31,4 +31,11 @@ describe("the chat between machines", () => {
     cy.contains(".tab-machine", "sam@ci-runner-2").rightclick();
     cy.contains('[role="menuitem"]', "Start Chat").should("be.visible");
   });
+
+  // Step 5 of the integration scenario: the real server, no stub, refuses a verb without the CSRF token.
+  it("refuses a chat verb that carries no CSRF token", () => {
+    cy.request({ method: "POST", url: "/api/chat/leave", body: { page: "p-no-token" }, failOnStatusCode: false })
+      .its("status")
+      .should("eq", 403);
+  });
 });
