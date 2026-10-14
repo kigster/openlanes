@@ -448,6 +448,17 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(status).to eq(1)
     end
 
+    it "writes its progress to the log it announces when --log names none" do
+      allow(Dir).to receive(:tmpdir).and_return(File.dirname(plans_root))
+      with_executor
+      _out, err, _status = run(dry_run: false, rounds: 1, log: nil)
+      log = OpenLanes::Engine::ProgressLog.default_path(File.dirname(plans_root))
+      aggregate_failures do
+        expect(err.gsub(/[\s│]+/, "")).to include("Progress:#{log}") # the box wraps long paths
+        expect(File.read(log)).to include("luke-backend", "started")
+      end
+    end
+
     # Narrowed to luke: once he moves the plan to 🟢, hansolo would take it
     # next, sign nothing, and fail the run for a reason this example is not
     # about.

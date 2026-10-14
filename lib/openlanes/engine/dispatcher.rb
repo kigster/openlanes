@@ -703,20 +703,51 @@ module OpenLanes
       def next_dispatchable
         reconcile
         @runner.in_scope.each do |subject|
+          working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
           # After {#reconcile} this is the folder's name. On a dry run, which
-          # renames nothing, it is what the name would have become.
-          state = Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
+          # renames nothing, it is what the name would have become. A plan an
+          # agent is in right now is never reconciled, so its contents are
+          # not asked: see {#partners_only}.
+          state = if working.empty?
+                    Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
+                  else
+                    subject.status
+                  end
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
 
-          candidates = Agents::Routing.filter(@runner.agents.for_status(state), subject)
+          candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
           candidates = candidates.sort_by { |a| a.name == preferred ? 0 : 1 } if preferred
           agent = candidates.find { |a| eligible?(a, subject) }
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # One agent at a time on a plan, except a pair working the same state.
+      #
+      # A plan with an agent in it is judged by its folder's name, never by
+      # what its contents would justify. Asking the contents is how the
+      # minesweeper trial ran its whole chain inside ⚪️ New: leah wrote her
+      # `## Research` chapter, the next tick saw a Researched plan and started
+      # yoda beside her, and leah's own Completed then found a partner running
+      # and held the folder where it was. Every later agent repeated it, so
+      # the folder never moved and luke and rey were building on a plan whose
+      # name still said nobody had researched it.
+      #
+      # @param candidates [Array<OpenLanes::Agents::Agent>]
+      # @param working [Array<OpenLanes::Agents::Agent>] already on the plan
+      # @param state [OpenLanes::Plans::Status] the folder's state
+      # @return [Array<OpenLanes::Agents::Agent>]
+      def partners_only(candidates, working, state)
+        return candidates if working.empty?
+
+        team = @runner.agents.team_for(state).map(&:name)
+        return [] unless working.all? { team.include?(it.name) }
+
+        candidates.select { team.include?(it.name) }
       end
 
       # A folder's name can lag its contents: a run killed before its rename,
@@ -930,11 +961,15 @@ module OpenLanes
                   end
         attempt = attempt.with(note: "#{attempt.note}; #{problems.join(", ")}") unless problems.empty?
         attempt = attempt.with(to: fresh(task)&.status&.key || attempt.to)
+        # One outcome, written to both records. The engine's state file once
+        # defaulted a failed round to Completed while state.json said
+        # Interrupted, so the page and the plan disagreed about the same round.
+        outcome = attempt.status || (attempt.ok ? "Completed" : "Interrupted")
         if (settled = fresh(task))
           stage!(settled,
             agent,
             task.round,
-            status:      attempt.status || (attempt.ok ? "Completed" : "Interrupted"),
+            status:      outcome,
             to:          attempt.to.to_s,
             finished_at: Time.now.iso8601,
             up:          attempt.up.to_i,
@@ -945,7 +980,7 @@ module OpenLanes
         @state&.record(ordinal,
           agent:    agent.name,
           round:    task.round,
-          status:   attempt.status || "Completed",
+          status:   outcome,
           exit:     attempt.ok ? "ok" : attempt.note,
           ended_at: Time.now.iso8601,
           up:       attempt.up,
@@ -1067,7 +1102,7 @@ module OpenLanes
 
           attempt = published.attempt
           subject = published.subject
-          return attempt.with(ok: false, note: "ledger says Completed but #{Plans::STATUS_BY_KEY.fetch(target)} is not justified: #{Plans::STATUS_BY_KEY.fetch(target).violation(subject)}") unless subject.machine.may?(target)
+          return unjustified(job, attempt, subject, target) unless subject.machine.may?(target)
 
           subject.machine.promote!(target)
           attempt = attempt.with(to: target)
@@ -1076,6 +1111,22 @@ module OpenLanes
         handoff = Plans::Ledger.handoff_after(reading, entry)
         attempt = honour(handoff, subject, attempt) if handoff
         attempt
+      end
+
+      # The agent signed Completed, but what it left does not justify the
+      # state it advances to. The folder stays, its `next:` is not honoured,
+      # and the round is recorded as Interrupted, which is what the page
+      # lists under Needs you once the agent's rounds run out. Taking the
+      # signature at its word instead parked the plan: nobody else handles
+      # the state it is still in, and its own agent counted itself done.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def unjustified(job, attempt, subject, target)
+        status = Plans::STATUS_BY_KEY.fetch(target)
+        remember(plan_of(job), job.task.agent.name, job.state, "Interrupted", job.task.round)
+        attempt.with(ok: false,
+          status: "Interrupted",
+          note: "ledger says Completed but #{status} is not justified: #{status.violation(subject)}")
       end
 
       # A build finished in a run that opens no pull request: 🟢 needs one,

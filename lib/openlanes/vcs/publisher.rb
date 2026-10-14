@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "tempfile"
 require "tty/command"
 
@@ -93,6 +94,7 @@ module OpenLanes
         mismatch = open && head_mismatch(open, checkout)
         return refuse(subject, checkout, title, mismatch) if mismatch
 
+        carry_plan(checkout, subject)
         commit(checkout, title)
         push(checkout)
         url = open ? open.url : create_pull_request(checkout, subject, title)
@@ -132,7 +134,67 @@ module OpenLanes
       # @return [String]
       def auto_letter(subject) = LETTERS.fetch(subject.pull_requests.size, LETTERS.last)
 
+      # Left out of the copy: the half-written temporaries an atomic write
+      # renames into place (`state.json.<pid>.<thread>.tmp`).
+      CARRY_EXCLUDED = ["*.tmp"].freeze
+
+      # Copy the plan's folder from the main checkout into the worktree, so
+      # the pull request carries its spec, plan and state next to the code.
+      #
+      # The main checkout stays the only writer. The engine reads, signs and
+      # renames the plan there and nowhere else; the worktree gets a snapshot,
+      # refreshed on every publish. Every copy of the same plan number is
+      # removed first, so a folder renamed since the last publish (⭐️ to 🟢,
+      # say) does not leave its old name behind in the branch, and a file
+      # deleted in the main checkout is deleted in the branch too.
+      #
+      # Nothing is copied when the worktree is the main checkout itself, which
+      # would delete the source, or when the plans live outside the
+      # repository, where the branch has no place for them.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param subject [OpenLanes::Plans::Subject] the plan in the main checkout
+      # @return [String, nil] the copy's path, nil when nothing was copied
+      def carry_plan(checkout, subject)
+        root = real(@root)
+        source = real(subject.feature.path)
+        return nil if real(checkout.path) == root || !source.start_with?("#{root}/")
+
+        parent = File.join(checkout.path, File.dirname(source.delete_prefix("#{root}/")))
+        FileUtils.mkdir_p(parent)
+        Dir.children(parent).each do |name|
+          next unless Plans::Ordinal.from_dirname(name) == subject.feature.ordinal
+
+          FileUtils.rm_rf(File.join(parent, name))
+        end
+        copy_tree(source, File.join(parent, File.basename(source)))
+      end
+
       private
+
+      # @param path [String]
+      # @return [String] symlinks resolved, so /var and /private/var compare equal
+      def real(path)
+        File.realpath(path)
+      rescue Errno::ENOENT
+        File.expand_path(path)
+      end
+
+      # @param source [String]
+      # @param target [String]
+      # @return [String] target
+      def copy_tree(source, target)
+        Dir.glob("**/*", File::FNM_DOTMATCH, base: source).each do |relative|
+          next if relative == "." || CARRY_EXCLUDED.any? { File.fnmatch?(it, File.basename(relative)) }
+
+          from = File.join(source, relative)
+          to = File.join(target, relative)
+          FileUtils.mkdir_p(File.directory?(from) ? to : File.dirname(to))
+          FileUtils.cp(from, to) if File.file?(from)
+        end
+        FileUtils.mkdir_p(target)
+        target
+      end
 
       # Why the open pull request cannot receive this checkout's push, if it
       # cannot.

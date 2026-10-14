@@ -120,8 +120,7 @@ module OpenLanes
         # whether a round prints anything at all) is read the whole time the
         # loop runs, not just when `report` prints its closing summary.
         quiet?(options)
-        UI.log_path = options[:log] ||
-                      File.join(Dir.tmpdir, "openlanes-#{File.basename(root)}.log")
+        UI.log_path = options[:log] || Engine::ProgressLog.default_path(root)
         startup("Progress", UI.log_path)
         credentials_warning if !dry_run?(options) && !quiet?(options)
         spec_warning(tree, plans) unless quiet?(options)

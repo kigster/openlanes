@@ -290,6 +290,7 @@ The loop stops when a full round changes no plan's state. It also stops when eve
 - **Isolation.** By default every plan gets its own git worktree and branch, `<user>/NNN.MM-slug`, so agents on different plans share nothing. Parallel runs require it: `--isolation shared` runs one agent at a time.
 - **Agents cannot publish.** They may write source, tests and their plan's documents, but may not commit, push or touch a pull request. The tool enforces this twice: it withholds those commands from the agent, and afterwards checks that `HEAD` did not move.
 - **The harness publishes.** When a plan finishes, the harness commits the branch, pushes it and opens a pull request titled like `[002.00](A) Tenancy Households`. Pass `--no-git-push` to leave the work uncommitted in its worktree.
+- **The plan travels with its pull request.** Before each commit, the publisher copies the plan folder (spec, plan, `state.json`) from the main checkout into the worktree under its current name, replacing any older copy. The main checkout's folder stays the only one the tool reads or writes.
 - **Nothing merges automatically.** An approval leaves the plan at 👀 until you merge.
 - **Disk over claims.** A plan moves only when the files its new state requires exist. If an agent reports success but wrote nothing, the tool records it as interrupted.
 

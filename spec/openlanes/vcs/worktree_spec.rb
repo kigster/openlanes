@@ -3,7 +3,11 @@
 # Real git repositories in a temp dir. A worktree is a git feature, and a test
 # that fakes git tests the fake.
 RSpec.describe OpenLanes::Vcs::Worktree do
-  subject(:worktrees) { described_class.new(root: repo, dir: worktree_dir, user: "tester") }
+  subject(:worktrees) { described_class.new(root: repo, dir: worktree_dir, user: "tester", seeder:) }
+
+  # No seeder unless an example installs one: the developer's own
+  # setup-worktree must not decide what these examples see.
+  let(:seeder) { nil }
 
   let(:tmp) { Dir.mktmpdir("spb-worktree") }
   let(:repo) { File.join(tmp, "project") }
@@ -100,17 +104,29 @@ RSpec.describe OpenLanes::Vcs::Worktree do
       File.write(File.join(repo, "config", "credentials", "test.key"), "testkey\n")
     end
 
-    # Seeding requires bin/setup-worktree which is part of the parent monorepo
-    # and not included in this extracted gem. The code handles missing seeder
-    # gracefully (tested in "#seed when the seeder is unavailable"), but the
-    # seeding itself cannot be tested without that script.
-    skip "gives a new checkout the .env git would not" do
+    # A stand-in for the user's setup-worktree: copies the two ignored files
+    # from the main checkout, never over one already there.
+    let(:seeder) do
+      path = File.join(File.dirname(repo), "fake-setup-worktree")
+      File.write(path, <<~SH)
+        #!/bin/sh
+        dest="$2"
+        src=$(git -C "$dest" worktree list --porcelain | sed -n '1s/^worktree //p')
+        for f in .env config/credentials/test.key; do
+          if [ -f "$src/$f" ] && [ ! -e "$dest/$f" ]; then mkdir -p "$(dirname "$dest/$f")"; cp "$src/$f" "$dest/$f"; fi
+        done
+      SH
+      FileUtils.chmod(0o755, path)
+      path
+    end
+
+    it "gives a new checkout the .env git would not" do
       checkout = worktrees.checkout_for(feature)
 
       expect(File.read(File.join(checkout.path, ".env"))).to eq("SECRET=from-main\n")
     end
 
-    skip "gives it the credential key, which is what MissingKeyError is about" do
+    it "gives it the credential key, which is what MissingKeyError is about" do
       checkout = worktrees.checkout_for(feature)
 
       expect(File.read(File.join(checkout.path, "config/credentials/test.key"))).to eq("testkey\n")
@@ -119,7 +135,7 @@ RSpec.describe OpenLanes::Vcs::Worktree do
     # Worktrees made before any of this existed are still out there, and the
     # seeder only ever adds a missing file, so repairing them costs one
     # subprocess and no risk.
-    skip "repairs a checkout that was created before seeding existed" do
+    it "repairs a checkout that was created before seeding existed" do
       checkout = worktrees.checkout_for(feature)
       FileUtils.rm_f(File.join(checkout.path, ".env"))
 
@@ -147,8 +163,40 @@ RSpec.describe OpenLanes::Vcs::Worktree do
     end
   end
 
+  describe ".seeder" do
+    let(:bin) { File.join(File.dirname(repo), "bin") }
+    let(:script) { File.join(bin, "setup-worktree") }
+
+    before do
+      FileUtils.mkdir_p(bin)
+      File.write(script, "#!/bin/sh\n")
+      FileUtils.chmod(0o755, script)
+    end
+
+    it "takes the environment's override first" do
+      other = File.join(File.dirname(repo), "mine")
+      FileUtils.cp(script, other)
+      expect(described_class.seeder("OPENLANES_SETUP_WORKTREE" => other, "PATH" => bin)).to eq(other)
+    end
+
+    it "then finds it on PATH" do
+      expect(described_class.seeder("PATH" => "/nonexistent#{File::PATH_SEPARATOR}#{bin}")).to eq(script)
+    end
+
+    it "then looks in ~/.claude/bin and ~/.agents/bin" do
+      expect(described_class.seeder_candidates("PATH" => "").map { File.dirname(it) })
+        .to eq([File.expand_path("~/.claude/bin"), File.expand_path("~/.agents/bin")])
+    end
+
+    it "skips a file that is not executable" do
+      FileUtils.chmod(0o644, script)
+      expect(described_class.seeder_candidates("PATH" => bin)).to include(script)
+      expect(described_class.seeder("PATH" => bin)).not_to eq(script)
+    end
+  end
+
   describe "#seed when the seeder is unavailable" do
-    before { stub_const("OpenLanes::Vcs::Worktree::SEEDER", "/nonexistent/setup-worktree") }
+    let(:seeder) { "/nonexistent/setup-worktree" }
 
     # A plan is not worth abandoning over a seeding step.
     it "does not raise, so one missing script cannot stop the loop" do
@@ -179,7 +227,10 @@ RSpec.describe OpenLanes::Vcs::Worktree do
         seeded
       end
 
-      it { expect(OpenLanes::UI).to have_received(:log).with(a_string_including("missing")) }
+      it "names every place it looked" do
+        expect(OpenLanes::UI).to have_received(:log).with(a_string_including("no setup-worktree found", "$OPENLANES_SETUP_WORKTREE", "~/.claude/bin", "~/.agents/bin"))
+      end
+
       it { expect(stderr.string).to be_empty }
     end
 
@@ -189,21 +240,21 @@ RSpec.describe OpenLanes::Vcs::Worktree do
   end
 
   describe "#seed when the seeder is present" do
-    def fake_seeder(exit_status)
+    let(:exit_status) { 0 }
+    let(:seeder) do
       path = File.join(File.dirname(repo), "setup-worktree")
       File.write(path, "#!/bin/sh\nexit #{exit_status}\n")
       FileUtils.chmod(0o755, path)
-      stub_const("OpenLanes::Vcs::Worktree::SEEDER", path)
+      path
     end
 
     it "answers true when the seeder succeeds, saying nothing" do
-      fake_seeder(0)
-
       expect(worktrees.seed(repo)).to be(true)
     end
 
     context "when the seeder runs and fails" do
       let(:stderr) { StringIO.new }
+      let(:exit_status) { 1 }
 
       around do |example|
         original = $stderr
@@ -213,10 +264,7 @@ RSpec.describe OpenLanes::Vcs::Worktree do
         $stderr = original
       end
 
-      before do
-        fake_seeder(1)
-        allow(OpenLanes::UI).to receive(:log)
-      end
+      before { allow(OpenLanes::UI).to receive(:log) }
 
       # Never fatal: a plan is not worth abandoning over a seeding step, but
       # a suite dying later on a missing key needs this line to explain it.
