@@ -123,4 +123,47 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(described_class.load(dir)).to be_default
     end
   end
+
+  describe "depends_on" do
+    it "is nil when the key is absent" do
+      expect(parse("lane: plan").depends_on).to be_nil
+    end
+
+    it "is empty when the key is present and empty" do
+      expect(parse("depends_on: []").depends_on).to eq([])
+    end
+
+    it "is empty when the key is present with no value" do
+      expect(parse("depends_on:").depends_on).to eq([])
+    end
+
+    it "keeps quoted canonical ordinals and reports no problem" do
+      spec = parse('depends_on: ["034.00"]')
+
+      expect(spec.depends_on).to eq(["034.00"])
+      expect(spec.problems).to be_empty
+    end
+
+    it "normalises a bare NNN to NNN.00, sorted and unique" do
+      expect(parse('depends_on: ["050", "034", "034.00"]').depends_on).to eq(%w[034.00 050.00])
+    end
+
+    it "drops a bare number YAML read as octal, and says so" do
+      spec = parse("depends_on: [034]")
+
+      expect(spec.depends_on).to eq([])
+      expect(spec.problems).to contain_exactly(a_string_including("depends_on: 28"))
+    end
+
+    it "drops a string that is not a plan number, and says so" do
+      spec = parse('depends_on: ["soon", "041.00"]')
+
+      expect(spec.depends_on).to eq(["041.00"])
+      expect(spec.problems).to contain_exactly(a_string_including('"soon"'))
+    end
+
+    it "is not the default when only depends_on is set" do
+      expect(parse("depends_on: []")).not_to be_default
+    end
+  end
 end

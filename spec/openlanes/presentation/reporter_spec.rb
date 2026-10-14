@@ -143,6 +143,57 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
     end
   end
 
+  describe "dependencies" do
+    def spec_with(deps) = "---\ndepends_on: #{deps}\n---\n#{spec_body}"
+
+    let!(:tree) do
+      plans do |t|
+        t.plan "034.00", :new, "base", files: { "spec.md" => spec_body }
+        t.plan "050.00", :new, "later", files: { "spec.md" => spec_with('["034.00"]') }
+      end
+    end
+
+    def row_for(ordinal) = table.lines.find { |l| l.start_with?("  #{ordinal}") }
+
+    it "says on the blocking plan's row which plans it holds up" do
+      expect(row_for("034.00")).to include("blocks 050.00")
+    end
+
+    it "keeps the dependent's own row free of the note" do
+      expect(row_for("050.00")).not_to include("blocks")
+    end
+
+    it "lists several blocked ordinals in order, comma-separated" do
+      plans { |t| t.plan "060.00", :new, "other", files: { "spec.md" => spec_with('["034.00"]') } }
+      expect(row_for("034.00")).to include("blocks 050.00, 060.00")
+    end
+
+    it "names an unknown dependency as a problem" do
+      plans { |t| t.plan "070.00", :new, "lost", files: { "spec.md" => spec_with('["999.00"]') } }
+      expect(table).to include("999.00 is not a plan in this tree")
+    end
+
+    it "warns that a dependency on a finished plan is ignored" do
+      plans do |t|
+        t.plan "010.00", :approved, "done", files: { "spec.md" => spec_body }
+        t.plan "080.00", :new, "after-done", files: { "spec.md" => spec_with('["010.00"]') }
+      end
+      expect(table).to include("010.00 is already done, so the entry is ignored")
+    end
+
+    it "shows the cycle a plan sits on" do
+      plans do |t|
+        t.plan "034.00", :new, "base", files: { "spec.md" => spec_with('["050.00"]') }
+      end
+      expect(table).to include("cycle: 034.00 → 050.00 → 034.00")
+    end
+
+    it "paints the note when colour is on" do
+      allow(OpenLanes::UI).to receive(:color?).and_return(true)
+      expect(reporter.render.lines.find { |l| l.include?("034.00") }).to match(/\e\[[0-9;]*mblocks 050\.00/)
+    end
+  end
+
   describe "table discipline" do
     it "writes nothing to STDERR, so the table composes in a pipe" do
       expect { reporter.render }.not_to output.to_stderr

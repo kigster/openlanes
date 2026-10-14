@@ -226,4 +226,59 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       end
     end
   end
+
+  describe "plan dependencies" do
+    def needs(*ordinals) = "---\ndepends_on: #{ordinals.inspect}\n---\n#{spec_body}"
+
+    let(:ready) { { "plan.md" => "# P", "plan-frontend.md" => "## F1" } }
+
+    context "when 050 depends on an open 034" do
+      let!(:built) do
+        plans do |t|
+          t.plan "034.00", :planned, "parser", files: { "spec.md" => spec_body, **ready }
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00"), **ready }
+        end
+      end
+
+      it "starts only 034 and says why 050 waits" do
+        runner.call
+
+        expect(calls.map(&:last).uniq).to eq(["034.00"])
+        expect(runner.held).to eq("050.00" => "waiting on 034.00")
+      end
+    end
+
+    context "when 034 is done" do
+      let!(:built) do
+        plans do |t|
+          t.plan "034.00", :approved, "parser", prs: [t.merged(34, "Ship")]
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00"), **ready }
+        end
+      end
+
+      it "starts 050" do
+        runner.call
+
+        expect(calls.map(&:last).uniq).to eq(["050.00"])
+        expect(runner.held).to be_empty
+      end
+    end
+
+    context "when 034 and 050 wait on each other" do
+      let!(:built) do
+        plans do |t|
+          t.plan "034.00", :planned, "parser", files: { "spec.md" => needs("050.00"), **ready }
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00"), **ready }
+        end
+      end
+
+      it "starts neither and reports the cycle for both" do
+        runner.call
+
+        expect(calls).to be_empty
+        expect(runner.held).to eq("034.00" => "cycle: 034.00 → 050.00 → 034.00",
+          "050.00" => "cycle: 050.00 → 034.00 → 050.00")
+      end
+    end
+  end
 end

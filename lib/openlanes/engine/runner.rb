@@ -167,6 +167,22 @@ module OpenLanes
       # @return [Array<OpenLanes::Plans::Subject>]
       def blocked = in_scope.select { |s| %i[blocked product_blocked].include?(s.status.key) }
 
+      # Plans in scope the dependency gate holds back, with the reason: a
+      # dependency that is not done yet, or a cycle that no order can break.
+      # A plan with no `depends_on:` key is never held, nor is one already
+      # parked, whose own state says more than its dependencies do.
+      #
+      # @return [Hash{String => String}] ordinal => "waiting on 034.00" or "cycle: ..."
+      def held
+        deps = tree.dependencies
+        in_scope.each_with_object({}) do |subject, out|
+          next if Plans::StateMachine::SETTLED.include?(subject.status.key)
+
+          ordinal = subject.feature.ordinal.to_s
+          reason = deps.reason(ordinal) and out[ordinal] = reason
+        end
+      end
+
       # @return [Boolean]
       def settled? = in_scope.all? { |s| Plans::StateMachine::SETTLED.include?(s.status.key) }
 

@@ -20,6 +20,7 @@ module OpenLanes
     #     - `openlanes create` opens an editor and writes no draft
     #   how-to-verify:
     #     - bundle exec rspec spec/openlanes/cli/create_spec.rb
+    #   depends_on: ["034.00"]   # plans that must be ✅ before this one starts
     #   ---
     #
     # The body is the specification; this is how it should be worked. A value
@@ -49,6 +50,10 @@ module OpenLanes
     # @!attribute [r] how_to_verify
     #   @return [Array<String>] the author's `how-to-verify`: the commands or
     #     checks that show it is.
+    # @!attribute [r] depends_on
+    #   @return [Array<String>, nil] canonical `NNN.MM` ordinals of the plans
+    #     this one waits for. nil when the key is absent ("not checked yet"),
+    #     which is not the same as `[]` ("checked, none").
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
     Spec = Data.define(:lane,
@@ -59,9 +64,10 @@ module OpenLanes
       :requirements,
       :completed_when,
       :how_to_verify,
+      :depends_on,
       :problems) do
       def initialize(lane: :full, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], problems: [])
+        completed_when: [], how_to_verify: [], depends_on: nil, problems: [])
         super
       end
 
@@ -106,6 +112,10 @@ module OpenLanes
       COMPLETED_WHEN_KEY = "task-completed-when"
       HOW_TO_VERIFY_KEY = "how-to-verify"
 
+      # The plans this one waits for. Quoted canonical ordinals only: YAML
+      # reads a bare `[034]` as octal 28, a silent wrong answer.
+      DEPENDS_ON_KEY = "depends_on"
+
       FILENAME = "spec.md"
 
       class << self
@@ -141,6 +151,7 @@ module OpenLanes
             requirements: notes(meta, REQUIREMENTS_KEY, problems),
             completed_when: notes(meta, COMPLETED_WHEN_KEY, problems),
             how_to_verify: notes(meta, HOW_TO_VERIFY_KEY, problems),
+            depends_on: depends_on(meta, problems),
             problems:)
         end
 
@@ -180,6 +191,26 @@ module OpenLanes
           end
 
           items.map { |item| item.to_s.strip }.reject(&:empty?)
+        end
+
+        # Each entry must be a string {Ordinal} can read; anything else is
+        # dropped and named, never coerced, since `034` has already become 28
+        # by the time it reaches here. `"034"` is normalised to `"034.00"`, so
+        # every caller compares one form.
+        #
+        # @return [Array<String>, nil] nil when the key is absent
+        def depends_on(meta, problems)
+          return nil unless meta.key?(DEPENDS_ON_KEY)
+
+          value = meta[DEPENDS_ON_KEY]
+          items = value.nil? ? [] : Array(value)
+          items.filter_map do |item|
+            ordinal = item.is_a?(String) && Ordinal.parse(item)
+            next ordinal.to_s if ordinal
+
+            problems << "#{DEPENDS_ON_KEY}: #{item.inspect} is not a quoted plan number like \"034.00\""
+            nil
+          end.uniq.sort
         end
 
         # @return [Hash]
