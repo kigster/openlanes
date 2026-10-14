@@ -22,7 +22,7 @@ All ordinals are canonical `"NNN.MM"` strings. Every list is sorted and never ni
 | `deps.closed(ordinal)` | `Array<String>` | Entries naming a ✅/😎 plan; the gate ignores them. |
 | `deps.cycle_of(ordinal)` | `Array<String>` or `nil` | A shortest cycle through the plan, e.g. `["034.00", "050.00", "034.00"]`, starting at the asked ordinal. Only edges to plans not yet ✅/😎 count. |
 | `deps.cycles` | `Array<Array<String>>` | One shortest cycle per strongly connected group, starting at its lowest ordinal. |
-| `deps.reason(ordinal)` | `String` or `nil` | `"cycle: 034.00 → 050.00 → 034.00"` or `"waiting on 034.00, 041.00"`; nil when free. Cycle wins. |
+| `deps.reason(ordinal)` | `String` or `nil` | `"cycle: 034.00 → 050.00 → 034.00"`, `"waiting on 034.00, 041.00"` or `"unknown plan 099.00; waiting on 034.00"`; nil when free. Cycle wins; an entry naming no plan is said as `unknown plan`, not as a wait. |
 
 `ordinal` may be an `Ordinal` or a `String`. Unknown ordinals answer `[]`/`nil`; nothing raises.
 

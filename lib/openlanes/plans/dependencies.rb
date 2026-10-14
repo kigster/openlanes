@@ -63,16 +63,24 @@ module OpenLanes
       def cycles = @cycles ||= components.select { looped?(it.first) }.map { cycle_of(it.first) }.sort
 
       # Why the engine must not start this plan, or nil when it may. A cycle
-      # outranks a plain wait, since waiting on a cycle never ends.
+      # outranks a plain wait, since waiting on a cycle never ends. An entry
+      # naming no plan is said apart from a real wait: a typo such as
+      # "099.00" holds the plan forever, and "waiting on 099.00" in the held
+      # report read like a wait that would end on its own.
       #
       # @param ordinal [OpenLanes::Plans::Ordinal, String]
-      # @return [String, nil] e.g. "waiting on 034.00" or "cycle: 034.00 → 050.00 → 034.00"
+      # @return [String, nil] e.g. "waiting on 034.00", "unknown plan 099.00"
+      #   or "cycle: 034.00 → 050.00 → 034.00"
       def reason(ordinal)
         cycle = cycle_of(ordinal)
         return "cycle: #{cycle.join(" → ")}" if cycle
 
-        open = waiting_on(ordinal)
-        "waiting on #{open.join(", ")}" unless open.empty?
+        missing = unknown(ordinal)
+        open = waiting_on(ordinal) - missing
+        parts = []
+        parts << "unknown plan #{missing.join(", ")}" unless missing.empty?
+        parts << "waiting on #{open.join(", ")}" unless open.empty?
+        parts.join("; ") unless parts.empty?
       end
 
       private

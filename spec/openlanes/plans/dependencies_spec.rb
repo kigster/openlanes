@@ -59,6 +59,11 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       expect(deps.closed("030.00")).to eq(["010.00"])
       expect(deps.unknown("030.00")).to eq(["099.00"])
     end
+
+    # "waiting on 099.00" read like a wait that would end; a typo never does.
+    it "names the unknown one apart from the real wait" do
+      expect(deps.reason("030.00")).to eq("unknown plan 099.00; waiting on 020.00")
+    end
   end
 
   context "with a two-plan cycle" do
