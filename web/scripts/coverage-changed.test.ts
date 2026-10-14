@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { isMeasured, measure, report, type FileCoverage } from "./coverage-changed";
 
 const entry = (path: string, hits: number[]): FileCoverage => ({ path, s: Object.fromEntries(hits.map((n, i) => [String(i), n])) });
@@ -38,4 +40,17 @@ it("measures only source files", () => {
   expect(isMeasured("src/test/setup.ts")).toBe(false);
   expect(isMeasured("src/vite-env.d.ts")).toBe(false);
   expect(isMeasured("src/index.css")).toBe(false);
+});
+
+it("skips the files vitest's coverage excludes, which have no entry to judge", () => {
+  expect(isMeasured("src/main.tsx")).toBe(false);
+  expect(isMeasured("src/api/types.ts")).toBe(false);
+  expect(isMeasured("src/api/client.ts")).toBe(true);
+});
+
+// Read as text: importing vite.config.ts under jsdom loads esbuild, which refuses jsdom's TextEncoder.
+it("hands vite's coverage the shared lists, not a copy the gate cannot see", () => {
+  const vite = readFileSync(resolve(__dirname, "../vite.config.ts"), "utf8");
+  expect(vite).toMatch(/include: COVERAGE_INCLUDE,/);
+  expect(vite).toMatch(/exclude: COVERAGE_EXCLUDE,/);
 });

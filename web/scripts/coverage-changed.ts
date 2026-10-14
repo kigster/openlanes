@@ -2,8 +2,9 @@
 // Run after `vitest run --coverage`: reads coverage/coverage-final.json (the istanbul `json` reporter).
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { matchesGlob, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { COVERAGE_EXCLUDE, COVERAGE_INCLUDE } from "../coverage.config.ts";
 
 export const THRESHOLD = 95;
 
@@ -35,9 +36,9 @@ export function measure(coverage: Record<string, FileCoverage>, changed: string[
   });
 }
 
-/** Only source files count: tests, fixtures of the test harness and declaration files are not measured. */
+/** Exactly the files vitest measures (coverage.config.ts): one it was told to leave out has no entry to be judged by. */
 export function isMeasured(file: string): boolean {
-  return /^src\/.*\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file) && !file.startsWith("src/test/") && !file.endsWith(".d.ts");
+  return COVERAGE_INCLUDE.some((glob) => matchesGlob(file, glob)) && !COVERAGE_EXCLUDE.some((glob) => matchesGlob(file, glob));
 }
 
 export function report(rows: Row[], threshold = THRESHOLD): { ok: boolean; lines: string[] } {

@@ -2,6 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { COVERAGE_EXCLUDE, COVERAGE_INCLUDE } from "./coverage.config.ts";
 
 // The API server listens on 11000 (contract.md); in development Vite proxies to it, so the page has one origin either way.
 export default defineConfig({
@@ -16,8 +17,8 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/vite-env.d.ts", "src/api/types.ts"],
+      include: COVERAGE_INCLUDE,
+      exclude: COVERAGE_EXCLUDE,
       thresholds: { statements: 95, branches: 90, functions: 95, lines: 95 },
       reporter: ["text-summary", "html", "lcov", "json"],
     },
