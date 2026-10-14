@@ -22,8 +22,25 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       )
 
       expect(line).to eq(
-        "[16:22:14 | 003.00 | ⭐️ Planned       | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
+        "[16:22:14 | 003.00 | ⭐️  Planned            | yoda-writer          | 01 |   91234 |    42s] editing spec.md"
       )
+    end
+
+    it "matches the line the module's @example documents" do
+      source = File.read(File.expand_path("../../../lib/openlanes/engine/progress_log.rb", __dir__))
+      documented = source[/^\s*#\s+#=> "(.*)"$/, 1]
+      line = described_class.render(
+        "editing spec.md",
+        plan:    "003.00",
+        status:  "⭐️ Planned",
+        agent:   "yoda-writer",
+        seconds: 42,
+        round:   "01",
+        pid:     91_234,
+        at:
+      )
+
+      expect(documented).to eq(line)
     end
 
     it "returns one line, with no trailing newline" do
@@ -46,7 +63,7 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       )
 
       aggregate_failures do
-        expect(header).to eq("[16:22:14 |        |                  |                      |    |   91234 |       ] round 1 - 3 plans")
+        expect(header).to eq("[16:22:14 |        |                        |                      |    |   91234 |       ] round 1 - 3 plans")
         expect(OpenLanes::UI.display_width(prefix_of(header))).to eq(OpenLanes::UI.display_width(prefix_of(full)))
         expect(OpenLanes::UI.display_width(prefix_of(header))).to eq(described_class::LINE_WIDTH)
       end
@@ -98,19 +115,39 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
   end
 
   describe "the column widths" do
-    # Five cells shy of the widest state on purpose: the emoji already names
-    # the state, so the longest labels lose their tails rather than every
-    # line paying for "Scrapped by Review" in full.
-    it "tracks the widest state the machine defines, minus the deliberate trim" do
-      widest = OpenLanes::Plans::STATUSES.map { |status| OpenLanes::UI.display_width(status.to_s) }.max
+    it "fits the widest state the machine defines, label in full" do
+      widest = OpenLanes::Plans::STATUSES.map { |status| OpenLanes::UI.display_width(status.label) }.max
 
-      expect(described_class::STATUS_WIDTH).to eq(widest - 5)
+      expect(described_class::STATUS_WIDTH).to eq(2 + 2 + widest)
+    end
+
+    it "leaves two spaces between a status's emoji and its label" do
+      line = described_class.render("x", status: "🔴 Changes Requested", at: Time.local(2026, 10, 13, 14, 24, 11))
+
+      expect(line).to include("| 🔴  Changes Requested ")
     end
 
     it "fits the longest specialist name on disk" do
       longest = OpenLanes::Agents::Registry.new.all.map { |agent| agent.name.length }.max
 
       expect(described_class::AGENT_WIDTH).to be > longest
+    end
+  end
+
+  describe ".default_path" do
+    it "names the checkout and a digest of its path, so same-named checkouts do not share a log" do
+      one = described_class.default_path("/work/a/minesweeper")
+      other = described_class.default_path("/work/b/minesweeper")
+      aggregate_failures do
+        expect(File.basename(one)).to match(/\Aopenlanes-minesweeper-\h{6}\.log\z/)
+        expect(one).not_to eq(other)
+        expect(File.dirname(one)).to eq(Dir.tmpdir)
+        expect(described_class.default_path("/work/a/minesweeper/")).to eq(one)
+      end
+    end
+
+    it "names the process that logs" do
+      expect(File.basename(described_class.default_path("/work/widgets", kind: "web"))).to match(/\Aopenlanes-web-widgets-\h{6}\.log\z/)
     end
   end
 end

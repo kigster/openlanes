@@ -284,7 +284,7 @@ RSpec.describe OpenLanes::UI do
         seconds: 42,
         round:   "01")
 
-      expect(File.read(@log_path)).to match(/\A\[\d\d:\d\d:\d\d \| 003\.00 +\| ⭐️ Planned +\| yoda-writer +\| 01 \| +\d+ \| +42s\] editing spec\.md\n\z/)
+      expect(File.read(@log_path)).to match(/\A\[\d\d:\d\d:\d\d \| 003\.00 +\| ⭐️  Planned +\| yoda-writer +\| 01 \| +\d+ \| +42s\] editing spec\.md\n\z/)
     end
 
     it "appends rather than truncating on a second call" do
@@ -680,6 +680,53 @@ RSpec.describe OpenLanes::UI do
       widths = OpenLanes::Plans::STATUSES.map { |s| described_class.display_width(described_class.fit(s.emoji, 2)) }
 
       expect(widths.uniq).to eq([2])
+    end
+  end
+
+  describe ".labelled" do
+    let(:rows) do
+      [["Progress", "/tmp/openlanes-minesweeper.log"],
+       ["Live board", ["redis://localhost:6379 as kig@host", "(c016ff29b4961a744912c240:734c0aa1d2e3)"]],
+       ["Control room", "http://127.0.0.1:11000"]]
+    end
+
+    it "pads every label to the widest, so the values start in one column" do
+      expect(described_class.labelled(rows, room: 100)).to eq(<<~TEXT.chomp)
+        Progress:     /tmp/openlanes-minesweeper.log
+        Live board:   redis://localhost:6379 as kig@host (c016ff29b4961a744912c240:734c0aa1d2e3)
+        Control room: http://127.0.0.1:11000
+      TEXT
+    end
+
+    it "puts a part that does not fit on a continuation line under the values" do
+      expect(described_class.labelled(rows, room: 60).lines(chomp: true)[1, 2]).to eq(
+        ["Live board:   redis://localhost:6379 as kig@host",
+         "              (c016ff29b4961a744912c240:734c0aa1d2e3)"]
+      )
+    end
+
+    it "breaks a path wider than its column between directories, each piece under the values" do
+      text = described_class.labelled([["Progress", "/var/folders/jq/853fg3814rs6xx/T/openlanes-minesweeper.log"]], room: 41)
+
+      expect(text.lines(chomp: true)).to eq(["Progress: /var/folders/jq/853fg3814rs6xx/",
+                                             "          T/openlanes-minesweeper.log"])
+    end
+
+    it "cuts a name wider than the column anywhere, rather than overflow it" do
+      text = described_class.labelled([["Id", "x" * 25]], room: 14)
+
+      expect(text.lines(chomp: true)).to eq(["Id: #{"x" * 10}", "    #{"x" * 10}", "    #{"x" * 5}"])
+    end
+
+    it "cuts a wide name by terminal cells, not characters" do
+      text = described_class.labelled([["Id", "界" * 7]], room: 10)
+
+      expect(text.lines(chomp: true)).to eq(["Id: 界界界", "    界界界", "    界"])
+    end
+
+    it "fits inside the box dry-cli-ui draws" do
+      allow(described_class).to receive(:tty?).and_return(false)
+      expect(described_class.box_room).to eq([described_class.width, 78].min - 6)
     end
   end
 

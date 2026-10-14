@@ -38,6 +38,13 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
       end
     end
 
+    it "leaves two spaces after each icon, so a wide emoji cannot overlap the words" do
+      aggregate_failures do
+        expect(table).to include("🟡  Building")
+        expect(table).to match(/🟡  1\b/)
+      end
+    end
+
     it "renders the feature name from the slug" do
       expect(table).to include("Dev Foundation")
     end

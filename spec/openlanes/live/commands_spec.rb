@@ -69,6 +69,14 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       expect(OpenLanes::UI).to have_received(:log).with("commands not read: gone")
     end
 
+    it "says what came from the page, once, naming the plan and agent it addresses" do
+      allow(OpenLanes::UI).to receive(:log)
+      apply
+      apply
+      expect(OpenLanes::UI).to have_received(:log)
+        .with("from the page: hold", plan: "001.00", agent: dispatcher.running.first.task.agent.name).once
+    end
+
     it "is a block the dispatcher calls at the top of its tick" do
       dispatcher.before_tick(&commands)
       dispatcher.tick
@@ -473,6 +481,11 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
         expect(runner.in_scope.map { it.feature.ordinal.to_s }).to eq(%w[001.00 002.00])
         expect(claims.held).to include("002.00")
       end
+    end
+
+    it "names the plan after an idea's heading, once" do
+      send_command("create_plans", idea: "# Minesweeper\n\nMinesweeper is played on a grid of covered squares.")
+      expect(apply.map(&:reason)).to eq(["created 002.00 minesweeper"])
     end
 
     it "creates one plan however often its command is applied" do

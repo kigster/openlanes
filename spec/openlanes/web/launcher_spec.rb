@@ -127,6 +127,6 @@ RSpec.describe OpenLanes::Web::Launcher do
 
   it "keeps its log in the temp dir by default" do
     expect(described_class.new(root: "/work/widgets", plans_dir: "/p", port: 1, redis_url: "x").log)
-      .to eq(File.join(Dir.tmpdir, "openlanes-web-widgets.log"))
+      .to eq(OpenLanes::Engine::ProgressLog.default_path("/work/widgets", kind: "web"))
   end
 end
