@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "securerandom"
 require "socket"
 require "time"
 require "tmpdir"
@@ -192,7 +193,11 @@ module OpenLanes
           next if message
 
           number = [data["messages"].map { |m| m["number"] }.max.to_i, after].max + 1
-          message = { "number" => number, "at" => at.iso8601, "from" => from, "to" => to, "body" => body, "read" => "no" }
+          # The id, not the number, is what a drain dedupes on: a worktree's
+          # copy of this file numbers its messages independently of the main
+          # checkout's, so two different messages can both be #4.
+          message = { "id" => SecureRandom.uuid, "number" => number, "at" => at.iso8601, "from" => from, "to" => to,
+                      "body" => body, "read" => "no" }
           message["command"] = command if command
           data["messages"] << message
         end
@@ -200,23 +205,37 @@ module OpenLanes
       end
 
       # Keep a message that arrived with its number already given, as one
-      # drained from Redis does (B4). A number this file already holds is
-      # the same message: `mail send` writes here before it publishes, so in
-      # the usual case nothing is written at all, and the file's mtime stays.
+      # drained from Redis does (B4).
+      #
+      # A message is the same message when its id matches, or, when either
+      # side was written before ids existed, when sender, recipient, time and
+      # body all match. Never by number alone: `mail send` in a worktree
+      # numbers against the worktree's `state.json`, the main checkout
+      # numbers against its own, and both can hand out #4. Deduping on the
+      # number dropped the second #4 as a "duplicate" without a word.
+      #
+      # So the usual case, `mail send` having already written here before it
+      # published, writes nothing at all and the file's mtime stays; and a
+      # different message whose number is taken is kept under the next free
+      # one.
       #
       # @param message [Hash] as {#message!} writes it, string keys
+      # @param reserved [Array<Integer>] numbers taken outside this file,
+      #   i.e. by mailbox.md
       # @return [Hash, nil] the message as written, nil when it was here
-      def deliver!(message)
-        number = message["number"]
-        return nil if messages.any? { |m| m["number"] == number }
+      def deliver!(message, reserved: [])
+        return nil if messages.any? { |m| same_message?(m, message) }
 
         delivered = nil
         update do |data|
-          next if data["messages"].any? { |m| m["number"] == number }
+          next if data["messages"].any? { |m| same_message?(m, message) }
 
+          taken = data["messages"].map { |m| m["number"].to_i } + reserved
+          number = taken.include?(message["number"]) ? taken.max + 1 : message["number"]
           # Unread whatever it arrived saying: only `mail ack` in this file
           # says its reader read it.
-          delivered = message.slice("number", "at", "from", "to", "body", "command").merge("read" => "no")
+          delivered = message.slice("id", "number", "at", "from", "to", "body", "command")
+                             .merge("number" => number, "read" => "no")
           data["messages"] << delivered
           data["messages"].sort_by! { |m| m["number"].to_i }
         end
@@ -350,6 +369,16 @@ module OpenLanes
       def lock_key
         plans = File.expand_path(File.dirname(dir))
         Digest::SHA256.hexdigest("#{plans}\0#{identity["ordinal"] || File.basename(dir)}")[0, 16]
+      end
+
+      # @param one [Hash]
+      # @param other [Hash]
+      # @return [Boolean] whether the two are one message, by id when both
+      #   carry one, by what they say otherwise
+      def same_message?(one, other)
+        return one["id"] == other["id"] if one["id"] && other["id"]
+
+        %w[from to body].all? { one[it] == other[it] } && parse_time(one["at"]) == parse_time(other["at"])
       end
 
       # @param text [String, nil]

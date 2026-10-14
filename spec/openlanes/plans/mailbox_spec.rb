@@ -237,17 +237,49 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
 
     it "keeps them in number order whatever order they arrive in" do
       mailbox.deliver(drained)
-      mailbox.deliver(drained.merge("number" => 2))
+      mailbox.deliver(drained.merge("number" => 2, "body" => "earlier"))
 
       expect(OpenLanes::Plans::PlanState.for(folder).messages.map { it["number"] }).to eq([2, 4])
     end
 
-    it "skips a number mailbox.md already holds" do
-      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+    it "skips a message mailbox.md already holds, recognised by what it says" do
+      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-10-13 19:17:10 -0700 · luke-backend → rey-frontend\n\nup\n")
 
       aggregate_failures do
         expect(mailbox.deliver(drained)).to be_nil
         expect(OpenLanes::Plans::PlanState.for(folder).messages).to eq([])
+      end
+    end
+
+    it "renumbers a different message whose number mailbox.md took" do
+      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+
+      expect(mailbox.deliver(drained)).to have_attributes(number: 5, body: "up")
+    end
+
+    # A worktree's state.json and the main checkout's number independently,
+    # so two different messages can both arrive as #4. The number is not
+    # their identity; the id `mail send` writes is.
+    it "keeps two different messages that both arrived as #4, as #4 and #5" do
+      mailbox.deliver(drained.merge("id" => "a1"))
+      mailbox.deliver(drained.merge("id" => "b2", "body" => "also up"))
+
+      expect(mailbox.messages.map { [it.number, it.body, it.id] }).to eq([[4, "up", "a1"], [5, "also up", "b2"]])
+    end
+
+    it "keeps one message delivered twice once, by its id" do
+      2.times { mailbox.deliver(drained.merge("id" => "a1")) }
+
+      expect(mailbox.messages.map(&:number)).to eq([4])
+    end
+
+    it "takes one without an id as a copy of a message that says the same thing" do
+      sent = mailbox.append(from: "luke-backend", to: "rey-frontend", body: "up", at: Time.new(2026, 10, 13, 19, 17, 10, "-07:00"))
+
+      aggregate_failures do
+        expect(sent.id).to match(/\A\h{8}-/)
+        expect(mailbox.deliver(drained.merge("number" => 9))).to be_nil
+        expect(mailbox.messages.map(&:number)).to eq([1])
       end
     end
 

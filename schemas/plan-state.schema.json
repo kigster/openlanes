@@ -89,6 +89,7 @@
         "required": ["number", "at", "from", "to", "body"],
         "additionalProperties": false,
         "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Written by `openlanes mail send`, so a message drained from Redis is recognised by identity, not by a number another copy of this file may also have given out. Absent on messages written before ids existed." },
           "number": { "type": "integer", "minimum": 1 },
           "at": { "type": "string", "format": "date-time" },
           "from": { "$ref": "#/$defs/agent" },

@@ -36,8 +36,12 @@ module OpenLanes
 
       # One entry.
       #
+      # @!attribute [r] id
+      #   @return [String, nil] what a drained copy is recognised by; nil on
+      #     messages from before ids, and on every mailbox.md one
       # @!attribute [r] number
-      #   @return [Integer] 1-based, in order of writing
+      #   @return [Integer] 1-based, in order of writing, within one copy of
+      #     the plan's files
       # @!attribute [r] at
       #   @return [String] when, as {TIME_FORMAT} writes it
       # @!attribute [r] from
@@ -50,10 +54,10 @@ module OpenLanes
       #   @return [String] "yes" once its recipient ran `mail ack`, "no" until
       #     then. Set by the reader, never by delivery: a stream ack says the
       #     bytes arrived, not that anybody read them.
-      Message = Data.define(:number, :at, :from, :to, :body, :read) do
+      Message = Data.define(:number, :at, :from, :to, :body, :read, :id) do
         # A message written before acks existed carries no `read`, and reads
         # as unread: nobody ever said they read it.
-        def initialize(number:, at:, from:, to:, body:, read: "no") = super
+        def initialize(number:, at:, from:, to:, body:, read: "no", id: nil) = super
 
         # @return [Boolean]
         def read? = read == "yes"
@@ -121,7 +125,9 @@ module OpenLanes
       end
 
       # Keep a message the harness drained from Redis, unless this plan
-      # already has its number, here or in `mailbox.md`.
+      # already has it, here or in `mailbox.md`. A different message whose
+      # number is taken is kept under the next free number: see
+      # {PlanState#deliver!}.
       #
       # @param message [Hash] as {Live::Mail#drain} returns it
       # @return [OpenLanes::Plans::Mailbox::Message, nil] as written, nil when
@@ -133,9 +139,11 @@ module OpenLanes
         raise Error, "a delivered message needs a positive number" unless number.is_a?(Integer) && number.positive?
         raise Error, "a message needs a body" if message["body"].to_s.strip.empty?
         raise Error, "a message needs --from and --to, each one agent name" unless name?(message["from"]) && name?(message["to"])
-        return nil if legacy.any? { |m| m.number == number }
 
-        state.deliver!(message)&.then { from_state(it) }
+        old = legacy
+        return nil if old.any? { |m| same_as_legacy?(m, message) }
+
+        state.deliver!(message, reserved: old.map(&:number))&.then { from_state(it) }
       end
 
       # How many messages nobody has acked. The dashboard shows it, and
@@ -148,7 +156,19 @@ module OpenLanes
         messages.count { |m| !m.read? && (recipient.nil? || m.to == recipient) }
       end
 
-      # Mark one message read.
+      # Whether +number+ is a `mailbox.md` message: history, counted as read,
+      # where an ack records nothing.
+      #
+      # @param number [Integer, String]
+      # @return [Boolean]
+      def legacy?(number)
+        number = Integer(number.to_s, exception: false)
+        legacy.any? { |m| m.number == number }
+      end
+
+      # Mark one message read. A `mailbox.md` number is returned as it
+      # stands, with nothing written: ask {#legacy?} before saying it was
+      # recorded.
       #
       # @param number [Integer]
       # @param by [String] the reader, who must be its recipient
@@ -212,7 +232,27 @@ module OpenLanes
           from: message["from"],
           to: message["to"],
           body: message["body"],
-          read: message["read"] == "yes" ? "yes" : "no")
+          read: message["read"] == "yes" ? "yes" : "no",
+          id: message["id"])
+      end
+
+      # mailbox.md has no ids, so a drained copy of one of its messages is
+      # recognised by what it says.
+      #
+      # @param old [OpenLanes::Plans::Mailbox::Message]
+      # @param message [Hash]
+      # @return [Boolean]
+      def same_as_legacy?(old, message)
+        old.from == message["from"] && old.to == message["to"] && old.body.strip == message["body"].to_s.strip &&
+          time_of(old.at) == time_of(message["at"])
+      end
+
+      # @param text [String, nil]
+      # @return [Time, nil]
+      def time_of(text)
+        Time.parse(text.to_s)
+      rescue ArgumentError
+        nil
       end
 
       # @param value [Object]
