@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { createQueryClient } from "./queryClient";
+import { COPILOT_KEY, createQueryClient } from "./queryClient";
+import type { CopilotLog } from "./types";
 import { reconcile, useBoard } from "./useBoard";
 import { replies } from "./replies";
 import type { StreamHandlers } from "./events";
 import { loadFixtureBoard } from "./client";
+import { useCopilot } from "../copilot/useCopilot";
 
 const streams: StreamHandlers[] = [];
 const closed = vi.fn();
@@ -56,6 +58,62 @@ it("loads the board, follows the stream, and refetches on reconnect", async () =
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   unmount();
   expect(closed).toHaveBeenCalled();
+});
+
+// The GET and the stream run at once. A turn the stream delivers while the GET is in flight, which that GET read too
+// early to include, must survive the GET's answer.
+it("keeps a copilot turn that arrives while the conversation's GET is in flight", async () => {
+  const client = createQueryClient();
+  let answer: (r: Response) => void = () => {};
+  const older = { id: "01JA", from: "you", kind: "text", text: "earlier", at: "2026-10-13T09:00:00Z", usage: null } as const;
+  fetchMock.mockImplementation((path: string) =>
+    path === "/api/copilot" ? new Promise<Response>(resolve => (answer = resolve)) : Promise.resolve(json(loadFixtureBoard())),
+  );
+  const { result } = renderHook(() => (useBoard(), useCopilot()), {
+    wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+  });
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/copilot", expect.anything()));
+  const turn = { id: "01JB.1", from: "copilot", kind: "text", text: "late", at: "2026-10-13T09:00:05Z", usage: { model: "m", up: 9, down: 1 } } as const;
+  act(() => streams[0].onCopilot?.(turn));
+  await act(async () => answer(json({ turns: [older], usage: { model: null, up: 0, down: 0 } })));
+  await waitFor(() => expect(result.current.log.turns.map(t => t.text)).toEqual(["earlier", "late"]));
+  expect(result.current.log.usage).toEqual(turn.usage);
+  act(() => streams[0].onCopilot?.(turn)); // the same turn again changes nothing
+  expect(client.getQueryData<CopilotLog>(COPILOT_KEY)?.turns).toHaveLength(2);
+});
+
+// The stream's copilot_cursor is the boundary between what the GET reads and what the stream sends. A read made on
+// reconnect, before that boundary is known, could miss a turn written in between; so only the cursor starts one.
+it("reads the conversation when the stream names its copilot boundary, and not on a bare reconnect", () => {
+  const client = createQueryClient();
+  fetchMock.mockResolvedValue(json(loadFixtureBoard()));
+  renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+  const refetch = vi.spyOn(client, "refetchQueries");
+  act(() => streams[0].onReconnect());
+  expect(refetch).not.toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
+  act(() => streams[0].onCopilotCursor?.());
+  expect(refetch).toHaveBeenCalledWith({ queryKey: COPILOT_KEY });
+});
+
+// A GET sampled before the stream's boundary may miss a turn written between its read and the stream opening. The
+// cursor's refetch cancels that GET (refetchQueries' cancelRefetch defaults to true) and reads again, past the boundary.
+it("reads again past the copilot boundary when the first GET is still in flight", async () => {
+  const client = createQueryClient();
+  const answers: ((r: Response) => void)[] = [];
+  fetchMock.mockImplementation((path: string) =>
+    path === "/api/copilot" ? new Promise<Response>(resolve => answers.push(resolve)) : Promise.resolve(json(loadFixtureBoard())),
+  );
+  const { result } = renderHook(() => (useBoard(), useCopilot()), {
+    wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+  });
+  await waitFor(() => expect(answers).toHaveLength(1));
+  act(() => streams[0].onCopilotCursor?.());
+  await waitFor(() => expect(answers).toHaveLength(2));
+  const missed = { id: "01JB", from: "you", kind: "text", text: "in between", at: "2026-10-13T09:00:05Z", usage: null } as const;
+  const none = { model: null, up: 0, down: 0 };
+  await act(async () => answers[0](json({ turns: [], usage: none })));
+  await act(async () => answers[1](json({ turns: [missed], usage: none })));
+  await waitFor(() => expect(result.current.log.turns.map(t => t.text)).toEqual(["in between"]));
 });
 
 it("reports a failed first load", async () => {

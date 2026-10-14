@@ -26,6 +26,17 @@ module OpenLanes
       # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       def current = @mutex.synchronize { @by_thread[Thread.current] ||= @factory.call }
 
+      # Drop and close this thread's store. A thread that is not one of
+      # Puma's pooled ones calls it when done, or the map would keep a
+      # connection for every such thread that ever ran. A shared store is
+      # dropped but not closed: the others still hold it.
+      #
+      # @return [void]
+      def release
+        store = @mutex.synchronize { @by_thread.delete(Thread.current) }
+        store&.close unless @mutex.synchronize { @by_thread.value?(store) }
+      end
+
       # @return [void]
       def close
         stores = @mutex.synchronize { @by_thread.values.uniq.tap { @by_thread.clear } }

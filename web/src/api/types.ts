@@ -183,3 +183,45 @@ export interface Reply {
   reason: string | null;
   at: Iso;
 }
+
+/** The copilot's model and running token totals (W17), shown in its header like a car's. */
+export interface CopilotUsage {
+  model: string | null; // null until the copilot has run
+  up: number;
+  down: number;
+}
+
+interface TurnBase {
+  id: string; // the message's ULID; a reply's is that id, a dot and its place: "01J….1"
+  text: string;
+  at: Iso;
+}
+
+/** What the person said. */
+export interface YouTurn extends TurnBase {
+  from: "you";
+  kind: "text";
+  usage: null;
+}
+
+/** What the copilot said: words, a red card to confirm a command that cannot be undone, or a drafted answer. */
+export type CopilotReply = TurnBase & { from: "copilot"; usage: CopilotUsage | null } & (
+    | { kind: "text" }
+    | { kind: "confirm"; command: Omit<Command, "id">; confirm: string; done: string } // confirm: the button; done: what the card says once accepted
+    | { kind: "draft"; question: string; draft: string } // question: a Question.id, whose answer box the draft goes into
+  );
+
+/** One turn of the conversation, as `GET /api/copilot` and `event: copilot` deliver it. */
+export type CopilotTurn = YouTurn | CopilotReply;
+
+/** `GET /api/copilot`: the newest turns, oldest first, and the copilot's latest usage. */
+export interface CopilotLog {
+  turns: CopilotTurn[];
+  usage: CopilotUsage;
+}
+
+/** `POST /api/copilot`'s body. */
+export interface CopilotMessage {
+  id: string;
+  text: string;
+}

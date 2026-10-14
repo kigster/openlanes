@@ -33,6 +33,9 @@ module OpenLanes
     # @!attribute [r] demo
     #   @return [OpenLanes::Web::Demo, nil] the demo engine, under `--demo`,
     #     which `POST /api/demo/reset` puts back to the start
+    # @!attribute [r] background
+    #   @return [#call] runs the block it is given apart from the request, a
+    #     thread by default; the suite passes one that runs it when told
     # @!attribute [r] stopping
     #   @return [Concurrent::AtomicBoolean] set when the server shuts down, so
     #     open streams end within a tick
@@ -47,9 +50,10 @@ module OpenLanes
       :ping_every,
       :lifetime,
       :demo,
+      :background,
       :stopping) do
       def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil,
-        stopping: Concurrent::AtomicBoolean.new, **rest)
+        background: Context::THREAD, stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end
 
@@ -61,6 +65,11 @@ module OpenLanes
 
       # @return [Boolean]
       def dist? = File.file?(index)
+    end
+
+    class Context
+      # Work started apart from a request, on a thread of its own.
+      THREAD = ->(&work) { Thread.new(&work) }
     end
   end
 end

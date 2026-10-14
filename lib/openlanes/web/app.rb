@@ -63,6 +63,22 @@ module OpenLanes
         # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
         def store = context.store
 
+        # @return [OpenLanes::Live::Copilot]
+        def copilot = Live.copilot(store:, keys: context.keys)
+
+        # Answer +turn+ apart from this request, on a store of its own,
+        # since a Redis connection is never shared between threads.
+        #
+        # @param turn [OpenLanes::Live::Copilot::Turn]
+        # @return [void]
+        def answer_later(turn)
+          context.background.call do
+            Live.copilot(store: context.stores.current, keys: context.keys).answer(turn)
+          ensure
+            context.stores.release
+          end
+        end
+
         # @param data [Object]
         # @return [String]
         def json(data)
@@ -134,6 +150,26 @@ module OpenLanes
       rescue Live::Command::Invalid => e
         status 422
         json(Live::Reply.new(id: id_in(body), status: "refused", reason: e.message).wire)
+      end
+
+      get "/api/copilot" do
+        json(copilot.history)
+      end
+
+      # The person's message to the copilot (W17). It is stored and accepted
+      # at once; the answer is written afterwards, apart from this request,
+      # and comes on the event stream as `event: copilot`, like a command's
+      # replies do. Until c3po-operator exists the answer is the placeholder's.
+      post "/api/copilot" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        turn = copilot.say(request.body.read)
+        answer_later(turn)
+        status 202
+        json(turn.wire)
+      rescue Live::Copilot::Invalid => e
+        status 422
+        json(error: e.message)
       end
 
       # Demo only: the board back to the fixture, for a test that wants a

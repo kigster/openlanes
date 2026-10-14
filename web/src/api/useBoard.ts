@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Board, Snapshot, WireBoard } from "./types";
+import type { Board, CopilotLog, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { openStream, type ConnectionState } from "./events";
-import { BOARD_KEY } from "./queryClient";
+import { BOARD_KEY, COPILOT_KEY } from "./queryClient";
+import { EMPTY_LOG, withTurn } from "./copilot";
 import { replies } from "./replies";
 
 export type { ConnectionState } from "./events";
@@ -74,7 +75,17 @@ export function useBoard(): BoardState {
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
       },
       onReply: reply => replies.deliver(reply),
+      // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
+      // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
+      onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
       onState: setConnection,
+      // Read the conversation only once the stream has said where it starts; a read begun earlier could miss a turn
+      // written before the stream opened, which the stream would then never send either. A read still in flight began
+      // before the boundary, so cancel it first: refetchQueries alone reuses it while the log has no data yet.
+      onCopilotCursor: () => {
+        void client.cancelQueries({ queryKey: COPILOT_KEY });
+        void client.refetchQueries({ queryKey: COPILOT_KEY });
+      },
       onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
     });
   }, [client, fixture]);

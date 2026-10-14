@@ -27,8 +27,13 @@ RSpec.describe OpenLanes::Web::App, :tree do
       dist:,
       node:,
       tick: 0.01,
-      lifetime: 0.2)
+      lifetime: 0.2,
+      background:)
   end
+  # Work the app starts apart from a request waits here until the example
+  # runs it, so an example can look between the 202 and the answer.
+  let(:later) { [] }
+  let(:background) { ->(&work) { later << work } }
   let(:app) { OpenLanes::Web.app(context) }
   let(:snapshot) { { seq: 7, node: { id: "aaaa", user: "pat", host: "box", checkout: "~/widgets", me: true }, plans: [] } }
   let(:command) { { id: "01JCMD", kind: "stop_all", plan: nil, agent: nil, payload: {} } }
@@ -149,6 +154,75 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "POST /api/copilot" do
+    def post_message(payload, token: context.csrf)
+      header "X-CSRF-Token", token if token
+      post "/api/copilot", payload.is_a?(String) ? payload : JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    context "with the session's token" do
+      before { post_message({ id: "01JMSG", text: "Why has 001 not moved?" }) }
+
+      it "answers 202 with the person's turn" do
+        expect([last_response.status, body]).to match([202, include("id" => "01JMSG", "from" => "you", "kind" => "text")])
+      end
+
+      it "answers before the copilot does: only the message is stored when the 202 goes out" do
+        expect([store.xlen(keys.copilot), later.size]).to eq([1, 1])
+      end
+
+      it "then stores the placeholder's answer apart from the request" do
+        later.each(&:call)
+        expect(store.xrange(keys.copilot).map { JSON.parse(it.fields["json"])["id"] }).to eq(%w[01JMSG 01JMSG.1])
+      end
+    end
+
+    context "with the default background" do
+      let(:background) { OpenLanes::Web::Context::THREAD }
+
+      it "answers on a thread of its own" do
+        post_message({ id: "01JMSG", text: "hi" })
+        wait_until = Time.now + 2
+        sleep 0.01 until store.xlen(keys.copilot) == 2 || Time.now > wait_until
+        expect(store.xlen(keys.copilot)).to eq(2)
+      end
+    end
+
+    context "without a token" do
+      before { post_message({ id: "01JMSG", text: "hi" }, token: nil) }
+
+      it "answers 403 and stores nothing" do
+        expect([last_response.status, store.xlen(keys.copilot)]).to eq([403, 0])
+      end
+    end
+
+    context "with no text" do
+      before { post_message({ id: "01JMSG", text: "" }) }
+
+      it "answers 422 with the reason" do
+        expect([last_response.status, body["error"]]).to eq([422, "a message needs text"])
+      end
+    end
+  end
+
+  describe "GET /api/copilot" do
+    before do
+      header "X-CSRF-Token", context.csrf
+      post "/api/copilot", JSON.generate(id: "01JMSG", text: "hello"), "CONTENT_TYPE" => "application/json"
+      later.each(&:call)
+      get "/api/copilot"
+    end
+
+    it "answers the conversation, oldest first, with the copilot's usage" do
+      expect([body["turns"].map { it["id"] }, body["usage"]])
+        .to eq([%w[01JMSG 01JMSG.1], { "model" => nil, "up" => 0, "down" => 0 }])
+    end
+
+    it "is never cached" do
+      expect(last_response.headers["Cache-Control"]).to include("no-store")
+    end
+  end
+
   describe "GET /api/events" do
     before do
       store.set(keys.snapshot, JSON.generate(snapshot))
@@ -160,7 +234,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
 
     it "opens with the reply cursor, then the board" do
-      expect(last_response.body).to start_with("id: 0-0\nevent: cursor\ndata: {\"id\":\"0-0\"}\n\nevent: board\ndata: {\"me\":{\"seq\":7")
+      expect(last_response.body).to start_with("id: 0-0\nevent: cursor\ndata: {\"id\":\"0-0\"}\n\nevent: copilot_cursor\ndata: {\"id\":\"0-0\"}\n\nevent: board\ndata: {\"me\":{\"seq\":7")
     end
   end
 

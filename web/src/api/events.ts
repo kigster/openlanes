@@ -1,13 +1,20 @@
 // The event stream (contract.md, `GET /api/events`) through @microsoft/fetch-event-source, which reconnects after a
 // dropped connection instead of giving up the way a bare EventSource does on a non-200.
 import { fetchEventSource, type EventSourceMessage } from "@microsoft/fetch-event-source";
-import type { Reply, WireBoard } from "./types";
+import type { CopilotTurn, Reply, WireBoard } from "./types";
 
 export type ConnectionState = "live" | "reconnecting" | "offline";
 
 export interface StreamHandlers {
   onBoard(board: WireBoard): void;
   onReply(reply: Reply): void;
+  /** A turn of the copilot conversation (W17). Carries no id, so it never moves the reply cursor. */
+  onCopilot?(turn: CopilotTurn): void;
+  /**
+   * The stream's boundary in the copilot conversation: every turn after it comes as `onCopilot`, so a read of
+   * `GET /api/copilot` started now covers the rest. Sent on every open, so it also stands for a reconnect.
+   */
+  onCopilotCursor?(): void;
   onState(state: ConnectionState): void;
   /** Called on every open after the first: whatever happened while the stream was down is fetched once. */
   onReconnect(): void;
@@ -46,6 +53,8 @@ export function openStream(handlers: StreamHandlers, url = "/api/events"): () =>
       // that id itself, so the event needs nothing from here, and like any other name it falls through.
       if (message.event === "board") handlers.onBoard(JSON.parse(message.data) as WireBoard);
       else if (message.event === "reply") handlers.onReply(JSON.parse(message.data) as Reply);
+      else if (message.event === "copilot") handlers.onCopilot?.(JSON.parse(message.data) as CopilotTurn);
+      else if (message.event === "copilot_cursor") handlers.onCopilotCursor?.();
     },
     onclose() {
       // The server closed a stream that should never end (a restart): treat it like any other drop.

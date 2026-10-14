@@ -62,6 +62,14 @@ module OpenLanes
       # @return [String]
       def run(of = node) = "#{base}:#{of}:run"
 
+      # Stream: `{json}`, one `CopilotTurn`: the conversation with this
+      # node's copilot (W17), the person's messages and its answers in the
+      # order they were said. {Copilot} writes and reads it.
+      #
+      # @param of [String]
+      # @return [String]
+      def copilot(of = node) = "#{base}:#{of}:copilot"
+
       # String: the node name holding a plan, `SET NX EX`.
       #
       # @param ordinal [#to_s] e.g. "004.00"
@@ -79,6 +87,10 @@ module OpenLanes
       # Lengths of {#board} and {#replies}, kept approximately.
       BOARD_LENGTH = 100
       REPLIES_LENGTH = 1000
+
+      # Length of {#copilot}, kept approximately: a conversation the page
+      # can scroll back through, not an archive.
+      COPILOT_LENGTH = 500
 
       # Seconds a snapshot outlives its last refresh.
       SNAPSHOT_TTL = 30

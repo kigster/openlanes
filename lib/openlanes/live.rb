@@ -57,6 +57,11 @@ module OpenLanes
     # @return [OpenLanes::Live::Session]
     def session(**) = Session.new(**)
 
+    # The conversation with the run's copilot (W17), on +store+ under +keys+.
+    #
+    # @return [OpenLanes::Live::Copilot]
+    def copilot(**) = Copilot.new(**)
+
     # This checkout's keys, for the API server beside its engine.
     #
     # @param root [String]
