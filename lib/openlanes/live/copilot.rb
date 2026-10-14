@@ -11,14 +11,16 @@ module OpenLanes
     # {#history} and then follows it on the event stream it already has
     # (`event: copilot`), so the copilot needs no transport of its own.
     #
-    # The copilot itself is not built yet. Until it is, {#say} hands every
-    # message to {PLACEHOLDER}, which answers it with one line saying so.
-    # The agent replaces the responder, not this class: whatever answers
-    # writes {Turn}s, and {Turn.parse} refuses a card that lacks what the
-    # page needs to draw it, whoever wrote it.
+    # Who answers is the responder's business, not this class's: the API
+    # server hands it {Operator}, which runs c3po-operator, and `--demo` a
+    # canned line. Whatever answers writes {Turn}s, and {Turn.check} refuses
+    # a card that lacks what the page needs to draw it, whoever wrote it.
     class Copilot
       # A message the person may not send as written.
       class Invalid < Error; end
+
+      # A message nobody is there to answer.
+      class Unanswered < Error; end
 
       # Who spoke a turn.
       SPEAKERS = %w[you copilot].freeze
@@ -38,22 +40,14 @@ module OpenLanes
       # wrong, and the agent would pay for every token of it.
       LIMIT = 4000
 
-      # What answers while c3po-operator does not exist.
-      PLACEHOLDER_TEXT = "c3po-operator is not built yet, so nobody is listening here. " \
-                         "Your message is kept in this conversation, but nothing acts on it."
-
-      # The responder used until the agent exists: one plain reply per message.
-      PLACEHOLDER = lambda do |turn|
-        [Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: PLACEHOLDER_TEXT)]
-      end
-
       # Tokens and model before the copilot has said anything that counts them.
       NO_USAGE = { model: nil, up: 0, down: 0 }.freeze
 
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param keys [OpenLanes::Live::Keys]
-      # @param responder [#call] the person's {Turn} in, the copilot's {Turn}s out
-      def initialize(store:, keys:, responder: PLACEHOLDER)
+      # @param responder [#call, nil] the person's {Turn} in, the copilot's
+      #   {Turn}s out; nil for a reader, which {#say} refuses to write through
+      def initialize(store:, keys:, responder: nil)
         @store = store
         @keys = keys
         @responder = responder
@@ -68,8 +62,14 @@ module OpenLanes
       # @param input [String, Hash] `CopilotMessage`: `{id, text}`
       # @return [OpenLanes::Live::Copilot::Turn] the person's turn
       # @raise [OpenLanes::Live::Copilot::Invalid] for the API server's 422
+      # @raise [OpenLanes::Live::Copilot::Unanswered] when nobody would answer
       def say(input)
-        message(input).tap { append(it) }
+        turn = message(input)
+        # Refused before it is stored: a message kept where nothing will ever
+        # answer it reads, on the page, as a copilot that is merely slow.
+        raise Unanswered, "the copilot is not running in this server" unless @responder
+
+        turn.tap { append(it) }
       end
 
       # Store whatever the responder answers to +turn+. A responder that
@@ -161,7 +161,8 @@ module OpenLanes
       #   @return [Time]
       # @!attribute [r] usage
       #   @return [Hash, nil] `{model, up, down}`, the copilot's running total
-      #     after this turn; nil on the person's turns and the placeholder's
+      #     after this turn; nil on the person's turns and on answers no model
+      #     wrote
       # @!attribute [r] fields
       #   @return [Hash{String => Object}] what a card needs, per {FIELDS}
       Turn = Data.define(:id, :from, :kind, :text, :at, :usage, :fields) do

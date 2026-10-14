@@ -28,6 +28,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
       node:,
       tick: 0.01,
       lifetime: 0.2,
+      copilot: OpenLanes::Web::Demo::COPILOT,
       background:)
   end
   # Work the app starts apart from a request waits here until the example
@@ -171,9 +172,22 @@ RSpec.describe OpenLanes::Web::App, :tree do
         expect([store.xlen(keys.copilot), later.size]).to eq([1, 1])
       end
 
-      it "then stores the placeholder's answer apart from the request" do
+      it "then stores the responder's answer apart from the request" do
         later.each(&:call)
         expect(store.xrange(keys.copilot).map { JSON.parse(it.fields["json"])["id"] }).to eq(%w[01JMSG 01JMSG.1])
+      end
+    end
+
+    context "when nothing answers the copilot in this server" do
+      let(:context) do
+        OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, url: "memory://", background:)
+      end
+
+      before { post_message({ id: "01JMSG", text: "hi" }) }
+
+      it "answers 503, stores nothing and starts nothing" do
+        expect([last_response.status, body["error"], store.xlen(keys.copilot), later.size])
+          .to eq([503, "the copilot is not running in this server", 0, 0])
       end
     end
 

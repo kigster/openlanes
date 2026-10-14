@@ -41,11 +41,13 @@ module OpenLanes
         keys = Live.keys(root:, node:)
         keys = keys.with(repo: "demo/#{keys.repo}") if options[:demo]
         demo = OpenLanes::Web.demo(store: stores.current, keys:).start if options[:demo]
-        context = OpenLanes::Web.context(stores:, keys:, plans_dir: tree.dir, url: stores.current.url, node:, demo:)
+        copilot = demo ? OpenLanes::Web::Demo::COPILOT : copilot_for(root:, tree:, stores:, keys:)
+        context = OpenLanes::Web.context(stores:, keys:, plans_dir: tree.dir, url: stores.current.url, node:, demo:, copilot:)
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port])
         serve(server, options, keys:, node:, url: stores.current.url)
       ensure
         demo&.stop
+        copilot.stop if copilot.respond_to?(:stop)
       end
 
       private
@@ -74,6 +76,14 @@ module OpenLanes
         end
         warn("#{e.message}\n\nThe demo keeps its board in memory instead: this page only, no other machine.") unless quiet?(options)
         OpenLanes::Web::Stores.shared(Live.memory_store)
+      end
+
+      # c3po-operator, answering in this server (W17). It runs beside the
+      # page rather than in the engine so it answers with no run going too.
+      #
+      # @return [OpenLanes::Live::Copilot::Operator]
+      def copilot_for(root:, tree:, stores:, keys:)
+        Live::Copilot::Operator.new(root:, plans_dir: tree.dir, stores:, keys:)
       end
 
       # Listen until INT or TERM.

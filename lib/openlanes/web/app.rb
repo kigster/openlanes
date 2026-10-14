@@ -64,7 +64,7 @@ module OpenLanes
         def store = context.store
 
         # @return [OpenLanes::Live::Copilot]
-        def copilot = Live.copilot(store:, keys: context.keys)
+        def copilot = Live.copilot(store:, keys: context.keys, responder: context.copilot)
 
         # Answer +turn+ apart from this request, on a store of its own,
         # since a Redis connection is never shared between threads.
@@ -73,7 +73,7 @@ module OpenLanes
         # @return [void]
         def answer_later(turn)
           context.background.call do
-            Live.copilot(store: context.stores.current, keys: context.keys).answer(turn)
+            Live.copilot(store: context.stores.current, keys: context.keys, responder: context.copilot).answer(turn)
           ensure
             context.stores.release
           end
@@ -159,7 +159,7 @@ module OpenLanes
       # The person's message to the copilot (W17). It is stored and accepted
       # at once; the answer is written afterwards, apart from this request,
       # and comes on the event stream as `event: copilot`, like a command's
-      # replies do. Until c3po-operator exists the answer is the placeholder's.
+      # replies do. The answer is c3po-operator's ({Context#copilot}).
       post "/api/copilot" do
         halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
 
@@ -169,6 +169,9 @@ module OpenLanes
         json(turn.wire)
       rescue Live::Copilot::Invalid => e
         status 422
+        json(error: e.message)
+      rescue Live::Copilot::Unanswered => e
+        status 503
         json(error: e.message)
       end
 

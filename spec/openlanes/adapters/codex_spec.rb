@@ -36,4 +36,8 @@ RSpec.describe OpenLanes::Adapters::Codex do
   it "reads its stream generically" do
     expect(adapter.transcript).to be_a(OpenLanes::Adapters::Stream)
   end
+
+  it "says it cannot resume a session, so the copilot starts each message afresh on it" do
+    expect(adapter.resumes?).to be(false)
+  end
 end

@@ -1,6 +1,6 @@
-// The copilot (W17): a conversation with c3po-operator about the run, in a floating panel docked bottom right. Until
-// the agent exists the API server answers every message with a placeholder; the cards below are drawn from typed
-// turns (contract.md, "Copilot") so they work the day it starts sending them.
+// The copilot (W17): a conversation with c3po-operator about the run, in a floating panel docked bottom right. The API
+// server runs the agent and checks every card it offers before storing it (contract.md, "Copilot"), so a card drawn
+// here is one the command gate takes; nothing is sent until the person presses its button.
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import type { CopilotReply, CopilotTurn, ModelChoice } from "../api/types";
 import { FloatingPanel } from "../floating";
