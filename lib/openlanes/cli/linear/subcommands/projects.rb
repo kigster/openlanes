@@ -16,7 +16,7 @@ module OpenLanes
         # @param options [Hash]
         # @return [void]
         def call(team:, **options)
-          tree = tree_for(options)
+          tree = tree_for(options).everything
           _api, survey = survey_for(team, tree)
 
           survey.projects.each { |project| puts row(project) }
