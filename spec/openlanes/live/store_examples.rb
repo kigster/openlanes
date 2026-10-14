@@ -102,6 +102,17 @@ RSpec.shared_examples "a live store" do
       expect(store.xlen("s")).to be < 300
     end
 
+    it "trims exactly what is older than MINID, alone or inside MULTI" do
+      ids
+      aggregate_failures do
+        expect(store.xtrim("s", minid: ids[1])).to eq(1)
+        expect(store.xrange("s").map(&:id)).to eq(ids.drop(1))
+        expect(store.xtrim("absent", minid: ids[1])).to eq(0)
+        store.multi { |tx| tx.xtrim("s", minid: ids[2]) }
+        expect(store.xrange("s").map(&:id)).to eq([ids[2]])
+      end
+    end
+
     it "reads what came after an id, and nothing for $" do
       first
       store.xadd("s", { n: 2 })

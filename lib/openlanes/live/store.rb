@@ -45,7 +45,7 @@ module OpenLanes
 
       # The writes {#multi} accepts. Reads inside a transaction answer
       # nothing until it commits, so none are offered.
-      WRITES = %i[set del expire hset hdel xadd xack].freeze
+      WRITES = %i[set del expire hset hdel xadd xack xtrim].freeze
 
       # Records the writes of one {#multi} block, to be applied together.
       class Transaction
@@ -143,6 +143,15 @@ module OpenLanes
 
       # @return [Integer] entries in the stream
       def xlen(key) = call("XLEN", key)
+
+      # Drops every entry older than +minid+, exactly rather than with `~`,
+      # so a message an hour old is gone when the hour is up, not when Redis
+      # next finds a whole node to free.
+      #
+      # @param key [String]
+      # @param minid [String] `<ms>-<seq>`, the oldest id kept
+      # @return [Integer] how many were removed
+      def xtrim(key, minid:) = call(*xtrim_command(key, minid:))
 
       # Creates the group, and the stream with it. Asking twice is not an
       # error: every engine start asks.
@@ -268,9 +277,13 @@ module OpenLanes
         case name
         when :set then set_command(*args, **kwargs)
         when :xadd then xadd_command(*args, **kwargs)
+        when :xtrim then xtrim_command(*args, **kwargs)
         else [name.to_s.upcase, *args]
         end
       end
+
+      # @return [Array]
+      def xtrim_command(key, minid:) = ["XTRIM", key, "MINID", minid]
 
       # @return [Array]
       def set_command(key, value, ex: nil, nx: false)
