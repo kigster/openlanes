@@ -46,8 +46,10 @@ Run with: `OPENLANES_TEST_REDIS_URL=redis://localhost:6379/13 bundle exec rspec 
 
 ## Assumptions
 
-- The CI drift check matches `\btilda\b|4747|agentilda:`, not the bare `tilda` the plan wrote: `README.md` names the real `agentilda-ai-setup` repository, which bare `tilda` would flag.
+- The CI drift check matches `\btilda\b|\b4747\b|agentilda:`, not the bare `tilda` the plan wrote: `README.md` names the real `agentilda-ai-setup` repository, which bare `tilda` would flag. The demo board's seed is exempt by its path, `lib/openlanes/web/demo_board.rb`, not by basename.
 - `bin/coverage-changed` takes the changed-file list from `git diff --name-only origin/main...HEAD -- lib/` by default, and accepts `--files` and `--resultset` so its spec runs on fixtures without git.
+- `npm run coverage:changed` judges exactly the files vitest measures: both read `web/coverage.config.ts`, so a changed file coverage excludes (`src/main.tsx`, `src/api/types.ts`) is skipped rather than failed at 0%.
+- The integration harness refuses a Redis database below 10, since `stop_all` runs FLUSHDB, and skips when `lsof` is not on PATH.
 
 ## Status
 
