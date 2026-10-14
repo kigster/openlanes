@@ -11,8 +11,9 @@
 #   --exit STATUS        exit at once with STATUS, never listening
 #   --silent             never listen, never exit
 #   --deny               send X-Frame-Options: DENY
-#   --record FILE        write whether $SIBLING_ENV answered when this started
-#   --sibling-env VAR    the sibling --record asks about
+#   --sibling-env VAR    look, on start, whether the sibling on $VAR answers;
+#                        the page says, as #sibling
+#   --record FILE        and write it to FILE too
 require "socket"
 
 # A program the specs start, not a spec: printing is what it is for.
@@ -41,7 +42,7 @@ puts "#{options[:name]} starting as #{Process.pid}"
 exit options[:exit] if options[:exit]
 sleep if options[:silent]
 
-if options[:record]
+if options[:sibling_env]
   sibling = Integer(ENV.fetch(options[:sibling_env]))
   answered = begin
     Socket.tcp("127.0.0.1", sibling, connect_timeout: 1).close
@@ -49,7 +50,8 @@ if options[:record]
   rescue SystemCallError
     false
   end
-  File.write(options[:record], "#{answered ? "answered" : "refused"} #{sibling}\n")
+  options[:sibling] = "#{answered ? "answered" : "refused"} #{sibling}"
+  File.write(options[:record], "#{options[:sibling]}\n") if options[:record]
 end
 
 sleep options[:delay] if options[:delay]
@@ -62,7 +64,8 @@ page = <<~HTML
   <!doctype html>
   <html lang="en"><head><meta charset="utf-8"><title>#{options[:name]}</title></head>
   <body><h1 id="name">#{options[:name]}</h1><p>pid <span id="pid">#{Process.pid}</span></p>
-  <p>port <span id="port">#{port}</span></p></body></html>
+  <p>port <span id="port">#{port}</span></p>
+  <p>sibling <span id="sibling">#{options[:sibling] || "none"}</span></p></body></html>
 HTML
 headers = ["Content-Type: text/html; charset=utf-8", "Content-Length: #{page.bytesize}", "Connection: close"]
 headers << "X-Frame-Options: DENY" if options[:deny]

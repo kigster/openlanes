@@ -1,0 +1,13 @@
+# The app the Preview tab's Cypress run starts (plan 012, F2): an API, then a
+# web page that says whether the API answered when it started. Set
+# FIXTURE_FRAMING=--deny to have the web process refuse framing.
+app:
+  kind: web
+  processes:
+    - name: api
+      start: ruby ../servers/server.rb --name api --port-env PORT_API --delay 1.5
+      restart_on: ["api/**/*.rb"]
+    - name: web
+      start: ruby ../servers/server.rb --name web --port-env PORT_WEB --sibling-env PORT_API $FIXTURE_FRAMING
+      ready: /
+      preview: true
