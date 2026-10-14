@@ -58,3 +58,7 @@ Split from `plan.md` by luke-backend on 2026-09-06. This gem has no browser; the
 >
 > [2026-09-16 08:49:53 AM PDT] [ agent: rey-frontend   status: Completed, round 2 (harness 22310; F1-F4 verified on disk independently: suite 976/0/3, proof 55/0, owned specs 77/0, standardrb 0, docs identical, fixture dry run renames nothing; figures also in pull-requests.md) ]
 > [2026-09-16 08:49:53 AM PDT] [ next: hansolo-reviewer ]
+
+> [!NOTE]
+>
+> [2026-10-13 07:04:16 PM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "010.00",
+    "slug": "inquirex-fixes"
+  },
+  "state": "blocked",
+  "updated_at": "2026-10-13T19:57:01-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-13T19:07:36-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "completed - 26 tool calls",
+      "finished_at": "2026-10-13T19:11:47-07:00",
+      "to": "researched",
+      "up": 1817694,
+      "down": 25333,
+      "seconds": 249.9
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-13T19:22:25-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:23:08-07:00",
+      "up": 183370,
+      "down": 4791,
+      "seconds": 42.9,
+      "note": "completed - 3 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-13T19:23:08-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-13T19:25:19-07:00",
+      "up": 471920,
+      "down": 15142,
+      "seconds": 129.8,
+      "note": "ledger says Completed but ⭐️ Planned is not justified: "
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-13T18:59:39-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:07:41-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:11:42-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-13T19:22:31-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:23:04-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-13T19:23:14-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:25:08-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    }
+  ],
+  "messages": []
+}

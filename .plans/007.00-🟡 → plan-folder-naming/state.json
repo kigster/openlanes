@@ -1,0 +1,220 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "007.00",
+    "slug": "plan-folder-naming"
+  },
+  "state": "building",
+  "updated_at": "2026-10-13T19:27:16-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-13T19:05:02-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "completed - 20 tool calls",
+      "finished_at": "2026-10-13T19:07:35-07:00",
+      "to": "researched",
+      "up": 1590016,
+      "down": 22871,
+      "seconds": 152.3
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-13T19:07:35-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:08:20-07:00",
+      "up": 190821,
+      "down": 5799,
+      "seconds": 44.9,
+      "note": "completed - 3 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-13T19:08:20-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-13T19:10:26-07:00",
+      "up": 749162,
+      "down": 13750,
+      "seconds": 124.8,
+      "note": "completed - 13 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "planned",
+      "started_at": "2026-10-13T19:13:36-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-13T19:27:16-07:00",
+      "up": 3906112,
+      "down": 33446,
+      "seconds": 820.0,
+      "note": "Almost completed; no rounds left"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-13T19:17:14-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-10-13T19:18:42-07:00",
+      "up": 754550,
+      "down": 5681,
+      "seconds": 86.8,
+      "note": "completed - 13 tool calls"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-13T18:59:39-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:05:09-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:07:24-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-13T19:07:39-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:08:15-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-13T19:08:26-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:10:14-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-13T19:13:43-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:17:20-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:18:37-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:27:00-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "number": 1,
+      "at": "2026-10-13T19:14:48-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Contract written in implementation-plan.md. Snapshot plan gains locked: {pid:number, host:string, started_at:ISO string} | null. New block emoji ⭕ (U+2B55) and 🛑 (U+1F6D1); old ⭕️ 🅱️ 🅱 still possible. You own web/ only; I own lib/ spec/ bin/ docs. Start F1 against that shape."
+    },
+    {
+      "number": 2,
+      "at": "2026-10-13T19:18:37-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done (web/ only). Proofs: web/src/panels/support.test.ts 'recognises both the new and the old block emoji'; web/src/board/model.test.ts 'lockMark' + pillState marks ⭕/🛑; web/src/board/Board.test.tsx 'locked plan'. Also added locked: null to web/src/api/fixtures/{board,snapshot}.json. vitest 293 pass, eslint, tsc, rubocop clean."
+    },
+    {
+      "number": 3,
+      "at": "2026-10-13T19:23:40-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "B4 landed: Live::Snapshot plans[] now carry locked: {pid, host, started_at ISO UTC} | null (plans only, not backlog — matches your fixture). STATUSES emoji are now ⚪ ⭐ ⭕ 🛑 💤 ⏪. Suite green."
+    },
+    {
+      "number": 4,
+      "at": "2026-10-13T19:25:57-07:00",
+      "from": "luke-backend",
+      "to": "luke-backend",
+      "body": "RESUME: B1, B2, B4 done (suite 2304/0, rubocop clean). Next: B4 dispatcher_spec + snapshot locked example, then B3 (tree.rb INACTIVE_DIRS, Tree all:, creator allocation across archive/deferred/abandoned, created:, list-plans --all, lib/openlanes.rb:133 ls-tree), then B5, B6, B7. bin/plan-number already searches the subfolders. See Progress in implementation-plan.md."
+    },
+    {
+      "number": 5,
+      "at": "2026-10-13T19:25:58-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end not finished this round: B1 B2 B4 in, B3 B5 B6 B7 next round. Nothing changes in your contract."
+    }
+  ]
+}

@@ -182,3 +182,19 @@ Mailbox message #9 to luke names the test behind each criterion.
 >
 > [2026-09-16 08:52:28 AM PDT] [ agent: rey-frontend   status: Completed, round 1 (F1-F4 verified on disk; suite 976/0/3, proof 55/0, lint clean, docs identical, HEAD unmoved) ]
 > [2026-09-16 08:52:28 AM PDT] [ next: hansolo-reviewer ]
+
+## Back-end verification, luke-backend, round 1 relaunch on 2026-10-13
+
+Run in the worktree in a subshell with `RBENV_VERSION=4.0.6`, `RUBYOPT`, `RUBYLIB`, `BUNDLE_LOCKFILE`, `BUNDLER_SETUP`, `BUNDLE_BIN_PATH`, `BUNDLER_VERSION`, `GEM_HOME` unset and `BUNDLE_GEMFILE=$PWD/Gemfile`.
+
+| Command                                                                                                  | Result                                     |
+| :------------------------------------------------------------------------------------------------------- | :----------------------------------------- |
+| `bundle exec rspec`                                                                                      | exit 0; 976 examples, 0 failures, 3 pending |
+| `bundle exec rspec spec/agentilda/dispatcher_spec.rb spec/agentilda/cli/run_spec.rb` (integration proof) | 55 examples, 0 failures                    |
+| `bundle exec rubocop`                                                                                    | exit 0; 147 files, no offenses             |
+| `bundle exec standardrb`                                                                                 | exit 0                                     |
+| `git rev-parse --short HEAD`                                                                             | `030518c`, unmoved                         |
+
+Uncommitted on the tree for the harness: `.rubocop.yml` (new), `lib/agentilda/child.rb`, `spec/agentilda/child_spec.rb`, `lib/agentilda/ui.rb`, `exe/agentilda`. See the 2026-10-13 amendments in `implementation-plan.md`.
+
+For the reviewer: this branch is 234 commits behind `origin/main`, which has since renamed the gem to `openlanes` and adopted its own `.rubocop.yml` with `rubocop-rspec`. Merging main will conflict broadly; that is outside this round.
