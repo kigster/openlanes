@@ -102,8 +102,11 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
   describe "discarded.md" do
     it "leaves a hand-written note on a plan already at ❌ alone" do
       plans do |t|
-        t.plan "005.00", :discarded, "gone", files: files.merge("discarded.md" => "# Discarded\n\nBy hand.\n"),
-          prs: [t.open(17, "g")]
+        t.plan "005.00",
+          :discarded,
+          "gone",
+          files: files.merge("discarded.md" => "# Discarded\n\nBy hand.\n"),
+          prs:   [t.open(17, "g")]
       end
       effects.apply(outcome("005.00", 17, :closed))
 
@@ -112,7 +115,8 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
 
     it "is taken back when the machine refuses the move" do
       plans { |t| t.plan "006.00", :in_review, "refused", files:, prs: [t.open(18, "h")] }
-      allow(effects).to receive(:walk).and_return(nil)
+      allow(OpenLanes::Plans::StateMachine).to receive(:new)
+        .and_return(instance_double(OpenLanes::Plans::StateMachine, may?: false))
 
       aggregate_failures do
         expect(effects.apply(outcome("006.00", 18, :closed))).to have_attributes(to: nil)
