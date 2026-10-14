@@ -6,11 +6,13 @@
 RSpec.describe OpenLanes::Live::Subscriber do
   let(:url) { "redis://chat:secret@localhost:6379/3" }
   let(:events) { [] }
+  let(:closed) { [] }
   let(:pubsub) do
     queue = events
+    shut = closed
     Class.new do
       define_method(:call) { |*| nil }
-      define_method(:close) { nil }
+      define_method(:close) { shut << true }
       define_method(:next_event) do |_timeout|
         event = queue.shift
         raise event if event.is_a?(Class) && event <= RedisClient::Error
@@ -40,6 +42,18 @@ RSpec.describe OpenLanes::Live::Subscriber do
     expect { subscribe }.to raise_error(OpenLanes::Live::Unavailable) { |e|
       expect([e.message, e.message.include?("secret")]).to match([/unavailable: NOPERM User chat/, false])
     }
+  end
+
+  it "closes the connection a refused subscription leaves behind, since no caller ever holds it" do
+    events.push(%w[subscribe inbox 1], RedisClient::CommandError.parse("NOPERM User chat has no permissions to access one of the channels"))
+    expect { subscribe }.to raise_error(OpenLanes::Live::Unavailable)
+    expect(closed).to eq([true])
+  end
+
+  it "closes the connection when Redis never confirms the subscription" do
+    events.push(%w[subscribe inbox 1])
+    expect { subscribe }.to raise_error(OpenLanes::Live::Unavailable)
+    expect(closed).to eq([true])
   end
 
   it "turns a dropped connection into Unavailable while it waits for a message" do

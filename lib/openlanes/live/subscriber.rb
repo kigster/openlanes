@@ -27,6 +27,12 @@ module OpenLanes
           @pubsub.call("PSUBSCRIBE", *patterns) unless patterns.empty?
           confirm(channels.size + patterns.size, timeout)
         end
+      rescue Unavailable
+        # The caller never gets this object, so nobody else can close the
+        # connection, and a chat retrying a NOPERM every step would pile up
+        # one open socket per try until the GC got round to them.
+        close
+        raise
       end
 
       # The next message, waiting up to +timeout+ seconds for one.
