@@ -31,6 +31,12 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       expect(document).to include("`.plans/archive/`", "`.plans/deferred/`", "`.plans/abandoned/`", "locked-by.pid")
     end
 
+    it "carries one row per review label, derived from ReviewLabel::ALL" do
+      OpenLanes::Plans::ReviewLabel::ALL.each do |label|
+        expect(document.scan(/^\| `#{label.name}` \| `#{label.colour}` \|/).size).to eq(1)
+      end
+    end
+
     it "documents every state the machine knows — emoji, label and key" do
       aggregate_failures do
         OpenLanes::Plans::STATUSES.each do |status|
