@@ -650,7 +650,10 @@ module OpenLanes
           # pass sees the plan as foreign and steps around it.
           next unless @runner.claim(pair.last)
 
-          start(*pair)
+          # Lost the lock file to another run on this machine: the next tick
+          # reads its lock and steps around the plan.
+          break unless start(*pair)
+
           started += 1
         end
         settle_idle(started) if @stay
@@ -845,12 +848,20 @@ module OpenLanes
 
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject]
-      # @return [void]
+      # @return [Boolean] false when another run took the plan's lock first
       def start(agent, subject)
         ordinal = subject.feature.ordinal.to_s
         round = @history[[ordinal, agent.name]].count { |h| h[:state] == subject.status.key } + 1
         from = subject.status.key
         subject = rename_on_start(subject, agent) unless @runner.dry_run?
+        # The lock says the folder is in use, so nothing renames it while the
+        # agent holds its path. It is taken before anything is recorded as
+        # started, since another run can win it between the check and here,
+        # and before the thread, so the next tick already sees it; it goes
+        # when the last agent in the plan does, however that agent went.
+        return false unless lock(ordinal, subject)
+
+        release_owed = true
         task = @runner.prepare(agent, subject, round)
         handle = Execution::Executor::Handle.new
         job = Job.new(key: "#{ordinal}/#{agent.name}",
@@ -890,11 +901,6 @@ module OpenLanes
           file:       agent.ledger.first,
           started_at: Time.now.iso8601)
         UI.log("started", **task.log_fields)
-        # The lock says the folder is in use, so nothing renames it while the
-        # agent holds its path. It is taken here, before the thread, so the
-        # next tick already sees it; it goes when the last agent in the plan
-        # does, however that agent went.
-        @locks.hold(ordinal, subject.feature.path) unless @runner.dry_run?
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
@@ -912,7 +918,24 @@ module OpenLanes
             @locks.release(ordinal) unless @runner.dry_run?
           end
         end
+        release_owed = false
         @running << job
+        true
+      rescue StandardError
+        # Failed before the thread that releases it existed.
+        @locks.release(ordinal) if release_owed && !@runner.dry_run?
+        raise
+      end
+
+      # @param ordinal [String]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean] whether this run now holds the plan's lock
+      def lock(ordinal, subject)
+        @locks.hold(ordinal, subject.feature.path) unless @runner.dry_run?
+        true
+      rescue Plans::Lock::Held => e
+        UI.log("lock lost: #{e.message}", plan: ordinal)
+        false
       end
 
       # `starts_as`: the folder moves the moment the agent is dispatched, where

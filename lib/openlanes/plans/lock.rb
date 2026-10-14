@@ -32,17 +32,47 @@ module OpenLanes
         nil
       end
 
-      # Claim the plan for this process.
+      # Claim the plan for this process. Creating the file is the claim
+      # (`O_EXCL`), so two runs that both saw no lock cannot both write it
+      # and have the later one win in silence. A lock this process already
+      # holds is rewritten, which is how a pair's partner and a renamed
+      # folder find it; one left by a local process that has died is removed
+      # and the claim tried once more.
       #
       # @param dir [String] a plan folder
       # @param pid [Integer]
       # @param now [Time]
       # @return [OpenLanes::Plans::Lock]
+      # @raise [OpenLanes::Plans::Lock::Held] when another live run holds it
       def self.write(dir, pid: Process.pid, now: Time.now)
         lock = new(pid:, host: Socket.gethostname, started_at: now.utc)
-        File.write(path(dir), "#{JSON.generate(lock.to_json_hash)}\n")
-        lock
+        body = "#{JSON.generate(lock.to_json_hash)}\n"
+        2.times do
+          File.open(path(dir), File::WRONLY | File::CREAT | File::EXCL) { it.write(body) }
+          return lock
+        rescue Errno::EEXIST
+          held = read(dir)
+          if held&.local? && held.pid == pid
+            File.write(path(dir), body)
+            return lock
+          end
+          raise self::Held, "#{dir} is locked by pid #{held.pid} on #{held.host}" if held && !held.stale?
+          raise self::Held, "#{dir} has a lock being written or unreadable" if held.nil? && fresh?(dir)
+
+          remove(dir)
+        end
+        raise self::Held, "#{dir}: another run claimed it first"
       end
+
+      # @param dir [String]
+      # @return [Boolean] an unreadable lock young enough to be one another
+      #   run has just created and not yet filled
+      def self.fresh?(dir)
+        Time.now - File.mtime(path(dir)) < self::UNREADABLE_GRACE
+      rescue Errno::ENOENT
+        false
+      end
+      private_class_method :fresh?
 
       # @param dir [String] a plan folder
       # @return [void]
@@ -85,5 +115,15 @@ module OpenLanes
 
     # The lock file's name, in every plan folder.
     Lock::FILENAME = "locked-by.pid"
+
+    # Seconds an unreadable lock is taken for one being written. Between the
+    # `O_EXCL` create and the write the file is empty; older than this, it is
+    # debris from a crash and is cleared like a dead pid's.
+    Lock::UNREADABLE_GRACE = 5
+
+    class Lock
+      # Another live run holds the plan's lock; the claim was not made.
+      class Held < OpenLanes::Error; end
+    end
   end
 end

@@ -747,6 +747,30 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    # Two runs both saw no lock; the other wrote first. The claim is the
+    # check, so this run starts nothing and records nothing as started.
+    it "starts nothing when another run takes the lock between the check and the claim" do
+      File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+        JSON.generate("pid" => Process.ppid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+      lost = false
+      allow(OpenLanes::Plans::Lock).to receive(:write).and_wrap_original do |original, *args, **opts|
+        original.call(*args, **opts)
+      rescue OpenLanes::Plans::Lock::Held
+        lost = true
+        raise
+      end
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call do |dispatcher|
+        # The check misses the lock until the claim has been refused once.
+        allow(dispatcher).to(receive(:locked_elsewhere?).and_wrap_original { |m, subject| lost && m.call(subject) })
+      end
+
+      aggregate_failures do
+        expect(calls).to be_empty
+        expect(OpenLanes::Plans::Lock.read(path_of("001.00")).pid).to eq(Process.ppid)
+        expect(File.read(File.join(path_of("001.00"), "spec.md"))).not_to include("status: Started")
+      end
+    end
+
     it "dispatches over a stale lock left by a dead process on this host" do
       pid = Process.spawn("true")
       Process.wait(pid)

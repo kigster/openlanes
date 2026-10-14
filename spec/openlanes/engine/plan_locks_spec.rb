@@ -26,6 +26,24 @@ RSpec.describe OpenLanes::Engine::PlanLocks do
     expect(File).not_to exist(file)
   end
 
+  # The partner's hold must not trip over the lock its own pair just wrote.
+  it "lets a pair share the lock its first half claimed" do
+    locks.hold("001.00", dir)
+
+    expect { locks.hold("001.00", dir) }.not_to raise_error
+    expect(locks.count("001.00")).to eq(2)
+  end
+
+  it "counts nothing when another live run holds the plan" do
+    File.write(file, JSON.generate("pid" => Process.ppid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+
+    aggregate_failures do
+      expect { locks.hold("001.00", dir) }.to raise_error(OpenLanes::Plans::Lock::Held)
+      expect(locks.count("001.00")).to eq(0)
+      expect(OpenLanes::Plans::Lock.read(dir).pid).to eq(Process.ppid)
+    end
+  end
+
   it "ignores a release for a plan nobody holds" do
     expect { locks.release("002.00") }.not_to raise_error
   end
