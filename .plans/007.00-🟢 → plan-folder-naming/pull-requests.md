@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 24 | [\[007.00\] Plan Folder Naming](https://github.com/kigster/openlanes/pull/24) | Open 🟡 |
+
 ## Front end (rey-frontend, round 1)
 
 - `cd web && npx vitest run`: 27 files, 293 tests passed
