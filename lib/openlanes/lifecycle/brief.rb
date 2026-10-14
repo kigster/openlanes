@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "date"
 require "tty/command"
+require "yaml"
 
 module OpenLanes
   module Lifecycle
@@ -109,6 +111,7 @@ module OpenLanes
       # @param dry_run [Boolean] plan the invocation, do not run it
       # @param seed [String, nil] what the author already wrote about the
       #   feature (`create --from`); opens spec.md and outranks the repo survey
+      # @param today [Date] what `created:` says
       def initialize(
         path:,
         title:,
@@ -116,7 +119,8 @@ module OpenLanes
         command: TTY::Command.new(printer: :null),
         timeout: TIMEOUT,
         dry_run: false,
-        seed: nil
+        seed: nil,
+        today: Date.today
       )
         @path = path
         @title = title
@@ -125,6 +129,7 @@ module OpenLanes
         @timeout = timeout
         @dry_run = dry_run
         @seed = seed.to_s.strip.then { |s| s.empty? ? nil : s }
+        @today = today
       end
 
       # @return [String]
@@ -146,9 +151,28 @@ module OpenLanes
         "# #{title}\n\n#{opening}" + HEADINGS.map { |h| "## #{h}\n\n" }.join("\n")
       end
 
+      # The scaffold under a frontmatter that says when the plan was created
+      # (decision N3): the folder name stops carrying any date once the plan
+      # is open, and a plan's age is otherwise only in git.
+      #
       # @return [String] where it was written
       def write_scaffold!
         File.write(spec_path, scaffold)
+        stamp!
+      end
+
+      # Merge settings into spec.md's frontmatter, keeping every key already
+      # there, and `created:` whether or not a draft rewrote the file without
+      # it. Run after the draft for that reason.
+      #
+      # @param settings [Hash{String => Object}] e.g. `lane` and `depth`
+      # @return [String] the spec's path
+      def stamp!(settings = {})
+        return spec_path unless File.file?(spec_path)
+
+        meta, body = Frontmatter.split(File.read(spec_path, encoding: "UTF-8"))
+        meta = { "created" => @today }.merge(meta).merge(settings)
+        File.write(spec_path, "#{YAML.dump(meta)}---\n\n#{body.sub(/\A\n+/, "")}")
         spec_path
       end
 

@@ -432,10 +432,9 @@ module OpenLanes
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
         )
         feature = Plans::Feature.parse(path)
-        spec = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed: "#{idea}\n\n#{marker(command)}")
-                        .write_scaffold!
-        settings = idea_frontmatter(command.payload["frontmatter"])
-        File.write(spec, "#{YAML.dump(settings)}---\n\n#{File.read(spec)}") unless settings.empty?
+        brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed: "#{idea}\n\n#{marker(command)}")
+        brief.write_scaffold!
+        brief.stamp!(idea_frontmatter(command.payload["frontmatter"]))
         created(feature, dispatcher)
       end
 

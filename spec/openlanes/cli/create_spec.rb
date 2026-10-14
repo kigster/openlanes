@@ -58,9 +58,9 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
       expect(spec_md).to include("# Split Big Migration")
     end
 
-    it "writes no frontmatter when no lane or depth was given" do
+    it "writes only created: when no lane or depth was given" do
       out, = run("plain", "plan", draft: false, open: false)
-      expect(File.read(File.join(out.strip, "spec.md"))).not_to start_with("---")
+      expect(File.read(File.join(out.strip, "spec.md"))).to start_with("---\ncreated: #{Date.today.iso8601}\n---\n\n# ")
     end
   end
 
@@ -121,6 +121,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
     def with_brief(result:)
       brief = instance_double(OpenLanes::Lifecycle::Brief,
         write_scaffold!: nil,
+        stamp!:          nil,
         attempt!:        result,
         spec_path:       File.join(plans_root, "irrelevant", "spec.md"))
       allow(OpenLanes::Lifecycle::Brief).to receive(:new).and_return(brief)

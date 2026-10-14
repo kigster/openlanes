@@ -251,7 +251,7 @@ module OpenLanes
           warn_about_draft(note) unless ok
         end
 
-        stamp(brief.spec_path, options)
+        brief.stamp!({ "lane" => options[:lane], "depth" => options[:depth] }.compact)
         open_spec(brief.spec_path) if options.fetch(:open, true)
         path
       end
@@ -271,20 +271,6 @@ module OpenLanes
             label:  ->(_) { label },
             fields: ->(_) { { plan:, agent: } }) { |_, line| block.call(line) }.first
         end
-      end
-
-      # Writes `--lane` and `--depth` into spec.md's frontmatter, after the
-      # draft, so a drafting agent that rewrites the file cannot drop them.
-      #
-      # @param spec_path [String]
-      # @param options [Hash]
-      # @return [void]
-      def stamp(spec_path, options)
-        settings = { "lane" => options[:lane], "depth" => options[:depth] }.compact
-        return if settings.empty? || !File.file?(spec_path)
-
-        meta, body = Frontmatter.split(File.read(spec_path, encoding: "UTF-8"))
-        File.write(spec_path, "#{YAML.dump(meta.merge(settings))}---\n#{body}")
       end
 
       # @param spec_path [String]

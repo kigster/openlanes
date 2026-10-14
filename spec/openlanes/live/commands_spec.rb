@@ -528,14 +528,14 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
 
       it "writes only the lane, and nothing for auto or research" do
-        expect(created.read("spec.md")).to start_with("---\nlane: full\n---\n\n# ")
+        expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\nlane: full\n---\n\n# ")
       end
     end
 
-    it "writes no frontmatter when the command carries no form" do
+    it "writes only created: when the command carries no form" do
       send_command("create_plans", idea: "A tic-tac-toe game")
       apply
-      expect(created.read("spec.md")).to start_with("# ")
+      expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\n---\n\n# ")
     end
 
     it "refuses an idea that makes no folder name" do
