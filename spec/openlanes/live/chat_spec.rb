@@ -118,6 +118,20 @@ RSpec.describe OpenLanes::Live::Chat do
       expect(here.drain(mine).last).to include(kind: "unanswered", machine: sam)
     end
 
+    it "waits for PUBLISH to count the receivers before an absent reply can expire the invite" do
+      # A second server for Sam's machine, with no page open, subscribed like any other.
+      idle = described_class.new(stores:, keys: keys.with(node: "#{sam}:eeeeeeeeeeee"), machine: sam, label: "sam@ci", clock:, wall:)
+      idle.step
+      # Its `absent` reaches the listening thread before PUBLISH has returned its count of two.
+      allow(here).to receive(:publish).and_wrap_original do |original, channel, data|
+        count = original.call(channel, data)
+        here.send(:absent, data[:invite][:id]) if data[:kind] == "invite"
+        count
+      end
+      here.start_chat(page: mine, name: "Dana", machine: sam, label: "sam@ci")
+      expect(here.state(page: mine)[:outgoing]).to contain_exactly(include(machine: sam))
+    end
+
     it "says at once that nobody answered when nothing listens for the machine" do
       here.start_chat(page: mine, name: "Dana", machine: "0" * 24, label: "ghost@nowhere")
       expect(here.drain(mine).last).to include(kind: "unanswered", label: "ghost@nowhere")

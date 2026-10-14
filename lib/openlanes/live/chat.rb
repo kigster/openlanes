@@ -226,10 +226,16 @@ module OpenLanes
         end
         id = SecureRandom.uuid
         wire = { id:, chat:, from: me, machine:, label:, expires_at: (@wall.call + INVITE_TTL).utc.iso8601 }
-        sent = { id:, page:, machine:, label:, deadline: now + INVITE_TTL, receivers: 0, absent: 0 }
+        # The receivers stay unknown until PUBLISH says: an `absent` heard
+        # before then is counted, never compared against a count not yet set.
+        sent = { id:, page:, machine:, label:, deadline: now + INVITE_TTL, receivers: nil, absent: 0 }
         @lock.synchronize { @outgoing[id] = sent }
-        sent[:receivers] = publish(@keys.chat_inbox(machine, db:), kind: "invite", invite: wire)
-        expire(id) if sent[:receivers].zero?
+        receivers = publish(@keys.chat_inbox(machine, db:), kind: "invite", invite: wire)
+        nobody = @lock.synchronize do
+          sent[:receivers] = receivers
+          sent[:absent] >= receivers
+        end
+        expire(id) if nobody
         sent.slice(:id, :machine, :label)
       end
 
@@ -373,7 +379,7 @@ module OpenLanes
         nobody = @lock.synchronize do
           sent = @outgoing[id] or next false
           sent[:absent] += 1
-          sent[:absent] >= sent[:receivers]
+          sent[:receivers] && sent[:absent] >= sent[:receivers]
         end
         expire(id) if nobody
       end
