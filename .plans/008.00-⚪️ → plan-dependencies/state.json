@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "008.00",
+    "slug": "plan-dependencies"
+  },
+  "state": "new",
+  "updated_at": "2026-10-13T17:49:44-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}

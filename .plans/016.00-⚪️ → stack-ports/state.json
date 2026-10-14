@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "016.00",
+    "slug": "stack-ports"
+  },
+  "state": "new",
+  "updated_at": "2026-10-13T17:49:48-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}
