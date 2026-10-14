@@ -74,9 +74,24 @@ jobs:
       - run:
           name: Wait for Redis
           command: dockerize -wait tcp://localhost:6379 -timeout 30s
+      # spec/integration skips here: it needs web/dist, which the e2e job builds and runs it against.
       - run:
           name: Run tests
           command: bundle exec rspec
+      # The whole-library figure hides a new file with half its lines untested; this gates each changed lib/ file.
+      - run:
+          name: Coverage of changed files
+          command: |
+            git fetch --no-tags origin main
+            bin/coverage-changed --base origin/main
+      # Names the draft used and the code never did; the demo board's RNG seed is the one legitimate 4747.
+      - run:
+          name: No retired names
+          command: |
+            if grep -rnE '\btilda\b|4747|agentilda:' README.md lib web/src --exclude=demo_board.rb; then
+              echo "retired name found: the binary is openlanes, the port 11000, the Redis prefix openlanes:" >&2
+              exit 1
+            fi
 
   # The page: lint, types, unit tests with coverage, and the production build that ships in the gem.
   web:
@@ -104,6 +119,12 @@ jobs:
           name: Unit tests with coverage
           working_directory: web
           command: npm run coverage
+      - run:
+          name: Coverage of changed files
+          working_directory: web
+          command: |
+            git fetch --no-tags origin main
+            npm run coverage:changed
       - run:
           name: Build
           working_directory: web
@@ -155,9 +176,21 @@ jobs:
           name: Build the page
           working_directory: web
           command: npm run build
+      # The gemspec aborts without web/dist/index.html; this proves the built .gem carries it.
+      - run:
+          name: Package the gem with the page
+          command: |
+            gem build openlanes.gemspec --output /tmp/openlanes.gem
+            tar -xOf /tmp/openlanes.gem data.tar.gz | tar -tz | grep -x 'web/dist/index.html'
       - run:
           name: Wait for Redis
           command: dockerize -wait tcp://localhost:6379 -timeout 30s
+      # Real exe/openlanes processes (engine, API server, two checkouts) on this Redis, each spec on its own database.
+      - run:
+          name: Integration specs
+          command: bundle exec rspec spec/integration
+          environment:
+            OPENLANES_TEST_REDIS_URL: redis://localhost:6379/15
       # The same script as `just web-e2e`: both demo servers (the page's own and demo@second-machine for the chat
       # spec), then Cypress against them, then both stopped.
       - run:
