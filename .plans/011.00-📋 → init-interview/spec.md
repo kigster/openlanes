@@ -21,7 +21,7 @@ Picked **config-first inside an interview-shaped delivery**: the keys, `-y` path
 
 ## Goal
 
-After this ships, `openlanes init` records three project-wide decisions in `.openlanes.yml` (`merge.by`, `build_quality`, `stack`) and writes `docs/decisions/stack.md`. On a terminal it gets there by asking who merges, how much quality to buy, and what the stack is, detecting what the folder already holds and, with an API key, extracting answers from a free-text description so the questions it answered are skipped. `--reconfigure` re-runs it with the current answers as defaults and shows the diff before saving.
+After this ships, `openlanes init` records four project-wide decisions in `.openlanes.yml` (`ci`, `merge.by`, `build_quality`, `stack`) and writes `docs/decisions/stack.md`. On a terminal it gets there by first settling CI (detecting an existing setup, or offering to scaffold one, M21), then asking who merges, how much quality to buy, and what the stack is, detecting what the folder already holds and, with an API key, extracting answers from a free-text description so the questions it answered are skipped. `--reconfigure` re-runs it with the current answers as defaults and shows the diff before saving.
 
 ## Non-Goals
 
@@ -36,11 +36,13 @@ After this ships, `openlanes init` records three project-wide decisions in `.ope
 
 Each item is checkable by a spec or a command.
 
-1. `Config::KEYS` accepts `merge` (`by: human|agent`), `build_quality` (`top_notch|high|medium|mvp`) and `stack`; `Config.parse` rejects other values of each, and `to_yaml` round-trips them.
+1. `Config::KEYS` accepts `ci` (`provider: github_actions|circleci|jenkins|external|none`, `config: <path>`), `merge` (`by: human|agent`), `build_quality` (`top_notch|high|medium|mvp`) and `stack`; `Config.parse` rejects other values of each, and `to_yaml` round-trips them.
 1. `stack:` holds `language, frameworks, front_end, persistence, caching, logins, deployment, domain, from, to` (research shape, `.openlanes.yml`).
 1. A stack detector maps marker files to a stack (`Gemfile`, `package.json`, `go.mod`, `Cargo.toml`, `mix.exs`, `pyproject.toml`/`requirements.txt`, with the refinements listed in `## Research`), tested on real temp folders. A folder with two language markers reports as mixed, and the interview asks.
 1. `init` writes `docs/decisions/stack.md` from the same fields; absent when the stack is unknown and `-y` is used.
-1. Interview order is merge, build quality, stack; the existing four values remain.
+1. **CI comes first (M21).** A CI detector reports what the folder already runs: `.github/workflows/*.yml` → GitHub Actions, `.circleci/config.yml` → CircleCI, `Jenkinsfile` → Jenkins, `.gitlab-ci.yml` → GitLab CI, `.buildkite/` → Buildkite (tested on real temp folders, several at once reported as a list). When one is found, the interview names it and asks nothing. When none is found it asks "Do you have a CI setup, or would you like some help with that?" with three answers: *I have one elsewhere* (record `ci.provider: external`), *Help me set one up*, *No CI for now* (record `ci.provider: none`). *Help me set one up* asks which: GitHub Actions (default), CircleCI, Jenkins.
+1. **CI scaffold.** For the chosen provider, `init` writes one config file that runs the project's own lint and test commands for the detected stack (`just lint` / `just test` when a justfile defines them, otherwise the stack's conventional commands), never overwriting an existing file, and records `ci.provider` and `ci.config` in `.openlanes.yml`. `-y` takes `--ci PROVIDER|none` and defaults to `none` (asks nothing, writes nothing). Check: one spec per provider asserting the file path and that it names the stack's commands; a spec that an existing file is left untouched.
+1. Interview order is CI, merge, build quality, stack; the existing four values remain.
 1. Free-text "Describe the app you want to build" with extraction through `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`; answered questions are skipped. With neither key, one message, then every question is asked. No placeholder answers are ever filled in.
 1. When a stack is detected and the user is open to alternatives, ask "port the code or start fresh beside it"; a port writes `stack.from` and `stack.to`.
 1. `init -y` takes flags and defaults for the new keys, asks nothing and makes no network call. New flags: `--merge-by`, `--build-quality`.
@@ -80,6 +82,8 @@ Unsettled items from the research, and what had to be assumed. None is answered 
 1. **Does `docs/decisions/stack.md` get overwritten** on `--reconfigure`, or is a new dated section appended? Assumed: overwritten, shown in the diff.
 1. **Stack field vocabulary.** Free text or a closed list for `frameworks` and `persistence`? Assumed free text, validated as non-empty strings.
 1. **OpenAI.** M16 names `OPENAI_API_KEY`; is an OpenAI adapter in `inquirex-llm` verified? Not checked.
+1. **The third CI choice (M21).** The owner asked for "the third most popular CI" after CircleCI and GitHub Actions. openlanes requires GitHub (`gh` opens every PR), which rules out GitLab CI for the hosted case. Recommendation: Jenkins (a `Jenkinsfile`, run on the user's own server). Alternative: Buildkite. Owner to confirm.
+1. **The gate without CI (M21).** With `ci.provider: none`, the review gate sees no checks. Recommendation: a passing review label then requires plan 014's local verification to have passed; until 014 ships, no CI means "not verified", not green. Today's code (plan 005, `ci_gate.rb`) treats no checks as green with a warning.
 
 ## Risks to planning or execution
 

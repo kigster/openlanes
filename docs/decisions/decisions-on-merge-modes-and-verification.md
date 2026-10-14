@@ -180,3 +180,13 @@ They are local in `/Users/kig/github/inquirex`; the Ruby gems are versioned toge
 
 - An `openlanes gc` command became plan aging and archiving (plans 007–009).
 - A Settings dialog in the control room comes with v2.0.
+
+### M21. `init` settles CI first
+
+Decided by the owner, 2026-10-14. Many projects have no CI, and without it a pull request has no checks for the review gate to read.
+
+- `init` first detects an existing CI setup (GitHub Actions, CircleCI, Jenkins, GitLab CI, Buildkite) and, when it finds one, asks nothing about CI.
+- Otherwise it is one of the first questions: "Do you have a CI setup, or would you like some help with that?" Choosing help asks which CI: GitHub Actions, CircleCI, or a third option (proposed: Jenkins, to confirm). openlanes then writes that provider's config, running the project's own lint and test commands.
+- The answer is recorded in `.openlanes.yml` as `ci.provider` (and `ci.config` when a file was written).
+- Proposed, to confirm: when a project has no CI, a passing review label requires local verification (plan 014) instead of being treated as green.
+- Built in plan 011.
