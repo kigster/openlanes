@@ -226,26 +226,22 @@ module OpenLanes
       # @return [Boolean]
       def dry_run?(options) = options.fetch(:dry_run, false)
 
-      # `claude` prefers a credential in the environment to a claude.ai login,
-      # so a project `.env` that direnv loads on `cd` can redirect every agent
-      # a run spawns to a key meant for the application itself.
-      #
-      # Say it once, before the run starts, because the failure arrives three
-      # minutes later, once per agent, and reads like an agent problem rather
-      # than an environment one.
+      # The credential warning {Execution.credentials_notice} words, drawn
+      # when there is one to give.
       #
       # @return [void]
       def credentials_warning
-        names = Execution::Executor.foreign_credentials
-        return if names.empty?
-
-        one = names.size == 1
-        warn("#{names.join(" and ")} #{one ? "is" : "are"} set in this shell, so every agent authenticates " \
-             "with #{one ? "it" : "them"} rather than with your claude.ai login.\n" \
-             "A stale one fails every agent in the run with `401 API key is invalid`, " \
-             "three minutes at a time.\n" \
-             "If it came from a project .env, run `unset #{names.join(" ")}` first.")
+        notice = Execution.credentials_notice
+        warn(notice) if notice
       end
+
+      # The success value of a workflow's result, or the refusal it failed
+      # with, reported and exited on. One shape for every workflow, so a
+      # command reads the same whichever one it calls.
+      #
+      # @param result [Dry::Monads::Result] Success(value) or Failure({Refusal})
+      # @return [Object] the success value; a failure never returns
+      def unwrap(result) = result.value_or { |refusal| refuse(refusal.message, refusal.status) }
 
       # The line every dry run ends with, so nobody mistakes a preview for the
       # thing having happened.

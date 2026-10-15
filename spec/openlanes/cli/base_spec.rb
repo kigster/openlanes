@@ -171,4 +171,33 @@ RSpec.describe OpenLanes::CLI::Base do
       end
     end
   end
+
+  # Every workflow fails the same way, so every command refuses the same way.
+  describe "#unwrap" do
+    subject(:command) { Class.new(described_class).new }
+
+    let(:err) { CapturedStream.new }
+
+    def unwrapped(result)
+      original = $stderr
+      $stderr = err
+      [command.send(:unwrap, result), 0]
+    rescue SystemExit => e
+      [nil, e.status]
+    ensure
+      $stderr = original
+    end
+
+    it "answers the success value and prints nothing" do
+      expect(unwrapped(Dry::Monads::Result::Success.new(7))).to eq([7, 0])
+      expect(err.string).to be_empty
+    end
+
+    it "exits with the refusal's status and prints its message" do
+      refusal = OpenLanes::Refusal.new(message: "No plan 999", status: 66)
+
+      expect(unwrapped(Dry::Monads::Result::Failure.new(refusal))).to eq([nil, 66])
+      expect(strip_ansi(err.string)).to include("No plan 999")
+    end
+  end
 end

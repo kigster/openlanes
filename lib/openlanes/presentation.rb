@@ -28,6 +28,11 @@ module OpenLanes
       state.running? ? state.waiting_on : {}
     end
 
+    # @param changes [Array<OpenLanes::Lifecycle::Resync::Prs::Change>]
+    # @param dry_run [Boolean]
+    # @return [OpenLanes::Presentation::PrChanges]
+    def pr_changes(changes, dry_run:) = PrChanges.new(changes, dry_run:)
+
     # @return [OpenLanes::Presentation::Viewer]
     def viewer = Viewer.new
 
