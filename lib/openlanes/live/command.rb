@@ -42,11 +42,11 @@ module OpenLanes
 
       # Every kind the page may send.
       KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop stop_all
-                 set_model switch_model add_plan create_plans].freeze
+                 set_model switch_model add_plan create_plans respond pause_discuss resume_anyway].freeze
 
       # Kinds that act on one plan, and so must name it.
       PLAN_KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop
-                      set_model switch_model].freeze
+                      set_model switch_model respond pause_discuss resume_anyway].freeze
 
       # Kinds that act on one agent of that plan, and so must name it too.
       AGENT_KINDS = %w[hold wrap_up compact stop set_model switch_model].freeze
@@ -60,7 +60,8 @@ module OpenLanes
         "set_model"    => %w[model],
         "switch_model" => %w[model],
         "add_plan"     => %w[ordinal],
-        "create_plans" => %w[idea]
+        "create_plans" => %w[idea],
+        "respond"      => %w[text]
       }.freeze
 
       # Ids are ULIDs; this only keeps an absurd one out of a hash field.
