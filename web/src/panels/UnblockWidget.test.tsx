@@ -20,6 +20,20 @@ describe("UnblockWidget", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it("offers a question's options before the editor, which opens to type something instead", async () => {
+    const user = userEvent.setup();
+    const plan = planAt("001.00");
+    plan.questions = [question({ options: [
+      { letter: "a", label: "Rebase", recommended: true, answer: "a) Rebase" },
+      { letter: "b", label: "Merge", recommended: false, answer: "b) Merge" },
+    ] })];
+    const { container } = renderPanel(<UnblockWidget plan={plan} onCommand={recorder().onCommand} onClose={() => {}} />);
+    expect(container.querySelector(".unblock-answer")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Type something instead" }));
+    expect(container.querySelector(".unblock-answer .cm-content")).not.toBeNull();
+    expect(screen.getByRole("button", { name: /Rebase/ })).toBeInTheDocument();
+  });
+
   it("sends the answer from the editor, by button and by Ctrl Enter, then closes itself", async () => {
     const { sent, onCommand } = recorder();
     const onClose = vi.fn();

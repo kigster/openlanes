@@ -52,7 +52,7 @@ The whole plan lands as one pull request. More than eight units, or a unit a rev
 
 ## Block when
 
-An ordering, dependency or scope question turns on a decision nobody has made. Write `blocked.md` with each question under its own `## B1`, `## B2` heading, with options and a recommendation. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
+An ordering, dependency or scope question turns on a decision nobody has made. Write `blocked.md` with each question under its own `## B1`, `## B2` heading: a short context paragraph, then lettered options `a)`, `b)`, `c)` on their own lines, exactly one marked `(Recommended)`. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
 
 ## Next
 

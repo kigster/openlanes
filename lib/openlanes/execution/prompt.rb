@@ -358,12 +358,14 @@ module OpenLanes
         SECTION
       end
 
-      # How to mark a yes/no question in `blocked.md` (W30). The page offers
-      # Yes and No buttons for exactly the questions marked this way and never
-      # guesses from the wording, so an agent that does not mark one gets a
-      # text box, and one that marks a two-way choice gets a meaningless yes.
-      # Said once here, for every agent that writes `blocked.md`, rather than
-      # in each definition, so the marker cannot drift between them.
+      # How to write a question in `blocked.md` so a person can answer it
+      # with one click (D3): context, then lettered options, one recommended.
+      # The page draws a button per option and always adds a text box, so an
+      # agent that writes the shape gets buttons, and one that does not gets
+      # only the box. Said once here, for every agent that writes
+      # `blocked.md`, rather than in each definition, so the shape cannot
+      # drift between them. {Plans::Choices} reads it, and still reads the
+      # W30 yes/no mark in files written before.
       #
       # @return [String] empty for an agent whose definition never mentions
       #   `blocked.md`, and for the agent that drains it
@@ -372,20 +374,29 @@ module OpenLanes
 
         <<~SECTION
 
-          ## Questions in blocked.md: yes/no questions
+          ## Questions in blocked.md: context, then lettered options
 
-          When a question can be answered with a plain yes or no, ask it that
-          way and mark it, on its own line straight under its heading:
+          Write every question for a person in one shape: a short context
+          paragraph saying what you need decided and why, then the options,
+          each on its own line, lettered `a)`, `b)`, `c)`, with exactly one
+          marked `(Recommended)`:
 
-              ## B2 Rebase onto main
-              #{Live::Snapshot::YES_NO_MARK}
+              ## B2 Where the second machine comes from
 
-              The pull request conflicts in lib/openlanes/cli.rb. Should I rebase onto main?
+              The chat spec needs someone on the other end, and steps 2 to 4 wait on it.
+
+              a) A second demo process on another port, started by just web-e2e. (Recommended)
+              b) The demo answers its own invites. Fewer processes, but the test covers a fake.
+              c) Narrow the spec to steps 1 and 5 and cover the rest in the Ruby suite.
+
+          A yes/no question is `a) yes` and `b) no`. Do not add an option for
+          "something else": the page always offers "Type something instead".
 
           The person answers with a button, and the answer reaches you as the
-          bare word `yes` or `no`, so branch on the word. Mark only a real yes/no
-          question: "Should I start it, or skip the integration specs?" is a
-          choice between two things, and needs words.
+          letter and the option, e.g. `b) The demo answers its own invites. …`,
+          or as the bare word `yes` or `no`; anything else is their own words.
+          A question with no sensible options is a context paragraph alone, and
+          gets a text box.
         SECTION
       end
 

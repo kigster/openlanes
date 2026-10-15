@@ -68,6 +68,11 @@ require_relative "support/git_repo"
 require_relative "support/coverage_fixtures"
 
 RSpec.configure do |config|
+  # The choice judge asks TypeSafe over the network. A developer's shell may
+  # well export TYPESAFE_API_KEY, so the suite turns the seam off outright;
+  # examples about the judge build their own around an adapter double.
+  config.before { OpenLanes::Live.choice_judge = nil }
+
   config.example_status_persistence_file_path = ".rspec_status"
   config.disable_monkey_patching!
   config.expect_with :rspec do |c|

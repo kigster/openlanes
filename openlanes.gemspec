@@ -66,6 +66,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-inflector"
   spec.add_dependency "dry-monads"
   spec.add_dependency "fuzzy-string-match"
+  spec.add_dependency "inquirex-llm", "~> 0.12"
   # Opens the control room in the browser when `openlanes run` starts the API server.
   spec.add_dependency "launchy", "~> 3.1"
   spec.add_dependency "parallel"

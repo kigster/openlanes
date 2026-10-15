@@ -13,14 +13,6 @@ module OpenLanes
     # to the page's fixture, level by level, so a field renamed on one side
     # fails the other's suite.
     class Snapshot
-      # How an agent marks a question as answerable with Yes or No (W30), on
-      # its own line under the question's heading. The agents' prompt shows
-      # it, and {#questions} looks for it; neither spells it twice.
-      YES_NO_MARK = "answers: yes, no"
-
-      # {YES_NO_MARK}, read forgivingly: brackets, case and spacing vary.
-      YES_NO = /answers:\s*\[?\s*yes\s*,\s*no\s*\]?/i
-
       # Any Markdown heading, which ends the body of the question above it.
       HEADING = /^[ \t]{0,3}\#{1,6}[ \t]/
 
@@ -42,9 +34,11 @@ module OpenLanes
       # @param meter [OpenLanes::Live::Meter]
       # @param log [Array<Hash>] `LogLine`s, newest last
       # @param adapter [OpenLanes::Adapters::Base] whose models the page offers
+      # @param judge [#call, nil] a second opinion on whether a question asks
+      #   to choose ({ChoiceJudge}); nil leaves the parser's verdict alone
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
-        adapter: Adapters.for(Adapters::DEFAULT))
+        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge)
         @board = board
         @tree = tree
         @agents = agents
@@ -60,6 +54,7 @@ module OpenLanes
         @meter = meter
         @log = log
         @adapter = adapter
+        @judge = judge
       end
 
       # @return [Hash]
@@ -280,8 +275,8 @@ module OpenLanes
 
       # ---- questions --------------------------------------------------------
 
-      # The questions `blocked.md` still asks, each with its body, whether it
-      # is a yes/no question, and who asked.
+      # The questions `blocked.md` still asks, each with its context, the
+      # options it offers (D3), and who asked.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @param state [OpenLanes::Plans::PlanState]
@@ -299,16 +294,36 @@ module OpenLanes
       # @return [Hash]
       def question(subject, open, body, asker, asked_at)
         id = "#{subject.feature.ordinal}/B#{open.number}"
-        yes_no = open.heading.match?(YES_NO) || body.match?(YES_NO)
+        choices = choices(open.heading, body)
         { id:,
           number:   open.number,
-          heading:  open.heading.sub(YES_NO, "").strip,
-          body:     body.lines.grep_v(/\A\s*#{YES_NO.source}\s*\z/i).join.strip,
+          heading:  open.heading.sub(Plans::Choices::YES_NO, "").strip,
+          body:     choices ? choices.context : body.strip,
           agent:    asker&.fetch("agent", nil),
           owner:    subject.status.key == :product_blocked ? "product" : "technical",
-          answers:  yes_no ? %w[yes no] : nil,
+          options:  choices&.to_a,
           held:     @run_state.question_held?(id),
           asked_at: }
+      end
+
+      # The options a question offers, or nil for one that wants words.
+      #
+      # A question its agent marked yes/no (W30) is taken at its word. Any
+      # other the parser found options in goes past the judge, which may say
+      # the list was not a choice after all; it is never asked about a
+      # question the parser found nothing in, since there would be no buttons
+      # to show.
+      #
+      # @param heading [String]
+      # @param body [String]
+      # @return [OpenLanes::Plans::Choices, nil]
+      def choices(heading, body)
+        return Plans::Choices.yes_no(body) if heading.match?(Plans::Choices::YES_NO)
+
+        found = Plans::Choices.parse(body) or return nil
+        return found if body.match?(Plans::Choices::YES_NO)
+
+        @judge&.call(body) == false ? nil : found
       end
 
       # @param text [String] the whole of blocked.md

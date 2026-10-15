@@ -56,7 +56,7 @@ The date is today's, not the merge date. The pull requests are the ones in `pull
 
 ## Block when
 
-An open question needs a decision that is not yours: a product tradeoff, a conflict with an earlier plan, a cost commitment. Write `blocked.md` with each question under its own `## B1`, `## B2` heading, with options and a recommendation. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop. A spec built on a guessed answer looks decided and is not.
+An open question needs a decision that is not yours: a product tradeoff, a conflict with an earlier plan, a cost commitment. Write `blocked.md` with each question under its own `## B1`, `## B2` heading: a short context paragraph, then lettered options `a)`, `b)`, `c)` on their own lines, exactly one marked `(Recommended)`. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop. A spec built on a guessed answer looks decided and is not.
 
 ## Next
 

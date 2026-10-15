@@ -1,6 +1,6 @@
-// What a person has done to a request that the snapshot does not know yet: a half-typed answer, "Answer in words",
+// What a person has done to a request that the snapshot does not know yet: a half-typed answer, "Type something instead",
 // a settled note. Needs you, the unblock widget and the drawer read one store, so a draft follows its question from
-// one place to another and the choice of words over buttons sticks to that question everywhere it shows.
+// one place to another and the choice of words over the options sticks to that question everywhere it shows.
 import { createContext, useContext, useSyncExternalStore } from "react";
 
 export interface AskState {

@@ -65,6 +65,14 @@ export interface PullRequest {
   merged_at: Iso | null;
 }
 
+/** One choice a question offers (D3), as Plans::Choices read it. A yes/no question is a) yes, b) no. */
+export interface QuestionOption {
+  letter: string; // "a", "b", …
+  label: string; // the option, its recommended marker stripped
+  recommended: boolean; // at most one per question
+  answer: string; // what choosing it sends: "a) <label>", or the bare "yes" / "no"
+}
+
 /** A question an agent wrote into blocked.md (B<n>), still without an answer (A<n>). */
 export interface Question {
   id: string; // "<ordinal>/B<n>"
@@ -73,7 +81,7 @@ export interface Question {
   body: string; // Markdown
   agent: string | null; // who asked, when the ledger says
   owner: "technical" | "product"; // ⭕ or 🛑
-  answers: string[] | null; // ["yes", "no"] when the agent declared it a yes/no question (W30)
+  options: QuestionOption[] | null; // what the question offers to choose from (D3); null when it wants words
   held: boolean; // a person chose Hold blocked
   asked_at: Iso | null;
 }

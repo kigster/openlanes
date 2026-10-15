@@ -54,7 +54,7 @@ When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `
 
 ## Block when
 
-- A unit needs a decision that is not yours. Write `blocked.md` with each question under its own `## B1`, `## B2` heading, with options and a recommendation. Mail rey. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
+- A unit needs a decision that is not yours. Write `blocked.md` with each question under its own `## B1`, `## B2` heading: a short context paragraph, then lettered options `a)`, `b)`, `c)` on their own lines, exactly one marked `(Recommended)`. Mail rey. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
 - A baseline failure sits in a file your units must change. Block (technical) and name the failures.
 
 A unit larger than the plan implied is not a block. Split it in `plan.md` and keep building.

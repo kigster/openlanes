@@ -15,7 +15,7 @@ export const carOf = (plan: Plan, agent: string): Car => plan.cars.find((c) => c
 
 export const question = (over: Partial<Question> = {}): Question => ({
   id: "001.00/B1", number: 1, heading: "B1 Redis key layout", body: "Should Redis keys carry the checkout path?",
-  agent: "luke-backend", owner: "technical", answers: null, held: false, asked_at: "2026-10-13T09:00:00Z", ...over,
+  agent: "luke-backend", owner: "technical", options: null, held: false, asked_at: "2026-10-13T09:00:00Z", ...over,
 });
 
 export type Sent = Omit<Command, "id">;

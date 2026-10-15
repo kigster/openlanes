@@ -14,8 +14,14 @@
 .btn-quiet { border-color: transparent; background: transparent; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn[aria-pressed="true"]:not(.md-mode) { background: var(--ink); color: var(--plate); border-color: var(--ink); }
-.btn-choice { min-width: 76px; justify-content: center; }
-.btn-words { font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+/* A question's options (D3): one full-width button each, stacked, read left to right like the sentence they are. */
+.ask-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.btn-choice { width: 100%; justify-content: flex-start; align-items: baseline; text-align: left; font-weight: 500; line-height: 1.4; }
+.btn-choice.is-recommended { border-color: var(--ink); border-width: 2px; }
+.choice-letter { font-weight: 800; flex: none; }
+.choice-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.choice-tag { flex: none; align-self: center; padding: 1px 8px; border-radius: 999px; background: var(--ink); color: var(--plate); font-size: 12px; font-weight: 700; }
+.btn-words { color: var(--ink-soft); border-style: dashed; }
 .help-pill { min-width: 40px; padding-inline: 0; justify-content: center; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 999px; font-weight: 800; }
 
 /* Feedback: what a command's reply said, in place. */

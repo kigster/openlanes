@@ -1,13 +1,13 @@
 // One request as a card: a question an agent asked, or an agent a person interrupted. Needs you shows it in the rail,
 // the unblock widget across the board, and the drawer the question part of it; the logic is here once for all three.
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import type { Plan, Question } from "../api/types";
+import type { Plan, Question, QuestionOption } from "../api/types";
 import { useAsk } from "./asks";
 import { useCommand } from "./command";
 import { Feedback } from "./feedback";
 import { renderMarkdown } from "./markdown";
 import { MarkdownEditor } from "./MarkdownEditor";
-import { useQuestion, type Ask } from "./question";
+import { isWord, useQuestion, type Ask } from "./question";
 import { ariaSendKeys, isSendKey, sendKeys, type SendCommand } from "./support";
 
 const FADE_MS = 500;
@@ -24,18 +24,32 @@ function HoldButton({ held, onClick, disabled }: { held: boolean; onClick: () =>
   );
 }
 
-/** Yes and No, plus the way out to words. */
-export function Choices({ answers, onChoose, onWords, disabled, children }: {
-  answers: string[]; onChoose: (word: string) => void; onWords: () => void; disabled: boolean; children?: ReactNode;
+/**
+ * A question's options, one full-width button each, stacked (D3), the recommended one tagged; then "Type something
+ * instead", always the last choice, which opens the text box under them. Once it is open the button goes, and the
+ * box's own Send takes its place.
+ */
+export function Choices({ options, onChoose, onWords, inWords, disabled, children }: {
+  options: QuestionOption[]; onChoose: (option: QuestionOption) => void; onWords: () => void; inWords: boolean;
+  disabled: boolean; children?: ReactNode;
 }) {
   return (
-    <div className="ask-actions ask-choices">
-      {answers.map((word) => (
-        <button key={word} type="button" className="btn btn-choice" disabled={disabled} onClick={() => onChoose(word)}>{capital(word)}</button>
-      ))}
-      <button type="button" className="btn btn-quiet btn-words" onClick={onWords}>Answer in words</button>
-      {children}
-    </div>
+    <>
+      <div className="ask-choices" role="group" aria-label="Choose an answer">
+        {options.map((option) => (
+          <button
+            key={option.letter} type="button" className={`btn btn-choice${option.recommended ? " is-recommended" : ""}`}
+            disabled={disabled} onClick={() => onChoose(option)}
+          >
+            {!isWord(option) && <span className="choice-letter" aria-hidden="true">{option.letter})</span>}
+            <span className="choice-label">{isWord(option) ? capital(option.label) : option.label}</span>
+            {option.recommended && <span className="choice-tag">Recommended</span>}
+          </button>
+        ))}
+        {!inWords && <button type="button" className="btn btn-choice btn-words" onClick={onWords}>Type something instead</button>}
+      </div>
+      {children && <div className="ask-actions">{children}</div>}
+    </>
   );
 }
 
@@ -98,34 +112,35 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   }
   const holdButton = <HoldButton held={q.isHeld} onClick={hold} disabled={pending} />;
   const body = <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.body) }} />;
-  let answerUi: ReactNode;
-  if (q.yesNo) {
-    answerUi = <Choices answers={question.answers ?? []} onChoose={q.choose} onWords={() => q.update({ inWords: true })} disabled={pending}>{holdButton}</Choices>;
-  } else if (variant === "widget") {
-    answerUi = (
-      <div className="unblock-answer">
-        <MarkdownEditor
-          value={q.state.draft} onChange={q.setDraft} onSubmit={q.answer} label="Your answer" invalid={q.invalid}
-          placeholder={q.invalid ? "Type an answer first" : `Your answer, in Markdown. ${sendKeys()} sends it.`}
-          height="180px" resizable autoFocus={!question.held}
-        />
-        <div className="unblock-buttons">
-          <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
-          {holdButton}
-        </div>
+  // The text box: the whole answer for a question that offers nothing to choose, the last choice for one that does.
+  const box = variant === "widget" ? (
+    <div className="unblock-answer">
+      <MarkdownEditor
+        value={q.state.draft} onChange={q.setDraft} onSubmit={q.answer} label="Your answer" invalid={q.invalid}
+        placeholder={q.invalid ? "Type an answer first" : `Your answer, in Markdown. ${sendKeys()} sends it.`}
+        height="180px" resizable autoFocus={!question.held && !q.options}
+      />
+      <div className="unblock-buttons">
+        <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
+        {holdButton}
       </div>
-    );
-  } else {
-    answerUi = (
-      <>
-        <AnswerBox id={`a-${question.id}`} value={q.state.draft} onChange={q.setDraft} onSend={q.answer} invalid={q.invalid} />
-        <div className="ask-actions">
-          <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
-          {holdButton}
-        </div>
-      </>
-    );
-  }
+    </div>
+  ) : (
+    <>
+      <AnswerBox id={`a-${question.id}`} value={q.state.draft} onChange={q.setDraft} onSend={q.answer} invalid={q.invalid} />
+      <div className="ask-actions">
+        <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
+        {holdButton}
+      </div>
+    </>
+  );
+  const choices = (children?: ReactNode) => q.options && (
+    <Choices options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords} disabled={pending}>
+      {children}
+    </Choices>
+  );
+  let answerUi: ReactNode = box;
+  if (q.options) answerUi = q.inWords ? <>{choices()}{box}</> : choices(holdButton);
   return (
     <div className={`ask${q.isHeld ? " is-held" : ""}`} data-ask={question.id}>
       <Who plan={plan} agent={question.agent} held={q.isHeld} />

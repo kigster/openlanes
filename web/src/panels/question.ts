@@ -1,6 +1,6 @@
 // A request's actions, shared by the rail's card, the unblock widget and the drawer's question block.
 import { useState } from "react";
-import type { Plan, Question } from "../api/types";
+import type { Plan, Question, QuestionOption } from "../api/types";
 import { useAsk } from "./asks";
 import { useCommand } from "./command";
 import { questionRef, type SendCommand } from "./support";
@@ -18,6 +18,9 @@ export function asksOf(plans: Plan[]): Ask[] {
 }
 
 const who = (q: Question) => q.agent ?? "the agent";
+
+/** A yes/no option, which answers with its bare word and shows without a letter. */
+export const isWord = (option: QuestionOption): boolean => option.answer === option.label;
 
 /** The question's actions, for the card and for the drawer's question block. */
 export function useQuestion(plan: Plan, question: Question, onCommand: SendCommand, onAnswered?: (text: string) => void) {
@@ -42,7 +45,9 @@ export function useQuestion(plan: Plan, question: Question, onCommand: SendComma
     await settle(text, `Answer sent to ${who(question)}.`);
     return true;
   };
-  const choose = (word: string) => settle(word, `Answered ${word.toLowerCase()} to ${who(question)}.`);
+  /** A yes/no option answers with its word, any other with its letter and label (D3); the note names it briefly. */
+  const choose = (option: QuestionOption) =>
+    settle(option.answer, `Answered ${isWord(option) ? option.label : `${option.letter})`} to ${who(question)}.`);
   const isHeld = held ?? question.held;
   const toggleHold = async () => {
     const holding = !isHeld;
@@ -57,6 +62,7 @@ export function useQuestion(plan: Plan, question: Question, onCommand: SendComma
   return {
     state, update, command, invalid, isHeld, answer, choose, toggleHold,
     setDraft: (draft: string) => { setInvalid(false); update({ draft }); },
-    yesNo: Boolean(question.answers?.length) && !state.inWords,
+    options: question.options?.length ? question.options : null,
+    inWords: state.inWords,
   };
 }
