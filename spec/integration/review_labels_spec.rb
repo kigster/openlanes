@@ -27,7 +27,7 @@ RSpec.describe "Review labels, end to end", :tree do
   def gh = JSON.parse(File.read(gh_state))
   def labels(number) = gh.dig("prs", number.to_s, "labels")
   def argv = File.readlines(gh_log).map { JSON.parse(it) }
-  def plan(ordinal) = tree.reload.find(ordinal)
+  def plan(ordinal) = tree.everything.reload.find(ordinal)
 
   def edit_gh
     data = gh
@@ -97,7 +97,7 @@ RSpec.describe "Review labels, end to end", :tree do
   end
 
   # The engine's half: `openlanes start` in human mode, its clock moved on
-  # 15 s. leah handles only ⚪️, so no agent starts: what moves is the watch.
+  # 15 s. leah handles only ⚪, so no agent starts: what moves is the watch.
   def watch_once
     clock = [0.0]
     runner = OpenLanes::Engine::Runner.new(tree:,

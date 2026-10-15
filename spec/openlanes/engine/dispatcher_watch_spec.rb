@@ -16,7 +16,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
   let(:watch) { OpenLanes::Engine::PrWatch.new(github:, clock: -> { clock.first }) }
   let(:boards) { [] }
-  # leah handles only ⚪️, so no agent starts on these plans: what moves them is the watch.
+  # leah handles only ⚪, so no agent starts on these plans: what moves them is the watch.
   let(:runner) do
     OpenLanes::Engine::Runner.new(tree:,
       executor: ->(*) { raise "no agent should start" },
@@ -29,7 +29,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   def files = { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n" }
-  def status_of(ordinal) = tree.reload.find(ordinal).status.key
+  def status_of(ordinal) = tree.everything.reload.find(ordinal).status.key
 
   before do
     plans do |t|
