@@ -33,3 +33,6 @@ mermaid.html
 
 # bin/factory-e2e and other reports
 /log/*
+
+# The built control room: a build product, made by `just web-build` before `gem build`
+/web/dist

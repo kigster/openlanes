@@ -1,5 +1,25 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 27 | [\[004.00\] Web Control Room](https://github.com/kigster/openlanes/pull/27) | Open 🟡 |
+
+## Verification (close-out, 2026-10-14)
+
+| Command | Result |
+| --- | --- |
+| `just lint` | 307 files, 0 offenses |
+| `just test` | 2232 examples, 0 failures, 98.63% |
+| `bundle exec rspec spec/integration` (repeated) | 9 examples, 0 failures: control room 4, restart 2, two checkouts 3 |
+| `bin/coverage-changed --base origin/main` | no changed `lib/` files |
+| `npx vitest run` (in `web/`) | 28 files, 298 tests, 0 failures |
+| `npx eslint .`, `npx tsc -b --noEmit`, `npm run typecheck` | clean |
+| `npm run coverage:changed` | `src/App.tsx` 99.2% |
+| `npx cypress run` against `openlanes web --demo --port 11055` | 21 tests in 5 specs, all pass |
+| `circleci config validate` | valid |
+
+The round-1 note below (integration specs timing out, 20 rubocop offenses) no longer reproduced on the salvaged files.
+
 ## Front end (rey-frontend, round 1)
 
 | Command (in `web/`) | Result |

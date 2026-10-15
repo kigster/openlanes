@@ -56,6 +56,20 @@ it("flags fixture data and a lost connection", () => {
   expect(screen.getByRole("status")).toHaveTextContent("Offline, retrying");
 });
 
+it("shows reconnecting when the stream errors and clears it when the stream reopens, the board unchanged", () => {
+  const snapshot = sampleBoard().me;
+  const { rerender } = render(<Header {...props({ snapshot })} />);
+  expect(screen.queryByRole("status")).toBeNull();
+  const totals = screen.getByText("$14.80");
+  rerender(<Header {...props({ snapshot, connection: "reconnecting" })} />);
+  expect(screen.getByRole("status")).toHaveTextContent("Reconnecting…");
+  // The totals stay on screen while the stream is down: the last board is kept, not blanked.
+  expect(screen.getByText("$14.80")).toBe(totals);
+  rerender(<Header {...props({ snapshot, connection: "live" })} />);
+  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.getByText("$14.80")).toBe(totals);
+});
+
 it("presses All machines", async () => {
   const onToggleMerged = vi.fn();
   render(<Header {...props({ merged: true, onToggleMerged })} />);

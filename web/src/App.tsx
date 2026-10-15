@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import * as Tabs from "@radix-ui/react-tabs";
 import { MotionConfig, useReducedMotion } from "motion/react";
@@ -59,10 +59,12 @@ const STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
 
 /**
  * The tabs sit in several tablists (each machine's in its own, beside its ▾), each a roving-focus group of its own.
- * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list;
- * focusing a tab selects it, so the keys still switch views.
+ * Taken before any group sees them, the arrows, Home and End move across every tab in the row, as in one list, and
+ * switch to the tab they land on. Focus alone does not switch (activationMode manual): with it automatic, pressing Tab
+ * to walk past the row focused the first machine's tab, which selected it and swapped the Board out from under the
+ * person, who then could never Tab to a car.
  */
-function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
+function acrossTabs(e: KeyboardEvent<HTMLElement>, activate: (tab: HTMLElement) => void): void {
   const from = e.target;
   const step = STEPS[e.key];
   const edge = e.key === "Home" || e.key === "End";
@@ -71,7 +73,17 @@ function acrossTabs(e: KeyboardEvent<HTMLElement>): void {
   const at = tabs.indexOf(from);
   const to = edge ? (e.key === "Home" ? 0 : tabs.length - 1) : (at + step + tabs.length) % tabs.length;
   e.preventDefault(); // the group's own handler stands down for a prevented event
-  tabs[to]?.focus();
+  const target = tabs[to];
+  target?.focus();
+  if (target) activate(target);
+}
+
+/**
+ * A tab whose `data-tab` is its `value`: acrossTabs switches by `data-tab`, Radix by `value`, and a tab written with
+ * only the one would take focus from the arrow keys and never show its panel.
+ */
+function Tab({ value, ...rest }: ComponentProps<typeof Tabs.Trigger>) {
+  return <Tabs.Trigger {...rest} value={value} data-tab={value} />;
 }
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
@@ -195,27 +207,27 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
       />
-      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab}>
+      <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}
-        <div className="tabs" onKeyDownCapture={acrossTabs}>
+        <div className="tabs" onKeyDownCapture={e => acrossTabs(e, tab => tab.dataset.tab && setTab(tab.dataset.tab))}>
           <Tabs.List className="tabs-list" aria-label="Views">
-            <Tabs.Trigger className="tab" value="board">
+            <Tab className="tab" value="board">
               Board
-            </Tabs.Trigger>
-            <Tabs.Trigger className="tab" value="logs">
+            </Tab>
+            <Tab className="tab" value="logs">
               Logs
               <span className="tab-count" title="Warnings and errors since you last looked">
                 {alerts || ""}
               </span>
-            </Tabs.Trigger>
+            </Tab>
             {runs.map(run => (
-              <Tabs.Trigger key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
+              <Tab key={testTabValue(run)} className="tab" value={testTabValue(run)} title={`${run.car.agent} ran ${run.cmd}`}>
                 {testTabLabel(run, runs)}
                 <span className="run-chip">
                   {run.done} of {run.total}
                 </span>
-              </Tabs.Trigger>
+              </Tab>
             ))}
           </Tabs.List>
             {others.map(o => {
@@ -227,7 +239,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               return (
                 <span key={value} className="tab-machine-wrap">
                   <Tabs.List className="tabs-list" aria-label={`Machine ${who(o.node)}`}>
-                    <Tabs.Trigger
+                    <Tab
                       className="tab tab-machine"
                       value={value}
                       title={`Read only: what ${who(o.node)} is working on. Press again to see every machine. Right-click to chat.`}
@@ -244,7 +256,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                       }}
                     >
                       {who(o.node)}
-                    </Tabs.Trigger>
+                    </Tab>
                   </Tabs.List>
                   <MachineMenu node={o.node} open={menuFor === o.node.id} onOpenChange={open => setMenuFor(open ? o.node.id : null)} />
                 </span>
