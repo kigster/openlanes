@@ -56,6 +56,10 @@ A PR that passed review is run before it merges. The engine starts the plan's ap
 
 ## In scope
 
+This plan covers items 1–7 and 11–14. It verifies through the shell when there is no browser. Items 8–10 (browser, mirroring) belong to 014.01, and items 15–18 (merge, rejection cap, control room) belong to 014.02. Those two plans can be built side by side once this one lands.
+
+Decided 2026-10-15 by kig: split 014 into three plans as above, one pull request each, with the browser and the merge-and-cap work in their own plans.
+
 Each item has its check. "Fake `gh`" is 005's `spec/support/fake_gh/gh`.
 
 1. **State.** `STATUSES` gains `verifying` (🧪 Verifying, requires `spec.md plan.md pull-requests.md`, invariant `open_pull_request("Verifying")`). Events: `verify` (`in_review` → `verifying`); `request_changes` and `approve` also accept `from: verifying`. Check: `state_machine_spec` asserts the three edges and that `verifying` joins `in_review`'s `FAMILIES` group (`state_machine.rb:93-96`), so `resync dirs` never moves a folder out of it.

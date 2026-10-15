@@ -1,0 +1,105 @@
+openapi: 3.1.0
+info:
+  title: openlanes web, plan files (plan 017.00)
+  version: "1.0"
+  description: List, read and save a plan's markdown files. See contract.md beside this file.
+paths:
+  /api/plans/{ordinal}/files:
+    parameters:
+      - $ref: "#/components/parameters/ordinal"
+    get:
+      summary: The readable plan files the folder has, in whitelist order
+      responses:
+        "200":
+          description: The list, possibly empty
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [files]
+                properties:
+                  files:
+                    type: array
+                    items: { $ref: "#/components/schemas/Name" }
+        "404": { $ref: "#/components/responses/Error" }
+  /api/plans/{ordinal}/files/{name}:
+    parameters:
+      - $ref: "#/components/parameters/ordinal"
+      - $ref: "#/components/parameters/name"
+    get:
+      summary: One plan file, raw
+      responses:
+        "200":
+          description: The file's bytes, unchanged
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            text/markdown:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      summary: Replace spec.md or plan.md, frontmatter unchanged
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: true
+          schema: { type: string }
+        - name: If-Match
+          in: header
+          required: true
+          description: The ETag from GET, quoted, sent back as received
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          text/markdown:
+            schema: { type: string, description: The whole file, frontmatter byte-equal to disk }
+      responses:
+        "200":
+          description: Written
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [etag]
+                properties:
+                  etag: { type: string, example: "\"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08\"" }
+        "403": { description: Bad or missing CSRF token, or a read-only name, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { description: The plan has a live car, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "412": { description: If-Match is not the file's current ETag, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "422": { description: The frontmatter block changed, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "428": { description: No If-Match header, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  parameters:
+    ordinal:
+      name: ordinal
+      in: path
+      required: true
+      schema: { type: string, example: "017.00" }
+    name:
+      name: name
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Name" }
+  headers:
+    ETag:
+      description: Strong ETag, the quoted SHA-256 hex of the raw bytes
+      schema: { type: string }
+  schemas:
+    Name:
+      type: string
+      enum: [spec.md, plan.md, contract.md, blocked.md, research.md, design.md]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+  responses:
+    Error:
+      description: Not found, with the reason
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

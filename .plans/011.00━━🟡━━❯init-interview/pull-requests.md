@@ -24,3 +24,16 @@ $ bundle exec rubocop
 ```
 
 The repo has no separate end-to-end suite for terminal commands; the integration spec above is it.
+
+Re-verified after the harness died, round 1 resumed (2026-10-15), no code changed:
+
+```
+$ bundle exec rspec
+3107 examples, 0 failures, 9 pending
+
+$ bundle exec rubocop
+440 files inspected, no offenses detected
+
+$ bundle exec rspec spec/openlanes/setup spec/openlanes/cli/init_spec.rb spec/openlanes/cli/init_integration_spec.rb spec/openlanes/config_spec.rb
+146 examples, 0 failures
+```

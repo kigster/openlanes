@@ -98,6 +98,12 @@ No front-end work in this plan.
 
 No. The plan adds no HTTP API and changes none.
 
+## Plan size
+
+This plan does not run as one round of seven units. Before any unit starts, it goes back to `palpatine-planner` to be broken into smaller tickets, each small enough for one round.
+
+Decided 2026-10-15 by kig: the plan is split into smaller tickets by `palpatine-planner`, not given a longer time budget.
+
 ## Task completed when
 
 - `bundle exec rspec` and `just lint` stay green.
@@ -120,3 +126,7 @@ No. The plan adds no HTTP API and changes none.
 > [!NOTE]
 >
 > [2026-10-15 09:27:29 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:50:18 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

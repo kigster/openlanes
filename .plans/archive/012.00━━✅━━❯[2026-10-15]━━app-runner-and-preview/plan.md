@@ -60,6 +60,7 @@ The spec leaves these open and recommends an answer for most; the plan builds th
 1. **Where the page learns about apps**: a Redis hash per machine, `openlanes:<repo>:apps:<node id>`, field `<plan>`, value the plan's process statuses plus a heartbeat. Keyed by machine and not by checkout, because the control room runs in the main checkout and the app in a worktree. An entry whose heartbeat is older than 30 s is pruned by whoever reads it, as `Live.board` prunes dead nodes.
 1. **Buttons**: the page posts `POST /api/apps/commands`, onto a stream the app runner reads; not the engine's command stream, because the runner is its own process and the engine never sees these commands.
 1. **Opt-in**: with no `app:` in `.openlanes.yml`, `app start` refuses in one line, nothing is written to Redis, and the page renders no Preview tab.
+1. **Landing the PR #38 coverage fixes on `main`.** PR #38 merged with `ci/circleci: test` and `ci/circleci: web` red, so its branch is not the tip that landed. The fixes are not reapplied to the merged branch: they go into a new branch cut from `origin/main`, carrying `spec/openlanes/cli/app_spec.rb`, `web/src/preview/useApps.ts` and `useApps.test.tsx`, and a new pull request turns `main`'s CI green. Decided 2026-10-15 by kig: rebase onto `main` and push a new pull request.
 
 ## Interfaces plan 014 (`chewie-verifier`) builds on
 

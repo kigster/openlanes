@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-15T09:29:55-07:00",
+  "updated_at": "2026-10-15T09:35:38-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -263,6 +263,13 @@
       "agent": "lando-broker",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:35:38-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "folded B1 into plan.md; blocked.md removed"
     }
   ],
   "messages": [
