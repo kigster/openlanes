@@ -9,6 +9,9 @@ module OpenLanes
     # @!attribute [r] rows
     #   @return [Array<OpenLanes::Engine::Board::Row>] one per agent invocation still
     #     worth showing: running, or finished within the last few seconds
+    # @!attribute [r] waiting_on
+    #   @return [Hash{String => Array<Integer>}] plan to the pull requests open
+    #     and waiting on a person, as the human-mode watch last saw them (M4)
     Board = Data.define(:started_at,
       :status,
       :plans,
@@ -23,8 +26,9 @@ module OpenLanes
       :dialog,
       :help,
       :about,
-      :hidden) do
-      def initialize(selected: nil, dialog: nil, help: false, about: nil, hidden: 0, **rest) = super
+      :hidden,
+      :waiting_on) do
+      def initialize(selected: nil, dialog: nil, help: false, about: nil, hidden: 0, waiting_on: {}, **rest) = super
     end
 
     # @!attribute [r] key

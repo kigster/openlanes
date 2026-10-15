@@ -284,7 +284,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         runner_with(executor).call
         text = File.read(File.join(path_of("020.00"), "plan.md"))
         expect(text.scan("## Task completed when").size).to eq(1)
-        expect(text).to include("- it works", "## How to verify", "- run it")
+        expect(text).to include("- it works", "## How to test", "- run it")
       end
     end
 
@@ -1042,6 +1042,26 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           expect(attempts.map(&:ok)).to eq([false])
           expect(attempts.first.note).to include("push rejected")
           expect(calls.size).to eq(1)
+        end
+      end
+    end
+
+    context "when ready-for-review cannot be applied to the pull request it opened" do
+      let(:publication) do
+        OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),
+          branch: checkout.branch,
+          title: "[001.00](A) Tic Tac Toe",
+          url:,
+          refusal: nil,
+          label_error: "could not label #12: HTTP 403")
+      end
+
+      before { attempts }
+
+      it "still moves to 🟢, and the attempt note says the label is missing" do
+        aggregate_failures do
+          expect(plan.status.key).to eq(:ready_for_review)
+          expect(attempts.first.note).to include("opened #{url}", "ready-for-review not applied: could not label #12: HTTP 403")
         end
       end
     end

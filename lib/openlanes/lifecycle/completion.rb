@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Lifecycle
-    # Copies the spec's `task-completed-when` and `how-to-verify` into
+    # Copies the spec's `task-completed-when` and how to test it into
     # `plan.md`, so the builders and the reviewer read them in the document
     # they work from rather than only in the frontmatter of another one.
     #
@@ -12,7 +12,12 @@ module OpenLanes
     # agent signs, and a section the agent wrote is never touched.
     module Completion
       COMPLETED_WHEN_HEADING = "## Task completed when"
-      HOW_TO_VERIFY_HEADING = "## How to verify"
+      HOW_TO_TEST = "## How to test"
+
+      # The heading {HOW_TO_TEST} replaced. A plan.md written before the
+      # rename still carries it, and without recognising it the harness would
+      # append a second copy of the same steps under the new name.
+      FORMER_HOW_TO_TEST = "## How to verify"
 
       module_function
 
@@ -25,7 +30,7 @@ module OpenLanes
       def markdown(spec, present: "")
         [
           section(COMPLETED_WHEN_HEADING, spec.completed_when, present),
-          section(HOW_TO_VERIFY_HEADING, spec.how_to_verify, present)
+          section(HOW_TO_TEST, spec.how_to_test, present, also: FORMER_HOW_TO_TEST)
         ].compact.join("\n")
       end
 
@@ -46,9 +51,10 @@ module OpenLanes
         true
       end
 
+      # @param also [String, nil] an older heading that counts as present
       # @return [String, nil]
-      def section(heading, items, present)
-        return nil if items.empty? || present.match?(/^#{Regexp.escape(heading)}\s*$/i)
+      def section(heading, items, present, also: nil)
+        return nil if items.empty? || [heading, also].compact.any? { present.match?(/^#{Regexp.escape(it)}\s*$/i) }
 
         "#{heading}\n\n#{items.map { Plans::Spec.list_item(it) }.join("\n")}\n"
       end

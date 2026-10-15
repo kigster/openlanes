@@ -15,7 +15,18 @@ module OpenLanes
 
     # @param tree [OpenLanes::Plans::Tree]
     # @return [OpenLanes::Presentation::Reporter]
-    def reporter(tree:) = Reporter.new(tree:)
+    def reporter(tree:) = Reporter.new(tree:, waiting_on: waiting_on(tree))
+
+    # What the engine's watch last saw a person owe, read only while that
+    # engine is up: once it stops, nobody is watching, and a pull request
+    # merged since would still be listed as waiting.
+    #
+    # @param tree [OpenLanes::Plans::Tree]
+    # @return [Hash{String => Array<Integer>}]
+    def waiting_on(tree)
+      state = Engine.state_file(tree).load
+      state.running? ? state.waiting_on : {}
+    end
 
     # @return [OpenLanes::Presentation::Viewer]
     def viewer = Viewer.new

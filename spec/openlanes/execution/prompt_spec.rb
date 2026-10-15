@@ -85,7 +85,7 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
         "- the editor opens",
         "- bundle exec rspec",
         "## Task completed when",
-        "## How to verify")
+        "## How to test")
     end
   end
 

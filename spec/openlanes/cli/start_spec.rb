@@ -133,6 +133,13 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true, rescan: 5))
     end
 
+    # start is the command `run` points people at to watch their pull
+    # requests, so its own staying must not drop the watch run builds.
+    it "watches the pull requests a person merges" do
+      expect(OpenLanes::Engine::Runner).to have_received(:new)
+        .with(hash_including(watch: an_instance_of(OpenLanes::Engine::PrWatch)))
+    end
+
     it "stops the control room" do
       expect(web).to have_received(:stop)
     end

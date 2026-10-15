@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
   let(:repo) { File.dirname(plans_root) }
   let(:command) { instance_double(TTY::Command) }
-  let(:github) { instance_double(OpenLanes::Vcs::GitHub) }
+  let(:github) { instance_double(OpenLanes::Vcs::GitHub, swap_label: ["ready-for-review"]) }
   let(:worktrees) { Dir.mktmpdir("openlanes-carry") }
   let(:checkout) { OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil).checkout_for(plan.feature) }
   let(:carried) { File.join(checkout.path, OpenLanes::PLANS_DIR) }
@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
   before do
     plans do |t|
-      t.plan "004.00", :planned, "carry", files: { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n" }
+      t.plan "004.00", :planned, "carry", files: { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n\n## How to test\n\n- run it\n" }
       t.plan "005.00", :new, "other", files: { "spec.md" => spec_body }
     end
     git("init", "-q", "--initial-branch=main")
@@ -43,7 +43,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       aggregate_failures do
         expect(copies).to eq([plan.feature.dirname])
         expect(Dir.children(carried)).not_to include(a_string_including("other")) unless committed
-        expect(File.read(File.join(carried, plan.feature.dirname, "plan.md"))).to eq("# Plan\n\n## U1\n")
+        expect(File.read(File.join(carried, plan.feature.dirname, "plan.md"))).to eq("# Plan\n\n## U1\n\n## How to test\n\n- run it\n")
       end
     end
 
@@ -106,7 +106,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
     main = OpenLanes::Vcs::Worktree::Checkout.new(ordinal: plan.feature.ordinal, branch: "main", path: repo, created: false)
     aggregate_failures do
       expect(publisher.carry_plan(main, plan)).to be_nil
-      expect(File.read(File.join(plan.feature.path, "plan.md"))).to eq("# Plan\n\n## U1\n")
+      expect(File.read(File.join(plan.feature.path, "plan.md"))).to eq("# Plan\n\n## U1\n\n## How to test\n\n- run it\n")
     end
   end
 end

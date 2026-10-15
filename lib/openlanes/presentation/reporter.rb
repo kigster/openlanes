@@ -24,8 +24,11 @@ module OpenLanes
       STATE_WIDTH = Plans::PullRequests::STATES.map { |_, label| UI.display_width(label) }.max
 
       # @param tree [OpenLanes::Plans::Tree]
-      def initialize(tree:)
+      # @param waiting_on [Hash{String => Array<Integer>}] plan number to the
+      #   pull requests open and awaiting a human, from the board snapshot
+      def initialize(tree:, waiting_on: {})
         @tree = tree
+        @waiting_on = waiting_on.transform_keys(&:to_s)
       end
 
       # @return [OpenLanes::Plans::Tree]
@@ -135,7 +138,7 @@ module OpenLanes
 
         rest = prs.drop(1).map { |pr| (" " * pr_column) + link(pr) }
 
-        [first, *rest, *violation_line(subject), *dependency_lines(subject)]
+        [first, *rest, *waiting_lines(subject), *violation_line(subject), *dependency_lines(subject)]
       end
 
       # What this plan holds up, said in the row's tail so the one line that
@@ -189,6 +192,16 @@ module OpenLanes
           :yellow
         else
           :blue
+        end
+      end
+
+      # One line per pull request a human has yet to act on, under the plan.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Array<String>]
+      def waiting_lines(subject)
+        Array(@waiting_on[subject.feature.ordinal.to_s]).map do |number|
+          (" " * title_column) + UI.paint("↳ waiting on you: PR ##{number}", :bright_yellow)
         end
       end
 

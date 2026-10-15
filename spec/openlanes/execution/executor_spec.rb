@@ -393,8 +393,14 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   describe "hansolo-reviewer, as the repository actually defines him" do
     let(:hansolo) { OpenLanes::Agents::Registry.new(dir: "agents").all.find { |a| a.name == "hansolo-reviewer" } }
 
-    it "may review, which is the point of him" do
-      expect(denied(hansolo)).not_to include("Bash(gh pr review:*)")
+    # A verdict is a review label now (plan 005), set through `openlanes
+    # review`, which refuses a passing one while CI is red. `gh pr review`
+    # would be a second door around that rule.
+    it "may comment, but not review: his verdict is a label" do
+      aggregate_failures do
+        expect(denied(hansolo)).not_to include("Bash(gh pr comment:*)")
+        expect(denied(hansolo)).to include("Bash(gh pr review:*)", "Bash(gh pr edit:*)")
+      end
     end
 
     it "may not merge, which is the line" do

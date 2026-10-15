@@ -57,6 +57,43 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
   end
 
+  describe "#how_to_test" do
+    let(:heading) { described_class::HOW_TO_TELL }
+
+    it "reads the items under the heading in the body" do
+      spec = described_class.parse("---\nlane: plan\n---\n# T\n\n#{heading}\n\n- run it\n- see green\n\n## Next\n\n- not this\n")
+      expect(spec.how_to_test).to eq(["run it", "see green"])
+    end
+
+    # Copied into plan.md as `- item`; a step's command must arrive with it.
+    it "keeps a step's indented lines and fenced block with that step" do
+      body = "#{heading}\n\n- Run this:\n\n  ```bash\n  bin/setup\n\n  - not an item\n  ```\n- see green\n  in the board\n"
+      expect(described_class.parse(body).how_to_test)
+        .to eq(["Run this:\n```bash\nbin/setup\n\n- not an item\n```", "see green\nin the board"])
+    end
+
+    it "takes plain lines when the section has no bullets" do
+      expect(described_class.parse("# T\n\n#{heading}\n\nOpen the board.\n").how_to_test).to eq(["Open the board."])
+    end
+
+    it "finds the heading with a curly apostrophe and no question mark" do
+      expect(described_class.parse("# T\n\n## How to tell it\u2019s working\n\n- run it\n").how_to_test).to eq(["run it"])
+    end
+
+    it "falls back to how-to-verify when the heading is missing" do
+      expect(parse("how-to-verify: bundle exec rspec").how_to_test).to eq(["bundle exec rspec"])
+    end
+
+    it "prefers the heading when both exist" do
+      spec = described_class.parse("---\nhow-to-verify: old\n---\n#{heading}\n\n- new\n")
+      expect(spec.how_to_test).to eq(["new"])
+    end
+
+    it "is empty when neither exists" do
+      expect(parse("lane: plan").how_to_test).to eq([])
+    end
+  end
+
   describe "what it ignores, and says so" do
     it "an unknown lane falls back to full" do
       expect(parse("lane: express").to_h.slice(:lane, :problems))

@@ -15,5 +15,9 @@ module OpenLanes
 
     # @return [OpenLanes::Vcs::Publisher]
     def publisher(**) = Publisher.new(**)
+
+    # @param github [OpenLanes::Vcs::GitHub]
+    # @return [OpenLanes::Vcs::Review]
+    def review(github: GitHub.new) = Review.new(github:)
   end
 end

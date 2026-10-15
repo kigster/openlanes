@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
 
         - the editor opens
 
-        ## How to verify
+        ## How to test
 
         - bundle exec rspec
       MARKDOWN
@@ -34,7 +34,7 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
 
       it "copies it as one item, its continuation indented under it" do
         described_class.copy(subject_plan)
-        expect(subject_plan.read("plan.md")).to end_with("## How to verify\n\n- run the CLI\n  check its output\n")
+        expect(subject_plan.read("plan.md")).to end_with("## How to test\n\n- run the CLI\n  check its output\n")
       end
     end
 
@@ -46,7 +46,7 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
 
       it "copies the checks from the section all the same" do
         described_class.copy(subject_plan)
-        expect(subject_plan.read("plan.md")).to end_with("## How to verify\n\n- bundle exec rspec\n")
+        expect(subject_plan.read("plan.md")).to end_with("## How to test\n\n- bundle exec rspec\n")
       end
     end
 
@@ -65,8 +65,8 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
 
       it "writes each check as one item that reads back unchanged" do
         described_class.copy(subject_plan)
-        copied = subject_plan.read("plan.md")[/^## How to verify\n.*/m]
-        reread = OpenLanes::Plans::Spec.parse(copied.sub("## How to verify", "## How to tell it's working?"))
+        copied = subject_plan.read("plan.md")[/^## How to test\n.*/m]
+        reread = OpenLanes::Plans::Spec.parse(copied.sub("## How to test", "## How to tell it's working?"))
 
         aggregate_failures do
           expect(OpenLanes::Plans::Spec.parse("# T\n\n## How to tell it's working?\n\n#{section}").how_to_verify).to eq(checks)
@@ -91,7 +91,17 @@ RSpec.describe OpenLanes::Lifecycle::Completion, :tree do
         described_class.copy(subject_plan)
         text = subject_plan.read("plan.md")
         expect(text.scan("## Task completed when").size).to eq(1)
-        expect(text).to include("In its own words.", "## How to verify")
+        expect(text).to include("In its own words.", "## How to test")
+        expect(text).not_to include("## How to verify")
+      end
+    end
+
+    context "when plan.md predates the rename and says How to verify" do
+      let(:plan_text) { "# Plan\n\n## How to verify\n\n- bundle exec rspec\n" }
+
+      it "does not add a second copy under How to test" do
+        described_class.copy(subject_plan)
+        expect(subject_plan.read("plan.md")).not_to include("## How to test")
       end
     end
 

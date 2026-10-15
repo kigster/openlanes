@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       t.plan "000.00",
         :building,
         "folder-capitalized-not-downcased",
-        files: { "spec.md" => spec_body(goal: "Make the thing work.") }
+        files: { "spec.md" => spec_body(goal: "Make the thing work."), "plan.md" => "# Plan\n\n## How to test\n\n- open the editor\n" }
     end
   end
 
@@ -26,7 +26,10 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       dirty?: true)
   end
 
-  before { allow(command).to receive(:run).and_return(result) }
+  before do
+    allow(command).to receive(:run).and_return(result)
+    allow(github).to receive(:swap_label).and_return(["ready-for-review"])
+  end
 
   describe "#title_for" do
     it "matches the convention: [NNN.MM](A) with the folder title-cased" do
@@ -108,6 +111,67 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       expect(publisher.publish(checkout:, subject: plan).url).to eq("https://github.com/example/repo/pull/7")
     end
 
+    it "labels the new pull request ready-for-review" do
+      publication = publisher.publish(checkout:, subject: plan)
+
+      aggregate_failures do
+        expect(github).to have_received(:swap_label)
+          .with(number: 7, repo: "example/repo", add: OpenLanes::Plans::ReviewLabel::INITIAL, remove: [])
+        expect(publication.label_error).to be_nil
+      end
+    end
+
+    it "keeps the pull request open when labelling fails, and says why" do
+      allow(github).to receive(:swap_label).and_raise(OpenLanes::Error, "could not label #7: HTTP 403")
+      publication = publisher.publish(checkout:, subject: plan)
+
+      aggregate_failures do
+        expect(publication).to be_published
+        expect(publication.label_error).to eq("could not label #7: HTTP 403")
+      end
+    end
+
+    it "copies the How to test section into the pull request body" do
+      body = nil
+      allow(command).to receive(:run) do |*argv, **|
+        body = File.read(argv[argv.index("-F") + 1]) if argv[0, 3] == %w[gh pr create]
+        result
+      end
+      publisher.publish(checkout:, subject: plan)
+
+      expect(body).to include("## How to test\n\n- open the editor")
+    end
+
+    context "when plan.md predates the rename and says How to verify" do
+      before { File.write(File.join(plan.feature.path, "plan.md"), "# Plan\n\n## How to verify\n\n- open the editor\n") }
+
+      it "publishes it, its steps under How to test" do
+        body = nil
+        allow(command).to receive(:run) do |*argv, **|
+          body = File.read(argv[argv.index("-F") + 1]) if argv[0, 3] == %w[gh pr create]
+          result
+        end
+
+        aggregate_failures do
+          expect(publisher.publish(checkout:, subject: plan).refusal).to be_nil
+          expect(body).to include("## How to test\n\n- open the editor")
+        end
+      end
+    end
+
+    context "when plan.md has no How to test section" do
+      before { File.write(File.join(plan.feature.path, "plan.md"), "# Plan\n\n## U1\n") }
+
+      it "refuses to open the pull request" do
+        publication = publisher.publish(checkout:, subject: plan)
+
+        aggregate_failures do
+          expect(publication.refusal).to include("## How to test")
+          expect(command).not_to have_received(:run).with("gh", "pr", "create", any_args)
+        end
+      end
+    end
+
     # The bracketed prefix is a join key for pull request titles. Repeating it
     # on every commit subject adds nothing and eats the 50 characters.
     it "keeps the prefix out of the commit subject" do
@@ -169,6 +233,16 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
           expect(command).to have_received(:run).with("git", "push", "-u", "origin", checkout.branch, hash_including(:chdir))
           expect(command).not_to have_received(:run).with("gh", any_args)
         end
+      end
+
+      # The last verdict, typically review-rejected, would otherwise read to
+      # the watch as a new rejection and send the plan back to 🔴.
+      it "resets the review label to ready-for-review, taking off the previous verdict" do
+        expect(github).to have_received(:swap_label)
+          .with(number: 7,
+            repo: "example/repo",
+            add: OpenLanes::Plans::ReviewLabel::INITIAL,
+            remove: OpenLanes::Plans::ReviewLabel.names)
       end
 
       it "reports that pull request, marked as updated" do

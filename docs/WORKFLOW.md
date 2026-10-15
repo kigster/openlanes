@@ -318,6 +318,19 @@ Not every pull request implements a feature. Dependency bumps, CI configuration,
 
 Most unmatched pull requests. The test is whether **somebody would need to read it** — a capability with behaviour, an interface, or invariants that are not obvious from the code. "Fix a typo", "remove dead code" and "bump a dependency" are `[dev]` and always were. Backfilling those produces an index that is longer without being more informative, which makes the real plans harder to find.
 
+## Review labels
+
+A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one. No passing verdict is given while CI is red.
+
+| Label                | Colour   | Passing | Meaning                                      |
+| -------------------- | -------- | ------- | -------------------------------------------- |
+| `ready-for-review`   | `c2e0c6` | no      | PR open, review not started                  |
+| `review-in-progress` | `fff3b0` | no      | hansolo is reviewing                         |
+| `review-passed`      | `1d76db` | yes     | passed with non-critical findings still open |
+| `ready-to-merge`     | `2ea043` | yes     | passed with nothing open                     |
+| `review-rejected`    | `b60205` | no      | changes needed                               |
+| `ok-to-merge`        | `1a7f37` | yes     | chewie verified it                           |
+
 ## If a real issue tracker arrives, this scheme retires
 
 This numbering is homegrown because there is nothing else to join on. If the work moves to Linear or Jira, **the issue key replaces it**: `[EQL-142] <title>` in pull request titles, `EQL-142-<status>-<slug>` for the folder, and the issue becomes the thing `pull-requests.md` is generated against.

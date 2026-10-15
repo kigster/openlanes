@@ -24,6 +24,19 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
 
   let(:table) { reporter.render }
 
+  describe "waiting on a human" do
+    let(:waiting) { described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root), waiting_on: { "018.01" => [12] }) }
+
+    it "says which pull request is waiting on you" do
+      expect(waiting.render).to include("waiting on you: PR #12")
+    end
+
+    it "says nothing for a plan with an empty list, or none given" do
+      empty = described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root), waiting_on: { "018.01" => [] })
+      expect([empty.render, table]).to all(satisfy { !it.include?("waiting on you") })
+    end
+  end
+
   describe "#render" do
     it "lists every plan in number order, retroactive siblings in their gap" do
       expect(table.scan(/\b\d{3}\.\d{2}\b/)).to eq(%w[001.00 002.00 003.00 018.01])

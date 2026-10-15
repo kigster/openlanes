@@ -27,6 +27,7 @@ module OpenLanes
           diagram,
           files_section,
           pull_requests,
+          review_labels,
           footer
         ].join("\n")
       end
@@ -402,6 +403,26 @@ module OpenLanes
           .select { |s| s.requires.include?(file) }
           .map { |s| "#{s.emoji} #{s.label}" }
           .join(", ")
+      end
+
+      # Derived from {Plans::ReviewLabel::ALL}, the only place a label is named.
+      #
+      # @return [String]
+      def review_labels
+        rows = OpenLanes::Plans::ReviewLabel::ALL.map do |l|
+          "| `#{l.name}` | `#{l.colour}` | #{l.passing? ? "yes" : "no"} | #{l.meaning} |"
+        end
+
+        <<~MARKDOWN
+          ## Review labels
+
+          A pull request carries one of these at a time, set through `openlanes review <pr> <label>`.
+          A new label replaces the previous one. No passing verdict is given while CI is red.
+
+          | Label | Colour | Passing | Meaning |
+          | --- | --- | --- | --- |
+          #{rows.join("\n")}
+        MARKDOWN
       end
 
       # @return [String]

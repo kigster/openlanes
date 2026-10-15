@@ -35,8 +35,11 @@ module OpenLanes
       # @!attribute [r] updated
       #   @return [Boolean] whether the push went to a pull request the plan
       #     already had open, rather than opening a new one
-      Publication = Data.define(:ordinal, :branch, :title, :url, :refusal, :updated) do
-        def initialize(updated: false, **rest) = super
+      # @!attribute [r] label_error
+      #   @return [String, nil] why `ready-for-review` could not be applied; the
+      #     pull request stays open regardless (open question 4)
+      Publication = Data.define(:ordinal, :branch, :title, :url, :refusal, :updated, :label_error) do
+        def initialize(updated: false, label_error: nil, **rest) = super
 
         # @return [Boolean]
         def published? = !url.nil?
@@ -89,6 +92,9 @@ module OpenLanes
           return refuse(subject, checkout, title, "nothing to publish — the worktree is unchanged")
         end
 
+        untestable = open.nil? && missing_how_to_test(subject)
+        return refuse(subject, checkout, title, untestable) if untestable
+
         return Publication.new(**base_fields(subject, checkout, title), url: nil, refusal: nil) if @dry_run
 
         mismatch = open && head_mismatch(open, checkout)
@@ -98,8 +104,9 @@ module OpenLanes
         commit(checkout, title)
         push(checkout)
         url = open ? open.url : create_pull_request(checkout, subject, title)
+        label_error = url.nil? ? nil : label_for_review(url, resubmitted: !open.nil?)
 
-        Publication.new(**base_fields(subject, checkout, title), url:, refusal: nil, updated: !open.nil?)
+        Publication.new(**base_fields(subject, checkout, title), url:, refusal: nil, updated: !open.nil?, label_error:)
       rescue TTY::Command::ExitError => e
         refuse(subject, checkout, title, git_complaint(e))
       end
@@ -268,7 +275,49 @@ module OpenLanes
 
           Implements `#{subject.feature.dirname}`. The specification and the plan
           for this work live in that folder.
+
+          #{Lifecycle::Completion::HOW_TO_TEST}
+
+          #{how_to_test(subject)}
         MARKDOWN
+      end
+
+      # A pull request a person cannot test is not ready for one to review.
+      #
+      # @return [String, nil] the refusal, or nil when plan.md has the section
+      def missing_how_to_test(subject)
+        return nil unless how_to_test(subject).empty?
+
+        "publish refused — plan.md has no `#{Lifecycle::Completion::HOW_TO_TEST}` section"
+      end
+
+      # A plan.md written before the rename says `## How to verify`; the
+      # harness no longer appends a duplicate to it, so its steps are read
+      # here under either heading rather than refused.
+      #
+      # @return [String] the section's body, without its heading
+      def how_to_test(subject)
+        headings = [Lifecycle::Completion::HOW_TO_TEST, Lifecycle::Completion::FORMER_HOW_TO_TEST]
+        lines = subject.read("plan.md").to_s.lines
+        start = lines.index { |l| headings.any? { l.strip.casecmp?(it) } } or return ""
+        lines[(start + 1)..].take_while { |l| !l.start_with?("## ", "# ") }.join.strip
+      end
+
+      # Put `ready-for-review` on the pull request. A resubmission also takes
+      # off whatever verdict the last review left: a `review-rejected` still
+      # there after the fixes are pushed reads to the watch as a fresh
+      # rejection, and the 🟢 plan would be sent straight back to 🔴.
+      #
+      # @param url [String]
+      # @param resubmitted [Boolean] whether the pull request was already open
+      # @return [String, nil] the error, when labelling failed
+      def label_for_review(url, resubmitted: false)
+        number = GitHub.number_of(url)
+        remove = resubmitted ? Plans::ReviewLabel.names : []
+        @github.swap_label(number:, repo: GitHub.repo_of(url), add: Plans::ReviewLabel::INITIAL, remove:)
+        nil
+      rescue Error => e
+        e.message
       end
 
       # The specification's own Goal section, verbatim. A pull request body that

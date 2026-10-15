@@ -124,10 +124,16 @@ module OpenLanes
         end
       end
 
+      # Also forgets the previous run's `waiting_on`. A live pid only says some
+      # run is up, not that it watches: a plain `run`, or one with `merge.by:
+      # auto`, never writes the map, so the last watch's entries would read as
+      # current for as long as this run lasted.
+      #
       # @param root [String]
       # @return [void]
       def begin_run!(root:)
         @mutex.synchronize do
+          @data.delete("waiting_on")
           @data["run"] = { "pid" => @pid, "root" => root, "started_at" => Time.now.iso8601,
                           "heartbeat_at" => Time.now.iso8601 }
         end
@@ -170,12 +176,28 @@ module OpenLanes
         @mutex.synchronize { @data["live"] = data }
       end
 
+      # Pull requests open and waiting on a person, by plan, as the
+      # human-mode watch last saw them. Here so `openlanes list-plans`, a
+      # process of its own, can say who owes what while the engine runs.
+      #
+      # @return [Hash{String => Array<Integer>}]
+      def waiting_on = @mutex.synchronize { (@data["waiting_on"] || {}).transform_values(&:dup) }
+
+      # @param data [Hash{String => Array<Integer>}] written by the next {#save}
+      # @return [void]
+      def waiting_on=(data)
+        @mutex.synchronize { @data["waiting_on"] = data.transform_keys(&:to_s) }
+      end
+
       # @param ordinal [String]
       # @return [Array<Hash>]
       def stages(ordinal) = @mutex.synchronize { (@data.dig("plans", ordinal.to_s, "stages") || []).map(&:dup) }
 
       # @return [Array<String>] every ordinal with a stage recorded
       def plans = @mutex.synchronize { @data["plans"].keys }
+
+      # @return [Boolean] whether a run wrote this file and is still alive
+      def running? = !@data.dig("run", "pid").nil? && !previous_run_dead?
 
       # @return [Boolean] whether the run that last wrote this file is gone
       def previous_run_dead?
