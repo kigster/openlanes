@@ -26,10 +26,17 @@ module OpenLanes
       # a pass at 95.
       #
       # @return [Float] 0.0 to 100.0
-      def percent
-        return 0.0 if problem || !relevant.positive?
+      def percent = ratio.to_f
 
-        (covered * 100r / relevant).to_f
+      # The percentage as the counts state it. A Float cannot hold most
+      # two-decimal figures (10.03 is 10.0299…), so anything that floors or
+      # compares reads this instead of {#percent}.
+      #
+      # @return [Rational] 0 to 100
+      def ratio
+        return 0r if problem || !relevant.positive?
+
+        covered * 100r / relevant
       end
 
       # @return [Boolean] whether the report said anything at all

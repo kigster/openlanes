@@ -43,6 +43,24 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
     expect(described_class.figure(94.995)).to eq("94.99%")
   end
 
+  # `10.03 * 100` is 1002.9999999999999, so flooring the Float product
+  # printed 10.02%; 573 of the 10001 two-decimal figures misprinted that way.
+  it "prints every two-decimal figure as itself, from the counts or from a Float" do
+    misprinted = (0..10_000).reject do |hundredths|
+      expected = format("%.2f%%", hundredths / 100.0)
+      described_class.figure(OpenLanes::Coverage::Report.new(covered: hundredths, relevant: 10_000).ratio) == expected &&
+        described_class.figure(hundredths / 100.0) == expected
+    end
+
+    expect(misprinted).to be_empty
+  end
+
+  it "reports 10.03% when the counts say 10.03%" do
+    declare(lcov_command(1003))
+
+    expect(gate.call(checkout:).to_s).to include("coverage 10.03% is below the 95% minimum")
+  end
+
   it "runs the command in the checkout it was handed" do
     declare(lcov_command(9500))
     gate.call(checkout:)
