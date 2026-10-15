@@ -11,6 +11,14 @@ RSpec.describe OpenLanes::Coverage::Report do
     expect(described_class.new(covered: 18_999, relevant: 20_000).percent).to eq(94.995)
   end
 
+  it "keeps the exact ratio, which no Float of 10.03 can hold" do
+    expect(described_class.new(covered: 1003, relevant: 10_000).ratio).to eq(Rational(1003, 100))
+  end
+
+  it "has a ratio of zero for a report that was not read" do
+    expect(described_class.new(covered: 5, relevant: 10, problem: "gone").ratio).to eq(0)
+  end
+
   OpenLanes::Coverage::Config::FORMATS.each do |format|
     context "with #{format}" do
       it "counts a missing report as 0%" do

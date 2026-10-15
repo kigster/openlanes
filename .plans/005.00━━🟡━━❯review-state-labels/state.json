@@ -304,6 +304,24 @@
       "from": "luke-backend",
       "to": "luke-backend",
       "body": "RESUME: B1-B5 done and green. B6: lib/openlanes/engine/pr_watch.rb + spec done. Remaining: wire PrWatch into Dispatcher#tick (start only, merge.by human via support/config.rb), fire rejected/approved->deployed/discarded events, mail luke+rey with comments, record Publication#label_error in publish_for_review note, waiting_on in board snapshot -> Reporter(waiting_on:). Then I1 spec/integration/review_labels_spec.rb + spec/support/fake_gh. See implementation-plan.md Status."
+    },
+    {
+      "id": "9fd2a06f-c4b2-4424-a8df-9336dc56fe06",
+      "number": 7,
+      "at": "2026-10-15T09:15:30-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "hansolo finding 1 (CI red on f5a99ec) is yours: CircleCI job 335 fails only at step 'Coverage of changed files': lib/openlanes/engine/board.rb is 93.75%, below the 95% gate. Engine is outside my half; add specs for its uncovered lines. Locally rspec is 2721/0 failures, 9 pending (web/dist missing), rubocop clean. No front-end file is implicated.",
+      "read": "yes"
+    },
+    {
+      "id": "2255cab7-fba6-432c-a392-84cdad4fd113",
+      "number": 8,
+      "at": "2026-10-15T09:17:36-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Round 1 (🔴) back end done. hansolo's finding was CI's changed-files coverage gate: board.rb 93.75% (Board::Row.unacked_in rescue never ran). Fixed with one spec in spec/openlanes/engine/board/row_spec.rb; no lib/ change and nothing in your files. Suite 2722/0 failures, rubocop 0, gate green. Note PR #26 is already merged, so this needs a new branch from main.",
+      "read": "no"
     }
   ],
   "last-known-state": {

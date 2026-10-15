@@ -82,10 +82,17 @@ module OpenLanes
         withhold(e.message)
       end
 
-      # @param percent [Float]
+      # Floors exactly. Flooring `percent * 100` as a Float printed 10.03 as
+      # 10.02%, because the product is 1002.9999999999999; a Float is read
+      # back as the shortest decimal it prints as, which is the one it meant.
+      #
+      # @param percent [Rational, Float] {Coverage::Report#ratio} where there is one
       # @return [String] floored to two decimals, so 94.995 never prints as
       #   the 95.00 it did not reach
-      def self.figure(percent) = format("%.2f%%", (percent * 100).floor / 100.0)
+      def self.figure(percent)
+        exact = percent.is_a?(Float) ? Rational(percent.to_s) : percent.to_r
+        format("%.2f%%", exact.floor(2))
+      end
 
       private
 
@@ -98,9 +105,9 @@ module OpenLanes
         report = Coverage.read(format: config.format, path: config.report_path(root))
         return withhold("coverage counts as 0%: #{report.problem}", config:, run:) unless report.read?
 
-        figure = self.class.figure(report.percent)
+        figure = self.class.figure(report.ratio)
         minimum = format("%g%%", config.minimum)
-        if report.percent >= config.minimum
+        if report.ratio >= config.minimum
           Verdict.new(passed: true,
             percent: report.percent,
             minimum: config.minimum,
