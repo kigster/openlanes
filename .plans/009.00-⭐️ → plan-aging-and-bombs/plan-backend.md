@@ -81,7 +81,7 @@ Prerequisite: stacked on #23 (plan 008, the dependents index). B3 consumes it an
 ## B7 Integration check
 
 - **Discipline:** back end
-- **Owns:** `spec/openlanes/web/bombs_integration_spec.rb` (new).
+- **Owns:** `spec/openlanes/integration/plan_aging_spec.rb` (new; amended from `spec/openlanes/web/bombs_integration_spec.rb` to sit beside 008's integration spec).
 - **Must not touch:** everything else.
 - **Depends on:** B5, B6.
 - **Builds:** one spec, nothing stubbed but the agent process and the `GitHub` seam. A real `.plans` tree with one ⭕️ plan that another plan depends on, its `blocked` signature backdated 8 days.
@@ -91,4 +91,4 @@ Prerequisite: stacked on #23 (plan 008, the dependents index). B3 consumes it an
   3. POSTing `respond` through the server's command endpoint writes the answer into `blocked.md`.
   4. The next round's unblocker folds it; the plan leaves 💣 and disappears from `bombs`; the halt is gone.
   5. POSTing `resume_anyway` on a second 💣 lifts the halt without any config edit.
-- **Done when:** `spec/openlanes/web/bombs_integration_spec.rb` green, and `bundle exec rspec` and `just lint` green.
+- **Done when:** `spec/openlanes/integration/plan_aging_spec.rb` green, and `bundle exec rspec` and `just lint` green.

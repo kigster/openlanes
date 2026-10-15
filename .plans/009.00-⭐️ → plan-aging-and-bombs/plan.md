@@ -18,7 +18,7 @@ Decided 2026-10-15 by the owner (Konstantin): stack 009 on #23 rather than wait 
 | B4 | Engine halt, `resume_until` in `state.json` | back end | B3 | `runner_spec.rb`, `dispatcher_spec.rb`, `plan_state_spec.rb` |
 | B5 | `run` exit 1, `--ignore-bombs`, `start` idles | back end | B4 | CLI specs for `run` and `start` |
 | B6 | `respond`, `pause_discuss`, `resume_anyway` commands; snapshot `bombs` | back end | B1, B4 | `commands_spec.rb`, `snapshot_spec.rb` |
-| B7 | **Integration check** | back end | B5, B6 | `web/bombs_integration_spec.rb` |
+| B7 | **Integration check** | back end | B5, B6 | `integration/plan_aging_spec.rb` |
 | F1 | Bomb notice, Respond, Pause and Discuss, Resume anyway | front end | contract below; B6 to verify | `BombNotice.test.tsx` |
 
 ## Order
