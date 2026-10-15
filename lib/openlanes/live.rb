@@ -54,6 +54,22 @@ module OpenLanes
       store
     end
 
+    # The process's {ChoiceJudge}: one, so its answers are shared by every
+    # snapshot built here; nil without TYPESAFE_API_KEY, and nil in the suite.
+    #
+    # @return [OpenLanes::Live::ChoiceJudge, nil]
+    def choice_judge
+      return @choice_judge if defined?(@choice_judge)
+
+      @choice_judge = ChoiceJudge.from_env
+    end
+
+    # @param judge [#call, nil] answers `call(text)` with true, false or nil
+    # @return [void]
+    def choice_judge=(judge)
+      @choice_judge = judge
+    end
+
     # @return [OpenLanes::Live::Session]
     def session(**) = Session.new(**)
 
