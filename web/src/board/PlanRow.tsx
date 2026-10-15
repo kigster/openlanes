@@ -101,7 +101,10 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
       aria-label={faded && owner ? `${planId(plan.ordinal)} ${plan.title}, on ${who(owner)}, read only` : undefined}
     >
       <div className="plan-head">
-        <div className="plan-id">{planId(plan.ordinal)}</div>
+        <div className="plan-id">
+          {planId(plan.ordinal)}
+          <span className="plan-status" role="img" aria-label={plan.status.label} title={plan.status.label}>{plan.status.emoji}</span>
+        </div>
         <h3 className="plan-title">{plan.title}</h3>
         <div className="plan-meta">
           <span className="lane">{lane.label}</span>

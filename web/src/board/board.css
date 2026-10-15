@@ -18,6 +18,7 @@
 .plan.is-retiring { overflow: hidden; }
 .plan-head { padding: 0 16px 0 20px; }
 .plan-id { font-weight: 800; font-size: 13px; color: var(--ink-soft); }
+.plan-status { margin-left: 6px; font-weight: 400; }
 .plan-title { font-weight: 600; font-size: 16px; line-height: 1.25; margin: 2px 0 6px; }
 .plan-meta { font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .lane { display: inline-flex; align-items: center; gap: 6px; }
