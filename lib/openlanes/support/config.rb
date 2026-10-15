@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "date"
 require "yaml"
 
 module OpenLanes
@@ -43,8 +44,12 @@ module OpenLanes
   # @!attribute [r] commands
   #   @return [Hash{String => Hash{Symbol => Object}}] by command name, as
   #     typed: "run", "resync dirs"
-  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands) do
-    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {})
+  # @!attribute [r] aging_since
+  #   @return [Date, nil] `plans.aging_since`: no blocked plan ages from
+  #     before it, so weeks the project sat paused do not count; nil is no floor
+  Config = Data.define(:path, :project, :lane, :frontend, :jobs, :redis_url, :commands, :aging_since) do
+    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
+      aging_since: nil)
       super
     end
 
@@ -72,6 +77,7 @@ module OpenLanes
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
+      settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
   end
@@ -81,7 +87,10 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url commands].freeze
+    KEYS = %w[project lane frontend jobs redis_url commands plans].freeze
+
+    # Every key `plans:` may hold. Checked key by key, like the top level.
+    PLAN_KEYS = %w[aging_since].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -118,7 +127,7 @@ module OpenLanes
       # @param path [String] for every error message
       # @return [OpenLanes::Config]
       def parse(text, path:)
-        data = YAML.safe_load(text) || {}
+        data = YAML.safe_load(text, permitted_classes: [Date]) || {}
         fail_with(path, "expected a mapping of settings at the top") unless data.is_a?(Hash)
 
         settings = data.transform_keys(&:to_s)
@@ -135,7 +144,8 @@ module OpenLanes
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
-          commands:  commands(settings["commands"], path))
+          commands:  commands(settings["commands"], path),
+          **plans(settings["plans"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -202,6 +212,31 @@ module OpenLanes
 
           [name.to_s.strip, options.transform_keys { it.to_s.tr("-", "_").to_sym }]
         end
+      end
+
+      # @return [Hash{Symbol => Object}] the `plans:` settings, as keywords for {Config.new}
+      def plans(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "plans: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - PLAN_KEYS).each do |key|
+          fail_with(path, "plans.#{key}: unknown key; known: #{PLAN_KEYS.join(", ")}")
+        end
+        { aging_since: aging_since(settings["aging_since"], path) }
+      end
+
+      # YAML hands an unquoted `2026-10-01` over as a Date already, and a
+      # quoted one as a String; both are the same day to whoever typed it.
+      #
+      # @return [Date, nil]
+      def aging_since(value, path)
+        return value if value.nil? || value.instance_of?(Date)
+
+        Date.iso8601(value.to_s)
+      rescue Date::Error
+        fail_with(path, "plans.aging_since: #{value.inspect} is not a date (YYYY-MM-DD)")
       end
 
       # @return [void]
