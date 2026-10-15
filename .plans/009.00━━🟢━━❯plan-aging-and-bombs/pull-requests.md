@@ -2,7 +2,10 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 39 | [\[009\] Plan aging and bombs](https://github.com/kigster/openlanes/pull/39) | Open 🟡 |
+| 39 | [\[009\] Plan aging and bombs](https://github.com/kigster/openlanes/pull/39) | Merged 🟣 |
+| 44 | [\[009.00\] Plan Aging and Bombs (salvage of #39)](https://github.com/kigster/openlanes/pull/44) | Open 🟡 |
+
+#39 merged into its stacked base `kig/008.00-plan-dependencies` after #23 had already merged, so none of it reached `main`. #44 carries the same commits onto `main`.
 
 ## Verification (luke-backend, last of the pair, 2026-10-15)
 
