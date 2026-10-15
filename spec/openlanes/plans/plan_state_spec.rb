@@ -117,6 +117,27 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "#conversion!" do
+    let(:digest) { Digest::SHA256.hexdigest("Should I rebase?") }
+
+    before do
+      state.conversion!(question: 2, digest:, original: "Should I rebase?", model: "anthropic/claude-haiku-5.5", outcome: "converted")
+    end
+
+    it "keeps the agent's words and the digest that stops a second call" do
+      aggregate_failures do
+        expect(state.conversions.first).to include("question" => 2, "original" => "Should I rebase?", "outcome" => "converted")
+        expect([state.converted?(digest), state.converted?("0" * 64)]).to eq([true, false])
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+      end
+    end
+
+    it "records a rejection with its reason" do
+      state.conversion!(question: 2, digest: "f" * 64, original: "x", model: "m", outcome: "rejected", note: "1 option")
+      expect([state.conversions.last["note"], schema.validate(written).to_a]).to eq(["1 option", []])
+    end
+  end
+
   describe "#resume_anyway!" do
     let(:now) { Time.now }
 

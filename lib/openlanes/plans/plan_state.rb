@@ -284,6 +284,35 @@ module OpenLanes
         message
       end
 
+      # ---- conversions ------------------------------------------------------
+
+      # Questions the engine rewrote into lettered choices (D9), and the ones
+      # it tried and could not. `blocked.md` keeps only the rewrite, so the
+      # words the agent wrote live here, beside the digest that keeps a
+      # restarted run from asking the model about the same text again.
+      #
+      # @return [Array<Hash>] oldest first; empty for a plan never converted
+      def conversions = read["conversions"] || []
+
+      # @param digest [String] SHA256 of the question's body as the agent wrote it
+      # @return [Boolean] whether that text was converted, or failed to be
+      def converted?(digest) = conversions.any? { it["digest"] == digest }
+
+      # @param question [Integer] the `n` of `## Bn`
+      # @param digest [String] SHA256 of +original+
+      # @param original [String] the body before the rewrite
+      # @param model [String] the model asked
+      # @param outcome [String] "converted" or "rejected"
+      # @param note [String, nil] why it was rejected
+      # @param at [Time]
+      # @return [Hash] the record as written
+      def conversion!(question:, digest:, original:, model:, outcome:, note: nil, at: Time.now)
+        record = { "question" => Integer(question), "digest" => digest, "original" => original, "at" => at.iso8601,
+                   "model" => model, "outcome" => outcome, "note" => note }.compact
+        update { |data| (data["conversions"] ||= []) << record }
+        record
+      end
+
       # ---- last-known-state -------------------------------------------------
 
       # Where the resume records live in the document.
