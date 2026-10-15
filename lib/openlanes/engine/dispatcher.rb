@@ -70,8 +70,9 @@ module OpenLanes
       # the agent that handles its state, on a thread of its own.
       Unblock = Struct.new(:ordinal, :thread, :outcome)
 
-      # States a plan waits in for a person's answer.
-      BLOCKED = %i[blocked product_blocked].freeze
+      # States a plan waits in for a person's answer. An answered 💣 is
+      # drained like an answered ⭕️.
+      BLOCKED = %i[blocked product_blocked bomb].freeze
 
       # How long a settled row stays on the screen.
       LINGER = 10
@@ -681,6 +682,9 @@ module OpenLanes
           return "idle: every plan is finished; create the next one from the page"
         end
 
+        bombs = @runner.halted_by.map { it.feature.ordinal.to_s }
+        return "idle: halted by 💣 #{bombs.join(", ")}; answer, or resume anyway from the page" unless bombs.empty?
+
         blocked = waiting
         return "idle: waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
 
@@ -705,6 +709,10 @@ module OpenLanes
       # @return [Array(OpenLanes::Agents::Agent, OpenLanes::Plans::Subject), nil]
       def next_dispatchable
         reconcile
+        # A 💣 stops new work, not work under way: agents already running
+        # finish, and their plans settle, while nothing else starts.
+        return nil if @runner.halted?
+
         @dependencies = @runner.dependencies(except: untouchable)
         blockers_first(@runner.in_scope).each do |subject|
           working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
@@ -778,13 +786,15 @@ module OpenLanes
       # agent is working in right now are left alone: the prompt names the
       # folder by path, and moving it under a running agent would strand
       # every write it makes afterwards. Nor is a plan another machine holds
-      # touched: its name is that machine's to change.
+      # touched: its name is that machine's to change. Then the blocked plans
+      # age (plan 009), so a 💣 is in place before anyone is assigned.
       #
       # @return [void]
       def reconcile
         busy = untouchable
         Lifecycle::Resync::Dirs.new(tree: @runner.tree.reload, except: busy).call(commit: !@runner.dry_run?)
         fast_forward(busy) unless @runner.dry_run?
+        @runner.age!(except: busy)
       end
 
       # Plans whose lane skips research, rewriting or planning are moved past
