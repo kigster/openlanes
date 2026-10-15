@@ -13,7 +13,7 @@ import { AsksProvider } from "../panels/AsksProvider";
 import { AnnouncerProvider } from "../panels/feedback";
 import { recorder, snapshot } from "../panels/testing";
 import { Copilot } from "./Copilot";
-import { ANSWER_TIMEOUT_MS, FIXTURE_REPLY } from "./useCopilot";
+import { ANSWER_TIMEOUT_MS, FIXTURE_REPLY, openCopilot } from "./useCopilot";
 
 const log = fixtureLog as CopilotLog;
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -90,6 +90,25 @@ it("says what it is for, and that it is not running, before anything was said", 
   setup();
   expect(await screen.findByText(/Ask c3po-operator about the run/)).toBeInTheDocument();
   expect(screen.getByText("Copilot for this run. Not running, ↑ 0 ↓ 0")).toBeInTheDocument();
+});
+
+it("opens on a plan when another panel asks, starting the message without sending it", async () => {
+  setup({ open: false });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  act(() => openCopilot({ plan: "009.00", text: "About 009.00: " }));
+  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  expect(box).toHaveValue("About 009.00: ");
+  expect(box).toHaveFocus();
+  expect(posted).toEqual([]);
+});
+
+it("keeps a message already being written when asked to open on a plan", async () => {
+  const user = userEvent.setup();
+  setup();
+  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  await user.type(box, "half written");
+  act(() => openCopilot({ plan: "009.00", text: "About 009.00: " }));
+  expect(box).toHaveValue("half written");
 });
 
 it("starts minimised to its tab on the right edge, and remembers being opened", async () => {

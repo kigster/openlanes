@@ -61,6 +61,20 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
                background: color-mix(in srgb, var(--alarm) 10%, transparent); border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); }
 .ask-confirm p { margin: 0; }
 
+/* Bomb notices (plan 009): full width above the board, one per halted plan; blocked.md left, the answer box right. */
+.bombs { display: flex; flex-direction: column; gap: 12px; margin: 14px 24px 0; }
+.bomb { padding: 14px 16px 16px; background: var(--plate); border: 2px solid var(--alarm); border-radius: var(--radius-plate); }
+.bomb-title { margin: 0 0 10px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.bomb-since { font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+.bomb-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.bomb-blocked { margin: 0; max-height: 320px; overflow-y: auto; }
+.bomb-answer label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.bomb-answer textarea { width: 100%; min-height: 96px; resize: vertical; padding: 10px; border-radius: 8px; font: inherit; color: var(--ink);
+                        border: 1px solid var(--hairline); background: var(--enamel); }
+.bomb-lifted { margin: 0; align-self: center; font-size: 13px; color: var(--ink-soft); }
+@media (max-width: 640px) { .bomb-body { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 960px) { .bombs { margin: 12px 16px 0; } }
+
 /* The unblock widget a red pill toggles: docked under the tabs, ringed in the highlight colour. */
 .unblock { margin: 14px 24px 0; padding: 14px 16px 16px; background: var(--plate); border: 2px solid var(--highlight);
            border-radius: var(--radius-plate); transition: opacity .5s ease; }

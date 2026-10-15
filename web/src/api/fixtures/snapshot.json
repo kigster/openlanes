@@ -345,6 +345,15 @@
       }
     }
   ],
+  "bombs": [
+    {
+      "plan": "016.00",
+      "slug": "stack-ports",
+      "blocked_md": "# Blocked\n\n## B1 Which port range?\n\nShould stacks share 11000-11099?\n",
+      "blocked_since": "2026-10-05T09:00:00Z",
+      "resume_until": null
+    }
+  ],
   "autocompact": 0.4,
   "log": [
     {

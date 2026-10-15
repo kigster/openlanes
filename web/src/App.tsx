@@ -23,6 +23,7 @@ import { useApps } from "./preview/useApps";
 import {
   ActionMenu,
   AgentDrawer,
+  BombNotice,
   AnnouncerProvider,
   HelpDialog,
   ModelSelect,
@@ -272,6 +273,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               );
             })}
         </div>
+        <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <main className="layout">
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>

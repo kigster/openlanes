@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ulid } from "ulid";
 import { fetchCopilot, isFixtureMode, postCopilot } from "../api/client";
@@ -73,4 +73,34 @@ export function useCopilot(): CopilotState {
   }, [pending, answered]);
 
   return { log, send, waiting: pending !== null && !answered, ready: query.isSuccess };
+}
+
+/** The window event other panels raise to open the copilot on a subject (plan 009's Pause and Discuss). */
+export const COPILOT_OPEN_EVENT = "openlanes:copilot-open";
+
+/** What to open the copilot on: the plan, and the words to start the message box with. Nothing is sent. */
+export interface CopilotOpenRequest {
+  plan: string;
+  text: string;
+}
+
+/**
+ * Opens the copilot with a message started about one plan. A window event rather than a prop, because the copilot
+ * mounts once beside the board and the panels asking for it sit far below; with no copilot mounted it does nothing.
+ */
+export function openCopilot(request: CopilotOpenRequest): void {
+  window.dispatchEvent(new CustomEvent<CopilotOpenRequest>(COPILOT_OPEN_EVENT, { detail: request }));
+}
+
+/** Calls `handler` with every openCopilot request while mounted. */
+export function useCopilotOpenRequests(handler: (request: CopilotOpenRequest) => void): void {
+  const latest = useRef(handler);
+  useEffect(() => {
+    latest.current = handler;
+  });
+  useEffect(() => {
+    const listen = (e: Event) => latest.current((e as CustomEvent<CopilotOpenRequest>).detail);
+    window.addEventListener(COPILOT_OPEN_EVENT, listen);
+    return () => window.removeEventListener(COPILOT_OPEN_EVENT, listen);
+  }, []);
 }
