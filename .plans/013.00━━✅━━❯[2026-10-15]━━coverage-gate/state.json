@@ -1,0 +1,224 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "013.00",
+    "slug": "coverage-gate"
+  },
+  "state": "rejected",
+  "updated_at": "2026-10-15T09:11:42-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-13T19:22:52-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "researched",
+      "finished_at": "2026-10-13T19:25:30-07:00",
+      "up": 1058786,
+      "down": 23977,
+      "seconds": 157.7,
+      "note": "completed - 29 tool calls"
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-13T19:25:30-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:26:06-07:00",
+      "up": 230547,
+      "down": 4200,
+      "seconds": 35.5,
+      "note": "completed - 4 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-13T19:26:06-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:26:45-07:00",
+      "up": 284352,
+      "down": 2856,
+      "seconds": 38.7,
+      "note": "Interrupted; no rounds left"
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-15T09:02:58-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:04:09-07:00",
+      "up": 479818,
+      "down": 6909,
+      "seconds": 70.6,
+      "note": "completed - 8 tool calls (rejected 1/2)"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-10-15T09:10:16-07:00",
+      "run": {
+        "pid": 17467,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:11:42-07:00",
+      "up": 426732,
+      "down": 3212,
+      "seconds": 82.7,
+      "note": "completed - 9 tool calls; publish refused: To github.com:kigster/openlanes"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-13T19:22:56-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:25:26-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-13T19:25:35-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:26:02-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-13T19:26:15-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:26:38-07:00",
+      "agent": "palpatine-planner",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:48:43-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-14T11:50:00-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 2
+    },
+    {
+      "at": "2026-10-14T11:51:04-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T12:01:20-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:03:03-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:04:05-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-15T09:04:15-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:06:14-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-15T09:10:23-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:11:33-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    }
+  ],
+  "messages": [
+    {
+      "number": 1,
+      "at": "2026-10-13T19:26:38-07:00",
+      "from": "palpatine-planner",
+      "to": "palpatine-planner",
+      "body": "RESUME: Read spec.md; nothing written. Findings: no code applies ok-to-merge or any label (rg ok-to-merge lib = nothing; M3 labels via 'openlanes review' do not exist in lib; hansolo-reviewer approves via gh pr review, a human merges). evals/cases/hansolo-reviewer/ exists (not evals/cases/hansolo). Next: decide whether gate wiring needs its own plan (likely Block technical B1: gate as standalone 'openlanes coverage' check + Engine::CoverageGate facade vs wait for label pipeline), else write plan.md/plan-backend.md/plan-frontend.md (frontend: none) with units: U1 Coverage::Config loader, U2 four parsers + fixtures, U3 gate class running command in Vcs::Worktree, U4 Reporter output, U5 hansolo eval case + agent text, U6 integration check."
+    }
+  ]
+}

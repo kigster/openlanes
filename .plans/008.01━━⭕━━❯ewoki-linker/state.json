@@ -1,0 +1,68 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "008.01",
+    "slug": "ewoki-linker"
+  },
+  "state": "building",
+  "updated_at": "2026-10-15T09:14:29-07:00",
+  "stages": [
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-15T09:12:19-07:00",
+      "run": {
+        "pid": 17467,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-15T09:14:23-07:00",
+      "up": 551684,
+      "down": 14049,
+      "seconds": 122.6,
+      "note": "completed - 13 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-10-15T09:14:23-07:00",
+      "run": {
+        "pid": 17467,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-15T09:12:26-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:14:14-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-15T09:14:29-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    }
+  ],
+  "messages": []
+}

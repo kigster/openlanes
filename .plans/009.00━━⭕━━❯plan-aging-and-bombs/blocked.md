@@ -10,3 +10,10 @@ a) **Recommended.** Wait for #23 to merge, then resume 009 at B3.
 b) Build a small private `depends_on` reader inside `lifecycle/aging.rb` now, to be replaced by 008's index later. It writes the dependents fact down twice, which `CLAUDE.md` warns against.
 c) Ship B1 and B2 alone in this pull request, and split B3 to B7 into a follow-up plan that depends on 008.
 d) Type something instead
+
+## A1
+
+PR 23 has been merged
+
+Answered by kig on 2026-10-15
+<!-- cmd:01M504Z9VBBCPBBTVPC2SV62G1 -->

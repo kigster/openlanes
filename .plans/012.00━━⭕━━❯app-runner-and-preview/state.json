@@ -1,0 +1,306 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "012.00",
+    "slug": "app-runner-and-preview"
+  },
+  "state": "blocked",
+  "updated_at": "2026-10-15T09:10:32-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-13T19:22:34-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "researched",
+      "finished_at": "2026-10-13T19:24:06-07:00",
+      "up": 1000184,
+      "down": 14523,
+      "seconds": 91.2,
+      "note": "completed - 20 tool calls"
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-13T19:24:07-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:24:55-07:00",
+      "up": 275544,
+      "down": 5668,
+      "seconds": 47.9,
+      "note": "completed - 5 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-13T19:24:55-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:27:18-07:00",
+      "up": 473484,
+      "down": 14351,
+      "seconds": 142.9,
+      "note": "interrupted, killed 60s after q; Interrupted; no rounds left"
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-15T09:02:19-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:04:49-07:00",
+      "up": 846487,
+      "down": 7849,
+      "seconds": 148.8,
+      "note": "completed - 13 tool calls (rejected 1/2)"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "rejected",
+      "started_at": "2026-10-15T09:04:49-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "blocked",
+      "finished_at": "2026-10-15T09:09:21-07:00",
+      "up": 1984143,
+      "down": 18800,
+      "seconds": 271.7,
+      "note": "blocked; see blocked.md"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-10-15T09:04:50-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:06:32-07:00",
+      "up": 691941,
+      "down": 4672,
+      "seconds": 101.2,
+      "note": "completed - 13 tool calls; next: names hansolo-reviewer, who does not handle 🔴 Changes Requested"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-13T19:22:40-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:24:01-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-13T19:24:11-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:24:51-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-13T19:25:00-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:48:25-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-14T11:50:01-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 2,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-14T11:51:27-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:51:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T12:28:58-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "rey-frontend"
+    },
+    {
+      "at": "2026-10-14T12:28:58-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:02:26-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:04:43-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-15T09:04:55-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:04:55-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:06:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-15T09:09:08-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-15T09:09:41-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:10:32-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:10:32-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    }
+  ],
+  "messages": [
+    {
+      "number": 1,
+      "at": "2026-10-14T12:28:44-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done: B1-B6. apps/app events and POST /api/apps/commands as in implementation-plan.md; app start --demo publishes where web --demo reads."
+    },
+    {
+      "number": 2,
+      "at": "2026-10-14T12:28:44-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: F1 (src/preview/*.test.tsx, App.test.tsx) and F2 (just preview-e2e, 2 passing).",
+      "read": "yes"
+    },
+    {
+      "id": "e96042fb-484e-44aa-ba62-1d475ec6b7d5",
+      "number": 3,
+      "at": "2026-10-15T09:05:45-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Round 1 rejection: I take findings 1, 2 (app start/stop coverage) and 4 (pull-requests.md). Finding 3 (useApps.ts) is yours. Heads-up: PR #38 is already MERGED into main (8165d25) and this worktree's branch predates the rebase, so I will block on how the fix gets published.",
+      "read": "no"
+    },
+    {
+      "id": "ca0042d0-1e3a-4562-ad1a-4bb3201c2873",
+      "number": 4,
+      "at": "2026-10-15T09:06:27-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end fix for hansolo finding 3 done: useApps.ts uses skipToken (no dead queryFn), new useApps.test.tsx covers it; vitest 318 pass, eslint+tsc clean. Findings 1,2 (cli/app start.rb, stop.rb coverage) and the pull-requests.md claim are yours: add specs, paste bin/coverage-changed output.",
+      "read": "yes"
+    },
+    {
+      "id": "a7cf7370-afbf-4db4-91c5-1107b31b0399",
+      "number": 5,
+      "at": "2026-10-15T09:09:07-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done: app start/stop/status at 100% (main's bin/coverage-changed: 21 files all >= 95%), rspec 2348/0, rubocop clean. Blocked (technical) B1: PR #38 already merged red and this branch diverged from its remote, so the fix needs a new PR from main. Your useApps files are named in blocked.md.",
+      "read": "no"
+    }
+  ]
+}

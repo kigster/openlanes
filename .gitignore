@@ -36,3 +36,4 @@ mermaid.html
 
 # The built control room: a build product, made by `just web-build` before `gem build`
 /web/dist
+locked-by.pid

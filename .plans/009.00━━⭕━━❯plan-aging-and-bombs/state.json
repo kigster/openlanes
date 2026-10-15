@@ -6,7 +6,7 @@
     "slug": "plan-aging-and-bombs"
   },
   "state": "building",
-  "updated_at": "2026-10-13T19:22:28-07:00",
+  "updated_at": "2026-10-15T09:10:27-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -147,6 +147,31 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-15T09:05:30-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:05:38-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-15T09:10:21-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:10:27-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [

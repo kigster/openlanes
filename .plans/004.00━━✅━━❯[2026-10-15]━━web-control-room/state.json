@@ -1,0 +1,283 @@
+{
+  "$schema": "https://github.com/kigster/agentilda/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "004.00",
+    "slug": "web-control-room"
+  },
+  "state": "rejected",
+  "updated_at": "2026-10-15T09:10:16-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-13T19:04:38-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "completed - 16 tool calls",
+      "finished_at": "2026-10-13T19:06:51-07:00",
+      "to": "researched",
+      "up": 1224766,
+      "down": 18067,
+      "seconds": 131.4
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-13T19:06:51-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-13T19:07:45-07:00",
+      "up": 334559,
+      "down": 6825,
+      "seconds": 54.0,
+      "note": "completed - 6 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-13T19:07:49-07:00",
+      "run": {
+        "pid": 83139,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-13T19:10:23-07:00",
+      "up": 696894,
+      "down": 14787,
+      "seconds": 153.5,
+      "note": "completed - 16 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "rejected",
+      "started_at": "2026-10-15T09:08:31-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-15T09:10:16-07:00",
+      "up": 4589417,
+      "down": 37052,
+      "seconds": 727.8,
+      "note": "harness died"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-10-15T09:08:35-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:09:01-07:00",
+      "up": 275390,
+      "down": 1448,
+      "seconds": 25.8,
+      "note": "completed - 5 tool calls; next: names hansolo-reviewer, who does not handle 🔴 Changes Requested"
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-15T09:06:32-07:00",
+      "run": {
+        "pid": 75654,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "to": "rejected",
+      "finished_at": "2026-10-15T09:08:31-07:00",
+      "up": 661420,
+      "down": 7366,
+      "seconds": 118.3,
+      "note": "completed - 11 tool calls (Completed, round 1 (rejected 1/2))"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-13T18:59:39-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:04:44-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:06:46-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-13T19:06:55-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:07:40-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-13T19:07:57-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:10:11-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-13T19:10:32-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:10:32-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:21:08-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-13T19:22:19-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:06:38-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:08:22-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (rejected 1/2)"
+    },
+    {
+      "at": "2026-10-15T09:08:37-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:08:39-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:08:57-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    }
+  ],
+  "messages": [
+    {
+      "number": 1,
+      "at": "2026-10-13T19:11:12-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "implementation-plan.md is written. No API changes. I call 'npm run coverage:changed' in the CircleCI web job after 'npm run coverage' (B5); mail me if your script name differs. I never write under web/."
+    },
+    {
+      "number": 2,
+      "at": "2026-10-13T19:21:07-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done. Script is 'npm run coverage:changed' in web/ (matches B5). Tests: keyboard.cy.ts (F1), Header/Board/App tests (F2), scripts/coverage-changed.test.ts (F3). FYI spec/integration/control_room_spec.rb times out and rubocop flags 20 offenses in spec/integration + spec/support/control_room_process.rb: yours."
+    },
+    {
+      "number": 3,
+      "at": "2026-10-13T19:22:19-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end round 1: B1, B2, B5 done (CI calls 'npm run coverage:changed' in the web job). B3 restart and B4 two-checkout specs still owed; back end NOT done yet. No API changes."
+    },
+    {
+      "number": 4,
+      "at": "2026-10-13T19:22:19-07:00",
+      "from": "luke-backend",
+      "to": "luke-backend",
+      "body": "RESUME: B1, B2, B5 done and green (rspec 2227/0, rubocop 0). Next: B3 spec/integration/restart_spec.rb, then B4 two_checkouts_spec.rb, both on spec/support/control_room_process.rb. See implementation-plan.md ## Status and ### Amendments (1.5 s bound needs owner decision)."
+    },
+    {
+      "id": "fa4f77df-e499-41af-af97-9102c9f98ad6",
+      "number": 5,
+      "at": "2026-10-15T09:08:57-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Round 1 review (hansolo) names one finding, in spec/integration/control_room_spec.rb (1.5 s vs 'within a second'): yours, not the front end. Nothing to fix in web/. Vitest 28 files / 301 tests pass. No API changes.",
+      "read": "no"
+    }
+  ],
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-15T09:10:16-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
+}
