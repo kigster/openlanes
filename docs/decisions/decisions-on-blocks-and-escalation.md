@@ -67,3 +67,15 @@ Work stops until it is. In the 010 incident palpatine did hold an `alock` lock o
 ### D7. An agent out of rounds says why and offers another round
 
 An agent that is red with no question to answer (luke on 003: interrupted, no rounds left) gets a drawer whose first line says why, e.g. "Out of rounds: interrupted 3 times (last: killed 60s after q)", and one primary button, **Give another round**. Model, log and message stay below it.
+
+### D9. The engine turns a prose question into choices
+
+Decided 2026-10-15 by the owner (kig).
+
+Agents are told to write D3's shape, and some still write a paragraph that ends in a question. The page then has no buttons to offer, only the text box.
+
+1. **The rewrite goes into `blocked.md`.** When an open question's body yields no options to the lenient parser, the engine rewrites that body, under the same `## Bn` heading, into D3's shape: a short context paragraph and lettered `a)`, `b)`, `c)` options, one per line, exactly one marked `(Recommended)`. No "Type something instead" line, which amends D8 for rewritten questions: the page adds the text box itself. The page, lando-broker and anything else reading the file then see the same options. `## An` answers are never touched. The agent's original text is kept in the plan's `state.json` under `conversions` (question number, original body, its SHA256, when, model, outcome), so the rewrite is traceable and the same text is never sent twice, even across restarts.
+2. **One direct call through `inquirex-llm`.** `OpenRouterAdapter`, keyed by `OPENROUTER_API_KEY`, asking for a JSON object with `context` and `options` (`label`, `recommended`). The default model is `anthropic/claude-haiku-5.5`, small and quick; `questions.model` in `.openlanes.yml` replaces it. The call runs off the tick thread and its result is applied on a later tick, and only if the question is still open, still unanswered and unchanged on disk, and the plan is still this run's. An answer that does not read back as two or more options with one recommended leaves the file as it was and is recorded as rejected. Without a key nothing is sent, and the page still shows the text box.
+3. **The web page is the only answering path.** `openlanes unblock` need not offer the same choices in the terminal; D8's bullet saying it does is withdrawn.
+
+The question text, and its heading, go to OpenRouter and to whichever provider serves the configured model.
