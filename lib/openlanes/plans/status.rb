@@ -143,7 +143,7 @@ module OpenLanes
     STATUSES = [
       Status.new(
         key:       :new,
-        emoji:     "⚪️",
+        emoji:     "⚪",
         label:     "New",
         requires:  %w[spec.md],
         note:      "a specification exists; it has not been planned yet",
@@ -173,7 +173,7 @@ module OpenLanes
       ),
       Status.new(
         key:       :planned,
-        emoji:     "⭐️",
+        emoji:     "⭐",
         label:     "Planned",
         requires:  %w[spec.md plan.md],
         note:      "specified and planned; nobody has started building",
@@ -287,7 +287,7 @@ module OpenLanes
       ),
       Status.new(
         key:       :blocked,
-        emoji:     "⭕️",
+        emoji:     "⭕",
         label:     "Technical Block",
         requires:  %w[blocked.md],
         note:      "cannot proceed; `blocked.md` names what an engineer or the CTO must decide",
@@ -295,7 +295,7 @@ module OpenLanes
       ),
       Status.new(
         key:       :product_blocked,
-        emoji:     "🅱️",
+        emoji:     "🛑",
         label:     "Product Block",
         requires:  %w[blocked.md],
         note:      "cannot proceed; `blocked.md` names what a product manager must decide",
@@ -303,7 +303,7 @@ module OpenLanes
       ),
       Status.new(
         key:       :deferred,
-        emoji:     "☢️",
+        emoji:     "💤",
         label:     "Deferred",
         requires:  %w[delayed.md],
         note:      "could proceed and chose not to yet; `delayed.md` must name the trigger",
@@ -314,7 +314,7 @@ module OpenLanes
       ),
       Status.new(
         key:       :retroactive,
-        emoji:     "🕰️",
+        emoji:     "⏪",
         label:     "Retroactive",
         requires:  [],
         note:      "the feature is live, but has neither a specification nor a plan",
@@ -334,11 +334,25 @@ module OpenLanes
       )
     ].freeze
 
-    # Emoji => status, folded so ⚪ and ⚪️ both resolve.
-    STATUS_BY_EMOJI = STATUSES.each_with_object({}) { |s, h| h[fold_emoji(s.emoji)] ||= s }.freeze
-
     # Symbol => status.
     STATUS_BY_KEY = STATUSES.to_h { |s| [s.key, s] }.freeze
+
+    # The emoji each state wore before every one became a single code point
+    # (decision N2). Folders, ledgers and snapshots written before then still
+    # carry them, and a plan named with one must keep its state until
+    # `resync dirs` renames it. Read only, never written. `⚪️ ⭐️ ⭕️` fold onto
+    # their successors anyway; the rest are different characters altogether,
+    # and `🅱` appears both with and without its variation selector.
+    LEGACY_EMOJI = {
+      "⚪️" => :new, "⭐️" => :planned, "⭕️" => :blocked, "🅱️" => :product_blocked, "🅱" => :product_blocked,
+      "☢️" => :deferred, "🕰️" => :retroactive
+    }.freeze
+
+    # Emoji => status, folded so ⚪ and ⚪️ both resolve, and so does every
+    # {LEGACY_EMOJI} spelling.
+    STATUS_BY_EMOJI = STATUSES.each_with_object({}) { |s, h| h[fold_emoji(s.emoji)] ||= s }
+                              .merge(LEGACY_EMOJI.to_h { |e, key| [fold_emoji(e), STATUS_BY_KEY.fetch(key)] }) { |_, now, _| now }
+                              .freeze
 
     # @param emoji [String, nil]
     # @return [OpenLanes::Plans::Status, nil]

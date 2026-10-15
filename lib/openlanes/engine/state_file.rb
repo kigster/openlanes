@@ -28,7 +28,14 @@ module OpenLanes
       # {#save} writes and renames over the first — brief, but `.plans/` is a
       # directory whose other contents are committed, so a `git status` run
       # during that instant must not offer it.
-      IGNORE = ["#{OpenLanes::PLANS_DIR}/#{FILENAME}", "#{OpenLanes::PLANS_DIR}/#{FILENAME}.*.tmp"].freeze
+      # The third is the lock an agent holds on a plan folder while it works
+      # ({Plans::Lock}), which names a process on this machine and nowhere else.
+      IGNORE = ["#{OpenLanes::PLANS_DIR}/#{FILENAME}", "#{OpenLanes::PLANS_DIR}/#{FILENAME}.*.tmp",
+                Plans::Lock::FILENAME].freeze
+
+      # A literal path git can be asked about for each {IGNORE} line that is
+      # not one already. The temp-file glob rides with the state file.
+      PROBES = { Plans::Lock::FILENAME => "#{OpenLanes::PLANS_DIR}/000.00/#{Plans::Lock::FILENAME}" }.freeze
 
       # @param tree [OpenLanes::Plans::Tree]
       # @return [String]
@@ -41,22 +48,33 @@ module OpenLanes
       # Add the ignore lines once. Editing somebody's `.gitignore` is a thing
       # to announce, which is why this returns whether it did.
       #
-      # Only the first line is asked about: git answers for a literal path,
-      # and the second is a glob no path equals. They are written together,
-      # so one being ignored means both are.
+      # Git answers for a literal path, and the temp-file line is a glob no
+      # path equals, so it is written with the state file's line and never
+      # asked about. The lock line is asked about on its own: a repository
+      # that ignored the state file before locks existed still needs it.
       #
       # @param root [String] repository root
       # @return [Boolean] true when lines were added
       def self.ensure_ignored!(root)
         return false unless system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
-        return false if system("git", "-C", root, "check-ignore", "-q", IGNORE.first, out: File::NULL, err: File::NULL)
+
+        missing = []
+        missing.concat(IGNORE.first(2)) unless ignored?(root, IGNORE.first)
+        missing << IGNORE.last unless ignored?(root, PROBES.fetch(IGNORE.last))
+        return false if missing.empty?
 
         path = File.join(root, ".gitignore")
         existing = File.file?(path) ? File.read(path) : ""
         glue = existing.empty? || existing.end_with?("\n") ? "" : "\n"
-        File.write(path, "#{existing}#{glue}#{IGNORE.join("\n")}\n")
+        File.write(path, "#{existing}#{glue}#{missing.join("\n")}\n")
         true
       end
+
+      # @param root [String]
+      # @param path [String] relative to +root+
+      # @return [Boolean]
+      def self.ignored?(root, path) = system("git", "-C", root, "check-ignore", "-q", path, out: File::NULL, err: File::NULL)
+      private_class_method :ignored?
 
       # @param path [String]
       # @param pid [Integer] this run's process id

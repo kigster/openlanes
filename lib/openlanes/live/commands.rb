@@ -217,7 +217,7 @@ module OpenLanes
 
       # `## A<n>` under the question, signed, for `lando-broker` to fold in
       # (W10). The dispatcher hands the plan to the broker once every
-      # question has an answer, and the plan leaves ⭕️ when the file is
+      # question has an answer, and the plan leaves ⭕ when the file is
       # drained. The answer carries the command's id in a comment, so a
       # command applied again after a crash finds it and writes nothing.
       #
@@ -417,7 +417,7 @@ module OpenLanes
         nil
       end
 
-      # The idea becomes a ⚪️ plan whose spec.md opens with it, then joins the run.
+      # The idea becomes a ⚪ plan whose spec.md opens with it, then joins the run.
       #
       # @return [String]
       def create_plans(command, dispatcher)
@@ -432,10 +432,9 @@ module OpenLanes
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
         )
         feature = Plans::Feature.parse(path)
-        spec = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed: "#{idea}\n\n#{marker(command)}")
-                        .write_scaffold!
-        settings = idea_frontmatter(command.payload["frontmatter"])
-        File.write(spec, "#{YAML.dump(settings)}---\n\n#{File.read(spec)}") unless settings.empty?
+        brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed: "#{idea}\n\n#{marker(command)}")
+        brief.write_scaffold!
+        brief.stamp!(idea_frontmatter(command.payload["frontmatter"]))
         created(feature, dispatcher)
       end
 

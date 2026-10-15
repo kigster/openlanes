@@ -67,7 +67,7 @@ RSpec.describe OpenLanes::Evals::Live do
 
   it "hands the agent the plan at the state the fixture names" do
     outcome
-    expect(seen[:folder]).to eq("001.00-⚪️ → billing-retries")
+    expect(seen[:folder]).to eq("001.00━━⚪━━❯billing-retries")
   end
 
   it "stamps the requested depth into spec.md, where the profile reads it" do
@@ -136,7 +136,7 @@ RSpec.describe OpenLanes::Evals::Live do
 
     it "hands it the folder under its starts_as name" do
       outcome
-      expect(seen[:folder]).to eq("001.00-🟡 → greeting-typo")
+      expect(seen[:folder]).to eq("001.00━━🟡━━❯greeting-typo")
     end
 
     it "scores the diff it made in the repository" do

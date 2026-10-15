@@ -17,6 +17,20 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       end
     end
 
+    it "spells every folder-name example the current way, with no arrow" do
+      examples = document.scan(%r{^#{Regexp.escape(OpenLanes::PLANS_DIR)}/\S+.*$})
+
+      aggregate_failures do
+        expect(examples).not_to be_empty
+        expect(examples.join("\n")).not_to include("→")
+        expect(examples).to all(include("━━❯"))
+      end
+    end
+
+    it "names each inactive subfolder and the lock file" do
+      expect(document).to include("`.plans/archive/`", "`.plans/deferred/`", "`.plans/abandoned/`", "locked-by.pid")
+    end
+
     it "documents every state the machine knows — emoji, label and key" do
       aggregate_failures do
         OpenLanes::Plans::STATUSES.each do |status|

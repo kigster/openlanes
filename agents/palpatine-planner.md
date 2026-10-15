@@ -58,6 +58,6 @@ An ordering, dependency or scope question turns on a decision nobody has made. W
 
 | You sign                            | Folder becomes | Who runs next                                                     |
 | :---------------------------------- | :------------- | :---------------------------------------------------------------- |
-| `Completed`                         | ⭐️ Planned     | `luke-backend`, with `rey-frontend` only if `## Frontend` has units |
-| `Blocked (technical)` / `(product)` | ⭕️ / 🅱️        | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
-| nothing, or killed                  | ⭐️ if `plan.md` has a heading (the harness signs for you), else stays 📋 | the pair, or nobody |
+| `Completed`                         | ⭐ Planned     | `luke-backend`, with `rey-frontend` only if `## Frontend` has units |
+| `Blocked (technical)` / `(product)` | ⭕ / 🛑        | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
+| nothing, or killed                  | ⭐ if `plan.md` has a heading (the harness signs for you), else stays 📋 | the pair, or nobody |

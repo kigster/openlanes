@@ -55,7 +55,7 @@ module OpenLanes
       # the moment the work moves.
       GLYPH_NOTE = /\s*\((?:[^\w\s(][^)]*)\)\s*\z/
 
-      # The same thing without the brackets: `… over the law plane ☢️ deferred`.
+      # The same thing without the brackets: `… over the law plane 💤 deferred`.
       TRAILING_GLYPH = /\s*[\u{2190}-\u{2BFF}\u{1F000}-\u{1FAFF}][^\n]*\z/
 
       # A plan number the author typed into the heading as well. The issue for

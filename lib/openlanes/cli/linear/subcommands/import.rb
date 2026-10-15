@@ -39,7 +39,7 @@ module OpenLanes
         # @param options [Hash]
         # @return [void]
         def call(team:, **options)
-          tree = tree_for(options)
+          tree = tree_for(options).everything
           require_project!(options)
           import = build(tree, team, resolve_project(team, tree, options), options)
 

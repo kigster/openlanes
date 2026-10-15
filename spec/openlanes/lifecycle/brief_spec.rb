@@ -33,14 +33,39 @@ RSpec.describe OpenLanes::Lifecycle::Brief, :tree do
   end
 
   describe "#write_scaffold!" do
-    it "writes the scaffold to spec.md inside the plan folder" do
+    it "writes the scaffold to spec.md inside the plan folder, under a created: date" do
       brief.write_scaffold!
 
-      expect(File.read(File.join(path, "spec.md"))).to eq(brief.scaffold)
+      expect(File.read(File.join(path, "spec.md"))).to eq("---\ncreated: #{Date.today.iso8601}\n---\n\n#{brief.scaffold}")
     end
 
     it "returns the path it wrote" do
       expect(brief.write_scaffold!).to eq(File.join(path, "spec.md"))
+    end
+  end
+
+  describe "#stamp!" do
+    subject(:brief) { described_class.new(path:, title: "Widget Export Flow", root:, command:, today: Date.new(2026, 10, 13)) }
+
+    let(:spec_md) { File.join(path, "spec.md") }
+
+    it "puts created: back when a draft rewrote the file without it, keeping the author's keys" do
+      File.write(spec_md, "---\nlane: quick\n---\n\n# Drafted\n")
+      brief.stamp!("depth" => "fast")
+
+      expect(File.read(spec_md)).to eq("---\ncreated: 2026-10-13\nlane: quick\ndepth: fast\n---\n\n# Drafted\n")
+    end
+
+    it "never moves a created: date already there" do
+      File.write(spec_md, "---\ncreated: 2025-01-02\n---\n\n# Old\n")
+      brief.stamp!
+
+      expect(OpenLanes::Frontmatter.split(File.read(spec_md)).first).to eq("created" => Date.new(2025, 1, 2))
+    end
+
+    it "does nothing when spec.md is not there" do
+      expect(brief.stamp!).to eq(spec_md)
+      expect(File).not_to exist(spec_md)
     end
   end
 

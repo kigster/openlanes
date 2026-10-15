@@ -14,7 +14,7 @@ Dropped for good; terminal. Say why, so nobody re-proposes it blind.
 **What would change our minds:** a regulator requiring live rates.
 ```
 
-## delayed.md — ☢️ Deferred
+## delayed.md — 💤 Deferred
 
 The work could proceed and we chose not to yet. openlanes refuses the state unless the file names a **trigger** (it looks for the words trigger, revisit, when, until or once).
 

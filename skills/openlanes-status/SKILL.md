@@ -23,7 +23,7 @@ Load the `openlanes` skill first if it is not in context. Every command here onl
 `status` draws a table on STDOUT; pass `-C` when you parse it. Summarise for the user rather than pasting the table:
 
 - a count per state, from the footer line
-- each blocked plan, and whether it waits on engineering (⭕️) or product (🅱️)
+- each blocked plan, and whether it waits on engineering (⭕) or product (🛑)
 - each plan in review, with its PR
 - anything that looks wrong: a plan whose folder name lags its contents, or a PR without an `[NNN.MM]` title prefix. Both are `openlanes-sync`'s to fix; offer it.
 

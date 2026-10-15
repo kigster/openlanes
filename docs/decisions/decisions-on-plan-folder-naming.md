@@ -1,6 +1,6 @@
 # Decisions on plan folder naming, archiving and locks
 
-Settled 2026-10-13 in a grilling session. Not built yet; this file is the specification the implementing plan works from.
+Settled 2026-10-13 in a grilling session. N1–N5 are built (plan 007.00). N6–N10 are not built yet; for them this file is the specification the implementing plan works from.
 
 ## N1. Folder names have no spaces
 

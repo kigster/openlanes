@@ -111,9 +111,11 @@ fi
 
 # Every plan number that actually exists on disk. A resolved number is checked
 # against this, so a typo in a branch name fails here rather than in the index
-# six weeks later.
-existing="$(find "$PLANS_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; \
-            | grep -oE "^${NUM_RE}" | sort -u)"
+# six weeks later. Inactive plans live one level down, in archive/, deferred/
+# and abandoned/, and their numbers are still taken.
+existing="$(find "$PLANS_DIR" "$PLANS_DIR"/{archive,deferred,abandoned} -mindepth 1 -maxdepth 1 -type d \
+              -exec basename {} \; 2>/dev/null \
+            | grep -oE "^${NUM_RE}" | sort -u || true)"
 [[ -n "$existing" ]] || die "plan-number: $PLANS_DIR holds no NNN[.MM]-<status>-<slug> folders."
 
 exists() { printf '%s\n' "$existing" | grep -qx "$1"; }
@@ -138,7 +140,7 @@ fi
 # 2. The diff, and only when it is unambiguous.
 if git rev-parse --verify --quiet "$BASE" >/dev/null 2>&1; then
   touched="$(git diff --name-only "$(git merge-base "$BASE" HEAD)"..HEAD -- "$PLANS_DIR" 2>/dev/null \
-             | awk -F/ 'NF>2 {print $2}' | grep -oE "^${NUM_RE}" | sort -u || true)"
+             | awk -F/ '$2 ~ /^(archive|deferred|abandoned)$/ {if (NF>3) print $3; next} NF>2 {print $2}' | grep -oE "^${NUM_RE}" | sort -u || true)"
   count="$(printf '%s' "$touched" | grep -c . || true)"
 
   if [[ "$count" == "1" ]]; then

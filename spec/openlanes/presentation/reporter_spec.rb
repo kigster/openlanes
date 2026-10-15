@@ -31,10 +31,10 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
 
     it "shows each status as both icon and words" do
       aggregate_failures do
-        expect(table).to include("⚪️").and include("New")
+        expect(table).to include("⚪").and include("New")
         expect(table).to include("✅").and include("Approved & Merged")
         expect(table).to include("🟡").and include("Building")
-        expect(table).to include("⭕️").and include("Technical Block")
+        expect(table).to include("⭕").and include("Technical Block")
       end
     end
 
@@ -129,8 +129,8 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
     it "names the number and every folder claiming it" do
       aggregate_failures do
         expect(table).to include("002.00 is claimed by 2 folders")
-        expect(table).to include("002.00-⚪️ → one-thing")
-        expect(table).to include("002.00-⭕️ → another-thing")
+        expect(table).to include("002.00━━⚪━━❯one-thing")
+        expect(table).to include("002.00━━⭕━━❯another-thing")
       end
     end
   end
@@ -197,6 +197,17 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
   describe "table discipline" do
     it "writes nothing to STDERR, so the table composes in a pipe" do
       expect { reporter.render }.not_to output.to_stderr
+    end
+  end
+
+  describe "a locked plan" do
+    it "wears 🔑 before its name, and keeps its folder name" do
+      plans { |t| t.plan "009.00", :new, "locked-one", files: { "spec.md" => "# Spec" } }
+      dir = OpenLanes::Plans::Tree.new(dir: plans_root).find("009.00").feature.path
+      OpenLanes::Plans::Lock.write(dir)
+
+      expect(described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).render).to include("🔑 Locked")
+      expect(Dir.children(plans_root)).to include(File.basename(dir))
     end
   end
 end

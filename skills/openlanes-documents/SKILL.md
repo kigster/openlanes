@@ -36,7 +36,7 @@ Agents also sign a ledger inside the document they own: a `> [!NOTE]` block of `
 
 **blocked.md questions and answers.** A question is a line that starts with `B<n>`, after at most four `#` and an optional `**`: `## B1 — Which rate feed?`. Its answer is a heading `## A1` with the same number. Any other numbering (`1.`, `Q1`, a bullet `- B1`) is invisible: the folder never blocks, and `openlanes unblock` finds nothing to drain. Start no other line with `B` and a digit. An answer counts only when it names who decided (a role will do), carries a date, and picks one option.
 
-Which human a block waits on lives only in the emoji. `resync dirs` files a new `blocked.md` as ⭕️ (engineering); rename the folder's emoji to 🅱️ by hand when product owns the decision, and `resync` keeps it there.
+Which human a block waits on lives only in the emoji. `resync dirs` files a new `blocked.md` as ⭕ (engineering); rename the folder's emoji to 🛑 by hand when product owns the decision, and `resync` keeps it there.
 
 **pull-requests.md.** openlanes reads the first markdown table whose header names a pull request (`Pull Request Number`, `PR`, `#`) and whose rows link to `/pull/<n>`. Columns are found by header words: number, name or title, status. Status words: `Open`, `Draft` or `WIP`, `Merged`, `Closed`. Escape `[`, `]` and `|` inside a title. Prose below the table is ignored.
 

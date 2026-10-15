@@ -6,7 +6,7 @@
 RSpec.describe OpenLanes::Linear::Issues, :tree do
   subject(:record) { described_class.new(dir: folder) }
 
-  let(:folder) { File.join(plans_root, "002.00-✅ → dev-foundation") }
+  let(:folder) { File.join(plans_root, "002.00━━✅━━❯dev-foundation") }
 
   let(:issues) do
     [OpenLanes::Linear::Issue.new(unit: "PR-1",

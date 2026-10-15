@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **This file is auto generated.**
 >
-> To regenerate it, run `openlanes docs` (which by the default writes to `${HOME}/.agents/context/workflow.md`). To override the destination, use the `-o | --output <file>` option.
+> To regenerate it, run `openlanes docs -o <file>`; without `-o` it prints to STDOUT.
 >
 > After changing the state machine. Editing it by hand puts it back into the condition it was written to end: three copies of the same table, quietly disagreeing.
 
@@ -13,8 +13,8 @@ There are three phases, and each one has a file that proves it happened:
 
 | Phase     | State             | The file that proves it |
 | :-------- | :---------------- | :---------------------- |
-| **spec**  | ⚪️ New            | `spec.md`               |
-| **plan**  | ⭐️ Planned        | `plan.md`               |
+| **spec**  | ⚪ New            | `spec.md`               |
+| **plan**  | ⭐ Planned        | `plan.md`               |
 | **build** | 🟡 → 🟢 → 👀 → ✅ | `pull-requests.md`      |
 
 Those files are not paperwork. They are what the tool checks: a folder may not claim a phase whose file is missing, and `openlanes resync dirs` renames any folder whose emoji its contents do not support.
@@ -26,11 +26,13 @@ A plan's number is its identity. It is set once, when the folder is created, and
 The shape is always `NNN.MM`:
 
 ```
-.plans/000.00-⚪️-initial-spec
-.plans/001.00-✅-dev-foundation
-.plans/001.01-✅-schedule-k1-backfill   <- shipped between 001 and 002,
-.plans/002.00-⭐️-tenancy-households        specified afterwards
+.plans/000.00━━⚪━━❯initial-spec
+.plans/001.00━━🟡━━❯dev-foundation
+.plans/001.01━━⏪━━❯schedule-k1-backfill   <- shipped between 001 and 002,
+.plans/002.00━━⭐━━❯tenancy-households        specified afterwards
 ```
+
+A folder name holds no space, so it needs no quoting in a shell, and every state emoji is a single code point, so it measures the same in every terminal. Older spellings (`NNN.MM-<emoji> → <slug>`, `NNN-<emoji>--<slug>`) and the emoji they used are still read; `openlanes resync dirs` renames them.
 
 - **`NNN` counts from `000`.** The first plan of a project is `000.00`; after that it is the highest major plus one, zero-padded to three digits.
 - **`MM` is `00` for an ordinary plan** — one specified before it was built.
@@ -45,9 +47,27 @@ Two digits, always. One would sort into the middle of the two-digit range — `0
 
 **A retroactive `spec.md` must open with a dated line saying so**, naming the pull requests it describes. It documents what exists; it does not pretend to have decided anything in advance. Anchor by *when the work merged*, not by what it is about — compare merge dates against folder creation dates (`git log --diff-filter=A`). Anchoring by topic invites an argument nobody can settle, and the number is a slot, not a claim about subject matter.
 
+## Where a plan lives
+
+The top of `.plans` holds only plans somebody may still work on. A plan in one of these states moves into a subfolder, and its name gains the date it got there:
+
+| Folder              | States                            |
+| ------------------- | --------------------------------- |
+| `.plans/archive/`   | ✅ Approved & Merged, 😎 Deployed |
+| `.plans/deferred/`  | 💤 Deferred                       |
+| `.plans/abandoned/` | ❌ Discarded                      |
+
+```
+.plans/archive/001.00━━✅━━❯[2026-09-01]━━dev-foundation
+```
+
+`openlanes resync dirs` does the moving, with `git mv`, and moves a plan back to the top, undated, once its state is open again. The date is the folder's last rename in git, else `state.json`'s `updated_at`, else today. Numbers span the subfolders: a number in `archive/` is never handed out again. `openlanes list-plans` shows the open plans; `--all` adds the rest.
+
+While an agent works in a plan, the folder holds a git-ignored `locked-by.pid` (pid, host, start time) and `list-plans` shows 🔑. The folder is never renamed while it is locked. `resync dirs` clears a lock whose process is gone from this machine, and only reports one from another.
+
 ## Starting a feature that does not exist yet
 
-`openlanes create <two to five words>` mints the folder at ⚪️ New and, for a genuinely new feature, scaffolds `spec.md` with a title and four headings, verbatim:
+`openlanes create <two to five words>` mints the folder at ⚪ New and, for a genuinely new feature, scaffolds `spec.md` with a title and four headings, verbatim:
 
 - `## What we are trying to achieve`
 - `## Why it matters`
@@ -64,10 +84,10 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 
 | Symbol | Meaning                | Key                  | Files required                           | Description                                                                                 |
 | :----: | :--------------------- | :------------------- | :--------------------------------------- | :------------------------------------------------------------------------------------------ |
-|   ⚪️   | **New**                | `new`                | `spec.md`                                | a specification exists; it has not been planned yet                                         |
+|   ⚪   | **New**                | `new`                | `spec.md`                                | a specification exists; it has not been planned yet                                         |
 |   🔎   | **Researched**         | `researched`         | `spec.md`                                | the topic has been researched; `spec.md` carries a `## Research` chapter                    |
 |   📋   | **Ready for Planning** | `ready_for_planning` | `spec.md`, `plan.md`                     | the specification is finished; `plan.md` exists and is still blank, waiting for the planner |
-|   ⭐️   | **Planned**            | `planned`            | `spec.md`, `plan.md`                     | specified and planned; nobody has started building                                          |
+|   ⭐   | **Planned**            | `planned`            | `spec.md`, `plan.md`                     | specified and planned; nobody has started building                                          |
 |   🟡   | **Building**           | `building`           | `spec.md`, `plan.md`                     | the back end is under way: data, domain and the API the interface will call                 |
 |   🎨   | **Building UI**        | `building_ui`        | `spec.md`, `plan.md`                     | the back end holds; the interface is being built against it                                 |
 |   🟢   | **Ready for Review**   | `ready_for_review`   | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is green on CI and waiting for a reviewer                                |
@@ -77,56 +97,56 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 |   😎   | **Deployed**           | `deployed`           | `deployed.md`                            | live in production; `deployed.md` names the release, date and SHA                           |
 |   😱   | **Rolled Back**        | `rolled_back`        | `rollback.md`                            | it shipped and was pulled; `rollback.md` names what broke                                   |
 |   💩   | **Scrapped by Review** | `shit`               | `rewrite.md`                             | the review scrapped the work; the plan survives, the pull requests do not                   |
-|   ⭕️   | **Technical Block**    | `blocked`            | `blocked.md`                             | cannot proceed; `blocked.md` names what an engineer or the CTO must decide                  |
-|   🅱️   | **Product Block**      | `product_blocked`    | `blocked.md`                             | cannot proceed; `blocked.md` names what a product manager must decide                       |
-|   ☢️   | **Deferred**           | `deferred`           | `delayed.md`                             | could proceed and chose not to yet; `delayed.md` must name the trigger                      |
-|   🕰️   | **Retroactive**        | `retroactive`        | —                                        | the feature is live, but has neither a specification nor a plan                             |
+|   ⭕   | **Technical Block**    | `blocked`            | `blocked.md`                             | cannot proceed; `blocked.md` names what an engineer or the CTO must decide                  |
+|   🛑   | **Product Block**      | `product_blocked`    | `blocked.md`                             | cannot proceed; `blocked.md` names what a product manager must decide                       |
+|   💤   | **Deferred**           | `deferred`           | `delayed.md`                             | could proceed and chose not to yet; `delayed.md` must name the trigger                      |
+|   ⏪   | **Retroactive**        | `retroactive`        | —                                        | the feature is live, but has neither a specification nor a plan                             |
 |   ❌   | **Discarded**          | `discarded`          | `discarded.md`                           | dropped for good; `discarded.md` says why. A terminal state                                 |
 
-"Files required" is a **minimum**, not an exact match: a ⚪️ folder that has grown a `plan.md` still satisfies ⚪️, and is ⭐️ anyway. That is why `resync dirs` moves a folder to the furthest state its contents justify rather than only fixing outright lies.
+"Files required" is a **minimum**, not an exact match: a ⚪ folder that has grown a `plan.md` still satisfies ⚪, and is ⭐ anyway. That is why `resync dirs` moves a folder to the furthest state its contents justify rather than only fixing outright lies.
 
-Some states share their requirements on purpose, and are told apart only by the folder name. ⭕️ Technical Block and 🅱️ Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐️ 🟡 🎨 🟢 👀 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
+Some states share their requirements on purpose, and are told apart only by the folder name. ⭕ Technical Block and 🛑 Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐ 🟡 🎨 🟢 👀 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
 
-So nothing re-derives one of them from a folder's contents — otherwise every ⭕️ would silently become 🅱️ the first time anything resynced. A folder falling back into that group from outside lands on its weakest member, ⭐️ Planned, because that is all its contents can prove.
+So nothing re-derives one of them from a folder's contents — otherwise every ⭕ would silently become 🛑 the first time anything resynced. A folder falling back into that group from outside lands on its weakest member, ⭐ Planned, because that is all its contents can prove.
 
 🟣 Merged is deliberately **not** a folder state. It describes a pull request, and a folder that claimed it would be claiming a pull request's condition as its own.
 
 ## When a plan is stopped, and how it starts again
 
-⭕️ Technical Block and 🅱️ Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `openlanes run` leaves alone (✅ 😎 ❌ ⭕️ 🅱️ ☢️), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
+⭕ Technical Block and 🛑 Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `openlanes run` leaves alone (✅ 😎 ❌ ⭕ 🛑 💤), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
 
-Questions are numbered `B1`, `B2`, and that numbering is how the file gets referenced in conversation and in pull requests. **`blocked.md` holds open questions and nothing else.** That is what the ⭕️/🅱️ invariant reads, so a file naming no question justifies neither state and `resync dirs` renames the folder out of it.
+Questions are numbered `B1`, `B2`, and that numbering is how the file gets referenced in conversation and in pull requests. **`blocked.md` holds open questions and nothing else.** That is what the ⭕/🛑 invariant reads, so a file naming no question justifies neither state and `resync dirs` renames the folder out of it.
 
 Which is how a block drains, in pieces:
 
 1. A human writes each answer under `## Answers` as it arrives, dated and attributed to whoever decided.
 1. `openlanes unblock NNN` hands the folder to `lando-broker`. Nothing else reaches it: answers arriving is not a fact the tool can observe, so a human running the command *is* the signal.
 1. `lando-broker` folds each answered question into the document that question was stopping — `spec.md` when the answer changes what we are building or why, `plan.md` when it changes how or in what order — and deletes the question and its answer from `blocked.md`.
-1. When the last question goes, the file goes with it, and the folder leaves ⭕️ on the resync that follows.
+1. When the last question goes, the file goes with it, and the folder leaves ⭕ on the resync that follows.
 
-An entry that names no decider, carries no date, or restates the options instead of choosing one is not an answer, and is left exactly where it is. So is any question nobody has answered yet: two answers out of five is a successful run, and the plan stays stopped on the other three, which is true. `lando-broker` never answers a question itself, and never retires one for being stale — dropping a question is a human's call, and it makes the plan ☢️ Deferred or ❌ Discarded, not quietly shorter.
+An entry that names no decider, carries no date, or restates the options instead of choosing one is not an answer, and is left exactly where it is. So is any question nobody has answered yet: two answers out of five is a successful run, and the plan stays stopped on the other three, which is true. `lando-broker` never answers a question itself, and never retires one for being stale — dropping a question is a human's call, and it makes the plan 💤 Deferred or ❌ Discarded, not quietly shorter.
 
 ## Transitions
 
 | From                  | May become                    | `promote` goes to     |
 | :-------------------- | :---------------------------- | :-------------------- |
-| ⚪️ New                | 🔎 📋 ⭐️ ⭕️ 🅱️ ☢️ ❌          | 🔎 Researched         |
-| 🔎 Researched         | 📋 ⭐️ ⭕️ 🅱️ ☢️ ❌             | 📋 Ready for Planning |
-| 📋 Ready for Planning | ⭐️ ⭕️ 🅱️ ☢️ ❌                | ⭐️ Planned            |
-| ⭐️ Planned            | 🟡 ⭕️ 🅱️ ☢️ ❌                | 🟡 Building           |
-| 🟡 Building           | 🎨 🟢 ⭕️ 🅱️ ☢️ ❌             | 🎨 Building UI        |
-| 🎨 Building UI        | 🟢 ⭕️ 🅱️ ☢️ ❌                | 🟢 Ready for Review   |
+| ⚪ New                | 🔎 📋 ⭐ ⭕ 🛑 💤 ❌          | 🔎 Researched         |
+| 🔎 Researched         | 📋 ⭐ ⭕ 🛑 💤 ❌             | 📋 Ready for Planning |
+| 📋 Ready for Planning | ⭐ ⭕ 🛑 💤 ❌                | ⭐ Planned            |
+| ⭐ Planned            | 🟡 ⭕ 🛑 💤 ❌                | 🟡 Building           |
+| 🟡 Building           | 🎨 🟢 ⭕ 🛑 💤 ❌             | 🎨 Building UI        |
+| 🎨 Building UI        | 🟢 ⭕ 🛑 💤 ❌                | 🟢 Ready for Review   |
 | 🟢 Ready for Review   | 👀 ❌                         | 👀 In Review          |
 | 👀 In Review          | ✅ 🔴 💩 ❌                   | ✅ Approved & Merged  |
-| 🔴 Changes Requested  | 🎨 🟢 ⭕️ 🅱️ ☢️ ❌             | 🎨 Building UI        |
+| 🔴 Changes Requested  | 🎨 🟢 ⭕ 🛑 💤 ❌             | 🎨 Building UI        |
 | ✅ Approved & Merged  | 🟡 😎 ❌                      | 😎 Deployed           |
 | 😎 Deployed           | 😱 ❌                         | —                     |
 | 😱 Rolled Back        | 🟡 🟢 ❌                      | 🟢 Ready for Review   |
-| 💩 Scrapped by Review | 📋 ⭐️ 🟡 ❌                   | ⭐️ Planned            |
-| ⭕️ Technical Block    | ⚪️ 🔎 📋 ⭐️ 🟡 ☢️ ❌          | —                     |
-| 🅱️ Product Block      | ⚪️ 🔎 📋 ⭐️ 🟡 ☢️ ❌          | —                     |
-| ☢️ Deferred           | ⚪️ 🔎 📋 ⭐️ 🟡 ❌             | —                     |
-| 🕰️ Retroactive        | ⚪️ 🔎 📋 ⭐️ 🟡 ✅ ⭕️ 🅱️ ☢️ ❌ | ⭐️ Planned            |
+| 💩 Scrapped by Review | 📋 ⭐ 🟡 ❌                   | ⭐ Planned            |
+| ⭕ Technical Block    | ⚪ 🔎 📋 ⭐ 🟡 💤 ❌          | —                     |
+| 🛑 Product Block      | ⚪ 🔎 📋 ⭐ 🟡 💤 ❌          | —                     |
+| 💤 Deferred           | ⚪ 🔎 📋 ⭐ 🟡 ❌             | —                     |
+| ⏪ Retroactive        | ⚪ 🔎 📋 ⭐ 🟡 ✅ ⭕ 🛑 💤 ❌ | ⭐ Planned            |
 | ❌ Discarded          | _terminal_                    | —                     |
 
 A bare promote walks the **spine** — spec → plan → build. Everything off it (blocking, deferring, rejecting) has to be named explicitly. That is the whole reason there is a machine here rather than a rename: a transition is refused when the destination's requirements are not already met, and that refusal is information — it means the phase has not actually happened yet.
@@ -137,10 +157,10 @@ A bare promote walks the **spine** — spec → plan → build. Everything off i
 ```mermaid
 stateDiagram-v2
     direction LR
-    new : ⚪️ New
+    new : ⚪ New
     researched : 🔎 Researched
     ready_for_planning : 📋 Ready for Planning
-    planned : ⭐️ Planned
+    planned : ⭐ Planned
     building : 🟡 Building
     building_ui : 🎨 Building UI
     ready_for_review : 🟢 Ready for Review
@@ -150,10 +170,10 @@ stateDiagram-v2
     deployed : 😎 Deployed
     rolled_back : 😱 Rolled Back
     shit : 💩 Scrapped by Review
-    blocked : ⭕️ Technical Block
-    product_blocked : 🅱️ Product Block
-    deferred : ☢️ Deferred
-    retroactive : 🕰️ Retroactive
+    blocked : ⭕ Technical Block
+    product_blocked : 🛑 Product Block
+    deferred : 💤 Deferred
+    retroactive : ⏪ Retroactive
     discarded : ❌ Discarded
 
     retroactive --> new
@@ -250,19 +270,19 @@ stateDiagram-v2
 
 ## Files allowed in a plan folder
 
-| File                     | Required by                                                                   |
-| :----------------------- | :---------------------------------------------------------------------------- |
-| `spec.md`                | the specification; written first                                              |
-| `plan.md`                | the execution plan; written from the spec                                     |
-| `contract.md`            | the contract between the two halves of building                               |
-| `openapi.yaml`           | the HTTP surface, when the plan has one                                       |
-| `pull-requests.md`       | 🟢 Ready for Review, 👀 In Review, 🔴 Changes Requested, ✅ Approved & Merged |
-| `deployed.md`            | 😎 Deployed                                                                   |
-| `rollback.md`            | 😱 Rolled Back                                                                |
-| `rewrite.md`             | 💩 Scrapped by Review                                                         |
-| `blocked.md`             | ⭕️ Technical Block, 🅱️ Product Block                                          |
-| `delayed.md`             | ☢️ Deferred                                                                   |
-| `discarded.md`           | ❌ Discarded                                                                  |
+| File               | Required by                                                                   |
+| :----------------- | :---------------------------------------------------------------------------- |
+| `spec.md`          | the specification; written first                                              |
+| `plan.md`          | the execution plan; written from the spec                                     |
+| `contract.md`      | the contract between the two halves of building                               |
+| `openapi.yaml`     | the HTTP surface, when the plan has one                                       |
+| `pull-requests.md` | 🟢 Ready for Review, 👀 In Review, 🔴 Changes Requested, ✅ Approved & Merged |
+| `deployed.md`      | 😎 Deployed                                                                   |
+| `rollback.md`      | 😱 Rolled Back                                                                |
+| `rewrite.md`       | 💩 Scrapped by Review                                                         |
+| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block                                          |
+| `delayed.md`       | 💤 Deferred                                                                   |
+| `discarded.md`     | ❌ Discarded                                                                  |
 
 `contract.md` is the one file no state requires. `luke-backend` writes it before it writes code, and `rey-frontend` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
 
@@ -311,4 +331,4 @@ Two things to hold to when that day comes:
 
 ______________________________________________________________________
 
-Generated by `openlanes docs` — version 2.0.0-alpha.
+Generated by `openlanes docs` — version 3.0.1.

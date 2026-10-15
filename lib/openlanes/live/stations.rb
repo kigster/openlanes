@@ -25,7 +25,7 @@ module OpenLanes
         def wire = { key: key.to_s, label:, agents: }
       end
 
-      # Key, label and the states folded into it, in spine order. ⭐️ Planned
+      # Key, label and the states folded into it, in spine order. ⭐ Planned
       # sits with 🟡 Building and 🟢 Ready for Review with 👀 In Review,
       # because on the board each pair is one stop with the same agents.
       # 🔴 Rejected sits at Building too: luke and rey rework it there, and
@@ -54,7 +54,7 @@ module OpenLanes
       # The stop a plan in +state+ is shown at. A state a {GROUPS} entry
       # names is shown at that stop, which is how 🔴 Rejected lands at
       # Building. Any other state off the spine (💩, 😱) is shown where the
-      # spine takes it next; one with no way forward (⭕️, 🅱️) where the
+      # spine takes it next; one with no way forward (⭕, 🛑) where the
       # plan was when it stopped, which only its history knows.
       #
       # @param state [Symbol]

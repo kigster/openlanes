@@ -124,7 +124,7 @@ module OpenLanes
       def major_for(pull)
         candidates = OpenLanes.plans_on_ref(root, pull[:branch].to_s)
         candidates = touched(pull) if candidates.empty?
-        candidates = tree.subjects.map { |s| s.feature.ordinal } if candidates.empty?
+        candidates = tree.taken if candidates.empty?
 
         candidates.map(&:major).max.to_i
       end
@@ -133,9 +133,8 @@ module OpenLanes
       # @return [Array<OpenLanes::Plans::Ordinal>]
       def touched(pull)
         Array(pull[:files]).filter_map { |path|
-          parts = path.to_s.split("/")
-          index = parts.index(OpenLanes::PLANS_DIR)
-          index && parts[index + 1] && Plans::Ordinal.from_dirname(parts[index + 1])
+          folder = Plans::Tree.plan_folder(path)
+          folder && Plans::Ordinal.from_dirname(folder)
         }.uniq
       end
 
@@ -161,7 +160,7 @@ module OpenLanes
       # @param major [Integer]
       # @return [Array<Integer>] minors already used under this major
       def minors_taken(major)
-        tree.subjects.map { |s| s.feature.ordinal }.select { |o| o.major == major }.map(&:minor)
+        tree.taken.select { |o| o.major == major }.map(&:minor)
       end
 
       # Phase three, in parallel: each worker owns a number nobody else can

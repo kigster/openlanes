@@ -401,7 +401,7 @@ module OpenLanes
 
         lists = [["The task is finished when", spec.completed_when], ["How to verify it", spec.how_to_verify]]
         body = lists.reject { |_, items| items.empty? }.map do |title, items|
-          "#{title}:\n\n#{items.map { |item| "- #{item}" }.join("\n")}\n"
+          "#{title}:\n\n#{items.map { Plans::Spec.list_item(it) }.join("\n")}\n"
         end
 
         "\n## Completion criteria — from the spec's author\n\n" \

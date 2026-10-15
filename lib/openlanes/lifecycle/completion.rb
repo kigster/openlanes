@@ -50,7 +50,7 @@ module OpenLanes
       def section(heading, items, present)
         return nil if items.empty? || present.match?(/^#{Regexp.escape(heading)}\s*$/i)
 
-        "#{heading}\n\n#{items.map { |item| "- #{item}" }.join("\n")}\n"
+        "#{heading}\n\n#{items.map { Plans::Spec.list_item(it) }.join("\n")}\n"
       end
       private_class_method :section
     end

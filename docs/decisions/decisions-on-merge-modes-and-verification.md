@@ -181,6 +181,15 @@ They are local in `/Users/kig/github/inquirex`; the Ruby gems are versioned toge
 - An `openlanes gc` command became plan aging and archiving (plans 007–009).
 - A Settings dialog in the control room comes with v2.0.
 
+### M20. Prose under "How to tell it's working?" is a check
+
+Decided by the owner, 2026-10-14: "The more specific and technical how to test is, the better. Prose can be pretty specific."
+
+- Every list item under `## How to tell it's working?` is one check, with its continuation lines and any fenced block under it.
+- Every prose paragraph is one check too, kept verbatim. Prose is no longer discarded as commentary.
+- A fenced block not under a list item belongs to the paragraph before it, or stands as its own check.
+- Built in plan 007 (`Spec.section_items`); supersedes plan 005's rule that read bullets only, falling back to plain lines when there were none.
+
 ### M21. `init` settles CI first
 
 Decided by the owner, 2026-10-14. Many projects have no CI, and without it a pull request has no checks for the review gate to read.

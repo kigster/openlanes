@@ -15,8 +15,8 @@ module OpenLanes
     class Dispatcher
       # One running invocation. `from` is the state the plan showed when the
       # agent was picked; `state` is the one it ran under, after any
-      # `starts_as` rename. History is keyed by `state`: luke picked at ⭐️
-      # works at 🟡, and keying by ⭐️ would offer him 🟡 afterwards as though
+      # `starts_as` rename. History is keyed by `state`: luke picked at ⭐
+      # works at 🟡, and keying by ⭐ would offer him 🟡 afterwards as though
       # he had never been there (the 020.00 regression, run twice over).
       Job = Struct.new(:key,
         :task,
@@ -132,6 +132,7 @@ module OpenLanes
         @fenced = []
         @unblocking = []
         @unblock_tried = {}
+        @locks = PlanLocks.new
       end
 
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
@@ -403,13 +404,24 @@ module OpenLanes
       def plan_of(job) = job.task.subject.feature.ordinal.to_s
 
       # Plans no agent may be started on and no rename may touch: one being
-      # discarded or drained, and one another machine holds (W26).
+      # discarded or drained, one another machine holds (W26), and one whose
+      # `locked-by.pid` another run wrote.
       #
       # @return [Array<String>]
       def untouchable
         busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal)
-        busy + @runner.tree.subjects.select { @runner.foreign?(it) }.map { it.feature.ordinal.to_s }
+        busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) }.map { it.feature.ordinal.to_s }
       end
+
+      # The Redis claim covers machines that share one; the lock file covers
+      # a second run on this machine, or one that never reached Redis.
+      # Without this check such a run renamed the folder at start, wrote its
+      # own lock over the holder's, and deleted it when its agent finished.
+      # This run's own lock is not a reason to stay out: a pair shares it.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean]
+      def locked_elsewhere?(subject) = Plans::Lock.read(subject.feature.path)&.held_elsewhere? || false
 
       # ---- discarding -------------------------------------------------------
 
@@ -638,7 +650,10 @@ module OpenLanes
           # pass sees the plan as foreign and steps around it.
           next unless @runner.claim(pair.last)
 
-          start(*pair)
+          # Lost the lock file to another run on this machine: the next tick
+          # reads its lock and steps around the plan.
+          break unless start(*pair)
+
           started += 1
         end
         settle_idle(started) if @stay
@@ -686,7 +701,11 @@ module OpenLanes
       # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
       # @return [String] what an idle run is waiting for
       def idle_reason(subjects)
-        return "idle: no plans yet; create one from the page or with openlanes create" if subjects.empty?
+        # Finished plans move into archive/ (N3), so an empty top level after
+        # a run that shipped everything is "finished", not "no plans yet".
+        if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
+          return "idle: no plans yet; create one from the page or with openlanes create"
+        end
         if subjects.all? { FINISHED.include?(it.status.key) }
           return "idle: every plan is finished; create the next one from the page"
         end
@@ -727,6 +746,7 @@ module OpenLanes
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
+          next if locked_elsewhere?(subject)
 
           candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
@@ -760,7 +780,7 @@ module OpenLanes
       #
       # A plan with an agent in it is judged by its folder's name, never by
       # what its contents would justify. Asking the contents is how the
-      # minesweeper trial ran its whole chain inside ⚪️ New: leah wrote her
+      # minesweeper trial ran its whole chain inside ⚪ New: leah wrote her
       # `## Research` chapter, the next tick saw a Researched plan and started
       # yoda beside her, and leah's own Completed then found a partner running
       # and held the folder where it was. Every later agent repeated it, so
@@ -783,7 +803,7 @@ module OpenLanes
       # A folder's name can lag its contents: a run killed before its rename,
       # a plan.md written by hand, a resync nobody ran. So the names are
       # reconciled before every dispatch, the way `resync dirs` would, and a
-      # ⚪️ folder that already holds a plan goes to the pair under its honest
+      # ⚪ folder that already holds a plan goes to the pair under its honest
       # name rather than to leah-researcher under its stale one. Plans an
       # agent is working in right now are left alone: the prompt names the
       # folder by path, and moving it under a running agent would strand
@@ -828,12 +848,20 @@ module OpenLanes
 
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject]
-      # @return [void]
+      # @return [Boolean] false when another run took the plan's lock first
       def start(agent, subject)
         ordinal = subject.feature.ordinal.to_s
         round = @history[[ordinal, agent.name]].count { |h| h[:state] == subject.status.key } + 1
         from = subject.status.key
         subject = rename_on_start(subject, agent) unless @runner.dry_run?
+        # The lock says the folder is in use, so nothing renames it while the
+        # agent holds its path. It is taken before anything is recorded as
+        # started, since another run can win it between the check and here,
+        # and before the thread, so the next tick already sees it; it goes
+        # when the last agent in the plan does, however that agent went.
+        return false unless lock(ordinal, subject)
+
+        release_owed = true
         task = @runner.prepare(agent, subject, round)
         handle = Execution::Executor::Handle.new
         job = Job.new(key: "#{ordinal}/#{agent.name}",
@@ -886,9 +914,28 @@ module OpenLanes
             }
           rescue StandardError => e
             e
+          ensure
+            @locks.release(ordinal) unless @runner.dry_run?
           end
         end
+        release_owed = false
         @running << job
+        true
+      rescue StandardError
+        # Failed before the thread that releases it existed.
+        @locks.release(ordinal) if release_owed && !@runner.dry_run?
+        raise
+      end
+
+      # @param ordinal [String]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean] whether this run now holds the plan's lock
+      def lock(ordinal, subject)
+        @locks.hold(ordinal, subject.feature.path) unless @runner.dry_run?
+        true
+      rescue Plans::Lock::Held => e
+        UI.log("lock lost: #{e.message}", plan: ordinal)
+        false
       end
 
       # `starts_as`: the folder moves the moment the agent is dispatched, where

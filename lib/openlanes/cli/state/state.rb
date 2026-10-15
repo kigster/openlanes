@@ -13,7 +13,7 @@ module OpenLanes
         # @param options [Hash]
         # @return [OpenLanes::Plans::PlanState]
         def plan_state_for(options)
-          tree = tree_for(options)
+          tree = tree_for(options).everything
           ordinal = Plans::Ordinal.parse(options[:plan].to_s)
           subject = ordinal && tree.find(ordinal)
           refuse("No plan #{options[:plan]} in #{tree.dir}.\n\nKnown: #{tree.ordinals.join(", ")}", 66) unless subject

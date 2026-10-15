@@ -1,5 +1,5 @@
 import * as panels from "./index";
-import { ariaSendKeys, clock, fmt, isSendKey, modelName, sendKeys } from "./support";
+import { BLOCK_EMOJI, ariaSendKeys, clock, fmt, isSendKey, modelName, sendKeys } from "./support";
 import { snapshot } from "./testing";
 
 describe("support", () => {
@@ -19,6 +19,11 @@ describe("support", () => {
     platform.mockRestore();
     expect(isSendKey({ key: "Enter", metaKey: false, ctrlKey: true })).toBe(true);
     expect(isSendKey({ key: "Enter", metaKey: false, ctrlKey: false })).toBe(false);
+  });
+
+  it("recognises both the new and the old block emoji", () => {
+    for (const e of ["⭕", "🛑", "⭕️", "🅱️", "🅱"]) expect(BLOCK_EMOJI.has(e)).toBe(true);
+    expect(BLOCK_EMOJI.has("🟡")).toBe(false);
   });
 
   it("exports every panel from the barrel", () => {

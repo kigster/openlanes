@@ -12,7 +12,7 @@ module OpenLanes
     # contract, and the name we would prefer if the team happens to have one.
     # {Push} resolves the name first and falls back to the type.
     #
-    # Several states have no Linear equivalent at all — ⭕️ Technical Block is
+    # Several states have no Linear equivalent at all — ⭕ Technical Block is
     # a reason, not a position in a workflow — so they map to the nearest
     # position and carry a label saying which reason.
     #

@@ -118,7 +118,7 @@ module OpenLanes
       # is as much a thing the user needs told about as a folder that drained, and
       # stopping at the first bad one hides the rest of the report.
       #
-      # The gate is `blocked.md` itself, not the folder's emoji. ⭕️ is *derived*
+      # The gate is `blocked.md` itself, not the folder's emoji. ⭕ is *derived*
       # from the file, so gating on the emoji made the tool circular: a
       # `blocked.md` whose questions are not numbered `## B<n>` never earns the
       # emoji, so `unblock` refused it, so the file could never drain and the

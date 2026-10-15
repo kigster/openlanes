@@ -36,7 +36,7 @@ If the pull requests merged after 018's folder was created and before 019's, the
 
 ## What happens next
 
-`create --prs` writes `pull-requests.md` (the folder is born 🕰️ Retroactive) and hands the folder to `yoda-writer`, which writes `spec.md` from the diff and an empty `plan.md`. `--no-spec` stops after recording the PRs. From there the plan moves like any other; `openlanes run -n --plan <NNN.MM>` shows who takes it next.
+`create --prs` writes `pull-requests.md` (the folder is born ⏪ Retroactive) and hands the folder to `yoda-writer`, which writes `spec.md` from the diff and an empty `plan.md`. `--no-spec` stops after recording the PRs. From there the plan moves like any other; `openlanes run -n --plan <NNN.MM>` shows who takes it next.
 
 ## What does not deserve one
 

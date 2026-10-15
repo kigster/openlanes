@@ -37,7 +37,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   # before it signed. The next tick read the half-finished folder as the next
   # state and started that state's agent beside the one still writing, the
   # first then held the folder for its "partner", and the whole chain ran
-  # inside ⚪️ New.
+  # inside ⚪ New.
   describe "an agent whose work shows before it signs" do
     let!(:built) { plans { |t| t.plan "030.00", :new, "minesweeper", files: { "spec.md" => spec_body } } }
     let(:live) { Hash.new(0) }
@@ -187,7 +187,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       let(:stale) do
         feature = tree.reload.subjects.first.feature
         path = OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil).checkout_for(feature).path
-        File.join(path, ".plans", "040.00-🟢 → minesweeper")
+        File.join(path, ".plans", "040.00━━🟢━━❯minesweeper")
       end
 
       before do
@@ -242,7 +242,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     # yoda finishes, leaves a blank plan.md, signs Completed and names
     # palpatine. The harness renames to 📋, starts palpatine, palpatine
-    # writes a plan and signs, the harness renames to ⭐️, luke and rey
+    # writes a plan and signs, the harness renames to ⭐, luke and rey
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
     it "moves yoda's finished work to 📋 and starts palpatine, then the pair" do
@@ -372,7 +372,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
-  # The 001.00 transcript, the other way round: a folder still named ⚪️
+  # The 001.00 transcript, the other way round: a folder still named ⚪
   # whose spec.md carries its research and whose plan.md already holds work
   # units. The old loop read the name, offered it to leah-researcher, and
   # she researched a plan that was ready to build.
@@ -402,7 +402,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       aggregate_failures do
         expect(calls.map(&:first)).to contain_exactly("luke-backend", "rey-frontend")
-        expect(Dir.children(plans_root)).to include("001.00-⚪️ → already-planned")
+        expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯already-planned")
       end
     end
   end
@@ -519,7 +519,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         expect(seen.map(&:first).uniq).to eq(%w[r2d2-mechanic])
       end
 
-      it "writes a one-unit plan.md so the folder may claim ⭐️ and then 🟡" do
+      it "writes a one-unit plan.md so the folder may claim ⭐ and then 🟡" do
         runner_with(executor).call
         expect(tree.reload.subjects.first.read("plan.md")).to include("## Task")
       end
@@ -676,7 +676,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "parks a Blocked plan at ⭕️ when blocked.md names a question" do
+    it "parks a Blocked plan at ⭕ when blocked.md names a question" do
       executor = executor_with do |_, subject, _|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich?\n")
         "Blocked"
@@ -685,7 +685,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:blocked)
     end
 
-    it "parks a product block at 🅱️ when the note says so" do
+    it "parks a product block at 🛑 when the note says so" do
       executor = lambda { |_agent, subject, round: 1, **|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich colour?\n")
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "spec.md"),
@@ -694,6 +694,101 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       }
       runner_with(executor, agents: agents.only("leah-researcher")).call
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:product_blocked)
+    end
+  end
+
+  describe "the plan lock" do
+    let!(:built) { plans { |t| t.plan "001.00", :new, "locked", files: { "spec.md" => spec_body } } }
+    let(:seen) { [] }
+
+    it "holds locked-by.pid while the agent works, and drops it after" do
+      executor = executor_with do |_, subject, _|
+        seen << [OpenLanes::Plans::Lock.read(subject.feature.path), File.basename(subject.feature.path)]
+        "Almost completed"
+      end
+      runner_with(executor, agents: agents.only("leah-researcher")).call
+
+      aggregate_failures do
+        expect(seen.first.first).to have_attributes(pid: Process.pid, host: Socket.gethostname)
+        expect(seen.map(&:last).uniq).to eq(["001.00━━⚪━━❯locked"])
+        expect(Dir.glob(File.join(plans_root, "**", OpenLanes::Plans::Lock::FILENAME))).to be_empty
+      end
+    end
+
+    it "drops the lock when the agent raises" do
+      executor = lambda { |_agent, subject, **|
+        seen << OpenLanes::Plans::Lock.read(subject.feature.path)
+        raise "the agent fell over"
+      }
+      runner_with(executor, agents: agents.only("leah-researcher")).call
+
+      aggregate_failures do
+        expect(seen.first).not_to be_nil
+        expect(Dir.glob(File.join(plans_root, "**", OpenLanes::Plans::Lock::FILENAME))).to be_empty
+      end
+    end
+
+    # Another run's lock keeps this one out entirely: no agent, and no
+    # start-time rename under the holder's feet.
+    {
+      "a live process on this host" => -> { { "pid" => Process.ppid, "host" => Socket.gethostname } },
+      "a process on another host"   => -> { { "pid" => 1, "host" => "elsewhere.invalid" } }
+    }.each do |holder, data|
+      it "neither dispatches nor renames a plan locked by #{holder}" do
+        File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+          JSON.generate(data.call.merge("started_at" => "2026-10-13T09:00:00Z")))
+        runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+
+        aggregate_failures do
+          expect(calls).to be_empty
+          expect(File.basename(path_of("001.00"))).to eq("001.00━━⚪━━❯locked")
+          expect(OpenLanes::Plans::Lock.read(path_of("001.00")).pid).to eq(data.call["pid"])
+        end
+      end
+    end
+
+    # Two runs both saw no lock; the other wrote first. The claim is the
+    # check, so this run starts nothing and records nothing as started.
+    it "starts nothing when another run takes the lock between the check and the claim" do
+      File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+        JSON.generate("pid" => Process.ppid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+      lost = false
+      allow(OpenLanes::Plans::Lock).to receive(:write).and_wrap_original do |original, *args, **opts|
+        original.call(*args, **opts)
+      rescue OpenLanes::Plans::Lock::Held
+        lost = true
+        raise
+      end
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call do |dispatcher|
+        # The check misses the lock until the claim has been refused once.
+        allow(dispatcher).to(receive(:locked_elsewhere?).and_wrap_original { |m, subject| lost && m.call(subject) })
+      end
+
+      aggregate_failures do
+        expect(calls).to be_empty
+        expect(OpenLanes::Plans::Lock.read(path_of("001.00")).pid).to eq(Process.ppid)
+        expect(File.read(File.join(path_of("001.00"), "spec.md"))).not_to include("status: Started")
+      end
+    end
+
+    it "dispatches over a stale lock left by a dead process on this host" do
+      pid = Process.spawn("true")
+      Process.wait(pid)
+      File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
+        JSON.generate("pid" => pid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+
+      expect(calls.map(&:first)).to eq(["leah-researcher"])
+    end
+
+    it "writes no lock on a dry run" do
+      executor = executor_with do |_, subject, _|
+        seen << OpenLanes::Plans::Lock.read(subject.feature.path)
+        "Almost completed"
+      end
+      runner_with(executor, agents: agents.only("leah-researcher"), dry_run: true).call
+
+      expect(seen).to eq([nil])
     end
   end
 

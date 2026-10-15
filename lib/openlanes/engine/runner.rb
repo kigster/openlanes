@@ -8,7 +8,7 @@ module OpenLanes
     # The loop itself is {Dispatcher}. This holds what the loop needs about
     # the run: the tree and its scope, the roster, the executor, how many run
     # at once, where each plan is checked out, and how a finished plan is
-    # published. Blocked plans (⭕️ 🅱️) are stepped around, never assigned.
+    # published. Blocked plans (⭕ 🛑) are stepped around, never assigned.
     class Runner
       # What one agent did to one plan.
       Attempt = Data.define(:ordinal,
@@ -199,7 +199,9 @@ module OpenLanes
         return tree.dependencies unless dry_run?
 
         leave = except.map(&:to_s)
-        Plans::Dependencies.new(tree,
+        # Every plan, archived ones included, as {Plans::Tree#dependencies}
+        # does: a shipped prerequisite sits in `archive/`.
+        Plans::Dependencies.new(tree.everything,
           status_of: lambda { |subject|
             untouched = leave.include?(subject.feature.ordinal.to_s) || foreign?(subject)
             untouched ? subject.status : effective_status(subject)

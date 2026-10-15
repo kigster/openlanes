@@ -166,4 +166,132 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(parse("depends_on: []")).not_to be_default
     end
   end
+
+  # M10: `how-to-verify:` leaves the frontmatter for a section of the body.
+  describe ".migrate_how_to_verify" do
+    def migrate(text) = described_class.migrate_how_to_verify(text)
+
+    it "adds the section at the end when the spec has none, and keeps the other keys as written" do
+      before = "---\nlane: quick # the short one\nhow-to-verify:\n  - bundle exec rspec\n  - just lint\n---\n# Title\n\n## Goal\n\nWork.\n"
+
+      expect(migrate(before)).to eq(
+        "---\nlane: quick # the short one\n---\n# Title\n\n## Goal\n\nWork.\n\n" \
+        "## How to tell it's working?\n\n- bundle exec rspec\n- just lint\n"
+      )
+    end
+
+    it "appends to the section the spec already has, before the next heading, and drops an emptied frontmatter" do
+      before = "---\nhow-to-verify: run the CLI\n---\n# Title\n\n## How to tell it's working?\n\n- the page loads\n\n## Framing\n\nTwo ways.\n"
+
+      expect(migrate(before)).to eq(
+        "# Title\n\n## How to tell it's working?\n\n- the page loads\n- run the CLI\n\n## Framing\n\nTwo ways.\n"
+      )
+    end
+
+    it "fills an empty section at the very end of the file" do
+      expect(migrate("---\nhow-to-verify: [a]\n---\n# T\n\n## How to tell it's working?")).to eq("# T\n\n## How to tell it's working?\n\n- a\n")
+    end
+
+    it "leaves a spec without the key untouched" do
+      ["# Plain\n", "---\nlane: quick\n---\n# T\n", "---\n: [\n---\n# Broken\n"].each do |text|
+        expect(migrate(text)).to equal(text)
+      end
+    end
+
+    # A regex took the blank line for the end of the entry and left `- b`
+    # behind in the frontmatter, now under `lane:`.
+    it "removes the whole list when a blank line separates its items" do
+      before = "---\nhow-to-verify:\n  - a\n\n  - b\nlane: quick\n---\n# T\n"
+
+      expect(migrate(before)).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n- b\n")
+    end
+
+    # A quoted key passed `meta.key?` but no regex removed it, so every
+    # resync appended the checks again.
+    it "removes a quoted key, and a second migration changes nothing" do
+      ["\"how-to-verify\"", "'how-to-verify'"].each do |key|
+        once = migrate("---\n#{key}: [a]\nlane: quick\n---\n# T\n")
+
+        aggregate_failures do
+          expect(once).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n")
+          expect(migrate(once)).to equal(once)
+        end
+      end
+    end
+
+    it "leaves a flow-mapping frontmatter alone rather than cut a shared line" do
+      text = "---\n{lane: quick, how-to-verify: a}\n---\n# T\n"
+
+      expect(migrate(text)).to equal(text)
+    end
+
+    # A `|` block keeps its lines; the section must too, and read them back
+    # as one check.
+    it "keeps a multi-line check as one item, and reads it back whole" do
+      migrated = migrate("---\nhow-to-verify: |\n  run the CLI\n  check its output\n---\n# T\n")
+
+      aggregate_failures do
+        expect(migrated).to eq("# T\n\n## How to tell it's working?\n\n- run the CLI\n  check its output\n")
+        expect(described_class.parse(migrated).how_to_verify).to eq(["run the CLI\ncheck its output"])
+      end
+    end
+
+    it "reads the checks from the section once the key has moved" do
+      migrated = migrate("---\nhow-to-verify:\n  - bundle exec rspec\n---\n# T\n")
+
+      expect(described_class.parse(migrated).how_to_verify).to eq(["bundle exec rspec"])
+    end
+
+    it "reads both while a spec has the key and the section, without repeating an item" do
+      text = "---\nhow-to-verify: [a, b]\n---\n# T\n\n## How to tell it's working?\n\nOpen the board.\n\n1. b\n* c\n"
+
+      expect(described_class.parse(text).how_to_verify).to eq(["a", "b", "Open the board.", "c"])
+    end
+  end
+
+  # Owner, 2026-10-14: the more specific how-to-test is, the better, and prose
+  # can be specific too, so a paragraph is a check like any item.
+  describe "the checks under `## How to tell it's working?`" do
+    let(:heading) { "## How to tell it's working?" }
+
+    def checks(section) = described_class.parse("# T\n\n#{heading}\n\n#{section}").how_to_verify
+
+    it "reads each prose paragraph as one check, its lines as written" do
+      expect(checks("Open the board.\nIt shows the plan in green.\n\nThen stop the run.\n\n## Next\n\nNot a check.\n"))
+        .to eq(["Open the board.\nIt shows the plan in green.", "Then stop the run."])
+    end
+
+    it "keeps prose and items in document order" do
+      expect(checks("Start the factory.\n\n- the board loads\n- a plan moves\n\nStop it with Ctrl-C.\n"))
+        .to eq(["Start the factory.", "the board loads", "a plan moves", "Stop it with Ctrl-C."])
+    end
+
+    # Copied into plan.md as `- item`; a step's command must arrive with it.
+    it "keeps a step's indented lines and fenced block with that step" do
+      section = "- Run this:\n\n  ```bash\n  bin/setup\n\n  - not an item\n  ```\n- see green\n  in the board\n"
+
+      expect(checks(section))
+        .to eq(["Run this:\n```bash\nbin/setup\n\n- not an item\n```", "see green\nin the board"])
+    end
+
+    it "keeps a command's own indentation inside the fence" do
+      expect(checks("- Run:\n  ```ruby\n  if ok\n    go\n  end\n  ```\n")).to eq(["Run:\n```ruby\nif ok\n  go\nend\n```"])
+    end
+
+    it "gives a fence outside any item to the paragraph before it" do
+      expect(checks("Run the suite:\n\n```sh\njust test\n\n## not a heading\n```\n"))
+        .to eq(["Run the suite:\n```sh\njust test\n\n## not a heading\n```"])
+    end
+
+    it "makes a fence with no paragraph before it a check of its own" do
+      expect(checks("- a\n\n~~~~\njust lint\n~~~\n~~~~\n")).to eq(["a", "~~~~\njust lint\n~~~\n~~~~"])
+    end
+
+    it "reads back what list_item writes, one item per check" do
+      originals = ["Open the board.\nIt is green.", "Run:\n```bash\nbin/setup\n\n- not an item\n```", "plain"]
+      section = originals.map { described_class.list_item(it) }.join("\n")
+
+      expect(checks("#{section}\n")).to eq(originals)
+    end
+  end
 end

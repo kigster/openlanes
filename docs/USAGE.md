@@ -77,7 +77,7 @@ Model and effort precedence, highest first: `run --model` (model only), `phases.
 | :------ | :----------------------------------------------- | :---------------------------------------------------------------------------------------- |
 | `full`  | leah → yoda → palpatine → luke (+ rey) → hansolo | features you want researched and specified                                                |
 | `plan`  | palpatine → luke (+ rey) → hansolo               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
-| `quick` | r2d2-mechanic → hansolo                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐️ |
+| `quick` | r2d2-mechanic → hansolo                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
 
 `openlanes create --lane quick split big migration` writes the frontmatter for you.
 
@@ -145,7 +145,7 @@ Flags can only tighten what an agent declares, never loosen it. Each agent is to
 
 ### Unblocking a plan
 
-The loop never assigns a blocked plan (⭕️ or 🅱️). Write your answers into the plan's `blocked.md` under `## Answers`, dated and attributed, then:
+The loop never assigns a blocked plan (⭕ or 🛑). Write your answers into the plan's `blocked.md` under `## Answers`, dated and attributed, then:
 
 ```bash
 openlanes unblock 003 -n         # what is 003 still waiting on?
@@ -169,7 +169,7 @@ openlanes state show --plan 003 | jq '.stages[] | {agent, round, status, model, 
 | Status                            | What the harness does                                               |
 | :-------------------------------- | :------------------------------------------------------------------ |
 | `Completed`                       | moves the folder on, if the files the next state requires are there |
-| `Blocked`                         | parks the folder at ⭕️, or at 🅱️ when the note says `product`       |
+| `Blocked`                         | parks the folder at ⭕, or at 🛑 when the note says `product`       |
 | `Almost completed`, `Interrupted` | gives the agent another round, up to its limit                      |
 
 An agent that stops without signing (crashed, timed out, killed) is signed `Interrupted` by the harness, and also `Completed` if the work is on disk anyway. A round left `Started` by a harness that has since died is marked `Interrupted` and picked up by the next run.
@@ -188,7 +188,7 @@ An agent that stops without signing (crashed, timed out, killed) is signed `Inte
 
 ## GitHub and Linear
 
-- **`resync dirs`** renames folders whose emoji their contents contradict. For example, a ⚪️ with a `plan.md` becomes ⭐️. Safe to run repeatedly.
+- **`resync dirs`** renames folders whose emoji their contents contradict. For example, a ⚪ with a `plan.md` becomes ⭐. Safe to run repeatedly.
 - **`resync prs`** adds the `[NNN.MM]` prefix to pull request titles, working from the branch name first and the diff second. It reports anything ambiguous and never guesses. By default it adopts an orphan pull request as a retroactive plan; `--no-adopt` flags it instead. Needs `gh`.
 - **`linear import TEAM -p PROJECT`** creates one Linear issue per plan and one child issue per work unit. It only goes one way: nothing edited in Linear comes back. `--format json` emits the arguments the Linear MCP tools take. `--update-unchanged` includes plans that have not changed since the last import. `linear projects TEAM` lists a team's projects and which plans they cover.
 

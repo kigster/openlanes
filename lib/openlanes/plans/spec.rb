@@ -116,7 +116,21 @@ module OpenLanes
       # reads a bare `[034]` as octal 28, a silent wrong answer.
       DEPENDS_ON_KEY = "depends_on"
 
+      # Where `how-to-verify:` lives now (decision M10): a section of the
+      # spec's body, written by its author like every other, rather than a
+      # key in its frontmatter. `resync dirs` moves the key's items here.
+      HOW_TO_VERIFY_HEADING = "## How to tell it's working?"
+
+      # The heading on a line of its own, whatever follows it.
+      HOW_TO_VERIFY_LINE = /^#{Regexp.escape(HOW_TO_VERIFY_HEADING)}[ \t]*$/
+
       FILENAME = "spec.md"
+
+      # A list item under the heading; +marker+ ends at its content column.
+      LIST_ITEM = /\A(?<marker>\s*(?:[-*]|\d+\.)\s+)(?<text>.+)/
+
+      # The opening of a fenced code block, and its fence.
+      FENCE = /\A(\s*)(`{3,}|~{3,})/
 
       class << self
         # @param subject [#read]
@@ -133,11 +147,43 @@ module OpenLanes
         # @param text [String] a whole spec.md
         # @return [OpenLanes::Plans::Spec]
         def parse(text)
-          meta, = Frontmatter.split(text)
-          from(meta)
+          meta, body = Frontmatter.split(text)
+          spec = from(meta)
+          checks = (spec.how_to_verify + section_items(body)).uniq
+          checks == spec.how_to_verify ? spec : spec.with(how_to_verify: checks)
         rescue Psych::Exception => e
           new(problems: ["spec.md frontmatter is not valid YAML (#{e.message.lines.first.strip})"])
         end
+
+        # Move a `how-to-verify:` frontmatter key into the body (M10): its
+        # items are appended to `## How to tell it's working?`, which is added
+        # at the end when the spec has none. The rest of the frontmatter is
+        # kept as written, comments and all, and a frontmatter left empty is
+        # dropped.
+        #
+        # @param text [String] a whole spec.md
+        # @return [String] +text+ itself when there is no key to move, or no
+        #   way to remove it that leaves the other keys exactly as they were
+        def migrate_how_to_verify(text)
+          match = Frontmatter::PATTERN.match(text) or return text
+          meta, = Frontmatter.split(text)
+          return text unless meta.key?(HOW_TO_VERIFY_KEY)
+
+          front = without_key("#{match[1]}\n", HOW_TO_VERIFY_KEY, meta) or return text
+          items = notes(meta, HOW_TO_VERIFY_KEY, [])
+          head = front.strip.empty? ? "" : "---\n#{front}---\n"
+          "#{head}#{append_checks(match[2], items)}"
+        rescue Psych::Exception
+          text
+        end
+
+        # One check as a Markdown list item. A check written as a YAML block
+        # scalar spans lines; its continuation lines are indented under the
+        # item, so they stay part of it rather than becoming loose prose.
+        #
+        # @param item [String]
+        # @return [String] without a trailing newline
+        def list_item(item) = "- #{item.gsub("\n", "\n  ")}"
 
         # @param meta [Hash]
         # @return [OpenLanes::Plans::Spec]
@@ -156,6 +202,133 @@ module OpenLanes
         end
 
         private
+
+        # The YAML source of +yaml+ with +key+'s entry cut out, from the
+        # key's line to the end of its value as Psych located them. A regex
+        # over the text took a blank line between list items for the end of
+        # the entry, leaving the later items behind, and never matched a
+        # quoted key at all. The cut is kept only when what is left loads as
+        # the same mapping less that key; anything else (a flow mapping, a key
+        # sharing a line) is not cut.
+        #
+        # @param yaml [String]
+        # @param key [String]
+        # @param meta [Hash] +yaml+, loaded
+        # @return [String, nil]
+        def without_key(yaml, key, meta)
+          root = Psych.parse(yaml)&.root
+          return nil unless root.is_a?(Psych::Nodes::Mapping)
+
+          name, value = root.children.each_slice(2).find { |k, _| k.is_a?(Psych::Nodes::Scalar) && k.value == key }
+          return nil unless name
+
+          stop = value.end_column.zero? ? value.end_line : value.end_line + 1
+          lines = yaml.lines
+          rest = (lines[0...name.start_line] + lines[stop..].to_a).join
+          left, = Frontmatter.split("---\n#{rest}\n---\n")
+          rest if left == meta.except(key)
+        end
+
+        # The checks under `## How to tell it's working?`, in document order,
+        # up to the next heading of the same level. The owner wants how-to-test
+        # as specific and technical as it can be, and prose can be just as
+        # specific as a bullet (2026-10-14, on M10), so prose is a check too
+        # rather than the author's aside that the agents never see:
+        #
+        # - A list item is one check, with its indented continuation lines and
+        #   any fenced block indented under it, blank lines in the fence
+        #   included. Its lines lose the item's indent and keep the rest, so
+        #   a command's own indentation survives.
+        # - A prose paragraph (consecutive non-blank, non-list lines) is one
+        #   check, its lines as written.
+        # - A fenced block not indented under an item joins the prose
+        #   paragraph just before it, or is a check of its own.
+        #
+        # Inside a fence nothing is a list item or a heading, so a
+        # `- not an item` line there stays in the code. {list_item} writes any
+        # of these back as one item, which this reads back unchanged.
+        #
+        # @param body [String]
+        # @return [Array<String>]
+        def section_items(body)
+          start = body =~ HOW_TO_VERIFY_LINE or return []
+          checks = []
+          state = { kind: nil, indent: 0, fence: nil }
+          body[start..].lines.drop(1).each do |line|
+            line = line.chomp
+            if state[:fence]
+              fence_line(checks, state, line)
+            elsif line.start_with?("## ")
+              break
+            else
+              section_line(checks, state, line)
+            end
+          end
+          checks.map(&:strip)
+        end
+
+        # A line inside a fenced block, the closing fence included.
+        def fence_line(checks, state, line)
+          checks[-1] = "#{checks.last}\n#{state[:kind] == :item ? dedent(line, state[:indent]) : line}"
+          fence = state[:fence]
+          state[:fence] = nil if line.strip.match?(/\A#{Regexp.escape(fence[0])}{#{fence.length},}\z/)
+        end
+
+        # A line outside any fence: it opens a fence, an item or a paragraph,
+        # or continues the one it follows.
+        def section_line(checks, state, line)
+          if (fence = line[FENCE, 2])
+            open_fence(checks, state, line, fence)
+          elsif (item = line.match(LIST_ITEM))
+            checks << item[:text]
+            state.merge!(kind: :item, indent: item.end(:marker))
+          elsif line.strip.empty?
+            state[:kind] = :after_prose if state[:kind] == :prose
+          elsif state[:kind] == :item && line.match?(/\A[ \t]/)
+            checks[-1] = "#{checks.last}\n#{dedent(line, state[:indent])}"
+          elsif state[:kind] == :prose
+            checks[-1] = "#{checks.last}\n#{line}"
+          else
+            checks << line
+            state[:kind] = :prose
+          end
+        end
+
+        # An indented fence under an open item belongs to it; any other joins
+        # the paragraph before it, or starts a check of its own.
+        def open_fence(checks, state, line, fence)
+          if state[:kind] == :item && line.match?(/\A[ \t]/)
+            checks[-1] = "#{checks.last}\n#{dedent(line, state[:indent])}"
+          elsif %i[prose after_prose].include?(state[:kind])
+            checks[-1] = "#{checks.last}\n#{line}"
+            state[:kind] = :prose
+          else
+            checks << line
+            state[:kind] = :prose
+          end
+          state[:fence] = fence
+        end
+
+        # +line+ less up to +indent+ leading blanks.
+        def dedent(line, indent) = line.sub(/\A[ \t]{0,#{indent}}/, "")
+
+        # @param body [String]
+        # @param items [Array<String>]
+        # @return [String]
+        def append_checks(body, items)
+          list = items.map { "#{list_item(it)}\n" }.join
+          body = "#{body}\n" unless body.end_with?("\n")
+          start = body =~ HOW_TO_VERIFY_LINE
+          return "#{body.rstrip}\n\n#{HOW_TO_VERIFY_HEADING}\n\n#{list}" unless start
+
+          heading_end = start + body[start..].index("\n").to_i + 1
+          rest = body[heading_end..].to_s
+          stop = rest =~ /^## / || rest.length
+          section = rest[0...stop].rstrip
+          joined = section.empty? ? "\n#{list}" : "#{section}\n#{list}"
+          tail = stop < rest.length ? "\n#{rest[stop..]}" : ""
+          "#{body[0...heading_end]}#{joined}#{tail}"
+        end
 
         # @return [Symbol, nil]
         def choice(meta, key, allowed, default, problems)

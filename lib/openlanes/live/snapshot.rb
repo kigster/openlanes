@@ -141,7 +141,8 @@ module OpenLanes
           interrupted: interrupted(stages, rows),
           claimed_by:  claimed_by(ordinal),
           unacked:     Plans.mailbox(subject.feature.path).unacked,
-          last_known:  last_known(state) }
+          last_known:  last_known(state),
+          locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash }
       end
 
       # @param status [OpenLanes::Plans::Status]

@@ -34,31 +34,73 @@ RSpec.describe "openlanes resync", :tree do
       expect(unwrapped(err)).to include("already named")
     end
 
+    it "lists a spec whose how-to-verify: key moves, and rewrites it for real" do
+      plans { |t| t.plan("001.00", :new, "checked", files: { "spec.md" => "---\nhow-to-verify: [x]\n---\n#{spec_body}" }) }
+      out, err, = run(command)
+      expect(out).to include("001.00━━⚪━━❯checked/spec.md")
+      expect(unwrapped(err)).to include("1 change pending")
+
+      _out, err, = run(command, dry_run: false)
+      expect(unwrapped(err)).to include("Renamed 0 folders, rewrote 1 spec.")
+    end
+
+    describe "lock files" do
+      let(:dir) { plans { |t| t.plan("001.00", :new, "held", files: { "spec.md" => spec_body }) } && Dir.glob(File.join(plans_root, "001.00*")).first }
+
+      def lock(pid:, host:)
+        File.write(File.join(dir, OpenLanes::Plans::Lock::FILENAME),
+          JSON.generate(pid:, host:, started_at: "2026-10-13T09:00:00Z"))
+      end
+
+      it "names another machine's lock and leaves it" do
+        lock(pid: 1, host: "elsewhere.example")
+        _out, err, = run(command, dry_run: false)
+
+        expect(unwrapped(err)).to include("locked by pid 1 on elsewhere.example", "another machine's lock; left alone")
+      end
+
+      it "says a dead local lock would be cleared, and clears it for real" do
+        lock(pid: Process.wait(Process.spawn("true")), host: Socket.gethostname)
+        _out, err, = run(command)
+        expect(unwrapped(err)).to include("its process is gone; would clear it")
+
+        _out, err, = run(command, dry_run: false)
+        expect(unwrapped(err)).to include("its process is gone; cleared")
+      end
+
+      it "says a live lock keeps the folder's name" do
+        lock(pid: Process.pid, host: Socket.gethostname)
+        _out, err, = run(command)
+
+        expect(unwrapped(err)).to include("an agent is working in it; not renamed")
+      end
+    end
+
     context "with a folder whose contents outgrew its name" do
       before do
-        # A ⚪️ folder that has grown a plan.md with work units best-fits ⭐️ whatever its name says.
+        # A ⚪ folder that has grown a plan.md with work units best-fits ⭐ whatever its name says.
         plans { |t| t.plan("001.00", :new, "outgrown", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       end
 
       it "prints the rename as a machine-readable row and leaves the disk alone" do
         out, err, = run(command)
 
-        expect(out).to include("001.00-⚪️ → outgrown\t001.00-⭐️ → outgrown")
-        expect(Dir.children(plans_root)).to include("001.00-⚪️ → outgrown")
-        expect(unwrapped(err)).to include("1 rename pending", "without --dry-run")
+        expect(out).to include("001.00━━⚪━━❯outgrown\t001.00━━⭐━━❯outgrown")
+        expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯outgrown")
+        expect(unwrapped(err)).to include("1 change pending", "without --dry-run")
       end
 
       it "renames without --dry-run and says how many folders moved" do
         _out, err, = run(command, dry_run: false)
 
-        expect(Dir.children(plans_root)).to include("001.00-⭐️ → outgrown")
+        expect(Dir.children(plans_root)).to include("001.00━━⭐━━❯outgrown")
         expect(unwrapped(err)).to include("Renamed 1 folder")
       end
 
       it "keeps the rows and drops the prose under --quiet" do
         out, err, = run(command, quiet: true)
 
-        expect(out).to include("001.00-⚪️ → outgrown")
+        expect(out).to include("001.00━━⚪━━❯outgrown")
         expect(err).to eq("")
       end
     end

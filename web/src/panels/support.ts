@@ -27,5 +27,8 @@ export const isSendKey = (e: { key: string; metaKey: boolean; ctrlKey: boolean }
 /** The B<n> a command addresses a question by; the question's id carries the plan too. */
 export const questionRef = (q: Question): string => `B${q.number}`;
 
-/** The red block emoji the status bar uses, so the backlog marks blocked plans the same way. */
-export const BLOCK_EMOJI = new Set(["🅱️", "⭕️"]);
+/**
+ * The red block emoji the status bar uses, so the backlog marks blocked plans the same way. Holds the single
+ * code point forms and the old VS16 forms, so a snapshot from an unmigrated repo still marks blocked plans.
+ */
+export const BLOCK_EMOJI = new Set(["⭕", "🛑", "⭕️", "🅱️", "🅱"]);

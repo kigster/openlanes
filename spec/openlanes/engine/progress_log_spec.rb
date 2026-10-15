@@ -32,7 +32,7 @@ RSpec.describe OpenLanes::Engine::ProgressLog do
       line = described_class.render(
         "editing spec.md",
         plan:    "003.00",
-        status:  "⭐️ Planned",
+        status:  "⭐ Planned",
         agent:   "yoda-writer",
         seconds: 42,
         round:   "01",

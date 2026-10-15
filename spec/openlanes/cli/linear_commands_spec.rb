@@ -97,6 +97,17 @@ RSpec.describe "openlanes linear", :tree do
 
       # The command has no push of its own, so a real run must not read as
       # though something reached Linear.
+      # Decision N3: Linear reads the inactive subfolders too, so a plan
+      # archived before its first import still reaches the tracker.
+      it "imports a plan that has moved into archive/" do
+        plans do |t|
+          t.plan("002.00", :approved, "shipped", under: "archive", archived_on: Date.new(2026, 9, 1), files: { "spec.md" => spec_body })
+        end
+        out, = run(command, team: "TAX", project: "Tax Rule DSL")
+
+        expect(out).to include("issue\t002.00")
+      end
+
       it "says nothing was sent when run without --dry-run" do
         _out, err, = run(command, team: "TAX", project: "Tax Rule DSL", dry_run: false)
 

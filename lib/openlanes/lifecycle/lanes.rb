@@ -8,7 +8,7 @@ module OpenLanes
     # trusts, so research and rewriting are skipped: the harness writes the
     # blank `plan.md` yoda-writer would have left and moves the folder to 📋.
     # A plan in the `quick` lane is a short mechanical task: the harness
-    # writes a one-unit `plan.md` and moves the folder to ⭐️, where
+    # writes a one-unit `plan.md` and moves the folder to ⭐, where
     # r2d2-mechanic is the only builder that serves the lane.
     #
     # Both moves are ordinary transitions through the state machine, so the

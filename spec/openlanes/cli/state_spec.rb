@@ -40,6 +40,16 @@ RSpec.describe "openlanes state", :tree do
     expect(JSON.parse(out)["signatures"].map { |s| s["status"] }).to eq(["Started"])
   end
 
+  # Decision N3: an archived plan is still a plan; `--plan` finds it there.
+  it "shows a plan that has moved into archive/" do
+    plans do |t|
+      t.plan "002.00", :approved, "shipped", under: "archive", archived_on: Date.new(2026, 9, 1), files: { "spec.md" => spec_body }
+    end
+    _out, err, status = show(plan: "002")
+
+    expect([status, err]).to eq([0, ""])
+  end
+
   it "refuses a round that is not a number" do
     _out, err, status = sign(plan: "001", agent: "luke-backend", round: "one", status: "Started")
     expect([status, err]).to match([64, a_string_including("--round must be a number")])

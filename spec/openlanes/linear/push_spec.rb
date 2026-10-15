@@ -130,7 +130,7 @@ RSpec.describe OpenLanes::Linear::Push, :tree do
   end
 
   describe "what it records" do
-    let(:record) { OpenLanes::Linear::Issues.new(dir: File.join(plans_root, "002.00-✅ → dev-foundation")) }
+    let(:record) { OpenLanes::Linear::Issues.new(dir: File.join(plans_root, "002.00━━✅━━❯dev-foundation")) }
 
     before { push.call }
 
@@ -162,7 +162,7 @@ RSpec.describe OpenLanes::Linear::Push, :tree do
     end
 
     it "updates rather than duplicates once the plan changes underneath it" do
-      File.write(File.join(plans_root, "002.00-✅ → dev-foundation", "plan.md"),
+      File.write(File.join(plans_root, "002.00━━✅━━❯dev-foundation", "plan.md"),
         "## PR-1 — Test rig, rewritten\n\nDifferent now.\n")
       calls.clear
       described_class.new(import: fresh_import, api:, tree:).call
@@ -204,7 +204,7 @@ RSpec.describe OpenLanes::Linear::Push, :tree do
     it "writes no linear.md claiming an issue that was never made" do
       push.call
 
-      expect(File.exist?(File.join(plans_root, "002.00-✅ → dev-foundation", "linear.md"))).to be(false)
+      expect(File.exist?(File.join(plans_root, "002.00━━✅━━❯dev-foundation", "linear.md"))).to be(false)
     end
   end
 end

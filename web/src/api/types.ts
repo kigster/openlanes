@@ -72,7 +72,7 @@ export interface Question {
   heading: string;
   body: string; // Markdown
   agent: string | null; // who asked, when the ledger says
-  owner: "technical" | "product"; // ⭕️ or 🅱️
+  owner: "technical" | "product"; // ⭕ or 🛑
   answers: string[] | null; // ["yes", "no"] when the agent declared it a yes/no question (W30)
   held: boolean; // a person chose Hold blocked
   asked_at: Iso | null;
@@ -111,6 +111,7 @@ export interface Plan {
   claimed_by: string | null; // Node.id holding the claim
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
+  locked: { pid: number; host: string; started_at: Iso } | null; // locked-by.pid in the plan folder, alive or not
 }
 
 export interface LogLine {

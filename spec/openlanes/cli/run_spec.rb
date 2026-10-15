@@ -83,7 +83,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
   # 🟡 Building is the cheapest *stable* assignable state: it sits inside a
   # {StateMachine::FAMILIES} group, so the resync each round runs cannot move
-  # it on its own. A ⭐️ folder would not do — its contents already best-fit
+  # it on its own. A ⭐ folder would not do — its contents already best-fit
   # 🟡, so the first round's resync advances it before any agent has run,
   # and every "nothing happened" assertion below would be false.
   def building_plan(ordinal = "001.00", slug = "tax-rule-dsl")
@@ -240,13 +240,13 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
 
     # The per-round resync used to run with dry_run: false even here, so a
-    # "dry" run renamed a ⭐️ folder whose plan.md already existed. A preview
+    # "dry" run renamed a ⭐ folder whose plan.md already existed. A preview
     # that moves folders is not a preview.
     it "renames nothing, even a folder the resync would promote" do
       plans { |t| t.plan("002.00", :planned, "stays-put", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       run
 
-      expect(Dir.children(plans_root).grep(/stays-put/)).to eq(["002.00-⭐️ → stays-put"])
+      expect(Dir.children(plans_root).grep(/stays-put/)).to eq(["002.00━━⭐━━❯stays-put"])
     end
 
     it "says where the progress log is going before the loop starts" do
@@ -474,7 +474,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(status).to eq(0)
     end
 
-    # luke `starts_as` 🟡, so a ⭐️ folder moves the moment he is dispatched.
+    # luke `starts_as` 🟡, so a ⭐ folder moves the moment he is dispatched.
     # The stub signs Almost completed rather than Completed: the attempt is
     # then ok without claiming 🟢, and the plan sits at 🟡 where it landed.
     it "shows a plan that actually moved as from -> to" do
@@ -629,7 +629,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(status).to eq(0)
     end
 
-    # ⭕️ is stepped around, never assigned — and stepping around in silence
+    # ⭕ is stepped around, never assigned — and stepping around in silence
     # would leave the human unaware they are the bottleneck.
     it "names the plans waiting on a human, with the unblock line to type" do
       plans { |t| t.plan("001.00", :blocked, "stuck", files: { "blocked.md" => "# Blocked\n\n## B1. Which vendor\n" }) }
