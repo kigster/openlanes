@@ -1,6 +1,6 @@
 # Implementation plan: the contract between luke-backend and rey-frontend
 
-Owner: `luke-backend`. Renamed to `contract.md` by B5; until B5 lands it lives here.
+Owner: `luke-backend`. Renamed from `implementation-plan.md` by B5 (this folder only; older folders keep their names).
 
 ## Baseline
 
@@ -57,6 +57,7 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 ## Known gaps
 
 - D8 option (c): hand edits to `plan.md` checkboxes take no lock.
+- `rg implementation-plan lib agents` is not empty: the agent prompts name the legacy files so older folders keep working (decision D3).
 
 ## Progress
 
@@ -64,8 +65,10 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 - [x] B2
 - [x] B3
 - [x] B4
-- [ ] B5
-- [ ] B6
+- [x] B5
+- [x] B6
+- [x] F1
+- [x] F2
 
 ## Snapshot wire (amended: added for rey's blocked.md B1, option 1)
 
@@ -88,3 +91,18 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 
 - Checks at STOP: affected suites 778 examples, 0 failures; `rubocop lib spec` clean. Full `bundle exec rspec` last run green before B3 (2251, 0 failures); rerun it first.
 - Next: B5 (plan.md units, `contract.md` rename, prompts ask for `mail ack` and `state resume`), then B6.
+
+## B5, B6, F1, F2 (finishing session, 2026-10-14)
+
+- Salvaged the uncommitted round-1 work as five commits, rebased on `origin/main` (no conflicts).
+- B5 done. `palpatine-planner` writes `## Backend`, `## Frontend` and `## HTTP surface` inside `plan.md`. `rey-frontend` declares `needs: ["plan.md#frontend"]`: `Routing.units?` reads `file#section` as the `###` headings under that `##`, and falls back to `plan-<section>.md` when `plan.md` has no such section, so no folder migrates. `luke-backend` and `rey-frontend` ledgers are `[plan.md, pull-requests.md, plan-<half>.md]`. Prompts ask for `mail ack` after each read and for `state resume` on INTERRUPT; the RESUME mail survives only as the human's note from the page (`Live::Commands`). `openlanes docs`, `docs/WORKFLOW.md` and the `openlanes-documents` skill name `contract.md` and `openapi.yaml`.
+- B6 done. `Presentation::ApiDocs#call(tree)` and `openlanes api docs`: found files on STDOUT with an `npx @redocly/cli build-docs` line, problems on STDERR as `path: reason`, exit 65 when any file is bad.
+- F1 done (decisions D1, D2). `Board::Row#unacked`, filled in `Dispatcher#row_for` through `Board::Row.unacked_in`; `UnackedBadge` on the plan row; `LastKnownTable` in the agent drawer. Snapshot key is `last_known` (amended: D1 said `last_known_state`; the shorter key shipped with B2 and the page reads it).
+- F2 done: `spec/integration/mail_round_trip_spec.rb`.
+
+## Review fixes (Grok on PR 28, 2026-10-14)
+
+- Amends B4: a drained message is deduped by identity, not number. `mail send` writes an `id` (UUID) into each message (schema updated); `PlanState#deliver!` matches on `id` when both sides have one, else on from, to, at and body. A different message whose number is taken (a worktree's `state.json` numbers independently) is kept under the next free number. `mailbox.md` messages are matched by content too.
+- Amends B3/B4: `Live::Mail#drain` acks an entry only after the dispatcher kept it; one whose plan this checkout cannot find stays pending and is retried each tick. An invalid message is acked and logged, since a retry cannot make it valid.
+- Amends B4: the drain covers every plan the stream has mail for (`Live::Mail#plans_since`, a cursor from "0" at startup), not only plans with an agent running, so a worktree's message is kept before the one-hour trim.
+- `mail ack` on a `mailbox.md` number says it is a legacy message and that nothing was written.

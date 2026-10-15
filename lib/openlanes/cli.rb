@@ -30,10 +30,15 @@ require_relative "cli/worktree/worktree"
 require_relative "cli/mail/mail"
 require_relative "cli/mail/subcommands/send"
 require_relative "cli/mail/subcommands/read"
+require_relative "cli/mail/subcommands/ack"
+require_relative "cli/mail/subcommands/render"
 require_relative "cli/state/state"
 require_relative "cli/state/subcommands/sign"
 require_relative "cli/state/subcommands/show"
+require_relative "cli/state/subcommands/resume"
 require_relative "cli/skills/subcommands/install"
+require_relative "cli/api/api"
+require_relative "cli/api/subcommands/docs"
 
 module OpenLanes
   # The command line. Every command is a thin shell over one library class:
@@ -99,7 +104,7 @@ module OpenLanes
         "mail",
         "state",
         "eval"
-      group "Reference", "docs", "states", "linear", "skills", "completion", "version"
+      group "Reference", "docs", "api", "states", "linear", "skills", "completion", "version"
     end
 
     register "init", Init
@@ -143,6 +148,8 @@ module OpenLanes
     register "mail" do |prefix|
       prefix.register "send", Mail::Send
       prefix.register "read", Mail::Read
+      prefix.register "ack", Mail::Ack
+      prefix.register "render", Mail::Render
     end
 
     # What every agent shells out to at the start and end of its round. See
@@ -150,11 +157,17 @@ module OpenLanes
     register "state" do |prefix|
       prefix.register "sign", State::Sign
       prefix.register "show", State::Show
+      prefix.register "resume", State::Resume
     end
 
     # Copies the skills bundled with the gem; see {OpenLanes::Skills}.
     register "skills" do |prefix|
       prefix.register "install", Skills::Install
+    end
+
+    # Lists and checks the OpenAPI contracts plans carry; see {OpenLanes::Presentation::ApiDocs}.
+    register "api" do |prefix|
+      prefix.register "docs", API::Docs
     end
 
     register "completion", ::Dry::CLI::Autocomplete::Command[::OpenLanes::CLI]

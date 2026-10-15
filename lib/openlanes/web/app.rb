@@ -14,7 +14,7 @@ module OpenLanes
       # The plan files the drawer and the preview may read. A name is looked
       # up in this list and never joined onto a path as typed, which is what
       # makes `../` meaningless here rather than merely refused.
-      PLAN_FILES = %w[spec.md plan.md blocked.md research.md design.md].freeze
+      PLAN_FILES = %w[spec.md plan.md contract.md blocked.md research.md design.md].freeze
 
       # Host headers the server answers. Loopback only, so a page on another
       # site cannot reach it through DNS rebinding.

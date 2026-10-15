@@ -52,6 +52,10 @@ module OpenLanes
     # @!attribute [r] session
     #   @return [String, nil] the CLI's session id, once its stream named it;
     #     what a compaction resumes (W28)
+    # @!attribute [r] unacked
+    #   @return [Integer] messages in the plan's mailbox nobody has acked yet.
+    #     Data for the screen only (D2): no round, route or rename reads it,
+    #     because an unanswered message is a warning, never an input.
     Board::Row = Data.define(:key,
       :at,
       :ordinal,
@@ -75,10 +79,25 @@ module OpenLanes
       :history,
       :context,
       :since,
-      :session) do
+      :session,
+      :unacked) do
       def initialize(pr: nil, phase: nil, remaining: nil, frame: 0, bold: false, message: nil,
-        elapsed: 0, subagents: 0, history: [], context: nil, since: nil, session: nil, **rest)
+        elapsed: 0, subagents: 0, history: [], context: nil, since: nil, session: nil, unacked: 0, **rest)
         super
+      end
+
+      # The count a row carries, read from the plan folder's mailbox, so the
+      # dispatcher fills the field in one call and the snapshot and the board
+      # cannot count differently (both ask Mailbox#unacked).
+      #
+      # @param dir [String] the plan folder
+      # @return [Integer] 0 for a plan nobody has written to, and for one
+      #   whose `state.json` cannot be read: a count for the screen must not
+      #   stop the tick that draws it
+      def self.unacked_in(dir)
+        Plans.mailbox(dir).unacked
+      rescue OpenLanes::Error, SystemCallError
+        0
       end
 
       # @param history [Array<String>] newest first

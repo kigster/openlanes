@@ -152,7 +152,19 @@
         }
       ],
       "interrupted": null,
-      "claimed_by": "3f9a0c7be21d44a8f6031c5d"
+      "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+      "unacked": 1,
+      "last_known": [
+        {
+          "agent": "rey-frontend",
+          "source": "harness",
+          "at": "2026-10-13T08:58:00Z",
+          "round": 1,
+          "status": "Interrupted",
+          "next_step": null,
+          "note": "harness died; last seen writing plan-frontend.md"
+        }
+      ]
     },
     {
       "ordinal": "005.00",
@@ -204,7 +216,9 @@
       },
       "questions": [],
       "interrupted": null,
-      "claimed_by": "3f9a0c7be21d44a8f6031c5d"
+      "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+      "unacked": 0,
+      "last_known": []
     },
     {
       "ordinal": "006.00",
@@ -265,7 +279,9 @@
         }
       ],
       "interrupted": null,
-      "claimed_by": "3f9a0c7be21d44a8f6031c5d"
+      "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+      "unacked": 0,
+      "last_known": []
     }
   ],
   "backlog": [

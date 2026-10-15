@@ -78,6 +78,20 @@ export interface Question {
   asked_at: Iso | null;
 }
 
+/**
+ * Where one agent stood when its round ended early (LastKnownState in Ruby): its own `state resume` record, or the
+ * harness's when it died first. Shown to a person; never an input to anything on the page.
+ */
+export interface LastKnown {
+  agent: string;
+  source: "agent" | "harness";
+  at: Iso;
+  round: number;
+  status: string; // a ledger status: "Interrupted", "Needs input", ...
+  next_step: string | null;
+  note: string | null;
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
@@ -95,6 +109,8 @@ export interface Plan {
   questions: Question[];
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim
+  unacked: number; // mailbox messages nobody has acked; a warning only (D2)
+  last_known: LastKnown[]; // one per agent with a resume record, empty when none
 }
 
 export interface LogLine {

@@ -135,6 +135,12 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .d-ctx-bar { position: relative; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 10%, transparent); }
 .d-ctx-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--lane-full); transition: width .4s ease; }
 .d-ctx-bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--highlight); }
+.d-last-known { margin: 0 0 16px; font-size: 13px; overflow-x: auto; }
+.d-last-known h3 { margin: 0 0 6px; font-size: 13px; color: var(--ink); }
+.d-last-known table { width: 100%; border-collapse: collapse; }
+.d-last-known th, .d-last-known td { padding: 4px 6px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--hairline); }
+.d-last-known thead th { color: var(--ink-soft); font-weight: 600; }
+.d-last-known tbody th { color: var(--ink); font-weight: 600; }
 .d-block { margin: 0 0 16px; padding: 12px; border-radius: 8px;
            background: color-mix(in srgb, var(--alarm) 12%, transparent); border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); }
 .d-block p { margin: 0 0 10px; }

@@ -73,8 +73,9 @@ module OpenLanes
       def on_board = @publisher.to_proc
 
       # Wire the run in: the run state a previous engine left is taken back
-      # on the first tick, commands are applied at the top of each tick, and
-      # the log is heard from now on.
+      # on the first tick, commands are applied at the top of each tick, mail
+      # published to Redis is drained into the plans' `state.json`, and the
+      # log is heard from now on.
       #
       # @param dispatcher [OpenLanes::Engine::Dispatcher]
       # @return [void]
@@ -83,6 +84,7 @@ module OpenLanes
         @publisher.on_lost { |ordinals| dispatcher.fence(ordinals) }
         dispatcher.before_tick(&@record)
         dispatcher.before_tick(&@commands)
+        dispatcher.mail = Mail.new(store: @store, keys: @keys)
       end
 
       # The run is over: the run state is written down, claims go back, and

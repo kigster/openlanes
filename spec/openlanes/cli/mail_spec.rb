@@ -10,6 +10,10 @@ RSpec.describe "openlanes mail", :tree do
     path
   end
 
+  # `send` publishes when Redis answers; these examples are about the file,
+  # and must not reach a developer's own Redis. See cli/mail/send_spec.rb.
+  before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "no Redis in this spec") }
+
   def run(command, **)
     out = CapturedStream.new
     err = CapturedStream.new
@@ -31,6 +35,10 @@ RSpec.describe "openlanes mail", :tree do
   def send(**) = run(OpenLanes::CLI::Mail::Send.new, **)
 
   def read(**) = run(OpenLanes::CLI::Mail::Read.new, **)
+
+  def ack(**) = run(OpenLanes::CLI::Mail::Ack.new, **)
+
+  def render(**) = run(OpenLanes::CLI::Mail::Render.new, **)
 
   it "delivers a message from one half to the other" do
     _out, err, status = send(body: "GET /returns/:id is up", plan: "001.00", from: "luke-backend", to: "rey-frontend")
@@ -106,6 +114,73 @@ RSpec.describe "openlanes mail", :tree do
     aggregate_failures do
       expect(err).to include("body")
       expect(status).to eq(64)
+    end
+  end
+
+  describe "ack" do
+    it "marks the reader's message read, and only that one" do
+      send(body: "one", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      send(body: "two", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      _out, err, status = ack(number: "2", plan: "001.00", for: "rey-frontend")
+
+      aggregate_failures do
+        expect(status).to eq(0)
+        expect(err).to include("#2 read by rey-frontend")
+        expect(OpenLanes::Plans::PlanState.for(folder).messages.map { |m| m["read"] }).to eq(%w[no yes])
+      end
+    end
+
+    it "says an ack on a mailbox.md message wrote nothing, rather than that it was recorded" do
+      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+      _out, err, status = ack(number: "1", plan: "001.00", for: "rey-frontend")
+
+      aggregate_failures do
+        expect(status).to eq(0)
+        expect(err).to include("#1 is a legacy message", "nothing was written")
+        expect(err).not_to include("read by")
+        expect(OpenLanes::Plans::PlanState.for(folder)).not_to exist
+      end
+    end
+
+    it "exits non-zero on a number with no message" do
+      _out, err, status = ack(number: "7", plan: "001.00", for: "rey-frontend")
+
+      aggregate_failures do
+        expect(status).to eq(65)
+        expect(err).to include("no message #7")
+      end
+    end
+
+    it "keeps both acks when two readers ack at the same moment" do
+      send(body: "for rey", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      send(body: "for luke", plan: "001.00", from: "rey-frontend", to: "luke-backend")
+
+      [[1, "rey-frontend"], [2, "luke-backend"]].map do |number, reader|
+        Thread.new { OpenLanes::Plans.mailbox(folder).ack(number, by: reader) }
+      end.each(&:join)
+
+      expect(OpenLanes::Plans::PlanState.for(folder).messages.map { |m| m["read"] }).to eq(%w[yes yes])
+    end
+
+    it "prints nothing under --quiet" do
+      send(body: "one", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      _out, err, status = ack(number: "1", plan: "001.00", for: "rey-frontend", quiet: true)
+
+      expect([err, status]).to eq(["", 0])
+    end
+  end
+
+  describe "render" do
+    it "prints the whole exchange to STDOUT and writes nothing in the plan folder" do
+      send(body: "GET /returns/:id is up", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      before = Dir.children(folder).sort.to_h { |f| [f, File.mtime(File.join(folder, f))] }
+      out, _err, status = render(plan: "001.00")
+
+      aggregate_failures do
+        expect(status).to eq(0)
+        expect(out).to include("luke-backend → rey-frontend · unread", "GET /returns/:id is up")
+        expect(Dir.children(folder).sort.to_h { |f| [f, File.mtime(File.join(folder, f))] }).to eq(before)
+      end
     end
   end
 end

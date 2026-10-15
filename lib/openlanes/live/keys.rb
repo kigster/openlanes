@@ -79,6 +79,23 @@ module OpenLanes
       # @return [String]
       def copilot_session(of = node) = "#{base}:#{of}:copilot-session"
 
+      # Stream: `{json}`, one mailbox message and the plan it belongs to,
+      # what `openlanes mail send` publishes after writing `state.json`
+      # (plan 003, B3). One stream per checkout; the plan rides in the entry,
+      # and each plan reads it through a group of its own ({Keys#mail_group}).
+      #
+      # @param of [String]
+      # @return [String]
+      def mail(of = node) = "#{base}:#{of}:mail"
+
+      # The consumer group one plan drains {#mail} through. Every group sees
+      # every entry, so a plan's harness thread acks what it read, its own
+      # or not, without taking anything from another plan's.
+      #
+      # @param plan [#to_s] e.g. "003.00"
+      # @return [String]
+      def mail_group(plan) = "mail:#{plan}"
+
       # Pub/sub channel: one chat's messages, joins, leaves and idle notices
       # (plan 006). Redis delivers a `PUBLISH` to every database's
       # subscribers, so the database is part of every chat channel's name: a
@@ -137,6 +154,10 @@ module OpenLanes
       # Length of {#copilot}, kept approximately: a conversation the page
       # can scroll back through, not an archive.
       COPILOT_LENGTH = 500
+
+      # Seconds a message stays in {#mail}. `state.json` is the record; the
+      # stream only has to outlast a harness tick, and an hour is generous.
+      MAIL_TTL = 3600
 
       # Seconds a snapshot outlives its last refresh.
       SNAPSHOT_TTL = 30

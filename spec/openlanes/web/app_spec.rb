@@ -375,7 +375,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
   describe "GET /api/plans/:ordinal/files/:name" do
     before do
       plans do |t|
-        t.plan("004.00", :new, "web-control-room", files: { "spec.md" => "# The spec\n", "secret.txt" => "no" })
+        t.plan("004.00", :new, "web-control-room", files: { "spec.md" => "# The spec\n", "contract.md" => "# The contract\n", "secret.txt" => "no" })
       end
     end
 
@@ -383,6 +383,11 @@ RSpec.describe OpenLanes::Web::App, :tree do
       get "/api/plans/004/files/spec.md"
       expect([last_response.status, last_response.content_type, last_response.body])
         .to eq([200, "text/markdown;charset=utf-8", "# The spec\n"])
+    end
+
+    it "serves the contract the two build halves share" do
+      get "/api/plans/004.00/files/contract.md"
+      expect(last_response.body).to eq("# The contract\n")
     end
 
     it "refuses a file that is not a plan document" do

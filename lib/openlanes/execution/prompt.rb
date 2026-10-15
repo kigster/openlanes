@@ -107,9 +107,9 @@ module OpenLanes
           session and the same round on plan #{subject.feature.ordinal}.
 
           The INTERRUPT you were sent was only to pause you for the compaction.
-          It is over: do not end your turn because of it. Read your RESUME note,
+          It is over: do not end your turn because of it. Read your resume record,
 
-              #{cli} mail read --dir "#{plans_dir}" --plan #{subject.feature.ordinal} --for #{agent.name}
+              #{cli} state show --dir "#{plans_dir}" --plan #{subject.feature.ordinal} | jq '."last-known-state"."#{agent.name}"'
 
           then carry on from its exact next step, as your original instructions
           say, and sign your ledger when the work is done, as before. If you had
@@ -279,7 +279,13 @@ module OpenLanes
               #{cli} mail read --dir "#{plans_dir}" --plan #{plan} --for #{agent.name}
 
           Pass `--after N`, with the number of the last message you have read,
-          to see only what is new. Write to it when you land an interface your
+          to see only what is new. Right after reading a message addressed to
+          you, ack it by its number, so the page stops warning that it is
+          unread:
+
+              #{cli} mail ack --dir "#{plans_dir}" --plan #{plan} --for #{agent.name} N
+
+          Write to it when you land an interface your
           partner is waiting on, when you amend the contract, when you need
           something from their half, and when you finish:
 
@@ -288,7 +294,7 @@ module OpenLanes
           Every message is appended with a number and a timestamp and never
           edited, so a person can read the exchange after the round. A question
           your partner has not answered within a few steps is not a reason to
-          stop: write your assumption into implementation-plan.md and carry on.
+          stop: write your assumption into contract.md and carry on.
         SECTION
       end
 
@@ -296,9 +302,11 @@ module OpenLanes
       # the advisory clock writes into it whether or not anyone is watching.
       #
       # INTERRUPT is what makes a restart after Ctrl-C safe: the agent that
-      # was cut off leaves a mailbox note to whoever picks the plan up, and
-      # every agent is told to read its mail first, so the next run resumes
-      # from the note rather than redoing work already on disk.
+      # was cut off leaves a resume record (`state resume`, plan 003) for
+      # whoever picks the plan up, and every agent is told to read it first,
+      # so the next run resumes from it rather than redoing work already on
+      # disk. A record, not a mail: fixed fields the next round can act on,
+      # and the harness writes one itself when the agent could not.
       #
       # @param control [String, nil]
       # @param agent [OpenLanes::Agents::Agent]
@@ -328,21 +336,25 @@ module OpenLanes
 
           INTERRUPT means the operator pressed Ctrl-C and the run will be started
           again later. Start nothing new. Finish the write you are in the middle
-          of, so no file is left half-written, then leave a resume note for
+          of, so no file is left half-written, then leave a resume record for
           whoever runs next — most likely you — saying what is done, what is
-          not, and the exact next step:
+          not, the exact next step and the files you touched:
 
-              #{cli} mail send --dir "#{plans_dir}" --plan #{plan} --from #{agent.name} --to #{agent.name} "RESUME: ..."
+              #{cli} state resume --dir "#{plans_dir}" --plan #{plan} --agent #{agent.name} --round #{round} --done "A,B" --remaining "C" --next-step "..." --files "x.rb,y.rb"
 
           Then sign `--status Interrupted`, with no `--next`, and
           end your turn.
 
-          Before you start, check for such a note from an earlier run:
+          Before you start, check for such a record from an earlier run, and
+          read your mail, where a person may have left a RESUME note:
 
+              #{cli} state show --dir "#{plans_dir}" --plan #{plan} | jq '."last-known-state"."#{agent.name}"'
               #{cli} mail read --dir "#{plans_dir}" --plan #{plan} --for #{agent.name}
 
-          If there is a RESUME note, continue from it and do not redo what it
-          says is done; check the files it names rather than taking it on trust.
+          If there is a record, continue from its next step and do not redo what
+          it says is done; check the files it names rather than taking it on
+          trust. A record whose source is "harness" was written for you after
+          you were stopped: it holds only what the harness saw.
         SECTION
       end
 

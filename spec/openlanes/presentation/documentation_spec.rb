@@ -36,6 +36,15 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       end
     end
 
+    # Plan 003 folded the units into plan.md and renamed the contract.
+    it "names contract.md and neither of the files it replaced" do
+      aggregate_failures do
+        expect(document).to include("`contract.md`", "`openapi.yaml`", "`## Frontend`")
+        expect(document).not_to include("implementation-plan.md")
+        expect(document).not_to include("plan-backend.md")
+      end
+    end
+
     it "renders every transition into the mermaid diagram" do
       diagram = document[/```mermaid\n(.*?)```/m, 1]
 

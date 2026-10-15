@@ -139,7 +139,9 @@ module OpenLanes
           pr:          pull_request(subject),
           questions:   questions(subject, state),
           interrupted: interrupted(stages, rows),
-          claimed_by:  claimed_by(ordinal) }
+          claimed_by:  claimed_by(ordinal),
+          unacked:     Plans.mailbox(subject.feature.path).unacked,
+          last_known:  last_known(state) }
       end
 
       # @param status [OpenLanes::Plans::Status]
@@ -253,6 +255,18 @@ module OpenLanes
         return nil unless last && last["status"] == "Interrupted" && rows.none? { it.agent == last["agent"] && it.running? }
 
         { agent: last["agent"], at: last["finished_at"] || last["started_at"], note: last["note"].to_s }
+      end
+
+      # Where each interrupted agent stood, as the next round will read it.
+      # Read-only: an unacked count or a resume record never changes a round.
+      #
+      # @param state [OpenLanes::Plans::PlanState]
+      # @return [Array<Hash>] `LastKnown`, one per agent
+      def last_known(state)
+        state.last_known_states.map do |agent, entry|
+          { agent:, source: entry.source, at: entry.at, round: entry.round, status: entry.status,
+            next_step: entry.next_step, note: entry.note }
+        end
       end
 
       # @param ordinal [String]

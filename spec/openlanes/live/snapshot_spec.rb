@@ -86,6 +86,12 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       state = OpenLanes::Plans::PlanState.for(path_of("001.00"))
       state.stage!(agent: "luke-backend", round: 1, status: "Blocked", from: "building", effort: "high")
       state.sign!(agent: "luke-backend", round: 1, status: "Blocked", note: "technical", at: at)
+      state.record_last_known("rey-frontend",
+        OpenLanes::Plans::LastKnownState.new(source: "harness",
+          round: 1,
+          status: "Interrupted",
+          next_step: "draw the panel",
+          note: "harness died"))
       plans do |t|
         t.plan "005.00",
           :in_review,
@@ -113,6 +119,17 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "has the fixture's keys at every level" do
       expect(shape(JSON.parse(JSON.generate(snapshot)))).to eq(shape(fixture))
+    end
+
+    it "counts unacked mail and carries each agent's resume record, and nothing for a plan without them" do
+      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "luke-backend", to: "rey-frontend", body: "B1 landed")
+
+      aggregate_failures do
+        expect(blocked_plan[:unacked]).to eq(1)
+        expect(blocked_plan[:last_known]).to match([{ agent: "rey-frontend", source: "harness", at: anything, round: 1,
+          status: "Interrupted", next_step: "draw the panel", note: "harness died" }])
+        expect(by_ordinal["005.00"].values_at(:unacked, :last_known)).to eq([0, []])
+      end
     end
 
     it "derives the stations from the spine and the agents' handles" do

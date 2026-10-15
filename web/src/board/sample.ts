@@ -1,5 +1,5 @@
 // Builders over the fixture for tests: a Board, and plans and cars with only the fields a test cares about changed.
-import type { Board, Car, Plan, PullRequest, Question } from "../api/types";
+import type { Board, Car, LastKnown, Plan, PullRequest, Question } from "../api/types";
 import { loadFixtureBoard } from "../api/client";
 
 export const sampleBoard = (): Board => loadFixtureBoard();
@@ -48,6 +48,19 @@ export function sampleQuestion(over: Partial<Question> = {}): Question {
   };
 }
 
+export function sampleLastKnown(over: Partial<LastKnown> = {}): LastKnown {
+  return {
+    agent: "rey-frontend",
+    source: "agent",
+    at: "2026-10-13T08:58:00Z",
+    round: 1,
+    status: "Interrupted",
+    next_step: "draw the panel",
+    note: null,
+    ...over,
+  };
+}
+
 export function samplePlan(over: Partial<Plan> = {}): Plan {
   return {
     ordinal: "001.00",
@@ -66,6 +79,8 @@ export function samplePlan(over: Partial<Plan> = {}): Plan {
     questions: [],
     interrupted: null,
     claimed_by: null,
+    unacked: 0,
+    last_known: [],
     ...over,
   };
 }

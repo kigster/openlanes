@@ -21,6 +21,9 @@
 .plan-title { font-weight: 600; font-size: 16px; line-height: 1.25; margin: 2px 0 6px; }
 .plan-meta { font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .lane { display: inline-flex; align-items: center; gap: 6px; }
+.unacked { display: none; }
+.unacked.is-warning { display: inline-flex; align-items: center; padding: 0 8px; border-radius: 999px; font-weight: 700;
+                      background: var(--alarm); color: #fff; }
 .lane::before { content: ""; width: 14px; height: 4px; border-radius: 2px; background: var(--lane-color); }
 
 .route { position: relative; width: calc(var(--stations) * var(--colw)); }

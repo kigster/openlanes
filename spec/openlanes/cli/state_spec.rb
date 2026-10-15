@@ -27,6 +27,8 @@ RSpec.describe "openlanes state", :tree do
 
   def show(**) = run(OpenLanes::CLI::State::Show.new, **)
 
+  def resume(**) = run(OpenLanes::CLI::State::Resume.new, **)
+
   it "signs, and says where" do
     _out, err, status = sign(plan: "001", agent: "luke-backend", round: "1", status: "Completed", next: "hansolo-reviewer")
     expect([status, err]).to match([0, a_string_including("luke-backend: Completed, round 1", "state.json")])
@@ -56,5 +58,46 @@ RSpec.describe "openlanes state", :tree do
   it "signs quietly when asked" do
     _out, err, = sign(plan: "001", agent: "luke-backend", round: "1", status: "Started", quiet: true)
     expect(err).to be_empty
+  end
+
+  describe "resume" do
+    let(:folder) { Dir[File.join(plans_root, "001.00*")].first }
+
+    it "writes an agent resume record into state.json" do
+      _out, err, status = resume(plan: "001",
+        agent: "luke-backend",
+        round: "2",
+        status: "Interrupted",
+        done: "B1, B2",
+        remaining: "B3",
+        next_step: "run rspec",
+        files: "lib/a.rb,lib/b.rb")
+      entry = OpenLanes::Plans::PlanState.for(folder).last_known("luke-backend")
+
+      aggregate_failures do
+        expect([status, err]).to match([0, a_string_including("luke-backend: Interrupted, round 2, resume record")])
+        expect(entry.to_h).to include(source: "agent",
+          round: 2,
+          done: %w[B1 B2],
+          remaining: ["B3"],
+          next_step: "run rspec",
+          files_touched: %w[lib/a.rb lib/b.rb])
+      end
+    end
+
+    it "refuses a round that is not a number" do
+      _out, err, status = resume(plan: "001", agent: "luke-backend", round: "x", status: "Interrupted")
+      expect([status, err]).to match([64, a_string_including("--round must be a number")])
+    end
+
+    it "refuses an agent name that is not one token" do
+      _out, err, status = resume(plan: "001", agent: "two words", round: "1", status: "Interrupted")
+      expect([status, err]).to match([64, a_string_including("agent name")])
+    end
+
+    it "records quietly when asked" do
+      _out, err, status = resume(plan: "001", agent: "luke-backend", round: "1", status: "Interrupted", quiet: true)
+      expect([status, err]).to eq([0, ""])
+    end
   end
 end

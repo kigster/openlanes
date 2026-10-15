@@ -18,13 +18,13 @@ You review one plan's pull request. Try to refute it, not to confirm it: start f
 
 ## Input
 
-`spec.md`, `plan.md`, `implementation-plan.md`, `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
+`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
 
 ## Check, in order
 
 1. The diff does what `spec.md` asked, and nothing it did not ask. Silent scope creep is the most common defect.
 1. Nothing in the diff breaks a Non-Goal, however useful it is.
-1. `plan.md` and `implementation-plan.md` describe what was built.
+1. `plan.md` and `contract.md` describe what was built.
 1. The tests can fail. Try to construct an input that breaks the code and no test covers.
 1. The integration proof and end-to-end results pasted in `pull-requests.md` exist and pass.
 1. `openlanes list-plans` shows the folder's state matching its pull requests.

@@ -137,6 +137,13 @@ module OpenLanes
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
       attr_reader :running
 
+      # Mail over Redis, drained once a tick into the plans' `state.json`.
+      # {Live::Session#attach} sets it; a run without Redis has none, and
+      # loses nothing, because `mail send` wrote the file already.
+      #
+      # @return [OpenLanes::Live::Mail, nil]
+      attr_accessor :mail
+
       # @return [OpenLanes::Engine::Runner]
       attr_reader :runner
 
@@ -167,6 +174,7 @@ module OpenLanes
         finish_discards
         unblock_answered
         poll
+        drain_mail
         # On threads: a kill waits out TERM before KILL, and the board must not.
         @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
         dispatch unless Execution::Control.quit? || resting?
@@ -541,7 +549,8 @@ module OpenLanes
           history: job.history || [],
           context: job.context,
           since: job.started_at,
-          session: job.handle.session)
+          session: job.handle.session,
+          unacked: Board::Row.unacked_in(task.subject.feature.path))
       end
 
       # @param task [OpenLanes::Engine::Runner::Task]
@@ -613,6 +622,7 @@ module OpenLanes
       def interrupt_stranded(subject, name, round)
         agent = @runner.agents.find(name) or return nil
         ordinal = subject.feature.ordinal.to_s
+        harness_resume(subject, agent, round, "harness died")
         write_interrupted(subject, agent, round, "harness died")
         remember(ordinal, agent.name, subject.status.key, "Interrupted", round)
         @state&.record(ordinal, agent: agent.name, round:, status: "Interrupted", exit: "harness died")
@@ -914,6 +924,49 @@ module OpenLanes
         end
       end
 
+      # Messages published to Redis, kept in their plan's `state.json`
+      # unless that file already has them. Every plan with an agent running
+      # is drained, and so is every plan the stream has mail for, running or
+      # not: a worktree's `mail send` reaches the main checkout only through
+      # the stream, which forgets it after an hour. A plan stays on the list
+      # until nothing of its mail is left pending.
+      #
+      # A message is acked once it is kept, or once it proves it never can
+      # be (no body, no single sender), since retrying an invalid message
+      # every second for an hour would only repeat the log line. One whose
+      # plan this checkout cannot find stays pending and is tried next tick.
+      #
+      # Only delivery: nothing here reads whether a message was acked by its
+      # reader, and no assignment turns on it (D3). Redis going away mid-run
+      # costs the drain, never the tick.
+      #
+      # @return [void]
+      def drain_mail
+        return if @mail.nil? || @runner.dry_run?
+
+        found, @mail_cursor = @mail.plans_since(@mail_cursor || "0")
+        @mail_plans = (@mail_plans || Set.new) | found
+        plans = @running.map { plan_of(it).to_s } | @mail_plans.to_a
+        plans.each do |ordinal|
+          pending = @mail.drain(plan: ordinal, consumer: "harness") { |message| keep_mail(ordinal, message) }
+          @mail_plans.delete(ordinal) if pending.empty?
+        end
+      rescue Live::Unavailable, SystemCallError => e
+        UI.log("mail not drained: #{e.message}")
+      end
+
+      # @param ordinal [String]
+      # @param message [Hash]
+      # @return [Boolean] whether the stream may forget it
+      def keep_mail(ordinal, message)
+        subject = fresh_by(ordinal) or return false
+        Plans.mailbox(subject.feature.path).deliver(message)
+        true
+      rescue OpenLanes::Error => e
+        UI.log("mail not kept: #{e.message}", plan: ordinal)
+        true
+      end
+
       # @param task [OpenLanes::Engine::Runner::Task]
       # @return [OpenLanes::Plans::Ledger::Reading]
       def read_ledger(task)
@@ -969,6 +1022,7 @@ module OpenLanes
                   elsif result.killed || (result.ok && (entry.nil? || entry.status == "Started"))
                     verify_and_sign(job, base, reason_for(result))
                   elsif !result.ok
+                    fresh(task)&.then { harness_resume(it, agent, task.round, result.note, phrase: job.message) }
                     remember(ordinal, agent.name, job.state, "Interrupted", task.round)
                     base.with(ok: false, note: result.note)
                   elsif entry.completed?
@@ -1024,7 +1078,10 @@ module OpenLanes
       def stopped_by_harness(job, base, why)
         task = job.task
         subject = fresh(task)
-        write_interrupted(subject, task.agent, task.round, why) if subject
+        if subject
+          harness_resume(subject, task.agent, task.round, why, phrase: job.message)
+          write_interrupted(subject, task.agent, task.round, why)
+        end
         remember(plan_of(job), task.agent.name, job.state, "Interrupted", task.round)
         base.with(ok: false, status: "Interrupted", note: why)
       end
@@ -1055,6 +1112,9 @@ module OpenLanes
         task = job.task
         agent = task.agent
         subject = fresh(task) or return base.with(ok: false, note: "plan folder vanished")
+        # Read before the harness's own Interrupted line lands, which would
+        # otherwise be the "last ledger line" the resume record quotes.
+        last = last_line(subject, agent)
         write_interrupted(subject, agent, task.round, reason)
         target = agent.advances_to
         if target && subject.machine.may?(target)
@@ -1071,10 +1131,42 @@ module OpenLanes
           entry = Plans::Ledger.last_for(read_ledger(task), agent.name)
           complete(job, base.with(note: "#{reason}; signed by harness"), entry, read_ledger(task))
         else
+          harness_resume(subject, agent, task.round, reason, last:, phrase: job.message)
           remember(subject.feature.ordinal.to_s, agent.name, job.state, "Interrupted", task.round)
           base.with(ok: false, status: "Interrupted", note: "#{reason}; #{retry_note(agent, Plans::Ledger::Entry.new(at: Time.now, agent: agent.name, status: "Interrupted", round: task.round, file: "", line: 0))}")
         end
       end
+
+      # The resume record the agent did not leave: killed when its grace ran
+      # out, dead, or stopped by the harness. Only what the harness saw, its
+      # last ledger line and its last transcript phrase, because that is all
+      # it knows; an agent's own record of this round or a later one stays,
+      # which {Plans::LastKnownState#supersedes?} decides under the plan lock.
+      # Pids, tokens and exit codes stay in `openlanes-state.json`.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param round [Integer]
+      # @param reason [String] why the agent stopped
+      # @param last [OpenLanes::Plans::Ledger::Entry, nil] read before the
+      #   harness wrote its own Interrupted line
+      # @param phrase [String, nil] the transcript's last phrase
+      # @return [void]
+      def harness_resume(subject, agent, round, reason, last: last_line(subject, agent), phrase: nil)
+        return if @runner.dry_run?
+
+        seen = "last ledger line: #{last.status}, round #{last.round}#{": #{last.note}" if last.note}" if last
+        note = [reason, seen, ("last seen: #{phrase}" if phrase && !phrase.empty?)].compact.join("; ")
+        entry = Plans::LastKnownState.new(source: "harness", round:, status: "Interrupted", note:)
+        Plans::PlanState.for(subject.feature.path).record_last_known(agent.name, entry)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("resume record not written: #{e.message}", plan: subject.feature.ordinal.to_s)
+      end
+
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [OpenLanes::Plans::Ledger::Entry, nil]
+      def last_line(subject, agent) = Plans::Ledger.last_for(Plans::Ledger.read(subject.feature.path, agent.ledger), agent.name)
 
       # @return [void]
       def write_interrupted(subject, agent, round, reason)
@@ -1276,6 +1368,7 @@ module OpenLanes
 
       # @return [OpenLanes::Engine::Runner::Attempt]
       def crashed(job, base, error)
+        fresh(job.task)&.then { harness_resume(it, job.task.agent, base.round, error.message.lines.first.to_s.strip, phrase: job.message) }
         remember(base.ordinal, base.agent, job.state, "Interrupted", base.round)
         base.with(ok: false, note: error.message.lines.first.to_s.strip)
       end

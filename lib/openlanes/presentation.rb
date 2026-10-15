@@ -19,5 +19,8 @@ module OpenLanes
 
     # @return [OpenLanes::Presentation::Viewer]
     def viewer = Viewer.new
+
+    # @return [OpenLanes::Presentation::ApiDocs] the openapi.yaml files plans carry
+    def api_docs = ApiDocs.new
   end
 end

@@ -126,6 +126,17 @@ module OpenLanes
       # @return [Integer]
       def xlen(key) = locked { (live(key) || []).size }
 
+      # @return [Integer] how many were removed
+      def xtrim(key, minid:)
+        locked do
+          stream = live(key) or next 0
+          floor = id_of(minid.include?("-") ? minid : "#{minid}-0")
+          before = stream.size
+          stream.reject! { (id_of(it.id) <=> floor).negative? }
+          before - stream.size
+        end
+      end
+
       # @return [Boolean] whether the group is new
       def xgroup_create(key, group, from: "0")
         locked do

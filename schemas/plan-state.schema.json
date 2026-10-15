@@ -75,6 +75,12 @@
         }
       }
     },
+    "last-known-state": {
+      "description": "One resume record per agent, last one wins: written by the agent through `openlanes state resume`, or by the harness when the agent could not.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/agent" },
+      "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
+    },
     "messages": {
       "description": "What agents on this plan said to each other, through `openlanes mail send`.",
       "type": "array",
@@ -83,17 +89,36 @@
         "required": ["number", "at", "from", "to", "body"],
         "additionalProperties": false,
         "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Written by `openlanes mail send`, so a message drained from Redis is recognised by identity, not by a number another copy of this file may also have given out. Absent on messages written before ids existed." },
           "number": { "type": "integer", "minimum": 1 },
           "at": { "type": "string", "format": "date-time" },
           "from": { "$ref": "#/$defs/agent" },
           "to": { "$ref": "#/$defs/agent" },
           "body": { "type": "string", "minLength": 1 },
+          "read": { "enum": ["yes", "no"], "description": "\"yes\" once its recipient ran `openlanes mail ack`. Absent on messages written before acks existed, which read as \"no\"." },
           "command": { "type": "string", "minLength": 1, "description": "The id of the page's command that sent it (plan 004, W13), so a redelivered command appends nothing twice." }
         }
       }
     }
   },
   "$defs": {
+    "lastKnownState": {
+      "description": "Where one agent stood when it was interrupted. No pid, token or exit field exists: those describe one machine's run and stay in openlanes-state.json.",
+      "type": "object",
+      "required": ["source", "at", "round", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "enum": ["agent", "harness"] },
+        "at": { "type": "string", "format": "date-time" },
+        "round": { "type": "integer", "minimum": 1 },
+        "status": { "$ref": "#/$defs/status" },
+        "done": { "type": "array", "items": { "type": "string" } },
+        "remaining": { "type": "array", "items": { "type": "string" } },
+        "next_step": { "type": "string" },
+        "files_touched": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      }
+    },
     "agent": { "type": "string", "pattern": "^[\\w-]+$" },
     "status": { "enum": ["Started", "Completed", "Almost completed", "Interrupted", "Blocked"] },
     "effort": { "enum": ["low", "medium", "high", "xhigh", "max", null] }
