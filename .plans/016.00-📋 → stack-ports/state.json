@@ -1,0 +1,40 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "016.00",
+    "slug": "stack-ports"
+  },
+  "state": "ready_for_planning",
+  "updated_at": "2026-10-14T11:54:47-07:00",
+  "stages": [],
+  "signatures": [
+    {
+      "at": "2026-10-14T11:51:25-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:54:41-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-14T11:54:41-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:54:42-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    }
+  ],
+  "messages": []
+}
