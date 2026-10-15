@@ -2,18 +2,18 @@
 
 `luke-backend` builds these, in the order B1 → B7. B1 and B2 can run at the same time. See `plan.md` for the graph and the shared contract.
 
-Prerequisite: plan 008 (dependents index) is merged. B3 consumes it and is the only unit that does.
+Prerequisite: stacked on #23 (plan 008, the dependents index). B3 consumes it and is the only unit that does.
 
 ## B1 State, event and Linear mapping
 
 - **Discipline:** back end
-- **Owns:** `lib/openlanes/plans/status.rb`, `lib/openlanes/plans/state_machine.rb`, `lib/openlanes/linear/mapping.rb`, `lib/openlanes/lifecycle/unblocker.rb`, their specs (`spec/openlanes/plans/status_spec.rb`, `spec/openlanes/plans/state_machine_spec.rb`, `spec/openlanes/linear/mapping_spec.rb`, `spec/openlanes/lifecycle/unblocker_spec.rb`), and whatever `openlanes docs` regenerates.
+- **Owns:** `lib/openlanes/plans/status.rb`, `lib/openlanes/plans/state_machine.rb`, `lib/openlanes/linear/mapping.rb`, `agents/lando-broker.md` (`handles:`), their specs (`spec/openlanes/plans/status_spec.rb`, `spec/openlanes/plans/state_machine_spec.rb`, `spec/openlanes/linear/mapping_spec.rb`, `spec/openlanes/lifecycle/unblocker_spec.rb`), and whatever `openlanes docs` regenerates.
 - **Must not touch:** `support/config.rb`, `engine/*`, `live/*`, `cli/run/*`, `web/src/*`.
 - **Depends on:** nothing
 - **Builds:**
   - `:bomb` in `STATUSES`: emoji 💣 (U+1F4A3), `requires: %w[blocked.md]`, invariant "blocked.md present" and nothing time-based.
   - `bomb` event: `blocked` → `bomb`, `product_blocked` → `bomb`. Placed with the blocked family, not `SPINE`. `bomb` is skipped by `next_dispatchable` like the other `SETTLED` blocks.
-  - Exit from `bomb`: the unblocker treats 💣 like ⭕️/🅱️. When an answer is folded, the plan returns to ⭕️ or 🅱️ by `blocked.md` content (technical vs product), then the normal unblock path runs (spec open question 2, assumed answer adopted).
+  - Exit from `bomb`: amended (plan.md, decision 1): the unblocker is unchanged; it gates on `blocked.md`, so a 💣 drains like ⭕️. 💣 leaves by every event a block leaves by, and `block` / `block_on_product` accept it. `lando-broker` handles 💣 so the run loop can drain it.
   - `defer` event accepts `blocked` and `product_blocked` as sources if it does not already.
   - 💣 placed in `PLACEMENTS` (same Linear state as the other blocks).
 - **Done when:** `state_machine_spec.rb` covers `bomb` in from both blocked states and out via unblock; `status_spec.rb` covers the invariant; `mapping_spec.rb` green; `unblocker_spec.rb` folds an answer out of a 💣 folder; `openlanes states` lists 💣 and `openlanes docs` regenerates cleanly.
@@ -32,12 +32,13 @@ Prerequisite: plan 008 (dependents index) is merged. B3 consumes it and is the o
 - **Discipline:** back end
 - **Owns:** `lib/openlanes/lifecycle/aging.rb` (new), `lib/openlanes/lifecycle.rb` (facade method only), `spec/openlanes/lifecycle/aging_spec.rb` (new).
 - **Must not touch:** `status.rb`, `state_machine.rb`, `config.rb`, `engine/*`.
-- **Depends on:** B1, B2, plan 008.
+- **Depends on:** B1, B2, #23 (`Tree#blocks_of`).
 - **Builds:**
   - `Lifecycle::Aging` with constants `BOMB_AFTER = 7 * 86_400` and `DEFER_AFTER = 14 * 86_400` (24 h multiples, not calendar days). This is the one place the limits live.
   - `Aging#age_of(subject, now:, since:)` → seconds. Clock start is the later of the latest `blocked` signature `at` in `state.json` (fallback: `blocked.md` mtime, as `live/snapshot.rb` does) and `aging_since`.
   - `Aging#call(tree, now:, since:, dry_run: false)` → `Data` result listing `bombed` and `deferred` plans. Blocked (⭕️/🅱️) plan with dependents past `BOMB_AFTER` fires `bomb`; blocked plan with no dependents past `DEFER_AFTER` fires `defer`, writing `delayed.md` first with trigger "revisit after the block is answered" and a line marking it as deferred by aging (spec open question 5: mark it).
   - Only ⭕️ and 🅱️ age. 💣 never defers.
+  - Dependents: `tree.blocks_of(ordinal)`, open ones only (plan.md, decision 9).
   - Facade: `Lifecycle.age(tree, now:, since:)`.
 - **Done when:** `aging_spec.rb`, using `PlansFixture` trees with backdated `state.json` signatures (no clock stubbing inside the sweep), shows: `aging_since` today → nothing ages; backdated 8 days with a dependent → 💣; 15 days without dependents → `deferred/` with `delayed.md` and the `:deferred` invariant holding; 💣 and non-blocked states untouched; a fresh `blocked` signature restarts the clock.
 
@@ -50,6 +51,7 @@ Prerequisite: plan 008 (dependents index) is merged. B3 consumes it and is the o
 - **Builds:**
   - `Runner` calls `Lifecycle.age` once per round, before assignment (after the first `resync dirs`). `Runner` gains `ignore_bombs:` (default `false`).
   - `PlanState#resume_until` / `#resume_anyway!(until:)`: a timestamped expiry in `state.json`, added to the schema.
+  - `Dispatcher::BLOCKED` gains `:bomb`, so an answered 💣 is drained in the loop like an answered ⭕️.
   - Halt: while any 💣 exists whose `resume_until` is absent or past, and `ignore_bombs` is false, `Dispatcher` assigns nothing new; running agents finish. `Dispatcher#done?` treats "halted with nothing running" as the end, not as a stall.
   - `Runner#bombs` → the 💣 plans that halted the run, for the CLI to report.
 - **Done when:** `runner_spec.rb` with a backdated tree shows the sweep bombs a plan, nothing new is assigned, the run ends; with `ignore_bombs: true` work proceeds; with `resume_until` in the future work proceeds, and in the past it halts. `dispatcher_spec.rb` shows a running agent is joined, not killed, when the halt starts.
