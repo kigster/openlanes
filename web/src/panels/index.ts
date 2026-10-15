@@ -11,6 +11,7 @@ export { renderMarkdown } from "./markdown";
 export { AskCard } from "./AskCard";
 export { asksOf, type Ask } from "./question";
 export { NeedsYou, type NeedsYouProps } from "./NeedsYou";
+export { BombNotice, type BombNoticeProps } from "./BombNotice";
 export { UnblockWidget, type UnblockWidgetProps } from "./UnblockWidget";
 export { ModelSelect, type ModelSelectProps } from "./ModelSelect";
 export { AgentActionMenu, type AgentActionMenuProps, type AgentAction } from "./AgentActionMenu";

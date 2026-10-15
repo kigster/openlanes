@@ -8,7 +8,8 @@ module OpenLanes
     # The loop itself is {Dispatcher}. This holds what the loop needs about
     # the run: the tree and its scope, the roster, the executor, how many run
     # at once, where each plan is checked out, and how a finished plan is
-    # published. Blocked plans (⭕ 🛑) are stepped around, never assigned.
+    # published. Blocked plans (⭕ 🛑 💣) are stepped around, never assigned,
+    # and while a 💣 stands nothing new is assigned at all (plan 009).
     class Runner
       # What one agent did to one plan.
       Attempt = Data.define(:ordinal,
@@ -51,10 +52,13 @@ module OpenLanes
       #   the run; see {Dispatcher#done?}
       # @param rescan [Integer] seconds between rescans while idle
       # @param watch [OpenLanes::Engine::PrWatch, nil] see {Dispatcher#initialize}
+      # @param ignore_bombs [Boolean] `--ignore-bombs`: a 💣 halts nothing
+      # @param aging_since [Date, nil] `plans.aging_since`, the floor of every
+      #   blocked plan's clock
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
-        watch: nil)
+        watch: nil, ignore_bombs: false, aging_since: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -71,6 +75,9 @@ module OpenLanes
         @stay = stay
         @rescan = rescan
         @watch = watch
+        @ignore_bombs = ignore_bombs
+        @aging_since = aging_since
+        @would_bomb = []
         @attempts = []
         @dropped = []
         @jobs = isolated? ? jobs : 1
@@ -169,7 +176,42 @@ module OpenLanes
       end
 
       # @return [Array<OpenLanes::Plans::Subject>]
-      def blocked = in_scope.select { |s| %i[blocked product_blocked].include?(s.status.key) }
+      def blocked = in_scope.select { |s| Dispatcher::BLOCKED.include?(s.status.key) }
+
+      # Age the blocked plans in scope (plan 009): bomb the ones others wait
+      # on, defer the ones nobody does. A dry run fires nothing, and
+      # remembers what it would have bombed so it halts as a real run would.
+      #
+      # @param except [Array<String>] ordinals an agent or a drain is in
+      # @param now [Time]
+      # @return [OpenLanes::Lifecycle::Aging::Result]
+      def age!(except: [], now: Time.now)
+        subjects = in_scope.reject { except.include?(it.feature.ordinal.to_s) || foreign?(it) }
+        result = Lifecycle.age(tree:, subjects:, since: @aging_since, now:, commit: !dry_run?)
+        @would_bomb = result.bombed if dry_run?
+        result
+      end
+
+      # Plans in scope that are 💣, or on a dry run would have become one.
+      #
+      # @return [Array<OpenLanes::Plans::Subject>]
+      def bombs
+        in_scope.select { it.status.key == :bomb || @would_bomb.include?(it.feature.ordinal.to_s) }
+      end
+
+      # The bombs that stop new work right now: none under `--ignore-bombs`,
+      # and none whose halt a person lifted from the page until it lapses.
+      #
+      # @param now [Time]
+      # @return [Array<OpenLanes::Plans::Subject>]
+      def halted_by(now: Time.now)
+        return [] if @ignore_bombs
+
+        bombs.reject { Plans::PlanState.for(it.feature.path).resumed?(now:) }
+      end
+
+      # @return [Boolean] whether a 💣 keeps every new agent from starting
+      def halted? = !halted_by.empty?
 
       # Plans in scope the dependency gate holds back, with the reason: a
       # dependency that is not done yet, or a cycle that no order can break.

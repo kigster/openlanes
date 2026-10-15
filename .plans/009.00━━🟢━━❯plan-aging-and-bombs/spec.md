@@ -1,5 +1,5 @@
 ---
-depends_on: ["008"]
+depends_on: ["008.00"]
 ---
 
 # Plan Aging and Bombs
@@ -106,7 +106,7 @@ Settled from the research recommendations. Reopen any of them only through a hum
 
 ## Open questions
 
-1. **Plan 008 must be merged first** (research Q4). The `depends_on` already names it, but the key is `"008"` and 008 wants canonical `"008.00"` (research contradiction 8); fix when 008 lands.
+1. ~~Plan 008 must be merged first~~ Settled: 009 is stacked on #23 (plan 008) and consumes its dependents index; `depends_on` now reads `"008.00"`. Decided 2026-10-15 by the owner (Konstantin): stack it on #23.
 1. How does `resync dirs` treat a 💣 folder whose answer arrives and whose prior path is unknown? Assumed: the unblocker returns it to ⭕️ or 🅱️ by `blocked.md` content, then the normal path resumes. Not anchored; confirm in planning.
 1. Does answering via Respond re-start the 7-day clock if the answer is incomplete and lando re-blocks? Assumed yes, because a new `blocked` signature is written.
 1. Which existing `hold` Pause reuses: all agents or only the 💣 plan's (research Q7)? N10 says "every agent"; assumed all.

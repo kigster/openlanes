@@ -301,6 +301,19 @@ module OpenLanes
         note:      "cannot proceed; `blocked.md` names what a product manager must decide",
         invariant: open_block("Product Block")
       ),
+      # 💣 is entered only by the aging sweep's `bomb` event, never by what a
+      # folder holds: its contents are a ⭕'s, and a check that read the clock
+      # would rename folders as days pass with nobody firing anything. Its
+      # check is a block's, open question and all: a weaker one would let
+      # `resync` carry a drained ⭕ sideways into 💣 instead of out.
+      Status.new(
+        key:       :bomb,
+        emoji:     "💣",
+        label:     "Bomb",
+        requires:  %w[blocked.md],
+        note:      "blocked too long while other plans depend on it; the run halts until a human answers",
+        invariant: open_block("Bomb")
+      ),
       Status.new(
         key:       :deferred,
         emoji:     "💤",

@@ -63,6 +63,10 @@ module OpenLanes
       option :port,
         default: OpenLanes::Web::DEFAULT_PORT.to_s,
         desc:    "Port the control room listens on, on 127.0.0.1"
+      option :ignore_bombs,
+        type:    :boolean,
+        default: false,
+        desc:    "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run"
       option :until_settled,
         type:    :boolean,
         default: false,
@@ -77,7 +81,8 @@ module OpenLanes
         "--rounds 3             # …capping every agent at three rounds per plan",
         "--plan 005,006,007     # only the plans a batch step just created",
         "--no-web               # headless: no control room, no browser; ends when the tree settles",
-        "--until-settled        # with the control room, but ending when the tree settles"
+        "--until-settled        # with the control room, but ending when the tree settles",
+        "--ignore-bombs         # keep working while a 💣 stands"
       ]
 
       # @param options [Hash]

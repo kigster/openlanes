@@ -71,6 +71,7 @@ module OpenLanes
           stations:    Stations.all(@agents).map(&:wire),
           plans:       mine,
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
+          bombs:       bombs(subjects),
           models:      @adapter.models.map(&:wire),
           autocompact: Adapters::AUTOCOMPACT / 100.0,
           log:         @log }
@@ -153,6 +154,24 @@ module OpenLanes
                 .map do |s|
           { ordinal: s.feature.ordinal.to_s, title: s.feature.title, status: status(s.status),
             lane: Plans::Spec.for(s).lane.to_s }
+        end
+      end
+
+      # Every 💣 in the tree that is not another machine's, on the board or
+      # not: a bomb halts the whole run, so the page shows it whatever this
+      # node is working on (plan 009).
+      #
+      # @param subjects [Array<OpenLanes::Plans::Subject>]
+      # @return [Array<Hash>] `Bomb`
+      def bombs(subjects)
+        aging = Lifecycle::Aging.new(tree: @tree, now: @at)
+        subjects.select { it.status.key == :bomb && !foreign?(it.feature.ordinal.to_s) }.map do |s|
+          resume = Plans::PlanState.for(s.feature.path).resume_until
+          { plan:          s.feature.ordinal.to_s,
+            slug:          s.feature.slug,
+            blocked_md:    s.read("blocked.md").to_s,
+            blocked_since: iso(aging.started_at(s)),
+            resume_until:  resume && iso(resume) }
         end
       end
 

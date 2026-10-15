@@ -102,6 +102,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         t.plan "012.00", :product_blocked, "linear-sync", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which?\n" }
         t.plan "014.00", :approved, "shipped", files: { "spec.md" => spec_body }
         t.plan "015.00", :new, "theirs", files: { "spec.md" => spec_body }
+        t.plan "016.00", :bomb, "stack-ports", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which port range?\n" }
       end
       store.set(keys.claim("015.00"), "ffffffffffffffffffffffff:000000000000")
       claims.claim("001.00")
@@ -189,7 +190,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     it "offers as backlog what is neither finished, nor ours, nor another machine's" do
-      expect(snapshot[:backlog].map { it[:ordinal] }).to eq(%w[012.00 013.00])
+      expect(snapshot[:backlog].map { it[:ordinal] }).to eq(%w[012.00 013.00 016.00])
     end
 
     it "describes the run, the node and the models" do
@@ -250,6 +251,33 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       it "keeps the parser's options" do
         expect(question[:options].size).to eq(2)
       end
+    end
+  end
+
+  describe "bombs" do
+    let(:path) do
+      path = nil
+      plans { |t| path = t.plan "016.00", :bomb, "stack-ports", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Range?\n" } }
+      path
+    end
+
+    before do
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: at - 86_400)
+    end
+
+    it "lists every 💣, on the board or not, with its blocked.md and when it was blocked" do
+      expect(snapshot[:bombs]).to eq([{ plan: "016.00", slug: "stack-ports", blocked_md: "## B1 Range?\n",
+                                        blocked_since: "2026-10-12T09:00:00Z", resume_until: nil }])
+    end
+
+    it "says until when a halt is lifted" do
+      OpenLanes::Plans::PlanState.for(path).resume_anyway!(till: at + 3600)
+      expect(snapshot[:bombs].first[:resume_until]).to eq("2026-10-13T10:00:00Z")
+    end
+
+    it "is empty, never missing, when nothing has bombed" do
+      FileUtils.rm_rf(path)
+      expect(snapshot[:bombs]).to eq([])
     end
   end
 

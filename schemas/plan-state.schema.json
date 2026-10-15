@@ -23,6 +23,11 @@
       "type": ["string", "null"]
     },
     "updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "resume_until": {
+      "description": "Until when a 💣 on this plan does not halt the run: the control room's Resume anyway for 24 h.",
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
     "stages": {
       "description": "One record per agent per round, written by the harness.",
       "type": "array",

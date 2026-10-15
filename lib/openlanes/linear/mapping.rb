@@ -55,6 +55,7 @@ module OpenLanes
       deployed:           Placement.new(type: "completed", name: "Done", labels: %w[deployed]),
       blocked:            Placement.new(type: "unstarted", name: "Todo", labels: %w[blocked]),
       product_blocked:    Placement.new(type: "unstarted", name: "Todo", labels: %w[blocked-on-product]),
+      bomb:               Placement.new(type: "unstarted", name: "Todo", labels: %w[blocked bomb]),
       deferred:           Placement.new(type: "backlog", name: "Backlog", labels: %w[deferred]),
       retroactive:        Placement.new(type: "completed", name: "Done", labels: %w[retroactive]),
       discarded:          Placement.new(type: "canceled", name: "Canceled", labels: [])

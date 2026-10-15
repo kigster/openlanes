@@ -332,4 +332,94 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       end
     end
   end
+
+  # Plan 009: the sweep runs before every assignment, and a 💣 stops new
+  # work. Ages come from backdated `Blocked` signatures, never a stubbed clock.
+  describe "aging and the halt" do
+    def needs(*ordinals) = "---\ndepends_on: #{ordinals.inspect}\n---\n#{spec_body}"
+
+    def plan_path(ordinal) = tree.reload.find(ordinal).feature.path
+
+    def blocked_since(days)
+      OpenLanes::Plans::PlanState.for(plan_path("001.00"))
+                                 .sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (days * 86_400))
+    end
+
+    let(:ready) { { "plan.md" => "# P\n\n## U1\n", "plan-frontend.md" => "## F1" } }
+
+    before do
+      plans do |t|
+        t.plan "001.00", :blocked, "feed", files: { "spec.md" => spec_body, "plan.md" => "# P", "blocked.md" => "## B1 Which feed?\n" }
+        t.plan "002.00", :planned, "consumer", files: { "spec.md" => needs("001.00"), **ready }
+        t.plan "003.00", :planned, "unrelated", files: { "spec.md" => spec_body, **ready }
+      end
+    end
+
+    context "when a plan others wait on has been blocked eight days" do
+      before { blocked_since(8) }
+
+      it "bombs it, starts nothing new, and names it" do
+        runner.call
+
+        aggregate_failures do
+          expect(calls).to be_empty
+          expect(tree.reload.find("001.00").status.key).to eq(:bomb)
+          expect(runner.halted_by.map { it.feature.ordinal.to_s }).to eq(%w[001.00])
+          expect(runner).to be_halted
+        end
+      end
+
+      it "works on under --ignore-bombs, with the 💣 still standing" do
+        runner = described_class.new(tree:, executor:, agents:, ignore_bombs: true, sleeper: ->(_) {})
+        runner.call
+
+        aggregate_failures do
+          expect(calls.map(&:last).uniq).to eq(%w[003.00])
+          expect(runner.bombs.map { it.feature.ordinal.to_s }).to eq(%w[001.00])
+          expect(runner).not_to be_halted
+        end
+      end
+
+      it "bombs nothing on a dry run, yet halts as the real run would" do
+        runner = described_class.new(tree:, executor:, agents:, dry_run: true, sleeper: ->(_) {})
+        runner.call
+
+        aggregate_failures do
+          expect(calls).to be_empty
+          expect(tree.reload.find("001.00").status.key).to eq(:blocked)
+          expect(runner.halted_by.map { it.feature.ordinal.to_s }).to eq(%w[001.00])
+        end
+      end
+
+      it "ages nothing when aging_since is today" do
+        runner = described_class.new(tree:, executor:, agents:, aging_since: Date.today, sleeper: ->(_) {})
+        runner.call
+
+        expect(calls.map(&:last).uniq).to eq(%w[003.00])
+        expect(runner).not_to be_halted
+      end
+    end
+
+    context "when the page said resume anyway" do
+      before do
+        blocked_since(8)
+        tree.reload.find("001.00").machine.promote!(:bomb)
+      end
+
+      it "works on while the expiry is ahead" do
+        OpenLanes::Plans::PlanState.for(plan_path("001.00")).resume_anyway!(till: Time.now + 3600)
+        runner.call
+
+        expect(calls.map(&:last).uniq).to eq(%w[003.00])
+        expect(runner.bombs.size).to eq(1)
+      end
+
+      it "halts again once it has passed" do
+        OpenLanes::Plans::PlanState.for(plan_path("001.00")).resume_anyway!(till: Time.now - 1)
+        runner.call
+
+        expect(calls).to be_empty
+      end
+    end
+  end
 end

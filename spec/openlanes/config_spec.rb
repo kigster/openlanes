@@ -56,6 +56,27 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "plans.aging_since" do
+      it "reads an unquoted date" do
+        openlanes_yml("plans:\n  aging_since: 2026-10-01\n")
+        expect(config.aging_since).to eq(Date.new(2026, 10, 1))
+      end
+
+      it "reads a quoted date" do
+        openlanes_yml("plans:\n  aging_since: '2026-10-01'\n")
+        expect(config.aging_since).to eq(Date.new(2026, 10, 1))
+      end
+
+      it "is nil when absent, which is no floor at all" do
+        openlanes_yml("jobs: 2\n")
+        expect(config.aging_since).to be_nil
+      end
+
+      it "writes itself back out under plans:" do
+        expect(described_class.new(aging_since: Date.new(2026, 10, 1)).to_yaml).to eq("plans:\n  aging_since: '2026-10-01'\n")
+      end
+    end
+
     # A config silently ignored is a timeout that stops applying with no
     # signal, so every one of these names the file.
     {
@@ -68,6 +89,10 @@ RSpec.describe OpenLanes::Config do
       "commands that are not a map"    => ["commands: run\n", /commands: must be a mapping/],
       "a command that is not a map"    => ["commands:\n  run: 3\n", /commands.run: must be a mapping/],
       "broken YAML"                    => ["commands: [\n", /not valid YAML/],
+      "plans that are not a map"       => ["plans: soon\n", /plans: must be a mapping/],
+      "a malformed aging date"         => ["plans:\n  aging_since: last week\n", /plans.aging_since: "last week" is not a date/],
+      "an impossible aging date"       => ["plans:\n  aging_since: '2026-02-30'\n", /plans.aging_since: .* is not a date/],
+      "an unknown key under plans"     => ["plans:\n  aging: 2026-10-01\n", /plans.aging: unknown key/],
       "jobs said twice"                => ["jobs: 2\ncommands:\n  run:\n    jobs: 3\n", /jobs and commands.run.jobs are the same setting/],
       "an unknown key inside app"      => ["app:\n  processes:\n    - {name: web, start: x, port: 1}\n", /app.processes\[0\]: unknown key port/],
       "an app process without start"   => ["app:\n  processes:\n    - name: web\n", /app.processes.web: needs start:/],

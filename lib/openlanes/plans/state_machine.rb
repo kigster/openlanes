@@ -67,7 +67,7 @@ module OpenLanes
       # a block outranks progress, and `retroactive` is last because it is the
       # absence of documents rather than the presence of any.
       PREFERENCE = %i[
-        discarded rolled_back shit deferred blocked product_blocked
+        discarded rolled_back shit deferred blocked product_blocked bomb
         deployed approved rejected in_review ready_for_review building_ui building planned ready_for_planning
         researched new
         retroactive
@@ -91,12 +91,12 @@ module OpenLanes
       # arriving from outside lands on the weakest member its contents fit.
       # Contents that fit the family justify only its floor, never its ceiling.
       FAMILIES = [
-        %i[blocked product_blocked],
+        %i[blocked product_blocked bomb],
         %i[planned building building_ui ready_for_review in_review rejected]
       ].freeze
 
       # States the agent loop leaves alone: work that is finished (✅ 😎), work
-      # that was dropped (❌), and work waiting on a human (⭕ 🛑 💤).
+      # that was dropped (❌), and work waiting on a human (⭕ 🛑 💣 💤).
       # Everything else is fair game for a specialist.
       #
       # ✅ Approved is here deliberately. `hansolo-reviewer` advancing a plan to
@@ -108,7 +108,7 @@ module OpenLanes
       # Moving `approved` out of this list is therefore a decision about blast
       # radius rather than about topology. If it ever moves, something has to own
       # `approved -> deployed`, and today nothing does.
-      SETTLED = %i[approved deployed discarded blocked product_blocked deferred].freeze
+      SETTLED = %i[approved deployed discarded blocked product_blocked bomb deferred].freeze
 
       # Every state an agent that may sign `Blocked` works in. A block the
       # machine refuses is reported as a failed attempt and parks nothing, so a
@@ -127,11 +127,11 @@ module OpenLanes
         OpenLanes::Plans::STATUSES.each { |status| state status.key }
 
         event :specify, guard: :justified? do
-          transitions from: %i[retroactive blocked product_blocked deferred], to: :new
+          transitions from: %i[retroactive blocked product_blocked bomb deferred], to: :new
         end
 
         event :research, guard: :justified? do
-          transitions from: %i[new retroactive blocked product_blocked deferred], to: :researched
+          transitions from: %i[new retroactive blocked product_blocked bomb deferred], to: :researched
         end
 
         # The specification is done and the planner has not started. Entered
@@ -139,7 +139,7 @@ module OpenLanes
         # a blank `plan.md`. Without it ⭐ Planned required a file only the
         # agent handling ⭐ Planned writes, and nothing could enter it.
         event :ready_to_plan, guard: :justified? do
-          transitions from: %i[researched new retroactive shit blocked product_blocked deferred],
+          transitions from: %i[researched new retroactive shit blocked product_blocked bomb deferred],
             to: :ready_for_planning
         end
 
@@ -149,12 +149,12 @@ module OpenLanes
         # planned. What research buys is not enforced here; it is enforced by
         # `yoda-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
-          transitions from: %i[ready_for_planning researched new retroactive shit blocked product_blocked deferred],
+          transitions from: %i[ready_for_planning researched new retroactive shit blocked product_blocked bomb deferred],
             to: :planned
         end
 
         event :build, guard: :justified? do
-          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked deferred],
+          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked bomb deferred],
             to: :building
         end
 
@@ -202,12 +202,21 @@ module OpenLanes
           transitions from: %i[deployed], to: :rolled_back
         end
 
+        # 💣 leaves back through the block it came from: once an answer is in,
+        # `blocked.md` says whether the question was technical or product, and
+        # the ordinary unblock path takes it from there.
         event :block, guard: :justified? do
-          transitions from: BLOCKABLE, to: :blocked
+          transitions from: BLOCKABLE + %i[bomb], to: :blocked
         end
 
         event :block_on_product, guard: :justified? do
-          transitions from: BLOCKABLE, to: :product_blocked
+          transitions from: BLOCKABLE + %i[bomb], to: :product_blocked
+        end
+
+        # Fired by the aging sweep alone, never by `resync`: a plan others
+        # depend on has sat blocked past the limit, and the run halts on it.
+        event :bomb, guard: :justified? do
+          transitions from: %i[blocked product_blocked], to: :bomb
         end
 
         event :defer, guard: :justified? do
