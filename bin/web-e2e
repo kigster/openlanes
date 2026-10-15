@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# vim: ft=bash
+#
+# Cypress against two `openlanes web --demo` servers on one Redis: the page's
+# own, and a second one as demo@second-machine that the chat spec (plan 006)
+# plays as another machine. `just web-e2e` and CircleCI's e2e job both run this
+# script, so CI cannot drift into starting only the first server again.
+# Build the page first (`just web-build`, or `npm run build` in web/).
+#
+# Settings, each with a default:
+#
+#   E2E_PORT       the page's own demo server        (11100)
+#   E2E_PEER_PORT  the second machine's demo server  (11101)
+#   E2E_REDIS_URL  Redis shared by both              (redis://localhost:6379/14)
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+eval "$(rbenv init - bash 2>/dev/null || true)"
+
+port="${E2E_PORT:-11100}"
+peer="${E2E_PEER_PORT:-11101}"
+redis="${E2E_REDIS_URL:-redis://localhost:6379/14}"
+
+for p in "$port" "$peer"; do
+  if curl -s -o /dev/null "http://127.0.0.1:$p/"; then
+    echo "port $p is taken; set E2E_PORT and E2E_PEER_PORT to free ones" >&2
+    exit 69
+  fi
+done
+
+pids=()
+stop() {
+  kill "${pids[@]}" 2>/dev/null || true
+  wait "${pids[@]}" 2>/dev/null || true
+}
+trap stop EXIT
+
+bundle exec exe/openlanes web --demo --no-open --port "$port" --redis-url "$redis" &
+pids+=($!)
+bundle exec exe/openlanes web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine &
+pids+=($!)
+
+for p in "$port" "$peer"; do
+  for _ in $(seq 300); do curl -sf "http://127.0.0.1:$p/healthz" >/dev/null && break; sleep 0.2; done
+  curl -sf "http://127.0.0.1:$p/healthz" >/dev/null || { echo "the demo on port $p never answered" >&2; exit 69; }
+done
+
+cd web
+npx cypress run --config "baseUrl=http://127.0.0.1:$port" --env "peer=http://127.0.0.1:$peer"
