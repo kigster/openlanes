@@ -99,6 +99,7 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 |   💩   | **Scrapped by Review** | `shit`               | `rewrite.md`                             | the review scrapped the work; the plan survives, the pull requests do not                   |
 |   ⭕   | **Technical Block**    | `blocked`            | `blocked.md`                             | cannot proceed; `blocked.md` names what an engineer or the CTO must decide                  |
 |   🛑   | **Product Block**      | `product_blocked`    | `blocked.md`                             | cannot proceed; `blocked.md` names what a product manager must decide                       |
+|   💣   | **Bomb**               | `bomb`               | `blocked.md`                             | blocked too long while other plans depend on it; the run halts until a human answers        |
 |   💤   | **Deferred**           | `deferred`           | `delayed.md`                             | could proceed and chose not to yet; `delayed.md` must name the trigger                      |
 |   ⏪   | **Retroactive**        | `retroactive`        | —                                        | the feature is live, but has neither a specification nor a plan                             |
 |   ❌   | **Discarded**          | `discarded`          | `discarded.md`                           | dropped for good; `discarded.md` says why. A terminal state                                 |
@@ -113,7 +114,7 @@ So nothing re-derives one of them from a folder's contents — otherwise every �
 
 ## When a plan is stopped, and how it starts again
 
-⭕ Technical Block and 🛑 Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `openlanes run` leaves alone (✅ 😎 ❌ ⭕ 🛑 💤), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
+⭕ Technical Block and 🛑 Product Block mean an agent hit a question that was not its to answer and wrote `blocked.md` instead of guessing past it. Both belong to the settled group `openlanes run` leaves alone (✅ 😎 ❌ ⭕ 🛑 💣 💤), so the loop never offers a stopped plan to anybody. A loop that could move one would make the state mean nothing.
 
 Questions are numbered `B1`, `B2`, and that numbering is how the file gets referenced in conversation and in pull requests. **`blocked.md` holds open questions and nothing else.** That is what the ⭕/🛑 invariant reads, so a file naming no question justifies neither state and `resync dirs` renames the folder out of it.
 
@@ -143,8 +144,9 @@ An entry that names no decider, carries no date, or restates the options instead
 | 😎 Deployed           | 😱 ❌                         | —                     |
 | 😱 Rolled Back        | 🟡 🟢 ❌                      | 🟢 Ready for Review   |
 | 💩 Scrapped by Review | 📋 ⭐ 🟡 ❌                   | ⭐ Planned            |
-| ⭕ Technical Block    | ⚪ 🔎 📋 ⭐ 🟡 💤 ❌          | —                     |
-| 🛑 Product Block      | ⚪ 🔎 📋 ⭐ 🟡 💤 ❌          | —                     |
+| ⭕ Technical Block    | ⚪ 🔎 📋 ⭐ 🟡 💣 💤 ❌       | —                     |
+| 🛑 Product Block      | ⚪ 🔎 📋 ⭐ 🟡 💣 💤 ❌       | —                     |
+| 💣 Bomb               | ⚪ 🔎 📋 ⭐ 🟡 ⭕ 🛑 ❌       | —                     |
 | 💤 Deferred           | ⚪ 🔎 📋 ⭐ 🟡 ❌             | —                     |
 | ⏪ Retroactive        | ⚪ 🔎 📋 ⭐ 🟡 ✅ ⭕ 🛑 💤 ❌ | ⭐ Planned            |
 | ❌ Discarded          | _terminal_                    | —                     |
@@ -172,6 +174,7 @@ stateDiagram-v2
     shit : 💩 Scrapped by Review
     blocked : ⭕ Technical Block
     product_blocked : 🛑 Product Block
+    bomb : 💣 Bomb
     deferred : 💤 Deferred
     retroactive : ⏪ Retroactive
     discarded : ❌ Discarded
@@ -179,11 +182,13 @@ stateDiagram-v2
     retroactive --> new
     blocked --> new
     product_blocked --> new
+    bomb --> new
     deferred --> new
     new --> researched
     retroactive --> researched
     blocked --> researched
     product_blocked --> researched
+    bomb --> researched
     deferred --> researched
     researched --> ready_for_planning
     new --> ready_for_planning
@@ -191,6 +196,7 @@ stateDiagram-v2
     shit --> ready_for_planning
     blocked --> ready_for_planning
     product_blocked --> ready_for_planning
+    bomb --> ready_for_planning
     deferred --> ready_for_planning
     ready_for_planning --> planned
     researched --> planned
@@ -199,6 +205,7 @@ stateDiagram-v2
     shit --> planned
     blocked --> planned
     product_blocked --> planned
+    bomb --> planned
     deferred --> planned
     planned --> building
     shit --> building
@@ -207,6 +214,7 @@ stateDiagram-v2
     retroactive --> building
     blocked --> building
     product_blocked --> building
+    bomb --> building
     deferred --> building
     building --> building_ui
     rejected --> building_ui
@@ -229,6 +237,7 @@ stateDiagram-v2
     building --> blocked
     building_ui --> blocked
     rejected --> blocked
+    bomb --> blocked
     new --> product_blocked
     researched --> product_blocked
     retroactive --> product_blocked
@@ -237,6 +246,9 @@ stateDiagram-v2
     building --> product_blocked
     building_ui --> product_blocked
     rejected --> product_blocked
+    bomb --> product_blocked
+    blocked --> bomb
+    product_blocked --> bomb
     new --> deferred
     researched --> deferred
     retroactive --> deferred
@@ -262,6 +274,7 @@ stateDiagram-v2
     shit --> discarded
     blocked --> discarded
     product_blocked --> discarded
+    bomb --> discarded
     deferred --> discarded
     retroactive --> discarded
 ```
@@ -280,7 +293,7 @@ stateDiagram-v2
 | `deployed.md`      | 😎 Deployed                                                                   |
 | `rollback.md`      | 😱 Rolled Back                                                                |
 | `rewrite.md`       | 💩 Scrapped by Review                                                         |
-| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block                                          |
+| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block, 💣 Bomb                                 |
 | `delayed.md`       | 💤 Deferred                                                                   |
 | `discarded.md`     | ❌ Discarded                                                                  |
 

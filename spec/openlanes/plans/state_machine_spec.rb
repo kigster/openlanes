@@ -128,10 +128,64 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       end
     end
 
+    # The clock decides when a plan becomes 💣, and the clock is the sweep's,
+    # never the invariant's: asking about a folder must not rename it.
+    it "holds a folder at Bomb while blocked.md names a question, and asks nothing of the clock" do
+      status = OpenLanes::Plans::STATUS_BY_KEY.fetch(:bomb)
+
+      aggregate_failures do
+        expect(status.emoji).to eq("\u{1F4A3}")
+        expect(status).to be_satisfied_by(folder(:bomb, files: { "blocked.md" => "## B1 Which feed?" }))
+        expect(status).not_to be_satisfied_by(folder(:bomb))
+        expect(status.violation(folder(:bomb, files: { "blocked.md" => "- **B1** \u2014 answered" })))
+          .to include("names no open question")
+      end
+    end
+
     it "stops a folder being Retroactive once it has been documented" do
       subject = folder(:retroactive, files: { "spec.md" => "written up" }, prs: ["Merged 🟣"])
 
       expect(OpenLanes::Plans::STATUS_BY_KEY[:retroactive].violation(subject)).to include("already exists")
+    end
+  end
+
+  describe "the bomb" do
+    let(:question) { { "spec.md" => "x", "blocked.md" => "## B1 Which feed?" } }
+
+    it "is entered from either block, and from nothing else" do
+      expect(described_class.inbound.fetch(:bomb)).to match_array(%i[blocked product_blocked])
+    end
+
+    it "fires from a technical block and from a product block" do
+      %i[blocked product_blocked].each do |key|
+        subject = folder(key, files: question)
+
+        expect(described_class.new(subject).promote!(:bomb).key).to eq(:bomb)
+        expect(subject.renames).to eq([:bomb])
+      end
+    end
+
+    it "leaves back through the block its blocked.md describes" do
+      aggregate_failures do
+        expect(described_class.edge?(:bomb, :blocked)).to be(true)
+        expect(described_class.edge?(:bomb, :product_blocked)).to be(true)
+        expect(described_class.new(folder(:bomb, files: question)).promote!(:blocked).key).to eq(:blocked)
+      end
+    end
+
+    it "resumes the normal path once its questions are answered, as a block does" do
+      expect(described_class.outbound(:bomb)).to include(:researched, :planned, :building)
+    end
+
+    it "is settled, so no agent is assigned to it, and shares the blocked family" do
+      aggregate_failures do
+        expect(described_class::SETTLED).to include(:bomb)
+        expect(described_class::FAMILIES.first).to eq(%i[blocked product_blocked bomb])
+      end
+    end
+
+    it "never defers: an aging sweep halts on it instead" do
+      expect(described_class.edge?(:bomb, :deferred)).to be(false)
     end
   end
 
