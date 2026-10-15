@@ -164,7 +164,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "offers Yes and No only for the question the agent marked, without the mark" do
       aggregate_failures do
-        expect(blocked_plan[:questions].map { it[:answers] }).to eq([nil, %w[yes no]])
+        expect(blocked_plan[:questions].map { it[:options]&.map { |o| o[:answer] } }).to eq([nil, %w[yes no]])
         expect(blocked_plan[:questions].map { it[:heading] }).to eq(["B1 Redis key layout", "B2 Rebase"])
         expect(blocked_plan[:questions].map { it[:body] }).to eq(["Should keys carry the path?", "Should I rebase onto main?"])
         expect(blocked_plan[:questions].first).to include(id: "001.00/B1",
@@ -209,6 +209,46 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       it "says so" do
         expect([blocked_plan[:questions].map { it[:held] }, blocked_plan[:cars].map { it[:held] }]).to eq([[true, false], [false, true]])
+      end
+    end
+  end
+
+  describe "a question that offers lettered options (D3)" do
+    subject(:question) do
+      described_class.new(board:, tree:, agents:, node:, repo: keys.repo, project: "openlanes", seq: 1, at:, claims:, judge:)
+                     .to_h[:plans].find { it[:ordinal] == "001.00" }[:questions].first
+    end
+
+    let(:judge) { nil }
+
+    before do
+      blocked("001.00",
+        "clean-boundaries",
+        "# Blocked\n\n## B1 Layout\n\nWhich layout?\n\na) Path (Recommended)\nb) Remote URL\nc) Type something instead\n")
+      claims.claim("001.00")
+    end
+
+    it "shows the context as the body and the options as buttons, the free-text one left to the box" do
+      aggregate_failures do
+        expect(question[:body]).to eq("Which layout?")
+        expect(question[:options]).to eq([{ letter: "a", label: "Path", recommended: true, answer: "a) Path" },
+                                          { letter: "b", label: "Remote URL", recommended: false, answer: "b) Remote URL" }])
+      end
+    end
+
+    context "when the judge says it does not ask to choose" do
+      let(:judge) { ->(_text) { false } }
+
+      it "offers the text box alone, with the whole question as its body" do
+        expect(question).to include(options: nil, body: start_with("Which layout?\n\na) Path"))
+      end
+    end
+
+    context "when the judge has no verdict" do
+      let(:judge) { ->(_text) {} }
+
+      it "keeps the parser's options" do
+        expect(question[:options].size).to eq(2)
       end
     end
   end

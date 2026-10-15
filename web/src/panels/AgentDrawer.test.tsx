@@ -4,7 +4,7 @@ import { axe } from "vitest-axe";
 import type { Car, Plan } from "../api/types";
 import type { AgentAction } from "./AgentActionMenu";
 import { AgentDrawer } from "./AgentDrawer";
-import { carOf, findInline, planAt, recorder, renderPanel, snapshot, type Sent } from "./testing";
+import { carOf, findInline, planAt, question, recorder, renderPanel, snapshot, type Sent } from "./testing";
 
 function drawer(plan: Plan, car: Car, onCommand = recorder().onCommand, onClose = vi.fn()) {
   return renderPanel(<AgentDrawer plan={plan} car={car} models={snapshot.models} autocompact={snapshot.autocompact} onCommand={onCommand} onClose={onClose} />);
@@ -143,12 +143,28 @@ describe("AgentDrawer", () => {
     await waitFor(() => expect(sent[0].payload).toEqual({ question: "B1", text: "yes" }));
   });
 
-  it("swaps Yes and No for words", async () => {
+  it("opens a box under Yes and No to type something instead", async () => {
     const user = userEvent.setup();
     const plan = planAt("006.00");
     drawer(plan, { ...carOf(plan, "r2d2-mechanic"), state: "stuck" });
-    await user.click(screen.getByRole("button", { name: "Answer in words" }));
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Type something instead" }));
     expect(screen.getByRole("textbox", { name: "Your answer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "No" })).toBeInTheDocument();
+  });
+
+  it("offers a lettered question's options and sends the one chosen", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("001.00");
+    plan.questions = [question({ body: "Which?", options: [
+      { letter: "a", label: "Rebase", recommended: false, answer: "a) Rebase" },
+      { letter: "b", label: "Merge", recommended: true, answer: "b) Merge" },
+    ] })];
+    drawer(plan, carOf(plan, "luke-backend"), onCommand);
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Rebase/ }));
+    await waitFor(() => expect(sent[0].payload).toEqual({ question: "B1", text: "a) Rebase" }));
   });
 
   it("starts a fresh transcript for another car", () => {

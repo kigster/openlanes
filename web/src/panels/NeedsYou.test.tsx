@@ -4,6 +4,16 @@ import { axe } from "vitest-axe";
 import { NeedsYou } from "./NeedsYou";
 import { findInline, getInline, planAt, question, recorder, renderPanel } from "./testing";
 
+const LETTERED = [
+  { letter: "a", label: "Carry the remote URL and the worktree name", recommended: true, answer: "a) Carry the remote URL and the worktree name" },
+  { letter: "b", label: "Carry the checkout path", recommended: false, answer: "b) Carry the checkout path" },
+];
+const lettered = () => {
+  const plan = planAt("001.00");
+  plan.questions = [question({ body: "Redis keys need one name per checkout. Which?", options: LETTERED })];
+  return plan;
+};
+
 const interrupted = () => {
   const plan = planAt("001.00");
   plan.questions = [];
@@ -71,14 +81,46 @@ describe("NeedsYou", () => {
     expect(await findInline("Refused: network down.")).toBeInTheDocument();
   });
 
-  it("answers a yes/no question with its buttons, or in words", async () => {
+  it("answers a yes/no question with its buttons, or opens the box under them to type something instead", async () => {
     const user = userEvent.setup();
     const { onCommand } = recorder();
     renderPanel(<NeedsYou plans={[planAt("006.00")]} onCommand={onCommand} />);
     expect(screen.queryByRole("textbox")).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Answer in words" }));
+    await user.click(screen.getByRole("button", { name: "Type something instead" }));
     expect(screen.getByRole("textbox", { name: "Your answer" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Yes" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Yes" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Type something instead" })).toBeNull();
+  });
+
+  it("stacks a lettered question's options in order, the recommended one tagged, and Type something instead last", async () => {
+    const { container } = renderPanel(<NeedsYou plans={[lettered()]} onCommand={recorder().onCommand} />);
+    const group = screen.getByRole("group", { name: "Choose an answer" });
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "a)Carry the remote URL and the worktree nameRecommended", "b)Carry the checkout path", "Type something instead",
+    ]);
+    expect(within(group).getAllByRole("button")[0]).toHaveClass("is-recommended");
+    expect(screen.getByText("Redis keys need one name per checkout. Which?")).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("sends a lettered option as its letter and label", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    renderPanel(<NeedsYou plans={[lettered()]} onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: /Carry the checkout path/ }));
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "B1", text: "b) Carry the checkout path" } });
+    expect(await findInline("Answered b) to luke-backend.")).toBeInTheDocument();
+  });
+
+  it("sends typed words for a lettered question, the options still above the box", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    renderPanel(<NeedsYou plans={[lettered()]} onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: "Type something instead" }));
+    expect(screen.getByRole("button", { name: /Carry the checkout path/ })).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Your answer" }), "Neither: use the plan number.");
+    await user.click(screen.getByRole("button", { name: "Send answer" }));
+    expect(sent[0].payload).toEqual({ question: "B1", text: "Neither: use the plan number." });
   });
 
   it("sends the word itself for Yes", async () => {

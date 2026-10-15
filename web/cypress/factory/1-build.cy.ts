@@ -22,7 +22,7 @@ const FALLBACK = "Use your recommendation.";
 const BUILT = /^finished: completed\b.*built locally/;
 const DEAD = ["discarded", "deferred"];
 
-interface Question { id: string; heading: string; body: string; answers: string[] | null; held: boolean }
+interface Question { id: string; heading: string; body: string; options: Array<{ label: string; recommended: boolean }> | null; held: boolean }
 interface Plan { ordinal: string; title: string; lane: string; status: { key: string; emoji: string; label: string }; questions: Question[]; cars: Array<{ key: string; state: string; message: string }> }
 interface LogLine { source: string; text: string; plan: string | null }
 interface Board { me: { plans: Plan[]; run: { status: string }; log: LogLine[] } | null }
@@ -34,8 +34,10 @@ const answerFor = (question: Question) => ANSWERS.find(([pattern]) => pattern.te
 function answer(question: Question) {
   cy.task("log", `answering ${question.id}: ${question.heading}`);
   cy.get(`.rail [data-ask="${question.id}"]`, { timeout: 30000 }).within(() => {
-    if (question.answers?.length) {
-      cy.contains("button", new RegExp(`^${question.answers[0]}$`, "i")).click();
+    if (question.options?.length) {
+      // The agent's own recommendation, or its first option when it made none (D3).
+      const pick = question.options.find((o) => o.recommended) ?? question.options[0];
+      cy.contains("button", pick.label, { matchCase: false }).click();
     } else {
       cy.get("textarea").type(answerFor(question), { delay: 0 });
       cy.contains("button", "Send answer").click();

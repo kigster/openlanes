@@ -41,7 +41,7 @@ export function sampleQuestion(over: Partial<Question> = {}): Question {
     body: "Should Redis keys carry the checkout path?",
     agent: "luke-backend",
     owner: "technical",
-    answers: null,
+    options: null,
     held: false,
     asked_at: null,
     ...over,

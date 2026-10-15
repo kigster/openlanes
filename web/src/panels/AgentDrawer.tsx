@@ -39,9 +39,10 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
     <div className="d-block">
       <p><strong>Blocked on your answer.</strong></p>
       <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.body) }} />
-      {q.yesNo ? (
-        <Choices answers={question.answers ?? []} onChoose={q.choose} onWords={() => q.update({ inWords: true })} disabled={q.command.pending} />
-      ) : (
+      {q.options && (
+        <Choices options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords} disabled={q.command.pending} />
+      )}
+      {(!q.options || q.inWords) && (
         <>
           <AnswerBox id={`d-${question.id}`} value={q.state.draft} onChange={q.setDraft} onSend={q.answer} invalid={q.invalid} />
           <div className="ask-actions">
