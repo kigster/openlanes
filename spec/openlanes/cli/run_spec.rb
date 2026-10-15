@@ -547,6 +547,45 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
+  # Plan 009: a plan others wait on, blocked eight days, becomes 💣 on the
+  # first sweep, and nothing else starts.
+  describe "a 💣" do
+    before do
+      path = nil
+      plans do |t|
+        path = t.plan "001.00", :blocked, "feed", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which feed?\n" }
+        t.plan "002.00",
+          :building,
+          "consumer",
+          files: { "spec.md" => "---\ndepends_on: [\"001.00\"]\n---\n#{spec_body}", "plan.md" => "# Plan", "plan-frontend.md" => "## F1" }
+      end
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
+    end
+
+    it "exits 1 and names the plan on STDERR, even when quiet" do
+      executor = with_executor
+      _out, err, status = run(dry_run: false, quiet: true)
+
+      aggregate_failures do
+        expect(status).to eq(1)
+        expect(unwrapped(err)).to include("Halted", "001.00 Feed")
+        expect(executor).not_to have_received(:call)
+      end
+    end
+
+    it "exits 0 under --ignore-bombs, with the 💣 left standing" do
+      with_executor
+      _out, _err, status = run(dry_run: false, ignore_bombs: true)
+
+      expect(status).to eq(0)
+      expect(OpenLanes::Plans::Tree.new(dir: plans_root).find("001.00").status.key).to eq(:bomb)
+    end
+
+    it "reads --ignore-bombs off the command line" do
+      expect(typed("--ignore-bombs")).to include(ignore_bombs: true)
+    end
+  end
+
   describe "the publisher" do
     subject(:publisher) { command.send(:publisher_for, plans_root, :worktree, options) }
 

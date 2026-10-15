@@ -68,6 +68,10 @@ module OpenLanes
       option :port,
         default: OpenLanes::Web::DEFAULT_PORT.to_s,
         desc:    "Port the control room listens on, on 127.0.0.1"
+      option :ignore_bombs,
+        type:    :boolean,
+        default: false,
+        desc:    "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run"
       option :until_settled,
         type:    :boolean,
         default: false,
@@ -82,7 +86,8 @@ module OpenLanes
         "--rounds 3             # …capping every agent at three rounds per plan",
         "--plan 005,006,007     # only the plans a batch step just created",
         "--no-web               # headless: no control room, no browser; ends when the tree settles",
-        "--until-settled        # with the control room, but ending when the tree settles"
+        "--until-settled        # with the control room, but ending when the tree settles",
+        "--ignore-bombs         # keep working while a 💣 stands"
       ]
 
       # Option precedence, quietest to loudest: the built-in default, then
@@ -162,6 +167,8 @@ module OpenLanes
           publisher: publisher_for(root, isolation, options),
           on_board:  live&.on_board,
           claims:    live&.claims,
+          ignore_bombs: options.fetch(:ignore_bombs, false),
+          aging_since:  Config.current.aging_since,
           **staying(options, web)
         )
         startup_box(options)
@@ -207,7 +214,9 @@ module OpenLanes
       # @return [Array<String>]
       def signals = %w[INT TERM]
 
-      # The closing report, and the exit status: 1 when any attempt failed.
+      # The closing report, and the exit status: 1 when any attempt failed,
+      # or when a 💣 halted the run (N9). A halted run that exited 0 would
+      # read to a script as a tree with nothing left to do.
       #
       # @param runner [OpenLanes::Engine::Runner]
       # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
@@ -216,7 +225,22 @@ module OpenLanes
       # @return [void]
       def finish(runner, attempts, options, seconds:)
         report(runner, attempts, options, seconds:)
-        exit(failures(attempts).empty? ? 0 : 1)
+        bombs = runner.halted_by
+        bomb_report(bombs)
+        exit(failures(attempts).empty? && bombs.empty? ? 0 : 1)
+      end
+
+      # Named on STDERR even under --quiet: it is why the run exits 1.
+      #
+      # @param bombs [Array<OpenLanes::Plans::Subject>]
+      # @return [void]
+      def bomb_report(bombs)
+        return if bombs.empty?
+
+        names = bombs.map { |b| "  #{b.feature.ordinal} #{b.feature.title} — see blocked.md" }.join("\n")
+        error("Halted: #{bombs.size} 💣 plan#{"s" unless bombs.size == 1} other plans wait on, " \
+              "blocked too long:\n#{names}\n\n" \
+              "Answer blocked.md, resume anyway from the control room, or re-run with --ignore-bombs.")
       end
 
       # Where the browser is sent once the control room answers.
