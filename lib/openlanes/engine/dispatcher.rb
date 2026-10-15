@@ -684,6 +684,9 @@ module OpenLanes
         blocked = waiting
         return "idle: waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
 
+        held = @runner.held(@runner.dependencies(except: untouchable))
+        return "idle: held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
+
         "idle: nothing to do"
       end
 
@@ -702,20 +705,18 @@ module OpenLanes
       # @return [Array(OpenLanes::Agents::Agent, OpenLanes::Plans::Subject), nil]
       def next_dispatchable
         reconcile
-        @runner.in_scope.each do |subject|
+        @dependencies = @runner.dependencies(except: untouchable)
+        blockers_first(@runner.in_scope).each do |subject|
           working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
           # After {#reconcile} this is the folder's name. On a dry run, which
           # renames nothing, it is what the name would have become. A plan an
           # agent is in right now is never reconciled, so its contents are
           # not asked: see {#partners_only}.
-          state = if working.empty?
-                    Lifecycle::Lanes.target(subject) || Lifecycle::Resync::Dirs.target(subject)
-                  else
-                    subject.status
-                  end
+          state = working.empty? ? @runner.effective_status(subject) : subject.status
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
+          next if held?(subject)
 
           candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
@@ -724,6 +725,25 @@ module OpenLanes
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # The dependency gate: a plan whose `depends_on:` names anything not yet
+      # ✅, or which sits on a cycle, is not started this tick. Kept out of
+      # {#next_dispatchable} so the rule can be read, and changed, alone.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean]
+      def held?(subject) = !@dependencies.reason(subject.feature.ordinal).nil?
+
+      # Plans that others wait for go first, so the work that unblocks the
+      # most is started soonest. Stable: plans nobody waits for keep the
+      # tree's order among themselves, and so do the blockers.
+      #
+      # @param subjects [Array<OpenLanes::Plans::Subject>]
+      # @return [Array<OpenLanes::Plans::Subject>]
+      def blockers_first(subjects)
+        deps = @dependencies || @runner.dependencies
+        subjects.each_with_index.sort_by { |s, i| [deps.blocks_of(s.feature.ordinal).empty? ? 1 : 0, i] }.map(&:first)
       end
 
       # One agent at a time on a plan, except a pair working the same state.

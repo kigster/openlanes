@@ -53,12 +53,20 @@ module OpenLanes
       # @return [Boolean] whether a plan with this number exists on disk
       def include?(ordinal) = !find(ordinal).nil?
 
+      # @return [OpenLanes::Plans::Dependencies] who waits for whom, read from
+      #   every `depends_on:` in this tree
+      def dependencies = @dependencies ||= Dependencies.new(self)
+
+      # @param ordinal [OpenLanes::Plans::Ordinal, String]
+      # @return [Array<String>] every plan that waits for this one; derived, never stored
+      def blocks_of(ordinal) = dependencies.blocks_of(ordinal)
+
       # Forget everything read from disk, so a caller that has just renamed
       # folders sees the new state.
       #
       # @return [self]
       def reload
-        @features = @subjects = @skipped = nil
+        @features = @subjects = @skipped = @dependencies = nil
         self
       end
 

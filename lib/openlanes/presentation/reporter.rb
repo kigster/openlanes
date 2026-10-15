@@ -117,12 +117,39 @@ module OpenLanes
           UI.fit(feature.status.emoji, EMOJI_WIDTH),
           UI.paint(UI.fit(feature.status.label, label_width), :yellow),
           UI.paint(UI.fit(feature.title, title_width), :blue, :bold),
-          prs.empty? ? UI.paint("[none yet]", :bright_red) : link(prs.first)
+          [prs.empty? ? UI.paint("[none yet]", :bright_red) : link(prs.first), *blocks_note(feature.ordinal)].join("  ")
         )
 
         rest = prs.drop(1).map { |pr| (" " * pr_column) + link(pr) }
 
-        [first, *rest, *violation_line(subject)]
+        [first, *rest, *violation_line(subject), *dependency_lines(subject)]
+      end
+
+      # What this plan holds up, said in the row's tail so the one line that
+      # answers "why is 050 not moving" is on the plan that causes it.
+      #
+      # @param ordinal [OpenLanes::Plans::Ordinal]
+      # @return [Array<String>]
+      def blocks_note(ordinal)
+        blocked = tree.dependencies.blocks_of(ordinal)
+        blocked.empty? ? [] : [UI.paint("blocks #{blocked.join(", ")}", :cyan)]
+      end
+
+      # Dependency trouble under the plan's row. Every answer comes from
+      # {Plans::Dependencies}; nothing about the graph is computed here.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Array<String>]
+      def dependency_lines(subject)
+        ordinal = subject.feature.ordinal
+        deps = tree.dependencies
+        notes = Plans::Spec.for(subject).problems.grep(/\Adepends_on/).map { |p| [p, :red] }
+        deps.unknown(ordinal).each { |o| notes << ["depends_on: #{o} is not a plan in this tree", :red] }
+        deps.closed(ordinal).each { |o| notes << ["depends_on: #{o} is already done, so the entry is ignored", :yellow] }
+        cycle = deps.cycle_of(ordinal)
+        notes << ["cycle: #{cycle.join(" → ")}", :red] if cycle
+
+        notes.map { |text, colour| (" " * title_column) + UI.paint("↳ #{text}", colour) }
       end
 
       # The URL is left bare rather than wrapped in an OSC 8 hyperlink: the table

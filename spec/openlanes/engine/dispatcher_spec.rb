@@ -1049,4 +1049,56 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
   end
+
+  describe "the dependency gate" do
+    let(:noop) do
+      lambda { |agent, subject, **|
+        calls << [agent.name, subject.feature.ordinal.to_s]
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "noop", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+    end
+
+    def frontmatter(**keys) = "---\n#{keys.map { |k, v| "#{k}: #{v}" }.join("\n")}\n---\n#{spec_body}"
+
+    describe "#blockers_first" do
+      let!(:built) do
+        plans do |t|
+          t.plan "001.00", :planned, "free-a", files: { "spec.md" => spec_body }
+          t.plan "002.00", :planned, "free-b", files: { "spec.md" => spec_body }
+          t.plan "003.00", :planned, "blocker", files: { "spec.md" => spec_body }
+          t.plan "004.00", :planned, "waiter", files: { "spec.md" => frontmatter(depends_on: '["003.00"]') }
+        end
+      end
+
+      let(:dispatcher) { described_class.new(runner: runner_with(noop)) }
+
+      it "puts a plan others wait for ahead of those nobody waits for, keeping order otherwise" do
+        ordered = dispatcher.send(:blockers_first, tree.subjects).map { it.feature.ordinal.to_s }
+
+        expect(ordered).to eq(%w[003.00 001.00 002.00 004.00])
+      end
+    end
+
+    %w[full plan quick].each do |lane|
+      context "with the #{lane} lane" do
+        let!(:built) do
+          plans do |t|
+            t.plan "034.00", :blocked, "stuck", files: { "blocked.md" => "## B1 Which?\n" }
+            t.plan "050.00",
+              :ready_for_planning,
+              "waiter",
+              files: { "spec.md" => frontmatter(lane:, depends_on: '["034.00"]') }
+          end
+        end
+
+        it "holds a plan whose dependency is not done" do
+          runner = runner_with(noop)
+          runner.call
+
+          expect(calls.map(&:last)).not_to include("050.00")
+          expect(runner.held).to eq("050.00" => "waiting on 034.00")
+        end
+      end
+    end
+  end
 end

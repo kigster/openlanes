@@ -47,4 +47,38 @@ RSpec.describe OpenLanes::CLI::ListPlans, :tree do
     expect(out).to include("No plans found")
     expect(status).to eq(0)
   end
+
+  def capture_stdout
+    out = StringIO.new
+    original = $stdout
+    $stdout = out
+    yield
+    out.string
+  ensure
+    $stdout = original
+  end
+
+  describe "dependencies" do
+    let(:dependent_spec) { "---\ndepends_on: [\"034.00\"]\n---\n#{spec_body}" }
+
+    before do
+      plans do |t|
+        t.plan("034.00", :new, "base", files: { "spec.md" => spec_body })
+        t.plan("050.00", :new, "later", files: { "spec.md" => dependent_spec })
+      end
+    end
+
+    it "reads blocks 050.00 on the 034 row" do
+      out, _err, _status = run
+
+      expect(out.lines.find { |l| l.include?("034.00") }).to include("blocks 050.00")
+    end
+
+    it "keeps the note when colour is on" do
+      allow(OpenLanes::UI).to receive(:color?).and_return(true)
+      printed = capture_stdout { command.call(dir: plans_root) }
+
+      expect(strip_ansi(printed)).to include("blocks 050.00")
+    end
+  end
 end

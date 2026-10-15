@@ -564,12 +564,25 @@ module OpenLanes
           error("#{summary.join(" · ")}\n\n#{failures(attempts).map { |f| "#{f.ordinal} #{f.agent}: #{f.note}" }.join("\n")}")
         end
 
+        held_report(runner.held)
         return if blocked.empty?
 
         warn("#{blocked.size} plan#{"s" unless blocked.size == 1} need a human decision:\n" +
                blocked.map { |b| "  #{b.feature.ordinal} #{b.status.emoji} #{b.feature.title} — see blocked.md" }.join("\n") +
                "\n\nWrite the answers into blocked.md, then: openlanes unblock " \
                "#{blocked.map { |b| b.feature.ordinal }.join(",")}")
+      end
+
+      # Plans the dependency gate held back, and why, so a run that stops at a
+      # fixed point with work left says what it is waiting for.
+      #
+      # @param held [Hash{String => String}] ordinal => reason
+      # @return [void]
+      def held_report(held)
+        return if held.empty?
+
+        warn("#{held.size} plan#{"s" unless held.size == 1} held by dependencies:\n" +
+             held.map { |ordinal, why| "  #{ordinal} #{why}" }.join("\n"))
       end
     end
   end
