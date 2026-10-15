@@ -304,19 +304,21 @@ module OpenLanes
       # @return [OpenLanes::Engine::Runner]
       def runner_for(agents, plans, live, web)
         Engine.runner(
-          tree:      @tree,
+          tree:         @tree,
           agents:,
           isolation:,
-          jobs:      (@options[:jobs] || UI.default_jobs).to_i,
+          jobs:         (@options[:jobs] || UI.default_jobs).to_i,
           plans:,
-          state:     Engine.state_file(@tree),
-          worktree:  (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree),
-          rounds:    @options[:rounds]&.to_i,
-          executor:  executor,
-          dry_run:   @dry_run,
-          publisher: publisher_for(@root, isolation),
-          on_board:  live&.on_board,
-          claims:    live&.claims,
+          state:        Engine.state_file(@tree),
+          worktree:     (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree),
+          rounds:       @options[:rounds]&.to_i,
+          executor:     executor,
+          dry_run:      @dry_run,
+          publisher:    publisher_for(@root, isolation),
+          on_board:     live&.on_board,
+          claims:       live&.claims,
+          ignore_bombs: @options.fetch(:ignore_bombs, false),
+          aging_since:  Config.current.aging_since,
           **staying(web)
         )
       end
@@ -457,16 +459,33 @@ module OpenLanes
       # @return [Array<String>]
       def signals = %w[INT TERM]
 
-      # The closing report.
+      # The closing report. A halted run that exited 0 would read to a
+      # script as a tree with nothing left to do, so a 💣 makes it 1 (N9).
       #
       # @param runner [OpenLanes::Engine::Runner]
       # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
       # @param seconds [Float] wall clock for the whole loop
-      # @return [Integer] the exit status: 1 when any attempt failed
+      # @return [Integer] the exit status: 1 when any attempt failed, or
+      #   when a 💣 halted the run
       def finish(runner, attempts, seconds:)
         unwatched(runner)
         report(runner, attempts, seconds:)
-        failures(attempts).empty? ? 0 : 1
+        bombs = runner.halted_by
+        bomb_report(bombs)
+        failures(attempts).empty? && bombs.empty? ? 0 : 1
+      end
+
+      # Named on STDERR even under --quiet: it is why the run exits 1.
+      #
+      # @param bombs [Array<OpenLanes::Plans::Subject>]
+      # @return [void]
+      def bomb_report(bombs)
+        return if bombs.empty?
+
+        names = bombs.map { |b| "  #{b.feature.ordinal} #{b.feature.title} — see blocked.md" }.join("\n")
+        error("Halted: #{bombs.size} 💣 plan#{"s" unless bombs.size == 1} other plans wait on, " \
+              "blocked too long:\n#{names}\n\n" \
+              "Answer blocked.md, resume anyway from the control room, or re-run with --ignore-bombs.")
       end
 
       # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
