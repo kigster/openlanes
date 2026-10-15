@@ -35,12 +35,20 @@ module OpenLanes
         "stop"    => { "phase" => "stopped", "state" => "done" }
       }.freeze
 
+      # The fields of a snapshot's `node` a declared identity replaces.
+      IDENTITY = %w[id user host ip checkout].freeze
+
       # @param fixture [String] path to a `Board` JSON
       # @param random [Random]
-      def initialize(fixture: FIXTURE, random: Random.new(4747))
+      # @param node [OpenLanes::Live::Node, nil] a declared identity
+      #   (`--identity`): this board is then that machine's, and the pretend
+      #   other machine is left to the demo that has none, so two demos on
+      #   one Redis never publish the same node twice
+      def initialize(fixture: FIXTURE, random: Random.new(4747), node: nil)
         board = JSON.parse(File.read(fixture))
         @me = board.fetch("me")
-        @others = board.fetch("others")
+        @others = node ? [] : board.fetch("others")
+        @me["node"].merge!(node.wire(heartbeat_at: Time.now).transform_keys(&:to_s).slice(*IDENTITY)) if node
         @random = random
         @ticks = 0
       end

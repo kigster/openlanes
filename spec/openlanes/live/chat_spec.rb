@@ -263,9 +263,91 @@ RSpec.describe OpenLanes::Live::Chat do
     hub = here.start
     start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     there.start_chat(page: theirs, name: "Sam", machine: dana, label: "dana@studio")
-    sleep 0.01 until here.state(page: mine)[:invites].any? || Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time > 2
+    Thread.pass until here.state(page: mine)[:invites].any? || Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time > 2
     expect(hub.state(page: mine)[:invites].size).to eq(1)
   ensure
     here.stop
+  end
+
+  # Pub/sub ignores both the repository and the Redis database, so the
+  # channel names are all that keeps two boards on one Redis apart.
+  describe "isolation on one Redis" do
+    def hub(keys:, machine:, label:, db: 0)
+      on_db = Class.new(SimpleDelegator) { define_method(:db) { db } }.new(store)
+      described_class.new(stores: OpenLanes::Web::Stores.shared(on_db), keys:, machine:, label:, clock:, wall:)
+    end
+
+    def isolated(elsewhere)
+      elsewhere.attach("page-else-1")
+      elsewhere.step
+      start
+      here.say(page: mine, id: "01JMSG", text: "only for widgets")
+      relay
+      elsewhere.step
+      elsewhere.drain("page-else-1")
+    end
+
+    it "never lets a start, an invite or a message cross to another repository (item 7)" do
+      gadgets = OpenLanes::Live::Keys.new(repo: "github.com/acme/gadgets", node: "#{sam}:dddddddddddd")
+      elsewhere = hub(keys: gadgets, machine: sam, label: "sam@gadgets")
+      aggregate_failures do
+        expect(isolated(elsewhere)).to eq([])
+        expect(elsewhere.state(page: "page-else-1")).to include(chat: nil, invites: [])
+      end
+    end
+
+    it "never lets two databases of one repository meet (item 8)" do
+      one = hub(keys: keys.with(node: "#{dana}:111111111111"), machine: dana, label: "dana@db1", db: 1)
+      ten = hub(keys: keys.with(node: "#{sam}:101010101010"), machine: sam, label: "sam@db10", db: 10)
+      [one, ten].each(&:step)
+      one.attach("page-db-one")
+      ten.attach("page-db-ten")
+      started = one.start_chat(page: "page-db-one", name: "Dana", machine: sam, label: "sam@db10")
+      2.times { [one, ten].each(&:step) }
+      aggregate_failures do
+        expect(ten.drain("page-db-ten")).to eq([])
+        expect(ten.state(page: "page-db-ten")).to include(chat: nil, invites: [])
+        expect(one.drain("page-db-one").map { it[:kind] }).to contain_exactly("joined", "unanswered")
+        expect(one.state(page: "page-db-one")[:chat][:id]).to eq(started[:chat])
+      end
+    end
+  end
+
+  describe "when Redis refuses the subscription" do
+    let(:refusing) do
+      Class.new(SimpleDelegator) do
+        def subscriber(**) = raise(OpenLanes::Live::Unavailable, "NOPERM no permission to PSUBSCRIBE")
+      end.new(store)
+    end
+    let(:hub) do
+      described_class.new(stores: OpenLanes::Web::Stores.shared(refusing), keys:, machine: dana, label: "dana@studio", clock:, wall:)
+    end
+
+    before { allow(OpenLanes::UI).to receive(:log) }
+
+    it "warns once, keeps answering state, and says why it is unavailable" do
+      results = 3.times.map { hub.listen }
+      aggregate_failures do
+        expect(results).to eq([false, false, false])
+        expect(OpenLanes::UI).to have_received(:log).with(/chat unavailable: NOPERM/).once
+        expect(hub.state(page: mine)).to include(chat: nil, unavailable: /NOPERM/)
+      end
+    end
+
+    it "puts the warning on STDERR when no log file or tap would hear it" do
+      allow(OpenLanes::UI).to receive_messages(log_path: nil, log_taps: [])
+      expect { 2.times { hub.listen } }.to output(/chat unavailable: NOPERM/).to_stderr
+    end
+
+    it "leaves STDERR alone when the log has somewhere to go" do
+      allow(OpenLanes::UI).to receive_messages(log_path: nil, log_taps: [proc {}])
+      expect { hub.listen }.not_to output.to_stderr
+    end
+
+    it "clears the reason once a step goes through again" do
+      hub.listen
+      allow(refusing).to receive(:subscriber) { |**opts| store.subscriber(**opts) }
+      expect([hub.listen, hub.unavailable, here.state(page: mine)[:unavailable]]).to eq([true, nil, nil])
+    end
   end
 end

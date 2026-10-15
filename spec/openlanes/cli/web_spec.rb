@@ -147,6 +147,12 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     end
   end
 
+  context "with --identity but no --demo" do
+    it "refuses: a live server answers only for this machine" do
+      expect(run(identity: "demo@second-machine")).to match([anything, include("--identity is for the demo only"), 64])
+    end
+  end
+
   describe "--demo" do
     let(:result) { run(demo: true) }
 
@@ -172,6 +178,31 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
 
     it "says it is the demo" do
       expect(stderr).to include("http://127.0.0.1:11000 (demo)")
+    end
+
+    it "publishes as this machine when no identity is declared" do
+      result
+      expect(built[:demo][:node]).to be_nil
+    end
+
+    context "with --identity" do
+      let(:result) { run(demo: true, identity: "demo@second-machine") }
+      let(:declared) { OpenLanes::Live::Node.declared("demo@second-machine", root: File.dirname(plans_root)) }
+
+      it "is that machine to the board, the chat and the session" do
+        result
+        context = built[:server][:context]
+        expect([context.node.label, context.keys.node, context.chat.machine, built[:demo][:node]])
+          .to eq(["demo@second-machine", declared.name, declared.id, context.node])
+      end
+
+      it "says so" do
+        expect(stderr).to include("as demo@second-machine (#{declared.name})")
+      end
+
+      it "refuses one that is not user@host" do
+        expect(run(demo: true, identity: "second-machine")).to match([anything, include("--identity: an identity is user@host"), 64])
+      end
     end
 
     context "without Redis" do

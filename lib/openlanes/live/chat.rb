@@ -95,6 +95,7 @@ module OpenLanes
         @outgoing = {}
         @beat = nil
         @running = false
+        @unavailable = nil
       end
 
       # @return [String]
@@ -109,12 +110,7 @@ module OpenLanes
         @running = true
         @thread = Thread.new do
           while @running
-            begin
-              step(POLL)
-            rescue Unavailable
-              close_subscriber
-              sleep 1
-            end
+            listen(POLL) or sleep 1
           end
         end
         self
@@ -148,6 +144,28 @@ module OpenLanes
         end
         housekeep
       end
+
+      # {#step}, kept from raising when Redis refuses the subscription (an ACL
+      # without `PSUBSCRIBE` answers `NOPERM`) or drops the connection. The
+      # board does not need the chat, so the server carries on serving it:
+      # one warning per outage, `unavailable` in {#state} until a step works
+      # again, and a fresh subscription on the next try.
+      #
+      # @param timeout [Float]
+      # @return [Boolean] whether the step went through
+      def listen(timeout = 0)
+        step(timeout)
+        @lock.synchronize { @unavailable = nil }
+        true
+      rescue Unavailable => e
+        close_subscriber
+        first = @lock.synchronize { @unavailable.nil?.tap { @unavailable = e.message } }
+        warn_unavailable(e.message) if first
+        false
+      end
+
+      # @return [String, nil] why the chat cannot listen, while it cannot
+      def unavailable = @lock.synchronize { @unavailable }
 
       # ---- the event stream -------------------------------------------------
 
@@ -184,7 +202,8 @@ module OpenLanes
       # ---- what the page asks -----------------------------------------------
 
       # `ChatState`: the chat this page is in, the invites open to this
-      # machine, and the ones this page is waiting on.
+      # machine, the ones this page is waiting on, and, while Redis refuses
+      # the subscription, why the chat is unavailable.
       #
       # @param page [String]
       # @return [Hash]
@@ -194,7 +213,8 @@ module OpenLanes
           chat = me.chat && { id: me.chat, me: participant(me), participants: roster(me.chat) }
           { chat:,
             invites:  @incoming.values.map { it[:invite] },
-            outgoing: @outgoing.values.select { it[:page] == page }.map { it.slice(:id, :machine, :label) } }
+            outgoing: @outgoing.values.select { it[:page] == page }.map { it.slice(:id, :machine, :label) },
+            unavailable: @unavailable }
         end
       end
 
@@ -590,6 +610,19 @@ module OpenLanes
 
       # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber]
       def subscriber = @subscriber ||= store.subscriber(channels: [inbox], patterns: [@keys.chat_rooms(db:)])
+
+      # {UI.log} alone reaches only a log file or a tap, and `openlanes web`
+      # sets up neither, so there the one warning an outage gets would be
+      # dropped and nobody would learn why the chat went dark. With nothing
+      # listening it goes to STDERR instead.
+      #
+      # @param reason [String]
+      # @return [void]
+      def warn_unavailable(reason)
+        message = "chat unavailable: #{reason}"
+        UI.log(message)
+        UI.line(message, bullet: "!") unless UI.log_path || UI.log_taps.any?
+      end
 
       # @return [void]
       def close_subscriber

@@ -46,7 +46,27 @@ module OpenLanes
       ID_LENGTH = 24
       CHECKOUT_LENGTH = 12
 
+      # A declared `user@host`: one of each, no spaces, no second `@`.
+      IDENTITY = /\A(?<user>[^@\s]+)@(?<host>[^@\s]+)\z/
+
+      # A declared identity that is not `user@host`.
+      class Invalid < ArgumentError; end
+
       class << self
+        # This checkout as a machine of another name: `openlanes web --demo
+        # --identity demo@second-machine` registers as a second machine on the
+        # same Redis and repository, through the same digest every process
+        # is already named by, so nothing reads a second naming scheme.
+        #
+        # @param identity [String] `user@host`
+        # @param root [String] the checkout
+        # @return [OpenLanes::Live::Node]
+        # @raise [Invalid]
+        def declared(identity, root:, **)
+          match = IDENTITY.match(identity.to_s.strip) or raise Invalid, "an identity is user@host, not #{identity.inspect}"
+          current(root:, user: match[:user], host: match[:host], **)
+        end
+
         # @param root [String] the checkout
         # @param user [String]
         # @param host [String]

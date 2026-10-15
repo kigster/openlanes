@@ -141,6 +141,48 @@ RSpec.describe OpenLanes::Web::Demo do
     end
   end
 
+  # Plan 006, I1: a second `openlanes web --demo --identity demo@second-machine`
+  # on the same store is a second machine, not a second copy of the first.
+  describe "a second demo with a declared identity" do
+    subject(:second) { described_class.new(store:, keys: second_keys, node:, interval: 0.01, clock: -> { at }) }
+
+    let(:root) { Dir.mktmpdir("openlanes-demo") }
+    let(:node) { OpenLanes::Live::Node.declared("demo@second-machine", root:) }
+    let(:second_keys) { keys.with(node: node.name) }
+    let(:seen) { OpenLanes::Live.board(store:, keys: second_keys) }
+
+    before do
+      demo.tick
+      second.tick
+    end
+
+    after { FileUtils.rm_rf(root) }
+
+    it "is on the first demo's board as its own machine, under its own node id" do
+      expect(board[:others].map { it["node"].values_at("id", "user", "host") })
+        .to eq([[board[:others].first.dig("node", "id"), "sam", "ci-runner-2"], [node.id, "demo", "second-machine"]])
+    end
+
+    it "publishes itself as that machine" do
+      expect(seen[:me]["node"].values_at("id", "user", "host", "checkout")).to eq([node.id, "demo", "second-machine", node.checkout])
+    end
+
+    it "leaves the pretend other machine to the first demo" do
+      expect(seen[:others].map { it.dig("node", "host") }).to eq(%w[ci-runner-2 studio-mini])
+    end
+
+    it "keeps its identity through a reset" do
+      second.reset
+      second.tick
+      expect(seen[:me].dig("node", "host")).to eq("second-machine")
+    end
+
+    it "takes only its own snapshot down when it stops" do
+      second.stop
+      expect([seen[:me], board[:others].map { it.dig("node", "host") }]).to eq([nil, ["ci-runner-2"]])
+    end
+  end
+
   describe "Redis going away" do
     before { allow(store).to receive(:xgroup_create).and_raise(OpenLanes::Live::Unavailable, "gone") }
 

@@ -53,15 +53,9 @@ web-dev:
 web-demo *args:
     {{ rbenv }} exe/openlanes web --demo {{ args }}
 
-# Cypress against the demo server; run `just web-build` first
+# Cypress against two demo servers, the second as demo@second-machine; run `just web-build` first
 web-e2e:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    eval "$(rbenv init - bash 2>/dev/null || true)"
-    bundle exec exe/openlanes web --demo --no-open --redis-url "${E2E_REDIS_URL:-redis://localhost:6379/14}" &
-    trap 'kill %1 2>/dev/null || true' EXIT
-    until curl -sf http://127.0.0.1:11000/healthz >/dev/null; do sleep 0.2; done
-    cd web && npx cypress run
+    bin/web-e2e
 
 # Real agents build a tic-tac-toe page through `openlanes start`; spends tokens, needs OPENLANES_FACTORY_E2E=1
 factory-e2e:

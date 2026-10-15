@@ -158,17 +158,11 @@ jobs:
       - run:
           name: Wait for Redis
           command: dockerize -wait tcp://localhost:6379 -timeout 30s
+      # The same script as `just web-e2e`: both demo servers (the page's own and demo@second-machine for the chat
+      # spec), then Cypress against them, then both stopped.
       - run:
-          name: Serve the demo
-          background: true
-          command: bundle exec exe/openlanes web --demo --no-open --redis-url "$E2E_REDIS_URL"
-      - run:
-          name: Wait for the demo
-          command: timeout 60 bash -c 'until curl -sf http://127.0.0.1:11000/healthz; do sleep 1; done'
-      - run:
-          name: Cypress
-          working_directory: web
-          command: npx cypress run
+          name: Cypress against two demo servers
+          command: bin/web-e2e
       # `when` belongs to run steps only, so the failure decides what is copied, and the copy is always stored:
       # empty after a green run, the videos and screenshots after a red one.
       - run:
