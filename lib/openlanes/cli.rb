@@ -40,6 +40,10 @@ require_relative "cli/state/subcommands/resume"
 require_relative "cli/skills/subcommands/install"
 require_relative "cli/api/api"
 require_relative "cli/api/subcommands/docs"
+require_relative "cli/app/app"
+require_relative "cli/app/subcommands/start"
+require_relative "cli/app/subcommands/status"
+require_relative "cli/app/subcommands/stop"
 
 module OpenLanes
   # The command line. Every command is a thin shell over one library class:
@@ -102,6 +106,7 @@ module OpenLanes
         "review",
         "worktree",
         "coverage",
+        "app",
         "agents",
         "describe",
         "mail",
@@ -173,6 +178,13 @@ module OpenLanes
     # Lists and checks the OpenAPI contracts plans carry; see {OpenLanes::Presentation::ApiDocs}.
     register "api" do |prefix|
       prefix.register "docs", API::Docs
+    end
+
+    # The app a plan builds, for the Preview tab; see {OpenLanes::Apps}.
+    register "app" do |prefix|
+      prefix.register "start", App::Start
+      prefix.register "status", App::Status
+      prefix.register "stop", App::Stop
     end
 
     register "completion", ::Dry::CLI::Autocomplete::Command[::OpenLanes::CLI]

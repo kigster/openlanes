@@ -57,6 +57,19 @@ web-demo *args:
 web-e2e:
     bin/web-e2e
 
+# The Preview tab's Cypress run: a real app runner beside `openlanes web --demo` on 11050; run `just web-build` first
+preview-e2e:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    eval "$(rbenv init - bash 2>/dev/null || true)"
+    export E2E_REDIS_URL="${E2E_REDIS_URL:-redis://localhost:6379/13}"
+    export PREVIEW_E2E_PORT="${PREVIEW_E2E_PORT:-11050}"
+    export OPENLANES_PORTS_FILE="$(mktemp -d)/ports.json"
+    bundle exec exe/openlanes web --demo --no-open --port "$PREVIEW_E2E_PORT" --redis-url "$E2E_REDIS_URL" &
+    trap 'kill %1 2>/dev/null || true' EXIT
+    until curl -sf "http://127.0.0.1:$PREVIEW_E2E_PORT/healthz" >/dev/null; do sleep 0.2; done
+    cd web && npx cypress run --config-file cypress.preview.config.ts
+
 # Real agents build a tic-tac-toe page through `openlanes start`; spends tokens, needs OPENLANES_FACTORY_E2E=1
 factory-e2e:
     #!/usr/bin/env bash

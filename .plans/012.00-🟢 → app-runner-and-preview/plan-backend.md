@@ -1,3 +1,8 @@
+> [!NOTE]
+>
+> [2026-10-14 11:51:30 AM PDT] [ agent: luke-backend   status: Started, round 1 ]
+> [2026-10-14 12:28:44 PM PDT] [ agent: luke-backend   status: Completed, round 1 ]
+
 # 012.00 App Runner and Preview, back end
 
 `luke-backend` builds these. Namespace is `OpenLanes::Apps` (`lib/openlanes/apps.rb` facade, `lib/openlanes/apps/`), plural like `Agents` and `Adapters`, so it never collides with `Web::App`. B1 lands first: `rey-frontend` builds against its event shape.
@@ -11,12 +16,13 @@
   - `lib/openlanes/apps.rb` (facade: `Apps.definition(config)`, `Apps.supervisor(...)`, `Apps.registry`)
   - `lib/openlanes/apps/definition.rb`: `Definition = Data.define(:kind, :processes)`, `ProcessSpec = Data.define(:name, :start, :ready, :restart_on, :preview)`; `Definition#preview` returns the one preview process or `nil`; `ProcessSpec#port_env` returns `PORT_<NAME>` (upcased, non-alphanumerics to `_`)
   - `lib/openlanes/apps/status.rb`: `Status = Data.define(:plan, :branch, :process, :state, :port, :preview, :url, :framing, :reason, :at)`, `STATES = %w[starting ready restarting stopped failed]`, `#to_h` is the wire payload below
-  - `lib/openlanes/live/keys.rb` (one new key, `apps(of = node)`)
-  - `lib/openlanes/web/events.rb` (an `apps` snapshot on stream open, then one `app` event per transition)
-  - specs: `spec/openlanes/support/config_spec.rb`, `spec/openlanes/apps/definition_spec.rb`, `spec/openlanes/apps/status_spec.rb`, `spec/openlanes/web/events_spec.rb`
+  - `lib/openlanes/live/keys.rb` (two new keys: `apps(machine = node id)`, a hash `openlanes:<repo>:apps:<node id>` of plan to its statuses and heartbeat; `app_commands(machine = node id)`, the stream the page's buttons go to)
+  - `lib/openlanes/apps/listing.rb`: `Apps::Listing.read(store:, keys:, now:)` returns every live `<app>` hash on this machine, pruning plans whose heartbeat is older than `Listing::TTL` (30 s); `Listing.write(store:, keys:, plan:, statuses:)` and `Listing.remove(store:, keys:, plan:)`
+  - `lib/openlanes/web/events.rb` (an `apps` snapshot on stream open, then one `app` event for each process whose status changed since the last tick)
+  - specs: `spec/openlanes/config_spec.rb`, `spec/openlanes/apps/definition_spec.rb`, `spec/openlanes/apps/status_spec.rb`, `spec/openlanes/apps/listing_spec.rb`, `spec/openlanes/web/events_spec.rb`
 - **Must not touch:** anything under `web/`, `lib/openlanes/execution/`, other `lib/openlanes/apps/*` files
 - **Depends on:** nothing
-- **Done when:** `config_spec.rb` loads a valid `app:` and refuses an unknown key inside it and a process missing `name` or `start`, each with the file named; `definition_spec.rb` refuses two `preview: true` and returns `nil` for zero; `events_spec.rb` sees one `app` event per state and the `apps` snapshot on open.
+- **Done when:** `config_spec.rb` loads a valid `app:` and refuses an unknown key inside it and a process missing `name` or `start`, each with the file named; `definition_spec.rb` refuses two `preview: true` and returns `nil` for zero; `listing_spec.rb` round-trips statuses and prunes a stale heartbeat; `events_spec.rb` sees the `apps` snapshot on open and one `app` event per changed process.
 
 Wire shape, fixed here and copied by `rey-frontend` into `web/src/api/types.ts`:
 
@@ -102,7 +108,7 @@ Signatures:
 
 - **Discipline:** back end
 - **Covers spec items:** 8, 11 (re-check after restart)
-- **Owns:** `lib/openlanes/apps/watcher.rb`, `spec/openlanes/apps/watcher_spec.rb`, `spec/openlanes/apps/restart_spec.rb`; also edits `lib/openlanes/apps/supervisor.rb` (adds `#restart(name)`)
+- **Owns:** `lib/openlanes/apps/watcher.rb`, `spec/openlanes/apps/watcher_spec.rb`, `spec/openlanes/apps/restart_spec.rb`; also edits `lib/openlanes/apps/supervisor.rb` (adds `#restart(name)`; amended: landed with B4, whose `halt` and `bring_up` it reuses)
 - **Must not touch:** `ports.rb`, `probe.rb`, `config.rb`, `web/`
 - **Depends on:** B4 (sequential: both write `supervisor.rb`)
 - **Done when:** `watcher_spec.rb` drives the poller with an injected clock and sleeper and reports only the process whose glob matched; `restart_spec.rb` records pids before and after a `restart_on` edit and sees only that process's pid change, its siblings' unchanged, a `restarting` then `ready` status, and a fresh framing verdict when the preview process restarts.
@@ -114,13 +120,32 @@ Planner decisions (spec open questions 5, 10):
 - **Restart:** `Child` TERM, wait for exit (KILL after `TERM_GRACE`), spawn on the same port, wait ready.
 - `Watcher.new(root:, definition:, clock:, sleeper:, interval: 1)`, `#changed -> Array<String>` (process names), `#run { |names| ... }`.
 
-## B6 Wiring: CLI, commands, opt-in
+## B6 Wiring: CLI, Redis, the buttons, opt-in
 
 - **Discipline:** back end
-- **Covers spec items:** 10 (the button commands), 12 (engine exit), 13
-- **Owns:** `lib/openlanes/cli/app/` (`app.rb` plus `subcommands/start.rb`, `stop.rb`, `status.rb`), `lib/openlanes/cli.rb` (register `app`), `lib/openlanes/live/commands.rb` (verbs `app.restart` and `app.stop`), `spec/openlanes/cli/app_spec.rb`, `spec/openlanes/live/commands_spec.rb`
-- **Must not touch:** `supervisor.rb`, `watcher.rb`, `web/`
+- **Covers spec items:** 10 (the server side of the buttons), 12 (engine exit), 13
+- **Owns:**
+  - `lib/openlanes/apps/runner.rb`: `Apps::Runner`, the foreground loop: start the supervisor, write its statuses through `Listing` every second (the heartbeat) and on each transition, poll the `Watcher`, read `app_commands`, stop on INT/TERM or a `stop` command
+  - `lib/openlanes/cli/app/app.rb` and `subcommands/start.rb`, `status.rb`, `stop.rb`; `lib/openlanes/cli.rb` (register `app`)
+  - `lib/openlanes/web/app.rb` (one route, `POST /api/apps/commands`)
+  - specs: `spec/openlanes/apps/runner_spec.rb`, `spec/openlanes/cli/app_spec.rb`, `spec/openlanes/web/app_spec.rb` (the route only)
+- **Must not touch:** `supervisor.rb`, `watcher.rb`, `lib/openlanes/live/commands.rb` (the engine's), `web/`
 - **Depends on:** B4, B5
-- **Done when:** `app_spec.rb` starts a two-process fixture through `openlanes app start NNN`, sees `openlanes app status` print both ready, and `openlanes app stop` free them; a project without `app:` refuses `app start` with one line and nothing else changes; `commands_spec.rb` routes `app.restart` with `target: "backend"` to every non-preview process in declared order (spec open question 9) and `target: <name>` to one; `bundle exec rspec` stays green.
+- **Done when:** `runner_spec.rb` drives a two-process fixture with an in-memory store: statuses appear in `Listing`, a `restart` command with `target: "backend"` restarts every non-preview process in declared order and `target: "<name>"` one, `stop` ends the loop with every port free and the plan's entry removed; `app_spec.rb` shows `openlanes app start` refusing a project without `app:` in one line with exit 65 and nothing written, `app status` printing the registry's rows for this machine, and `app stop NNN` sending TERM to the runner that owns the plan; `app_spec.rb` (web) answers 202 for a valid command, 422 for an unknown action or plan, 403 without the token; `bundle exec rspec` stays green.
 
-Planner decision: the trigger in this plan is `openlanes app start [NNN]`, run in the plan's checkout (worktree when one exists, its branch from git), in the foreground like `openlanes web`, publishing to the Live store and listening for `app.*` commands. Starting the app automatically on a state transition belongs to the plan that adds `chewie-verifier`.
+Command shapes:
+
+```
+openlanes app start [NNN] [--redis-url URL] [--demo] [--ready-timeout 30]
+openlanes app status            # every reserved port on this machine: plan, process, port, pid, root
+openlanes app stop [NNN]        # TERM to the runner holding NNN's ports (every runner when omitted)
+
+POST /api/apps/commands  (X-CSRF-Token)
+  { "plan": "012.00", "action": "restart" | "stop", "target": "backend" | "<process name>" | null }
+  202 { "plan", "action", "target" }   422 { "error" }   403 { "error" }
+```
+
+- `app start NNN` runs in the plan's worktree (`Vcs.worktree(root:).path_for(feature)`) when that directory exists, else the project root. The branch comes from `git rev-parse --abbrev-ref HEAD` there. Without NNN the plan is read off the branch name (`<user>/NNN.MM-slug`), else it is `000.00`.
+- `--demo` writes under the `demo/<repo>` keys that `openlanes web --demo` reads, so the Cypress run can show a Preview tab beside the demo board.
+- Redis is optional for `app start`: when it does not answer, the runner says so once and carries on with transitions on STDERR only. `app status` and `app stop` read the port registry and never need Redis.
+- The engine itself does not start apps in this plan (decision 8), so `engine/` is untouched. `Execution::Child`'s `at_exit` group kill covers an exiting runner.

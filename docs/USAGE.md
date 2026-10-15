@@ -154,6 +154,35 @@ openlanes unblock 003            # fold the answered questions into spec.md and 
 
 Partial answers are fine. The plan stays blocked until the last question is answered. Under `openlanes start`, answer in **Needs You** on the page instead.
 
+### Running the app a plan builds: `openlanes app`
+
+A project declares how to run its app under `app:` in `.openlanes.yml` (luke writes it on a plan's first build):
+
+```yaml
+app:
+  kind: web
+  processes:                        # started in this order, each once the one before is ready
+    - name: api
+      start: bin/rails s -p $PORT_API  # a shell line, run in the checkout
+      ready: /up                    # optional HTTP path that must answer 2xx or 3xx; without it a TCP connect will do
+      restart_on: ["app/**/*.rb"]   # Dir.glob patterns; a change restarts this process only
+    - name: web
+      start: npx vite --port $PORT_WEB --strictPort
+      ready: /
+      preview: true                 # the one process the Preview tab shows
+```
+
+```bash
+openlanes app start 012          # plan 012's app, in its worktree when it has one; Ctrl-C stops it
+openlanes app status             # every port an app holds on this machine
+openlanes app stop 012           # stop it from another terminal
+```
+
+- Each process gets the lowest free port from 11100, and every process sees every port as `PORT_<NAME>`. Ports come from one registry per machine (`~/.local/state/openlanes/ports.json`, or `$OPENLANES_PORTS_FILE`), so two worktrees never collide.
+- A process that exits, or does not answer on its port within 30 s (`--ready-timeout`), fails the start and stops the rest. An app that moves to another port fails with the port it was given.
+- The control room shows a **Preview** tab per running app, labelled with plan, branch and port: the app in a frame, or a button to open it in a window when its `X-Frame-Options` or `frame-ancestors` refuse framing. Its toolbar restarts the backend (every process but the previewed one) or stops the app.
+- Without `app:` nothing changes: `app start` refuses and the page shows no Preview tab.
+
 ## How agents hand off
 
 An agent never renames its plan folder. It signs the plan's `state.json`, and the harness moves the folder based on the signature:

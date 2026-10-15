@@ -9,5 +9,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["**/*.ts", "../cypress.config.ts", "../cypress.factory.config.ts"]
+  "include": ["**/*.ts", "../cypress.config.ts", "../cypress.factory.config.ts", "../cypress.preview.config.ts"]
 }

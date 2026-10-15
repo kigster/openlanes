@@ -100,6 +100,45 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  # Plan 012: the Preview tab's toolbar, onto the app runner's stream.
+  describe "POST /api/apps/commands" do
+    def post_app(payload, token: context.csrf)
+      header "X-CSRF-Token", token if token
+      post "/api/apps/commands", JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    def queued = store.xrange(keys.app_commands).map { JSON.parse(it.fields["json"]) }
+
+    it "queues a restart for the runner and answers 202 with what it queued" do
+      post_app({ plan: "12", action: "restart", target: "backend" })
+      expect([last_response.status, body, queued]).to eq(
+        [202, { "plan" => "012.00", "action" => "restart", "target" => "backend" },
+         [{ "plan" => "012.00", "action" => "restart", "target" => "backend" }]]
+      )
+    end
+
+    it "queues a stop with no target" do
+      post_app({ plan: "012.00", action: "stop" })
+      expect(queued).to eq([{ "plan" => "012.00", "action" => "stop", "target" => nil }])
+    end
+
+    {
+      "an unknown action"   => [{ plan: "012.00", action: "rebuild" }, /action must be one of restart, stop/],
+      "no plan"             => [{ action: "stop" }, /plan must be a plan number/],
+      "a target with a ../" => [{ plan: "012.00", action: "restart", target: "../web" }, /target must be backend or a process name/]
+    }.each do |what, (payload, message)|
+      it "answers 422 for #{what} and queues nothing" do
+        post_app(payload)
+        expect([last_response.status, body["error"], queued]).to match([422, message, []])
+      end
+    end
+
+    it "answers 403 without the token" do
+      post_app({ plan: "012.00", action: "stop" }, token: nil)
+      expect([last_response.status, queued]).to eq([403, []])
+    end
+  end
+
   describe "POST /api/commands" do
     context "with the session's token" do
       before { post_command(command) }

@@ -100,3 +100,21 @@ it("treats a closed stream as a drop, and closes for good when asked", () => {
   expect(init.signal?.aborted).toBe(true);
   settle?.reject(new Error("aborted"));
 });
+
+it("routes the apps snapshot and each app's news (plan 012)", () => {
+  const h = { ...handlers(), onApps: vi.fn(), onApp: vi.fn() };
+  openStream(h);
+  calls[0].onmessage?.({ id: "", event: "apps", data: '{"apps":[{"process":"web"}]}', retry: undefined });
+  calls[0].onmessage?.({ id: "", event: "app", data: '{"process":"api"}', retry: undefined });
+  expect(h.onApps).toHaveBeenCalledWith([{ process: "web" }]);
+  expect(h.onApp).toHaveBeenCalledWith({ process: "api" });
+});
+
+it("starts every stream with no apps, since the server says nothing when there are none", async () => {
+  const h = { ...handlers(), onApps: vi.fn() };
+  openStream(h);
+  await calls[0].onopen?.(ok());
+  expect(h.onApps).toHaveBeenCalledWith([]);
+  openStream(handlers());
+  await expect(calls[1].onopen?.(ok())).resolves.toBeUndefined();
+});

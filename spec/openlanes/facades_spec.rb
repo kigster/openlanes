@@ -79,6 +79,25 @@ RSpec.describe "module facades", :tree do
     end
   end
 
+  describe OpenLanes::Apps do
+    let(:definition) do
+      OpenLanes::Apps::Definition.new(kind: "web", processes: [OpenLanes::Apps::ProcessSpec.new(name: "web", start: "x")])
+    end
+
+    it "reads the app a config declares, and nil when it declares none" do
+      expect([described_class.definition(OpenLanes::Config.new(app: definition)), described_class.definition(OpenLanes::Config.new)])
+        .to eq([definition, nil])
+    end
+
+    it "builds the registry, a supervisor, a watcher and a runner" do
+      built = [described_class.registry(path: File.join(dir, "ports.json")),
+               described_class.supervisor(definition:, root: dir, plan: "012.00", branch: "b"),
+               described_class.watcher(root: dir, definition:),
+               described_class.runner(definition:, root: dir, plan: "012.00", branch: "b")]
+      expect(built.map(&:class)).to eq([OpenLanes::Apps::Ports, OpenLanes::Apps::Supervisor, OpenLanes::Apps::Watcher, OpenLanes::Apps::Runner])
+    end
+  end
+
   describe OpenLanes::Presentation do
     it "derives the conventions document" do
       expect(described_class.documentation).to include("New")

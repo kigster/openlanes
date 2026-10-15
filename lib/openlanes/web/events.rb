@@ -37,6 +37,14 @@ module OpenLanes
     # the boundary and the stream everything after. A turn written between a
     # read the page started on its own and the stream opening fell in the
     # gap between the two and was never shown.
+    #
+    # The apps running on this machine (plan 012) open the stream as one
+    # `apps` event, sent only when there is one, so a project with no app
+    # gets the stream it always had; the page starts each stream with no
+    # apps. After that each process whose status changed comes as an `app`
+    # event. A process whose plan's entry vanished (its runner
+    # stopped or died) is sent once more as `stopped`, so the page never
+    # keeps a tab for an app that is gone.
     class Events
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -73,9 +81,11 @@ module OpenLanes
         # The page is attached, so every chat event from here on is queued for
         # it: a `GET /api/chat` the page starts on this misses nothing.
         out << self.class.frame("chat_cursor", {}) if @chat && @page && !out.closed?
+        apps = open_apps(out)
         seqs = nil
         until over?(out, started)
           seqs = board(out, seqs)
+          apps = app_news(out, apps)
           cursor = replies(out, cursor)
           said = copilot(out, said)
           chat(out)
@@ -110,6 +120,25 @@ module OpenLanes
         out << self.class.frame("board", board) unless now == seqs
         now
       end
+
+      # @return [Hash{Array(String, String) => Hash}] what was sent, by plan and process
+      def open_apps(out)
+        now = live_apps
+        out << self.class.frame("apps", { apps: now.values }) unless now.empty? || out.closed?
+        now
+      end
+
+      # @param sent [Hash{Array(String, String) => Hash}]
+      # @return [Hash{Array(String, String) => Hash}]
+      def app_news(out, sent)
+        now = live_apps
+        now.each { |key, app| out << self.class.frame("app", app) unless sent[key] == app }
+        sent.except(*now.keys).each_value { out << self.class.frame("app", it.merge("state" => "stopped")) }
+        now
+      end
+
+      # @return [Hash{Array(String, String) => Hash}]
+      def live_apps = Apps::Listing.read(store: @store, keys: @keys).to_h { [[it["plan"], it["process"]], it] }
 
       # @return [String] the last reply id sent
       def replies(out, cursor)

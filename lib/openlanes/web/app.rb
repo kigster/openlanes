@@ -175,6 +175,28 @@ module OpenLanes
         json(Live::Reply.new(id: id_in(body), status: "refused", reason: e.message).wire)
       end
 
+      # The Preview tab's toolbar (plan 012): Restart backend, a named
+      # restart, or Stop, for the `openlanes app start` running that plan's
+      # app. Queued on the app runner's stream, not the engine's: the engine
+      # never runs an app, so it would never read them.
+      post "/api/apps/commands" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        data = body_json
+        plan = Plans::Ordinal.parse(data["plan"].to_s)&.to_s or halt 422, json(error: "plan must be a plan number like 012.00")
+        action = data["action"].to_s
+        halt 422, json(error: "action must be one of #{Apps::Runner::ACTIONS.join(", ")}") unless Apps::Runner::ACTIONS.include?(action)
+        target = data["target"]
+        unless target.nil? || target.to_s.match?(Apps::Definition::NAME)
+          halt 422, json(error: "target must be backend or a process name")
+        end
+
+        command = { plan:, action:, target: }
+        store.xadd(context.keys.app_commands, { json: JSON.generate(command) }, maxlen: Apps::Runner::COMMANDS_LENGTH)
+        status 202
+        json(command)
+      end
+
       get "/api/copilot" do
         json(copilot.history)
       end

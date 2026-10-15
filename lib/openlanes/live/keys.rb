@@ -133,6 +133,23 @@ module OpenLanes
       # @return [String]
       def chat_base(db) = "#{base}:chat:#{db}"
 
+      # Hash: plan ordinal to that plan's running app, its process statuses
+      # and a heartbeat ({Apps::Listing}). One per machine, not per
+      # checkout: the app runs in a plan's worktree and the control room in
+      # the main checkout, and both are this machine.
+      #
+      # @param machine [String] a node id, 24 hex digits of `user@host`
+      # @return [String]
+      def apps(machine = node.split(":").first) = "#{base}:apps:#{machine}"
+
+      # Stream: `{json}`, one request from the Preview tab's toolbar
+      # (restart, stop), read by `openlanes app start`. Not {#commands}: the
+      # engine never runs an app, so it would never read them.
+      #
+      # @param machine [String]
+      # @return [String]
+      def app_commands(machine = node.split(":").first) = "#{apps(machine)}:commands"
+
       # String: the node name holding a plan, `SET NX EX`.
       #
       # @param ordinal [#to_s] e.g. "004.00"

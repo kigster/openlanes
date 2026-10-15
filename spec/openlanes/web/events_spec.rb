@@ -124,6 +124,40 @@ RSpec.describe OpenLanes::Web::Events do
       end
     end
 
+    # Plan 012: the apps on this machine, from the runner's listing.
+    context "when an app is running and changes" do
+      def app(state, process = "web") = OpenLanes::Apps::Status.new(plan: "012.00", branch: "b", process:, state:, port: 11_101)
+
+      def listing(*statuses) = OpenLanes::Apps::Listing.write(store:, keys:, plan: "012.00", statuses:)
+
+      def named(event) = frames.grep(/event: #{event}\n/).map { JSON.parse(it[/data: (.*)\n\n\z/, 1]) }
+
+      before do
+        listing(app("starting", "api"), app("starting"))
+        run_ticks do |tick|
+          listing(app("ready", "api"), app("starting")) if tick == 1
+          listing(app("ready", "api"), app("ready")) if tick == 2
+          OpenLanes::Apps::Listing.remove(store:, keys:, plan: "012.00") if tick == 3
+        end
+      end
+
+      it "opens with every app in one apps event" do
+        expect(named("apps").map { it["apps"].map { |a| [a["process"], a["state"]] } }).to eq([[%w[api starting], %w[web starting]]])
+      end
+
+      it "sends one app event per process that changed, and stopped for each that went away" do
+        expect(named("app").map { [it["process"], it["state"]] }).to eq([%w[api ready], %w[web ready], %w[api stopped], %w[web stopped]])
+      end
+    end
+
+    context "when no app is running" do
+      before { run_ticks }
+
+      it "sends nothing about apps, so the stream is the one it always was" do
+        expect(frames.grep(/event: apps?\n/)).to be_empty
+      end
+    end
+
     context "when the copilot conversation moves" do
       let(:copilot) { OpenLanes::Live.copilot(store:, keys:, responder: OpenLanes::Web::Demo::COPILOT) }
       let(:copilot_mark) { copilot.newest }

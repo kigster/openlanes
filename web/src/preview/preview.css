@@ -1,0 +1,16 @@
+/* The Preview tab (plan 012, M13): the toolbar over the app's own page. */
+.preview { background: var(--plate); border: 1px solid var(--hairline); border-radius: var(--radius-plate); display: flex; flex-direction: column; min-height: 70vh; }
+.preview[hidden] { display: none; }
+.preview-head { padding: 18px 20px 4px; }
+.preview-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.preview-head p { margin: 4px 0 0; color: var(--ink-soft); font: 13px var(--mono); }
+.preview-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 20px; border-bottom: 1px solid var(--hairline); }
+.preview-state { font-weight: 700; }
+.preview-state.is-running { color: var(--go); }
+.preview-state.is-restarting { color: var(--lane-plan); }
+.preview-state.is-failed { color: var(--alarm); }
+.preview-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.preview-error { flex-basis: 100%; color: var(--alarm); font-size: 14px; }
+.preview-frame { flex: 1; width: 100%; min-height: 60vh; border: 0; border-radius: 0 0 var(--radius-plate) var(--radius-plate); background: #fff; }
+.preview-note { padding: 20px; color: var(--ink-soft); }
+.preview-note p { margin: 0 0 12px; }

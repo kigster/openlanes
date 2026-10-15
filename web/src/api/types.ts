@@ -292,3 +292,29 @@ export interface ChatSaid {
   at: Iso;
   who: ChatParticipant;
 }
+
+// The app a plan builds, run by `openlanes app start` (plan 012). Ruby's OpenLanes::Apps::Status#to_h builds exactly
+// this shape, and spec/openlanes/apps/status_spec.rb pins it.
+
+export type AppState = "starting" | "ready" | "restarting" | "stopped" | "failed";
+
+/** One process of a running app: `event: app`, or one entry of `event: apps`. */
+export interface AppStatus {
+  plan: string; // "012.00"
+  branch: string;
+  process: string; // its name in `.openlanes.yml` app.processes
+  state: AppState;
+  port: number;
+  preview: boolean; // the process the Preview tab shows
+  url: string; // "http://127.0.0.1:<port>/"
+  framing: "frame" | "window" | null; // set on the preview process once it is ready
+  reason: string | null; // why it failed
+  at: Iso;
+}
+
+/** What the Preview tab's toolbar asks of the runner: `POST /api/apps/commands`. */
+export interface AppCommand {
+  plan: string;
+  action: "restart" | "stop";
+  target?: string | null; // "backend" (every process but the previewed one), a process name, or every process
+}
