@@ -15,7 +15,7 @@ RSpec.describe OpenLanes::Lifecycle::CreateWorkflow, :tree do
     subject(:created) { create("tax", "rule", "dsl").value! }
 
     it "mints the folder and answers where it is" do
-      expect(created.path).to eq(File.join(plans_root, "000.00-⚪️ → tax-rule-dsl"))
+      expect(created.path).to eq(File.join(plans_root, "000.00━━⚪━━❯tax-rule-dsl"))
     end
 
     it "answers the scaffolded spec.md for a person to open" do
@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Lifecycle::CreateWorkflow, :tree do
     end
 
     it "words the success text with the state and the next step" do
-      expect(created.message).to include("Created 000.00-⚪️ → tax-rule-dsl", "fill in the four headings")
+      expect(created.message).to include("Created 000.00━━⚪━━❯tax-rule-dsl", "fill in the four headings")
     end
   end
 
@@ -37,7 +37,7 @@ RSpec.describe OpenLanes::Lifecycle::CreateWorkflow, :tree do
     it "names the folder from its frontmatter title" do
       seeded = seed_file("---\ntitle: Tax Rule DSL\n---\nRules should read like the statute.\n")
 
-      expect(File.basename(create(from: seeded).value!.path)).to eq("000.00-⚪️ → tax-rule-dsl")
+      expect(File.basename(create(from: seeded).value!.path)).to eq("000.00━━⚪━━❯tax-rule-dsl")
     end
 
     {

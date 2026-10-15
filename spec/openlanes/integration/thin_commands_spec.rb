@@ -46,7 +46,7 @@ RSpec.describe "the slimmed commands, end to end", :tree do
   it "create prints the new folder and exits 0" do
     out, _err, status = openlanes("create", "billing", "sync", "--no-draft", "--no-open")
 
-    expect([status, File.basename(out.strip)]).to eq([0, "003.00-⚪️ → billing-sync"])
+    expect([status, File.basename(out.strip)]).to eq([0, "003.00━━⚪━━❯billing-sync"])
   end
 
   it "create refuses a seed file that is not there with 66" do
