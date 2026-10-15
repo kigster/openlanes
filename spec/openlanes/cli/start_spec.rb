@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
 
   let(:live_store) { OpenLanes::Live.memory_store }
   let(:web) do
-    instance_double(OpenLanes::Web::Launcher, ready?: true, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
+    instance_double(OpenLanes::Web::Launcher, ready?: true, port: 11_000, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
   end
   let(:executor) { instance_double(OpenLanes::Execution::Executor) }
 

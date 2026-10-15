@@ -323,16 +323,14 @@ module OpenLanes
       def web_for(live, root:, tree:, options:)
         return nil if live.nil? || options[:web] == false
 
-        web = OpenLanes::Web.launcher(root:,
-          plans_dir: tree.dir,
-          port:      options[:port] || OpenLanes::Web::DEFAULT_PORT,
-          redis_url: live.store.url).start
+        port = Integer(options[:port] || OpenLanes::Web::DEFAULT_PORT)
+        web = OpenLanes::Web.launcher(root:, plans_dir: tree.dir, port:, redis_url: live.store.url).start
         unless web.ready?
           web.stop
           return without_web(web, live, options)
         end
 
-        startup("Control room", web.url)
+        startup("Control room", web.port == port ? web.url : "#{web.url} (#{port} was taken)")
         OpenLanes::Web.open(browser_url(web, tree)) unless options[:open] == false
         web
       end

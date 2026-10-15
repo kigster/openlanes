@@ -117,6 +117,36 @@ RSpec.describe OpenLanes::Web::Launcher do
     end
   end
 
+  context "when the port asked for is taken" do
+    # Another `openlanes web` answering /healthz there must not pass for ours.
+    let(:squatter) { TCPServer.new(OpenLanes::Web::HOST, 0) }
+    let(:port) { squatter.addr[1] }
+
+    before { launcher.start }
+
+    after { squatter.close }
+
+    it "moves to the next free port, before spawning anything" do
+      expect([launcher.port, launcher.argv[3], launcher.url]).to eq([port + 1, (port + 1).to_s, "http://127.0.0.1:#{port + 1}"])
+    end
+  end
+
+  context "when every port tried is taken" do
+    let(:squatter) { TCPServer.new(OpenLanes::Web::HOST, 0) }
+    let(:port) { squatter.addr[1] }
+
+    before do
+      stub_const("#{described_class}::PORTS_TRIED", 1)
+      launcher.start
+    end
+
+    after { squatter.close }
+
+    it "spawns nothing, is not ready, and says why in its log" do
+      expect([launcher.pid, launcher.ready?, File.read(launcher.log)]).to match([nil, false, /Ports #{port}-#{port} are all taken/])
+    end
+  end
+
   describe "#healthy?, against nothing listening" do
     subject(:probe) { described_class.new(root: dir, plans_dir: dir, port: 1, redis_url: "x") }
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "socket"
 require "tmpdir"
 
 module OpenLanes
@@ -26,6 +27,9 @@ module OpenLanes
       # Seconds {#stop} gives the server after TERM before KILL.
       STOP_WITHIN = 5.0
 
+      # Ports {#start} tries, from the one asked for, before giving up.
+      PORTS_TRIED = 10
+
       # @param root [String] the checkout the run works in
       # @param plans_dir [String]
       # @param port [Integer]
@@ -49,6 +53,9 @@ module OpenLanes
       # @return [Integer, nil]
       attr_reader :pid
 
+      # @return [Integer] the port asked for, or the free one {#start} moved to
+      attr_reader :port
+
       # @return [String]
       def url = "http://#{HOST}:#{@port}"
 
@@ -60,10 +67,18 @@ module OpenLanes
       # @return [Hash{String => String}] added to the server's environment
       def env = { REDIS_URL_ENV => @redis_url }
 
-      # Spawn the server and wait for it to answer.
+      # Spawn the server on the first free port from the one asked for, and
+      # wait for it to answer. A taken port is skipped before spawning, never
+      # probed: a leftover `openlanes web` for another project answers
+      # `/healthz` there, and the run once declared that server its own and
+      # opened the browser on someone else's board.
       #
       # @return [self]
       def start
+        free = free_port
+        return taken unless free
+
+        @port = free
         @pid = Process.spawn(env, *argv, chdir: @root, pgroup: true, in: File::NULL, %i[out err] => [@log, "a"])
         @ready = wait_until_ready
         self
@@ -87,6 +102,27 @@ module OpenLanes
       end
 
       private
+
+      # @return [Integer, nil]
+      def free_port = (@port...(@port + PORTS_TRIED)).find { free?(it) }
+
+      # @param port [Integer]
+      # @return [Boolean] whether nothing listens there
+      def free?(port)
+        TCPServer.new(HOST, port).close
+        true
+      rescue SystemCallError
+        false
+      end
+
+      # Every port tried is taken: said in the log {#start}'s caller points at.
+      #
+      # @return [self]
+      def taken
+        File.write(@log, "Ports #{@port}-#{@port + PORTS_TRIED - 1} are all taken. Pass --port to use another.\n", mode: "a")
+        @ready = false
+        self
+      end
 
       # @return [Boolean]
       def wait_until_ready

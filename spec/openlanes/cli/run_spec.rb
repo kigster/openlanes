@@ -18,7 +18,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   # The control room is a process of its own; the suite never spawns it, and
   # never opens a browser.
   let(:web) do
-    instance_double(OpenLanes::Web::Launcher, ready?: true, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
+    instance_double(OpenLanes::Web::Launcher, ready?: true, port: 11_000, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
   end
 
   # STDERR as it was written, before strip_ansi: what a terminal received.
@@ -775,9 +775,14 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     it "starts beside the run on the store the board is published to, and prints its URL" do
       result
       aggregate_failures do
-        expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root), plans_dir: plans_root, port: "4848", redis_url: "memory://")
+        expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root), plans_dir: plans_root, port: 4848, redis_url: "memory://")
         expect(stderr).to include("Control room: http://127.0.0.1:11000")
       end
+    end
+
+    it "names the port it asked for when the server had to move off it" do
+      result
+      expect(stderr).to include("Control room: http://127.0.0.1:11000 (4848 was taken)")
     end
 
     it "opens the browser" do
