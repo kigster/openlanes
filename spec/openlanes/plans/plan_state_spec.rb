@@ -117,6 +117,25 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "#resume_anyway!" do
+    let(:now) { Time.now }
+
+    it "is not resumed until someone says so" do
+      expect([state.resume_until, state.resumed?(now:)]).to eq([nil, false])
+    end
+
+    it "lifts the halt until the expiry, then lets it lapse with nothing to undo" do
+      state.resume_anyway!(till: now + 86_400)
+
+      aggregate_failures do
+        expect(state.resume_until.to_i).to eq((now + 86_400).to_i)
+        expect(state.resumed?(now:)).to be(true)
+        expect(state.resumed?(now: now + 86_401)).to be(false)
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+      end
+    end
+  end
+
   describe "#stranded" do
     before do
       state.stage!(agent: "luke-backend", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })

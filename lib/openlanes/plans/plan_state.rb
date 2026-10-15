@@ -104,6 +104,27 @@ module OpenLanes
       # @return [String, nil]
       def state = read["state"]
 
+      # Until when a 💣 on this plan does not halt the run: "Resume anyway
+      # for 24 h" from the control room. Kept here, not in `.openlanes.yml`,
+      # so it lapses on its own and nobody has to remember to take it out.
+      #
+      # @return [Time, nil]
+      def resume_until
+        text = read["resume_until"] or return nil
+        parse_time(text)
+      end
+
+      # @param now [Time]
+      # @return [Boolean] whether a halt on this plan is lifted right now
+      def resumed?(now: Time.now) = (resume_until || now) > now
+
+      # @param till [Time] when the halt comes back
+      # @return [Time] as written
+      def resume_anyway!(till:)
+        update { |data| data["resume_until"] = till.iso8601 }
+        till
+      end
+
       # ---- the harness --------------------------------------------------------
 
       # Record or update one agent's round. A second call for the same agent

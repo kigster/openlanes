@@ -142,6 +142,32 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     end
   end
 
+  # Plan 009: a 💣 halts the engine, and the service idles on it rather
+  # than ending, so the page stays up to answer it.
+  describe "a 💣 others wait on" do
+    before do
+      path = nil
+      plans do |t|
+        path = t.plan "002.00", :blocked, "minesweeper", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Board size\n" }
+        t.plan "003.00",
+          :building,
+          "scoreboard",
+          files: { "spec.md" => "---\ndepends_on: [\"002.00\"]\n---\n#{spec_body}", "plan.md" => "# P\n\n## U1\n" }
+      end
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
+    end
+
+    let!(:result) { start(open: false) }
+
+    it "stays up and idle, says why, and exits 0 once stopped" do
+      aggregate_failures do
+        expect(result.last).to eq(0)
+        expect(result[1]).to include("idle: halted by 💣 002.00")
+        expect(executor).not_to have_received(:call)
+      end
+    end
+  end
+
   describe "every plan finished" do
     before do
       plans { |t| t.plan "001.00", :deployed, "shipped", files: { "spec.md" => spec_body, "deployed.md" => "v1\n" } }

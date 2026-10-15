@@ -317,6 +317,7 @@
         }
       }
     ],
+    "bombs": [],
     "autocompact": 0.4,
     "log": [
       {
@@ -505,6 +506,7 @@
           }
         }
       ],
+      "bombs": [],
       "autocompact": 0.4,
       "log": []
     }

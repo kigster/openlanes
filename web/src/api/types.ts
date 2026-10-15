@@ -135,6 +135,16 @@ export interface Snapshot {
   models: ModelChoice[];
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
   log: LogLine[]; // the most recent lines, newest last
+  bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
+}
+
+/** A plan that sat blocked past its deadline: halted until someone responds, discusses, or resumes it anyway. */
+export interface Bomb {
+  plan: string; // ordinal
+  slug: string;
+  blocked_md: string; // blocked.md, Markdown
+  blocked_since: Iso;
+  resume_until: Iso | null; // set by resume_anyway: the halt is lifted until then
 }
 
 /** Everything the page shows: our snapshot plus every other node's, read-only. */
@@ -167,7 +177,10 @@ export type CommandKind =
   | "set_model" // next round; payload: { model }
   | "switch_model" // now: as compact, carried on in the new model; a fresh restart on it when the session cannot be resumed; payload: { model }
   | "add_plan" // payload: { ordinal }
-  | "create_plans"; // payload: { idea }
+  | "create_plans" // payload: { idea }
+  | "respond" // a 💣 plan: answers its first open question in blocked.md; payload: { text }
+  | "pause_discuss" // a 💣 plan: holds its running agents while the person talks it over with the copilot
+  | "resume_anyway"; // a 💣 plan: lifts the halt for 24 h
 
 export interface Command {
   id: string; // ULID, minted by the page; also its idempotency key

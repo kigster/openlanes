@@ -8,7 +8,7 @@ import { COPILOT_COLORS } from "./colors";
 import { useAskStore } from "../panels/asks";
 import { useCommand } from "../panels/command";
 import { ariaSendKeys, fmt, isSendKey, modelName, sendKeys, type SendCommand } from "../panels/support";
-import { useCopilot } from "./useCopilot";
+import { useCopilot, useCopilotOpenRequests } from "./useCopilot";
 import "./copilot.css";
 
 const OPEN_KEY = "openlanes-copilot-open";
@@ -120,6 +120,13 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
     setOpenState(next);
     writeOpen(next);
   };
+
+  // Another panel asked to talk a plan over: open, and start the message unless the person has one going already.
+  useCopilotOpenRequests(({ text: start }) => {
+    setOpen(true);
+    setText(was => (was.trim() ? was : start));
+    input.current?.focus();
+  });
 
   const submit = async (e?: FormEvent) => {
     e?.preventDefault();

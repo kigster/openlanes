@@ -1,7 +1,7 @@
 ---
 name: lando-broker
 description: Folds answered blocks into the documents they were stopping, and retires blocked.md once the last question clears.
-handles: [blocked, product_blocked]
+handles: [blocked, product_blocked, bomb]
 model: haiku
 ledger: [spec.md]
 effort: low
@@ -57,7 +57,7 @@ After you finish, `unblock` renames the folder by its contents:
 
 | Result                          | Folder becomes                                              | Who runs next                         |
 | :------------------------------ | :---------------------------------------------------------- | :------------------------------------ |
-| questions remain                | stays ⭕️ / 🅱️                                               | a human answers, runs `unblock` again |
+| questions remain                | stays ⭕️ / 🅱️ / 💣                                          | a human answers, runs `unblock` again |
 | `blocked.md` deleted            | the state its documents justify (⚪️, 🔎, 📋, ⭐️ or later) | that state's agent on the next `openlanes run` |
 | an answer undercuts planned units | as above                                                  | report the affected units; `palpatine-planner` re-plans only if a human moves the folder back to 📋 |
 
