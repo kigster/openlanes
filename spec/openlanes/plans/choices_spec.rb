@@ -129,4 +129,17 @@ RSpec.describe OpenLanes::Plans::Choices do
       expect([choices.context, choices.options.map(&:label), choices.recommended]).to eq(["Rebase?", %w[yes no], nil])
     end
   end
+
+  describe ".write" do
+    subject(:text) { described_class.write(context: " Rebase or merge? ", labels: %w[Rebase Merge], recommended: 1) }
+
+    it "writes D3's shape, one lettered line per label" do
+      expect(text).to eq("Rebase or merge?\n\na) Rebase\nb) Merge (Recommended)\n")
+    end
+
+    it "reads back as the same choice" do
+      choices = parse(text)
+      expect([choices.context, choices.options.map(&:label), choices.recommended.letter]).to eq(["Rebase or merge?", %w[Rebase Merge], "b"])
+    end
+  end
 end

@@ -70,6 +70,23 @@ module OpenLanes
       @choice_judge = judge
     end
 
+    # The process's {ChoiceConverter}: nil without OPENROUTER_API_KEY, and
+    # nil in the suite.
+    #
+    # @return [OpenLanes::Live::ChoiceConverter, nil]
+    def choice_converter
+      return @choice_converter if defined?(@choice_converter)
+
+      @choice_converter = ChoiceConverter.from_env
+    end
+
+    # @param converter [#call, nil] answers `call(heading:, body:)` with a
+    #   {ChoiceConverter::Result}
+    # @return [void]
+    def choice_converter=(converter)
+      @choice_converter = converter
+    end
+
     # @return [OpenLanes::Live::Session]
     def session(**) = Session.new(**)
 

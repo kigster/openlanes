@@ -77,6 +77,37 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "questions.model" do
+      it "reads the model that rewrites prose questions" do
+        openlanes_yml("questions:\n  model: google/gemini-3.5-flash\n")
+        expect(config.questions_model).to eq("google/gemini-3.5-flash")
+      end
+
+      it "is nil when absent, which takes the converter's default" do
+        openlanes_yml("jobs: 2\n")
+        expect(config.questions_model).to be_nil
+      end
+
+      it "refuses a key it does not know" do
+        openlanes_yml("questions:\n  effort: low\n")
+        expect { config }.to raise_error(OpenLanes::Error, /questions\.effort: unknown key; known: model/)
+      end
+
+      it "refuses a model that is not a name" do
+        openlanes_yml("questions:\n  model: 42\n")
+        expect { config }.to raise_error(OpenLanes::Error, /questions\.model: 42 is not a model id/)
+      end
+
+      it "refuses questions: that is not a mapping" do
+        openlanes_yml("questions: haiku\n")
+        expect { config }.to raise_error(OpenLanes::Error, /questions: must be a mapping/)
+      end
+
+      it "writes itself back out under questions:" do
+        expect(described_class.new(questions_model: "m/x").to_yaml).to eq("questions:\n  model: m/x\n")
+      end
+    end
+
     # A config silently ignored is a timeout that stops applying with no
     # signal, so every one of these names the file.
     {
