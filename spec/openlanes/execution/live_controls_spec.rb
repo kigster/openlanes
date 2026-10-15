@@ -86,12 +86,18 @@ RSpec.describe "The live controls on one invocation" do
       expect(prompt_for("luke-backend")).not_to include("/compact")
     end
 
-    it "tells an agent that writes blocked.md how to mark a yes/no question (W30)" do
-      expect(prompt_for("luke-backend")).to include("yes/no questions", "    #{OpenLanes::Live::Snapshot::YES_NO_MARK}")
+    it "tells an agent that writes blocked.md to write context, then lettered options (D3)" do
+      expect(prompt_for("luke-backend")).to include("context, then lettered options", "(Recommended)", "Type something instead")
+    end
+
+    it "shows an example the page reads as three options, the first recommended" do
+      example = prompt_for("luke-backend")[/^ {4}## B2 Where.*?(?=\n\n\S)/m].gsub(/^ {4}/, "")
+      choices = OpenLanes::Plans::Choices.parse(example.sub(/\A.*\n/, ""))
+      expect(choices.options.map { [it.letter, it.recommended] }).to eq([["a", true], ["b", false], ["c", false]])
     end
 
     it "leaves that out for the agent that drains blocked.md" do
-      expect(prompt_for("lando-broker")).not_to include("yes/no questions")
+      expect(prompt_for("lando-broker")).not_to include("context, then lettered options")
     end
   end
 

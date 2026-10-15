@@ -44,7 +44,7 @@ Length is not the measure. Stop at the shortest chapter that meets the list.
 
 ## Block when
 
-A question needs a decision that is not yours: a product tradeoff, a price, a contradiction only its owner can settle. Write `blocked.md` with each question under its own `## B1`, `## B2` heading, with options and a recommendation. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
+A question needs a decision that is not yours: a product tradeoff, a price, a contradiction only its owner can settle. Write `blocked.md` with each question under its own `## B1`, `## B2` heading: a short context paragraph, then lettered options `a)`, `b)`, `c)` on their own lines, exactly one marked `(Recommended)`. Sign `Blocked, round N (technical)` or `Blocked, round N (product)` and stop.
 
 ## Next
 
