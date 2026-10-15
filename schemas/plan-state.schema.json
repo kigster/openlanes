@@ -86,6 +86,24 @@
       "propertyNames": { "$ref": "#/$defs/agent" },
       "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
     },
+    "conversions": {
+      "description": "Questions in blocked.md the engine rewrote into lettered choices (D9), and ones it tried and could not, with the text as the agent wrote it.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question", "digest", "original", "at", "model", "outcome"],
+        "additionalProperties": false,
+        "properties": {
+          "question": { "type": "integer", "minimum": 1, "description": "The n of ## Bn." },
+          "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA256 of original, so the same text is never sent twice." },
+          "original": { "type": "string", "minLength": 1 },
+          "at": { "type": "string", "format": "date-time" },
+          "model": { "type": "string", "minLength": 1 },
+          "outcome": { "enum": ["converted", "rejected"] },
+          "note": { "type": "string", "description": "Why the model's answer was rejected." }
+        }
+      }
+    },
     "messages": {
       "description": "What agents on this plan said to each other, through `openlanes mail send`.",
       "type": "array",

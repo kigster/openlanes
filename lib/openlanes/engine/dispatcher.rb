@@ -109,8 +109,10 @@ module OpenLanes
       # @param watch [OpenLanes::Engine::PrWatch, nil] the human-mode watch
       #   over open pull requests (M4); nil when nobody merges by hand or the
       #   run does not stay
+      # @param converter [#call, nil] rewrites prose questions into choices
+      #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
       def initialize(runner:, state: nil, rounds: nil, sleeper: ->(seconds) { sleep(seconds) }, on_board: nil,
-        stay: false, rescan: RESCAN, watch: nil)
+        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter)
         @runner = runner
         @watch = watch
         @watching = nil
@@ -139,6 +141,7 @@ module OpenLanes
         @fenced = []
         @unblocking = []
         @unblock_tried = {}
+        @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         @locks = PlanLocks.new
       end
 
@@ -181,6 +184,7 @@ module OpenLanes
         reap
         finish_discards
         unblock_answered
+        convert_questions
         poll
         drain_mail
         watch_pull_requests
@@ -547,6 +551,15 @@ module OpenLanes
           @unblock_tried[ordinal] = answers
           start_unblock(agent, subject)
         end
+      end
+
+      # Prose questions go to the model off the tick thread; what it wrote
+      # comes back on a later tick (D9). A quitting or dry run applies what
+      # already came back and sends nothing new.
+      #
+      # @return [void]
+      def convert_questions
+        @conversions.call(busy: untouchable, start: !(@runner.dry_run? || Execution::Control.quit?))
       end
 
       # @param agent [OpenLanes::Agents::Agent]

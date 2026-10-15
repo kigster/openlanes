@@ -16,6 +16,8 @@ module OpenLanes
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
+  #   questions:
+  #     model: anthropic/claude-haiku-5.5  # rewrites prose questions into choices (D9)
   #   app:                      # how to run the app a plan builds (M12)
   #     kind: web
   #     processes:
@@ -62,6 +64,10 @@ module OpenLanes
   # @!attribute [r] aging_since
   #   @return [Date, nil] `plans.aging_since`: no blocked plan ages from
   #     before it, so weeks the project sat paused do not count; nil is no floor
+  # @!attribute [r] questions_model
+  #   @return [String, nil] `questions.model`: the OpenRouter model that
+  #     rewrites a prose question into lettered choices; nil takes
+  #     {Live::ChoiceConverter::DEFAULT_MODEL}
   Config = Data.define(:path,
     :project,
     :lane,
@@ -71,9 +77,10 @@ module OpenLanes
     :commands,
     :merge_by,
     :app,
-    :aging_since) do
+    :aging_since,
+    :questions_model) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil, app: nil, aging_since: nil)
+      merge_by: nil, app: nil, aging_since: nil, questions_model: nil)
       super
     end
 
@@ -113,6 +120,7 @@ module OpenLanes
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
+      settings["questions"] = { "model" => questions_model } if questions_model
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
   end
@@ -122,13 +130,16 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url merge commands app plans].freeze
+    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
     PLAN_KEYS = %w[aging_since].freeze
+
+    # Every key `questions:` may hold.
+    QUESTION_KEYS = %w[model].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -185,7 +196,8 @@ module OpenLanes
           merge_by:  merge_by(settings["merge"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
-          **plans(settings["plans"], path))
+          **plans(settings["plans"], path),
+          **questions(settings["questions"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -280,6 +292,23 @@ module OpenLanes
           fail_with(path, "plans.#{key}: unknown key; known: #{PLAN_KEYS.join(", ")}")
         end
         { aging_since: aging_since(settings["aging_since"], path) }
+      end
+
+      # @return [Hash{Symbol => Object}] the `questions:` settings, as keywords for {Config.new}
+      def questions(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "questions: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - QUESTION_KEYS).each do |key|
+          fail_with(path, "questions.#{key}: unknown key; known: #{QUESTION_KEYS.join(", ")}")
+        end
+        model = settings["model"]
+        return {} if model.nil?
+        return { questions_model: model.strip } if model.is_a?(String) && !model.strip.empty?
+
+        fail_with(path, "questions.model: #{model.inspect} is not a model id, e.g. #{Live::ChoiceConverter::DEFAULT_MODEL}")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a
