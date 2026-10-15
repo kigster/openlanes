@@ -71,7 +71,12 @@ RSpec.configure do |config|
   # The choice judge asks TypeSafe over the network. A developer's shell may
   # well export TYPESAFE_API_KEY, so the suite turns the seam off outright;
   # examples about the judge build their own around an adapter double.
-  config.before { OpenLanes::Live.choice_judge = nil }
+  # The choice converter asks OpenRouter, and OPENROUTER_API_KEY sits in
+  # this project's own .env, so it is turned off the same way.
+  config.before do
+    OpenLanes::Live.choice_judge = nil
+    OpenLanes::Live.choice_converter = nil
+  end
 
   config.example_status_persistence_file_path = ".rspec_status"
   config.disable_monkey_patching!

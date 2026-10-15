@@ -101,6 +101,22 @@ module OpenLanes
                       Option.new(letter: "b", label: "no", recommended: false, answer: "no")])
         end
 
+        # The D3 shape, written out: the context, a blank line, then one
+        # lettered line per label with the recommended one marked. {.parse}
+        # reads it back into the same labels, which is how a rewritten
+        # question proves it kept its shape.
+        #
+        # @param context [String]
+        # @param labels [Array<String>] one line each
+        # @param recommended [Integer] the index of the recommended label
+        # @return [String] Markdown, ending in a newline
+        def write(context:, labels:, recommended:)
+          lines = labels.each_with_index.map do |label, i|
+            "#{("a".ord + i).chr}) #{label}#{" (Recommended)" if i == recommended}"
+          end
+          "#{context.to_s.strip}\n\n#{lines.join("\n")}\n"
+        end
+
         private
 
         # The W30 mark, on a line of its own.
