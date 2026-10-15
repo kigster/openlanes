@@ -106,21 +106,26 @@ RSpec.describe OpenLanes::Plans::Feature do
 
   # Every spelling a folder has worn, with what it decodes to.
   {
-    "003.00━━⭐━━❯tax-rule-dsl"                 => [:planned, "tax-rule-dsl", nil, true],
-    "002.00━━✅━━❯[2026-10-13]━━dev-foundation" => [:approved, "dev-foundation", Date.new(2026, 10, 13), true],
-    "003.00-⭐️ → tax-rule-dsl"                 => [:planned, "tax-rule-dsl", nil, false],
-    "003.00-⭐️→tax-rule-dsl"                   => [:planned, "tax-rule-dsl", nil, false],
-    "003.00-⭐️--tax-rule-dsl"                  => [:planned, "tax-rule-dsl", nil, false],
-    "003.00-⭐️-tax-rule-dsl"                   => [:planned, "tax-rule-dsl", nil, false],
-    "018-🅱️--pricing"                          => [:product_blocked, "pricing", nil, false],
-    "018.00-🅱 → pricing"                       => [:product_blocked, "pricing", nil, false],
-    "018.00━━🛑━━❯pricing"                      => [:product_blocked, "pricing", nil, true],
-    "019.00-☢️ → later"                        => [:deferred, "later", nil, false],
-    "019.00━━💤━━❯later"                        => [:deferred, "later", nil, true],
-    "005.01-🕰️-k1"                             => [:retroactive, "k1", nil, false],
-    "005.01━━⏪━━❯k1"                           => [:retroactive, "k1", nil, true],
-    "006.00-⭕️ → stuck"                        => [:blocked, "stuck", nil, false],
-    "007.00-⚪️ → fresh"                        => [:new, "fresh", nil, false]
+    "003.00━━⭐━━❯tax-rule-dsl"                   => [:planned, "tax-rule-dsl", nil, true],
+    "002.00━━✅━━❯[2026-10-13]━━dev-foundation"   => [:approved, "dev-foundation", Date.new(2026, 10, 13), true],
+    "003.00-⭐️ → tax-rule-dsl"                   => [:planned, "tax-rule-dsl", nil, false],
+    "003.00-⭐️→tax-rule-dsl"                     => [:planned, "tax-rule-dsl", nil, false],
+    "003.00-⭐️--tax-rule-dsl"                    => [:planned, "tax-rule-dsl", nil, false],
+    "003.00-⭐️-tax-rule-dsl"                     => [:planned, "tax-rule-dsl", nil, false],
+    "018-🅱️--pricing"                            => [:product_blocked, "pricing", nil, false],
+    "018.00-🅱 → pricing"                         => [:product_blocked, "pricing", nil, false],
+    "018.00━━🛑━━❯pricing"                        => [:product_blocked, "pricing", nil, true],
+    "019.00-☢️ → later"                          => [:deferred, "later", nil, false],
+    "019.00━━💤━━❯later"                          => [:deferred, "later", nil, true],
+    "005.01-🕰️-k1"                               => [:retroactive, "k1", nil, false],
+    "005.01━━⏪━━❯k1"                             => [:retroactive, "k1", nil, true],
+    "006.00-⭕️ → stuck"                          => [:blocked, "stuck", nil, false],
+    "007.00-⚪️ → fresh"                          => [:new, "fresh", nil, false],
+    # Written by a rename that took a whole current name for the slug.
+    "001.00━━⭕━━❯001.00━━🛑━━❯clean-agent"        => [:blocked, "clean-agent", nil, false],
+    "008.01━━🟡━━❯008.01━━⭕━━❯008.01━━⭕━━❯linker" => [:building, "linker", nil, false],
+    "009.00━━⭕━━❯009.00-⭕️ → aging"              => [:blocked, "aging", nil, false],
+    "010.00━━🦄━━❯unknown-emoji"                  => [:new, "unknown-emoji", nil, false]
   }.each do |dirname, (key, slug, date, canonical)|
     it "decodes #{dirname}" do
       feature = parsed(dirname)
