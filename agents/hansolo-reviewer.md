@@ -28,6 +28,7 @@ Before anything else, for each PR: `openlanes review <n> review-in-progress`. Yo
 
 1. The diff does what `spec.md` asked, and nothing it did not ask. Silent scope creep is the most common defect.
 1. Nothing in the diff breaks a Non-Goal, however useful it is.
+1. The diff never lowers `minimum` in `.openlanes.coverage.yml`, and never deletes the file. The coverage gate only means something while the minimum holds, so a lowered one is a finding whatever reason the builder gives.
 1. `plan.md` and `contract.md` describe what was built.
 1. The tests can fail. Try to construct an input that breaks the code and no test covers.
 1. The integration proof and end-to-end results pasted in `pull-requests.md` exist and pass.

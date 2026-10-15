@@ -5,8 +5,8 @@
     "ordinal": "013.00",
     "slug": "coverage-gate"
   },
-  "state": "ready_for_planning",
-  "updated_at": "2026-10-13T19:26:45-07:00",
+  "state": "ready_for_review",
+  "updated_at": "2026-10-14T12:01:20-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -106,6 +106,30 @@
       "at": "2026-10-13T19:26:38-07:00",
       "agent": "palpatine-planner",
       "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:48:43-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-14T11:50:00-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 2
+    },
+    {
+      "at": "2026-10-14T11:51:04-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T12:01:20-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
       "round": 1
     }
   ],

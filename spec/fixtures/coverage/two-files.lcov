@@ -1,0 +1,15 @@
+TN:
+SF:lib/small.rb
+DA:1,0
+LF:10
+LH:0
+end_of_record
+TN:
+SF:lib/large.rb
+FNF:3
+FNH:3
+LF:1000
+LH:1000
+BRF:4
+BRH:2
+end_of_record

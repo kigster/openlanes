@@ -15,5 +15,10 @@ module OpenLanes
 
     # @return [OpenLanes::Engine::Tally]
     def tally(**) = Tally.new(**)
+
+    # The coverage check `ok-to-merge` waits on (M15).
+    #
+    # @return [OpenLanes::Engine::CoverageGate]
+    def coverage_gate(**) = CoverageGate.new(**)
   end
 end

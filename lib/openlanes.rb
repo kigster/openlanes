@@ -21,6 +21,7 @@ loader.inflector.inflect(
   "ui"         => "UI"
 )
 loader.collapse("#{__dir__}/openlanes/support")
+loader.collapse("#{__dir__}/openlanes/cli/coverage")
 loader.collapse("#{__dir__}/openlanes/cli/create")
 loader.collapse("#{__dir__}/openlanes/cli/docs")
 loader.collapse("#{__dir__}/openlanes/cli/eval")
