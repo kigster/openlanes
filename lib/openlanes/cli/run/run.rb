@@ -190,19 +190,28 @@ module OpenLanes
       # would leave the page talking to nobody. Headless, or with
       # `--until-settled`, it ends at the first fixed point.
       #
-      # @param options [Hash]
-      # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
       # A staying run is also the one that watches the pull requests a person
       # merges (M4): it is still up when they do. A run that ends cannot wait
       # for a merge, so it names the pull requests it leaves unwatched instead.
       #
+      # @param options [Hash]
+      # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
       # @return [Hash] `stay:`, `rescan:` and `watch:` for {Engine::Runner}, or nothing
       def staying(options, web)
         return {} if web.nil? || options[:until_settled]
 
         @stays = "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
-        watch = Engine::PrWatch.new(github: Vcs.github) if Config.current.human_merges? && !dry_run?(options)
-        { stay: true, rescan: Engine::Dispatcher::RESCAN, watch: }
+        { stay: true, rescan: Engine::Dispatcher::RESCAN, watch: watch(options) }
+      end
+
+      # The pull request watch a staying run carries, in human mode only: when
+      # agents merge, nobody else's merge is worth waiting for. Kept apart from
+      # {#staying} so `start`, which overrides that, cannot leave it behind.
+      #
+      # @param options [Hash]
+      # @return [OpenLanes::Engine::PrWatch, nil]
+      def watch(options)
+        Engine::PrWatch.new(github: Vcs.github) if Config.current.human_merges? && !dry_run?(options)
       end
 
       # The open pull requests a run that does not stay leaves for a person,

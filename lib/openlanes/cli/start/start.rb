@@ -47,10 +47,13 @@ module OpenLanes
 
       private
 
-      # @param _options [Hash]
+      # Always stays, at the rescan asked for, and watches the pull requests
+      # a person merges the way a staying `run` does.
+      #
+      # @param options [Hash]
       # @param _web [OpenLanes::Web::Launcher]
       # @return [Hash]
-      def staying(_options, _web) = { stay: true, rescan: @rescan }
+      def staying(options, _web) = { stay: true, rescan: @rescan, watch: watch(options) }
 
       # @return [void]
       def without_live(message, _options)
