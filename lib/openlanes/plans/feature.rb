@@ -109,13 +109,28 @@ module OpenLanes
 
       # `NNN.MM━━<emoji>━━❯<slug>`, dated or not.
       #
+      # An emoji nothing answers to reads as ⚪ New rather than falling through
+      # to {.legacy}, which cannot split this spelling and took the whole name
+      # for the slug; the next rename then wrote
+      # `001.00━━⭕━━❯001.00━━🛑━━❯slug`. A name already nested that way is
+      # read down to its innermost slug, so `resync dirs` can undo it.
+      #
       # @return [OpenLanes::Plans::Feature, nil]
       def self.current(dirname, ordinal, path)
         m = CURRENT_FORM.match(dirname) or return nil
-        status = OpenLanes::Plans.status_for_emoji(m[:emoji]) or return nil
+        status = OpenLanes::Plans.status_for_emoji(m[:emoji]) || STATUS_BY_KEY.fetch(:new)
         archived_on = m[:date] && Date.iso8601(m[:date], exception: false)
 
-        new(ordinal:, status:, slug: m[:slug], dirname:, path:, archived_on:)
+        new(ordinal:, status:, slug: innermost(m[:slug], ordinal), dirname:, path:, archived_on:)
+      end
+
+      # @param slug [String]
+      # @param ordinal [OpenLanes::Plans::Ordinal]
+      # @return [String] +slug+ without any plan prefix of the same ordinal
+      def self.innermost(slug, ordinal)
+        return slug unless Ordinal.from_dirname(slug) == ordinal
+
+        parse(slug)&.slug || slug
       end
 
       # `NNN.MM-<emoji> → <slug>`, `NNN-<emoji>--<slug>` and `NNN-<emoji>-<slug>`.
@@ -134,7 +149,7 @@ module OpenLanes
 
         new(ordinal:, status: status || STATUS_BY_KEY.fetch(:new), slug:, dirname:, path:)
       end
-      private_class_method :current, :legacy
+      private_class_method :current, :legacy, :innermost
 
       # @return [String] proper name, e.g. "Law as Data"
       def title = OpenLanes::Plans.titleize(slug)
