@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 26 | [\[005.00\] Review State Labels](https://github.com/kigster/openlanes/pull/26) | Open 🟡 |
+| 26 | [\[005.00\] Review State Labels](https://github.com/kigster/openlanes/pull/26) | Merged 🟣 |
 
 ## Verification
 
