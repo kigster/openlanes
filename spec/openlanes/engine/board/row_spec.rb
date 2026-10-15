@@ -74,5 +74,12 @@ RSpec.describe OpenLanes::Engine::Board::Row do
 
       expect(described_class.unacked_in(dir)).to eq(1)
     end
+
+    # A count for the screen must not stop the tick that draws it.
+    it "is 0 for a plan whose state.json is not valid JSON" do
+      File.write(File.join(dir, "state.json"), "{ not json")
+
+      expect(described_class.unacked_in(dir)).to eq(0)
+    end
   end
 end
