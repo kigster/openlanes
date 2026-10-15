@@ -13,9 +13,6 @@ module OpenLanes
     # to the page's fixture, level by level, so a field renamed on one side
     # fails the other's suite.
     class Snapshot
-      # Any Markdown heading, which ends the body of the question above it.
-      HEADING = /^[ \t]{0,3}\#{1,6}[ \t]/
-
       # Plan states finished with, kept off "Choose an existing plan".
       FINISHED = %i[approved deployed discarded].freeze
 
@@ -304,7 +301,7 @@ module OpenLanes
         open = Lifecycle::Unblocker.questions(subject).reject(&:answered)
         return [] if open.empty?
 
-        bodies = bodies(subject.read("blocked.md").to_s)
+        bodies = Plans::BlockedFile.bodies(subject.read("blocked.md").to_s)
         asker = state.signatures.rfind { it["status"] == "Blocked" }
         asked_at = asker&.fetch("at", nil) || iso(File.mtime(File.join(subject.feature.path, "blocked.md")))
         open.map { |q| question(subject, q, bodies.fetch(q.number, ""), asker, asked_at) }
@@ -343,24 +340,6 @@ module OpenLanes
         return found if body.match?(Plans::Choices::YES_NO)
 
         @judge&.call(body) == false ? nil : found
-      end
-
-      # @param text [String] the whole of blocked.md
-      # @return [Hash{Integer => String}] each open question's number to the
-      #   lines under its heading, up to the next heading
-      def bodies(text)
-        found = {}
-        current = nil
-        text.each_line do |line|
-          if (number = line[Plans::OPEN_BLOCK, 1])
-            current = found[number.to_i] = +""
-          elsif line.match?(HEADING) || line.match?(Plans::ANSWER_BLOCK)
-            current = nil
-          elsif current
-            current << line
-          end
-        end
-        found
       end
 
       # @param time [Time]
