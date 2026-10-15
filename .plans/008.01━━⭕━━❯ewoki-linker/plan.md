@@ -116,3 +116,7 @@ No. The plan adds no HTTP API and changes none.
 
 1. Plans at 🟡 Building or later are not linked (grandfathered; 008.02 decides the invariant). U4 tests the skip.
 1. A failed or killed ewoki is retried at most once per round; after `LINK_ATTEMPTS = 3`, defined once in `dispatcher.rb`, the harness writes the ⭕️ `blocked.md` question instead.
+
+> [!NOTE]
+>
+> [2026-10-15 09:27:29 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

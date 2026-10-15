@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-15T09:10:32-07:00",
+  "updated_at": "2026-10-15T09:29:55-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -257,6 +257,12 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-15T09:29:55-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": [

@@ -126,3 +126,11 @@ No front-end work: `init` is a terminal command, and the web Settings dialog is 
 ## HTTP surface
 
 No. The plan adds no HTTP API and changes none; extraction is an outbound client call, not a served route. No `openapi.yaml`.
+
+> [!NOTE]
+>
+> [2026-10-15 09:27:29 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:34:10 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

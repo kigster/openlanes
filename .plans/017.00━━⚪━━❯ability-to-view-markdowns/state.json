@@ -3,31 +3,37 @@
   "version": 1,
   "plan": {
     "ordinal": "017.00",
-    "slug": "what-this-is"
+    "slug": "ability-to-view-markdowns"
   },
   "state": "new",
-  "updated_at": "2026-10-15T09:10:16-07:00",
+  "updated_at": "2026-10-15T09:34:10-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
-      "started_at": "2026-10-15T09:09:02-07:00",
+      "started_at": "2026-10-15T09:29:50-07:00",
       "run": {
-        "pid": 75654,
+        "pid": 29943,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "haiku",
       "effort": "medium",
       "note": "harness died",
-      "finished_at": "2026-10-15T09:10:16-07:00"
+      "finished_at": "2026-10-15T09:34:10-07:00"
     }
   ],
   "signatures": [
     {
       "at": "2026-10-15T09:09:08-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:29:55-07:00",
       "agent": "leah-researcher",
       "status": "Started",
       "round": 1
@@ -37,7 +43,7 @@
   "last-known-state": {
     "leah-researcher": {
       "source": "harness",
-      "at": "2026-10-15T09:10:16-07:00",
+      "at": "2026-10-15T09:34:10-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"

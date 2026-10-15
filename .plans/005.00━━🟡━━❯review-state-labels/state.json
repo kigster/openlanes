@@ -6,7 +6,7 @@
     "slug": "review-state-labels"
   },
   "state": "rejected",
-  "updated_at": "2026-10-15T09:25:11-07:00",
+  "updated_at": "2026-10-15T09:34:10-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,42 +71,42 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "building",
-      "started_at": "2026-10-15T09:25:05-07:00",
+      "started_at": "2026-10-15T09:29:50-07:00",
       "run": {
-        "pid": 17467,
+        "pid": 29943,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
       "to": "building",
-      "finished_at": "2026-10-13T19:22:25-07:00",
+      "finished_at": "2026-10-15T09:34:10-07:00",
       "up": 5927905,
       "down": 48489,
       "seconds": 685.3,
-      "note": "Almost completed; no rounds left"
+      "note": "harness died"
     },
     {
       "agent": "rey-frontend",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "building",
-      "started_at": "2026-10-15T09:25:05-07:00",
+      "started_at": "2026-10-15T09:29:50-07:00",
       "run": {
-        "pid": 17467,
+        "pid": 29943,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
       "to": "building",
-      "finished_at": "2026-10-13T19:16:14-07:00",
+      "finished_at": "2026-10-15T09:34:10-07:00",
       "up": 1112017,
       "down": 10728,
       "seconds": 287.3,
-      "note": "completed - 17 tool calls"
+      "note": "harness died"
     },
     {
       "agent": "hansolo-reviewer",
@@ -248,6 +248,18 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:29:55-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:29:56-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": [
@@ -293,5 +305,21 @@
       "to": "luke-backend",
       "body": "RESUME: B1-B5 done and green. B6: lib/openlanes/engine/pr_watch.rb + spec done. Remaining: wire PrWatch into Dispatcher#tick (start only, merge.by human via support/config.rb), fire rejected/approved->deployed/discarded events, mail luke+rey with comments, record Publication#label_error in publish_for_review note, waiting_on in board snapshot -> Reporter(waiting_on:). Then I1 spec/integration/review_labels_spec.rb + spec/support/fake_gh. See implementation-plan.md Status."
     }
-  ]
+  ],
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-15T09:34:10-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    },
+    "rey-frontend": {
+      "source": "harness",
+      "at": "2026-10-15T09:34:10-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
 }

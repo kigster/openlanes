@@ -3,10 +3,10 @@
   "version": 1,
   "plan": {
     "ordinal": "018.00",
-    "slug": "018.00━━⚪━draggable-divider"
+    "slug": "draggable-divider"
   },
   "state": "building",
-  "updated_at": "2026-10-15T09:21:24-07:00",
+  "updated_at": "2026-10-15T09:34:17-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -72,29 +72,33 @@
       "agent": "luke-backend",
       "round": 1,
       "status": "Started",
-      "from": "planned",
-      "started_at": "2026-10-15T09:18:52-07:00",
+      "from": "building",
+      "started_at": "2026-10-15T09:34:11-07:00",
       "run": {
-        "pid": 17467,
+        "pid": 41315,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
-      "effort": "high"
+      "effort": "high",
+      "note": "harness died",
+      "finished_at": "2026-10-15T09:27:29-07:00"
     },
     {
       "agent": "rey-frontend",
       "round": 1,
       "status": "Started",
       "from": "building",
-      "started_at": "2026-10-15T09:18:52-07:00",
+      "started_at": "2026-10-15T09:34:11-07:00",
       "run": {
-        "pid": 17467,
+        "pid": 41315,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
-      "effort": "medium"
+      "effort": "medium",
+      "note": "harness died",
+      "finished_at": "2026-10-15T09:27:29-07:00"
     }
   ],
   "signatures": [
@@ -148,6 +152,18 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:34:16-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:34:17-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": [
@@ -159,6 +175,31 @@
       "to": "rey-frontend",
       "body": "contract.md written: no HTTP surface, every web/ file is yours, I touch nothing under web/ or lib/. I fixed a baseline Ruby failure in spec/openlanes/execution/prompt_spec.rb (worktree path escaping). B1 waits on F3: mail me when App.tsx and shell.css are wired, and I run rspec spec/openlanes/web plus just web-build.",
       "read": "no"
+    },
+    {
+      "id": "8da69b8d-87a7-4d59-bcd6-9bfeaf398c4c",
+      "number": 2,
+      "at": "2026-10-15T09:25:22-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: F1-F4 landed, web-test green, web-e2e 30/30 incl. divider.cy.ts. B1 (rspec spec/openlanes/web + web-build) is yours; web-build already succeeds. Note spec/openlanes/execution/prompt_spec.rb is modified in the tree and is not mine.",
+      "read": "no"
     }
-  ]
+  ],
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-15T09:27:29-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    },
+    "rey-frontend": {
+      "source": "harness",
+      "at": "2026-10-15T09:27:29-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
 }

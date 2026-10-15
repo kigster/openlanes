@@ -81,3 +81,19 @@ I1 owns it: `spec/integration/review_labels_spec.rb`, a real `.plans` tree, the 
 - With a failing check, `openlanes review <n> ready-to-merge` is refused and `review-rejected` is accepted.
 - Under `openlanes start`, add `review-rejected` and a comment on GitHub: within about 15 s the plan folder shows 🔴 and luke and rey have mail. Merge another PR: its plan shows ✅.
 - Remove `## How to test` from a `plan.md`: the publisher refuses to open its PR.
+
+> [!NOTE]
+>
+> [2026-10-15 09:27:29 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:27:29 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:34:10 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:34:10 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]
