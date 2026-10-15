@@ -147,6 +147,94 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  # Plan 009: the 💣 notice's three buttons.
+  describe "the bomb commands" do
+    def bomb(ordinal, slug, questions)
+      plans do |t|
+        t.plan ordinal, :bomb, slug, files: { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## Unit 1\n", "blocked.md" => questions }
+      end
+    end
+
+    def blocked_md(ordinal) = File.read(File.join(path_of(ordinal), "blocked.md"))
+
+    before { bomb("002.00", "feed", "## B1 Which feed?\n\n## A1\n\nThe vendor's.\n\n## B2 How often?\n") }
+
+    describe "respond" do
+      it "answers the first question still without an answer, as answer would" do
+        send_command("respond", plan: "002.00", text: "Hourly.")
+
+        aggregate_failures do
+          expect(apply.map { [it.status, it.reason] }).to eq([["done", "answered B2"]])
+          expect(blocked_md("002.00")).to end_with("## B2 How often?\n\n## A2\n\nHourly.\n\nAnswered by dana on 2026-10-13\n<!-- cmd:C1 -->\n")
+        end
+      end
+
+      it "writes nothing the second time the same command is applied" do
+        send_command("respond", plan: "002.00", text: "Hourly.", id: "01JR")
+        allow(store).to receive(:multi).and_raise(OpenLanes::Live::Unavailable, "gone")
+        allow(OpenLanes::UI).to receive(:log)
+        apply
+        allow(store).to receive(:multi).and_call_original
+        apply
+
+        expect(blocked_md("002.00").scan("## A2").size).to eq(1)
+      end
+
+      it "refuses when every question already has an answer waiting" do
+        File.write(File.join(path_of("002.00"), "blocked.md"), "\n## A2\n\nDaily.\n", mode: "a")
+        send_command("respond", plan: "002.00", text: "Hourly.")
+
+        expect(apply.map { [it.status, it.reason] }).to eq([["refused", "every question 002.00 asks already has an answer waiting"]])
+      end
+    end
+
+    describe "resume_anyway" do
+      it "lifts the halt for 24 hours, in state.json" do
+        send_command("resume_anyway", plan: "002.00")
+
+        aggregate_failures do
+          expect(apply.map { [it.status, it.reason] }).to eq([["done", "002.00 halts nothing until 2026-10-14T09:00:00Z"]])
+          expect(OpenLanes::Plans::PlanState.for(path_of("002.00")).resume_until).to eq(Time.utc(2026, 10, 14, 9))
+        end
+      end
+    end
+
+    describe "pause_discuss" do
+      before do
+        building("003.00", "other")
+        start_agents
+      end
+
+      it "holds every running agent and changes no file" do
+        before = Dir.glob(File.join(plans_root, "**", "*")).to_h { [it, File.file?(it) ? File.read(it) : nil] }
+        send_command("pause_discuss", plan: "002.00")
+        replies = apply
+        after = Dir.glob(File.join(plans_root, "**", "*")).to_h { [it, File.file?(it) ? File.read(it) : nil] }
+
+        aggregate_failures do
+          expect(replies.map(&:status)).to eq(%w[done])
+          expect(dispatcher.running.map { control_of(it.key) }).to all(eq("HOLD"))
+          expect(dispatcher.running.map { run_state.car_held?(it.key) }).to all(be(true))
+          expect(after).to eq(before)
+        end
+      end
+    end
+
+    it "refuses all three on a plan that is not a 💣" do
+      blocked("004.00", "plain", "## B1 Which?\n")
+      send_command("respond", plan: "004.00", text: "x")
+      send_command("pause_discuss", plan: "004.00")
+      send_command("resume_anyway", plan: "004.00")
+
+      expect(apply.map { [it.status, it.reason] }).to all(eq(["refused", "004.00 is ⭕️ Technical Block, not a 💣"]))
+    end
+
+    it "is refused before it is queued without the text a response carries" do
+      expect { send_command("respond", plan: "002.00") }
+        .to raise_error(OpenLanes::Live::Command::Invalid, "respond needs payload text")
+    end
+  end
+
   describe "hold_blocked and release_hold" do
     before do
       blocked("002.00", "rebase", "## B1 Rebase\n\nShould I?\n")

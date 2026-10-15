@@ -31,22 +31,28 @@ module OpenLanes
 
       # Command kind to the method that applies it.
       HANDLERS = {
-        "answer"       => :answer,
-        "hold_blocked" => :hold_blocked,
-        "release_hold" => :release_hold,
-        "resume"       => :resume,
-        "discard"      => :discard,
-        "message"      => :message,
-        "hold"         => :signal,
-        "wrap_up"      => :signal,
-        "compact"      => :compact,
-        "stop"         => :signal,
-        "stop_all"     => :stop_all,
-        "set_model"    => :set_model,
-        "switch_model" => :switch_model,
-        "add_plan"     => :add_plan,
-        "create_plans" => :create_plans
+        "answer"        => :answer,
+        "hold_blocked"  => :hold_blocked,
+        "release_hold"  => :release_hold,
+        "resume"        => :resume,
+        "discard"       => :discard,
+        "message"       => :message,
+        "hold"          => :signal,
+        "wrap_up"       => :signal,
+        "compact"       => :compact,
+        "stop"          => :signal,
+        "stop_all"      => :stop_all,
+        "set_model"     => :set_model,
+        "switch_model"  => :switch_model,
+        "add_plan"      => :add_plan,
+        "create_plans"  => :create_plans,
+        "respond"       => :respond,
+        "pause_discuss" => :pause_discuss,
+        "resume_anyway" => :resume_anyway
       }.freeze
+
+      # How long "Resume anyway" lifts a 💣's halt.
+      RESUME_FOR = 24 * 3600
 
       # Plans a person may not add to a run: there is nothing left to do.
       FINISHED = Snapshot::FINISHED
@@ -224,10 +230,15 @@ module OpenLanes
       # @return [String, nil]
       def answer(command, dispatcher)
         subject, question = question!(command, dispatcher)
-        path = File.join(subject.feature.path, "blocked.md")
-        return nil if File.read(path).include?(marker(command))
+        return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
         return "B#{question.number} already has an answer waiting" if question.answered
 
+        write_answer(subject, question, command, dispatcher)
+      end
+
+      # @return [nil]
+      def write_answer(subject, question, command, dispatcher)
+        path = File.join(subject.feature.path, "blocked.md")
         File.open(path, "a") do |file|
           file.write("\n## A#{question.number}\n\n#{command["text"]}\n\n" \
                      "Answered by #{@node.user} on #{@clock.call.strftime("%Y-%m-%d")}\n#{marker(command)}\n")
@@ -235,6 +246,53 @@ module OpenLanes
         @run_state.hold_question(question_id(subject, question), held: false)
         dispatcher.wake!
         nil
+      end
+
+      # ---- bombs ------------------------------------------------------------
+
+      # The 💣 notice's answer box (plan 009): the first open question with
+      # no answer yet gets this one, in exactly the form {#answer} writes,
+      # so the drain that clears a ⭕️ clears the 💣 too.
+      #
+      # @return [String, nil]
+      def respond(command, dispatcher)
+        subject = bomb!(command, dispatcher)
+        return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
+
+        question = Lifecycle::Unblocker.questions(subject).reject(&:answered).first or
+          raise Refusal, "every question #{command.plan} asks already has an answer waiting"
+        write_answer(subject, question, command, dispatcher)
+        "answered B#{question.number}"
+      end
+
+      # Pause and Discuss (N10): every agent on this machine holds, and the
+      # page opens the copilot on the plan. No file changes.
+      #
+      # @return [String]
+      def pause_discuss(command, dispatcher)
+        bomb!(command, dispatcher)
+        held = dispatcher.running.map(&:key).select { dispatcher.signal(it, Execution::Control::HOLD) }
+        held.each { @run_state.hold_car(it, held: true) }
+        "held #{held.size} agent#{"s" unless held.size == 1}; discuss #{command.plan} in the copilot"
+      end
+
+      # Resume anyway for {RESUME_FOR}: the halt this 💣 causes lapses on its
+      # own, with no config edit to undo.
+      #
+      # @return [String]
+      def resume_anyway(command, dispatcher)
+        subject = bomb!(command, dispatcher)
+        till = Plans::PlanState.for(subject.feature.path).resume_anyway!(till: @clock.call + RESUME_FOR)
+        dispatcher.wake!
+        "#{command.plan} halts nothing until #{till.utc.iso8601}"
+      end
+
+      # @return [OpenLanes::Plans::Subject] the plan, refused unless it is 💣
+      def bomb!(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        raise Refusal, "#{command.plan} is #{subject.status}, not a 💣" unless subject.status.key == :bomb
+
+        subject
       end
 
       # @return [nil]
