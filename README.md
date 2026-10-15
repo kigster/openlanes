@@ -212,7 +212,7 @@ When an agent hits a question that is not its to answer, it writes numbered ques
 ### The autonomy boundary
 
 - Agents never run `git commit`, `git push`, `gh pr create`, `gh pr merge` and friends; web access is off unless an agent declares `network: true`.
-- After every agent, the harness verifies `HEAD` did not move and no new remote ref appeared.
+- After every agent, the harness verifies `HEAD` did not move and no remote-tracking ref was moved by a push.
 - The harness, not the agent, commits, pushes and opens the pull request. `--no-git-push` turns that off.
 - Nothing merges automatically. Merging and deploying stay manual.
 

@@ -609,7 +609,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   # The after-check half of the boundary. A prompt is a request; this is the
   # guarantee — an agent that committed anyway is reported as a failure, not
   # trusted because it said "completed".
-  describe "the after-check on HEAD" do
+  describe "the after-check on HEAD and remote refs" do
     subject(:streaming) { described_class.new(root:, spawn:, trace_dir: @traces) }
 
     let(:stream) { [%({"type":"result","subtype":"success","result":"done"}\n)] }
@@ -636,6 +636,39 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       expect(streaming.call(agent, subject_plan)).to have_attributes(
         ok: false, note: a_string_including("agent committed", "HEAD moved")
       )
+    end
+
+    # The other half: nothing leaves the machine. A bare repository on disk
+    # plays origin, so the push is real and nothing reaches the network.
+    context "with an origin" do
+      let(:origin) { "#{root}-origin.git" }
+
+      before do
+        system("git", "init", "-q", "--bare", origin, out: File::NULL, err: File::NULL)
+        system("git", "-C", root, "remote", "add", "origin", origin)
+        system("git", "-C", root, "push", "-q", "origin", "HEAD:main", out: File::NULL, err: File::NULL)
+      end
+
+      after { FileUtils.rm_rf(origin) }
+
+      it "reports an invocation that pushed, though HEAD never moved" do
+        allow(fake_child).to receive(:each_chunk) do
+          system("git", "-C", root, "push", "-q", "origin", "HEAD:refs/heads/sneaky", out: File::NULL, err: File::NULL)
+        end
+
+        expect(streaming.call(agent, subject_plan)).to have_attributes(
+          ok: false, note: a_string_including("agent pushed (origin/sneaky)")
+        )
+      end
+
+      it "passes an invocation that only fetched what somebody else pushed" do
+        system("git", "-C", origin, "branch", "theirs", "main")
+        allow(fake_child).to receive(:each_chunk) do
+          system("git", "-C", root, "fetch", "-q", "origin", out: File::NULL, err: File::NULL)
+        end
+
+        expect(streaming.call(agent, subject_plan).ok).to be(true)
+      end
     end
   end
 

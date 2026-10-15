@@ -103,6 +103,7 @@ lib/openlanes/
     state_file.rb        restart state; board.rb, tally.rb, progress_log.rb what the run shows and costs
   execution/             OpenLanes::Execution — one agent invocation
     executor.rb          one agent invocation through its adapter, and the autonomy boundary
+    boundary.rb          the after-check: HEAD unmoved, no remote-tracking ref moved by a push
     child.rb, clock.rb, control.rb   the process, its advisory timeout, its control file
     transcript.rb        parses --output-format stream-json into a spinner phrase
   vcs/                   OpenLanes::Vcs — worktree.rb, publisher.rb (push, open the PR), github.rb (the gh seam)
@@ -130,7 +131,7 @@ flowchart LR
   T[Tree: .plans folders] --> R[Runner round]
   R -->|one agent per plan| W[Worktree: checkout and branch]
   W --> E[Executor: claude -p]
-  E --> X{HEAD unmoved, no new remote ref}
+  E --> X{HEAD unmoved, nothing pushed}
   X -->|yes| S[StateMachine: rename the folder]
   X -->|no| FAIL[Reported as a failed attempt]
   S --> P[Publisher: push, open the PR]
@@ -146,7 +147,7 @@ flowchart LR
 `Executor` enforces "docs plus code, but nothing leaves the machine" twice over, because a prompt is a request and only a check is a guarantee:
 
 - Before: `--disallowedTools` withholds `WebFetch` and `WebSearch` (unless the agent declares `network: true`), and `FORBIDDEN_COMMANDS` is passed as `Bash(<cmd>:*)` specifiers. An agent's `may:` frontmatter can lift some of those, but never anything in `UNGRANTABLE` (`git push`, `gh pr merge`).
-- After: the harness verifies `HEAD` did not move and no new remote ref appeared.
+- After: `Boundary` verifies `HEAD` did not move and no remote-tracking ref was moved by a push. It reads local state only: a ref under `refs/remotes` that changed during the run counts when its reflog says `update by push` (or has no entry to explain it), so an agent's `git fetch` passes. `git ls-remote` was rejected: a network call per run, and it blames the agent for anyone else's push. Pushes the harness makes itself are declared through `Boundary.sanction` first, because worktrees share `refs/remotes`. Blind spots: a push to a bare URL, and a deleted remote branch (locally the same as `fetch --prune`).
 
 Approving a pull request is grantable because it is reversible, visible and attributable. Merging is not. Keep that line where it is.
 

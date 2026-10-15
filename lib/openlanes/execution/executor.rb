@@ -15,9 +15,10 @@ module OpenLanes
     #
     #   BEFORE — the agent is told, and `--disallowedTools` withholds the tools
     #            that would let it push.
-    #   AFTER  — the harness checks that HEAD did not move and no new remote ref
-    #            appeared. A prompt is a request; a check is a guarantee, and only
-    #            one of them survives a model deciding it knows better.
+    #   AFTER  — {Boundary} checks that HEAD did not move and that no
+    #            remote-tracking ref was moved by a push. A prompt is a request;
+    #            a check is a guarantee, and only one of them survives a model
+    #            deciding it knows better.
     class Executor
       # What one invocation did, and what it spent doing it.
       #
@@ -491,7 +492,7 @@ module OpenLanes
         end
 
         handle ||= Handle.new
-        before = head(root)
+        before = Boundary.snapshot(root)
         trace = trace_path(agent, subject)
         profile = profile_for(agent, subject)
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
@@ -541,7 +542,7 @@ module OpenLanes
             pid: handle.pid)
         end
 
-        violation = boundary_violation(before, root)
+        violation = before.violation(root)
         return failure(sessions, started, violation, pid: handle.pid) if violation
 
         spent(sessions,
@@ -826,23 +827,6 @@ module OpenLanes
         elsif Control.overdue?
           handle.kill!(grace: 0, reason: :quit)
         end
-      end
-
-      # @return [String, nil] current commit, or nil outside a repository
-      def head(root = @root)
-        out = `git -C #{root.shellescape} rev-parse HEAD 2>/dev/null`.strip
-        out.empty? ? nil : out
-      end
-
-      # @param before [String, nil]
-      # @return [String, nil] what boundary was crossed, or nil
-      def boundary_violation(before, root = @root)
-        return nil if before.nil?
-
-        after = head(root)
-        return "agent committed (HEAD moved #{before[0, 7]} → #{after[0, 7]}) — the boundary is docs plus code, no commits" if after != before
-
-        nil
       end
     end
   end
