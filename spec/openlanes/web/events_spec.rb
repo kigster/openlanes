@@ -3,7 +3,7 @@
 # The event stream's loop, run for a few ticks against the in-memory store
 # with a clock the example moves, so pings and lifetimes cost no real time.
 RSpec.describe OpenLanes::Web::Events do
-  subject(:events) { described_class.new(context:, store:, last_id:, page:, clock:, sleeper:) }
+  subject(:events) { described_class.new(context:, store:, last_id:, page:, clock:, waiter:) }
 
   # An `out` the loop writes to, which can be closed from inside a write.
   let(:out_class) do
@@ -39,18 +39,18 @@ RSpec.describe OpenLanes::Web::Events do
       keys:,
       plans_dir: "/nowhere",
       url: "memory://",
-      tick: 0,
       ping_every: 0.5,
       lifetime:)
   end
   let(:out) { out_class.new }
   let(:frames) { out.frames }
-  # Each tick advances the clock a quarter second, then runs the example's
-  # block with the tick's number.
+  # Each wait for news advances the clock a quarter second, then runs the
+  # example's block with the wait's number, standing in for whatever a
+  # nudge would have woken the stream for.
   let(:on_tick) { [nil] }
-  let(:sleeper) do
+  let(:waiter) do
     ticks = [0]
-    lambda do |_|
+    lambda do |_, _|
       ticks[0] += 1
       now[0] += 0.25
       on_tick.first&.call(ticks.first)
