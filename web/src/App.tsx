@@ -314,6 +314,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         </main>
       </Tabs.Root>
       <StatusBar
+        redisUrl={me.redis_url}
         plans={me.plans}
         stations={me.stations}
         others={others}

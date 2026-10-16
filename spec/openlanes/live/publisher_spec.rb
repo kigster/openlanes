@@ -31,6 +31,11 @@ RSpec.describe OpenLanes::Live::Publisher, :tree do
     end
   end
 
+  it "names the Redis it publishes through, which is the one the page shows" do
+    publisher.call(dispatcher.board)
+    expect(JSON.parse(store.get(keys.snapshot))["redis_url"]).to eq(store.url)
+  end
+
   it "counts on from the board stream, so a restarted engine never repeats a seq" do
     store.xadd(keys.board, { seq: 41, json: "{}" })
     expect(publisher.call(dispatcher.board)[:seq]).to eq(42)

@@ -156,4 +156,8 @@ button, textarea { font: inherit; color: inherit; }
 .pills-theirs .pill:hover { --tint: 18%; }
 .pills-theirs .pill-mark { opacity: .7; }
 .statusbar-sum { margin: 0; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
-@media (max-width: 720px) { .statusbar h2, .statusbar-sum { display: none; } }
+/* Which Redis the engine keeps claims and run state in: two engines on different ones never see each other's claims,
+   so the address is on screen rather than in a log. Already redacted by the engine. */
+.statusbar-redis { margin: 0; flex: none; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+.statusbar-redis code { font: 12px var(--mono); color: var(--ink); }
+@media (max-width: 720px) { .statusbar h2, .statusbar-sum, .statusbar-redis { display: none; } }

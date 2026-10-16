@@ -22,6 +22,12 @@ export const dollars = (n: number): string => "$" + n.toFixed(2);
 /** Plan numbers are plain NNN (W21) when the ordinal is a whole plan, 001.00; a sub-plan keeps its suffix. */
 export const planId = (ordinal: string): string => (ordinal.endsWith(".00") ? ordinal.slice(0, -3) : ordinal);
 
+/**
+ * A Redis URL with any userinfo, user name included, replaced by ":***": redis://:***@host:6379/0. The engine already
+ * redacts what it sends; this is the page refusing to be the place a password leaks if an older engine did not.
+ */
+export const redactUrl = (url: string): string => url.replace(/^([a-z][a-z0-9+.-]*:\/\/)[^@/]*@/i, "$1:***@");
+
 export const who = (node: Pick<Node, "user" | "host">): string => `${node.user}@${node.host}`;
 
 /** Whole seconds from `from` to `to`, never negative; 0 when either is missing or unreadable. */

@@ -1,4 +1,4 @@
-import { clock, dollars, fmt, lastSeen, planId, secondsBetween, span, stamp, who } from "./format";
+import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
 import {
   LANES,
   carLook,
@@ -27,6 +27,11 @@ describe("format", () => {
     expect(dollars(14.2)).toBe("$14.20");
     expect([planId("001.00"), planId("010.01")]).toEqual(["001", "010.01"]);
     expect(who({ user: "dana", host: "studio-mini" })).toBe("dana@studio-mini");
+  });
+
+  it("redacts a URL's userinfo, user name included", () => {
+    expect(["redis://:pw@h:6379/0", "rediss://user:pw@h/1", "redis://user@h/2", "redis://h:6379/0"].map(redactUrl))
+      .toEqual(["redis://:***@h:6379/0", "rediss://:***@h/1", "redis://:***@h/2", "redis://h:6379/0"]);
   });
 
   it("measures seconds between two times, never negative", () => {

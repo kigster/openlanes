@@ -53,6 +53,11 @@ describe("under ?fixture", () => {
     expect(screen.queryByRole("button", { name: /Chat with/ })).toBeNull();
   });
 
+  it("shows the Redis the engine uses in the status bar", async () => {
+    renderApp();
+    expect(await screen.findByText("redis://localhost:6379/0")).toBeInTheDocument();
+  });
+
   it("draws the header, the tabs, the board and the status bar", async () => {
     renderApp();
     expect(await screen.findByText("Fixture data")).toBeInTheDocument();

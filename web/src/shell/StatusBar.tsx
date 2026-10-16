@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Plan, Snapshot, Station } from "../api/types";
-import { planId, span, who } from "../board/format";
+import { planId, redactUrl, span, who } from "../board/format";
 import { hasRequest, isApproved, isMerged, pillState } from "../board/model";
 import { MERGED_STAYS_MS, type GonePlan } from "../board/useLifecycle";
 
 export interface StatusBarProps {
+  /** The Redis the engine keeps plan claims and run state in, from its snapshot; null or absent from an older engine. */
+  redisUrl?: string | null;
   plans: Plan[];
   stations: Station[];
   others: Snapshot[];
@@ -38,7 +40,7 @@ const SLIDE = { duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as const };
  * after a divider in the order they finished), other machines' plans at the right end, and the summary.
  */
 export function StatusBar(props: StatusBarProps) {
-  const { plans, stations, others, gone, offBar, finishOrder, unblocking, onToggleUnblock, onShowPlan, onOpenMachine, onDropGone } = props;
+  const { redisUrl, plans, stations, others, gone, offBar, finishOrder, unblocking, onToggleUnblock, onShowPlan, onOpenMachine, onDropGone } = props;
   const list = useRef<HTMLOListElement>(null);
 
   const live = plans.filter(p => !gone.has(p.ordinal));
@@ -146,6 +148,11 @@ export function StatusBar(props: StatusBarProps) {
       <p className="statusbar-sum">
         {merged} merged, {ready} ready to merge, {blocked} blocked
       </p>
+      {redisUrl && (
+        <p className="statusbar-redis" title="The Redis this machine's engine keeps plan claims, locks and run state in">
+          Redis <code>{redactUrl(redisUrl)}</code>
+        </p>
+      )}
     </footer>
   );
 }

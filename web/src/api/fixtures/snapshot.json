@@ -369,5 +369,6 @@
       "text": "started luke-backend on 001.00",
       "plan": "001.00"
     }
-  ]
+  ],
+  "redis_url": "redis://localhost:6379/0"
 }

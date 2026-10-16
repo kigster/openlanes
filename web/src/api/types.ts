@@ -162,6 +162,7 @@ export interface Snapshot {
   backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "lane">>; // not complete, not claimed: for "Choose an existing plan"
   models: ModelChoice[];
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
+  redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"
   log: LogLine[]; // the most recent lines, newest last
   bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
 }

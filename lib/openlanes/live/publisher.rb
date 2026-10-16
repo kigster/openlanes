@@ -153,6 +153,10 @@ module OpenLanes
           claims:      @claims,
           run_state:   @run_state,
           meter:       @meter,
+          # The URL the engine publishes through, not one read back from the
+          # environment: the page's status bar says which Redis the claims and
+          # run state really live in, and only the store that wrote them knows.
+          redis_url:   @store.url,
           log:).to_h
       end
 

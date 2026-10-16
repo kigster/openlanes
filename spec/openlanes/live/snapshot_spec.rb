@@ -345,6 +345,23 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
   end
 
+  describe "the Redis URL" do
+    it "is the engine's own, with its userinfo redacted" do
+      expect(described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        redis_url: "redis://dana:secret@10.0.4.2:6379/0").to_h[:redis_url]).to eq("redis://:***@10.0.4.2:6379/0")
+    end
+
+    it "is null when nobody said which" do
+      expect(snapshot[:redis_url]).to be_nil
+    end
+  end
+
   describe "an unclaimed plan" do
     before { building("001.00", "tax-rule-dsl") }
 
