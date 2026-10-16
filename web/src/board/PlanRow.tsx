@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
 import type { Car as CarData, ModelChoice, Node, Plan, Station } from "../api/types";
-import { Car, InterruptedCar } from "./Car";
+import { Car, InterruptedCar, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, planId, who } from "./format";
 import { LANES, rowColors, rowDomId, routeOf } from "./model";
@@ -75,15 +75,18 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
     cars = (
       <>
         {plan.cars.map(car => (
-          <Car
-            key={car.key}
-            plan={plan}
-            car={car}
-            models={models}
-            open={openCar === car.key}
-            onOpen={readOnly ? undefined : onOpenCar}
-            modelSlot={readOnly ? undefined : renderModel?.(plan, car)}
-          />
+          // A car and the sub-agents it started share one line, so each ghost tile sits beside the agent that owns it.
+          <div key={car.key} className="car-group">
+            <Car
+              plan={plan}
+              car={car}
+              models={models}
+              open={openCar === car.key}
+              onOpen={readOnly ? undefined : onOpenCar}
+              modelSlot={readOnly ? undefined : renderModel?.(plan, car)}
+            />
+            <SubagentTiles car={car} />
+          </div>
         ))}
         {plan.pr && <Terminus pr={plan.pr} />}
       </>

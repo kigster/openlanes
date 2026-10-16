@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan } from "../api/types";
-import { clock, fmt } from "./format";
+import { clock, fmt, shortAgent } from "./format";
 import { carLook, lockMark, modelLabel } from "./model";
 
 interface CarProps {
@@ -27,11 +27,16 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   return (
     <div className={cls} data-car={car.key}>
       <div className="car-top">
+        {/* The tile shows the role (luke-backend reads "backend"); the full name stays the accessible name and the
+            tooltip, and still contains the visible text, so voice control can say either. */}
         {readOnly ? (
-          <span className="car-agent">{car.agent}</span>
+          <span className="car-agent" title={car.agent}>
+            <span aria-hidden="true">{shortAgent(car.agent)}</span>
+            <span className="sr-only">{car.agent}</span>
+          </span>
         ) : (
-          <button type="button" className="car-open" aria-expanded={open} onClick={() => onOpen(plan, car)}>
-            {car.agent}
+          <button type="button" className="car-open" aria-expanded={open} aria-label={car.agent} title={car.agent} onClick={() => onOpen(plan, car)}>
+            {shortAgent(car.agent)}
           </button>
         )}
         {lock && (
@@ -63,12 +68,35 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   );
 }
 
+/**
+ * The sub-agents a car has running, each a ghost of a tile beside it, faded to --subagent-opacity. The faded tiles are
+ * hidden from assistive technology, which hears the same list once, at full strength, from the sr-only line: text at
+ * a fifth of its contrast is a picture of a sub-agent, not something to read.
+ */
+export function SubagentTiles({ car }: { car: CarData }) {
+  const names = car.subagents ?? [];
+  if (names.length === 0) return null;
+  return (
+    <div className="subagents">
+      <span className="sr-only">
+        {car.agent} has {names.length} {names.length === 1 ? "sub-agent" : "sub-agents"} running: {names.join(", ")}
+      </span>
+      {names.map((name, i) => (
+        <div key={`${name}-${i}`} className="car is-subagent" aria-hidden="true" title={`${name}, a sub-agent of ${car.agent}`}>
+          <span className="car-agent">{shortAgent(name)}</span>
+          <span className="car-model">sub-agent</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** The car an interrupted plan shows in place of its agents until someone keeps or discards the work. */
 export function InterruptedCar({ agent }: { agent: string }) {
   return (
     <div className="car is-queued is-blocked">
       <div className="car-top">
-        <span className="car-agent">{agent}</span>
+        <span className="car-agent" title={agent}>{shortAgent(agent)}</span>
         <span className="car-model">interrupted</span>
       </div>
       <div className="car-activity">You interrupted it. Keep its work or discard it in Needs you.</div>

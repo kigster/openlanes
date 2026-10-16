@@ -77,6 +77,13 @@
 /* The model slot (ModelSelect, from src/panels) sits on a layer above the card's hit area. */
 .car-slot { position: relative; z-index: 1; display: inline-flex; }
 
+/* A car and its sub-agents on one line: the ghosts sit to the right of the agent that started them. */
+.car-group { display: flex; align-items: stretch; gap: 8px; }
+.subagents { display: flex; gap: 6px; }
+.car.is-subagent { display: flex; flex-direction: column; justify-content: center; gap: 2px; width: 132px; cursor: default;
+                   opacity: var(--subagent-opacity); }
+.car.is-subagent .car-agent { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 .cars:has(.terminus) { flex-direction: row; }
 /* Near the end of the line the cars hang leftwards, so they never run off the board. */
 .cars.is-late { transform: translateX(calc(var(--stations) * var(--colw) - 100% - 8px)); }

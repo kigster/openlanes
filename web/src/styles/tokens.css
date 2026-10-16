@@ -36,6 +36,8 @@
   --label-progress: #FFF3B0;
   --label-approved: #0B6E2E;
   --focus: #1F5FD1;
+  /* A sub-agent's tile, beside its parent's: a ghost of a car, 80% transparent. One knob, so it is easy to tune. */
+  --subagent-opacity: 0.2;
 
   --colw: 128px;
   --gutter: 236px;

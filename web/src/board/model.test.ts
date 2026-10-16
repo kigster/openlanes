@@ -1,4 +1,4 @@
-import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
+import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, shortAgent, span, stamp, who } from "./format";
 import {
   LANES,
   carLook,
@@ -27,6 +27,11 @@ describe("format", () => {
     expect(dollars(14.2)).toBe("$14.20");
     expect([planId("001.00"), planId("010.01")]).toEqual(["001", "010.01"]);
     expect(who({ user: "dana", host: "studio-mini" })).toBe("dana@studio-mini");
+  });
+
+  it("shortens an agent's name to what follows its first dash, and leaves a name with nothing to drop whole", () => {
+    expect(["leah-researcher", "luke-backend", "r2d2-mechanic", "general-purpose", "Explore", "odd-", "a-b-c"].map(shortAgent))
+      .toEqual(["researcher", "backend", "mechanic", "purpose", "Explore", "odd-", "b-c"]);
   });
 
   it("redacts a URL's userinfo, user name included", () => {

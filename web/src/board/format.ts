@@ -23,6 +23,16 @@ export const dollars = (n: number): string => "$" + n.toFixed(2);
 export const planId = (ordinal: string): string => (ordinal.endsWith(".00") ? ordinal.slice(0, -3) : ordinal);
 
 /**
+ * An agent's name as its tile shows it: everything up to and including the first "-" dropped, so leah-researcher
+ * reads as researcher. Display only: commands, keys and tooltips keep the full name. A name with nothing after its
+ * first "-" (or no "-" at all) is shown whole rather than as nothing.
+ */
+export const shortAgent = (name: string): string => {
+  const at = name.indexOf("-");
+  return at < 0 || at === name.length - 1 ? name : name.slice(at + 1);
+};
+
+/**
  * A Redis URL with any userinfo, user name included, replaced by ":***": redis://:***@host:6379/0. The engine already
  * redacts what it sends; this is the page refusing to be the place a password leaks if an older engine did not.
  */

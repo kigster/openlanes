@@ -154,6 +154,7 @@ describe("PlanRow", () => {
       <PlanRow plan={samplePlan({ cars: [], interrupted: { agent: "leah-researcher", at: "t", note: "" } })} stations={stations} models={models} />,
     );
     expect(screen.getByText("interrupted")).toBeInTheDocument();
+    expect(screen.getByText("researcher")).toHaveAttribute("title", "leah-researcher");
     expect(screen.getByText("You interrupted it. Keep its work or discard it in Needs you.")).toBeInTheDocument();
   });
 
@@ -164,6 +165,50 @@ describe("PlanRow", () => {
     expect(container.querySelector(".plan")).toHaveClass("is-retiring");
     expect(screen.getByText("failed")).toBeInTheDocument();
     expect(screen.getByText("rspec crashed")).toHaveAttribute("title", "rspec crashed");
+  });
+});
+
+describe("agent tiles", () => {
+  const stations = sampleBoard().me.stations;
+  const models = sampleBoard().me.models;
+
+  it("shows the role, keeping the full name as the button's name and tooltip", () => {
+    render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "leah-researcher" })] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    const button = screen.getByRole("button", { name: "leah-researcher" });
+    expect(button).toHaveTextContent(/^researcher$/);
+    expect(button).toHaveAttribute("title", "leah-researcher");
+  });
+
+  it("shows the role on a read-only car as well", () => {
+    const { container } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} owner={sampleBoard().others[0].node} />);
+    expect(container.querySelector(".car-agent")).toHaveAttribute("title", "luke-backend");
+    expect(container.querySelector(".car-agent [aria-hidden]")).toHaveTextContent(/^backend$/);
+  });
+
+  it("draws each running sub-agent as a faded tile beside its parent, and says so once to a screen reader", async () => {
+    const car = sampleCar({ agent: "rey-frontend", subagents: ["Explore", "luke-backend"] });
+    const { container } = render(<PlanRow plan={samplePlan({ cars: [car, sampleCar()] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    const groups = container.querySelectorAll(".car-group");
+    expect(groups).toHaveLength(2);
+    const tiles = groups[0].querySelectorAll<HTMLElement>(".car.is-subagent");
+    expect(Array.from(tiles, t => t.querySelector(".car-agent")?.textContent)).toEqual(["Explore", "backend"]);
+    expect(tiles[1]).toHaveAttribute("title", "luke-backend, a sub-agent of rey-frontend");
+    for (const tile of tiles) expect(tile).toHaveAttribute("aria-hidden", "true");
+    expect(within(groups[0] as HTMLElement).getByText("rey-frontend has 2 sub-agents running: Explore, luke-backend")).toHaveClass("sr-only");
+    expect(groups[1].querySelector(".subagents")).toBeNull();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("names a lone sub-agent in the singular, and tolerates an engine that sends no list", () => {
+    const old = { ...sampleCar({ key: "001.00/old" }) } as Partial<ReturnType<typeof sampleCar>>;
+    delete old.subagents;
+    render(
+      <PlanRow
+        plan={samplePlan({ cars: [sampleCar({ subagents: ["Plan"] }), old as ReturnType<typeof sampleCar>] })}
+        stations={stations} models={models}
+      />,
+    );
+    expect(screen.getByText("luke-backend has 1 sub-agent running: Plan")).toBeInTheDocument();
   });
 });
 
