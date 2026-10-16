@@ -52,9 +52,19 @@ RSpec.describe "the control room across a restart", :redis do
     room.kill(:server)
     room.start_server
 
+    # Both come on the stream's first look, the board before the replies.
+    # Taken in whichever order they arrive: the engine is idle by now, so it
+    # nudges no second board, and waiting for one after the reply would
+    # wait for the next ping.
     again = room.sse("/api/events", last_event_id: cursor)
-    reply = again.wait_for(deadline: 10) { it.name == "reply" && it.data["id"] == "hold-B1" }
-    board = again.wait_for(deadline: 10) { it.name == "board" && plan_on(it.data) }
+    seen = {}
+    until seen.key?("reply") && seen.key?("board")
+      event = again.wait_for(deadline: 10) do |e|
+        (e.name == "reply" && e.data["id"] == "hold-B1") || (e.name == "board" && plan_on(e.data))
+      end
+      seen[event.name] = event
+    end
+    reply, board = seen.values_at("reply", "board")
 
     expect(reply.data["status"]).to eq("done")
     expect(held(board.data)).to eq([true, false])
