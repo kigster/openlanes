@@ -53,6 +53,19 @@ describe("under ?fixture", () => {
     expect(screen.queryByRole("button", { name: /Chat with/ })).toBeNull();
   });
 
+  it("switches to narrow lanes and remembers it in this browser", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderApp();
+    const toggle = await screen.findByRole("button", { name: "Narrow lanes" });
+    expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "wide");
+    await user.click(toggle);
+    expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "narrow");
+    unmount();
+    renderApp();
+    expect(await screen.findByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "narrow");
+  });
+
   it("shows the Redis the engine uses in the status bar", async () => {
     renderApp();
     expect(await screen.findByText("redis://localhost:6379/0")).toBeInTheDocument();

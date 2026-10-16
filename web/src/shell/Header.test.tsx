@@ -105,3 +105,19 @@ it("toggles the theme, follows the OS until pressed", async () => {
   unmount();
   media.mockRestore();
 });
+
+it("offers narrow lanes as a pressed-or-not toggle", async () => {
+  const onToggleNarrow = vi.fn();
+  const { rerender } = render(<Header {...props({ narrow: false, onToggleNarrow })} />);
+  const toggle = screen.getByRole("button", { name: "Narrow lanes" });
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await userEvent.click(toggle);
+  expect(onToggleNarrow).toHaveBeenCalledTimes(1);
+  rerender(<Header {...props({ narrow: true, onToggleNarrow })} />);
+  expect(screen.getByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
+});
+
+it("has no lanes toggle when nobody handles it", () => {
+  render(<Header {...props()} />);
+  expect(screen.queryByRole("button", { name: "Narrow lanes" })).toBeNull();
+});

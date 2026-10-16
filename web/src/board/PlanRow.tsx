@@ -56,11 +56,13 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   useEffect(() => {
     const row = scope.current;
     if (!retiring || reduced || !row) return;
-    // Fade first, then fold the height away, so the rows below close the gap slowly (the mockup's retire()).
+    // Fade first, then fold the height away, so the rows below close the gap slowly (the mockup's retire()). The padding
+    // is read rather than assumed, because a narrow lane has less of it and would otherwise grow before it shrank.
     const h = `${row.offsetHeight}px`;
+    const { paddingTop: top, paddingBottom: bottom } = getComputedStyle(row);
     void animate(
       row,
-      { opacity: [1, 0, 0], height: [h, h, "0px"], paddingTop: ["18px", "18px", "0px"], paddingBottom: ["20px", "20px", "0px"] },
+      { opacity: [1, 0, 0], height: [h, h, "0px"], paddingTop: [top, top, "0px"], paddingBottom: [bottom, bottom, "0px"] },
       { duration: FADE_MS / 1000, times: [0, 0.6, 1], ease: "easeInOut" },
     );
   }, [retiring, reduced, animate, scope]);

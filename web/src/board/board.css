@@ -84,6 +84,23 @@
                    opacity: var(--subagent-opacity); }
 .car.is-subagent .car-agent { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Narrow lanes (the top bar's toggle): half the row height. A row keeps what says which plan it is and who is on it,
+   its number, status, title and agent tiles, and drops the lane label, the token counts, each car's activity line and
+   its meter, which the drawer and the status bar still carry. An unacked-mail warning stays: it is a warning. */
+[data-lanes="narrow"] .plan { padding: 6px 0 8px; }
+[data-lanes="narrow"] .plan-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+[data-lanes="narrow"] .plan-id { flex: none; }
+[data-lanes="narrow"] .plan-title { font-size: 14px; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-lanes="narrow"] .plan-meta > :not(.unacked) { display: none; }
+[data-lanes="narrow"] .cars { margin-top: 2px; gap: 4px; }
+[data-lanes="narrow"] .car { padding: 3px 10px; }
+[data-lanes="narrow"] .car-activity, [data-lanes="narrow"] .car-stats { display: none; }
+[data-lanes="narrow"] .terminus { flex-direction: row; align-items: center; gap: 8px; }
+[data-lanes="narrow"] .car.is-subagent { flex-direction: row; align-items: baseline; gap: 6px; }
+[data-lanes="narrow"] .car.is-subagent .car-model { display: none; }
+/* The red car's question is the one activity line worth its height: without it a blocked car says nothing of why. */
+[data-lanes="narrow"] .car.is-blocked .car-activity { display: -webkit-box; -webkit-line-clamp: 1; margin: 2px 0 0; }
+
 .cars:has(.terminus) { flex-direction: row; }
 /* Near the end of the line the cars hang leftwards, so they never run off the board. */
 .cars.is-late { transform: translateX(calc(var(--stations) * var(--colw) - 100% - 8px)); }

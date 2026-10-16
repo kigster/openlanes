@@ -17,6 +17,7 @@ import { StatusBar } from "./shell/StatusBar";
 import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
 import { useBoardNews } from "./shell/useBoardNews";
+import { useLanes } from "./shell/useLanes";
 import { PreviewTab } from "./preview/PreviewTab";
 import { appTabLabel, appTabValue } from "./preview/model";
 import { useApps } from "./preview/useApps";
@@ -97,6 +98,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const send = useSendCommand();
   const onCommand = useCallback<SendCommand>(command => send.mutateAsync(command), [send]);
   const life = useLifecycle(me.plans, reduced);
+  const lanes = useLanes();
   // Other machines' merged rows stay and fade like ours; one hook tracks them all, keyed by machine and plan.
   const theirPlans = useMemo(
     () => others.flatMap(o => o.plans.map(p => ({ ...p, ordinal: nodePlanKey(o.node.id, p.ordinal) }))),
@@ -208,6 +210,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         fixture={fixture}
         merged={merged}
         onToggleMerged={() => setMerged(!merged)}
+        narrow={lanes.lanes === "narrow"}
+        onToggleNarrow={lanes.toggle}
         actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
@@ -275,7 +279,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         </div>
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
-        <main className="layout">
+        <main className="layout" data-lanes={lanes.lanes}>
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
             <Board
               board={board}
