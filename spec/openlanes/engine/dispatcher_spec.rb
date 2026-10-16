@@ -962,7 +962,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     let(:checkout) do
       instance_double(OpenLanes::Vcs::Worktree::Checkout, branch: "kig/001.00-tic-tac-toe", path: plans_root, dirty?: true)
     end
-    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout, root: File.dirname(plans_root)) }
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout, refresh: nil, root: File.dirname(plans_root)) }
     let(:publisher) { instance_double(OpenLanes::Vcs::Publisher) }
     let(:url) { "https://github.com/example/repo/pull/12" }
     let(:publication) do

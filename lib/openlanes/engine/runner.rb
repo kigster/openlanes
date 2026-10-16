@@ -34,7 +34,11 @@ module OpenLanes
       end
 
       # One unit of work: an agent, a plan, and the checkout it happens in.
-      Task = Data.define(:agent, :subject, :root, :checkout, :round) do
+      # `refresh` is what bringing the checkout up to date did, nil when
+      # nothing was tried (shared isolation, a dry run, a partner already in it).
+      Task = Data.define(:agent, :subject, :root, :checkout, :round, :refresh) do
+        def initialize(refresh: nil, **rest) = super
+
         # @return [Hash] columns for the log
         def log_fields
           { plan: subject.feature.ordinal.to_s, status: subject.status.to_s,
@@ -270,12 +274,20 @@ module OpenLanes
       # is the one checked out where the run was typed, which is where a dry
       # run of that plan is typed.
       #
+      # A worktree is brought up to date with the default branch first (see
+      # {Vcs::Refresh}), here rather than on the agent's thread, so no partner
+      # can start in the same checkout while git is rewriting it.
+      #
+      # @param refresh [Boolean] false when another agent is already working
+      #   in the plan's checkout, which must not move under it
+      # @param hold [String, nil] see {Vcs::Refresh#call}
       # @return [OpenLanes::Engine::Runner::Task]
-      def prepare(agent, subject, round)
+      def prepare(agent, subject, round, refresh: true, hold: nil)
         return Task.new(agent:, subject:, root: shared_root, checkout: nil, round:) if !isolated? || dry_run?
 
         checkout = worktree.checkout_for(subject.feature)
-        Task.new(agent:, subject:, root: checkout.path, checkout:, round:)
+        outcome = worktree.refresh(checkout, hold:) if refresh
+        Task.new(agent:, subject:, root: checkout.path, checkout:, round:, refresh: outcome)
       end
 
       # Push a finished build and record the pull request it opened in the

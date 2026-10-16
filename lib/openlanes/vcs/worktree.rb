@@ -137,6 +137,18 @@ module OpenLanes
         Checkout.new(ordinal: feature.ordinal, branch:, path:, created: true)
       end
 
+      # Bring a plan's checkout up to date with the default branch before an
+      # agent runs in it, and say what happened in the progress log.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param hold [String, nil] see {Refresh#call}
+      # @return [OpenLanes::Vcs::Refresh::Outcome]
+      def refresh(checkout, hold: nil)
+        outcome = Refresh.new(path: checkout.path).call(hold:)
+        UI.log(outcome.summary, plan: checkout.ordinal.to_s) unless outcome.kind == :current
+        outcome
+      end
+
       # Copy in the files git ignores and a new checkout therefore lacks: `.env`
       # and friends, and credential keys.
       #
@@ -268,12 +280,19 @@ module OpenLanes
       # @return [Boolean]
       def clean?(path) = `git -C #{path.shellescape} status --porcelain 2>/dev/null`.strip.empty?
 
+      # A new branch starts from the freshly fetched default branch on
+      # `origin`, not from whatever the main checkout has checked out: that
+      # is often a branch of its own, or a `main` nobody has pulled in weeks,
+      # and the plan's agent then builds against code that is not there.
+      # Without such a remote branch it falls back to the main checkout's
+      # HEAD, as it always did.
+      #
       # @param branch [String]
       # @param path [String]
       # @return [void]
       def add(branch, path)
         exists = system("git", "-C", root, "show-ref", "--verify", "--quiet", "refs/heads/#{branch}")
-        args = exists ? ["worktree", "add", path, branch] : ["worktree", "add", "-b", branch, path]
+        args = exists ? ["worktree", "add", path, branch] : ["worktree", "add", "-b", branch, path, *Refresh.fetch(root)]
 
         return if system("git", "-C", root, *args, out: File::NULL, err: File::NULL)
 

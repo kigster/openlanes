@@ -651,7 +651,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
         path:    plans_root,
         created: true
       )
-      worktree = instance_double(OpenLanes::Vcs::Worktree, repository?: true, checkout_for: checkout)
+      worktree = instance_double(OpenLanes::Vcs::Worktree, repository?: true, checkout_for: checkout, refresh: nil)
       allow(OpenLanes::Vcs::Worktree).to receive(:new).and_return(worktree)
 
       out, err, status = run(isolation: "worktree")
