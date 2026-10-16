@@ -77,6 +77,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rackup", "~> 2.1"
   # The live run (plan 004) lives in Redis: board and command streams, plan claims.
   spec.add_dependency "redis-client", "~> 0.31"
+  spec.add_dependency "semantic_logger", "~> 5.1"
   spec.add_dependency "sinatra", "~> 4.2"
   spec.add_dependency "tty-box"
   spec.add_dependency "tty-command"
