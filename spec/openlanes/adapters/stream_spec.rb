@@ -44,6 +44,11 @@ RSpec.describe OpenLanes::Adapters::Stream do
     expect(seen.last).to be_a(OpenLanes::Execution::Transcript::Progress)
   end
 
+  # codex and pi never say they delegated, so the page draws no sub-agent tiles for them.
+  it "reports no sub-agents running" do
+    expect(seen.last.running).to eq([])
+  end
+
   it "is not failed when nothing failed" do
     expect(stream.failed?).to be(false)
   end
