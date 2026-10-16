@@ -34,15 +34,20 @@ module OpenLanes
       # @param plans_dir [String]
       # @param port [Integer]
       # @param redis_url [String]
-      # @param log [String] where the server's output goes
+      # @param log [String] where the server's raw STDOUT and STDERR go: a
+      #   crash before its logger is up, and Puma's own complaints
+      # @param logging [OpenLanes::Log::Settings, nil] where the server logs
+      #   its requests; the engine's own, so both processes write one file
       # @param ready_within [Float]
       # @param probe [Proc, nil] answers whether the server is up; `/healthz` by default
-      def initialize(root:, plans_dir:, port:, redis_url:, log: default_log(root), ready_within: READY_WITHIN, probe: nil)
+      def initialize(root:, plans_dir:, port:, redis_url:, log: default_log(root), logging: Log.settings,
+        ready_within: READY_WITHIN, probe: nil)
         @root = root
         @plans_dir = plans_dir
         @port = Integer(port)
         @redis_url = redis_url
         @log = log
+        @logging = logging
         @ready_within = ready_within
         @probe = probe || method(:healthy?)
       end
@@ -64,8 +69,13 @@ module OpenLanes
         [EXE, "web", "--port", @port.to_s, "--no-open", "--dir", @plans_dir]
       end
 
+      # The Redis URL, and where to log. A server left to find its own log
+      # would resolve `log/development.log` from its own root and defaults,
+      # and a `--log` typed on `run` would move the engine's lines but not
+      # the server's.
+      #
       # @return [Hash{String => String}] added to the server's environment
-      def env = { REDIS_URL_ENV => @redis_url }
+      def env = { REDIS_URL_ENV => @redis_url, **@logging&.env.to_h }
 
       # Spawn the server on the first free port from the one asked for, and
       # wait for it to answer. A taken port is skipped before spawning, never

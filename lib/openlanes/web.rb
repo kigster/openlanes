@@ -54,9 +54,11 @@ module OpenLanes
       Live::Chat.new(stores:, keys:, machine:, label: node&.label || machine, **)
     end
 
+    # The routes, with every request logged on the way out (see {RequestLog}).
+    #
     # @param context [OpenLanes::Web::Context]
-    # @return [Class] a Rack application
-    def app(context) = App.serving(context)
+    # @return [#call] a Rack application
+    def app(context) = RequestLog.new(App.serving(context))
 
     # @param app [#call]
     # @param context [OpenLanes::Web::Context]

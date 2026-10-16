@@ -26,6 +26,7 @@ module OpenLanes
       option :identity,
         desc: "With --demo: register as USER@HOST instead of this login and host, so a second demo on " \
               "another port is another machine on the same Redis"
+      log_options
 
       example [
         "                 # serve the live run of this checkout",
@@ -39,6 +40,7 @@ module OpenLanes
       def call(**options)
         tree = tree_for(options)
         root = File.dirname(tree.dir)
+        logging(options, root:)
         url = Live.redis_url(option: redis_url_option(options), config: Config.current)
         node = node_for(root, options)
         stores = stores_for(url, options)
@@ -55,6 +57,19 @@ module OpenLanes
       end
 
       private
+
+      # Logs as `web`, to the file the engine named in this process's
+      # environment when the engine spawned it, else to the same default the
+      # engine would pick, so a server started by hand still joins the run's log.
+      #
+      # @param options [Hash]
+      # @param root [String]
+      # @return [OpenLanes::Log::Settings]
+      def logging(options, root:)
+        Log.setup(Log::Settings.from(options, root:), name: "web")
+      rescue Log::Invalid => e
+        refuse(e.message, 64)
+      end
 
       # `--redis-url`, else the URL `openlanes run` hands its server through the
       # environment, so a password never shows in `ps`. Both are passed to
@@ -127,6 +142,7 @@ module OpenLanes
           info("Control room: #{server.url}#{" (demo)" if options[:demo]}\n" \
                "Redis: #{Live.mask(url)} as #{node.label} (#{keys.node}), repository #{keys.repo}")
         end
+        Log.logger.info("listening", url: server.url, demo: options[:demo], repo: keys.repo)
         OpenLanes::Web.open(server.url) if options[:open]
         server.wait
       end
