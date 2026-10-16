@@ -66,6 +66,27 @@ RSpec.describe OpenLanes::Adapters::Stream do
     end
   end
 
+  # pi nests what the agent said in a content array, and a truncated line
+  # still starts with a brace; neither may be lost or crash the reader.
+  context "with arrays and a broken line" do
+    subject(:nested) { described_class.new }
+
+    before do
+      nested.push(%({"type":"message","content":[{"type":"image"},{"type":"text","text":"Built the page"}]}\n))
+      nested.push(%({"type":"message","content":[{"type":"image"}]}\n))
+      nested.push(%({"type":"truncated\n))
+      nested.finish
+    end
+
+    it "finds the words inside an array" do
+      expect(nested.result).to eq("Built the page")
+    end
+
+    it "keeps a line that only looks like JSON as plain text" do
+      expect(nested.plain).to eq([%({"type":"truncated)])
+    end
+  end
+
   context "with a trace file" do
     subject(:traced) { described_class.new(trace: path) }
 
