@@ -95,6 +95,9 @@ module OpenLanes
           @board.advance(@clock.call)
           publish(@keys.node, @board.me)
           @board.others.each { publish(other, it) }
+          # The demo's board moves on every tick, so every tick is news, and
+          # the one nudge covers this tick's replies as well.
+          Live::News.publish(store: @store, keys: @keys, kind: "board")
           replies
         end
       rescue Live::Unavailable => e

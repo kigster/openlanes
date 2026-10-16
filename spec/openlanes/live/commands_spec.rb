@@ -41,6 +41,14 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
     end
 
+    it "nudges the pages for the reply, once it is on the stream" do
+      news = OpenLanes::Live::News.subscribe(store:, keys:)
+      apply
+      expect(news.next_message(0)&.last).to eq('{"kind":"reply"}')
+    ensure
+      news&.close
+    end
+
     context "when the same id arrives again" do
       before do
         apply
