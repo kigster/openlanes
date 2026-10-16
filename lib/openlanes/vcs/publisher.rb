@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "open3"
 require "tempfile"
 require "tty/command"
 
@@ -239,13 +240,36 @@ module OpenLanes
         run(checkout, "git", "commit", "-m", title.sub(/\A\[[^\]]+\](?:\([A-Z]\))?\s*/, ""))
       end
 
+      # The branch is the checkout's own, named by {Worktree#branch_for} and
+      # written only by this harness, so after the harness has rebased it
+      # (see {Refresh}) it may replace what `origin` holds. The lease names
+      # the commit the tracking ref last saw: anything pushed there since,
+      # by anybody, makes the push fail rather than vanish. A branch with no
+      # tracking ref yet gets a plain push, which can only fast-forward.
+      #
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
       # @return [void]
       def push(checkout)
         # Declared first, so an agent still running in another worktree is
         # not blamed for the tracking ref this push moves under it.
         Execution::Boundary.sanction(checkout.path, "origin", checkout.branch)
-        run(checkout, "git", "push", "-u", "origin", checkout.branch)
+        run(checkout, "git", "push", *lease(checkout), "-u", "origin", checkout.branch)
+      end
+
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @return [Array<String>] the `--force-with-lease` flag, or nothing
+      def lease(checkout)
+        # Read directly rather than through {#run}: it is a local lookup that
+        # changes nothing, and the command seam is for what leaves the machine.
+        seen, = Open3.capture2("git",
+          "-C",
+          checkout.path,
+          "rev-parse",
+          "--verify",
+          "--quiet",
+          "refs/remotes/origin/#{checkout.branch}",
+          err: File::NULL)
+        seen.strip.empty? ? [] : ["--force-with-lease=refs/heads/#{checkout.branch}:#{seen.strip}"]
       end
 
       # @return [String, nil] the pull request URL
