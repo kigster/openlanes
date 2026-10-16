@@ -302,7 +302,7 @@ module OpenLanes
 
       # @param error [OpenLanes::Live::Unavailable]
       # @return [void]
-      def claims_unavailable(error) = UI.log("claims unchecked: #{error.message}")
+      def claims_unavailable(error) = UI.log("claims unchecked: #{error.message}", level: :warn)
 
       # @return [void]
       def record_pull_request(path, publication)

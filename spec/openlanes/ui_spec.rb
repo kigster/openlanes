@@ -269,26 +269,44 @@ RSpec.describe OpenLanes::UI do
       }
     end
 
-    after { described_class.log_path = nil }
-
     it "is a no-op with nothing set" do
-      expect { described_class.log("hello") }.not_to raise_error
+      aggregate_failures do
+        expect { described_class.log("hello") }.not_to raise_error
+        expect(described_class.log_path).to be_nil
+      end
     end
 
-    it "appends a line in columns, creating the directory if needed" do
-      described_class.log_path = @log_path
+    it "writes one line with the fields as its payload, creating the directory if needed" do
+      open_log(@log_path)
       described_class.log("editing spec.md",
         plan:    "003.00",
         status:  "⭐️ Planned",
         agent:   "yoda-writer",
-        seconds: 42,
+        seconds: 41.96,
         round:   "01")
 
-      expect(File.read(@log_path)).to match(/\A\[\d\d:\d\d:\d\d \| 003\.00 +\| ⭐️  Planned +\| yoda-writer +\| 01 \| +\d+ \| +42s\] editing spec\.md\n\z/)
+      expect(File.read(@log_path)).to match(
+        /\A\S+ \S+ I \[#{Process.pid}:[^\]]+\] engine -- editing spec\.md -- \{plan: "003\.00", status: "⭐️ Planned", agent: "yoda-writer", seconds: 42\.0, round: "01"\}\n\z/
+      )
+    end
+
+    it "writes at the level it is given, and tells its taps without one" do
+      heard = []
+      described_class.tap_log(->(message, fields) { heard << [message, fields] })
+      open_log(@log_path)
+      described_class.log("lock lost", level: :warn, plan: "003.00")
+
+      aggregate_failures do
+        expect(File.read(@log_path)).to match(/ W \[.*\] engine -- lock lost/)
+        expect(heard).to eq([["lock lost", { plan: "003.00" }]])
+        expect(described_class.log_path).to eq(@log_path)
+      end
+    ensure
+      described_class.instance_variable_set(:@log_taps, nil)
     end
 
     it "appends rather than truncating on a second call" do
-      described_class.log_path = @log_path
+      open_log(@log_path)
       described_class.log("first")
       described_class.log("second")
 
@@ -331,7 +349,7 @@ RSpec.describe OpenLanes::UI do
 
     it "logs the failure as a failure, not as finished" do
       Dir.mktmpdir("ui-log") do |dir|
-        described_class.log_path = File.join(dir, "progress.log")
+        open_log(File.join(dir, "progress.log"))
         described_class.concurrently([:plan],
           "round",
           jobs:    1,
@@ -340,8 +358,7 @@ RSpec.describe OpenLanes::UI do
 
         expect(File.read(described_class.log_path)).to include("failed after", "timed out after 900s")
         expect(File.read(described_class.log_path)).not_to include("finished after")
-      ensure
-        described_class.log_path = nil
+        expect(File.read(described_class.log_path)).to match(/ W \[.*failed after/)
       end
     end
   end
@@ -390,7 +407,7 @@ RSpec.describe OpenLanes::UI do
 
       it "logs the start and the finish when a log path is set" do
         Dir.mktmpdir do |dir|
-          described_class.log_path = File.join(dir, "run.log")
+          open_log(File.join(dir, "run.log"))
           described_class.concurrently([:plan],
             "round 1",
             jobs:   1,
@@ -399,12 +416,10 @@ RSpec.describe OpenLanes::UI do
 
           log = File.read(described_class.log_path)
           aggregate_failures do
-            expect(log).to match(/\| 000\.00 .*yoda-writer.*\] started$/)
-            expect(log).to match(/\| 000\.00 .*\] finished after \d+s$/)
+            expect(log).to match(/-- started -- \{plan: "000\.00", agent: "yoda-writer", seconds: [\d.]+\}$/)
+            expect(log).to match(/-- finished after \d+s -- \{plan: "000\.00"/)
           end
         end
-      ensure
-        described_class.log_path = nil
       end
 
       it "re-raises a failure after reporting it, rather than swallowing it" do
@@ -484,14 +499,12 @@ RSpec.describe OpenLanes::UI do
       Dir.mktmpdir do |dir|
         @log_dir = dir
         example.run
-      ensure
-        described_class.log_path = nil
       end
     end
 
-    # A `before`, not part of the `around`: the suite-wide `UI.reset!` hook
-    # runs between the two and nils whatever log_path the around had set.
-    before { described_class.log_path = File.join(@log_dir, "run.log") }
+    # A `before`, not part of the `around`: the suite-wide `Log.reset!` hook
+    # runs between the two and closes whatever log the around had opened.
+    before { open_log(File.join(@log_dir, "run.log")) }
 
     it "redraws the meter and phrase on every update" do
       line.call(progress("reading spec.md"))
@@ -523,7 +536,7 @@ RSpec.describe OpenLanes::UI do
 
       aggregate_failures do
         expect(handle.detail).to eq(described_class.meter(progress(nil, up: 999)).rstrip)
-        expect(File.exist?(described_class.log_path)).to be(false)
+        expect(File.read(described_class.log_path)).to be_empty
       end
     end
 

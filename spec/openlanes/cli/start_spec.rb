@@ -121,7 +121,7 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     it "opens with one Info box: the log, the board and the control room" do
       aggregate_failures do
         expect(result[1].scan("─ Info ─").size).to eq(1)
-        expect(result[1]).to include("Progress:", "Live board:", "Control room: http://127.0.0.1:11000")
+        expect(result[1]).to include("Log:", "Live board:", "Control room: http://127.0.0.1:11000")
       end
     end
 
