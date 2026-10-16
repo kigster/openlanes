@@ -27,6 +27,13 @@ module OpenLanes
       # folder by what its files justify.
       BY_CONTENTS = "by contents"
 
+      # What bb8-resolver is offered: no plan state, but the stopped rebases
+      # the harness hands it (D10). An empty cell read as "does nothing".
+      REBASES = "stopped rebases, from the harness"
+
+      # It writes, so "read-only" would be false; it moves no plan either.
+      STAGES_ONLY = "stages, never moves a plan"
+
       # @param agents [OpenLanes::Agents::Registry]
       def initialize(agents: Registry.new)
         @agents = agents
@@ -66,12 +73,17 @@ module OpenLanes
 
       # @param agent [OpenLanes::Agents::Agent]
       # @return [String]
-      def handles(agent) = agent.handles.map { |key| state(key) }.join(", ")
+      def handles(agent)
+        return REBASES if agent.name == Engine::Rebase::RESOLVER
+
+        agent.handles.map { |key| state(key) }.join(", ")
+      end
 
       # @param agent [OpenLanes::Agents::Agent]
       # @return [String]
       def advances(agent)
         return state(agent.advances_to) if agent.advances_to
+        return STAGES_ONLY if agent.name == Engine::Rebase::RESOLVER
         return BY_CONTENTS if agent.handles.any? && agent.handles.all? { |key| Plans::StateMachine::SETTLED.include?(key) }
 
         READ_ONLY

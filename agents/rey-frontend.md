@@ -53,6 +53,10 @@ You build the front-end half of one plan: everything a user sees or touches. `lu
 
 A unit larger than the plan implied is not a block. Split it in `plan.md` and keep building.
 
+## When the harness says a rebase stopped
+
+Before a run, the harness rebases the plan's branch onto `origin/main`. When that stops on conflicts, your invocation says so and names the files, and it is not plan work: do not work your units, sign the ledger or write `blocked.md`. Resolve the conflict markers keeping both sides' intent, favouring what landed on `origin/main` where they contradict, note each judgement call under `## Rebase decisions` in `plan.md`, run the tests that cover those files, `git add` them and end your turn. Never run `git rebase` or `git commit`: the harness continues the rebase. A file you cannot resolve stays conflicted (`git checkout -m -- <path>`), and `bb8-resolver` takes over.
+
 ## Next
 
 | When you sign `Completed`       | Folder becomes       | Who runs next                                                     |
