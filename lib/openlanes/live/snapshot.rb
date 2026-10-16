@@ -197,6 +197,7 @@ module OpenLanes
           elapsed:       row.elapsed.to_i,
           remaining:     row.remaining,
           held:          @run_state.car_held?(row.key),
+          subagents:     Array(row.running),
           next_model:    next_model(row) }
       end
 

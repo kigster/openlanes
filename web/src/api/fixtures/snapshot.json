@@ -111,7 +111,8 @@
           "elapsed": 229,
           "remaining": 971,
           "held": false,
-          "next_model": null
+          "next_model": null,
+          "subagents": []
         },
         {
           "key": "001.00/rey-frontend",
@@ -134,7 +135,10 @@
           "elapsed": 229,
           "remaining": 971,
           "held": false,
-          "next_model": null
+          "next_model": null,
+          "subagents": [
+            "Explore"
+          ]
         }
       ],
       "pr": null,
@@ -205,7 +209,8 @@
           "elapsed": 229,
           "remaining": 971,
           "held": false,
-          "next_model": null
+          "next_model": null,
+          "subagents": []
         }
       ],
       "pr": {
@@ -260,7 +265,8 @@
           "elapsed": 229,
           "remaining": 971,
           "held": false,
-          "next_model": null
+          "next_model": null,
+          "subagents": []
         }
       ],
       "pr": null,

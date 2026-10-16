@@ -338,6 +338,11 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       run_state.choose_model("001.00/luke-backend", "claude-opus-5-5")
       expect(car[:next_model]).to be_nil
     end
+
+    it "names the sub-agents still running, and none for a row that has none" do
+      rows.replace([row("001.00", "luke-backend", running: %w[Explore leah-researcher]), row("001.00", "rey-frontend")])
+      expect(snapshot[:plans].first[:cars].map { it[:subagents] }).to eq([%w[Explore leah-researcher], []])
+    end
   end
 
   describe "an unclaimed plan" do

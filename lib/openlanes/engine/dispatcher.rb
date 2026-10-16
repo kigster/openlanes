@@ -34,7 +34,8 @@ module OpenLanes
         :state,
         :frame,
         :history,
-        :context) do
+        :context,
+        :running) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -633,7 +634,8 @@ module OpenLanes
           context: job.context,
           since: job.started_at,
           session: job.handle.session,
-          unacked: Board::Row.unacked_in(task.subject.feature.path))
+          unacked: Board::Row.unacked_in(task.subject.feature.path),
+          running: job.running || [])
       end
 
       # @param task [OpenLanes::Engine::Runner::Task]
@@ -988,6 +990,7 @@ module OpenLanes
               job.up = progress.up
               job.down = progress.down
               job.subagents = progress.subagents
+              job.running = progress.running
               job.context = progress.context
               job.message = progress.message || progress.activity
               job.history = Board::Row.remember(job.history || [], job.message)
@@ -1119,6 +1122,7 @@ module OpenLanes
             history: Board::Row.remember(row.history, attempt.note),
             remaining: nil,
             phase: nil,
+            running: [],
             bold: !attempt.ok) }
           # `to:` is for the terminal's line; the log file keeps its columns.
           moved = Plans::STATUS_BY_KEY[attempt.to]&.to_s if attempt.advanced?
