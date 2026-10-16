@@ -118,4 +118,48 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
   it "adds no operator section when nobody steered the run" do
     expect(text).not_to include("Operator instructions")
   end
+
+  # A stopped rebase (D10): the invocation resolves it and nothing else.
+  describe "a rebase to resolve" do
+    let(:stopped) do
+      OpenLanes::Vcs::Refresh::Outcome.new(kind: :conflicted, base: "origin/main", files: ["app.rb", "lib/x.rb"])
+    end
+    let(:resolution) do
+      described_class.new(agent:,
+        subject: plan,
+        root: "/repo",
+        profile:,
+        control: "/tmp/control",
+        denied: ["git push", "git rebase"],
+        rebase: stopped).to_s
+    end
+
+    it "keeps the agent's own definition first, so its rebase section is read" do
+      expect(resolution).to start_with(agent.prompt)
+    end
+
+    it "names the base and every conflicted file" do
+      expect(resolution).to include("onto `origin/main`", "  app.rb\n  lib/x.rb")
+    end
+
+    it "says it is not plan work, and that a conflict never goes to a person" do
+      expect(resolution).to include("This is not plan work", "never a question", "favour what")
+    end
+
+    it "asks for staging and forbids everything that moves HEAD" do
+      expect(resolution).to include("`git add` each file", "Never run `git rebase`", "`git commit`", "  git rebase")
+    end
+
+    it "asks for each judgement call in plan.md" do
+      expect(resolution).to include("## Rebase decisions")
+    end
+
+    it "carries no ledger section, so nothing reads it as the round's verdict" do
+      expect(resolution).not_to include("state sign")
+    end
+
+    it "names the control file" do
+      expect(resolution).to include("Your control file is /tmp/control")
+    end
+  end
 end
