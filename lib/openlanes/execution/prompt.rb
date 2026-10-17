@@ -71,7 +71,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{ledger_section(agent, subject, round:, successor:)}#{journal_section}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -445,6 +445,49 @@ module OpenLanes
       #
       # @return [String] empty for an agent whose definition never mentions
       #   `blocked.md`, and for the agent that drains it
+      # How to keep the journal (M2), and what the previous round kept.
+      #
+      # @return [String]
+      def journal_section
+        <<~SECTION
+          ## Your journal - print it as you go
+
+          Keep a journal of this round, so the next round, yours or anyone's,
+          does not redo it. Print each entry the moment it happens, as one line
+          of JSON on a line of its own in your reply, and nothing else on that
+          line. Do not write it to a file or run a command: the harness reads
+          your output and keeps every entry in `state.json`, so a round that is
+          killed still keeps what it printed.
+
+              {"kind":"decision","text":"tokens live in Redis, not Postgres"}
+
+          `kind` is one of `#{Plans::Journal::KINDS.join("`, `")}`. `todo` is
+          work you have found, `done` work you finished, `question` something you
+          stopped to ask, and `note` anything else you must not forget. An
+          `override` overturns an earlier entry and names its number:
+
+              {"kind":"override","text":"tokens live in Postgres after all","overrides":3}
+          #{previous_journal}
+        SECTION
+      end
+
+      # The previous round's journal, enforced rather than requested (M2): it
+      # is in the prompt even when the session is resumed, because an agent
+      # whose CLI cannot resume has nothing else to go on.
+      #
+      # @return [String]
+      def previous_journal
+        return "" if round < 2
+
+        entries = Plans::PlanState.for(subject.feature.path).journal(agent.name, round - 1)
+        return "" if entries.empty?
+
+        "\nYour journal from round #{round - 1}, numbered; a later entry wins over an earlier one:\n\n" \
+          "#{Plans::Journal.render(entries)}\n"
+      rescue OpenLanes::Error, SystemCallError
+        ""
+      end
+
       def questions_section
         return "" unless agent.prompt.include?("blocked.md") && !agent.handles.include?(:blocked)
 

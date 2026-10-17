@@ -125,6 +125,14 @@ module OpenLanes
         # @return [String, nil] the CLI's session id, once its stream named it
         attr_accessor :session
 
+        # @return [OpenLanes::Execution::Executor::Sessions, nil] the
+        #   transcripts read so far, once {Executor#call} started the first
+        attr_accessor :sessions
+
+        # @return [Array<OpenLanes::Plans::Journal::Entry>] what the agent
+        #   printed in its journal (M2) so far, across every session
+        def journal = sessions ? sessions.journal : []
+
         # @return [OpenLanes::Execution::Executor::Compaction, nil] the latest
         #   compaction asked for
         def compaction = @mutex.synchronize { @compaction }
@@ -312,6 +320,11 @@ module OpenLanes
 
         # @return [Integer]
         def tools = @all.sum(&:tools)
+
+        # Every session's journal entries, in the order printed.
+        #
+        # @return [Array<OpenLanes::Plans::Journal::Entry>]
+        def journal = @all.flat_map { it.respond_to?(:journal) ? it.journal : [] }
 
         # What the sessions already over spent, added to the running one's
         # progress so the meter carries on rather than starting again.
@@ -543,6 +556,7 @@ module OpenLanes
         resume = nil unless profile.adapter.resumes?
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
         sessions = Sessions.new
+        handle.sessions = sessions
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = Clock.new(seconds: timeout_for(agent),
           control:,

@@ -37,7 +37,8 @@ module OpenLanes
         :context,
         :running,
         :rebase,
-        :recorded_session) do
+        :recorded_session,
+        :recorded_journal) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -1236,6 +1237,7 @@ module OpenLanes
           job.file = entry&.file || job.file
           job.status = entry&.status
           record_session(job)
+          record_journal(job)
           @state&.record(job.task.subject.feature.ordinal.to_s,
             agent:  job.task.agent.name,
             round:  job.task.round,
@@ -1336,6 +1338,9 @@ module OpenLanes
         ordinal = task.subject.feature.ordinal.to_s
         result = job.result
         base = attempt_for(job)
+        # First of all: whatever the agent printed, a killed one included,
+        # is kept before anything else can fail.
+        record_journal(job)
         # Before anything reads the ledger: a resolution signs nothing, so
         # whatever the ledger holds is the plan's previous round, not this one.
         return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
@@ -1899,6 +1904,28 @@ module OpenLanes
         subject = fresh(job.task) or return
         stage!(subject, job.task.agent, job.task.round, session:)
         job.recorded_session = session
+      end
+
+      # A round's journal entries (M2) go into `state.json` as the stream
+      # prints them, a poll at a time, so an agent killed mid-round keeps
+      # every line it got out. Only the entries not yet written are sent:
+      # the dispatcher is the journal's one writer, and counts what it wrote.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [void]
+      def record_journal(job)
+        return if job.rebase || @runner.dry_run? || !job.handle.respond_to?(:journal)
+
+        entries = job.handle.journal
+        done = job.recorded_journal.to_i
+        return if entries.size <= done
+
+        subject = fresh(job.task) or return
+        Plans::PlanState.for(subject.feature.path)
+                        .journal!(agent: job.task.agent.name, round: job.task.round, entries: entries.drop(done))
+        job.recorded_journal = entries.size
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal not written: #{e.message}", level: :warn, plan: job.task.subject.feature.ordinal.to_s)
       end
 
       # @return [Hash] adapter, model and effort, when the executor can say

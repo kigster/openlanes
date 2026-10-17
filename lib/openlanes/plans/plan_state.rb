@@ -509,6 +509,43 @@ module OpenLanes
         (read[LAST_KNOWN] || {}).transform_values { |h| LastKnownState.from_h(h) }
       end
 
+      # ---- memory: the agents' journals (M2) -----------------------------
+
+      # Where the journals live in the document.
+      MEMORY = "memory"
+
+      # Append entries an agent printed to its journal for one round, in the
+      # order given, numbering them after every entry the agent already has
+      # in any round. Only the dispatcher calls this, under the lock every
+      # write takes, so two agents printing at once cannot collide.
+      #
+      # @param agent [String]
+      # @param round [Integer]
+      # @param entries [Array<OpenLanes::Plans::Journal::Entry>]
+      # @return [Array<Hash>] the entries as written, numbered
+      # @raise [OpenLanes::Error] on an agent name that is not one token
+      def journal!(agent:, round:, entries:)
+        raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+        return [] if entries.empty?
+
+        written = []
+        update do |data|
+          rounds = (((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {})
+          last = rounds.values.flatten.map { it["number"].to_i }.max || 0
+          list = (rounds[Integer(round).to_s] ||= [])
+          entries.each_with_index do |entry, i|
+            written << entry.to_json_h(last + i + 1)
+            list << written.last
+          end
+        end
+        written
+      end
+
+      # @param agent [String]
+      # @param round [Integer]
+      # @return [Array<Hash>] the round's entries in order, empty when none
+      def journal(agent, round) = read.dig(MEMORY, agent, "rounds", Integer(round).to_s) || []
+
       # The signatures as ledger entries, so the dispatcher reads them exactly
       # as it reads a line in plan.md. Each signature takes two line numbers,
       # the entry and its handoff, so {Ledger.handoff_after} pairs them.

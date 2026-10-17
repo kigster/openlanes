@@ -30,6 +30,7 @@ module OpenLanes
         @activity = nil
         @result = nil
         @error = nil
+        @journal = []
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -61,6 +62,11 @@ module OpenLanes
 
       # @return [Integer, nil]
       attr_accessor :pid
+
+      # The journal entries (M2) the agent printed, in order.
+      #
+      # @return [Array<OpenLanes::Plans::Journal::Entry>]
+      def journal = @journal.dup
 
       # These CLIs do not report sub-agents.
       #
@@ -138,6 +144,9 @@ module OpenLanes
         @error = describe_error(event) if type.match?(/error|fail/i)
         said = text_in(event)
         if said
+          # A delta is a fragment of a message whose whole arrives later, and
+          # scanning both would write every entry twice.
+          @journal.concat(Plans::Journal.scan(said)) unless type.match?(/delta/i)
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
         end

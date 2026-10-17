@@ -126,7 +126,14 @@ module OpenLanes
         @context = nil
         @session = nil
         @compacted = nil
+        @journal = []
       end
+
+      # The journal entries (M2) the agent itself printed, in order. A
+      # sub-agent's lines are its own business and are not read.
+      #
+      # @return [Array<OpenLanes::Plans::Journal::Entry>]
+      def journal = @journal.dup
 
       # Everything sent to the model, which on any turn after the first is
       # mostly cache reads: a typical agent turn is two fresh input tokens
@@ -304,6 +311,7 @@ module OpenLanes
         case event["type"]
         when "assistant"
           capture_message(event)
+          note_journal(event)
           @tools += tool_calls(event)
           delegate(event)
           announce(phrase_for(event))
@@ -351,6 +359,14 @@ module OpenLanes
           @running[block["id"]] = name || "sub-agent"
         end
         publish
+      end
+
+      # @param event [Hash]
+      # @return [void]
+      def note_journal(event)
+        return unless event["parent_tool_use_id"].nil?
+
+        blocks_of(event, "text").each { @journal.concat(Plans::Journal.scan(it["text"])) }
       end
 
       # The `tool_result` that answers a `Task` call is the sub-agent's
