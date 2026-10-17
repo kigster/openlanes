@@ -57,6 +57,13 @@ module OpenLanes
         @thread = @puma.run
         @context.chat&.start
         self
+      rescue SystemCallError
+        # A later address failing leaves the earlier ones bound; Puma is not
+        # running yet, so close its sockets here rather than leak them to
+        # whoever retries in this process.
+        @puma&.binder&.close
+        @puma = nil
+        raise
       end
 
       # @return [Integer] the port listened on, the real one when 0 was asked

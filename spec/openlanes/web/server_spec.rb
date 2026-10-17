@@ -51,6 +51,23 @@ RSpec.describe OpenLanes::Web::Server do
     end
   end
 
+  context "when a later address cannot be bound" do
+    # 192.0.2.1 is TEST-NET-1, never this machine's, so binding it fails.
+    subject(:server) do
+      described_class.new(app: OpenLanes::Web.app(context),
+        context:,
+        port: 0,
+        listen: OpenLanes::Web::Listen.parse("127.0.0.1,192.0.2.1"))
+    end
+
+    it "closes the listeners it had already bound, and raises" do
+      opened = []
+      allow(TCPServer).to(receive(:new).and_wrap_original { |original, *args| original.call(*args).tap { opened << it } })
+      expect { server.start }.to raise_error(Errno::EADDRNOTAVAIL)
+      expect([opened.size, opened.all?(&:closed?), server.port]).to eq([1, true, 0])
+    end
+  end
+
   it "answers /healthz" do
     expect(get("/healthz").body).to eq("ok memory://\n")
   end
