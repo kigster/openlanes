@@ -6,8 +6,30 @@
     "slug": "runtime-state-outside-plans"
   },
   "state": "new",
-  "updated_at": "2026-10-16T17:54:00-07:00",
-  "stages": [],
-  "signatures": [],
+  "updated_at": "2026-10-16T18:12:26-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Started",
+      "from": "new",
+      "started_at": "2026-10-16T18:12:21-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-16T18:12:26-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    }
+  ],
   "messages": []
 }

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "020.01",
+    "slug": "durable-run-events"
+  },
+  "state": "new",
+  "updated_at": "2026-10-16T18:14:33-07:00",
+  "stages": [],
+  "signatures": [
+    {
+      "at": "2026-10-16T18:14:14-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:14:33-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": "4f7234d6-2386-4a18-b19b-abea8be78a9f",
+      "number": 1,
+      "at": "2026-10-16T18:13:34-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "contract.md written: slash commands queue stop_plan/restart_plan/set_concurrency; engine answers with a copilot turn '<id>.1' text '<status>: <reason>'; help turn same id, text starts 'Slash commands:'; 503 when no engine; run.jobs on the snapshot. B1+B2 landed, B3-B5 in progress.",
+      "read": "no"
+    },
+    {
+      "id": "4315eea0-99a0-4b7f-8bfd-2fe3943fa974",
+      "number": 2,
+      "at": "2026-10-16T18:14:14-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: run.jobs + stop_plan/restart_plan/set_concurrency kinds in types.ts/fixtures (board.json, snapshot.json run now has jobs:4 - keep Ruby snapshot_spec parity), header shows 'N of J agents' (Header.test.tsx), slash hint in Copilot.test.tsx, I1 files (bin/lanes-e2e, web/cypress.lanes.config.ts, web/cypress/lanes/, just lanes-e2e). Not run: the live lanes-e2e (tokens). It expects replies containing 'concurrency 3 → 2', 'stopped N agents on', 'restarts at the next tick', 'already has an agent', and a help turn naming /stop /restart /concurrency.",
+      "read": "no"
+    },
+    {
+      "id": "f3f9140a-80f9-4c2f-b311-94dbcba6640b",
+      "number": 3,
+      "at": "2026-10-16T18:14:33-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: run.jobs + stop_plan/restart_plan/set_concurrency kinds in types.ts and fixtures (run.jobs:4 in board.json/snapshot.json; keep Ruby snapshot_spec parity); header 'N of J agents'; slash hint in the composer; I1 files (bin/lanes-e2e, web/cypress.lanes.config.ts, web/cypress/lanes/, just lanes-e2e). Live lanes-e2e NOT run (tokens). It expects replies matching 'concurrency 3 → 2', 'stopped N agents on', 'restarts at the next tick', 'already has an agent', and a help turn naming /stop /restart /concurrency. NB: the plan was renumbered 020.00 -> 020.01 mid-round.",
+      "read": "no"
+    }
+  ]
+}
