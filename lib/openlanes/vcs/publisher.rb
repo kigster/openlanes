@@ -119,6 +119,40 @@ module OpenLanes
         refuse(subject, checkout, title, git_complaint(e))
       end
 
+      # Commit the plan's folder, and nothing else, to the checkout's branch and
+      # push it. Verification uses it to land chewie's screenshots on the pull
+      # request before the engine links them by SHA.
+      #
+      # It refuses a checkout with changes outside the plan folder: chewie
+      # writes `verification/**` and nothing more, so a stray code edit is
+      # something it should not have made, and committing it here would slip
+      # unreviewed code into a pull request that already passed review. Nor is
+      # it a resubmit, so the review labels are left exactly as they are.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param plan [OpenLanes::Plans::Subject] the plan in the main checkout
+      # @param message [String] the commit subject
+      # @return [String, nil] the new commit's SHA, nil on a dry run
+      # @raise [OpenLanes::Error] on a stray change, or nothing to commit
+      def commit_plan(checkout:, plan:, message:)
+        folder = plan_parent(plan)
+        raise Error, "the plans live outside the repository, so the branch has no place for them" if folder.nil?
+
+        stray = changed_paths(checkout).reject { inside_plan?(it, folder, plan) }
+        raise Error, "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: #{stray.join(", ")}" if stray.any?
+        return nil if @dry_run
+
+        carry_plan(checkout, plan)
+        run(checkout, "git", "add", "-A", "--", folder)
+        raise Error, "nothing to commit for #{plan.feature.ordinal}" if run!(checkout, "git", "diff", "--cached", "--quiet").success?
+
+        run(checkout, "git", "commit", "-m", message)
+        push(checkout)
+        run(checkout, "git", "rev-parse", "HEAD").out.strip
+      rescue TTY::Command::ExitError => e
+        raise Error, git_complaint(e)
+      end
+
       # git and gh put the useful sentence in stderr, several lines below the
       # command they echo. Reporting only the first line reports "it failed".
       #
@@ -186,6 +220,38 @@ module OpenLanes
       end
 
       private
+
+      # @param plan [OpenLanes::Plans::Subject]
+      # @return [String, nil] the plans directory relative to the repository,
+      #   nil when the plans live outside it
+      def plan_parent(plan)
+        root = real(@root)
+        source = real(plan.feature.path)
+        source.start_with?("#{root}/") ? File.dirname(source.delete_prefix("#{root}/")) : nil
+      end
+
+      # Every path git sees changed, untracked files included. `-z` keeps an
+      # emoji folder name unquoted; a rename's second entry is its old path.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @return [Array<String>]
+      def changed_paths(checkout)
+        entries = run(checkout, "git", "status", "--porcelain", "-z", "--untracked-files=all").out.split("\0")
+        paths = []
+        until entries.empty?
+          entry = entries.shift
+          paths << entry[3..]
+          paths << entries.shift if entry.start_with?("R", "C")
+        end
+        paths.compact
+      end
+
+      # @return [Boolean] whether `path` lies in any copy of this plan's folder
+      def inside_plan?(path, folder, plan)
+        return false unless path.start_with?("#{folder}/")
+
+        Plans::Ordinal.from_dirname(path.delete_prefix("#{folder}/").split("/").first) == plan.feature.ordinal
+      end
 
       # @param path [String]
       # @return [String] symlinks resolved, so /var and /private/var compare equal
@@ -366,6 +432,9 @@ module OpenLanes
 
       # @return [TTY::Command::Result]
       def run(checkout, *argv) = @command.run(*argv, chdir: checkout.path)
+
+      # @return [TTY::Command::Result] whatever the exit status
+      def run!(checkout, *argv) = @command.run!(*argv, chdir: checkout.path)
     end
   end
 end

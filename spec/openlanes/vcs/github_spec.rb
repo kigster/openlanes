@@ -161,6 +161,23 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#comment" do
+    it "posts the body as one conversation comment" do
+      github.comment(number: 92, body: "Step 3 failed", repo: "acme/widgets")
+
+      expect(command).to have_received(:run)
+        .with("gh", "pr", "comment", "92", "--body", "Step 3 failed", "-R", "acme/widgets")
+    end
+
+    it "names the pull request it could not comment on" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr comment",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "no such pull request")))
+
+      expect { github.comment(number: 92, body: "x") }.to raise_error(OpenLanes::Error, /could not comment on #92/)
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")

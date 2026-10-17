@@ -72,6 +72,10 @@ in ["pr", "edit"]
   end
   flags("--remove-label").each { |label| pr["labels"].delete(label) }
   save(state)
+in ["pr", "comment"]
+  pr = pr!(state, ARGV[2])
+  pr["comments"] << { "author" => { "login" => "openlanes" }, "body" => flag("--body"), "url" => "#{pr["url"]}#issuecomment-#{pr["comments"].size + 1}" }
+  save(state)
 in ["pr", "view"]
   pr = pr!(state, ARGV[2])
   fields = flag("--json").split(",")

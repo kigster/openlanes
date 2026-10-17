@@ -272,6 +272,20 @@ module OpenLanes
         raise Error, "could not read labels of ##{number}: #{first_line(e)}"
       end
 
+      # Post one conversation comment. The engine, not chewie, says why a
+      # verification failed: only the engine has the SHA the screenshot link
+      # needs, because only the engine pushes.
+      #
+      # @param number [Integer]
+      # @param body [String]
+      # @param repo [String, nil]
+      # @return [void]
+      def comment(number:, body:, repo: nil)
+        @command.run("gh", "pr", "comment", number.to_s, "--body", body, *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not comment on ##{number}: #{first_line(e)}"
+      end
+
       # @param number [Integer]
       # @param repo [String, nil]
       # @return [Array<Hash>] `{name:, bucket:}`, bucket as `gh` reports it
