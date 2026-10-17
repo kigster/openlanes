@@ -289,4 +289,24 @@ RSpec.describe OpenLanes::Agents::Registry do
       expect(names(agents.team_for(status(:new)))).to eq(%w[leah-researcher])
     end
   end
+
+  # Invoked only by the harness for a stopped rebase (D10), never routed to
+  # a plan state, so `handles` is empty, as c3po-operator's is.
+  describe "bb8-resolver, as the repository defines it" do
+    let(:shipped) { described_class.new }
+    let(:bb8) { shipped.find("bb8-resolver") }
+
+    it "handles no plan state and is never offered one" do
+      offered = OpenLanes::Plans::STATUSES.flat_map { |status| shipped.for_status(status).map(&:name) }
+
+      aggregate_failures do
+        expect(bb8).to have_attributes(handles: [], phase: "rebase", model: "sonnet", effort: "high")
+        expect(offered).not_to include("bb8-resolver")
+      end
+    end
+
+    it "is withheld git rebase and git commit like every agent, and granted nothing" do
+      expect(bb8.may).to eq([])
+    end
+  end
 end

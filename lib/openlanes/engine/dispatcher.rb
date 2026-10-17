@@ -35,7 +35,8 @@ module OpenLanes
         :frame,
         :history,
         :context,
-        :running) do
+        :running,
+        :rebase) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -158,6 +159,11 @@ module OpenLanes
 
       # @return [OpenLanes::Engine::Runner]
       attr_reader :runner
+
+      # Stopped rebases and how often each plan's has failed; see {Rebase}.
+      #
+      # @return [OpenLanes::Engine::Rebase]
+      def rebases = @rebases ||= Rebase.new(agents: @runner.agents, executor: @runner.executor)
 
       # @return [OpenLanes::Engine::StateFile, nil] nil under a dry run
       def state_file = @state
@@ -827,6 +833,10 @@ module OpenLanes
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
           next if locked_elsewhere?(subject)
+          # A stopped rebase holds the checkout until the harness has
+          # continued or aborted it; a partner started now would build on
+          # conflict markers.
+          next if @running.any? { plan_of(it) == subject.feature.ordinal.to_s && it.rebase }
 
           candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
@@ -944,7 +954,9 @@ module OpenLanes
         return false unless lock(ordinal, subject)
 
         release_owed = true
-        task = @runner.prepare(agent, subject, round)
+        # A checkout another agent is working in is never moved under it.
+        alone = @running.none? { plan_of(it) == ordinal }
+        task = @runner.prepare(agent, subject, round, refresh: alone, hold: rebases.hold(ordinal))
         handle = Execution::Executor::Handle.new
         job = Job.new(key: "#{ordinal}/#{agent.name}",
           task:,
@@ -956,6 +968,12 @@ module OpenLanes
           down: 0,
           subagents: 0,
           frame: 0)
+        if task.refresh&.conflicted?
+          start_rebase(job, ordinal)
+          release_owed = false
+          return true
+        end
+        job.message = task.refresh.summary if task.refresh&.kind == :pending
         if agent.advances_to && Plans::STATUS_BY_KEY.key?(agent.advances_to)
           successor = Agents::Routing.filter(@runner.agents.for_status(Plans::STATUS_BY_KEY.fetch(agent.advances_to)),
             subject).first&.name
@@ -1008,6 +1026,37 @@ module OpenLanes
         # Failed before the thread that releases it existed.
         @locks.release(ordinal) if release_owed && !@runner.dry_run?
         raise
+      end
+
+      # A job that resolves a stopped rebase rather than working the plan
+      # (D10). Nothing is signed or remembered for it: no round of the
+      # agent's is spent, and plan work starts on the next tick, on the
+      # rebased branch, or on the old one if the rebase was aborted.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param ordinal [String]
+      # @return [void]
+      def start_rebase(job, ordinal)
+        stopped = job.task.refresh
+        job.rebase = stopped
+        job.message = "rebasing onto #{stopped.base}: #{stopped.files.size} conflicted file#{"s" unless stopped.files.size == 1}"
+        UI.log("started rebase resolution", **job.task.log_fields)
+        job.thread = Thread.new do
+          Thread.current.report_on_exception = false
+          job.result = begin
+            rebases.resolve(job.task, handle: job.handle) { |progress|
+              job.up = progress.up
+              job.down = progress.down
+              job.message = "rebasing: #{progress.message || progress.activity}"
+              job.history = Board::Row.remember(job.history || [], job.message)
+            }
+          rescue StandardError => e
+            e
+          ensure
+            @locks.release(ordinal)
+          end
+        end
+        @running << job
       end
 
       # @param ordinal [String]
@@ -1141,6 +1190,10 @@ module OpenLanes
         ordinal = task.subject.feature.ordinal.to_s
         result = job.result
         base = attempt_for(job)
+        # Before anything reads the ledger: a resolution signs nothing, so
+        # whatever the ledger holds is the plan's previous round, not this one.
+        return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
+        return base if job.rebase
         return crashed(job, base, result) if result.is_a?(Exception)
         return base.with(note: result.note) if @runner.dry_run?
 

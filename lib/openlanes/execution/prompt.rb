@@ -32,8 +32,11 @@ module OpenLanes
       # @param seconds [Integer, nil] the enforced clock
       # @param denied [Array<String>] commands withheld
       # @param granted [Array<String>] commands lifted for this agent
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
+      #   on conflicts, which this invocation resolves instead of working the plan
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
-        instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [])
+        instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil)
+        @rebase = rebase
         @agent = agent
         @subject = subject
         @root = root
@@ -52,6 +55,8 @@ module OpenLanes
 
       # @return [String]
       def to_s
+        return resolution if @rebase
+
         <<~PROMPT
           #{agent.prompt}
 
@@ -91,6 +96,77 @@ module OpenLanes
           A refused `acquire` means another agent holds it: work on something
           else, never write it anyway. Before your closing signature, run
           `AGENT_ID=#{agent.name} alock release-all`.
+        PROMPT
+      end
+
+      # What an agent resolving a stopped rebase is told. Its own definition
+      # comes first, for who it is and what it builds, and so its own
+      # "a rebase stopped" section is read; everything after says this
+      # invocation is not plan work. No ledger section: a signature here would
+      # be read as this round's verdict on the plan, which it is not.
+      #
+      # @return [String]
+      def resolution
+        base = @rebase.base
+        files = @rebase.files.map { "  #{it}" }.join("\n")
+        denied = @denied.map { "  #{it}" }.join("\n")
+        stop = "Your control file is #{control}. Read it between steps: STOP means stage what you resolved and end your turn now."
+        <<~PROMPT
+          #{agent.prompt}
+
+          ---
+
+          ## This invocation: resolve a stopped rebase, and nothing else
+
+          Plan folder    : #{subject.feature.path}
+          Plan number    : #{subject.feature.ordinal}
+          Repository root: #{root}
+
+          The harness rebased this plan's branch onto `#{base}`, so the plan builds
+          on current code, and the rebase stopped on conflicts in:
+
+          #{files}
+
+          This is not plan work. Do not work your plan's units, do not sign the
+          ledger, and do not write `blocked.md`: a conflict is never a question
+          for a person. Do exactly this:
+
+          1. Read what the branch is for (`spec.md` and `plan.md` in the plan
+             folder), the commit being replayed (`git show REBASE_HEAD`), and what
+             landed upstream (`git log --oneline -20 #{base}`).
+          1. Resolve every conflict marker in the files above, keeping the intent
+             of both sides. Where they genuinely contradict each other, favour what
+             landed on `#{base}` and adapt the branch's change to it.
+          1. Record each judgement call, one line per file, with its reason, under
+             `## Rebase decisions` in the plan folder's `plan.md`, so a reviewer
+             sees what was chosen and why.
+          1. Run the tests that cover the files you changed.
+          1. `git add` each file you resolved, then end your turn.
+
+          Never run `git rebase` (`--continue`, `--skip`, `--abort`), `git commit`,
+          or anything else that moves HEAD (`git reset`, `git switch`, `git merge`,
+          `git cherry-pick`, `git checkout <branch>`). The harness continues the
+          rebase after you end; if the next commit conflicts too, you are invoked
+          again for it.
+
+          If you cannot resolve a file, or the tests fail because of the merge and
+          you cannot fix that, leave the file conflicted (`git checkout -m -- <path>`
+          puts the markers back) and end your turn. The harness then hands the
+          rebase on, or aborts it, which restores the branch exactly.
+
+          #{stop if control}
+
+          ## Boundary — enforced, not requested
+
+          #{withheld_preamble(profile)}
+
+          #{denied}
+
+          The harness checks afterwards that HEAD has not moved. Claim each file
+          before you write it, naming yourself:
+
+              AGENT_ID=#{agent.name} alock acquire <path> "<why>"
+              AGENT_ID=#{agent.name} alock release-all
         PROMPT
       end
 

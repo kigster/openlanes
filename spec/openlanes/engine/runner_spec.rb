@@ -197,7 +197,7 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
           path:   "/does-not-exist",
           dirty?: false)
       end
-      let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout) }
+      let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout, refresh: nil) }
 
       let(:explosive) do
         ->(agent, subject, **) {

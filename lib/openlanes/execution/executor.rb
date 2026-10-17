@@ -322,8 +322,13 @@ module OpenLanes
       # as a regular expression that nothing referenced — a guard in the shape of
       # a constant, enforcing nothing — which is exactly how `gh pr review` came
       # to be reachable by an agent nobody had granted it to.
+      #
+      # `git rebase` is here because the harness owns the rebase onto the
+      # default branch ({Vcs::Refresh}): an agent resolving a stopped one only
+      # edits and stages, and a `--continue`, `--skip` or `--abort` of its own
+      # would move HEAD inside the window the after-check guards.
       FORBIDDEN_COMMANDS = [
-        "git push", "git commit",
+        "git push", "git commit", "git rebase",
         "gh pr create", "gh pr edit", "gh pr merge",
         "gh pr review", "gh pr comment",
         "gh release create"
@@ -336,7 +341,11 @@ module OpenLanes
       # does not: an approval is reversible, visible, and attributable to the
       # identity that made it. That difference is the whole line between
       # `hansolo-reviewer` approving and `hansolo-reviewer` merging.
-      UNGRANTABLE = ["git push", "gh pr merge"].freeze
+      #
+      # A rebase is the harness's alone for the same reason a merge is: it
+      # rewrites the branch a pull request is built from, and the harness
+      # pushes that rewrite with a lease only it can check.
+      UNGRANTABLE = ["git push", "gh pr merge", "git rebase"].freeze
 
       # How much of what the agent said survives into a one-line report.
       REASON_LIMIT = 300
@@ -477,9 +486,12 @@ module OpenLanes
       # @param handle [OpenLanes::Execution::Executor::Handle, nil] filled in for the caller
       # @param partners [Array<OpenLanes::Agents::Agent>] the other agents working this
       #   plan right now, named in the prompt beside the plan's mailbox
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
+      #   on conflicts: the invocation resolves it and does no plan work
       # @return [OpenLanes::Execution::Executor::Result]
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
-      def call(agent, subject, root: @root, round: 1, successor: nil, handle: nil, partners: [], &on_progress)
+      def call(agent, subject, root: @root, round: 1, successor: nil, handle: nil, partners: [], rebase: nil,
+        &on_progress)
         started = UI.monotonic
         if @dry_run
           return Result.new(ok: true,
@@ -497,7 +509,7 @@ module OpenLanes
         profile = profile_for(agent, subject)
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
         handle.control = control
-        argv = invocation(agent, subject, root:, control:, round:, successor:, partners:)
+        argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:)
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = Clock.new(seconds: timeout_for(agent),
@@ -603,12 +615,13 @@ module OpenLanes
       # @param round [Integer] which attempt on this plan this is
       # @param successor [String, nil] who the agent names on its `next:` line
       # @param partners [Array<OpenLanes::Agents::Agent>]
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [Array<String>]
-      def invocation(agent, subject, root: @root, control: nil, round: 1, successor: nil, partners: [])
+      def invocation(agent, subject, root: @root, control: nil, round: 1, successor: nil, partners: [], rebase: nil)
         profile = profile_for(agent, subject)
         profile.adapter.argv(
           Adapters::Invocation.new(
-            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:),
+            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:),
             root:,
             model:           profile.model,
             effort:          profile.effort,
@@ -795,10 +808,12 @@ module OpenLanes
       # @param round [Integer]
       # @param successor [String, nil]
       # @param partners [Array<OpenLanes::Agents::Agent>]
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [String]
       def prompt_for(agent, subject, root = @root, control: nil, round: 1, successor: nil, partners: [],
-        profile: profile_for(agent, subject))
+        profile: profile_for(agent, subject), rebase: nil)
         Prompt.new(agent:,
+          rebase:,
           subject:,
           root:,
           profile:,

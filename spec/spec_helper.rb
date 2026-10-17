@@ -67,6 +67,7 @@ require_relative "support/box_text"
 require_relative "support/git_repo"
 require_relative "support/coverage_fixtures"
 require_relative "support/log_helper"
+require_relative "support/origin_repo"
 
 RSpec.configure do |config|
   # The choice judge asks TypeSafe over the network. A developer's shell may

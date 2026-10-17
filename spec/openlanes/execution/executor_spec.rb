@@ -377,6 +377,25 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       end
     end
 
+    # The harness owns the rebase onto the default branch (D10); an agent
+    # resolving one only edits and stages.
+    it "withholds git rebase and git commit, and no definition can lift the rebase" do
+      argv = denied(agent_with(may: ["git rebase", "git commit"]))
+
+      aggregate_failures do
+        expect(argv).to include("Bash(git rebase:*)")
+        expect(argv).not_to include("Bash(git commit:*)")
+        expect(denied(agent_with)).to include("Bash(git commit:*)", "Bash(git rebase:*)")
+      end
+    end
+
+    it "tells an agent resolving a stopped rebase only that" do
+      stopped = OpenLanes::Vcs::Refresh::Outcome.new(kind: :conflicted, base: "origin/main", files: ["app.rb"])
+      argv = described_class.new(root:, spawn:).invocation(agent_with, subject_plan, rebase: stopped)
+
+      expect(argv.join(" ")).to include("resolve a stopped rebase, and nothing else", "  app.rb")
+    end
+
     it "tells the agent what it has been granted, not only what it has lost" do
       argv = described_class.new(root:, spawn:).invocation(agent_with(may: ["gh pr review"]), subject_plan)
 

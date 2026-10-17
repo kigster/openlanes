@@ -209,6 +209,7 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | `hansolo-reviewer`  | Ready for Review, In Review                       | Approved & Merged  | sonnet/high   | all        |
 | `lando-broker`      | Technical Block, Product Block                    | by contents        | haiku/low     | all        |
 | `c3po-operator`     | none: the control room's read-only copilot        | read-only          | haiku/low     | all        |
+| `bb8-resolver`      | stopped rebases, from the harness                 | stages, never moves a plan | sonnet/high | all   |
 
 Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A plan's `spec.md` frontmatter can change the adapter, model and effort per phase.
 

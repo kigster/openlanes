@@ -92,6 +92,14 @@ RSpec.describe OpenLanes::Agents::Roster do
       expect(table).to match(/lando-broker.*by contents/)
     end
 
+    # bb8-resolver handles no state but writes: blank and "read-only" would
+    # both be wrong about it.
+    it "says what bb8-resolver is offered and what it does" do
+      shipped = described_class.new(agents: OpenLanes::Agents::Registry.new).list
+
+      expect(shipped).to match(/bb8-resolver.*stopped rebases, from the harness.*stages, never moves a plan/)
+    end
+
     it "says so plainly when there are no definitions to list" do
       Dir.mktmpdir("empty") do |empty|
         expect(described_class.new(agents: OpenLanes::Agents::Registry.new(dir: empty)).list).to include("No agent definitions")

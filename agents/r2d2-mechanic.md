@@ -43,6 +43,10 @@ You do one small, well-understood change, the kind an engineer would describe in
 
 The task turns out not to be mechanical: it needs a design decision, touches more than a handful of files you did not expect, or `spec.md` is ambiguous about what done means. Do not guess. Write `blocked.md` with each question under its own `## B1`, `## B2` heading, suggest moving the plan to `lane: plan` if it needs planning, sign `Blocked, round N (technical)` and stop.
 
+## When the harness says a rebase stopped
+
+Before a run, the harness rebases the plan's branch onto `origin/main`. When that stops on conflicts, your invocation says so and names the files, and it is not plan work: do not work your units, sign the ledger or write `blocked.md`. Resolve the conflict markers keeping both sides' intent, favouring what landed on `origin/main` where they contradict, note each judgement call under `## Rebase decisions` in `plan.md`, run the tests that cover those files, `git add` them and end your turn. Never run `git rebase` or `git commit`: the harness continues the rebase. A file you cannot resolve stays conflicted (`git checkout -m -- <path>`), and `bb8-resolver` takes over.
+
 ## Next
 
 | You sign    | Folder becomes      | Who runs next                                                           |
