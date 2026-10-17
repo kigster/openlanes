@@ -33,9 +33,11 @@ module OpenLanes
       # @param adapter [OpenLanes::Adapters::Base] whose models the page offers
       # @param judge [#call, nil] a second opinion on whether a question asks
       #   to choose ({ChoiceJudge}); nil leaves the parser's verdict alone
+      # @param redis_url [String, nil] the store the engine itself is using,
+      #   unredacted: the snapshot redacts it ({Live.redact})
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
-        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge)
+        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil)
         @board = board
         @tree = tree
         @agents = agents
@@ -52,6 +54,7 @@ module OpenLanes
         @log = log
         @adapter = adapter
         @judge = judge
+        @redis_url = redis_url
       end
 
       # @return [Hash]
@@ -71,6 +74,7 @@ module OpenLanes
           bombs:       bombs(subjects),
           models:      @adapter.models.map(&:wire),
           autocompact: Adapters::AUTOCOMPACT / 100.0,
+          redis_url:   @redis_url && Live.redact(@redis_url),
           log:         @log }
       end
 
@@ -197,6 +201,7 @@ module OpenLanes
           elapsed:       row.elapsed.to_i,
           remaining:     row.remaining,
           held:          @run_state.car_held?(row.key),
+          subagents:     Array(row.running),
           next_model:    next_model(row) }
       end
 

@@ -112,7 +112,8 @@
             "elapsed": 229,
             "remaining": 971,
             "held": false,
-            "next_model": null
+            "next_model": null,
+            "subagents": []
           },
           {
             "key": "001.00/rey-frontend",
@@ -135,7 +136,11 @@
             "elapsed": 229,
             "remaining": 971,
             "held": false,
-            "next_model": null
+            "next_model": null,
+            "subagents": [
+              "Explore",
+              "general-purpose"
+            ]
           }
         ],
         "pr": null,
@@ -197,7 +202,8 @@
             "elapsed": 229,
             "remaining": 971,
             "held": false,
-            "next_model": null
+            "next_model": null,
+            "subagents": []
           }
         ],
         "pr": {
@@ -252,7 +258,8 @@
             "elapsed": 229,
             "remaining": 971,
             "held": false,
-            "next_model": null
+            "next_model": null,
+            "subagents": []
           }
         ],
         "pr": null,
@@ -348,7 +355,8 @@
         "text": "started luke-backend on 001.00",
         "plan": "001.00"
       }
-    ]
+    ],
+    "redis_url": "redis://localhost:6379/0"
   },
   "others": [
     {
@@ -464,7 +472,8 @@
               "elapsed": 229,
               "remaining": 971,
               "held": false,
-              "next_model": null
+              "next_model": null,
+              "subagents": []
             }
           ],
           "pr": {
@@ -532,7 +541,8 @@
       ],
       "bombs": [],
       "autocompact": 0.4,
-      "log": []
+      "log": [],
+      "redis_url": "redis://localhost:6379/0"
     }
   ]
 }

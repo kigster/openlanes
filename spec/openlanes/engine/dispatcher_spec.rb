@@ -333,7 +333,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         said_queue, release_queue = said, release
         lambda { |_agent, _subject, **, &progress|
           ["reading spec.md", "reading spec.md", "editing plan.md"].each do |activity|
-            progress.call(OpenLanes::Execution::Transcript::Progress.new(activity:, up: 1, down: 1, subagents: 0))
+            progress.call(OpenLanes::Execution::Transcript::Progress.new(activity:,
+              up: 1,
+              down: 1,
+              subagents: 1,
+              running: ["Explore"]))
           end
           said_queue << true
           release_queue.pop(timeout: 5)
@@ -357,6 +361,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       context "when the agent is still running" do
         it { expect(row.history).to eq(["editing plan.md", "reading spec.md"]) }
+        it("carries the sub-agents it has running") { expect(row.running).to eq(["Explore"]) }
       end
 
       context "when the agent is done" do
@@ -372,6 +377,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
         it("keeps the statuses under the outcome") { expect(row.history.drop(1)).to eq(["editing plan.md", "reading spec.md"]) }
         it("puts the outcome on top") { expect(row.history.first).to eq(row.message) }
+        it("leaves no sub-agent running") { expect(row.running).to eq([]) }
       end
     end
   end

@@ -48,7 +48,7 @@ module OpenLanes
         default: true,
         desc:    "With --isolation worktree, a finished branch is pushed and its pull request " \
                  "opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted."
-      option :log, desc: "Append progress to this file (default: a per-project file under the system temp dir)"
+      log_options
       option :redis_url,
         desc: "Redis for the live board, its commands and plan claims shared with other machines " \
               "(default: .openlanes.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"

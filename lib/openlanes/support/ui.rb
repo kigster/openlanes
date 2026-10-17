@@ -2,7 +2,6 @@
 
 require "concurrent/hash"
 require "etc"
-require "fileutils"
 require "dry/cli/ui"
 require "pastel"
 require "stringio"
@@ -97,8 +96,9 @@ module OpenLanes
       def alive = "#{seconds.round}s"
 
       # @param message [String]
+      # @param level [Symbol] the entry's level in the log
       # @return [void]
-      def note(message) = UI.log(message, **@fields, seconds:)
+      def note(message, level: :info) = UI.log(message, level:, **@fields, seconds:)
 
       # @return [void]
       def start
@@ -182,7 +182,7 @@ module OpenLanes
       def failed(reason)
         stop_ticker
         @handle&.fail(reason)
-        note("failed after #{alive}: #{reason}")
+        note("failed after #{alive}: #{reason}", level: :warn)
       end
 
       # @param update [OpenLanes::Execution::Transcript::Progress]
@@ -240,16 +240,16 @@ module OpenLanes
       def reset!
         remove_instance_variable(:@pastel) if instance_variable_defined?(:@pastel)
         self.quiet = false
-        self.log_path = nil
       end
 
-      # Where {.log} appends to, if anywhere. nil (the default) means nowhere;
-      # `openlanes run` sets this before the loop starts, so a round
-      # started under a tool that discards STDERR — an agent's own Bash call,
-      # for instance — still leaves something to `tail -f`.
+      # Where {.log} writes, if anywhere: the file {Log.setup} was given
+      # (`-` for STDOUT), nil before then. `openlanes run` sets logging up
+      # before the loop starts, so a round started under a tool that discards
+      # STDERR (an agent's own Bash call, for instance) still leaves
+      # something to `tail -f`.
       #
       # @return [String, nil]
-      attr_accessor :log_path
+      def log_path = Log.settings&.file
 
       # Something else that hears every {.log} line, as it is logged: the
       # live board keeps the latest few for the page. Taps are called on the
@@ -271,23 +271,18 @@ module OpenLanes
       # @return [Array<#call>]
       def log_taps = @log_taps || []
 
-      # Append one timestamped line to {.log_path}. A no-op with nothing set.
-      # Safe to call from several threads at once.
+      # Tell every tap, then write one entry to the log {Log.setup} opened,
+      # with the fields as its payload. The file is in addition to what the
+      # taps draw, never instead of it. Safe to call from several threads at once.
       #
       # @param message [String]
+      # @param level [Symbol] the entry's level in the log; taps hear every
+      #   level alike, since the terminal has no levels to filter by
+      # @param fields [Hash] plan, status, agent, round, seconds, to
       # @return [void]
-      def log(message, **fields)
+      def log(message, level: :info, **fields)
         log_taps.each { |tap| tap.call(message, fields) }
-        path = log_path or return
-
-        # Taps hear every field; the file takes only its own columns, so a
-        # field meant for the terminal (the state a plan moved to) adds
-        # nothing to the file's format.
-        line = Engine::ProgressLog.render(message, **fields.slice(*Engine::ProgressLog::FIELDS))
-        (@log_mutex ||= Mutex.new).synchronize do
-          FileUtils.mkdir_p(File.dirname(path))
-          File.open(path, "a") { |f| f.puts(line) }
-        end
+        Log.event(message, level:, **fields)
       end
 
       # Cells the meter takes on a spinner line, per direction.

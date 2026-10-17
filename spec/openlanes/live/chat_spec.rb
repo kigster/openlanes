@@ -45,6 +45,26 @@ RSpec.describe OpenLanes::Live::Chat do
     relay
   end
 
+  # A page's chat events wait in this process, so the event stream, asleep
+  # on Redis, hears of them only through the nudge.
+  describe "nudging the event streams" do
+    let!(:news) { OpenLanes::Live::News.subscribe(store:, keys:) }
+
+    after { news.close }
+
+    def heard = [].tap { |kinds| while (message = news.next_message(0)) do kinds << JSON.parse(message.last)["kind"] end }
+
+    it "says nothing for a step that gave no page anything" do
+      relay
+      expect(heard).to be_empty
+    end
+
+    it "nudges once per step that queued something for a page" do
+      start
+      expect(heard).to include("chat")
+    end
+  end
+
   describe "starting a chat" do
     it "joins the starter and invites the machine, whose pages see the invite" do
       started = start

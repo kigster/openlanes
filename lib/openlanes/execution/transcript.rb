@@ -57,9 +57,17 @@ module OpenLanes
       # @!attribute [r] session
       #   @return [String, nil] the CLI's session id, from its `init` event,
       #     which is what `--resume` carries the agent on in (W28)
-      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session) do
-        def initialize(pid: nil, message: nil, context: nil, session: nil, **rest) = super
+      # @!attribute [r] running
+      #   @return [Array<String>] the sub-agents working right now, by name,
+      #     oldest first; empty for a stream that never says (codex, pi)
+      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session, :running) do
+        def initialize(pid: nil, message: nil, context: nil, session: nil, running: [], **rest) = super
       end
+
+      # The tools that start a sub-agent. `claude` called it `Task` and renamed
+      # it `Agent`; a transcript that knew only one name would show a run on the
+      # other CLI version with no sub-agents at all.
+      DELEGATES = %w[Task Agent].freeze
 
       # The one kind of line the trace does not keep.
       #
@@ -82,7 +90,7 @@ module OpenLanes
         "Read" => "reading", "Write" => "writing", "Edit" => "editing",
         "MultiEdit" => "editing", "NotebookEdit" => "editing",
         "Bash" => "running", "Grep" => "searching for", "Glob" => "looking for",
-        "Task" => "delegating", "TodoWrite" => "planning",
+        "Task" => "delegating", "Agent" => "delegating", "TodoWrite" => "planning",
         "WebFetch" => "fetching", "WebSearch" => "searching the web for",
         "SendUserMessage" => "saying"
       }.freeze
@@ -114,6 +122,7 @@ module OpenLanes
         @streamed = {}
         @tasks = {}
         @spawned = 0
+        @running = {}
         @context = nil
         @session = nil
         @compacted = nil
@@ -172,8 +181,16 @@ module OpenLanes
           pid: @pid,
           message: @message,
           context: @context,
-          session: @session)
+          session: @session,
+          running: @running.values)
       end
+
+      # The sub-agents started and not yet answered, by name. A count would
+      # have been enough for the meter; the page draws each one beside its
+      # parent, so it needs to know which.
+      #
+      # @return [Array<String>] oldest first
+      def running = @running.values
 
       # @return [String, nil] the session id from the stream's `init` event
       attr_reader :session
@@ -288,7 +305,9 @@ module OpenLanes
         when "assistant"
           capture_message(event)
           @tools += tool_calls(event)
+          delegate(event)
           announce(phrase_for(event))
+        when "user" then collect(event)
         when "stream_event" then meter(event)
         when "system" then system_event(event)
         when "result" then record_result(event)
@@ -311,6 +330,50 @@ module OpenLanes
           text = block.dig("input", "message").to_s.strip
           @message = clip(text) unless text.empty?
         end
+      end
+
+      # A sub-agent is running from the `Task` call that starts it until the
+      # `tool_result` that answers that call. Its name is the `subagent_type`
+      # the call asked for, which is what a person would recognise
+      # ("leah-researcher"), and its `description` only when it named none.
+      # A sub-agent's own calls carry a `parent_tool_use_id` and are read the
+      # same way, so one it starts in turn is a sub-agent too.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def delegate(event)
+        started = blocks_of(event, "tool_use").select { DELEGATES.include?(it["name"]) && it["id"] }
+        return if started.empty?
+
+        started.each do |block|
+          input = block["input"].is_a?(Hash) ? block["input"] : {}
+          name = [input["subagent_type"], input["description"]].map { it.to_s.strip }.find { !it.empty? }
+          @running[block["id"]] = name || "sub-agent"
+        end
+        publish
+      end
+
+      # The `tool_result` that answers a `Task` call is the sub-agent's
+      # return, so it leaves the list there.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def collect(event)
+        done = blocks_of(event, "tool_result").filter_map { it["tool_use_id"] }.select { @running.key?(it) }
+        return if done.empty?
+
+        done.each { @running.delete(it) }
+        publish
+      end
+
+      # @param event [Hash]
+      # @param type [String]
+      # @return [Array<Hash>] the message's content blocks of that type
+      def blocks_of(event, type)
+        blocks = event.dig("message", "content")
+        return [] unless blocks.is_a?(Array)
+
+        blocks.select { it.is_a?(Hash) && it["type"] == type }
       end
 
       # @param event [Hash]
@@ -432,6 +495,9 @@ module OpenLanes
         @error = @result if event["is_error"]
         settle(event["usage"])
         @spawned = [@spawned, event.dig("subagent_stats", "spawned").to_i].max
+        # The invocation is over, so whatever it started is over with it,
+        # answered or not.
+        @running.clear
         publish
       end
 

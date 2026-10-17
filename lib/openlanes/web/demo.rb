@@ -95,6 +95,9 @@ module OpenLanes
           @board.advance(@clock.call)
           publish(@keys.node, @board.me)
           @board.others.each { publish(other, it) }
+          # The demo's board moves on every tick, so every tick is news, and
+          # the one nudge covers this tick's replies as well.
+          Live::News.publish(store: @store, keys: @keys, kind: "board")
           replies
         end
       rescue Live::Unavailable => e
@@ -110,6 +113,9 @@ module OpenLanes
       # @return [void]
       def publish(name, snapshot)
         snapshot["seq"] = next_seq(name)
+        # The fixture names a Redis for the page to show; the demo says the
+        # one it is really publishing through, as the engine does.
+        snapshot["redis_url"] = Live.redact(@store.url)
         json = JSON.generate(snapshot)
         @store.multi do |tx|
           tx.set(@keys.snapshot(name), json, ex: Live::Keys::SNAPSHOT_TTL)

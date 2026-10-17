@@ -50,7 +50,10 @@ button, textarea { font: inherit; color: inherit; }
 
 /* Layout */
 .tabs-root { display: contents; }
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; padding: 20px 24px; align-items: start; }
+/* The right column holds Needs you or an agent's drawer, one at a time, so both share its width: up to 432px, the
+   drawer's 360px made 20% wider for the transcript, and one width so opening a drawer never shifts the board. It
+   gives back to 360px on a 1024-1280px laptop, where a fixed 432px left the board little more than half the screen. */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 432px); gap: 20px; padding: 20px 24px; align-items: start; }
 @media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; } }
 .loading { padding: 40px 24px; color: var(--ink-soft); }
 .loading.is-error { color: var(--alarm); }
@@ -156,4 +159,8 @@ button, textarea { font: inherit; color: inherit; }
 .pills-theirs .pill:hover { --tint: 18%; }
 .pills-theirs .pill-mark { opacity: .7; }
 .statusbar-sum { margin: 0; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
-@media (max-width: 720px) { .statusbar h2, .statusbar-sum { display: none; } }
+/* Which Redis the engine keeps claims and run state in: two engines on different ones never see each other's claims,
+   so the address is on screen rather than in a log. Already redacted by the engine. */
+.statusbar-redis { margin: 0; flex: none; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+.statusbar-redis code { font: 12px var(--mono); color: var(--ink); }
+@media (max-width: 720px) { .statusbar h2, .statusbar-sum, .statusbar-redis { display: none; } }

@@ -144,6 +144,25 @@ module OpenLanes
           desc:
       end
 
+      # `-l`, `-L` and `--log-format`, for the commands that run something
+      # long enough to be worth a log. No defaults here: a flag left out must
+      # stay nil, so {Log::Settings.from} can fall back to what the engine
+      # handed its server through the environment.
+      #
+      # @return [void]
+      def self.log_options
+        option :log,
+          aliases: ["-l"],
+          desc:    "Write the log to FILE, appending; - for STDOUT (default: #{Log::DEFAULT_FILE} under the project root)"
+        option :log_level,
+          aliases: ["-L"],
+          values:  Log::LEVELS,
+          desc:    "The lowest level written (default: #{Log::DEFAULT_LEVEL})"
+        option :log_format,
+          values: Log::FORMATS.keys,
+          desc:   "standard (one line per entry) or json (default: #{Log::DEFAULT_FORMAT})"
+      end
+
       private
 
       # @param options [Hash]

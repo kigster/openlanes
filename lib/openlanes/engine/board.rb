@@ -60,6 +60,9 @@ module OpenLanes
     #   @return [Integer] messages in the plan's mailbox nobody has acked yet.
     #     Data for the screen only (D2): no round, route or rename reads it,
     #     because an unanswered message is a warning, never an input.
+    # @!attribute [r] running
+    #   @return [Array<String>] its sub-agents still at work, by name. Empty
+    #     once the row is done, and for an adapter whose stream never says
     Board::Row = Data.define(:key,
       :at,
       :ordinal,
@@ -84,9 +87,10 @@ module OpenLanes
       :context,
       :since,
       :session,
-      :unacked) do
+      :unacked,
+      :running) do
       def initialize(pr: nil, phase: nil, remaining: nil, frame: 0, bold: false, message: nil,
-        elapsed: 0, subagents: 0, history: [], context: nil, since: nil, session: nil, unacked: 0, **rest)
+        elapsed: 0, subagents: 0, history: [], context: nil, since: nil, session: nil, unacked: 0, running: [], **rest)
         super
       end
 

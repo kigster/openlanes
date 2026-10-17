@@ -31,6 +31,11 @@ RSpec.describe OpenLanes::Live::Publisher, :tree do
     end
   end
 
+  it "names the Redis it publishes through, which is the one the page shows" do
+    publisher.call(dispatcher.board)
+    expect(JSON.parse(store.get(keys.snapshot))["redis_url"]).to eq(store.url)
+  end
+
   it "counts on from the board stream, so a restarted engine never repeats a seq" do
     store.xadd(keys.board, { seq: 41, json: "{}" })
     expect(publisher.call(dispatcher.board)[:seq]).to eq(42)
@@ -72,6 +77,35 @@ RSpec.describe OpenLanes::Live::Publisher, :tree do
     allow(OpenLanes::UI).to receive(:log)
     2.times { publisher.call(dispatcher.board) }
     expect(OpenLanes::UI).to have_received(:log).with("board not published: gone").once
+  end
+
+  # The nudge an open page's event stream sleeps on (News).
+  describe "nudging the pages" do
+    subject(:publisher) do
+      described_class.new(store:, keys:, node:, tree:, agents:, project: "openlanes", claims:, run_state:, clock: -> { wall[0] += 1 })
+    end
+
+    # A wall clock that moves a second on every reading, as a real tick's does.
+    let(:wall) { [Time.utc(2026, 10, 13, 9)] }
+    let!(:news) { OpenLanes::Live::News.subscribe(store:, keys:) }
+
+    after { news.close }
+
+    def heard = [].tap { |kinds| while (message = news.next_message(0)) do kinds << JSON.parse(message.last)["kind"] end }
+
+    it "nudges once for the first snapshot, and not again while only its clock moves" do
+      3.times { publisher.call(dispatcher.board) }
+      expect([heard, publisher.seq]).to eq([%w[board], 3])
+    end
+
+    it "nudges again when the board says something new" do
+      publisher.call(dispatcher.board)
+      heard
+      building("002.00", "second-plan")
+      claims.claim("002.00")
+      publisher.call(dispatcher.board)
+      expect(heard).to eq(%w[board])
+    end
   end
 
   describe "the log" do

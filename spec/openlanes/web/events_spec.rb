@@ -3,7 +3,7 @@
 # The event stream's loop, run for a few ticks against the in-memory store
 # with a clock the example moves, so pings and lifetimes cost no real time.
 RSpec.describe OpenLanes::Web::Events do
-  subject(:events) { described_class.new(context:, store:, last_id:, page:, clock:, sleeper:) }
+  subject(:events) { described_class.new(context:, store:, last_id:, page:, clock:, waiter:) }
 
   # An `out` the loop writes to, which can be closed from inside a write.
   let(:out_class) do
@@ -39,18 +39,18 @@ RSpec.describe OpenLanes::Web::Events do
       keys:,
       plans_dir: "/nowhere",
       url: "memory://",
-      tick: 0,
       ping_every: 0.5,
       lifetime:)
   end
   let(:out) { out_class.new }
   let(:frames) { out.frames }
-  # Each tick advances the clock a quarter second, then runs the example's
-  # block with the tick's number.
+  # Each wait for news advances the clock a quarter second, then runs the
+  # example's block with the wait's number, standing in for whatever a
+  # nudge would have woken the stream for.
   let(:on_tick) { [nil] }
-  let(:sleeper) do
+  let(:waiter) do
     ticks = [0]
-    lambda do |_|
+    lambda do |_, _|
       ticks[0] += 1
       now[0] += 0.25
       on_tick.first&.call(ticks.first)
@@ -291,6 +291,30 @@ RSpec.describe OpenLanes::Web::Events do
 
       it "ends within a tick" do
         expect(frames.grep(/\Aevent: board/).size).to eq(1)
+      end
+    end
+
+    context "when Redis refuses SUBSCRIBE" do
+      let(:waited_on) { [] }
+      let(:waiter) do
+        lambda do |news, _|
+          waited_on << news
+          now[0] += 0.25
+        end
+      end
+
+      before do
+        allow(store).to receive(:subscriber).and_raise(OpenLanes::Live::Unavailable, "NOPERM no permissions to SUBSCRIBE")
+        publish(1)
+        run_ticks
+      end
+
+      it "still sends the board, and polls rather than ending" do
+        aggregate_failures do
+          expect(frames.grep(/\Aevent: board/).size).to eq(1)
+          expect(frames.grep(/NOPERM/)).to be_empty
+          expect(waited_on).to all(be_nil).and(have_attributes(size: be > 1))
+        end
       end
     end
 

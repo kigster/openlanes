@@ -25,6 +25,7 @@ export function sampleCar(over: Partial<Car> = {}): Car {
     elapsed: 75,
     remaining: null,
     held: false,
+    subagents: [],
     ...over,
   };
 }

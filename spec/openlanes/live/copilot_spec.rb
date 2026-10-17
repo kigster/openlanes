@@ -14,6 +14,15 @@ RSpec.describe OpenLanes::Live::Copilot do
   let(:fixture) { JSON.parse(File.read(File.join(OpenLanes::Web::GEM_ROOT, "web/src/api/fixtures/copilot.json"))) }
   let(:stored) { store.xrange(keys.copilot).map { JSON.parse(it.fields["json"]) } }
 
+  it "nudges the open pages for each turn it writes, since the API server, not the engine, writes them" do
+    news = OpenLanes::Live::News.subscribe(store:, keys:)
+    copilot.answer(copilot.say({ "id" => "01JN", "text" => "hi" }))
+    expect([news.next_message(0), news.next_message(0), news.next_message(0)].map { it&.last })
+      .to eq(['{"kind":"copilot"}', '{"kind":"copilot"}', nil])
+  ensure
+    news&.close
+  end
+
   describe "#say" do
     context "with a message" do
       let!(:turn) { copilot.say(JSON.generate(id: "01JMSG", text: "  Why has 001 not moved?  ")) }

@@ -52,7 +52,7 @@ Keep the defaults (`--isolation worktree`, pushing on) whenever the user wants p
 openlanes run --until-settled --plan <NNN,...>
 ```
 
-A run takes minutes to hours: each agent may take up to 15 minutes per round, over several rounds. Start it in the background and wait for it to exit; it prints its progress log path at the start, which is what to read when the user asks how it is going. Avoid polling in a tight loop.
+A run takes minutes to hours: each agent may take up to 15 minutes per round, over several rounds. Start it in the background and wait for it to exit; it prints its log path at the start (`log/development.log` under the project unless `--log` says otherwise), which is what to read when the user asks how it is going. Avoid polling in a tight loop.
 
 When Redis answers, the run also serves the control room (it still ends at the fixed point, because of `--until-settled`) on `http://127.0.0.1:11000` and opens it in the browser: the user watches the board there and can message, interrupt or stop an agent. Without Redis the run warns once and goes on headless; that is not a failure. To get the page, start `redis-server` (or pass `--redis-url`) before the run; `openlanes-setup` has the details.
 

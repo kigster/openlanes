@@ -66,6 +66,7 @@ require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"
 require_relative "support/coverage_fixtures"
+require_relative "support/log_helper"
 
 RSpec.configure do |config|
   # The choice judge asks TypeSafe over the network. A developer's shell may
@@ -90,10 +91,21 @@ RSpec.configure do |config|
 
   config.include PlansFixture
   config.include BoxText
+  config.include LogHelper
 
   # Pastel memoizes `enabled:` at construction, so an example that stubs
   # `tty?` or `color?` would otherwise poison every example that ran after it.
   config.before { OpenLanes::UI.reset! }
+
+  # A run sets logging up for its whole process, and the suite is one
+  # process: without this, the file one example opened would take every
+  # later example's lines. The environment is the engine's hand-off to its
+  # server, and a developer's shell exporting it must not steer the suite.
+  config.before do
+    OpenLanes::Log.reset!
+    OpenLanes::Log::Settings.members.each { ENV.delete("OPENLANES_LOG#{"_#{it.upcase}" unless it == :file}") }
+  end
+  config.after { OpenLanes::Log.reset! }
 
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.

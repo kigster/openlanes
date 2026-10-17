@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
 import type { Car as CarData, ModelChoice, Node, Plan, Station } from "../api/types";
-import { Car, InterruptedCar } from "./Car";
+import { Car, InterruptedCar, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, planId, who } from "./format";
 import { LANES, rowColors, rowDomId, routeOf } from "./model";
@@ -56,11 +56,13 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   useEffect(() => {
     const row = scope.current;
     if (!retiring || reduced || !row) return;
-    // Fade first, then fold the height away, so the rows below close the gap slowly (the mockup's retire()).
+    // Fade first, then fold the height away, so the rows below close the gap slowly (the mockup's retire()). The padding
+    // is read rather than assumed, because a narrow lane has less of it and would otherwise grow before it shrank.
     const h = `${row.offsetHeight}px`;
+    const { paddingTop: top, paddingBottom: bottom } = getComputedStyle(row);
     void animate(
       row,
-      { opacity: [1, 0, 0], height: [h, h, "0px"], paddingTop: ["18px", "18px", "0px"], paddingBottom: ["20px", "20px", "0px"] },
+      { opacity: [1, 0, 0], height: [h, h, "0px"], paddingTop: [top, top, "0px"], paddingBottom: [bottom, bottom, "0px"] },
       { duration: FADE_MS / 1000, times: [0, 0.6, 1], ease: "easeInOut" },
     );
   }, [retiring, reduced, animate, scope]);
@@ -75,15 +77,18 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
     cars = (
       <>
         {plan.cars.map(car => (
-          <Car
-            key={car.key}
-            plan={plan}
-            car={car}
-            models={models}
-            open={openCar === car.key}
-            onOpen={readOnly ? undefined : onOpenCar}
-            modelSlot={readOnly ? undefined : renderModel?.(plan, car)}
-          />
+          // A car and the sub-agents it started share one line, so each ghost tile sits beside the agent that owns it.
+          <div key={car.key} className="car-group">
+            <Car
+              plan={plan}
+              car={car}
+              models={models}
+              open={openCar === car.key}
+              onOpen={readOnly ? undefined : onOpenCar}
+              modelSlot={readOnly ? undefined : renderModel?.(plan, car)}
+            />
+            <SubagentTiles car={car} />
+          </div>
         ))}
         {plan.pr && <Terminus pr={plan.pr} />}
       </>

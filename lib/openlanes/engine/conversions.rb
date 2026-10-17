@@ -143,7 +143,7 @@ module OpenLanes
       end
 
       # @return [void]
-      def couldnt(job, why) = UI.log("questions: could not convert B#{job.number}: #{why}", plan: job.ordinal)
+      def couldnt(job, why) = UI.log("questions: could not convert B#{job.number}: #{why}", level: :warn, plan: job.ordinal)
 
       # A reader never sees half a file.
       #

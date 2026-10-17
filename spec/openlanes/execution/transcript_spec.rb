@@ -137,6 +137,52 @@ RSpec.describe OpenLanes::Execution::Transcript do
     end
   end
 
+  # The page draws each running sub-agent as its own tile beside its parent,
+  # so the transcript keeps which ones are running, not only how many ran.
+  describe "the sub-agents running" do
+    def delegated(id, input, name: "Task", parent: nil)
+      { type: "assistant", parent_tool_use_id: parent,
+        message: { content: [{ type: "tool_use", id:, name:, input: }] } }.to_json + "\n"
+    end
+
+    def answered(id) = { type: "user", message: { content: [{ type: "tool_result", tool_use_id: id, content: "done" }] } }.to_json + "\n"
+
+    it "names each by the sub-agent type it asked for, else by its description" do
+      feed(delegated("toolu_1", { "subagent_type" => "Explore", "description" => "Find the routes" }),
+        delegated("toolu_2", { "description" => "Read the spec" }, name: "Agent"))
+
+      expect(transcript.progress.running).to eq(["Explore", "Read the spec"])
+    end
+
+    it "drops one when its result comes back, and counts a sub-agent's own as well" do
+      feed(delegated("toolu_1", { "subagent_type" => "Explore" }),
+        delegated("toolu_9", { "subagent_type" => "general-purpose" }, parent: "toolu_1"),
+        answered("toolu_1"),
+        answered("toolu_404"))
+
+      expect(transcript.running).to eq(["general-purpose"])
+    end
+
+    it "calls one that gave neither a sub-agent, and publishes the change" do
+      progress = []
+      transcript = described_class.new { progress << it.running }
+      transcript.push(delegated("toolu_1", nil))
+      transcript.push(answered("toolu_1"))
+
+      expect(progress.values_at(0, -1)).to eq([["sub-agent"], []])
+    end
+
+    it "empties the list when the invocation ends" do
+      feed(delegated("toolu_1", { "subagent_type" => "Explore" }), { type: "result", result: "ok" }.to_json + "\n")
+
+      expect(transcript.running).to be_empty
+    end
+
+    it "is empty for a stream that never delegates" do
+      expect(transcript.progress.running).to eq([])
+    end
+  end
+
   describe "#push" do
     it "reports a tool call as something being done, not as a tool name" do
       transcript.push(assistant(tool("Edit", { "file_path" => "/a/b/spec.md" })))

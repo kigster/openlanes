@@ -41,6 +41,22 @@ RSpec.describe OpenLanes::Web::Launcher do
     expect(launcher.env).to eq("OPENLANES_REDIS_URL" => "redis://localhost:6379/9")
   end
 
+  it "hands the engine's log settings to the server too, so both write one file" do
+    logging = OpenLanes::Log::Settings.new(file: File.join(dir, "log", "development.log"), level: "debug", format: "json")
+    launcher = described_class.new(root: dir, plans_dir: dir, port:, redis_url: "redis://localhost:6379/9", logging:)
+
+    expect(launcher.env).to eq("OPENLANES_REDIS_URL" => "redis://localhost:6379/9",
+      "OPENLANES_LOG" => logging.file,
+      "OPENLANES_LOG_LEVEL" => "debug",
+      "OPENLANES_LOG_FORMAT" => "json")
+  end
+
+  it "takes the settings this process logs with when given none" do
+    settings = open_log(File.join(dir, "log", "development.log"))
+
+    expect(described_class.new(root: dir, plans_dir: dir, port:, redis_url: "r").env).to include(settings.env)
+  end
+
   it "points at loopback" do
     expect(launcher.url).to eq("http://127.0.0.1:4999")
   end

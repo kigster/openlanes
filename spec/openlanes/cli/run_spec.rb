@@ -249,10 +249,10 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(Dir.children(plans_root).grep(/stays-put/)).to eq(["002.00━━⭐━━❯stays-put"])
     end
 
-    it "says where the progress log is going before the loop starts" do
+    it "says where the log is going before the loop starts" do
       _out, err, = run
 
-      expect(unwrapped(err)).to include("Progress:")
+      expect(unwrapped(err)).to include("Log:", "progress.log")
     end
   end
 
@@ -449,15 +449,34 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(status).to eq(1)
     end
 
-    it "writes its progress to the log it announces when --log names none" do
-      allow(Dir).to receive(:tmpdir).and_return(File.dirname(plans_root))
+    it "writes its progress to log/development.log under the project when --log names none" do
       with_executor
       _out, err, _status = run(dry_run: false, rounds: 1, log: nil)
-      log = OpenLanes::Engine::ProgressLog.default_path(File.dirname(plans_root))
+      log = File.join(File.dirname(plans_root), "log", "development.log")
       aggregate_failures do
-        expect(err.gsub(/[\s│]+/, "")).to include("Progress:#{log}") # the box wraps long paths
-        expect(File.read(log)).to include("luke-backend", "started")
+        expect(err.gsub(/[\s│]+/, "")).to include("Log:#{log}") # the box wraps long paths
+        expect(File.read(log)).to include("engine -- run starting", "engine -- started", 'agent: "luke-backend"')
+        expect(File.read(log)).to match(/ W \[.*engine -- run finished -- \{attempts: \d+, failed: \d+/)
       end
+    end
+
+    it "refuses a log level it does not know, before anything runs" do
+      _out, err, status = run(dry_run: false, rounds: 1, log_level: "loud")
+
+      aggregate_failures do
+        expect(status).to eq(64)
+        expect(err).to include("--log-level loud: use one of debug, info, warn, error, fatal")
+      end
+    end
+
+    it "writes JSON, one object per line, under --log-format json" do
+      with_executor
+      run(dry_run: false, rounds: 1, log_format: "json")
+      lines = File.readlines(File.join(plans_root, "..", "progress.log")).map { JSON.parse(it) }
+
+      expect(lines).to include(a_hash_including("name" => "engine",
+        "message" => "started",
+        "payload" => a_hash_including("agent" => "luke-backend")))
     end
 
     # Narrowed to luke: once he moves the plan to 🟢, hansolo would take it
@@ -524,7 +543,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
       aggregate_failures do
         expect(err).not_to include("started")
-        expect(log).to include("| luke-backend         | 01 |")
+        expect(log).to include('agent: "luke-backend", round: "01"')
       end
     end
 
@@ -739,7 +758,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     it "holds the log, the board and the control room in one box, labels aligned" do
       aggregate_failures do
         expect(boxes).to eq(1)
-        expect(err).to match(%r{│  Progress:     /\S+}).and include("progress.log")
+        expect(err).to match(%r{│  Log: +/\S+}).and include("progress.log")
         expect(err).to match(%r{│  Live board:   memory:// as \S+})
         expect(err).to include('│  Control room: http://127.0.0.1:11000')
       end
@@ -757,7 +776,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
 
       it "says only where the log is" do
-        expect([boxes, err]).to match([1, satisfy { !it.include?("Live board") && it.include?("Progress:") }])
+        expect([boxes, err]).to match([1, satisfy { !it.include?("Live board") && it.include?("Log:") }])
       end
     end
 

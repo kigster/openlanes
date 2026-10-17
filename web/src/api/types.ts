@@ -52,6 +52,9 @@ export interface Car {
   elapsed: number; // seconds
   remaining: number | null; // seconds before its timeout
   held: boolean; // a person asked it to hold for now
+  // Its sub-agents running right now, by name (Task's subagent_type, else its description), oldest first. Empty
+  // when it has none, and always for an adapter whose stream never says (codex, pi).
+  subagents: string[];
   // Queued by set_model for its next round, until a round runs on it. The engine always sends it;
   // optional only until src/board/sample.ts (held by another agent) adds it to sampleCar.
   next_model?: string | null;
@@ -163,6 +166,7 @@ export interface Snapshot {
   backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "lane">>; // not complete, not claimed: for "Choose an existing plan"
   models: ModelChoice[];
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
+  redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"
   log: LogLine[]; // the most recent lines, newest last
   bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
 }

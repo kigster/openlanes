@@ -36,6 +36,16 @@ module OpenLanes
     # @return [String]
     def mask(url) = url.to_s.sub(%r{\A([a-z][a-z0-9+.-]*://)([^:@/]*):[^@/]+@}i, '\1\2:***@')
 
+    # The address with all of its userinfo replaced, user name included, for
+    # a page anyone on the network can open. {.mask} keeps the user name
+    # because a log read by the person who ran the engine is better for it; a
+    # page shown on a shared screen is not.
+    #
+    # @param url [String]
+    # @return [String] `redis://:***@host:6379/0`, or the URL as it was when
+    #   it carries no userinfo
+    def redact(url) = url.to_s.sub(%r{\A([a-z][a-z0-9+.-]*://)[^@/]*@}i, '\1:***@')
+
     # @param url [String]
     # @return [OpenLanes::Live::Store]
     def store(url) = Store.new(url:)

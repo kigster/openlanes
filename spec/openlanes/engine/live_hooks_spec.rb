@@ -148,7 +148,7 @@ RSpec.describe "The engine's live hooks" do
       it "works alone, and says so" do
         aggregate_failures do
           expect([runner.claim(one), runner.foreign?(one)]).to eq([true, false])
-          expect(OpenLanes::UI).to have_received(:log).with("claims unchecked: gone").twice
+          expect(OpenLanes::UI).to have_received(:log).with("claims unchecked: gone", level: :warn).twice
         end
       end
     end

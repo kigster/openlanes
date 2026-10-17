@@ -34,7 +34,8 @@ module OpenLanes
         :state,
         :frame,
         :history,
-        :context) do
+        :context,
+        :running) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -387,7 +388,7 @@ module OpenLanes
           @fenced |= [ordinal]
           @runner.drop_plan(ordinal)
           @running.select { plan_of(it) == ordinal }.each do |job|
-            UI.log("claim lost; stopping", **job.task.log_fields)
+            UI.log("claim lost; stopping", level: :warn, **job.task.log_fields)
             Thread.new { job.handle.kill!(grace: KILL_GRACE, reason: :fenced) }
           end
         end
@@ -476,7 +477,7 @@ module OpenLanes
         # ended the thread, so a stray JSON::ParserError or Errno from `gh`
         # would otherwise end the whole run on the next tick.
         rescue StandardError => e
-          UI.log("pull requests unwatched this time: #{e.message.lines.first.to_s.strip}")
+          UI.log("pull requests unwatched this time: #{e.message.lines.first.to_s.strip}", level: :warn)
           nil
         end
       end
@@ -610,7 +611,7 @@ module OpenLanes
         outcome = unblock.outcome
         if outcome.is_a?(Exception) || !outcome.ok
           note = outcome.is_a?(Exception) ? outcome.message : outcome.note
-          return UI.log("unblock failed: #{note}", plan: unblock.ordinal)
+          return UI.log("unblock failed: #{note}", level: :warn, plan: unblock.ordinal)
         end
 
         @mutex.synchronize do
@@ -650,7 +651,8 @@ module OpenLanes
           context: job.context,
           since: job.started_at,
           session: job.handle.session,
-          unacked: Board::Row.unacked_in(task.subject.feature.path))
+          unacked: Board::Row.unacked_in(task.subject.feature.path),
+          running: job.running || [])
       end
 
       # @param task [OpenLanes::Engine::Runner::Task]
@@ -1009,6 +1011,7 @@ module OpenLanes
               job.up = progress.up
               job.down = progress.down
               job.subagents = progress.subagents
+              job.running = progress.running
               job.context = progress.context
               job.message = progress.message || progress.activity
               job.history = Board::Row.remember(job.history || [], job.message)
@@ -1035,7 +1038,7 @@ module OpenLanes
         @locks.hold(ordinal, subject.feature.path) unless @runner.dry_run?
         true
       rescue Plans::Lock::Held => e
-        UI.log("lock lost: #{e.message}", plan: ordinal)
+        UI.log("lock lost: #{e.message}", level: :warn, plan: ordinal)
         false
       end
 
@@ -1161,7 +1164,7 @@ module OpenLanes
           @mail_plans.delete(ordinal) if pending.empty?
         end
       rescue Live::Unavailable, SystemCallError => e
-        UI.log("mail not drained: #{e.message}")
+        UI.log("mail not drained: #{e.message}", level: :warn)
       end
 
       # @param ordinal [String]
@@ -1172,7 +1175,7 @@ module OpenLanes
         Plans.mailbox(subject.feature.path).deliver(message)
         true
       rescue OpenLanes::Error => e
-        UI.log("mail not kept: #{e.message}", plan: ordinal)
+        UI.log("mail not kept: #{e.message}", level: :warn, plan: ordinal)
         true
       end
 
@@ -1202,10 +1205,12 @@ module OpenLanes
             history: Board::Row.remember(row.history, attempt.note),
             remaining: nil,
             phase: nil,
+            running: [],
             bold: !attempt.ok) }
-          # `to:` is for the terminal's line; the log file keeps its columns.
+          # `to:` names the state the plan moved to, on the terminal and in the log.
           moved = Plans::STATUS_BY_KEY[attempt.to]&.to_s if attempt.advanced?
           UI.log(attempt.ok ? "finished: #{attempt.note}" : "failed: #{attempt.note}",
+            level: attempt.ok ? :info : :warn,
             **job.task.log_fields,
             **{ to: moved }.compact)
         end
@@ -1370,7 +1375,7 @@ module OpenLanes
         entry = Plans::LastKnownState.new(source: "harness", round:, status: "Interrupted", note:)
         Plans::PlanState.for(subject.feature.path).record_last_known(agent.name, entry)
       rescue SystemCallError, OpenLanes::Error => e
-        UI.log("resume record not written: #{e.message}", plan: subject.feature.ordinal.to_s)
+        UI.log("resume record not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
       end
 
       # @param subject [OpenLanes::Plans::Subject]
@@ -1621,7 +1626,7 @@ module OpenLanes
 
         Plans::PlanState.for(subject.feature.path).stage!(agent: agent.name, round:, **fields)
       rescue SystemCallError, OpenLanes::Error => e
-        UI.log("state.json not written: #{e.message}", plan: subject.feature.ordinal.to_s)
+        UI.log("state.json not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
       end
 
       # @return [Hash] adapter, model and effort, when the executor can say

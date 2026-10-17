@@ -154,13 +154,14 @@ module OpenLanes
       def seed(path)
         unless @seeder && File.executable?(@seeder)
           UI.log("worktree: no #{SEEDER_NAME} found (searched #{self.class.seeder_search}), " \
-                 "so #{path} has no .env or credential keys")
+                 "so #{path} has no .env or credential keys",
+            level: :warn)
           return false
         end
 
         return true if system(@seeder, "--quiet", path, out: File::NULL, err: File::NULL)
 
-        UI.log("worktree: could not seed #{path}; its suite may fail on a missing key")
+        UI.log("worktree: could not seed #{path}; its suite may fail on a missing key", level: :warn)
         false
       end
 

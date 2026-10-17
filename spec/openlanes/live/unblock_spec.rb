@@ -80,7 +80,7 @@ RSpec.describe "Unblocking from the run loop", :tree do
     it "tries once, and waits for blocked.md to change before trying again" do
       aggregate_failures do
         expect(executor.calls).to eq(%w[002.00/lando-broker])
-        expect(OpenLanes::UI).to have_received(:log).with("unblock failed: completed", plan: "002.00")
+        expect(OpenLanes::UI).to have_received(:log).with("unblock failed: completed", level: :warn, plan: "002.00")
       end
     end
   end

@@ -101,6 +101,47 @@ RSpec.describe OpenLanes::Lifecycle::Aging, :tree do
     end
   end
 
+  # Another process (a hand rename, a second engine) can move the folder
+  # between the sweep's read and its rename; the machine then refuses, and
+  # the sweep says so at warn and moves on rather than raising.
+  context "when the state machine refuses the move" do
+    before do
+      allow(OpenLanes::Plans::StateMachine).to receive(:new).and_wrap_original do |original, *args|
+        original.call(*args).tap { allow(it).to receive(:promote!).and_raise(OpenLanes::Plans::StateMachine::Refused, "moved under us") }
+      end
+      allow(OpenLanes::UI).to receive(:log)
+    end
+
+    it "bombs nothing, and logs why" do
+      blocked("001.00", "feed", days: 8)
+      dependent("002.00", on: "001.00")
+
+      aggregate_failures do
+        expect(sweep.bombed).to be_empty
+        expect(OpenLanes::UI).to have_received(:log).with("aging: could not bomb: moved under us", level: :warn, plan: "001.00")
+      end
+    end
+
+    it "defers nothing, takes its delayed.md back, and logs why" do
+      path = blocked("001.00", "feed", days: 15)
+
+      aggregate_failures do
+        expect(sweep.deferred).to be_empty
+        expect(File.exist?(File.join(path, "delayed.md"))).to be(false)
+        expect(OpenLanes::UI).to have_received(:log).with("aging: could not defer: moved under us", level: :warn, plan: "001.00")
+      end
+    end
+  end
+
+  it "reads an unparseable signature time as no signature, and falls back to blocked.md" do
+    path = blocked("001.00", "feed", days: 20)
+    state = File.join(path, "state.json")
+    File.write(state, File.read(state).gsub(/"at": ?"[^"]+"/, '"at": "not a time"'))
+    File.utime(Time.now - (3 * day), Time.now - (3 * day), File.join(path, "blocked.md"))
+
+    expect(described_class.new(tree:).age_of(tree.find("001.00"))).to be_within(60).of(3 * day)
+  end
+
   it "leaves a blocked plan with a dependent alone before seven days" do
     blocked("001.00", "feed", days: 6)
     dependent("002.00", on: "001.00")

@@ -44,6 +44,11 @@ RSpec.describe OpenLanes::Adapters::Stream do
     expect(seen.last).to be_a(OpenLanes::Execution::Transcript::Progress)
   end
 
+  # codex and pi never say they delegated, so the page draws no sub-agent tiles for them.
+  it "reports no sub-agents running" do
+    expect(seen.last.running).to eq([])
+  end
+
   it "is not failed when nothing failed" do
     expect(stream.failed?).to be(false)
   end
@@ -58,6 +63,27 @@ RSpec.describe OpenLanes::Adapters::Stream do
 
     it "carries the message" do
       expect([failing.failed?, failing.error]).to eq([true, "rate limited"])
+    end
+  end
+
+  # pi nests what the agent said in a content array, and a truncated line
+  # still starts with a brace; neither may be lost or crash the reader.
+  context "with arrays and a broken line" do
+    subject(:nested) { described_class.new }
+
+    before do
+      nested.push(%({"type":"message","content":[{"type":"image"},{"type":"text","text":"Built the page"}]}\n))
+      nested.push(%({"type":"message","content":[{"type":"image"}]}\n))
+      nested.push(%({"type":"truncated\n))
+      nested.finish
+    end
+
+    it "finds the words inside an array" do
+      expect(nested.result).to eq("Built the page")
+    end
+
+    it "keeps a line that only looks like JSON as plain text" do
+      expect(nested.plain).to eq([%({"type":"truncated)])
     end
   end
 

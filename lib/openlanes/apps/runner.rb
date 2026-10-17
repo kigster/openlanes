@@ -81,6 +81,7 @@ module OpenLanes
       ensure
         @supervisor.stop
         live { Listing.remove(store: @store, keys: @keys, plan: @plan) } unless failed
+        nudge
       end
 
       # The supervisor's publisher: every transition goes out at once, with
@@ -91,12 +92,20 @@ module OpenLanes
       def publish(status)
         @say.call("#{status.process} #{status.state} on port #{status.port}#{": #{status.reason}" if status.reason}")
         heartbeat
+        nudge
       end
 
       private
 
       # @return [void]
       def heartbeat = live { Listing.write(store: @store, keys: @keys, plan: @plan, statuses: @supervisor.statuses) }
+
+      # Tells open pages the app changed. Only on a transition or a stop,
+      # never on the once-a-second {#heartbeat}, which changes nothing a
+      # page shows: an app that is merely up keeps every stream asleep.
+      #
+      # @return [void]
+      def nudge = live { Live::News.publish(store: @store, keys: @keys, kind: "app") }
 
       # @return [Boolean]
       def restart(name, why:)

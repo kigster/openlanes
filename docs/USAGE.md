@@ -139,7 +139,27 @@ Flags can only tighten what an agent declares, never loosen it. Each agent is to
 
 ### Following a run, and stopping it
 
-- `run` and `start` print one line per event on STDERR (an agent started or finished, a plan changed state, a command came from the page, the reason the engine idles). `--quiet` silences them. Progress also goes to a log file (`--log`).
+- `run` and `start` print one line per event on STDERR (an agent started or finished, a plan changed state, a command came from the page, the reason the engine idles). `--quiet` silences them. The same events also go to the log, which the terminal output does not replace.
+
+### The log
+
+The engine (`run`, `start`) and the control room's server (`web`, or the one `run` and `start` spawn) write one log through SemanticLogger: `log/development.log` under the project root, created when missing, appended to by both processes. Each line carries its process id and its writer, `engine` or `web`. The server logs every API request (method, path, status, duration in ms, and the page id when there is one); the event stream logs when it opens and when it closes, and static files and `/healthz` log at debug only.
+
+```text
+2026-10-15 20:25:44.277017 I [7415:592] engine -- idle: no plans yet; create one from the page or with openlanes create
+2026-10-15 20:25:44.409615 I [7437:puma srv tp 001] (0.300ms) web -- GET /api/chat 422 -- {method: "GET", path: "/api/chat", status: 422, page: "tab-42"}
+2026-10-15 20:25:47.514154 I [7437:puma srv tp 001] (3.078s) web -- GET /api/events stream closed -- {method: "GET", path: "/api/events", status: 200, page: "tab-42"}
+```
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `-l`, `--log FILE` | `log/development.log` | where to append; relative to the project root; `-` for STDOUT |
+| `-L`, `--log-level LEVEL` | `info` | `debug`, `info`, `warn`, `error` or `fatal`; lower levels are not written |
+| `--log-format FORMAT` | `standard` | `standard` (one line per entry) or `json` (one object per line) |
+
+`run`, `start` and `web` take all three, and `run`/`start` hand theirs to the server they spawn (through `OPENLANES_LOG`, `OPENLANES_LOG_LEVEL` and `OPENLANES_LOG_FORMAT`), so both processes always write the same file. A project can set them once in `.openlanes.yml` under `commands: run:` (or `start:`, `web:`) as `log:`, `log_level:` and `log_format:`. The server's raw STDOUT and STDERR (a crash before its logger is up) still go to a file under the system temp directory.
+
+The log is never rotated or capped. For a long-running `start`, rotate it externally with `copytruncate` (logrotate, or `newsyslog` on macOS): both processes append with O_APPEND, so truncating in place is safe and neither needs a restart. `log/` is created in the project's own checkout, so add `/log/*` to the project's `.gitignore` if it is not there already. A URL's password is replaced by `***` in every line, whether it appears in the message or in a field.
 - `unblock` and `create` show each agent as a spinner line on a terminal.
 - Ctrl-C once asks each running agent to leave a `RESUME:` note in its plan's mailbox and sign `Interrupted`. Every agent reads its mail before it starts, so a later run picks up where this one stopped. A second Ctrl-C aborts immediately.
 
