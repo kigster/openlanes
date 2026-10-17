@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "027.00",
+    "slug": "agent-asks-for-more-time"
+  },
+  "state": "new",
+  "updated_at": "2026-10-16T23:33:04-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}
