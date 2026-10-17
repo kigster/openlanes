@@ -52,4 +52,33 @@ RSpec.describe OpenLanes::Execution::Transcript do
     transcript.push(assistant({ type: "text", text: '{"openlanes_memory": {"kind": "wish", "text": "x"}}' }))
     expect(transcript.journal.map(&:class)).to eq([OpenLanes::Plans::Journal::Rejection])
   end
+
+  context "with --include-partial-messages" do
+    def streamed(inner, parent: nil) = "#{JSON.generate(type: "stream_event", parent_tool_use_id: parent, event: inner)}\n"
+
+    def delta(text, index: 0, type: "text_delta", parent: nil)
+      key = type == "text_delta" ? :text : :partial_json
+      streamed({ type: "content_block_delta", index:, delta: { type:, key => text } }, parent:)
+    end
+
+    before { transcript.push(streamed({ type: "content_block_start", index: 0, content_block: { type: "text" } })) }
+
+    it "keeps a finished line when the agent is killed before the message arrives" do
+      transcript.push(delta(decision[0, 9]))
+      transcript.push(delta("#{decision[9..]}\n#{done[0, 8]}"))
+      expect(seen.last.journal.map(&:kind)).to eq(["decision"])
+    end
+
+    it "does not take the line again when the message arrives" do
+      transcript.push(delta("#{decision}\n"))
+      transcript.push(assistant({ type: "text", text: "#{decision}\n#{done}" }))
+      expect(kinds).to eq(%w[decision done])
+    end
+
+    it "ignores a sub-agent's deltas and a tool's input" do
+      transcript.push(delta("#{decision}\n", parent: "toolu_1"))
+      transcript.push(delta("#{decision}\n", index: 1, type: "input_json_delta"))
+      expect(kinds).to eq([])
+    end
+  end
 end
