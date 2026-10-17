@@ -39,6 +39,11 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
       expect(described_class.answers("## B1 Vendor\n## **A1.** Acme\n")).to eq(1 => "Acme\n")
     end
 
+    it "keeps an answer's own leading punctuation, which can reverse it" do
+      answers = described_class.answers("## B1 Offset\n## A1. -1\n## B2 Flag\n## A2: --no-delete\n## B3 Pick\n## A3 - Retain\n")
+      expect(answers).to eq(1 => "-1\n", 2 => "--no-delete\n", 3 => "Retain\n")
+    end
+
     it "keeps a heading inside an answer, and stops at the next question" do
       answers = described_class.answers("## B1 Store\n\n## A1\n\n### Database\nUse Postgres\n\n## B2 Next\n\nWhat?\n")
       expect(answers).to eq(1 => "\n### Database\nUse Postgres\n\n")

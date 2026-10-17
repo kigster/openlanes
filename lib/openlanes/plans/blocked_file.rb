@@ -14,6 +14,12 @@ module OpenLanes
       # Any Markdown heading, which ends the body of the question above it.
       HEADING = /^[ \t]{0,3}\#{1,6}[ \t]/
 
+      # What sits between `A1` and the answer on its heading: a `.`, `:` or
+      # `)`, the close of a bold `**A1.**`, or a dash with a space after it.
+      # Only that, because the answer's own punctuation is part of it: `-1`
+      # and `--no-delete` are decisions, and `1` and `no-delete` the opposite.
+      SEPARATOR = /\A[ \t]*[.:)]?\**[ \t]*(?:[-–—][ \t]+)?/
+
       # A question or an answer heading, either of which ends an answer.
       BLOCK = Regexp.union(OPEN_BLOCK, ANSWER_BLOCK)
 
@@ -43,7 +49,7 @@ module OpenLanes
       def answers(text)
         lines = text.to_s.lines
         spans(lines, ANSWER_BLOCK, ends: BLOCK).to_h do |number, (from, to)|
-          title = lines[from - 1].sub(ANSWER_BLOCK, "").sub(/\A[\s.:)*-]+/, "").strip
+          title = lines[from - 1].sub(ANSWER_BLOCK, "").sub(SEPARATOR, "").strip
           [number, "#{"#{title}\n" unless title.empty?}#{lines[from...to].join}"]
         end
       end
