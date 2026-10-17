@@ -22,6 +22,11 @@
       "description": "The last state the harness moved the folder to. The folder name is authoritative.",
       "type": ["string", "null"]
     },
+    "moves": {
+      "description": "How many times openlanes has moved the folder to another state. A settling stage notes the count, so a later move, even away and back, is seen.",
+      "type": "integer",
+      "minimum": 0
+    },
     "updated_at": { "type": ["string", "null"], "format": "date-time" },
     "resume_until": {
       "description": "Until when a 💣 on this plan does not halt the run: the control room's Resume anyway for 24 h.",
@@ -29,7 +34,7 @@
       "format": "date-time"
     },
     "stages": {
-      "description": "One record per agent per round, written by the harness.",
+      "description": "One record per dispatch of an agent's round, in dispatch order, written by the harness.",
       "type": "array",
       "items": {
         "type": "object",
@@ -41,6 +46,7 @@
           "status": { "$ref": "#/$defs/status" },
           "from": { "type": "string" },
           "to": { "type": "string" },
+          "moves": { "description": "The plan's moves when this round settled.", "type": "integer", "minimum": 0 },
           "started_at": { "type": "string", "format": "date-time" },
           "finished_at": { "type": "string", "format": "date-time" },
           "adapter": { "enum": ["claude", "codex", "pi"] },
@@ -50,6 +56,14 @@
           "down": { "type": "integer", "minimum": 0 },
           "seconds": { "type": "number", "minimum": 0 },
           "note": { "type": "string" },
+          "session": {
+            "description": "The CLI's session id for this round, as soon as its stream named it. `claude --resume <id>`, run from `cwd`, carries it on by hand.",
+            "type": "string"
+          },
+          "cwd": {
+            "description": "The checkout the round ran in. A claude session is found only from the directory it ran in.",
+            "type": "string"
+          },
           "run": {
             "description": "The harness process that dispatched it, so a restart can tell a crash from a live run.",
             "type": "object",

@@ -128,33 +128,119 @@ module OpenLanes
 
       # ---- the harness --------------------------------------------------------
 
-      # Record or update one agent's round. A second call for the same agent
-      # and round updates the first, so a round is one record from dispatch
-      # to settlement.
+      # Record or update one agent's round. A later call for the same agent
+      # and round updates the latest record of it, so a round is one record
+      # from dispatch to settlement.
+      #
+      # A new dispatch passes +reset+, which appends a record rather than
+      # finding one: rounds are numbered per state and per run, so round 1 of
+      # a later run shares its number with round 1 of an earlier one. Merging
+      # into the earlier record would carry its session, checkout and outcome
+      # into a round that has none of them yet, and replacing it would lose
+      # that round from `openlanes state show`. Appending keeps both, in
+      # dispatch order, which {#resumption} relies on when two rounds started
+      # in the same second.
       #
       # @param agent [String]
       # @param round [Integer]
+      # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
-      #   effort, up, down, seconds, note, to, run
+      #   effort, up, down, seconds, note, to, run, session, cwd
       # @return [Hash] the stage as written
-      def stage!(agent:, round:, **fields)
+      def stage!(agent:, round:, reset: false, **fields)
         stage = nil
         update do |data|
-          stage = data["stages"].find { |s| s["agent"] == agent && s["round"] == round }
+          stage = data["stages"].rfind { |s| s["agent"] == agent && s["round"] == round } unless reset
           unless stage
             stage = { "agent" => agent, "round" => round }
             data["stages"] << stage
           end
           stage.merge!(fields.transform_keys(&:to_s).compact)
+          # A settling round notes how often the plan had moved by then, in
+          # the same write, so {#resumption} sees a move no stage recorded.
+          stage["moves"] = data["moves"].to_i if fields.key?(:to)
         end
         stage
+      end
+
+      # Whether one agent's next round may carry on the session its last one
+      # ran in (M1), and if not, why not. Asked before the new round's own
+      # stage is written, so the answer is about the rounds before it.
+      #
+      # The latest stage of +agent+ that names a session is the candidate. It
+      # is resumable only when it settled leaving the plan in +state+, no
+      # stage started after it moved the plan anywhere else, and it ran in
+      # +root+: `claude` keeps its sessions per working directory, so an id
+      # recorded in a worktree is not found from the main checkout. The
+      # candidate's own `from` is not compared, because an agent that
+      # `starts_as` renames the folder on dispatch: its first round leaves
+      # from Planned and works in Building, and its second leaves from
+      # Building.
+      #
+      # A move no agent made, such as `resync dirs` or a person through
+      # the CLI, records no stage, so {#state!} counts every move in `moves`
+      # and a settling stage notes the count it saw: a count that has grown
+      # since means the plan went away and came back. A folder renamed by
+      # hand, outside openlanes, is not counted.
+      #
+      # A round that ends Blocked starts the next one fresh, after the
+      # person answers: the plan went to Blocked and back. That is the case
+      # where the earlier context would help most, and it is deliberately
+      # conservative for now; the answer reaches the agent through
+      # blocked.md either way.
+      #
+      # @param agent [String]
+      # @param state [#to_s] the state key the plan is in now
+      # @param root [String] the checkout the new round will run in
+      # @return [OpenLanes::Plans::PlanState::Resumption]
+      def resumption(agent:, state:, root:)
+        data = read
+        all = data["stages"]
+        # `started_at` has second precision, so two rounds can tie on it; the
+        # one dispatched later sits later in the array.
+        last, = all.each_with_index
+                   .select { |s, _| s["agent"] == agent && !s["session"].to_s.empty? }
+                   .max_by { |s, i| [started(s), i] }
+        return Resumption.new(session: nil, reason: "no session recorded for #{agent}") unless last
+
+        session = last["session"]
+        state = state.to_s
+        reason = if last["to"].to_s.empty?
+                   "round #{last["round"]} (#{session}) never settled"
+                 elsif last["to"] != state
+                   "the plan moved to #{last["to"]} after round #{last["round"]} (#{session})"
+                 elsif (moved = moved_since(all, last, state))
+                   "the plan moved to #{moved} since round #{last["round"]} (#{session})"
+                 elsif last.key?("moves") && data["moves"].to_i != last["moves"]
+                   "the plan moved away and back since round #{last["round"]} (#{session})"
+                 elsif File.expand_path(last["cwd"].to_s) != File.expand_path(root) || last["cwd"].to_s.empty?
+                   "session #{session} ran in #{last["cwd"] || "an unrecorded checkout"}, not #{root}"
+                 end
+        Resumption.new(session: reason ? nil : session, reason: reason || "round #{last["round"]} left it in #{state}")
+      end
+
+      # What {#resumption} decided.
+      #
+      # @!attribute [r] session
+      #   @return [String, nil] the id to resume, nil to start fresh
+      # @!attribute [r] reason
+      #   @return [String] why, for the log
+      Resumption = Data.define(:session, :reason) do
+        # @return [Boolean]
+        def resume? = !session.nil?
       end
 
       # @param key [Symbol, String] the state the folder was just moved to
       # @return [void]
       def state!(key)
-        update { |data| data["state"] = key.to_s }
+        update do |data|
+          data["moves"] = data["moves"].to_i + 1 unless data["state"] == key.to_s
+          data["state"] = key.to_s
+        end
       end
+
+      # @return [Integer] how many times {#state!} has moved the plan
+      def moves = read["moves"].to_i
 
       # Stages a dead harness left Started. Nobody is working them, and nobody
       # will finish them unless a run picks them up.
@@ -488,6 +574,24 @@ module OpenLanes
       def lock_key
         plans = File.expand_path(File.dirname(dir))
         Digest::SHA256.hexdigest("#{plans}\0#{identity["ordinal"] || File.basename(dir)}")[0, 16]
+      end
+
+      # @param stage [Hash]
+      # @return [Time]
+      def started(stage) = parse_time(stage["started_at"])
+
+      # @param all [Array<Hash>] every stage
+      # @param since [Hash] the stage to look after
+      # @param state [String]
+      # @return [String, nil] a state some later stage left the plan in, other
+      #   than +state+
+      def moved_since(all, since, state)
+        after = started(since)
+        at = all.index { it.equal?(since) }
+        all.each_with_index
+           .select { |s, i| i > at || started(s) > after }
+           .map { |s, _| s["to"].to_s }
+           .find { !it.empty? && it != state }
       end
 
       # @param one [Hash]

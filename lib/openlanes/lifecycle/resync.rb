@@ -291,7 +291,14 @@ module OpenLanes
         # @return [void]
         # @raise [OpenLanes::Error] when the target name is already taken
         def rename(change)
-          return if OpenLanes.move_directory(change.source, change.target)
+          if OpenLanes.move_directory(change.source, change.target)
+            # Counted like any other move, so a session left in the state
+            # the plan has just been taken out of is not resumed when it
+            # comes back. A folder with no state.json has no session to lose.
+            state = Plans::PlanState.for(change.target)
+            state.state!(change.to) if change.from != change.to && state.exist?
+            return
+          end
 
           raise Error, "cannot rename #{change.dirname} — #{File.basename(change.target)} already exists"
         end
