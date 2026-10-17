@@ -18,8 +18,9 @@ module OpenLanes
       # makes `../` meaningless here rather than merely refused.
       PLAN_FILES = %w[spec.md plan.md contract.md blocked.md research.md design.md].freeze
 
-      # Host headers the server answers. Loopback only, so a page on another
-      # site cannot reach it through DNS rebinding.
+      # Host headers the server always answers: loopback, so a page on another
+      # site cannot reach it through DNS rebinding. A server listening beyond
+      # this machine adds its own addresses and name ({Listen#permitted_hosts}).
       LOCAL_HOSTS = ["localhost", IPAddr.new("127.0.0.0/8"), IPAddr.new("::1")].freeze
 
       # What `/` says when the page was never built.
@@ -53,6 +54,7 @@ module OpenLanes
         def serving(context)
           Class.new(self) do
             set :context, context
+            set :host_authorization, { permitted_hosts: LOCAL_HOSTS + context.listen.permitted_hosts }
             set :public_folder, context.dist
           end
         end

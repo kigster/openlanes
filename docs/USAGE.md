@@ -100,6 +100,8 @@ It never ends on its own, not even once every plan is finished, since the page c
 
 `openlanes web` serves the page on its own; `openlanes web --demo` replays a sample run with no agents.
 
+It listens on `127.0.0.1:11000`. `-p` / `--port` moves the port. `-i` / `--ips 127.0.0.1,192.168.1.20` listens on the addresses given, and `-I` on every interface (the same as `--ips 0.0.0.0`), so other machines can open the page. The page has no login: anyone who reaches it can stop agents, answer their questions and message them, so `openlanes web` warns whenever it listens beyond loopback, even under `--quiet`. It still answers only Host headers naming loopback, an address it listens on, or this machine's name, which keeps DNS rebinding out.
+
 ### `openlanes run`: headless, or to a fixed point
 
 `openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which always ends there.

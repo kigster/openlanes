@@ -42,6 +42,9 @@ module OpenLanes
     # @!attribute [r] chat
     #   @return [OpenLanes::Live::Chat, nil] the chat between machines (plan 006),
     #     relayed to this server's pages; nil where nothing serves it
+    # @!attribute [r] listen
+    #   @return [OpenLanes::Web::Listen] the addresses served, which decide
+    #     the Host headers answered
     # @!attribute [r] stopping
     #   @return [Concurrent::AtomicBoolean] set when the server shuts down, so
     #     open streams end on the `stop` nudge that follows
@@ -58,9 +61,10 @@ module OpenLanes
       :copilot,
       :background,
       :chat,
+      :listen,
       :stopping) do
       def initialize(dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
-        background: Context::THREAD, stopping: Concurrent::AtomicBoolean.new, **rest)
+        background: Context::THREAD, listen: Listen.parse(nil), stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end
 

@@ -25,8 +25,8 @@ module OpenLanes
     # Where the server listens unless told otherwise (contract.md).
     DEFAULT_PORT = 11_000
 
-    # Loopback only: the page can stop agents, and nothing off this machine
-    # may reach it (W3).
+    # Loopback by default: the page can stop agents and has no login, so
+    # nothing off this machine reaches it unless `--ips` or `-I` says so (W3).
     HOST = "127.0.0.1"
 
     module_function

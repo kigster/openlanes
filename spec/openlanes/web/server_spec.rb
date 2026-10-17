@@ -5,6 +5,15 @@ require "net/http"
 # The app on a real Puma, on a free port: what rack-test cannot show is that
 # an event stream really streams, frame by frame, while other requests are
 # answered beside it.
+# CircleCI's containers have no IPv6 loopback, so binding `::1` there raises
+# EADDRNOTAVAIL: probe it rather than assume every machine has one.
+ipv6_loopback = begin
+  Socket.tcp_server_sockets("::1", 0).each(&:close)
+  true
+rescue SystemCallError, SocketError
+  false
+end
+
 RSpec.describe OpenLanes::Web::Server do
   subject(:server) { described_class.new(app: OpenLanes::Web.app(context), context:, port: 0).start }
 
@@ -23,7 +32,40 @@ RSpec.describe OpenLanes::Web::Server do
   def get(path) = Net::HTTP.get_response(uri.host, path, uri.port)
 
   it "listens on loopback only" do
-    expect(server.url).to match(%r{\Ahttp://127\.0\.0\.1:\d+\z})
+    expect([server.url, server.urls, server.listen.public?])
+      .to match([%r{\Ahttp://127\.0\.0\.1:\d+\z}, [server.url], false])
+  end
+
+  context "with two addresses", if: ipv6_loopback do
+    subject(:server) do
+      described_class.new(app: OpenLanes::Web.app(context),
+        context:,
+        port: 0,
+        listen: OpenLanes::Web::Listen.parse("127.0.0.1,::1")).start
+    end
+
+    it "answers on both, on the one port it reports" do
+      six = Net::HTTP.get_response(URI("http://[::1]:#{server.port}/healthz"))
+      expect([get("/healthz").code, six.code, server.urls])
+        .to eq(["200", "200", ["http://127.0.0.1:#{server.port}", "http://[::1]:#{server.port}"]])
+    end
+  end
+
+  context "when a later address cannot be bound" do
+    # 192.0.2.1 is TEST-NET-1, never this machine's, so binding it fails.
+    subject(:server) do
+      described_class.new(app: OpenLanes::Web.app(context),
+        context:,
+        port: 0,
+        listen: OpenLanes::Web::Listen.parse("127.0.0.1,192.0.2.1"))
+    end
+
+    it "closes the listeners it had already bound, and raises" do
+      opened = []
+      allow(TCPServer).to(receive(:new).and_wrap_original { |original, *args| original.call(*args).tap { opened << it } })
+      expect { server.start }.to raise_error(Errno::EADDRNOTAVAIL)
+      expect([opened.size, opened.all?(&:closed?), server.port]).to eq([1, true, 0])
+    end
   end
 
   it "answers /healthz" do

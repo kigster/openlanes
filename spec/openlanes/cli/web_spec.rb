@@ -19,6 +19,9 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     allow(OpenLanes::Live).to receive_messages(connect: store, store:)
     allow(OpenLanes::Web).to receive(:server) do |**keywords|
       built[:server] = keywords
+      allow(server).to receive_messages(listen: keywords[:listen],
+        port: 11_000,
+        urls: keywords[:listen].urls(11_000, addresses: %w[127.0.0.1 192.168.1.20]))
       server
     end
     allow(OpenLanes::Web).to receive(:demo) do |**keywords|
@@ -171,6 +174,66 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
 
     it "refuses and names the flag" do
       expect([result[2], stderr]).to match([69, include("Port 11000 is taken", "--port")])
+    end
+  end
+
+  describe "where it listens" do
+    it "is loopback unless told otherwise, and warns of nothing" do
+      result
+      expect([built[:server][:listen].ips, stderr]).to match([%w[127.0.0.1], satisfy { !it.include?("no login") }])
+    end
+
+    it "takes -p as --port" do
+      expect(described_class.options.find { it.name == :port }.aliases).to eq(["-p"])
+    end
+
+    context "with --ips" do
+      let(:result) { run(ips: "127.0.0.1, 192.168.1.20") }
+
+      it "listens on each, and answers to them in the Host header" do
+        result
+        listen = built[:server][:listen]
+        expect([listen.ips, built[:server][:context].listen]).to eq([%w[127.0.0.1 192.168.1.20], listen])
+      end
+
+      it "prints the other addresses and warns that the page has no login, even with --quiet" do
+        quiet = unwrapped(run(ips: "192.168.1.20", quiet: true)[1])
+        expect([stderr, quiet]).to match([include("Also on: http://192.168.1.20:11000", "no login"),
+                                          include("Listening on 192.168.1.20", "no login")])
+      end
+
+      it "logs the warning" do
+        result
+        log = File.read(File.join(File.dirname(plans_root), "log", "development.log"))
+        expect(log).to include("listening beyond loopback")
+      end
+    end
+
+    context "with -I" do
+      let(:result) { run(all_interfaces: true) }
+
+      it "listens everywhere, and opens the page on loopback" do
+        result
+        expect([built[:server][:listen].ips, stderr]).to match([%w[0.0.0.0], include("Also on: http://192.168.1.20:11000")])
+      end
+    end
+
+    it "refuses -I beside --ips" do
+      expect(run(all_interfaces: true, ips: "127.0.0.1")).to match([anything, include("--ips or -I, not both"), 64])
+    end
+
+    it "refuses an address that is not one" do
+      expect(run(ips: "127.0.0.1,nope")).to match([anything, include('--ips: "nope" is not an IP address'), 64])
+    end
+
+    context "when an address is not this machine's" do
+      let(:result) { run(ips: "10.255.255.1") }
+
+      before { allow(server).to receive(:start).and_raise(Errno::EADDRNOTAVAIL) }
+
+      it "refuses and names the addresses" do
+        expect([result[2], stderr]).to match([69, include("--ips 10.255.255.1", "not one of this machine's")])
+      end
     end
   end
 
