@@ -12,6 +12,11 @@ RSpec.describe OpenLanes::Web::Listen do
       expect(described_class.parse(" 127.0.0.1,192.168.1.20 ,127.0.0.1").ips).to eq(%w[127.0.0.1 192.168.1.20])
     end
 
+    it "drops what a wildcard beside it covers, which Linux would refuse to bind twice" do
+      expect(%w[0.0.0.0,127.0.0.1,192.168.1.20 127.0.0.1,0.0.0.0,::1 ::,0.0.0.0,127.0.0.1,::1].map { described_class.parse(it).ips })
+        .to eq([%w[0.0.0.0], %w[0.0.0.0 ::1], %w[::]])
+    end
+
     it "names what is not an address" do
       expect { described_class.parse("127.0.0.1,box.local") }
         .to raise_error(described_class::Invalid, '"box.local" is not an IP address')

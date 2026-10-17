@@ -77,6 +77,10 @@ module OpenLanes
       EVERYWHERE = "0.0.0.0"
 
       class << self
+        # An address a wildcard given beside it already covers is dropped:
+        # Linux refuses to bind `127.0.0.1` on a port `0.0.0.0` holds, even
+        # with SO_REUSEADDR, and the EADDRINUSE read as "port taken".
+        #
         # @param text [String, nil] comma-separated addresses; blank for {HOST}
         # @return [Listen]
         # @raise [Invalid] naming the address that is not one
@@ -88,7 +92,9 @@ module OpenLanes
           rescue IPAddr::Error
             raise Invalid, "#{ip.inspect} is not an IP address"
           end
-          new(ips: ips.uniq)
+          ips = ips.uniq
+          wildcards = ips.select { wildcard?(it) }
+          new(ips: ips.reject { |ip| wildcards.any? { it != ip && covered(it, [ip]).any? } })
         end
 
         # @param ip [String]
