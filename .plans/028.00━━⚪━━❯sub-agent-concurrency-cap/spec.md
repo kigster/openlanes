@@ -1,6 +1,7 @@
 ---
 created: 2026-10-16
 lane: plan
+depends_on: ["024.00", "025.00"]
 ---
 
 # Sub Agent Concurrency Cap

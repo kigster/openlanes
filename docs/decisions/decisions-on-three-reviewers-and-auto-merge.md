@@ -57,6 +57,7 @@ Two lifecycle labels stay, one is renamed:
 | `review-ok-not-perfect` | `E8E890` | `review-passed` | no ⛔️ or 💣, more than five 🤔 |
 | `review-approved` | `109a10` | `ready-to-merge` | anything else |
 
+- Existing `ready-to-merge` labels meant review approval only, not chewie's verification. Before the new meaning is enabled, a one-time, restart-safe migration relabels every open PR that carries the old `ready-to-merge` to `review-approved`; it is idempotent (a PR already migrated, or already verified by chewie, is left alone), so an interrupted run or a repeated start is harmless. Nothing reads `ready-to-merge` as verified until the migration has finished.
 - The dispatcher makes sure every label exists on the repo, with these colours, when it starts on a project, and creates or updates any that do not match.
 - `review-vulnerability` is the one exception to one label at a time: it sits beside `review-rejected`.
 - The threshold of five 🤔 is a setting, overridable by an environment variable.
@@ -86,11 +87,11 @@ Two lifecycle labels stay, one is renamed:
 
 ### R5. The engine auto-merges a passing PR that merges clean
 
-- With `merge.by: agent`, the engine merges a PR once its verdict passes (`review-approved`, or `review-ok-not-perfect` under `mvp`), chewie-verifier has labelled it `ready-to-merge`, CI is green on the PR and on `main`, and it merges onto `main` without conflicts.
+- With `merge.by: auto` (the spelling `Config::MERGERS` accepts, `lib/openlanes/support/config.rb`; the agent-mode of M4), the engine merges a PR once its verdict passes (`review-approved`, or `review-ok-not-perfect` under `mvp`), chewie-verifier has labelled it `ready-to-merge`, CI is green on the PR and on `main`, and it merges onto `main` without conflicts.
 - Auto-merge only exists once chewie-verifier (plan 014) is built; until then nothing auto-merges. chewie is therefore built with very high priority.
 - With `merge.by: human` nothing changes: the person merges (M4).
 - The engine merges, never an agent (M2 stands).
-- The only conflict check is that this PR merges clean. Changes big enough to collide with everything run alone (R6). After each merge the engine rebases the other open plan branches onto `main`, and conflicts left over are fixed in their next round.
+- The only conflict check is that this PR merges clean. Changes big enough to collide with everything run alone (R6). After each merge the engine rebases the other open plan branches onto `main`, and conflicts left over are fixed in their next round. A rebase moves a checkout's `HEAD`, which `Boundary` would report as an agent commit, so it is queued per checkout until no agent is running in it (before that checkout's next boundary snapshot), and it still refuses a checkout with uncommitted work.
 
 ### R6. A sweeping refactor runs alone
 

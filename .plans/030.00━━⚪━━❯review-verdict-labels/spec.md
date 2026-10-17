@@ -21,4 +21,5 @@ The label is how the engine decides what happens next without a person reading t
 
 - Starting on a repo creates or recolours the labels.
 - Comments with any ⛔️ or 💣 give `review-rejected` (plus `review-vulnerability` for 💣); more than five 🤔 (a setting, env-overridable) gives `review-ok-not-perfect`; otherwise `review-approved`.
+- A restart-safe migration relabels open PRs carrying the old `ready-to-merge` to `review-approved` before the new meaning is enabled. Specs cover existing PRs, an interrupted migration, and repeated startup.
 - Only vader's comments may count 💣 and 🔓.

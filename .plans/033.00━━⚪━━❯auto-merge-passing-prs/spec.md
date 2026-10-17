@@ -8,7 +8,7 @@ depends_on: ["014.00", "030.00"]
 
 ## What we are trying to achieve
 
-With `merge.by: agent`, the engine merges a PR whose verdict passes, which chewie-verifier labelled `ready-to-merge`, whose CI is green on the PR and on `main`, and which merges clean; then it rebases the other open plan branches onto `main`. Decided as R5 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
+With `merge.by: auto`, the engine merges a PR whose verdict passes, which chewie-verifier labelled `ready-to-merge`, whose CI is green on the PR and on `main`, and which merges clean; then it rebases the other open plan branches onto `main`. Decided as R5 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
 
 ## Why it matters
 
@@ -22,4 +22,4 @@ M2 says the engine merges and `gh pr merge` stays ungrantable; `Vcs::Refresh` al
 
 - A passing, verified, green, clean PR is merged by the engine.
 - A PR missing any one condition is not.
-- After a merge, other open plan branches are rebased onto `main`.
+- After a merge, other open plan branches are rebased onto `main`, each queued until no agent is running in that checkout; a merge while another checkout is active leaves that checkout's `HEAD` alone and `Boundary` reports no violation, and uncommitted work is still protected.
