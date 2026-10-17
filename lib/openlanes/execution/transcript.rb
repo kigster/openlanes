@@ -324,11 +324,16 @@ module OpenLanes
       def handle(event)
         case event["type"]
         when "assistant"
-          capture_journal(event)
+          grew = capture_journal(event)
           capture_message(event)
           @tools += tool_calls(event)
           delegate(event)
-          announce(phrase_for(event))
+          # A journal line is published even when the phrase is the one
+          # already showing: the dispatcher keeps only the snapshots it is
+          # handed, so one held back here is lost if the round is killed
+          # before anything else publishes.
+          published = announce(phrase_for(event))
+          publish if grew && !published
         when "user" then collect(event)
         when "stream_event" then meter(event)
         when "system" then system_event(event)
@@ -343,12 +348,13 @@ module OpenLanes
       # agent writes that happens to hold such a line is not a journal entry.
       #
       # @param event [Hash]
-      # @return [void]
+      # @return [Boolean] whether the journal grew
       def capture_journal(event)
-        return unless event["parent_tool_use_id"].nil?
+        return false unless event["parent_tool_use_id"].nil?
 
         lines = blocks_of(event, "text").flat_map { Plans::Journal.scan(it["text"]) }
         @journal.concat(lines)
+        !lines.empty?
       end
 
       # `--brief` gives the agent SendUserMessage, and what it sends is the
@@ -615,12 +621,13 @@ module OpenLanes
       end
 
       # @param phrase [String, nil]
-      # @return [void]
+      # @return [Boolean] whether it published
       def announce(phrase)
-        return if phrase.nil? || phrase == @activity
+        return false if phrase.nil? || phrase == @activity
 
         @activity = phrase
         publish
+        true
       end
 
       # Hand the caller a whole snapshot rather than the one field that moved.

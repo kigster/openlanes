@@ -27,6 +27,17 @@ RSpec.describe OpenLanes::Execution::Transcript do
     expect(seen.last.journal.map(&:kind)).to eq(["decision"])
   end
 
+  it "hands over a new line even when the agent's phrase has not changed" do
+    transcript.push(assistant({ type: "text", text: "Same start.\n#{decision}" }))
+    transcript.push(assistant({ type: "text", text: "Same start.\n#{done}" }))
+    expect(seen.last.journal.map(&:kind)).to eq(%w[decision done])
+  end
+
+  it "publishes nothing extra for a message with no journal line and the same phrase" do
+    2.times { transcript.push(assistant({ type: "text", text: "Same start." })) }
+    expect(seen.size).to eq(1)
+  end
+
   it "ignores a line inside a tool's input, such as a file being written" do
     transcript.push(assistant({ type: "tool_use", name: "Write", input: { file_path: "x.md", content: decision } }))
     expect(kinds).to eq([])
