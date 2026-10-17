@@ -1,0 +1,2 @@
+gem contents: Brewfile present, no bin/*
+bin/setup: all OK, exit 0
