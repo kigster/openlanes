@@ -155,6 +155,27 @@ minimum: 95
 - The engine runs `command` in a clean checkout of the PR and reads `report`. A missing report counts as 0%.
 - Below `minimum` there is no `ok-to-merge`. hansolo rejects any change that lowers `minimum`.
 
+**Amended 2026-10-17, by the owner.** There is no `.openlanes.coverage.yml` any more, and no fallback to it. Coverage is the `coverage:` section of the project's `.openlanes.yml`, which holds one top-level key per config section. luke still writes it, and the gate reads it from the PR's checkout. `command` and `minimum` are required, plus exactly one of two shapes:
+
+```yaml
+coverage:                    # a command prints the line percentage
+  command: bundle exec rspec
+  report_command: cat coverage/coverage.json | jq '.total.lines.percent'
+  minimum: 95
+```
+
+```yaml
+coverage:                    # a report file, read by one of the parsers
+  command: npm test -- --coverage
+  report: coverage/coverage-summary.json
+  format: istanbul           # lcov | cobertura | istanbul | simplecov
+  minimum: 95
+```
+
+- `report_command` runs in the checkout after `command` succeeds. Its STDOUT must be one number from 0 to 100. Anything else (text, nothing, several numbers, a non-zero exit) counts as an unreadable report, and so as 0%, which is how a report a parser cannot read is handled too. A missing report still counts as 0%.
+- `format` beside `report_command`, `report` beside `report_command`, `report` without `format` (or the reverse), neither shape, and any unknown key are each an error naming `.openlanes.yml` and the `coverage` section.
+- No `coverage:` section is not a plain rejection. chewie sends the PR back to luke with one note: add a `coverage:` section to `.openlanes.yml` for this stack, with both shapes shown. The PR is still labelled `review-rejected` and the plan goes to 🔴, but this send-back does not count against `merge.max_rejections`. It is a setup gap, not a defect in the code, and counting it would bring a plan nearer the arbitrator (M6) for something the build never got wrong. Once luke writes the section, the gate works as above.
+
 ## Project setup
 
 ### M16. `lanes init` interviews in the terminal through inquirex-tty
