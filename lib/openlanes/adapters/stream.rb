@@ -15,6 +15,9 @@ module OpenLanes
     # its events keeps working, and one that stops reporting usage shows a
     # meter at zero rather than a crash.
     class Stream
+      # Events that carry part of a message still being written. A line read
+      # out of one would be read again, whole or cut, when the message closes.
+      PARTIAL = /delta|update|partial|chunk/i
       # @param trace [String, nil] where every line is kept verbatim
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
       def initialize(trace: nil, &on_progress)
@@ -30,6 +33,8 @@ module OpenLanes
         @activity = nil
         @result = nil
         @error = nil
+        @journal = []
+        @heard = {}
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -59,6 +64,10 @@ module OpenLanes
       # @return [String, nil]
       attr_reader :trace_path
 
+      # @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #   the journal lines printed so far
+      def journal = @journal.dup
+
       # @return [Integer, nil]
       attr_accessor :pid
 
@@ -83,7 +92,14 @@ module OpenLanes
       #
       # @return [OpenLanes::Execution::Transcript::Progress]
       def progress
-        Execution::Transcript::Progress.new(activity:, up:, down:, subagents: 0, pid:, message: nil, running: [])
+        Execution::Transcript::Progress.new(activity:,
+          up:,
+          down:,
+          subagents: 0,
+          pid:,
+          message: nil,
+          running: [],
+          journal: @journal.dup.freeze)
       end
 
       # @param chunk [String, nil]
@@ -141,7 +157,62 @@ module OpenLanes
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
         end
+        take_journal(event) unless type.match?(PARTIAL) || type.match?(/tool|command|exec/i)
         @on_progress&.call(progress)
+      end
+
+      # Journal lines (M2) in what the agent itself said, in every text block
+      # of every message it finished. Not {#text_in}, which takes the first
+      # `text` anywhere in the event: that can be a tool's output, which would
+      # make a file the agent read into its memory, and it misses a line in a
+      # message's second block.
+      #
+      # A CLI read by shape delivers the same message more than once: as it
+      # closes, and again in a summary of the turn or the run. So a message
+      # already taken is not taken again, by its id or else by its words, while
+      # the same line in two different messages is kept twice: an agent may
+      # mean `todo U1` again after it said `done U1`.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def take_journal(event)
+        messages_in(event).each do |message|
+          texts = texts_of(message)
+          key = message["id"] || texts
+          next if texts.empty? || @heard.key?(key)
+
+          @heard[key] = true
+          texts.each { @journal.concat(Plans::Journal.scan(it)) }
+        end
+      end
+
+      # The agent's own messages an event carries: one under `item` (codex)
+      # or `message` (pi), or a list under `messages`. A message that names
+      # a role other than the assistant's is a prompt or a tool result, and
+      # an item typed as anything but a message is a command, a file change
+      # or reasoning.
+      #
+      # @param event [Hash]
+      # @return [Array<Hash>]
+      def messages_in(event)
+        found = [event["item"], event["message"], *Array(event["messages"])]
+        found.select do |message|
+          message.is_a?(Hash) &&
+            [nil, "assistant"].include?(message["role"]) &&
+            (message["type"].nil? || message["type"].to_s.match?(/message|assistant/i))
+        end
+      end
+
+      # @param message [Hash]
+      # @return [Array<String>] its text, block by block, tool calls left out
+      def texts_of(message)
+        content = message["content"]
+        blocks = if content.is_a?(Array)
+                   content.select { it.is_a?(Hash) && [nil, "text", "output_text"].include?(it["type"]) }.map { it["text"] }
+                 else
+                   [message["text"], content]
+                 end
+        blocks.select { it.is_a?(String) && !it.strip.empty? }
       end
 
       # Usage counts arrive per turn, so they are added rather than replaced.
