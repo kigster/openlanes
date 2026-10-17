@@ -4,6 +4,14 @@ Decided 2026-10-16 by the owner (kig).
 
 A new round today starts a new session with an empty context, and gets back only what is on disk plus a thin resume record. Agents redo work, and spend time and tokens doing it. These decisions keep what an agent learned from one round to the next.
 
+### M0. The principle: a person intervenes as rarely as possible
+
+This is the primary guiding principle of the whole system, and every decision here is measured against it. An agent is asked before a person (M4); nobody answering has a default; and the questions a person must answer are asked up front, while they are already there, rather than as blocks in the middle of a run.
+
+### M6. A new idea is grilled before its spec is saved
+
+When a person adds a new idea through the page, the page interviews them, one question at a time with a recommended answer each, as the grill-me skill does, before `spec.md` is written. The answers go into the spec, so the agents downstream find the decisions already made instead of blocking to ask for them.
+
 ### M1. A round resumes the previous round's session
 
 - An adapter that can resume (`resumes?`; only claude today) MUST resume: the next round of the same agent, on the same plan state, in the same checkout, runs with `--resume <session id>`.
