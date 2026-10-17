@@ -5,8 +5,8 @@
     "ordinal": "017.00",
     "slug": "ability-to-view-markdowns"
   },
-  "state": "building_ui",
-  "updated_at": "2026-10-17T12:11:29-07:00",
+  "state": "verifying",
+  "updated_at": "2026-10-17T12:29:59-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -226,7 +226,7 @@
     {
       "agent": "rey-frontend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "rejected",
       "started_at": "2026-10-17T12:05:00-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
@@ -237,7 +237,76 @@
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "e852cb85-28e1-4d35-a944-37f44bee22db"
+      "session": "e852cb85-28e1-4d35-a944-37f44bee22db",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-17T12:11:47-07:00",
+      "up": 791571,
+      "down": 7266,
+      "seconds": 398.9,
+      "note": "completed - 13 tool calls; pushed to https://github.com/kigster/openlanes/pull/79",
+      "moves": 5
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "ready_for_review",
+      "started_at": "2026-10-17T12:11:49-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8b8f87b2-04d8-4a7f-8f7f-f6a730eb3171",
+      "to": "in_review",
+      "finished_at": "2026-10-17T12:13:21-07:00",
+      "up": 565067,
+      "down": 5139,
+      "seconds": 92.1,
+      "note": "no closing ledger line; Interrupted; no rounds left",
+      "moves": 6
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 2,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-10-17T12:21:19-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8b8f87b2-04d8-4a7f-8f7f-f6a730eb3171",
+      "to": "verifying",
+      "finished_at": "2026-10-17T12:21:54-07:00",
+      "up": 283061,
+      "down": 1601,
+      "seconds": 33.1,
+      "note": "completed - 3 tool calls; approved, on to 🧪 verification",
+      "moves": 7
+    },
+    {
+      "agent": "chewie-verifier",
+      "round": 1,
+      "status": "Started",
+      "from": "verifying",
+      "started_at": "2026-10-17T12:21:55-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "7bed76e1-0888-4312-a640-3092b9d556a8"
     }
   ],
   "signatures": [
@@ -536,6 +605,45 @@
       "status": "Completed",
       "round": 1,
       "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-17T12:11:57-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:13:12-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 2,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-17T12:21:25-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-17T12:21:48-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 2,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-17T12:22:00-07:00",
+      "agent": "chewie-verifier",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:29:59-07:00",
+      "agent": "chewie-verifier",
+      "status": "Completed",
+      "round": 1,
+      "note": "verified"
     }
   ],
   "messages": [
@@ -750,9 +858,16 @@
       "round": 1,
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I signed plan 017.00's back end `Completed` for round 1."
+    },
+    "hansolo-reviewer": {
+      "source": "harness",
+      "at": "2026-10-17T12:13:21-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "no closing ledger line; last ledger line: Completed, round 2: approved; last seen: I found no problems with PR #79 and signed `Completed, round 2 (approved)`, but the approved label did not go on."
     }
   },
-  "moves": 4,
+  "moves": 7,
   "extensions": [
     {
       "number": 1,
@@ -763,6 +878,29 @@
       "asked_at": "2026-10-17T12:03:38-07:00",
       "closed": "finished",
       "settled_at": "2026-10-17T12:04:54-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-17T12:13:21-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-17T12:18:21-07:00"
+    },
+    {
+      "number": 3,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-10-17T12:21:20-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-17T12:21:54-07:00"
     }
   ]
 }
