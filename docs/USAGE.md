@@ -158,6 +158,8 @@ The engine (`run`, `start`) and the control room's server (`web`, or the one `ru
 | `--log-format FORMAT` | `standard` | `standard` (one line per entry) or `json` (one object per line) |
 
 `run`, `start` and `web` take all three, and `run`/`start` hand theirs to the server they spawn (through `OPENLANES_LOG`, `OPENLANES_LOG_LEVEL` and `OPENLANES_LOG_FORMAT`), so both processes always write the same file. A project can set them once in `.openlanes.yml` under `commands: run:` (or `start:`, `web:`) as `log:`, `log_level:` and `log_format:`. The server's raw STDOUT and STDERR (a crash before its logger is up) still go to a file under the system temp directory.
+
+The log is never rotated or capped. For a long-running `start`, rotate it externally with `copytruncate` (logrotate, or `newsyslog` on macOS): both processes append with O_APPEND, so truncating in place is safe and neither needs a restart. `log/` is created in the project's own checkout, so add `/log/*` to the project's `.gitignore` if it is not there already. A URL's password is replaced by `***` in every line, whether it appears in the message or in a field.
 - `unblock` and `create` show each agent as a spinner line on a terminal.
 - Ctrl-C once asks each running agent to leave a `RESUME:` note in its plan's mailbox and sign `Interrupted`. Every agent reads its mail before it starts, so a later run picks up where this one stopped. A second Ctrl-C aborts immediately.
 
