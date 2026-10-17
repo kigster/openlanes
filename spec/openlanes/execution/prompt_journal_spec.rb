@@ -26,6 +26,12 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     expect(text).to include("Your journal on this plan is empty")
   end
 
+  # PlanState reads a missing file as an empty document, so a brand-new
+  # plan's prompt builds rather than raising Errno::ENOENT.
+  it "builds for a plan that has no state.json yet" do
+    expect([File.exist?(state.path), text]).to match([false, include("Your journal on this plan is empty")])
+  end
+
   context "when earlier rounds left a journal" do
     before do
       state.journal!(agent: "luke-backend",
