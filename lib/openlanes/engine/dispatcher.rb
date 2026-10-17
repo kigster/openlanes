@@ -233,8 +233,13 @@ module OpenLanes
       # @return [Boolean]
       def done?
         return false unless quiet?
+        # A quit does not wait for a look: it only reads, and the coverage
+        # run under it is a child process killed at exit.
         return true if Execution::Control.quit?
         return false if @stay
+        # Nor does an ending run return in the middle of one: what it finds
+        # is acted on, on the next tick, before the run reports.
+        return false if @runner.verification&.busy?
 
         next_dispatchable.nil?
       end
@@ -469,9 +474,18 @@ module OpenLanes
       #
       # @return [Array<String>]
       def untouchable
-        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal)
+        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now
         busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) }.map { it.feature.ordinal.to_s }
       end
+
+      # Plans whose CI and coverage are being looked at off the loop's
+      # thread. Untouchable until the look is acted on: a builder started
+      # in the checkout the suite is running in, or a person's rejection
+      # renaming the folder under it, would leave the look acting on a plan
+      # that is no longer the one it read.
+      #
+      # @return [Array<String>]
+      def verifying_now = @runner.verification&.looking || []
 
       # The Redis claim covers machines that share one; the lock file covers
       # a second run on this machine, or one that never reached Redis.
@@ -1648,7 +1662,10 @@ module OpenLanes
         driver = @runner.verification or return
         return if @runner.dry_run?
 
-        subjects = @runner.in_scope.reject { untouchable.include?(it.feature.ordinal.to_s) }
+        # The plans being looked at are untouchable to everything but the
+        # look itself, which is about to be acted on.
+        busy = untouchable - driver.looking
+        subjects = @runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }
         driver.poll(subjects).each do |settled|
           result = settled.result
           @verifying[settled.plan] = result.note if result.kind == :waiting

@@ -122,7 +122,11 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     before do
       plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] }
       verified!
+      allow(outcome).to receive(:look).and_return(look)
     end
+
+    let(:look) { OpenLanes::Engine::Verification::Outcome::Look.new(ci: :pending) }
+    let(:ready) { OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "ready") }
 
     it "looks at once, then not again until the interval has passed" do
       allow(outcome).to receive(:settle).and_return(waiting)
@@ -138,12 +142,56 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
 
       aggregate_failures do
         expect(first.map(&:plan)).to eq(["014.00"])
-        expect(outcome).to have_received(:settle).twice
+        expect(outcome).to have_received(:look).twice
+      end
+    end
+
+    it "only reads on its thread, and acts on what it read on the caller's" do
+      threads = { look: nil, settle: nil }
+      allow(outcome).to receive(:look) { threads[:look] = Thread.current and look }
+      allow(outcome).to receive(:settle) { threads[:settle] = Thread.current and waiting }
+
+      driver.poll([plan])
+      driver.join
+      driver.poll([plan])
+
+      aggregate_failures do
+        expect(threads[:look]).not_to eq(Thread.current)
+        expect(threads[:settle]).to eq(Thread.current)
+        expect(outcome).to have_received(:settle).with(checkout:, plan: anything, pull: anything, round: anything, seen: look)
+      end
+    end
+
+    it "is busy, and names the plan it looks at, until what it found is acted on" do
+      gate = Queue.new
+      allow(outcome).to receive(:look) { gate.pop and look }
+      allow(outcome).to receive(:settle).and_return(waiting)
+
+      driver.poll([plan])
+      during = [driver.busy?, driver.looking]
+      gate << true
+      driver.join
+      finished = driver.busy?
+      driver.poll([plan])
+
+      expect([during, finished, driver.busy?, driver.looking]).to eq([[true, ["014.00"]], true, false, []])
+    end
+
+    it "leaves a plan that moved while it was looked at for the next look" do
+      allow(outcome).to receive(:settle)
+
+      driver.poll([plan])
+      driver.join
+      plan.machine.promote!(:rejected)
+
+      aggregate_failures do
+        expect(driver.poll([plan])).to eq([])
+        expect(outcome).not_to have_received(:settle)
       end
     end
 
     it "logs one plan's failure and carries on with the next look" do
-      allow(outcome).to receive(:settle).and_raise(JSON::ParserError, "unexpected token")
+      allow(outcome).to receive(:look).and_raise(JSON::ParserError, "unexpected token")
       allow(OpenLanes::UI).to receive(:log)
 
       driver.poll([plan])
@@ -156,7 +204,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     end
 
     it "stops looking at a plan once it is ready-to-merge" do
-      allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "ready"))
+      allow(outcome).to receive(:settle).and_return(ready)
 
       driver.poll([plan])
       driver.join
@@ -165,11 +213,11 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       driver.poll([plan])
       driver.join
 
-      expect(outcome).to have_received(:settle).once
+      expect(outcome).to have_received(:look).once
     end
 
     it "looks again at a plan verified afresh after it was ready-to-merge" do
-      allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "ready"))
+      allow(outcome).to receive(:settle).and_return(ready)
 
       driver.poll([plan])
       driver.join
@@ -179,7 +227,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       driver.poll([plan])
       driver.join
 
-      expect(outcome).to have_received(:settle).twice
+      expect(outcome).to have_received(:look).twice
     end
   end
 

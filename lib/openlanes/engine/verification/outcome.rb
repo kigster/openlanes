@@ -39,6 +39,21 @@ module OpenLanes
           def initialize(to: nil, sha: nil, **rest) = super
         end
 
+        # What one look at a verified pull request found, and nothing more:
+        # {#look} reads GitHub and runs the coverage gate, which may take
+        # minutes, so it runs off the dispatcher's thread; {#settle} acts on
+        # it (labels, rejects, renames, mails) back on that thread, where
+        # every other lifecycle change happens.
+        #
+        # @!attribute [r] ci
+        #   @return [Symbol] :labelled (already `ready-to-merge`), :registering
+        #     (no checks yet, within {NO_CHECKS_GRACE}), or a {Vcs::CiGate} verdict
+        # @!attribute [r] verdict
+        #   @return [CoverageGate::Verdict, nil] the gate's, once CI is green
+        Look = Data.define(:ci, :verdict) do
+          def initialize(verdict: nil, **rest) = super
+        end
+
         # Who the comment and the harness's own signature are from.
         AGENT = "chewie-verifier"
 
@@ -178,28 +193,48 @@ module OpenLanes
           Result.new(kind: :committed, note: "verified PR ##{number_of(pull)}; #{pushed}; waiting on CI", sha:)
         end
 
-        # One look at a verified pull request, asked again until it is
-        # labelled or rejected: CI pending waits, and so do no checks at all
-        # within {NO_CHECKS_GRACE} of the verification; CI red or the
+        # Read what decides a verified pull request: its labels, its CI and,
+        # once CI is green, the coverage gate. Changes nothing in the plan,
+        # on GitHub or in the round, so it is safe off the dispatcher's
+        # thread (the gate writes only what the project's suite writes).
+        #
+        # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+        # @param plan [OpenLanes::Plans::Subject]
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @param round [Round] the verified round
+        # @return [Look]
+        def look(checkout:, plan:, pull:, round:)
+          number = number_of(pull)
+          repo = Vcs::GitHub.repo_of(pull.url)
+          return Look.new(ci: :labelled) if labelled_ready?(number, repo)
+
+          ci = Vcs::CiGate.verdict(@github.checks(number:, repo:))
+          ci = :registering if ci == :none && registering?(round)
+          return Look.new(ci:) if %i[registering pending red].include?(ci)
+
+          Look.new(ci:, verdict: gate_verdict(checkout, plan, round))
+        end
+
+        # Act on one look at a verified pull request, asked again until it
+        # is labelled or rejected: CI pending waits, and so do no checks at
+        # all within {NO_CHECKS_GRACE} of the verification; CI red or the
         # coverage gate withholding rejects; otherwise `ready-to-merge` goes on.
         #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
         # @param plan [OpenLanes::Plans::Subject]
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
         # @param round [Round] the verified round
+        # @param seen [Look, nil] what {#look} found; nil looks now
         # @return [Result]
-        def settle(checkout:, plan:, pull:, round:)
+        def settle(checkout:, plan:, pull:, round:, seen: nil)
+          seen ||= look(checkout:, plan:, pull:, round:)
           number = number_of(pull)
-          repo = Vcs::GitHub.repo_of(pull.url)
-          return ready(number, "already #{Plans::ReviewLabel::READY_TO_MERGE}") if labelled_ready?(number, repo)
-
-          ci = Vcs::CiGate.verdict(@github.checks(number:, repo:))
-          return Result.new(kind: :waiting, note: "🧪 no checks yet on PR ##{number}; waiting for CI to start") if ci == :none && registering?(round)
-
-          case ci
+          case seen.ci
+          when :labelled then ready(number, "already #{Plans::ReviewLabel::READY_TO_MERGE}")
+          when :registering then Result.new(kind: :waiting, note: "🧪 no checks yet on PR ##{number}; waiting for CI to start")
           when :pending then Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}")
           when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
-          else gated(checkout:, plan:, pull:, round:)
+          else gated(checkout:, plan:, pull:, round:, verdict: seen.verdict)
           end
         end
 
@@ -237,8 +272,7 @@ module OpenLanes
         private
 
         # @return [Result]
-        def gated(checkout:, plan:, pull:, round:)
-          verdict = gate_verdict(checkout, plan, round)
+        def gated(checkout:, plan:, pull:, round:, verdict:)
           return reject(checkout:, plan:, pull:, round:, why: SETUP, counted: false) if verdict.unconfigured?
           return reject(checkout:, plan:, pull:, round:, why: withheld(verdict)) if verdict.withheld?
 

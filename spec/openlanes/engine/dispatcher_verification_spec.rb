@@ -184,6 +184,38 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       FileUtils.mkdir_p(File.join(plan.feature.path, "verification", "1"))
       File.write(File.join(plan.feature.path, "verification", "1", "report.md"), "Verdict: verified\n")
       File.write(File.join(plan.feature.path, "verification", "1", "published.txt"), "abc1234\n")
+      allow(outcome).to receive(:look).and_return(look)
+    end
+
+    let(:look) { OpenLanes::Engine::Verification::Outcome::Look.new(ci: :pending) }
+
+    def runner_for(driver)
+      OpenLanes::Engine::Runner.new(tree:,
+        executor: executor("verified"),
+        agents: OpenLanes::Agents::Registry.new.only("chewie-verifier"),
+        isolation: :shared,
+        verification: driver,
+        sleeper: ->(_) {})
+    end
+
+    it "does not end, and lets nothing touch the plan, while its look is under way" do
+      gate = Queue.new
+      allow(outcome).to receive(:look) { gate.pop and look }
+      allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :waiting, note: "🧪 waiting on CI for PR #7"))
+      dispatcher = described_class.new(runner: runner_for(driver), sleeper: ->(_) {})
+
+      dispatcher.tick
+      during = [dispatcher.done?, dispatcher.send(:untouchable).include?("014.00")]
+      gate << true
+      driver.join
+      dispatcher.tick
+
+      aggregate_failures do
+        expect(during).to eq([false, true])
+        expect(outcome).to have_received(:settle).once
+        expect(dispatcher.send(:untouchable)).not_to include("014.00")
+        expect(dispatcher.done?).to be(true)
+      end
     end
 
     it "is never handed to chewie again, and is settled by the engine instead" do
@@ -202,7 +234,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       aggregate_failures do
         expect(calls).to be_empty
-        expect(outcome).to have_received(:settle).once.with(checkout:, plan: anything, pull: anything, round: anything)
+        expect(outcome).to have_received(:settle).once.with(checkout:, plan: anything, pull: anything, round: anything, seen: look)
       end
     end
 
