@@ -59,7 +59,9 @@ module OpenLanes
       #     which is what `--resume` carries the agent on in (W28)
       # @!attribute [r] running
       #   @return [Array<String>] the sub-agents working right now, by name,
-      #     oldest first; empty for a stream that never says (codex, pi)
+      #     oldest first; empty for a stream that never says (codex, pi).
+      #     {#subagents} only ever rises, so a tile drawn from it would never
+      #     return to plain once its agent had fanned out
       # @!attribute [r] journal
       #   @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
       #     every journal line (M2) the agent has printed so far, in order. The
@@ -116,6 +118,11 @@ module OpenLanes
       # a better spinner line than sixty characters of absolute path.
       SUBJECTS = %w[file_path pattern description command query url].freeze
 
+      # The `status` values of a `task_notification` that end its task. Any
+      # other value leaves the task in flight: a status this parser has never
+      # seen is not evidence that the sub-agent stopped.
+      TERMINAL = %w[completed failed stopped].freeze
+
       # @param trace [String, nil] a file to keep the raw stream in, or nil to
       #   keep none. Every line is written before anything is made of it, so a
       #   run that failed can be read back afterwards even where this parser made
@@ -138,6 +145,7 @@ module OpenLanes
         @tasks = {}
         @spawned = 0
         @running = {}
+        @ended = {}
         @context = nil
         @session = nil
         @compacted = nil
@@ -279,6 +287,9 @@ module OpenLanes
       # @return [void]
       def finish
         consume(@buffer.slice!(0..-1).to_s)
+        # A sub-agent killed with its parent never sends its notification, and
+        # nothing outlives a stream that has ended.
+        close_tasks
         @trace&.close
         @trace = nil
       end
@@ -530,7 +541,8 @@ module OpenLanes
         when "init" then begin_session(event)
         when "compact_boundary" then @compacted = event["compact_metadata"] || {}
         when "task_started" then start_task(event)
-        when "task_progress", "task_notification" then update_task(event)
+        when "task_progress" then update_task(event)
+        when "task_notification" then end_task(event)
         end
       end
 
@@ -549,8 +561,41 @@ module OpenLanes
       def start_task(event)
         id = event["task_id"] or return
 
-        @tasks[id] ||= { tool_use_id: event["tool_use_id"], total: 0 }
+        task = (@tasks[id] ||= { tool_use_id: event["tool_use_id"], total: 0 })
+        # Keyed by the `Task` call, so a start seen both as that call and as
+        # this event is one sub-agent. A notification that overtook its own
+        # start has already ended it.
+        call = task[:tool_use_id] || id
+        @running[call] ||= task_name(event) unless @ended.key?(id)
         @spawned = @tasks.size
+        publish
+      end
+
+      # Tokens are taken as from any update. Only a terminal status ends the
+      # task: the notification is the one event that says a sub-agent stopped.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def end_task(event)
+        id = event["task_id"]
+        if id && TERMINAL.include?(event["status"])
+          [@tasks.dig(id, :tool_use_id), event["tool_use_id"], id].compact.each { @running.delete(it) }
+          @ended[id] = true
+        end
+        update_task(event)
+      end
+
+      # @param event [Hash] a `task_started`
+      # @return [String] named as {#delegate} names a `Task` call
+      def task_name(event)
+        [event["subagent_type"], event["description"]].map { it.to_s.strip }.find { !it.empty? } || "sub-agent"
+      end
+
+      # @return [void]
+      def close_tasks
+        return if @running.empty?
+
+        @running.clear
         publish
       end
 

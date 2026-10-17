@@ -324,6 +324,52 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       it("carries the live sub-agent count") { expect(row.subagents).to eq(0) }
     end
 
+    # The tile's extra lines: the row carries the sub-agents in flight now, so
+    # the list empties when they end, while the cumulative count stays.
+    describe "the sub-agents in flight" do
+      let(:steps) { [Queue.new, Queue.new] }
+      let(:said) { Queue.new }
+      let(:executor) do
+        steps_queue, said_queue = steps, said
+        lambda { |_agent, _subject, **, &progress|
+          [%w[Explore Plan], []].each_with_index do |running, i|
+            steps_queue[i].pop(timeout: 5)
+            progress.call(OpenLanes::Execution::Transcript::Progress.new(activity: "fanning out",
+              up: 1,
+              down: 1,
+              subagents: 2,
+              running:))
+            said_queue << running
+          end
+          steps_queue[0].pop(timeout: 5)
+          OpenLanes::Execution::Executor::Result.new(ok: false, note: "stopped early", up: 1, down: 1, subagents: 2, delegated: 0, seconds: 1.0)
+        }
+      end
+      let(:dispatcher) { described_class.new(runner: runner_with(executor), sleeper: ->(_) {}) }
+      let(:key) { dispatcher.board.rows.find(&:running?).key }
+
+      def row_after(step)
+        steps[step] << true
+        said.pop(timeout: 5)
+        dispatcher.tick
+        dispatcher.board.rows.find { it.key == key }.then { [it.running, it.subagents] }
+      end
+
+      before do
+        dispatcher.tick
+        key
+      end
+
+      after do
+        steps.each { |q| 3.times { q << true } }
+        dispatcher.running.each { |job| job.thread.join(5) }
+      end
+
+      it "names two while two run, then none once they end, and still counts 2 spawned" do
+        expect([row_after(0), row_after(1)]).to eq([[%w[Explore Plan], 2], [[], 2]])
+      end
+    end
+
     # What `run --scroll-height` draws: every distinct status, newest
     # first, on the running row and on the finished one it leaves behind.
     describe "the agent's statuses, newest first, repeats dropped" do
