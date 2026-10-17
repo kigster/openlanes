@@ -44,9 +44,7 @@ module OpenLanes
       # @param port [Integer]
       # @param addresses [Array<String>] this machine's interface addresses
       # @return [Array<String>]
-      def urls(port, addresses: Listen.addresses)
-        ips.flat_map { Listen.wildcard?(it) ? Listen.same_family(it, addresses) : [it] }.uniq.map { Listen.url(it, port) }
-      end
+      def urls(port, addresses: Listen.addresses) = reached(addresses).map { Listen.url(it, port) }
 
       # The Host headers answered beside loopback, which {App} always
       # permits: each address listened on, a wildcard's interfaces, and this
@@ -59,10 +57,16 @@ module OpenLanes
       def permitted_hosts(addresses: Listen.addresses, hostname: Socket.gethostname)
         return [] unless public?
 
-        listened = ips.flat_map { Listen.wildcard?(it) ? Listen.same_family(it, addresses) : [it] }
         names = [hostname, hostname.split(".").first].uniq
-        names + listened.uniq.map { IPAddr.new(it) }
+        names + reached(addresses).map { IPAddr.new(it) }
       end
+
+      private
+
+      # @param addresses [Array<String>]
+      # @return [Array<String>] the addresses listened on, each wildcard
+      #   replaced by the interface addresses it answers on
+      def reached(addresses) = ips.flat_map { Listen.wildcard?(it) ? Listen.covered(it, addresses) : [it] }.uniq
     end
 
     class Listen
@@ -96,12 +100,18 @@ module OpenLanes
         # @return [String]
         def url(ip, port) = "http://#{IPAddr.new(ip).ipv6? ? "[#{ip}]" : ip}:#{port}"
 
+        # The interface addresses a wildcard answers on. `0.0.0.0` is IPv4
+        # only; `::` is both, because Ruby's TCPServer leaves IPV6_V6ONLY
+        # off, so Linux and macOS hand it IPv4 clients too. Treating `::` as
+        # IPv6 alone refused an IPv4 LAN client's Host header with a 403.
+        #
         # @param wildcard [String] `0.0.0.0` or `::`
         # @param addresses [Array<String>]
-        # @return [Array<String>] the addresses of the wildcard's family
-        def same_family(wildcard, addresses)
-          six = IPAddr.new(wildcard).ipv6?
-          addresses.select { IPAddr.new(it).ipv6? == six }
+        # @return [Array<String>]
+        def covered(wildcard, addresses)
+          return addresses if IPAddr.new(wildcard).ipv6?
+
+          addresses.select { IPAddr.new(it).ipv4? }
         end
 
         # This machine's interface addresses, loopback first, link-local

@@ -33,9 +33,10 @@ RSpec.describe OpenLanes::Web::Listen do
   end
 
   describe "#urls" do
-    it "spells a wildcard out as this machine's addresses of its family" do
+    it "spells 0.0.0.0 out as this machine's IPv4 addresses, and :: as all of them, being dual-stack" do
       expect([described_class.parse("0.0.0.0").urls(80, addresses:), described_class.parse("::").urls(80, addresses:)])
-        .to eq([%w[http://127.0.0.1:80 http://192.168.1.20:80], %w[http://[::1]:80 http://[fd00::7]:80]])
+        .to eq([%w[http://127.0.0.1:80 http://192.168.1.20:80],
+                %w[http://127.0.0.1:80 http://[::1]:80 http://192.168.1.20:80 http://[fd00::7]:80]])
     end
   end
 
@@ -47,6 +48,11 @@ RSpec.describe OpenLanes::Web::Listen do
     it "adds the addresses listened on and this machine's name" do
       hosts = described_class.parse("0.0.0.0").permitted_hosts(addresses:, hostname: "box.local")
       expect(hosts).to eq(["box.local", "box", IPAddr.new("127.0.0.1"), IPAddr.new("192.168.1.20")])
+    end
+
+    it "permits IPv4 Host headers under ::, which answers IPv4 clients too" do
+      hosts = described_class.parse("::").permitted_hosts(addresses:, hostname: "box")
+      expect(hosts).to eq(["box", *%w[127.0.0.1 ::1 192.168.1.20 fd00::7].map { IPAddr.new(it) }])
     end
   end
 
