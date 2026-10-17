@@ -96,7 +96,7 @@ openlanes start --plan 005                     # only plan 005, until stopped
 
 Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All Local** stops this machine's agents, then its engine and the page. The page also hosts `c3po-operator`, a read-only copilot that talks about the run, drafts answers to blocked agents and proposes stops for you to confirm.
 
-It never ends on its own, not even once every plan is finished, since the page can create the next one. Stop All Local, Ctrl-C or `SIGTERM` ends it. It takes `run`'s flags except `-n`, `--no-web` and `--until-settled`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
+It never ends on its own, not even once every plan is finished, since the page can create the next one. Stop All Local, Ctrl-C or `SIGTERM` ends it. It takes `run`'s flags except `-n`, `--no-web`, `--stay` and `--until-settled`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
 
 `openlanes web` serves the page on its own; `openlanes web --demo` replays a sample run with no agents.
 
@@ -104,7 +104,7 @@ It listens on `127.0.0.1:11000`. `-p` / `--port` moves the port. `-i` / `--ips 1
 
 ### `openlanes run`: headless, or to a fixed point
 
-`openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which always ends there.
+`openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which ends there too unless `--stay` keeps it up for a control room `openlanes web` serves on its own (as `mprocs.yaml` does). Under mprocs the engine does not watch the `control-room` pane: if that pane dies, the engine waits on with no page until you restart the pane or end the engine with Ctrl-C.
 
 ```bash
 openlanes run -n                               # dry run: who would take what

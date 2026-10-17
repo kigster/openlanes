@@ -20,7 +20,7 @@ module OpenLanes
 
       # Inherited from `run`, and meaningless here: a dry run publishes no
       # board, and a run without its page cannot be answered.
-      @options = options.reject { %i[dry_run web until_settled].include?(it.name) }
+      @options = options.reject { %i[dry_run web stay until_settled].include?(it.name) }
 
       option :rescan,
         default: Engine::Dispatcher::RESCAN.to_s,
