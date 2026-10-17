@@ -430,6 +430,7 @@ module OpenLanes
       # @param live [OpenLanes::Live::Session, nil] the board a page apart would read
       # @return [Hash] `stay:`, `rescan:` and `watch:` for {Runner}, or nothing
       def staying(web, live = nil)
+        stay_unheeded(live)
         return {} if @options[:until_settled]
         return {} unless web || (live && @options[:stay])
 
@@ -439,6 +440,25 @@ module OpenLanes
                    "The engine stays up for the control room `openlanes web` serves: Stop All Local or Ctrl-C ends it."
                  end
         { stay: true, rescan: Dispatcher::RESCAN, watch: watch }
+      end
+
+      # A `--stay` this run cannot keep, said once on STDERR. Dropped in
+      # silence, mprocs showed an engine that had ended at its first fixed
+      # point and nothing said why. A run without Redis goes on headless
+      # rather than refusing (see {#without_live}), so this warns the same
+      # way instead of exiting 69 as `start` does.
+      #
+      # @param live [OpenLanes::Live::Session, nil]
+      # @return [void]
+      def stay_unheeded(live)
+        return if @quiet || !@options[:stay]
+
+        if @options[:until_settled]
+          warn("--stay is ignored with --until-settled: the run ends at the first fixed point.")
+        elsif live.nil?
+          warn("--stay needs the live board (Redis) a separate page reads, and this run has none, " \
+               "so it ends at the first fixed point.")
+        end
       end
 
       # The pull request watch a staying run carries, in human mode only: when

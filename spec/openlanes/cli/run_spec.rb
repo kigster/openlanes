@@ -886,6 +886,37 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
           expect(stderr).to include("The engine stays up for the control room `openlanes web` serves")
         end
       end
+
+      it "warns about nothing it cannot keep" do
+        expect(stderr).not_to include("--stay")
+      end
+    end
+
+    context "with --no-web --stay but no Redis" do
+      before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
+
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false, stay: true) }
+
+      it "says the run ends at the fixed point, and ends there" do
+        result
+        aggregate_failures do
+          expect(stderr).to include("--stay needs the live board (Redis) a separate page reads, and this run has none, " \
+                                    "so it ends at the first fixed point.")
+          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
+        end
+      end
+    end
+
+    context "with --stay and --until-settled" do
+      let(:result) { run(dry_run: false, rounds: 1, web: false, stay: true) }
+
+      it "says --stay is ignored, once, and ends at the fixed point" do
+        result
+        aggregate_failures do
+          expect(stderr.scan("--stay is ignored with --until-settled").size).to eq(1)
+          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
+        end
+      end
     end
 
     context "with --no-web alone" do
