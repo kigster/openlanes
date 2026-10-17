@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 76 | [\[024.00\](A) Resume Sessions Across Rounds](https://github.com/kigster/openlanes/pull/76) | Open 🟡 |
+
 ## Verification (luke-backend, round 1)
 
 ```text
