@@ -173,7 +173,9 @@ RSpec.describe OpenLanes::Vcs::Refresh, :origin do
       expect(refresh.continue).to have_attributes(kind: :conflicted, files: ["app.rb"])
     end
 
-    it "skips a commit the resolution left empty" do
+    it "skips a commit the resolution left empty, and says which" do
+      logged = []
+      allow(OpenLanes::UI).to receive(:log) { |message, **| logged << message }
       refresh.call
       git!(checkout.path, "checkout", "--ours", "--", "app.rb")
       git!(checkout.path, "add", "app.rb")
@@ -181,6 +183,7 @@ RSpec.describe OpenLanes::Vcs::Refresh, :origin do
       aggregate_failures do
         expect(refresh.continue.kind).to eq(:rebased)
         expect(head).to eq(origin_main)
+        expect(logged.join).to match(%r{rebase dropped \h+ .+: its changes are already on origin/main})
       end
     end
 

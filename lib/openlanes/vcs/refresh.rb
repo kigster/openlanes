@@ -210,11 +210,15 @@ module OpenLanes
         left = unresolved
         return Outcome.new(kind: :conflicted, base:, target: rev(base), files: left) unless left.empty?
 
-        ok = git({ "GIT_EDITOR" => "true" }, "rebase", "--continue")
         # A resolution identical to what is already on HEAD leaves the commit
-        # empty, and some git versions then refuse to continue. Skipping it
-        # drops nothing: the index is HEAD.
-        ok ||= rebasing? && unmerged.empty? && git({}, "diff", "--cached", "--quiet") && git({}, "rebase", "--skip")
+        # empty. Newer git drops it on continue, older git refuses and is
+        # skipped past. Either way it drops nothing the branch still needs
+        # (the index is HEAD), but the commit is gone, so it is named.
+        empty = git({}, "diff", "--cached", "--quiet")
+        stopped_at = capture("log", "-1", "--format=%h %s", "REBASE_HEAD") if empty
+        ok = git({ "GIT_EDITOR" => "true" }, "rebase", "--continue")
+        ok ||= empty && rebasing? && unmerged.empty? && git({}, "rebase", "--skip")
+        dropped(stopped_at, base)
         stopped = rebasing? ? unmerged : []
         return Outcome.new(kind: :conflicted, base:, target: rev(base), files: stopped) unless stopped.empty?
         return Outcome.new(kind: :rebased, base:, target: rev(base)) if ok && !rebasing?
@@ -291,6 +295,18 @@ module OpenLanes
         sha = File.read(git_path("rebase-merge/onto")).strip if File.file?(git_path("rebase-merge/onto"))
         base = "#{REMOTE}/#{self.class.default_branch(path)}"
         sha.nil? || rev(base) == sha ? base : sha[0, 7]
+      end
+
+      # Log a commit the rebase replayed as empty, once it is past it.
+      #
+      # @param stopped_at [String, nil] "<sha> <subject>" of the commit
+      # @param base [String]
+      # @return [void]
+      def dropped(stopped_at, base)
+        return if stopped_at.nil?
+        return if rebasing? && capture("log", "-1", "--format=%h %s", "REBASE_HEAD") == stopped_at
+
+        UI.log("worktree: rebase dropped #{stopped_at}: its changes are already on #{base}")
       end
 
       # @return [Boolean]
