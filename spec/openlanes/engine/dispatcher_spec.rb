@@ -1052,6 +1052,30 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    context "when publishing is refused because plan.md says nothing of how to test it" do
+      let(:publication) do
+        OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),
+          branch: checkout.branch,
+          title: "[001.00](A) Tic Tac Toe",
+          url: nil,
+          refusal: OpenLanes::Vcs::Publisher::UNTESTABLE)
+      end
+      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("r2d2-mechanic") }
+
+      before { attempts }
+
+      it "mails the builder what is missing and runs it once more, then leaves it Interrupted for a person" do
+        aggregate_failures do
+          expect(plan.status.key).to eq(:building)
+          expect(calls.size).to eq(2)
+          expect(attempts.map(&:status)).to eq(%w[Interrupted Interrupted])
+          expect(attempts.map(&:note)).to match([include("plan.md has no `## How to test` section", "r2d2-mechanic was asked to add it"),
+                                                 include("still missing after r2d2-mechanic was asked")])
+          expect([mail.size, mail.first.from, mail.first.body]).to match([1, "openlanes", include("Add one to plan.md")])
+        end
+      end
+    end
+
     context "when ready-for-review cannot be applied to the pull request it opened" do
       let(:publication) do
         OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),

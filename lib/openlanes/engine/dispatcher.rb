@@ -66,11 +66,24 @@ module OpenLanes
       #   @return [OpenLanes::Plans::Subject]
       # @!attribute [r] refused
       #   @return [Boolean]
-      Published = Data.define(:attempt, :subject, :refused)
+      Published = Data.define(:attempt, :subject, :refused, :untestable) do
+        def initialize(untestable: false, **rest) = super
+      end
 
       # A blocked plan whose every question has an answer, being drained by
       # the agent that handles its state, on a thread of its own.
       Unblock = Struct.new(:ordinal, :thread, :outcome)
+
+      # Who the harness signs its own mail as.
+      HARNESS = "openlanes"
+
+      # What a builder is told when its finished work has no way to be tested.
+      HOW_TO_TEST_MAIL = <<~MAIL.freeze
+        The build is done, but the pull request was not opened: plan.md has no
+        `#{Lifecycle::Completion::HOW_TO_TEST}` section, and a pull request nobody can test is not
+        ready for review. Add one to plan.md: the commands to run and what a person
+        should see, as a list. Change nothing else, then sign Completed again.
+      MAIL
 
       # States a plan waits in for a person's answer. An answered 💣 is
       # drained like an answered ⭕.
@@ -134,6 +147,7 @@ module OpenLanes
         @attempts = []
         @history = Hash.new { |h, k| h[k] = [] }
         @finished_plans = []
+        @asked_how_to_test = Set.new
         @preferred = {}
         @started_at = UI.monotonic
         @mutex = Mutex.new
@@ -1395,6 +1409,7 @@ module OpenLanes
         if target
           attempt = attempt.with(note: "#{base.note}#{" (#{entry.note})" if entry.note}")
           published = publish_for_review(task, target, subject, attempt)
+          return untestable(job, published.attempt, subject) if published.untestable
           return unpublished(published, ordinal) if published.refused
 
           attempt = published.attempt
@@ -1499,7 +1514,10 @@ module OpenLanes
 
         publication = @runner.publish(task, subject)
         if publication&.refusal
-          Published.new(attempt: attempt.with(ok: false, note: "#{attempt.note}; publish refused: #{publication.refusal}"), subject:, refused: true)
+          Published.new(attempt: attempt.with(ok: false, note: "#{attempt.note}; publish refused: #{publication.refusal}"),
+            subject:,
+            refused:    true,
+            untestable: publication.untestable?)
         elsif publication&.published?
           verb = publication.updated ? "pushed to" : "opened"
           note = "#{attempt.note}; #{verb} #{publication.url}"
@@ -1508,6 +1526,30 @@ module OpenLanes
         else
           unchanged
         end
+      end
+
+      # The builders finished, but plan.md says nothing about how to test the
+      # result. That is work an agent can do, so the builder is mailed what is
+      # missing and handed its round back, once, to write it. A second refusal
+      # is Interrupted, which the page lists under Needs you. Parking the plan
+      # as finished, as a rejected push is, left 021 at 🟡 with nothing on the
+      # page saying why.
+      #
+      # @param job [Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def untestable(job, attempt, subject)
+        agent = job.task.agent
+        ordinal = plan_of(job)
+        if @mutex.synchronize { @asked_how_to_test.add?(ordinal) }
+          forget_round(job)
+          Plans::Mailbox.new(dir: subject.feature.path).append(from: HARNESS, to: agent.name, body: HOW_TO_TEST_MAIL)
+          return attempt.with(status: "Interrupted", note: "#{attempt.note}; #{agent.name} was asked to add it")
+        end
+
+        remember(ordinal, agent.name, job.state, "Interrupted", job.task.round)
+        attempt.with(status: "Interrupted", note: "#{attempt.note}; still missing after #{agent.name} was asked")
       end
 
       # A refused publish leaves the plan where it was. Running the builder

@@ -44,7 +44,14 @@ module OpenLanes
 
         # @return [Boolean]
         def published? = !url.nil?
+
+        # @return [Boolean] whether it was refused for want of `## How to test`,
+        #   which an agent can write, unlike a rejected push
+        def untestable? = refusal == UNTESTABLE
       end
+
+      # Why a pull request nobody could test is not opened.
+      UNTESTABLE = "publish refused — plan.md has no `#{Lifecycle::Completion::HOW_TO_TEST}` section".freeze
 
       # A..Z, which is more parts than any feature should be split into.
       LETTERS = ("A".."Z").to_a.freeze
@@ -315,9 +322,7 @@ module OpenLanes
       #
       # @return [String, nil] the refusal, or nil when plan.md has the section
       def missing_how_to_test(subject)
-        return nil unless how_to_test(subject).empty?
-
-        "publish refused — plan.md has no `#{Lifecycle::Completion::HOW_TO_TEST}` section"
+        UNTESTABLE if how_to_test(subject).empty?
       end
 
       # A plan.md written before the rename says `## How to verify`; the
