@@ -62,7 +62,7 @@ app:
 - The questionnaire of V4 is an inquirex flow instead of hand-built `TTY::Prompt` calls. Three gems, each with one job:
   - [`inquirex`](https://github.com/inquirex/inquirex): the DSL (`Inquirex.define`, `ask`, `say`, `default`, `transition ... if_rule:`) and the engine that walks the flow.
   - [`inquirex-tty`](https://github.com/inquirex/inquirex-tty): the terminal widgets that render each step (`select`, `multi_select`, text input).
-  - `inquirex-llm`: the `extract` step.
+  - [`inquirex-llm`](https://github.com/inquirex/inquirex-llm): the `extract` step, which has an LLM turn free text into structured answers.
 - openlanes depends on `inquirex-llm` today, and gets `inquirex` through it; `inquirex` and `inquirex-tty` become direct dependencies.
 - It follows the shape of inquirex-tty's `examples/10_real_tax_preparer.rb`:
   1. A short `say` explains what is being set up.
