@@ -1,0 +1,128 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "029.00",
+    "slug": "grill-new-ideas-before-the-spec"
+  },
+  "state": "rejected",
+  "updated_at": "2026-10-17T12:56:15-07:00",
+  "stages": [
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-10-17T12:33:39-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/029.00-grill-new-ideas-before-the-spec",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "210fe685-f8a5-4efb-be63-da122d41c783",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-17T12:41:20-07:00",
+      "up": 2564842,
+      "down": 23639,
+      "seconds": 453.0,
+      "note": "completed - 40 tool calls; opened https://github.com/kigster/openlanes/pull/81",
+      "moves": 3
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-17T12:41:22-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/029.00-grill-new-ideas-before-the-spec",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "1f27fe65-2b4c-484f-b79f-739820620fdb",
+      "to": "rejected",
+      "finished_at": "2026-10-17T12:43:51-07:00",
+      "up": 855328,
+      "down": 7328,
+      "seconds": 148.4,
+      "note": "completed - 15 tool calls (rejected 1/2)",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-10-17T12:44:06-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/029.00-grill-new-ideas-before-the-spec",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "f374efc4-21a0-4128-925a-6053496a5b81"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-17T12:33:47-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:41:03-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:41:27-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:43:45-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-17T12:44:12-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:56:15-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    }
+  ],
+  "messages": [],
+  "moves": 5,
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-17T12:41:23-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-17T12:43:51-07:00"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { ApiError, fetchBoard, fetchCopilot, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postAppCommand, postCommand, postCopilot, resetSession } from "./client";
+import { ApiError, fetchBoard, fetchCopilot, getSession, isFixtureMode, loadFixtureBoard, mintCommand, postAppCommand, postCommand, postCopilot, postInterview, resetSession } from "./client";
 import type { Command } from "./types";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -170,5 +170,28 @@ describe("the Preview tab's commands", () => {
     await expect(postAppCommand(command)).rejects.toThrow("action must be one of restart, stop");
     fetchMock.mockResolvedValueOnce(json(500, {}));
     await expect(postAppCommand(command)).rejects.toThrow("POST /api/apps/commands answered 500");
+  });
+});
+
+describe("the interview (M6)", () => {
+  const questions = [{ context: "Who signs in?", options: ["Anyone", "Staff only"], recommended: 1 }];
+
+  it("posts the idea with the token and returns the questions", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(200, { questions }));
+    await expect(postInterview("A staff rota")).resolves.toEqual({ questions });
+    const [path, init] = fetchMock.mock.calls[1];
+    expect([path, init.headers["X-CSRF-Token"], JSON.parse(init.body)]).toEqual(["/api/interview", "tok-1", { idea: "A staff rota" }]);
+  });
+
+  it("passes on the server's reason when there is no interviewer", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(200, { questions: [], reason: "no OPENROUTER_API_KEY" }));
+    await expect(postInterview("A staff rota")).resolves.toEqual({ questions: [], reason: "no OPENROUTER_API_KEY" });
+  });
+
+  it("answers no questions, naming the status, when the server refuses or fails", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, session)).mockResolvedValueOnce(json(422, { error: "idea is blank" }));
+    await expect(postInterview(" ")).resolves.toEqual({ questions: [], reason: "POST /api/interview answered 422" });
+    fetchMock.mockResolvedValueOnce(json(500, {}));
+    await expect(postInterview("A staff rota")).resolves.toEqual({ questions: [], reason: "POST /api/interview answered 500" });
   });
 });
