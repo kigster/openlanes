@@ -70,6 +70,36 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  context "when something other than an agent moved the plan away and back since" do
+    before do
+      state.state!(:building)
+      round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root)
+      state.state!(:reviewing)
+      state.state!(:building)
+    end
+
+    it "starts fresh, though no stage recorded the move" do
+      expect(decision).to have_attributes(session: nil,
+        reason: "the plan moved away and back since round 1 (sess-1)")
+    end
+
+    it "writes a document the schema accepts" do
+      expect(schema.validate(JSON.parse(File.read(state.path))).map { |e| e["error"] }).to eq([])
+    end
+  end
+
+  context "when the plan was only told the state it was already in" do
+    before do
+      state.state!(:building)
+      round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root)
+      state.state!(:building)
+    end
+
+    it "counts no move, and resumes" do
+      expect([state.moves, decision.session]).to eq([1, "sess-1"])
+    end
+  end
+
   context "when the last round never settled" do
     before { round(1, at: "2026-10-16T10:00:00Z", session: "sess-1", cwd: root) }
 

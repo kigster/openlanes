@@ -156,6 +156,9 @@ module OpenLanes
             data["stages"] << stage
           end
           stage.merge!(fields.transform_keys(&:to_s).compact)
+          # A settling round notes how often the plan had moved by then, in
+          # the same write, so {#resumption} sees a move no stage recorded.
+          stage["moves"] = data["moves"].to_i if fields.key?(:to)
         end
         stage
       end
@@ -174,12 +177,25 @@ module OpenLanes
       # from Planned and works in Building, and its second leaves from
       # Building.
       #
+      # A move no agent made, such as `resync dirs` or a person through
+      # the CLI, records no stage, so {#state!} counts every move in `moves`
+      # and a settling stage notes the count it saw: a count that has grown
+      # since means the plan went away and came back. A folder renamed by
+      # hand, outside openlanes, is not counted.
+      #
+      # A round that ends Blocked starts the next one fresh, after the
+      # person answers: the plan went to Blocked and back. That is the case
+      # where the earlier context would help most, and it is deliberately
+      # conservative for now; the answer reaches the agent through
+      # blocked.md either way.
+      #
       # @param agent [String]
       # @param state [#to_s] the state key the plan is in now
       # @param root [String] the checkout the new round will run in
       # @return [OpenLanes::Plans::PlanState::Resumption]
       def resumption(agent:, state:, root:)
-        all = stages
+        data = read
+        all = data["stages"]
         # `started_at` has second precision, so two rounds can tie on it; the
         # one dispatched later sits later in the array.
         last, = all.each_with_index
@@ -195,6 +211,8 @@ module OpenLanes
                    "the plan moved to #{last["to"]} after round #{last["round"]} (#{session})"
                  elsif (moved = moved_since(all, last, state))
                    "the plan moved to #{moved} since round #{last["round"]} (#{session})"
+                 elsif last.key?("moves") && data["moves"].to_i != last["moves"]
+                   "the plan moved away and back since round #{last["round"]} (#{session})"
                  elsif File.expand_path(last["cwd"].to_s) != File.expand_path(root) || last["cwd"].to_s.empty?
                    "session #{session} ran in #{last["cwd"] || "an unrecorded checkout"}, not #{root}"
                  end
@@ -215,8 +233,14 @@ module OpenLanes
       # @param key [Symbol, String] the state the folder was just moved to
       # @return [void]
       def state!(key)
-        update { |data| data["state"] = key.to_s }
+        update do |data|
+          data["moves"] = data["moves"].to_i + 1 unless data["state"] == key.to_s
+          data["state"] = key.to_s
+        end
       end
+
+      # @return [Integer] how many times {#state!} has moved the plan
+      def moves = read["moves"].to_i
 
       # Stages a dead harness left Started. Nobody is working them, and nobody
       # will finish them unless a run picks them up.

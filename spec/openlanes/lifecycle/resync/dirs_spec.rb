@@ -132,6 +132,31 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
 
         expect(names).to eq(["007.00━━⭐━━❯tenancy"])
       end
+
+      it "writes no state.json into a folder that had none" do
+        resync.call(commit: true)
+
+        expect(File).not_to exist(File.join(plans_root, "007.00━━⭐━━❯tenancy", "state.json"))
+      end
+    end
+
+    # A move no agent made must still be seen by session resumption (M1):
+    # otherwise a plan taken away and brought back resumes a session from
+    # the state it was taken out of.
+    context "when a renamed folder keeps a state.json" do
+      let!(:tree) do
+        plans do |t|
+          t.raw "007-⚪--tenancy",
+            files: { "spec.md" => spec_body, "plan.md" => "# Plan", "state.json" => '{"state":"new","moves":1}' }
+        end
+      end
+
+      it "counts the status rename as a move, and the spelling rename as none" do
+        resync.call(commit: true)
+        state = OpenLanes::Plans::PlanState.for(File.join(plans_root, "007.00━━⭐━━❯tenancy"))
+
+        expect([state.state, state.moves]).to eq(["planned", 2])
+      end
     end
 
     # The migration path for a tree written entirely in the `--`-era
