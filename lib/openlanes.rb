@@ -9,6 +9,7 @@ require "dry/inflector"
 # Every command workflow answers a Dry::Monads::Result (see OpenLanes::Refusal).
 require "dry/monads"
 require "fileutils"
+require "open3"
 require "shellwords"
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
@@ -138,13 +139,37 @@ module OpenLanes
   # @return [Array<OpenLanes::Plans::Ordinal>] possibly empty
   def self.plans_on_ref(root, ref)
     ["origin/#{ref}", ref].each do |candidate|
-      dirs = [PLANS_DIR, *Plans::Tree::SUBFOLDERS.map { "#{PLANS_DIR}/#{it}" }].map { "#{it}/".shellescape }.join(" ")
-      out = `git -C #{root.shellescape} ls-tree -d --name-only #{candidate.shellescape} #{dirs} 2>/dev/null`
-      next if out.to_s.strip.empty?
-
-      return out.lines.filter_map { |line| Plans::Ordinal.from_dirname(File.basename(line.strip)) }
+      found = plans_at(root, candidate)
+      return found unless found.empty?
     end
     []
+  end
+
+  # Plan numbers in `.plans` on one tree-ish, the inactive subfolders
+  # included. {plans_on_ref} guesses at a branch name; this reads exactly
+  # what it is given, which is what allocating a number across every branch
+  # needs: a full ref name tried as `origin/refs/heads/x` would cost a
+  # second `ls-tree` per branch for nothing.
+  #
+  # @param root [String] any directory inside the repository
+  # @param treeish [String] a ref, or a commit
+  # @param plans [String] the `.plans` directory, relative to +root+
+  # @return [Array<OpenLanes::Plans::Ordinal>] empty when the ref is unknown
+  #   or carries no plans
+  def self.plans_at(root, treeish, plans: PLANS_DIR)
+    dirs = [plans, *Plans::Tree::SUBFOLDERS.map { "#{plans}/#{it}" }].map { "#{it}/" }
+    out, status = Open3.capture2("git",
+      "-C",
+      root,
+      "ls-tree",
+      "-d",
+      "--name-only",
+      treeish,
+      *dirs,
+      err: File::NULL)
+    return [] unless status.success?
+
+    out.lines.filter_map { |line| Plans::Ordinal.from_dirname(File.basename(line.strip)) }
   end
 
   # The agent that writes a specification for work that already shipped.
