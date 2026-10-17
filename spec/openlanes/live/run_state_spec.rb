@@ -46,4 +46,21 @@ RSpec.describe OpenLanes::Live::RunState do
       expect(state.model_for("001.00/luke-backend")).to be_nil
     end
   end
+
+  context "with a concurrency set from the copilot" do
+    before { state.concurrency = 2 }
+
+    it "remembers it, and moves seq once" do
+      state.concurrency = 2
+      expect([state.concurrency, state.seq]).to eq([2, 1])
+    end
+
+    it "survives a restore" do
+      expect(described_class.new.restore(state.to_h).concurrency).to eq(2)
+    end
+
+    it "restores a limit under 1 as unset" do
+      expect(described_class.new.restore("concurrency" => 0).concurrency).to be_nil
+    end
+  end
 end

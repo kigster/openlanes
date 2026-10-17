@@ -60,6 +60,23 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
     end
   end
 
+  context "with a /concurrency set before the restart (plan 020.00)" do
+    before { state.live = saved(4).merge("concurrency" => 2) }
+
+    it "hands the limit back to the dispatcher" do
+      allow(dispatcher).to receive(:concurrency=)
+      record.call(dispatcher)
+      expect(dispatcher).to have_received(:concurrency=).with(2)
+    end
+
+    it "says so and starts anyway when this run cannot take it" do
+      allow(OpenLanes::UI).to receive(:log)
+      allow(dispatcher).to receive(:concurrency=).and_raise(OpenLanes::Error, "this run is --isolation shared")
+      record.call(dispatcher)
+      expect(OpenLanes::UI).to have_received(:log).with(/concurrency 2 from before the restart not kept/)
+    end
+  end
+
   context "when Redis came back empty" do
     before do
       state.live = saved(5, cars: ["001.00/luke-backend"])

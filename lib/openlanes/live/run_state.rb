@@ -9,7 +9,8 @@ module OpenLanes
     # Held in the engine, and kept by {RunRecord} in Redis and in
     # `.plans/openlanes-state.json` (W6), so an engine that restarts still
     # knows them. Every change moves {#seq} on by one, which is how the
-    # record tells which of its two copies is newer. A model choice also
+    # record tells which of its two copies is newer. So does the concurrency
+    # a person set with `/concurrency` (plan 020.00). A model choice also
     # lives in the executor, which is what applies it; this copy is what the
     # page is shown and what a restart hands back to the executor.
     class RunState
@@ -18,7 +19,22 @@ module OpenLanes
         @held_questions = []
         @held_cars = []
         @models = {}
+        @concurrency = nil
         @seq = 0
+      end
+
+      # @return [Integer, nil] the limit `/concurrency` set; nil when nobody did
+      def concurrency = @mutex.synchronize { @concurrency }
+
+      # @param limit [Integer]
+      # @return [void]
+      def concurrency=(limit)
+        @mutex.synchronize do
+          next if @concurrency == limit
+
+          @concurrency = limit
+          @seq += 1
+        end
       end
 
       # @param id [String] `"<ordinal>/B<n>"`
@@ -67,7 +83,7 @@ module OpenLanes
       def to_h
         @mutex.synchronize do
           { "seq" => @seq, "held_questions" => @held_questions.dup, "held_cars" => @held_cars.dup,
-            "models" => @models.dup }
+            "models" => @models.dup }.merge(@concurrency ? { "concurrency" => @concurrency } : {})
         end
       end
 
@@ -80,6 +96,7 @@ module OpenLanes
           @held_questions = Array(data["held_questions"]).map(&:to_s)
           @held_cars = Array(data["held_cars"]).map(&:to_s)
           @models = (data["models"].is_a?(Hash) ? data["models"] : {}).to_h { |k, v| [k.to_s, v.to_s] }
+          @concurrency = data["concurrency"].is_a?(Integer) && data["concurrency"].positive? ? data["concurrency"] : nil
           @seq = data["seq"].to_i
         end
         self

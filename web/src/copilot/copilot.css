@@ -26,3 +26,6 @@
 .cp-composer textarea:focus-visible { outline: 2px solid var(--inv-focus); outline-offset: 1px; }
 .cp-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
 .cp-error { margin: 6px 0 0; color: #7A0D12; font-weight: 700; }
+.cp-command { font-family: var(--mono, ui-monospace, monospace); }
+.cp-slash-hint { margin: 6px 0 0; font-size: 0.85em; color: var(--ink-soft); }
+.cp-slash-hint code { font-family: var(--mono, ui-monospace, monospace); }

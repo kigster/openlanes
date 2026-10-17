@@ -207,6 +207,48 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
   end
 
+  describe "the lane commands (plan 020.00)" do
+    def running_on(ordinal) = me["plans"].find { it["ordinal"] == ordinal }["cars"].count { it["state"] == "running" }
+
+    it "stops every running agent on a plan" do
+      expect([board.apply(command("stop_plan", plan: ordinal)), running_on(ordinal)])
+        .to eq(["stopped 1 agent on 001.00 and took it off the board", 0])
+    end
+
+    it "refuses to restart a plan that still has an agent" do
+      expect { board.apply(command("restart_plan", plan: ordinal)) }
+        .to raise_error(described_class::Refusal, "001.00 already has an agent: rey-frontend")
+    end
+
+    it "restarts a stopped plan's cars and leaves its stuck one waiting" do
+      board.apply(command("stop_plan", plan: ordinal))
+      expect([board.apply(command("restart_plan", plan: ordinal)), plan["cars"].map { it["state"] }])
+        .to eq(["001.00 restarts at the next tick", %w[stuck running]])
+    end
+
+    it "refuses a plan not on the board" do
+      expect { board.apply(command("stop_plan", plan: "042.00")) }.to raise_error(described_class::Refusal, "there is no plan 042.00")
+    end
+
+    it "lowers the limit without stopping anyone" do
+      expect([board.apply(command("set_concurrency", limit: 1)), me["run"]["jobs"], running(me).size])
+        .to eq(["concurrency 4 → 1; the run waits for 2 agents to finish", 1, 3])
+    end
+
+    it "refuses a limit that is not a whole number of at least 1" do
+      expect { board.apply(command("set_concurrency", limit: 0)) }
+        .to raise_error(described_class::Refusal, "concurrency must be a whole number of at least 1, not 0")
+    end
+
+    def running(snapshot) = snapshot["plans"].flat_map { it["cars"] }.select { it["state"] == "running" }
+  end
+
+  describe "a kind the demo has no handler for" do
+    it "is refused rather than raising on the demo's thread" do
+      expect { board.apply(command("pause_discuss", plan: ordinal)) }.to raise_error(described_class::Refusal, "the demo cannot pause_discuss")
+    end
+  end
+
   describe "add_plan" do
     before { board.apply(command("add_plan", plan: "013", ordinal: "013")) }
 

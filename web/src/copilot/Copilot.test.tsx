@@ -277,3 +277,30 @@ it("survives a private window, where storage throws", async () => {
   expect(screen.getByRole("dialog", { name: "c3po-operator" })).toBeInTheDocument();
   vi.restoreAllMocks();
 });
+
+it("hints at /stop, /restart and /concurrency while the box starts with a slash, and not otherwise", async () => {
+  const user = userEvent.setup();
+  setup();
+  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  expect(screen.queryByText(/Run commands/)).toBeNull();
+  await user.type(box, "/");
+  const hint = screen.getByText(/Run commands/);
+  for (const command of ["/stop", "/restart", "/concurrency"]) expect(within(hint).getByText(command)).toBeInTheDocument();
+  expect(box).toHaveAccessibleDescription(/Run commands/);
+  await user.clear(box);
+  await user.type(box, "why /stop");
+  expect(screen.queryByText(/Run commands/)).toBeNull();
+});
+
+it("draws a slash turn as a command and ends reading on the engine's .1 turn", async () => {
+  const user = userEvent.setup();
+  history = { turns: [], usage: { model: null, up: 0, down: 0 } };
+  const { stream } = setup();
+  await user.type(await screen.findByRole("textbox", { name: "Message c3po-operator" }), "/stop 020.00");
+  await user.click(screen.getByRole("button", { name: "Send" }));
+  expect(await within(chat()).findByText("/stop 020.00")).toHaveClass("cp-command");
+  expect(screen.getByText("Reading the board…")).toBeInTheDocument();
+  await stream(reply(`${posted[0].id}.1`, "stopped 2 agents on 020.00"));
+  expect(screen.queryByText("Reading the board…")).toBeNull();
+  expect(screen.getByText("stopped 2 agents on 020.00")).not.toHaveClass("cp-command");
+});

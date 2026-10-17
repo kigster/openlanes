@@ -150,6 +150,7 @@ export interface Run {
   down: number;
   cost: number;
   agents_working: number;
+  jobs: number; // the run's concurrency limit, changed live by /concurrency
 }
 
 /** What the engine publishes every tick, per node. The page's whole state. */
@@ -213,7 +214,10 @@ export type CommandKind =
   | "create_plans" // payload: { idea }
   | "respond" // a 💣 plan: answers its first open question in blocked.md; payload: { text }
   | "pause_discuss" // a 💣 plan: holds its running agents while the person talks it over with the copilot
-  | "resume_anyway"; // a 💣 plan: lifts the halt for 24 h
+  | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
+  | "stop_plan" // /stop: signals the plan's agents and takes it off the board; payload: {}
+  | "restart_plan" // /restart: puts an idle plan back on the board; refused while it has an agent
+  | "set_concurrency"; // /concurrency: payload: { limit }, never kills a running agent
 
 export interface Command {
   id: string; // ULID, minted by the page; also its idempotency key

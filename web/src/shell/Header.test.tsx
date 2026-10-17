@@ -27,7 +27,7 @@ it("names this machine and prints the run's totals as plain text, accessibly", a
   expect(screen.getByRole("heading", { level: 1, name: "OpenLanes control room" })).toHaveClass("sr-only");
   expect(screen.getByText("dana@studio-mini")).toBeInTheDocument();
   expect(screen.getByText("18 min")).toBeInTheDocument();
-  expect(screen.getByText("4")).toBeInTheDocument();
+  expect(screen.getByText("agents", { exact: false, selector: ".topbar-stat" })).toHaveTextContent("4 of 4 agents");
   expect(screen.getByText("2.82M")).toBeInTheDocument();
   expect(screen.getByText("$14.80")).toBeInTheDocument();
   expect(screen.queryByText("Sample data")).toBeNull();
@@ -35,6 +35,14 @@ it("names this machine and prints the run's totals as plain text, accessibly", a
   expect(screen.getByRole("button", { name: "Stop All Local" })).toBeInTheDocument();
   expect(screen.getByRole("img", { name: "openlanes" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
+});
+
+it("shows the agents working against the run's limit", () => {
+  const snapshot = sampleBoard().me;
+  snapshot.run.agents_working = 3;
+  snapshot.run.jobs = 4;
+  render(<Header {...props({ snapshot })} />);
+  expect(screen.getByText(/agents$/, { selector: ".topbar-stat" })).toHaveTextContent("3 of 4 agents");
 });
 
 it("titles a project that is not openlanes itself and leaves out a missing description", () => {
