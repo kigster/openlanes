@@ -104,7 +104,7 @@ It listens on `127.0.0.1:11000`. `-p` / `--port` moves the port. `-i` / `--ips 1
 
 ### `openlanes run`: headless, or to a fixed point
 
-`openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which ends there too unless `--stay` keeps it up for a control room `openlanes web` serves on its own (as `mprocs.yaml` does). Under mprocs the engine does not watch the `control-room` pane: if that pane dies, the engine waits on with no page until you restart the pane or end the engine with Ctrl-C.
+`openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which ends there too unless `--stay` keeps it up for a control room `openlanes web` serves on its own (as `mprocs.yaml` does, under `just start`, with Vite's dev server in front of it so the page reloads as you edit it). Under mprocs the engine does not watch the `api` pane: if that pane dies, the engine waits on with no page until you restart the pane or end the engine with Ctrl-C.
 
 ```bash
 openlanes run -n                               # dry run: who would take what
