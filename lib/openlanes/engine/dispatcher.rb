@@ -1082,6 +1082,10 @@ module OpenLanes
         return if @runner.dry_run? || @runner.halted?
 
         busy = untouchable
+        # Fresh from disk: a round started on a plan renames it without
+        # touching the cached tree, and an exhausted Building agent read
+        # against a stale Planned would never be asked about.
+        @runner.tree.reload
         @runner.in_scope.each do |subject|
           next if busy.include?(subject.feature.ordinal.to_s) || Plans::StateMachine::SETTLED.include?(subject.status.key)
 
@@ -1103,8 +1107,8 @@ module OpenLanes
         past.last
       end
 
-      # A round that ended well needs no more time: its open request, if it
-      # asked, is closed rather than left on the page.
+      # A round that has ended needs no more time, however it ended: its open
+      # request, if it asked, is closed rather than left on the page.
       #
       # @param job [OpenLanes::Engine::Dispatcher::Job]
       # @return [void]
@@ -1198,7 +1202,7 @@ module OpenLanes
           requeued = @requeued.delete(job.key)
           forget_round(job) if requeued || job.handle.compaction&.restart
           @attempts << attempt
-          close_extension(job) if attempt.ok
+          close_extension(job)
           row = row_for(job)
           @recent << { at: UI.monotonic, row: row.with(state: attempt.ok ? :done : :failed,
             message: attempt.note,
