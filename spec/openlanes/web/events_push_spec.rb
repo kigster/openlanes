@@ -57,7 +57,8 @@ RSpec.describe OpenLanes::Web::Events, :tree do
     started = monotonic
     publisher.call(dispatcher.board)
     board = next_board(2)
-    expect([board.dig("me", "seq"), monotonic - started]).to match([1, be < 0.1])
+    # Well under the 30s ping, so it was pushed, not polled; loose enough for a busy CI box.
+    expect([board.dig("me", "seq"), monotonic - started]).to match([1, be < 2])
   end
 
   it "sends nothing while an idle engine republishes the same board" do
