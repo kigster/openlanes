@@ -1036,6 +1036,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         worktree:,
         publisher:,
         state:,
+        # No round granted on its own (E1), so each example counts only the rounds it asks for.
+        extensions: limits,
         sleeper: ->(_) {}).call
     end
     let(:executor) do
@@ -1121,6 +1123,31 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           expect(attempts.map(&:note)).to match([include("plan.md has no `## How to test` section", "r2d2-mechanic was asked to add it"),
                                                  include("still missing after r2d2-mechanic was asked")])
           expect([mail.size, mail.first.from, mail.first.body]).to match([1, "openlanes", include("Add one to plan.md")])
+        end
+      end
+    end
+
+    # The specs above opt out of E1's automatic round; this one keeps the
+    # defaults a real run has, so a change to how #66's hand-back and E1's
+    # grant add up shows here as a different count.
+    context "when publishing is refused and the run keeps the default extensions" do
+      let(:limits) { nil }
+      let(:publication) do
+        OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),
+          branch: checkout.branch,
+          title: "[001.00](A) Tic Tac Toe",
+          url: nil,
+          refusal: OpenLanes::Vcs::Publisher::UNTESTABLE)
+      end
+
+      before { attempts }
+
+      it "runs the build, the round it is handed back, and the round E1 grants, then waits for a person" do
+        aggregate_failures do
+          expect(plan.status.key).to eq(:building)
+          expect(calls.size).to eq(3)
+          expect(attempts.map(&:status)).to eq(%w[Interrupted Interrupted Interrupted])
+          expect(attempts.last.note).to include("still missing after r2d2-mechanic was asked")
         end
       end
     end
