@@ -974,7 +974,9 @@ module OpenLanes
             @runner.executor.call(agent, subject, root: task.root, round:, successor:, handle:, partners:) { |progress|
               job.up = progress.up
               job.down = progress.down
-              job.subagents = progress.subagents
+              # In flight now, not ever started: the tile's extra lines must
+              # go when the sub-agents do. Tally reads the Result, not this.
+              job.subagents = progress.running
               job.context = progress.context
               job.message = progress.message || progress.activity
               job.history = Board::Row.remember(job.history || [], job.message)

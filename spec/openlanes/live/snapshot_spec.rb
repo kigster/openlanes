@@ -111,7 +111,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     let(:rows) do
       [row("001.00", "luke-backend", model: "opus", up: 374_000, down: 26_400),
-       row("001.00", "rey-frontend"),
+       row("001.00", "rey-frontend", subagents: 2),
        row("005.00", "hansolo-reviewer")]
     end
 
@@ -124,6 +124,17 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       expect(by_ordinal["001.00"][:locked]).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z")
       expect(by_ordinal.except("001.00").values.map { it[:locked] }.uniq).to eq([nil])
+    end
+
+    # The tile's extra lines: an Integer on every car, never null, 0 for a
+    # car with nothing in flight.
+    it "carries each car's sub-agents in flight as an Integer, 0 when none" do
+      cars = snapshot[:plans].flat_map { it[:cars] }.to_h { [it[:key], it[:subagents]] }
+
+      aggregate_failures do
+        expect(cars.values).to all(be_an(Integer))
+        expect(cars.values_at("001.00/rey-frontend", "001.00/luke-backend", "005.00/hansolo-reviewer")).to eq([2, 0, 0])
+      end
     end
 
     it "has the fixture's keys at every level" do

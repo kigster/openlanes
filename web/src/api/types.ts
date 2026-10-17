@@ -55,6 +55,7 @@ export interface Car {
   // Queued by set_model for its next round, until a round runs on it. The engine always sends it;
   // optional only until src/board/sample.ts (held by another agent) adds it to sampleCar.
   next_model?: string | null;
+  subagents: number; // sub-agents in flight now; an older engine's read-only board omits it, read as 0
 }
 
 export interface PullRequest {

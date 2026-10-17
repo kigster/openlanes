@@ -44,6 +44,10 @@ module OpenLanes
     #   @return [Symbol, nil] the clock's phase while running
     # @!attribute [r] frame
     #   @return [Integer] spinner frame counter
+    # @!attribute [r] subagents
+    #   @return [Integer] sub-agents in flight now, not ever started: it falls
+    #     back to 0 when they end, so the tile drawn from it does too. The
+    #     cumulative count rides on the attempt, for the tally
     # @!attribute [r] history
     #   @return [Array<String>] what the agent has said, newest first, for
     #     `run --scroll-height` to show more than the latest line of

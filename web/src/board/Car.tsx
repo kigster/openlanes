@@ -23,9 +23,17 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   const look = carLook(plan, car);
   const readOnly = !onOpen;
   const lock = lockMark(plan);
-  const cls = ["car", look.blocked && "is-blocked", readOnly && "is-readonly"].filter(Boolean).join(" ");
+  // At most three lines: more would crowd the 248px tile, and the count itself is in the label.
+  const fanned = car.subagents > 0 ? Math.min(car.subagents, 3) : 0;
+  const fanLabel = fanned ? `${car.subagents} sub-agent${car.subagents === 1 ? "" : "s"} running` : undefined;
+  const cls = ["car", look.blocked && "is-blocked", readOnly && "is-readonly", fanned > 0 && "car-fanned"]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <div className={cls} data-car={car.key}>
+    <div className={cls} data-car={car.key} title={fanLabel} aria-label={fanLabel}>
+      {Array.from({ length: fanned }, (_, i) => (
+        <span key={i} className="car-stack-line" aria-hidden="true" style={{ "--n": i } as React.CSSProperties} />
+      ))}
       <div className="car-top">
         {readOnly ? (
           <span className="car-agent">{car.agent}</span>

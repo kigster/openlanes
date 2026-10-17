@@ -92,6 +92,7 @@ describe("carLook", () => {
     expect(carLook(plan, sampleCar({ state: "stuck", message: "waiting" })).label).toBe("needs you");
     expect(carLook(plan, sampleCar({ state: "failed" })).label).toBe("failed");
     expect(carLook(plan, sampleCar()).blocked).toBe(false);
+    expect(sampleCar().subagents).toBe(0);
   });
 });
 

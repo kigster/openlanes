@@ -722,4 +722,34 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       expect(argv.join(" ")).to include("The folder's name is not currently justified")
     end
   end
+
+  # A resumed session's meter carries on from the sessions before it, but
+  # only the live session's sub-agents can still be running: the tile must
+  # not inherit the earlier session's finished fan-out.
+  describe "the sessions of one invocation" do
+    def event(**fields) = "#{fields.to_json}\n"
+
+    it "starts a resumed session at 0 in flight while keeping the earlier spawns" do
+      earlier = OpenLanes::Execution::Transcript.new
+      earlier.push(event(type: "system", subtype: "task_started", task_id: "a"))
+      earlier.push(event(type: "system", subtype: "task_started", task_id: "b"))
+      earlier.finish
+      firsts = []
+      resumed = OpenLanes::Execution::Transcript.new { firsts << it }
+      sessions = described_class::Sessions.new << earlier << resumed
+      resumed.push(event(type: "system", subtype: "init", session_id: "sess-2"))
+
+      carried = sessions.carry(firsts.first)
+      expect([carried.running, carried.subagents]).to eq([0, 2])
+    end
+
+    it "passes the live session's own sub-agents in flight through" do
+      sessions = described_class::Sessions.new << OpenLanes::Execution::Transcript.new
+      live = OpenLanes::Execution::Transcript.new
+      sessions << live
+      live.push(event(type: "system", subtype: "task_started", task_id: "c"))
+
+      expect(sessions.carry(live.progress).running).to eq(1)
+    end
+  end
 end

@@ -45,6 +45,10 @@ module OpenLanes
       #   @return [Integer] tokens generated
       # @!attribute [r] subagents
       #   @return [Integer] sub-agents spawned so far
+      # @!attribute [r] running
+      #   @return [Integer] sub-agents in flight now: started and not yet ended.
+      #     {#subagents} only ever rises, so a tile drawn from it would never
+      #     return to plain once its agent had fanned out
       # @!attribute [r] pid
       #   @return [Integer, nil] the `claude` process, once the harness has
       #     found it — nil until then, and for callers that never look
@@ -57,8 +61,8 @@ module OpenLanes
       # @!attribute [r] session
       #   @return [String, nil] the CLI's session id, from its `init` event,
       #     which is what `--resume` carries the agent on in (W28)
-      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session) do
-        def initialize(pid: nil, message: nil, context: nil, session: nil, **rest) = super
+      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session, :running) do
+        def initialize(pid: nil, message: nil, context: nil, session: nil, running: 0, **rest) = super
       end
 
       # The one kind of line the trace does not keep.
@@ -93,6 +97,11 @@ module OpenLanes
       # a better spinner line than sixty characters of absolute path.
       SUBJECTS = %w[file_path pattern description command query url].freeze
 
+      # The `status` values of a `task_notification` that end its task. Any
+      # other value leaves the task in flight: a status this parser has never
+      # seen is not evidence that the sub-agent stopped.
+      TERMINAL = %w[completed failed stopped].freeze
+
       # @param trace [String, nil] a file to keep the raw stream in, or nil to
       #   keep none. Every line is written before anything is made of it, so a
       #   run that failed can be read back afterwards even where this parser made
@@ -114,6 +123,8 @@ module OpenLanes
         @streamed = {}
         @tasks = {}
         @spawned = 0
+        @open = {}
+        @ended = {}
         @context = nil
         @session = nil
         @compacted = nil
@@ -145,6 +156,9 @@ module OpenLanes
       # @return [Integer] sub-agents this invocation started
       attr_reader :spawned
 
+      # @return [Integer] sub-agents started and not yet ended, see {Progress#running}
+      def running = @open.size
+
       # The `claude` process this transcript is reading, set by the {Executor}
       # once it has found the child, so the spinner line can name a pid someone
       # can actually `ps` while the agent runs.
@@ -169,6 +183,7 @@ module OpenLanes
           up:,
           down:,
           subagents: @spawned,
+          running:,
           pid: @pid,
           message: @message,
           context: @context,
@@ -239,6 +254,9 @@ module OpenLanes
       # @return [void]
       def finish
         consume(@buffer.slice!(0..-1).to_s)
+        # A sub-agent killed with its parent never sends its notification, and
+        # nothing outlives a stream that has ended.
+        close_tasks
         @trace&.close
         @trace = nil
       end
@@ -383,7 +401,8 @@ module OpenLanes
         when "init" then begin_session(event)
         when "compact_boundary" then @compacted = event["compact_metadata"] || {}
         when "task_started" then start_task(event)
-        when "task_progress", "task_notification" then update_task(event)
+        when "task_progress" then update_task(event)
+        when "task_notification" then end_task(event)
         end
       end
 
@@ -403,7 +422,30 @@ module OpenLanes
         id = event["task_id"] or return
 
         @tasks[id] ||= { tool_use_id: event["tool_use_id"], total: 0 }
+        # A notification that overtook its own start has already ended it.
+        @open[id] = true unless @ended.key?(id)
         @spawned = @tasks.size
+        publish
+      end
+
+      # Tokens are taken as from any update. Only a terminal status ends the
+      # task: the notification is the one event that says a sub-agent stopped.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def end_task(event)
+        if TERMINAL.include?(event["status"])
+          @open.delete(event["task_id"])
+          @ended[event["task_id"]] = true
+        end
+        update_task(event)
+      end
+
+      # @return [void]
+      def close_tasks
+        return if @open.empty?
+
+        @open.clear
         publish
       end
 
@@ -432,6 +474,7 @@ module OpenLanes
         @error = @result if event["is_error"]
         settle(event["usage"])
         @spawned = [@spawned, event.dig("subagent_stats", "spawned").to_i].max
+        @open.clear
         publish
       end
 

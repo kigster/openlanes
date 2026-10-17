@@ -24,6 +24,14 @@ module OpenLanes
         "Waiting on the reviewer's mailbox"
       ].freeze
 
+      # The one car that fans out, so the tile's extra lines can be seen and
+      # tested against a real engine. Every other car keeps the fixture's 0.
+      FANNED = "001.00/rey-frontend"
+
+      # Its sub-agents in flight, one entry per four ticks: 3, then 1, then 0,
+      # so the cycle repeats every 12 ticks (12 seconds of the demo clock).
+      FAN = [3, 1, 0].freeze
+
       # The status a plan takes once its last question is answered.
       UNBLOCKED = { "key" => "building", "emoji" => "🟡", "label" => "Building" }.freeze
 
@@ -83,6 +91,7 @@ module OpenLanes
         snapshot["at"] = stamp
         snapshot["node"]["heartbeat_at"] = stamp
         snapshot["plans"].each { |plan| advance_plan(plan) }
+        snapshot["plans"].flat_map { it["cars"] }.select { it["key"] == FANNED }.each { fan(it) }
         run = snapshot["run"]
         run["up"] = snapshot["plans"].sum { it["up"] }
         run["down"] = snapshot["plans"].sum { it["down"] }
@@ -103,6 +112,13 @@ module OpenLanes
           chatter(car) if (@ticks % 4).zero?
         end
         plan["elapsed"] += 1 if plan["cars"].any? { it["state"] == "running" }
+      end
+
+      # A car that stopped has nothing in flight.
+      #
+      # @return [void]
+      def fan(car)
+        car["subagents"] = car["state"] == "running" ? FAN[(@ticks / 4) % FAN.size] : 0
       end
 
       # @return [void]

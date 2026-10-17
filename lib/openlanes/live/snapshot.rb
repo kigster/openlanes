@@ -200,7 +200,8 @@ module OpenLanes
           elapsed:       row.elapsed.to_i,
           remaining:     row.remaining,
           held:          @run_state.car_held?(row.key),
-          next_model:    next_model(row) }
+          next_model:    next_model(row),
+          subagents:     row.subagents.to_i }
       end
 
       # The model a person queued for the agent's next round, until a round

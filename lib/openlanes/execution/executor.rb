@@ -292,6 +292,8 @@ module OpenLanes
 
         # What the sessions already over spent, added to the running one's
         # progress so the meter carries on rather than starting again.
+        # `running` is left as the live session reports it: a session that is
+        # over has no sub-agent still in flight.
         #
         # @param progress [OpenLanes::Execution::Transcript::Progress]
         # @return [OpenLanes::Execution::Transcript::Progress]

@@ -251,6 +251,74 @@ RSpec.describe OpenLanes::Execution::Transcript do
     end
   end
 
+  # The tile's extra lines: how many sub-agents are in flight now, which has
+  # to fall again when they end, unlike the cumulative count beside it.
+  describe "sub-agents in flight" do
+    def ended(id, status) = { type: "system", subtype: "task_notification", task_id: id, status: }.to_json + "\n"
+    def result = { type: "result", result: "done", is_error: false }.to_json + "\n"
+
+    it "counts started tasks until each one's notification arrives" do
+      feed(started("a"), started("b"), ended("a", "completed"))
+      after_first = transcript.running
+      feed(ended("b", "completed"))
+
+      expect([after_first, transcript.running, transcript.spawned]).to eq([1, 0, 2])
+    end
+
+    it "ends a task that failed or was stopped" do
+      feed(started("a"), started("b"), ended("a", "failed"), ended("b", "stopped"))
+
+      expect(transcript.running).to eq(0)
+    end
+
+    it "keeps a task in flight on a status it does not know" do
+      feed(started("a"), ended("a", "pending"))
+
+      expect(transcript.running).to eq(1)
+    end
+
+    it "does not reopen a task whose notification overtook its start" do
+      feed(ended("a", "completed"), started("a"))
+
+      expect(transcript.running).to eq(0)
+    end
+
+    it "is 0 once the result arrives, while the cumulative count stays" do
+      feed(started("a"), started("b"), result)
+
+      expect([transcript.running, transcript.spawned, transcript.progress.subagents]).to eq([0, 2, 2])
+    end
+
+    it "is 0 once the stream ends without a result" do
+      feed(started("a"))
+      transcript.finish
+
+      expect(transcript.progress.running).to eq(0)
+    end
+
+    it "is published on every progress" do
+      counts = []
+      watched = described_class.new { counts << it.running }
+      [started("a"), ended("a", "completed")].each { watched.push(it) }
+
+      expect(counts).to eq([1, 0])
+    end
+
+    # Recorded from `claude -p --output-format stream-json --verbose` with a
+    # prompt that fanned out to two sub-agents, ids and paths made fictional.
+    it "replays a real fan-out to 0 in flight and 2 spawned" do
+      counts = []
+      replay = described_class.new { counts << it.running }
+      replay.push(File.read(File.expand_path("../../fixtures/streams/subagent-fanout.ndjson", __dir__)))
+      replay.finish
+
+      aggregate_failures do
+        expect(counts.max).to eq(2)
+        expect([replay.running, replay.spawned]).to eq([0, 2])
+      end
+    end
+  end
+
   describe "#finish" do
     it "consumes a last line that never got its newline" do
       transcript.push(assistant(tool("Bash", { "command" => "bundle exec rspec" })).chomp)
