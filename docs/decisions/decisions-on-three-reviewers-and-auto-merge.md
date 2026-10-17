@@ -93,7 +93,3 @@ The lifecycle labels stay: `ready-for-review`, `review-in-progress`, and chewie'
   - Plans that never started (no branch yet) do not count; they stay queued behind it.
   - A blocked plan that holds a branch holds the refactor up too, and the board says so, e.g. "refactor 031 waits on 018 ⭕".
   - Nothing else starts until the refactor is merged.
-
-## Open
-
-- `execution: global-lock-required` for large refactors.
