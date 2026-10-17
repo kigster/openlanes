@@ -82,7 +82,8 @@ module OpenLanes
         The build is done, but the pull request was not opened: plan.md has no
         `#{Lifecycle::Completion::HOW_TO_TEST}` section, and a pull request nobody can test is not
         ready for review. Add one to plan.md: the commands to run and what a person
-        should see, as a list. Change nothing else, then sign Completed again.
+        should see, as a list, covering every part of the build and not only yours.
+        Change nothing else, then sign Completed again.
       MAIL
 
       # States a plan waits in for a person's answer. An answered 💣 is
@@ -1519,6 +1520,9 @@ module OpenLanes
             refused:    true,
             untestable: publication.untestable?)
         elsif publication&.published?
+          # Once per refusal, not once per run: a later round that loses the
+          # section again is owed another mail rather than a silent Interrupted.
+          @mutex.synchronize { @asked_how_to_test.delete(task.subject.feature.ordinal.to_s) }
           verb = publication.updated ? "pushed to" : "opened"
           note = "#{attempt.note}; #{verb} #{publication.url}"
           note += "; #{Plans::ReviewLabel::INITIAL} not applied: #{publication.label_error}" if publication.label_error

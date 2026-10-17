@@ -1076,6 +1076,31 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    context "when the builder adds the missing section after being asked" do
+      let(:refused) do
+        OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),
+          branch: checkout.branch,
+          title: "[001.00](A) Tic Tac Toe",
+          url: nil,
+          refusal: OpenLanes::Vcs::Publisher::UNTESTABLE)
+      end
+      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("r2d2-mechanic") }
+
+      before do
+        allow(publisher).to receive(:publish).and_return(refused, publication)
+        attempts
+      end
+
+      it "opens the pull request on the second round and mails only once" do
+        aggregate_failures do
+          expect(calls.size).to eq(2)
+          expect(plan.status.key).to eq(:ready_for_review)
+          expect(mail.size).to eq(1)
+          expect(mail.first.body).to include("every part of the build")
+        end
+      end
+    end
+
     context "when ready-for-review cannot be applied to the pull request it opened" do
       let(:publication) do
         OpenLanes::Vcs::Publisher::Publication.new(ordinal: OpenLanes::Plans::Ordinal.parse("001.00"),
