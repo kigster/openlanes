@@ -512,6 +512,29 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "the Host header, listening beyond loopback" do
+    let(:listen) { OpenLanes::Web::Listen.parse("192.168.1.20") }
+    let(:context) do
+      OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store),
+        keys:,
+        plans_dir: plans_root,
+        url: "redis://localhost:6379/3",
+        dist:,
+        node:,
+        listen:)
+    end
+
+    def status_for(host)
+      header "Host", host
+      get "/api/board"
+      last_response.status
+    end
+
+    it "answers the address listened on and loopback, and still refuses another site" do
+      expect(%w[192.168.1.20:11000 127.0.0.1:11000 attacker.example].map { status_for(it) }).to eq([200, 200, 403])
+    end
+  end
+
   describe "a write from another origin" do
     before do
       header "Origin", "http://attacker.example"

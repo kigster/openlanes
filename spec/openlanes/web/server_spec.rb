@@ -23,7 +23,23 @@ RSpec.describe OpenLanes::Web::Server do
   def get(path) = Net::HTTP.get_response(uri.host, path, uri.port)
 
   it "listens on loopback only" do
-    expect(server.url).to match(%r{\Ahttp://127\.0\.0\.1:\d+\z})
+    expect([server.url, server.urls, server.listen.public?])
+      .to match([%r{\Ahttp://127\.0\.0\.1:\d+\z}, [server.url], false])
+  end
+
+  context "with two addresses" do
+    subject(:server) do
+      described_class.new(app: OpenLanes::Web.app(context),
+        context:,
+        port: 0,
+        listen: OpenLanes::Web::Listen.parse("127.0.0.1,::1")).start
+    end
+
+    it "answers on both, on the one port it reports" do
+      six = Net::HTTP.get_response(URI("http://[::1]:#{server.port}/healthz"))
+      expect([get("/healthz").code, six.code, server.urls])
+        .to eq(["200", "200", ["http://127.0.0.1:#{server.port}", "http://[::1]:#{server.port}"]])
+    end
   end
 
   it "answers /healthz" do

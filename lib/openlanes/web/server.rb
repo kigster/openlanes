@@ -7,7 +7,8 @@ require "puma/server"
 module OpenLanes
   module Web
     # The app on Puma, multi-threaded because every open page holds one
-    # thread for its event stream, and bound to {HOST} only.
+    # thread for its event stream, and bound to {HOST} unless a {Listen}
+    # names other addresses.
     #
     #   server = Web.server(app:, context:, port: 11000).start
     #   server.url   # => "http://127.0.0.1:11000"
@@ -25,23 +26,24 @@ module OpenLanes
       # @param app [#call]
       # @param context [OpenLanes::Web::Context]
       # @param port [Integer] 0 for any free port
-      # @param host [String]
+      # @param listen [OpenLanes::Web::Listen] the addresses to listen on
       # @param log [IO] where Puma writes its errors
-      def initialize(app:, context:, port: DEFAULT_PORT, host: HOST, log: $stderr)
+      def initialize(app:, context:, port: DEFAULT_PORT, listen: Listen.parse(nil), log: $stderr)
         @app = app
         @context = context
         @port = Integer(port)
-        @host = host
+        @listen = listen
         @log = log
       end
 
-      # @return [String]
-      attr_reader :host
+      # @return [OpenLanes::Web::Listen]
+      attr_reader :listen
 
       # Listen, and serve on Puma's own threads.
       #
       # @return [self]
       # @raise [Errno::EADDRINUSE] when the port is taken
+      # @raise [Errno::EADDRNOTAVAIL] when an address is not this machine's
       def start
         @puma = Puma::Server.new(@app,
           nil,
@@ -49,7 +51,9 @@ module OpenLanes
           max_threads:          MAX_THREADS,
           force_shutdown_after: SHUTDOWN_AFTER,
           log_writer:           Puma::LogWriter.new(File.open(File::NULL, "w"), @log))
-        @puma.add_tcp_listener(@host, @port)
+        # Port 0 is resolved by the first listener, and the rest share it, so
+        # every address answers on the one port {#url} reports.
+        @listen.ips.each { @puma.add_tcp_listener(it, @puma.connected_ports.first || @port) }
         @thread = @puma.run
         @context.chat&.start
         self
@@ -58,8 +62,11 @@ module OpenLanes
       # @return [Integer] the port listened on, the real one when 0 was asked
       def port = @puma&.connected_ports&.first || @port
 
-      # @return [String]
-      def url = "http://#{@host}:#{port}"
+      # @return [String] where this machine's browser opens the page
+      def url = @listen.browse_url(port)
+
+      # @return [Array<String>] every address the page answers on
+      def urls = @listen.urls(port)
 
       # Block until the server stops.
       #

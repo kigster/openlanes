@@ -17,7 +17,8 @@ Every view implements `open`, `draw(board)`, `attach(console)` and `close`. Afte
 ### W3. Stack: Sinatra 4 + Puma, React + TypeScript + Vite, shadcn/ui, Motion
 
 - Hanami 3 was considered and rejected. It expects to be the application, with its own root, container, settings and database scaffolding, and its guide covers no streaming, SSE or WebSockets. It also needs Node for assets, so it saves nothing over React.
-- Sinatra's `stream` helper serves SSE on Puma. The server binds to `127.0.0.1` only, with a CSRF token on every write.
+- Sinatra's `stream` helper serves SSE on Puma. The server binds to `127.0.0.1` by default, with a CSRF token on every write.
+- Revised 2026-10-16: `openlanes web -i/--ips` and `-I` (every interface) listen beyond loopback when a person asks by name. There is still no login, so the server warns on every such start and in the log, and the Host check widens only to the addresses listened on and this machine's name. `openlanes run` and `start` still serve on loopback only.
 - The front end uses React with shadcn/ui (Tailwind) for widgets and Motion for animation. It is built with Vite, and the built `web/dist` ships inside the gem, so Node is needed only to build it and to run Cypress.
 
 ### W4. Animations follow the state machine
