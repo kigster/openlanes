@@ -75,7 +75,7 @@ module OpenLanes
       # the server's.
       #
       # @return [Hash{String => String}] added to the server's environment
-      def env = { REDIS_URL_ENV => @redis_url, **@logging&.env.to_h }
+      def env = { REDIS_URL_ENV => @redis_url, **(@logging ? @logging.env : {}) }
 
       # Spawn the server on the first free port from the one asked for, and
       # wait for it to answer. A taken port is skipped before spawning, never
