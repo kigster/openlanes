@@ -55,4 +55,21 @@ RSpec.describe OpenLanes::Vcs::Publisher, :origin do
       expect(remote_branch).to eq(theirs)
     end
   end
+
+  # The tracking ref is shared with the main checkout, so a fetch there
+  # moves it onto their commit, and a lease on the tracking ref alone would
+  # then have matched and overwritten it.
+  it "refuses when somebody else pushed and the main checkout fetched it" do
+    git!(upstream, "fetch", "-q", "origin", checkout.branch)
+    git!(upstream, "checkout", "-q", "-b", "theirs", "FETCH_HEAD")
+    theirs = commit_file(upstream, "lib/theirs.rb", "# theirs\n")
+    git!(upstream, "push", "-q", "origin", "theirs:#{checkout.branch}")
+    git!(main, "fetch", "-q", "origin")
+    git!(checkout.path, "commit", "-q", "--amend", "-m", "rewritten")
+
+    aggregate_failures do
+      expect { publisher.send(:push, checkout) }.to raise_error(TTY::Command::ExitError)
+      expect(remote_branch).to eq(theirs)
+    end
+  end
 end

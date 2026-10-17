@@ -242,9 +242,14 @@ module OpenLanes
 
       # The branch is the checkout's own, named by {Worktree#branch_for} and
       # written only by this harness, so after the harness has rebased it
-      # (see {Refresh}) it may replace what `origin` holds. The lease names
-      # the commit the tracking ref last saw: anything pushed there since,
-      # by anybody, makes the push fail rather than vanish. A branch with no
+      # (see {Refresh}) it may replace what `origin` holds. The lease alone
+      # is not enough: it trusts the tracking ref, and worktrees share
+      # `refs/remotes` with the main checkout, so a fetch there (an editor's
+      # auto-fetch, `gh pr checkout`) moves it onto somebody else's push and
+      # the lease would then let us overwrite it. `--force-if-includes` adds
+      # that the tracking ref's tip must be in this branch's own reflog,
+      # i.e. a commit the harness had here. It is a no-op beside an explicit
+      # `:<expect>`, so the lease names only the ref. A branch with no
       # tracking ref yet gets a plain push, which can only fast-forward.
       #
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
@@ -257,7 +262,7 @@ module OpenLanes
       end
 
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
-      # @return [Array<String>] the `--force-with-lease` flag, or nothing
+      # @return [Array<String>] the lease flags, or nothing
       def lease(checkout)
         # Read directly rather than through {#run}: it is a local lookup that
         # changes nothing, and the command seam is for what leaves the machine.
@@ -269,7 +274,7 @@ module OpenLanes
           "--quiet",
           "refs/remotes/origin/#{checkout.branch}",
           err: File::NULL)
-        seen.strip.empty? ? [] : ["--force-with-lease=refs/heads/#{checkout.branch}:#{seen.strip}"]
+        seen.strip.empty? ? [] : ["--force-with-lease=refs/heads/#{checkout.branch}", "--force-if-includes"]
       end
 
       # @return [String, nil] the pull request URL
