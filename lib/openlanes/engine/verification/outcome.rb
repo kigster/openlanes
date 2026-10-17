@@ -1,0 +1,278 @@
+# frozen_string_literal: true
+
+require "erb"
+require "fileutils"
+
+module OpenLanes
+  module Engine
+    module Verification
+      # What the engine does with a verification once chewie has signed, or
+      # once the app would not start (M1, M14, M15). chewie only writes files
+      # in its round's folder; everything that leaves the machine is done
+      # here, because the comment links the screenshot by the SHA of a commit
+      # only the engine may make, and `ready-to-merge` waits for a CI run that
+      # commit itself starts.
+      #
+      # Rejecting: commit the failing step's PNG, comment with it, label
+      # `review-rejected`, then send the plan to 🔴 and mail the comment to
+      # whoever handles 🔴, through {PrOutcomes}, exactly as a person's
+      # rejection on GitHub is handled.
+      #
+      # Passing: commit `final.png` ({#pass}), then, each time the engine
+      # asks ({#settle}), wait for green CI, run the coverage gate and label
+      # `ready-to-merge`. Merging is not here: plan 033 merges in agent mode,
+      # and in human mode the person does (M4).
+      class Outcome
+        # What one step did.
+        #
+        # @!attribute [r] kind
+        #   @return [Symbol] :rejected, :committed (passed, CI not read yet),
+        #     :waiting (CI pending), or :ready (`ready-to-merge` applied)
+        # @!attribute [r] note
+        #   @return [String] for the attempt and the log
+        # @!attribute [r] to
+        #   @return [Symbol, nil] the state the folder moved to
+        Result = Data.define(:kind, :note, :to) do
+          def initialize(to: nil, **rest) = super
+        end
+
+        # Who the comment and the harness's own signature are from.
+        AGENT = "chewie-verifier"
+
+        # Lines of a withheld coverage run quoted in the comment.
+        TAIL = CoverageGate::TAIL
+
+        # @param root [String] the main checkout, which the PNG's link is relative to
+        # @param publisher [OpenLanes::Vcs::Publisher]
+        # @param github [OpenLanes::Vcs::GitHub]
+        # @param outcomes [OpenLanes::Engine::PrOutcomes] moves to 🔴 and mails
+        # @param agents [OpenLanes::Agents::Registry] whose rejections count
+        # @param review [OpenLanes::Vcs::Review]
+        # @param coverage_gate [#call]
+        # @param max_rejections [Integer] see {Config#max_rejections}
+        # @param arbitration [#call] given `plan:, count:, max:` at the cap
+        # @param screenshots [#call] a round's folder to a {Screenshots}
+        def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
+          coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
+          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) })
+          @root = root
+          @publisher = publisher
+          @github = github
+          @outcomes = outcomes
+          @agents = agents
+          @review = review
+          @gate = coverage_gate
+          @max = max_rejections
+          @arbitration = arbitration
+          @screenshots = screenshots
+        end
+
+        # @param checkout [OpenLanes::Vcs::Worktree::Checkout] the plan's
+        # @param plan [OpenLanes::Plans::Subject] read fresh, in the main checkout
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @param round [Round]
+        # @param why [String, nil] Markdown saying what failed when chewie's
+        #   report cannot: the app that did not start, red CI, the coverage gate
+        # @return [Result]
+        def reject(checkout:, plan:, pull:, round:, why: nil)
+          round.make!
+          report = round.report || Report.new
+          if why
+            write_report(round, why) unless round.reported?
+            sign_for_chewie(plan, round, why)
+          end
+          kept = keep(round, failing_step: report.step)
+          sha, committed = commit(checkout, plan, round, "rejected")
+          png = kept.find { File.basename(it) == report.screenshot }
+          body = comment(plan:, round:, report:, why:, link: link(pull, sha, png), committed:)
+          number = number_of(pull)
+          @github.comment(number:, body:, repo: Vcs::GitHub.repo_of(pull.url))
+          labelled = @review.call(pr: pull.url || number, label: Plans::ReviewLabel::REJECTED)
+          send_back(plan, pull, body, labelled)
+        end
+
+        # chewie verified it: keep `final.png`, and push it.
+        #
+        # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+        # @param plan [OpenLanes::Plans::Subject]
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @param round [Round]
+        # @return [Result] :committed; the folder stays 🧪 until {#settle}
+        def pass(checkout:, plan:, pull:, round:)
+          keep(round, failing_step: nil)
+          sha, committed = commit(checkout, plan, round, "verified")
+          pushed = sha ? "#{Screenshots::FINAL} pushed in #{sha[0, 7]}" : committed
+          Result.new(kind: :committed, note: "verified PR ##{number_of(pull)}; #{pushed}; waiting on CI")
+        end
+
+        # One look at a verified pull request, asked again until it is
+        # labelled or rejected: CI pending waits, CI red or the coverage gate
+        # withholding rejects, and otherwise `ready-to-merge` goes on.
+        #
+        # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+        # @param plan [OpenLanes::Plans::Subject]
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @param round [Round] the verified round
+        # @return [Result]
+        def settle(checkout:, plan:, pull:, round:)
+          number = number_of(pull)
+          repo = Vcs::GitHub.repo_of(pull.url)
+          return ready(number, "already #{Plans::ReviewLabel::READY_TO_MERGE}") if labelled_ready?(number, repo)
+
+          case Vcs::CiGate.verdict(@github.checks(number:, repo:))
+          when :pending then Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}")
+          when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
+          else gated(checkout:, plan:, pull:, round:)
+          end
+        end
+
+        # Every rejection of this plan so far, hansolo's and chewie's
+        # together (M6). Derived from their signatures every time, never
+        # stored: a count kept beside the ledger is a second answer to one
+        # question.
+        #
+        # @param plan [OpenLanes::Plans::Subject]
+        # @return [Integer]
+        def rejections(plan)
+          judges = @agents.all.select { %w[review verification].include?(it.phase.to_s) }
+          files = judges.flat_map(&:ledger).uniq
+          names = judges.map(&:name)
+          Plans::Ledger.read(plan.feature.path, files).entries
+                       .select { names.include?(it.agent) && it.completed? && it.note.to_s.downcase.include?("reject") }
+                       .uniq { [it.agent, it.note, it.at.to_i / 60] }
+                       .size
+        end
+
+        private
+
+        # @return [Result]
+        def gated(checkout:, plan:, pull:, round:)
+          verdict = @gate.call(checkout:)
+          return reject(checkout:, plan:, pull:, round:, why: withheld(verdict)) if verdict.withheld?
+
+          result = @review.call(pr: pull.url || number_of(pull), label: Plans::ReviewLabel::READY_TO_MERGE)
+          return Result.new(kind: :waiting, note: "🧪 #{Plans::ReviewLabel::READY_TO_MERGE} refused: #{result.reason}") if result.refused?
+
+          # Plan 033 merges here in agent mode (R5): `ready-to-merge`, green
+          # CI on the PR and on main, and a clean merge. Until then nothing
+          # merges, and in human mode nothing ever does (M4).
+          ready(number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
+        end
+
+        # @return [Result]
+        def ready(number, why) = Result.new(kind: :ready, note: "PR ##{number} #{why}; waiting for it to merge")
+
+        # @return [Boolean]
+        def labelled_ready?(number, repo) = @github.labels(number:, repo:).include?(Plans::ReviewLabel::READY_TO_MERGE.name)
+
+        # @return [String]
+        def withheld(verdict)
+          lines = ["The coverage gate withheld #{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}."]
+          lines.push("", "```text", *verdict.output.last(TAIL), "```") unless verdict.output.empty?
+          lines.join("\n")
+        end
+
+        # Only what the round is allowed to keep, minus the engine's own note
+        # about the app, which names this machine's ports and is no part of
+        # the record.
+        #
+        # @return [Array<String>] the kept images
+        def keep(round, failing_step:)
+          return [] unless File.directory?(round.dir)
+
+          FileUtils.rm_f(File.join(round.dir, Round::APP_NOTE))
+          @screenshots.call(round.dir).prepare(failing_step:)
+        rescue Screenshots::Refused => e
+          UI.log("screenshots not kept: #{e.message}", level: :warn)
+          []
+        end
+
+        # @return [Array(String, String)] the SHA, nil when nothing was
+        #   committed, and what to say about it
+        def commit(checkout, plan, round, verdict)
+          message = "Verify #{plan.feature.ordinal}, round #{round.number}: #{verdict}"
+          sha = @publisher.commit_plan(checkout:, plan:, message:)
+          [sha, sha ? "committed #{sha[0, 7]}" : "nothing committed on a dry run"]
+        rescue Error => e
+          [nil, "not committed: #{e.message}"]
+        end
+
+        # The engine writes the report chewie never got to write.
+        #
+        # @return [void]
+        def write_report(round, why)
+          File.write(round.report_path, <<~MARKDOWN)
+            # Verification, round #{round.number}
+
+            Verdict: rejected
+
+            Written by the engine; chewie-verifier did not run.
+
+            #{why}
+          MARKDOWN
+        end
+
+        # A rejection chewie did not sign (the app, CI, the coverage gate)
+        # still counts against the cap.
+        #
+        # @return [void]
+        def sign_for_chewie(plan, round, why)
+          first = why.lines.first.to_s.strip.delete("()").sub(/[.:]\z/, "")
+          Plans::PlanState.for(plan.feature.path)
+                          .sign!(agent: AGENT,
+                            round: round.number,
+                            status: "Completed",
+                            note: "rejected: #{first}; signed by harness")
+        end
+
+        # @return [Result]
+        def send_back(plan, pull, body, labelled)
+          count = rejections(plan)
+          tally = "rejected #{count} of #{@max}"
+          @arbitration.call(plan:, count:, max: @max) if count >= @max
+          moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
+            pr: number_of(pull),
+            kind: :rejected,
+            comments: [{ author: AGENT, url: pull.url.to_s, body: }]))
+          label = labelled.refused? ? "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}" : Plans::ReviewLabel::REJECTED.name
+          Result.new(kind: :rejected,
+            note: "verification rejected PR ##{number_of(pull)}, #{tally}; #{label}" \
+                  "#{"; #{moved.note}" if moved}",
+            to: moved&.to)
+        end
+
+        # @return [String] Markdown
+        def comment(plan:, round:, report:, why:, link:, committed:)
+          lines = ["### 🧪 #{AGENT}: rejected, verification round #{round.number}", ""]
+          if why
+            lines << why
+          else
+            lines << "**Step #{report.step || "?"}:** #{report.what || "see #{round.relative}/#{Round::REPORT}"}" << ""
+            lines << "- **Expected:** #{report.expected || "not reported"}"
+            lines << "- **Seen:** #{report.seen || "not reported"}"
+          end
+          lines << "" << "![#{report.screenshot}](#{link})" if link
+          lines << "" << "The screenshots were #{committed}." unless link || why
+          lines << "" << "Plan #{plan.feature.ordinal}. How to test is in the pull request's description."
+          lines.join("\n")
+        end
+
+        # M14: by commit SHA, so the image renders in a private repository
+        # too. Every byte of the path is escaped: plan folders carry emoji,
+        # `━` and `❯`, and one unescaped byte is a broken image.
+        #
+        # @return [String, nil]
+        def link(pull, sha, png)
+          repo = Vcs::GitHub.repo_of(pull.url)
+          return nil unless sha && png && repo
+
+          path = Pathname(File.realpath(png)).relative_path_from(Pathname(File.realpath(@root))).to_s
+          "https://github.com/#{repo}/blob/#{sha}/#{path.split("/").map { ERB::Util.url_encode(it) }.join("/")}?raw=true"
+        end
+
+        # @return [Integer]
+        def number_of(pull) = Vcs::GitHub.number_of(pull.url || pull.number)
+      end
+    end
+  end
+end
