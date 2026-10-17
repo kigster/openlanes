@@ -386,6 +386,11 @@ module OpenLanes
       # and nothing here can tell the two apart.
       CREDENTIAL_VARS = %w[ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN].freeze
 
+      # What `claude -p --resume <id>` prints for an id it has no session for,
+      # in the directory it was run from (2.1.x): this line on stderr, then a
+      # `result` event with `is_error`, zero turns and zero tokens, exit 1.
+      SESSION_MISSING = /No conversation found with session ID/
+
       # @param env [Hash]
       # @return [Array<String>] credential variables currently set
       def self.foreign_credentials(env = ENV)
@@ -488,10 +493,13 @@ module OpenLanes
       #   plan right now, named in the prompt beside the plan's mailbox
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts: the invocation resolves it and does no plan work
+      # @param resume [String, nil] the previous round's session id (M1), to
+      #   carry on with this round's prompt; ignored by a CLI that cannot
+      #   resume, and dropped for a fresh start when the CLI cannot find it
       # @return [OpenLanes::Execution::Executor::Result]
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
       def call(agent, subject, root: @root, round: 1, successor: nil, handle: nil, partners: [], rebase: nil,
-        &on_progress)
+        resume: nil, &on_progress)
         started = UI.monotonic
         if @dry_run
           return Result.new(ok: true,
@@ -509,7 +517,8 @@ module OpenLanes
         profile = profile_for(agent, subject)
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
         handle.control = control
-        argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:)
+        resume = nil unless profile.adapter.resumes?
+        argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = Clock.new(seconds: timeout_for(agent),
@@ -520,6 +529,15 @@ module OpenLanes
 
         begin
           status = drain(child, sessions, handle)
+          if resume && !handle.killed && session_missing?(status, sessions.current)
+            UI.log("session #{resume} not found, starting #{agent.name} fresh",
+              level: :warn,
+              plan:  subject.feature.ordinal.to_s,
+              agent: agent.name)
+            handle.session = nil
+            argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:)
+            status = drain(launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress), sessions, handle)
+          end
           while (compaction = handle.take_compaction)
             resumed = settling(compaction, agent) do
               carry_on(compaction, agent, subject, root:, profile:, trace:, handle:, sessions:, &on_progress)
@@ -616,8 +634,10 @@ module OpenLanes
       # @param successor [String, nil] who the agent names on its `next:` line
       # @param partners [Array<OpenLanes::Agents::Agent>]
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
+      # @param resume [String, nil] a session id to carry on
       # @return [Array<String>]
-      def invocation(agent, subject, root: @root, control: nil, round: 1, successor: nil, partners: [], rebase: nil)
+      def invocation(agent, subject, root: @root, control: nil, round: 1, successor: nil, partners: [], rebase: nil,
+        resume: nil)
         profile = profile_for(agent, subject)
         profile.adapter.argv(
           Adapters::Invocation.new(
@@ -629,7 +649,8 @@ module OpenLanes
             denied_tools:    denied_for(agent),
             denied_commands: denied_commands(agent),
             network:         agent.network,
-            lean:            @lean
+            lean:            @lean,
+            resume:
           )
         )
       end
@@ -671,6 +692,23 @@ module OpenLanes
         handle.child = child
         transcript.pid = child.pid
         child
+      end
+
+      # Whether a resumed invocation failed because its session is gone,
+      # rather than at anything it did. The message is the sure sign; a
+      # failure that spent nothing and called no tool is taken as the same
+      # thing, because a CLI that rewords the message must still not cost the
+      # round. Starting such a failure again fresh costs one more start-up at
+      # worst: an invocation that spent nothing has nothing to lose.
+      #
+      # @param status [Process::Status]
+      # @param transcript [OpenLanes::Execution::Transcript]
+      # @return [Boolean]
+      def session_missing?(status, transcript)
+        return false if status.success? && !transcript.failed?
+        return true if [transcript.error, *transcript.plain].any? { SESSION_MISSING.match?(it.to_s) }
+
+        transcript.up.zero? && transcript.down.zero? && transcript.tools.zero?
       end
 
       # @return [Process::Status]
