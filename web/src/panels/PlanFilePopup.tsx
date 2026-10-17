@@ -39,6 +39,8 @@ export function PlanFilePopup({ ordinal, name, editable, onClose }: PlanFilePopu
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const dirty = editing && file !== null && draft !== file.body;
 
   useEffect(() => {
     let live = true;
@@ -46,6 +48,7 @@ export function PlanFilePopup({ ordinal, name, editable, onClose }: PlanFilePopu
     setFailure(null);
     setEditing(false);
     setSaveError(null);
+    setConfirming(false);
     readPlanFile(ordinal, name).then(
       (read) => { if (live) setFile({ ...splitPlanFile(read.body), etag: read.etag }); },
       (error: unknown) => { if (live) setFailure(describe(error)); },
@@ -60,8 +63,9 @@ export function PlanFilePopup({ ordinal, name, editable, onClose }: PlanFilePopu
     setEditing(true);
   };
 
-  const save = async () => {
-    if (!file || saving) return;
+  /** True when the file was written; a refusal stays on screen with the draft kept. */
+  const save = async (): Promise<boolean> => {
+    if (!file || saving) return false;
     setSaving(true);
     setSaveError(null);
     try {
@@ -69,15 +73,24 @@ export function PlanFilePopup({ ordinal, name, editable, onClose }: PlanFilePopu
       const { etag } = await savePlanFile(ordinal, name, joinPlanFile({ frontmatter: file.frontmatter, body: draft }), file.etag, csrf);
       setFile({ frontmatter: file.frontmatter, body: draft, etag });
       setEditing(false);
+      return true;
     } catch (error) {
       setSaveError(describe(error));
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
+  // Closing with a changed draft asks first, so Esc, a click outside and Close cannot lose the text silently.
+  const requestClose = () => { if (dirty) setConfirming(true); else onClose(); };
+  const saveAndClose = async () => {
+    setConfirming(false);
+    if (await save()) onClose();
+  };
+
   return (
-    <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog.Root open onOpenChange={(open) => { if (!open) requestClose(); }}>
       <Frame
         className="plan-file"
         title={`${ordinal} ${name}`}
@@ -99,11 +112,18 @@ export function PlanFilePopup({ ordinal, name, editable, onClose }: PlanFilePopu
             </>
           )}
           {saveError && <p role="alert" className="plan-file-error">{saveError}</p>}
+          {confirming && (
+            <div role="alert" className="plan-file-confirm">
+              <p>You have unsaved changes. Save them before closing?</p>
+              <button type="button" className="btn btn-primary" onClick={saveAndClose}>Yes</button>
+              <button type="button" className="btn btn-quiet" onClick={onClose}>No</button>
+            </div>
+          )}
         </div>
         <div className="help-foot">
           {file && editable && !editing && <button type="button" className="btn btn-primary" onClick={startEditing}>Edit</button>}
-          {editing && <button type="button" className="btn btn-primary" disabled={saving} onClick={save}>Save</button>}
-          {editing && <button type="button" className="btn btn-quiet" disabled={saving} onClick={() => setEditing(false)}>Cancel</button>}
+          {editing && <button type="button" className="btn btn-primary" disabled={saving} onClick={save}>Save Changes</button>}
+          {editing && <button type="button" className="btn btn-quiet" disabled={saving} onClick={() => { setEditing(false); setConfirming(false); }}>Cancel</button>}
           <Dialog.Close className="btn btn-quiet">Close</Dialog.Close>
         </div>
       </Frame>

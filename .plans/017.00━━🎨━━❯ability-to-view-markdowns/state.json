@@ -5,8 +5,8 @@
     "ordinal": "017.00",
     "slug": "ability-to-view-markdowns"
   },
-  "state": "building",
-  "updated_at": "2026-10-17T11:47:52-07:00",
+  "state": "building_ui",
+  "updated_at": "2026-10-17T12:11:29-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -134,7 +134,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "building",
       "started_at": "2026-10-17T11:41:45-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
@@ -145,7 +145,14 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "session": "2fa7d050-b353-48f7-ad4b-6760da15da4b"
+      "session": "2fa7d050-b353-48f7-ad4b-6760da15da4b",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-17T11:48:20-07:00",
+      "up": 1028598,
+      "down": 6638,
+      "seconds": 386.3,
+      "note": "completed - 11 tool calls; opened https://github.com/kigster/openlanes/pull/79",
+      "moves": 1
     },
     {
       "agent": "rey-frontend",
@@ -169,6 +176,68 @@
       "seconds": 89.9,
       "note": "completed - 5 tool calls",
       "moves": 0
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-10-17T12:03:37-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "2ac20895-cd9c-4167-ac89-fecff954bc7a",
+      "to": "rejected",
+      "finished_at": "2026-10-17T12:04:54-07:00",
+      "up": 610646,
+      "down": 4572,
+      "seconds": 76.6,
+      "note": "completed - 11 tool calls (rejected 1/2)",
+      "moves": 3
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-10-17T12:04:56-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "dfe4ea97-101a-414a-a69a-b29d69a214ac",
+      "to": "building_ui",
+      "finished_at": "2026-10-17T12:10:20-07:00",
+      "up": 543000,
+      "down": 4733,
+      "seconds": 323.5,
+      "note": "completed - 10 tool calls; next: names hansolo-reviewer, who does not handle 🎨 Building UI",
+      "moves": 4
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-10-17T12:05:00-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "e852cb85-28e1-4d35-a944-37f44bee22db"
     }
   ],
   "signatures": [
@@ -428,6 +497,45 @@
       "agent": "luke-backend",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-17T12:03:43-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:04:49-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-17T12:05:03-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:05:06-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:10:12-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-17T12:11:29-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
     }
   ],
   "messages": [
@@ -575,7 +683,7 @@
       "from": "rey-frontend",
       "to": "luke-backend",
       "body": "Front end done. F1 planFiles.test.ts, F2 PlanFilePopup.test.tsx, F3 PlanDrawer.test.tsx/App.test.tsx, F4 plan-files.cy.ts. vitest 378/0, lint+typecheck clean, web-e2e 25/25. Proof in pull-requests.md.",
-      "read": "no"
+      "read": "yes"
     },
     {
       "id": "d617435f-4346-4002-bef0-7a7cb7fc929c",
@@ -584,6 +692,33 @@
       "from": "luke-backend",
       "to": "rey-frontend",
       "body": "Added ## How to test to plan.md at the harness's request (mail #15), covering both halves: web-test, web-e2e, and the manual drawer/popup steps. Nothing else changed.",
+      "read": "no"
+    },
+    {
+      "id": "2d7a5c23-faab-42c8-b20f-f7a734e54e98",
+      "number": 18,
+      "at": "2026-10-17T12:05:41-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Hansolo finding 3 (CI red) cause: CircleCI job 833, step 'Coverage of changed files' (npm run coverage:changed, web/scripts/coverage-changed.ts) fails: src/panels/PlanFilePopup.tsx 93.8% (45/48 lines) < 95%. Everything else ok. All three findings are in PlanFilePopup.tsx, your half; the dirty-check tests for finding 1 should cover the missing lines. Back end has no findings; contract unchanged. Run 'cd web && npm run coverage:changed' locally to prove it.",
+      "read": "no"
+    },
+    {
+      "id": "5fb60b68-7e2e-485b-9aea-280b5d64804a",
+      "number": 19,
+      "at": "2026-10-17T12:10:11-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done for this rejection round: no back-end findings, rspec 3577/0, rubocop clean. You are last: paste the integration proof (just web-e2e) and coverage:changed result into pull-requests.md.",
+      "read": "no"
+    },
+    {
+      "id": "0d71fb81-ec5f-4cc2-bdf5-6a41deba0666",
+      "number": 20,
+      "at": "2026-10-17T12:11:29-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Review fixes done in web/ only (unsaved-changes prompt, Save Changes label, coverage:changed back above 95%). rspec 0 failures, rubocop clean, web-e2e 25/25. Proof in pull-requests.md.",
       "read": "no"
     }
   ],
@@ -616,5 +751,18 @@
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I signed plan 017.00's back end `Completed` for round 1."
     }
-  }
+  },
+  "moves": 4,
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-17T12:03:38-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-17T12:04:54-07:00"
+    }
+  ]
 }

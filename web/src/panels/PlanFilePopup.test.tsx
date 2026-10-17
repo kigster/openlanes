@@ -39,13 +39,13 @@ describe("PlanFilePopup", () => {
     renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={() => {}} />);
     await user.click(await screen.findByRole("button", { name: "Edit" }));
     typeInEditor(document.body, " more");
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     await waitFor(() => expect(save).toHaveBeenCalled());
     const [ordinal, name, text, etag, csrf] = save.mock.calls[0];
     expect([ordinal, name, etag, csrf]).toEqual(["017.00", "spec.md", '"e1"', "tok"]);
     expect(text.startsWith("---\nlane: full\n---\n")).toBe(true);
     expect(text).toContain("more");
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Save" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Save Changes" })).toBeNull());
   });
 
   it("shows a conflict on 412 and keeps the editor", async () => {
@@ -53,9 +53,9 @@ describe("PlanFilePopup", () => {
     const user = userEvent.setup();
     renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={() => {}} />);
     await user.click(await screen.findByRole("button", { name: "Edit" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/Conflict/);
-    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Changes" })).toBeInTheDocument();
   });
 
   it("shows the reason on a 409 and on a failed read", async () => {
@@ -63,8 +63,68 @@ describe("PlanFilePopup", () => {
     const user = userEvent.setup();
     renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={() => {}} />);
     await user.click(await screen.findByRole("button", { name: "Edit" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("plan has a live car");
+  });
+
+  it("closes at once when nothing was edited", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={onClose} />);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before closing over unsaved edits, and No discards them", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={onClose} />);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    typeInEditor(document.body, " more");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText("You have unsaved changes. Save them before closing?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "No" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves then closes on Yes", async () => {
+    const save = vi.spyOn(api, "savePlanFile").mockResolvedValue({ etag: '"e2"' });
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={onClose} />);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    typeInEditor(document.body, " more");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "Yes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays open on Yes when the save is refused", async () => {
+    vi.spyOn(api, "savePlanFile").mockRejectedValue(new api.PlanFileError("stale", 412, "stale"));
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={onClose} />);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    typeInEditor(document.body, " more");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "Yes" }));
+    expect(await screen.findByText(/Conflict/)).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("asks on Escape too, and Cancel drops the question", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={onClose} />);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    typeInEditor(document.body, " more");
+    await user.keyboard("{Escape}");
+    expect(onClose).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText(/unsaved changes/)).toBeNull();
   });
 
   it("reports a failed read", async () => {
