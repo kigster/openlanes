@@ -60,8 +60,23 @@ module OpenLanes
       # @!attribute [r] running
       #   @return [Array<String>] the sub-agents working right now, by name,
       #     oldest first; empty for a stream that never says (codex, pi)
-      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session, :running) do
-        def initialize(pid: nil, message: nil, context: nil, session: nil, running: [], **rest) = super
+      # @!attribute [r] journal
+      #   @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #     every journal line (M2) the agent has printed so far, in order. The
+      #     whole list rather than the latest, because a snapshot can be
+      #     skipped by a reader that is busy, and an entry must not be: the
+      #     dispatcher keeps its place in the list and writes what is past it.
+      Progress = Data.define(:activity,
+        :up,
+        :down,
+        :subagents,
+        :pid,
+        :message,
+        :context,
+        :session,
+        :running,
+        :journal) do
+        def initialize(pid: nil, message: nil, context: nil, session: nil, running: [], journal: [], **rest) = super
       end
 
       # The tools that start a sub-agent. `claude` called it `Task` and renamed
@@ -126,6 +141,7 @@ module OpenLanes
         @context = nil
         @session = nil
         @compacted = nil
+        @journal = []
       end
 
       # Everything sent to the model, which on any turn after the first is
@@ -182,7 +198,8 @@ module OpenLanes
           message: @message,
           context: @context,
           session: @session,
-          running: @running.values)
+          running: @running.values,
+          journal: @journal.dup.freeze)
       end
 
       # The sub-agents started and not yet answered, by name. A count would
@@ -194,6 +211,10 @@ module OpenLanes
 
       # @return [String, nil] the session id from the stream's `init` event
       attr_reader :session
+
+      # @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #   the journal lines printed so far
+      def journal = @journal.dup
 
       # What a `/compact` reported in its `compact_boundary` event:
       # `pre_tokens`, `post_tokens` and the rest of its `compact_metadata`.
@@ -303,6 +324,7 @@ module OpenLanes
       def handle(event)
         case event["type"]
         when "assistant"
+          capture_journal(event)
           capture_message(event)
           @tools += tool_calls(event)
           delegate(event)
@@ -312,6 +334,21 @@ module OpenLanes
         when "system" then system_event(event)
         when "result" then record_result(event)
         end
+      end
+
+      # Journal lines (M2) in the agent's own text. A sub-agent's are left
+      # out: it was not told the format, the journal is its parent's, and a
+      # line it printed reaches the parent as a tool result the parent can
+      # repeat if it matters. Text only, never a tool's input, so a file the
+      # agent writes that happens to hold such a line is not a journal entry.
+      #
+      # @param event [Hash]
+      # @return [void]
+      def capture_journal(event)
+        return unless event["parent_tool_use_id"].nil?
+
+        lines = blocks_of(event, "text").flat_map { Plans::Journal.scan(it["text"]) }
+        @journal.concat(lines)
       end
 
       # `--brief` gives the agent SendUserMessage, and what it sends is the
