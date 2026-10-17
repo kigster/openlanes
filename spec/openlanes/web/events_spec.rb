@@ -294,6 +294,30 @@ RSpec.describe OpenLanes::Web::Events do
       end
     end
 
+    context "when Redis refuses SUBSCRIBE" do
+      let(:waited_on) { [] }
+      let(:waiter) do
+        lambda do |news, _|
+          waited_on << news
+          now[0] += 0.25
+        end
+      end
+
+      before do
+        allow(store).to receive(:subscriber).and_raise(OpenLanes::Live::Unavailable, "NOPERM no permissions to SUBSCRIBE")
+        publish(1)
+        run_ticks
+      end
+
+      it "still sends the board, and polls rather than ending" do
+        aggregate_failures do
+          expect(frames.grep(/\Aevent: board/).size).to eq(1)
+          expect(frames.grep(/NOPERM/)).to be_empty
+          expect(waited_on).to all(be_nil).and(have_attributes(size: be > 1))
+        end
+      end
+    end
+
     context "when Redis goes away" do
       before do
         allow(store).to receive(:get).and_raise(OpenLanes::Live::Unavailable, "Redis at x is unavailable")

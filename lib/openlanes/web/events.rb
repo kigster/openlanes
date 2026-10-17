@@ -52,8 +52,12 @@ module OpenLanes
     # stopped or died) is sent once more as `stopped`, so the page never
     # keeps a tab for an app that is gone.
     class Events
-      # Block on the subscription for the next nudge.
-      WAIT = ->(news, seconds) { news.next_message(seconds) }
+      # How often a stream without a subscription looks again: the polling
+      # interval every stream used before nudges.
+      POLL = 0.25
+
+      # Block on the subscription for the next nudge, or, with none, poll.
+      WAIT = ->(news, seconds) { news ? news.next_message(seconds) : sleep([seconds, POLL].min) }
 
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -82,7 +86,7 @@ module OpenLanes
       # @return [void]
       def run(out)
         @chat&.attach(@page) if @page
-        news = Live::News.subscribe(store: @store, keys: @keys)
+        news = subscribe
         started = @clock.call
         pinged = started
         cursor = @last_id || newest_reply
@@ -119,6 +123,20 @@ module OpenLanes
       def self.frame(event, data, id: nil) = "#{"id: #{id}\n" if id}event: #{event}\ndata: #{JSON.generate(data)}\n\n"
 
       private
+
+      # The stream's subscription to nudges, or nil to poll. A Redis user
+      # whose ACL withholds SUBSCRIBE got a working polled board before
+      # nudges existed, and ending the stream instead would leave its page
+      # reconnecting forever. A Redis that is gone fails the first read
+      # just after, and ends the stream there.
+      #
+      # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber, nil]
+      def subscribe
+        Live::News.subscribe(store: @store, keys: @keys)
+      rescue Live::Unavailable => e
+        UI.log("events: no nudges, polling every #{POLL}s: #{e.message}", level: :warn)
+        nil
+      end
 
       # @return [Boolean]
       def over?(out, started)
