@@ -4,6 +4,8 @@ require "ipaddr"
 require "json"
 require "rack/utils"
 require "sinatra/base"
+require "newrelic_rpm"
+require 'newrelic/infinite_tracing'
 
 module OpenLanes
   module Web

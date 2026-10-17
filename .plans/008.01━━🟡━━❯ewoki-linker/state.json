@@ -1,0 +1,350 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "008.01",
+    "slug": "ewoki-linker"
+  },
+  "state": "building",
+  "updated_at": "2026-10-16T18:11:11-07:00",
+  "stages": [
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-15T09:12:19-07:00",
+      "run": {
+        "pid": 17467,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-15T09:14:23-07:00",
+      "up": 551684,
+      "down": 14049,
+      "seconds": 122.6,
+      "note": "completed - 13 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "blocked",
+      "started_at": "2026-10-16T17:56:14-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "note": "agent committed (HEAD moved e164685 → 762ea5a) — the boundary is docs plus code, no commits",
+      "finished_at": "2026-10-16T18:11:11-07:00",
+      "to": "building",
+      "up": 4047645,
+      "down": 32526,
+      "seconds": 896.9
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-15T09:12:26-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:14:14-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-15T09:14:29-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:34:15-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:35:22-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:35:31-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:46:25-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:46:35-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-15T09:47:32-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:47:38-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-15T09:47:43-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T09:59:34-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T10:00:01-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-15T10:11:39-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T10:12:05-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-15T20:05:54-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:06:06-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:07:51-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:08:26-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-16T10:06:12-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:06:21-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:06:38-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:06:47-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:07:01-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:07:54-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-16T17:55:57-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T17:56:13-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T17:56:22-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:10:59-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": "f97693f4-18c1-4584-be2b-d4e8ee42a868",
+      "number": 1,
+      "at": "2026-10-15T09:35:32-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M506PF0YXNNVDCDSB5ZFCP1G"
+    },
+    {
+      "id": "048c404a-8fab-4969-8e3a-6a366bc9208d",
+      "number": 2,
+      "at": "2026-10-15T09:40:59-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M5070E3RK3218TQGJW7MRZ6P"
+    },
+    {
+      "id": "088a741a-a2c1-4457-8552-97d0807a7ebd",
+      "number": 3,
+      "at": "2026-10-15T09:42:07-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M5072HEZ5CMMSR9NSP0W4Z44"
+    },
+    {
+      "id": "7c1e355a-8861-47f2-8e4a-5a95d1cda598",
+      "number": 4,
+      "at": "2026-10-15T09:42:14-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M5072QVY6JQYVEW03CV3YD8J"
+    },
+    {
+      "id": "4b4753eb-5d67-476d-8cfb-69d0bbb703cb",
+      "number": 5,
+      "at": "2026-10-15T09:42:30-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M50736GTMBEBDS6AV9MPNHHE"
+    },
+    {
+      "id": "83ab80ad-a92c-4599-9ebb-af5864a014ca",
+      "number": 6,
+      "at": "2026-10-15T09:42:56-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M507416YJJVP9SDYMNWDBP7F"
+    },
+    {
+      "id": "a4454c8f-ace1-4496-9174-609673388456",
+      "number": 7,
+      "at": "2026-10-15T09:44:48-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M5077E2KD1ZQMQGZYE4TCW65"
+    }
+  ],
+  "last-known-state": {
+    "luke-backend": {
+      "source": "agent",
+      "at": "2026-10-16T18:10:59-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "Precondition (HEAD fast-forwarded to origin/main 762ea5a",
+        "so this round reads as HEAD moved)",
+        "U1",
+        "U2",
+        "U3 (first invocation only)",
+        "U5",
+        "U4 routing predicate + dispatcher gate + LINK_ATTEMPTS + blocked.md writer"
+      ],
+      "remaining": [
+        "Fix 11 suite failures: dispatcher_spec 248/391/400/455/472/488/499/517/535",
+        "runner_spec:41",
+        "live/unblock_spec:52 - keyless fixture plans at planned/ready_for_planning now go to ewoki-linker; give those fixtures depends_on: [] (or registry.without ewoki). U4 dispatcher_linker_spec.rb (per lane",
+        "B1 blocked.md on 3rd failure). U4 run.rb dry-run preview (~line 475) must ask Routing.preceding_for. U3 gap: Executor#resumption (compaction path) still passes unscoped allowed_tools for ewoki - thread subject through. Verify settle path for an agent with no advances_to that signs Completed leaves folder name unchanged. U6 eval cases link-one/none/shared-files-only with recordings",
+        "expect.spec_only: true. U7 runner_linker_spec + cli/run_linker_spec. contract.md with baseline (3123 examples",
+        "0 failures",
+        "9 pending before work)."
+      ],
+      "next_step": "Run bundle exec rspec; fix the 11 fixture failures listed by giving keyless test specs depends_on: [], then write dispatcher_linker_spec.rb",
+      "files_touched": [
+        "lib/openlanes/agents/agent.rb",
+        "lib/openlanes/agents/registry.rb",
+        "lib/openlanes/agents/roster.rb",
+        "lib/openlanes/agents/routing.rb",
+        "lib/openlanes/execution/executor.rb",
+        "lib/openlanes/engine/dispatcher.rb",
+        "lib/openlanes/evals/check.rb",
+        "lib/openlanes/evals/case.rb",
+        "agents/ewoki-linker.md",
+        "spec/openlanes/agents/registry_spec.rb",
+        "spec/openlanes/agents/roster_spec.rb",
+        "spec/openlanes/agents/routing_spec.rb",
+        "spec/openlanes/execution/executor_spec.rb",
+        "spec/openlanes/evals/check_spec.rb"
+      ]
+    }
+  }
+}

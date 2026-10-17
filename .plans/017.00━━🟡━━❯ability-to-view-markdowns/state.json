@@ -3,10 +3,10 @@
   "version": 1,
   "plan": {
     "ordinal": "017.00",
-    "slug": "017.00━━⭐━━❯017.00━━🟡━━❯ability-to-view-markdowns"
+    "slug": "ability-to-view-markdowns"
   },
   "state": "building",
-  "updated_at": "2026-10-15T09:50:25-07:00",
+  "updated_at": "2026-10-16T10:07:58-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,38 +71,42 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
-      "from": "planned",
-      "started_at": "2026-10-15T09:50:18-07:00",
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-16T10:04:22-07:00",
       "run": {
-        "pid": 53174,
+        "pid": 88556,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "harness died",
-      "finished_at": "2026-10-15T09:47:08-07:00"
+      "note": "completed - 7 tool calls; publish refused: publish refused — plan.md has no `## How to test` section",
+      "finished_at": "2026-10-16T10:07:58-07:00",
+      "to": "building",
+      "up": 401223,
+      "down": 3071,
+      "seconds": 215.7
     },
     {
       "agent": "rey-frontend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "building",
-      "started_at": "2026-10-15T09:50:19-07:00",
+      "started_at": "2026-10-15T20:05:31-07:00",
       "run": {
-        "pid": 53174,
+        "pid": 9792,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
       "to": "building",
-      "finished_at": "2026-10-15T09:47:08-07:00",
-      "up": 1813669,
-      "down": 21424,
-      "seconds": 179.2,
-      "note": "harness died"
+      "finished_at": "2026-10-15T20:14:26-07:00",
+      "up": 554215,
+      "down": 3030,
+      "seconds": 533.9,
+      "note": "completed - 9 tool calls; publish refused: publish refused — plan.md has no `## How to test` section"
     }
   ],
   "signatures": [
@@ -218,6 +222,66 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T10:08:40-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T10:08:41-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T13:58:57-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T13:58:59-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:03:24-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:05:36-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:07:30-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:14:22-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:04:30-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:07:51-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -267,6 +331,42 @@
       "to": "rey-frontend",
       "body": "B1-B3 done. (2) bin/web-e2e now copies web/cypress/fixtures/plans to a temp dir, passes --dir to both demo servers, and --env plansDir=<tmp>/.plans to cypress. Fixture folders: 001.00━━⭕━━❯clean-agent-boundaries and 002.00━━⭕━━❯fixture-without-a-car, each spec.md (frontmatter), plan.md, blocked.md. (1) A carless blocked plan on the demo board needs board.json, which B3 may not touch and DemoBoard reads verbatim. Assumption in contract.md: add 002.00 (status blocked, one question, cars: []) to web/src/api/fixtures/board.json on your side; its folder already exists in the fixture. If you cannot, sign Blocked (technical) naming it.",
       "read": "yes"
+    },
+    {
+      "id": "4a23757a-e5b3-464a-a797-5560a56a851d",
+      "number": 6,
+      "at": "2026-10-15T20:05:56-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done and re-verified this round: rspec 3046/0 failures, rubocop clean. Demo server with the B3 copy lists 002's spec.md, plan.md, blocked.md with ETag. Saw your 002.00 (cars: []) in board.json; contract.md updated, gap closed. I am running just web-e2e now and will paste the result into pull-requests.md.",
+      "read": "no"
+    },
+    {
+      "id": "02c2c4b3-d899-4346-a174-110dd6d8879f",
+      "number": 7,
+      "at": "2026-10-15T20:07:29-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "just web-e2e green after just web-build: 25/25, plan-files.cy.ts 2/2. Results in pull-requests.md. Back end is done; signing Completed.",
+      "read": "no"
+    },
+    {
+      "id": "bad7e4ba-382c-4192-9b52-809347294408",
+      "number": 8,
+      "at": "2026-10-15T20:14:22-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done. F1 planFiles.test.ts, F2 PlanFilePopup.test.tsx, F3 PlanDrawer.test.tsx + App.test.tsx, F4 plan-files.cy.ts. vitest 378/378, e2e 25/25.",
+      "read": "yes"
+    },
+    {
+      "id": "87db7e71-1385-4388-a0d1-d9173464f18b",
+      "number": 9,
+      "at": "2026-10-16T10:07:50-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done (re-verified 2026-10-16): rspec 3046/0 failures, rubocop clean, web-e2e 25/25. Proof in pull-requests.md.",
+      "read": "no"
     }
   ],
   "last-known-state": {
@@ -286,17 +386,17 @@
     },
     "rey-frontend": {
       "source": "harness",
-      "at": "2026-10-15T09:47:08-07:00",
+      "at": "2026-10-15T19:54:45-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
     },
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-15T09:47:08-07:00",
+      "at": "2026-10-15T20:07:41-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "harness died; last ledger line: Started, round 1"
+      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The back end of 017.00 is finished, and the full end-to-end suite now passes, including the new plan-files test."
     }
   }
 }

@@ -37,3 +37,26 @@ $ bundle exec rubocop
 $ bundle exec rspec spec/openlanes/setup spec/openlanes/cli/init_spec.rb spec/openlanes/cli/init_integration_spec.rb spec/openlanes/config_spec.rb
 146 examples, 0 failures
 ```
+
+Re-verified again after a further harness death (2026-10-15, 10:0x), no code changed:
+
+```
+$ bundle exec rspec
+3107 examples, 0 failures, 9 pending
+
+$ bundle exec rubocop
+440 files inspected, no offenses detected
+```
+
+Re-verified after the harness flagged a push (2026-10-16), no code changed. The flagged ref, `origin/kig/collapse-agent-transcript`, was pushed at 2026-10-15 20:04 from the separate `openlanes.worktrees/collapse-agent-transcript` checkout, which shares `refs/remotes` with this worktree; this plan's branch was not pushed and `HEAD` is still `ce65c43`.
+
+```
+$ bundle exec rspec
+3107 examples, 0 failures, 9 pending
+
+$ bundle exec rubocop
+440 files inspected, no offenses detected
+
+$ bundle exec rspec spec/openlanes/cli/init_integration_spec.rb
+2 examples, 0 failures
+```

@@ -79,9 +79,10 @@ No file is shared. `justfile`'s `web-e2e` recipe, if B3 needs to touch it, is lu
 
 - `web/cypress/fixtures/plans/` holds `001.00━━⭕━━❯clean-agent-boundaries` (blocked in `board.json`, 2 cars) and `002.00━━⭕━━❯fixture-without-a-car`, each with `spec.md` (frontmatter `created`, `lane`), `plan.md` (none) and `blocked.md`.
 - `bin/web-e2e` copies that tree to a temp dir, passes it as `--dir` to both demo servers, and gives Cypress its path as `Cypress.env("plansDir")`, so F4 reads a file back with `cy.readFile` under that path.
-- Gap for F4: `web/src/api/fixtures/board.json` has one blocked plan, `001.00`, and it has cars, so its Edit is disabled. No blocked plan on the demo board has no car, and B3 may not touch `board.json`. F4 needs a carless blocked plan on the board (for example `002.00` added to `board.json`), which is rey's file.
+- The demo board (`web/src/api/fixtures/board.json`, rey's file) holds `001.00` blocked with 2 cars (Edit disabled, PUT `409`) and `002.00` blocked with one question and `cars: []` (Edit enabled). F4 drives `002.00`.
+- Verified against `openlanes web --demo --dir <copy>`: `GET /api/plans/002/files` → `{"files":["spec.md","plan.md","blocked.md"]}`; `GET /api/plans/002/files/spec.md` → `text/markdown;charset=utf-8` with a quoted 64-hex `ETag`.
 
 ## Amendments
 
 - amended: Cypress env is `plansDir`, not `plans`, at rey's request (mail #4).
-- amended: assumption for the F4 gap: rey adds `002.00` (status `blocked`, one question, `cars: []`) to `web/src/api/fixtures/board.json`; its folder is already in the B3 fixture. B3 is barred from `board.json`.
+- amended: assumption for the F4 gap: rey adds `002.00` (status `blocked`, one question, `cars: []`) to `web/src/api/fixtures/board.json`; its folder is already in the B3 fixture. B3 is barred from `board.json`. Resolved: rey added it; the gap is closed.

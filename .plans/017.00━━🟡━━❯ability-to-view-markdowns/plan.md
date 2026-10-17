@@ -116,3 +116,27 @@ Yes. One new route (`GET /api/plans/:ordinal/files`), one new header on an exist
 > [!NOTE]
 >
 > [2026-10-15 09:47:08 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:59:26 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:59:26 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 10:10:58 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 10:10:58 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 07:54:45 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 07:54:45 PM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]

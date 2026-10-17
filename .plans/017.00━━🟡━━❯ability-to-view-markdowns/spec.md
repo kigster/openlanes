@@ -11,13 +11,37 @@ Whenever a plan is blocked, clicking on the bottom red pill currently opens up t
 
 ## Proposal
 
-Also open the drawer on the right with a dropdown of markdown files in the folder. Selecting a markdown opens a popup with the preview. There is only one popup window, so selecting another file replaces the contents. The pop up can be closed.
+Also open the drawer on the right with a dropdown of markdown files in the folder (filtered to the three that can be edited:  spec.md or plan.md or blocked.md). 
+
+Selecting the file from the dropdown opens large modal popup, showing the markdown file rendered as HTML. 
+
+On the bottom right of the drop down there are two buttons: [ Edit ] [ Close ]
+
+Once the user clicks on [ Edit ] the preview is replaced with an editable textarea that has the same syntax highlighting for markdown as well as for the code blocks inside as we have elsewhere.
+
+ There is only one popup window, so selecting another file replaces the contents. The pop up can be closed.
 
 The popup should have an [EDIT] button and be able to switch to text area so that spec.md or plan.md can be edited.
+
+In this mode, the [ Edit ] button is replaced with [ Save Changes ] [ Cancel ] [ Close ]
+
+Clicking on [ Close ] after changes have been made to the file and not saved, and while still in the edit mode, pops up a confirmation: "You have unsaved changes. Save them before closing? Yes/No". 
+
+After that the dialog closes. 
+
+### blocked.md
+
+In the case of blocked.md, upon saving the file the Ruby Code should check if there is any text after ## A1 answer header, and if so, it should start the unblocking agent on this plan.
+
+
 
 <!-- cmd:01M5055EZANP1J1S8X1VSHB1CA -->
 
 ## What we are trying to achieve
+
+We need to be able to effectively unblock technical blocks and sometimes that requires human editing of the 
+
+For blocked.md specifically, we may want to 
 
 
 ## Why it matters

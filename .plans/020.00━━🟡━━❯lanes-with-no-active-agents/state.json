@@ -1,0 +1,97 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "020.00",
+    "slug": "lanes-with-no-active-agents"
+  },
+  "state": "building",
+  "updated_at": "2026-10-16T18:11:11-07:00",
+  "stages": [
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-16T18:08:35-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-16T18:11:04-07:00",
+      "up": 979806,
+      "down": 16136,
+      "seconds": 147.4,
+      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-10-16T18:11:04-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-10-16T18:11:04-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-16T18:08:42-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:10:53-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-16T18:11:09-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:11:11-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    }
+  ],
+  "messages": [],
+  "last-known-state": {
+    "palpatine-planner": {
+      "source": "harness",
+      "at": "2026-10-16T18:11:04-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The plan for 020.00 is written to `plan.md` in the plan folder, and I signed it `Completed` with `--next luke-backend`."
+    }
+  }
+}

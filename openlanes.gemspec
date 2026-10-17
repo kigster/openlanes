@@ -85,4 +85,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-screen"
   spec.add_dependency "unicode-display_width"
   spec.add_dependency "zeitwerk"
+  spec.add_dependency "newrelic_rpm"
+  spec.add_dependency "newrelic-infinite_tracing"
 end

@@ -36,10 +36,16 @@ After this ships, `openlanes init` records four project-wide decisions in `.open
 
 Each item is checkable by a spec or a command.
 
-1. `Config::KEYS` accepts `ci` (`provider: github_actions|circleci|jenkins|external|none`, `config: <path>`), `merge` (`by: human|agent`), `build_quality` (`top_notch|high|medium|mvp`) and `stack`; `Config.parse` rejects other values of each, and `to_yaml` round-trips them.
-1. `stack:` holds `language, frameworks, front_end, persistence, caching, logins, deployment, domain, from, to` (research shape, `.openlanes.yml`).
-1. A stack detector maps marker files to a stack (`Gemfile`, `package.json`, `go.mod`, `Cargo.toml`, `mix.exs`, `pyproject.toml`/`requirements.txt`, with the refinements listed in `## Research`), tested on real temp folders. A folder with two language markers reports as mixed, and the interview asks.
-1. `init` writes `docs/decisions/stack.md` from the same fields; absent when the stack is unknown and `-y` is used.
+1. *Integrated CI?* Yes/No. 
+1. If Yes, *CI Provider:* (supported providers Github, CircleCI, Custom)
+1. *Auto-approved PRs merged by*: Human, Agent, and the third option is: Agent, but only PRs classified as low-risk by a dedicated agent.
+1. *Code Build Quality vs Build Speed:*
+   1. Quality: Top, Speed: Slowest (More tokens)
+   1. Quality: High, Speed: Faster
+   1. Quality: Medium, Speed: Fast
+   1. Quality: MVP, Speed: Ultra Fast
+1. *Stack:* `Config.parse` rejects other values of each, and `to_yaml` round-trips them. The `stack:` holds `language(s), frameworks, front_end, persistence, caching, logins, deployment, domain, from, to` (research shape, `.openlanes.yml`).
+1. A stack detector maps marker files to a stack (`Gemfile`, `package.json`, `go.mod`, `Cargo.toml`, `mix.exs`, `pyproject.toml`/`requirements.txt`, with the refinements listed in `## Research`), tested on real temp folders. A folder with two language markers reports as mixed, and the interview asks. `init` writes `docs/decisions/stack.md` from the same fields; absent when the stack is unknown and `-y` is used.
 1. **CI comes first (M21).** A CI detector reports what the folder already runs: `.github/workflows/*.yml` → GitHub Actions, `.circleci/config.yml` → CircleCI, `Jenkinsfile` → Jenkins, `.gitlab-ci.yml` → GitLab CI, `.buildkite/` → Buildkite (tested on real temp folders, several at once reported as a list). When one is found, the interview names it and asks nothing. When none is found it asks "Do you have a CI setup, or would you like some help with that?" with three answers: *I have one elsewhere* (record `ci.provider: external`), *Help me set one up*, *No CI for now* (record `ci.provider: none`). *Help me set one up* asks which: GitHub Actions (default), CircleCI, Jenkins.
 1. **CI scaffold.** For the chosen provider, `init` writes one config file that runs the project's own lint and test commands for the detected stack (`just lint` / `just test` when a justfile defines them, otherwise the stack's conventional commands), never overwriting an existing file, and records `ci.provider` and `ci.config` in `.openlanes.yml`. `-y` takes `--ci PROVIDER|none` and defaults to `none` (asks nothing, writes nothing). Check: one spec per provider asserting the file path and that it names the stack's commands; a spec that an existing file is left untouched.
 1. Interview order is CI, merge, build quality, stack; the existing four values remain.
@@ -51,7 +57,6 @@ Each item is checkable by a spec or a command.
 
 ## Out of scope
 
-- Cmd-Backspace "go back": needs a per-terminal key test (research, unsettled 1) and an engine `back` that does not exist (M17.5). Reason: depends on upstream work.
 - Rewriting existing `.openlanes.yml` keys beyond the three new ones. Reason: not needed.
 - Linear/GitHub sync of the stack. Reason: no consumer yet.
 

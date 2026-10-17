@@ -1,0 +1,32 @@
+openapi: 3.1.0
+info:
+  title: openlanes board snapshot, plan 019.00 addition
+  version: "019.00"
+  description: >
+    Additive change only. Every car in the board snapshot gains `subagents`.
+    Every other field of the snapshot is unchanged and described by
+    web/src/api/types.ts and web/src/api/fixtures/snapshot.json.
+paths: {}
+components:
+  schemas:
+    Car:
+      type: object
+      description: One agent at work on one plan (`Live::Snapshot#car`).
+      required: [key, agent, subagents]
+      properties:
+        key:
+          type: string
+          example: 001.00/rey-frontend
+        agent:
+          type: string
+          example: rey-frontend
+        subagents:
+          type: integer
+          minimum: 0
+          description: >
+            Sub-agents in flight now: started and not yet ended. 0 when none,
+            never null. Falls back to 0 when they end. Older engines omit the
+            field; a reader treats a missing field as 0. Codex and Pi agents
+            always report 0.
+          example: 3
+      additionalProperties: true

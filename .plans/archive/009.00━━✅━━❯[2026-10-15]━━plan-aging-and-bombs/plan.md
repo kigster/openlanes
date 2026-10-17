@@ -90,3 +90,17 @@ The spec's open questions, settled by its recommended or assumed option. Reopen 
 1. **Dependents.** "Other plans depend on it" is `Tree#blocks_of` from #23, counting only dependents still open: not ✅ or 😎 (008's `Dependencies::DONE`) and not ❌. A plan whose only dependents have shipped or been dropped holds nobody up, so it ages toward ☢️, not 💣.
 1. **Dry runs.** The sweep fires nothing under `--dry-run`; it reports what it would bomb or defer, and the dry run halts on the would-be bombs as a real run would.
 1. **Respond.** `respond` answers the first open question that has no answer yet, in the same `## A<n>` form the existing `answer` command writes, so the unblocker folds it unchanged.
+
+## How to test
+
+- With `aging_since` set to today, nothing ages. Backdate it, and a blocked plan with dependents turns 💣 and `lanes run` exits non-zero naming it.
+- The notice shows `blocked.md` on the left and an answer box on the right; Respond writes into `blocked.md`, and work resumes on the next round.
+- A blocked plan with no dependents moves to `deferred/` after 14 days.
+
+> [!NOTE]
+>
+> [2026-10-15 10:08:34 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 10:10:58 AM PDT] [ agent: rey-frontend   status: **Interrupted, round 1 (harness died)** ]

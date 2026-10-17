@@ -3,10 +3,10 @@
   "version": 1,
   "plan": {
     "ordinal": "014.00",
-    "slug": "014.00━━⭐━━❯014.00━━🟡━━❯chewie-verifier"
+    "slug": "chewie-verifier"
   },
   "state": "building",
-  "updated_at": "2026-10-15T09:50:24-07:00",
+  "updated_at": "2026-10-16T10:10:50-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -31,18 +31,22 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
-      "from": "planned",
-      "started_at": "2026-10-15T09:50:18-07:00",
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-10-16T10:04:22-07:00",
       "run": {
-        "pid": 53174,
+        "pid": 88556,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "harness died",
-      "finished_at": "2026-10-15T09:47:08-07:00"
+      "note": "Almost completed; no rounds left",
+      "finished_at": "2026-10-16T10:10:50-07:00",
+      "to": "building",
+      "up": 3282049,
+      "down": 26394,
+      "seconds": 387.3
     }
   ],
   "signatures": [
@@ -121,16 +125,78 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T10:08:40-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T13:58:58-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:03:12-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:14:03-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:04:30-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:10:39-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
     }
   ],
   "messages": [],
   "last-known-state": {
     "luke-backend": {
-      "source": "harness",
-      "at": "2026-10-15T09:47:08-07:00",
+      "source": "agent",
+      "at": "2026-10-16T10:10:35-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "harness died; last ledger line: Started, round 1"
+      "done": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6 (lib/openlanes/engine/verification.rb + spec",
+        "8 green)",
+        "B7 part 1 (dispatcher: hansolo approved -> verifying via to_verifying; chewie verdicts verified/rejected -> Verification#pass/#reject via Runner#verification; Screenshots.prepare before commit; dispatcher_spec updated + 2 chewie examples)"
+      ],
+      "remaining": [
+        "B7 part 2: wrap chewie's executor.call (dispatcher.rb ~line 968",
+        "inside job.thread) in Verification::AppSession#around when agent.phase == VERIFICATION_PHASE and Apps.definition is set and task.checkout exists; on a failed AppSession::Result skip the agent and in settle call outcome.reject(step: 'the app does not start'",
+        "seen: result.message",
+        "png: nil); board text '🧪 waiting on CI' for a verified plan whose pass returned :waiting; dispatcher_spec examples for app-start failure (no agent call",
+        "no child alive)",
+        "B8 spec/integration/verification_spec.rb + stand-in agent script under spec/fixtures/verification/",
+        "bin/coverage-changed check"
+      ],
+      "next_step": "Merge of origin/main aee4ccd is still staged (MERGE_HEAD), uncommitted; do not abort it. Full suite at 10:09: 3055 examples, 2 failures, both in spec/openlanes/apps/supervisor_spec.rb (port races under load; that file passes alone with the same seed 5813); rubocop clean. Next: B7 part 2 in dispatcher.rb around the job.thread block, then B8. Revert docs/badges/coverage_badge.svg after every rspec run.",
+      "files_touched": [
+        "lib/openlanes/engine/verification.rb",
+        "spec/openlanes/engine/verification_spec.rb",
+        "lib/openlanes/engine/dispatcher.rb",
+        "lib/openlanes/engine/runner.rb",
+        "spec/openlanes/engine/dispatcher_spec.rb"
+      ]
     }
   }
 }

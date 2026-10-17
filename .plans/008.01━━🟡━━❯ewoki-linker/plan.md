@@ -6,6 +6,8 @@ Spec items 6–9 of the 008.00 delivery. Seven back-end units, no front end, no 
 
 This worktree's branch (`kig/008.01-spec-ewoki-linker`) predates 008.00's merge: `lib/openlanes/plans/dependencies.rb`, `Spec#depends_on` and the dispatcher's dependency gate are on `origin/main` but not on `HEAD`. Rebase onto `origin/main` before U1 starts. Every unit below reads those 008.00 pieces and edits none of them.
 
+Decided 2026-10-16 by kig: the agent fast-forwards the branch to `origin/main` in the next round, and the boundary reports that round as a failed attempt (HEAD moved); a human then re-runs it from the moved `HEAD`.
+
 ## Order and dependency graph
 
 ```mermaid
@@ -100,9 +102,9 @@ No. The plan adds no HTTP API and changes none.
 
 ## Plan size
 
-This plan does not run as one round of seven units. Before any unit starts, it goes back to `palpatine-planner` to be broken into smaller tickets, each small enough for one round.
+The plan stays one plan of seven units. It is not split into tickets; the agent building it gets a longer time budget per round.
 
-Decided 2026-10-15 by kig: the plan is split into smaller tickets by `palpatine-planner`, not given a longer time budget.
+Decided 2026-10-16 by kig: keep the plan as one plan and give the building agent a longer time budget per round. This supersedes the 2026-10-15 decision to split it.
 
 ## Task completed when
 

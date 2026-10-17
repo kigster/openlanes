@@ -3,10 +3,10 @@
   "version": 1,
   "plan": {
     "ordinal": "011.00",
-    "slug": "011.00━━🟡━━❯011.00━━🟡━━❯init-interview"
+    "slug": "init-interview"
   },
   "state": "building",
-  "updated_at": "2026-10-15T09:50:18-07:00",
+  "updated_at": "2026-10-16T10:06:52-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,22 +71,22 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Interrupted",
-      "from": "planned",
-      "started_at": "2026-10-15T09:50:04-07:00",
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-16T10:04:22-07:00",
       "run": {
-        "pid": 30068,
+        "pid": 88556,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "harness died",
-      "finished_at": "2026-10-15T09:50:18-07:00",
+      "note": "completed - 9 tool calls; publish refused: publish refused — plan.md has no `## How to test` section",
+      "finished_at": "2026-10-16T10:06:52-07:00",
       "to": "building",
-      "up": 835590,
-      "down": 4441,
-      "seconds": 149.6
+      "up": 554166,
+      "down": 3851,
+      "seconds": 150.1
     }
   ],
   "signatures": [
@@ -157,16 +157,64 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:59:33-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T10:01:34-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T10:08:45-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T13:58:58-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:03:12-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-15T20:05:21-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:04:30-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T10:06:46-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [],
   "last-known-state": {
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-15T09:50:18-07:00",
+      "at": "2026-10-15T20:05:31-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "harness died; last ledger line: Interrupted, round 1: harness died"
+      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: Plan 011.00 is signed `Completed`."
     }
   }
 }

@@ -123,3 +123,15 @@ Copied verbatim from the spec's author. Bullets 2, 3 and 6 (auto/human merge, `m
 > [!NOTE]
 >
 > [2026-10-15 09:47:08 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 09:59:26 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 10:10:58 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+> [!NOTE]
+>
+> [2026-10-15 07:54:45 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

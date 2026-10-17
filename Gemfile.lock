@@ -13,6 +13,8 @@ PATH
       fuzzy-string-match
       inquirex-llm (~> 0.12)
       launchy (~> 3.1)
+      newrelic-infinite_tracing
+      newrelic_rpm
       parallel
       pastel
       puma (>= 6.4)
@@ -83,6 +85,12 @@ GEM
       zeitwerk (~> 2.6)
     fuzzy-string-match (1.0.1)
       RubyInline (>= 3.8.6)
+    google-protobuf (3.25.8)
+    googleapis-common-protos-types (1.20.0)
+      google-protobuf (>= 3.18, < 5.a)
+    grpc (1.84.0)
+      google-protobuf (>= 3.25, < 5.0)
+      googleapis-common-protos-types (~> 1.0)
     hana (1.3.7)
     inquirex (0.12.1)
       ostruct (~> 0.6)
@@ -103,6 +111,12 @@ GEM
     lint_roller (1.1.0)
     logger (1.7.0)
     mustermann (3.1.1)
+    newrelic-infinite_tracing (10.9.1)
+      google-protobuf (< 4.0)
+      grpc (~> 1.34)
+      newrelic_rpm (= 10.9.1)
+    newrelic_rpm (10.9.1)
+      logger
     nio4r (2.7.5)
     ostruct (0.6.3)
     parallel (2.3.0)
@@ -236,7 +250,6 @@ GEM
     zeitwerk (2.8.3)
 
 PLATFORMS
-  arm64-darwin-25
   ruby
 
 DEPENDENCIES
@@ -279,6 +292,9 @@ CHECKSUMS
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
   dry-monads (1.11.0) sha256=ffc188512bf90c8ace135a1171a6791e561d5e3a1de6195ce5f9bc190c81e31b
   fuzzy-string-match (1.0.1) sha256=0740e515b3d1f7a40bd7f058a67a63682a9f4d98e4a95a9eb670aa562a047549
+  google-protobuf (3.25.8) sha256=102c8500502e224a5daa7447bdd2c458a25a6c7b0bf5d8496a559ada131952b7
+  googleapis-common-protos-types (1.20.0) sha256=5e374b06bcfc7e13556e7c0d87b99f1fa3d42de6396a1de3d8fc13aefb4dd07f
+  grpc (1.84.0) sha256=df2dd2d379fe3419a58af64f2fab514202437e28b7df5b441a16da542486a98f
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
   inquirex (0.12.1) sha256=ec9bda0f2de064935144c4ec258c81b939c6883dfbe3a58ef6a6568c909b075e
   inquirex-llm (0.12.1) sha256=ba97590a48d1d6c49f009abbbd70139933d89b908fb4ec612e5d4eda4bdc3889
@@ -289,6 +305,8 @@ CHECKSUMS
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   mustermann (3.1.1) sha256=4c6170c7234d5499c345562ba7c7dfe73e1754286dcc1abb053064d66a127198
+  newrelic-infinite_tracing (10.9.1) sha256=43f7376f6294c49faeac45818b463612cc49d0c9d7aa7f82ff4fe33b33b84214
+  newrelic_rpm (10.9.1) sha256=7a2c8f0bd6c3407f7d981999d46e0d5c39c53bee9ca737f0e083d3b6dcc8f0c3
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
   openlanes (3.0.1)
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912

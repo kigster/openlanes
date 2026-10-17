@@ -18,28 +18,91 @@ You drain `blocked.md` in one plan folder. A human has answered some of its ques
 
 `blocked.md`, which uses exactly two heading kinds:
 
-- `## B1`, `## B2`: an open question.
-- `## A1`, `## A2`: the answer to the question with the same number.
+- `## B1 - Block Title` followed by the question contents.
+- `## A1 - Block Title`  followed by either "TODO" or the  answer user provided.
 
 If the questions are numbered some other way, renumber them to `## B<n>` first and say so in your report. Other notation is invisible to the tool.
 
 ## An answer counts only if it
 
-1. names who decided (a role is enough);
-1. carries a date;
-1. settles the question. "Leaning towards B" or a restated set of options does not.
+It answers the question. If the question is multiple choice, "Leaning towards B" should be enough. Alternatively, an answer can be text describing the solution. 
 
 An `## A<n>` failing any of these stays, and so does its `## B<n>`.
 
 ## Do
 
-For each answer that counts:
+For each answer that answers the question, this agent will insert that decision into the document the block stops (spec.md or plan.md or one of the specialized implementation files), as both a block and a decision in that document's voice, followed by one provenance line.
 
-1. Write the decision into the document it stops, as settled fact in that document's voice, followed by one provenance line: `Decided 2026-08-21 by the CTO: rates are read from the vendor feed, never cached across a filing period.`
-   - What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most 🛑 blocks.
-   - How, in what order, or by which unit: `plan.md`. Most ⭕ blocks. Only if `plan.md` already exists.
-   - Both: write both.
-1. Delete the `## B<n>` and its `## A<n>` together.
+# Examples
+
+**blocked.md**
+
+## B1 — Who rebases the main branch?
+
+<additional context and why it's unclear>
+
+## A1 — Who rebases the main branch?
+
+TODO
+
+------
+
+#### After the user answers the question:
+
+### A1 — Who rebases the main branch? 
+
+<inserted automatically>
+
+- Answered on <date> <time>
+- By <username@machine>
+
+<answer text provided by the user>
+
+---
+
+Once the file is saved, this agent will be started. 
+
+It must read the `blocked.md` file and find one or more answer blocks. 
+
+For each block that has been answered:
+
+- it moves the block header and body into the file that this block was preventing from moving forward (such as either `spec.md` or `plan.md` or one of the implementation files, but changes the title to:
+
+> [!NOTE]
+> 
+> **Note For Unblocking Agent**
+>
+> Compress the essense of the block B1 into a single sentence title shown above as "Block Title"
+>
+> Extract the complete answer and place it here, fixing syntax errors and improving clarity if needed.
+
+### B1 (answered) — Block  Title
+
+<block question>
+
+### D1 (decision) — Block Title
+
+Answered:
+
+* 2026-08-21, <timestamp>
+* By [ name/username/role ] if that's available (nothing if not)
+
+<answer text, cleaned up, clarified if needed, and syntax/grammar fixed>
+
+---
+
+Most importantly, after inserting this into either spec.md or plan.md or one of the implementation files, this block is removed from blocked.md. If it's the only question, the file is removed.
+
+---
+
+#### Agent's Job
+
+What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most  🛑 blocks.
+
+ - How, in what order, or by which unit: `plan.md`. Most ⭕ blocks. Only if `plan.md` already exists.
+ - Both: write both.
+
+1. Delete the `## B<n>` and its `## A<n>` together from `blocked.md`
 
 When no `## B<n>` remains, delete `blocked.md`. Folding one answer out of four is a complete run.
 
@@ -53,7 +116,7 @@ When no `## B<n>` remains, delete `blocked.md`. Folding one answer out of four i
 
 ## Next
 
-After you finish, `unblock` renames the folder by its contents:
+After you finish and there is no more un-answered questions, and `blocked.md` has been removed, `unblock` renames the folder by its contents:
 
 | Result                          | Folder becomes                                              | Who runs next                         |
 | :------------------------------ | :---------------------------------------------------------- | :------------------------------------ |
