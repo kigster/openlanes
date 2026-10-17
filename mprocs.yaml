@@ -1,5 +1,5 @@
 ---
 procs:
   control-room: bundle exec lanes web
-  engine: bundle exec lanes run -j 4
+  engine: bundle exec lanes run -j 4 --no-web --stay
   logs: tail -F log/development.log
