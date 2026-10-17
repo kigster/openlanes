@@ -29,6 +29,24 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
     it "reads each answer up to the next question" do
       expect(described_class.answers(text)).to eq(1 => "\nSplit them.\n\n")
     end
+
+    it "keeps the words on the answer's heading, which is often the whole decision" do
+      answers = described_class.answers("## B2. Revocation\n\n## A2. Retain, do not delete\n\nDecided by Alan Turing.\n")
+      expect(answers).to eq(2 => "Retain, do not delete\n\nDecided by Alan Turing.\n")
+    end
+
+    it "reads an answer that is only its heading" do
+      expect(described_class.answers("## B1 Vendor\n## **A1.** Acme\n")).to eq(1 => "Acme\n")
+    end
+
+    it "keeps a heading inside an answer, and stops at the next question" do
+      answers = described_class.answers("## B1 Store\n\n## A1\n\n### Database\nUse Postgres\n\n## B2 Next\n\nWhat?\n")
+      expect(answers).to eq(1 => "\n### Database\nUse Postgres\n\n")
+    end
+
+    it "still ends a question's body at any heading" do
+      expect(described_class.bodies("## B1 Store\n\nWhich?\n### Notes\nmore\n")).to eq(1 => "\nWhich?\n")
+    end
   end
 
   describe ".replace" do

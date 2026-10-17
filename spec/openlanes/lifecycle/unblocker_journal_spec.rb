@@ -59,6 +59,15 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
     }])
   end
 
+  context "when the answer is written on its heading" do
+    let(:blocked_body) { "# Blocked\n\n## B1. What happens on revocation\n\n## A1. Retain, do not delete\n" }
+
+    it "records the heading's words as the answer" do
+      unblocker.drain(subject_plan)
+      expect(seen.first.map(&:answer)).to eq(["Retain, do not delete"])
+    end
+  end
+
   context "when nothing on record ever blocked" do
     before { FileUtils.rm_f(state.path) }
 
