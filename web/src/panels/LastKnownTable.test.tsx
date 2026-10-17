@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { sampleLastKnown } from "../board/sample";
 import { AgentDrawer } from "./AgentDrawer";
@@ -11,7 +12,7 @@ describe("LastKnownTable", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders one row per agent: agent, source, round, status, next step and note", async () => {
+  it("puts the fields down the first column and one agent in each column after it", async () => {
     const { container } = render(
       <LastKnownTable
         entries={[
@@ -22,12 +23,24 @@ describe("LastKnownTable", () => {
     );
     const table = screen.getByRole("table");
     expect(screen.getByRole("heading", { name: "Last known state" })).toBeInTheDocument();
-    const rows = within(table).getAllByRole("row").slice(1).map((r) => Array.from(r.querySelectorAll("th, td"), (c) => c.textContent));
+    const rows = within(table).getAllByRole("row").map((r) => Array.from(r.querySelectorAll("th, td"), (c) => c.textContent));
     expect(rows).toEqual([
-      ["rey-frontend", "agent", "1", "Interrupted", "draw the panel", "—"],
-      ["luke-backend", "harness", "2", "Interrupted", "—", "harness died"],
+      ["Agent", "rey-frontend", "luke-backend"],
+      ["Source", "agent", "harness"],
+      ["Round", "1", "2"],
+      ["Status", "Interrupted. Next step: draw the panel", "Interrupted"],
+      ["Note", "—", "harness died"],
     ]);
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("has no next step row, and shows the next step as the status's tooltip on focus", async () => {
+    const user = userEvent.setup();
+    render(<LastKnownTable entries={[sampleLastKnown()]} />);
+    expect(screen.queryByRole("rowheader", { name: "Next step" })).toBeNull();
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    await user.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Next step: draw the panel");
   });
 
   it("shows in the agent drawer for a plan that has records, and not for one without", () => {
@@ -38,6 +51,6 @@ describe("LastKnownTable", () => {
     expect(screen.queryByRole("table")).toBeNull();
     unmount();
     renderPanel(<AgentDrawer plan={{ ...plan, last_known: [sampleLastKnown()] }} {...props} />);
-    expect(within(screen.getByRole("table")).getByText("draw the panel")).toBeInTheDocument();
+    expect(within(screen.getByRole("table")).getByText(/Next step: draw the panel/)).toBeInTheDocument();
   });
 });
