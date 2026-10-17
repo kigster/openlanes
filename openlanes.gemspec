@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   TEXT
   spec.homepage = "https://github.com/kigster/openlanes"
 
-  spec.required_ruby_version = ">= 3" # rubocop:disable Gemspec/RequiredRubyVersion -- the floor users get, not the Ruby the cops lint for
+  spec.required_ruby_version = ">= 4" # rubocop:disable Gemspec/RequiredRubyVersion -- the floor users get, not the Ruby the cops lint for
 
   spec.metadata = {
     "homepage_uri"          => spec.homepage,
@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
     # `openlanes web --demo` replays.
     # Source maps stay out: they double the page's size for nobody who installs it.
     globbed = Dir.glob(["*.gemspec", "lib/**/*.rb", "agents/*.md", "schemas/*.json", "evals/cases/**/*", "skills/**/*",
-                        "exe/*", "bin/*", "web/dist/**/*", "web/src/api/fixtures/board.json"])
+                        "exe/*", "bin/*", "web/dist/**/*", "web/src/api/fixtures/board.json", "Brewfile"])
     globbed.select { |f| File.file?(f) && !f.end_with?(".map") }
   end
 

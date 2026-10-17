@@ -25,6 +25,10 @@ gem_url := 'https://rubygems.org/gems/' + gem_name
 recipes:
     just --choose
 
+# Start both the engine and control room with 4 concurrent workers
+run:
+    @mprocs
+
 # Sync all dependencies
 install:
     bin/setup

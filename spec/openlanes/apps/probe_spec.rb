@@ -42,6 +42,19 @@ RSpec.describe OpenLanes::Apps::Probe do
     expect(described_class.ready?(closed_port)).to be(false)
   end
 
+  # What a refused connect looks like behind Little Snitch: Socket.tcp hands
+  # back a socket, and only asking it for its peer shows nothing is there.
+  it "is not listening when the socket it was handed has no peer" do
+    peerless = instance_double(Socket)
+    allow(peerless).to receive(:remote_address).and_raise(Errno::EINVAL)
+    allow(Socket).to receive(:tcp).and_yield(peerless)
+
+    aggregate_failures do
+      expect(described_class.listening?(11_100)).to be(false)
+      expect(OpenLanes::Apps::Ports.answering?(11_100)).to be(false)
+    end
+  end
+
   { 200 => true, 302 => true, 404 => false, 503 => false }.each do |code, ready|
     it "is #{"not " unless ready}ready when the path answers #{code}" do
       serving(code) { |port| expect(described_class.ready?(port, path: "/up")).to be(ready) }
