@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "034.00",
+    "slug": "refactor-global-lock"
+  },
+  "state": "new",
+  "updated_at": "2026-10-16T23:33:09-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}
