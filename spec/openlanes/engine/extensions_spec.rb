@@ -47,14 +47,25 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       end
     end
 
-    context "with a minute left and nobody answering" do
-      let(:left) { 60 }
+    context "with two minutes left and nobody answering" do
+      let(:left) { 120 }
 
       it "gives ten more minutes on its own, to the clock that is running" do
         extensions.watch(job, path)
         aggregate_failures do
           expect(plan.extensions.first).to include("answer" => "b", "by" => "auto", "grant" => "live", "seconds" => 600)
-          expect(handle.remaining).to eq(660)
+          expect(handle.remaining).to eq(720)
+        end
+      end
+
+      # The automatic grant is spent; a person can still add to it.
+      it "asks again when the granted time runs low, and leaves that one to a person" do
+        extensions.watch(job, path)
+        clock.extend!(-600)
+        extensions.watch(job, path)
+        aggregate_failures do
+          expect(plan.extensions.map { it["number"] }).to eq([1, 2])
+          expect(plan.extensions.last).to include("limit" => "time").and(satisfy { !it.key?("settled_at") })
         end
       end
 
@@ -117,12 +128,20 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       end
     end
 
-    it "moves a live clock for a time choice, and gives no round" do
+    # A resumed agent may be running while its rounds request is open:
+    # every choice on that request is still a round.
+    it "gives a round for a time choice on a rounds request, even with a live clock" do
       extensions.answer!(path, 1, "b", by: "dana", live: handle)
       aggregate_failures do
-        expect(handle.remaining).to eq(1200)
-        expect(extensions.rounds(path, "luke-backend", :building)).to eq(0)
+        expect(handle.remaining).to eq(600)
+        expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
       end
+    end
+
+    it "counts no round granted before this run started, since a restart counts used rounds afresh" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      later = described_class.new(stay:, now: -> { now + 60 })
+      expect(later.rounds(path, "luke-backend", :building)).to eq(0)
     end
 
     it "answers once: a second answer changes nothing" do
@@ -133,6 +152,28 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
 
     it "refuses a letter that is not a choice" do
       expect { extensions.answer!(path, 1, "d", by: "dana") }.to raise_error(ArgumentError, /a\), b\), c\)/)
+    end
+  end
+
+  describe "#answer! on a time request" do
+    before { plan.ask_extension!(agent: "luke-backend", state: :building, round: 1, limit: "time", at: now) }
+
+    it "moves a live clock for a time choice, and gives no round" do
+      extensions.answer!(path, 1, "b", by: "dana", live: handle)
+      aggregate_failures do
+        expect(handle.remaining).to eq(1200)
+        expect(extensions.rounds(path, "luke-backend", :building)).to eq(0)
+      end
+    end
+
+    it "turns the time into a round when the clock already told the agent STOP" do
+      clock.extend!(-600)
+      clock.tick
+      extensions.answer!(path, 1, "c", by: "dana", live: handle)
+      aggregate_failures do
+        expect(plan.extensions.first).to include("grant" => "round", "seconds" => 1200)
+        expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
+      end
     end
   end
 

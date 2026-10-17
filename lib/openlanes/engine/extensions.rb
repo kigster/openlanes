@@ -30,8 +30,9 @@ module OpenLanes
       ASK_AT = 300
 
       # Seconds left when an unanswered time request is granted on its own:
-      # before the agent is told STOP, so it never stops for nothing.
-      AUTO_AT = 60
+      # before the clock's WRAP_UP at 60, so the agent is not already
+      # wrapping up when the time arrives.
+      AUTO_AT = 120
 
       # Seconds a rounds request waits for a person on a staying run before
       # it is granted on its own.
@@ -67,6 +68,10 @@ module OpenLanes
         @stay = stay
         @auto = auto
         @now = now
+        # Rounds used are counted in memory, from this run's start; rounds
+        # granted are counted from the same moment, or a restart would hand
+        # back every round ever granted on top of a fresh allowance.
+        @since = now.call
       end
 
       # A running agent whose clock is nearly out: ask once per round, and
@@ -130,9 +135,16 @@ module OpenLanes
         request = plan.extensions.find { it["number"] == Integer(number) }
         return nil if request.nil? || request.key?("settled_at")
 
-        grant = live && choice.seconds.positive? ? "live" : "round"
+        # Only a time request moves a running clock: every choice on a
+        # rounds request is a round, even while the agent was resumed.
+        grant = live && request["limit"] == "time" && choice.seconds.positive? ? "live" : "round"
         settled = plan.settle_extension!(number, answer: choice.letter, by:, grant:, seconds: choice.seconds, at: @now.call)
-        live.extend!(choice.seconds) if grant == "live"
+        # Someone else settled it between the read above and this write.
+        return nil unless settled
+
+        # The clock told the agent STOP, or stopped, before the time got
+        # there: the time comes with a round instead of going nowhere.
+        settled = plan.amend_extension!(number, grant: "round") if grant == "live" && !live.extend!(choice.seconds)
         UI.log("#{by == AUTO ? "auto-extended" : "extended by #{by}"}: #{request["agent"]} #{choice.label.downcase}",
           plan: File.basename(path)[/\A\d{3}\.\d{2}/])
         settled
@@ -144,7 +156,9 @@ module OpenLanes
       # @param agent [String]
       # @param state [#to_s]
       # @return [Integer]
-      def rounds(path, agent, state) = granted(Plans::PlanState.for(path).extensions, agent, state.to_s).size
+      def rounds(path, agent, state)
+        granted(Plans::PlanState.for(path).extensions, agent, state.to_s).count { Time.iso8601(it["settled_at"]) >= @since.floor }
+      end
 
       # The extra seconds a granted round runs on, handed out once.
       #
@@ -161,7 +175,9 @@ module OpenLanes
         grant["seconds"]
       end
 
-      # A request nobody needs any more: the agent finished the round.
+      # A request nobody needs any more: the agent's round ended, however it
+      # ended. A time card left open would say "running out of time" about an
+      # agent no longer running, and stand in for the next round's own ask.
       #
       # @param path [String]
       # @param agent [String]
@@ -228,9 +244,15 @@ module OpenLanes
       # @return [Array<Hash>] the requests that gave the agent a round on this state
       def granted(all, agent, state) = all.select { it["grant"] == "round" && it["agent"] == agent && it["state"] == state }
 
+      # A time request answered with time on the running clock does not
+      # count: when that time runs low too, the round asks again, so a
+      # person can add to an automatic grant.
+      #
       # @return [Boolean] whether this round already asked about this limit
       def asked?(all, agent, state, round, limit)
-        all.any? { it["agent"] == agent && it["state"] == state && it["round"] == round && it["limit"] == limit }
+        all.any? do |r|
+          r["agent"] == agent && r["state"] == state && r["round"] == round && r["limit"] == limit && r["grant"] != "live"
+        end
       end
 
       # @return [Boolean] whether the one grant of this kind nobody answered is spent

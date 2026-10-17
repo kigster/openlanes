@@ -347,16 +347,31 @@ module OpenLanes
       # @param number [Integer]
       # @param fields [Hash{String => Object}] `answer`, `by`, `grant`, `seconds`, `closed`
       # @param at [Time]
-      # @return [Hash, nil] the request as it now stands, nil when there is no such request
+      # @return [Hash, nil] the request as settled; nil when there is no such
+      #   request, or when it was settled already
       def settle_extension!(number, at: Time.now, **fields)
-        found = nil
+        settled = nil
         update do |data|
           found = (data["extensions"] || []).find { it["number"] == Integer(number) } or next
           next if found.key?("settled_at")
 
-          found.merge!(fields.transform_keys(&:to_s).compact, "settled_at" => at.iso8601)
+          settled = found.merge!(fields.transform_keys(&:to_s).compact, "settled_at" => at.iso8601)
         end
-        found
+        settled
+      end
+
+      # Correct how a settled request was granted, when the grant could not
+      # be given as settled: time for a clock that had already stopped.
+      #
+      # @param number [Integer]
+      # @param fields [Hash{String => Object}]
+      # @return [Hash, nil] the request as it now stands
+      def amend_extension!(number, **fields)
+        amended = nil
+        update do |data|
+          amended = (data["extensions"] || []).find { it["number"] == Integer(number) }&.merge!(fields.transform_keys(&:to_s))
+        end
+        amended
       end
 
       # Mark a granted round's extra seconds as given to the round that ran on them.
