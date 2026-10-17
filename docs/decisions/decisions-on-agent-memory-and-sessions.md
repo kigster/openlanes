@@ -19,6 +19,8 @@ When a person adds a new idea through the page, the page interviews them, one qu
 - Every round's session id is kept in that round's entry under `stages` in `state.json`, so a person can resume the agent by hand in an interactive session.
 - Autocompact stays at 40% of the model's context (`Adapters::AUTOCOMPACT`, passed as `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`), which already applies to every claude invocation.
 
+Implemented (plan 024). `Plans::PlanState#resumption` decides from `state.json` whether a round resumes and why not; `Engine::Dispatcher#resumption_for` asks it, logs the decision and hands the session to the executor, which starts fresh when the CLI cannot find it. `spec/integration/resume_across_rounds_spec.rb` drives all of it through a real `Runner` and a fake `claude`. Resuming by hand is in `docs/USAGE.md`, under "Resuming an agent's session".
+
 ### M2. The agent keeps a journal, which the dispatcher writes
 
 - The agent writes nothing to a file and runs no command. It prints each entry as one line of JSON in its own output, and the dispatcher, which already reads every agent's stream, appends it to `state.json` under `memory.<agent>.rounds.<n>`. The harness is the only writer, under the lock `PlanState` already takes, so a pair working at once cannot collide.
