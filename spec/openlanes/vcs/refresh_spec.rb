@@ -267,6 +267,29 @@ RSpec.describe OpenLanes::Vcs::Refresh, :origin do
         expect(logged.join).to include("could not fetch origin main")
       end
     end
+
+    # A credential prompt or a stalled socket used to hold the tick thread,
+    # and with it every lane, for as long as git cared to wait.
+    it "abandons a fetch that hangs, and works from the last fetch" do
+      logged = []
+      allow(OpenLanes::UI).to receive(:log) { |message, **| logged << message }
+      stub_const("#{described_class}::FETCH_TIMEOUT", 0.5)
+      git!(main, "remote", "set-url", "origin", "ssh://hang.invalid/project.git")
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with("GIT_SSH_COMMAND", "ssh").and_return("sh -c 'sleep 30'")
+
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      aggregate_failures do
+        expect(described_class.fetch(main)).to eq("origin/main")
+        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 10
+        expect(logged.join).to include("git fetch timed out after 0.5s", "could not fetch origin main")
+      end
+    end
+
+    it "never lets git or ssh stop to ask for credentials" do
+      expect(described_class.fetch_env).to include("GIT_TERMINAL_PROMPT" => "0",
+        "GIT_SSH_COMMAND" => a_string_ending_with("-o BatchMode=yes"))
+    end
   end
 
   describe OpenLanes::Vcs::Refresh::Outcome do

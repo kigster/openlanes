@@ -39,6 +39,20 @@ module OpenLanes
       # --check` also reports whitespace, which is no reason to stop a rebase.
       MARKER = "leftover conflict marker"
 
+      # Seconds a fetch may take before it is abandoned. It runs on the
+      # dispatcher's tick thread, so a fetch stuck on a credential prompt or
+      # a stalled socket would stop every lane on the machine.
+      FETCH_TIMEOUT = 60
+
+      # git and ssh must fail rather than ask: nobody is there to answer.
+      # BatchMode is appended to the user's own ssh command, not put in its
+      # place, so a configured key or jump host still applies.
+      #
+      # @return [Hash{String => String}]
+      def self.fetch_env
+        { "GIT_TERMINAL_PROMPT" => "0", "GIT_SSH_COMMAND" => "#{ENV.fetch("GIT_SSH_COMMAND", "ssh")} -o BatchMode=yes" }
+      end
+
       # What one refresh did.
       #
       # @!attribute [r] kind
@@ -112,7 +126,7 @@ module OpenLanes
           return nil unless system("git", "-C", path, "remote", "get-url", REMOTE, out: File::NULL, err: File::NULL)
 
           base = default_branch(path)
-          fetched = system("git", "-C", path, "fetch", "--quiet", REMOTE, base, out: File::NULL, err: File::NULL)
+          fetched = fetch_within("git", "-C", path, "fetch", "--quiet", REMOTE, base)
           UI.log("worktree: could not fetch #{REMOTE} #{base}; working from the last fetch") unless fetched
           ref = "#{REMOTE}/#{base}"
           if system("git",
@@ -126,6 +140,32 @@ module OpenLanes
             err: File::NULL)
             ref
           end
+        end
+
+        private
+
+        # Run a fetch, killing its whole process group (git, and the ssh or
+        # credential helper it started) once it has run past {FETCH_TIMEOUT}.
+        #
+        # @return [Boolean] whether it finished, and succeeded, in time
+        def fetch_within(*argv, timeout: FETCH_TIMEOUT)
+          pid = Process.spawn(fetch_env, *argv, pgroup: true, in: File::NULL, out: File::NULL, err: File::NULL)
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+          loop do
+            _, status = Process.wait2(pid, Process::WNOHANG)
+            return status.success? if status
+            break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+            sleep 0.05
+          end
+          UI.log("worktree: git fetch timed out after #{timeout}s")
+          begin
+            Process.kill("KILL", -pid)
+          rescue Errno::ESRCH, Errno::EPERM
+            # Already gone, or not ours to end.
+          end
+          Process.wait(pid)
+          false
         end
       end
 
