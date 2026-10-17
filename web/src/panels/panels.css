@@ -164,6 +164,12 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .d-last-known th, .d-last-known td { padding: 4px 6px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--hairline); }
 .d-last-known thead th { color: var(--ink-soft); font-weight: 600; }
 .d-last-known tbody th { color: var(--ink); font-weight: 600; }
+/* A status with a next step behind it, as a tooltip: dotted, like an abbreviation, so it reads as hoverable. */
+.d-last-known .lk-next { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+/* Radix tooltips, portalled to <body>: above the drawer and its menus. */
+.tooltip { z-index: 60; max-width: 280px; padding: 6px 10px; border-radius: 8px; background: var(--ink); color: var(--plate);
+           font: 12px/1.4 var(--sans); box-shadow: 0 8px 24px rgb(0 0 0 / 24%); }
+.tooltip-arrow { fill: var(--ink); }
 .d-block { margin: 0 0 16px; padding: 12px; border-radius: 8px;
            background: color-mix(in srgb, var(--alarm) 12%, transparent); border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); }
 .d-block p { margin: 0 0 10px; }
