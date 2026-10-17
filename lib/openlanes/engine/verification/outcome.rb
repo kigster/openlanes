@@ -46,6 +46,15 @@ module OpenLanes
         # counting it would reach the arbitrator a round early.
         REJECTION = %r{\Arejected(?=\z|[\s:/])}i
 
+        # How long after the verification commit zero checks still means
+        # "CI has not registered yet" rather than "this project has no CI".
+        # Right after {#pass} pushes `final.png` the new head can report no
+        # checks for a while; {Vcs::Review} counts none as green, so without
+        # this window `ready-to-merge` could go on before the run that commit
+        # starts. Past it, none is taken at its word, or a project with no CI
+        # would wait forever.
+        NO_CHECKS_GRACE = 5 * 60
+
         # Lines of a withheld coverage run quoted in the comment.
         TAIL = CoverageGate::TAIL
 
@@ -92,9 +101,10 @@ module OpenLanes
         # @param max_rejections [Integer] see {Config#max_rejections}
         # @param arbitration [#call] given `plan:, count:, max:` at the cap
         # @param screenshots [#call] a round's folder to a {Screenshots}
+        # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) })
+          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Time.now })
           @root = root
           @publisher = publisher
           @github = github
@@ -105,6 +115,7 @@ module OpenLanes
           @max = max_rejections
           @arbitration = arbitration
           @screenshots = screenshots
+          @clock = clock
         end
 
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout] the plan's
@@ -163,8 +174,9 @@ module OpenLanes
         end
 
         # One look at a verified pull request, asked again until it is
-        # labelled or rejected: CI pending waits, CI red or the coverage gate
-        # withholding rejects, and otherwise `ready-to-merge` goes on.
+        # labelled or rejected: CI pending waits, and so do no checks at all
+        # within {NO_CHECKS_GRACE} of the verification; CI red or the
+        # coverage gate withholding rejects; otherwise `ready-to-merge` goes on.
         #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
         # @param plan [OpenLanes::Plans::Subject]
@@ -176,7 +188,10 @@ module OpenLanes
           repo = Vcs::GitHub.repo_of(pull.url)
           return ready(number, "already #{Plans::ReviewLabel::READY_TO_MERGE}") if labelled_ready?(number, repo)
 
-          case Vcs::CiGate.verdict(@github.checks(number:, repo:))
+          ci = Vcs::CiGate.verdict(@github.checks(number:, repo:))
+          return Result.new(kind: :waiting, note: "🧪 no checks yet on PR ##{number}; waiting for CI to start") if ci == :none && registering?(round)
+
+          case ci
           when :pending then Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}")
           when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
           else gated(checkout:, plan:, pull:, round:)
@@ -220,6 +235,19 @@ module OpenLanes
           # CI on the PR and on main, and a clean merge. Until then nothing
           # merges, and in human mode nothing ever does (M4).
           ready(number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
+        end
+
+        # Whether the verification commit is recent enough that CI may not
+        # have registered on it yet. Timed from the round's report, which
+        # chewie writes moments before {#pass} commits; read from disk rather
+        # than remembered, so a restarted engine keeps the same window.
+        #
+        # @return [Boolean]
+        def registering?(round)
+          path = round&.report_path
+          return false unless path && File.exist?(path)
+
+          @clock.call - File.mtime(path) < NO_CHECKS_GRACE
         end
 
         # @return [Result]

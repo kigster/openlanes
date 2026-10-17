@@ -15,8 +15,11 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       coverage_gate: gate,
       max_rejections: 2,
       arbitration:,
-      screenshots: ->(dir) { OpenLanes::Engine::Verification::Screenshots.new(dir:, which: ->(_) { false }) })
+      screenshots: ->(dir) { OpenLanes::Engine::Verification::Screenshots.new(dir:, which: ->(_) { false }) },
+      clock: -> { now })
   end
+
+  let(:now) { Time.now }
 
   let(:agents) { OpenLanes::Agents::Registry.new }
   let(:arbitration) { instance_double(OpenLanes::Engine::Arbitration, call: nil) }
@@ -205,6 +208,30 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         expect(labels).to eq(%w[ready-to-merge])
         expect(gh_calls.map { it.take(2) }).not_to include(%w[pr merge])
         expect(plan.status.key).to eq(:verifying)
+      end
+    end
+
+    context "when the verification commit has no checks yet" do
+      it "waits for CI to register rather than taking none for green" do
+        outcome.pass(checkout:, plan:, pull: pr, round:)
+
+        aggregate_failures do
+          expect(outcome.settle(checkout:, plan:, pull: pr, round:))
+            .to have_attributes(kind: :waiting, note: "🧪 no checks yet on PR #1; waiting for CI to start")
+          expect(gate).not_to have_received(:call)
+          expect(labels).to eq(%w[review-approved])
+        end
+      end
+
+      context "when the grace period is over" do
+        let(:now) { Time.now + described_class::NO_CHECKS_GRACE + 1 }
+
+        it "takes none at its word, as a project with no CI, and labels ready-to-merge" do
+          outcome.pass(checkout:, plan:, pull: pr, round:)
+
+          expect(outcome.settle(checkout:, plan:, pull: pr, round:).kind).to eq(:ready)
+          expect(labels).to eq(%w[ready-to-merge])
+        end
       end
     end
 
