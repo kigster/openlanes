@@ -81,6 +81,12 @@ module OpenLanes
       # The two shapes, as every error and the setup note spell them.
       SHAPES = "report_command alone, or report with format"
 
+      # Where the first M15 kept this section. Never read: only the
+      # `coverage:` section counts. But a project that still has it would
+      # otherwise turn unconfigured without a word and be sent back for
+      # setup, so its presence is said once, as a warning.
+      LEGACY = ".openlanes.coverage.yml"
+
       class << self
         # @param root [String] a checkout
         # @return [OpenLanes::Coverage::Config, nil] nil when its
@@ -88,6 +94,7 @@ module OpenLanes
         # @raise [OpenLanes::Coverage::Invalid] when the section, or the file
         #   around it, cannot be used
         def load(root)
+          warn_legacy(root)
           OpenLanes::Config.load(root).coverage
         rescue Invalid
           raise
@@ -116,6 +123,17 @@ module OpenLanes
         end
 
         private
+
+        # Once per file and process: the gate asks on every poll.
+        #
+        # @return [void]
+        def warn_legacy(root)
+          path = File.join(root, LEGACY)
+          @warned ||= Set.new
+          return unless File.exist?(path) && @warned.add?(path)
+
+          UI.log("#{path} is no longer read; move its settings under #{SECTION}: in .openlanes.yml", level: :warn)
+        end
 
         # @param message [String] after the section's name: ": …" for the
         #   section, ".key: …" for one key, as the rest of `.openlanes.yml` reads

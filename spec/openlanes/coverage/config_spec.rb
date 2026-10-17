@@ -86,6 +86,24 @@ RSpec.describe OpenLanes::Coverage::Config do
     expect(described_class.load(root)).to be_nil
   end
 
+  it "warns once that the retired file is no longer read, however often it is asked" do
+    allow(OpenLanes::UI).to receive(:log)
+    legacy = File.join(root, ".openlanes.coverage.yml")
+    File.write(legacy, YAML.dump(reported))
+    2.times { described_class.load(root) }
+
+    expect(OpenLanes::UI).to have_received(:log)
+      .with("#{legacy} is no longer read; move its settings under coverage: in .openlanes.yml", level: :warn).once
+  end
+
+  it "warns about nothing when there is no retired file" do
+    allow(OpenLanes::UI).to receive(:log)
+    write(reported)
+    described_class.load(root)
+
+    expect(OpenLanes::UI).not_to have_received(:log)
+  end
+
   %w[command minimum].each do |key|
     it "names a missing #{key}" do
       expect_invalid(printed.except(key), ": missing key #{key}")
