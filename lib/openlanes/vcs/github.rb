@@ -216,6 +216,31 @@ module OpenLanes
         raise Error, "could not list labels: #{first_line(e)}"
       end
 
+      # The open pull requests that carry one label, asked of GitHub rather
+      # than of `pull-requests.md`, which only knows the plans' own.
+      #
+      # @param name [String] the label
+      # @param repo [String, nil]
+      # @return [Array<Integer>] their numbers
+      # @raise [OpenLanes::Error]
+      def open_pulls_labelled(name, repo: nil)
+        out = @command.run("gh",
+          "pr",
+          "list",
+          "--state",
+          "open",
+          "--label",
+          name,
+          "--limit",
+          "1000",
+          "--json",
+          "number",
+          *repo_flag(repo)).out
+        JSON.parse(out).map { it["number"] }
+      rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError => e
+        raise Error, "could not list pull requests labelled #{name}: #{first_line(e)}"
+      end
+
       # Give an existing label its colour and description back (R3). Only
       # {LabelSync} calls this, and only for the labels openlanes owns.
       #

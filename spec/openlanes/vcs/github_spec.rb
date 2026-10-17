@@ -457,6 +457,37 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
+    describe "#open_pulls_labelled" do
+      it "asks for the open pull requests carrying the label, by number" do
+        allow(command).to receive(:run)
+          .and_return(instance_double(TTY::Command::Result, out: JSON.generate([{ "number" => 7 }, { "number" => 9 }])))
+
+        aggregate_failures do
+          expect(github.open_pulls_labelled("ready-to-merge", repo: "o/r")).to eq([7, 9])
+          expect(command).to have_received(:run).with("gh",
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--label",
+            "ready-to-merge",
+            "--limit",
+            "1000",
+            "--json",
+            "number",
+            "-R",
+            "o/r")
+        end
+      end
+
+      it "names the failure when gh cannot list them" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 401"))
+
+        expect { github.open_pulls_labelled("ready-to-merge") }
+          .to raise_error(OpenLanes::Error, /could not list pull requests labelled ready-to-merge: HTTP 401/)
+      end
+    end
+
     describe "#recolour_label" do
       let(:rejected) { OpenLanes::Plans::ReviewLabel::REJECTED }
 

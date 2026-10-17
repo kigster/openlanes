@@ -108,9 +108,13 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       OpenLanes::Vcs::LabelSync::Change.new(label: OpenLanes::Plans::ReviewLabel::INITIAL, action: :keep, was: "c2e0c6")
     end
 
+    let(:migration) { instance_double(OpenLanes::Vcs::LabelMigration) }
+    let(:nothing_owed) { OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, relabelled: []) }
+
     before do
-      allow(OpenLanes::Vcs).to receive(:label_sync).and_return(sync)
+      allow(OpenLanes::Vcs).to receive_messages(label_sync: sync, label_migration: migration)
       allow(sync).to receive(:call).and_return([keep, create])
+      allow(migration).to receive(:call).and_return(nothing_owed)
     end
 
     # Calls the private step the way #prepare does, capturing STDERR.
@@ -165,6 +169,28 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       expect(OpenLanes::Vcs).to have_received(:label_sync).with(root: elsewhere)
     ensure
       FileUtils.rm_rf(elsewhere)
+    end
+
+    # R3: M3's `ready-to-merge` comes off open pull requests before the
+    # sync recolours the label, the mark that the migration is done.
+    it "migrates M3's ready-to-merge before it syncs, and says which pull requests moved" do
+      allow(migration).to receive(:call).and_return(OpenLanes::Vcs::LabelMigration::Outcome.new(pending: true, relabelled: [7, 9]))
+      err = sync_with(dry_run: false)
+
+      aggregate_failures do
+        expect(migration).to have_received(:call).with(dry_run: false).ordered
+        expect(sync).to have_received(:call).with(dry_run: false).ordered
+        expect(err).to include("relabel ready-to-merge → review-approved on #7, #9")
+      end
+    end
+
+    it "leaves the labels unsynced when the migration fails, so the next run migrates again" do
+      allow(migration).to receive(:call).and_raise(OpenLanes::Error, "could not label #7: HTTP 502")
+
+      aggregate_failures do
+        expect(sync_with(dry_run: false)).to include("Review labels not synced: could not label #7: HTTP 502")
+        expect(sync).not_to have_received(:call)
+      end
     end
 
     it "warns and goes on when gh cannot be reached" do

@@ -229,13 +229,20 @@ module OpenLanes
       # Against `--root`'s repository, the one the publisher opens pull
       # requests on, not whichever checkout the engine was started from.
       #
+      # M3's `ready-to-merge` comes off open pull requests first, so the
+      # sync's recolouring, which marks the migration done, never runs ahead
+      # of it: a migration that fails skips the sync, and the next run starts
+      # it again.
+      #
       # @return [void]
       def sync_labels
+        migrated = Vcs.label_migration(root: @root).call(dry_run: @dry_run).to_s
         changes = Vcs.label_sync(root: @root).call(dry_run: @dry_run).select(&:write?)
-        return if changes.empty? || @quiet
+        lines = [migrated, *changes].compact.map { "  #{it}" }
+        return if lines.empty? || @quiet
 
         lead = @dry_run ? "Dry run: would sync review labels" : "Synced review labels"
-        info("#{lead}:\n#{changes.map { "  #{it}" }.join("\n")}")
+        info("#{lead}:\n#{lines.join("\n")}")
       rescue OpenLanes::Error => e
         warn("Review labels not synced: #{e.message}") unless @quiet
       end
