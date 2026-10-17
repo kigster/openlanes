@@ -36,7 +36,8 @@ module OpenLanes
         :history,
         :context,
         :running,
-        :rebase) do
+        :rebase,
+        :recorded_session) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -299,12 +300,16 @@ module OpenLanes
       #
       # @param job [OpenLanes::Engine::Dispatcher::Job]
       # @return [OpenLanes::Adapters::Base]
-      def adapter_for(job)
+      def adapter_for(job) = adapter_of(job.task.agent, job.task.subject)
+
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [OpenLanes::Adapters::Base]
+      def adapter_of(agent, subject)
         executor = @runner.executor
-        agent = job.task.agent
         return Adapters.for(agent.adapter) unless executor.respond_to?(:profile_for)
 
-        executor.profile_for(agent, job.task.subject).adapter
+        executor.profile_for(agent, subject).adapter
       end
 
       # Hand back the round an interrupted agent lost, so a person's "resume"
@@ -983,13 +988,18 @@ module OpenLanes
         # never start is not a partner.
         team = @runner.agents.team_for(Lifecycle::Resync::Dirs.target(subject))
         partners = Agents::Routing.filter(team, subject) - [agent]
+        # Asked before this round's own stage is written, which would
+        # otherwise be the latest one it finds.
+        resume = resumption_for(task, from)
         remember(ordinal, agent.name, job.state, "Started", round)
         stage!(subject,
           agent,
           round,
+          reset:      true,
           status:     "Started",
           from:       from.to_s,
           started_at: Time.now.iso8601,
+          cwd:        task.root,
           run:        { pid: Process.pid, host: Socket.gethostname },
           **profile_fields(agent, subject))
         @state&.record(ordinal,
@@ -1004,7 +1014,14 @@ module OpenLanes
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
-            @runner.executor.call(agent, subject, root: task.root, round:, successor:, handle:, partners:) { |progress|
+            @runner.executor.call(agent,
+              subject,
+              root:      task.root,
+              round:,
+              successor:,
+              handle:,
+              partners:,
+              resume:) { |progress|
               job.up = progress.up
               job.down = progress.down
               job.subagents = progress.subagents
@@ -1091,6 +1108,7 @@ module OpenLanes
           entry = Plans::Ledger.last_for(reading, job.task.agent.name)
           job.file = entry&.file || job.file
           job.status = entry&.status
+          record_session(job)
           @state&.record(job.task.subject.feature.ordinal.to_s,
             agent:  job.task.agent.name,
             round:  job.task.round,
@@ -1234,7 +1252,8 @@ module OpenLanes
             up:          attempt.up.to_i,
             down:        attempt.down.to_i,
             seconds:     attempt.seconds.to_f.round(1),
-            note:        attempt.note.to_s)
+            note:        attempt.note.to_s,
+            session:     job.handle&.session)
         end
         @state&.record(ordinal,
           agent:    agent.name,
@@ -1597,6 +1616,50 @@ module OpenLanes
         Plans::PlanState.for(subject.feature.path).stage!(agent: agent.name, round:, **fields)
       rescue SystemCallError, OpenLanes::Error => e
         UI.log("state.json not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+      end
+
+      # The session this round carries on (M1): the previous round's, when
+      # its CLI can resume one, the plan has not moved since, and it ran in
+      # this round's checkout. Either way the log says which and why, since
+      # an agent that suddenly knows or forgets everything is otherwise a
+      # mystery.
+      #
+      # @param task [OpenLanes::Engine::Runner::Task]
+      # @param state [Symbol] the state the plan was in when dispatched
+      # @return [String, nil] the session id to resume, nil to start fresh
+      def resumption_for(task, state)
+        return nil if @runner.dry_run?
+
+        adapter = adapter_of(task.agent, task.subject)
+        unless adapter.resumes?
+          UI.log("fresh session: #{adapter.name} cannot resume one", **task.log_fields)
+          return nil
+        end
+
+        decision = Plans::PlanState.for(task.subject.feature.path)
+                                   .resumption(agent: task.agent.name, state:, root: task.root)
+        UI.log(decision.resume? ? "resuming session #{decision.session}: #{decision.reason}" : "fresh session: #{decision.reason}",
+          **task.log_fields)
+        decision.session
+      rescue OpenLanes::Error => e
+        UI.log("fresh session: state.json unreadable: #{e.message}", level: :warn, **task.log_fields)
+        nil
+      end
+
+      # A round's session id goes into its stage the moment the stream names
+      # it, not only when the round settles: a person resuming an agent by
+      # hand is most often doing it while the round is still running, or
+      # after the harness died under it.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [void]
+      def record_session(job)
+        session = job.handle&.session
+        return if session.nil? || job.recorded_session == session || job.rebase
+
+        subject = fresh(job.task) or return
+        stage!(subject, job.task.agent, job.task.round, session:)
+        job.recorded_session = session
       end
 
       # @return [Hash] adapter, model and effort, when the executor can say
