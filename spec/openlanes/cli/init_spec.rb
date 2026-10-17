@@ -8,6 +8,8 @@ RSpec.describe OpenLanes::CLI::Init do
   let(:file) { File.join(repo, ".openlanes.yml") }
   let(:tty) { false }
   let(:prompt) { instance_double(TTY::Prompt) }
+  let(:ready) { true }
+  let(:machine) { instance_double(OpenLanes::Setup::Machine, ready?: ready) }
 
   before do
     FileUtils.mkdir_p(File.join(repo, ".git"))
@@ -15,6 +17,7 @@ RSpec.describe OpenLanes::CLI::Init do
     Dir.chdir(File.join(repo, "lib"))
     allow(TTY::Prompt).to receive(:new).and_return(prompt)
     allow($stdin).to receive(:tty?).and_return(tty)
+    allow(OpenLanes::Setup).to receive(:machine).and_return(machine)
   end
 
   after { FileUtils.rm_rf(top) }
@@ -38,6 +41,46 @@ RSpec.describe OpenLanes::CLI::Init do
   end
 
   def written = YAML.safe_load_file(file)
+
+  context "with a ready machine" do
+    it "does not run setup" do
+      allow(machine).to receive(:call)
+      run
+      expect(machine).not_to have_received(:call)
+    end
+  end
+
+  context "with a machine missing a tool" do
+    let(:ready) { false }
+    let(:gh) { OpenLanes::Setup::Check.new(name: "gh", ok: true, detail: "gh auth status passes", fix: nil) }
+
+    before do
+      allow(machine).to receive(:call) { |dry_run:| OpenLanes::Setup::Machine::Outcome.new(missing: %w[jq], installed: !dry_run, checks: [gh]) }
+    end
+
+    it "runs setup before its interview, then writes the file" do
+      _out, err, = run
+      expect(machine).to have_received(:call).with(dry_run: false)
+      expect(err).to include("running openlanes setup first", "✓ gh")
+      expect(written).to eq("project" => "acme-app", "lane" => "full")
+    end
+
+    it "installs nothing on a dry run" do
+      run(dry_run: true)
+      expect(machine).to have_received(:call).with(dry_run: true)
+    end
+
+    context "when setup cannot fix it" do
+      let(:gh) { OpenLanes::Setup::Check.new(name: "gh", ok: false, detail: "gh is not logged in", fix: "gh auth login") }
+
+      it "says so and carries on" do
+        _out, err, status = run
+        expect(err).to include("fix: gh auth login", "Still not ready")
+        expect(status).to eq(0)
+        expect(File).to exist(file)
+      end
+    end
+  end
 
   context "without a terminal" do
     it "writes the file at the repository root, not where it was typed" do

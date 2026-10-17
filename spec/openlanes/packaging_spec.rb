@@ -58,6 +58,31 @@ RSpec.describe "packaging" do
     end
   end
 
+  # Plan 035: `openlanes setup` bundles the shipped Brewfile; bin/ holds
+  # contributor tools, which an installed gem cannot run.
+  describe "the gem's files" do
+    let(:files) { Gem::Specification.load(File.join(root, "openlanes.gemspec")).files }
+
+    it "ships the runtime Brewfile and not the contributor's" do
+      expect(files).to include("Brewfile")
+      expect(files).not_to include("Brewfile.dev")
+    end
+
+    it "ships nothing from bin/" do
+      expect(files.grep(%r{\Abin/})).to be_empty
+    end
+
+    it "keeps bin/setup bundling both Brewfiles in a checkout" do
+      script = File.read(File.join(root, "bin", "setup"))
+      expect(script).to include('--file="${project_root}/Brewfile"', '--file="${project_root}/Brewfile.dev"')
+    end
+
+    it "lists in the Brewfile every tool the engine shells out to" do
+      brews = File.read(File.join(root, "Brewfile")).scan(/^brew '([^']+)'/).flatten
+      expect(brews).to include("git", "gh", "redis", "just", "imagemagick", "vips", "jq")
+    end
+  end
+
   describe "README.md" do
     let(:readme) { File.read(File.join(root, "README.md")) }
 
