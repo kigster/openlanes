@@ -1,5 +1,7 @@
 // One agent up close, in place of the rail: its model (switched now), what it has cost, how full its context is, its
-// question when it is stuck, its transcript, and the composer with Send message and the Action menu beside it.
+// question when it is stuck, its transcript behind a Show log toggle, and the composer with Send message and the Action
+// menu beside it. The log starts closed every time the drawer opens, for a stuck agent too: the question is what the
+// person must act on, and a full transcript under it pushed the composer off the bottom of the panel.
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Car, ModelChoice, Plan, Question, Reply } from "../api/types";
 import { AgentActionMenu, type AgentAction } from "./AgentActionMenu";
@@ -55,14 +57,34 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
   );
 }
 
+/**
+ * The disclosure for the transcript; the count says there is something behind it before anyone opens it.
+ * The count is the button's description, not part of its name: a name that changes with every new line is
+ * re-announced to a screen reader each time. It is aria-hidden rather than left out of an aria-label, because an
+ * aria-label missing visible text fails label-in-name; a description still reads a hidden element it points at.
+ */
+function LogToggle({ count, open, controls, onToggle }: { count: number; open: boolean; controls: string; onToggle: () => void }) {
+  const countId = useId();
+  return (
+    <button type="button" className="btn btn-quiet log-toggle" aria-describedby={countId} aria-expanded={open} aria-controls={controls} onClick={onToggle}>
+      <span className="log-caret" aria-hidden="true">{open ? "▾" : "▸"}</span>
+      {open ? "Hide log" : "Show log"}
+      <span id={countId} className="log-count" aria-hidden="true">{count === 1 ? "1 line" : `${count} lines`}</span>
+    </button>
+  );
+}
+
 export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose }: AgentDrawerProps) {
-  const ids = { title: useId(), model: useId(), message: useId() };
+  const ids = { title: useId(), model: useId(), message: useId(), log: useId() };
   const command = useCommand(onCommand);
   const [mine, setMine] = useState<{ key: string; lines: Pending[] }>({ key: car.key, lines: [] });
   const history = useRef(car.history);
   useEffect(() => { history.current = car.history; }, [car.history]);
   const [text, setText] = useState("");
   const [refused, setRefused] = useState<Outcome | null>(null);
+  // Keyed by car, so switching to another agent closes the log again rather than carrying the last one's choice over.
+  const [log, setLog] = useState({ key: car.key, open: false });
+  const logOpen = log.key === car.key && log.open;
   const close = useRef<HTMLButtonElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { close.current?.focus(); }, [car.key]);
@@ -147,7 +169,10 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
       </div>
       <LastKnownTable entries={plan.last_known} />
       {stuck && <QuestionBlock plan={plan} question={question} onCommand={onCommand} onAnswered={(t) => push(`You answered: ${t}`)} />}
-      <ol className="transcript" aria-live="polite" aria-label={`Transcript of ${car.agent}`}>
+      <LogToggle count={lines.length + car.history.length} open={logOpen} controls={ids.log} onToggle={() => setLog({ key: car.key, open: !logOpen })} />
+      {/* Hidden, not unmounted, so aria-controls always names an element; aria-live goes with it, since a closed log
+          announcing every new line would talk about a region the person chose not to look at. */}
+      <ol id={ids.log} className="transcript" hidden={!logOpen} aria-live={logOpen ? "polite" : "off"} aria-label={`Transcript of ${car.agent}`}>
         {[...lines, ...car.history].map((line, i) => <li key={i}>{line}</li>)}
       </ol>
       <form className="composer" onSubmit={send}>

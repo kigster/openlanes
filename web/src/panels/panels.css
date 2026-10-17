@@ -170,6 +170,11 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .d-block textarea { background: var(--plate); }
 .transcript { list-style: none; margin: 0 0 16px; padding: 10px 12px; max-height: 260px; overflow-y: auto;
               background: var(--enamel); border-radius: 8px; font: 12px/1.55 var(--mono); }
+.transcript[hidden] { display: none; }
+/* Show log: a quiet full-width row, so collapsed it costs one line of height and nothing more. */
+.log-toggle { display: flex; align-items: center; width: 100%; justify-content: flex-start; gap: 8px; margin: 0 0 12px; padding-left: 4px; font-weight: 600; }
+.log-caret { width: 1em; color: var(--ink-soft); }
+.log-count { margin-left: auto; color: var(--ink-soft); font-weight: 500; font-size: 13px; }
 .transcript li { color: var(--ink-soft); }
 .transcript li:first-child { color: var(--ink); }
 .composer label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }

@@ -9,7 +9,12 @@ import { carOf, findInline, planAt, question, recorder, renderPanel, snapshot, t
 function drawer(plan: Plan, car: Car, onCommand = recorder().onCommand, onClose = vi.fn()) {
   return renderPanel(<AgentDrawer plan={plan} car={car} models={snapshot.models} autocompact={snapshot.autocompact} onCommand={onCommand} onClose={onClose} />);
 }
-const transcript = () => within(screen.getByRole("list", { name: /Transcript of/ })).getAllByRole("listitem").map((li) => li.textContent);
+// The log starts closed, so reading it means opening it first, the way a person would.
+const transcript = () => {
+  const toggle = screen.getByRole("button", { name: /Show log|Hide log/ });
+  if (toggle.getAttribute("aria-expanded") === "false") fireEvent.click(toggle);
+  return within(screen.getByRole("list", { name: /Transcript of/ })).getAllByRole("listitem").map((li) => li.textContent);
+};
 
 describe("AgentDrawer", () => {
   it("shows the agent, its model, tokens, elapsed time and context, focusing Close", async () => {
@@ -165,6 +170,80 @@ describe("AgentDrawer", () => {
     expect(screen.getByText("Recommended")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Rebase/ }));
     await waitFor(() => expect(sent[0].payload).toEqual({ question: "B1", text: "a) Rebase" }));
+  });
+
+  it("keeps the log closed on open, with its line count, and the composer and Action menu in view", async () => {
+    const plan = planAt("005.00");
+    const car = carOf(plan, "hansolo-reviewer");
+    const { container } = drawer(plan, car);
+    const toggle = screen.getByRole("button", { name: /Show log/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent(`${car.history.length} line`);
+    const log = container.querySelector(`#${CSS.escape(toggle.getAttribute("aria-controls") ?? "")}`);
+    expect(log).toHaveAttribute("hidden");
+    expect(log).toHaveAttribute("aria-live", "off");
+    expect(screen.queryByRole("list", { name: /Transcript of/ })).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Message hansolo-reviewer" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Send message" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Action" })).toBeVisible();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("opens and closes the log, announcing it only while open", async () => {
+    const user = userEvent.setup();
+    const plan = planAt("005.00");
+    const car = carOf(plan, "hansolo-reviewer");
+    drawer(plan, car);
+    await user.click(screen.getByRole("button", { name: /Show log/ }));
+    const toggle = screen.getByRole("button", { name: /Hide log/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    const list = screen.getByRole("list", { name: "Transcript of hansolo-reviewer" });
+    expect(list).toHaveAttribute("aria-live", "polite");
+    expect(list.id).toBe(toggle.getAttribute("aria-controls"));
+    expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(car.history);
+    await user.click(toggle);
+    expect(screen.getByRole("button", { name: /Show log/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("list", { name: /Transcript of/ })).toBeNull();
+  });
+
+  it("sends a message with the log closed and counts the new line", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("005.00");
+    const car = carOf(plan, "hansolo-reviewer");
+    drawer(plan, car, onCommand);
+    await user.type(screen.getByRole("textbox", { name: "Message hansolo-reviewer" }), "Ship it");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+    await waitFor(() => expect(sent).toEqual([{ kind: "message", plan: "005.00", agent: "hansolo-reviewer", payload: { text: "Ship it" } }]));
+    expect(screen.getByRole("button", { name: /Show log/ })).toHaveTextContent(`${car.history.length + 1} lines`);
+    expect(screen.queryByRole("list", { name: /Transcript of/ })).toBeNull();
+  });
+
+  // A name that carried the count changed with every line, and a screen reader re-announces a changed name.
+  it("names the toggle without its count, and describes it with the count", () => {
+    const plan = planAt("005.00");
+    const car = carOf(plan, "hansolo-reviewer");
+    drawer(plan, car);
+    const toggle = screen.getByRole("button", { name: "Show log" });
+    expect(toggle).toHaveAccessibleDescription(car.history.length === 1 ? "1 line" : `${car.history.length} lines`);
+  });
+
+  it("shows a stuck agent's question with its log still closed", () => {
+    const plan = planAt("001.00");
+    drawer(plan, carOf(plan, "luke-backend"));
+    expect(screen.getByText("Blocked on your answer.")).toBeVisible();
+    expect(screen.getByRole("button", { name: /Show log/ })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Send message" })).toBeVisible();
+  });
+
+  it("closes the log again for another car", async () => {
+    const user = userEvent.setup();
+    const plan = planAt("001.00");
+    const { rerender } = drawer(plan, carOf(plan, "rey-frontend"));
+    await user.click(screen.getByRole("button", { name: /Show log/ }));
+    expect(screen.getByRole("button", { name: /Hide log/ })).toBeInTheDocument();
+    rerender(<AgentDrawer plan={plan} car={carOf(plan, "luke-backend")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
+    expect(screen.getByRole("button", { name: /Show log/ })).toHaveAttribute("aria-expanded", "false");
   });
 
   it("starts a fresh transcript for another car", () => {
