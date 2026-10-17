@@ -482,14 +482,19 @@ module OpenLanes
         entry
       end
 
-      # The agent whose questions `blocked.md` holds: the latest round that
-      # settled Blocked, or failing that the latest Blocked signature, since
-      # a plan blocked by hand-run agents has signatures and no stages.
+      # The agent whose questions `blocked.md` holds: whoever blocked last,
+      # a round that settled Blocked or a Blocked signature, since a plan
+      # blocked by hand-run agents has signatures and no stages. Neither
+      # kind outranks the other: a hand-run agent that blocks after a
+      # harness round did is the one that asked.
       #
       # @return [String, nil] nil when nothing on record ever blocked
       def blocked_by
-        stage = stages.select { it["status"] == "Blocked" }.max_by { parse_time(it["finished_at"] || it["started_at"]) }
-        stage ? stage["agent"] : signatures.rfind { it["status"] == "Blocked" }&.dig("agent")
+        data = read
+        blocks = data["stages"].select { it["status"] == "Blocked" }
+                               .map { [parse_time(it["finished_at"] || it["started_at"]), it["agent"]] }
+        blocks += data["signatures"].select { it["status"] == "Blocked" }.map { [parse_time(it["at"]), it["agent"]] }
+        blocks.each_with_index.max_by { |(at, _), i| [at, i] }&.first&.last
       end
 
       # ---- last-known-state -------------------------------------------------

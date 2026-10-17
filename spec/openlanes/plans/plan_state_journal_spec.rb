@@ -84,6 +84,18 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     it "is nil when nothing ever blocked" do
       expect(state.blocked_by).to be_nil
     end
+
+    it "names a hand-run agent that signed Blocked after a harness round blocked" do
+      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
+      state.sign!(agent: "yoda-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 11))
+      expect(state.blocked_by).to eq("yoda-writer")
+    end
+
+    it "names a harness round that blocked after an older Blocked signature" do
+      state.sign!(agent: "yoda-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 9))
+      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
+      expect(state.blocked_by).to eq("luke-backend")
+    end
   end
 
   it "rejects an entry kind the journal does not have" do
