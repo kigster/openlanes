@@ -128,28 +128,29 @@ module OpenLanes
 
       # ---- the harness --------------------------------------------------------
 
-      # Record or update one agent's round. A second call for the same agent
-      # and round updates the first, so a round is one record from dispatch
-      # to settlement.
+      # Record or update one agent's round. A later call for the same agent
+      # and round updates the latest record of it, so a round is one record
+      # from dispatch to settlement.
       #
-      # A new dispatch passes +reset+: rounds are numbered per state and per
-      # run, so round 1 of a later run lands on round 1 of an earlier one, and
-      # merging into it would carry the earlier round's session, checkout and
-      # outcome into a round that has none of them yet. A round that then died
-      # before its stream named a session would look resumable from a session
-      # it never ran.
+      # A new dispatch passes +reset+, which appends a record rather than
+      # finding one: rounds are numbered per state and per run, so round 1 of
+      # a later run shares its number with round 1 of an earlier one. Merging
+      # into the earlier record would carry its session, checkout and outcome
+      # into a round that has none of them yet, and replacing it would lose
+      # that round from `openlanes state show`. Appending keeps both, in
+      # dispatch order, which {#resumption} relies on when two rounds started
+      # in the same second.
       #
       # @param agent [String]
       # @param round [Integer]
-      # @param reset [Boolean] start the record afresh rather than merge
+      # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
       #   effort, up, down, seconds, note, to, run, session, cwd
       # @return [Hash] the stage as written
       def stage!(agent:, round:, reset: false, **fields)
         stage = nil
         update do |data|
-          stage = data["stages"].find { |s| s["agent"] == agent && s["round"] == round }
-          stage&.replace("agent" => agent, "round" => round) if reset
+          stage = data["stages"].rfind { |s| s["agent"] == agent && s["round"] == round } unless reset
           unless stage
             stage = { "agent" => agent, "round" => round }
             data["stages"] << stage
@@ -179,7 +180,11 @@ module OpenLanes
       # @return [OpenLanes::Plans::PlanState::Resumption]
       def resumption(agent:, state:, root:)
         all = stages
-        last = all.select { it["agent"] == agent && !it["session"].to_s.empty? }.max_by { started(it) }
+        # `started_at` has second precision, so two rounds can tie on it; the
+        # one dispatched later sits later in the array.
+        last, = all.each_with_index
+                   .select { |s, _| s["agent"] == agent && !s["session"].to_s.empty? }
+                   .max_by { |s, i| [started(s), i] }
         return Resumption.new(session: nil, reason: "no session recorded for #{agent}") unless last
 
         session = last["session"]
@@ -489,9 +494,10 @@ module OpenLanes
       #   than +state+
       def moved_since(all, since, state)
         after = started(since)
-        all.reject { it.equal?(since) }
-           .select { started(it) >= after }
-           .map { it["to"].to_s }
+        at = all.index { it.equal?(since) }
+        all.each_with_index
+           .select { |s, i| i > at || started(s) > after }
+           .map { |s, _| s["to"].to_s }
            .find { !it.empty? && it != state }
       end
 

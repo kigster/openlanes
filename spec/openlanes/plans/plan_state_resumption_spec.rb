@@ -100,8 +100,35 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       state.stage!(agent: "luke-backend", round: 1, reset: true, status: "Started", started_at: "2026-10-17T10:00:00Z")
     end
 
-    it "drops what an earlier run's round of the same number left behind" do
-      expect(state.stages.first.keys).to contain_exactly("agent", "round", "status", "started_at")
+    it "starts a record that carries nothing from an earlier run's round of the same number" do
+      expect(state.stages.last.keys).to contain_exactly("agent", "round", "status", "started_at")
+    end
+
+    it "keeps the earlier round's record, so its history survives" do
+      expect(state.stages.map { it["session"] }).to eq(["sess-1", nil])
+    end
+
+    it "updates the new record, not the earlier one, when the round settles" do
+      state.stage!(agent: "luke-backend", round: 1, status: "Completed", to: "building")
+      expect(state.stages.map { it["status"] }).to eq(%w[Interrupted Completed])
+    end
+  end
+
+  context "when two rounds started in the same second" do
+    before do
+      round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "obsolete", cwd: root)
+      state.stage!(agent: "luke-backend",
+        round: 1,
+        reset: true,
+        status: "Interrupted",
+        started_at: "2026-10-16T10:00:00Z",
+        to: "building",
+        session: "replacement",
+        cwd: root)
+    end
+
+    it "resumes the one dispatched later" do
+      expect(decision.session).to eq("replacement")
     end
   end
 end
