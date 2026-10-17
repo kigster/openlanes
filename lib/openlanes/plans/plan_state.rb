@@ -23,6 +23,8 @@ module OpenLanes
     #   messages    the agents, through `openlanes mail send`: what a pair
     #               says to each other, and the RESUME notes an interrupted
     #               agent leaves for its successor
+    #   memory      the harness again: each agent's journal (M2), the lines
+    #               it printed as it worked, with the answers to its questions
     #
     # A stage still Started whose harness process is gone is a crash, which is
     # how a restarted run finds what it has to resume.
@@ -466,6 +468,97 @@ module OpenLanes
       # @return [void]
       def spend_extension!(number)
         update { |data| (data["extensions"] || []).find { it["number"] == Integer(number) }&.store("spent", true) }
+      end
+
+      # ---- memory -----------------------------------------------------------
+
+      # Where the journals live in the document (M2).
+      MEMORY = "memory"
+
+      # One agent's journal on this plan, oldest round first, each entry
+      # numbered as the agent refers to it: 1 up, across every round.
+      #
+      # @param agent [String]
+      # @return [Array<OpenLanes::Plans::Journal::Round>] empty for an agent
+      #   that never printed an entry here
+      def journal(agent)
+        rounds = read.dig(MEMORY, agent, "rounds") || {}
+        first = 1
+        rounds.sort_by { |key, _| key.to_i }.map do |key, value|
+          entries = Array(value["entries"]).map { Journal::Entry.from_h(it) }
+          round = Journal::Round.new(number: key.to_i, round: value["round"], state: value["state"], entries:, first:)
+          first += entries.size
+          round
+        end
+      end
+
+      # Append entries to one of the agent's journal rounds, as they arrive.
+      #
+      # The first call of a dispatch passes no +number+ and is given the next
+      # one, under the same lock as the write, so two runs on one plan cannot
+      # both take round 3. Later calls of the same dispatch pass it back.
+      #
+      # An `override` must name an entry before its own: one pointing at
+      # itself or ahead can only be a miscount, and the prompt would draw it
+      # as overturning something it never saw.
+      #
+      # @param agent [String]
+      # @param entries [Array<OpenLanes::Plans::Journal::Entry>]
+      # @param number [Integer, nil] the journal round, nil to start one
+      # @param round [Integer, nil] the dispatcher's round, kept beside it
+      # @param state [#to_s, nil] the state the round started in
+      # @return [Array(Integer, Array<OpenLanes::Plans::Journal::Rejection>)]
+      #   the journal round written to, and what was refused
+      # @raise [OpenLanes::Error] on an agent name that is not one token
+      def journal!(agent:, entries:, number: nil, round: nil, state: nil)
+        raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+
+        rejected = []
+        update do |data|
+          rounds = ((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {}
+          number ||= rounds.keys.map(&:to_i).max.to_i + 1
+          target = (rounds[number.to_s] ||= { "round" => round, "state" => state&.to_s }.compact.merge("entries" => []))
+          count = rounds.sum { |_, value| Array(value["entries"]).size }
+          entries.each do |entry|
+            if entry.overrides && entry.overrides > count
+              rejected << Journal::Rejection.new(line: Journal.line(entry.kind, entry.text, overrides: entry.overrides),
+                reason: "entry #{count + 1} overrides #{entry.overrides}, which is not before it")
+              next
+            end
+            target["entries"] << entry.to_json_h
+            count += 1
+          end
+        end
+        [number, rejected]
+      end
+
+      # A person's answer to one of the agent's `blocked.md` questions, kept
+      # in the agent's journal with the question (M3): B1 with A1. Appended to
+      # the agent's latest round, which is the one that asked. Written once:
+      # a drain that is run again finds the same ref and answer already there.
+      #
+      # @param agent [String]
+      # @param ref [String] `B<n>`
+      # @param question [String]
+      # @param answer [String]
+      # @return [OpenLanes::Plans::Journal::Entry, nil] nil when it was there
+      def answer!(agent:, ref:, question:, answer:)
+        entry = Journal::Entry.new(kind: "question", text: question, ref:, answer:)
+        rounds = journal(agent)
+        return nil if rounds.flat_map(&:entries).include?(entry)
+
+        journal!(agent:, entries: [entry], number: rounds.last&.number)
+        entry
+      end
+
+      # The agent whose questions `blocked.md` holds: the latest round that
+      # settled Blocked, or failing that the latest Blocked signature, since
+      # a plan blocked by hand-run agents has signatures and no stages.
+      #
+      # @return [String, nil] nil when nothing on record ever blocked
+      def blocked_by
+        stage = stages.select { it["status"] == "Blocked" }.max_by { parse_time(it["finished_at"] || it["started_at"]) }
+        stage ? stage["agent"] : signatures.rfind { it["status"] == "Blocked" }&.dig("agent")
       end
 
       # ---- last-known-state -------------------------------------------------
