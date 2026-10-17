@@ -201,6 +201,15 @@ module OpenLanes
           end
         end
 
+        # Why this checkout is not the pull request's code, asked before
+        # chewie is started on it ({Driver#hand_off}); {Vcs::Publisher#commit_plan}
+        # asks again before the screenshots are pushed.
+        #
+        # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+        # @param pull [OpenLanes::Plans::PullRequest]
+        # @return [String, nil] nil when the pull request is built from the checkout's branch
+        def mismatch(checkout:, pull:) = @publisher.branch_mismatch(pull, checkout, refused: "verification refused")
+
         # @param pull [OpenLanes::Plans::PullRequest]
         # @return [Array<String>] the pull request's labels, as GitHub has them now
         # @raise [OpenLanes::Error] when GitHub cannot be asked

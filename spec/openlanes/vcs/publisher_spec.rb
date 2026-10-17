@@ -384,6 +384,20 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
         .to raise_error(OpenLanes::Error, %r{tmp/cache-09 and 2 more \(left by the app})
     end
 
+    it "refuses a pull request built from another branch, and commits nothing" do
+      FileUtils.rm_rf(File.dirname(screenshot))
+      plans { |t| t.plan "001.00", :verifying, "adopted", prs: [t.open(9, "Adopted")] }
+      adopted = OpenLanes::Plans::Tree.new(dir: plans_root).find("001.00")
+      allow(github).to receive(:pull_request).and_return({ branch: "someone/else" })
+      before = repo_git("rev-parse", "HEAD")
+
+      aggregate_failures do
+        expect { publisher.commit_plan(checkout:, plan: adopted, message: "Verify") }
+          .to raise_error(OpenLanes::Error, "refused to commit 001.00 — #9 is built from someone/else, not main, so a push would not reach it")
+        expect(repo_git("rev-parse", "HEAD")).to eq(before)
+      end
+    end
+
     it "is not a resubmit, so the review labels are left alone" do
       publisher.commit_plan(checkout:, plan:, message: "Verify")
 

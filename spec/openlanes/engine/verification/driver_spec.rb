@@ -32,6 +32,16 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       end
     end
 
+    it "keeps the plan at 👀 when the pull request is built from another branch" do
+      allow(outcome).to receive_messages(labels: %w[review-approved], mismatch: "verification refused — #7 is built from x, not y, so a push would not reach it")
+
+      aggregate_failures do
+        expect(driver.hand_off(plan)).to eq("stays 👀: verification refused — #7 is built from x, not y, so a push would not reach it; verify it by hand")
+        expect(plan.status.key).to eq(:in_review)
+        expect(outcome).to have_received(:mismatch).with(checkout:, pull: anything)
+      end
+    end
+
     it "says a pull request with no review label carries nothing that goes on" do
       allow(outcome).to receive(:labels).and_return([])
 

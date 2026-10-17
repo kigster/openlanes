@@ -47,7 +47,10 @@ module OpenLanes
         attr_reader :outcome
 
         # hansolo approved: on to 🧪, when the pull request carries a verdict
-        # that goes on to verification ({Verification::FROM_REVIEW}).
+        # that goes on to verification ({Verification::FROM_REVIEW}) and is
+        # built from the branch chewie would be run in. The checkout's branch
+        # is derived from the plan, and an adopted pull request may be built
+        # from any other; verifying it there would test the wrong code.
         #
         # @param subject [OpenLanes::Plans::Subject] read fresh
         # @return [String, nil] what happened, for the attempt; nil when the
@@ -62,6 +65,9 @@ module OpenLanes
             return "stays 👀: PR ##{pull.number.to_s.delete("#")} is labelled #{verdict.empty? ? "nothing" : verdict}, " \
                    "and only #{FROM_REVIEW.map(&:name).join(", ")} goes on to verification"
           end
+
+          mismatch = @outcome.mismatch(checkout: @worktree.checkout_for(subject.feature), pull:)
+          return "stays 👀: #{mismatch}; verify it by hand" if mismatch
 
           subject.machine.promote!(:verifying)
           "on to 🧪 verification"

@@ -119,6 +119,20 @@ module OpenLanes
         refuse(subject, checkout, title, git_complaint(e))
       end
 
+      # Why a push from this checkout would not reach the pull request, as
+      # {#publish} asks before pushing. `pull-requests.md` does not record a
+      # head branch, and an adopted or hand-opened pull request can come from
+      # any branch, while the checkout's branch is derived from the plan.
+      # Verification asks it too, before chewie runs and before its commit:
+      # otherwise it verifies one branch's code, pushes screenshots to it,
+      # and labels a pull request built from another.
+      #
+      # @param pull [OpenLanes::Plans::PullRequest] an open pull request
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param refused [String] how the sentence starts
+      # @return [String, nil] nil when the pull request is built from the checkout's branch
+      def branch_mismatch(pull, checkout, refused: "refused") = head_mismatch(pull, checkout, refused:)
+
       # Paths named in a {#commit_plan} refusal before the rest are counted.
       STRAY_SHOWN = 10
 
@@ -136,7 +150,8 @@ module OpenLanes
       # @param plan [OpenLanes::Plans::Subject] the plan in the main checkout
       # @param message [String] the commit subject
       # @return [String, nil] the new commit's SHA, nil on a dry run
-      # @raise [OpenLanes::Error] on a stray change, or nothing to commit
+      # @raise [OpenLanes::Error] on a stray change, a pull request built from
+      #   another branch, or nothing to commit
       def commit_plan(checkout:, plan:, message:)
         folder = plan_parent(plan)
         raise Error, "the plans live outside the repository, so the branch has no place for them" if folder.nil?
@@ -144,6 +159,10 @@ module OpenLanes
         stray = changed_paths(checkout).reject { |path, _| inside_plan?(path, folder, plan) }
         raise Error, stray_complaint(plan, stray) if stray.any?
         return nil if @dry_run
+
+        open = plan.pull_requests.select(&:open?).last
+        mismatch = open && branch_mismatch(open, checkout, refused: "refused to commit #{plan.feature.ordinal}")
+        raise Error, mismatch if mismatch
 
         carry_plan(checkout, plan)
         run(checkout, "git", "add", "-A", "--", folder)
@@ -325,14 +344,14 @@ module OpenLanes
       # @param open [OpenLanes::Plans::PullRequest]
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
       # @return [String, nil] nil when the pull request is built from the checkout's branch
-      def head_mismatch(open, checkout)
+      def head_mismatch(open, checkout, refused: "publish refused")
         head = @github.pull_request(open.number || open.url).fetch(:branch)
         return if head == checkout.branch
 
-        "publish refused — ##{open.number} is built from #{head.empty? ? "an unknown branch" : head}, " \
+        "#{refused} — ##{open.number} is built from #{head.empty? ? "an unknown branch" : head}, " \
           "not #{checkout.branch}, so a push would not reach it"
       rescue Error => e
-        "publish refused — could not tell which branch ##{open.number} is built from: #{e.message}"
+        "#{refused} — could not tell which branch ##{open.number} is built from: #{e.message}"
       end
 
       # @return [Hash]

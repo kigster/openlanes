@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:stamp) { "2026-10-16 09:00:00 AM PDT" }
   let(:calls) { [] }
   let(:files) { { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## How to test\n\n1. Run it.\n" } }
-  let(:outcome) { instance_double(OpenLanes::Engine::Verification::Outcome, labels: %w[review-approved]) }
+  let(:outcome) { instance_double(OpenLanes::Engine::Verification::Outcome, labels: %w[review-approved], mismatch: nil) }
   let(:checkout) { instance_double(OpenLanes::Vcs::Worktree::Checkout, branch: "kig/014.00-x", path: File.dirname(plans_root)) }
   let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout) }
   let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(plans_root, "..", "ports.json")) }
