@@ -134,3 +134,16 @@ Yes, additively. The board snapshot response gains `subagents` (integer, ≥ 0) 
 
 - Per-sub-agent activity, `Tally` accounting, Codex and Pi, scheduling, and the stale ratatui doc, as the spec's Non-Goals say.
 - The 3-line cap is an assumption from the spec (open question 2); confirm with the owner at review.
+
+## How to test
+
+From the spec: verify in the browser that an agent that fanned out is visually different from the rest.
+
+1. `just web-build`, then `openlanes web --demo` and open the board it prints.
+1. Find car `001.00/rey-frontend`. Within its 12-tick cycle it shows 3 extra vertical lines on its right edge, then 1, then none; hovering it reads "3 sub-agents running" (then "1 sub-agent running"), and at 0 it has no such title.
+1. Every other car stays a plain tile throughout.
+1. Automated: `bin/web-e2e` runs `web/cypress/e2e/subagents.cy.ts` against two real demo servers, nothing stubbed; `bundle exec rspec` and `bundle exec rubocop` exit 0.
+
+> [!NOTE]
+>
+> [2026-10-16 07:03:02 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

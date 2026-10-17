@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "building",
-  "updated_at": "2026-10-16T18:21:33-07:00",
+  "updated_at": "2026-10-16T19:03:10-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -73,20 +73,20 @@
       "round": 1,
       "status": "Started",
       "from": "building",
-      "started_at": "2026-10-16T18:15:36-07:00",
+      "started_at": "2026-10-16T19:03:02-07:00",
       "run": {
-        "pid": 37288,
+        "pid": 31063,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "completed - 9 tool calls; publish refused: publish refused — plan.md has no `## How to test` section",
-      "finished_at": "2026-10-16T10:06:52-07:00",
+      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine",
+      "finished_at": "2026-10-16T18:28:26-07:00",
       "to": "building",
-      "up": 554166,
-      "down": 3851,
-      "seconds": 150.1
+      "up": 83120,
+      "down": 140,
+      "seconds": 770.0
     }
   ],
   "signatures": [
@@ -217,16 +217,22 @@
       "agent": "luke-backend",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T19:03:10-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": [],
   "last-known-state": {
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-15T20:05:31-07:00",
+      "at": "2026-10-16T18:28:26-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: Plan 011.00 is signed `Completed`."
+      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: A leftover background command from earlier was stopped when it hit its time limit."
     }
   }
 }

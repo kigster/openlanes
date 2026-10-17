@@ -27,3 +27,15 @@ bundle exec rspec        # 3046 examples, 0 failures
 bundle exec rubocop      # 427 files inspected, no offenses detected
 just web-e2e             # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
+
+## Re-verification, luke-backend, round 1 (2026-10-16, second pass)
+
+Full runs here flaked while another session's `rspec` ran on the same machine:
+
+- `spec/openlanes/apps/supervisor_spec.rb:122` (`--silent` fixture "answered"): every suite scanned app ports up from 11100, so a concurrent suite's server took the same port. Fixed, test-only: `spec/support/port_window.rb` gives each suite process its own 100-port window of 11100..11999 (by pid), used by the `Ports` registries in `apps/supervisor_spec.rb`, `apps/restart_spec.rb`, `apps/runner_spec.rb`. `spec/openlanes/apps` then 101/101 green, three runs in a row.
+- `spec/integration/restart_spec.rb:43,63` (Redis event within 10 s) failed once under the same load and passed on the run before it. Not touched by this plan; left for a human, not chased.
+
+```bash
+bundle exec rspec        # 3046 examples, 0 failures (exit 0); the next run: 2 failures, the restart_spec pair above
+bundle exec rubocop      # 428 files inspected, no offenses detected
+```

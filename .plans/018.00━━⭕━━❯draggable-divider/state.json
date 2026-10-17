@@ -6,7 +6,7 @@
     "slug": "draggable-divider"
   },
   "state": "building",
-  "updated_at": "2026-10-16T18:23:55-07:00",
+  "updated_at": "2026-10-16T19:03:09-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,7 +71,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Blocked",
       "from": "building",
       "started_at": "2026-10-16T18:23:42-07:00",
       "run": {
@@ -81,32 +81,32 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "completed - 7 tool calls; publish refused: publish refused — plan.md has no `## How to test` section",
-      "finished_at": "2026-10-16T10:11:47-07:00",
+      "note": "agent pushed (origin/main) — the boundary is docs plus code, nothing leaves the machine",
+      "finished_at": "2026-10-16T18:39:50-07:00",
       "to": "building",
-      "up": 454932,
-      "down": 3831,
-      "seconds": 227.5
+      "up": 987300,
+      "down": 8771,
+      "seconds": 967.8
     },
     {
       "agent": "rey-frontend",
       "round": 1,
       "status": "Completed",
       "from": "building",
-      "started_at": "2026-10-16T10:08:01-07:00",
+      "started_at": "2026-10-16T18:28:26-07:00",
       "run": {
-        "pid": 88556,
+        "pid": 37288,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "note": "completed - 4 tool calls",
-      "finished_at": "2026-10-16T10:08:54-07:00",
+      "note": "completed - 17 tool calls; publish refused: publish refused — plan.md has no `## How to test` section",
+      "finished_at": "2026-10-16T18:47:38-07:00",
       "to": "building",
-      "up": 258455,
-      "down": 1332,
-      "seconds": 52.2
+      "up": 56921,
+      "down": 51,
+      "seconds": 1151.2
     }
   ],
   "signatures": [
@@ -298,6 +298,62 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T18:28:32-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:39:38-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-16T18:43:30-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:55:20-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:55:26-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:00:21-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:00:29-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:03:07-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:03:09-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -417,15 +473,33 @@
       "to": "rey-frontend",
       "body": "Back end done (B1): rspec 3013/0, rubocop clean, spec/openlanes/web 167/0, web-build ok, web-e2e 30/30 incl. divider 7/7. Proof in pull-requests.md. Signing Completed.",
       "read": "no"
+    },
+    {
+      "id": "4b9e5155-75b5-4944-94e8-5afccc065e37",
+      "number": 14,
+      "at": "2026-10-16T18:39:38-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "B1 rechecked: rubocop clean, web specs 167/0, web-build ok, web-e2e green (divider 7/7). Full rspec fails 1-4 different flaky port/process specs per run under load, none touched by this branch. Signed Blocked (technical); see blocked.md B1. No web/ changes needed from you.",
+      "read": "no"
+    },
+    {
+      "id": "a59e9205-0880-40fb-9d97-1cd4576b6335",
+      "number": 15,
+      "at": "2026-10-16T18:43:29-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: vitest 361/361, lint and typecheck clean, divider.cy.ts 7/7 per your e2e run. Criteria map: placement, drag, clamps, persistence, keys, dblclick, 900px -> divider.cy.ts; hook -> useSideWidth.test.ts; component -> ColumnDivider.test.tsx; wiring -> App.test.tsx.",
+      "read": "no"
     }
   ],
   "last-known-state": {
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-15T19:54:45-07:00",
+      "at": "2026-10-16T18:39:50-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "harness died; last ledger line: Started, round 1"
+      "note": "agent pushed (origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Blocked, round 1: technical; last seen: I signed 018.00 as **Blocked (technical)**."
     },
     "rey-frontend": {
       "source": "harness",

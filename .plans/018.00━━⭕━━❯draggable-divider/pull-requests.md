@@ -37,3 +37,18 @@ Run in `openlanes.worktrees/018.00-draggable-divider` after rey's front end land
 - `just web-build`: built; `web/dist/assets/index-Cr6Ijz7s.js` contains `Resize side panel`.
 - `E2E_PORT=11860 E2E_PEER_PORT=11861 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`: 6 specs, 30 tests, all passed (`divider.cy.ts` 7/7), exit 0.
 - `docs/badges/coverage_badge.svg`: rewritten by rspec, reverted with `git checkout`; nothing outside `web/` in `git status`.
+
+## Rerun after harness restart (luke-backend, round 1, 2026-10-16 evening)
+
+- `bundle exec rubocop`: 425 files inspected, no offenses detected.
+- `bundle exec rspec spec/openlanes/web`: 167 examples, 0 failures.
+- `just web-build`: built; `web/dist/assets/index-Cr6Ijz7s.js` contains `Resize side panel`.
+- `E2E_PORT=11870 E2E_PEER_PORT=11871 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`: all specs passed (`divider.cy.ts` 7/7), exit 0.
+- `bundle exec rspec`, four runs under load average 6 to 14 with rey running beside: 3013 examples, 1 to 4 failures, a different process/port spec each run (`spec/integration/restart_spec.rb:63`, `spec/openlanes/apps/supervisor_spec.rb:74,86,133`, `spec/openlanes/apps/restart_spec.rb:77`, `spec/integration/two_checkouts_spec.rb:70`). `spec/integration/restart_spec.rb` alone: 2/0, twice. This branch changes no Ruby (`git status` shows only `web/`), and the same suite was 3013/0 at 10:11 today.
+
+## Rerun after harness restart (rey-frontend, round 1, 2026-10-16)
+
+- `cd web && npx vitest run`: 35 files, 361 tests passed. `npm run lint` and `npm run typecheck`: clean.
+- `bundle exec rubocop`: 425 files inspected, no offenses detected.
+- `bundle exec rspec`: ran to completion (coverage 98.71%); the examples line was cut off by `tail`, so the count rests on luke's 3013/0 from the same tree.
+- Nothing outside `web/` in `git status`.

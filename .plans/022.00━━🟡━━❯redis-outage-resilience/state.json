@@ -1,0 +1,198 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "022.00",
+    "slug": "redis-outage-resilience"
+  },
+  "state": "building",
+  "updated_at": "2026-10-16T19:03:02-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-16T18:40:55-07:00",
+      "run": {
+        "pid": 37288,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "researched",
+      "finished_at": "2026-10-16T18:42:50-07:00",
+      "up": 1228383,
+      "down": 18029,
+      "seconds": 114.7,
+      "note": "completed - 20 tool calls"
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-16T18:42:50-07:00",
+      "run": {
+        "pid": 37288,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-16T18:43:30-07:00",
+      "up": 175297,
+      "down": 4296,
+      "seconds": 39.2,
+      "note": "completed - 3 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-16T18:43:30-07:00",
+      "run": {
+        "pid": 37288,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-16T18:46:26-07:00",
+      "up": 780542,
+      "down": 17635,
+      "seconds": 174.9,
+      "note": "completed - 14 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "planned",
+      "started_at": "2026-10-16T18:46:26-07:00",
+      "run": {
+        "pid": 37288,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-16T19:03:02-07:00",
+      "up": 1278668,
+      "down": 15945,
+      "seconds": 157.4,
+      "note": "harness died"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-16T18:47:38-07:00",
+      "run": {
+        "pid": 37288,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-10-16T18:48:42-07:00",
+      "up": 396742,
+      "down": 5566,
+      "seconds": 63.2,
+      "note": "agent pushed (origin/kig/rebase-worktrees-onto-main) — the boundary is docs plus code, nothing leaves the machine"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-16T18:41:01-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:42:46-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-16T18:42:56-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:43:24-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-16T18:43:37-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:46:08-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-16T18:46:32-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:47:43-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:48:35-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": "9fcc7797-5716-4ce4-8d06-780d469ecec4",
+      "number": 1,
+      "at": "2026-10-16T18:48:35-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "F1 done: Header shows stale alert (>15s) and run.outage line; Run.outage is optional in types.ts. Tests in web/src/shell/Header.test.tsx 'Redis outage notice' prove both states and the silent case. Web suite 358 passed, eslint clean. Wire shape unchanged; no back-end files touched.",
+      "read": "no"
+    }
+  ],
+  "last-known-state": {
+    "rey-frontend": {
+      "source": "harness",
+      "at": "2026-10-16T18:48:42-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "agent pushed (origin/kig/rebase-worktrees-onto-main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: F1, the outage notice in the board header, is built and I signed `Completed`."
+    },
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-16T19:03:02-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
+}
