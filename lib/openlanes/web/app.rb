@@ -201,6 +201,25 @@ module OpenLanes
         json(command)
       end
 
+      # The interview a new idea gets before its spec is written (M6). No
+      # interviewer, or one that failed, is not an error: the page gets no
+      # questions and a reason, and creates the plan as it always has.
+      post "/api/interview" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        idea = body_json["idea"].to_s.strip
+        halt 422, json(error: "interview needs an idea") if idea.empty?
+
+        interviewer = Live.interviewer
+        next json(questions: [], reason: "no interviewer: OPENROUTER_API_KEY is not set") unless interviewer
+
+        begin
+          json(questions: interviewer.call(idea:).map(&:wire))
+        rescue StandardError => e
+          json(questions: [], reason: "the interviewer failed: #{e.message.lines.first.to_s.strip}")
+        end
+      end
+
       get "/api/copilot" do
         json(copilot.history)
       end

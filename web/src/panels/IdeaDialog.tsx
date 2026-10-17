@@ -8,6 +8,7 @@ import { Feedback } from "./feedback";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { IDEA_DEFAULTS, type IdeaFrontmatter } from "./frontmatter";
 import { sendKeys, type SendCommand } from "./support";
+import { postInterview, type InterviewQuestion } from "../api/client";
 
 // What each choice means, shown under its control. Depth's efforts are the defaults .openlanes.yml will be able to remap (W25).
 const HELP = {
@@ -99,19 +100,72 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
   const [fm, setFm] = useState<IdeaFrontmatter>(IDEA_DEFAULTS);
   const [empty, setEmpty] = useState(false);
   const command = useCommand(onCommand);
-  const go = async () => {
-    if (!idea.trim()) { setEmpty(true); return; }
+  // The interview (M6): null before it starts, then the questions, asked one at a time.
+  const [questions, setQuestions] = useState<InterviewQuestion[] | null>(null);
+  const [answers, setAnswers] = useState<{ question: string; answer: string }[]>([]);
+  const [own, setOwn] = useState("");
+  const [asking, setAsking] = useState(false);
+  const create = async (decisions: { question: string; answer: string }[]) => {
     // Research is only meaningful on the full lane, so the payload never says otherwise.
     const frontmatter = { ...fm, research: fm.lane === "full" && fm.research };
     const reply = await command.send(
-      { kind: "create_plans", plan: null, agent: null, payload: { idea: idea.trim(), frontmatter } },
+      { kind: "create_plans", plan: null, agent: null, payload: { idea: idea.trim(), frontmatter, decisions } },
       "Idea sent. Its plans join this run as they are created.",
     );
     if (reply && reply.status !== "refused") {
       setIdea("");
+      setQuestions(null);
+      setAnswers([]);
       onOpenChange(false);
     }
   };
+  const go = async () => {
+    if (!idea.trim()) { setEmpty(true); return; }
+    setAsking(true);
+    const { questions: asked } = await postInterview(idea.trim()).catch(() => ({ questions: [] as InterviewQuestion[] }));
+    setAsking(false);
+    if (asked.length === 0) { await create([]); return; }
+    setAnswers([]);
+    setQuestions(asked);
+  };
+  const answer = async (text: string) => {
+    if (!questions || !text.trim()) return;
+    const next = [...answers, { question: questions[answers.length].context, answer: text.trim() }];
+    setOwn("");
+    setAnswers(next);
+    if (next.length === questions.length) await create(next);
+  };
+  const current = questions?.[answers.length];
+  if (current && questions) {
+    return (
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Frame
+          className="idea" title={`Before the spec: question ${answers.length + 1} of ${questions.length}`}
+          description={<Dialog.Description asChild><p>{current.context}</p></Dialog.Description>}
+        >
+          <div className="start-body interview">
+            {current.options.map((label, i) => (
+              <button
+                key={label} type="button" className={i === current.recommended ? "btn btn-primary" : "btn"}
+                disabled={command.pending} onClick={() => void answer(`${String.fromCharCode(97 + i)}) ${label}`)}
+              >
+                {String.fromCharCode(97 + i)}) {label}{i === current.recommended ? " (Recommended)" : ""}
+              </button>
+            ))}
+            <input
+              aria-label="Type something instead" placeholder="Type something instead" value={own}
+              onChange={(e) => setOwn(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void answer(own); }}
+            />
+            <Feedback outcome={command.outcome?.tone === "refused" ? command.outcome : null} announced={command.announced} />
+          </div>
+          <div className="start-foot">
+            <span className="grow">The answers go into the spec, so the agents do not stop to ask.</span>
+            <button type="button" className="btn btn-quiet" disabled={command.pending} onClick={() => void create([])}>Skip the interview</button>
+          </div>
+        </Frame>
+      </Dialog.Root>
+    );
+  }
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Frame
@@ -130,7 +184,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
         <div className="start-foot">
           <span className="grow">This creates the plans and adds them to this run.</span>
           <Dialog.Close className="btn btn-quiet">Cancel</Dialog.Close>
-          <button type="button" className="btn btn-primary" disabled={command.pending} onClick={go}>Break it into plans</button>
+          <button type="button" className="btn btn-primary" disabled={command.pending || asking} onClick={go}>{asking ? "Preparing questions…" : "Break it into plans"}</button>
         </div>
       </Frame>
     </Dialog.Root>

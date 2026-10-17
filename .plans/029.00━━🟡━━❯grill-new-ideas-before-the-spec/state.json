@@ -1,0 +1,44 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "029.00",
+    "slug": "grill-new-ideas-before-the-spec"
+  },
+  "state": "building",
+  "updated_at": "2026-10-17T12:41:03-07:00",
+  "stages": [
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-10-17T12:33:39-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/029.00-grill-new-ideas-before-the-spec",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "210fe685-f8a5-4efb-be63-da122d41c783"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-17T12:33:47-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:41:03-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [],
+  "moves": 2
+}

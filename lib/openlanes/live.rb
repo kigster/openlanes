@@ -97,6 +97,23 @@ module OpenLanes
       @choice_converter = converter
     end
 
+    # The process's {Interviewer} (M6): nil without OPENROUTER_API_KEY, and
+    # nil in the suite.
+    #
+    # @return [OpenLanes::Live::Interviewer, nil]
+    def interviewer
+      return @interviewer if defined?(@interviewer)
+
+      @interviewer = Interviewer.from_env
+    end
+
+    # @param interviewer [#call, nil] answers `call(idea:)` with
+    #   {Interviewer::Question}s
+    # @return [void]
+    def interviewer=(interviewer)
+      @interviewer = interviewer
+    end
+
     # @return [OpenLanes::Live::Session]
     def session(**) = Session.new(**)
 
