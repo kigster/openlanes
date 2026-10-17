@@ -36,15 +36,12 @@ Amends the earlier practice of a single question per `blocked.md`.
 - Before its clock runs out, the dispatcher asks the running agent whether it needs more time, and the agent may say yes.
 - Time is added in chunks of 5 minutes, a setting in the gem's global configuration.
 - After 30 minutes added in total, the agent is interrupted and a new round starts, resuming its session (M1), with autocompact at 40%.
+- The agent is asked first; a person only after it. The `X<n>` card of E1 in [decisions-on-limit-extensions.md](decisions-on-limit-extensions.md) goes to a person only when the 30 minutes are used up, or when the agent is out of rounds. E1's automatic 10 minutes is replaced by the agent's own chunks.
 
 ### M5. Sub-agents, capped per agent
 
 - Every agent gets the `Task` tool, with a maximum number of sub-agents at once in its front-matter. The default is 1; `leah-researcher` gets 2.
 - The agent drawer shows the setting as a concurrency dropdown, 1 to 4.
+- A change made in the drawer or by `openlanes init` is saved per agent in the project's `.openlanes.yml` (`agents: { luke-backend: { concurrency: 2 } }`). `agents/*.md` ships with the gem and keeps the defaults; the project file overrides them.
 - `openlanes init` asks whether to set concurrency per agent. If yes, it goes through each agent with the same 1–4 choice.
-
-## Open
-
-- How M4 relates to E1 in [decisions-on-limit-extensions.md](decisions-on-limit-extensions.md) (PR #62), where a person answers `X<n>` with one round, 10 minutes or 20 minutes.
-- Enforcing M5: Claude Code has no flag that caps concurrent sub-agents. The harness sees each spawn in the stream, so it can tell the agent its limit and react when it is exceeded, but it cannot prevent the spawn.
-- Where a concurrency change made in the drawer is kept. The proposal is the project's `.openlanes.yml`, per agent, because `agents/*.md` ships with the gem.
+- The prompt states the limit. Claude Code cannot be told to cap sub-agents, so the harness counts the running ones in the agent's stream; an agent that goes over it is stopped as on a timeout: STOP, the kill after the grace period, and a new round, which resumes the session (M1) and reads the journal (M2).
