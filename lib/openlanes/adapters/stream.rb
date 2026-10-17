@@ -15,9 +15,15 @@ module OpenLanes
     # its events keeps working, and one that stops reporting usage shows a
     # meter at zero rather than a crash.
     class Stream
-      # Events that carry part of a message still being written. A line read
-      # out of one would be read again, whole or cut, when the message closes.
+      # Events that carry part of a message still being written. Only its
+      # finished lines are read out of one, and the closing message does not
+      # read them again (see {#take_partial}).
       PARTIAL = /delta|update|partial|chunk/i
+
+      # Events that repeat messages already closed: pi's `turn_end` and
+      # `agent_end`, or anything carrying a `messages` list.
+      SUMMARY = /turn|agent|session|run/i
+
       # @param trace [String, nil] where every line is kept verbatim
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
       def initialize(trace: nil, &on_progress)
@@ -35,6 +41,9 @@ module OpenLanes
         @error = nil
         @journal = []
         @heard = {}
+        @closed = Hash.new(0)
+        @open = { text: +"", taken: 0 }
+        @pending = Hash.new(0)
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -157,7 +166,13 @@ module OpenLanes
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
         end
-        take_journal(event) unless type.match?(PARTIAL) || type.match?(/tool|command|exec/i)
+        unless type.match?(/tool|command|exec/i)
+          if type.match?(PARTIAL)
+            take_partial(event)
+          else
+            take_journal(event, summary: type.match?(SUMMARY) || event.key?("messages"))
+          end
+        end
         @on_progress&.call(progress)
       end
 
@@ -168,26 +183,79 @@ module OpenLanes
       # message's second block.
       #
       # A CLI read by shape delivers the same message more than once: as it
-      # closes, and again in a summary of the turn or the run. So a message
-      # already taken is not taken again, by its id or else by its words, while
-      # the same line in two different messages is kept twice: an agent may
-      # mean `todo U1` again after it said `done U1`.
+      # closes, and again in a summary of the turn or the run. A message with
+      # an id is taken once by its id. One without is always taken as it
+      # closes, since an agent may mean `todo U1` again after it said `done
+      # U1`; a summary skips as many copies of its words as have closed, and
+      # takes the rest.
       #
       # @param event [Hash]
+      # @param summary [Boolean] whether the event repeats closed messages
       # @return [void]
-      def take_journal(event)
+      def take_journal(event, summary:)
+        seen = Hash.new(0)
         messages_in(event).each do |message|
           texts = texts_of(message)
-          key = message["id"] || texts
-          next if texts.empty? || @heard.key?(key)
+          next if texts.empty?
 
-          @heard[key] = true
-          texts.each { @journal.concat(Plans::Journal.scan(it)) }
+          if (id = message["id"])
+            next if @heard.key?(id)
+
+            @heard[id] = true
+          else
+            next if summary && (seen[texts] += 1) <= @closed[texts]
+
+            @closed[texts] += 1
+          end
+          texts.flat_map { Plans::Journal.scan(it) }.each { keep(it) }
+          @open = { text: +"", taken: 0 }
         end
       end
 
+      # The finished lines of a message still being written, as they arrive,
+      # so an agent killed before the message closes keeps what it printed.
+      # An event carries either the message so far (pi's `message`, codex's
+      # `item`) or only the newest piece of it (a `delta`).
+      #
+      # @param event [Hash]
+      # @return [void]
+      def take_partial(event)
+        whole = messages_in(event).map { texts_of(it).join("\n") }.reject(&:empty?).last
+        whole ? @open[:text] = +whole : @open[:text] << delta_in(event).to_s
+        cut = @open[:text].rindex("\n") or return
+
+        entries = Plans::Journal.scan(@open[:text][0..cut])
+        entries.drop(@open[:taken]).each do |entry|
+          @journal << entry
+          @pending[entry] += 1
+        end
+        @open[:taken] = entries.size
+      end
+
+      # An entry from a closing message, unless it was already taken from that
+      # message while it was being written.
+      #
+      # @param entry [OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection]
+      # @return [void]
+      def keep(entry)
+        return @pending[entry] -= 1 if @pending[entry].positive?
+
+        @journal << entry
+      end
+
+      # @param event [Hash]
+      # @return [String, nil] the newest piece of text a partial event carries
+      def delta_in(event)
+        [event["delta"], event.dig("assistantMessageEvent", "delta")].each do |delta|
+          return delta if delta.is_a?(String)
+          return delta["text"] if delta.is_a?(Hash) && delta["text"].is_a?(String)
+        end
+        nil
+      end
+
       # The agent's own messages an event carries: one under `item` (codex)
-      # or `message` (pi), or a list under `messages`. A message that names
+      # or `message` (pi), a list under `messages`, or the event itself when
+      # it is a message with its words at the top level. A message that names
       # a role other than the assistant's is a prompt or a tool result, and
       # an item typed as anything but a message is a command, a file change
       # or reasoning.
@@ -195,7 +263,8 @@ module OpenLanes
       # @param event [Hash]
       # @return [Array<Hash>]
       def messages_in(event)
-        found = [event["item"], event["message"], *Array(event["messages"])]
+        itself = event.key?("content") || event["text"].is_a?(String) ? event : nil
+        found = [event["item"], event["message"], *Array(event["messages"]), itself]
         found.select do |message|
           message.is_a?(Hash) &&
             [nil, "assistant"].include?(message["role"]) &&
