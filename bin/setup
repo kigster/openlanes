@@ -75,7 +75,7 @@ bundle check>/dev/null && {
   ok "Gemfile dependencies are already satisfied."
 } || bundle install -j 12
 
-if [[ -n $REDIS_URL && $(echo ping | redis-cli -u $REDIS_URL) == "PONG" ]]; then
+if [[ -n ${REDIS_URL:-} && $(echo ping | redis-cli -u "$REDIS_URL") == "PONG" ]]; then
   ok "Redis is available @ [$REDIS_URL]"
 else
   unset REDIS_URL
