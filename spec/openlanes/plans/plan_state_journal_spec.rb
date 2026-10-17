@@ -67,6 +67,22 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       state.answer!(agent: "yoda-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres")
       expect(schema.validate(written).map { it["error"] }).to eq([])
     end
+
+    it "writes it once when several drains answer at the same moment" do
+      answered = Array.new(6) do
+        Thread.new { described_class.for(state.dir).answer!(agent: "yoda-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres") }
+      end.map(&:value)
+      expect([answered.compact.size, state.journal("yoda-writer").flat_map(&:entries).count { it.ref == "B1" }]).to eq([1, 1])
+    end
+
+    it "starts round 1 for an asker with no journal yet" do
+      state.answer!(agent: "luke-backend", ref: "B2", question: "B2 Rebase?", answer: "Yes")
+      expect(state.journal("luke-backend").map(&:number)).to eq([1])
+    end
+
+    it "refuses an agent name that is not one token" do
+      expect { state.answer!(agent: "two words", ref: "B1", question: "q", answer: "a") }.to raise_error(OpenLanes::Error)
+    end
   end
 
   describe "#blocked_by" do

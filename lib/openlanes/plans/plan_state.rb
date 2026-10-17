@@ -467,19 +467,30 @@ module OpenLanes
       # in the agent's journal with the question (M3): B1 with A1. Appended to
       # the agent's latest round, which is the one that asked. Written once:
       # a drain that is run again finds the same ref and answer already there.
+      # The check is made under the lock the write takes, so two drains at
+      # once (two control rooms, or a hand run beside the broker) cannot both
+      # find it missing and both write it.
       #
       # @param agent [String]
       # @param ref [String] `B<n>`
       # @param question [String]
       # @param answer [String]
       # @return [OpenLanes::Plans::Journal::Entry, nil] nil when it was there
+      # @raise [OpenLanes::Error] on an agent name that is not one token
       def answer!(agent:, ref:, question:, answer:)
-        entry = Journal::Entry.new(kind: "question", text: question, ref:, answer:)
-        rounds = journal(agent)
-        return nil if rounds.flat_map(&:entries).include?(entry)
+        raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
 
-        journal!(agent:, entries: [entry], number: rounds.last&.number)
-        entry
+        entry = Journal::Entry.new(kind: "question", text: question, ref:, answer:)
+        written = nil
+        update do |data|
+          rounds = ((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {}
+          next if rounds.each_value.any? { Array(it["entries"]).include?(entry.to_json_h) }
+
+          latest = rounds.keys.map(&:to_i).max || 1
+          (rounds[latest.to_s] ||= { "entries" => [] })["entries"] << entry.to_json_h
+          written = entry
+        end
+        written
       end
 
       # The agent whose questions `blocked.md` holds: whoever blocked last,
