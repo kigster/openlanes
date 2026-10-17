@@ -151,9 +151,14 @@ module OpenLanes
         command = Live::Command.parse(entry.fields["json"].to_s)
         first = @store.hget(@keys.done, command.id)
         reply = first ? parse(first) : outcome(command)
+        # A slash command is answered in the conversation too, or the page's
+        # copilot waits for an engine reply that never comes. Once only: a
+        # redelivery has its turn already.
+        turn = Live::Commands.echo_turn(reply) if !first && command.payload["source"] == "copilot"
         @store.multi do |tx|
           tx.hset(@keys.done, reply.id, reply.to_json) unless first
           tx.xadd(@keys.replies, { json: reply.to_json }, maxlen: Live::Keys::REPLIES_LENGTH)
+          tx.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Live::Keys::COPILOT_LENGTH) if turn
           tx.xack(@keys.commands, Live::Keys::GROUP, entry.id)
         end
         reply

@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 80 | [\[020.00\](A) Lanes with No Active Agents](https://github.com/kigster/openlanes/pull/80) | Open 🟡 |
+
 ## rey-frontend, round 1
 
 - web: `npm test` 358 passed; `npm run lint` and `npm run typecheck` clean.
@@ -38,3 +42,10 @@
 - Unrelated, found on the way: on Darwin 27, Ruby 4.0.6's `Socket.tcp(..., connect_timeout:)` returns an unconnected socket for a refused port instead of raising, so `Apps::Ports.answering?` and `Apps::Probe.listening?` read every port as taken (26-30 failures in `spec/openlanes/apps`, `cli/app_spec`). Both now ask for `remote_address`; the same change in the spec helpers and `spec/fixtures/apps/servers/server.rb`. `bundle exec rspec spec/openlanes/apps spec/openlanes/cli/app_spec.rb`: 112 examples, 0 failures.
 - `bundle exec rspec`: 3142 examples, 0 failures. `bundle exec rubocop`: 433 files, no offenses.
 - Rerun for `## How to test`, now in plan.md. `bundle exec rspec`: 3142 examples, 0 failures (one earlier full run failed once in `spec/integration/restart_spec.rb:43`, which passed 3/3 alone and on the rerun). `bundle exec rubocop`: no offenses.
+
+## luke-backend, round 1 (hansolo's 💩 on `DemoBoard`)
+
+- `DemoBoard` gains `stop_plan`, `restart_plan`, `set_concurrency`, worded as the engine words them; `/restart` refuses while a car runs ("already has an agent") and brings back only stopped cars. `DemoBoard#apply` now refuses any kind it has no handler for ("the demo cannot …") instead of raising `NoMethodError` on the demo thread; that also covers `respond`, `pause_discuss` and `resume_anyway`, which had the same latent crash.
+- `Demo#answer` writes the `"<id>.1"` copilot turn for `payload.source == "copilot"`, in the same `MULTI`, not on redelivery. The turn is built by `Live::Commands.echo_turn`, now a class method, so engine and demo share one definition.
+- New examples: `spec/openlanes/web/demo_board_spec.rb` ("the lane commands", "a kind the demo has no handler for"), `spec/openlanes/web/demo_spec.rb` ("when the copilot sent it": one turn on a double delivery, `run.jobs` changed).
+- `bundle exec rspec`: 3614 examples, 0 failures. `bundle exec rubocop`: 488 files, no offenses (exit 0).

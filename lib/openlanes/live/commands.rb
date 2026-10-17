@@ -60,6 +60,20 @@ module OpenLanes
       # Plans a person may not add to a run: there is nothing left to do.
       FINISHED = Snapshot::FINISHED
 
+      # The copilot turn that answers a slash command: `"<id>.1"`, the turn
+      # the page's "reading" waits for. {Web::Demo} writes the same one, so
+      # the demo's copilot ends its wait as the engine's does.
+      #
+      # @param reply [OpenLanes::Live::Reply]
+      # @return [OpenLanes::Live::Copilot::Turn]
+      def self.echo_turn(reply)
+        Copilot::Turn.new(id: "#{reply.id}.1",
+          from: "copilot",
+          kind: "text",
+          text: [reply.status, reply.reason].compact.join(": "),
+          at: reply.at)
+      end
+
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param keys [OpenLanes::Live::Keys]
       # @param node [OpenLanes::Live::Node]
@@ -177,7 +191,7 @@ module OpenLanes
       def reply(entry, id, status, reason, echo: false)
         reply = Reply.new(id:, status:, reason:, at: @clock.call)
         json = reply.to_json
-        turn = echo_turn(reply) if echo
+        turn = Commands.echo_turn(reply) if echo
         @store.multi do |tx|
           tx.hset(@keys.done, id, json)
           tx.xadd(@keys.replies, { json: }, maxlen: Keys::REPLIES_LENGTH)
@@ -187,16 +201,6 @@ module OpenLanes
         end
         News.publish(store: @store, keys: @keys, kind: "reply")
         reply
-      end
-
-      # @param reply [OpenLanes::Live::Reply]
-      # @return [OpenLanes::Live::Copilot::Turn]
-      def echo_turn(reply)
-        Copilot::Turn.new(id: "#{reply.id}.1",
-          from: "copilot",
-          kind: "text",
-          text: [reply.status, reply.reason].compact.join(": "),
-          at: reply.at)
       end
 
       # @return [OpenLanes::Live::Reply] the first reply, sent again
