@@ -30,6 +30,10 @@ module OpenLanes
   #         start: npx vite --port $PORT_WEB --strictPort
   #         ready: /
   #         preview: true
+  #   coverage:                 # what the coverage gate measures (M15)
+  #     command: bundle exec rspec
+  #     report_command: jq '.total.lines.percent' coverage/coverage.json
+  #     minimum: 95             # or report: + format: instead of report_command:
   #
   # Precedence, loudest first: a flag typed on the command line, the plan's
   # spec.md frontmatter, this file, the built-in default. The file supplies
@@ -79,6 +83,10 @@ module OpenLanes
   # @!attribute [r] review_max_hmm
   #   @return [Integer, nil] `review.max_hmm` as the file says it; read
   #     {#max_hmm}, which applies the environment and the default
+  # @!attribute [r] coverage
+  #   @return [OpenLanes::Coverage::Config, nil] the `coverage:` section; nil
+  #     when the project declares none, and then the gate sends the pull
+  #     request back to its builder to write one
   Config = Data.define(:path,
     :project,
     :lane,
@@ -91,9 +99,11 @@ module OpenLanes
     :aging_since,
     :questions_model,
     :review_max_hmm,
-    :merge_max_rejections) do
+    :merge_max_rejections,
+    :coverage) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil)
+      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
+      coverage: nil)
       super
     end
 
@@ -159,6 +169,7 @@ module OpenLanes
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
+      settings["coverage"] = coverage.to_h if coverage
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -176,7 +187,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions review].freeze
+    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions review coverage].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -256,7 +267,8 @@ module OpenLanes
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
           **questions(settings["questions"], path),
-          **review(settings["review"], path))
+          **review(settings["review"], path),
+          coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil)
         conflicts!(config, path)
         config
       rescue Psych::Exception => e

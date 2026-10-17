@@ -19,8 +19,13 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
   end
 
   def declare(command, report: "coverage/lcov.info", format: "lcov")
-    File.write(File.join(dir, ".openlanes.coverage.yml"),
-      YAML.dump("command" => command, "report" => report, "format" => format, "minimum" => minimum))
+    section("command" => command, "report" => report, "format" => format, "minimum" => minimum)
+  end
+
+  def section(coverage) = File.write(File.join(dir, ".openlanes.yml"), YAML.dump("coverage" => coverage))
+
+  def printing(report_command, command: "true")
+    section("command" => command, "report_command" => report_command, "minimum" => minimum)
   end
 
   it "withholds at 94.99% against a 95 minimum and names both numbers" do
@@ -114,13 +119,86 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
     end
   end
 
-  it "withholds when the project declares no coverage" do
-    expect(gate.call(checkout:)).to have_attributes(passed?: false, minimum: nil, reason: /no .openlanes.coverage.yml .*M15/)
+  it "withholds as unconfigured when .openlanes.yml has no coverage: section" do
+    File.write(File.join(dir, ".openlanes.yml"), "jobs: 2\n")
+    verdict = gate.call(checkout:)
+
+    expect(verdict).to have_attributes(passed?: false,
+      unconfigured?: true,
+      minimum: nil,
+      reason: ".openlanes.yml in #{dir} has no coverage: section, so nothing was measured")
   end
 
-  it "withholds when the declaration is invalid" do
-    File.write(File.join(dir, ".openlanes.coverage.yml"), "command: true\n")
+  it "withholds as unconfigured when there is no .openlanes.yml at all" do
+    expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: true)
+  end
 
-    expect(gate.call(checkout:)).to have_attributes(passed?: false, reason: /missing key report/)
+  it "withholds, configured, when the section is invalid" do
+    File.write(File.join(dir, ".openlanes.yml"), "coverage:\n  command: true\n")
+
+    expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: false, reason: /coverage: missing key minimum/)
+  end
+
+  it "withholds, configured, when the file around the section is invalid" do
+    File.write(File.join(dir, ".openlanes.yml"), "jobs: many\n")
+
+    expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: false, reason: /jobs: "many"/)
+  end
+
+  context "with a report_command" do
+    it "passes on the figure it prints, after the command ran" do
+      printing("echo 98.785", command: "touch ran")
+      verdict = gate.call(checkout:)
+
+      expect(verdict).to have_attributes(passed?: true, percent: 98.785)
+      expect(verdict.to_s).to eq("coverage 98.78% meets the 95% minimum (report_command: `echo 98.785`)")
+      expect(File).to exist(File.join(dir, "ran"))
+    end
+
+    it "withholds below the minimum and floors the figure" do
+      printing("echo 94.999")
+
+      expect(gate.call(checkout:).to_s).to eq("ready-to-merge withheld: coverage 94.99% is below the 95% minimum (report_command: `echo 94.999`)")
+    end
+
+    it "reads the figure in the checkout, from STDOUT alone" do
+      File.write(File.join(dir, "figure"), "97\n")
+      printing("echo 'jq: a warning' >&2; cat figure")
+
+      expect(gate.call(checkout:)).to have_attributes(passed?: true, percent: 97.0)
+    end
+
+    [["echo n/a", 'printed "n/a"'], ["printf ''", 'printed ""'], ["echo 100.5", 'printed "100.5"'],
+     ["echo '95 97'", 'printed "95 97"']].each do |command, said|
+      it "counts #{command.inspect} as an unreadable report, at 0%" do
+        printing(command)
+
+        expect(gate.call(checkout:)).to have_attributes(passed?: false,
+          percent: 0.0,
+          reason: "coverage counts as 0%: `#{command}` #{said}, not a line percentage")
+      end
+    end
+
+    it "counts a failing report_command as 0%, with the first line it wrote to STDERR" do
+      printing("echo 'no such file' >&2; exit 4")
+
+      expect(gate.call(checkout:)).to have_attributes(passed?: false,
+        percent: 0.0,
+        reason: /0%: `.*` exited 4, not a line percentage \(no such file\)/)
+    end
+
+    it "stops a report_command that runs past the timeout" do
+      printing("sleep 30")
+      verdict = OpenLanes::Engine.coverage_gate(timeout: 0.3).call(checkout:)
+
+      expect(verdict).to have_attributes(passed?: false, reason: /0%: `sleep 30` ran past 0.3s/)
+    end
+
+    it "never runs the report_command when the test command fails" do
+      printing("touch read && echo 99", command: "exit 1")
+
+      expect(gate.call(checkout:)).to have_attributes(passed?: false, reason: /`exit 1` exited 1/)
+      expect(File).not_to exist(File.join(dir, "read"))
+    end
   end
 end
