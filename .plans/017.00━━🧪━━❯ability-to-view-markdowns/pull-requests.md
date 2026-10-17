@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 79 | [\[017.00\](A) Ability to View Markdowns](https://github.com/kigster/openlanes/pull/79) | Open 🟡 |
+
 ## Integration proof, luke-backend, round 1 (2026-10-15)
 
 ```bash
@@ -62,3 +66,60 @@ cd web && npm run lint       # clean
 cd web && npx tsc --noEmit   # clean
 E2E_PORT=11880 E2E_PEER_PORT=11881 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
+
+## Final integration proof, luke-backend, round 1 (2026-10-17)
+
+The previous pass was flagged for pushes to `origin/kig/keep-tests-on-local-redis` and `origin/main`. This plan touches neither, and nothing was pushed from here; worktrees share `refs/remotes`.
+
+On this machine, now macOS 27.0.1, Ruby 4.0.6's `Socket.tcp(..., connect_timeout:)` returns a socket for a refused connect, with SO_ERROR set to ECONNREFUSED, so closed ports read as listening: 26 failures in `spec/openlanes/apps`. Fixed: `Apps::Probe.listening?` now calls `remote_address` on the socket, which raises on such a socket. `Ports#answering?` and the `connectable?` helpers in `apps/supervisor_spec.rb` and `cli/app_spec.rb` go through it, and `spec/fixtures/apps/servers/server.rb` makes the same check.
+
+```bash
+bundle exec rspec spec/openlanes/apps spec/openlanes/cli/app_spec.rb  # 112 examples, 0 failures (26 failures before the fix)
+bundle exec rspec        # 3046 examples, 0 failures (exit 0); the run before it: 1 failure, spec/integration/restart_spec.rb:43, passing alone twice in a row
+bundle exec rubocop      # 428 files inspected, no offenses detected
+E2E_PORT=11890 E2E_PEER_PORT=11891 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
+
+## Front-end proof, rey-frontend, round 1 (2026-10-17)
+
+```bash
+cd web && npx vitest run   # 37 files, 378 tests passed
+cd web && npm run lint     # clean
+cd web && npm run typecheck # clean
+E2E_PORT=11900 E2E_PEER_PORT=11901 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
+
+## Changes Requested, luke-backend, round 1 (2026-10-17)
+
+hansolo's three findings are all in `web/src/panels/PlanFilePopup.tsx`, rey-frontend's half; none names the back end. Finding 3's cause, from CircleCI job 833:
+
+```bash
+npm run coverage:changed   # step "Coverage of changed files": FAIL 93.8% 45/48 src/panels/PlanFilePopup.tsx, under 95%; every other changed file ok
+```
+
+Mailed to rey (#18). Back end re-verified on the rebased tree, no code changed:
+
+```bash
+bundle exec rspec     # 3577 examples, 0 failures (exit 0)
+bundle exec rubocop   # 487 files inspected, no offenses detected
+```
+
+## Review round 1 fixes, rey-frontend (2026-10-17)
+
+- Finding 1: closing (Close, Esc, click outside) over a changed draft now asks "You have unsaved changes. Save them before closing?" with Yes (save, then close; a refused save keeps the popup open) and No (discard). Tests in `PlanFilePopup.test.tsx`.
+- Finding 2: the edit button reads "Save Changes"; tests find it by that name.
+- Finding 3: the red `ci/circleci: web` step was `npm run coverage:changed`: `PlanFilePopup.tsx` was at 93.8%, under the 95% floor. Reproduced locally; the new tests lift it to 95.2%.
+
+```bash
+cd web && npm run lint && npm run typecheck      # clean
+cd web && npm run coverage                       # 39 files, 419 tests passed
+cd web && npm run coverage:changed               # every changed file ok; PlanFilePopup.tsx 95.2%
+cd web && npm run build                          # built
+bundle exec rubocop                              # 487 files, no offenses
+bundle exec rspec                                # 3577 examples, 0 failures
+E2E_PORT=11910 E2E_PEER_PORT=11911 just web-e2e  # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
+
+> [!NOTE]
+>
+> [2026-10-17 12:13:21 PM PDT] [ agent: hansolo-reviewer   status: **Interrupted, round 1 (no closing ledger line)** ]

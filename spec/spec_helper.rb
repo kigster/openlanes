@@ -70,6 +70,7 @@ require_relative "support/log_helper"
 require_relative "support/origin_repo"
 require_relative "support/fake_gh_env"
 require_relative "support/test_redis"
+require_relative "support/port_window"
 
 TestRedis.scrub!
 

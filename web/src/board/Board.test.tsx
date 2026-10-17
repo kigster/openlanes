@@ -59,7 +59,7 @@ describe("Board", () => {
     const { container } = render(<Board board={board} merged retiring={noRetire} gone={none} theirs={life} />);
     const heads = container.querySelectorAll(".machine-head");
     expect(heads).toHaveLength(2);
-    expect(heads[0]).toHaveTextContent("dana@studio-mini10.0.4.123 plansthis machine");
+    expect(heads[0]).toHaveTextContent("dana@studio-mini10.0.4.124 plansthis machine");
     expect(heads[1]).toHaveTextContent("sam@ci-runner-21 plansread onlylast seen 0s ago");
     const theirs = container.querySelector(".plan.is-theirs")!;
     expect(theirs).toHaveAttribute("aria-label", "010 Cache agent registry lookups, on sam@ci-runner-2, read only");

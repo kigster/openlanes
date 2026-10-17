@@ -12,6 +12,8 @@ export { AskCard } from "./AskCard";
 export { asksOf, type Ask } from "./question";
 export { NeedsYou, type NeedsYouProps } from "./NeedsYou";
 export { BombNotice, type BombNoticeProps } from "./BombNotice";
+export { PlanDrawer, type PlanDrawerProps } from "./PlanDrawer";
+export { PlanFilePopup, type PlanFilePopupProps } from "./PlanFilePopup";
 export { UnblockWidget, type UnblockWidgetProps } from "./UnblockWidget";
 export { ModelSelect, type ModelSelectProps } from "./ModelSelect";
 export { AgentActionMenu, type AgentActionMenuProps, type AgentAction } from "./AgentActionMenu";

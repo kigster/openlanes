@@ -8,7 +8,7 @@ require "rbconfig"
 RSpec.describe OpenLanes::Apps::Runner do
   let(:root) { File.realpath(Dir.mktmpdir("openlanes-runner")) }
   let(:server) { File.expand_path("../../fixtures/apps/servers/server.rb", __dir__) }
-  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(root, "ports.json")) }
+  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(root, "ports.json"), **PortWindow.bounds) }
   let(:store) { OpenLanes::Live.memory_store }
   let(:keys) { OpenLanes::Live::Keys.new(repo: "github.com/acme/widgets", node: "aaaa:bbbb") }
   let(:said) { [] }
