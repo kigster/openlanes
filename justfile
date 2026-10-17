@@ -63,6 +63,7 @@ preview-e2e:
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
     export E2E_REDIS_URL="${E2E_REDIS_URL:-redis://localhost:6379/13}"
+    bin/require-local-redis "$E2E_REDIS_URL"
     export PREVIEW_E2E_PORT="${PREVIEW_E2E_PORT:-11050}"
     export OPENLANES_PORTS_FILE="$(mktemp -d)/ports.json"
     bundle exec exe/openlanes web --demo --no-open --port "$PREVIEW_E2E_PORT" --redis-url "$E2E_REDIS_URL" &

@@ -10,6 +10,11 @@ RSpec.describe ControlRoomProcess do
                 redis://localhost:6379/10 redis://localhost:6379/15].map { described_class.dedicated?(it) })
         .to eq([false, false, false, true, true])
     end
+
+    it "reads a unix socket's database from ?db=, not from its path" do
+      expect(%w[unix:///tmp/redis.sock?db=15 unix:///tmp/redis.sock?db=3 unix:///tmp/redis.sock]
+        .map { described_class.dedicated?(it) }).to eq([true, false, false])
+    end
   end
 
   describe ".new" do

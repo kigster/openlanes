@@ -94,11 +94,7 @@ class ControlRoomProcess
   #
   # @param db [Integer]
   # @return [String]
-  def self.redis_url(db)
-    base = URI(ENV.fetch("OPENLANES_TEST_REDIS_URL", "redis://localhost:6379/15"))
-    base.path = "/#{db}"
-    base.to_s
-  end
+  def self.redis_url(db) = TestRedis.url(db)
 
   # Through the gem the engine itself uses, not `redis-cli`: CI's Ruby image
   # has a Redis service beside it but no `redis-cli` on PATH, and a check
@@ -150,7 +146,7 @@ class ControlRoomProcess
   # @param url [String]
   # @return [Boolean] whether the URL names a database this harness may flush
   def self.dedicated?(url)
-    db = URI(url).path.delete_prefix("/")
+    db = TestRedis.database(url).to_s
     db.match?(/\A\d+\z/) && db.to_i >= FIRST_TEST_DATABASE
   end
 

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Exits non-zero unless the Redis URL it is given is on this machine.
+#
+# The e2e runs flush and fill the database they are pointed at, and they take
+# it from the shell, which may well export a shared or production Redis.
+#
+#   bin/require-local-redis redis://localhost:6379/14
+set -euo pipefail
+
+url="${1:?usage: bin/require-local-redis REDIS_URL}"
+if [[ "$url" == unix://* || "$url" =~ ^rediss?://([^@/]*@)?(localhost|127\.0\.0\.1|\[::1\])(:|/|$) ]]; then
+  exit 0
+fi
+# Only the host is printed: the URL may carry a password.
+host="${url#*://}"
+host="${host#*@}"
+echo "refusing ${host%%/*}: the e2e runs only use a Redis on this machine" >&2
+exit 1

@@ -8,7 +8,7 @@ require_relative "store_examples"
 RSpec.describe OpenLanes::Live::Store, :redis do
   subject(:store) { described_class.new(url: url) }
 
-  let(:url) { ENV.fetch("OPENLANES_TEST_REDIS_URL", "redis://localhost:6379/15") }
+  let(:url) { TestRedis.url(15) }
   let(:admin) { RedisClient.config(url:).new_client }
 
   around do |example|
