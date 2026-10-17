@@ -200,12 +200,23 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
       aggregate_failures do
         expect(result).to have_attributes(kind: :rejected, to: :rejected)
-        expect(result.note).to start_with("verified PR #1 but NOT committed (refused to commit 014.00: changes outside its plan folder")
+        expect(result.note).to start_with("verified PR #1 but NOT published (refused to commit 014.00: changes outside its plan folder")
         expect(result.note).to include("not counted (0 of 2)")
-        expect(comments.first).to include("final.png was not committed, so the pull request carries no evidence")
+        expect(comments.first).to include("final.png never reached the pull request, so it carries no evidence")
         expect(labels).to eq(%w[review-rejected])
         expect(outcome.rejections(plan)).to eq(0)
         expect(OpenLanes::Engine::Verification.latest(plan.feature.path).report.verdict).to eq(:rejected)
+      end
+    end
+
+    it "sends the round back, saying the commit is local, when the push fails" do
+      repo_git("remote", "set-url", "origin", "#{repo_root}-nowhere.git")
+      result = outcome.pass(checkout:, plan:, pull: pr, round:)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :rejected)
+        expect(result.note).to match(/\Averified PR #1 but NOT published \(committed \h{7} locally, but the push failed: /)
+        expect(gate).not_to have_received(:call)
       end
     end
 

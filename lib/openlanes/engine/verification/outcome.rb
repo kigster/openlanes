@@ -158,7 +158,8 @@ module OpenLanes
         # label it ready with no `final.png` on the branch, and the missing
         # evidence would go unnoticed. It is a send-back, not a counted
         # rejection, because the code may be fine; what is wrong is the
-        # checkout (a stray file, a push that would not go).
+        # checkout (a stray file, a push that would not go). Nothing past
+        # this point reads CI for a round whose push failed.
         #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
         # @param plan [OpenLanes::Plans::Subject]
@@ -325,11 +326,13 @@ module OpenLanes
         end
 
         # @return [Result] the send-back for a verified round whose evidence
-        #   never reached the branch, its note saying so first
+        #   never reached the branch, its note saying so first. A push that
+        #   failed after a local commit lands here too: the commit waits in
+        #   the checkout, and the builders' next publish carries it.
         def uncommitted(checkout:, plan:, pull:, round:, failure:)
-          why = "Verified, but #{Screenshots::FINAL} was not committed, so the pull request carries no evidence: #{failure}"
+          why = "Verified, but #{Screenshots::FINAL} never reached the pull request, so it carries no evidence: #{failure}"
           result = reject(checkout:, plan:, pull:, round:, why:, counted: false)
-          result.with(note: "verified PR ##{number_of(pull)} but NOT committed (#{failure}); #{result.note}")
+          result.with(note: "verified PR ##{number_of(pull)} but NOT published (#{failure}); #{result.note}")
         end
 
         # The engine writes the report chewie never got to write.

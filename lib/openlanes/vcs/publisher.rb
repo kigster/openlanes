@@ -150,10 +150,23 @@ module OpenLanes
         raise Error, "nothing to commit for #{plan.feature.ordinal}" if run!(checkout, "git", "diff", "--cached", "--quiet").success?
 
         run(checkout, "git", "commit", "-m", message)
-        push(checkout)
-        run(checkout, "git", "rev-parse", "HEAD").out.strip
+        sha = run(checkout, "git", "rev-parse", "HEAD").out.strip
+        pushed!(checkout, sha)
+        sha
       rescue TTY::Command::ExitError => e
         raise Error, git_complaint(e)
+      end
+
+      # A commit that stayed on this machine is said as one: "not committed"
+      # would send someone looking for a change that is right there in the
+      # checkout, waiting for the next push to carry it.
+      #
+      # @return [void]
+      # @raise [OpenLanes::Error] when the push fails
+      def pushed!(checkout, sha)
+        push(checkout)
+      rescue TTY::Command::ExitError => e
+        raise Error, "committed #{sha[0, 7]} locally, but the push failed: #{git_complaint(e)}"
       end
 
       # git and gh put the useful sentence in stderr, several lines below the
