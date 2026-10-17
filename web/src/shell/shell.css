@@ -50,9 +50,10 @@ button, textarea { font: inherit; color: inherit; }
 
 /* Layout */
 .tabs-root { display: contents; }
-/* The right column holds Needs you or an agent's drawer, one at a time, so both share its width: 432px, the drawer's
-   360px made 20% wider for the transcript, and one width so opening a drawer never shifts the board. */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 432px; gap: 20px; padding: 20px 24px; align-items: start; }
+/* The right column holds Needs you or an agent's drawer, one at a time, so both share its width: up to 432px, the
+   drawer's 360px made 20% wider for the transcript, and one width so opening a drawer never shifts the board. It
+   gives back to 360px on a 1024-1280px laptop, where a fixed 432px left the board little more than half the screen. */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 30vw, 432px); gap: 20px; padding: 20px 24px; align-items: start; }
 @media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; } }
 .loading { padding: 40px 24px; color: var(--ink-soft); }
 .loading.is-error { color: var(--alarm); }
