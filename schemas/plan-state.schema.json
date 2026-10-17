@@ -50,6 +50,14 @@
           "down": { "type": "integer", "minimum": 0 },
           "seconds": { "type": "number", "minimum": 0 },
           "note": { "type": "string" },
+          "session": {
+            "description": "The CLI's session id for this round, as soon as its stream named it. `claude --resume <id>`, run from `cwd`, carries it on by hand.",
+            "type": "string"
+          },
+          "cwd": {
+            "description": "The checkout the round ran in. A claude session is found only from the directory it ran in.",
+            "type": "string"
+          },
           "run": {
             "description": "The harness process that dispatched it, so a restart can tell a crash from a live run.",
             "type": "object",
