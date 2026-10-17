@@ -27,6 +27,11 @@ module OpenLanes
     # push moved it during the run. A ref that moved with no reflog entry at all
     # (reflogs switched off) cannot be told apart from a push, and is reported.
     #
+    # Worktrees share `refs/remotes`, so a push from any other checkout of
+    # the repository (a person, another session, a sibling agent's harness)
+    # moves the same refs during this run. A pushed commit that is the HEAD
+    # of another worktree was pushed from there, and is not this agent's.
+    #
     # Blind spots, by construction: a push to a bare URL updates no tracking
     # ref, and a deleted remote branch takes its tracking ref and that ref's
     # reflog with it, which locally looks the same as `git fetch --prune`.
@@ -116,9 +121,10 @@ module OpenLanes
         # @param root [String]
         # @return [Array<String>] tracking refs a push moved since the snapshot
         def pushed(before, root)
-          logs = nil
+          logs = elsewhere = nil
           remotes(root).filter_map do |ref, sha|
             next if before.remotes[ref] == sha || sanctioned?(ref, sha)
+            next if (elsewhere ||= other_heads(root)).include?(sha)
 
             logs ||= reflogs(root)
             entries = logs.fetch(ref, [])
@@ -127,7 +133,34 @@ module OpenLanes
           end
         end
 
+        # The commit checked out in every worktree of the repository but
+        # +root+'s own: what a push from one of them would carry.
+        #
+        # @param root [String]
+        # @return [Set<String>]
+        def other_heads(root)
+          own = real(rev_parse_path(root))
+          out = `git -C #{root.shellescape} worktree list --porcelain 2>/dev/null`
+          out.split("\n\n").each_with_object(Set.new) do |block, heads|
+            fields = block.lines.to_h { |line| line.chomp.split(" ", 2) }
+            heads << fields["HEAD"] if fields["HEAD"] && real(fields["worktree"]) != own
+          end
+        end
+
         private
+
+        # @return [String, nil] the checkout's top level
+        def rev_parse_path(root)
+          out = `git -C #{root.shellescape} rev-parse --show-toplevel 2>/dev/null`.strip
+          out.empty? ? root : out
+        end
+
+        # @return [String, nil] the path with symlinks resolved, as git prints it
+        def real(path)
+          File.realpath(path.to_s)
+        rescue SystemCallError
+          path
+        end
 
         # @return [String, nil]
         def rev_parse(root, rev)
