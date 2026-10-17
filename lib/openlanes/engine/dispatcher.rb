@@ -114,8 +114,9 @@ module OpenLanes
       # @param converter [#call, nil] rewrites prose questions into choices
       #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
       def initialize(runner:, state: nil, rounds: nil, sleeper: ->(seconds) { sleep(seconds) }, on_board: nil,
-        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter)
+        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil)
         @runner = runner
+        @extensions = extensions || Extensions.new(stay:)
         @watch = watch
         @watching = nil
         @waiting_on = {}
@@ -193,6 +194,7 @@ module OpenLanes
         unblock_answered
         convert_questions
         poll
+        ask_for_time
         drain_mail
         watch_pull_requests
         # On threads: a kill waits out TERM before KILL, and the board must not.
@@ -244,6 +246,21 @@ module OpenLanes
       # @return [void]
       def extend(key, seconds)
         @running.find { |j| j.key == key }&.handle&.extend!(seconds)
+      end
+
+      # A person's answer to an `X<n>` request (E1). A time choice reaches
+      # the agent's clock while that agent still runs on the plan; otherwise
+      # the answer is one more round.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param number [Integer]
+      # @param letter [String]
+      # @param by [String]
+      # @return [Hash, nil] the request as settled, nil when it already was
+      def answer_extension(subject, number, letter, by:)
+        request = Plans::PlanState.for(subject.feature.path).extensions.find { it["number"] == number }
+        live = request && job("#{subject.feature.ordinal}/#{request["agent"]}")&.handle
+        @extensions.answer!(subject.feature.path, number, letter, by:, live:).tap { wake! }
       end
 
       # Something to run at the top of every tick, on the loop thread, where
@@ -723,6 +740,7 @@ module OpenLanes
 
       # @return [void]
       def dispatch
+        ask_for_rounds
         started = 0
         while @running.size < @runner.jobs && (pair = next_dispatchable)
           # Lost to another machine between the check and the claim: the next
@@ -935,7 +953,7 @@ module OpenLanes
         return true if past.empty?
         return false if %w[Completed Blocked].include?(past.last[:status])
 
-        past.size < rounds_for(agent)
+        past.size < rounds_for(agent) + @extensions.rounds(subject.feature.path, agent.name, subject.status.key)
       end
 
       # @param agent [OpenLanes::Agents::Agent]
@@ -958,6 +976,9 @@ module OpenLanes
         alone = @running.none? { plan_of(it) == ordinal }
         task = @runner.prepare(agent, subject, round, refresh: alone, hold: rebases.hold(ordinal))
         handle = Execution::Executor::Handle.new
+        # A round a person gave more time to (E1) starts with it.
+        bonus = @runner.dry_run? ? 0 : @extensions.take_seconds(subject.feature.path, agent.name, subject.status.key)
+        handle.extend!(bonus) if bonus.positive?
         job = Job.new(key: "#{ordinal}/#{agent.name}",
           task:,
           handle:,
@@ -1082,6 +1103,71 @@ module OpenLanes
         Plans::Tree.new(dir: @runner.tree.dir).find(subject.feature.ordinal) || subject
       end
 
+      # ---- more time, more rounds (E1) ---------------------------------------
+
+      # Each running agent near the end of its clock asks for more, and is
+      # given it once on its own. Read only in the last {Extensions::ASK_AT}
+      # seconds, so the folder is looked up then and not on every tick.
+      #
+      # @return [void]
+      def ask_for_time
+        return if @runner.dry_run?
+
+        @running.each do |job|
+          left = job.handle.remaining
+          next unless left && left <= Extensions::ASK_AT
+
+          subject = fresh(job.task) or next
+          @extensions.watch(job, subject.feature.path)
+        end
+      end
+
+      # Agents that used every round they had on a plan's state without
+      # finishing ask for another. Before the dispatch, so a round granted
+      # on its own starts in the same pass.
+      #
+      # @return [void]
+      def ask_for_rounds
+        return if @runner.dry_run? || @runner.halted?
+
+        busy = untouchable
+        # Fresh from disk: a round started on a plan renames it without
+        # touching the cached tree, and an exhausted Building agent read
+        # against a stale Planned would never be asked about.
+        @runner.tree.reload
+        @runner.in_scope.each do |subject|
+          next if busy.include?(subject.feature.ordinal.to_s) || Plans::StateMachine::SETTLED.include?(subject.status.key)
+
+          Agents::Routing.filter(@runner.agents.for_status(subject.status), subject).each do |agent|
+            last = out_of_rounds(agent, subject) or next
+            @extensions.exhausted(subject.feature.path, agent.name, subject.status.key, last[:round])
+          end
+        end
+      end
+
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Hash, nil] the agent's last round on the plan's state, when it was its last allowed one
+      def out_of_rounds(agent, subject)
+        past = @history[[subject.feature.ordinal.to_s, agent.name]].select { |h| h[:state] == subject.status.key }
+        return nil if past.empty? || %w[Completed Blocked Started].include?(past.last[:status])
+        return nil if past.size < rounds_for(agent) + @extensions.rounds(subject.feature.path, agent.name, subject.status.key)
+
+        past.last
+      end
+
+      # A round that has ended needs no more time, however it ended: its open
+      # request, if it asked, is closed rather than left on the page.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [void]
+      def close_extension(job)
+        return if @runner.dry_run?
+
+        subject = fresh(job.task) or return
+        @extensions.close!(subject.feature.path, job.task.agent.name, job.state)
+      end
+
       # ---- polling ----------------------------------------------------------
 
       # @return [void]
@@ -1165,6 +1251,7 @@ module OpenLanes
           requeued = @requeued.delete(job.key)
           forget_round(job) if requeued || job.handle.compaction&.restart
           @attempts << attempt
+          close_extension(job)
           row = row_for(job)
           @recent << { at: UI.monotonic, row: row.with(state: attempt.ok ? :done : :failed,
             message: attempt.note,

@@ -104,6 +104,30 @@
         }
       }
     },
+    "extensions": {
+      "description": "The harness asking a person for more time or another round for one agent (E1), and how each request was settled.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "agent", "state", "round", "limit", "asked_at"],
+        "additionalProperties": false,
+        "properties": {
+          "number": { "type": "integer", "minimum": 1, "description": "The n of Xn, unique in this plan." },
+          "agent": { "type": "string", "minLength": 1 },
+          "state": { "type": "string", "minLength": 1, "description": "The status key the agent was working when it ran out." },
+          "round": { "type": "integer", "minimum": 1 },
+          "limit": { "enum": ["time", "rounds"], "description": "What ran out: the round's clock, or the agent's rounds." },
+          "asked_at": { "type": "string", "format": "date-time" },
+          "answer": { "enum": ["a", "b", "c"], "description": "a) one more round, b) ten more minutes, c) twenty more minutes." },
+          "by": { "type": "string", "minLength": 1, "description": "Who answered: a person's user name, or auto." },
+          "grant": { "enum": ["live", "round"], "description": "live: the running clock was extended; round: one more round." },
+          "seconds": { "type": "integer", "minimum": 0, "description": "Extra seconds on the clock the grant gives." },
+          "closed": { "type": "string", "minLength": 1, "description": "Why it was settled without an answer." },
+          "settled_at": { "type": "string", "format": "date-time" },
+          "spent": { "type": "boolean", "description": "A round grant's seconds were given to the round that ran on them." }
+        }
+      }
+    },
     "messages": {
       "description": "What agents on this plan said to each other, through `openlanes mail send`.",
       "type": "array",

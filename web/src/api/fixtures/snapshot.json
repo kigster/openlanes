@@ -146,6 +146,7 @@
         {
           "id": "001.00/B1",
           "number": 1,
+          "kind": "block",
           "heading": "B1 Redis key layout",
           "body": "Should Redis keys carry the checkout path, or the remote URL plus the worktree name?",
           "agent": "luke-backend",
@@ -274,6 +275,7 @@
         {
           "id": "006.00/B1",
           "number": 1,
+          "kind": "block",
           "heading": "B1 Rebase",
           "body": "The PR has a merge conflict in lib/openlanes/cli.rb. Should I rebase onto main?",
           "agent": "r2d2-mechanic",

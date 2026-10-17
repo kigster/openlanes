@@ -231,6 +231,8 @@ module OpenLanes
       #
       # @return [String, nil]
       def answer(command, dispatcher)
+        return extension(command, dispatcher) if command["question"].to_s.match?(/\AX\d+\z/i)
+
         subject, question = question!(command, dispatcher)
         return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
         return "B#{question.number} already has an answer waiting" if question.answered
@@ -248,6 +250,21 @@ module OpenLanes
         @run_state.hold_question(question_id(subject, question), held: false)
         dispatcher.wake!
         nil
+      end
+
+      # An answer to the harness's request for more time or rounds (E1).
+      # The page sends the chosen option, "b) Extend Time by 10 minutes";
+      # only its letter counts, so there is nothing to parse but that.
+      #
+      # @return [String]
+      def extension(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        number = command["question"][1..].to_i
+        letter = command["text"].to_s.strip[/\A([a-c])\)?(?:\s|\z)/i, 1] or
+          raise Refusal, "X#{number} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
+        settled = dispatcher.answer_extension(subject, number, letter.downcase, by: @node.user) or
+          raise Refusal, "#{command.plan} has no open request X#{number}"
+        settled["grant"] == "live" ? "#{settled["agent"]} has #{settled["seconds"] / 60} more minutes" : "#{settled["agent"]} gets one more round"
       end
 
       # ---- bombs ------------------------------------------------------------

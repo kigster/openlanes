@@ -69,17 +69,29 @@ RSpec.describe OpenLanes::Execution::Clock do
     expect(clock.remaining).to eq(0)
   end
 
-  # `x` after the warnings: the file is cleared so the agent's next poll
-  # sees a reprieve, and every moment fires again against the new deadline.
-  it "extends the deadline, clears the file, and re-arms the warnings" do
+  # `x` after the warnings: the agent's next poll reads how long it now
+  # has, and every moment fires again against the new deadline.
+  it "extends the deadline, says so in the file, and re-arms the warnings" do
     at(1140)
-    clock.extend!(600)
     aggregate_failures do
-      expect(File.read(control).strip).to eq("")
+      expect(clock.extend!(600)).to be(true)
+      expect(File.read(control).strip).to eq("WARN: 11 minutes left, time was extended")
       expect(clock.phase).to eq(:calm)
       expect(clock.remaining).to eq(660)
       expect(at(1200)).to eq("WARN: 10 minutes left")
       expect(at(1740)).to eq("WRAP_UP: 1 minute left, write to disk now")
+    end
+  end
+
+  # An agent told STOP is on its way out; time given then reaches nobody.
+  it "refuses more time once STOP is out, or once the clock is stopped" do
+    at(1200)
+    stopped = described_class.new(seconds: 1200, control:, on_expire: -> {}, now: -> { now[:t] })
+    stopped.stop
+    aggregate_failures do
+      expect(clock.extend!(600)).to be(false)
+      expect(clock.phase).to eq(:stopped)
+      expect(stopped.extend!(600)).to be(false)
     end
   end
 end

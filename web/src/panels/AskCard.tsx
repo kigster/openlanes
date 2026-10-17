@@ -27,11 +27,11 @@ function HoldButton({ held, onClick, disabled }: { held: boolean; onClick: () =>
 /**
  * A question's options, one full-width button each, stacked (D3), the recommended one tagged; then "Type something
  * instead", always the last choice, which opens the text box under them. Once it is open the button goes, and the
- * box's own Send takes its place.
+ * box's own Send takes its place. A request for more time (E1) has nothing to say in words, so it has no such choice.
  */
-export function Choices({ options, onChoose, onWords, inWords, disabled, children }: {
+export function Choices({ options, onChoose, onWords, inWords, disabled, words = true, children }: {
   options: QuestionOption[]; onChoose: (option: QuestionOption) => void; onWords: () => void; inWords: boolean;
-  disabled: boolean; children?: ReactNode;
+  disabled: boolean; words?: boolean; children?: ReactNode;
 }) {
   return (
     <>
@@ -46,7 +46,7 @@ export function Choices({ options, onChoose, onWords, inWords, disabled, childre
             {option.recommended && <span className="choice-tag">Recommended</span>}
           </button>
         ))}
-        {!inWords && <button type="button" className="btn btn-choice btn-words" onClick={onWords}>Type something instead</button>}
+        {words && !inWords && <button type="button" className="btn btn-choice btn-words" onClick={onWords}>Type something instead</button>}
       </div>
       {children && <div className="ask-actions">{children}</div>}
     </>
@@ -134,16 +134,23 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
       </div>
     </>
   );
+  // The harness's own request (E1) takes one of its options and nothing else: no words, and no hold, since
+  // nothing is blocked to hold.
+  const extension = question.kind === "extension";
   const choices = (children?: ReactNode) => q.options && (
-    <Choices options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords} disabled={pending}>
+    <Choices
+      options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords}
+      disabled={pending} words={!extension}
+    >
       {children}
     </Choices>
   );
   let answerUi: ReactNode = box;
-  if (q.options) answerUi = q.inWords ? <>{choices()}{box}</> : choices(holdButton);
+  if (q.options) answerUi = q.inWords && !extension ? <>{choices()}{box}</> : choices(extension ? undefined : holdButton);
   return (
     <div className={`ask${q.isHeld ? " is-held" : ""}`} data-ask={question.id}>
       <Who plan={plan} agent={question.agent} held={q.isHeld} />
+      {extension && <p className="ask-heading">{question.heading}</p>}
       {body}
       {answerUi}
       <Feedback outcome={q.command.outcome?.tone === "refused" ? q.command.outcome : null} announced={q.command.announced} />

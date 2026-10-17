@@ -38,6 +38,7 @@ export function sampleQuestion(over: Partial<Question> = {}): Question {
   return {
     id: "001.00/B1",
     number: 1,
+    kind: "block",
     heading: "B1 Redis key layout",
     body: "Should Redis keys carry the checkout path?",
     agent: "luke-backend",

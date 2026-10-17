@@ -37,14 +37,19 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
   plan: Plan; question: Question; onCommand: SendCommand; onAnswered: (text: string) => void;
 }) {
   const q = useQuestion(plan, question, onCommand, onAnswered);
+  // The harness's own request (E1) takes one of its options and nothing else, as on the rail.
+  const extension = question.kind === "extension";
   return (
     <div className="d-block">
-      <p><strong>Blocked on your answer.</strong></p>
+      <p><strong>{extension ? question.heading : "Blocked on your answer."}</strong></p>
       <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.body) }} />
       {q.options && (
-        <Choices options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords} disabled={q.command.pending} />
+        <Choices
+          options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords}
+          disabled={q.command.pending} words={!extension}
+        />
       )}
-      {(!q.options || q.inWords) && (
+      {!extension && (!q.options || q.inWords) && (
         <>
           <AnswerBox id={`d-${question.id}`} value={q.state.draft} onChange={q.setDraft} onSend={q.answer} invalid={q.invalid} />
           <div className="ask-actions">
@@ -108,7 +113,9 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
 
   const question = plan.questions.find((q) => q.agent === car.agent);
   const [askState] = useAsk(question?.id ?? "");
-  const stuck = car.state === "stuck" && question && !askState.settled;
+  // A request for more time or rounds (E1) comes from a car still running, or one that failed out of rounds,
+  // so it is shown whatever the car's state; a block only while the car is stuck on it.
+  const asking = question && !askState.settled && (car.state === "stuck" || question.kind === "extension");
 
   const used = car.context !== null && car.context_limit ? car.context / car.context_limit : null;
 
@@ -168,7 +175,7 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
         </div>
       </div>
       <LastKnownTable entries={plan.last_known} />
-      {stuck && <QuestionBlock plan={plan} question={question} onCommand={onCommand} onAnswered={(t) => push(`You answered: ${t}`)} />}
+      {asking && <QuestionBlock plan={plan} question={question} onCommand={onCommand} onAnswered={(t) => push(`You answered: ${t}`)} />}
       <LogToggle count={lines.length + car.history.length} open={logOpen} controls={ids.log} onToggle={() => setLog({ key: car.key, open: !logOpen })} />
       {/* Hidden, not unmounted, so aria-controls always names an element; aria-live goes with it, since a closed log
           announcing every new line would talk about a region the person chose not to look at. */}

@@ -130,7 +130,21 @@ module OpenLanes
         def compaction = @mutex.synchronize { @compaction }
 
         # @return [OpenLanes::Execution::Clock, nil]
-        attr_accessor :clock
+        attr_reader :clock
+
+        # The clock, once {Executor#call} has started it. Seconds granted
+        # before then (a round given more time, E1) go onto it now rather
+        # than being dropped for want of a clock.
+        #
+        # @param clock [OpenLanes::Execution::Clock, nil]
+        # @return [void]
+        def clock=(clock)
+          @mutex.synchronize do
+            @clock = clock
+            clock&.extend!(@pending) if @pending&.positive?
+            @pending = nil
+          end
+        end
 
         # @return [String, nil]
         attr_reader :control
@@ -185,9 +199,18 @@ module OpenLanes
           child&.terminate
         end
 
+        # More time on the clock, or on the clock to come.
+        #
         # @param seconds [Integer]
-        # @return [void]
-        def extend!(seconds) = clock&.extend!(seconds)
+        # @return [Boolean] false when the clock had already stopped the agent
+        def extend!(seconds)
+          @mutex.synchronize do
+            next @clock.extend!(seconds) if @clock
+
+            @pending = @pending.to_i + seconds
+            true
+          end
+        end
 
         # Ask for the session to be compacted (W28): INTERRUPT, so the agent
         # leaves a resume note and ends its turn, and SIGKILL after +grace+

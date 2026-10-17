@@ -434,8 +434,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
     # The stub answers ok and signs nothing, so the dispatcher looks for the
     # work on disk, finds no pull request to justify 🟢, and marks the attempt
-    # Interrupted with no rounds left. Both of the pair get their turn at 🟡,
-    # which is why one plan makes two invocations and two failures.
+    # Interrupted. Both of the pair get their turn at 🟡, and with nobody to
+    # answer, each is granted one more round on its own (E1) before it has
+    # no rounds left: one plan, four invocations, four failures.
     it "reports each attempt, prints the bill, and exits non-zero when nothing was signed" do
       with_executor
       out, err, status = run(dry_run: false, rounds: 1)
@@ -443,8 +444,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(out).to include("001.00  luke-backend")
       # A committed run spent something, so the tally belongs with the
       # attempts it bills for, on STDOUT, where a redirected run keeps it.
-      expect(out).to include("2 invocations")
-      expect(unwrapped(err)).to include("0 advanced", "2 failed")
+      expect(out).to include("4 invocations")
+      expect(unwrapped(err)).to include("0 advanced", "4 failed")
       expect(status).to eq(1)
     end
 

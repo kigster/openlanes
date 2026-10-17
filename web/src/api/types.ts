@@ -76,10 +76,14 @@ export interface QuestionOption {
   answer: string; // what choosing it sends: "a) <label>", or the bare "yes" / "no"
 }
 
-/** A question an agent wrote into blocked.md (B<n>), still without an answer (A<n>). */
+/**
+ * A request still without an answer: a question an agent wrote into blocked.md (B<n>, answered by A<n>), or the
+ * harness asking for more time or another round for an agent that ran out (X<n>, E1), which offers only its options.
+ */
 export interface Question {
-  id: string; // "<ordinal>/B<n>"
+  id: string; // "<ordinal>/B<n>" or "<ordinal>/X<n>"
   number: number;
+  kind: "block" | "extension";
   heading: string;
   body: string; // Markdown
   agent: string | null; // who asked, when the ledger says

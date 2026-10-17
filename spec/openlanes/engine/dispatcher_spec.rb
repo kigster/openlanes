@@ -6,6 +6,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:state) { OpenLanes::Engine::StateFile.new(path: OpenLanes::Engine::StateFile.for(tree)) }
   let(:calls) { [] }
   let(:stamp) { "2026-09-04 11:29:20 AM PDT" }
+  # These examples are about the limits an agent is given; the round a run
+  # grants on its own when nobody answers (E1) has its own spec.
+  let(:limits) { OpenLanes::Engine::Extensions.new(stay: false, auto: false) }
 
   # An executor that behaves like a real agent: signs Started, does its
   # work, signs its outcome. Each fake is keyed by agent name.
@@ -28,6 +31,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       jobs: 2,
       state:,
       sleeper: ->(_) {},
+      extensions: limits,
 **)
   end
 
@@ -664,12 +668,50 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = OpenLanes::Agents::Registry.new(dir:)
         executor = executor_with { |_, _, _| "Almost completed" }
-        attempts = OpenLanes::Engine::Runner.new(tree:, executor:, agents: two, isolation: :shared, jobs: 1, state:, sleeper: ->(_) {}).call
+        attempts = OpenLanes::Engine::Runner.new(tree:,
+          executor:,
+          agents: two,
+          isolation: :shared,
+          jobs: 1,
+          state:,
+          sleeper: ->(_) {},
+          extensions: limits).call
         aggregate_failures do
           expect(calls.map(&:last)).to eq([1, 2])
           expect(attempts.last.note).to include("no rounds left")
         end
       end
+    end
+
+    # E1: on a run nobody can answer, an agent out of rounds is given one
+    # more on its own, once, with the request it asked on record.
+    it "gives an agent out of rounds one more on its own when nobody can answer, and then parks the plan" do
+      executor = executor_with { |_, _, _| "Almost completed" }
+      attempts = runner_with(executor,
+        agents:     agents.only("leah-researcher"),
+        extensions: OpenLanes::Engine::Extensions.new(stay: false)).call
+      requests = OpenLanes::Plans::PlanState.for(path_of("001.00")).extensions
+      aggregate_failures do
+        expect(calls.map(&:last)).to eq([1, 2])
+        expect(attempts.last.note).to include("no rounds left")
+        expect(requests.first).to include("limit" => "rounds", "by" => "auto", "grant" => "round")
+        expect(requests.last).to include("round" => 2).and(satisfy { !it.key?("settled_at") })
+      end
+    end
+
+    it "starts a round a person gave twenty minutes with them on its clock" do
+      seen = []
+      executor = lambda { |agent, subject, round: 1, handle: nil, **|
+        handle.clock = OpenLanes::Execution::Clock.new(seconds: 60, control: File.join(subject.feature.path, "c"), on_expire: -> {}, now: -> { 0 })
+        seen << handle.remaining
+        calls << [agent.name, subject.feature.ordinal.to_s, round]
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+      plan = OpenLanes::Plans::PlanState.for(path_of("001.00"))
+      plan.ask_extension!(agent: "leah-researcher", state: :new, round: 1, limit: "rounds")
+      limits.answer!(path_of("001.00"), 1, "c", by: "dana")
+      runner_with(executor, agents: agents.only("leah-researcher")).call
+      expect(seen.first).to eq(1260)
     end
 
     it "never re-runs a Completed agent whose promotion was refused, and reports the refusal" do
@@ -829,7 +871,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           calls << round
           OpenLanes::Execution::Executor::Result.new(ok: false, note: "timed out", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0, killed: :timeout)
         }
-        OpenLanes::Engine::Runner.new(tree:, executor:, agents: two, isolation: :shared, jobs: 1, state:, sleeper: ->(_) {}).call
+        OpenLanes::Engine::Runner.new(tree:,
+          executor:,
+          agents: two,
+          isolation: :shared,
+          jobs: 1,
+          state:,
+          sleeper: ->(_) {},
+          extensions: limits).call
         text = File.read(File.join(path_of("001.00"), "spec.md"))
         aggregate_failures do
           expect(calls).to eq([1, 2])

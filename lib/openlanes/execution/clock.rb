@@ -89,21 +89,31 @@ module OpenLanes
       #
       # @return [void]
       def stop
-        thread = @mutex.synchronize { @thread.tap { @thread = nil } }
+        thread = @mutex.synchronize do
+          @closed = true
+          @thread.tap { @thread = nil }
+        end
         thread&.kill
       end
 
-      # Ten more minutes, or however many. The file is emptied so the next poll
-      # reads a reprieve, and every moment is re-armed against the new deadline.
+      # Ten more minutes, or however many. The file tells the agent how long
+      # it now has, so one told "5 minutes left" does not wrap up on the old
+      # deadline, and every moment is re-armed against the new one.
+      #
+      # Refused once STOP is out or the clock is stopped: that agent is
+      # exiting, and time given to it would reach nobody.
       #
       # @param seconds [Integer]
-      # @return [void]
+      # @return [Boolean] whether the time reached a clock still running
       def extend!(seconds)
         @mutex.synchronize do
+          next false if @closed || %i[stopped expired].include?(@phase)
+
           @deadline += seconds
-          @fired = []
+          @fired = WARNINGS.map(&:first).select { |before| before >= @deadline - @now.call }
           @phase = :calm
-          Control.write(@control, "")
+          Control.write(@control, "#{Control::WARN}: #{((@deadline - @now.call) / 60.0).round} minutes left, time was extended")
+          true
         end
       end
 

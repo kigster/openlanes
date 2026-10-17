@@ -172,6 +172,27 @@ describe("AgentDrawer", () => {
     await waitFor(() => expect(sent[0].payload).toEqual({ question: "B1", text: "a) Rebase" }));
   });
 
+  // A time request comes from a car still running, so the drawer shows it whatever the car's state (E1).
+  it("shows a running agent's request for more time, its three choices only, and answers X<n>", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("001.00");
+    plan.questions = [question({
+      id: "001.00/X2", number: 2, kind: "extension", heading: "luke-backend is running out of time",
+      body: "Round 1 on Building has under 5 minutes left on its clock.",
+      options: [
+        { letter: "a", label: "Extend Rounds by 1", recommended: false, answer: "a) Extend Rounds by 1" },
+        { letter: "b", label: "Extend Time by 10 minutes", recommended: true, answer: "b) Extend Time by 10 minutes" },
+      ],
+    })];
+    drawer(plan, { ...carOf(plan, "luke-backend"), state: "running" }, onCommand);
+    expect(screen.getByText("luke-backend is running out of time")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Type something instead" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /Extend Time by 10 minutes/ }));
+    await waitFor(() => expect(sent[0].payload).toEqual({ question: "X2", text: "b) Extend Time by 10 minutes" }));
+  });
+
   it("keeps the log closed on open, with its line count, and the composer and Action menu in view", async () => {
     const plan = planAt("005.00");
     const car = carOf(plan, "hansolo-reviewer");
