@@ -14,10 +14,21 @@ module OpenLanes
       # Fields asked of `gh pr list`.
       FIELDS = %w[number title url headRefName files state isDraft mergedAt labels].freeze
 
+      # A runner that runs every command in one directory. `gh` with no `-R`
+      # asks the checkout it runs in which repository it means, and the
+      # engine's working directory is the plans project, which `--root` can
+      # point away from: label sync then wrote to the wrong repository.
+      Rooted = Data.define(:command, :chdir) do
+        def run(*argv, **) = command.run(*argv, chdir:, **)
+        def run!(*argv, **) = command.run!(*argv, chdir:, **)
+      end
+
       # @param command [TTY::Command] runner, injectable for tests
       # @param limit [Integer] how many pull requests to fetch
-      def initialize(command: TTY::Command.new(printer: :null), limit: 200)
-        @command = command
+      # @param chdir [String, nil] the checkout `gh` runs in; nil means the
+      #   current directory
+      def initialize(command: TTY::Command.new(printer: :null), limit: 200, chdir: nil)
+        @command = chdir ? Rooted.new(command:, chdir:) : command
         @limit = limit
       end
 

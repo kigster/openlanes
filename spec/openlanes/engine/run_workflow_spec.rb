@@ -156,6 +156,17 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       expect(sync_with(dry_run: false)).to be_empty
     end
 
+    # Copilot on #69: `gh` with no -R resolves the repository from the
+    # directory it runs in, so the sync must run in --root's checkout.
+    it "syncs the repository --root names, not the current directory's" do
+      elsewhere = Dir.mktmpdir("openlanes-root")
+      sync_with(dry_run: true, root: elsewhere)
+
+      expect(OpenLanes::Vcs).to have_received(:label_sync).with(root: elsewhere)
+    ensure
+      FileUtils.rm_rf(elsewhere)
+    end
+
     it "warns and goes on when gh cannot be reached" do
       allow(sync).to receive(:call).and_raise(OpenLanes::Error, "could not list labels: HTTP 401")
 

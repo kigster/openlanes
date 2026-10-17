@@ -226,10 +226,12 @@ module OpenLanes
       # pull request is labelled (R3). Once per run. A `gh` that cannot be
       # reached is warned about rather than refused: labelling creates a
       # missing label on first use anyway, so the run loses colours, not work.
+      # Against `--root`'s repository, the one the publisher opens pull
+      # requests on, not whichever checkout the engine was started from.
       #
       # @return [void]
       def sync_labels
-        changes = Vcs.label_sync.call(dry_run: @dry_run).select(&:write?)
+        changes = Vcs.label_sync(root: @root).call(dry_run: @dry_run).select(&:write?)
         return if changes.empty? || @quiet
 
         lead = @dry_run ? "Dry run: would sync review labels" : "Synced review labels"

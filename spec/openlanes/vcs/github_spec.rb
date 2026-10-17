@@ -143,6 +143,24 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  # Copilot on #69: label sync ran gh in the engine's directory, which
+  # --root can point away from.
+  describe "chdir:" do
+    it "runs every gh command in the checkout it names" do
+      result = instance_double(TTY::Command::Result, out: "[]", success?: true)
+      allow(command).to receive_messages(run: result, run!: result)
+      rooted = described_class.new(command:, chdir: "/tmp/elsewhere")
+
+      rooted.label_colours
+      rooted.available?
+
+      aggregate_failures do
+        expect(command).to have_received(:run).with("gh", "label", "list", "--limit", "1000", "--json", "name,color", chdir: "/tmp/elsewhere")
+        expect(command).to have_received(:run!).with("gh", "auth", "status", chdir: "/tmp/elsewhere")
+      end
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")
