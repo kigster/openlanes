@@ -25,7 +25,6 @@ RSpec.describe "Mail round trip", :tree do
       url: "memory://",
       dist: plans_root,
       node:,
-      tick: 0.01,
       lifetime: 0.2,
       copilot: OpenLanes::Web::Demo::COPILOT,
       background: ->(&) {})

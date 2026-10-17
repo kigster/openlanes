@@ -28,7 +28,6 @@ RSpec.describe "plan aging and bombs, end to end", :tree do
       url: "redis://localhost:6379/12",
       dist: project,
       node:,
-      tick: 0.01,
       lifetime: 0.2,
       copilot: OpenLanes::Web::Demo::COPILOT,
       background: ->(&work) { work })

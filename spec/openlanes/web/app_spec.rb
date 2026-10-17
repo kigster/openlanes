@@ -26,7 +26,6 @@ RSpec.describe OpenLanes::Web::App, :tree do
       url: "redis://user:hunter2@localhost:6379/3",
       dist:,
       node:,
-      tick: 0.01,
       lifetime: 0.2,
       copilot: OpenLanes::Web::Demo::COPILOT,
       background:)

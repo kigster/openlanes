@@ -82,6 +82,7 @@ module OpenLanes
           tx.xadd(@keys.board, { seq: snapshot[:seq], json: }, maxlen: Keys::BOARD_LENGTH)
           tx.hset(@keys.nodes, @node.name, JSON.generate(@node.wire(heartbeat_at: now)))
         end
+        nudge(snapshot)
         lost = @claims&.renew || []
         unless lost.empty?
           UI.log("claims lost to another machine: #{lost.join(", ")}; stopping their agents")
@@ -154,6 +155,34 @@ module OpenLanes
           run_state:   @run_state,
           meter:       @meter,
           log:).to_h
+      end
+
+      # Fields that move with the clock alone: the sequence number, the
+      # snapshot's time, this node's heartbeat, and how long each plan has
+      # been worked on. A car's `elapsed` is left in on purpose: while an
+      # agent runs, its seconds counter is what the page is there to show.
+      #
+      # @param snapshot [Hash]
+      # @return [Hash] what the page would see change
+      def content(snapshot)
+        snapshot.except(:seq, :at)
+                .merge(node:  snapshot[:node].except(:heartbeat_at),
+                  plans: Array(snapshot[:plans]).map { it.except(:elapsed) })
+      end
+
+      # Nudges the open pages ({News}) when this tick's snapshot says
+      # something the last one did not. The snapshot is still written every
+      # tick, because its expiry is how a node is known to be alive; only
+      # the nudge waits for news, so an engine with nothing to do is quiet.
+      #
+      # @param snapshot [Hash]
+      # @return [void]
+      def nudge(snapshot)
+        now = content(snapshot)
+        return if now == @published
+
+        News.publish(store: @store, keys: @keys, kind: "board")
+        @published = now
       end
 
       # One more than the last published, even across an engine restart:

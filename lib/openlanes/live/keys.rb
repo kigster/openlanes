@@ -133,6 +133,16 @@ module OpenLanes
       # @return [String]
       def chat_base(db) = "#{base}:chat:#{db}"
 
+      # Pub/sub channel: "look again", one per project, published by
+      # whoever wrote something an open page shows ({News}). Every node's
+      # engine on the project publishes here, because every page shows every
+      # node's board. The database is in the name for the reason it is in
+      # {#chat_room}'s: a `PUBLISH` reaches every database's subscribers.
+      #
+      # @param db [Integer] the Redis database the nodes share
+      # @return [String]
+      def news(db:) = "#{base}:news:#{db}"
+
       # Hash: plan ordinal to that plan's running app, its process statuses
       # and a heartbeat ({Apps::Listing}). One per machine, not per
       # checkout: the app runs in a plan's worktree and the control room in

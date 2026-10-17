@@ -131,7 +131,8 @@ module OpenLanes
       end
 
       # Handle whatever has arrived, waiting up to +timeout+ for the first,
-      # then expire, prune and heartbeat.
+      # then expire, prune and heartbeat, and nudge the event streams when a
+      # page was handed something to show.
       #
       # @param timeout [Float]
       # @return [void]
@@ -143,6 +144,7 @@ module OpenLanes
           message = sub.next_message(0)
         end
         housekeep
+        nudge
       end
 
       # {#step}, kept from raising when Redis refuses the subscription (an ACL
@@ -553,6 +555,20 @@ module OpenLanes
       def push(page, event)
         page.events << event
         page.events.shift(page.events.size - BACKLOG) if page.events.size > BACKLOG
+        @pushed = true
+      end
+
+      # A page's events wait in this process, where an event stream blocked
+      # on {Keys#news} cannot see them, so a step that queued any says so on
+      # that channel: one nudge per step, however many it queued. Nearly
+      # every push happens inside a step, on the listening thread; the one
+      # that does not (an invite nobody was there to hear, expired on the
+      # request's own thread) is nudged by the next step, {POLL} later.
+      #
+      # @return [void]
+      def nudge
+        pushed = @lock.synchronize { @pushed.tap { @pushed = false } }
+        News.publish(store:, keys: @keys, kind: "chat") if pushed
       end
 
       # @return [Hash] `ChatParticipant`

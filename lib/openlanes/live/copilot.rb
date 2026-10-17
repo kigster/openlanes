@@ -139,9 +139,14 @@ module OpenLanes
       # @return [Hash, nil]
       def latest_usage(turns) = turns.reverse_each.map { it["usage"] }.find(&:itself)
 
+      # Written here, in the API server rather than by the Dispatcher, so the
+      # open streams are nudged here too: a turn has no other way to reach a
+      # stream that waits on {Keys#news}.
+      #
       # @return [void]
       def append(turn)
         @store.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH)
+        News.publish(store: @store, keys: @keys, kind: "copilot")
       end
     end
 

@@ -10,9 +10,15 @@ module OpenLanes
     # conversation with the copilot (W17), and a `: ping` comment so proxies and the
     # browser keep the connection open.
     #
-    # Polled rather than blocked on: a blocking read would hold the thread's
-    # connection for the length of the wait, and the board has to be looked
-    # at every tick anyway.
+    # Pushed rather than polled: the stream holds a subscription of its own
+    # to {Live::Keys#news} and sleeps on it until a writer nudges ({Live::News}),
+    # then reads Redis exactly as it did when it looked every quarter second.
+    # The nudge carries no data, so the cursors below are untouched by it.
+    # It subscribes before its first read, so a write that lands between
+    # the two is read twice rather than missed. With no nudge it still looks
+    # once per ping, which is how it notices what nobody announces: a node
+    # whose snapshot expired, an app whose runner was killed. One
+    # subscription per stream, closed when the stream ends.
     #
     # A reply carries its stream id as the event's `id:`, so a browser that
     # reconnects sends `Last-Event-ID` and gets what it missed. The stream
@@ -46,14 +52,22 @@ module OpenLanes
     # stopped or died) is sent once more as `stopped`, so the page never
     # keeps a tab for an app that is gone.
     class Events
+      # How often a stream without a subscription looks again: the polling
+      # interval every stream used before nudges.
+      POLL = 0.25
+
+      # Block on the subscription for the next nudge, or, with none, poll.
+      WAIT = ->(news, seconds) { news ? news.next_message(seconds) : sleep([seconds, POLL].min) }
+
       # @param context [OpenLanes::Web::Context]
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param last_id [String, nil] the `Last-Event-ID` the browser sent
       # @param page [String, nil] the page's own id, `?page=` on the stream, for its chat
       # @param clock [Proc] seconds, monotonic
-      # @param sleeper [Proc] waits the given seconds between ticks
+      # @param waiter [Proc] given the subscription and at most how many
+      #   seconds to wait, returns once a nudge arrives or the time is up
       def initialize(context:, store:, last_id: nil, page: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-        sleeper: ->(seconds) { sleep seconds })
+        waiter: WAIT)
         @context = context
         @store = store
         @keys = context.keys
@@ -62,7 +76,7 @@ module OpenLanes
         @chat = context.chat
         @page = page.to_s.match?(Live::Chat::PAGE) ? page : nil
         @clock = clock
-        @sleeper = sleeper
+        @waiter = waiter
       end
 
       # Write events to +out+ until the browser leaves, the server stops, or
@@ -72,6 +86,7 @@ module OpenLanes
       # @return [void]
       def run(out)
         @chat&.attach(@page) if @page
+        news = subscribe
         started = @clock.call
         pinged = started
         cursor = @last_id || newest_reply
@@ -90,13 +105,14 @@ module OpenLanes
           said = copilot(out, said)
           chat(out)
           pinged = ping(out) if @clock.call - pinged >= @context.ping_every
-          @sleeper.call(@context.tick)
+          wait(news, started, pinged)
         end
       rescue Live::Unavailable => e
         # Ending the stream is the right answer: the page reconnects with
         # backoff and shows itself as reconnecting meanwhile.
         out << ": #{e.message.tr("\n", " ")}\n\n"
       ensure
+        news&.close
         @chat&.detach(@page) if @page
       end
 
@@ -108,9 +124,43 @@ module OpenLanes
 
       private
 
+      # The stream's subscription to nudges, or nil to poll. A Redis user
+      # whose ACL withholds SUBSCRIBE got a working polled board before
+      # nudges existed, and ending the stream instead would leave its page
+      # reconnecting forever. A Redis that is gone fails the first read
+      # just after, and ends the stream there.
+      #
+      # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber, nil]
+      def subscribe
+        Live::News.subscribe(store: @store, keys: @keys)
+      rescue Live::Unavailable => e
+        UI.log("events: no nudges, polling every #{POLL}s: #{e.message}", level: :warn)
+        nil
+      end
+
       # @return [Boolean]
       def over?(out, started)
         out.closed? || @context.stopping.true? || (@context.lifetime && @clock.call - started >= @context.lifetime)
+      end
+
+      # Sleep until a nudge, the next ping, or the end of the stream's
+      # lifetime, whichever comes first. One nudge, one look: a nudge that
+      # arrives while the stream is reading stays queued and wakes the next
+      # wait at once, so nothing written during a look is missed. Queued
+      # nudges are not drained first because the drain costs more than it
+      # saves: redis-client cannot poll without waiting, so emptying the
+      # queue costs {Live::Subscriber::SHORTEST} on every wake, ten times
+      # what an extra look costs, and a tick nudges once or twice at most.
+      #
+      # @param news [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber]
+      # @param started [Float]
+      # @param pinged [Float]
+      # @return [void]
+      def wait(news, started, pinged)
+        now = @clock.call
+        limits = [@context.ping_every - (now - pinged)]
+        limits << (@context.lifetime - (now - started)) if @context.lifetime
+        @waiter.call(news, [limits.min, 0].max)
       end
 
       # @return [Array] the seqs now, after sending the board if they changed

@@ -18,7 +18,8 @@ module OpenLanes
       MAX_THREADS = 64
 
       # Seconds Puma waits for open streams after {#stop}. They notice the
-      # context's `stopping` within a tick; this is the backstop.
+      # context's `stopping` on the `stop` nudge {#stop} publishes; this is
+      # the backstop, for a Redis that went away and took the nudge with it.
       SHUTDOWN_AFTER = 2
 
       # @param app [#call]
@@ -70,6 +71,10 @@ module OpenLanes
       # @return [void]
       def stop
         @context.stopping.make_true
+        # Wakes every stream blocked waiting for news, here and on any other
+        # server following this project, so ours see `stopping` now rather
+        # than at their next ping. The others look, find nothing, and sleep.
+        Live::News.publish(store: @context.store, keys: @context.keys, kind: "stop")
         @context.chat&.stop
         @puma&.stop(true)
         @context.stores.close

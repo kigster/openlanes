@@ -14,8 +14,7 @@ RSpec.describe OpenLanes::Web::Server do
     OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store),
       keys:,
       plans_dir: Dir.tmpdir,
-      url: "memory://",
-      tick: 0.02)
+      url: "memory://")
   end
   let(:uri) { URI(server.url) }
 
@@ -63,6 +62,8 @@ RSpec.describe OpenLanes::Web::Server do
       first
       OpenLanes::Live.enqueue(store:, keys:, input: { id: "01LIVE", kind: "stop_all", plan: nil, agent: nil, payload: {} })
       store.xadd(keys.replies, { json: JSON.generate(id: "01LIVE", status: "done", reason: nil, at: "2026-10-13T09:00:00Z") })
+      # What the engine does after writing a reply; the stream sleeps until it.
+      OpenLanes::Live::News.publish(store:, keys:, kind: "reply")
     end
 
     after { reader.kill }

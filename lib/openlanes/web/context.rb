@@ -5,8 +5,8 @@ require "concurrent/atomic/atomic_boolean"
 module OpenLanes
   module Web
     # Everything one API server knows, fixed when it starts: where Redis is,
-    # whose keys it reads, the token every write must carry, and how often
-    # the event stream looks for news.
+    # whose keys it reads, the token every write must carry, and how long
+    # an event stream sleeps when nobody nudges it.
     #
     # @!attribute [r] stores
     #   @return [OpenLanes::Web::Stores] a store per request thread
@@ -23,10 +23,9 @@ module OpenLanes
     # @!attribute [r] node
     #   @return [OpenLanes::Live::Node, nil] this machine, for `/api/session`
     #     while no engine has published a snapshot
-    # @!attribute [r] tick
-    #   @return [Float] seconds between the event stream's looks (contract: 250 ms)
     # @!attribute [r] ping_every
-    #   @return [Float] seconds between `: ping` comments
+    #   @return [Float] seconds between `: ping` comments, and the longest an
+    #     event stream waits for a nudge before it looks anyway
     # @!attribute [r] lifetime
     #   @return [Float, nil] seconds an event stream lives; nil for as long as
     #     the browser holds it. The suite sets one so a stream ends.
@@ -45,7 +44,7 @@ module OpenLanes
     #     relayed to this server's pages; nil where nothing serves it
     # @!attribute [r] stopping
     #   @return [Concurrent::AtomicBoolean] set when the server shuts down, so
-    #     open streams end within a tick
+    #     open streams end on the `stop` nudge that follows
     Context = Data.define(:stores,
       :keys,
       :plans_dir,
@@ -53,7 +52,6 @@ module OpenLanes
       :csrf,
       :dist,
       :node,
-      :tick,
       :ping_every,
       :lifetime,
       :demo,
@@ -61,7 +59,7 @@ module OpenLanes
       :background,
       :chat,
       :stopping) do
-      def initialize(dist: DIST, node: nil, tick: 0.25, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
+      def initialize(dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
         background: Context::THREAD, stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end

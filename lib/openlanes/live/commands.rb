@@ -173,6 +173,7 @@ module OpenLanes
           tx.xack(@keys.commands, Keys::GROUP, entry.id)
           @record&.write(tx)
         end
+        News.publish(store: @store, keys: @keys, kind: "reply")
         reply
       end
 
@@ -182,6 +183,7 @@ module OpenLanes
           tx.xadd(@keys.replies, { json: first }, maxlen: Keys::REPLIES_LENGTH)
           tx.xack(@keys.commands, Keys::GROUP, entry.id)
         end
+        News.publish(store: @store, keys: @keys, kind: "reply")
         data = JSON.parse(first)
         Reply.new(id: data["id"], status: data["status"], reason: data["reason"], at: Time.iso8601(data["at"]))
       end
