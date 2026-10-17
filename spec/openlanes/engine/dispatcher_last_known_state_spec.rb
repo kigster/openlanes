@@ -37,7 +37,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   def run_with(executor)
-    OpenLanes::Engine::Runner.new(tree:, executor:, agents:, isolation: :shared, jobs: 1, sleeper: ->(_) {}).call
+    OpenLanes::Engine::Runner.new(tree:,
+      executor:,
+      agents:,
+      isolation: :shared,
+      jobs: 1,
+      sleeper: ->(_) {},
+      extensions: OpenLanes::Engine::Extensions.new(stay: false, auto: false)).call
   end
 
   it "writes a harness record for an agent killed before it left one" do

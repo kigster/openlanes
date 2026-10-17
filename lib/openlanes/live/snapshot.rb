@@ -292,12 +292,18 @@ module OpenLanes
       # ---- questions --------------------------------------------------------
 
       # The questions `blocked.md` still asks, each with its context, the
-      # options it offers (D3), and who asked.
+      # options it offers (D3), and who asked; then the harness's own
+      # requests for more time or rounds (E1).
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @param state [OpenLanes::Plans::PlanState]
       # @return [Array<Hash>] `Question`
       def questions(subject, state)
+        blocked(subject, state) + Engine::Extensions.questions(subject, state)
+      end
+
+      # @return [Array<Hash>] `Question`, from `blocked.md`
+      def blocked(subject, state)
         open = Lifecycle::Unblocker.questions(subject).reject(&:answered)
         return [] if open.empty?
 
@@ -313,6 +319,7 @@ module OpenLanes
         choices = choices(open.heading, body)
         { id:,
           number:   open.number,
+          kind:     "block",
           heading:  open.heading.sub(Plans::Choices::YES_NO, "").strip,
           body:     choices ? choices.context : body.strip,
           agent:    asker&.fetch("agent", nil),

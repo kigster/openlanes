@@ -147,6 +147,40 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  # E1: the harness's own request for more time or rounds, X<n>.
+  describe "answer to X<n>" do
+    before do
+      building("001.00", "tax-rule-dsl")
+      start_agents
+    end
+
+    after { executor.release_all }
+
+    let(:agent) { dispatcher.running.first.task.agent.name }
+    let(:plan) { OpenLanes::Plans::PlanState.for(path_of("001.00")) }
+
+    it "gives a running agent more time on the clock it is running on" do
+      plan.ask_extension!(agent:, state: :building, round: 1, limit: "time")
+      send_command("answer", plan: "001.00", question: "X1", text: "c) Extend Time by 20 minutes")
+      aggregate_failures do
+        expect(apply.map { [it.status, it.reason] }).to eq([["done", "luke-backend has 20 more minutes"]])
+        expect(plan.extensions.first).to include("answer" => "c", "by" => "dana", "grant" => "live", "seconds" => 1200)
+      end
+    end
+
+    it "gives a round to an agent that is not running, and refuses what is not a choice or not open" do
+      plan.ask_extension!(agent: "leah-researcher", state: :building, round: 1, limit: "rounds")
+      send_command("answer", plan: "001.00", question: "X1", text: "never")
+      send_command("answer", plan: "001.00", question: "X1", text: "a) Extend Rounds by 1")
+      send_command("answer", plan: "001.00", question: "X1", text: "b")
+      aggregate_failures do
+        expect(apply.map(&:reason)).to eq(['X1 takes a), b) or c), not "never"', "leah-researcher gets one more round",
+                                           "001.00 has no open request X1"])
+        expect(plan.extensions.first).to include("answer" => "a", "grant" => "round")
+      end
+    end
+  end
+
   # Plan 009: the 💣 notice's three buttons.
   describe "the bomb commands" do
     def bomb(ordinal, slug, questions)

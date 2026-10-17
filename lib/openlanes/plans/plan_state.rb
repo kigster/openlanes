@@ -313,6 +313,60 @@ module OpenLanes
         record
       end
 
+      # ---- extensions -------------------------------------------------------
+
+      # The harness asking a person for more time or another round for one
+      # agent (E1), and how each request was answered. Kept here rather than
+      # in the run's memory, so a grant survives a restart and an answer can
+      # come from any control room, after the run that asked is gone.
+      #
+      # @return [Array<Hash>] oldest first; empty for a plan that never asked
+      def extensions = read["extensions"] || []
+
+      # @param agent [String]
+      # @param state [String] the plan state the agent was working, a {Status} key
+      # @param round [Integer]
+      # @param limit [String] "time" or "rounds", whichever ran out
+      # @param at [Time]
+      # @return [Hash] the request as written, with its `number`
+      def ask_extension!(agent:, state:, round:, limit:, at: Time.now)
+        record = nil
+        update do |data|
+          all = (data["extensions"] ||= [])
+          record = { "number" => (all.map { it["number"] }.max || 0) + 1, "agent" => agent, "state" => state.to_s,
+                     "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601 }
+          all << record
+        end
+        record
+      end
+
+      # Answer a request, or close it unanswered. Once settled it stays
+      # settled: a second answer, from another page or a replayed command,
+      # changes nothing.
+      #
+      # @param number [Integer]
+      # @param fields [Hash{String => Object}] `answer`, `by`, `grant`, `seconds`, `closed`
+      # @param at [Time]
+      # @return [Hash, nil] the request as it now stands, nil when there is no such request
+      def settle_extension!(number, at: Time.now, **fields)
+        found = nil
+        update do |data|
+          found = (data["extensions"] || []).find { it["number"] == Integer(number) } or next
+          next if found.key?("settled_at")
+
+          found.merge!(fields.transform_keys(&:to_s).compact, "settled_at" => at.iso8601)
+        end
+        found
+      end
+
+      # Mark a granted round's extra seconds as given to the round that ran on them.
+      #
+      # @param number [Integer]
+      # @return [void]
+      def spend_extension!(number)
+        update { |data| (data["extensions"] || []).find { it["number"] == Integer(number) }&.store("spent", true) }
+      end
+
       # ---- last-known-state -------------------------------------------------
 
       # Where the resume records live in the document.

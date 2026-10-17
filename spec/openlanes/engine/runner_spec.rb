@@ -188,7 +188,9 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
           isolation: :worktree,
           jobs: 2,
           worktree:,
-          sleeper: ->(_) {})
+          sleeper: ->(_) {},
+          # One crash, not the crash and the round granted after it (E1).
+          extensions: OpenLanes::Engine::Extensions.new(stay: false, auto: false))
       end
 
       let(:checkout) do

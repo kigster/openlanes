@@ -58,7 +58,7 @@ module OpenLanes
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
-        watch: nil, ignore_bombs: false, aging_since: nil)
+        watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -77,6 +77,7 @@ module OpenLanes
         @watch = watch
         @ignore_bombs = ignore_bombs
         @aging_since = aging_since
+        @extensions = extensions
         @would_bomb = []
         @attempts = []
         @dropped = []
@@ -170,7 +171,8 @@ module OpenLanes
           on_board: @on_board,
           stay:     @stay,
           rescan:   @rescan,
-          watch:    @watch)
+          watch:      @watch,
+          extensions: @extensions)
         yield dispatcher if block_given?
         @attempts = dispatcher.run
       end
