@@ -59,7 +59,11 @@ app:
 
 ### V6. The init interview is an inquirex flow
 
-- The questionnaire of V4 is written in the inquirex DSL (`Inquirex.define`), run in the terminal through inquirex-tty, instead of hand-built `TTY::Prompt` calls. openlanes already depends on `inquirex-llm`.
+- The questionnaire of V4 is an inquirex flow instead of hand-built `TTY::Prompt` calls. Three gems, each with one job:
+  - [`inquirex`](https://github.com/inquirex/inquirex): the DSL (`Inquirex.define`, `ask`, `say`, `default`, `transition ... if_rule:`) and the engine that walks the flow.
+  - [`inquirex-tty`](https://github.com/inquirex/inquirex-tty): the terminal widgets that render each step (`select`, `multi_select`, text input).
+  - `inquirex-llm`: the `extract` step.
+- openlanes depends on `inquirex-llm` today, and gets `inquirex` through it; `inquirex` and `inquirex-tty` become direct dependencies.
 - It follows the shape of inquirex-tty's `examples/10_real_tax_preparer.rb`:
   1. A short `say` explains what is being set up.
   2. An optional free-text `ask :describe`: what the app is, how it is run, tested and linted, in the person's own words.
