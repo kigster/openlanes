@@ -22,7 +22,7 @@ app:
 ```
 
 - `kind` is required. `run` or `processes` is required for every kind but `library`.
-- Either `check`, or both `lint` and `test`, is required. Before chewie walks How to test, the engine runs `check` (or `lint`, then `test`) in the PR's checkout, against the started app, with `PORT_<NAME>` and `APP_URL` in the environment. A failure rejects with the tail of its output and any screenshots it wrote. The project's own end-to-end suite belongs in `test` or `check`; it replaces the separate `verify.e2e` decided earlier the same day.
+- `lint` and `test` are each optional, but the project must have something that fails when the program breaks: `test` or `check`. A linter alone is not that. Before chewie walks How to test, the engine runs `check`, or else `lint` (when given) and then `test`, in the PR's checkout, against the started app, with `PORT_<NAME>` and `APP_URL` in the environment. A failure rejects with the tail of its output and any screenshots it wrote. The project's own end-to-end suite belongs in `test` or `check`; it replaces the separate `verify.e2e` decided earlier the same day.
 - `setup` is a list of commands run in order before every start, so a migration added in a later commit is never missed. Making them idempotent is the project's job. A command that fails rejects with its last 20 lines, as a process that fails to start does.
 - `coverage:` stays its own section (the M15 amendment).
 
@@ -41,13 +41,16 @@ app:
 
 ### V3. A desktop app is tested automatically and walked by a person, for now
 
-- The engine runs `check` (or `lint` and `test`), including the project's own UI tests, as for every kind.
+- The engine runs `check`, or `lint` and `test`, including the project's own UI tests, as for every kind.
 - Walking How to test goes to a person as one question listing the steps; their answer is the verdict. A desktop driver can come later.
 
 ### V4. `openlanes init` detects, then confirms each answer
 
 - init reads the repository (justfile and Makefile targets, `package.json` scripts, `bin/setup`, `bin/dev`, `Procfile`, `Gemfile`, `Cargo.toml` and the like) and proposes every key of V1, with its guess as the recommended answer, one question at a time. The person accepts or types their own.
 - Nothing is written that the person did not confirm (M0, M6).
+- init asks separately whether the project already has a test suite and whether it has a linter, and for the command of each it has.
+- For each it lacks, init asks whether to add one. A yes creates it as the project's first plan (a test suite, or a linter, for this stack), and every plan created after it depends on it, so nothing is built before there is something that fails when the program breaks. That plan writes `test:` (or `lint:`) into `app:` when it lands.
+- A no to a test suite leaves the project without what V1 requires, so its PRs go back to luke under V5 until one exists.
 
 ### V5. A missing or incomplete `app:` goes back to luke
 
