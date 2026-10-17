@@ -196,7 +196,7 @@ module OpenLanes
           "--description",
           label.meaning,
           *repo_flag(repo))
-      rescue TTY::Command::ExitError => e
+      rescue TTY::Command::ExitError, SystemCallError => e
         return if e.message.match?(/already exists/i)
 
         raise Error, "could not create label #{label.name}: #{first_line(e)}"
@@ -233,7 +233,7 @@ module OpenLanes
           "--description",
           label.meaning,
           *repo_flag(repo))
-      rescue TTY::Command::ExitError => e
+      rescue TTY::Command::ExitError, SystemCallError => e
         raise Error, "could not recolour label #{label.name}: #{first_line(e)}"
       end
 

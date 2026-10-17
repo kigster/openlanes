@@ -342,6 +342,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       expect { github.ensure_label(label) }.to raise_error(OpenLanes::Error, "could not create label ready-for-review: HTTP 403: forbidden")
     end
 
+    it "turns a missing gh into an Error when creating a label" do
+      allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+      expect { github.ensure_label(label) }
+        .to raise_error(OpenLanes::Error, /could not create label ready-for-review: No such file or directory - gh/)
+    end
+
     it "swaps labels in one edit, with -R, and returns what is left" do
       left = github.swap_label(number: 12,
         repo: "o/r",
@@ -441,6 +448,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
 
         expect(argvs.last).to eq(["gh", "label", "edit", "review-rejected", "--color", "F90000",
                                   "--description", rejected.meaning])
+      end
+
+      it "names the failure when gh is not installed" do
+        allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+        expect { github.recolour_label(rejected) }
+          .to raise_error(OpenLanes::Error, /could not recolour label review-rejected: No such file or directory - gh/)
       end
 
       it "names the label it could not recolour" do
