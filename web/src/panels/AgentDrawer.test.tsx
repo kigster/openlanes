@@ -219,6 +219,15 @@ describe("AgentDrawer", () => {
     expect(screen.queryByRole("list", { name: /Transcript of/ })).toBeNull();
   });
 
+  // A name that carried the count changed with every line, and a screen reader re-announces a changed name.
+  it("names the toggle without its count, and describes it with the count", () => {
+    const plan = planAt("005.00");
+    const car = carOf(plan, "hansolo-reviewer");
+    drawer(plan, car);
+    const toggle = screen.getByRole("button", { name: "Show log" });
+    expect(toggle).toHaveAccessibleDescription(car.history.length === 1 ? "1 line" : `${car.history.length} lines`);
+  });
+
   it("shows a stuck agent's question with its log still closed", () => {
     const plan = planAt("001.00");
     drawer(plan, carOf(plan, "luke-backend"));

@@ -57,13 +57,19 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
   );
 }
 
-/** The disclosure for the transcript; the count says there is something behind it before anyone opens it. */
+/**
+ * The disclosure for the transcript; the count says there is something behind it before anyone opens it.
+ * The count is the button's description, not part of its name: a name that changes with every new line is
+ * re-announced to a screen reader each time.
+ */
 function LogToggle({ count, open, controls, onToggle }: { count: number; open: boolean; controls: string; onToggle: () => void }) {
+  const countId = useId();
+  const name = open ? "Hide log" : "Show log";
   return (
-    <button type="button" className="btn btn-quiet log-toggle" aria-expanded={open} aria-controls={controls} onClick={onToggle}>
+    <button type="button" className="btn btn-quiet log-toggle" aria-label={name} aria-describedby={countId} aria-expanded={open} aria-controls={controls} onClick={onToggle}>
       <span className="log-caret" aria-hidden="true">{open ? "▾" : "▸"}</span>
-      {open ? "Hide log" : "Show log"}
-      <span className="log-count">{count === 1 ? "1 line" : `${count} lines`}</span>
+      {name}
+      <span id={countId} className="log-count">{count === 1 ? "1 line" : `${count} lines`}</span>
     </button>
   );
 }
