@@ -56,3 +56,14 @@ app:
 
 - A project with no `app:` section, or one missing a key V1 requires, is sent back to luke, uncounted against `merge.max_rejections`, to declare it, exactly as a missing `coverage:` section is.
 - There is no silent shell-only fallback: an app is never "verified" without having been started the way the project says.
+
+### V6. The init interview is an inquirex flow
+
+- The questionnaire of V4 is written in the inquirex DSL (`Inquirex.define`), run in the terminal through inquirex-tty, instead of hand-built `TTY::Prompt` calls. openlanes already depends on `inquirex-llm`.
+- It follows the shape of inquirex-tty's `examples/10_real_tax_preparer.rb`:
+  1. A short `say` explains what is being set up.
+  2. An optional free-text `ask :describe`: what the app is, how it is run, tested and linted, in the person's own words.
+  3. An `extract` step reads that description, together with what init detected in the repository (V4), into a schema built from the questions below (`kind`, `setup`, `run`, `lint`, `test`, `check`, whether there is a test suite, whether there is a linter). The schema is derived from the ask steps, so the option lists are written once.
+  4. One `ask` per key. Unlike the example, none is skipped with `skip_if not_empty`: each is pre-filled with `default { ... }` from the extraction, or else from detection, and the person confirms or changes it (V4: nothing written unconfirmed).
+  5. `has_test_suite` and `has_linter` branch, with `transition ... if_rule:`, to "add one as the first plan?" (V4).
+- Without an LLM key, or when the person skips `:describe`, the extract step is skipped and the defaults come from detection alone; the interview still works.
