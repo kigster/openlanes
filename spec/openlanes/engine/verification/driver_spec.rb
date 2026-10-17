@@ -14,10 +14,11 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
 
   def plan = OpenLanes::Plans::Tree.new(dir: plans_root).find(OpenLanes::Plans::Ordinal.parse("014.00"))
 
-  def verified!
-    dir = File.join(plan.feature.path, "verification", "1")
+  def verified!(number = 1, published: true)
+    dir = File.join(plan.feature.path, "verification", number.to_s)
     FileUtils.mkdir_p(dir)
     File.write(File.join(dir, "report.md"), "Verdict: verified\n")
+    File.write(File.join(dir, "published.txt"), "abc1234\n") if published
   end
 
   describe "#hand_off" do
@@ -46,6 +47,66 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       allow(outcome).to receive(:labels).and_return([])
 
       expect(driver.hand_off(plan)).to include("is labelled nothing")
+    end
+  end
+
+  describe "#hand_off after an earlier verification" do
+    before do
+      plans { |t| t.plan "014.00", :in_review, "x", files:, prs: [t.open(7, "X")] }
+      verified!
+      allow(outcome).to receive_messages(labels: %w[review-approved], mismatch: nil)
+    end
+
+    it "starts a round of its own, so the old verified one is not taken for this hand-off" do
+      driver.hand_off(plan)
+
+      aggregate_failures do
+        expect(plan.status.key).to eq(:verifying)
+        expect(OpenLanes::Engine::Verification.latest(plan.feature.path).number).to eq(2)
+        expect(driver.awaiting_ci?(plan)).to be(false)
+      end
+    end
+  end
+
+  describe "#awaiting_ci?" do
+    before { plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] } }
+
+    it "is false for a verified report the engine never published" do
+      verified!(published: false)
+
+      expect(driver.awaiting_ci?(plan)).to be(false)
+    end
+
+    it "is true once the engine has published it" do
+      verified!
+
+      expect(driver.awaiting_ci?(plan)).to be(true)
+    end
+  end
+
+  describe "#pass" do
+    before do
+      plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] }
+      verified!(published: false)
+    end
+
+    let(:task) { instance_double(OpenLanes::Engine::Runner::Task, checkout:) }
+
+    it "records the pushed commit, and only then does the plan wait on CI" do
+      allow(outcome).to receive(:pass)
+        .and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :committed, note: "x", sha: "abc1234def"))
+      driver.pass(task, plan)
+
+      expect(File.read(File.join(plan.feature.path, "verification", "1", "published.txt"))).to eq("abc1234def\n")
+      expect(driver.awaiting_ci?(plan)).to be(true)
+    end
+
+    it "records nothing when the round was sent back" do
+      allow(outcome).to receive(:pass)
+        .and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "x", to: :rejected))
+      driver.pass(task, plan)
+
+      expect(File).not_to exist(File.join(plan.feature.path, "verification", "1", "published.txt"))
     end
   end
 
@@ -105,6 +166,20 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       driver.join
 
       expect(outcome).to have_received(:settle).once
+    end
+
+    it "looks again at a plan verified afresh after it was ready-to-merge" do
+      allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "ready"))
+
+      driver.poll([plan])
+      driver.join
+      driver.poll([plan])
+      verified!(2)
+      now[0] = 30.0
+      driver.poll([plan])
+      driver.join
+
+      expect(outcome).to have_received(:settle).twice
     end
   end
 

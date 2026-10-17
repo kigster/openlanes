@@ -183,6 +183,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       plans { |t| t.plan "014.00", :verifying, "chewie", files:, prs: [t.open(7, "Chewie")] }
       FileUtils.mkdir_p(File.join(plan.feature.path, "verification", "1"))
       File.write(File.join(plan.feature.path, "verification", "1", "report.md"), "Verdict: verified\n")
+      File.write(File.join(plan.feature.path, "verification", "1", "published.txt"), "abc1234\n")
     end
 
     it "is never handed to chewie again, and is settled by the engine instead" do

@@ -33,8 +33,10 @@ module OpenLanes
         #   @return [String] for the attempt and the log
         # @!attribute [r] to
         #   @return [Symbol, nil] the state the folder moved to
-        Result = Data.define(:kind, :note, :to) do
-          def initialize(to: nil, **rest) = super
+        # @!attribute [r] sha
+        #   @return [String, nil] the verification commit, on :committed
+        Result = Data.define(:kind, :note, :to, :sha) do
+          def initialize(to: nil, sha: nil, **rest) = super
         end
 
         # Who the comment and the harness's own signature are from.
@@ -173,7 +175,7 @@ module OpenLanes
           return uncommitted(checkout:, plan:, pull:, round:, failure:) if failure
 
           pushed = sha ? "#{Screenshots::FINAL} pushed in #{sha[0, 7]}" : committed
-          Result.new(kind: :committed, note: "verified PR ##{number_of(pull)}; #{pushed}; waiting on CI")
+          Result.new(kind: :committed, note: "verified PR ##{number_of(pull)}; #{pushed}; waiting on CI", sha:)
         end
 
         # One look at a verified pull request, asked again until it is
@@ -272,14 +274,15 @@ module OpenLanes
         end
 
         # Whether the verification commit is recent enough that CI may not
-        # have registered on it yet. Timed from the round's report, which
-        # chewie writes moments before {#pass} commits; read from disk rather
-        # than remembered, so a restarted engine keeps the same window.
+        # have registered on it yet. Timed from the round's publication
+        # record, written just after the push, or failing that its report;
+        # read from disk rather than remembered, so a restarted engine keeps
+        # the same window.
         #
         # @return [Boolean]
         def registering?(round)
-          path = round&.report_path
-          return false unless path && File.exist?(path)
+          path = round && [round.published_path, round.report_path].find { File.exist?(it) }
+          return false unless path
 
           @clock.call - File.mtime(path) < NO_CHECKS_GRACE
         end

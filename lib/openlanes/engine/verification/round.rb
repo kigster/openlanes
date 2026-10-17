@@ -33,6 +33,21 @@ module OpenLanes
         # @return [String] the folder, relative to the plan folder
         def relative = File.join(Round::FOLDER, number.to_s)
 
+        # @return [String] where the engine records the verification commit
+        def published_path = File.join(dir, Round::PUBLISHED)
+
+        # Whether the engine pushed this round's evidence. chewie's
+        # `Verdict: verified` is only chewie's word: a run that died after
+        # writing it, before its signature or the push, would otherwise be
+        # taken for a round waiting on CI, and the old head labelled ready.
+        #
+        # @return [Boolean]
+        def published? = File.file?(published_path)
+
+        # @param sha [String, nil] the commit that carried the round
+        # @return [void]
+        def publish!(sha) = File.write(published_path, "#{sha}\n")
+
         # @return [self] with its folder made
         def make!
           FileUtils.mkdir_p(dir)
@@ -49,6 +64,9 @@ module OpenLanes
 
         # The engine's note to chewie about the app it started.
         APP_NOTE = "app.md"
+
+        # The engine's record that the round's evidence was pushed: the SHA.
+        PUBLISHED = "published.txt"
 
         class << self
           # @param plan_dir [String]

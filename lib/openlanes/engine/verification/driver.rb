@@ -19,7 +19,11 @@ module OpenLanes
         #   @return [String] the ordinal
         # @!attribute [r] result
         #   @return [Outcome::Result]
-        Settled = Data.define(:plan, :result)
+        # @!attribute [r] round
+        #   @return [Integer, nil] the round it settled
+        Settled = Data.define(:plan, :result, :round) do
+          def initialize(round: nil, **rest) = super
+        end
 
         # Seconds between looks at CI, as {PrWatch} paces its own.
         INTERVAL = 15
@@ -69,6 +73,11 @@ module OpenLanes
           mismatch = @outcome.mismatch(checkout: @worktree.checkout_for(subject.feature), pull:)
           return "stays 👀: #{mismatch}; verify it by hand" if mismatch
 
+          # A round of its own for this hand-off, before the rename carries
+          # it into 🧪: the newest round otherwise may be one verified before
+          # a rejection and a rebuild, and would be taken for this one,
+          # waiting on CI, with the fixes never verified.
+          Verification.round_for(subject.feature.path).make!
           subject.machine.promote!(:verifying)
           "on to 🧪 verification"
         rescue OpenLanes::Error => e
@@ -110,13 +119,24 @@ module OpenLanes
         def pass(task, subject)
           pull = open_pull(subject) or return nil
 
-          @outcome.pass(checkout: checkout_of(task, subject), plan: subject, pull:, round: latest(subject))
+          round = latest(subject)
+          result = @outcome.pass(checkout: checkout_of(task, subject), plan: subject, pull:, round:)
+          # Only now is the round waiting on CI ({#awaiting_ci?}).
+          round.publish!(result.sha) if result.kind == :committed
+          result
         end
 
         # @param subject [OpenLanes::Plans::Subject]
+        # A verified round counts only once the engine pushed its evidence
+        # ({Round#published?}); one chewie reported but the engine never
+        # published goes back to chewie, in a new round.
+        #
         # @return [Boolean] whether the plan waits on CI rather than on chewie
         def awaiting_ci?(subject)
-          subject.status.key == :verifying && Round.latest(subject.feature.path)&.report&.verdict == :verified
+          return false unless subject.status.key == :verifying
+
+          round = Round.latest(subject.feature.path)
+          !round.nil? && round.published? && round.report&.verdict == :verified
         end
 
         # Look at CI for every plan waiting on it, on a thread of its own:
@@ -130,12 +150,12 @@ module OpenLanes
           if @thread && !@thread.alive?
             done = @thread.value || []
             @thread = nil
-            @ready.merge(done.select { it.result.kind == :ready }.map(&:plan))
+            @ready.merge(done.select { it.result.kind == :ready }.map { [it.plan, it.round] })
             return done
           end
           return [] if @thread || !due?
 
-          waiting = subjects.select { awaiting_ci?(it) && !@ready.include?(it.feature.ordinal.to_s) }
+          waiting = subjects.select { awaiting_ci?(it) && !@ready.include?(ready_key(it)) }
           @thread = Thread.new { waiting.filter_map { settle(it) } } unless waiting.empty?
           []
         end
@@ -150,8 +170,9 @@ module OpenLanes
         def settle(subject)
           pull = open_pull(subject) or return nil
           checkout = @worktree.checkout_for(subject.feature)
-          result = @outcome.settle(checkout:, plan: subject, pull:, round: Round.latest(subject.feature.path))
-          Settled.new(plan: subject.feature.ordinal.to_s, result:)
+          round = Round.latest(subject.feature.path)
+          result = @outcome.settle(checkout:, plan: subject, pull:, round:)
+          Settled.new(plan: subject.feature.ordinal.to_s, result:, round: round&.number)
         # StandardError, not only OpenLanes::Error: one plan's surprise from
         # `gh` must not end the look for the others, nor the run.
         rescue StandardError => e
@@ -169,6 +190,13 @@ module OpenLanes
           @last = now
           true
         end
+
+        # Ready is remembered per round, not per plan: a plan rejected after
+        # `ready-to-merge`, rebuilt and verified again is a new round, and
+        # must be looked at again.
+        #
+        # @return [Array(String, Integer)]
+        def ready_key(subject) = [subject.feature.ordinal.to_s, Round.latest(subject.feature.path)&.number]
 
         # @return [OpenLanes::Plans::PullRequest, nil]
         def open_pull(subject) = subject.pull_requests.select(&:open?).last
