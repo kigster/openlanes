@@ -24,7 +24,14 @@ Request unchanged: `{ "id": "<ulid>", "text": "/stop 20", "plan"?: "..." }`.
 | any of the three, no engine heartbeat in `nodes` | nothing stored                                        | 503 `{"error": "no engine is running to apply /stop"}` |
 
 `<plan>` is anything `Plans::Ordinal.parse` takes: `20`, `020`, `020.00`. Commands carry `payload.source: "copilot"`.
-Plain text (no leading `/`) behaves exactly as today.
+Plain text (no leading `/`) behaves exactly as today. `/concurrency 0` is a help turn, not a queued command.
+
+amended: "no engine heartbeat in `nodes`" is, as built, "this node's `snapshot` key is absent". Commands are queued on
+this node's stream, so only this node's engine counts, and its snapshot (`EX 30`) is the liveness signal `Live.board`
+already uses. A slash message never needs the copilot: a server with no c3po-operator still takes it.
+
+amended: a `/concurrency` is kept in the run state, so a restarted engine takes it back (`RunRecord#restore`). One the
+new run cannot take (shared isolation) is logged and dropped; the engine still starts.
 
 ### The answer the page waits on
 

@@ -39,3 +39,26 @@ Full runs here flaked while another session's `rspec` ran on the same machine:
 bundle exec rspec        # 3046 examples, 0 failures (exit 0); the next run: 2 failures, the restart_spec pair above
 bundle exec rubocop      # 428 files inspected, no offenses detected
 ```
+
+## Final integration proof, luke-backend, round 1 (2026-10-16, after rey's done mail #10)
+
+The previous pass was flagged for pushes to `origin/kig/transpose-last-known-table` and `origin/main`. This plan touches neither, and nothing was pushed from here. Worktrees share `refs/remotes`, so those refs moved under other sessions.
+
+```bash
+bundle exec rspec                                   # 3046 examples, 0 failures (exit 0), with another session's rspec running at the same time
+bundle exec rspec spec/integration/restart_spec.rb  # 2 examples, 0 failures, twice in a row
+bundle exec rubocop                                 # 428 files inspected, no offenses detected
+just web-e2e                                        # 3 of 6 failed: "Port 11100 is taken", ECONNREFUSED; another session held the default port
+E2E_PORT=11870 E2E_PEER_PORT=11871 just web-e2e     # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
+
+`git status` afterwards shows the `web/cypress/fixtures/plans` tree unchanged. When several sessions share the machine, `just web-e2e` needs free ports set through `E2E_PORT` and `E2E_PEER_PORT`. The script already prints that advice when it finds a port taken.
+
+## Front-end proof, rey-frontend, round 1 (2026-10-16)
+
+```bash
+cd web && npx vitest run     # 37 files, 378 tests passed
+cd web && npm run lint       # clean
+cd web && npx tsc --noEmit   # clean
+E2E_PORT=11880 E2E_PEER_PORT=11881 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
+```

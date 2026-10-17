@@ -72,15 +72,15 @@ dispatches on the next tick; lowering 3 → 1 with three running keeps all three
 
 - **Discipline:** back end
 - **Owns:** `lib/openlanes/live/commands.rb`, `lib/openlanes/live/run_state.rb`,
-  `spec/openlanes/live/lane_commands_spec.rb` (new), `spec/openlanes/live/run_state_spec.rb`
+  `spec/openlanes/live/commands_lanes_spec.rb` (new), `spec/openlanes/live/run_state_spec.rb`
 - **Must not touch:** `command.rb`, `copilot.rb`, `lib/openlanes/engine/*`
 - **Depends on:** B1, B2
-- **Done when:** `spec/openlanes/live/lane_commands_spec.rb` passes against `MemoryStore`.
+- **Done when:** `spec/openlanes/live/commands_lanes_spec.rb` passes against `MemoryStore`.
 
 - `HANDLERS` gains `stop_plan`, `restart_plan`, `set_concurrency`, each returning a reason string ("stopped 2 agents on
   020.00 and took it off the board", "020.00 restarts at the next tick", "concurrency 4 → 3; the run waits for one
   agent to finish") or raising `Refusal`.
-- `set_concurrency`: `limit` must be an Integer ≥ 1. Recorded in `RunState` (`#concurrency`, `#set_concurrency`) so a
+- `set_concurrency`: `limit` must be an Integer ≥ 1. Recorded in `RunState` (`#concurrency`, `#concurrency=`) so a
   restarted engine and the snapshot read it.
 - `reply`: for `payload["source"] == "copilot"`, the same `MULTI` also `xadd`s a copilot `Turn` (`"#{id}.1"`,
   `from: "copilot"`, `kind: "text"`, status and reason) to `@keys.copilot`. `answer_again` writes no turn, so a

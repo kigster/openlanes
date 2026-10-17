@@ -100,8 +100,8 @@ No. This plan adds and changes no HTTP API. The `app.frame` SSE event is 014.01'
 
 ## Task completed when
 
-- [ ] Every unit's done-when spec passes.
-- [ ] `bundle exec rspec` and `just lint` stay green, and `bin/coverage-changed` passes on the changed `lib/` files.
+- [x] Every unit's done-when spec passes.
+- [x] `bundle exec rspec` and `just lint` stay green, and `bin/coverage-changed` passes on the changed `lib/` files.
 
 ## How to test
 

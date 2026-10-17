@@ -15,20 +15,26 @@ Before any unit: `bundle exec rspec` reported 3123 examples, 0 failures, 9 pendi
 - `RunWorkflow#takers` and `#assignable` ask `Routing.preceding_for` / `Agent#precedes?` (the dry-run takers preview).
 - `Executor#allowed_for(agent, subject)`: a preceding agent gets `Edit(/<plan>/spec.md)` only, and `Write`, `MultiEdit`, `NotebookEdit` denied; the resumption (compaction) path carries the same scope.
 - Eval check `spec_only` (`expect.spec_only: true`).
+- `Changes.between` drops `.plans/**` from the fixture side too, so a case that seeds other plans for the agent to read does not count them as deleted.
+- Eval cases `evals/cases/ewoki-linker/{link-one,none,shared-files-only}.yml`, each with `pass/` and `fail/` recordings.
 
 ## Amendments
 
 - amended: `spec/openlanes/engine/dispatcher_spec.rb`, `runner_spec.rb` and `live/live_context.rb` run with `Registry.new.without("ewoki-linker")`; their keyless fixtures are about routing, not linking, and the gate has its own spec (`dispatcher_linker_spec.rb`).
 - amended: the dry-run preview named at `cli/run/run.rb:~475` lives in `engine/run_workflow.rb#takers`; that is what was changed.
+- amended: `lib/openlanes/evals/changes.rb` changed in round 2 (U5's file): the ewoki fixtures seed `.plans/034.00…/spec.md` in `repo:`, and only the after side ignored `.plans`, so every recording showed one phantom deletion.
+- amended: `spec/openlanes/evals/corpus_spec.rb` counts an agent as working a plan when it handles or precedes a state; it previously excluded ewoki (`handles: []`).
+- amended: U7 hands the plan on through the chain in the same round, not the next one: the dispatcher chains the lane's agent right after ewoki returns. A 📋 fixture needs a blank `plan.md`, since one with a body reads as planned and resync lifts it to ⭐.
+- observed, not changed: in a dry run nothing writes the key, so the preview shows ewoki for both of its in-agent rounds and then the planner for the same plan.
 
 ## Integration proof
 
-`spec/openlanes/cli/run_linker_spec.rb` (U7, not yet written): `./exe/openlanes run --dry-run --isolation shared` on a fixture with 050 keyless at 📋 and another with `depends_on: []` reports `would invoke ewoki-linker` for 050 only.
+`spec/openlanes/cli/run_linker_spec.rb`: `./exe/openlanes run --dry-run --isolation shared` on a fixture with 050 keyless at 📋 and another with `depends_on: []` reports `would invoke ewoki-linker` for 050 only.
 
 ## Status, round 1
 
 - [x] U1, U2, U3 (incl. resumption path), U4 (incl. `dispatcher_linker_spec.rb`, all three lanes), U5
-- [ ] U6 eval cases `link-one`, `none`, `shared-files-only` with recordings
-- [ ] U7 `runner_linker_spec.rb`, `cli/run_linker_spec.rb`
+- [x] U6 eval cases `link-one`, `none`, `shared-files-only` with recordings
+- [x] U7 `runner_linker_spec.rb`, `cli/run_linker_spec.rb`
 
 After round 1: `bundle exec rspec` 3160 examples, 0 failures, 9 pending; `bundle exec rubocop` no offenses.

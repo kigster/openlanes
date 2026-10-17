@@ -6,7 +6,7 @@
     "slug": "redis-outage-resilience"
   },
   "state": "building",
-  "updated_at": "2026-10-16T19:03:02-07:00",
+  "updated_at": "2026-10-16T19:20:09-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -93,20 +93,20 @@
       "round": 1,
       "status": "Completed",
       "from": "building",
-      "started_at": "2026-10-16T18:47:38-07:00",
+      "started_at": "2026-10-16T19:19:42-07:00",
       "run": {
-        "pid": 37288,
+        "pid": 31063,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
       "to": "building",
-      "finished_at": "2026-10-16T18:48:42-07:00",
-      "up": 396742,
-      "down": 5566,
-      "seconds": 63.2,
-      "note": "agent pushed (origin/kig/rebase-worktrees-onto-main) — the boundary is docs plus code, nothing leaves the machine"
+      "finished_at": "2026-10-16T19:20:09-07:00",
+      "up": 168980,
+      "down": 1353,
+      "seconds": 26.5,
+      "note": "completed - 3 tool calls; publish refused: publish refused — plan.md has no `## How to test` section"
     }
   ],
   "signatures": [
@@ -166,6 +166,18 @@
       "agent": "rey-frontend",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T19:19:49-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:20:04-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -176,6 +188,15 @@
       "from": "rey-frontend",
       "to": "luke-backend",
       "body": "F1 done: Header shows stale alert (>15s) and run.outage line; Run.outage is optional in types.ts. Tests in web/src/shell/Header.test.tsx 'Redis outage notice' prove both states and the silent case. Web suite 358 passed, eslint clean. Wire shape unchanged; no back-end files touched.",
+      "read": "no"
+    },
+    {
+      "id": "7cf98b37-3a7c-41dd-9582-e34a0ebcea17",
+      "number": 2,
+      "at": "2026-10-16T19:20:03-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done (F1). Header.test.tsx 'Redis outage notice' covers fresh/null silent, stale alert, recovered status. Web vitest 358 pass, tsc clean.",
       "read": "no"
     }
   ],

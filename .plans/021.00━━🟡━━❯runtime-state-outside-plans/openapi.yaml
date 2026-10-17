@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  title: OpenLanes control-room snapshot, plan lock
+  version: "021.00"
+  description: >
+    Only the change this plan makes: the per-plan `locked` object gains
+    `foreign`. No route is added or removed.
+paths: {}
+components:
+  schemas:
+    PlanLock:
+      description: >
+        The lock an agent holds on a plan, read from the runtime state
+        directory or a legacy `locked-by.pid`. Null when the plan is not locked.
+      type: ["object", "null"]
+      required: [pid, host, started_at, foreign]
+      properties:
+        pid:
+          type: integer
+        host:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        foreign:
+          type: boolean
+          description: Written on another host. Always held; never cleared automatically.

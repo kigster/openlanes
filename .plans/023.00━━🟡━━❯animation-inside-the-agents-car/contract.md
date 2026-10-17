@@ -55,3 +55,7 @@ Results go to `integration.md`.
 ## Round 1 note (luke)
 
 - Assumption: rey had not started on 023.00 during luke's round 1, so B1 ran only its red run (see `integration.md`). B1's green run is the last step of the plan and goes to whichever of us finishes last, per the integration proof above.
+
+## Round 1 amendment (luke)
+
+- amended: the reduced-motion row of the DOM table holds only with selector `.car.is-running .car-gear { animation: none; }`; a bare `.car-gear` lost on specificity. Luke changed `board.css` and `boardCss.test.ts` (rey's files) and mailed rey. Integration proof green, see `integration.md`.

@@ -11,6 +11,8 @@ Source: GitHub issue #51, https://github.com/kigster/openlanes/issues/51 — "Mo
 
 The plan tree mixes human-authored work artifacts with machine-specific operational state. The run state file is stored under `.plans/`, and plan locks live inside individual plan directories. This couples recovery and concurrency details to the workspace users browse, commit, archive, and migrate.
 
+Research narrowed the problem: `openlanes-state.json` and `locked-by.pid` are the two machine-local files that belong elsewhere (Research, Inventory). Two temp-file patterns inside plan folders are not git-ignored at all, and `state.json` carries machine fields (`run.pid`, `host`) inside a durable file.
+
 ## Proposal
 
 Define a dedicated ignored runtime-data location (for example, `.openlanes/` or an XDG state directory) for process/run state, locks, and other machine-local data. Keep durable, reviewable plan artifacts in the workspace. Decide explicitly which per-plan records are durable product history and which are operational state.
@@ -150,6 +152,81 @@ References (all retrieved 2026-10-16):
 
 No paywalled or licensed sources were used.
 
-> [!NOTE]
->
-> [2026-10-16 06:15:36 PM PDT] [ agent: yoda-writer   status: **Interrupted, round 1 (harness died)** ]
+## Framings
+
+1. **Hygiene.** `.plans/` must hold only reviewable files. Move every runtime file out, and fix the leaks (unignored `*.tmp`).
+2. **Recovery and concurrency.** The lock and the run state are a machine's private bookkeeping. Redesign them for restart safety and for locks held by other hosts, and let the location follow.
+3. **Portability.** `.plans/` should be copyable, archivable and migratable with no stale machine data in it.
+
+Chosen: framing 2 with 1 as its means. The acceptance criteria turn on recovery and cross-host locks, and a move that ignored foreign hosts would only relocate the problem. Framing 3 follows for free.
+
+## Goal
+
+After this ships, `.plans/` holds only durable, reviewable plan artifacts. The run state file, per-plan locks and the machine fields of `state.json` live in a per-project XDG state directory, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<6 hex of sha256(root)>/`. An interrupted run still resumes after a reboot, and a lock taken on another host is shown as held, with its host and start time, rather than silently ignored. Existing workspaces keep working through read fallbacks to the old paths.
+
+## Non-Goals
+
+1. No heartbeat and no automatic expiry of foreign-host locks (see Q1).
+2. No change to durable files: `spec.md`, `plan.md`, `blocked.md`, `discarded.md`, `delayed.md`, `pull-requests.md`, `INDEX.md`, `BACKLOG.md`, and the history parts of `state.json`.
+3. No move of traces, progress logs or the `flock` lock out of `Dir.tmpdir`, nor of `ports.json`; they already sit outside the tree (Research, Inventory).
+4. No change to `live/run_state.rb`, which is a payload inside the state file, not a second writer (Research, Roles).
+5. No deletion of legacy files in existing workspaces.
+6. No new CLI command for editing runtime state beyond what migration needs.
+
+## In scope
+
+Each item is checked by the named spec.
+
+1. A single `Runtime` path resolver returns the project state directory from `$XDG_STATE_HOME` (absolute values only, else `~/.local/state`) and the root. Check: new spec covers unset, empty, relative and absolute `XDG_STATE_HOME`, and two roots giving distinct directories.
+2. `StateFile` reads and writes `<state-dir>/openlanes-state.json`; its temp file goes in the same directory. Check: `state_file_spec.rb` asserts no `openlanes-state.json*` appears under `.plans/` after `save`.
+3. `StateFile#load` falls back to `.plans/openlanes-state.json`, then `.plans/tmp/openlanes-state.json`, and never deletes either. Check: `state_file_spec.rb` and `spec/integration/restart_spec.rb` resume from each legacy path.
+4. `StateFile#begin_run!` records `host` and `previous_run_dead?` treats a record from another host as not provably dead. Check: spec with a stubbed `Socket.gethostname`.
+5. `Plans::Lock` writes `<state-dir>/locks/<ordinal>.lock` (pid, host, started_at), keyed by ordinal so a folder rename does not matter. Check: `lock_spec.rb` renames the folder while locked.
+6. All lock readers (`resync.rb`, `dispatcher.rb`, `reporter.rb`, `live/snapshot.rb`, `plan_locks.rb`) go through the new path, and also read a legacy `locked-by.pid` in the folder. Check: reporter and snapshot specs show the 🔑 mark and `locked` for a lock at each location.
+7. A foreign-host lock stays held and is reported with host and start time in the reporter and `live/snapshot.rb`. Check: spec with a lock whose host differs.
+8. A stale legacy `locked-by.pid` on this host is still cleared by `resync dirs`. Check: `resync` spec.
+9. `state.json` no longer receives `run.pid`/`host`; they go to the runtime record. `schemas/plan-state.schema.json` and `plan_state.rb` are updated, and old files with those fields still load. Check: `plan_state_spec.rb` loads a file with the fields and a schema validation of a new file without them.
+10. Temp files `state.json.*.tmp` and `blocked.md.*.tmp` are covered by an ignore rule. Check: `git check-ignore` on both names in the repo's `.gitignore` and in `ensure_ignored!`'s output.
+11. `StateFile.ensure_ignored!` stops adding lines for paths that no longer live in `.plans/`, and never edits lines it did not write. Check: `state_file_spec.rb` against a `.gitignore` with unrelated content.
+12. The README "Plan folders" section and `docs/decisions/` record the inventory, the durable-versus-operational split, the location and the migration. Check: the decisions file exists and the README no longer says `locked-by.pid` lives in the plan folder.
+
+## Out of scope
+
+- Foreign-lock heartbeat or expiry: product tradeoff between a stuck plan and a double run.
+- Redis copy of the run record: unrelated to the files under `.plans/`.
+- Removing the legacy fallbacks: waits one release, then a separate plan.
+- Windows state paths: the code and the XDG spec target Unix; nothing in the research covers Windows.
+
+## Back end / front end
+
+| Item | Half |
+| --- | --- |
+| 1, 2, 3, 4, 5, 8, 9, 10, 11 | Back end (`luke-backend`): `engine/`, `plans/`, `lifecycle/`, schema |
+| 6 | Both: readers in `engine/` and `lifecycle/` are back end; `presentation/reporter.rb` and `live/snapshot.rb` are the displays (`rey-frontend`) |
+| 7 | Front end (`rey-frontend`) renders "held on <host> since <time>"; back end supplies the host and start time |
+| 12 | Back end writes the docs; `rey-frontend` has nothing to build |
+
+The pair's contract: `Plans::Lock.read` returns a value with `host`, `pid`, `started_at` and `foreign?`, and the displays only format it.
+
+## Open questions
+
+1. **Q1.** Foreign-lock expiry. Assumed: none, locks stay held until a person clears them. Needs a product decision before any heartbeat plan.
+2. **Q2.** Moving `run.pid`/`host` out of `state.json` is a schema change. Assumed yes, with old files still loading. Reader tools outside this repo are unknown.
+3. **Q3.** Stopping `ensure_ignored!` from adding lines changes behaviour for repos that relied on it. Assumed acceptable, since the paths it protected no longer exist in `.plans/`.
+4. **Q4.** Does `Socket.gethostname` change on macOS when the network changes, leaving a machine's own locks looking foreign? Unverified (Research, Foreign hosts). If it does, a stable host id is needed.
+5. **Q5.** A legacy foreign-host `locked-by.pid`: assumed read for one release, then ignored. The release count is not decided.
+6. **Q6.** The hash of the project root changes if the checkout moves, orphaning the runtime record. Assumed acceptable; the legacy fallback does not cover it.
+7. **Q7.** Worktrees have different roots, so they get separate state directories. Assumed intended; whether a run in one worktree should see locks from another is unanswered.
+8. **Q8.** The `<project>` name: assumed the root's basename.
+
+## Risks to planning or execution
+
+- Q1 may be pushed back by the owner as part of "safe lock cleanup across hosts"; the acceptance criteria could then be read as requiring expiry. Mitigation: state in the PR that "safe" is read as "never wrongly cleared".
+- Lock readers are spread over six files (Research, Migration); a missed reader would show a plan as unlocked and allow a double run. Plan a single reader entry point first.
+- Specs build real trees in temp directories; they must set `XDG_STATE_HOME` to a temp directory or they will write into the developer's home.
+- `spec_helper.rb`'s `REPO_ROOT` quirk (CLAUDE.md) means coverage figures are noisy; do not use them as the check.
+- Any plan folder created by an older version and carrying `run:` fields must keep loading, or restart specs break.
+
+## Conclusion
+
+When this ships, `.plans/` contains only plan artifacts a person would review. Run state and locks live in a per-project XDG state directory that survives reboots, locks are keyed by plan ordinal and carry host and start time, foreign-host locks are shown and never auto-cleared, and temp files are ignored. Older workspaces keep running through read-only fallbacks, and the decision is recorded in `docs/decisions/` and the README.

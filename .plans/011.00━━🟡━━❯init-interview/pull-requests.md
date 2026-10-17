@@ -70,3 +70,18 @@ $ bundle exec rspec
 $ bundle exec rubocop
 440 files inspected, no offenses detected
 ```
+
+Re-verified after the harness flagged a push (2026-10-16, 18:28), no code changed. Both flagged refs were pushed from the separate `openlanes.worktrees/transpose-last-known-table` checkout, which shares `refs/remotes` with this one: `origin/kig/transpose-last-known-table` at 18:22:53 (`76e8833`, that worktree's HEAD) and `origin/main` at 18:28:19 (`7186635`). This plan's `HEAD` is still `ce65c43`.
+
+The first full run hit `Errno::EADDRINUSE` on port 11103 in three `spec/openlanes/apps/runner_spec.rb` examples, a fixed fixture port another checkout's suite was holding at the time. That file then passed twice alone (9 examples, 0 failures), and the full rerun is clean:
+
+```
+$ bundle exec rspec        # ANTHROPIC_API_KEY and OPENAI_API_KEY unset
+3107 examples, 0 failures, 9 pending
+
+$ bundle exec rubocop
+440 files inspected, no offenses detected
+
+$ bundle exec rspec spec/openlanes/cli/init_integration_spec.rb
+2 examples, 0 failures
+```

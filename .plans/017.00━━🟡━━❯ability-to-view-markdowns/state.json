@@ -6,7 +6,7 @@
     "slug": "ability-to-view-markdowns"
   },
   "state": "building",
-  "updated_at": "2026-10-16T19:03:10-07:00",
+  "updated_at": "2026-10-16T19:10:45-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,7 +71,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "building",
       "started_at": "2026-10-16T19:03:02-07:00",
       "run": {
@@ -81,32 +81,32 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine",
-      "finished_at": "2026-10-16T18:33:43-07:00",
+      "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine",
+      "finished_at": "2026-10-16T19:09:23-07:00",
       "to": "building",
-      "up": 1248017,
-      "down": 9762,
-      "seconds": 823.6
+      "up": 631169,
+      "down": 4840,
+      "seconds": 380.4
     },
     {
       "agent": "rey-frontend",
       "round": 1,
       "status": "Completed",
       "from": "building",
-      "started_at": "2026-10-16T18:23:10-07:00",
+      "started_at": "2026-10-16T19:09:14-07:00",
       "run": {
-        "pid": 37288,
+        "pid": 31063,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
       "to": "building",
-      "finished_at": "2026-10-16T18:23:42-07:00",
-      "up": 220187,
-      "down": 1415,
-      "seconds": 31.3,
-      "note": "completed - 4 tool calls"
+      "finished_at": "2026-10-16T19:10:45-07:00",
+      "up": 269230,
+      "down": 2052,
+      "seconds": 91.5,
+      "note": "completed - 5 tool calls; publish refused: publish refused — plan.md has no `## How to test` section"
     }
   ],
   "signatures": [
@@ -312,6 +312,24 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T19:09:15-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:09:20-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:10:42-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -405,7 +423,7 @@
       "from": "rey-frontend",
       "to": "luke-backend",
       "body": "Front end done, re-verified: vitest 378/378, lint+typecheck clean. Proofs: planFiles.test.ts (F1), PlanFilePopup.test.tsx (F2), PlanDrawer.test.tsx + App.test.tsx (F3), plan-files.cy.ts 2/2 (F4).",
-      "read": "no"
+      "read": "yes"
     },
     {
       "id": "fff04990-c3ff-4f45-98cf-f073fc247b7a",
@@ -414,6 +432,24 @@
       "from": "luke-backend",
       "to": "rey-frontend",
       "body": "Back end re-verified, done. Added a test-only fix for a port-collision flake in apps specs (spec/support/port_window.rb); no change to your files or the contract.",
+      "read": "no"
+    },
+    {
+      "id": "de93494d-a6a6-4ec7-887d-25a78bc88ea3",
+      "number": 12,
+      "at": "2026-10-16T19:09:14-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done, and I ran last. rspec 3046/0 failures, rubocop clean, web-e2e 25/25 (plan-files 2/2) on E2E_PORT=11870/11871; 11100 was held by another session. Proof is in pull-requests.md.",
+      "read": "no"
+    },
+    {
+      "id": "d6b92ad5-d61f-4ff9-8cd1-99b4f10a99a6",
+      "number": 13,
+      "at": "2026-10-16T19:10:41-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done. F1 planFiles.test.ts, F2 PlanFilePopup.test.tsx, F3 PlanDrawer.test.tsx + App.test.tsx, F4 plan-files.cy.ts. vitest 378/378, lint+tsc clean, web-e2e 25/25.",
       "read": "no"
     }
   ],
@@ -441,10 +477,10 @@
     },
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-16T18:33:43-07:00",
+      "at": "2026-10-16T19:09:23-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I signed 017.00's back end `Completed`, but the Ruby suite is not reliably green: one full run passed and the next had 2 failures."
+      "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I signed plan 017.00's back end `Completed` for round 1."
     }
   }
 }

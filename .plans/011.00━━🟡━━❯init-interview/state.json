@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "building",
-  "updated_at": "2026-10-16T19:03:10-07:00",
+  "updated_at": "2026-10-16T19:09:14-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -71,7 +71,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "building",
       "started_at": "2026-10-16T19:03:02-07:00",
       "run": {
@@ -81,12 +81,12 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine",
-      "finished_at": "2026-10-16T18:28:26-07:00",
+      "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine",
+      "finished_at": "2026-10-16T19:09:14-07:00",
       "to": "building",
-      "up": 83120,
-      "down": 140,
-      "seconds": 770.0
+      "up": 1066297,
+      "down": 8246,
+      "seconds": 371.5
     }
   ],
   "signatures": [
@@ -223,16 +223,22 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T19:09:02-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [],
   "last-known-state": {
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-16T18:28:26-07:00",
+      "at": "2026-10-16T19:09:14-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "agent pushed (origin/kig/transpose-last-known-table, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: A leftover background command from earlier was stopped when it hit its time limit."
+      "note": "agent pushed (origin/kig/keep-tests-on-local-redis, origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: Plan 011.00 is signed Completed."
     }
   }
 }

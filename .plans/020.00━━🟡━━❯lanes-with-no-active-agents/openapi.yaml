@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: openlanes control room, as plan 020.00 changes it
+  version: "020.00"
+  description: >
+    Only what 020.00 changes. Slash messages to the copilot become engine
+    commands; Command gains three kinds; the board's run gains jobs.
+paths:
+  /api/copilot:
+    post:
+      summary: The person's message to the copilot, or a slash command for the engine
+      parameters:
+        - { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CopilotMessage" }
+      responses:
+        "202":
+          description: >
+            The person's turn, stored. Plain text is answered later by
+            c3po-operator. /stop, /restart and /concurrency are queued on the
+            engine's command stream under the message id; the engine's answer
+            arrives as copilot turn "<id>.1" ("done: ..." or "refused: ...").
+            Any other slash message is answered at once with turn "<id>.1",
+            text starting "Slash commands:".
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CopilotTurn" }
+        "403": { description: CSRF token missing or wrong; nothing stored }
+        "422":
+          description: Malformed message; nothing stored
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "503":
+          description: >
+            Nothing stored. Plain text with no copilot in this server
+            ("the copilot is not running in this server"), or a slash command
+            with no live engine on this node ("no engine is running to apply /stop").
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  /api/commands:
+    post:
+      summary: Queue a Command for this node's engine (unchanged route; new kinds)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Command" }
+      responses:
+        "202": { description: accepted, content: { application/json: { schema: { $ref: "#/components/schemas/Reply" } } } }
+        "422": { description: refused, content: { application/json: { schema: { $ref: "#/components/schemas/Reply" } } } }
+  /api/board:
+    get:
+      summary: This node's snapshot and every other live node's
+      responses:
+        "200":
+          description: Board; each snapshot's run now carries jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  me: { $ref: "#/components/schemas/Snapshot" }
+                  others: { type: array, items: { $ref: "#/components/schemas/Snapshot" } }
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties: { error: { type: string } }
+    CopilotMessage:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string, pattern: "^[0-9A-Za-z_-]{1,64}$" }
+        text: { type: string, maxLength: 4000, examples: ["/stop 20", "/restart 020.00", "/concurrency 3"] }
+    CopilotTurn:
+      type: object
+      required: [id, from, kind, text, at]
+      properties:
+        id: { type: string, description: 'the message id; a reply is "<id>.1"' }
+        from: { enum: [you, copilot] }
+        kind: { enum: [text, confirm, draft] }
+        text: { type: string }
+        at: { type: string, format: date-time }
+        usage: { type: [object, "null"] }
+    Command:
+      type: object
+      required: [id, kind]
+      properties:
+        id: { type: string }
+        kind:
+          type: string
+          description: existing kinds, plus stop_plan, restart_plan, set_concurrency
+        plan: { type: [string, "null"], description: "required by stop_plan and restart_plan" }
+        agent: { type: [string, "null"], description: "not used by the three new kinds" }
+        payload:
+          type: object
+          properties:
+            limit: { type: integer, minimum: 1, description: "set_concurrency only, required" }
+            source: { const: copilot, description: "set by the copilot route; the engine then echoes its reply as a copilot turn" }
+    Reply:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status: { enum: [accepted, refused, done] }
+        reason: { type: [string, "null"] }
+        at: { type: string, format: date-time }
+    Snapshot:
+      type: object
+      properties:
+        run:
+          type: object
+          required: [jobs]
+          properties:
+            jobs: { type: integer, minimum: 1, description: "how many agents may run at once, after any /concurrency" }
