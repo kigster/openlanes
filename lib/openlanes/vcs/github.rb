@@ -199,7 +199,9 @@ module OpenLanes
       def label_colours(repo: nil)
         out = @command.run("gh", "label", "list", "--limit", "1000", "--json", "name,color", *repo_flag(repo)).out
         JSON.parse(out).to_h { [it["name"].to_s, it["color"].to_s.downcase] }
-      rescue TTY::Command::ExitError, JSON::ParserError => e
+      # A machine without `gh` (a CI image, say) is a reason to skip the sync,
+      # not to stop the run: {LabelSync}'s caller warns on Error.
+      rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError => e
         raise Error, "could not list labels: #{first_line(e)}"
       end
 

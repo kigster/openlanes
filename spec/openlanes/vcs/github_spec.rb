@@ -406,6 +406,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
 
         expect { github.label_colours }.to raise_error(OpenLanes::Error, /could not list labels: HTTP 401/)
       end
+
+      # A CI image without gh: the sync's caller warns on Error and carries on.
+      it "names the failure when gh is not installed" do
+        allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+        expect { github.label_colours }.to raise_error(OpenLanes::Error, /could not list labels: No such file or directory - gh/)
+      end
     end
 
     describe "#recolour_label" do
