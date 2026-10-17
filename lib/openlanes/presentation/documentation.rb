@@ -98,6 +98,14 @@ module OpenLanes
           - **`MM` from `01` to `99` marks a retroactive plan**: work that shipped with no
             specification, documented after the fact. `openlanes create --after 001`
             takes the next free slot in the gap after 001.
+          - **A number is taken if any branch holds it.** "Highest" counts the primary
+            checkout's `#{OpenLanes::PLANS_DIR}` (archived plans included) and `#{OpenLanes::PLANS_DIR}` on every local
+            branch and every `origin/*` branch, read without a fetch, so a plan on an
+            unmerged branch keeps its number.
+          - **Plans are created only in the primary checkout.** In a linked worktree,
+            `openlanes create` and `resync prs` adoption refuse and name the primary
+            checkout. Numbers are handed out under a lock in the shared git directory,
+            so two creates at once cannot take the same one.
 
           `001.01` is a **sibling of 001 that arrived later, not a part of 001**. The dot
           reads as containment in almost every other numbering scheme, and here it does

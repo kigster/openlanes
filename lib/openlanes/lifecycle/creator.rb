@@ -42,19 +42,28 @@ module OpenLanes
         slug = self.class.slugify(words)
         return Failure("the topic produced an empty slug") if slug.empty?
 
-        ordinal = after ? retroactive_ordinal(after) : Plans::Ordinal.next_major(existing)
-        return ordinal if ordinal.is_a?(Dry::Monads::Result)
+        # Read the taken numbers and make the folder under one lock, fresh
+        # each time: a number read before the lock was taken may be gone.
+        allocator.hold do
+          @existing = nil
+          ordinal = after ? retroactive_ordinal(after) : Plans::Ordinal.next_major(existing)
+          return ordinal if ordinal.is_a?(Dry::Monads::Result)
 
-        build(ordinal, resolved, slug).fmap { |path| record_pull_requests(path, prs) }
+          build(ordinal, resolved, slug).fmap { |path| record_pull_requests(path, prs) }
+        end
       rescue OpenLanes::Error => e
         Failure(e.message)
       end
 
       # Archived, deferred and abandoned plans keep their numbers (N3), so a
-      # number that lives only in `archive/` is still taken.
+      # number that lives only in `archive/` is still taken; so is one that
+      # lives only on another branch, or two checkouts mint it twice.
       #
       # @return [Array<OpenLanes::Plans::Ordinal>] every number already taken
-      def existing = @existing ||= Plans::Tree.new(dir:).taken
+      def existing = @existing ||= allocator.taken
+
+      # @return [OpenLanes::Lifecycle::Allocator] where numbers may come from
+      def allocator = @allocator ||= Allocator.new(dir:)
 
       # How many words of an idea name its plan.
       TOPIC_WORDS = 8
