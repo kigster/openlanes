@@ -23,13 +23,19 @@ export const dollars = (n: number): string => "$" + n.toFixed(2);
 export const planId = (ordinal: string): string => (ordinal.endsWith(".00") ? ordinal.slice(0, -3) : ordinal);
 
 /**
+ * Claude Code's own sub-agent types. Their first word is not a persona, and general-purpose, the one most runs
+ * delegate to, would read as "purpose".
+ */
+const BUILT_IN = new Set(["general-purpose", "statusline-setup", "output-style-setup", "claude-code-guide"]);
+
+/**
  * An agent's name as its tile shows it: everything up to and including the first "-" dropped, so leah-researcher
- * reads as researcher. Display only: commands, keys and tooltips keep the full name. A name with nothing after its
- * first "-" (or no "-" at all) is shown whole rather than as nothing.
+ * reads as researcher. Display only: commands, keys and tooltips keep the full name. A built-in sub-agent type, or a
+ * name with nothing after its first "-" (or no "-" at all), is shown whole.
  */
 export const shortAgent = (name: string): string => {
   const at = name.indexOf("-");
-  return at < 0 || at === name.length - 1 ? name : name.slice(at + 1);
+  return at < 0 || at === name.length - 1 || BUILT_IN.has(name) ? name : name.slice(at + 1);
 };
 
 /**

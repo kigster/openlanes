@@ -29,9 +29,9 @@ describe("format", () => {
     expect(who({ user: "dana", host: "studio-mini" })).toBe("dana@studio-mini");
   });
 
-  it("shortens an agent's name to what follows its first dash, and leaves a name with nothing to drop whole", () => {
+  it("shortens an agent's name to what follows its first dash, and leaves built-ins and names with nothing to drop whole", () => {
     expect(["leah-researcher", "luke-backend", "r2d2-mechanic", "general-purpose", "Explore", "odd-", "a-b-c"].map(shortAgent))
-      .toEqual(["researcher", "backend", "mechanic", "purpose", "Explore", "odd-", "b-c"]);
+      .toEqual(["researcher", "backend", "mechanic", "general-purpose", "Explore", "odd-", "b-c"]);
   });
 
   it("redacts a URL's userinfo, user name included", () => {
