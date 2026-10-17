@@ -12,6 +12,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       github: OpenLanes::Vcs::GitHub.new,
       outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents:),
       agents:,
+      review:,
       coverage_gate: gate,
       max_rejections: 2,
       arbitration:,
@@ -20,6 +21,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
   end
 
   let(:now) { Time.now }
+  let(:review) { OpenLanes::Vcs::Review.new(github: OpenLanes::Vcs::GitHub.new) }
 
   let(:agents) { OpenLanes::Agents::Registry.new }
   let(:arbitration) { instance_double(OpenLanes::Engine::Arbitration, call: nil) }
@@ -232,6 +234,44 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           expect(outcome.settle(checkout:, plan:, pull: pr, round:).kind).to eq(:ready)
           expect(labels).to eq(%w[ready-to-merge])
         end
+      end
+    end
+
+    context "when ready-to-merge is refused after the gate passed" do
+      let(:review) { instance_double(OpenLanes::Vcs::Review) }
+
+      def review_result(refused)
+        OpenLanes::Vcs::Review::Result.new(pr: 1,
+          from: [],
+          to: "ready-to-merge",
+          ci: refused ? :pending : :green,
+          refused:,
+          reason: refused ? "CI pending" : nil,
+          dry_run: false)
+      end
+
+      before do
+        allow(review).to receive(:call).and_return(review_result(true), review_result(true), review_result(false))
+        edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }] }
+        outcome.pass(checkout:, plan:, pull: pr, round:)
+      end
+
+      it "runs the coverage gate once for the commit, however often it is asked" do
+        kinds = Array.new(3) { outcome.settle(checkout:, plan:, pull: pr, round:).kind }
+
+        aggregate_failures do
+          expect(kinds).to eq(%i[waiting waiting ready])
+          expect(gate).to have_received(:call).once
+        end
+      end
+
+      it "measures a new commit on the branch afresh" do
+        outcome.settle(checkout:, plan:, pull: pr, round:)
+        File.write(File.join(repo_root, "fix.rb"), "puts :fixed\n")
+        commit_all("a fix")
+        outcome.settle(checkout:, plan:, pull: pr, round:)
+
+        expect(gate).to have_received(:call).twice
       end
     end
 

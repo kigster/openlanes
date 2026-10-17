@@ -2,6 +2,7 @@
 
 require "erb"
 require "fileutils"
+require "open3"
 
 module OpenLanes
   module Engine
@@ -116,6 +117,7 @@ module OpenLanes
           @arbitration = arbitration
           @screenshots = screenshots
           @clock = clock
+          @verdicts = {}
         end
 
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout] the plan's
@@ -224,7 +226,7 @@ module OpenLanes
 
         # @return [Result]
         def gated(checkout:, plan:, pull:, round:)
-          verdict = @gate.call(checkout:)
+          verdict = gate_verdict(checkout, plan, round)
           return reject(checkout:, plan:, pull:, round:, why: SETUP, counted: false) if verdict.unconfigured?
           return reject(checkout:, plan:, pull:, round:, why: withheld(verdict)) if verdict.withheld?
 
@@ -235,6 +237,28 @@ module OpenLanes
           # CI on the PR and on main, and a clean merge. Until then nothing
           # merges, and in human mode nothing ever does (M4).
           ready(number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
+        end
+
+        # The coverage gate's verdict on this round's commit, run once. A
+        # refused `ready-to-merge` (CI flipping to pending between two reads)
+        # answers :waiting, and without this every poll after it would run
+        # the project's whole suite again over code that has not changed. A
+        # new commit on the branch is a new key, so it is measured afresh; a
+        # head that cannot be read is never cached.
+        #
+        # @return [OpenLanes::Engine::CoverageGate::Verdict]
+        def gate_verdict(checkout, plan, round)
+          head = head_of(checkout) or return @gate.call(checkout:)
+
+          @verdicts[[plan.feature.ordinal.to_s, round.number, head]] ||= @gate.call(checkout:)
+        end
+
+        # @return [String, nil] the checkout's HEAD, nil when git cannot say
+        def head_of(checkout)
+          out, status = Open3.capture2("git", "-C", checkout.path.to_s, "rev-parse", "HEAD", err: File::NULL)
+          status.success? ? out.strip : nil
+        rescue SystemCallError
+          nil
         end
 
         # Whether the verification commit is recent enough that CI may not
