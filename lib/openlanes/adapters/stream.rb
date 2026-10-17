@@ -15,6 +15,9 @@ module OpenLanes
     # its events keeps working, and one that stops reporting usage shows a
     # meter at zero rather than a crash.
     class Stream
+      # Events that carry part of a message still being written. A line read
+      # out of one would be read again, whole or cut, when the message closes.
+      PARTIAL = /delta|update|partial|chunk/i
       # @param trace [String, nil] where every line is kept verbatim
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
       def initialize(trace: nil, &on_progress)
@@ -30,6 +33,7 @@ module OpenLanes
         @activity = nil
         @result = nil
         @error = nil
+        @journal = []
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -59,6 +63,10 @@ module OpenLanes
       # @return [String, nil]
       attr_reader :trace_path
 
+      # @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #   the journal lines printed so far
+      def journal = @journal.dup
+
       # @return [Integer, nil]
       attr_accessor :pid
 
@@ -83,7 +91,14 @@ module OpenLanes
       #
       # @return [OpenLanes::Execution::Transcript::Progress]
       def progress
-        Execution::Transcript::Progress.new(activity:, up:, down:, subagents: 0, pid:, message: nil, running: [])
+        Execution::Transcript::Progress.new(activity:,
+          up:,
+          down:,
+          subagents: 0,
+          pid:,
+          message: nil,
+          running: [],
+          journal: @journal.dup.freeze)
       end
 
       # @param chunk [String, nil]
@@ -140,8 +155,22 @@ module OpenLanes
         if said
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
+          take_journal(said) unless type.match?(PARTIAL)
         end
         @on_progress&.call(progress)
+      end
+
+      # Journal lines (M2) in what the agent said. A CLI read by shape may say
+      # the same words twice, once as the message closes and again in a
+      # summary of the turn, so a line already taken is not taken again: an
+      # agent that means a thing twice says it in different words.
+      #
+      # @param said [String]
+      # @return [void]
+      def take_journal(said)
+        Plans::Journal.scan(said).each do |line|
+          @journal << line unless @journal.include?(line)
+        end
       end
 
       # Usage counts arrive per turn, so they are added rather than replaced.
