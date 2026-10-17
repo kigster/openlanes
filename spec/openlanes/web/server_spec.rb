@@ -5,6 +5,15 @@ require "net/http"
 # The app on a real Puma, on a free port: what rack-test cannot show is that
 # an event stream really streams, frame by frame, while other requests are
 # answered beside it.
+# CircleCI's containers have no IPv6 loopback, so binding `::1` there raises
+# EADDRNOTAVAIL: probe it rather than assume every machine has one.
+ipv6_loopback = begin
+  Socket.tcp_server_sockets("::1", 0).each(&:close)
+  true
+rescue SystemCallError, SocketError
+  false
+end
+
 RSpec.describe OpenLanes::Web::Server do
   subject(:server) { described_class.new(app: OpenLanes::Web.app(context), context:, port: 0).start }
 
@@ -27,7 +36,7 @@ RSpec.describe OpenLanes::Web::Server do
       .to match([%r{\Ahttp://127\.0\.0\.1:\d+\z}, [server.url], false])
   end
 
-  context "with two addresses" do
+  context "with two addresses", if: ipv6_loopback do
     subject(:server) do
       described_class.new(app: OpenLanes::Web.app(context),
         context:,
