@@ -228,7 +228,7 @@ RSpec.describe OpenLanes::Vcs::Worktree do
       end
 
       it "names every place it looked" do
-        expect(OpenLanes::UI).to have_received(:log).with(a_string_including("no setup-worktree found", "$OPENLANES_SETUP_WORKTREE", "~/.claude/bin", "~/.agents/bin"))
+        expect(OpenLanes::UI).to have_received(:log).with(a_string_including("no setup-worktree found", "$OPENLANES_SETUP_WORKTREE", "~/.claude/bin", "~/.agents/bin"), level: :warn)
       end
 
       it { expect(stderr.string).to be_empty }
@@ -273,7 +273,7 @@ RSpec.describe OpenLanes::Vcs::Worktree do
       context "when it has run" do
         before { worktrees.seed(repo) }
 
-        it { expect(OpenLanes::UI).to have_received(:log).with(a_string_including("could not seed")) }
+        it { expect(OpenLanes::UI).to have_received(:log).with(a_string_including("could not seed"), level: :warn) }
         it { expect(stderr.string).to be_empty }
       end
 

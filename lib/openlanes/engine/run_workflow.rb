@@ -3,7 +3,7 @@
 module OpenLanes
   module Engine
     # `openlanes run` without the command: narrow the roster and the plans,
-    # check the pairing makes sense, set the run up (isolation, progress log,
+    # check the pairing makes sense, set the run up (isolation, log,
     # state file, live board, control room), build the {Runner}, run it to a
     # fixed point, and report what it did.
     #
@@ -45,6 +45,7 @@ module OpenLanes
         plans  = yield scope
         yield assignable(agents, plans) if @options[:agent]
         yield isolatable
+        yield logging
 
         prepare(plans)
         live = yield live_for(agents)
@@ -175,14 +176,30 @@ module OpenLanes
           66)
       end
 
-      # The progress log, the warnings that must land before the first agent,
+      # Opens the log every event of the run is written to, the one the
+      # control room's server will write to as well (it is handed the same
+      # settings through {Web::Launcher#env}). Logged as `engine`, so its
+      # lines and the server's tell themselves apart.
+      #
+      # The project root rather than `--root`: `--root` is where agents
+      # work, and the log belongs with the `.plans` it reports on.
+      #
+      # @return [Dry::Monads::Result]
+      def logging
+        settings = Log.setup(Log::Settings.from(@options, root: File.dirname(@tree.dir)), name: "engine")
+        Log.logger.info("run starting", root: @root, dry_run: @dry_run)
+        Success(settings)
+      rescue Log::Invalid => e
+        refusal(e.message, 64)
+      end
+
+      # The warnings that must land before the first agent,
       # the state file, and a clean control file.
       #
       # @param plans [Array<OpenLanes::Plans::Ordinal>, nil]
       # @return [void]
       def prepare(plans)
-        UI.log_path = @options[:log] || ProgressLog.default_path(@root)
-        startup("Progress", UI.log_path)
+        startup("Log", UI.log_path)
         credentials unless @dry_run || @quiet
         spec_warning(plans) unless @quiet
 
@@ -472,7 +489,14 @@ module OpenLanes
         report(runner, attempts, seconds:)
         bombs = runner.halted_by
         bomb_report(bombs)
-        failures(attempts).empty? && bombs.empty? ? 0 : 1
+        status = failures(attempts).empty? && bombs.empty? ? 0 : 1
+        Log.logger.public_send(status.zero? ? :info : :warn,
+          "run finished",
+          attempts: attempts.size,
+          failed:   failures(attempts).size,
+          seconds:  seconds.round(1),
+          exit:     status)
+        status
       end
 
       # Named on STDERR even under --quiet: it is why the run exits 1.

@@ -96,10 +96,9 @@ A direct bidirectional socket was considered. Streams won because they keep what
 ### W14. One logging library, one log directory
 
 - Every component logs through SemanticLogger: the engine, the API server and each CLI command. Agents' raw traces stay in `Dir.tmpdir/openlanes-traces`, for the reason `Executor::TRACE_DIR` gives.
-- By default, logs go to `.openlanes/log/engine.log` and `.openlanes/log/api.log` in the project root, one file per process so two processes never interleave lines in one file. One line per entry by default; `--log-format json` for machines.
-- `.openlanes/` is created when missing and added to `.gitignore`.
-- This departs from the global `log/` convention on purpose: openlanes runs inside other people's projects, and their own `log/` belongs to them.
-- `-l`/`--log`, `-L`/`--log-level` and `--log-format` work as the global CLI rules describe, with the paths above as defaults.
+- **Revised 2026-10-15:** both processes log to one file, `log/development.log` in the project root, created when missing. The engine hands the server its file, level and format through the environment, so one `--log` moves both. Each line names its process id and its writer (`engine` or `web`), so interleaved lines stay attributable; each process opens the file in append mode and writes whole lines synchronously, so they never tear. One line per entry by default; `--log-format json` for machines.
+- This supersedes the earlier `.openlanes/log/engine.log` and `api.log` split, at the user's request: one file to `tail -f`. The cost is the one the earlier version named: in a project that keeps its own `log/development.log` (a Rails app), openlanes' lines join it. `--log` (or `log:` under `commands:` in `.openlanes.yml`) moves them.
+- `-l`/`--log`, `-L`/`--log-level` and `--log-format` work as the global CLI rules describe, with the path above as the default.
 
 ### W15. Every test run gets its own tab, fed by a tee
 

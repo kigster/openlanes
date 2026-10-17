@@ -50,6 +50,33 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     expect(stderr).to include("Control room: http://127.0.0.1:11000", "Redis: memory:// as")
   end
 
+  describe "logging" do
+    let(:default_log) { File.join(File.dirname(plans_root), "log", "development.log") }
+
+    it "logs as web to log/development.log under the project" do
+      result
+      expect(File.read(default_log)).to match(%r{ I \[\d+:[^\]]+\] web -- listening -- \{url: "http://127\.0\.0\.1:11000"})
+    end
+
+    it "logs where the engine that spawned it said to, at its level and in its format" do
+      handed = File.join(File.dirname(plans_root), "shared.log")
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("OPENLANES_LOG").and_return(handed)
+      allow(ENV).to receive(:[]).with("OPENLANES_LOG_FORMAT").and_return("json")
+      result
+
+      aggregate_failures do
+        expect(OpenLanes::Log.settings).to have_attributes(file: handed, format: "json")
+        expect(JSON.parse(File.read(handed))).to include("name" => "web", "message" => "listening")
+        expect(File.exist?(default_log)).to be(false)
+      end
+    end
+
+    it "refuses a level it does not know" do
+      expect(run(log_level: "loud")).to match([anything, include("--log-level loud"), 64])
+    end
+  end
+
   it "listens on the port asked for" do
     result
     expect(built[:server][:port]).to eq("11000")

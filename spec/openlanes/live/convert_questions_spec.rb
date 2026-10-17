@@ -103,7 +103,7 @@ RSpec.describe "Converting prose questions into choices", :tree do
       aggregate_failures do
         expect(blocked_md).to eq("## B1 Budget\n\n#{prose}\n")
         expect(state.conversions.map { it.slice("outcome", "note") }).to eq([{ "outcome" => "rejected", "note" => "1 option, not 2 or more" }])
-        expect(OpenLanes::UI).to have_received(:log).with("questions: could not convert B1: 1 option, not 2 or more", plan: "002.00")
+        expect(OpenLanes::UI).to have_received(:log).with("questions: could not convert B1: 1 option, not 2 or more", level: :warn, plan: "002.00")
       end
     end
 
@@ -126,7 +126,7 @@ RSpec.describe "Converting prose questions into choices", :tree do
         expect(blocked_md).to eq("## B1 Budget\n\n#{prose}\n")
         expect(state.conversions).to eq([])
         expect(converter.calls.size).to eq(1)
-        expect(OpenLanes::UI).to have_received(:log).with("questions: could not convert B1: OpenRouter API error 503: busy", plan: "002.00")
+        expect(OpenLanes::UI).to have_received(:log).with("questions: could not convert B1: OpenRouter API error 503: busy", level: :warn, plan: "002.00")
       end
     end
   end
@@ -144,7 +144,7 @@ RSpec.describe "Converting prose questions into choices", :tree do
       aggregate_failures do
         expect(blocked_md).to eq("## B1 Budget\n\nSomething else entirely.\n")
         expect(OpenLanes::UI).to have_received(:log)
-          .with("questions: could not convert B1: it changed or was answered while the model was writing", plan: "002.00")
+          .with("questions: could not convert B1: it changed or was answered while the model was writing", level: :warn, plan: "002.00")
       end
     end
   end

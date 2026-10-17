@@ -119,7 +119,7 @@ module OpenLanes
         UI.log("aging: 💣 after #{days(age)} blocked, with plans waiting on it", plan: subject.feature.ordinal.to_s)
         true
       rescue Plans::StateMachine::Refused => e
-        UI.log("aging: could not bomb: #{e.message}", plan: subject.feature.ordinal.to_s)
+        UI.log("aging: could not bomb: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
         false
       end
 
@@ -135,7 +135,7 @@ module OpenLanes
         true
       rescue Plans::StateMachine::Refused => e
         File.delete(path) if wrote && File.exist?(path)
-        UI.log("aging: could not defer: #{e.message}", plan: subject.feature.ordinal.to_s)
+        UI.log("aging: could not defer: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
         false
       end
 
