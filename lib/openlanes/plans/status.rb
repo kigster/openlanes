@@ -241,6 +241,14 @@ module OpenLanes
         invariant: open_pull_request("In Review")
       ),
       Status.new(
+        key:       :verifying,
+        emoji:     "🧪",
+        label:     "Verifying",
+        requires:  %w[spec.md plan.md pull-requests.md],
+        note:      "the review approved it; chewie runs the app through How to test before anything merges",
+        invariant: open_pull_request("Verifying")
+      ),
+      Status.new(
         key:       :rejected,
         emoji:     "🔴",
         label:     "Changes Requested",

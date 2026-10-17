@@ -60,6 +60,19 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       end
     end
 
+    it "runs an approved review through 🧪 Verifying, which can still pass or send it back" do
+      aggregate_failures do
+        expect(described_class.edge?(:in_review, :verifying)).to be(true)
+        expect(described_class.edge?(:verifying, :approved)).to be(true)
+        expect(described_class.edge?(:verifying, :rejected)).to be(true)
+        expect(described_class.event_for.fetch(:verifying)).to eq(:verify)
+      end
+    end
+
+    it "keeps 🧪 Verifying in the family resync never moves a folder out of" do
+      expect(described_class.family_of(:in_review)).to include(:verifying)
+    end
+
     it "lets anything be discarded, from anywhere" do
       others = OpenLanes::Plans::STATUSES.map(&:key) - [:discarded]
 
@@ -286,14 +299,15 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       end
     end
 
-    it "derives every step back from the spine, as far as review" do
+    it "derives every step back from the spine, as far as verification" do
       expect(described_class::RETREAT).to eq(researched: :new,
         ready_for_planning: :researched,
         planned: :ready_for_planning,
         building: :planned,
         building_ui: :building,
         ready_for_review: :building_ui,
-        in_review: :ready_for_review)
+        in_review: :ready_for_review,
+        verifying: :in_review)
     end
 
     it "refuses with the earlier state's own violation when the folder does not fit it" do
@@ -314,11 +328,11 @@ RSpec.describe OpenLanes::Plans::StateMachine do
   end
 
   describe "#spine_next" do
-    it "walks spec → plan → build → review → merge → ship" do
+    it "walks spec → plan → build → review → verify → merge → ship" do
       expected = {
         retroactive: :planned, new: :researched, researched: :ready_for_planning, ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
-        ready_for_review: :in_review, in_review: :approved, approved: :deployed,
+        ready_for_review: :in_review, in_review: :verifying, verifying: :approved, approved: :deployed,
         rejected: :building_ui, rolled_back: :ready_for_review, shit: :planned,
         discarded: nil, blocked: nil, deployed: nil
       }

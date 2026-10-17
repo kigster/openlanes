@@ -50,6 +50,7 @@ module OpenLanes
       building_ui:        Placement.new(type: "started", name: "In Progress", labels: %w[frontend]),
       ready_for_review:   Placement.new(type: "started", name: "In Review", labels: []),
       in_review:          Placement.new(type: "started", name: "In Review", labels: []),
+      verifying:          Placement.new(type: "started", name: "In Review", labels: []),
       rejected:           Placement.new(type: "started", name: "In Review", labels: %w[changes-requested]),
       approved:           Placement.new(type: "completed", name: "Done", labels: []),
       deployed:           Placement.new(type: "completed", name: "Done", labels: %w[deployed]),

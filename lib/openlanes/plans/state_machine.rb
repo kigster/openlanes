@@ -43,7 +43,8 @@ module OpenLanes
         building:           :building_ui,
         building_ui:        :ready_for_review,
         ready_for_review:   :in_review,
-        in_review:          :approved,
+        in_review:          :verifying,
+        verifying:          :approved,
         approved:           :deployed,
         rejected:           :building_ui,
         rolled_back:        :ready_for_review,
@@ -53,7 +54,7 @@ module OpenLanes
       # One step back along the spine, for the one move that goes backwards: a
       # person discarding an interrupted round (W9) sends the plan back to the
       # state the work started from. Derived from {SPINE}, walking it from ⚪:
-      # each state on that path steps back to the one before it, as far as 👀,
+      # each state on that path steps back to the one before it, as far as 🧪,
       # the last state an agent works in. States off the path (🔴 💩 ⏪ and
       # the birth state) have no single state behind them and step back
       # nowhere.
@@ -68,7 +69,7 @@ module OpenLanes
       # absence of documents rather than the presence of any.
       PREFERENCE = %i[
         discarded rolled_back shit deferred blocked product_blocked bomb
-        deployed approved rejected in_review ready_for_review building_ui building planned ready_for_planning
+        deployed approved rejected verifying in_review ready_for_review building_ui building planned ready_for_planning
         researched new
         retroactive
       ].freeze
@@ -92,15 +93,15 @@ module OpenLanes
       # Contents that fit the family justify only its floor, never its ceiling.
       FAMILIES = [
         %i[blocked product_blocked bomb],
-        %i[planned building building_ui ready_for_review in_review rejected]
+        %i[planned building building_ui ready_for_review in_review verifying rejected]
       ].freeze
 
       # States the agent loop leaves alone: work that is finished (✅ 😎), work
       # that was dropped (❌), and work waiting on a human (⭕ 🛑 💣 💤).
       # Everything else is fair game for a specialist.
       #
-      # ✅ Approved is here deliberately. `hansolo-reviewer` advancing a plan to
-      # it is the end of the loop, not a step in it: nothing merges, and no agent
+      # ✅ Approved is here deliberately. A plan reaching it, from 🧪 once its
+      # pull request merged, is the end of the loop, not a step in it: no agent
       # handles `approved`. Merging is the one act in this lifecycle that changes
       # a branch everyone else builds on, and an autonomous loop that does it
       # unattended has no way to be wrong quietly.
@@ -178,12 +179,23 @@ module OpenLanes
           transitions from: %i[ready_for_review], to: :in_review
         end
 
-        event :approve, guard: :justified? do
-          transitions from: %i[in_review retroactive], to: :approved
+        # hansolo's approval no longer ends the loop (plan 014, M1): the app is
+        # run through the pull request's `## How to test` first, by
+        # chewie-verifier, before anything may merge.
+        event :verify, guard: :justified? do
+          transitions from: %i[in_review], to: :verifying
         end
 
+        # `in_review` stays a source: a person who merges on GitHub while
+        # hansolo is still reading has approved it all the same (M4).
+        event :approve, guard: :justified? do
+          transitions from: %i[in_review verifying retroactive], to: :approved
+        end
+
+        # From 🧪 as well as 👀: a verification that fails sends the plan back
+        # to the builders exactly as a review that fails does.
         event :request_changes, guard: :justified? do
-          transitions from: %i[in_review], to: :rejected
+          transitions from: %i[in_review verifying], to: :rejected
         end
 
         event :slop, guard: :justified? do
