@@ -146,7 +146,7 @@ class ControlRoomProcess
   # @param url [String]
   # @return [Boolean] whether the URL names a database this harness may flush
   def self.dedicated?(url)
-    db = URI(url).path.delete_prefix("/")
+    db = TestRedis.database(url).to_s
     db.match?(/\A\d+\z/) && db.to_i >= FIRST_TEST_DATABASE
   end
 

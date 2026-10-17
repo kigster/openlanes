@@ -21,6 +21,8 @@ module TestRedis
   # fails fast instead of reading or writing it.
   UNREACHABLE = "redis://127.0.0.1:1/0"
 
+  DEFAULT_PORT = 6379
+
   LOCAL_HOSTS = %w[localhost 127.0.0.1 ::1 [::1]].freeze
 
   # Variables a developer's shell or a running engine may export, each of
@@ -39,6 +41,10 @@ module TestRedis
 
     # The URL for one test database on the local Redis.
     #
+    # A TCP URL carries the database as its path; a unix URL's path IS the
+    # socket, so replacing it would name a socket that does not exist, and
+    # the database goes in `?db=N` as redis-rb reads it.
+    #
     # @param db [Integer]
     # @param env [Hash, ENV]
     # @return [String]
@@ -47,8 +53,21 @@ module TestRedis
       base = URI(env.fetch("OPENLANES_TEST_REDIS_URL", DEFAULT))
       raise ArgumentError, "refusing #{base.host}: the suite only uses a Redis on this machine" unless local?(base)
 
-      base.path = "/#{db}"
+      if base.scheme == "unix"
+        base.query = "db=#{db}"
+      else
+        base.path = "/#{db}"
+      end
       base.to_s
+    end
+
+    # @param url [String]
+    # @return [String, nil] the database the URL names, whichever scheme carries it
+    def database(url)
+      uri = URI(url)
+      return URI.decode_www_form(uri.query.to_s).to_h["db"] if uri.scheme == "unix"
+
+      uri.path.delete_prefix("/")
     end
 
     # @param uri [URI::Generic]
@@ -61,32 +80,58 @@ module TestRedis
     # belong to an open file, and a second open in this process would wait
     # on the first forever.
     #
+    # The lock is per example, so `:redis` state must be set up per example
+    # (`before`, never `before(:all)`): another suite may flush between two
+    # examples of one group.
+    #
     # @param env [Hash, ENV]
     # @yield
     # @return [Object] the block's value
-    def exclusively(env: ENV)
+    def exclusively(env: ENV, &)
       @depth ||= 0
-      if @depth.zero?
-        @lock = File.open(lock_path(env:), File::RDWR | File::CREAT, 0o644)
-        @lock.flock(File::LOCK_EX)
-      end
+      acquire(env) if @depth.zero?
+      # Counted only once the lock is held, so a failed acquisition leaves
+      # the depth where it was instead of driving it to -1, which would
+      # skip the lock for every later example.
       @depth += 1
-      yield
-    ensure
-      @depth -= 1
-      if @depth.zero?
-        @lock.flock(File::LOCK_UN)
-        @lock.close
-        @lock = nil
+      begin
+        yield
+      ensure
+        @depth -= 1
+        release if @depth.zero?
       end
     end
+
+    # Where lock files live. `Dir.tmpdir` follows `$TMPDIR`, and sandboxes
+    # that each set their own would each lock a different file.
+    #
+    # @param env [Hash, ENV]
+    # @return [String]
+    def lock_dir(env: ENV) = env.fetch("OPENLANES_TEST_LOCK_DIR", "/tmp")
 
     # @param env [Hash, ENV]
     # @return [String] one lock file per Redis server, not per database
     def lock_path(env: ENV)
       base = URI(url(0, env:))
-      where = base.scheme == "unix" ? base.path : "#{base.host}-#{base.port}"
-      File.join(Dir.tmpdir, "openlanes-test-redis-#{where.gsub(/[^\w.-]/, "_")}.lock")
+      where = base.scheme == "unix" ? base.path : "loopback-#{base.port || DEFAULT_PORT}"
+      File.join(lock_dir(env:), "openlanes-test-redis-#{where.gsub(/[^\w.-]/, "_")}.lock")
+    end
+
+    private
+
+    def acquire(env)
+      @lock = File.open(lock_path(env:), File::RDWR | File::CREAT, 0o644)
+      @lock.flock(File::LOCK_EX)
+    rescue Exception # rubocop:disable Lint/RescueException
+      @lock&.close
+      @lock = nil
+      raise
+    end
+
+    def release
+      @lock.flock(File::LOCK_UN)
+      @lock.close
+      @lock = nil
     end
   end
 end
