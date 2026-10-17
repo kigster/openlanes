@@ -31,7 +31,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   before do
     plans { |t| t.plan "001.00", :new, "remember", files: { "spec.md" => spec_body } }
-    OpenLanes::Engine::Runner.new(tree:, executor:, agents:, isolation: :shared, jobs: 1, sleeper: ->(_) {}).call
+    # No round granted on its own (E1): the agent's two rounds are the ones counted here.
+    OpenLanes::Engine::Runner.new(tree:,
+      executor:,
+      agents:,
+      isolation: :shared,
+      jobs: 1,
+      sleeper: ->(_) {},
+      extensions: OpenLanes::Engine::Extensions.new(stay: false, auto: false)).call
   end
 
   after do
