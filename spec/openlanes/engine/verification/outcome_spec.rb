@@ -177,6 +177,21 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
+    it "sends the round back, uncounted and saying so, when final.png cannot be committed" do
+      File.write(File.join(repo_root, "app.rb"), "puts :stray\n")
+      result = outcome.pass(checkout:, plan:, pull: pr, round:)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :rejected)
+        expect(result.note).to start_with("verified PR #1 but NOT committed (refused to commit 014.00: changes outside its plan folder")
+        expect(result.note).to include("not counted (0 of 2)")
+        expect(comments.first).to include("final.png was not committed, so the pull request carries no evidence")
+        expect(labels).to eq(%w[review-rejected])
+        expect(outcome.rejections(plan)).to eq(0)
+        expect(OpenLanes::Engine::Verification.latest(plan.feature.path).report.verdict).to eq(:rejected)
+      end
+    end
+
     it "waits while CI is pending, then labels ready-to-merge once it is green and the gate passes" do
       outcome.pass(checkout:, plan:, pull: pr, round:)
       edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }

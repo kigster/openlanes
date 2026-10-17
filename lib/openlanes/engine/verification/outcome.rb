@@ -26,7 +26,7 @@ module OpenLanes
         # What one step did.
         #
         # @!attribute [r] kind
-        #   @return [Symbol] :rejected, :committed (passed, CI not read yet),
+        #   @return [Symbol] :rejected, :committed (passed and pushed, CI not read yet),
         #     :waiting (CI pending), or :ready (`ready-to-merge` applied)
         # @!attribute [r] note
         #   @return [String] for the attempt and the log
@@ -140,14 +140,24 @@ module OpenLanes
 
         # chewie verified it: keep `final.png`, and push it.
         #
+        # A commit that failed is sent back rather than reported as
+        # committed: {#settle} would otherwise read the old head's CI and
+        # label it ready with no `final.png` on the branch, and the missing
+        # evidence would go unnoticed. It is a send-back, not a counted
+        # rejection, because the code may be fine; what is wrong is the
+        # checkout (a stray file, a push that would not go).
+        #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
         # @param plan [OpenLanes::Plans::Subject]
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
         # @param round [Round]
-        # @return [Result] :committed; the folder stays 🧪 until {#settle}
+        # @return [Result] :committed, the folder staying 🧪 until {#settle};
+        #   :rejected when `final.png` could not be committed
         def pass(checkout:, plan:, pull:, round:)
           keep(round, failing_step: nil)
-          sha, committed = commit(checkout, plan, round, "verified")
+          sha, committed, failure = commit(checkout, plan, round, "verified")
+          return uncommitted(checkout:, plan:, pull:, round:, failure:) if failure
+
           pushed = sha ? "#{Screenshots::FINAL} pushed in #{sha[0, 7]}" : committed
           Result.new(kind: :committed, note: "verified PR ##{number_of(pull)}; #{pushed}; waiting on CI")
         end
@@ -240,14 +250,23 @@ module OpenLanes
           []
         end
 
-        # @return [Array(String, String)] the SHA, nil when nothing was
-        #   committed, and what to say about it
+        # @return [Array(String, String, String)] the SHA, nil when nothing
+        #   was committed; what to say about it; and why the commit failed,
+        #   nil when it did not
         def commit(checkout, plan, round, verdict)
           message = "Verify #{plan.feature.ordinal}, round #{round.number}: #{verdict}"
           sha = @publisher.commit_plan(checkout:, plan:, message:)
-          [sha, sha ? "committed #{sha[0, 7]}" : "nothing committed on a dry run"]
+          [sha, sha ? "committed #{sha[0, 7]}" : "nothing committed on a dry run", nil]
         rescue Error => e
-          [nil, "not committed: #{e.message}"]
+          [nil, "not committed: #{e.message}", e.message]
+        end
+
+        # @return [Result] the send-back for a verified round whose evidence
+        #   never reached the branch, its note saying so first
+        def uncommitted(checkout:, plan:, pull:, round:, failure:)
+          why = "Verified, but #{Screenshots::FINAL} was not committed, so the pull request carries no evidence: #{failure}"
+          result = reject(checkout:, plan:, pull:, round:, why:, counted: false)
+          result.with(note: "verified PR ##{number_of(pull)} but NOT committed (#{failure}); #{result.note}")
         end
 
         # The engine writes the report chewie never got to write.
