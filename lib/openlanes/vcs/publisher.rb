@@ -119,6 +119,9 @@ module OpenLanes
         refuse(subject, checkout, title, git_complaint(e))
       end
 
+      # Paths named in a {#commit_plan} refusal before the rest are counted.
+      STRAY_SHOWN = 10
+
       # Commit the plan's folder, and nothing else, to the checkout's branch and
       # push it. Verification uses it to land chewie's screenshots on the pull
       # request before the engine links them by SHA.
@@ -138,8 +141,8 @@ module OpenLanes
         folder = plan_parent(plan)
         raise Error, "the plans live outside the repository, so the branch has no place for them" if folder.nil?
 
-        stray = changed_paths(checkout).reject { inside_plan?(it, folder, plan) }
-        raise Error, "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: #{stray.join(", ")}" if stray.any?
+        stray = changed_paths(checkout).reject { |path, _| inside_plan?(path, folder, plan) }
+        raise Error, stray_complaint(plan, stray) if stray.any?
         return nil if @dry_run
 
         carry_plan(checkout, plan)
@@ -234,16 +237,42 @@ module OpenLanes
       # emoji folder name unquoted; a rename's second entry is its old path.
       #
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
-      # @return [Array<String>]
+      # @return [Hash{String => Boolean}] each path, and whether git does not
+      #   track it
       def changed_paths(checkout)
         entries = run(checkout, "git", "status", "--porcelain", "-z", "--untracked-files=all").out.split("\0")
-        paths = []
+        paths = {}
         until entries.empty?
           entry = entries.shift
-          paths << entry[3..]
-          paths << entries.shift if entry.start_with?("R", "C")
+          paths[entry[3..]] = entry.start_with?("??")
+          paths[entries.shift] = false if entry.start_with?("R", "C")
         end
-        paths.compact
+        paths.reject { |path, _| path.nil? }
+      end
+
+      # Running the app in the checkout leaves files behind that a project
+      # may never have ignored (logs, `tmp/`, a SQLite file, `coverage/`),
+      # and each one refuses every verification commit until it is. So the
+      # refusal names them, apart from edits to tracked files, and says what
+      # to do about them; "changes outside its plan folder" alone reads as a
+      # stray code edit and sends someone looking for one.
+      #
+      # @param plan [OpenLanes::Plans::Subject]
+      # @param stray [Hash{String => Boolean}] see {#changed_paths}
+      # @return [String]
+      def stray_complaint(plan, stray)
+        untracked, edited = stray.partition { |_, new| new }.map { |pairs| pairs.map(&:first) }
+        parts = []
+        parts << "edited #{shown(edited)}" if edited.any?
+        parts << "untracked #{shown(untracked)} (left by the app or its tests? add them to .gitignore)" if untracked.any?
+        "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: #{parts.join("; ")}"
+      end
+
+      # @param paths [Array<String>]
+      # @return [String]
+      def shown(paths)
+        more = paths.size - STRAY_SHOWN
+        "#{paths.first(STRAY_SHOWN).join(", ")}#{" and #{more} more" if more.positive?}"
       end
 
       # @return [Boolean] whether `path` lies in any copy of this plan's folder

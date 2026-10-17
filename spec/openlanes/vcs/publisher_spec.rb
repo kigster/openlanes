@@ -357,9 +357,31 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
       aggregate_failures do
         expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
-          .to raise_error(OpenLanes::Error, /outside its plan folder: app\.rb/)
+          .to raise_error(OpenLanes::Error, /outside its plan folder: untracked app\.rb/)
         expect(repo_git("rev-parse", "HEAD")).to eq(before)
       end
+    end
+
+    it "names untracked leftovers apart from edits, with the hint to ignore them" do
+      File.write(File.join(repo_root, "README.md"), "seeded\n")
+      repo_git("add", "README.md")
+      repo_git("commit", "-q", "-m", "readme", "--", "README.md")
+      File.write(File.join(repo_root, "README.md"), "edited\n")
+      FileUtils.mkdir_p(File.join(repo_root, "log"))
+      File.write(File.join(repo_root, "log", "test.log"), "boot\n")
+
+      expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+        .to raise_error(OpenLanes::Error,
+          "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: edited README.md; " \
+          "untracked log/test.log (left by the app or its tests? add them to .gitignore)")
+    end
+
+    it "counts the untracked files past the first ten rather than listing every one" do
+      FileUtils.mkdir_p(File.join(repo_root, "tmp"))
+      12.times { File.write(File.join(repo_root, "tmp", format("cache-%02d", it)), "") }
+
+      expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+        .to raise_error(OpenLanes::Error, %r{tmp/cache-09 and 2 more \(left by the app})
     end
 
     it "is not a resubmit, so the review labels are left alone" do
