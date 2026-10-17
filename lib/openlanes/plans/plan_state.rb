@@ -519,6 +519,11 @@ module OpenLanes
       # in any round. Only the dispatcher calls this, under the lock every
       # write takes, so two agents printing at once cannot collide.
       #
+      # An override must name an entry below its own number. One that does
+      # not (`"overrides":99` as an agent's first line) overturns nothing,
+      # and is kept as a note rather than dropped, so it still takes its
+      # number and the agent's own count stays the stored one.
+      #
       # @param agent [String]
       # @param round [Integer]
       # @param entries [Array<OpenLanes::Plans::Journal::Entry>]
@@ -534,11 +539,19 @@ module OpenLanes
           last = rounds.values.flatten.map { it["number"].to_i }.max || 0
           list = (rounds[Integer(round).to_s] ||= [])
           entries.each_with_index do |entry, i|
-            written << entry.to_json_h(last + i + 1)
+            number = last + i + 1
+            entry = entry.with(kind: "note", overrides: nil) if entry.overrides && entry.overrides >= number
+            written << entry.to_json_h(number)
             list << written.last
           end
         end
         written
+      end
+
+      # @param agent [String]
+      # @return [Integer] the number the agent's next journal entry will take
+      def next_journal_number(agent)
+        (read.dig(MEMORY, agent, "rounds") || {}).values.flatten.map { it["number"].to_i }.max.to_i + 1
       end
 
       # @param agent [String]

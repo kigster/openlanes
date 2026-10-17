@@ -434,17 +434,6 @@ module OpenLanes
         SECTION
       end
 
-      # How to write a question in `blocked.md` so a person can answer it
-      # with one click (D3): context, then lettered options, one recommended.
-      # The page draws a button per option and always adds a text box, so an
-      # agent that writes the shape gets buttons, and one that does not gets
-      # only the box. Said once here, for every agent that writes
-      # `blocked.md`, rather than in each definition, so the shape cannot
-      # drift between them. {Plans::Choices} reads it, and still reads the
-      # W30 yes/no mark in files written before.
-      #
-      # @return [String] empty for an agent whose definition never mentions
-      #   `blocked.md`, and for the agent that drains it
       # How to keep the journal (M2), and what the previous round kept.
       #
       # @return [String]
@@ -467,8 +456,21 @@ module OpenLanes
           `override` overturns an earlier entry and names its number:
 
               {"kind":"override","text":"tokens live in Postgres after all","overrides":3}
+
+          Entries are numbered 1, 2, 3… in the order you print them, counting
+          on from your earlier rounds: the first you print this round is
+          ##{next_journal_number}. Only a line of the shape above gets a number. An
+          override must name a number below its own; one that does not
+          overturns nothing and is kept as a note.
           #{previous_journal}
         SECTION
+      end
+
+      # @return [Integer] what this round's first entry will be numbered
+      def next_journal_number
+        Plans::PlanState.for(subject.feature.path).next_journal_number(agent.name)
+      rescue OpenLanes::Error, SystemCallError
+        1
       end
 
       # The previous round's journal, enforced rather than requested (M2): it
@@ -488,6 +490,17 @@ module OpenLanes
         ""
       end
 
+      # How to write a question in `blocked.md` so a person can answer it
+      # with one click (D3): context, then lettered options, one recommended.
+      # The page draws a button per option and always adds a text box, so an
+      # agent that writes the shape gets buttons, and one that does not gets
+      # only the box. Said once here, for every agent that writes
+      # `blocked.md`, rather than in each definition, so the shape cannot
+      # drift between them. {Plans::Choices} reads it, and still reads the
+      # W30 yes/no mark in files written before.
+      #
+      # @return [String] empty for an agent whose definition never mentions
+      #   `blocked.md`, and for the agent that drains it
       def questions_section
         return "" unless agent.prompt.include?("blocked.md") && !agent.handles.include?(:blocked)
 

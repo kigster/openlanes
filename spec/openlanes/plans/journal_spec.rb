@@ -88,6 +88,18 @@ RSpec.describe OpenLanes::Plans::Journal do
       expect(schema.valid?(data)).to be(false)
     end
 
+    it "keeps an override of no earlier entry as a note, under its own number" do
+      written = state.journal!(agent: "rey-frontend",
+        round: 2,
+        entries: entries({ kind: "override", text: "x", overrides: 99 }, { kind: "override", text: "y", overrides: 3 }))
+
+      expect(written).to eq([{ "number" => 2, "kind" => "note", "text" => "x" }, { "number" => 3, "kind" => "note", "text" => "y" }])
+    end
+
+    it "says what number the agent's next entry takes" do
+      expect([state.next_journal_number("luke-backend"), state.next_journal_number("leia-planner")]).to eq([5, 1])
+    end
+
     it "writes nothing for nothing" do
       expect(state.journal!(agent: "luke-backend", round: 3, entries: [])).to eq([])
     end

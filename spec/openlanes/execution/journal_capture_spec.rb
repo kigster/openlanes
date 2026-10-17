@@ -29,6 +29,17 @@ RSpec.describe "the agent journal, read from the stream and replayed in the prom
 
       expect(stream.journal.map(&:text)).to eq(["whole"])
     end
+
+    it "keeps an entry once when a growing message is sent again whole" do
+      first = entry(kind: "decision", text: "once")
+      [{ type: "message_update", message: { content: [{ type: "text", text: first }] } },
+       { type: "message_update", message: { content: [{ type: "text", text: "#{first}\n#{entry(kind: "todo", text: "U2")}" }] } },
+       { type: "message_end", message: { content: [{ type: "text", text: "#{first}\n#{entry(kind: "todo", text: "U2")}" }] } },
+       { type: "message_end", message: { content: [{ type: "text", text: entry(kind: "done", text: "U2") }] } }]
+        .each { stream.push("#{JSON.generate(it)}\n") }
+
+      expect(stream.journal.map(&:text)).to eq(%w[once U2 U2])
+    end
   end
 
   describe OpenLanes::Execution::Executor, :tree do
@@ -88,6 +99,10 @@ RSpec.describe "the agent journal, read from the stream and replayed in the prom
 
       it "puts it there when the session is resumed, too" do
         expect(prompt(2, resume: "sess-1")).to include("#1 decision: Redis")
+      end
+
+      it "tells the agent the number its first entry this round takes" do
+        expect(prompt(2)).to include("the first you print this round is\n#2")
       end
 
       it "shows no previous journal to round 1" do

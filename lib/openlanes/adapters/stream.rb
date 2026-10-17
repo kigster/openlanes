@@ -31,6 +31,8 @@ module OpenLanes
         @result = nil
         @error = nil
         @journal = []
+        @said = nil
+        @taken = 0
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -146,11 +148,27 @@ module OpenLanes
         if said
           # A delta is a fragment of a message whose whole arrives later, and
           # scanning both would write every entry twice.
-          @journal.concat(Plans::Journal.scan(said)) unless type.match?(/delta/i)
+          note_journal(said) unless type.match?(/delta/i)
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
         end
         @on_progress&.call(progress)
+      end
+
+      # A CLI may send one message more than once as it grows, an update
+      # with the text so far and then the whole at its end, under types
+      # that do not say "delta". A text that extends the one before it is
+      # the same message, so only the entries past those already taken from
+      # it are new. Any other text starts a new message.
+      #
+      # @param said [String]
+      # @return [void]
+      def note_journal(said)
+        @taken = 0 unless @said && said.start_with?(@said)
+        found = Plans::Journal.scan(said)
+        @journal.concat(found.drop(@taken))
+        @taken = [@taken, found.size].max
+        @said = said
       end
 
       # Usage counts arrive per turn, so they are added rather than replaced.
