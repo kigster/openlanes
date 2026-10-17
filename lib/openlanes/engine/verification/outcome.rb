@@ -292,14 +292,25 @@ module OpenLanes
         # the record.
         #
         # @return [Array<String>] the kept images
+        #
+        # A round holding an image that is not PNG has those images deleted
+        # before anything else: both callers commit the round's folder whole,
+        # so an image merely "not kept" would be published all the same,
+        # together with every step screenshot {Screenshots#prepare} would
+        # have pruned. The PNGs then go through {Screenshots#prepare} as
+        # usual, so the evidence that can be shown still is.
         def keep(round, failing_step:)
           return [] unless File.directory?(round.dir)
 
           FileUtils.rm_f(File.join(round.dir, Round::APP_NOTE))
-          @screenshots.call(round.dir).prepare(failing_step:)
-        rescue Screenshots::Refused => e
-          UI.log("screenshots not kept: #{e.message}", level: :warn)
-          []
+          shots = @screenshots.call(round.dir)
+          begin
+            shots.prepare(failing_step:)
+          rescue Screenshots::Refused => e
+            removed = shots.discard_foreign!
+            UI.log("#{e.message}; deleted #{removed.join(", ")} rather than publish them", level: :warn)
+            shots.prepare(failing_step:)
+          end
         end
 
         # @return [Array(String, String, String)] the SHA, nil when nothing

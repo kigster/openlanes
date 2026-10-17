@@ -96,6 +96,18 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       expect(pushed).to contain_exactly("step-02.png", "final.png", "report.md")
     end
 
+    it "publishes no image that is not PNG, and still prunes the step screenshots" do
+      FileUtils.cp(fixture_png, File.join(round.dir, "step-03.webp"))
+      allow(OpenLanes::UI).to receive(:log)
+      outcome.reject(checkout:, plan:, pull: pr, round:)
+      pushed = origin_files.grep(%r{/verification/1/}).map { File.basename(it) }
+
+      aggregate_failures do
+        expect(pushed).to contain_exactly("step-02.png", "final.png", "report.md")
+        expect(OpenLanes::UI).to have_received(:log).with(a_string_including("not PNG", "deleted step-03.webp rather than publish them"), level: :warn)
+      end
+    end
+
     it "names the step, what was expected and what was seen, and links the PNG by SHA, every byte escaped" do
       dirname = plan.feature.dirname
       outcome.reject(checkout:, plan:, pull: pr, round:)

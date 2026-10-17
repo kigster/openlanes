@@ -61,6 +61,19 @@ module OpenLanes
           kept
         end
 
+        # Delete every image that is not PNG. {#prepare} deletes nothing when
+        # it refuses, so that a person reading the round can see what was
+        # there; but the round's folder is committed whole, so whatever is
+        # left in it is published. A caller about to commit calls this
+        # first, then {#prepare} again.
+        #
+        # @return [Array<String>] the names removed
+        def discard_foreign!
+          foreign = Dir.children(@dir).select { it.match?(IMAGE) && !it.match?(/\.png\z/i) && File.file?(File.join(@dir, it)) }.sort
+          foreign.each { FileUtils.rm_f(File.join(@dir, it)) }
+          foreign
+        end
+
         private
 
         # @param paths [Array<String>]

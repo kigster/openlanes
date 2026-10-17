@@ -73,6 +73,17 @@ RSpec.describe OpenLanes::Engine::Verification::Screenshots do
     end
   end
 
+  it "deletes only the images that are not PNG when asked to discard them" do
+    %w[final.png step-01.png].each { put(it) }
+    %w[step-02.webp step-03.JPG].each { FileUtils.cp(fixture, File.join(dir, it)) }
+    File.write(File.join(dir, "report.md"), "Verdict: rejected\n")
+
+    aggregate_failures do
+      expect(screenshots.discard_foreign!).to eq(%w[step-02.webp step-03.JPG])
+      expect(Dir.children(dir).sort).to eq(%w[final.png report.md step-01.png])
+    end
+  end
+
   it "warns once and keeps the files as they are when neither tool is installed" do
     %w[step-01.png final.png].each { put(it) }
     allow(OpenLanes::UI).to receive(:log)
