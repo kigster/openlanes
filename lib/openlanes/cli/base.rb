@@ -160,7 +160,7 @@ module OpenLanes
           desc:    "The lowest level written (default: #{Log::DEFAULT_LEVEL})"
         option :log_format,
           values: Log::FORMATS.keys,
-          desc:   "standard (one line per entry) or json (default: #{Log::DEFAULT_FORMAT})"
+          desc:   "color or standard (one line per entry, with or without colour) or json (default: #{Log::DEFAULT_FORMAT})"
       end
 
       private

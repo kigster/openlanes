@@ -58,7 +58,7 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
 
     it "logs as web to log/development.log under the project" do
       result
-      expect(File.read(default_log)).to match(%r{ I \[\d+:[^\]]+\] web -- listening -- \{url: "http://127\.0\.0\.1:11000"})
+      expect(File.read(default_log).gsub(/\e\[[\d;]*m/, "")).to match(%r{ I \[\d+:[^\]]+\] web -- listening -- \{url: "http://127\.0\.0\.1:11000"})
     end
 
     it "logs where the engine that spawned it said to, at its level and in its format" do
