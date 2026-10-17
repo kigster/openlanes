@@ -6,7 +6,7 @@ depends_on: ["005.00", "012.00", "013.00"]
 
 ## What we are trying to achieve
 
-`chewie-verifier` checks out a PR that passed review, starts the app, follows `## How to test`, and labels it `ok-to-merge` or rejects it with a PNG screenshot. In agent mode the engine then merges; rejections are capped.
+`chewie-verifier` checks out a PR that passed review, starts the app, follows `## How to test`, and labels it `ready-to-merge` or rejects it with a PNG screenshot. In agent mode the engine then merges; rejections are capped.
 
 ## Why it matters
 
@@ -25,7 +25,7 @@ A review reads the diff, but nobody runs the app before it merges.
 
 ## How to tell it's working?
 
-- A fixture project with a two-process web app (012's `spec/fixtures/apps/` servers) and a PR whose `## How to test` steps pass: after hansolo signs `approved`, the folder moves 👀 → 🧪, the app starts, chewie signs `Completed (verified)`, the engine pushes one commit adding `verification/1/final.png`, and once the fake `gh` reports CI green the PR carries exactly one review label, `ok-to-merge`.
+- A fixture project with a two-process web app (012's `spec/fixtures/apps/` servers) and a PR whose `## How to test` steps pass: after hansolo signs `approved`, the folder moves 👀 → 🧪, the app starts, chewie signs `Completed (verified)`, the engine pushes one commit adding `verification/1/final.png`, and once the fake `gh` reports CI green the PR carries exactly one review label, `ready-to-merge`.
 - Same fixture with `merge.by: auto`: the fake `gh` records exactly one `gh pr merge` call, issued by the engine process, after the PR's checks and the status of `main`'s HEAD both read green and `mergeStateStatus` is `CLEAN`; the folder ends at ✅. With `merge.by: human` the fake `gh` records no merge call and the board shows "waiting on you: PR #N".
 - `main` red, or the PR not `CLEAN`: no merge call; the plan stays 🧪 and the board says which check holds it.
 - A PR whose steps fail: the PR gets `review-rejected` and one comment naming the failing step and linking `verification/1/step-NN.png` by commit SHA; the PNG is in the PR branch; the folder moves to 🔴 and the comment is mailed to luke and rey.
@@ -42,15 +42,15 @@ A review reads the diff, but nobody runs the app before it merges.
 
 ## Goal
 
-A PR that passed review is run before it merges. The engine starts the plan's app (plan 012), hands the running app and the PR's `## How to test` to a new `chewie-verifier` agent, and acts on its verdict. On a pass it commits the final screenshot, waits for CI, consults plan 013's coverage gate and applies `ok-to-merge`. On a fail it commits the failing step's PNG, comments with it, applies `review-rejected` and sends the plan to 🔴. In agent mode (`merge.by: auto`) the engine itself merges an `ok-to-merge` PR once its CI, `main`'s CI and the merge are all clean; in human mode it waits for the human. Rejections from hansolo and chewie are counted against `merge.max_rejections`. Today an approved plan stops at 👀, nothing runs the app, and nothing merges (research, "Where verification sits today").
+A PR that passed review is run before it merges. The engine starts the plan's app (plan 012), hands the running app and the PR's `## How to test` to a new `chewie-verifier` agent, and acts on its verdict. On a pass it commits the final screenshot, waits for CI, consults plan 013's coverage gate and applies `ready-to-merge`. On a fail it commits the failing step's PNG, comments with it, applies `review-rejected` and sends the plan to 🔴. In agent mode (`merge.by: auto`) the engine itself merges an `ready-to-merge` PR once its CI, `main`'s CI and the merge are all clean; in human mode it waits for the human. Rejections from hansolo and chewie are counted against `merge.max_rejections`. Today an approved plan stops at 👀, nothing runs the app, and nothing merges (research, "Where verification sits today").
 
 ## Non-Goals
 
 - **No agent merges, pushes or commits.** `gh pr merge` and `git push` stay in `UNGRANTABLE` (`executor.rb:338`); chewie gets neither, nor `git commit`.
 - **Not the arbitrator.** Ruling on the cap, appeals and `review-passed` checks is plan 015 (M7–M9). This plan stops at the cap and leaves a seam.
-- **Not `build_quality`.** M5's table, and its per-level choice of which verdicts go on to verification, belong to the `init` work (plan 011, M16). Here only `ready-to-merge` goes on to verification: M5's rule at `top_notch` and `high`, and the only passing label hansolo applies (005 `hansolo-reviewer.md:42-47`).
+- **Not `build_quality`.** M5's table, and its per-level choice of which verdicts go on to verification, belong to the `init` work (plan 011, M16). Here only `review-approved` goes on to verification: M5's rule at `top_notch` and `high`, and the only passing label hansolo applies (005 `hansolo-reviewer.md:42-47`).
 - **Not the app runner.** Starting, ports, readiness and restart are 012's `Apps::Supervisor`; this plan calls it.
-- **Not the coverage gate.** Parsing reports is 013; this plan calls its gate before applying `ok-to-merge`.
+- **Not the coverage gate.** Parsing reports is 013; this plan calls its gate before applying `ready-to-merge`.
 - **No port parity checks (M18).** Running steps against two stacks is later work (plan 016).
 - **No deploy.** ✅ → 😎 stays a human's.
 
@@ -75,8 +75,8 @@ Each item has its check. "Fake `gh`" is 005's `spec/support/fake_gh/gh`.
 11. **Screenshots.** The engine optimises every PNG under `verification/<round>/` with `vips` (falling back to `magick`, and skipping with a warning if neither exists), refuses non-PNG images there, and keeps only the failing `step-NN.png` and `final.png`. Check: spec with a fixture PNG asserts the file does not grow, and that an `.avif` is refused.
 12. **Commit and push.** A publisher method commits the plan folder only (carried as today, `publisher.rb:141-171`), pushes, and returns the SHA. It refuses when the checkout has changes outside the plan folder (chewie must not edit code), and it is not a resubmit (`label_for_review` is not called). Check: publisher spec refusing a stray code edit, and a clean run returning the SHA.
 13. **Rejection path.** After the push, a new `GitHub#comment` posts the failing step, what was expected and what was seen, and the PNG linked as `https://github.com/<repo>/blob/<sha>/<url-encoded path>?raw=true`; then `Vcs.review` applies `review-rejected`; the folder goes to 🔴 and the comment is mailed to luke and rey through `PrOutcomes`. Check: fake `gh` records the comment, then the label; folder at 🔴; mailbox entries for both.
-14. **Pass path.** After the push the plan stays 🧪 until PR CI is green; then the 013 coverage gate runs; on a pass `Vcs.review` applies `ok-to-merge`, otherwise the PR is rejected with the gate's message. Check: fake `gh` going pending → green; gate stubbed to pass and to fail.
-15. **Merge (agent mode).** A merge step, polled every 15 s like `PrWatch`, merges a 🧪 PR when it carries `ok-to-merge`, `CiGate` is green, `main`'s HEAD is green (a new `GitHub#commit_status`, reading statuses and check runs), and `mergeStateStatus` is `CLEAN`, through a new `GitHub#merge(number:, repo:)`. It then records "merged" and promotes to ✅. Check: one spec per failing condition, each with no merge call; a spec asserting `Executor::UNGRANTABLE` still includes `gh pr merge`.
+14. **Pass path.** After the push the plan stays 🧪 until PR CI is green; then the 013 coverage gate runs; on a pass `Vcs.review` applies `ready-to-merge`, otherwise the PR is rejected with the gate's message. Check: fake `gh` going pending → green; gate stubbed to pass and to fail.
+15. **Merge (agent mode).** A merge step, polled every 15 s like `PrWatch`, merges a 🧪 PR when it carries `ready-to-merge`, `CiGate` is green, `main`'s HEAD is green (a new `GitHub#commit_status`, reading statuses and check runs), and `mergeStateStatus` is `CLEAN`, through a new `GitHub#merge(number:, repo:)`. It then records "merged" and promotes to ✅. Check: one spec per failing condition, each with no merge call; a spec asserting `Executor::UNGRANTABLE` still includes `gh pr merge`.
 16. **Human mode.** With `merge.by: human` the merge step never calls `GitHub#merge`; 005's `PrWatch` moves the plan to ✅ when the human merges, and the board shows "waiting on you: PR #N". Check: spec with fake `gh` flipping the PR to merged.
 17. **Rejection cap.** `merge.max_rejections` is accepted under `merge:` (`config.rb:214-226`, 005), default 2. The count is derived from the ledger, never stored: hansolo's and chewie's `Completed` signatures with a rejected note on this plan. At the cap the plan is not sent back to the builders; it waits under Needs you, the board shows "rejected N of M", and an `Engine::Arbitration` seam (`call(plan:)`) is invoked, whose default only records the wait. Check: config spec for the key; dispatcher spec at counts 1 and 2.
 18. **Control room.** The board snapshot carries `rejections: { count, max }` per plan; the plan card shows "rejected N of M", and 🧪 plans render in the Review station. Check: vitest on the card.
@@ -126,7 +126,7 @@ Each has a recommendation, which the spec above assumes until the owner says oth
 ## Risks to planning or execution
 
 - **Three unmerged dependencies.** 005 (PR #26) is open; 012 and 013 have plans but no code. Every interface named here (`Vcs.review`, `CiGate`, `PrWatch`, `PrOutcomes`, `Apps.supervisor`, the coverage gate) may move before it lands. The planner should start with items that touch none of them (1–5, 8) and pin the rest to the merged names.
-- **CI churn from the screenshot commit.** Every verification push starts a CI run, so a pass costs one extra CI cycle before `ok-to-merge`. The board must say what 🧪 waits on.
+- **CI churn from the screenshot commit.** Every verification push starts a CI run, so a pass costs one extra CI cycle before `ready-to-merge`. The board must say what 🧪 waits on.
 - **Repository growth.** PNGs land in the PR branch and then on `main`. M14 limits them to two per round and optimises them; a plan rejected three times still adds six images.
 - **URL encoding.** Plan folders contain emoji, spaces and `→`; a link not encoded byte for byte shows a broken image.
 - **MCP surface in the adapter.** `--strict-mcp-config` exists to keep the operator's setup out of agents (`claude.rb:45-52`). The new key must add only the named server, and a spec must prove argv is unchanged for every other agent.
@@ -135,7 +135,7 @@ Each has a recommendation, which the spec above assumes until the owner says oth
 
 ## Conclusion
 
-When this ships, an approved plan moves to 🧪 Verifying instead of stopping at 👀. The engine starts its app, launches headless Chrome for web apps, and hands both to `chewie-verifier`, which follows `## How to test` and leaves screenshots and a report in the plan folder. The engine commits the screenshots, then either rejects the PR with a comment and a linked PNG and sends it to 🔴, or waits for green CI and the coverage gate and applies `ok-to-merge`. In agent mode it merges the PR itself once `main` is green and the merge is clean; in human mode it waits for the human. Rejections are counted, and at the cap the plan waits for the arbitrator that plan 015 adds.
+When this ships, an approved plan moves to 🧪 Verifying instead of stopping at 👀. The engine starts its app, launches headless Chrome for web apps, and hands both to `chewie-verifier`, which follows `## How to test` and leaves screenshots and a report in the plan folder. The engine commits the screenshots, then either rejects the PR with a comment and a linked PNG and sends it to 🔴, or waits for green CI and the coverage gate and applies `ready-to-merge`. In agent mode it merges the PR itself once `main` is green and the merge is clean; in human mode it waits for the human. Rejections are counted, and at the cap the plan waits for the arbitrator that plan 015 adds.
 
 ## Research
 
@@ -150,20 +150,20 @@ Gathered 2026-10-14. Repository claims cite `file:line` on `origin/main` (b2b517
 
 - **No code after review.** hansolo's approved verdict ends the plan's run with the folder still at 👀: `lib/openlanes/engine/dispatcher.rb:1090-1093` adds it to `@finished_plans` with "approved, awaiting merge". On the 005 branch the same block is at `dispatcher.rb:1147-1150`.
 - **No state for it.** `in_review` (👀) is followed only by `approve` → ✅, `request_changes` → 🔴 and `slop` → 💩 (`lib/openlanes/plans/state_machine.rb:181-191`). `approved` requires every PR merged (`lib/openlanes/plans/status.rb:251-263`). No agent handles `approved` or later (`state_machine.rb:98-111`, `SETTLED`).
-- **No agent.** `agents/` holds nine files; none is `chewie-verifier`. `rg -n "chewie|ok-to-merge" lib agents spec` finds nothing on `main`.
+- **No agent.** `agents/` holds nine files; none is `chewie-verifier`. `rg -n "chewie|ready-to-merge" lib agents spec` finds nothing on `main`.
 - **hansolo's hand-off says a human merges.** `agents/hansolo-reviewer.md:58`: "`approved` | stays 👀; the run ends | a human merges. No agent merges."
 
 ### What PR #26 (plan 005) gives this plan
 
-- **Labels.** `ReviewLabel = Data.define(:name, :colour, :meaning, :passing)` with `ALL` in M3 order (`lib/openlanes/plans/review_label.rb:11-29`, 005 branch). `ok-to-merge` is `1a7f37`, passing, "chewie verified it" (:28). Constants exist for `INITIAL` (:32) and `REJECTED` (:35), not for `ok-to-merge`. `ReviewLabel.passing` (:42), `fetch` (:47-50).
+- **Labels.** `ReviewLabel = Data.define(:name, :colour, :meaning, :passing)` with `ALL` in M3 order (`lib/openlanes/plans/review_label.rb:11-29`, 005 branch). `ready-to-merge` is `1a7f37`, passing, "chewie verified it" (:28). Constants exist for `INITIAL` (:32) and `REJECTED` (:35), not for `ready-to-merge`. `ReviewLabel.passing` (:42), `fetch` (:47-50).
 - **Applying a label.** `Vcs::Review#call(pr:, label:, dry_run: false)` (`lib/openlanes/vcs/review.rb:28-47`, 005) reads current labels, reads CI through `CiGate.verdict(@github.checks(...))`, refuses a passing label while CI is `:red` or `:pending` (:56-63), else swaps the label. Facade `Vcs.review` (`lib/openlanes/vcs.rb:21`, 005). CLI: `openlanes review PULL_REQUEST LABEL [-n]` (`lib/openlanes/cli/review/review.rb:13-19`, exit 1 on refusal, 64 on an unknown label).
 - **CI.** `CiGate.verdict(checks)` returns `:none`, `:red`, `:pending` or `:green` (`lib/openlanes/vcs/ci_gate.rb:18-28`, 005) from `GitHub#checks(number:, repo:)`, which runs `gh pr checks N --json name,state,bucket` (`github.rb:230-246`, 005). PR CI only: nothing reads `main`'s CI.
 - **GitHub seam.** New on 005: `ensure_label`, `swap_label`, `labels`, `checks`, `review_comments` (`github.rb:176-249`). Still missing: merge, mergeability (`mergeable`, `mergeStateStatus`), posting a comment, and any commit-status read.
 - **The watch.** `Engine::PrWatch` polls every 15 s (`pr_watch.rb:23`, 005), first poll after one full interval (:31-35), one `pulls(state: "all")` per poll. Outcomes `:rejected`, `:merged`, `:closed`, `:waiting` (:13-15); `:rejected` only when the PR carries `review-rejected` (:69-80). `PrOutcomes` moves to 🔴 and mails the comments to every agent that handles 🔴 (`pr_outcomes.rb:53-63`, :136-142), to ✅ on merge (:67-75), to ❌ on close (:79-100). It is built only when `Config.current.human_merges?` and the engine stays up (`lib/openlanes/cli/run/run.rb:204`, 005). In `merge.by: auto` nothing watches and nothing merges (005 `spec.md:171`).
 - **Config.** `merge.by` with `MERGERS = %i[human auto]`, default human (`lib/openlanes/support/config.rb:60-64`, :102, 005). The `merge:` parser accepts only `by` and rejects any other key (:214-226). `max_rejections` and `build_quality` do not exist.
-- **`## How to test`.** `Lifecycle::Completion::HOW_TO_TEST = "## How to test"` (`completion.rb:15`, 005); the publisher writes it into the PR body (`publisher.rb:274`, 005) and refuses to publish without it (:283). `Publisher#label_for_review(url, resubmitted:)` removes every review label on a resubmit, `ok-to-merge` included (:309).
+- **`## How to test`.** `Lifecycle::Completion::HOW_TO_TEST = "## How to test"` (`completion.rb:15`, 005); the publisher writes it into the PR body (`publisher.rb:274`, 005) and refuses to publish without it (:283). `Publisher#label_for_review(url, resubmitted:)` removes every review label on a resubmit, `ready-to-merge` included (:309).
 - **hansolo on 005.** `may: [gh pr comment]` (`agents/hansolo-reviewer.md:13`, 005); it applies its own labels through `openlanes review` and never applies `review-passed` (:23-25, :42-47). Its Next table still says a human merges (:62).
-- **005 hands three things to this plan explicitly**: applying `ok-to-merge` (`spec.md:18`, :148, :170), auto-merge behaviour (:171), and the label names as an interface (`plan.md:76`).
+- **005 hands three things to this plan explicitly**: applying `ready-to-merge` (`spec.md:18`, :148, :170), auto-merge behaviour (:171), and the label names as an interface (`plan.md:76`).
 
 ### What plan 012 (app runner) gives this plan
 
@@ -175,8 +175,8 @@ Gathered 2026-10-14. Repository claims cite `file:line` on `origin/main` (b2b517
 
 ### What plan 013 (coverage gate) gives this plan
 
-- The gate "withholds `ok-to-merge`" below `minimum` or on a missing report (013 `spec.md:37`, item 8 at :59) and runs in a clean PR checkout (:60).
-- **013 leaves the call site open:** "No code applies `ok-to-merge` today … the wiring may need a plan of its own. This is the largest risk" (013 `spec.md:90`, :96). This plan is that wiring: the gate must be consulted before `ok-to-merge` is applied.
+- The gate "withholds `ready-to-merge`" below `minimum` or on a missing report (013 `spec.md:37`, item 8 at :59) and runs in a clean PR checkout (:60).
+- **013 leaves the call site open:** "No code applies `ready-to-merge` today … the wiring may need a plan of its own. This is the largest risk" (013 `spec.md:90`, :96). This plan is that wiring: the gate must be consulted before `ready-to-merge` is applied.
 - `bin/coverage-changed` (PR #27, `origin/kig/004.00-web-control-room:bin/coverage-changed`) gates per-file coverage of `lib/` changes in this repository's own CI. It is not the M15 project gate, and plan 014 does not call it; it matters only because this plan's own `lib/` changes must pass it.
 
 ### The autonomy boundary and screenshots
@@ -185,7 +185,7 @@ Gathered 2026-10-14. Repository claims cite `file:line` on `origin/main` (b2b517
 - **The engine commits, and only on the way to 🟢.** `Dispatcher#publish_for_review` returns early unless `target == :ready_for_review` (`dispatcher.rb:1199-1202`). `Publisher#publish` refuses a clean checkout (`publisher.rb:88-90`), then carries the plan folder, commits with `git add -A`, pushes, and opens a PR only if none is open (:94-105, :228-237).
 - **The plan folder has one writer.** Agents are pointed at the plan folder in the main checkout (`lib/openlanes/execution/prompt.rb:62`, :134), and `carry_plan` replaces every copy of the plan in the worktree with the main checkout's (`publisher.rb:141-171`). PNGs written into the main checkout's `verification/<round>/` are therefore carried into the PR branch by the existing mechanism; PNGs written anywhere in the worktree's `.plans` would be deleted by it.
 - **Comment links need the SHA first.** M14 links screenshots by commit SHA. The commit exists only after the engine pushes, so the comment can only be posted after the engine's push, never by the agent during its run.
-- **A push restarts CI.** Committing screenshots to the PR branch starts a new CI run; `Vcs::Review` refuses `ok-to-merge` while CI is `:pending` (`review.rb:56-63`, 005). The pass path must push first, wait for green, and only then label.
+- **A push restarts CI.** Committing screenshots to the PR branch starts a new CI run; `Vcs::Review` refuses `ready-to-merge` while CI is `:pending` (`review.rb:56-63`, 005). The pass path must push first, wait for green, and only then label.
 
 ### Browser automation
 
@@ -228,7 +228,7 @@ Per `CLAUDE.md` "When adding a state": `STATUSES`, an `aasm` event, `agents/*.md
 **Contradictions**
 
 1. `executor.rb:16-20` and `CLAUDE.md` ("The autonomy boundary") say the after-check also verifies "no new remote ref appeared". The code compares HEAD only (`executor.rb:839-846`). Production runs the HEAD check; `git push` being `UNGRANTABLE` is the real guard.
-2. M1 says chewie applies `ok-to-merge`, but the screenshot push leaves CI pending and `Vcs::Review` refuses a passing label while pending. Production (005) would refuse it.
+2. M1 says chewie applies `ready-to-merge`, but the screenshot push leaves CI pending and `Vcs::Review` refuses a passing label while pending. Production (005) would refuse it.
 3. M14 links screenshots "by commit SHA", which only the engine can produce, while M1 says chewie comments. The comment must come from the engine.
 4. The spec stub's `depends_on: ["005", "012", "013"]` was not `NNN.MM`; corrected to `"005.00"` and so on. The stub's body headings were duplicated, empty, after `## How to tell it's working?`; removed.
 5. `hansolo-reviewer.md:58` (main) and :62 (005) say a human merges; M2 says the engine merges in agent mode.
