@@ -86,6 +86,32 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
     end
   end
 
+  # M2 for the broker itself: its prompt asks it to keep a journal, and no
+  # dispatcher job carries its progress, so the unblocker writes it.
+  context "when the broker prints journal lines and then fails" do
+    let(:decision) { OpenLanes::Plans::Journal::Entry.new(kind: "decision", text: "Folded B1 into spec.md") }
+    let(:update) { Struct.new(:journal) }
+    let(:executor) do
+      lambda { |_agent, _subject, **, &progress|
+        progress.call(update.new([decision]))
+        progress.call(update.new([decision]))
+        [false, "exited 1"]
+      }
+    end
+
+    def broker_entries = state.journal("lando-broker").flat_map(&:entries).map(&:text)
+
+    it "keeps them, once, when the run loop drains the plan" do
+      unblocker.drain(subject_plan)
+      expect(broker_entries).to eq(["Folded B1 into spec.md"])
+    end
+
+    it "keeps them, once, when `openlanes unblock` runs it" do
+      unblocker.call([subject_plan])
+      expect(broker_entries).to eq(["Folded B1 into spec.md"])
+    end
+  end
+
   context "when state.json cannot be read" do
     let(:executor) { ->(_agent, _subject, **) { [true, "completed"] } }
     let(:heard) { [] }

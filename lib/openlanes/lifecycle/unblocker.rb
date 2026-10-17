@@ -188,9 +188,46 @@ module OpenLanes
       # @return [Array(Boolean, String)]
       def invoke(subject, progress)
         journal_answers(subject)
-        @executor.call(agent, subject, root:, &progress)
+        forward = progress.to_proc
+        kept = { written: 0, number: nil }
+        @executor.call(agent, subject, root:) do |update|
+          record_journal(subject, update, kept)
+          forward.call(update)
+        end
       rescue StandardError => e
         [false, "#{e.class}: #{e.message.lines.first.to_s.strip}"]
+      end
+
+      # The broker's own journal lines (M2), written as they arrive, the way
+      # {Engine::Dispatcher} writes every other agent's: its prompt asks it to
+      # keep one like any agent's, and neither the run loop nor `openlanes
+      # unblock` hands its progress to the dispatcher. As they arrive, so a
+      # broker that fails or is killed keeps what it said.
+      #
+      # A journal that cannot be written costs the record, never the drain;
+      # the lines stay unwritten for the next update to try again.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param update [Object] whatever the executor reports
+      # @param kept [Hash] how many lines are written, and the journal round
+      # @return [void]
+      def record_journal(subject, update, kept)
+        lines = update.respond_to?(:journal) ? Array(update.journal) : []
+        return if !applying? || lines.size <= kept[:written]
+
+        entries, rejected = lines[kept[:written]..].partition { it.is_a?(Plans::Journal::Entry) }
+        unless entries.empty?
+          kept[:number], refused = Plans::PlanState.for(subject.feature.path)
+                                                   .journal!(agent: agent.name,
+                                                     entries:,
+                                                     number: kept[:number],
+                                                     state: subject.feature.status)
+          rejected += refused
+        end
+        kept[:written] = lines.size
+        rejected.each { UI.log("journal line ignored, #{it.reason}: #{it.line[0, 160]}", level: :warn, **log_fields(subject)) }
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal not written yet: #{e.message}", level: :warn, **log_fields(subject))
       end
 
       # Every answered question goes into the journal of the agent that asked
