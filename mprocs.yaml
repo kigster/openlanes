@@ -2,4 +2,4 @@
 procs:
   control-room: bundle exec lanes web
   engine: bundle exec lanes run -j 4
-  logs: tail -f log/development.log
+  logs: tail -F log/development.log
