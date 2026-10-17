@@ -22,7 +22,19 @@ module OpenLanes
     class Supervisor
       # The app did not come up. The message is the reason, for a person;
       # everything that had started has been stopped by the time it is raised.
-      class StartFailed < Error; end
+      # {#process} names the one that failed, so its {#log_tail} can be read
+      # after the stop: verification quotes it when it rejects (M1).
+      class StartFailed < Error
+        # @return [String, nil] the process that did not become ready
+        attr_reader :process
+
+        # @param message [String]
+        # @param process [String, nil]
+        def initialize(message = nil, process: nil)
+          super(message)
+          @process = process
+        end
+      end
 
       # Seconds a process has to become ready (spec open question 10).
       READY_TIMEOUT = 30
@@ -69,6 +81,7 @@ module OpenLanes
         @running = {}
         @ports = {}
         @statuses = {}
+        @tails = {}
         @mutex = Mutex.new
       end
 
@@ -133,6 +146,16 @@ module OpenLanes
       # @return [Integer, nil]
       def port(name) = @ports[name.to_s]
 
+      # The last lines a process printed, kept after it is stopped. A failed
+      # start stops everything before it raises, and M1 wants the failing
+      # process's last 20 lines in the rejection, which {Status#reason}
+      # (five lines, for the Preview tab) is too short to carry.
+      #
+      # @param name [String]
+      # @param lines [Integer] at most {TAIL}
+      # @return [Array<String>] oldest first; empty for a process never started
+      def log_tail(name, lines = TAIL) = @mutex.synchronize { Array(@tails[name.to_s]).last(lines) }
+
       private
 
       # @return [void]
@@ -145,7 +168,7 @@ module OpenLanes
 
           reason = @statuses.fetch(spec.name).reason
           stop
-          raise StartFailed, reason
+          raise StartFailed.new(reason, process: spec.name)
         end
       end
 
@@ -169,6 +192,7 @@ module OpenLanes
       def spawn(spec)
         child = Execution::Child.spawn(["sh", "-c", spec.start], chdir: @root, env: @env)
         tail = []
+        @mutex.synchronize { @tails[spec.name] = tail }
         reader = Thread.new { read(spec.name, child, tail) }
         waiter = Thread.new { child.wait }
         @running[spec.name] = Running.new(spec, child, waiter, reader, tail)
