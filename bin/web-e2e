@@ -20,6 +20,7 @@ eval "$(rbenv init - bash 2>/dev/null || true)"
 port="${E2E_PORT:-11100}"
 peer="${E2E_PEER_PORT:-11101}"
 redis="${E2E_REDIS_URL:-redis://localhost:6379/14}"
+"$(dirname "$0")/require-local-redis" "$redis"
 
 for p in "$port" "$peer"; do
   if curl -s -o /dev/null "http://127.0.0.1:$p/"; then

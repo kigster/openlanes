@@ -35,6 +35,7 @@ fi
 
 port="${FACTORY_PORT:-4777}"
 redis_url="${FACTORY_REDIS_URL:-redis://localhost:6379/11}"
+"$(dirname "$0")/require-local-redis" "$redis_url"
 model="${FACTORY_MODEL:-haiku}"
 timeout="${FACTORY_TIMEOUT:-600}"
 minutes="${FACTORY_MINUTES:-15}"
