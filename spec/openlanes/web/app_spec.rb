@@ -193,6 +193,46 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "POST /api/interview" do
+    def post_idea(payload, token: context.csrf)
+      header "X-CSRF-Token", token if token
+      post "/api/interview", JSON.generate(payload), "CONTENT_TYPE" => "application/json"
+    end
+
+    let(:question) do
+      OpenLanes::Live::Interviewer::Question.new(context: "Who opens it?", options: %w[Accountant Anyone], recommended: 0)
+    end
+
+    it "answers with the interviewer's questions" do
+      OpenLanes::Live.interviewer = ->(idea:) { idea == "CSV export" ? [question] : [] }
+      post_idea({ idea: "CSV export" })
+      expect([last_response.status, body]).to eq(
+        [200, { "questions" => [{ "context" => "Who opens it?", "options" => %w[Accountant Anyone], "recommended" => 0 }] }]
+      )
+    end
+
+    it "answers no questions, and why, without an interviewer" do
+      post_idea({ idea: "CSV export" })
+      expect([last_response.status, body["questions"], body["reason"]]).to eq([200, [], "no interviewer: OPENROUTER_API_KEY is not set"])
+    end
+
+    it "answers no questions, and why, when the interviewer fails" do
+      OpenLanes::Live.interviewer = ->(idea:) { raise "timed out #{idea}" }
+      post_idea({ idea: "CSV export" })
+      expect([body["questions"], body["reason"]]).to eq([[], "the interviewer failed: timed out CSV export"])
+    end
+
+    it "answers 422 without an idea" do
+      post_idea({ idea: " " })
+      expect(last_response.status).to eq(422)
+    end
+
+    it "answers 403 without the token" do
+      post_idea({ idea: "CSV export" }, token: nil)
+      expect(last_response.status).to eq(403)
+    end
+  end
+
   describe "POST /api/copilot" do
     def post_message(payload, token: context.csrf)
       header "X-CSRF-Token", token if token

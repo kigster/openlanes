@@ -4,6 +4,13 @@ import { axe } from "vitest-axe";
 import { HelpDialog, StopAllDialog } from "./dialogs";
 import { IdeaDialog } from "./IdeaDialog";
 import { findInline, recorder, renderPanel, typeInEditor } from "./testing";
+import { postInterview } from "../api/client";
+
+// No interviewer unless an example sets one, so the dialog creates the plan as it did before M6.
+vi.mock("../api/client", async (original) => ({
+  ...(await original<typeof import("../api/client")>()),
+  postInterview: vi.fn(async () => ({ questions: [] })),
+}));
 
 describe("StopAllDialog", () => {
   it("asks with the live counts, Cancel focused, and passes axe", async () => {
@@ -105,10 +112,41 @@ describe("IdeaDialog", () => {
     await act(async () => { fireEvent.keyDown(content, { key: "Enter", code: "Enter", keyCode: 13, ctrlKey: true }); });
     expect(sent).toEqual([{
       kind: "create_plans", plan: null, agent: null,
-      payload: { idea: "# Budgets\n\nTrack spending.", frontmatter: { lane: "plan", research: false, frontend: "auto", depth: "auto" } },
+      payload: { idea: "# Budgets\n\nTrack spending.", frontmatter: { lane: "plan", research: false, frontend: "auto", depth: "auto" }, decisions: [] },
     }]);
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByTestId("announcer")).toHaveTextContent("Idea sent. Its plans join this run as they are created.");
+  });
+
+  it("interviews the idea one question at a time, the recommended answer marked, and sends the decisions (M6)", async () => {
+    vi.mocked(postInterview).mockResolvedValueOnce({ questions: [
+      { context: "Who opens the export?", options: ["The accountant", "Anyone"], recommended: 0 },
+      { context: "Which format?", options: ["CSV", "XLSX"], recommended: 1 },
+    ] });
+    const { sent, onCommand } = recorder();
+    const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+    act(() => { typeInEditor(baseElement, "Export the ledger"); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+    expect(await screen.findByRole("dialog", { name: "Before the spec: question 1 of 2" })).toHaveAccessibleDescription("Who opens the export?");
+    expect(screen.getByRole("button", { name: "a) The accountant (Recommended)" })).toBeInTheDocument();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "a) The accountant (Recommended)" })); });
+    expect(screen.getByRole("button", { name: "b) XLSX (Recommended)" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Type something instead" }), { target: { value: "Both" } });
+    await act(async () => { fireEvent.keyDown(screen.getByRole("textbox", { name: "Type something instead" }), { key: "Enter" }); });
+    expect(sent[0].payload.decisions).toEqual([
+      { question: "Who opens the export?", answer: "a) The accountant" },
+      { question: "Which format?", answer: "Both" },
+    ]);
+  });
+
+  it("lets the interview be skipped, sending no decisions", async () => {
+    vi.mocked(postInterview).mockResolvedValueOnce({ questions: [{ context: "Who?", options: ["A", "B"], recommended: 0 }] });
+    const { sent, onCommand } = recorder();
+    const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+    act(() => { typeInEditor(baseElement, "Export the ledger"); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+    await act(async () => { fireEvent.click(await screen.findByRole("button", { name: "Skip the interview" })); });
+    expect(sent[0].payload.decisions).toEqual([]);
   });
 
   it("keeps the idea and shows the reason when refused", async () => {

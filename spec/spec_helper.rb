@@ -82,6 +82,7 @@ RSpec.configure do |config|
   config.before do
     OpenLanes::Live.choice_judge = nil
     OpenLanes::Live.choice_converter = nil
+    OpenLanes::Live.interviewer = nil
   end
 
   # Every real-Redis example holds the machine-wide lock while it runs, and

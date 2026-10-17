@@ -668,6 +668,30 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\n---\n\n# ")
     end
 
+    context "with the interview's decisions (M6)" do
+      before do
+        send_command("create_plans",
+          idea:      "Export the ledger as CSV",
+          decisions: [{ question: "Who opens the export?", answer: "a) The accountant" },
+                      { question: "Blank", answer: " " }, "not a decision"])
+        apply
+      end
+
+      it "records each answered decision in spec.md, under Decisions" do
+        expect(created.read("spec.md")).to include("## Decisions\n\n- **Who opens the export?** a) The accountant\n")
+      end
+
+      it "leaves out a decision without an answer" do
+        expect(created.read("spec.md")).not_to include("Blank")
+      end
+    end
+
+    it "writes no Decisions section when the interview was skipped" do
+      send_command("create_plans", idea: "Export the ledger as CSV", decisions: [])
+      apply
+      expect(created.read("spec.md")).not_to include("## Decisions")
+    end
+
     it "refuses an idea that makes no folder name" do
       send_command("create_plans", idea: "!!!")
       expect(apply.first.reason).to start_with("could not create the plan")
