@@ -202,12 +202,13 @@ module OpenLanes
         # More time on the clock, or on the clock to come.
         #
         # @param seconds [Integer]
-        # @return [void]
+        # @return [Boolean] false when the clock had already stopped the agent
         def extend!(seconds)
           @mutex.synchronize do
             next @clock.extend!(seconds) if @clock
 
             @pending = @pending.to_i + seconds
+            true
           end
         end
 
