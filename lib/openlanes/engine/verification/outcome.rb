@@ -39,6 +39,13 @@ module OpenLanes
         # Who the comment and the harness's own signature are from.
         AGENT = "chewie-verifier"
 
+        # A signature that counts as a rejection: its note starts with the
+        # word, as `rejected`, `rejected 1/2` (hansolo) or `rejected: …` (the
+        # harness signing for chewie). Anchored rather than searched for: an
+        # approving note that says "nothing to reject" is not a rejection, and
+        # counting it would reach the arbitrator a round early.
+        REJECTION = %r{\Arejected(?=\z|[\s:/])}i
+
         # Lines of a withheld coverage run quoted in the comment.
         TAIL = CoverageGate::TAIL
 
@@ -46,8 +53,8 @@ module OpenLanes
         # no `coverage:` section. A plain rejection would only say the gate
         # withheld, and the builder would go looking for a defect; this names
         # the one thing to write, in both shapes, so the next round writes it.
-        # Its first line must not say "reject": the ledger counts rejections
-        # by that word, and this one does not count.
+        # It is signed "sent back", not "rejected" ({REJECTION}), because
+        # this one does not count.
         SETUP = <<~MARKDOWN
           Coverage is not declared yet: this branch's `.openlanes.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
 
@@ -183,7 +190,7 @@ module OpenLanes
           files = judges.flat_map(&:ledger).uniq
           names = judges.map(&:name)
           Plans::Ledger.read(plan.feature.path, files).entries
-                       .select { names.include?(it.agent) && it.completed? && it.note.to_s.downcase.include?("reject") }
+                       .select { names.include?(it.agent) && it.completed? && it.note.to_s.strip.match?(REJECTION) }
                        .uniq { [it.agent, it.note, it.at.to_i / 60] }
                        .size
         end

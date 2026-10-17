@@ -148,6 +148,20 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
   end
 
+  describe "#rejections" do
+    def sign(agent, note) = OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent:, round: 1, status: "Completed", note:)
+
+    it "counts only notes that start with the word, never one that merely mentions it" do
+      sign("hansolo-reviewer", "rejected 1/2")
+      sign("chewie-verifier", "rejected: CI is red on PR #1; signed by harness")
+      sign("hansolo-reviewer", "approved, nothing to reject")
+      sign("chewie-verifier", "verified; the rejected alternative is gone")
+      sign("chewie-verifier", "sent back: Coverage is not declared yet; signed by harness")
+
+      expect(outcome.rejections(plan)).to eq(2)
+    end
+  end
+
   describe "#pass and #settle" do
     before { chewie_left("verified") }
 
