@@ -1,11 +1,20 @@
 # frozen_string_literal: true
 
+require "shellwords"
+require "tempfile"
+
 module OpenLanes
   module Engine
     # Decides whether a pull request's checkout has earned `ready-to-merge` on
-    # coverage (decision M15): runs the project's declared test command in
-    # that checkout, reads the report it wrote, and compares the line figure
-    # with the declared minimum.
+    # coverage (decision M15): runs the test command the checkout's
+    # `.openlanes.yml` declares under `coverage:`, reads the line figure (from
+    # the report it wrote, or from what `report_command` prints), and compares
+    # it with the declared minimum.
+    #
+    # A checkout with no `coverage:` section withholds too, but as
+    # {Verdict#unconfigured?}: nothing was measured, so nothing failed, and
+    # the verifier sends the pull request back for the section rather than
+    # for a defect.
     #
     # Everything that is not a clean, fresh, readable report at or above the
     # minimum withholds, each with its reason. In particular the command's
@@ -43,10 +52,14 @@ module OpenLanes
       # @!attribute [r] output
       #   @return [Array<String>] the command's last {TAIL} lines; empty when
       #     it never ran
-      Verdict = Data.define(:passed, :percent, :minimum, :reason, :config, :output) do
-        def initialize(percent: 0.0, minimum: nil, config: nil, output: [], **rest) = super
+      # @!attribute [r] unconfigured
+      #   @return [Boolean] withheld only because the checkout's
+      #     `.openlanes.yml` has no `coverage:` section
+      Verdict = Data.define(:passed, :percent, :minimum, :reason, :config, :output, :unconfigured) do
+        def initialize(percent: 0.0, minimum: nil, config: nil, output: [], unconfigured: false, **rest) = super
 
         alias_method :passed?, :passed
+        alias_method :unconfigured?, :unconfigured
 
         # @return [Boolean]
         def withheld? = !passed
@@ -75,7 +88,11 @@ module OpenLanes
         return withhold("#{root} has uncommitted changes; coverage is measured only in a clean checkout") if checkout.dirty?
 
         config = Coverage.config(root)
-        return withhold("no #{Coverage::Config::FILE} in #{root}; luke declares command, report, format and minimum (M15)") unless config
+        unless config
+          return Verdict.new(passed: false,
+            unconfigured: true,
+            reason: "#{OpenLanes::Config::FILE} in #{root} has no #{Coverage::Config::SECTION}: section, so nothing was measured")
+        end
 
         judge(config, root, run(config.command, root))
       rescue Coverage::Invalid => e
@@ -98,11 +115,11 @@ module OpenLanes
 
       # @return [Verdict]
       def judge(config, root, run)
-        source = "#{config.format}: #{config.report}"
+        source = config.source
         failed = failure(config, root, run)
         return withhold("coverage counts as 0%: #{failed}", config:, run:) if failed
 
-        report = Coverage.read(format: config.format, path: config.report_path(root))
+        report = report_of(config, root)
         return withhold("coverage counts as 0%: #{report.problem}", config:, run:) unless report.read?
 
         figure = self.class.figure(report.ratio)
@@ -130,10 +147,46 @@ module OpenLanes
         return "`#{config.command}` exited #{run.status.exitstatus || run.status}" unless run.status.success?
 
         path = config.report_path(root)
+        # A report_command reads whatever it reads; there is no file here
+        # whose age could say whether the command wrote it.
+        return unless path
+
         # A whole second's grace: some filesystems keep mtimes in seconds.
         return unless File.exist?(path) && File.mtime(path) < Time.at(run.started.to_i)
 
         "#{config.report} is older than this run, so the command did not write it"
+      end
+
+      # The figure, from the report file or from `report_command`'s STDOUT.
+      #
+      # @return [Coverage::Report]
+      def report_of(config, root)
+        return Coverage.read(format: config.format, path: config.report_path(root)) unless config.report_command?
+
+        printed(config.report_command, root)
+      end
+
+      # What `report_command` printed, as a {Coverage::Report}, so it is
+      # floored and compared exactly as a parsed report is: the number over
+      # 100 lines, held as a Rational. Anything but one number from 0 to 100
+      # is a report that could not be read, and counts as 0% the same way.
+      # STDERR goes to a file of its own, because a warning `jq` prints is
+      # not part of the figure.
+      #
+      # @return [Coverage::Report]
+      def printed(command, root)
+        Tempfile.create("openlanes-coverage-stderr") do |stderr|
+          run = run("{ #{command}\n} 2>#{Shellwords.escape(stderr.path)}", root)
+          return Coverage::Report.new(problem: "`#{command}` ran past #{@timeout}s and was stopped") if run.timed_out
+
+          text = run.output.join("\n").strip
+          figure = text.match?(/\A\d+(\.\d+)?\z/) && Rational(text)
+          return Coverage::Report.new(covered: figure, relevant: 100) if run.status.success? && figure && figure <= 100
+
+          said = run.status.success? ? "printed #{text.inspect}" : "exited #{run.status.exitstatus || run.status}"
+          error = File.read(stderr.path).lines.first.to_s.strip
+          Coverage::Report.new(problem: "`#{command}` #{said}, not a line percentage#{" (#{error})" unless error.empty?}")
+        end
       end
 
       # @return [Run]

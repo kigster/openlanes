@@ -59,10 +59,13 @@ module OpenLanes
       # @param ignore_bombs [Boolean] `--ignore-bombs`: a 💣 halts nothing
       # @param aging_since [Date, nil] `plans.aging_since`, the floor of every
       #   blocked plan's clock
+      # @param verification [OpenLanes::Engine::Verification::Driver, nil]
+      #   what a 🧪 plan is run through (plan 014); nil when the run publishes
+      #   nothing, and an approved plan then finishes at 👀
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
-        watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil)
+        watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -82,6 +85,7 @@ module OpenLanes
         @ignore_bombs = ignore_bombs
         @aging_since = aging_since
         @extensions = extensions
+        @verification = verification
         @would_bomb = []
         @attempts = []
         @dropped = []
@@ -89,6 +93,9 @@ module OpenLanes
       end
 
       attr_reader :jobs, :worktree, :tree, :attempts, :executor, :agents
+
+      # @return [OpenLanes::Engine::Verification::Driver, nil]
+      attr_reader :verification
 
       # @return [Boolean]
       def isolated? = @isolation == :worktree

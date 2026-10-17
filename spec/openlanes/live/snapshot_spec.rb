@@ -150,7 +150,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         "new"                => %w[leah-researcher],
         "ready_for_planning" => %w[palpatine-planner],
         "pr"                 => [],
-        "in_review"          => %w[hansolo-reviewer]
+        "in_review"          => %w[chewie-verifier hansolo-reviewer]
       )
     end
 

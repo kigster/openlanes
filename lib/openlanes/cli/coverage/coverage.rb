@@ -20,7 +20,7 @@ module OpenLanes
       dry_run_option "Print the declaration and where the command would run; run nothing"
 
       example [
-        "013                  # run .openlanes.coverage.yml's command in plan 013's worktree",
+        "013                  # run .openlanes.yml's coverage.command in plan 013's worktree",
         "013 --dry-run        # show what would run, and where"
       ]
 
@@ -54,9 +54,10 @@ module OpenLanes
         config = File.directory?(path) && OpenLanes::Coverage.config(path)
         $stdout.puts("would run in #{path}")
         if config
-          $stdout.puts("  #{config.command}", "  then read #{config.report} (#{config.format}), minimum #{format("%g%%", config.minimum)}")
+          $stdout.puts("  #{config.command}", "  then read #{config.source}, minimum #{format("%g%%", config.minimum)}")
         else
-          $stdout.puts("  the declaration is read from #{OpenLanes::Coverage::Config::FILE} there once the worktree exists")
+          $stdout.puts("  the declaration is read from the #{OpenLanes::Coverage::Config::SECTION}: section of " \
+                       "#{OpenLanes::Config::FILE} there, once the worktree exists and has one")
         end
         dry_run_footer(1, "coverage run")
       rescue OpenLanes::Coverage::Invalid => e

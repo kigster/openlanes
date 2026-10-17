@@ -1,92 +1,173 @@
 # frozen_string_literal: true
 
-require "yaml"
-
 module OpenLanes
   module Coverage
-    # A project's `.openlanes.coverage.yml`, at the root of the checkout:
+    # The `coverage:` section of a project's `.openlanes.yml` (M15, amended
+    # 2026-10-17). One of two shapes, never both:
     #
-    #   command: npm test -- --coverage
-    #   report:  coverage/lcov.info
-    #   format:  lcov            # lcov | cobertura | istanbul | simplecov
-    #   minimum: 95
+    #   coverage:                 # the figure, printed by a command
+    #     command: bundle exec rspec
+    #     report_command: jq '.total.lines.percent' coverage/coverage.json
+    #     minimum: 95
     #
-    # All four keys are required and nothing else is allowed. A key the gate
-    # ignored would be a promise nobody checks, which is the failure this file
-    # exists to end; so, as with `.openlanes.yml`, anything unexpected is an
-    # error naming the file.
+    #   coverage:                 # a report file, read by a parser here
+    #     command: npm test -- --coverage
+    #     report:  coverage/lcov.info
+    #     format:  lcov           # lcov | cobertura | istanbul | simplecov
+    #     minimum: 95
+    #
+    # `command` and `minimum` are required in both. A key the gate ignored
+    # would be a promise nobody checks, which is the failure this section
+    # exists to end; so, as everywhere in `.openlanes.yml`, anything
+    # unexpected is an error naming the file and the section. A
+    # `report_command` beside a `format` is refused rather than read as one
+    # of them: which of the two the author meant is exactly what is unknown.
+    #
+    # It lives in the file a project already has rather than in a second one
+    # beside it (the first M15 had `.openlanes.coverage.yml`): one project's
+    # settings in two files is two places to look, and one gets forgotten.
     #
     # @!attribute [r] path
-    #   @return [String] the file it was read from
+    #   @return [String] the `.openlanes.yml` it was read from
     # @!attribute [r] command
     #   @return [String] run through `sh -c` in the checkout
     # @!attribute [r] report
-    #   @return [String] relative to the checkout, as written
+    #   @return [String, nil] relative to the checkout, as written; nil with
+    #     a {#report_command}
     # @!attribute [r] format
-    #   @return [Symbol] one of {FORMATS}
+    #   @return [Symbol, nil] one of {FORMATS}; nil with a {#report_command}
+    # @!attribute [r] report_command
+    #   @return [String, nil] run through `sh -c` in the checkout after
+    #     {#command}; its STDOUT is the line percentage
     # @!attribute [r] minimum
     #   @return [Float] the lowest line percentage that passes, 0 to 100
-    Config = Data.define(:path, :command, :report, :format, :minimum) do
+    Config = Data.define(:path, :command, :report, :format, :report_command, :minimum) do
+      def initialize(report: nil, format: nil, report_command: nil, **rest) = super
+
       # @param root [String] the checkout the report path is relative to
-      # @return [String] absolute
-      def report_path(root) = File.expand_path(report, root)
+      # @return [String, nil] absolute; nil with a {#report_command}
+      def report_path(root) = report && File.expand_path(report, root)
+
+      # @return [Boolean] whether the figure comes from {#report_command}
+      def report_command? = !report_command.nil?
+
+      # Where the figure comes from, as a verdict names it.
+      #
+      # @return [String]
+      def source = report_command? ? "report_command: `#{report_command}`" : "#{format}: #{report}"
+
+      # The section as `.openlanes.yml` holds it.
+      #
+      # @return [Hash{String => Object}]
+      def to_h
+        { "command" => command, "report" => report, "format" => format&.to_s,
+          "report_command" => report_command, "minimum" => minimum }.compact
+      end
     end
 
     class Config
-      # The file's name, at the checkout's root.
-      FILE = ".openlanes.coverage.yml"
+      # The section's key at the top of `.openlanes.yml`.
+      SECTION = "coverage"
 
       # Report formats with a parser. Each reports lines (plan decision 1).
       FORMATS = %i[lcov cobertura istanbul simplecov].freeze
 
-      # Every key, each required.
-      KEYS = %w[command report format minimum].freeze
+      # Every key the section may hold.
+      KEYS = %w[command report format report_command minimum].freeze
+
+      # Keys both shapes require.
+      REQUIRED = %w[command minimum].freeze
+
+      # The two shapes, as every error and the setup note spell them.
+      SHAPES = "report_command alone, or report with format"
+
+      # Where the first M15 kept this section. Never read: only the
+      # `coverage:` section counts. But a project that still has it would
+      # otherwise turn unconfigured without a word and be sent back for
+      # setup, so its presence is said once, as a warning.
+      LEGACY = ".openlanes.coverage.yml"
 
       class << self
-        # @param root [String]
-        # @return [OpenLanes::Coverage::Config, nil] nil when there is no file
-        # @raise [OpenLanes::Coverage::Invalid]
+        # @param root [String] a checkout
+        # @return [OpenLanes::Coverage::Config, nil] nil when its
+        #   `.openlanes.yml` has no `coverage:` section, or there is no file
+        # @raise [OpenLanes::Coverage::Invalid] when the section, or the file
+        #   around it, cannot be used
         def load(root)
-          path = File.join(root, FILE)
-          return nil unless File.file?(path)
-
-          parse(File.read(path), path:)
+          warn_legacy(root)
+          OpenLanes::Config.load(root).coverage
+        rescue Invalid
+          raise
+        rescue OpenLanes::Error => e
+          raise Invalid, e.message
         end
 
-        # @param text [String] YAML
-        # @param path [String] named in every error
+        # @param value [Object] what YAML gave for `coverage:`
+        # @param path [String] the `.openlanes.yml`, named in every error
         # @return [OpenLanes::Coverage::Config]
         # @raise [OpenLanes::Coverage::Invalid]
-        def parse(text, path:)
-          data = YAML.safe_load(text)
-          fail_with(path, "expected a mapping with #{KEYS.join(", ")}") unless data.is_a?(Hash)
+        def parse(value, path:)
+          fail_with(path, ": must be a mapping with command, minimum, and #{SHAPES}") unless value.is_a?(Hash)
 
-          settings = data.transform_keys(&:to_s)
+          settings = value.transform_keys(&:to_s)
           unknown = settings.keys - KEYS
-          fail_with(path, "unknown key #{unknown.join(", ")}; known: #{KEYS.join(", ")}") unless unknown.empty?
-          missing = KEYS - settings.keys
-          fail_with(path, "missing key #{missing.join(", ")}") unless missing.empty?
+          fail_with(path, ": unknown key #{unknown.join(", ")}; known: #{KEYS.join(", ")}") unless unknown.empty?
+          missing = REQUIRED - settings.keys
+          fail_with(path, ": missing key #{missing.join(", ")}") unless missing.empty?
+          shape!(settings, path)
 
           new(path:,
             command: text_of(settings, "command", path),
-            report:  text_of(settings, "report", path),
-            format:  format_of(settings["format"], path),
-            minimum: minimum_of(settings["minimum"], path))
-        rescue Psych::Exception => e
-          fail_with(path, "is not valid YAML (#{e.message.lines.first.to_s.strip})")
+            minimum: minimum_of(settings["minimum"], path),
+            **source_of(settings, path))
         end
 
         private
 
+        # Once per file and process: the gate asks on every poll.
+        #
+        # @return [void]
+        def warn_legacy(root)
+          path = File.join(root, LEGACY)
+          @warned ||= Set.new
+          return unless File.exist?(path) && @warned.add?(path)
+
+          UI.log("#{path} is no longer read; move its settings under #{SECTION}: in .openlanes.yml", level: :warn)
+        end
+
+        # @param message [String] after the section's name: ": …" for the
+        #   section, ".key: …" for one key, as the rest of `.openlanes.yml` reads
         # @return [void] never returns
-        def fail_with(path, message) = raise(Invalid, "#{path}: #{message}")
+        def fail_with(path, message) = raise(Invalid, "#{path}: #{SECTION}#{message}")
+
+        # Exactly one shape, said whole.
+        #
+        # @return [void]
+        def shape!(settings, path)
+          given = %w[report format report_command].select { settings.key?(it) }
+          return if [%w[report_command], %w[report format]].include?(given)
+
+          problem =
+            if given.empty? then "says nowhere to read the figure"
+            elsif given.include?("report_command") then "report_command replaces #{(given - %w[report_command]).join(" and ")}"
+            else "#{given.first} without #{(%w[report format] - given).first}"
+            end
+          fail_with(path, ": #{problem}; give #{SHAPES}")
+        end
+
+        # @return [Hash{Symbol => Object}]
+        def source_of(settings, path)
+          return { report_command: text_of(settings, "report_command", path) } if settings.key?("report_command")
+
+          { report: text_of(settings, "report", path), format: format_of(settings["format"], path) }
+        end
 
         # @return [String]
         def text_of(settings, key, path)
           value = settings[key]
           return value.strip if value.is_a?(String) && !value.strip.empty?
 
-          fail_with(path, "#{key}: must be a non-empty string, not #{value.inspect}")
+          fail_with(path, ".#{key}: must be a non-empty string, not #{value.inspect}")
         end
 
         # @return [Symbol]
@@ -94,7 +175,7 @@ module OpenLanes
           format = value.to_s.strip.downcase.to_sym
           return format if FORMATS.include?(format)
 
-          fail_with(path, "format: #{value.inspect} is not one of #{FORMATS.join(", ")}")
+          fail_with(path, ".format: #{value.inspect} is not one of #{FORMATS.join(", ")}")
         end
 
         # A quoted `"95"` is refused rather than converted: YAML that types a
@@ -105,7 +186,7 @@ module OpenLanes
         def minimum_of(value, path)
           return value.to_f if value.is_a?(Numeric) && value.between?(0, 100)
 
-          fail_with(path, "minimum: #{value.inspect} is not a number from 0 to 100")
+          fail_with(path, ".minimum: #{value.inspect} is not a number from 0 to 100")
         end
       end
     end

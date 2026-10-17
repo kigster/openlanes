@@ -343,6 +343,8 @@ module OpenLanes
       # @param web [OpenLanes::Web::Launcher, nil]
       # @return [OpenLanes::Engine::Runner]
       def runner_for(agents, plans, live, web)
+        worktree = (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree)
+        publisher = publisher_for(@root, isolation)
         Engine.runner(
           tree:         @tree,
           agents:,
@@ -350,11 +352,12 @@ module OpenLanes
           jobs:         (@options[:jobs] || UI.default_jobs).to_i,
           plans:,
           state:        Engine.state_file(@tree),
-          worktree:     (OpenLanes::Vcs.worktree(root: @root) if isolation == :worktree),
+          worktree:,
           rounds:       @options[:rounds]&.to_i,
           executor:     executor,
           dry_run:      @dry_run,
-          publisher:    publisher_for(@root, isolation),
+          publisher:,
+          verification: verification_for(publisher, worktree),
           on_board:     live&.on_board,
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -412,6 +415,27 @@ module OpenLanes
         end
 
         Vcs.publisher(root:, dry_run: @dry_run)
+      end
+
+      # Verification (plan 014) commits, comments and labels, so it runs
+      # only where the build was published: a plan never pushed has no pull
+      # request to verify, and a dry run changes nothing.
+      #
+      # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil]
+      # @return [OpenLanes::Engine::Verification::Driver, nil]
+      def verification_for(publisher, worktree)
+        return nil if publisher.nil? || worktree.nil? || @dry_run
+
+        github = Vcs.github
+        config = Config.current
+        outcome = Verification.outcome(root: @root,
+          publisher:,
+          github:,
+          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
+          agents: Agents::Registry.new,
+          max_rejections: config.max_rejections)
+        Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config))
       end
 
       # What the runner is told about idling past its fixed points. With its

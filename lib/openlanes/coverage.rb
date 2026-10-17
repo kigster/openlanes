@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
 module OpenLanes
-  # A project's declared test coverage (decision M15): which command writes
-  # the report, where, in which format, and the lowest line figure that may
-  # merge.
+  # A project's declared test coverage (decision M15), the `coverage:`
+  # section of its `.openlanes.yml`: which command runs the suite, where the
+  # line figure comes from, and the lowest one that may merge.
   #
   # Pure, like {Plans}: it reads files and does arithmetic, and starts no
-  # process. Running the command belongs to {Engine::CoverageGate}, which is
-  # the only caller that turns a figure into a verdict.
+  # process. Running either command belongs to {Engine::CoverageGate}, which
+  # is the only caller that turns a figure into a verdict.
   module Coverage
-    # A `.openlanes.coverage.yml` that cannot be honoured as written.
+    # A `coverage:` section, or the `.openlanes.yml` around it, that cannot be
+    # honoured as written.
     class Invalid < OpenLanes::Error; end
 
     # A report present on disk that a parser cannot read.
@@ -18,8 +19,8 @@ module OpenLanes
     module_function
 
     # @param root [String] the checkout whose declaration is read
-    # @return [OpenLanes::Coverage::Config, nil] nil when the project declares
-    #   no coverage
+    # @return [OpenLanes::Coverage::Config, nil] nil when its `.openlanes.yml`
+    #   has no `coverage:` section
     # @raise [OpenLanes::Coverage::Invalid]
     def config(root) = Config.load(root)
 

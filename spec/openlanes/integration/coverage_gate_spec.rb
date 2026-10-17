@@ -16,8 +16,8 @@ RSpec.describe "the coverage gate, end to end" do
   def project(command)
     PlansFixture::Builder.new(File.join(root, OpenLanes::PLANS_DIR))
                          .plan("001.00", :ready_for_review, "gate", files: { "spec.md" => "# Gate\n" })
-    File.write(File.join(root, ".openlanes.coverage.yml"),
-      YAML.dump("command" => command, "report" => "coverage/lcov.info", "format" => "lcov", "minimum" => 95))
+    File.write(File.join(root, ".openlanes.yml"),
+      YAML.dump("coverage" => { "command" => command, "report" => "coverage/lcov.info", "format" => "lcov", "minimum" => 95 }))
     File.write(File.join(root, ".gitignore"), "coverage/\n")
     [%w[init -q -b main], %w[add -A], %w[-c user.name=Fixture -c user.email=fixture@example.com commit -q -m fixture]]
       .each { |args| Open3.capture2e("git", "-C", root, *args).last.success? or raise "git #{args.join(" ")} failed" }

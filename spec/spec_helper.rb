@@ -68,6 +68,7 @@ require_relative "support/git_repo"
 require_relative "support/coverage_fixtures"
 require_relative "support/log_helper"
 require_relative "support/origin_repo"
+require_relative "support/fake_gh_env"
 require_relative "support/test_redis"
 
 TestRedis.scrub!

@@ -120,6 +120,22 @@ RSpec.describe OpenLanes::Apps::Supervisor do
     end
   end
 
+  context "when a process prints more than the reason keeps, then exits" do
+    let(:definition) do
+      app(OpenLanes::Apps::ProcessSpec.new(name: "web", start: "for i in $(seq 1 30); do echo line $i; done; exit 4"))
+    end
+
+    it "names the process and keeps its last 20 lines after the stop" do
+      expect { supervisor.start }.to raise_error(described_class::StartFailed) { |e| expect(e.process).to eq("web") }
+      expect(supervisor.log_tail("web")).to eq((11..30).map { "line #{it}" })
+    end
+
+    it "answers fewer lines when asked, and nothing for a process it never started" do
+      expect { supervisor.start }.to raise_error(described_class::StartFailed)
+      expect([supervisor.log_tail("web", 2), supervisor.log_tail("api")]).to eq([["line 29", "line 30"], []])
+    end
+  end
+
   context "when a process listens on a port other than the one it was given" do
     let(:ready_timeout) { 1 }
     let(:elsewhere) { TCPServer.new("127.0.0.1", 0).then { |s| s.addr[1].tap { s.close } } }

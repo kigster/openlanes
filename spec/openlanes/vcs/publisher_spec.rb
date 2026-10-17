@@ -312,4 +312,109 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       end
     end
   end
+
+  # Real git and a bare origin: what is under test is which paths reach the
+  # commit, and a stubbed git would only echo back what the stub was told.
+  describe "#commit_plan" do
+    subject(:publisher) do
+      described_class.new(root: repo_root, command: TTY::Command.new(printer: :null), dry_run: false, github:)
+    end
+
+    let(:checkout) { instance_double(OpenLanes::Vcs::Worktree::Checkout, branch: "main", path: repo_root, dirty?: true) }
+    let(:origin) { "#{repo_root}-origin.git" }
+    let(:screenshot) { File.join(plan.feature.path, "verification", "1", "final.png") }
+
+    before do
+      init_repo
+      repo_git("config", "user.name", "Test Author")
+      repo_git("config", "user.email", "test@example.com")
+      repo_git("config", "commit.gpgsign", "false")
+      commit_all("seed")
+      system("git", "init", "-q", "--bare", origin, exception: true)
+      repo_git("remote", "add", "origin", origin)
+      repo_git("push", "-q", "-u", "origin", "main")
+      FileUtils.mkdir_p(File.dirname(screenshot))
+      File.binwrite(screenshot, "\x89PNG\r\n\x1a\n")
+      allow(OpenLanes::Execution::Boundary).to receive(:sanction)
+    end
+
+    after { FileUtils.rm_rf(origin) }
+
+    it "commits the plan folder, pushes it and returns the SHA" do
+      sha = publisher.commit_plan(checkout:, plan:, message: "Verify 000.00")
+
+      aggregate_failures do
+        expect(sha).to eq(repo_git("rev-parse", "HEAD").strip)
+        expect(repo_git("rev-parse", "origin/main").strip).to eq(sha)
+        expect(repo_git("show", "--name-only", "--format=", sha)).to include("verification/1/final.png")
+        expect(OpenLanes::Execution::Boundary).to have_received(:sanction).with(repo_root, "origin", "main")
+      end
+    end
+
+    it "refuses a checkout with a change outside the plan folder, and commits nothing" do
+      File.write(File.join(repo_root, "app.rb"), "puts :stray\n")
+      before = repo_git("rev-parse", "HEAD")
+
+      aggregate_failures do
+        expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+          .to raise_error(OpenLanes::Error, /outside its plan folder: untracked app\.rb/)
+        expect(repo_git("rev-parse", "HEAD")).to eq(before)
+      end
+    end
+
+    it "names untracked leftovers apart from edits, with the hint to ignore them" do
+      File.write(File.join(repo_root, "README.md"), "seeded\n")
+      repo_git("add", "README.md")
+      repo_git("commit", "-q", "-m", "readme", "--", "README.md")
+      File.write(File.join(repo_root, "README.md"), "edited\n")
+      FileUtils.mkdir_p(File.join(repo_root, "log"))
+      File.write(File.join(repo_root, "log", "test.log"), "boot\n")
+
+      expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+        .to raise_error(OpenLanes::Error,
+          "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: edited README.md; " \
+          "untracked log/test.log (left by the app or its tests? add them to .gitignore)")
+    end
+
+    it "counts the untracked files past the first ten rather than listing every one" do
+      FileUtils.mkdir_p(File.join(repo_root, "tmp"))
+      12.times { File.write(File.join(repo_root, "tmp", format("cache-%02d", it)), "") }
+
+      expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+        .to raise_error(OpenLanes::Error, %r{tmp/cache-09 and 2 more \(left by the app})
+    end
+
+    it "refuses a pull request built from another branch, and commits nothing" do
+      FileUtils.rm_rf(File.dirname(screenshot))
+      plans { |t| t.plan "001.00", :verifying, "adopted", prs: [t.open(9, "Adopted")] }
+      adopted = OpenLanes::Plans::Tree.new(dir: plans_root).find("001.00")
+      allow(github).to receive(:pull_request).and_return({ branch: "someone/else" })
+      before = repo_git("rev-parse", "HEAD")
+
+      aggregate_failures do
+        expect { publisher.commit_plan(checkout:, plan: adopted, message: "Verify") }
+          .to raise_error(OpenLanes::Error, "refused to commit 001.00 — #9 is built from someone/else, not main, so a push would not reach it")
+        expect(repo_git("rev-parse", "HEAD")).to eq(before)
+      end
+    end
+
+    it "is not a resubmit, so the review labels are left alone" do
+      publisher.commit_plan(checkout:, plan:, message: "Verify")
+
+      expect(github).not_to have_received(:swap_label)
+    end
+
+    it "refuses when there is nothing new to commit" do
+      FileUtils.rm_rf(File.dirname(screenshot))
+
+      expect { publisher.commit_plan(checkout:, plan:, message: "Verify") }
+        .to raise_error(OpenLanes::Error, /nothing to commit/)
+    end
+
+    it "changes nothing on a dry run" do
+      dry = described_class.new(root: repo_root, command: TTY::Command.new(printer: :null), dry_run: true, github:)
+
+      expect(dry.commit_plan(checkout:, plan:, message: "Verify")).to be_nil
+    end
+  end
 end

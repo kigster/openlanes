@@ -119,6 +119,75 @@ module OpenLanes
         refuse(subject, checkout, title, git_complaint(e))
       end
 
+      # Why a push from this checkout would not reach the pull request, as
+      # {#publish} asks before pushing. `pull-requests.md` does not record a
+      # head branch, and an adopted or hand-opened pull request can come from
+      # any branch, while the checkout's branch is derived from the plan.
+      # Verification asks it too, before chewie runs and before its commit:
+      # otherwise it verifies one branch's code, pushes screenshots to it,
+      # and labels a pull request built from another.
+      #
+      # @param pull [OpenLanes::Plans::PullRequest] an open pull request
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param refused [String] how the sentence starts
+      # @return [String, nil] nil when the pull request is built from the checkout's branch
+      def branch_mismatch(pull, checkout, refused: "refused") = head_mismatch(pull, checkout, refused:)
+
+      # Paths named in a {#commit_plan} refusal before the rest are counted.
+      STRAY_SHOWN = 10
+
+      # Commit the plan's folder, and nothing else, to the checkout's branch and
+      # push it. Verification uses it to land chewie's screenshots on the pull
+      # request before the engine links them by SHA.
+      #
+      # It refuses a checkout with changes outside the plan folder: chewie
+      # writes `verification/**` and nothing more, so a stray code edit is
+      # something it should not have made, and committing it here would slip
+      # unreviewed code into a pull request that already passed review. Nor is
+      # it a resubmit, so the review labels are left exactly as they are.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param plan [OpenLanes::Plans::Subject] the plan in the main checkout
+      # @param message [String] the commit subject
+      # @return [String, nil] the new commit's SHA, nil on a dry run
+      # @raise [OpenLanes::Error] on a stray change, a pull request built from
+      #   another branch, or nothing to commit
+      def commit_plan(checkout:, plan:, message:)
+        folder = plan_parent(plan)
+        raise Error, "the plans live outside the repository, so the branch has no place for them" if folder.nil?
+
+        stray = changed_paths(checkout).reject { |path, _| inside_plan?(path, folder, plan) }
+        raise Error, stray_complaint(plan, stray) if stray.any?
+        return nil if @dry_run
+
+        open = plan.pull_requests.select(&:open?).last
+        mismatch = open && branch_mismatch(open, checkout, refused: "refused to commit #{plan.feature.ordinal}")
+        raise Error, mismatch if mismatch
+
+        carry_plan(checkout, plan)
+        run(checkout, "git", "add", "-A", "--", folder)
+        raise Error, "nothing to commit for #{plan.feature.ordinal}" if run!(checkout, "git", "diff", "--cached", "--quiet").success?
+
+        run(checkout, "git", "commit", "-m", message)
+        sha = run(checkout, "git", "rev-parse", "HEAD").out.strip
+        pushed!(checkout, sha)
+        sha
+      rescue TTY::Command::ExitError => e
+        raise Error, git_complaint(e)
+      end
+
+      # A commit that stayed on this machine is said as one: "not committed"
+      # would send someone looking for a change that is right there in the
+      # checkout, waiting for the next push to carry it.
+      #
+      # @return [void]
+      # @raise [OpenLanes::Error] when the push fails
+      def pushed!(checkout, sha)
+        push(checkout)
+      rescue TTY::Command::ExitError => e
+        raise Error, "committed #{sha[0, 7]} locally, but the push failed: #{git_complaint(e)}"
+      end
+
       # git and gh put the useful sentence in stderr, several lines below the
       # command they echo. Reporting only the first line reports "it failed".
       #
@@ -187,6 +256,64 @@ module OpenLanes
 
       private
 
+      # @param plan [OpenLanes::Plans::Subject]
+      # @return [String, nil] the plans directory relative to the repository,
+      #   nil when the plans live outside it
+      def plan_parent(plan)
+        root = real(@root)
+        source = real(plan.feature.path)
+        source.start_with?("#{root}/") ? File.dirname(source.delete_prefix("#{root}/")) : nil
+      end
+
+      # Every path git sees changed, untracked files included. `-z` keeps an
+      # emoji folder name unquoted; a rename's second entry is its old path.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @return [Hash{String => Boolean}] each path, and whether git does not
+      #   track it
+      def changed_paths(checkout)
+        entries = run(checkout, "git", "status", "--porcelain", "-z", "--untracked-files=all").out.split("\0")
+        paths = {}
+        until entries.empty?
+          entry = entries.shift
+          paths[entry[3..]] = entry.start_with?("??")
+          paths[entries.shift] = false if entry.start_with?("R", "C")
+        end
+        paths.reject { |path, _| path.nil? }
+      end
+
+      # Running the app in the checkout leaves files behind that a project
+      # may never have ignored (logs, `tmp/`, a SQLite file, `coverage/`),
+      # and each one refuses every verification commit until it is. So the
+      # refusal names them, apart from edits to tracked files, and says what
+      # to do about them; "changes outside its plan folder" alone reads as a
+      # stray code edit and sends someone looking for one.
+      #
+      # @param plan [OpenLanes::Plans::Subject]
+      # @param stray [Hash{String => Boolean}] see {#changed_paths}
+      # @return [String]
+      def stray_complaint(plan, stray)
+        untracked, edited = stray.partition { |_, new| new }.map { |pairs| pairs.map(&:first) }
+        parts = []
+        parts << "edited #{shown(edited)}" if edited.any?
+        parts << "untracked #{shown(untracked)} (left by the app or its tests? add them to .gitignore)" if untracked.any?
+        "refused to commit #{plan.feature.ordinal}: changes outside its plan folder: #{parts.join("; ")}"
+      end
+
+      # @param paths [Array<String>]
+      # @return [String]
+      def shown(paths)
+        more = paths.size - STRAY_SHOWN
+        "#{paths.first(STRAY_SHOWN).join(", ")}#{" and #{more} more" if more.positive?}"
+      end
+
+      # @return [Boolean] whether `path` lies in any copy of this plan's folder
+      def inside_plan?(path, folder, plan)
+        return false unless path.start_with?("#{folder}/")
+
+        Plans::Ordinal.from_dirname(path.delete_prefix("#{folder}/").split("/").first) == plan.feature.ordinal
+      end
+
       # @param path [String]
       # @return [String] symlinks resolved, so /var and /private/var compare equal
       def real(path)
@@ -217,14 +344,14 @@ module OpenLanes
       # @param open [OpenLanes::Plans::PullRequest]
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
       # @return [String, nil] nil when the pull request is built from the checkout's branch
-      def head_mismatch(open, checkout)
+      def head_mismatch(open, checkout, refused: "publish refused")
         head = @github.pull_request(open.number || open.url).fetch(:branch)
         return if head == checkout.branch
 
-        "publish refused — ##{open.number} is built from #{head.empty? ? "an unknown branch" : head}, " \
+        "#{refused} — ##{open.number} is built from #{head.empty? ? "an unknown branch" : head}, " \
           "not #{checkout.branch}, so a push would not reach it"
       rescue Error => e
-        "publish refused — could not tell which branch ##{open.number} is built from: #{e.message}"
+        "#{refused} — could not tell which branch ##{open.number} is built from: #{e.message}"
       end
 
       # @return [Hash]
@@ -366,6 +493,9 @@ module OpenLanes
 
       # @return [TTY::Command::Result]
       def run(checkout, *argv) = @command.run(*argv, chdir: checkout.path)
+
+      # @return [TTY::Command::Result] whatever the exit status
+      def run!(checkout, *argv) = @command.run!(*argv, chdir: checkout.path)
     end
   end
 end

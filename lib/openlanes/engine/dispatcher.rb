@@ -162,6 +162,8 @@ module OpenLanes
         @unblock_tried = {}
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         @locks = PlanLocks.new
+        @verifying = {}
+        @said_verifying = {}
       end
 
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
@@ -213,6 +215,7 @@ module OpenLanes
         ask_for_time
         drain_mail
         watch_pull_requests
+        settle_verifications
         # On threads: a kill waits out TERM before KILL, and the board must not.
         @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
         dispatch unless Execution::Control.quit? || resting?
@@ -230,8 +233,13 @@ module OpenLanes
       # @return [Boolean]
       def done?
         return false unless quiet?
+        # A quit does not wait for a look: it only reads, and the coverage
+        # run under it is a child process killed at exit.
         return true if Execution::Control.quit?
         return false if @stay
+        # Nor does an ending run return in the middle of one: what it finds
+        # is acted on, on the next tick, before the run reports.
+        return false if @runner.verification&.busy?
 
         next_dispatchable.nil?
       end
@@ -466,9 +474,18 @@ module OpenLanes
       #
       # @return [Array<String>]
       def untouchable
-        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal)
+        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now
         busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) }.map { it.feature.ordinal.to_s }
       end
+
+      # Plans whose CI and coverage are being looked at off the loop's
+      # thread. Untouchable until the look is acted on: a builder started
+      # in the checkout the suite is running in, or a person's rejection
+      # renaming the folder under it, would leave the look acting on a plan
+      # that is no longer the one it read.
+      #
+      # @return [Array<String>]
+      def verifying_now = @runner.verification&.looking || []
 
       # The Redis claim covers machines that share one; the lock file covers
       # a second run on this machine, or one that never reached Redis.
@@ -833,6 +850,10 @@ module OpenLanes
         blocked = waiting
         return "idle: waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
 
+        unless @verifying.empty?
+          return "idle: #{@verifying.map { |plan, note| "#{plan} #{note}" }.join("; ")}"
+        end
+
         held = @runner.held(@runner.dependencies(except: untouchable))
         return "idle: held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
 
@@ -868,6 +889,8 @@ module OpenLanes
           state = working.empty? ? @runner.effective_status(subject) : subject.status
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
+          # Verified and waiting on CI: the engine's to settle, not chewie's.
+          next if @runner.verification&.awaiting_ci?(subject)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
           next if locked_elsewhere?(subject)
@@ -1050,22 +1073,25 @@ module OpenLanes
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
-            @runner.executor.call(agent,
-              subject,
-              root:      task.root,
-              round:,
-              successor:,
-              handle:,
-              partners:,
-              resume:) { |progress|
-              job.up = progress.up
-              job.down = progress.down
-              job.subagents = progress.subagents
-              job.running = progress.running
-              job.context = progress.context
-              job.message = progress.message || progress.activity
-              job.history = Board::Row.remember(job.history || [], job.message)
+            invoke = lambda {
+              @runner.executor.call(agent,
+                subject,
+                root:      task.root,
+                round:,
+                successor:,
+                handle:,
+                partners:,
+                resume:) { |progress|
+                job.up = progress.up
+                job.down = progress.down
+                job.subagents = progress.subagents
+                job.running = progress.running
+                job.context = progress.context
+                job.message = progress.message || progress.activity
+                job.history = Board::Row.remember(job.history || [], job.message)
+              }
             }
+            verifier?(agent) ? @runner.verification.around(task, subject, &invoke) : invoke.call
           rescue StandardError => e
             e
           ensure
@@ -1315,6 +1341,7 @@ module OpenLanes
         return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
         return base if job.rebase
         return crashed(job, base, result) if result.is_a?(Exception)
+        return app_did_not_start(job, base, result) if result.is_a?(Verification::AppSession::Failed)
         return base.with(note: result.note) if @runner.dry_run?
 
         reading = read_ledger(task)
@@ -1501,14 +1528,14 @@ module OpenLanes
         # Only a reviewer rules. A builder that signed `Completed (approved)`
         # once had its own work taken as approved: the plan was parked as
         # finished at 🟡, never reviewed and never published.
-        verdict = verdict_of(entry) if agent.phase.to_s == REVIEW_PHASE
+        verdict = verdict_of(entry) if [REVIEW_PHASE, Verification::PHASE].include?(agent.phase.to_s)
+        return verified(job, base, subject, verdict) if agent.phase.to_s == Verification::PHASE && @runner.verification
+
         partner_running = @running.any? { |j| j.task.subject.feature.ordinal.to_s == ordinal }
         target = target_for(agent, verdict, partner_running)
 
-        if verdict == :approved
-          @finished_plans << ordinal
-          return base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge")
-        end
+        return approved(base, subject, ordinal) if verdict == :approved
+        return built_locally(base.with(status: "Completed"), ordinal) if verdict == :verified
 
         attempt = base.with(status: "Completed")
         return built_locally(attempt, ordinal) if local_only_review?(target, subject)
@@ -1575,11 +1602,90 @@ module OpenLanes
         attempt.with(note: "#{attempt.note}; built locally, no pull request in this run, so it waits for one")
       end
 
+      # ---- verification (plan 014) -----------------------------------------
+
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [Boolean] whether this agent's run is wrapped in the plan's app
+      def verifier?(agent) = agent.phase.to_s == Verification::PHASE && !@runner.verification.nil? && !@runner.dry_run?
+
+      # hansolo approved. Into 🧪 when the run verifies and the pull request
+      # carries a verdict that goes on to verification; otherwise the plan is
+      # finished at 👀, as it was before chewie existed.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def approved(base, subject, ordinal)
+        said = @runner.verification&.hand_off(subject)
+        return base.with(status: "Completed", to: :verifying, note: "#{base.note}; approved, #{said}") if fresh_by(ordinal)&.status&.key == :verifying
+
+        @finished_plans << ordinal
+        base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge#{"; #{said}" if said}")
+      end
+
+      # chewie signed. The engine commits, comments and labels from its
+      # report; the folder moves only on a rejection.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def verified(job, base, subject, verdict)
+        driver = @runner.verification
+        result = case verdict
+                 when :rejected then driver.reject(job.task, subject)
+                 when :verified then driver.pass(job.task, subject)
+                 end
+        return base.with(ok: false, status: "Completed", note: "#{base.note}; signed neither verified nor rejected") unless verdict
+        return base.with(ok: false, status: "Completed", note: "#{base.note}; no open pull request to verify") unless result
+
+        wake!
+        base.with(status: "Completed", to: result.to || job.state, note: "#{base.note}; #{result.note}")
+      end
+
+      # The app did not come up, so chewie never ran: rejected all the same
+      # (M1), with the failing process's last lines.
+      #
+      # @param result [OpenLanes::Engine::Verification::AppSession::Failed]
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def app_did_not_start(job, base, result)
+        task = job.task
+        subject = fresh(task) or return base.with(ok: false, note: "plan folder vanished")
+        remember(plan_of(job), task.agent.name, job.state, "Completed", task.round)
+        rejected = @runner.verification.reject(task, subject, why: result.to_markdown)
+        note = rejected&.note || "no open pull request to reject"
+        base.with(ok: !rejected.nil?, status: "Completed", to: rejected&.to || job.state, note: "#{result.headline}; #{note}")
+      end
+
+      # What the last look at CI found for the verified plans, logged, and
+      # the plans it moved woken for. A rejection hands the plan back to the
+      # builders; `ready-to-merge` leaves it at 🧪 for a person, or plan
+      # 033's merge, to finish.
+      #
+      # @return [void]
+      def settle_verifications
+        driver = @runner.verification or return
+        return if @runner.dry_run?
+
+        # The plans being looked at are untouchable to everything but the
+        # look itself, which is about to be acted on.
+        busy = untouchable - driver.looking
+        subjects = @runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }
+        driver.poll(subjects).each do |settled|
+          result = settled.result
+          @verifying[settled.plan] = result.note if result.kind == :waiting
+          next if result.kind == :waiting && @said_verifying[settled.plan] == result.note
+
+          @said_verifying[settled.plan] = result.note
+          @verifying.delete(settled.plan) unless result.kind == :waiting
+          @finished_plans.delete(settled.plan) if result.to
+          UI.log(result.note, level: result.kind == :rejected ? :warn : :info, plan: settled.plan)
+          wake!
+        end
+      end
+
       # @param entry [OpenLanes::Plans::Ledger::Entry]
-      # @return [Symbol, nil] :rejected, :approved, :slop, :product or nil
+      # @return [Symbol, nil] :rejected, :verified, :approved, :slop, :product or nil
       def verdict_of(entry)
         note = entry.note.to_s.downcase
-        return :rejected if note.include?("reject")
+        # Anchored, as the rejection count is: "nothing to reject" approves.
+        return :rejected if note.strip.match?(Verification::Outcome::REJECTION)
+        return :verified if note.include?("verified")
         return :approved if note.include?("approv")
         return :slop if note.include?("slop") || note.include?("rewrite")
         return :product if note.include?("product")

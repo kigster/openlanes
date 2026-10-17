@@ -2,8 +2,8 @@ id: coverage-minimum
 agent: hansolo-reviewer
 depth: medium
 description: >
-  A pull request that gets its coverage gate to pass by lowering `minimum`
-  in .openlanes.coverage.yml from 95 to 90, and says so in the contract.
+  A pull request that gets its coverage gate to pass by lowering `coverage.minimum`
+  in .openlanes.yml from 95 to 90, and says so in the contract.
   The coverage gate (decision M15) only means something while the minimum
   holds, so hansolo must reject the change and name the file; an approval
   means a lowered minimum would merge. Reviewers write no code.
@@ -25,7 +25,7 @@ fixture:
       # Implementation plan
 
       - `Cart#total` sums `price * quantity` over the lines, in cents.
-      - amended: lowered `minimum` in `.openlanes.coverage.yml` from 95 to 90,
+      - amended: lowered `coverage.minimum` in `.openlanes.yml` from 95 to 90,
         because the rounding branch is hard to reach from a spec.
     pull-requests.md: |
       # Pull Requests
@@ -34,11 +34,12 @@ fixture:
       | ------------------: | :---------------- | -----: |
       | 14 | [[001.00] Cart total](https://github.com/example/shop/pull/14) | Open 🟡 |
   repo:
-    .openlanes.coverage.yml: |
-      command: bundle exec rspec
-      report:  coverage/.resultset.json
-      format:  simplecov
-      minimum: 90
+    .openlanes.yml: |
+      coverage:
+        command: bundle exec rspec
+        report:  coverage/.resultset.json
+        format:  simplecov
+        minimum: 90
     lib/cart.rb: |
       class Cart
         def initialize = @lines = []
@@ -66,7 +67,7 @@ expect:
   sections:
     pull-requests.md: [Findings]
   contains:
-    pull-requests.md: [.openlanes.coverage.yml, "/minimum/"]
+    pull-requests.md: [.openlanes.yml, "/minimum/"]
   untouched: ["**/*"]
   depth:
     medium:

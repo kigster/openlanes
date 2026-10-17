@@ -11,11 +11,11 @@ Every project keeps its plans in a `.plans/` directory at its root. Each medium-
 
 There are three phases, and each one has a file that proves it happened:
 
-| Phase     | State             | The file that proves it |
-| :-------- | :---------------- | :---------------------- |
-| **spec**  | ⚪ New            | `spec.md`               |
-| **plan**  | ⭐ Planned        | `plan.md`               |
-| **build** | 🟡 → 🟢 → 👀 → ✅ | `pull-requests.md`      |
+| Phase     | State                  | The file that proves it |
+| :-------- | :--------------------- | :---------------------- |
+| **spec**  | ⚪ New                 | `spec.md`               |
+| **plan**  | ⭐ Planned             | `plan.md`               |
+| **build** | 🟡 → 🟢 → 👀 → 🧪 → ✅ | `pull-requests.md`      |
 
 Those files are not paperwork. They are what the tool checks: a folder may not claim a phase whose file is missing, and `openlanes resync dirs` renames any folder whose emoji its contents do not support.
 
@@ -94,6 +94,7 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 |   🎨   | **Building UI**        | `building_ui`        | `spec.md`, `plan.md`                     | the back end holds; the interface is being built against it                                 |
 |   🟢   | **Ready for Review**   | `ready_for_review`   | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is green on CI and waiting for a reviewer                                |
 |   👀   | **In Review**          | `in_review`          | `spec.md`, `plan.md`, `pull-requests.md` | a reviewer has picked it up and has not ruled yet                                           |
+|   🧪   | **Verifying**          | `verifying`          | `spec.md`, `plan.md`, `pull-requests.md` | the review approved it; chewie runs the app through How to test before anything merges      |
 |   🔴   | **Changes Requested**  | `rejected`           | `spec.md`, `plan.md`, `pull-requests.md` | the review asked for fixes; resubmit once they are made                                     |
 |   ✅   | **Approved & Merged**  | `approved`           | `pull-requests.md`                       | reviewed, approved, and every pull request merged                                           |
 |   😎   | **Deployed**           | `deployed`           | `deployed.md`                            | live in production; `deployed.md` names the release, date and SHA                           |
@@ -108,7 +109,7 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 
 "Files required" is a **minimum**, not an exact match: a ⚪ folder that has grown a `plan.md` still satisfies ⚪, and is ⭐ anyway. That is why `resync dirs` moves a folder to the furthest state its contents justify rather than only fixing outright lies.
 
-Some states share their requirements on purpose, and are told apart only by the folder name. ⭕ Technical Block and 🛑 Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐ 🟡 🎨 🟢 👀 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
+Some states share their requirements on purpose, and are told apart only by the folder name. ⭕ Technical Block and 🛑 Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐ 🟡 🎨 🟢 👀 🧪 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
 
 So nothing re-derives one of them from a folder's contents — otherwise every ⭕ would silently become 🛑 the first time anything resynced. A folder falling back into that group from outside lands on its weakest member, ⭐ Planned, because that is all its contents can prove.
 
@@ -140,7 +141,8 @@ An entry that names no decider, carries no date, or restates the options instead
 | 🟡 Building           | 🎨 🟢 ⭕ 🛑 💤 ❌             | 🎨 Building UI        |
 | 🎨 Building UI        | 🟢 ⭕ 🛑 💤 ❌                | 🟢 Ready for Review   |
 | 🟢 Ready for Review   | 👀 ❌                         | 👀 In Review          |
-| 👀 In Review          | ✅ 🔴 💩 ❌                   | ✅ Approved & Merged  |
+| 👀 In Review          | 🧪 ✅ 🔴 💩 ❌                | 🧪 Verifying          |
+| 🧪 Verifying          | ✅ 🔴 ❌                      | ✅ Approved & Merged  |
 | 🔴 Changes Requested  | 🎨 🟢 ⭕ 🛑 💤 ❌             | 🎨 Building UI        |
 | ✅ Approved & Merged  | 🟡 😎 ❌                      | 😎 Deployed           |
 | 😎 Deployed           | 😱 ❌                         | —                     |
@@ -169,6 +171,7 @@ stateDiagram-v2
     building_ui : 🎨 Building UI
     ready_for_review : 🟢 Ready for Review
     in_review : 👀 In Review
+    verifying : 🧪 Verifying
     rejected : 🔴 Changes Requested
     approved : ✅ Approved & Merged
     deployed : 😎 Deployed
@@ -225,9 +228,12 @@ stateDiagram-v2
     rejected --> ready_for_review
     rolled_back --> ready_for_review
     ready_for_review --> in_review
+    in_review --> verifying
     in_review --> approved
+    verifying --> approved
     retroactive --> approved
     in_review --> rejected
+    verifying --> rejected
     in_review --> shit
     approved --> deployed
     deployed --> rolled_back
@@ -269,6 +275,7 @@ stateDiagram-v2
     building_ui --> discarded
     ready_for_review --> discarded
     in_review --> discarded
+    verifying --> discarded
     rejected --> discarded
     approved --> discarded
     deployed --> discarded
@@ -285,19 +292,19 @@ stateDiagram-v2
 
 ## Files allowed in a plan folder
 
-| File               | Required by                                                                   |
-| :----------------- | :---------------------------------------------------------------------------- |
-| `spec.md`          | the specification; written first                                              |
-| `plan.md`          | the execution plan; written from the spec                                     |
-| `contract.md`      | the contract between the two halves of building                               |
-| `openapi.yaml`     | the HTTP surface, when the plan has one                                       |
-| `pull-requests.md` | 🟢 Ready for Review, 👀 In Review, 🔴 Changes Requested, ✅ Approved & Merged |
-| `deployed.md`      | 😎 Deployed                                                                   |
-| `rollback.md`      | 😱 Rolled Back                                                                |
-| `rewrite.md`       | 💩 Scrapped by Review                                                         |
-| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block, 💣 Bomb                                 |
-| `delayed.md`       | 💤 Deferred                                                                   |
-| `discarded.md`     | ❌ Discarded                                                                  |
+| File               | Required by                                                                                 |
+| :----------------- | :------------------------------------------------------------------------------------------ |
+| `spec.md`          | the specification; written first                                                            |
+| `plan.md`          | the execution plan; written from the spec                                                   |
+| `contract.md`      | the contract between the two halves of building                                             |
+| `openapi.yaml`     | the HTTP surface, when the plan has one                                                     |
+| `pull-requests.md` | 🟢 Ready for Review, 👀 In Review, 🧪 Verifying, 🔴 Changes Requested, ✅ Approved & Merged |
+| `deployed.md`      | 😎 Deployed                                                                                 |
+| `rollback.md`      | 😱 Rolled Back                                                                              |
+| `rewrite.md`       | 💩 Scrapped by Review                                                                       |
+| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block, 💣 Bomb                                               |
+| `delayed.md`       | 💤 Deferred                                                                                 |
+| `discarded.md`     | ❌ Discarded                                                                                |
 
 `contract.md` is the one file no state requires. `luke-backend` writes it before it writes code, and `rey-frontend` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
 

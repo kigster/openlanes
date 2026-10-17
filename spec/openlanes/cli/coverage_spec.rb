@@ -17,13 +17,13 @@ RSpec.describe "openlanes coverage", :tree do
   after { FileUtils.rm_rf("#{root}.worktrees") }
 
   def commit(hit:, minimum: 95)
-    File.write(File.join(root, ".openlanes.coverage.yml"),
-      YAML.dump(
+    File.write(File.join(root, ".openlanes.yml"),
+      YAML.dump("coverage" => {
         "command" => "mkdir -p coverage && printf 'SF:a\\nLF:10000\\nLH:#{hit}\\nend_of_record\\n' > coverage/lcov.info",
         "report"  => "coverage/lcov.info",
         "format"  => "lcov",
         "minimum" => minimum
-      ))
+      }))
     File.write(File.join(root, ".gitignore"), "coverage/\n")
     git = ->(*args) { Open3.capture2e("git", "-C", root, *args).last.success? or raise "git #{args.join(" ")} failed" }
     git.call("init", "-q", "-b", "main")
@@ -91,13 +91,13 @@ RSpec.describe "openlanes coverage", :tree do
     run(plan: "001")
     out, = run(plan: "001", dry_run: true)
 
-    expect(out).to include("then read coverage/lcov.info (lcov), minimum 95%")
+    expect(out).to include("then read lcov: coverage/lcov.info, minimum 95%")
   end
 
   it "refuses a preview of an invalid declaration" do
     commit(hit: 9500)
     run(plan: "001")
-    File.write(File.join(worktree, ".openlanes.coverage.yml"), "command: true\n")
+    File.write(File.join(worktree, ".openlanes.yml"), "coverage:\n  command: true\n")
     _out, err, status = run(plan: "001", dry_run: true)
 
     expect([status, err]).to match([65, a_string_including("missing key")])
@@ -106,8 +106,8 @@ RSpec.describe "openlanes coverage", :tree do
   it "shows the command's output on STDERR when it withholds" do
     commit(hit: 9500)
     run(plan: "001")
-    File.write(File.join(worktree, ".openlanes.coverage.yml"),
-      YAML.dump("command" => "echo boom; exit 2", "report" => "r", "format" => "lcov", "minimum" => 95))
+    File.write(File.join(worktree, ".openlanes.yml"),
+      YAML.dump("coverage" => { "command" => "echo boom; exit 2", "report" => "r", "format" => "lcov", "minimum" => 95 }))
     Open3.capture2e("git", "-C", worktree, "-c", "user.name=F", "-c", "user.email=f@example.com", "commit", "-qam", "x")
     out, err, status = run(plan: "001")
 
