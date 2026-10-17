@@ -27,6 +27,16 @@ module OpenLanes
     # push moved it during the run. A ref that moved with no reflog entry at all
     # (reflogs switched off) cannot be told apart from a push, and is reported.
     #
+    # Worktrees share `refs/remotes`, so a push from any other checkout of
+    # the repository (a person, another session, a sibling agent's harness)
+    # moves the same refs during this run. A pushed commit reachable from
+    # another worktree's HEAD, and not from this one's, was pushed from there
+    # and is not this agent's. The main checkout counts as another worktree,
+    # so a push of whatever its HEAD names is exempt too; that is accepted,
+    # because it is a push from that checkout, not from this agent. A sibling
+    # that sits on this checkout's own commit is not told apart from it, so a
+    # push of that shared commit is still reported.
+    #
     # Blind spots, by construction: a push to a bare URL updates no tracking
     # ref, and a deleted remote branch takes its tracking ref and that ref's
     # reflog with it, which locally looks the same as `git fetch --prune`.
@@ -116,9 +126,10 @@ module OpenLanes
         # @param root [String]
         # @return [Array<String>] tracking refs a push moved since the snapshot
         def pushed(before, root)
-          logs = nil
+          logs = elsewhere = nil
           remotes(root).filter_map do |ref, sha|
             next if before.remotes[ref] == sha || sanctioned?(ref, sha)
+            next if pushed_elsewhere?(root, sha, elsewhere ||= other_heads(root))
 
             logs ||= reflogs(root)
             entries = logs.fetch(ref, [])
@@ -127,7 +138,56 @@ module OpenLanes
           end
         end
 
+        # Whether a pushed commit came from another worktree: it is reachable
+        # from that worktree's HEAD (not merely equal to it, so a sibling that
+        # pushed and then committed again before this check is still
+        # recognised) and not reachable from this checkout's own HEAD. The
+        # second half matters because an agent's HEAD is unmoved, so
+        # everything it could push is an ancestor of it; without the
+        # exclusion a sibling branched from the same commit would exempt the
+        # agent's own base commit.
+        #
+        # @param root [String]
+        # @param sha [String]
+        # @param heads [Set<String>] from {#other_heads}
+        # @return [Boolean]
+        def pushed_elsewhere?(root, sha, heads)
+          return false if ancestor?(root, sha, "HEAD")
+
+          heads.any? { |head| ancestor?(root, sha, head) }
+        end
+
+        # The commit checked out in every worktree of the repository but
+        # +root+'s own: what a push from one of them would carry.
+        #
+        # @param root [String]
+        # @return [Set<String>]
+        def other_heads(root)
+          own = real(rev_parse_path(root))
+          out = `git -C #{root.shellescape} worktree list --porcelain 2>/dev/null`
+          out.split("\n\n").each_with_object(Set.new) do |block, heads|
+            fields = block.lines.to_h { |line| line.chomp.split(" ", 2) }
+            heads << fields["HEAD"] if fields["HEAD"] && real(fields["worktree"]) != own
+          end
+        end
+
         private
+
+        # @return [Boolean] whether +sha+ is reachable from +rev+ (or is it)
+        def ancestor?(root, sha, rev) = system("git", "-C", root, "merge-base", "--is-ancestor", sha, rev, err: File::NULL)
+
+        # @return [String, nil] the checkout's top level
+        def rev_parse_path(root)
+          out = `git -C #{root.shellescape} rev-parse --show-toplevel 2>/dev/null`.strip
+          out.empty? ? root : out
+        end
+
+        # @return [String, nil] the path with symlinks resolved, as git prints it
+        def real(path)
+          File.realpath(path.to_s)
+        rescue SystemCallError
+          path
+        end
 
         # @return [String, nil]
         def rev_parse(root, rev)

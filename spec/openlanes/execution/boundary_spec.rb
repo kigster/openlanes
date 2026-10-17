@@ -76,6 +76,36 @@ RSpec.describe OpenLanes::Execution::Boundary do
       expect(violation).to include("origin/sneaky")
     end
 
+    it "passes a push from another worktree of the same repository, as a person or another session makes" do
+      sibling = File.join(dir, "sibling")
+      git(work, "worktree", "add", "-q", "-b", "kig/other-work", sibling)
+      git(sibling, "commit", "-q", "--allow-empty", "-m", "someone else's")
+      expect(violation_after { git(sibling, "push", "-q", "origin", "kig/other-work") }).to be_nil
+    end
+
+    it "passes a sibling's push even when it has committed again since" do
+      sibling = File.join(dir, "sibling")
+      git(work, "worktree", "add", "-q", "-b", "kig/other-work", sibling)
+      git(sibling, "commit", "-q", "--allow-empty", "-m", "pushed")
+      violation = violation_after do
+        git(sibling, "push", "-q", "origin", "kig/other-work")
+        git(sibling, "commit", "-q", "--allow-empty", "-m", "and then some")
+      end
+      expect(violation).to be_nil
+    end
+
+    it "reports a push of this worktree's own commit even when a sibling sits on it" do
+      git(work, "worktree", "add", "-q", "-b", "kig/other-work", File.join(dir, "sibling"))
+      expect(violation_after { git(work, "push", "-q", "origin", "HEAD:refs/heads/same-commit") })
+        .to include("origin/same-commit")
+    end
+
+    it "still reports a push from this worktree when another one exists" do
+      git(work, "worktree", "add", "-q", "-b", "kig/other-work", File.join(dir, "sibling"))
+      expect(violation_after { git(work, "push", "-q", "origin", "#{detached_commit(work)}:refs/heads/aside") })
+        .to include("agent pushed", "origin/aside")
+    end
+
     it "passes a push the harness declared first, as the publisher does" do
       violation = violation_after do
         git(work, "branch", "kig/000.00-feature")
