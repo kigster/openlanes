@@ -19,6 +19,16 @@ module OpenLanes
       # whatever release is installed, which can predate `state sign`.
       EXECUTABLE = File.expand_path("../../../exe/openlanes", __dir__)
 
+      # Most journal entries a prompt carries, newest kept. The journal goes
+      # into every round's prompt, resumed or not, so it is paid for in
+      # tokens every round: at {Plans::Journal::TEXT_LIMIT} characters an
+      # entry, 40 is at most about 5k tokens, small beside the agent's own
+      # definition. The newest are the ones kept because a later entry wins
+      # over an earlier one, so what is cut is what was most likely already
+      # overturned or done; the prompt says how many were cut and how to read
+      # them.
+      JOURNAL_LIMIT = 40
+
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject]
       # @param root [String] the checkout the agent works in
@@ -71,7 +81,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -265,6 +275,80 @@ module OpenLanes
           renames the plan folder and starts the next agent from these
           signatures; you never rename the folder yourself.
         SECTION
+      end
+
+      # The journal (M2): how to keep it, and what it already holds. Said to
+      # every agent, identically, for the same reason as the ledger. What it
+      # holds is put here by the harness, not left for the agent to look up,
+      # so reading it is enforced rather than requested, and a resumed
+      # session, which may have compacted the round that wrote it, gets it too.
+      #
+      # @return [String]
+      def journal_section
+        <<~SECTION
+
+          ## Your journal - record as you go, read before you start
+
+          Keep a journal of this plan, for yourself in later rounds. Record each
+          of these the moment it happens, not at the end, so a round that is
+          killed still leaves everything you printed:
+
+            todo      work you have found that still needs doing
+            done      work you have finished
+            decision  a choice you made, and why
+            question  something you stopped to ask a person
+            override  a decision that overturns an earlier entry, with its number
+            note      anything else you must not forget
+
+          Write nothing to a file and run no command for it. Print each entry in
+          your reply, as one line of JSON on a line of its own; the harness reads
+          your output and keeps it in `state.json`:
+
+              #{Plans::Journal.line("decision", "Store money as integer cents, as the API already does")}
+              #{Plans::Journal.line("override", "Store money as BigDecimal: the spec's B1 answer needs fractions", overrides: 3)}
+
+          Entries are numbered from 1 across all your rounds on this plan, as
+          listed below, and a later entry wins over an earlier one. Keep each to
+          one line under #{Plans::Journal::TEXT_LIMIT} characters.
+          #{journal_so_far}
+        SECTION
+      end
+
+      # @return [String]
+      def journal_so_far
+        rounds = Plans::PlanState.for(subject.feature.path).journal(agent.name)
+        numbered = rounds.flat_map { |r| r.entries.each_with_index.map { |e, i| [r, r.first + i, e] } }
+        return "\nYour journal on this plan is empty: this is your first round to keep one.\n" if numbered.empty?
+
+        overridden = numbered.each_with_object({}) { |(_, n, e), map| map[e.overrides] = n if e.overrides }
+        shown = numbered.last(JOURNAL_LIMIT)
+        cut = numbered.size - shown.size
+        lines = shown.chunk_while { |a, b| a.first.equal?(b.first) }.flat_map do |group|
+          round = group.first.first
+          ["", "  Journal round #{round.number}#{" (#{round.state})" if round.state}:",
+           *group.map { |_, n, e| "    #{n}. #{journal_line(e)}#{"  (overridden by #{overridden[n]})" if overridden[n]}" }]
+        end
+        omitted = if cut.positive?
+                    "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
+                      "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
+                      "| jq '.memory.\"#{agent.name}\"'\n"
+                  end
+        "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
+          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{omitted}"
+      rescue OpenLanes::Error
+        "\nYour journal could not be read: state.json is not valid JSON.\n"
+      end
+
+      # @param entry [OpenLanes::Plans::Journal::Entry]
+      # @return [String]
+      def journal_line(entry)
+        label = case entry.kind
+                when "override" then entry.overrides ? "override of #{entry.overrides}" : "override"
+                when "question" then entry.ref ? "question #{entry.ref}" : "question"
+                else entry.kind
+                end
+        answer = entry.answer ? " -> answered: #{entry.answer}" : ""
+        "[#{label}] #{entry.text}#{answer}"
       end
 
       # The section `run --max-tokens` adds. Stating the number is what lets
