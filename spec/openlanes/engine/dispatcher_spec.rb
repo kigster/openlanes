@@ -1069,6 +1069,25 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    context "when the reviewer approves with a note that mentions rejecting" do
+      let(:roster) { agents.only("r2d2-mechanic", "hansolo-reviewer") }
+      let(:executor) do
+        executor_with do |agent, subject, round|
+          next "Completed" unless agent.name == "hansolo-reviewer"
+
+          OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
+            "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} (approved, nothing to reject) ]")
+          nil
+        end
+      end
+
+      before { attempts }
+
+      it "reads the verdict from the note's leading word and leaves the plan at 👀" do
+        expect(plan.status.key).to eq(:in_review)
+      end
+    end
+
     context "when the reviewer follows in the same run" do
       let(:roster) { agents.only("r2d2-mechanic", "hansolo-reviewer") }
 

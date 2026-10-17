@@ -1683,7 +1683,8 @@ module OpenLanes
       # @return [Symbol, nil] :rejected, :verified, :approved, :slop, :product or nil
       def verdict_of(entry)
         note = entry.note.to_s.downcase
-        return :rejected if note.include?("reject")
+        # Anchored, as the rejection count is: "nothing to reject" approves.
+        return :rejected if note.strip.match?(Verification::Outcome::REJECTION)
         return :verified if note.include?("verified")
         return :approved if note.include?("approv")
         return :slop if note.include?("slop") || note.include?("rewrite")
