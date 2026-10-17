@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 82 | [\[035.00\](A) Setup Command](https://github.com/kigster/openlanes/pull/82) | Open 🟡 |
+
 ## luke-backend, round 1 — verification
 
 - `bundle exec rubocop` → 490 files inspected, no offenses detected

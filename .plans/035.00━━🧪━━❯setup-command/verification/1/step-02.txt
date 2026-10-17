@@ -1,0 +1,14 @@
+
+┌─ Error ──────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  This machine is not ready: run each fix above, then openlanes setup     │
+│  again.                                                                  │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+✓ brew      Homebrew is installed
+✓ Brewfile  every tool in /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-setup-command/Brewfile is installed
+✓ claude    the claude CLI is on PATH
+✗ gh        gh is not logged in
+    fix: gh auth login
+✓ redis     redis://apollo.re1.re:6379 answers PING
+exit 69

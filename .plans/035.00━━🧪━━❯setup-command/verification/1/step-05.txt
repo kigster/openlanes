@@ -1,0 +1,26 @@
+ready: no setup output, exit 0
+--- missing (gh bad):
+  · This machine is missing something openlanes needs; running openlanes setup first.
+✓ brew      Homebrew is installed
+✓ Brewfile  every tool in /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-setup-command/Brewfile is installed
+✓ claude    the claude CLI is on PATH
+✗ gh        gh is not logged in
+    fix: gh auth login
+✓ redis     redis://apollo.re1.re:6379 answers PING
+
+┌─ Warning ────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Still not ready: run each fix above, then openlanes setup.              │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─ Success ────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Wrote /private/tmp/v35/i2/.openlanes.yml                                │
+│  Plans live in /private/tmp/v35/i2/.plans                                │
+│                                                                          │
+│  Next: openlanes create <a few words>                                    │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+/private/tmp/v35/i2/.openlanes.yml
+exit 0
