@@ -83,15 +83,34 @@ module OpenLanes
       #
       # @param pulls [Array<Hash>] the orphans, from {Resync::Prs}
       # @return [Array<OpenLanes::Lifecycle::Adoption::Adoptee>] in pull request order
+      # @raise [Allocator::Refused] in a linked worktree, where no plan is
+      #   minted, so a preview there says so rather than promising folders
       def plan(pulls)
+        allocator.refuse!
+        @taken = nil
         allocate(gather(pulls))
       end
 
       # Adopt every orphan: create its folder and record its pull request.
       #
+      # The slots are read and the folders made under the allocation lock, or
+      # a `create` running beside this one can take a slot this just handed out.
+      #
       # @param pulls [Array<Hash>]
       # @return [Array<OpenLanes::Lifecycle::Adoption::Adoptee>] with `path` filled in
+      # @raise [Allocator::Refused] in a linked worktree
       def call(pulls)
+        allocator.hold { adopt_all(pulls) }
+      end
+
+      # @return [OpenLanes::Lifecycle::Allocator]
+      def allocator = @allocator ||= Allocator.new(dir: tree.dir)
+
+      private
+
+      # @param pulls [Array<Hash>]
+      # @return [Array<OpenLanes::Lifecycle::Adoption::Adoptee>]
+      def adopt_all(pulls)
         adoptees = plan(pulls)
         return adoptees if adoptees.empty?
 
@@ -99,8 +118,6 @@ module OpenLanes
         tree.reload
         created
       end
-
-      private
 
       # Phase one, in parallel: ask each pull request's branch how far the
       # sequence had got when the work started. Branches are not all rebased
@@ -158,9 +175,10 @@ module OpenLanes
       end
 
       # @param major [Integer]
-      # @return [Array<Integer>] minors already used under this major
+      # @return [Array<Integer>] minors already used under this major, on
+      #   this tree or on any branch: a slot taken anywhere is taken
       def minors_taken(major)
-        tree.taken.select { |o| o.major == major }.map(&:minor)
+        (@taken ||= allocator.taken).select { |o| o.major == major }.map(&:minor)
       end
 
       # Phase three, in parallel: each worker owns a number nobody else can
