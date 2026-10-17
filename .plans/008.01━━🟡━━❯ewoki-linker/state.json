@@ -6,7 +6,7 @@
     "slug": "ewoki-linker"
   },
   "state": "building",
-  "updated_at": "2026-10-16T18:11:11-07:00",
+  "updated_at": "2026-10-16T18:23:10-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -32,21 +32,21 @@
       "agent": "luke-backend",
       "round": 1,
       "status": "Almost completed",
-      "from": "blocked",
-      "started_at": "2026-10-16T17:56:14-07:00",
+      "from": "building",
+      "started_at": "2026-10-16T18:15:36-07:00",
       "run": {
-        "pid": 88556,
+        "pid": 37288,
         "host": "macbook-m3-kig.re1.re"
       },
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "note": "agent committed (HEAD moved e164685 → 762ea5a) — the boundary is docs plus code, no commits",
-      "finished_at": "2026-10-16T18:11:11-07:00",
+      "note": "agent pushed (origin/kig/transpose-last-known-table) — the boundary is docs plus code, nothing leaves the machine",
+      "finished_at": "2026-10-16T18:23:10-07:00",
       "to": "building",
-      "up": 4047645,
-      "down": 32526,
-      "seconds": 896.9
+      "up": 2989611,
+      "down": 19919,
+      "seconds": 453.1
     }
   ],
   "signatures": [
@@ -230,6 +230,18 @@
       "agent": "luke-backend",
       "status": "Almost completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T18:15:42-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:22:58-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -307,43 +319,32 @@
   "last-known-state": {
     "luke-backend": {
       "source": "agent",
-      "at": "2026-10-16T18:10:59-07:00",
+      "at": "2026-10-16T18:22:57-07:00",
       "round": 1,
       "status": "Interrupted",
       "done": [
-        "Precondition (HEAD fast-forwarded to origin/main 762ea5a",
-        "so this round reads as HEAD moved)",
         "U1",
         "U2",
-        "U3 (first invocation only)",
+        "U3 incl resumption path",
+        "U4 incl run_workflow takers and dispatcher_linker_spec",
         "U5",
-        "U4 routing predicate + dispatcher gate + LINK_ATTEMPTS + blocked.md writer"
+        "suite green 3160/0",
+        "rubocop clean",
+        "contract.md"
       ],
       "remaining": [
-        "Fix 11 suite failures: dispatcher_spec 248/391/400/455/472/488/499/517/535",
-        "runner_spec:41",
-        "live/unblock_spec:52 - keyless fixture plans at planned/ready_for_planning now go to ewoki-linker; give those fixtures depends_on: [] (or registry.without ewoki). U4 dispatcher_linker_spec.rb (per lane",
-        "B1 blocked.md on 3rd failure). U4 run.rb dry-run preview (~line 475) must ask Routing.preceding_for. U3 gap: Executor#resumption (compaction path) still passes unscoped allowed_tools for ewoki - thread subject through. Verify settle path for an agent with no advances_to that signs Completed leaves folder name unchanged. U6 eval cases link-one/none/shared-files-only with recordings",
-        "expect.spec_only: true. U7 runner_linker_spec + cli/run_linker_spec. contract.md with baseline (3123 examples",
-        "0 failures",
-        "9 pending before work)."
+        "U6 eval cases link-one none shared-files-only with recordings (layout: evals/cases/<agent>/<id>.yml plus <id>/pass|fail/plan|repo dirs; expect.spec_only: true)",
+        "U7 runner_linker_spec.rb and cli/run_linker_spec.rb",
+        "pull-requests.md and Completed signature"
       ],
-      "next_step": "Run bundle exec rspec; fix the 11 fixture failures listed by giving keyless test specs depends_on: [], then write dispatcher_linker_spec.rb",
+      "next_step": "Copy evals/cases/r2d2-mechanic/task-fast layout for evals/cases/ewoki-linker/link-one; find the offline evals command via ./exe/openlanes --help; then write U7 specs using dispatcher_linker_spec.rb's executor fake",
       "files_touched": [
-        "lib/openlanes/agents/agent.rb",
-        "lib/openlanes/agents/registry.rb",
-        "lib/openlanes/agents/roster.rb",
-        "lib/openlanes/agents/routing.rb",
+        "lib/openlanes/engine/run_workflow.rb",
         "lib/openlanes/execution/executor.rb",
-        "lib/openlanes/engine/dispatcher.rb",
-        "lib/openlanes/evals/check.rb",
-        "lib/openlanes/evals/case.rb",
-        "agents/ewoki-linker.md",
-        "spec/openlanes/agents/registry_spec.rb",
-        "spec/openlanes/agents/roster_spec.rb",
-        "spec/openlanes/agents/routing_spec.rb",
-        "spec/openlanes/execution/executor_spec.rb",
-        "spec/openlanes/evals/check_spec.rb"
+        "spec/openlanes/engine/dispatcher_linker_spec.rb",
+        "spec/openlanes/engine/dispatcher_spec.rb",
+        "spec/openlanes/engine/runner_spec.rb",
+        "spec/openlanes/live/live_context.rb"
       ]
     }
   }

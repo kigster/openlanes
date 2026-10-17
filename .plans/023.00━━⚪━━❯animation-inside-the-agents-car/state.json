@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "023.00",
+    "slug": "animation-inside-the-agents-car"
+  },
+  "state": "new",
+  "updated_at": "2026-10-16T18:26:59-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": []
+}

@@ -127,6 +127,16 @@ No front-end work: `init` is a terminal command, and the web Settings dialog is 
 
 No. The plan adds no HTTP API and changes none; extraction is an outbound client call, not a served route. No `openapi.yaml`.
 
+## How to test
+
+- `bundle exec rspec spec/openlanes/setup spec/openlanes/config_spec.rb spec/openlanes/cli/init_spec.rb spec/openlanes/cli/init_integration_spec.rb` passes, with no API key set and no network call.
+- In an empty git folder holding a `Gemfile` and a `Gemfile.lock` that names `rails`, with `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` unset: `openlanes init -y --ci github_actions --merge-by auto --build-quality mvp` exits 0 and writes `.openlanes.yml` with `merge.by: auto`, `ci.provider: github_actions`, `ci.config: .github/workflows/ci.yml`, `build_quality: mvp`, `stack.language: ruby` and `rails` under `stack.frameworks`; `docs/decisions/stack.md` names ruby and rails; `.github/workflows/ci.yml` runs `bundle exec rubocop` and `bundle exec rspec`.
+- In the same folder, `openlanes init --reconfigure -n --build-quality medium` prints `- build_quality: mvp` / `+ build_quality: medium` and leaves `.openlanes.yml` unchanged.
+- Then `openlanes init --reconfigure -y --build-quality high` prints `- build_quality: mvp` / `+ build_quality: high`, writes it, and leaves `.github/workflows/ci.yml` byte-identical.
+- In a git folder holding both a `Gemfile` and a `go.mod`, `openlanes init -y` writes `.openlanes.yml` with no `stack:` key and creates no `docs/decisions/stack.md`.
+- `openlanes init -y --merge-by agent` is refused with exit 1 and writes nothing.
+- On a terminal, with no flags and `ANTHROPIC_API_KEY` set, `openlanes init` asks about CI, then for a description, then who merges, build quality and the stack; a description naming the language and framework skips those stack questions. With no key it says once `No ANTHROPIC_API_KEY or OPENAI_API_KEY is set, so every question will be asked.` and asks no description.
+
 > [!NOTE]
 >
 > [2026-10-15 09:27:29 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

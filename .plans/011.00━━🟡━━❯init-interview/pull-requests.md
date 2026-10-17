@@ -60,3 +60,13 @@ $ bundle exec rubocop
 $ bundle exec rspec spec/openlanes/cli/init_integration_spec.rb
 2 examples, 0 failures
 ```
+
+Publish was refused on 2026-10-16 because `plan.md` had no `## How to test` section. Added it. Every step was run by hand against `exe/openlanes` in temp folders, with both API keys unset, and each one holds: the Rails folder gets its `.openlanes.yml`, `stack.md` and `ci.yml`; `--reconfigure -n` shows the diff and writes nothing; `--reconfigure -y` writes `high` and leaves `ci.yml` byte-identical; the mixed Ruby and Go folder gets no `stack:`; `--merge-by agent` exits 1. No code changed.
+
+```
+$ bundle exec rspec
+3107 examples, 0 failures, 9 pending
+
+$ bundle exec rubocop
+440 files inspected, no offenses detected
+```

@@ -6,8 +6,25 @@
     "slug": "durable-run-events"
   },
   "state": "new",
-  "updated_at": "2026-10-16T18:14:33-07:00",
-  "stages": [],
+  "updated_at": "2026-10-16T18:15:36-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-16T18:14:50-07:00",
+      "run": {
+        "pid": 88556,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "harness died",
+      "finished_at": "2026-10-16T18:15:36-07:00"
+    }
+  ],
   "signatures": [
     {
       "at": "2026-10-16T18:14:14-07:00",
@@ -19,6 +36,12 @@
       "at": "2026-10-16T18:14:33-07:00",
       "agent": "rey-frontend",
       "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:14:54-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
       "round": 1
     }
   ],
@@ -50,5 +73,14 @@
       "body": "Front end done: run.jobs + stop_plan/restart_plan/set_concurrency kinds in types.ts and fixtures (run.jobs:4 in board.json/snapshot.json; keep Ruby snapshot_spec parity); header 'N of J agents'; slash hint in the composer; I1 files (bin/lanes-e2e, web/cypress.lanes.config.ts, web/cypress/lanes/, just lanes-e2e). Live lanes-e2e NOT run (tokens). It expects replies matching 'concurrency 3 → 2', 'stopped N agents on', 'restarts at the next tick', 'already has an agent', and a help turn naming /stop /restart /concurrency. NB: the plan was renumbered 020.00 -> 020.01 mid-round.",
       "read": "no"
     }
-  ]
+  ],
+  "last-known-state": {
+    "leah-researcher": {
+      "source": "harness",
+      "at": "2026-10-16T18:15:36-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
 }

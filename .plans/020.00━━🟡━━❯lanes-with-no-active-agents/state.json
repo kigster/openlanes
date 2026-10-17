@@ -6,7 +6,7 @@
     "slug": "lanes-with-no-active-agents"
   },
   "state": "building",
-  "updated_at": "2026-10-16T18:11:11-07:00",
+  "updated_at": "2026-10-16T18:15:36-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -31,7 +31,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "planned",
       "started_at": "2026-10-16T18:11:04-07:00",
       "run": {
@@ -40,12 +40,14 @@
       },
       "adapter": "claude",
       "model": "opus",
-      "effort": "high"
+      "effort": "high",
+      "note": "harness died",
+      "finished_at": "2026-10-16T18:15:36-07:00"
     },
     {
       "agent": "rey-frontend",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "building",
       "started_at": "2026-10-16T18:11:04-07:00",
       "run": {
@@ -54,7 +56,13 @@
       },
       "adapter": "claude",
       "model": "sonnet",
-      "effort": "medium"
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-10-16T18:14:49-07:00",
+      "up": 1945856,
+      "down": 17302,
+      "seconds": 225.2,
+      "note": "agent pushed (origin/main) — the boundary is docs plus code, nothing leaves the machine"
     }
   ],
   "signatures": [
@@ -82,9 +90,25 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T18:14:43-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
     }
   ],
-  "messages": [],
+  "messages": [
+    {
+      "id": "a9643b50-5a47-4e5d-95ce-783697ffa360",
+      "number": 1,
+      "at": "2026-10-16T18:14:43-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done (types, fixtures with run.jobs, header 'N of J agents', slash hint, I1 files). Live lanes-e2e not run (tokens).",
+      "read": "no"
+    }
+  ],
   "last-known-state": {
     "palpatine-planner": {
       "source": "harness",
@@ -92,6 +116,20 @@
       "round": 1,
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The plan for 020.00 is written to `plan.md` in the plan folder, and I signed it `Completed` with `--next luke-backend`."
+    },
+    "rey-frontend": {
+      "source": "harness",
+      "at": "2026-10-16T18:14:49-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "agent pushed (origin/main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I built all three front-end units and signed `Completed` on `020.00-lanes-with-no-active-agents`."
+    },
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-16T18:15:36-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
     }
   }
 }
