@@ -359,7 +359,7 @@ module OpenLanes
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
-          **staying(web)
+          **staying(web, live)
         )
       end
 
@@ -417,19 +417,27 @@ module OpenLanes
       # What the runner is told about idling past its fixed points. With its
       # control room up the engine stays, since the page can answer a blocked
       # plan or create the next one at any moment, and a run that had ended
-      # would leave the page talking to nobody. Headless, or with
-      # `--until-settled`, it ends at the first fixed point.
+      # would leave the page talking to nobody. `--stay` asks the same of a
+      # headless run whose page `openlanes web` serves apart, as mprocs does:
+      # the commands travel through the live board, not the server. Otherwise
+      # headless, or with `--until-settled`, it ends at the first fixed point.
       #
       # A staying run is also the one that watches the pull requests a person
       # merges (M4): it is still up when they do. A run that ends cannot wait
       # for a merge, so it names the pull requests it leaves unwatched instead.
       #
       # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
+      # @param live [OpenLanes::Live::Session, nil] the board a page apart would read
       # @return [Hash] `stay:`, `rescan:` and `watch:` for {Runner}, or nothing
-      def staying(web)
-        return {} if web.nil? || @options[:until_settled]
+      def staying(web, live = nil)
+        return {} if @options[:until_settled]
+        return {} unless web || (live && @options[:stay])
 
-        @stays = "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
+        @stays = if web
+                   "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
+                 else
+                   "The engine stays up for the control room `openlanes web` serves: Stop All Local or Ctrl-C ends it."
+                 end
         { stay: true, rescan: Dispatcher::RESCAN, watch: watch }
       end
 

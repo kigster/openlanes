@@ -866,6 +866,37 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       end
     end
 
+    context "with --no-web --stay, the page served apart" do
+      before do
+        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+          ticks = 0
+          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! if (ticks += 1) > 3 })
+        end
+      end
+
+      after { OpenLanes::Execution::Control.reset! }
+
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false, stay: true) }
+
+      it "starts no server, and stays up for the page all the same" do
+        result
+        aggregate_failures do
+          expect(OpenLanes::Web).not_to have_received(:launcher)
+          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
+          expect(stderr).to include("The engine stays up for the control room `openlanes web` serves")
+        end
+      end
+    end
+
+    context "with --no-web alone" do
+      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false) }
+
+      it "ends at the fixed point" do
+        result
+        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay, :watch))
+      end
+    end
+
     context "with --until-settled" do
       it "ends at the fixed point, as CI wants, watching no pull request" do
         result

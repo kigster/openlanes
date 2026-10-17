@@ -67,6 +67,10 @@ module OpenLanes
         type:    :boolean,
         default: false,
         desc:    "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run"
+      option :stay,
+        type:    :boolean,
+        default: false,
+        desc:    "Stay up past fixed points with --no-web, for a control room served apart by `openlanes web`"
       option :until_settled,
         type:    :boolean,
         default: false,
@@ -81,6 +85,7 @@ module OpenLanes
         "--rounds 3             # …capping every agent at three rounds per plan",
         "--plan 005,006,007     # only the plans a batch step just created",
         "--no-web               # headless: no control room, no browser; ends when the tree settles",
+        "--no-web --stay        # headless, but up for a page `openlanes web` serves on its own",
         "--until-settled        # with the control room, but ending when the tree settles",
         "--ignore-bombs         # keep working while a 💣 stands"
       ]

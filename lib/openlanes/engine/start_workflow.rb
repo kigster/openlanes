@@ -24,7 +24,7 @@ module OpenLanes
       #
       # @param _web [OpenLanes::Web::Launcher]
       # @return [Hash]
-      def staying(_web) = { stay: true, rescan: @rescan, watch: watch }
+      def staying(_web, _live = nil) = { stay: true, rescan: @rescan, watch: watch }
 
       # @param message [String]
       # @return [Dry::Monads::Result::Failure]
