@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# vim: ft=bash
+#
+# The lanes integration test: a throwaway git repository with three quick-lane plans, `openlanes start -j 3` serving
+# it, and Cypress typing /concurrency, /stop and /restart into the copilot while real agents work. It spends real
+# tokens, so it refuses to run unless OPENLANES_LANES_E2E=1 says so, and nothing in `just test`, `just web-e2e` or
+# CircleCI calls it.
+#
+#   OPENLANES_LANES_E2E=1 just lanes-e2e
+#
+# Settings, each with a default:
+#
+#   LANES_PORT       control room port                     (4778)
+#   LANES_REDIS_URL  Redis for the board and its commands  (redis://localhost:6379/12)
+#   LANES_MODEL      model every agent runs on             (haiku)
+#   LANES_TIMEOUT    seconds before one agent is abandoned (600)
+#
+# What it leaves behind is log/lanes-e2e/: the progress log, the last board, every plan's state.json. The temp
+# repository and the `openlanes start` it launched are always torn down, pass or fail.
+
+set -euo pipefail
+
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ "${OPENLANES_LANES_E2E:-}" != "1" ]]; then
+  echo "lanes-e2e runs real agents and spends real tokens." >&2
+  echo "Set OPENLANES_LANES_E2E=1 to run it: OPENLANES_LANES_E2E=1 just lanes-e2e" >&2
+  exit 64
+fi
+
+port="${LANES_PORT:-4778}"
+redis_url="${LANES_REDIS_URL:-redis://localhost:6379/12}"
+model="${LANES_MODEL:-haiku}"
+timeout="${LANES_TIMEOUT:-600}"
+artifacts="${repo}/log/lanes-e2e"
+
+command -v claude >/dev/null || { echo "claude is not on PATH; the lanes have no agents to run." >&2; exit 69; }
+if command -v redis-cli >/dev/null && ! redis-cli -u "${redis_url}" ping >/dev/null 2>&1; then
+  echo "Redis does not answer on ${redis_url}." >&2
+  exit 69
+fi
+if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Port ${port} is taken; set LANES_PORT to a free one." >&2
+  exit 69
+fi
+[[ -f "${repo}/web/dist/index.html" ]] || { echo "web/dist is missing; run just web-build first." >&2; exit 66; }
+
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/openlanes-lanes.XXXXXX")"
+project="${tmp}/lanes"
+pid=""
+
+openlanes() { "${repo}/exe/openlanes" "$@"; }
+
+collect() {
+  rm -rf "${artifacts}"
+  mkdir -p "${artifacts}/plans"
+  curl -sf "http://127.0.0.1:${port}/api/board" -o "${artifacts}/board.json" 2>/dev/null || true
+  cp "${tmp}/progress.log" "${tmp}/start.log" "${artifacts}/" 2>/dev/null || true
+  if [[ -d "${project}/.plans" ]]; then
+    for plan in "${project}"/.plans/*/; do
+      name="$(basename "${plan}")"
+      mkdir -p "${artifacts}/plans/${name}"
+      cp "${plan}"*.md "${plan}"state.json "${artifacts}/plans/${name}/" 2>/dev/null || true
+    done
+  fi
+}
+
+teardown() {
+  status=$?
+  trap - EXIT INT TERM
+  collect || true
+  if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+    # TERM is `openlanes start`'s graceful stop; KILL only if it outlives that.
+    kill -TERM "${pid}" 2>/dev/null || true
+    for _ in $(seq 1 30); do kill -0 "${pid}" 2>/dev/null || break; sleep 1; done
+    kill -KILL "${pid}" 2>/dev/null || true
+  fi
+  rm -rf "${tmp}"
+  echo "lanes-e2e: artifacts in ${artifacts}" >&2
+  exit "${status}"
+}
+trap teardown EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# A repository with one commit and `openlanes init`, and no remote: nothing this run does can reach GitHub.
+mkdir -p "${project}"
+(
+  cd "${project}"
+  git init -q -b main
+  git config user.name "Lanes Test"
+  git config user.email "lanes-test@example.invalid"
+  printf '# Lanes\n\nA scratch repository. Each plan writes one small text file under notes/.\n' >README.md
+  git add README.md
+  git commit -q -m "Initial commit"
+  openlanes init -y -q --project "Lanes" -j 3
+  for spec in "${repo}"/web/cypress/lanes/fixtures/*.md; do
+    openlanes create --from "${spec}" --lane quick --no-draft -q
+  done
+  git add -A
+  git commit -q -m "Initialize openlanes and three plans"
+)
+
+(
+  cd "${project}"
+  exec "${repo}/exe/openlanes" start --no-open \
+    --port "${port}" --redis-url "${redis_url}" \
+    --isolation worktree -j 3 \
+    --model "${model}" --timeout "${timeout}" \
+    --log "${tmp}/progress.log"
+) >"${tmp}/start.log" 2>&1 &
+pid=$!
+
+for _ in $(seq 1 120); do
+  curl -sf "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
+  kill -0 "${pid}" 2>/dev/null || { echo "openlanes start exited:" >&2; cat "${tmp}/start.log" >&2; exit 1; }
+  sleep 0.5
+done
+curl -sf "http://127.0.0.1:${port}/healthz" >/dev/null || { echo "The control room never answered on ${port}." >&2; exit 1; }
+
+cd "${repo}/web"
+npx cypress run --config-file cypress.lanes.config.ts --config "baseUrl=http://127.0.0.1:${port}"

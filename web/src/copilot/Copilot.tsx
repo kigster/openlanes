@@ -73,13 +73,16 @@ export function DraftCard({ turn }: { turn: Extract<CopilotReply, { kind: "draft
   );
 }
 
+/** The run-control commands the server's slash grammar accepts; shown as a hint only, the server parses them. */
+const SLASH_COMMANDS = ["/stop", "/restart", "/concurrency"] as const;
+
 function Turn({ turn, onCommand }: { turn: CopilotTurn; onCommand: SendCommand }) {
   const you = turn.from === "you";
   return (
     <div className={`cp-turn${you ? " is-you" : ""}`} data-turn={turn.id}>
       <p className="cp-who">{you ? "You" : "c3po-operator"}</p>
       <div className="cp-said">
-        <p>{turn.text}</p>
+        <p className={you && turn.text.startsWith("/") ? "cp-command" : undefined}>{turn.text}</p>
         {turn.from === "copilot" && turn.kind === "confirm" && <ConfirmCard turn={turn} onCommand={onCommand} />}
         {turn.from === "copilot" && turn.kind === "draft" && <DraftCard turn={turn} />}
       </div>
@@ -182,6 +185,7 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
             value={text}
             placeholder={`Ask about the run. ${sendKeys()} sends it.`}
             aria-keyshortcuts={ariaSendKeys()}
+            aria-describedby={text.startsWith("/") ? "copilot-slash-hint" : undefined}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => {
               if (isSendKey(e)) {
@@ -190,6 +194,16 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
               }
             }}
           />
+          {text.startsWith("/") && (
+            <p className="cp-slash-hint" id="copilot-slash-hint">
+              Run commands: {SLASH_COMMANDS.map((c, i) => (
+                <span key={c}>
+                  {i > 0 && ", "}
+                  <code>{c}</code>
+                </span>
+              ))}
+            </p>
+          )}
           {error && (
             <p className="cp-error" role="alert">
               {error}

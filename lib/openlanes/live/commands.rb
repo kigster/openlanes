@@ -31,24 +31,27 @@ module OpenLanes
 
       # Command kind to the method that applies it.
       HANDLERS = {
-        "answer"        => :answer,
-        "hold_blocked"  => :hold_blocked,
-        "release_hold"  => :release_hold,
-        "resume"        => :resume,
-        "discard"       => :discard,
-        "message"       => :message,
-        "hold"          => :signal,
-        "wrap_up"       => :signal,
-        "compact"       => :compact,
-        "stop"          => :signal,
-        "stop_all"      => :stop_all,
-        "set_model"     => :set_model,
-        "switch_model"  => :switch_model,
-        "add_plan"      => :add_plan,
-        "create_plans"  => :create_plans,
-        "respond"       => :respond,
-        "pause_discuss" => :pause_discuss,
-        "resume_anyway" => :resume_anyway
+        "answer"          => :answer,
+        "hold_blocked"    => :hold_blocked,
+        "release_hold"    => :release_hold,
+        "resume"          => :resume,
+        "discard"         => :discard,
+        "message"         => :message,
+        "hold"            => :signal,
+        "wrap_up"         => :signal,
+        "compact"         => :compact,
+        "stop"            => :signal,
+        "stop_all"        => :stop_all,
+        "set_model"       => :set_model,
+        "switch_model"    => :switch_model,
+        "add_plan"        => :add_plan,
+        "create_plans"    => :create_plans,
+        "respond"         => :respond,
+        "pause_discuss"   => :pause_discuss,
+        "resume_anyway"   => :resume_anyway,
+        "stop_plan"       => :stop_plan,
+        "restart_plan"    => :restart_plan,
+        "set_concurrency" => :set_concurrency
       }.freeze
 
       # How long "Resume anyway" lifts a 💣's halt.
@@ -141,7 +144,7 @@ module OpenLanes
         # the page is part of the run's story, beside what the agents did.
         UI.log("from the page: #{command.kind.tr("_", " ")}", **{ plan: command.plan, agent: command.agent }.compact)
         status, reason = apply(command, dispatcher)
-        return reply(entry, command.id, status, reason) unless status == :pending
+        return reply(entry, command.id, status, reason, echo: command.payload["source"] == "copilot") unless status == :pending
 
         @pending[entry.id] = [entry, command.id, reason]
         nil
@@ -163,18 +166,37 @@ module OpenLanes
         ["refused", "#{command.kind} failed: #{e.message}"]
       end
 
+      # A command the copilot sent (a slash command, plan 020.00) is also
+      # answered in the conversation, as turn `"<id>.1"`: that is the turn the
+      # page's "reading" waits for, and the conversation keeps the outcome.
+      # It is written in the same `MULTI`, so a redelivery, which
+      # {#answer_again} handles, can never write it twice.
+      #
+      # @param echo [Boolean] whether to answer in the copilot stream too
       # @return [OpenLanes::Live::Reply]
-      def reply(entry, id, status, reason)
+      def reply(entry, id, status, reason, echo: false)
         reply = Reply.new(id:, status:, reason:, at: @clock.call)
         json = reply.to_json
+        turn = echo_turn(reply) if echo
         @store.multi do |tx|
           tx.hset(@keys.done, id, json)
           tx.xadd(@keys.replies, { json: }, maxlen: Keys::REPLIES_LENGTH)
+          tx.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH) if turn
           tx.xack(@keys.commands, Keys::GROUP, entry.id)
           @record&.write(tx)
         end
         News.publish(store: @store, keys: @keys, kind: "reply")
         reply
+      end
+
+      # @param reply [OpenLanes::Live::Reply]
+      # @return [OpenLanes::Live::Copilot::Turn]
+      def echo_turn(reply)
+        Copilot::Turn.new(id: "#{reply.id}.1",
+          from: "copilot",
+          kind: "text",
+          text: [reply.status, reply.reason].compact.join(": "),
+          at: reply.at)
       end
 
       # @return [OpenLanes::Live::Reply] the first reply, sent again
@@ -565,6 +587,48 @@ module OpenLanes
       def holder_label(holder)
         json = holder && @store.hget(@keys.nodes, holder)
         json ? JSON.parse(json).values_at("user", "host").join("@") : "another machine"
+      end
+
+      # ---- lanes (plan 020.00) ----------------------------------------------
+
+      # `/stop NNN`: every agent on the plan stops, and the plan leaves the board.
+      #
+      # @return [String]
+      def stop_plan(command, dispatcher)
+        ordinal = ordinal!(command)
+        told = dispatcher.stop_plan(ordinal)
+        told.each { @run_state.hold_car(it, held: false) }
+        "stopped #{told.size} agent#{"s" unless told.size == 1} on #{ordinal} and took it off the board"
+      end
+
+      # `/restart NNN`: a lane that lost its agent is dispatched again.
+      #
+      # @return [String]
+      def restart_plan(command, dispatcher)
+        ordinal = ordinal!(command)
+        dispatcher.restart_plan(ordinal)
+        "#{ordinal} restarts at the next tick"
+      end
+
+      # `/concurrency N`. Lowering it stops nobody; the run waits for agents
+      # to finish until it is under the new limit.
+      #
+      # @return [String]
+      def set_concurrency(command, dispatcher)
+        limit = command.payload["limit"]
+        raise Refusal, "concurrency must be a whole number of at least 1, not #{limit.inspect}" unless limit.is_a?(Integer) && limit >= 1
+
+        before = dispatcher.runner.jobs
+        dispatcher.concurrency = limit
+        @run_state.concurrency = limit
+        over = dispatcher.running.size - limit
+        wait = over.positive? ? "; the run waits for #{over} agent#{"s" unless over == 1} to finish" : ""
+        "concurrency #{before} → #{limit}#{wait}"
+      end
+
+      # @return [String] the plan's ordinal, normalised
+      def ordinal!(command)
+        (Plans::Ordinal.parse(command.plan.to_s) or raise Refusal, "#{command.plan} is not a plan number").to_s
       end
 
       # ---- lookups ----------------------------------------------------------

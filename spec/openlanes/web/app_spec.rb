@@ -216,6 +216,36 @@ RSpec.describe OpenLanes::Web::App, :tree do
       end
     end
 
+    context "with a slash command and a live engine (plan 020.00)" do
+      before do
+        store.set(keys.snapshot, JSON.generate(snapshot))
+        post_message({ id: "01JCONC", text: "/concurrency 2" })
+      end
+
+      it "answers 202, queues it for the engine and starts no copilot" do
+        queued = store.xrange(keys.commands).map { JSON.parse(it.fields["json"]) }
+        expect([last_response.status, queued.map { it.values_at("id", "kind", "payload") }, later.size])
+          .to eq([202, [["01JCONC", "set_concurrency", { "limit" => 2, "source" => "copilot" }]], 0])
+      end
+    end
+
+    context "with a slash command and no engine" do
+      before { post_message({ id: "01JSTOP", text: "/stop 20" }) }
+
+      it "answers 503 and stores nothing" do
+        expect([last_response.status, body["error"], store.xlen(keys.copilot), store.xlen(keys.commands)])
+          .to eq([503, "no engine is running to apply /stop", 0, 0])
+      end
+    end
+
+    context "with an unknown slash command" do
+      before { post_message({ id: "01JFROB", text: "/frobnicate" }) }
+
+      it "answers 202 with the usage already in the conversation, and starts no copilot" do
+        expect([last_response.status, store.xlen(keys.copilot), later.size]).to eq([202, 2, 0])
+      end
+    end
+
     context "when nothing answers the copilot in this server" do
       let(:context) do
         OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, url: "memory://", background:)
