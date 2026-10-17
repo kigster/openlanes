@@ -202,6 +202,52 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
+    context "when the branch's .openlanes.yml has no coverage: section" do
+      let(:unconfigured) do
+        OpenLanes::Engine::CoverageGate::Verdict.new(passed: false,
+          unconfigured: true,
+          reason: ".openlanes.yml in /x has no coverage: section, so nothing was measured")
+      end
+
+      before do
+        allow(gate).to receive(:call).and_return(unconfigured)
+        edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }] }
+      end
+
+      it "sends the pull request back to luke with the section to write, in both shapes" do
+        result = outcome.settle(checkout:, plan:, pull: pr, round:)
+        mail = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.find { it.to == "luke-backend" }
+
+        aggregate_failures do
+          expect(result).to have_attributes(kind: :rejected, to: :rejected)
+          expect(result.note).to include("sent back PR #1, sent back for setup, not counted (0 of 2)")
+          expect(comments.first).to include("chewie-verifier: sent back for setup",
+            "Add a `coverage:` section to `.openlanes.yml`",
+            "report_command:",
+            "format: lcov",
+            "does not count against `merge.max_rejections`")
+          expect(mail.body).to include("Add a `coverage:` section to `.openlanes.yml` for this stack")
+          expect(labels).to eq(%w[review-rejected])
+          expect(OpenLanes::Engine::Verification.latest(plan.feature.path).report.verdict).to eq(:rejected)
+        end
+      end
+
+      it "does not count against merge.max_rejections, nor call the arbitrator at the cap" do
+        OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                   .sign!(agent: "hansolo-reviewer", round: 1, status: "Completed", note: "rejected 1/2")
+        OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                   .sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+
+        result = outcome.settle(checkout:, plan:, pull: pr, round:)
+
+        aggregate_failures do
+          expect(outcome.rejections(plan)).to eq(2)
+          expect(result.note).to include("not counted (2 of 2)")
+          expect(arbitration).not_to have_received(:call)
+        end
+      end
+    end
+
     it "rejects when CI turns red after verification" do
       edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
 

@@ -42,6 +42,39 @@ module OpenLanes
         # Lines of a withheld coverage run quoted in the comment.
         TAIL = CoverageGate::TAIL
 
+        # What the builders are told when the branch's `.openlanes.yml` has
+        # no `coverage:` section. A plain rejection would only say the gate
+        # withheld, and the builder would go looking for a defect; this names
+        # the one thing to write, in both shapes, so the next round writes it.
+        # Its first line must not say "reject": the ledger counts rejections
+        # by that word, and this one does not count.
+        SETUP = <<~MARKDOWN
+          Coverage is not declared yet: this branch's `.openlanes.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
+
+          Add a `coverage:` section to `.openlanes.yml` for this stack, in one of two shapes. `command` (runs the whole suite) and `minimum` (the lowest line percentage that merges) are required in both.
+
+          A command that prints the line percentage:
+
+          ```yaml
+          coverage:
+            command: bundle exec rspec
+            report_command: jq '.total.lines.percent' coverage/coverage.json
+            minimum: 95
+          ```
+
+          Or a report file, in one of the formats the gate reads:
+
+          ```yaml
+          coverage:
+            command: npm test -- --coverage
+            report: coverage/lcov.info
+            format: lcov    # lcov | cobertura | istanbul | simplecov
+            minimum: 95
+          ```
+
+          This send-back is a setup gap, not a defect, and does not count against `merge.max_rejections`.
+        MARKDOWN
+
         # @param root [String] the main checkout, which the PNG's link is relative to
         # @param publisher [OpenLanes::Vcs::Publisher]
         # @param github [OpenLanes::Vcs::GitHub]
@@ -73,8 +106,12 @@ module OpenLanes
         # @param round [Round]
         # @param why [String, nil] Markdown saying what failed when chewie's
         #   report cannot: the app that did not start, red CI, the coverage gate
+        # @param counted [Boolean] false for a send-back that is a setup gap
+        #   rather than a defect ({SETUP}): it goes to the builders like any
+        #   rejection, but is not signed as one, so `merge.max_rejections`
+        #   never reaches the arbitrator over a missing config section
         # @return [Result]
-        def reject(checkout:, plan:, pull:, round:, why: nil)
+        def reject(checkout:, plan:, pull:, round:, why: nil, counted: true)
           round.make!
           report = round.report || Report.new
           if why
@@ -82,16 +119,16 @@ module OpenLanes
             # the round reads as rejected and a later 🧪 gets a new round
             # rather than being taken for one still waiting on CI.
             write_report(round, why) unless report.verdict == :rejected
-            sign_for_chewie(plan, round, why)
+            sign_for_chewie(plan, round, why, counted:)
           end
           kept = keep(round, failing_step: report.step)
           sha, committed = commit(checkout, plan, round, "rejected")
           png = kept.find { File.basename(it) == report.screenshot }
-          body = comment(plan:, round:, report:, why:, link: link(pull, sha, png), committed:)
+          body = comment(plan:, round:, report:, why:, link: link(pull, sha, png), committed:, counted:)
           number = number_of(pull)
           @github.comment(number:, body:, repo: Vcs::GitHub.repo_of(pull.url))
           labelled = @review.call(pr: pull.url || number, label: Plans::ReviewLabel::REJECTED)
-          send_back(plan, pull, body, labelled)
+          send_back(plan, pull, body, labelled, counted:)
         end
 
         # chewie verified it: keep `final.png`, and push it.
@@ -156,6 +193,7 @@ module OpenLanes
         # @return [Result]
         def gated(checkout:, plan:, pull:, round:)
           verdict = @gate.call(checkout:)
+          return reject(checkout:, plan:, pull:, round:, why: SETUP, counted: false) if verdict.unconfigured?
           return reject(checkout:, plan:, pull:, round:, why: withheld(verdict)) if verdict.withheld?
 
           result = @review.call(pr: pull.url || number_of(pull), label: Plans::ReviewLabel::READY_TO_MERGE)
@@ -221,37 +259,39 @@ module OpenLanes
         end
 
         # A rejection chewie did not sign (the app, CI, the coverage gate)
-        # still counts against the cap.
+        # still counts against the cap. A setup send-back is signed too, so
+        # the round has its record, but as "sent back", which {#rejections}
+        # does not count.
         #
         # @return [void]
-        def sign_for_chewie(plan, round, why)
+        def sign_for_chewie(plan, round, why, counted:)
           first = why.lines.first.to_s.strip.delete("()").sub(/[.:]\z/, "")
           Plans::PlanState.for(plan.feature.path)
                           .sign!(agent: AGENT,
                             round: round.number,
                             status: "Completed",
-                            note: "rejected: #{first}; signed by harness")
+                            note: "#{counted ? "rejected" : "sent back"}: #{first}; signed by harness")
         end
 
         # @return [Result]
-        def send_back(plan, pull, body, labelled)
+        def send_back(plan, pull, body, labelled, counted:)
           count = rejections(plan)
-          tally = "rejected #{count} of #{@max}"
-          @arbitration.call(plan:, count:, max: @max) if count >= @max
+          tally = counted ? "rejected #{count} of #{@max}" : "sent back for setup, not counted (#{count} of #{@max})"
+          @arbitration.call(plan:, count:, max: @max) if counted && count >= @max
           moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
             pr: number_of(pull),
             kind: :rejected,
             comments: [{ author: AGENT, url: pull.url.to_s, body: }]))
           label = labelled.refused? ? "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}" : Plans::ReviewLabel::REJECTED.name
           Result.new(kind: :rejected,
-            note: "verification rejected PR ##{number_of(pull)}, #{tally}; #{label}" \
+            note: "verification #{counted ? "rejected" : "sent back"} PR ##{number_of(pull)}, #{tally}; #{label}" \
                   "#{"; #{moved.note}" if moved}",
             to: moved&.to)
         end
 
         # @return [String] Markdown
-        def comment(plan:, round:, report:, why:, link:, committed:)
-          lines = ["### 🧪 #{AGENT}: rejected, verification round #{round.number}", ""]
+        def comment(plan:, round:, report:, why:, link:, committed:, counted:)
+          lines = ["### 🧪 #{AGENT}: #{counted ? "rejected" : "sent back for setup"}, verification round #{round.number}", ""]
           if why
             lines << why
           else
