@@ -208,6 +208,16 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     it "moves with it, and records the new state" do
       expect([moved.signatures.size, moved.state]).to eq([1, "building_ui"])
     end
+
+    it "says in the log which plan moved, from which state to which" do
+      heard = []
+      tap = OpenLanes::UI.tap_log(->(message, fields) { heard << [message, fields] })
+      moved
+      OpenLanes::UI.untap_log(tap)
+
+      expect(heard).to include([match(/\Amoved: .+ → #{Regexp.escape(OpenLanes::Plans.status(:building_ui).to_s)}\z/),
+                                include(plan: "001.00")])
+    end
   end
 
   describe "last-known-state" do

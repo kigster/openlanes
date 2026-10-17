@@ -122,10 +122,14 @@ module OpenLanes
           raise Error, "cannot rename #{@feature.dirname} — #{File.basename(target)} already exists"
         end
 
+        from = @feature.status
         @reads = {}
         @pull_requests = nil
         @feature = Feature.parse(target) or raise Error, "#{File.basename(target)} is not a plan folder"
         PlanState.for(target).state!(status.key)
+        # Every transition passes through here, whoever fires it, so this is
+        # the one line in the log that says a plan changed state.
+        UI.log("moved: #{from} → #{status}", plan: @feature.ordinal.to_s)
         @feature
       end
     end
