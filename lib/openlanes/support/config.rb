@@ -18,6 +18,9 @@ module OpenLanes
   #       timeout: 1800
   #   questions:
   #     model: anthropic/claude-haiku-5.5  # rewrites prose questions into choices (D9)
+  #   review:
+  #     max_hmm: 5              # most 🤔 a review may carry and be approved (R3);
+  #                             # $OPENLANES_REVIEW_MAX_HMM beats it
   #   app:                      # how to run the app a plan builds (M12)
   #     kind: web
   #     processes:
@@ -68,6 +71,9 @@ module OpenLanes
   #   @return [String, nil] `questions.model`: the OpenRouter model that
   #     rewrites a prose question into lettered choices; nil takes
   #     {Live::ChoiceConverter::DEFAULT_MODEL}
+  # @!attribute [r] review_max_hmm
+  #   @return [Integer, nil] `review.max_hmm` as the file says it; read
+  #     {#max_hmm}, which applies the environment and the default
   Config = Data.define(:path,
     :project,
     :lane,
@@ -78,10 +84,27 @@ module OpenLanes
     :merge_by,
     :app,
     :aging_since,
-    :questions_model) do
+    :questions_model,
+    :review_max_hmm) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil, app: nil, aging_since: nil, questions_model: nil)
+      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil)
       super
+    end
+
+    # The most 🤔 a review may carry and still be `review-approved` (R3).
+    # Loudest first: `$OPENLANES_REVIEW_MAX_HMM`, then `review.max_hmm`, then
+    # {Plans::Verdict::DEFAULT_MAX_HMM}. The variable is there so one run can
+    # be stricter or looser without editing a file the whole team shares.
+    #
+    # @param env [Hash] the environment, injectable for tests
+    # @return [Integer]
+    # @raise [OpenLanes::Error] when the variable is not a whole number
+    def max_hmm(env: ENV)
+      raw = env[Config::MAX_HMM_ENV].to_s.strip
+      return review_max_hmm || Plans::Verdict::DEFAULT_MAX_HMM if raw.empty?
+      return Integer(raw, 10) if raw.match?(/\A\d+\z/)
+
+      raise Error, "#{Config::MAX_HMM_ENV}=#{raw.inspect} is not a whole number"
     end
 
     # Who merges a pull request once its review passed (M4). A person, unless
@@ -121,6 +144,7 @@ module OpenLanes
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
+      settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
   end
@@ -130,7 +154,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions].freeze
+    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions review].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -140,6 +164,12 @@ module OpenLanes
 
     # Every key `questions:` may hold.
     QUESTION_KEYS = %w[model].freeze
+
+    # Every key `review:` may hold.
+    REVIEW_KEYS = %w[max_hmm].freeze
+
+    # The variable that beats `review.max_hmm`.
+    MAX_HMM_ENV = "OPENLANES_REVIEW_MAX_HMM"
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -197,7 +227,8 @@ module OpenLanes
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
-          **questions(settings["questions"], path))
+          **questions(settings["questions"], path),
+          **review(settings["review"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -309,6 +340,23 @@ module OpenLanes
         return { questions_model: model.strip } if model.is_a?(String) && !model.strip.empty?
 
         fail_with(path, "questions.model: #{model.inspect} is not a model id, e.g. #{Live::ChoiceConverter::DEFAULT_MODEL}")
+      end
+
+      # @return [Hash{Symbol => Object}] the `review:` settings, as keywords for {Config.new}
+      def review(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "review: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - REVIEW_KEYS).each do |key|
+          fail_with(path, "review.#{key}: unknown key; known: #{REVIEW_KEYS.join(", ")}")
+        end
+        max = settings["max_hmm"]
+        return {} if max.nil?
+        return { review_max_hmm: max } if max.is_a?(Integer) && !max.negative?
+
+        fail_with(path, "review.max_hmm: #{max.inspect} is not a whole number")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a

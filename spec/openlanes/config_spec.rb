@@ -108,6 +108,47 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "review.max_hmm" do
+      it "defaults to five when neither the file nor the environment says" do
+        expect(config.max_hmm(env: {})).to eq(5)
+      end
+
+      it "reads the file" do
+        openlanes_yml("review:\n  max_hmm: 2\n")
+        expect([config.review_max_hmm, config.max_hmm(env: {})]).to eq([2, 2])
+      end
+
+      it "lets $OPENLANES_REVIEW_MAX_HMM beat the file" do
+        openlanes_yml("review:\n  max_hmm: 2\n")
+        expect(config.max_hmm(env: { "OPENLANES_REVIEW_MAX_HMM" => "9" })).to eq(9)
+      end
+
+      it "ignores an empty variable" do
+        expect(config.max_hmm(env: { "OPENLANES_REVIEW_MAX_HMM" => " " })).to eq(5)
+      end
+
+      it "refuses a variable that is not a whole number" do
+        expect { config.max_hmm(env: { "OPENLANES_REVIEW_MAX_HMM" => "five" }) }
+          .to raise_error(OpenLanes::Error, /OPENLANES_REVIEW_MAX_HMM="five" is not a whole number/)
+      end
+
+      {
+        "an unknown key"   => ["review:\n  max_rejections: 2\n", /review\.max_rejections: unknown key; known: max_hmm/],
+        "a negative count" => ["review:\n  max_hmm: -1\n", /review\.max_hmm: -1 is not a whole number/],
+        "a word"           => ["review:\n  max_hmm: five\n", /review\.max_hmm: "five" is not a whole number/],
+        "not a mapping"    => ["review: 5\n", /review: must be a mapping/]
+      }.each do |label, (text, message)|
+        it "refuses #{label}" do
+          openlanes_yml(text)
+          expect { config }.to raise_error(OpenLanes::Error, message)
+        end
+      end
+
+      it "writes itself back out under review:" do
+        expect(described_class.new(review_max_hmm: 3).to_yaml).to eq("review:\n  max_hmm: 3\n")
+      end
+    end
+
     # A config silently ignored is a timeout that stops applying with no
     # signal, so every one of these names the file.
     {
