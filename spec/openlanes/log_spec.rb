@@ -109,6 +109,16 @@ RSpec.describe OpenLanes::Log do
       end
     end
 
+    it "never writes a URL's password, in the message or in a field" do
+      described_class.setup(settings)
+      described_class.event("push to https://bot:s3cret@github.com/a/b.git failed",
+        reason: "redis://:hunter2@cache:6379/0 refused",
+        plan:   "003.00")
+
+      expect(File.read(file)).to include("https://bot:***@github.com", "redis://:***@cache")
+        .and(satisfy { !it.match?(/s3cret|hunter2/) })
+    end
+
     it "writes to STDOUT for --log -" do
       expect {
         described_class.setup(settings(log: "-"))

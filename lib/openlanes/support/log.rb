@@ -54,6 +54,12 @@ module OpenLanes
     ENV_LEVEL = "OPENLANES_LOG_LEVEL"
     ENV_FORMAT = "OPENLANES_LOG_FORMAT"
 
+    # The password in a URL's userinfo, wherever the URL sits in a line: a
+    # git or Redis error, or an agent's failure reason, can quote a remote
+    # with its credentials, and the log outlives the run. The same rule as
+    # {Live.mask}, which only looks at a string that is one URL.
+    CREDENTIALS = %r{([a-z][a-z0-9+.-]*://[^:@/\s]*):[^@/\s]+@}i
+
     # The logger a process uses when {.setup} was never told its name.
     DEFAULT_NAME = "openlanes"
 
@@ -152,9 +158,19 @@ module OpenLanes
       def event(message, level: :info, **fields)
         return unless configured?
 
-        payload = fields.compact.transform_values { it.is_a?(Float) ? it.round(1) : it }
-        logger.public_send(level, message.to_s, payload.empty? ? nil : payload)
+        payload = fields.compact.transform_values do |value|
+          case value
+          when Float then value.round(1)
+          when String then redact(value)
+          else value
+          end
+        end
+        logger.public_send(level, redact(message.to_s), payload.empty? ? nil : payload)
       end
+
+      # @param text [String]
+      # @return [String] +text+ with every URL password replaced by `***`
+      def redact(text) = text.gsub(CREDENTIALS, '\1:***@')
 
       # Forget the setup and stop writing. For the suite, which sets logging
       # up in a temp directory and must not leave an appender writing there.
