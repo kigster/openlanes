@@ -1036,6 +1036,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         worktree:,
         publisher:,
         state:,
+        extensions: limits,
         sleeper: ->(_) {}).call
     end
     let(:executor) do
