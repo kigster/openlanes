@@ -92,6 +92,30 @@ describe("NeedsYou", () => {
     expect(screen.queryByRole("button", { name: "Type something instead" })).toBeNull();
   });
 
+  it("offers an agent out of time only its three choices, and answers X<n> with the one picked (E1)", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("001.00");
+    plan.questions = [question({
+      id: "001.00/X2", number: 2, kind: "extension", heading: "luke-backend is running out of time",
+      body: "Round 1 on Building has under 5 minutes left on its clock.",
+      options: [
+        { letter: "a", label: "Extend Rounds by 1", recommended: false, answer: "a) Extend Rounds by 1" },
+        { letter: "b", label: "Extend Time by 10 minutes", recommended: true, answer: "b) Extend Time by 10 minutes" },
+        { letter: "c", label: "Extend Time by 20 minutes", recommended: false, answer: "c) Extend Time by 20 minutes" },
+      ],
+    })];
+    renderPanel(<NeedsYou plans={[plan]} onCommand={onCommand} />);
+    const group = screen.getByRole("group", { name: "Choose an answer" });
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "a)Extend Rounds by 1", "b)Extend Time by 10 minutesRecommended", "c)Extend Time by 20 minutes",
+    ]);
+    expect(screen.getByText("luke-backend is running out of time")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hold blocked" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /Extend Time by 20 minutes/ }));
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "X2", text: "c) Extend Time by 20 minutes" } });
+  });
+
   it("stacks a lettered question's options in order, the recommended one tagged, and Type something instead last", async () => {
     const { container } = renderPanel(<NeedsYou plans={[lettered()]} onCommand={recorder().onCommand} />);
     const group = screen.getByRole("group", { name: "Choose an answer" });

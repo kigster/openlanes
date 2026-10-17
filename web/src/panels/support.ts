@@ -25,7 +25,7 @@ export const isSendKey = (e: { key: string; metaKey: boolean; ctrlKey: boolean }
   e.key === "Enter" && (e.metaKey || e.ctrlKey);
 
 /** The B<n> a command addresses a question by; the question's id carries the plan too. */
-export const questionRef = (q: Question): string => `B${q.number}`;
+export const questionRef = (q: Question): string => `${q.kind === "extension" ? "X" : "B"}${q.number}`;
 
 /**
  * The red block emoji the status bar uses, so the backlog marks blocked plans the same way. Holds the single
