@@ -25,6 +25,12 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
     end
   end
 
+  describe ".answers" do
+    it "reads each answer up to the next question" do
+      expect(described_class.answers(text)).to eq(1 => "\nSplit them.\n\n")
+    end
+  end
+
   describe ".replace" do
     it "rewrites one body and leaves the headings and the answer alone" do
       expect(described_class.replace(text, 1, "Fit?\n\na) Split (Recommended)\nb) Wait")).to eq(<<~MD)

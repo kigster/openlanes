@@ -3,7 +3,8 @@
 module OpenLanes
   module Plans
     # The bodies of the questions in `blocked.md`: the lines under each
-    # `## Bn` heading, up to the next heading of any kind or the next `## An`.
+    # `## Bn` heading, up to the next heading of any kind or the next `## An`;
+    # and, the same way, the bodies of the answers under `## An`.
     #
     # The page reads a body to show it and the engine reads one to rewrite it
     # into choices, so both find its edges here; two readers with two ideas
@@ -21,6 +22,18 @@ module OpenLanes
       def bodies(text)
         lines = text.to_s.lines
         spans(lines).transform_values { |(from, to)| lines[from...to].join }
+      end
+
+      # The answers waiting under `## An` headings, by number, which is how
+      # the harness copies each question and its answer into the asking
+      # agent's journal (M3) before the broker drains them.
+      #
+      # @param text [String] the whole of blocked.md
+      # @return [Hash{Integer => String}] each answer's number to the lines
+      #   under its heading
+      def answers(text)
+        lines = text.to_s.lines
+        spans(lines, ANSWER_BLOCK).transform_values { |(from, to)| lines[from...to].join }
       end
 
       # +text+ with question +number+'s body replaced by +body+, its heading
@@ -42,14 +55,16 @@ module OpenLanes
       end
 
       # @param lines [Array<String>]
-      # @return [Hash{Integer => Array(Integer, Integer)}] each question's
+      # @param pattern [Regexp] {OPEN_BLOCK} for questions, {ANSWER_BLOCK}
+      #   for answers; either kind of heading ends the other's body
+      # @return [Hash{Integer => Array(Integer, Integer)}] each block's
       #   number to the first line under its heading and the line that ends it
-      def spans(lines)
+      def spans(lines, pattern = OPEN_BLOCK)
         found = {}
         open = nil
         lines.each_with_index do |line, i|
-          number = line[OPEN_BLOCK, 1]
-          if number || line.match?(HEADING) || line.match?(ANSWER_BLOCK)
+          number = line[pattern, 1]
+          if number || line.match?(HEADING) || line.match?(OPEN_BLOCK) || line.match?(ANSWER_BLOCK)
             found[open.first] = [open.last, i] if open
             open = number && [number.to_i, i + 1]
           end

@@ -187,10 +187,47 @@ module OpenLanes
       # @param progress [OpenLanes::UI::Line]
       # @return [Array(Boolean, String)]
       def invoke(subject, progress)
+        journal_answers(subject)
         @executor.call(agent, subject, root:, &progress)
       rescue StandardError => e
         [false, "#{e.class}: #{e.message.lines.first.to_s.strip}"]
       end
+
+      # Every answered question goes into the journal of the agent that asked
+      # it (M3), B1 with A1, before the broker folds it in and deletes it:
+      # afterwards the words are gone from `blocked.md`, and the asker's next
+      # round would know only that the plan was unblocked, not what it was
+      # told. Here, rather than where the page writes an answer, because an
+      # answer typed into the file by hand is drained the same way.
+      #
+      # A journal that cannot be written costs the record, never the drain.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [void]
+      def journal_answers(subject)
+        return unless applying?
+
+        state = Plans::PlanState.for(subject.feature.path)
+        asker = state.blocked_by or return
+        text = subject.read("blocked.md").to_s
+        bodies = Plans::BlockedFile.bodies(text)
+        answers = Plans::BlockedFile.answers(text).transform_values { plain(it) }
+        self.class.questions(subject).each do |question|
+          answer = answers[question.number]
+          next if answer.nil? || answer.empty?
+
+          state.answer!(agent: asker,
+            ref: "B#{question.number}",
+            question: plain("#{question.heading} #{bodies[question.number]}"),
+            answer:)
+        end
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal not written: #{e.message}", level: :warn, **log_fields(subject))
+      end
+
+      # @param text [String] a block's body
+      # @return [String] one line, without the page's command markers
+      def plain(text) = Plans::Journal.clip(text.gsub(/<!--.*?-->/m, "").split.join(" "))
 
       # The same pass the run loop makes after every round, for the same reason:
       # a drained folder is only *named* differently once something reads the
