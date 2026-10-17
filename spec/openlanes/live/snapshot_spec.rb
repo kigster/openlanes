@@ -338,6 +338,28 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       run_state.choose_model("001.00/luke-backend", "claude-opus-5-5")
       expect(car[:next_model]).to be_nil
     end
+
+    it "names the sub-agents still running, and none for a row that has none" do
+      rows.replace([row("001.00", "luke-backend", running: %w[Explore leah-researcher]), row("001.00", "rey-frontend")])
+      expect(snapshot[:plans].first[:cars].map { it[:subagents] }).to eq([%w[Explore leah-researcher], []])
+    end
+  end
+
+  describe "the Redis URL" do
+    it "is the engine's own, with its userinfo redacted" do
+      expect(described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        redis_url: "redis://dana:secret@10.0.4.2:6379/0").to_h[:redis_url]).to eq("redis://:***@10.0.4.2:6379/0")
+    end
+
+    it "is null when nobody said which" do
+      expect(snapshot[:redis_url]).to be_nil
+    end
   end
 
   describe "an unclaimed plan" do

@@ -27,6 +27,10 @@ RSpec.describe OpenLanes::Web::Demo do
       expect(board[:me].values_at("at", "seq")).to eq(["2026-10-13T09:30:00Z", 1])
     end
 
+    it "names the Redis it really publishes through, not the fixture's" do
+      expect(board[:me]["redis_url"]).to eq("memory://")
+    end
+
     it "counts the seq up on every tick" do
       demo.tick
       expect(board[:me]["seq"]).to eq(2)

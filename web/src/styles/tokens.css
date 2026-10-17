@@ -36,6 +36,12 @@
   --label-progress: #FFF3B0;
   --label-approved: #0B6E2E;
   --focus: #1F5FD1;
+  /* A question's answer buttons stand a shade off whatever they sit on: darker here, lighter in the dark theme. A
+     translucent wash rather than a colour, because the same buttons sit on enamel in Needs you and on plate elsewhere. */
+  --choice-bg: rgb(0 0 0 / 6%);
+  --choice-bg-hover: rgb(0 0 0 / 10%);
+  /* A sub-agent's tile, beside its parent's: a ghost of a car, 80% transparent. One knob, so it is easy to tune. */
+  --subagent-opacity: 0.2;
 
   --colw: 128px;
   --gutter: 236px;
@@ -69,6 +75,8 @@
     --label-progress: #5A4D12;
     --label-approved: #3FAF6A;
     --focus: #8DB2FF;
+    --choice-bg: rgb(255 255 255 / 7%);
+    --choice-bg-hover: rgb(255 255 255 / 12%);
     color-scheme: dark;
   }
 }
@@ -94,6 +102,8 @@
   --label-progress: #5A4D12;
   --label-approved: #3FAF6A;
   --focus: #8DB2FF;
+  --choice-bg: rgb(255 255 255 / 7%);
+  --choice-bg-hover: rgb(255 255 255 / 12%);
   color-scheme: dark;
 }
 

@@ -109,3 +109,22 @@ it("takes the oldest purple pill off an overflowing bar once it has stayed long 
   width.mockRestore();
   vi.useRealTimers();
 });
+
+// Two engines on different Redis servers never see each other's claims, so the bar says which one this engine uses.
+describe("the Redis the engine uses", () => {
+  it("is shown as the engine sent it", () => {
+    render(<StatusBar {...props({ redisUrl: "redis://localhost:6379/0" })} />);
+    expect(screen.getByText("redis://localhost:6379/0")).toBeInTheDocument();
+  });
+
+  it("never shows a password or user name, even from an engine that sent one", () => {
+    render(<StatusBar {...props({ redisUrl: "rediss://dana:hunter2@10.0.4.2:6380/3" })} />);
+    expect(screen.getByText("rediss://:***@10.0.4.2:6380/3")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("hunter2");
+  });
+
+  it("is left out when the engine did not say", () => {
+    render(<StatusBar {...props({ redisUrl: null })} />);
+    expect(screen.queryByText(/^Redis/)).toBeNull();
+  });
+});

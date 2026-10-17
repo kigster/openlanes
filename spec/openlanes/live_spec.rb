@@ -23,6 +23,13 @@ RSpec.describe OpenLanes::Live do
     end
   end
 
+  describe ".redact" do
+    it "hides the whole userinfo, user name included, and leaves a URL without one alone" do
+      expect(%w[redis://:pw@h:6379/0 rediss://user:pw@h/1 redis://user@h/2 redis://h:6379/0].map { described_class.redact(it) })
+        .to eq(%w[redis://:***@h:6379/0 rediss://:***@h/1 redis://:***@h/2 redis://h:6379/0])
+    end
+  end
+
   describe ".connect" do
     it "is Unavailable where nothing answers" do
       expect { described_class.connect("redis://127.0.0.1:1/15") }.to raise_error(described_class::Unavailable)

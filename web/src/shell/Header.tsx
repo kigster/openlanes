@@ -13,6 +13,9 @@ export interface HeaderProps {
   /** All machines is on. */
   merged: boolean;
   onToggleMerged: () => void;
+  /** Narrow lanes is on: rows at half height, the least important details dropped. */
+  narrow?: boolean;
+  onToggleNarrow?: () => void;
   /** The Action ▾ menu: ActionMenu from src/panels. */
   actionMenu?: ReactNode;
   /** Stop All Local and its confirmation: StopAllDialog from src/panels, which brings its own button. */
@@ -34,7 +37,7 @@ const MOON = (
 );
 
 /** The top bar: the project, this machine, the run's totals as plain text, and the run-wide controls. */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, actionMenu, stopAll, help }: HeaderProps) {
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, actionMenu, stopAll, help }: HeaderProps) {
   const { theme, toggle } = useTheme();
   const { node, run } = snapshot;
   const minutes = Math.floor(secondsBetween(run.started_at, snapshot.at) / 60);
@@ -91,6 +94,17 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
       >
         All machines
       </button>
+      {onToggleNarrow && (
+        <button
+          className="btn btn-quiet"
+          type="button"
+          aria-pressed={narrow}
+          title="Narrow lanes: half-height rows with the plan number, status, title and agents; tokens, lane and activity lines left to the drawer"
+          onClick={onToggleNarrow}
+        >
+          Narrow lanes
+        </button>
+      )}
       {actionMenu}
       <button className="btn btn-quiet btn-icon" type="button" aria-label={themeLabel} title={themeLabel} onClick={toggle}>
         {theme === "dark" ? SUN : MOON}

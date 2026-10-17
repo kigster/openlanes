@@ -79,8 +79,12 @@ module OpenLanes
       # @return [Boolean]
       def failed? = !@error.nil?
 
+      # No sub-agents, running or spawned: codex and pi never say they delegated.
+      #
       # @return [OpenLanes::Execution::Transcript::Progress]
-      def progress = Execution::Transcript::Progress.new(activity:, up:, down:, subagents: 0, pid:, message: nil)
+      def progress
+        Execution::Transcript::Progress.new(activity:, up:, down:, subagents: 0, pid:, message: nil, running: [])
+      end
 
       # @param chunk [String, nil]
       # @return [void]
