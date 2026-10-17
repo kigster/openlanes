@@ -165,6 +165,19 @@ The log is never rotated or capped. For a long-running `start`, rotate it extern
 - `unblock` and `create` show each agent as a spinner line on a terminal.
 - Ctrl-C once asks each running agent to leave a `RESUME:` note in its plan's mailbox and sign `Interrupted`. Every agent reads its mail before it starts, so a later run picks up where this one stopped. A second Ctrl-C aborts immediately.
 
+### Resuming an agent's session
+
+An agent's next round resumes the session its last round ran in (`--resume <session id>`) when all of these hold: it is the same agent, the plan is in the same state that round left it in, and the round runs in the same checkout. Only claude can resume; codex and pi start every round fresh. A plan that moved to another state, or a session claude cannot find, also starts fresh. The log says which it chose and why: `resuming session …` or `fresh session: …`.
+
+Every round's session id and checkout are kept in its entry under `stages` in `state.json`, written as soon as the agent's stream names the session. To talk to an agent yourself, in an interactive session that carries on from where it stopped:
+
+```bash
+openlanes state show --plan 003 | jq '.stages[-1] | {session, cwd}'
+cd <cwd> && claude --resume <session>
+```
+
+`cd` first: claude keeps its sessions per directory, so an id recorded in a worktree is not found from the main checkout. Pick an earlier entry than `.stages[-1]` for another agent's session.
+
 ### Unblocking a plan
 
 The loop never assigns a blocked plan (⭕ or 🛑). Write your answers into the plan's `blocked.md` under `## Answers`, dated and attributed, then:
