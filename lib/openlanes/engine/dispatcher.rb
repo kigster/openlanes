@@ -1919,6 +1919,11 @@ module OpenLanes
       # the agent believes it remembered it, and only the log can tell a
       # person it did not.
       #
+      # The place in the list moves on only once the lines are written. A
+      # folder not found this tick, or a `state.json` that cannot be written
+      # right now, leaves them for the next tick to try again, rather than a
+      # hole in the journal the agent believes it kept.
+      #
       # @param job [OpenLanes::Engine::Dispatcher::Job]
       # @return [void]
       def record_journal(job)
@@ -1926,11 +1931,11 @@ module OpenLanes
         return if job.rebase || @runner.dry_run? || lines.size <= job.journaled.to_i
 
         fields = job.task.log_fields
-        added = lines[job.journaled.to_i..]
-        job.journaled = lines.size
-        entries, rejected = added.partition { it.is_a?(Plans::Journal::Entry) }
-        subject = fresh(job.task)
-        if subject && !entries.empty?
+        entries, rejected = lines[job.journaled.to_i..].partition { it.is_a?(Plans::Journal::Entry) }
+        unless entries.empty?
+          subject = fresh(job.task) or
+            return UI.log("journal not written yet: plan folder not found", level: :warn, **fields)
+
           job.journal_round, refused = Plans::PlanState.for(subject.feature.path)
                                                        .journal!(agent: job.task.agent.name,
                                                          entries:,
@@ -1939,9 +1944,10 @@ module OpenLanes
                                                          state: job.from)
           rejected += refused
         end
+        job.journaled = lines.size
         rejected.each { UI.log("journal line ignored, #{it.reason}: #{it.line[0, 160]}", level: :warn, **fields) }
       rescue SystemCallError, OpenLanes::Error => e
-        UI.log("journal not written: #{e.message}", level: :warn, **job.task.log_fields)
+        UI.log("journal not written yet: #{e.message}", level: :warn, **job.task.log_fields)
       end
 
       # @return [Hash] adapter, model and effort, when the executor can say
