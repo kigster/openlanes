@@ -333,16 +333,17 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 ## Review labels
 
-A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one. No passing verdict is given while CI is red.
+A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
-| Label                | Colour   | Passing | Meaning                                      |
-| -------------------- | -------- | ------- | -------------------------------------------- |
-| `ready-for-review`   | `c2e0c6` | no      | PR open, review not started                  |
-| `review-in-progress` | `fff3b0` | no      | hansolo is reviewing                         |
-| `review-passed`      | `1d76db` | yes     | passed with non-critical findings still open |
-| `ready-to-merge`     | `2ea043` | yes     | passed with nothing open                     |
-| `review-rejected`    | `b60205` | no      | changes needed                               |
-| `ok-to-merge`        | `1a7f37` | yes     | chewie verified it                           |
+| Label                   | Colour   | Passing | Meaning                                                     |
+| ----------------------- | -------- | ------- | ----------------------------------------------------------- |
+| `ready-for-review`      | `c2e0c6` | no      | luke and rey are done; the PR waits for a free review slot  |
+| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                  |
+| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                       |
+| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                |
+| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default) |
+| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                         |
+| `ready-to-merge`        | `5319e7` | yes     | chewie-verifier verified it and its E2E tests pass          |
 
 ## If a real issue tracker arrives, this scheme retires
 

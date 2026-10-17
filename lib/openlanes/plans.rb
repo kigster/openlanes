@@ -35,5 +35,24 @@ module OpenLanes
     # @param project [String, nil]
     # @return [OpenLanes::Plans::Index]
     def index(tree:, project: nil) = Index.new(tree:, project:)
+
+    # The review label the reviewers' comments add up to (R3). A 💣 or 🔓
+    # from anyone but the security reviewer is left out, and said in the log,
+    # so a reviewer straying outside its remit is visible rather than silent.
+    #
+    # @param comments [Array<OpenLanes::Plans::Verdict::Comment, Hash>] each
+    #   with `agent:` and `body:`
+    # @param max_hmm [Integer] defaults to `review.max_hmm`, or
+    #   `$OPENLANES_REVIEW_MAX_HMM` over it
+    # @return [OpenLanes::Plans::Verdict]
+    def verdict(comments, max_hmm: Config.current.max_hmm)
+      Verdict.call(comments, max_hmm:).tap do |verdict|
+        verdict.ignored.each do |comment|
+          UI.log("ignored #{Verdict::MARKS[Verdict.mark_of(comment.body)]} from #{comment.agent || "an unnamed reviewer"}: " \
+                 "only #{Verdict::SECURITY_REVIEWER} may use it",
+            level: :warn)
+        end
+      end
+    end
   end
 end

@@ -10,7 +10,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:comments) { [{ author: "octo", body: "Rename the method", url: "https://github.com/o/r/pull/11#c1" }] }
   let(:rows) do
     [{ number: 11, open: true, state: "Open 🟡", labels: %w[review-rejected] },
-     { number: 12, open: true, state: "Open 🟡", labels: %w[ready-to-merge] },
+     { number: 12, open: true, state: "Open 🟡", labels: %w[review-approved] },
      { number: 13, open: false, state: "Merged 🟣", labels: [] },
      { number: 14, open: false, state: "Closed 🔴", labels: [] }]
   end

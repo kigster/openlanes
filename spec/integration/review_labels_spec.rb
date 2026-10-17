@@ -136,7 +136,7 @@ RSpec.describe "Review labels, end to end", :tree do
     end
 
     edit_gh { it["prs"][number]["checks"] = [{ "name" => "rspec", "state" => "FAILURE", "bucket" => "fail" }] }
-    _, err, status = openlanes("review", number, "ready-to-merge")
+    _, err, status = openlanes("review", number, "review-approved")
     aggregate_failures "no passing verdict over red CI" do
       expect(status).not_to eq(0)
       expect(err).to include("CI is red")
@@ -147,6 +147,12 @@ RSpec.describe "Review labels, end to end", :tree do
     aggregate_failures "a rejection is accepted" do
       expect(status).to eq(0)
       expect(labels(number)).to eq(%w[review-rejected])
+    end
+
+    _, _, status = openlanes("review", number, "review-vulnerability")
+    aggregate_failures "a vulnerability sits beside the rejection" do
+      expect(status).to eq(0)
+      expect(labels(number)).to contain_exactly("review-rejected", "review-vulnerability")
     end
 
     edit_gh do |data|
@@ -175,6 +181,28 @@ RSpec.describe "Review labels, end to end", :tree do
     aggregate_failures do
       expect(publication.refusal).to include("## How to test")
       expect(gh["prs"].keys).to eq(%w[41 42])
+    end
+  end
+
+  # R3 against the real `gh` argv: a repository labelled under M3 gets the
+  # new set, and a second sync asks once and writes nothing.
+  it "syncs the repository's labels to R3, idempotently" do
+    edit_gh do |data|
+      data["labels"] = %w[review-rejected ok-to-merge]
+      data["colours"] = { "review-rejected" => "b60205", "ok-to-merge" => "1a7f37" }
+    end
+    sync = OpenLanes::Vcs.label_sync(github: OpenLanes::Vcs::GitHub.new)
+
+    first = sync.call.select(&:write?).map { [it.label.name, it.action] }
+    writes = argv.count { it.take(2) != %w[label list] }
+    second = sync.call.select(&:write?)
+
+    aggregate_failures do
+      expect(first).to include(["review-rejected", :recolour], ["ready-to-merge", :create])
+      expect(gh["colours"]).to include("review-rejected" => "F90000", "ready-to-merge" => "5319e7")
+      expect(gh["colours"].keys).to include(*OpenLanes::Plans::ReviewLabel.names)
+      expect(second).to be_empty
+      expect(argv.count { it.take(2) != %w[label list] }).to eq(writes)
     end
   end
 end

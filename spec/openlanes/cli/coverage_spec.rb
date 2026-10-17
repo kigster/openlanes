@@ -60,7 +60,7 @@ RSpec.describe "openlanes coverage", :tree do
     commit(hit: 9499)
     out, _err, status = run(plan: "001")
 
-    expect([status, out]).to eq([1, "ok-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)\n"])
+    expect([status, out]).to eq([1, "ready-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)\n"])
   end
 
   it "refuses a plan the tree does not hold" do

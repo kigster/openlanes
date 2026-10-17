@@ -19,5 +19,11 @@ module OpenLanes
     # @param github [OpenLanes::Vcs::GitHub]
     # @return [OpenLanes::Vcs::Review]
     def review(github: GitHub.new) = Review.new(github:)
+
+    # @param root [String, nil] the checkout whose repository is synced; nil
+    #   means the current directory's
+    # @param github [OpenLanes::Vcs::GitHub]
+    # @return [OpenLanes::Vcs::LabelSync]
+    def label_sync(root: nil, github: GitHub.new(chdir: root)) = LabelSync.new(github:)
   end
 end

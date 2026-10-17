@@ -143,6 +143,24 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  # Copilot on #69: label sync ran gh in the engine's directory, which
+  # --root can point away from.
+  describe "chdir:" do
+    it "runs every gh command in the checkout it names" do
+      result = instance_double(TTY::Command::Result, out: "[]", success?: true)
+      allow(command).to receive_messages(run: result, run!: result)
+      rooted = described_class.new(command:, chdir: "/tmp/elsewhere")
+
+      rooted.label_colours
+      rooted.available?
+
+      aggregate_failures do
+        expect(command).to have_received(:run).with("gh", "label", "list", "--limit", "1000", "--json", "name,color", chdir: "/tmp/elsewhere")
+        expect(command).to have_received(:run!).with("gh", "auth", "status", chdir: "/tmp/elsewhere")
+      end
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")
@@ -212,7 +230,7 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     let(:payload) do
       { number: 12, title: "Add health checks", url: "https://github.com/o/r/pull/12",
        state: "MERGED", isDraft: false, mergedAt: "2026-08-01T10:00:00Z",
-       body: "Adds /healthz.", labels: [{ name: "ok-to-merge" }] }.to_json
+       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }] }.to_json
     end
 
     it "reads one pull request by number or URL" do
@@ -228,7 +246,7 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       command = instance_double(TTY::Command)
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
 
-      expect(described_class.new(command:).pull_request("12")).to include(open: false, labels: ["ok-to-merge"])
+      expect(described_class.new(command:).pull_request("12")).to include(open: false, labels: ["ready-to-merge"])
     end
 
     it "blames authentication rather than reporting a parse error when gh says nothing" do
@@ -300,16 +318,16 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     it "carries each pull request's labels on #pulls" do
       allow(command).to receive(:run).and_return(
         instance_double(TTY::Command::Result,
-          out: JSON.generate([{ "number" => 1, "state" => "MERGED", "mergedAt" => "x", "labels" => [{ "name" => "ok-to-merge" }] }]))
+          out: JSON.generate([{ "number" => 1, "state" => "MERGED", "mergedAt" => "x", "labels" => [{ "name" => "ready-to-merge" }] }]))
       )
-      expect(github.pulls.first).to include(labels: ["ok-to-merge"], state: "Merged 🟣", open: false)
+      expect(github.pulls.first).to include(labels: ["ready-to-merge"], state: "Merged 🟣", open: false)
     end
 
     it "creates a missing label with its colour and meaning, never --force" do
       github.ensure_label(label, repo: "o/r")
 
       expect(argvs).to eq([["gh", "label", "create", "ready-for-review", "--color", "c2e0c6",
-                            "--description", "PR open, review not started", "-R", "o/r"]])
+                            "--description", label.meaning, "-R", "o/r"]])
     end
 
     it "leaves an existing label alone" do
@@ -322,6 +340,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_raise(exit_error("HTTP 403: forbidden\nmore"))
 
       expect { github.ensure_label(label) }.to raise_error(OpenLanes::Error, "could not create label ready-for-review: HTTP 403: forbidden")
+    end
+
+    it "turns a missing gh into an Error when creating a label" do
+      allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+      expect { github.ensure_label(label) }
+        .to raise_error(OpenLanes::Error, /could not create label ready-for-review: No such file or directory - gh/)
     end
 
     it "swaps labels in one edit, with -R, and returns what is left" do
@@ -360,12 +385,12 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run) do |*argv|
         argvs << argv
         calls += 1
-        raise exit_error("'review-passed' not found") if calls == 2
+        raise exit_error("'review-ok-not-perfect' not found") if calls == 2
 
         instance_double(TTY::Command::Result, out: JSON.generate("labels" => [{ "name" => "review-rejected" }]))
       end
 
-      github.swap_label(number: 12, add: label, remove: %w[review-rejected review-passed])
+      github.swap_label(number: 12, add: label, remove: %w[review-rejected review-ok-not-perfect])
 
       expect(argvs[3]).to eq(%w[gh pr edit 12 --add-label ready-for-review --remove-label review-rejected])
     end
@@ -385,6 +410,59 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).with("gh", "pr", "edit", any_args).and_raise(exit_error("no such PR"))
 
       expect { github.swap_label(number: 12, add: label) }.to raise_error(OpenLanes::Error, /could not label #12: no such PR/)
+    end
+
+    describe "#label_colours" do
+      it "lists the repository's labels by name, colours in lower case" do
+        allow(command).to receive(:run).and_return(
+          instance_double(TTY::Command::Result,
+            out: JSON.generate([{ "name" => "review-rejected", "color" => "B60205" }, { "name" => "bug", "color" => "d73a4a" }]))
+        )
+
+        aggregate_failures do
+          expect(github.label_colours(repo: "o/r")).to eq("review-rejected" => "b60205", "bug" => "d73a4a")
+          expect(command).to have_received(:run)
+            .with("gh", "label", "list", "--limit", "1000", "--json", "name,color", "-R", "o/r")
+        end
+      end
+
+      it "names the failure when gh cannot list them" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 401"))
+
+        expect { github.label_colours }.to raise_error(OpenLanes::Error, /could not list labels: HTTP 401/)
+      end
+
+      # A CI image without gh: the sync's caller warns on Error and carries on.
+      it "names the failure when gh is not installed" do
+        allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+        expect { github.label_colours }.to raise_error(OpenLanes::Error, /could not list labels: No such file or directory - gh/)
+      end
+    end
+
+    describe "#recolour_label" do
+      let(:rejected) { OpenLanes::Plans::ReviewLabel::REJECTED }
+
+      it "edits the colour and description of an existing label" do
+        github.recolour_label(rejected)
+
+        expect(argvs.last).to eq(["gh", "label", "edit", "review-rejected", "--color", "F90000",
+                                  "--description", rejected.meaning])
+      end
+
+      it "names the failure when gh is not installed" do
+        allow(command).to receive(:run).and_raise(Errno::ENOENT, "gh")
+
+        expect { github.recolour_label(rejected) }
+          .to raise_error(OpenLanes::Error, /could not recolour label review-rejected: No such file or directory - gh/)
+      end
+
+      it "names the label it could not recolour" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 403"))
+
+        expect { github.recolour_label(rejected, repo: "o/r") }
+          .to raise_error(OpenLanes::Error, /could not recolour label review-rejected: HTTP 403/)
+      end
     end
 
     describe "#checks" do

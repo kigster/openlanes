@@ -47,7 +47,7 @@ RSpec.describe "the coverage gate, end to end" do
     project(lcov(9499))
     out, _err, status = gate
 
-    expect([status, out]).to eq([1, "ok-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)\n"])
+    expect([status, out]).to eq([1, "ready-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)\n"])
   end
 
   it "withholds when the command writes no report, counting it as 0%" do
@@ -55,6 +55,6 @@ RSpec.describe "the coverage gate, end to end" do
     out, _err, status = gate
 
     expect(status).to eq(1)
-    expect(out).to match(%r{\Aok-to-merge withheld: coverage counts as 0%: .*coverage/lcov.info is missing\n\z})
+    expect(out).to match(%r{\Aready-to-merge withheld: coverage counts as 0%: .*coverage/lcov.info is missing\n\z})
   end
 end

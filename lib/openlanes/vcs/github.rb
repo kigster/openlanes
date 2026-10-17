@@ -14,10 +14,21 @@ module OpenLanes
       # Fields asked of `gh pr list`.
       FIELDS = %w[number title url headRefName files state isDraft mergedAt labels].freeze
 
+      # A runner that runs every command in one directory. `gh` with no `-R`
+      # asks the checkout it runs in which repository it means, and the
+      # engine's working directory is the plans project, which `--root` can
+      # point away from: label sync then wrote to the wrong repository.
+      Rooted = Data.define(:command, :chdir) do
+        def run(*argv, **) = command.run(*argv, chdir:, **)
+        def run!(*argv, **) = command.run!(*argv, chdir:, **)
+      end
+
       # @param command [TTY::Command] runner, injectable for tests
       # @param limit [Integer] how many pull requests to fetch
-      def initialize(command: TTY::Command.new(printer: :null), limit: 200)
-        @command = command
+      # @param chdir [String, nil] the checkout `gh` runs in; nil means the
+      #   current directory
+      def initialize(command: TTY::Command.new(printer: :null), limit: 200, chdir: nil)
+        @command = chdir ? Rooted.new(command:, chdir:) : command
         @limit = limit
       end
 
@@ -167,7 +178,9 @@ module OpenLanes
       end
 
       # Create a review label when the repository lacks it. Never `--force`:
-      # a colour somebody changed by hand on GitHub is theirs to keep.
+      # this runs before every label swap, and recolouring is {LabelSync}'s
+      # job, done once per run where the change is announced, not as a side
+      # effect of labelling one pull request.
       #
       # @param label [Plans::ReviewLabel]
       # @param repo [String, nil] "owner/repo"; nil means the current checkout's
@@ -183,10 +196,45 @@ module OpenLanes
           "--description",
           label.meaning,
           *repo_flag(repo))
-      rescue TTY::Command::ExitError => e
+      rescue TTY::Command::ExitError, SystemCallError => e
         return if e.message.match?(/already exists/i)
 
         raise Error, "could not create label #{label.name}: #{first_line(e)}"
+      end
+
+      # Every label the repository has, and its colour.
+      #
+      # @param repo [String, nil]
+      # @return [Hash{String => String}] name to colour, lower-case hex without `#`
+      # @raise [OpenLanes::Error]
+      def label_colours(repo: nil)
+        out = @command.run("gh", "label", "list", "--limit", "1000", "--json", "name,color", *repo_flag(repo)).out
+        JSON.parse(out).to_h { [it["name"].to_s, it["color"].to_s.downcase] }
+      # A machine without `gh` (a CI image, say) is a reason to skip the sync,
+      # not to stop the run: {LabelSync}'s caller warns on Error.
+      rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError => e
+        raise Error, "could not list labels: #{first_line(e)}"
+      end
+
+      # Give an existing label its colour and description back (R3). Only
+      # {LabelSync} calls this, and only for the labels openlanes owns.
+      #
+      # @param label [Plans::ReviewLabel]
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error]
+      def recolour_label(label, repo: nil)
+        @command.run("gh",
+          "label",
+          "edit",
+          label.name,
+          "--color",
+          label.colour,
+          "--description",
+          label.meaning,
+          *repo_flag(repo))
+      rescue TTY::Command::ExitError, SystemCallError => e
+        raise Error, "could not recolour label #{label.name}: #{first_line(e)}"
       end
 
       # Put one label on a pull request and take others off, in one edit.

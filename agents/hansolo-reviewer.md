@@ -44,7 +44,7 @@ Count your earlier rejections of this PR: the `rejected` notes in `openlanes sta
 | :----------------------------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------------------- |
 | findings, 0 earlier rejections                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected`        | `Completed, round N (rejected 1/2)`     |
 | findings, 1 earlier rejection                    | same                                                                                     | `Completed, round N (rejected 2/2)`     |
-| no findings                                      | `openlanes review <n> ready-to-merge`, then `gh pr comment` with "👍🏼 to deploy"          | `Completed, round N (approved)`         |
+| no findings                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"         | `Completed, round N (approved)`         |
 | code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`              | `Completed, round N (slop)`             |
 
 If `pull-requests.md` lists several PRs, judge each. Approve the plan only when every PR passes.
