@@ -82,8 +82,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   context "when the CLI cannot find the session" do
     let(:streams) { [[missing, broken], [fresh_stream, ok]] }
+    let(:heard) { [] }
+    let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
 
     before { result }
+
+    after { OpenLanes::UI.untap_log(tap) }
+
+    it "says the session was not found" do
+      expect(heard).to include("session sess-1 not found, starting luke-backend fresh")
+    end
 
     it "starts once more, fresh" do
       aggregate_failures do
@@ -99,12 +107,35 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   context "when a resumed run fails having spent nothing, without the usual message" do
-    let(:streams) { [[["something went wrong\n"], broken], [fresh_stream, ok]] }
+    let(:streams) { [[["API Error: 529 overloaded\n"], broken], [fresh_stream, ok]] }
+    let(:heard) { [] }
+    let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
 
     before { result }
 
+    after { OpenLanes::UI.untap_log(tap) }
+
     it "takes it as the same thing and starts fresh" do
       expect([spawned.size, result.ok]).to eq([2, true])
+    end
+
+    it "logs what the CLI said, so an outage reads as one" do
+      expect(heard).to include("session sess-1 failed before spending anything (API Error: 529 overloaded), " \
+                               "starting luke-backend fresh")
+    end
+  end
+
+  context "when a resumed run fails silently having spent nothing" do
+    let(:streams) { [[[], broken], [fresh_stream, ok]] }
+    let(:heard) { [] }
+    let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
+
+    before { result }
+
+    after { OpenLanes::UI.untap_log(tap) }
+
+    it "logs the exit status instead" do
+      expect(heard).to include("session sess-1 failed before spending anything (exit 1), starting luke-backend fresh")
     end
   end
 

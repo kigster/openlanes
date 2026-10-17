@@ -529,8 +529,8 @@ module OpenLanes
 
         begin
           status = drain(child, sessions, handle)
-          if resume && !handle.killed && session_missing?(status, sessions.current)
-            UI.log("session #{resume} not found, starting #{agent.name} fresh",
+          if resume && !handle.killed && (lost = lost_session(status, sessions.current))
+            UI.log("session #{resume} #{lost}, starting #{agent.name} fresh",
               level: :warn,
               plan:  subject.feature.ordinal.to_s,
               agent: agent.name)
@@ -695,20 +695,30 @@ module OpenLanes
       end
 
       # Whether a resumed invocation failed because its session is gone,
-      # rather than at anything it did. The message is the sure sign; a
-      # failure that spent nothing and called no tool is taken as the same
-      # thing, because a CLI that rewords the message must still not cost the
-      # round. Starting such a failure again fresh costs one more start-up at
-      # worst: an invocation that spent nothing has nothing to lose.
+      # rather than at anything it did, and what to say about it. The message
+      # is the sure sign; a failure that spent nothing and called no tool is
+      # taken as the same thing, because a CLI that rewords the message must
+      # still not cost the round. Starting such a failure again fresh costs
+      # one more start-up at worst: an invocation that spent nothing has
+      # nothing to lose.
+      #
+      # That second case also catches an overload, an auth error or a network
+      # drop at start-up, which the fresh start will usually hit again. The
+      # line the CLI printed goes into the log beside the retry, so an outage
+      # reads as an outage rather than as a lost session.
       #
       # @param status [Process::Status]
       # @param transcript [OpenLanes::Execution::Transcript]
-      # @return [Boolean]
-      def session_missing?(status, transcript)
-        return false if status.success? && !transcript.failed?
-        return true if [transcript.error, *transcript.plain].any? { SESSION_MISSING.match?(it.to_s) }
+      # @return [String, nil] why the session counts as lost, nil when it does not
+      def lost_session(status, transcript)
+        return nil if status.success? && !transcript.failed?
 
-        transcript.up.zero? && transcript.down.zero? && transcript.tools.zero?
+        said = [transcript.error, *transcript.plain].map(&:to_s).reject(&:empty?)
+        return "not found" if said.any? { SESSION_MISSING.match?(it) }
+        return nil unless transcript.up.zero? && transcript.down.zero? && transcript.tools.zero?
+
+        detail = said.empty? ? "exit #{status.exitstatus}" : said.last.lines.first.strip[0, 200]
+        "failed before spending anything (#{detail})"
       end
 
       # @return [Process::Status]
