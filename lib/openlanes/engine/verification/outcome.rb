@@ -78,7 +78,10 @@ module OpenLanes
           round.make!
           report = round.report || Report.new
           if why
-            write_report(round, why) unless round.reported?
+            # Over a verified report too (CI or coverage failing after it), so
+            # the round reads as rejected and a later 🧪 gets a new round
+            # rather than being taken for one still waiting on CI.
+            write_report(round, why) unless report.verdict == :rejected
             sign_for_chewie(plan, round, why)
           end
           kept = keep(round, failing_step: report.step)
@@ -125,6 +128,11 @@ module OpenLanes
           else gated(checkout:, plan:, pull:, round:)
           end
         end
+
+        # @param pull [OpenLanes::Plans::PullRequest]
+        # @return [Array<String>] the pull request's labels, as GitHub has them now
+        # @raise [OpenLanes::Error] when GitHub cannot be asked
+        def labels(pull) = @github.labels(number: number_of(pull), repo: Vcs::GitHub.repo_of(pull.url))
 
         # Every rejection of this plan so far, hansolo's and chewie's
         # together (M6). Derived from their signatures every time, never
@@ -206,7 +214,7 @@ module OpenLanes
 
             Verdict: rejected
 
-            Written by the engine; chewie-verifier did not run.
+            Written by the engine: the round failed where chewie-verifier could not say so.
 
             #{why}
           MARKDOWN

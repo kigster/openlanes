@@ -141,7 +141,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       aggregate_failures do
         expect(result.kind).to eq(:rejected)
         expect(comments.first).to include("the app does not start: web exited with status 3", "line 1\n", "line 20\n")
-        expect(report).to include("Verdict: rejected", "chewie-verifier did not run")
+        expect(report).to include("Verdict: rejected", "chewie-verifier could not say so")
         expect(outcome.rejections(plan)).to eq(1)
         expect(origin_files.grep(%r{verification/1/report\.md})).not_to be_empty
       end
@@ -207,6 +207,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
       expect(outcome.settle(checkout:, plan:, pull: pr, round:).kind).to eq(:rejected)
       expect(comments.first).to include("CI is red on PR #1 after verification.")
+      expect(OpenLanes::Engine::Verification.latest(plan.feature.path).report.verdict).to eq(:rejected)
     end
   end
 end

@@ -85,6 +85,31 @@ RSpec.describe OpenLanes::Engine::Verification::Screenshots do
     end
   end
 
+  it "finds a tool on PATH and runs it, by default" do
+    put("final.png")
+    bin = Dir.mktmpdir("openlanes-bin")
+    File.write(File.join(bin, "shrink"), "#!/bin/sh\nhead -c 64 \"$1\" > \"$2\"\n")
+    File.chmod(0o755, File.join(bin, "shrink"))
+    saved = ENV.fetch("PATH")
+    ENV["PATH"] = "#{bin}#{File::PATH_SEPARATOR}#{saved}"
+
+    described_class.new(dir:, tools: { "shrink" => ->(from, to) { ["shrink", from, to] }, "absent-tool" => ->(*) { ["absent-tool"] } }).prepare
+
+    expect(File.size(File.join(dir, "final.png"))).to eq(64)
+  ensure
+    ENV["PATH"] = saved
+    FileUtils.rm_rf(bin)
+  end
+
+  it "counts a tool that cannot be started as one that failed" do
+    put("final.png")
+    before = File.size(File.join(dir, "final.png"))
+
+    described_class.new(dir:, tools: { "gone" => ->(from, to) { ["/nonexistent/gone", from, to] } }, which: ->(_) { true }).prepare
+
+    expect(File.size(File.join(dir, "final.png"))).to eq(before)
+  end
+
   it "tries vips first and magick after it, by default" do
     argv = described_class::TOOLS.map { |_, build| build.call("in.png", "out.png").first }
 
