@@ -100,6 +100,23 @@
       "propertyNames": { "$ref": "#/$defs/agent" },
       "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
     },
+    "memory": {
+      "description": "Each agent's journal (M2): the entries it printed in its output, one line of JSON each, written by the dispatcher in the order printed. Entries are numbered per agent across its rounds.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/agent" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["rounds"],
+        "additionalProperties": false,
+        "properties": {
+          "rounds": {
+            "type": "object",
+            "propertyNames": { "pattern": "^[1-9]\\d*$" },
+            "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/journalEntry" } }
+          }
+        }
+      }
+    },
     "conversions": {
       "description": "Questions in blocked.md the engine rewrote into lettered choices (D9), and ones it tried and could not, with the text as the agent wrote it.",
       "type": "array",
@@ -179,6 +196,21 @@
         "files_touched": { "type": "array", "items": { "type": "string" } },
         "note": { "type": "string" }
       }
+    },
+    "journalEntry": {
+      "description": "One journal entry. No timestamp: the list is ordered, and a later entry wins over an earlier one.",
+      "type": "object",
+      "required": ["number", "kind", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["todo", "done", "decision", "question", "override", "note"] },
+        "text": { "type": "string", "minLength": 1 },
+        "overrides": { "type": "integer", "minimum": 1, "description": "The number of the entry an override overturns; present on overrides only." },
+        "answer": { "type": "string", "minLength": 1, "description": "A question's answer, recorded by the dispatcher when it arrives." }
+      },
+      "if": { "properties": { "kind": { "const": "override" } } },
+      "then": { "required": ["overrides"] }
     },
     "agent": { "type": "string", "pattern": "^[\\w-]+$" },
     "status": { "enum": ["Started", "Completed", "Almost completed", "Interrupted", "Blocked"] },
