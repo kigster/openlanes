@@ -2,6 +2,14 @@
 
 Settled 2026-10-13 in a grilling session. Not built yet. Plans 005 and 007–016 implement it; their specs point here.
 
+> [!IMPORTANT]
+> **M3's labels are superseded by R3** (plan 030, `lib/openlanes/plans/review_label.rb`). Read every label name below with R3's meaning, not M3's:
+>
+> - `ready-to-merge` changed meaning. Under M3 it meant "review passed with nothing open". Under R3 it means "chewie-verifier verified it and its E2E tests pass", the role M3 gave `ok-to-merge`. Where M1, M2 and M5 say `ok-to-merge`, R3 says `ready-to-merge`; where they say `ready-to-merge`, R3 says `review-approved`.
+> - `review-passed` is replaced by `review-ok-not-perfect`.
+> - `review-passed` and `ok-to-merge` are retired (`ReviewLabel::RETIRED`): nothing sets them, and the next verdict on a pull request that still carries one takes it off. Label sync never deletes them from the repository.
+> - Migrating a repository: relabel every pull request that carries M3's `ready-to-merge` as `review-approved` *before* any automatic merge reads R3's `ready-to-merge`, or a pull request that only passed review reads as verified.
+
 Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 
 - **L1:** the six labels are replaced by M3's six. `approved-despite-ci` is dropped, so there is no longer any way to approve over red CI.
@@ -22,7 +30,7 @@ Supersedes, in `decisions-on-web-ui-and-review-labels.md`:
 - In agent mode the engine merges a PR in code when it has `ok-to-merge`, its CI is green, `main`'s CI is green, and the merge is clean.
 - `gh pr merge` stays in `UNGRANTABLE`. No agent can merge.
 
-### M3. Six labels, one at a time per PR
+### M3. Six labels, one at a time per PR (superseded by R3)
 
 | Label | Colour | Meaning |
 | --- | --- | --- |
