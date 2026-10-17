@@ -13,6 +13,8 @@ module OpenLanes
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
+  #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
+  #                             # the plan stops going back to its builders (M6)
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
@@ -60,6 +62,9 @@ module OpenLanes
   #     typed: "run", "resync dirs"
   # @!attribute [r] merge_by
   #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
+  # @!attribute [r] merge_max_rejections
+  #   @return [Integer, nil] `merge.max_rejections` as the file says it; read
+  #     {#max_rejections}, which applies the default
   # @!attribute [r] app
   #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes app
   #     start` runs; nil when the project declares none, and then nothing
@@ -85,11 +90,20 @@ module OpenLanes
     :app,
     :aging_since,
     :questions_model,
-    :review_max_hmm) do
+    :review_max_hmm,
+    :merge_max_rejections) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil)
+      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil)
       super
     end
+
+    # How many times a plan's pull request may be rejected, by hansolo and
+    # chewie counted together, before it stops going back to its builders
+    # (M6). Two, the value M5 gave `high`, until `desired_codebase_quality`
+    # (R4) supplies one.
+    #
+    # @return [Integer]
+    def max_rejections = merge_max_rejections || Config::DEFAULT_MAX_REJECTIONS
 
     # The most 🤔 a review may carry and still be `review-approved` (R3).
     # Loudest first: `$OPENLANES_REVIEW_MAX_HMM`, then `review.max_hmm`, then
@@ -139,13 +153,21 @@ module OpenLanes
     # @return [String]
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
-                   "redis_url" => redis_url, "merge" => merge_by && { "by" => merge_by.to_s } }
+                   "redis_url" => redis_url, "merge" => merge_settings }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
       YAML.dump(settings.compact).delete_prefix("---\n")
+    end
+
+    private
+
+    # @return [Hash, nil] `merge:` as the file would hold it, nil when nothing is set
+    def merge_settings
+      merge = { "by" => merge_by&.to_s, "max_rejections" => merge_max_rejections }.compact
+      merge.empty? ? nil : merge
     end
   end
 
@@ -158,6 +180,12 @@ module OpenLanes
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
+
+    # Every key `merge:` may hold.
+    MERGE_KEYS = %w[by max_rejections].freeze
+
+    # {#max_rejections} when the file names none (M6).
+    DEFAULT_MAX_REJECTIONS = 2
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
     PLAN_KEYS = %w[aging_since].freeze
@@ -223,7 +251,7 @@ module OpenLanes
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
-          merge_by:  merge_by(settings["merge"], path),
+          **merge(settings["merge"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
@@ -284,19 +312,35 @@ module OpenLanes
         fail_with(path, "redis_url: #{value.inspect} is not a #{REDIS_SCHEMES.map { "#{it}://" }.join(", ")} URL")
       end
 
-      # @return [Symbol, nil]
-      def merge_by(value, path)
-        return nil if value.nil?
+      # @return [Hash{Symbol => Object}] the `merge:` settings, as keywords for {Config.new}
+      def merge(value, path)
+        return {} if value.nil?
 
         fail_with(path, "merge: must be a mapping, e.g. `merge: { by: human }`") unless value.is_a?(Hash)
 
-        unknown = value.keys.map(&:to_s) - %w[by]
-        fail_with(path, "merge: unknown key #{unknown.join(", ")}; known: by") unless unknown.empty?
+        settings = value.transform_keys(&:to_s)
+        unknown = settings.keys - MERGE_KEYS
+        fail_with(path, "merge: unknown key #{unknown.join(", ")}; known: #{MERGE_KEYS.join(", ")}") unless unknown.empty?
 
-        by = value.transform_keys(&:to_s)["by"].to_s.strip.downcase.to_sym
+        { merge_by: merge_by(settings, path), merge_max_rejections: max_rejections(settings, path) }.compact
+      end
+
+      # @return [Symbol, nil]
+      def merge_by(settings, path)
+        return nil unless settings.key?("by")
+
+        by = settings["by"].to_s.strip.downcase.to_sym
         return by if MERGERS.include?(by)
 
-        fail_with(path, "merge.by: #{value.transform_keys(&:to_s)["by"].inspect} is not one of #{MERGERS.join(", ")}")
+        fail_with(path, "merge.by: #{settings["by"].inspect} is not one of #{MERGERS.join(", ")}")
+      end
+
+      # @return [Integer, nil]
+      def max_rejections(settings, path)
+        max = settings["max_rejections"]
+        return max if max.nil? || (max.is_a?(Integer) && max.positive?)
+
+        fail_with(path, "merge.max_rejections: #{max.inspect} is not a whole number above zero")
       end
 
       # @return [Hash{String => Hash{Symbol => Object}}]
