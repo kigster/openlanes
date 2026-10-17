@@ -30,7 +30,7 @@ module OpenLanes
         number = GitHub.number_of(pr)
         repo = GitHub.repo_of(pr)
 
-        from = @github.labels(number:, repo:) & Plans::ReviewLabel.names
+        from = @github.labels(number:, repo:) & Plans::ReviewLabel.known
         ci = CiGate.verdict(@github.checks(number:, repo:))
         reason = refusal(to, ci)
         result = Result.new(pr: number,

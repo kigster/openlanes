@@ -61,15 +61,25 @@ module OpenLanes
       # chewie-verifier's label, and the one the coverage gate withholds.
       READY_TO_MERGE = named("ready-to-merge")
 
+      # M3's verdicts that R3 dropped. Nothing sets them any more, but pull
+      # requests labelled before R3 still carry them, so every new verdict
+      # takes them off: otherwise #62's `review-passed` would sit beside its
+      # next verdict, two at once. LabelSync never deletes them from the
+      # repository; that stays a person's call.
+      RETIRED = %w[review-passed ok-to-merge].freeze
+
       class << self
         # @return [Array<String>] every label name, in R3 order
         def names = ALL.map(&:name)
+
+        # @return [Array<String>] every name a verdict replaces: R3's and {RETIRED}
+        def known = names + RETIRED
 
         # @return [Array<ReviewLabel>] the verdicts refused while CI is red
         def passing = ALL.select(&:passing?)
 
         # The labels a new one takes off the pull request. Everything else in
-        # the set, except that setting {VULNERABILITY} leaves {REJECTED} where
+        # the set, {RETIRED} included, except that setting {VULNERABILITY} leaves {REJECTED} where
         # it is, and setting {REJECTED} leaves {VULNERABILITY}: the two are
         # set as a pair, one call each, in either order.
         #
@@ -77,7 +87,7 @@ module OpenLanes
         # @return [Array<String>]
         def displaced_by(label)
           kept = [label, *(PAIR if PAIR.include?(label))].map(&:name)
-          names - kept
+          known - kept
         end
 
         # @param name [String, ReviewLabel]

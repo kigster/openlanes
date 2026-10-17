@@ -29,7 +29,15 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
 
   describe ".displaced_by" do
     it "takes every other label off for an ordinary verdict" do
-      expect(described_class.displaced_by(described_class::APPROVED)).to eq(described_class.names - %w[review-approved])
+      expect(described_class.displaced_by(described_class::APPROVED))
+        .to eq(described_class.names - %w[review-approved] + described_class::RETIRED)
+    end
+
+    # Grok on #69: #62 carries M3's review-passed, which R3 no longer names.
+    it "takes M3's retired verdicts off too" do
+      described_class::ALL.each do |label|
+        expect(described_class.displaced_by(label)).to include("review-passed", "ok-to-merge")
+      end
     end
 
     it "leaves review-rejected beside review-vulnerability, and the other way round" do

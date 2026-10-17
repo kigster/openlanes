@@ -36,6 +36,17 @@ RSpec.describe OpenLanes::Vcs::Review do
     expect(github.labels_on).to include("bug")
   end
 
+  # Grok on #69: a verdict set under M3 would otherwise sit beside R3's.
+  it "takes a retired M3 verdict off with the next one" do
+    github = FakeReviewGitHub.new(labels: %w[review-passed ok-to-merge bug])
+    result = described_class.new(github:).call(pr: "62", label: "review-approved")
+
+    aggregate_failures do
+      expect(result.from).to eq(%w[review-passed ok-to-merge])
+      expect(github.labels_on).to contain_exactly("review-approved", "bug")
+    end
+  end
+
   it "reports from, to and the CI verdict" do
     result = review.call(pr: "#12", label: "review-in-progress")
 

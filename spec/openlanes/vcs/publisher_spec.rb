@@ -236,13 +236,14 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       end
 
       # The last verdict, typically review-rejected, would otherwise read to
-      # the watch as a new rejection and send the plan back to 🔴.
+      # the watch as a new rejection and send the plan back to 🔴; a retired M3
+      # verdict would sit beside the new label.
       it "resets the review label to ready-for-review, taking off the previous verdict" do
         expect(github).to have_received(:swap_label)
           .with(number: 7,
             repo: "example/repo",
             add: OpenLanes::Plans::ReviewLabel::INITIAL,
-            remove: OpenLanes::Plans::ReviewLabel.names)
+            remove: OpenLanes::Plans::ReviewLabel.known)
       end
 
       it "reports that pull request, marked as updated" do
