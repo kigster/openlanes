@@ -16,6 +16,7 @@ File.open(ENV.fetch("FAKE_GH_LOG"), "a") { |f| f.puts(JSON.generate(ARGV)) }
 
 state = File.file?(STATE) ? JSON.parse(File.read(STATE)) : {}
 state["labels"] ||= []
+state["colours"] ||= {}
 state["prs"] ||= {}
 state["next"] ||= 1
 
@@ -45,6 +46,14 @@ in ["label", "create"]
   name = ARGV[2]
   fail_with(%(label with name "#{name}" already exists; use `--force` to update its color and description)) if state["labels"].include?(name)
   state["labels"] << name
+  state["colours"][name] = flag("--color")
+  save(state)
+in ["label", "list"]
+  puts JSON.generate(state["labels"].map { { "name" => it, "color" => state["colours"].fetch(it, "ededed").downcase } })
+in ["label", "edit"]
+  name = ARGV[2]
+  fail_with(%(label with name "#{name}" not found)) unless state["labels"].include?(name)
+  state["colours"][name] = flag("--color")
   save(state)
 in ["pr", "create"]
   number = state["next"]

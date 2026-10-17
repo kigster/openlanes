@@ -202,6 +202,7 @@ module OpenLanes
         startup("Log", UI.log_path)
         credentials unless @dry_run || @quiet
         spec_warning(plans) unless @quiet
+        sync_labels if publishing?
 
         # The state file is what a harness that dies leaves for the next one.
         # It sits in .plans/ so a reboot keeps it, and it is ignored by name
@@ -215,6 +216,26 @@ module OpenLanes
         # Control files from a previous run would otherwise be read as orders
         # to this one.
         Execution::Control.reset!
+      end
+
+      # @return [Boolean] whether this run opens and labels pull requests;
+      #   the same test {#publisher_for} applies, without its warning
+      def publishing? = isolation == :worktree && @options[:git_push] != false
+
+      # Every review label on the repository, in R3's colours, before any
+      # pull request is labelled (R3). Once per run. A `gh` that cannot be
+      # reached is warned about rather than refused: labelling creates a
+      # missing label on first use anyway, so the run loses colours, not work.
+      #
+      # @return [void]
+      def sync_labels
+        changes = Vcs.label_sync.call(dry_run: @dry_run).select(&:write?)
+        return if changes.empty? || @quiet
+
+        lead = @dry_run ? "Dry run: would sync review labels" : "Synced review labels"
+        info("#{lead}:\n#{changes.map { "  #{it}" }.join("\n")}")
+      rescue OpenLanes::Error => e
+        warn("Review labels not synced: #{e.message}") unless @quiet
       end
 
       # @return [void]

@@ -97,4 +97,69 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       it { is_expected.to be_nil }
     end
   end
+
+  # R3: once per run, before any pull request is labelled.
+  describe "the review label sync" do
+    let(:sync) { instance_double(OpenLanes::Vcs::LabelSync) }
+    let(:create) do
+      OpenLanes::Vcs::LabelSync::Change.new(label: OpenLanes::Plans::ReviewLabel::APPROVED, action: :create, was: nil)
+    end
+    let(:keep) do
+      OpenLanes::Vcs::LabelSync::Change.new(label: OpenLanes::Plans::ReviewLabel::INITIAL, action: :keep, was: "c2e0c6")
+    end
+
+    before do
+      allow(OpenLanes::Vcs).to receive(:label_sync).and_return(sync)
+      allow(sync).to receive(:call).and_return([keep, create])
+    end
+
+    # Calls the private step the way #prepare does, capturing STDERR.
+    def sync_with(**)
+      err = CapturedStream.new
+      original, $stderr = $stderr, err
+      workflow(isolation: "worktree", **).send(:sync_labels)
+      strip_ansi(err.string)
+    ensure
+      $stderr = original
+    end
+
+    it "runs only when the run opens pull requests" do
+      aggregate_failures do
+        expect(workflow(isolation: "worktree").send(:publishing?)).to be(true)
+        expect(workflow(isolation: "worktree", git_push: false).send(:publishing?)).to be(false)
+        expect(workflow.send(:publishing?)).to be(false)
+      end
+    end
+
+    it "is not asked for on a shared-tree run" do
+      call
+      expect(OpenLanes::Vcs).not_to have_received(:label_sync)
+    end
+
+    it "previews the labels it would write under a dry run" do
+      err = sync_with(dry_run: true)
+
+      aggregate_failures do
+        expect(sync).to have_received(:call).with(dry_run: true)
+        expect(err).to include("Dry run: would sync review labels", "create review-approved (#109a10)")
+        expect(err).not_to include("keep ready-for-review")
+      end
+    end
+
+    it "reports the labels it wrote" do
+      expect(sync_with(dry_run: false)).to include("Synced review labels")
+    end
+
+    it "says nothing when every label was already right" do
+      allow(sync).to receive(:call).and_return([keep])
+
+      expect(sync_with(dry_run: false)).to be_empty
+    end
+
+    it "warns and goes on when gh cannot be reached" do
+      allow(sync).to receive(:call).and_raise(OpenLanes::Error, "could not list labels: HTTP 401")
+
+      expect(sync_with(dry_run: false)).to include("Review labels not synced: could not list labels: HTTP 401")
+    end
+  end
 end

@@ -167,7 +167,9 @@ module OpenLanes
       end
 
       # Create a review label when the repository lacks it. Never `--force`:
-      # a colour somebody changed by hand on GitHub is theirs to keep.
+      # this runs before every label swap, and recolouring is {LabelSync}'s
+      # job, done once per run where the change is announced, not as a side
+      # effect of labelling one pull request.
       #
       # @param label [Plans::ReviewLabel]
       # @param repo [String, nil] "owner/repo"; nil means the current checkout's
@@ -187,6 +189,39 @@ module OpenLanes
         return if e.message.match?(/already exists/i)
 
         raise Error, "could not create label #{label.name}: #{first_line(e)}"
+      end
+
+      # Every label the repository has, and its colour.
+      #
+      # @param repo [String, nil]
+      # @return [Hash{String => String}] name to colour, lower-case hex without `#`
+      # @raise [OpenLanes::Error]
+      def label_colours(repo: nil)
+        out = @command.run("gh", "label", "list", "--limit", "1000", "--json", "name,color", *repo_flag(repo)).out
+        JSON.parse(out).to_h { [it["name"].to_s, it["color"].to_s.downcase] }
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not list labels: #{first_line(e)}"
+      end
+
+      # Give an existing label its colour and description back (R3). Only
+      # {LabelSync} calls this, and only for the labels openlanes owns.
+      #
+      # @param label [Plans::ReviewLabel]
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error]
+      def recolour_label(label, repo: nil)
+        @command.run("gh",
+          "label",
+          "edit",
+          label.name,
+          "--color",
+          label.colour,
+          "--description",
+          label.meaning,
+          *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not recolour label #{label.name}: #{first_line(e)}"
       end
 
       # Put one label on a pull request and take others off, in one edit.

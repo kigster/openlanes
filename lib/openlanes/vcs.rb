@@ -19,5 +19,9 @@ module OpenLanes
     # @param github [OpenLanes::Vcs::GitHub]
     # @return [OpenLanes::Vcs::Review]
     def review(github: GitHub.new) = Review.new(github:)
+
+    # @param github [OpenLanes::Vcs::GitHub]
+    # @return [OpenLanes::Vcs::LabelSync]
+    def label_sync(github: GitHub.new) = LabelSync.new(github:)
   end
 end
