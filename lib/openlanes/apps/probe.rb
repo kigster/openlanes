@@ -29,11 +29,20 @@ module OpenLanes
         status(port, path).between?(200, 399)
       end
 
+      # Something accepted a connection on the port. Asking the socket for
+      # its peer is the part that matters: behind a network filter (Little
+      # Snitch on macOS) `Socket.tcp` with `connect_timeout` returns a socket
+      # for a refused connect, and only `getpeername` then says EINVAL. Without
+      # it every port on the machine reads as taken.
+      #
       # @param port [Integer]
+      # @param timeout [Numeric] seconds the connect may take
       # @return [Boolean]
-      def listening?(port)
-        Socket.tcp(Status::HOST, port, connect_timeout: TIMEOUT).close
-        true
+      def listening?(port, timeout: TIMEOUT)
+        Socket.tcp(Status::HOST, port, connect_timeout: timeout) do |socket|
+          socket.remote_address
+          true
+        end
       rescue SystemCallError, IOError, SocketError
         false
       end

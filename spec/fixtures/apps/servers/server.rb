@@ -45,7 +45,8 @@ sleep if options[:silent]
 if options[:sibling_env]
   sibling = Integer(ENV.fetch(options[:sibling_env]))
   answered = begin
-    Socket.tcp("127.0.0.1", sibling, connect_timeout: 1).close
+    # The peer, not the connect, proves an answer: see Probe.listening?.
+    Socket.tcp("127.0.0.1", sibling, connect_timeout: 1, &:remote_address)
     true
   rescue SystemCallError
     false

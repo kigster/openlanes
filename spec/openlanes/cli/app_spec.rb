@@ -63,12 +63,7 @@ RSpec.describe "openlanes app" do
     end
   end
 
-  def connectable?(port)
-    Socket.tcp("127.0.0.1", port, connect_timeout: 0.2).close
-    true
-  rescue SystemCallError
-    false
-  end
+  def connectable?(port) = OpenLanes::Apps::Probe.listening?(port, timeout: 0.2)
 
   def rows(out) = out.lines.drop(1).map(&:split)
 

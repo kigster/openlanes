@@ -65,12 +65,7 @@ module OpenLanes
 
         # @param port [Integer]
         # @return [Boolean]
-        def answering?(port)
-          Socket.tcp(Status::HOST, port, connect_timeout: 0.2).close
-          true
-        rescue SystemCallError, IOError
-          false
-        end
+        def answering?(port) = Probe.listening?(port, timeout: 0.2)
 
         # @param pid [Integer]
         # @return [Boolean]

@@ -1,26 +1,104 @@
 #!/usr/bin/env bash
+# vim: ft=bash
+#
+# © 2026 OpenLanes Developer Setup Script
+
+if [[ $* =~ -y || $* =~ --yes ]]; then
+  echo "Non-interactive mode engaged."
+else
+  echo "NOTE: this setup script is for developers of OpenLanes."
+  echo "Are you sure you want to continue? Press Ctrl-C to abort, or press ENTER to continue."
+  read -a answer >/dev/null
+fi
 
 set -euo pipefail
 IFS=$'\n\t'
 # set -v
 
-command -v just>/dev/null  || brew install just
-command -v rbenv>/dev/null || brew install rbenv
+declare project_root="$( cd $(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")/.. && pwd -P)"
 
-ruby_version="$(cat .ruby-version | tr -d '\n')"
-current_ruby_version="$(ruby -e 'puts RbConfig::CONFIG["RUBY_PROGRAM_VERSION"]')"
+function ok() {
+  echo -e "\e[1;32m[OK ✔]\e[0m $*"
+}
 
-if [[ ${ruby_version} != ${current_ruby_version} ]]; then
-  bash -c "$(curl -fsSL https://bit.ly/ruby-install-0-2-1)" -- ${ruby_version}
+function err() {
+  echo -e "\e[1;31m[ERROR]\e[0m $*"
+}
+
+command -v brew>/dev/null  || {
+  echo "Installing homebrew, required to install dependencies. You may need to provide sudo password."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+hash -r >/dev/null
+
+echo "Installing Brew packages defined in the Brewfile"
+brew bundle --no-upgrade
+
+mkdir -p "$(rbenv root)"/plugins
+if [[ -d "$(rbenv root)"/plugins/ruby-build ]]; then
+  echo "Updating ruby-build"
+  cd "$(rbenv root)"/plugins/ruby-build && test -d .git && git pull >/dev/null || true
 else
-  echo -e "\e[0;33m[OK]\e[0m Ruby version ${ruby_version} is installed and current."
+  echo "Installing ruby-build"
+  git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
 fi
 
-rbenv versions | grep -q ${ruby_version} || {
-  echo -e "\e[1;31mCan't find ruby version ${ruby_version} after an attempted install.\e[0m"
+cd "${project_root}"
+
+ruby_version="$(cat .ruby-version | tr -d '\n')"
+
+echo "ruby version needed: [${ruby_version}]"
+
+if rbenv local ${ruby_version}; then
+  echo "Ruby ${ruby_version} is already installed"
+else
+  set +e
+  echo "Ruby ${ruby_version} is not installed, installing with rv..."
+  rv ruby install ${ruby_version} -i $(rbenv root)/versions/${ruby_version}
+  hash -r >/dev/null
+  # alternative way to install using rbenv
+  # bash -c "$(curl -fsSL https://bit.ly/ruby-install-0-2-1)" -- ${ruby_version}
+fi
+
+rbenv local ${ruby_version} || {
+  err "Ruby ${ruby_version} failed to install. Please install it using rbenv or your favorite ruby manager."
   exit 1
 }
 
+ok "Ruby version ${ruby_version} is installed and current."
+
+echo "Updating bundler..."
+bundle update --bundler >/dev/null 2>&1
+
 bundle check>/dev/null && {
-  echo -e "\e[0;33m[OK]\e[0m Gemfile dependencies are already satisfied."
+  ok "Gemfile dependencies are already satisfied."
 } || bundle install -j 12
+
+if [[ -n $REDIS_URL && $(echo ping | redis-cli -u $REDIS_URL) == "PONG" ]]; then
+  ok "Redis is available @ [$REDIS_URL]"
+else
+  unset REDIS_URL
+  /bin/ps -ef | grep -q -E '[r]edis-server' || {
+    echo "Starting local redis server..."
+    brew tap homebrew/services
+    brew services start redis
+    sleep 1
+  }
+
+  /bin/ps -ef | grep -q -E '[r]edis-server' || {
+    err "Redis server failed to start with brew services. Please start it manually."
+    exit 1
+  }
+fi
+
+gh auth status >/dev/null || {
+  echo "We need 'gh' utility authenticated with Github... Please follow the prompts."
+  gh auth login -w
+  gh auth status >/dev/null || {
+    err "gh is not authenticated. Please run 'gh auth login' and get it authenticated."
+    exit 1
+  }
+}
+
+ok "gh is authenticated, so you should be good to go!"

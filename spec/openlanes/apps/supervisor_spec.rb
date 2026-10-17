@@ -43,12 +43,7 @@ RSpec.describe OpenLanes::Apps::Supervisor do
     false
   end
 
-  def connectable?(port)
-    Socket.tcp("127.0.0.1", port, connect_timeout: 0.2).close
-    true
-  rescue SystemCallError
-    false
-  end
+  def connectable?(port) = OpenLanes::Apps::Probe.listening?(port, timeout: 0.2)
 
   def transitions = published.map { [it.process, it.state] }
 
