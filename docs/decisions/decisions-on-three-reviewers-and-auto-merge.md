@@ -16,7 +16,7 @@ Three reviewers start at the same time on a PR, each with a sub-agent concurrenc
 | `darth-reviewer` | friendly | a fast cheap model: Haiku. Gemini's fastest Flash is optional, used only if an adapter can reach it | core logic bugs, unchecked nil/null access, database safety and integrity, load on infrastructure, scalability, fault tolerance |
 | `vader-security-reviewer` | friendly, security only | a medium model: Sonnet | anything in the PR's code that can be exploited: SQL injection, CSRF, spoofing, weak or missing encryption of sensitive data, sensitive data in clear text (to a Sidekiq job, say), vulnerable dependencies (it can look up advisories for the libraries in use), unchecked buffers in static languages, double free in C |
 
-Each reviewer is given the spec, the plan, and the journal of decisions the implementing agents made (M2 of the memory decisions). Each ignores existing PR comments, including GitHub Copilot's, and reviews only the diff.
+Each reviewer is given the spec, the plan, and the journal of decisions the implementing agents made (M2 of the memory decisions). The reviewers keep a journal of their own in `state.json` the same way, and so do luke and rey when they answer the review; `state.json` is committed with the plan, so the whole exchange is kept in git. Each ignores existing PR comments, including GitHub Copilot's, and reviews only the diff.
 
 ### R2. Every comment declares its verdict
 
@@ -40,7 +40,15 @@ These are PR comments, not GitHub reviews: the same account opens and reviews th
 
 ### R3. The verdict labels replace M3's
 
-The lifecycle labels stay: `ready-for-review`, `review-in-progress`, and chewie's `ok-to-merge`. The verdicts become:
+Two lifecycle labels stay, one is renamed:
+
+| Label | Colour | Given when |
+| --- | --- | --- |
+| `ready-for-review` | `c2e0c6` | luke and rey are done, and the PR waits for a free review slot |
+| `review-in-progress` | `FFBE20` | the reviewers have started; replaces `ready-for-review` |
+| `ready-to-merge` | `5319e7` | chewie-verifier (M1) verified the PR and its E2E tests pass. Renamed from `ok-to-merge` |
+
+`ready-to-merge` no longer means "passed with nothing open"; that verdict is now `review-approved`. The verdicts become:
 
 | Label | Colour | Replaces | Given when |
 | --- | --- | --- | --- |
@@ -78,8 +86,8 @@ The lifecycle labels stay: `ready-for-review`, `review-in-progress`, and chewie'
 
 ### R5. The engine auto-merges a passing PR that merges clean
 
-- With `merge.by: agent`, the engine merges a PR once its verdict passes (`review-approved`, or `review-ok-not-perfect` under `mvp`), CI is green on the PR and on `main`, and it merges onto `main` without conflicts.
-- chewie's `ok-to-merge` (M1) becomes a further gate once plan 014 ships; until then it is not required.
+- With `merge.by: agent`, the engine merges a PR once its verdict passes (`review-approved`, or `review-ok-not-perfect` under `mvp`), chewie-verifier has labelled it `ready-to-merge`, CI is green on the PR and on `main`, and it merges onto `main` without conflicts.
+- Auto-merge only exists once chewie-verifier (plan 014) is built; until then nothing auto-merges. chewie is therefore built with very high priority.
 - With `merge.by: human` nothing changes: the person merges (M4).
 - The engine merges, never an agent (M2 stands).
 - The only conflict check is that this PR merges clean. Changes big enough to collide with everything run alone (R6). After each merge the engine rebases the other open plan branches onto `main`, and conflicts left over are fixed in their next round.
