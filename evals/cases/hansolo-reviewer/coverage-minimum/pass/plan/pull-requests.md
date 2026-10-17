@@ -6,7 +6,7 @@
 
 ## Findings
 
-1. `.openlanes.coverage.yml:4` lowers `minimum` from 95 to 90, which the coverage gate (M15) forbids: the gate then passes a project it should stop. Failing scenario: a suite at 91% line coverage; expected `ok-to-merge` withheld, actual passed. Restore `minimum: 95`.
+1. `.openlanes.coverage.yml:4` lowers `minimum` from 95 to 90, which the coverage gate (M15) forbids: the gate then passes a project it should stop. Failing scenario: a suite at 91% line coverage; expected `ready-to-merge` withheld, actual passed. Restore `minimum: 95`.
 2. `spec/cart_spec.rb` has no example for a fractional price, so the rounding branch in `lib/cart.rb:8` is the untested line the minimum was lowered to hide. Failing scenario: `cart.add(0.5, 3)`; expected a test pinning `total` to 2, actual no test reaches it.
 
 > [!NOTE]

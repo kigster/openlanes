@@ -28,7 +28,7 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
     verdict = gate.call(checkout:)
 
     expect(verdict).to have_attributes(passed?: false, percent: 94.99, minimum: 95.0)
-    expect(verdict.to_s).to eq("ok-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)")
+    expect(verdict.to_s).to eq("ready-to-merge withheld: coverage 94.99% is below the 95% minimum (lcov: coverage/lcov.info)")
   end
 
   it "passes at exactly 95.0%" do

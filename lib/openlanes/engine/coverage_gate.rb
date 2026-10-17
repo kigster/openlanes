@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Engine
-    # Decides whether a pull request's checkout has earned `ok-to-merge` on
+    # Decides whether a pull request's checkout has earned `ready-to-merge` on
     # coverage (decision M15): runs the project's declared test command in
     # that checkout, reads the report it wrote, and compares the line figure
     # with the declared minimum.
@@ -12,7 +12,7 @@ module OpenLanes
     # own verdict comes first: a suite that fails can still leave a report
     # behind, and a figure from a red run is not one to merge on.
     #
-    # Nothing applies `ok-to-merge` yet. The verifier (plan 014) or
+    # Nothing applies `ready-to-merge` yet. The verifier (plan 014) or
     # `Vcs::Review` (plan 005), whichever lands second, asks this gate before
     # setting the label and refuses with {Verdict#reason}.
     #
@@ -52,7 +52,7 @@ module OpenLanes
         def withheld? = !passed
 
         # @return [String]
-        def to_s = passed ? reason : "ok-to-merge withheld: #{reason}"
+        def to_s = passed ? reason : "#{Plans::ReviewLabel::READY_TO_MERGE} withheld: #{reason}"
       end
 
       # What one run of the command left behind.

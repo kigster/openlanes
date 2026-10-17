@@ -49,7 +49,7 @@ RSpec.describe OpenLanes::CLI::Review do
     out, err, status = run("12", passing)
 
     expect([status, out, err.gsub(/\s+/, " ")]).to match(
-      [1, include("refused"), include("CI is red").and(include("Only #{rejected} is accepted"))]
+      [1, include("refused"), include("CI is red").and(include("Only #{rejected} and review-vulnerability are accepted"))]
     )
   end
 

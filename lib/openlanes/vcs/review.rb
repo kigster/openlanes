@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Vcs
-    # Moves a pull request from one review label to the next (M3).
+    # Moves a pull request from one review label to the next (M3, R3).
     #
     # The only way a review label is set: `gh pr edit` stays forbidden to
     # agents (L3), so the CI rule below cannot be skipped by labelling by hand
@@ -42,7 +42,7 @@ module OpenLanes
           dry_run:)
         return result if result.refused? || dry_run
 
-        @github.swap_label(number:, repo:, add: to, remove: from)
+        @github.swap_label(number:, repo:, add: to, remove: from & Plans::ReviewLabel.displaced_by(to))
         result
       end
 

@@ -58,7 +58,8 @@ module OpenLanes
 
         if result.refused?
           error("PR ##{result.pr} stays #{from}: #{result.reason}.\n" \
-                "Only #{Plans::ReviewLabel::REJECTED.name} is accepted until CI is green.")
+                "Only #{Plans::ReviewLabel::REJECTED.name} and #{Plans::ReviewLabel::VULNERABILITY.name} " \
+                "are accepted until CI is green.")
           return
         end
 

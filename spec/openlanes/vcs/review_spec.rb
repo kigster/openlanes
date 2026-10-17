@@ -29,7 +29,7 @@ RSpec.describe OpenLanes::Vcs::Review do
   let(:review_labels) { -> { github.labels_on & OpenLanes::Plans::ReviewLabel.names } }
 
   it "replaces the review label at every transition, leaving exactly one" do
-    %w[review-in-progress review-rejected review-in-progress ready-to-merge ok-to-merge].each do |label|
+    %w[review-in-progress review-rejected review-in-progress review-approved ready-to-merge].each do |label|
       review.call(pr: "12", label:)
       expect(review_labels.call).to eq([label])
     end
@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::Vcs::Review do
 
   it "refuses a reference that names no pull request, before asking GitHub anything" do
     allow(github).to receive(:labels)
-    expect { review.call(pr: "https://github.com/example/repo/issues/1234", label: "review-passed") }
+    expect { review.call(pr: "https://github.com/example/repo/issues/1234", label: "review-ok-not-perfect") }
       .to raise_error(OpenLanes::Error, /not a pull request number or URL/)
     expect(github).not_to have_received(:labels)
   end
@@ -85,18 +85,35 @@ RSpec.describe OpenLanes::Vcs::Review do
       expect(review.call(pr: "12", label: "review-rejected")).not_to be_refused
       expect(review_labels.call).to eq(%w[review-rejected])
     end
+
+    it "accepts review-vulnerability beside review-rejected, in either order" do
+      review.call(pr: "12", label: "review-rejected")
+      expect(review.call(pr: "12", label: "review-vulnerability")).not_to be_refused
+      expect(review_labels.call).to contain_exactly("review-rejected", "review-vulnerability")
+
+      review.call(pr: "12", label: "review-rejected")
+      expect(review_labels.call).to contain_exactly("review-rejected", "review-vulnerability")
+    end
+  end
+
+  it "takes both review-rejected and review-vulnerability off for the next verdict" do
+    review.call(pr: "12", label: "review-rejected")
+    review.call(pr: "12", label: "review-vulnerability")
+    review.call(pr: "12", label: "review-in-progress")
+
+    expect(review_labels.call).to eq(%w[review-in-progress])
   end
 
   it "makes a passing verdict wait while CI is pending" do
     github.buckets = %w[pending]
 
-    expect(review.call(pr: "12", label: "ready-to-merge")).to have_attributes(refused?: true, reason: "CI pending")
+    expect(review.call(pr: "12", label: "review-approved")).to have_attributes(refused?: true, reason: "CI pending")
   end
 
   it "treats no checks as green, with a warning" do
     github.buckets = []
 
-    expect(review.call(pr: "12", label: "review-passed"))
+    expect(review.call(pr: "12", label: "review-ok-not-perfect"))
       .to have_attributes(refused?: false, ci: :none, reason: described_class::NO_CHECKS)
   end
 

@@ -5,7 +5,7 @@ module OpenLanes
     # `openlanes coverage PLAN` — the coverage gate (M15), by hand.
     #
     # Runs the declared test command in the plan's worktree, never in the main
-    # tree, and prints the verdict `ok-to-merge` will wait on. The verdict is
+    # tree, and prints the verdict `ready-to-merge` will wait on. The verdict is
     # the deliverable and goes to STDOUT; the command's own output, when the
     # gate withholds, goes to STDERR. Exits 1 when the gate withholds, so a
     # script or CI step can stop on it.
