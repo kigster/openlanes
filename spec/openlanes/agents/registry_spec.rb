@@ -245,6 +245,30 @@ RSpec.describe OpenLanes::Agents::Registry do
       expect(agents.find("hansolo-reviewer").prompt).to include("openlanes review <n> review-in-progress")
     end
 
+    it "gives chewie 🧪 Verifying, the verification phase, and nothing that leaves the machine" do
+      chewie = agents.find("chewie-verifier")
+
+      aggregate_failures do
+        expect(chewie).to have_attributes(handles: [:verifying],
+          advances_to: :approved,
+          phase: "verification",
+          adapter: "claude",
+          may: [],
+          ledger: %w[pull-requests.md])
+        expect(chewie.allowed_tools).to match_array(%w[Read Grep Glob Bash Write])
+        expect(agents.for_status(OpenLanes::Plans::STATUS_BY_KEY.fetch(:verifying)).map(&:name)).to eq(%w[chewie-verifier])
+      end
+    end
+
+    it "tells chewie both verdict words, the report it writes, and where its screenshots go" do
+      expect(agents.find("chewie-verifier").prompt)
+        .to include("(verified)", "(rejected)", "## Failing step", "step-NN.png", "final.png", "report.md", "app.md")
+    end
+
+    it "tells hansolo an approval goes on to chewie" do
+      expect(agents.find("hansolo-reviewer").prompt).to include("🧪 Verifying", "chewie-verifier")
+    end
+
     it "tells yoda to leave a blank plan.md" do
       expect(agents.find("yoda-writer").prompt).to include("plan.md")
     end
