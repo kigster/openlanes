@@ -70,6 +70,21 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # M2: the session may have compacted the round that wrote the journal, so
+  # the journal is in the prompt whether or not the session carries on.
+  context "when the previous round left a journal" do
+    before do
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .journal!(agent: "luke-backend",
+                                   entries: [OpenLanes::Plans::Journal::Entry.new(kind: "decision", text: "Integer cents")])
+      result
+    end
+
+    it "puts it in the resumed round's prompt" do
+      expect([pairs(spawned.first), spawned.first[2]]).to match([include(%w[--resume sess-1]), include("1. [decision] Integer cents")])
+    end
+  end
+
   context "when handed no session" do
     let(:resume) { nil }
 
