@@ -34,6 +34,7 @@ module OpenLanes
         @result = nil
         @error = nil
         @journal = []
+        @heard = {}
       end
 
       # @return [Integer] tokens sent, cached input included
@@ -155,22 +156,63 @@ module OpenLanes
         if said
           @activity = said.lines.first.to_s.strip[0, Execution::Transcript::LIMIT]
           @result = said
-          take_journal(said) unless type.match?(PARTIAL)
         end
+        take_journal(event) unless type.match?(PARTIAL) || type.match?(/tool|command|exec/i)
         @on_progress&.call(progress)
       end
 
-      # Journal lines (M2) in what the agent said. A CLI read by shape may say
-      # the same words twice, once as the message closes and again in a
-      # summary of the turn, so a line already taken is not taken again: an
-      # agent that means a thing twice says it in different words.
+      # Journal lines (M2) in what the agent itself said, in every text block
+      # of every message it finished. Not {#text_in}, which takes the first
+      # `text` anywhere in the event: that can be a tool's output, which would
+      # make a file the agent read into its memory, and it misses a line in a
+      # message's second block.
       #
-      # @param said [String]
+      # A CLI read by shape delivers the same message more than once: as it
+      # closes, and again in a summary of the turn or the run. So a message
+      # already taken is not taken again, by its id or else by its words, while
+      # the same line in two different messages is kept twice: an agent may
+      # mean `todo U1` again after it said `done U1`.
+      #
+      # @param event [Hash]
       # @return [void]
-      def take_journal(said)
-        Plans::Journal.scan(said).each do |line|
-          @journal << line unless @journal.include?(line)
+      def take_journal(event)
+        messages_in(event).each do |message|
+          texts = texts_of(message)
+          key = message["id"] || texts
+          next if texts.empty? || @heard.key?(key)
+
+          @heard[key] = true
+          texts.each { @journal.concat(Plans::Journal.scan(it)) }
         end
+      end
+
+      # The agent's own messages an event carries: one under `item` (codex)
+      # or `message` (pi), or a list under `messages`. A message that names
+      # a role other than the assistant's is a prompt or a tool result, and
+      # an item typed as anything but a message is a command, a file change
+      # or reasoning.
+      #
+      # @param event [Hash]
+      # @return [Array<Hash>]
+      def messages_in(event)
+        found = [event["item"], event["message"], *Array(event["messages"])]
+        found.select do |message|
+          message.is_a?(Hash) &&
+            [nil, "assistant"].include?(message["role"]) &&
+            (message["type"].nil? || message["type"].to_s.match?(/message|assistant/i))
+        end
+      end
+
+      # @param message [Hash]
+      # @return [Array<String>] its text, block by block, tool calls left out
+      def texts_of(message)
+        content = message["content"]
+        blocks = if content.is_a?(Array)
+                   content.select { it.is_a?(Hash) && [nil, "text", "output_text"].include?(it["type"]) }.map { it["text"] }
+                 else
+                   [message["text"], content]
+                 end
+        blocks.select { it.is_a?(String) && !it.strip.empty? }
       end
 
       # Usage counts arrive per turn, so they are added rather than replaced.

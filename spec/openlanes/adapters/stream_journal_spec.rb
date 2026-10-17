@@ -19,4 +19,42 @@ RSpec.describe OpenLanes::Adapters::Stream do
       { type: "agent_end", messages: [{ content: [{ type: "text", text: decision }] }] })
     expect(stream.journal.size).to eq(1)
   end
+
+  it "keeps a line said again in a later message, which the agent meant twice" do
+    todo = OpenLanes::Plans::Journal.line("todo", "U1")
+    done = OpenLanes::Plans::Journal.line("done", "U1")
+    feed({ type: "item.completed", item: { id: "m1", type: "agent_message", text: todo } },
+      { type: "item.completed", item: { id: "m2", type: "agent_message", text: done } },
+      { type: "item.completed", item: { id: "m3", type: "agent_message", text: todo } })
+    expect(stream.journal.map(&:kind)).to eq(%w[todo done todo])
+  end
+
+  it "reads every text block of a message, not only the first" do
+    feed({ type: "message_end",
+           message: { role: "assistant", content: [{ type: "text", text: "Working." }, { type: "text", text: decision }] } })
+    expect(stream.journal.map(&:text)).to eq(["Integer cents"])
+  end
+
+  it "takes nothing from a tool's output" do
+    feed({ type: "tool_execution_end", result: { content: [{ type: "text", text: decision }] } },
+      { type: "message_end", message: { role: "toolResult", content: [{ type: "text", text: decision }] } },
+      { type: "item.completed", item: { type: "command_execution", aggregated_output: decision, text: decision } })
+    expect(stream.journal).to be_empty
+  end
+
+  it "takes nothing from the prompt it was given, which shows example lines" do
+    feed({ type: "agent_end", messages: [{ role: "user", content: [{ type: "text", text: decision }] }] })
+    expect(stream.journal).to be_empty
+  end
+
+  it "takes nothing from a tool call's input" do
+    feed({ type: "message_end",
+           message: { role: "assistant", content: [{ type: "toolCall", arguments: { text: decision } }] } })
+    expect(stream.journal).to be_empty
+  end
+
+  it "still shows the first thing said as the activity" do
+    feed({ type: "item.completed", item: { type: "agent_message", text: "Reading the spec" } })
+    expect(stream.activity).to eq("Reading the spec")
+  end
 end
