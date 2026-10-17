@@ -43,6 +43,14 @@ Settled 2026-10-13 in a grilling session. N1–N5 are built (plan 007.00). N6–
 - Why: in equilibris-app, 23 of 37 plans were finished and diluted the 14 still open.
 - A plan's age comes from git (the folder's first and last commit) and `state.json`'s `updated_at`. New specs also get a `created:` frontmatter key.
 
+### N3 amendment, 2026-10-17 (Konstantin Gredeskoul): numbers are allocated across branches, in the primary checkout only
+
+- Why: each checkout saw only its own `.plans`. `main` stopped at 023 while 024–035 lived on an unmerged branch, so `create` on `main` would hand out 024 again.
+- New plans (the next major, and retroactive minor slots, including `resync prs` adoption) are created only in the primary checkout. A linked worktree is detected by `git rev-parse --git-dir` differing from `--git-common-dir`; there `create` refuses with "plans are created only in the primary checkout, <path>; this is a worktree of it". `resync prs`, previewing or not, refuses with status 73 when it would adopt. Outside git nothing changes.
+- A number is taken if it is in the primary checkout's `.plans` (subfolders included, as above) or in `.plans` on any local branch or `origin/*` remote-tracking branch, read with `git ls-tree`. No fetch: what has not been fetched is not seen.
+- Reading the taken numbers and creating the folder happen under an exclusive `flock` on `<git-common-dir>/openlanes-ordinal.lock`, so two creates at once cannot take the same number.
+- Built in `Lifecycle::Allocator`; `Plans::Ordinal` stays arithmetic over the list it is given.
+
 ## N4. Locks are a file, never part of the name
 
 - While an agent works on a plan, the folder holds `locked-by.pid` with `pid`, `host` and `started_at`. It is git-ignored.
