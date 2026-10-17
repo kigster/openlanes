@@ -257,3 +257,15 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
   .ask, .unblock, .d-ctx-bar i { transition: none; }
   .is-leaving { opacity: 1; }
 }
+
+/* The plan file popup and drawer (plan 017). */
+.plan-file { width: min(760px, 92vw); }
+.plan-file-body { padding: 0 16px; max-height: 60vh; overflow: auto; }
+.plan-file-frontmatter { margin: 0 0 10px; padding: 8px 12px; background: var(--plate); border: 1px solid var(--hairline);
+  font: 13px/1.5 var(--mono); white-space: pre-wrap; color: var(--ink-soft); }
+.plan-file-preview { height: auto; resize: none; }
+.plan-file-error { color: var(--gb-red); margin: 8px 0; }
+.plan-drawer { margin: 14px 24px 0; padding: 12px 16px; background: var(--plate); border: 1px solid var(--hairline);
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.plan-drawer h2 { margin: 0; font-size: 15px; }
+.plan-drawer select { font: inherit; }

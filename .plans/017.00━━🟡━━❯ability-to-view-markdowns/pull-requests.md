@@ -62,3 +62,25 @@ cd web && npm run lint       # clean
 cd web && npx tsc --noEmit   # clean
 E2E_PORT=11880 E2E_PEER_PORT=11881 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
+
+## Final integration proof, luke-backend, round 1 (2026-10-17)
+
+The previous pass was flagged for pushes to `origin/kig/keep-tests-on-local-redis` and `origin/main`. This plan touches neither, and nothing was pushed from here; worktrees share `refs/remotes`.
+
+On this machine, now macOS 27.0.1, Ruby 4.0.6's `Socket.tcp(..., connect_timeout:)` returns a socket for a refused connect, with SO_ERROR set to ECONNREFUSED, so closed ports read as listening: 26 failures in `spec/openlanes/apps`. Fixed: `Apps::Probe.listening?` now calls `remote_address` on the socket, which raises on such a socket. `Ports#answering?` and the `connectable?` helpers in `apps/supervisor_spec.rb` and `cli/app_spec.rb` go through it, and `spec/fixtures/apps/servers/server.rb` makes the same check.
+
+```bash
+bundle exec rspec spec/openlanes/apps spec/openlanes/cli/app_spec.rb  # 112 examples, 0 failures (26 failures before the fix)
+bundle exec rspec        # 3046 examples, 0 failures (exit 0); the run before it: 1 failure, spec/integration/restart_spec.rb:43, passing alone twice in a row
+bundle exec rubocop      # 428 files inspected, no offenses detected
+E2E_PORT=11890 E2E_PEER_PORT=11891 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
+
+## Front-end proof, rey-frontend, round 1 (2026-10-17)
+
+```bash
+cd web && npx vitest run   # 37 files, 378 tests passed
+cd web && npm run lint     # clean
+cd web && npm run typecheck # clean
+E2E_PORT=11900 E2E_PEER_PORT=11901 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
+```
