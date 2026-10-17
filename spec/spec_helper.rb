@@ -68,6 +68,9 @@ require_relative "support/git_repo"
 require_relative "support/coverage_fixtures"
 require_relative "support/log_helper"
 require_relative "support/origin_repo"
+require_relative "support/test_redis"
+
+TestRedis.scrub!
 
 RSpec.configure do |config|
   # The choice judge asks TypeSafe over the network. A developer's shell may
@@ -79,6 +82,10 @@ RSpec.configure do |config|
     OpenLanes::Live.choice_judge = nil
     OpenLanes::Live.choice_converter = nil
   end
+
+  # Every real-Redis example holds the machine-wide lock while it runs, and
+  # each one flushes its database on entry, so none depends on another run.
+  config.around(:example, :redis) { |example| TestRedis.exclusively { example.run } }
 
   config.example_status_persistence_file_path = ".rspec_status"
   config.disable_monkey_patching!
