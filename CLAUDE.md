@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-This is a CLI-based ruby gem with executables (`openlanes`, with `depot` and `lanes` as aliases) providing rich multi command/sub-command interface to Agentic Software Development.
+This is a CLI-based ruby gem with executables (`openlanes`, with `ol` and `lanes` as aliases) providing rich multi command/sub-command interface to Agentic Software Development.
 
 
 The gem's responsibilities are:

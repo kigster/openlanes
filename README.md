@@ -2,7 +2,7 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/kigster/openlanes/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/kigster/openlanes/tree/main) ![Coverage](docs/badges/coverage_badge.svg) [![Copilot](https://github.com/kigster/openlanes/actions/workflows/agents/copilot-pull-request-reviewer/badge.svg)](https://github.com/kigster/openlanes/actions/workflows/agents/copilot-pull-request-reviewer) [![Dependabot Updates](https://github.com/kigster/openlanes/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/kigster/openlanes/actions/workflows/dependabot/dependabot-updates)
 
-`openlanes` is a CLI software factory. You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `depot`.
+`openlanes` is a CLI software factory. You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `ol`.
 
 ## Picture is worth a few words ;) 
 
