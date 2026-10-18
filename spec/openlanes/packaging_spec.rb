@@ -63,7 +63,7 @@ RSpec.describe "packaging" do
   describe "the gem's files" do
     let(:files) { Gem::Specification.load(File.join(root, "openlanes.gemspec")).files }
 
-    it "ships the runtime Brewfile and not the contributor's" do
+    it "ships the Brewfile" do
       expect(files).to include("Brewfile")
     end
 
@@ -71,9 +71,9 @@ RSpec.describe "packaging" do
       expect(files.grep(%r{\Abin/})).to be_empty
     end
 
-    it "keeps bin/setup bundling both Brewfiles in a checkout" do
+    it "keeps bin/setup bundling the same Brewfile in a checkout" do
       script = File.read(File.join(root, "bin", "setup"))
-      expect(script).to include('--file="${project_root}/Brewfile"', '--file="${project_root}/Brewfile"')
+      expect(script).to include('--file="${project_root}/Brewfile"')
     end
 
     it "lists in the Brewfile every tool the engine shells out to" do
