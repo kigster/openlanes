@@ -10,6 +10,10 @@ module OpenLanes
     #
     # Each command kind is one method, named as {Live::Commands} names its
     # handlers, raising {Refusal} with the reason the engine would give.
+    #
+    # The fixture carries one plan hansolo approved and one whose pull
+    # request merged, each with `finished` set and no cars, so the demo
+    # shows the half-height rows a real run keeps until it restarts.
     class DemoBoard
       # A command the demo will not apply.
       class Refusal < StandardError; end
@@ -317,7 +321,8 @@ module OpenLanes
           "pr" => nil,
           "questions" => [],
           "interrupted" => nil,
-          "claimed_by" => @me.dig("node", "id"))
+          "claimed_by" => @me.dig("node", "id"),
+          "finished" => nil)
       end
 
       # @return [String]

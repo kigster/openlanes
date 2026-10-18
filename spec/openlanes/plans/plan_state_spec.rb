@@ -157,6 +157,74 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "#finish!" do
+    let(:approved_at) { Time.utc(2026, 10, 18, 12) }
+    let(:merged_at) { approved_at + 600 }
+
+    it "is nil for a plan that never finished" do
+      expect(state.finished).to be_nil
+    end
+
+    it "keeps how and when, in a form the schema accepts" do
+      state.finish!("approved", at: approved_at)
+
+      aggregate_failures do
+        expect(state.finished).to eq(described_class::Finished.new(kind: "approved", at: approved_at))
+        expect(written["finished"]).to eq("kind" => "approved", "at" => "2026-10-18T12:00:00Z")
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+      end
+    end
+
+    it "lets a merge replace an approval" do
+      state.finish!("approved", at: approved_at)
+      state.finish!(:merged, at: merged_at)
+
+      expect(state.finished).to eq(described_class::Finished.new(kind: "merged", at: merged_at))
+    end
+
+    it "keeps the first merge's time and writes nothing when the watch reports it again" do
+      state.finish!("merged", at: merged_at)
+      before = File.read(state.path)
+
+      aggregate_failures do
+        expect(state.finish!("merged", at: merged_at + 15).at).to eq(merged_at)
+        expect(state.finish!("approved", at: merged_at + 30).kind).to eq("merged")
+        expect(File.read(state.path)).to eq(before)
+      end
+    end
+
+    it "takes a second approval's time, as after a rejection and a rebuild" do
+      state.finish!("approved", at: approved_at)
+      state.finish!("approved", at: merged_at)
+
+      expect(state.finished.at).to eq(merged_at)
+    end
+
+    it "refuses a kind it does not know" do
+      expect { state.finish!("shipped") }.to raise_error(OpenLanes::Error, /approved or merged/)
+    end
+
+    it "is forgotten by #unfinish!, which writes nothing when there is nothing to forget" do
+      state.unfinish!
+      existed = state.exist?
+      state.finish!("approved", at: approved_at)
+      state.unfinish!
+
+      aggregate_failures do
+        expect(existed).to be(false)
+        expect(state.finished).to be_nil
+        expect(written).not_to have_key("finished")
+      end
+    end
+
+    it "rejects a record the schema does not know" do
+      state.finish!("approved", at: approved_at)
+      data = written.merge("finished" => { "kind" => "shipped", "at" => "2026-10-18T12:00:00Z" })
+
+      expect(schema.validate(data).to_a).not_to be_empty
+    end
+  end
+
   describe "#stranded" do
     before do
       state.stage!(agent: "luke-backend", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })

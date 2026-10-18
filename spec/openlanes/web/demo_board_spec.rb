@@ -249,12 +249,19 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
   end
 
+  it "carries one approved and one merged plan, finished and with no cars" do
+    finished = me["plans"].select { it["finished"] }
+
+    expect(finished.map { [it.dig("finished", "kind"), it.dig("pr", "state"), it["cars"]] })
+      .to contain_exactly(["approved", "approved", []], ["merged", "merged", []])
+  end
+
   describe "add_plan" do
     before { board.apply(command("add_plan", plan: "013", ordinal: "013")) }
 
     it "moves the plan from the backlog onto the board, claimed by this node" do
-      expect([me["backlog"].map { it["ordinal"] }, me["plans"].last.values_at("ordinal", "station", "slug", "claimed_by")])
-        .to eq([["012.00"], ["013.00", "new", "plain-nnn-plan-numbers", "3f9a0c7be21d44a8f6031c5d"]])
+      expect([me["backlog"].map { it["ordinal"] }, me["plans"].last.values_at("ordinal", "station", "slug", "claimed_by", "finished")])
+        .to eq([["012.00"], ["013.00", "new", "plain-nnn-plan-numbers", "3f9a0c7be21d44a8f6031c5d", nil]])
     end
 
     it "refuses a plan not in the backlog" do

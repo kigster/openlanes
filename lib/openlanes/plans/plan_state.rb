@@ -128,6 +128,75 @@ module OpenLanes
         till
       end
 
+      # ---- finished ---------------------------------------------------------
+
+      # How a plan finished: hansolo approved it, or its pull request merged.
+      FINISH_KINDS = %w[approved merged].freeze
+
+      # When and how a plan finished, which the control room keeps on the
+      # board for the rest of the run (and a restarted engine carries the
+      # latest one over). Kept here because nothing else records the moment:
+      # the folder name says ✅ but not since when, and `pull-requests.md`
+      # has no times at all.
+      #
+      # @!attribute [r] kind
+      #   @return [String] one of {FINISH_KINDS}
+      # @!attribute [r] at
+      #   @return [Time]
+      Finished = Data.define(:kind, :at) do
+        # @return [Boolean]
+        def merged? = kind == "merged"
+
+        # @return [Hash] as `state.json` and the snapshot carry it
+        def to_json_h = { "kind" => kind, "at" => at.utc.iso8601 }
+      end
+
+      # @return [OpenLanes::Plans::PlanState::Finished, nil]
+      def finished
+        record = read["finished"] or return nil
+        Finished.new(kind: record["kind"], at: parse_time(record["at"]))
+      end
+
+      # Record that the plan finished. A merge replaces an approval; nothing
+      # replaces a merge, so the watch, which reports the same merged pull
+      # request on every poll, keeps the time of the first report and writes
+      # nothing after it. A second approval, after a rejection and a rebuild,
+      # is a new approval and takes its own time.
+      #
+      # @param kind [String] one of {FINISH_KINDS}
+      # @param at [Time]
+      # @return [OpenLanes::Plans::PlanState::Finished] the record kept
+      # @raise [OpenLanes::Error] for a kind outside {FINISH_KINDS}
+      def finish!(kind, at: Time.now)
+        kind = kind.to_s
+        raise Error, "a plan finishes #{FINISH_KINDS.join(" or ")}, not #{kind.inspect}" unless FINISH_KINDS.include?(kind)
+
+        current = finished
+        return current if current&.merged?
+
+        kept = Finished.new(kind:, at:)
+        update do |data|
+          existing = data["finished"]
+          if existing && existing["kind"] == "merged"
+            kept = Finished.new(kind: "merged", at: parse_time(existing["at"]))
+          else
+            data["finished"] = kept.to_json_h
+          end
+        end
+        kept
+      end
+
+      # Forget that the plan finished: an agent is working on it again, or a
+      # person rejected what was approved. Writes nothing when there was
+      # nothing to forget.
+      #
+      # @return [void]
+      def unfinish!
+        return unless read.key?("finished")
+
+        update { |data| data.delete("finished") }
+      end
+
       # ---- the harness --------------------------------------------------------
 
       # Record or update one agent's round. A later call for the same agent

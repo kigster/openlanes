@@ -30,9 +30,11 @@ module OpenLanes
 
       # @param tree_dir [String] the `.plans` directory, reread after each rename
       # @param agents [Agents::Registry] who handles 🔴, and so gets the comments
-      def initialize(tree_dir:, agents:)
+      # @param clock [#call] the time a merge is recorded at
+      def initialize(tree_dir:, agents:, clock: -> { Time.now })
         @tree_dir = tree_dir
         @agents = agents
+        @clock = clock
       end
 
       # @param outcome [PrWatch::Outcome]
@@ -55,6 +57,9 @@ module OpenLanes
         return nil if subject.status.key == :rejected
 
         moved = walk(subject, :rejected) or return nil
+        # A person overruled the approval: the board must stop showing it
+        # as finished.
+        Plans::PlanState.for(moved.feature.path).unfinish!
         mailed = mail(moved, outcome)
         Applied.new(plan: outcome.plan,
           pr: outcome.pr,
@@ -62,11 +67,14 @@ module OpenLanes
           note: "PR ##{outcome.pr} labelled #{Plans::ReviewLabel::REJECTED.name}; mailed #{mailed.join(", ")}")
       end
 
-      # Merged on GitHub: the row says so, and once no pull request is left
-      # open the plan is ✅, by the person who merged it.
+      # Merged on GitHub: the row says so, `state.json` says when (the
+      # watch learns of it on the poll after, which is as close as a
+      # local clock gets), and once no pull request is left open the plan is
+      # ✅, by the person who merged it.
       def merged(outcome)
         subject = find(outcome.plan) or return nil
         record(subject, outcome.pr, "merged")
+        Plans::PlanState.for(subject.feature.path).finish!("merged", at: @clock.call)
         subject = find(outcome.plan)
         return applied(outcome, nil, "merged") if subject.pull_requests.any?(&:open?)
 

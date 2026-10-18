@@ -167,6 +167,7 @@ module OpenLanes
         @locks = PlanLocks.new
         @verifying = {}
         @said_verifying = {}
+        @finished = carried_over
       end
 
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
@@ -492,7 +493,7 @@ module OpenLanes
         Board.new(started_at: @started_at,
           status: run_status,
           plans: (@running.map { |j| j.task.subject.feature.ordinal.to_s } + @recent.map { |r| r[:row].ordinal } +
-                  waiting).uniq,
+                  waiting + @mutex.synchronize { @finished.keys }).uniq,
           up:,
           down:,
           rows: rows,
@@ -605,10 +606,60 @@ module OpenLanes
 
           applied = effects.apply(outcome) or next
           @finished_plans.delete(applied.plan) if applied.to
+          keep_finished(applied.plan)
           UI.log("#{applied.plan}: #{applied.note}#{" → #{Plans::STATUS_BY_KEY.fetch(applied.to)}" if applied.to}")
           wake!
         end
         @state&.waiting_on = @waiting_on
+      end
+
+      # ---- finished plans ---------------------------------------------------
+
+      # The one plan that finished last before this engine started, so a
+      # restarted board is not empty of what it just did, and not crowded
+      # with everything it ever did either.
+      #
+      # @return [Hash{String => OpenLanes::Plans::PlanState::Finished}]
+      def carried_over
+        latest = @runner.tree.subjects.reject { @runner.foreign?(it) }.filter_map { |subject|
+          finished = Plans::PlanState.for(subject.feature.path).finished
+          [subject.feature.ordinal.to_s, finished] if finished
+        }.max_by { |_, finished| finished.at }
+        latest ? [latest].to_h : {}
+      end
+
+      # Record an approval or a merge, and keep the plan on the board for the
+      # rest of the run. A dry run writes nothing, but still shows it.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param kind [String] one of {Plans::PlanState::FINISH_KINDS}
+      # @return [void]
+      def finish(subject, kind)
+        at = Time.now
+        kept = @runner.dry_run? ? Plans::PlanState::Finished.new(kind:, at:) : Plans::PlanState.for(subject.feature.path).finish!(kind, at:)
+        @mutex.synchronize { @finished[subject.feature.ordinal.to_s] = kept }
+      end
+
+      # Read back what {PrOutcomes} wrote: a merge joins the board's finished
+      # plans, a rejection leaves them. Read rather than told, so the watch's
+      # one record of it is the only one.
+      #
+      # @param ordinal [String]
+      # @return [void]
+      def keep_finished(ordinal)
+        subject = fresh_by(Plans::Ordinal.parse(ordinal)) or return
+        finished = Plans::PlanState.for(subject.feature.path).finished
+        @mutex.synchronize { finished ? @finished[ordinal] = finished : @finished.delete(ordinal) }
+      end
+
+      # An agent is starting on the plan, so it is not finished any more: the
+      # board would otherwise show an approved row over a rebuild.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [void]
+      def unfinish(subject)
+        @mutex.synchronize { @finished.delete(subject.feature.ordinal.to_s) }
+        Plans::PlanState.for(subject.feature.path).unfinish! unless @runner.dry_run?
       end
 
       # ---- discarding -------------------------------------------------------
@@ -1078,6 +1129,8 @@ module OpenLanes
         # and before the thread, so the next tick already sees it; it goes
         # when the last agent in the plan does, however that agent went.
         return false unless lock(ordinal, subject)
+
+        unfinish(subject)
 
         release_owed = true
         # A checkout another agent is working in is never moved under it.
@@ -1688,6 +1741,7 @@ module OpenLanes
         return base.with(status: "Completed", to: :verifying, note: "#{base.note}; approved, #{said}") if fresh_by(ordinal)&.status&.key == :verifying
 
         @finished_plans << ordinal
+        finish(subject, "approved")
         base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge#{"; #{said}" if said}")
       end
 

@@ -26,6 +26,14 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
       end
     end
 
+    it "forgets the approval it overruled, so the board stops showing the plan as finished" do
+      plans { |t| t.plan "002.00", :in_review, "overruled", files:, prs: [t.open(12, "b")] }
+      OpenLanes::Plans::PlanState.for(plan("002.00").feature.path).finish!("approved")
+      effects.apply(outcome("002.00", 12, :rejected))
+
+      expect(OpenLanes::Plans::PlanState.for(plan("002.00").feature.path).finished).to be_nil
+    end
+
     it "does nothing the second time, so a poll every 15 s mails once" do
       expect(effects.apply(outcome("001.00", 11, :rejected, comments:))).to be_nil
     end
@@ -64,6 +72,17 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
         expect(plan("003.00").status.key).to eq(:approved)
         expect(plan("003.00").pull_requests.map(&:state)).to eq(["Merged 🟣"])
       end
+    end
+
+    it "says when in state.json, and keeps that time when the watch reports it again" do
+      plans { |t| t.plan "003.00", :in_review, "dated", files:, prs: [t.open(13, "c")] }
+      OpenLanes::Plans::PlanState.for(plan("003.00").feature.path).finish!("approved", at: Time.utc(2026, 10, 18, 11))
+      times = [Time.utc(2026, 10, 18, 12), Time.utc(2026, 10, 18, 12, 0, 15)]
+      clocked = described_class.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new, clock: -> { times.shift })
+      2.times { clocked.apply(outcome("003.00", 13, :merged)) }
+
+      expect(OpenLanes::Plans::PlanState.for(plan("003.00").feature.path).finished)
+        .to eq(OpenLanes::Plans::PlanState::Finished.new(kind: "merged", at: Time.utc(2026, 10, 18, 12)))
     end
 
     it "waits for the plan's other open pull request" do
