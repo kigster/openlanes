@@ -654,9 +654,14 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       )
       worktree = instance_double(OpenLanes::Vcs::Worktree, repository?: true, checkout_for: checkout, refresh: nil)
       allow(OpenLanes::Vcs::Worktree).to receive(:new).and_return(worktree)
-      # Publishing syncs review labels first; without this the spec would run
-      # the real `gh` against whatever repository the suite is checked out in.
-      allow(OpenLanes::Vcs).to receive(:label_sync).and_return(instance_double(OpenLanes::Vcs::LabelSync, call: []))
+      # Publishing migrates and syncs review labels first; without this the
+      # spec would run the real `gh` against whatever repository the suite is
+      # checked out in.
+      owed = OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, moves: {})
+      allow(OpenLanes::Vcs).to receive_messages(
+        label_sync:      instance_double(OpenLanes::Vcs::LabelSync, call: []),
+        label_migration: instance_double(OpenLanes::Vcs::LabelMigration, call: owed)
+      )
 
       out, err, status = run(isolation: "worktree")
 
