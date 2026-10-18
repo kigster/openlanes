@@ -28,7 +28,7 @@ it("draws a pill per plan with the mockup's states and the summary, accessibly",
   expect(pill).toHaveClass("pill is-blocked");
   expect(pill).toHaveAttribute("aria-expanded", "true");
   expect(screen.getByRole("button", { name: "005 1h 38m, working, at Review" })).not.toHaveAttribute("aria-expanded");
-  expect(screen.getByText("0 merged, 0 ready to merge, 2 blocked")).toBeInTheDocument();
+  expect(screen.getByText("0 merged, 0 ready to merge, 3 blocked")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "010 1h 38m, on sam@ci-runner-2, read only, at Review" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });

@@ -7,7 +7,7 @@ require "socket"
 # started through `sh -c`, exactly as an app's `start:` line is.
 RSpec.describe OpenLanes::Apps::Supervisor do
   let(:dir) { File.realpath(Dir.mktmpdir("openlanes-supervisor")) }
-  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(dir, "ports.json")) }
+  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(dir, "ports.json"), **PortWindow.bounds) }
   let(:published) { [] }
   let(:server) { File.expand_path("../../fixtures/apps/servers/server.rb", __dir__) }
   let(:ready_timeout) { 10 }

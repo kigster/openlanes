@@ -13,11 +13,6 @@ module OpenLanes
     # {.serving}, carries that server's {Context} as a setting, so two apps in
     # one process (the suite) never share a token or a store.
     class App < Sinatra::Base
-      # The plan files the drawer and the preview may read. A name is looked
-      # up in this list and never joined onto a path as typed, which is what
-      # makes `../` meaningless here rather than merely refused.
-      PLAN_FILES = %w[spec.md plan.md contract.md blocked.md research.md design.md].freeze
-
       # Host headers the server always answers: loopback, so a page on another
       # site cannot reach it through DNS rebinding. A server listening beyond
       # this machine adds its own addresses and name ({Listen#permitted_hosts}).
@@ -83,6 +78,19 @@ module OpenLanes
           end
         end
 
+        # @return [OpenLanes::Web::PlanFiles]
+        def plan_files = PlanFiles.new(plans_dir: context.plans_dir)
+
+        # The rule the page draws cars by: this machine's board lists the
+        # plan with at least one car. No snapshot means no engine, so no car.
+        #
+        # @param ordinal [String] e.g. "017.00"
+        # @return [Boolean]
+        def live_car?(ordinal)
+          plans = Live.board(store:, keys: context.keys).dig(:me, "plans") || []
+          plans.any? { it["ordinal"].to_s == ordinal && Array(it["cars"]).any? }
+        end
+
         # @return [OpenLanes::Live::Chat]
         def chat = context.chat || halt(404, json(error: "this server has no chat"))
 
@@ -139,6 +147,26 @@ module OpenLanes
 
       before "/api/*" do
         cache_control :no_store
+      end
+
+      error PlanFiles::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanFiles::ReadOnly do
+        status 403
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanFiles::Stale do
+        status 412
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanFiles::FrontmatterChanged do
+        status 422
+        json(error: env["sinatra.error"].message)
       end
 
       error Live::Unavailable do
@@ -271,15 +299,39 @@ module OpenLanes
         status 204
       end
 
-      get "/api/plans/:ordinal/files/:name" do
-        name = PLAN_FILES.find { it == params[:name] } or halt 404, json(error: "not a plan file: #{params[:name]}")
-        ordinal = Plans::Ordinal.parse(params[:ordinal]) or halt 404, json(error: "not a plan number")
-        subject = Plans.tree(context.plans_dir).find(ordinal) or halt 404, json(error: "there is no plan #{ordinal}")
-        path = File.join(subject.feature.path, name)
-        halt 404, json(error: "#{ordinal} has no #{name}") unless File.file?(path)
+      # The plan files (plan 017). The page may read six names and write
+      # two; {PlanFiles} holds both lists and every guard but the car, so a
+      # name is never joined onto a path as typed.
+      get "/api/plans/:ordinal/files" do
+        json(files: plan_files.list(params[:ordinal]))
+      end
 
+      get "/api/plans/:ordinal/files/:name" do
+        file = plan_files.read(params[:ordinal], params[:name])
+        headers "ETag" => file.etag
         content_type "text/markdown", charset: "utf-8"
-        File.read(path)
+        file.body
+      end
+
+      # A whole file, saved from the popup. The car is checked here rather
+      # than in {PlanFiles}, since the board is this server's to read: an
+      # agent working the plan would overwrite the save, or be overwritten.
+      put "/api/plans/:ordinal/files/:name" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        ordinal, name = params.values_at(:ordinal, :name)
+        plan_files.read(ordinal, name)
+        halt 403, json(error: "#{name} is read only") unless PlanFiles::EDITABLE.include?(name)
+
+        if_match = request.env["HTTP_IF_MATCH"].to_s.strip
+        halt 428, json(error: "If-Match is required; send the ETag from GET") if if_match.empty?
+
+        number = Plans::Ordinal.parse(ordinal).to_s
+        halt 409, json(error: "#{number} has an agent working on it; wait until it stops") if live_car?(number)
+
+        tag = plan_files.write(ordinal, name, body: request.body.read, if_match:)
+        headers "ETag" => tag
+        json(etag: tag)
       end
 
       get "/api/*" do

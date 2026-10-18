@@ -8,7 +8,7 @@ require "rbconfig"
 RSpec.describe "Restarting one process of an app" do
   let(:root) { File.realpath(Dir.mktmpdir("openlanes-restart")) }
   let(:server) { File.expand_path("../../fixtures/apps/servers/server.rb", __dir__) }
-  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(root, "ports.json")) }
+  let(:registry) { OpenLanes::Apps::Ports.new(path: File.join(root, "ports.json"), **PortWindow.bounds) }
   let(:published) { [] }
   let(:framings) { [] }
   let(:framing) do

@@ -109,6 +109,37 @@ Yes. One new route (`GET /api/plans/:ordinal/files`), one new header on an exist
 - `web/node_modules` was absent during research, so the web suite has no known baseline. rey-frontend runs `just web-install` and `just web-test` before F1 and records the result in the ledger.
 - A web save leaves the tree dirty. That is intended: the harness owns commits (spec, Out of scope).
 
+## Rebase decisions
+
+Replaying 547d0a2 onto `origin/main` 0b10d65, 2026-10-17, bb8-resolver.
+
+- `plan.md`: kept the branch's copy. It is main's copy plus the `## How to test` section added this round, and nothing in it was removed.
+- `pull-requests.md`: kept the branch's copy. It is main's copy plus the 2026-10-17 backend and frontend proofs, and nothing in it was removed.
+- `state.json`: kept the branch's copy. Every stage, signature and message on main is in it unchanged. It adds 3 stages, 6 signatures, mail #14 to #17 and a later `updated_at`, and marks mail #13 read.
+- `lib/openlanes/apps/probe.rb`: kept main's `listening?` (the block form of `Socket.tcp`, with main's comment) and dropped the branch's version (`ensure socket&.close`). Both are the same fix, `remote_address` on the socket, and main's `probe_spec.rb` stubs `Socket.tcp` with `and_yield`, which only works with the block form. The branch's macOS 27 finding is still recorded in `pull-requests.md`.
+- `spec/fixtures/apps/servers/server.rb`: kept main's `Socket.tcp(..., &:remote_address)`. The branch's `.tap(&:remote_address).close` is the same fix, and the block form also closes the socket when `remote_address` raises.
+- `lib/openlanes/web/app.rb`: removed `PLAN_FILES`, as the branch did (B2 moved it to `PlanFiles::READABLE`, and nothing else on main reads it). Kept main's `LOCAL_HOSTS` comment, which names `Listen#permitted_hosts`.
+- `spec/spec_helper.rb`: kept main's four new requires and `TestRedis.scrub!`, and added the branch's `require_relative "support/port_window"` next to them.
+- `web/src/App.tsx`: kept main's `data-lanes={lanes.lanes}` on `<main>`, with the branch's `<PlanDrawer plan={unblockPlan} />` just before it and after main's `BombNotice` and `UnblockWidget`.
+- `web/src/panels/index.ts`: kept every export from both sides: main's `BombNotice`, and the branch's `PlanDrawer` and `PlanFilePopup`.
+
+## How to test
+
+From the repository root, Ruby 4.0 under rbenv (`eval "$(rbenv init -)"`).
+
+- `bundle exec rspec spec/openlanes/web/plan_files_spec.rb spec/openlanes/web/app_spec.rb`: 0 failures. Covers B1 (list, read, ETag, atomic write, stale hash, locked frontmatter, read-only `blocked.md`, unknown plan) and B2 (the three routes and every refusal: `403` CSRF, `403` read only, `404` traversal, `428`, `412`, `422`, `409` live car).
+- `bundle exec rspec` and `bundle exec rubocop`: both exit 0.
+- `just web-install`, then `just web-test`: lint and typecheck clean, vitest green (F1 client, F2 popup, F3 drawer and App wiring).
+- `just web-build`, then `just web-e2e`: Cypress prints `All specs passed!`, `plan-files.cy.ts` 2/2 (F4, against the real demo server and B3's fixture). If another session holds port 11100, set free ports: `E2E_PORT=11890 E2E_PEER_PORT=11891 just web-e2e`.
+- After `just web-e2e`, `git status web/cypress/fixtures` shows no change: saves went to a temp copy.
+- By hand: `tmp=$(mktemp -d) && cp -R web/cypress/fixtures/plans/. "$tmp"`, then `just web-demo --dir "$tmp"` and open `http://127.0.0.1:11000` (add `--port N` and use that port below if 11000 is taken).
+  - Click the red pill of `002.00` (blocked, no car): the plan drawer opens beside the unblock widget, and its dropdown lists `spec.md`, `plan.md`, `blocked.md`.
+  - Choose `blocked.md`: it renders as markdown, with no Edit button.
+  - Choose `spec.md`: the one popup now shows `spec.md`, not a second popup. Edit, change the body, Save, reopen: the change is there, and `head -4 "$tmp"/002*/spec.md` shows the frontmatter unchanged.
+  - With the popup open, change the file on disk, then Save: the popup names the conflict and keeps the typed text.
+  - `001.00` (blocked, two cars): Edit is disabled.
+  - `curl -s http://127.0.0.1:11000/api/plans/002/files` prints `{"files":["spec.md","plan.md","blocked.md"]}`; `curl -si http://127.0.0.1:11000/api/plans/002/files/spec.md | rg -i etag` prints a quoted 64-hex `ETag`; a `curl -X PUT` to the same URL without `X-CSRF-Token` answers `403`.
+
 > [!NOTE]
 >
 > [2026-10-15 09:47:08 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

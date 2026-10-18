@@ -79,7 +79,7 @@ describe("under ?fixture", () => {
     expect(screen.getByRole("tab", { name: "sam@ci-runner-2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Clean agent boundaries and transitions" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Action/ })).toBeInTheDocument();
-    expect(screen.getByText("0 merged, 0 ready to merge, 2 blocked")).toBeInTheDocument();
+    expect(screen.getByText("0 merged, 0 ready to merge, 3 blocked")).toBeInTheDocument();
   });
 
   it("switches tabs with the arrow keys and shows the Logs and test tabs", async () => {
@@ -162,6 +162,20 @@ describe("under ?fixture", () => {
     await user.click(pill);
     await user.click(within(screen.getByRole("region", { name: /Unblock 001/ })).getByRole("button", { name: "Hide" }));
     expect(pill).toHaveFocus();
+  });
+
+  it("opens the plan drawer with the unblock widget and lists the plan's files", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ files: ["spec.md", "plan.md"] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderApp();
+    const pill = await screen.findByRole("button", { name: /^001 [^,]*, needs technical decision/ });
+    await user.click(pill);
+    const select = await screen.findByRole("combobox", { name: "Plan file" });
+    expect(Array.from(select.querySelectorAll("option")).map(o => o.value).filter(Boolean)).toEqual(["spec.md", "plan.md"]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/plans/001.00/files", expect.anything());
+    await user.click(pill);
+    expect(screen.queryByRole("combobox", { name: "Plan file" })).toBeNull();
   });
 
   it("shows a working plan's row from its pill, and opens and closes a car's drawer", async () => {

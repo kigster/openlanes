@@ -29,6 +29,7 @@ import {
   HelpDialog,
   ModelSelect,
   NeedsYou,
+  PlanDrawer,
   StopAllDialog,
   UnblockWidget,
   type SendCommand,
@@ -279,6 +280,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         </div>
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
+        <PlanDrawer plan={unblockPlan} />
         <main className="layout" data-lanes={lanes.lanes}>
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
             <Board
