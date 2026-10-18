@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 81 | [\[029.00\](A) Grill New Ideas Before the Spec](https://github.com/kigster/openlanes/pull/81) | Open 🟡 |
+| 81 | [\[029.00\](A) Grill New Ideas Before the Spec](https://github.com/kigster/openlanes/pull/81) | Merged 🟣 |
 
 ## luke-backend, round 1: checks run before signing
 

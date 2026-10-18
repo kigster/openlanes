@@ -5,8 +5,8 @@
     "ordinal": "020.00",
     "slug": "lanes-with-no-active-agents"
   },
-  "state": "retroactive",
-  "updated_at": "2026-10-18T02:48:02-07:00",
+  "state": "approved",
+  "updated_at": "2026-10-18T06:34:54-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -186,7 +186,7 @@
     {
       "agent": "rey-frontend",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "rejected",
       "started_at": "2026-10-17T12:26:59-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.00-lanes-with-no-active-agents",
@@ -197,7 +197,9 @@
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "526a3d75-5c1d-4ddb-9b02-824a964b230a"
+      "session": "526a3d75-5c1d-4ddb-9b02-824a964b230a",
+      "note": "harness died",
+      "finished_at": "2026-10-18T06:34:33-07:00"
     }
   ],
   "signatures": [
@@ -459,10 +461,10 @@
     },
     "rey-frontend": {
       "source": "harness",
-      "at": "2026-10-16T19:03:02-07:00",
+      "at": "2026-10-18T06:34:33-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "harness died; last ledger line: Started, round 1"
+      "note": "harness died; last ledger line: Completed, round 1"
     },
     "luke-backend": {
       "source": "agent",
@@ -521,5 +523,9 @@
       "settled_at": "2026-10-17T12:24:19-07:00"
     }
   ],
-  "moves": 5
+  "moves": 6,
+  "finished": {
+    "kind": "merged",
+    "at": "2026-10-18T13:34:54Z"
+  }
 }

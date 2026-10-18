@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 76 | [\[024.00\](A) Resume Sessions Across Rounds](https://github.com/kigster/openlanes/pull/76) | Open 🟡 |
+| 76 | [\[024.00\](A) Resume Sessions Across Rounds](https://github.com/kigster/openlanes/pull/76) | Merged 🟣 |
 
 ## Verification (luke-backend, round 1)
 
@@ -14,3 +14,7 @@ $ bundle exec rspec
 $ bundle exec rubocop
 485 files inspected, no offenses detected
 ```
+
+> [!NOTE]
+>
+> [2026-10-18 06:34:33 AM PDT] [ agent: chewie-verifier   status: **Interrupted, round 1 (harness died)** ]

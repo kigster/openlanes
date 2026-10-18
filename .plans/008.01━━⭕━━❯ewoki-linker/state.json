@@ -6,7 +6,7 @@
     "slug": "ewoki-linker"
   },
   "state": "blocked",
-  "updated_at": "2026-10-17T14:01:50-07:00",
+  "updated_at": "2026-10-18T06:34:46-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -303,6 +303,18 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-18T06:34:39-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T06:34:43-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1
     }
   ],
   "messages": [
@@ -409,5 +421,34 @@
       ]
     }
   },
-  "moves": 1
+  "moves": 1,
+  "memory": {
+    "lando-broker": {
+      "rounds": {
+        "1": {
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 Suite red on machine loopback, not on plan code The implementation requirement says `bundle exec rspec` must exit 0 before Completed. Today it reports 3187 examples, 30 failures, all in `spec/openlanes/apps/*` and `spec/openlanes/cli/app_spec.rb`, every one `Ports::Exhausted: every port from 11100 to 11999 is taken`. On this machine any TCP connect to 127.0.0.1 succeeds, even to port 1, with nothing listening (`lsof -iTCP -sTCP:LISTEN` empty), both inside and outside the agent sandbox, so `P…",
+              "ref": "B1",
+              "answer": "Have you tried rebasing onto main so you get a fix to this problem from the main branch? Answered by kig on 2026-10-17"
+            }
+          ]
+        },
+        "2": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 (loopback port probe failing the suite) still open: the A1 reply is a question back ('Have you tried rebasing onto main?'), not a choice among a/b/c or a solution, so it does not qualify"
+            },
+            {
+              "kind": "note",
+              "text": "blocked.md left untouched in 008.01; no B/A pair folded. Human must answer B1 with a, b or c and rerun openlanes unblock 008.01"
+            }
+          ]
+        }
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-17T14:02:09-07:00",
+  "updated_at": "2026-10-18T06:35:07-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -91,7 +91,7 @@
     {
       "agent": "luke-backend",
       "round": 2,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "building",
       "started_at": "2026-10-17T11:34:40-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/011.00-init-interview",
@@ -102,7 +102,9 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "session": "08d9c380-8db6-44ce-af5b-00ef7d6a4c59"
+      "session": "08d9c380-8db6-44ce-af5b-00ef7d6a4c59",
+      "note": "harness died",
+      "finished_at": "2026-10-18T06:34:33-07:00"
     }
   ],
   "signatures": [
@@ -271,16 +273,39 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-18T06:34:37-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T06:34:44-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
     }
   ],
-  "messages": [],
+  "messages": [
+    {
+      "id": "bfcc55df-16cf-4d0c-b8e9-28343754f687",
+      "number": 1,
+      "at": "2026-10-18T06:35:07-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M57KJ82AG29YBHM0EAD9DG9T"
+    }
+  ],
   "last-known-state": {
     "luke-backend": {
       "source": "harness",
-      "at": "2026-10-17T11:46:09-07:00",
+      "at": "2026-10-18T06:34:33-07:00",
       "round": 2,
       "status": "Interrupted",
-      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Blocked, round 2: technical; last seen: I signed plan 011.00 **Blocked, round 2 (technical)**."
+      "note": "harness died; last ledger line: Blocked, round 2: technical"
     }
   },
   "extensions": [
@@ -306,5 +331,34 @@
       "asked_at": "2026-10-17T11:46:09-07:00"
     }
   ],
-  "moves": 1
+  "moves": 1,
+  "memory": {
+    "lando-broker": {
+      "rounds": {
+        "1": {
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 The app specs fail on this machine's Ruby and macOS, outside this plan `bundle exec rspec` reports 3107 examples, 30 failures, all of them in `spec/openlanes/apps/` (ports, probe, restart, runner, supervisor) and `spec/openlanes/cli/app_spec.rb`. Round 1 ran the same suite with 0 failures. The cause is a call that behaves differently on this host (Darwin 27, Ruby 4.0.6): `Socket.tcp(\"127.0.0.1\", port, connect_timeout: 0.2)` returns a socket for a port nothing listens on, where `Socket.tcp` w…",
+              "ref": "B1",
+              "answer": "Rebase onto main. Answered by kig on 2026-10-17"
+            }
+          ]
+        },
+        "2": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "B1 answer 'Rebase onto main' names none of the offered options (a/b/c), so it is not an answer; B1/A1 left in blocked.md"
+            },
+            {
+              "kind": "question",
+              "text": "B1 still open: human must pick a) fix probe in own PR, b) luke-backend fixes inside plan, or c) accept as is"
+            }
+          ]
+        }
+      }
+    }
+  }
 }

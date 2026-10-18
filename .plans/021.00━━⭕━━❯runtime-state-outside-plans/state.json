@@ -6,7 +6,7 @@
     "slug": "runtime-state-outside-plans"
   },
   "state": "blocked",
-  "updated_at": "2026-10-17T14:03:27-07:00",
+  "updated_at": "2026-10-18T06:34:45-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -261,6 +261,18 @@
       "agent": "lando-broker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-18T06:34:38-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T06:34:43-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -354,5 +366,38 @@
       "note": "agent pushed (origin/kig/add-web-listen-ips, origin/kig/ask-to-extend-limits) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The background notification says the command was stopped at its time limit."
     }
   },
-  "moves": 1
+  "moves": 1,
+  "memory": {
+    "luke-backend": {
+      "rounds": {
+        "1": {
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 The suite cannot exit 0 on this machine The plan requires `bundle exec rspec` to exit 0. Every unit is done, rubocop is clean, and the suite has one failure this plan caused, now fixed (`spec/integration/restart_spec.rb` read the run record from `.plans/`). 30 failures are left, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb`, and a clean checkout of `HEAD` (0d0d99c) fails the same 30 out of 112. The cause is the machine: right now a TCP connect to a localhost port nobody …",
+              "ref": "B1",
+              "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
+            }
+          ]
+        }
+      }
+    },
+    "lando-broker": {
+      "rounds": {
+        "1": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "B1 kept open: A1 ('Rebase onto main and retry') answers neither option a) nor b), so it fails the answer test"
+            },
+            {
+              "kind": "note",
+              "text": "blocked.md untouched: only one block, no qualifying answer; file stays so a human can answer again"
+            }
+          ]
+        }
+      }
+    }
+  }
 }

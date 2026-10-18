@@ -5,8 +5,8 @@
     "ordinal": "024.00",
     "slug": "resume-sessions-across-rounds"
   },
-  "state": "retroactive",
-  "updated_at": "2026-10-18T02:48:02-07:00",
+  "state": "approved",
+  "updated_at": "2026-10-18T14:07:57-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -80,7 +80,7 @@
     {
       "agent": "chewie-verifier",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "verifying",
       "started_at": "2026-10-17T11:40:58-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/024.00-resume-sessions-across-rounds",
@@ -91,7 +91,32 @@
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "4301dfce-d1c6-4e84-a4e9-c7756ee72cc1"
+      "session": "4301dfce-d1c6-4e84-a4e9-c7756ee72cc1",
+      "note": "harness died",
+      "finished_at": "2026-10-18T06:34:33-07:00"
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "retroactive",
+      "started_at": "2026-10-18T06:34:39-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/024.00-resume-sessions-across-rounds",
+      "run": {
+        "pid": 12355,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "ae94cb04-9baa-478a-a199-b1cae32c5883",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-18T06:35:15-07:00",
+      "up": 272084,
+      "down": 3397,
+      "seconds": 35.9,
+      "note": "completed - 5 tool calls",
+      "moves": 7
     }
   ],
   "signatures": [
@@ -145,6 +170,19 @@
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
+    },
+    {
+      "at": "2026-10-18T06:34:47-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T06:35:11-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
     }
   ],
   "messages": [
@@ -158,7 +196,7 @@
       "read": "no"
     }
   ],
-  "moves": 6,
+  "moves": 8,
   "extensions": [
     {
       "number": 1,
@@ -170,5 +208,18 @@
       "closed": "finished",
       "settled_at": "2026-10-17T11:40:56-07:00"
     }
-  ]
+  ],
+  "last-known-state": {
+    "chewie-verifier": {
+      "source": "harness",
+      "at": "2026-10-18T06:34:33-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Completed, round 1: Completed, round 1 (verified)"
+    }
+  },
+  "finished": {
+    "kind": "merged",
+    "at": "2026-10-18T13:35:22Z"
+  }
 }

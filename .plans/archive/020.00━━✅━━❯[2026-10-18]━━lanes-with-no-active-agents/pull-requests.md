@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 80 | [\[020.00\](A) Lanes with No Active Agents](https://github.com/kigster/openlanes/pull/80) | Open 🟡 |
+| 80 | [\[020.00\](A) Lanes with No Active Agents](https://github.com/kigster/openlanes/pull/80) | Merged 🟣 |
 
 ## rey-frontend, round 1
 
