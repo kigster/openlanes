@@ -1,0 +1,184 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "025.00",
+    "slug": "agent-memory-journal"
+  },
+  "state": "rejected",
+  "updated_at": "2026-10-17T14:30:11-07:00",
+  "stages": [
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-10-17T14:05:49-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/025.00-agent-memory-journal",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "665151ce-a64b-471f-a907-aa43a5a123f0",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-17T14:18:11-07:00",
+      "up": 2969372,
+      "down": 24658,
+      "seconds": 732.4,
+      "note": "completed - 43 tool calls; opened https://github.com/kigster/openlanes/pull/83",
+      "moves": 3
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-17T14:18:12-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/025.00-agent-memory-journal",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "fbc588ec-e54e-494a-b9a3-5cfcecba798a",
+      "to": "rejected",
+      "finished_at": "2026-10-17T14:22:22-07:00",
+      "up": 67761,
+      "down": 93,
+      "seconds": 248.7,
+      "note": "completed - 18 tool calls (rejected 1/2)",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-10-17T14:22:24-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/025.00-agent-memory-journal",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "0d97f5a3-7ea5-4dfe-b245-daebf7837b4c",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-17T14:29:15-07:00",
+      "up": 1278087,
+      "down": 13781,
+      "seconds": 403.4,
+      "note": "completed - 20 tool calls; pushed to https://github.com/kigster/openlanes/pull/83",
+      "moves": 6
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-17T14:29:17-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/025.00-agent-memory-journal",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "000e7328-3226-4c6d-a170-5b8629b4bbf1",
+      "to": "rejected",
+      "finished_at": "2026-10-17T14:30:11-07:00",
+      "up": 344280,
+      "down": 4414,
+      "seconds": 54.2,
+      "note": "completed - 7 tool calls (rejected 2/2)",
+      "moves": 8
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-17T14:05:57-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:17:51-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:18:18-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:19:46-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-17T14:22:32-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:28:58-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-17T14:29:24-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:30:07-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 2/2"
+    }
+  ],
+  "messages": [],
+  "moves": 8,
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-17T14:18:14-07:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-10-17T14:21:12-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-17T14:29:18-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-17T14:30:11-07:00"
+    }
+  ]
+}

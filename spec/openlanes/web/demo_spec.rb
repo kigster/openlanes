@@ -96,6 +96,24 @@ RSpec.describe OpenLanes::Web::Demo do
       end
     end
 
+    context "when the copilot sent it (a slash command)" do
+      let(:turns) { store.xrange(keys.copilot).map { JSON.parse(it.fields["json"]) } }
+
+      before do
+        2.times { store.xadd(keys.commands, { json: JSON.generate(id: "01SLASH", kind: "set_concurrency", plan: nil, agent: nil, payload: { limit: 2, source: "copilot" }) }) }
+        demo.tick
+      end
+
+      it "answers in the conversation once, as the turn the page waits for" do
+        expect(turns.map { it.values_at("id", "from", "text") })
+          .to eq([["01SLASH.1", "copilot", "done: concurrency 4 → 2; the run waits for 1 agent to finish"]])
+      end
+
+      it "changes the run's limit" do
+        expect(board[:me]["run"]["jobs"]).to eq(2)
+      end
+    end
+
     context "when it is malformed in the stream" do
       before do
         store.xadd(keys.commands, { json: "{not json" })

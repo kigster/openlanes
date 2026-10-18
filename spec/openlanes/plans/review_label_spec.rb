@@ -24,7 +24,15 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
   end
 
   it "fits every meaning in GitHub's 100-character label description" do
-    expect(described_class::ALL.map { it.meaning.length }).to all(be <= 100)
+    expect([*described_class::ALL, described_class::MIGRATED].map { it.meaning.length }).to all(be <= 100)
+  end
+
+  # LabelSync walks ALL; the migration's marker must be one it never touches.
+  it "keeps the migration's marker out of the verdicts" do
+    aggregate_failures do
+      expect(described_class::ALL).not_to include(described_class::MIGRATED)
+      expect(described_class.known).not_to include(described_class::MIGRATED.name)
+    end
   end
 
   describe ".displaced_by" do

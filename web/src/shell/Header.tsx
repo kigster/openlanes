@@ -66,7 +66,7 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
         Run <strong>{minutes} min</strong>
       </span>
       <span className="topbar-stat">
-        <strong>{run.agents_working}</strong> agents working
+        <strong>{run.agents_working}</strong> of <strong>{run.jobs}</strong> agents
       </span>
       <span className="topbar-stat" title="Tokens in and out, all plans">
         ↑ <strong>{fmt(run.up)}</strong> &nbsp; ↓ <strong>{fmt(run.down)}</strong>

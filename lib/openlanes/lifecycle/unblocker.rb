@@ -187,10 +187,84 @@ module OpenLanes
       # @param progress [OpenLanes::UI::Line]
       # @return [Array(Boolean, String)]
       def invoke(subject, progress)
-        @executor.call(agent, subject, root:, &progress)
+        journal_answers(subject)
+        forward = progress.to_proc
+        kept = { written: 0, number: nil }
+        @executor.call(agent, subject, root:) do |update|
+          record_journal(subject, update, kept)
+          forward.call(update)
+        end
       rescue StandardError => e
         [false, "#{e.class}: #{e.message.lines.first.to_s.strip}"]
       end
+
+      # The broker's own journal lines (M2), written as they arrive, the way
+      # {Engine::Dispatcher} writes every other agent's: its prompt asks it to
+      # keep one like any agent's, and neither the run loop nor `openlanes
+      # unblock` hands its progress to the dispatcher. As they arrive, so a
+      # broker that fails or is killed keeps what it said.
+      #
+      # A journal that cannot be written costs the record, never the drain;
+      # the lines stay unwritten for the next update to try again.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param update [Object] whatever the executor reports
+      # @param kept [Hash] how many lines are written, and the journal round
+      # @return [void]
+      def record_journal(subject, update, kept)
+        lines = update.respond_to?(:journal) ? Array(update.journal) : []
+        return if !applying? || lines.size <= kept[:written]
+
+        entries, rejected = lines[kept[:written]..].partition { it.is_a?(Plans::Journal::Entry) }
+        unless entries.empty?
+          kept[:number], refused = Plans::PlanState.for(subject.feature.path)
+                                                   .journal!(agent: agent.name,
+                                                     entries:,
+                                                     number: kept[:number],
+                                                     state: subject.feature.status)
+          rejected += refused
+        end
+        kept[:written] = lines.size
+        rejected.each { UI.log("journal line ignored, #{it.reason}: #{it.line[0, 160]}", level: :warn, **log_fields(subject)) }
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal not written yet: #{e.message}", level: :warn, **log_fields(subject))
+      end
+
+      # Every answered question goes into the journal of the agent that asked
+      # it (M3), B1 with A1, before the broker folds it in and deletes it:
+      # afterwards the words are gone from `blocked.md`, and the asker's next
+      # round would know only that the plan was unblocked, not what it was
+      # told. Here, rather than where the page writes an answer, because an
+      # answer typed into the file by hand is drained the same way.
+      #
+      # A journal that cannot be written costs the record, never the drain.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [void]
+      def journal_answers(subject)
+        return unless applying?
+
+        state = Plans::PlanState.for(subject.feature.path)
+        asker = state.blocked_by or return
+        text = subject.read("blocked.md").to_s
+        bodies = Plans::BlockedFile.bodies(text)
+        answers = Plans::BlockedFile.answers(text).transform_values { plain(it) }
+        self.class.questions(subject).each do |question|
+          answer = answers[question.number]
+          next if answer.nil? || answer.empty?
+
+          state.answer!(agent: asker,
+            ref: "B#{question.number}",
+            question: plain("#{question.heading} #{bodies[question.number]}"),
+            answer:)
+        end
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal not written: #{e.message}", level: :warn, **log_fields(subject))
+      end
+
+      # @param text [String] a block's body
+      # @return [String] one line, without the page's command markers
+      def plain(text) = Plans::Journal.clip(text.gsub(/<!--.*?-->/m, "").split.join(" "))
 
       # The same pass the run loop makes after every round, for the same reason:
       # a drained folder is only *named* differently once something reads the

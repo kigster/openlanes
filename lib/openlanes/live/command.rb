@@ -42,26 +42,28 @@ module OpenLanes
 
       # Every kind the page may send.
       KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop stop_all
-                 set_model switch_model add_plan create_plans respond pause_discuss resume_anyway].freeze
+                 set_model switch_model add_plan create_plans respond pause_discuss resume_anyway
+                 stop_plan restart_plan set_concurrency].freeze
 
       # Kinds that act on one plan, and so must name it.
       PLAN_KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop
-                      set_model switch_model respond pause_discuss resume_anyway].freeze
+                      set_model switch_model respond pause_discuss resume_anyway stop_plan restart_plan].freeze
 
       # Kinds that act on one agent of that plan, and so must name it too.
       AGENT_KINDS = %w[hold wrap_up compact stop set_model switch_model].freeze
 
       # Payload fields each kind cannot do without.
       PAYLOAD = {
-        "answer"       => %w[question text],
-        "hold_blocked" => %w[question],
-        "release_hold" => %w[question],
-        "message"      => %w[text],
-        "set_model"    => %w[model],
-        "switch_model" => %w[model],
-        "add_plan"     => %w[ordinal],
-        "create_plans" => %w[idea],
-        "respond"      => %w[text]
+        "answer"          => %w[question text],
+        "hold_blocked"    => %w[question],
+        "release_hold"    => %w[question],
+        "message"         => %w[text],
+        "set_model"       => %w[model],
+        "switch_model"    => %w[model],
+        "add_plan"        => %w[ordinal],
+        "create_plans"    => %w[idea],
+        "respond"         => %w[text],
+        "set_concurrency" => %w[limit]
       }.freeze
 
       # Ids are ULIDs; this only keeps an absurd one out of a hash field.

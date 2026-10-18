@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "033.00",
+    "slug": "auto-merge-passing-prs"
+  },
+  "state": "planned",
+  "updated_at": "2026-10-17T11:27:24-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": [],
+  "moves": 1
+}

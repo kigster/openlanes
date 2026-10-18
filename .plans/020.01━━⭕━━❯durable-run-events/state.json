@@ -1,0 +1,376 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "020.01",
+    "slug": "durable-run-events"
+  },
+  "state": "blocked",
+  "updated_at": "2026-10-17T14:03:23-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-16T19:10:46-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "completed - 19 tool calls",
+      "finished_at": "2026-10-16T19:12:22-07:00",
+      "to": "researched",
+      "up": 1036355,
+      "down": 15085,
+      "seconds": 96.5
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-16T19:12:23-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-16T19:13:04-07:00",
+      "up": 219090,
+      "down": 4574,
+      "seconds": 41.4,
+      "note": "completed - 4 tool calls"
+    },
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-16T19:13:04-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "planned",
+      "finished_at": "2026-10-16T19:15:33-07:00",
+      "up": 741456,
+      "down": 17572,
+      "seconds": 148.7,
+      "note": "completed - 14 tool calls"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-10-16T19:15:34-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-16T19:27:03-07:00",
+      "up": 7508236,
+      "down": 58898,
+      "seconds": 688.9,
+      "note": "agent pushed (origin/kig/add-web-listen-ips, origin/kig/ask-to-extend-limits) — the boundary is docs plus code, nothing leaves the machine"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-10-16T19:17:39-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-10-16T19:19:41-07:00",
+      "up": 1152541,
+      "down": 12428,
+      "seconds": 122.8,
+      "note": "agent pushed (origin/kig/add-web-listen-ips) — the boundary is docs plus code, nothing leaves the machine"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "building",
+      "started_at": "2026-10-17T12:13:23-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d60b8ceb-3e39-4ac1-b1f1-cb391f2caefc",
+      "to": "blocked",
+      "finished_at": "2026-10-17T12:24:17-07:00",
+      "up": 1226670,
+      "down": 9927,
+      "seconds": 653.7,
+      "note": "blocked; see blocked.md",
+      "moves": 1
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-17T12:14:55-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "run": {
+        "pid": 61648,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "bf2cef2b-cbaa-4bd7-bea1-4bd103fe9faf",
+      "to": "building",
+      "finished_at": "2026-10-17T12:21:17-07:00",
+      "up": 1865264,
+      "down": 14597,
+      "seconds": 381.5,
+      "note": "completed - 27 tool calls",
+      "moves": 0
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-16T18:14:14-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:14:33-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T18:14:54-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:10:52-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:12:18-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-10-16T19:12:28-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:12:59-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-16T19:13:10-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:15:24-07:00",
+      "agent": "palpatine-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-16T19:15:39-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:17:45-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:19:36-07:00",
+      "agent": "rey-frontend",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-16T19:26:48-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:13:32-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:15:01-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:21:11-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T12:24:05-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-17T14:03:22-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-17T14:03:23-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": "4f7234d6-2386-4a18-b19b-abea8be78a9f",
+      "number": 1,
+      "at": "2026-10-16T18:13:34-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "contract.md written: slash commands queue stop_plan/restart_plan/set_concurrency; engine answers with a copilot turn '<id>.1' text '<status>: <reason>'; help turn same id, text starts 'Slash commands:'; 503 when no engine; run.jobs on the snapshot. B1+B2 landed, B3-B5 in progress.",
+      "read": "no"
+    },
+    {
+      "id": "4315eea0-99a0-4b7f-8bfd-2fe3943fa974",
+      "number": 2,
+      "at": "2026-10-16T18:14:14-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: run.jobs + stop_plan/restart_plan/set_concurrency kinds in types.ts/fixtures (board.json, snapshot.json run now has jobs:4 - keep Ruby snapshot_spec parity), header shows 'N of J agents' (Header.test.tsx), slash hint in Copilot.test.tsx, I1 files (bin/lanes-e2e, web/cypress.lanes.config.ts, web/cypress/lanes/, just lanes-e2e). Not run: the live lanes-e2e (tokens). It expects replies containing 'concurrency 3 → 2', 'stopped N agents on', 'restarts at the next tick', 'already has an agent', and a help turn naming /stop /restart /concurrency.",
+      "read": "yes"
+    },
+    {
+      "id": "f3f9140a-80f9-4c2f-b311-94dbcba6640b",
+      "number": 3,
+      "at": "2026-10-16T18:14:33-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done: run.jobs + stop_plan/restart_plan/set_concurrency kinds in types.ts and fixtures (run.jobs:4 in board.json/snapshot.json; keep Ruby snapshot_spec parity); header 'N of J agents'; slash hint in the composer; I1 files (bin/lanes-e2e, web/cypress.lanes.config.ts, web/cypress/lanes/, just lanes-e2e). Live lanes-e2e NOT run (tokens). It expects replies matching 'concurrency 3 → 2', 'stopped N agents on', 'restarts at the next tick', 'already has an agent', and a help turn naming /stop /restart /concurrency. NB: the plan was renumbered 020.00 -> 020.01 mid-round.",
+      "read": "yes"
+    },
+    {
+      "id": "fd644d5e-b56f-41ad-86ae-fe16545390fe",
+      "number": 4,
+      "at": "2026-10-16T19:19:09-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "F2 docs and F1 command+renderer (Presentation::EventsReport, CLI::Events::Report) landed with specs, built on Report::Result as in report.rb. Waiting on B4/B6 (Runner/Dispatcher/Unblocker/PrOutcomes emits) for the integration spec; mail me when they land. I did not touch lib/openlanes/events*.",
+      "read": "yes"
+    },
+    {
+      "id": "f81725c9-6f39-492b-a9e8-ab327df1995b",
+      "number": 5,
+      "at": "2026-10-16T19:20:00-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Your msgs 2-3 describe stop/restart/concurrency work, not 020.01 durable-run-events; nothing of it is in this worktree. 020.01 F1/F2 contract is in contract.md: Events.dir/log/report, Log#events/#skipped_lines, Report::Result fields runs, completion_rate, blocks, runs_needing_feedback, intervention_rate, time_to_answer{count,median_s,max_s}, pr_outcomes{opened,reviewed,merged,closed}, usage_by_run, usage_by_model (Report::Usage rows: run adapter model invocations input_tokens output_tokens cost_usd estimated incomplete), skipped_lines. Config#events_enabled/#events_dir. B1-B3,B5 landed; B4/B6 emits next.",
+      "read": "no"
+    },
+    {
+      "id": "e4830370-4fd9-438b-b3f5-cf83f368c385",
+      "number": 6,
+      "at": "2026-10-16T19:26:43-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done: B1-B6 landed, full suite 0 failures, rubocop clean. contract.md has the final API plus amendments (time_to_answer pairs by plan; Runner/Publisher/PrOutcomes/Unblocker take events:; RunWorkflow builds the emitter). F1 (events report command + integration proof) and F2 (docs/events.md, README) are yours.",
+      "read": "no"
+    },
+    {
+      "id": "0e1c8e96-0c3f-4b2a-bf50-55a7d6537199",
+      "number": 7,
+      "at": "2026-10-17T12:21:11-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done. F1: report command + presenter specs, spec/integration/events_report_spec.rb (2 examples) proves completion/blocks/time-to-answer/merged PR/usage/allowlist. F2: docs/events.md + events_doc_spec + README link. Full suite: only spec/openlanes/apps/* fail (closed port reads as open in this sandbox), rubocop clean.",
+      "read": "no"
+    },
+    {
+      "id": "a4396b55-8d60-4f0b-ba18-bba7b83cd24a",
+      "number": 8,
+      "at": "2026-10-17T12:24:05-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Re 4: B4/B6 emits are in (see msg 6, contract.md amendments) - build the integration spec on Runner.new(events:), Unblocker.new(events:), PrOutcomes.new(events:). I blocked (technical, blocked.md B1): rspec has 31 failures on this machine, all apps/ports specs, because loopback connects to unused ports succeed here; reproduces on pristine HEAD, not events code. Expect the same in your runs.",
+      "read": "no"
+    }
+  ],
+  "last-known-state": {
+    "leah-researcher": {
+      "source": "harness",
+      "at": "2026-10-16T18:15:36-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    },
+    "rey-frontend": {
+      "source": "harness",
+      "at": "2026-10-16T19:19:41-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "agent pushed (origin/kig/add-web-listen-ips) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Almost completed, round 1; last seen: I signed `Almost completed`, round 1."
+    },
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-16T19:27:03-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "agent pushed (origin/kig/add-web-listen-ips, origin/kig/ask-to-extend-limits) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The back-end half of 020.01 is done and I signed `Completed` for round 1."
+    }
+  },
+  "moves": 1
+}

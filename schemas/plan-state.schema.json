@@ -100,6 +100,24 @@
       "propertyNames": { "$ref": "#/$defs/agent" },
       "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
     },
+    "memory": {
+      "description": "Each agent's journal (M2): what it printed as one-line JSON while it worked, kept by the harness, the only writer. Entries are numbered 1 up across an agent's rounds, in order; a later one wins.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/agent" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["rounds"],
+        "additionalProperties": false,
+        "properties": {
+          "rounds": {
+            "description": "Keyed by the agent's journal round on this plan, 1 up across runs and states; not the dispatcher's round, which restarts in every run.",
+            "type": "object",
+            "propertyNames": { "pattern": "^[1-9][0-9]*$" },
+            "additionalProperties": { "$ref": "#/$defs/journalRound" }
+          }
+        }
+      }
+    },
     "conversions": {
       "description": "Questions in blocked.md the engine rewrote into lettered choices (D9), and ones it tried and could not, with the text as the agent wrote it.",
       "type": "array",
@@ -178,6 +196,28 @@
         "next_step": { "type": "string" },
         "files_touched": { "type": "array", "items": { "type": "string" } },
         "note": { "type": "string" }
+      }
+    },
+    "journalRound": {
+      "type": "object",
+      "required": ["entries"],
+      "additionalProperties": false,
+      "properties": {
+        "round": { "type": "integer", "minimum": 1, "description": "The dispatcher's round it was printed in." },
+        "state": { "type": "string", "description": "The state the plan was in when the round started." },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/journalEntry" } }
+      }
+    },
+    "journalEntry": {
+      "type": "object",
+      "required": ["kind", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["todo", "done", "decision", "question", "override", "note"] },
+        "text": { "type": "string", "minLength": 1 },
+        "overrides": { "type": "integer", "minimum": 1, "description": "On an override: the number of the entry it overturns." },
+        "ref": { "type": "string", "pattern": "^B[0-9]+$", "description": "The blocked.md question this records, written by the harness." },
+        "answer": { "type": "string", "description": "A person's answer to that question, written by the harness." }
       }
     },
     "agent": { "type": "string", "pattern": "^[\\w-]+$" },

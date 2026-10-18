@@ -20,6 +20,7 @@ require_relative "cli/linear/subcommands/import"
 require_relative "cli/docs/docs"
 require_relative "cli/eval/eval"
 require_relative "cli/run/run"
+require_relative "cli/setup/setup"
 require_relative "cli/start/start"
 require_relative "cli/unblock/unblock"
 require_relative "cli/version/version"
@@ -95,7 +96,7 @@ module OpenLanes
       width [90, TTY::Screen.width - 2].min
 
       # Most used first: what a person types every day, then what scripts do.
-      group "OpenLanes Default Web Operation", "init", "start", "web"
+      group "OpenLanes Default Web Operation", "setup", "init", "start", "web"
       group "Headless Operation",
         "create",
         "run",
@@ -115,6 +116,7 @@ module OpenLanes
       group "Reference", "docs", "api", "states", "linear", "skills", "completion", "version"
     end
 
+    register "setup", Setup
     register "init", Init
     register "create", Create, aliases: %w[new c]
     # Renamed from `status`, which read as "is the tool OK?" rather than "what

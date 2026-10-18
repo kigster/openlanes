@@ -256,6 +256,36 @@ RSpec.describe OpenLanes::Web::App, :tree do
       end
     end
 
+    context "with a slash command and a live engine (plan 020.00)" do
+      before do
+        store.set(keys.snapshot, JSON.generate(snapshot))
+        post_message({ id: "01JCONC", text: "/concurrency 2" })
+      end
+
+      it "answers 202, queues it for the engine and starts no copilot" do
+        queued = store.xrange(keys.commands).map { JSON.parse(it.fields["json"]) }
+        expect([last_response.status, queued.map { it.values_at("id", "kind", "payload") }, later.size])
+          .to eq([202, [["01JCONC", "set_concurrency", { "limit" => 2, "source" => "copilot" }]], 0])
+      end
+    end
+
+    context "with a slash command and no engine" do
+      before { post_message({ id: "01JSTOP", text: "/stop 20" }) }
+
+      it "answers 503 and stores nothing" do
+        expect([last_response.status, body["error"], store.xlen(keys.copilot), store.xlen(keys.commands)])
+          .to eq([503, "no engine is running to apply /stop", 0, 0])
+      end
+    end
+
+    context "with an unknown slash command" do
+      before { post_message({ id: "01JFROB", text: "/frobnicate" }) }
+
+      it "answers 202 with the usage already in the conversation, and starts no copilot" do
+        expect([last_response.status, store.xlen(keys.copilot), later.size]).to eq([202, 2, 0])
+      end
+    end
+
     context "when nothing answers the copilot in this server" do
       let(:context) do
         OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, url: "memory://", background:)
@@ -498,6 +528,129 @@ RSpec.describe OpenLanes::Web::App, :tree do
     it "never reads outside the plans for a traversing ordinal" do
       get "/api/plans/..%2F..%2Fetc/files/spec.md"
       expect(last_response.status).to eq(404)
+    end
+
+    it "sends the SHA-256 of the bytes as a strong ETag" do
+      get "/api/plans/004.00/files/spec.md"
+      expect(last_response.headers["ETag"]).to eq(%("#{Digest::SHA256.hexdigest("# The spec\n")}"))
+    end
+  end
+
+  describe "GET /api/plans/:ordinal/files" do
+    before do
+      plans do |t|
+        t.plan("004.00", :new, "web-control-room", files: { "spec.md" => "# S\n", "blocked.md" => "# B\n", "secret.txt" => "no" })
+        t.plan("005.00", :new, "empty")
+      end
+    end
+
+    it "lists the plan files the folder has, in whitelist order" do
+      get "/api/plans/004/files"
+      expect([last_response.status, body]).to eq([200, { "files" => %w[spec.md blocked.md] }])
+    end
+
+    it "lists none for a folder with none" do
+      get "/api/plans/005.00/files"
+      expect([last_response.status, body]).to eq([200, { "files" => [] }])
+    end
+
+    it "refuses a plan that does not exist" do
+      get "/api/plans/009.00/files"
+      expect([last_response.status, body]).to eq([404, { "error" => "there is no plan 009.00" }])
+    end
+  end
+
+  describe "PUT /api/plans/:ordinal/files/:name" do
+    let(:spec_md) { "---\nlane: full\n---\n\n# The spec\n" }
+    let(:edited) { "---\nlane: full\n---\n\n# The spec, edited\n" }
+    let(:path) { File.join(Dir[File.join(plans_root, "004.00*")].first, "spec.md") }
+
+    before do
+      plans do |t|
+        t.plan("004.00", :blocked, "web-control-room", files: { "spec.md" => spec_md, "blocked.md" => "## B1\n" })
+      end
+    end
+
+    def etag_of(text) = %("#{Digest::SHA256.hexdigest(text)}")
+
+    def save(name, text, if_match: etag_of(spec_md), token: context.csrf)
+      header "X-CSRF-Token", token if token
+      header "If-Match", if_match if if_match
+      put "/api/plans/004.00/files/#{name}", text, "CONTENT_TYPE" => "text/markdown"
+    end
+
+    it "writes the file and answers with its new ETag" do
+      save("spec.md", edited)
+      expect([last_response.status, body, last_response.headers["ETag"], File.read(path)])
+        .to eq([200, { "etag" => etag_of(edited) }, etag_of(edited), edited])
+    end
+
+    it "serves the saved body and ETag on the next GET" do
+      save("spec.md", edited)
+      get "/api/plans/004.00/files/spec.md"
+      expect([last_response.body, last_response.headers["ETag"]]).to eq([edited, etag_of(edited)])
+    end
+
+    it "refuses without the CSRF token" do
+      save("spec.md", edited, token: nil)
+      expect([last_response.status, File.read(path)]).to eq([403, spec_md])
+    end
+
+    it "refuses blocked.md as read only" do
+      save("blocked.md", "## B9\n", if_match: etag_of("## B1\n"))
+      expect([last_response.status, body]).to eq([403, { "error" => "blocked.md is read only" }])
+    end
+
+    it "refuses a traversing name" do
+      save("..%2Fspec.md", edited)
+      expect([last_response.status, File.read(path)]).to eq([404, spec_md])
+    end
+
+    it "refuses a plan that does not exist" do
+      header "X-CSRF-Token", context.csrf
+      header "If-Match", etag_of(spec_md)
+      put "/api/plans/009.00/files/spec.md", edited
+      expect(last_response.status).to eq(404)
+    end
+
+    it "requires If-Match" do
+      save("spec.md", edited, if_match: nil)
+      expect([last_response.status, File.read(path)]).to eq([428, spec_md])
+    end
+
+    it "refuses a stale If-Match" do
+      save("spec.md", edited, if_match: etag_of("older"))
+      expect([last_response.status, body["error"], File.read(path)])
+        .to eq([412, "spec.md changed since it was read; reload it", spec_md])
+    end
+
+    it "refuses changed frontmatter" do
+      save("spec.md", edited.sub("lane: full", "lane: quick"))
+      expect([last_response.status, body["error"], File.read(path)]).to eq([422, "the frontmatter of spec.md is locked", spec_md])
+    end
+
+    context "when the plan has a live car" do
+      before do
+        plan = { ordinal: "004.00", cars: [{ agent: "luke-backend" }] }
+        store.set(keys.snapshot, JSON.generate(snapshot.merge(plans: [plan])))
+      end
+
+      it "refuses with 409 and leaves the file alone" do
+        save("spec.md", edited)
+        expect([last_response.status, body["error"], File.read(path)])
+          .to eq([409, "004.00 has an agent working on it; wait until it stops", spec_md])
+      end
+    end
+
+    context "when the board lists the plan with no car" do
+      before do
+        store.set(keys.snapshot, JSON.generate(snapshot.merge(plans: [{ ordinal: "004.00", cars: [] }])))
+      end
+
+      it "saves" do
+        save("spec.md", edited)
+        expect(last_response.status).to eq(200)
+      end
     end
   end
 

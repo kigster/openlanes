@@ -20,7 +20,8 @@
       "up": 2816200,
       "down": 202400,
       "cost": 14.8,
-      "agents_working": 4
+      "agents_working": 4,
+      "jobs": 4
     },
     "stations": [
       {
@@ -295,6 +296,43 @@
         "unacked": 0,
         "last_known": [],
         "locked": null
+      },
+      {
+        "ordinal": "002.00",
+        "title": "Fixture without a car",
+        "slug": "fixture-without-a-car",
+        "status": {
+          "key": "blocked",
+          "emoji": "⭕️",
+          "label": "Technical Block"
+        },
+        "lane": "full",
+        "station": "building",
+        "up": 0,
+        "down": 0,
+        "cost": 0,
+        "started_at": "2026-10-13T09:00:00Z",
+        "elapsed": 0,
+        "cars": [],
+        "pr": null,
+        "questions": [
+          {
+            "id": "002.00/B1",
+            "number": 1,
+            "heading": "B1 Which fixture shape",
+            "body": "Which shape should the fixture take?",
+            "agent": "rey-frontend",
+            "owner": "technical",
+            "options": null,
+            "held": false,
+            "asked_at": "2026-10-13T09:00:00Z"
+          }
+        ],
+        "interrupted": null,
+        "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+        "unacked": 0,
+        "last_known": [],
+        "locked": null
       }
     ],
     "backlog": [
@@ -380,7 +418,8 @@
         "up": 2816200,
         "down": 202400,
         "cost": 14.8,
-        "agents_working": 4
+        "agents_working": 4,
+        "jobs": 4
       },
       "stations": [
         {

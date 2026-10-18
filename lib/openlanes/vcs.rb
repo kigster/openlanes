@@ -25,5 +25,13 @@ module OpenLanes
     # @param github [OpenLanes::Vcs::GitHub]
     # @return [OpenLanes::Vcs::LabelSync]
     def label_sync(root: nil, github: GitHub.new(chdir: root)) = LabelSync.new(github:)
+
+    # Run before {label_sync}, once per repository: the repository's
+    # {Plans::ReviewLabel::MIGRATED} label marks it done.
+    #
+    # @param root [String, nil] as for {label_sync}
+    # @param github [OpenLanes::Vcs::GitHub]
+    # @return [OpenLanes::Vcs::LabelMigration]
+    def label_migration(root: nil, github: GitHub.new(chdir: root)) = LabelMigration.new(github:)
   end
 end

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "026.00",
+    "slug": "one-block-at-a-time"
+  },
+  "state": "planned",
+  "updated_at": "2026-10-17T11:27:23-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": [],
+  "moves": 1
+}

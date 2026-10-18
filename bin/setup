@@ -32,8 +32,10 @@ command -v brew>/dev/null  || {
 
 hash -r >/dev/null
 
-echo "Installing Brew packages defined in the Brewfile"
+echo "Installing Brew packages defined in the Brewfile and Brewfile.dev"
 brew bundle --no-upgrade --file="${project_root}/Brewfile"
+brew bundle --no-upgrade --file="${project_root}/Brewfile.dev"
+hash -r >/dev/null
 
 mkdir -p "$(rbenv root)"/plugins
 if [[ -d "$(rbenv root)"/plugins/ruby-build ]]; then

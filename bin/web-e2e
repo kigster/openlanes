@@ -12,6 +12,10 @@
 #   E2E_PORT       the page's own demo server        (11100)
 #   E2E_PEER_PORT  the second machine's demo server  (11101)
 #   E2E_REDIS_URL  Redis shared by both              (redis://localhost:6379/14)
+#
+# Both servers read a copy of web/cypress/fixtures/plans in a temp dir, passed
+# as --dir, so a save from the plan-files spec (plan 017) never dirties the
+# checkout. Cypress gets that path as the `plansDir` env, to read files back.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -29,16 +33,21 @@ for p in "$port" "$peer"; do
   fi
 done
 
+plans_tmp="$(mktemp -d)"
+plans="$plans_tmp/.plans"
+cp -R web/cypress/fixtures/plans "$plans"
+
 pids=()
 stop() {
   kill "${pids[@]}" 2>/dev/null || true
   wait "${pids[@]}" 2>/dev/null || true
+  rm -rf "$plans_tmp"
 }
 trap stop EXIT
 
-bundle exec exe/openlanes web --demo --no-open --port "$port" --redis-url "$redis" &
+bundle exec exe/openlanes web --demo --no-open --port "$port" --redis-url "$redis" --dir "$plans" &
 pids+=($!)
-bundle exec exe/openlanes web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine &
+bundle exec exe/openlanes web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine --dir "$plans" &
 pids+=($!)
 
 for p in "$port" "$peer"; do
@@ -47,4 +56,4 @@ for p in "$port" "$peer"; do
 done
 
 cd web
-npx cypress run --config "baseUrl=http://127.0.0.1:$port" --env "peer=http://127.0.0.1:$peer"
+npx cypress run --config "baseUrl=http://127.0.0.1:$port" --env "peer=http://127.0.0.1:$peer,plansDir=$plans"

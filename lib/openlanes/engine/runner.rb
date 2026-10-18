@@ -97,6 +97,23 @@ module OpenLanes
       # @return [OpenLanes::Engine::Verification::Driver, nil]
       attr_reader :verification
 
+      # A new concurrency limit, from the copilot's `/concurrency N`. Nothing
+      # running is stopped: the dispatcher fills only while fewer agents run
+      # than the limit, so a lower one takes effect as agents finish.
+      #
+      # @param count [Integer] at least 1
+      # @return [void]
+      # @raise [OpenLanes::Error] under `--isolation shared`, where every agent
+      #   works in one checkout and a second would write over the first
+      def jobs=(count)
+        raise OpenLanes::Error, "concurrency must be a whole number of at least 1, not #{count.inspect}" unless count.is_a?(Integer) && count >= 1
+        if !isolated? && count != 1
+          raise OpenLanes::Error, "this run is --isolation shared: one checkout, one agent at a time, so concurrency stays 1"
+        end
+
+        @jobs = count
+      end
+
       # @return [Boolean]
       def isolated? = @isolation == :worktree
 
@@ -125,6 +142,16 @@ module OpenLanes
       # @param ordinal [#to_s]
       # @return [void]
       def drop_plan(ordinal) = @dropped |= [ordinal.to_s]
+
+      # @param ordinal [#to_s]
+      # @return [Boolean] whether {#drop_plan} took it out of this run
+      def dropped?(ordinal) = @dropped.include?(ordinal.to_s)
+
+      # Let another machine take the plan: a person stopped it here.
+      #
+      # @param ordinal [#to_s]
+      # @return [void]
+      def release(ordinal) = @claims&.release(ordinal)
 
       # @return [Array<OpenLanes::Plans::Subject>]
       def in_scope = tree.subjects.select { |s| in_scope?(s) }

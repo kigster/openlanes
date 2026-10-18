@@ -147,3 +147,18 @@ From the spec: verify in the browser that an agent that fanned out is visually d
 > [!NOTE]
 >
 > [2026-10-16 07:03:02 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
+
+## Rebase decisions
+
+Upstream PR #55 (`c8e29f4`, `05dacfa`, `74e2231`) landed the same data this plan built, as names: `Progress#running` and `Board::Row#running` are `Array<String>`, the car's `subagents` on the wire is `string[]`, and the page draws each one as a ghost tile beside its parent. Main's shape wins everywhere below; the branch's integer count is now `running.size` / `subagents.length`.
+
+- `lib/openlanes/execution/transcript.rb`: kept main's `@running` (names keyed by the `Task` call's `tool_use_id`, ended by its `tool_result`); folded the branch's evidence in, so a `task_started` adds the same key (named by `subagent_type`, else `description`), a terminal `task_notification` removes it, a notification that overtook its start does not reopen it, and `finish` clears it. Dropped the branch's `@open` counter and its duplicate `running` method and `running:` keyword.
+- `lib/openlanes/engine/dispatcher.rb`: took main's side (`job.running = progress.running`, `job.subagents` stays cumulative); the branch's `job.subagents = progress.running` would have put a list into an Integer field.
+- `lib/openlanes/engine/board.rb`: rewrote the branch's `subagents` doc to main's meaning (cumulative), pointing at `running` for the in-flight list.
+- `lib/openlanes/live/snapshot.rb`: took main's `subagents: Array(row.running)`; dropped the branch's `row.subagents.to_i`, which would have sent the cumulative count under the same key.
+- `lib/openlanes/web/demo_board.rb`: kept the branch's fan-out cycle but as name lists (3 names, 1, none) instead of 3, 1, 0, so the demo matches the wire type.
+- `web/src/api/fixtures/board.json`, `snapshot.json`, `web/src/board/sample.ts`: took main's name lists; the branch's `2` on rey-frontend matches main's two names.
+- `web/src/api/types.ts`: dropped the branch's second `subagents: number` (a duplicate property next to main's `string[]`).
+- `web/src/board/Car.tsx`: kept the branch's tile lines and label, counted from `car.subagents?.length`. The tile now shows both the lines and main's ghost tiles beside it; a reviewer may want only one of the two.
+- `state.json`: took main's copy, the newer harness record (rey's attempt finished 19:10:01 vs 18:40:29 on the branch).
+- Specs (`transcript_spec`, `executor_spec`, `dispatcher_spec`, `demo_board_spec`, `Car.test.tsx`, `model.test.ts`): adapted the branch's examples to lists; gave each `task_started` its own `tool_use_id`, since the shared default would now collapse two tasks into one; dropped the branch's snapshot Integer example, covered by main's "names the sub-agents still running".

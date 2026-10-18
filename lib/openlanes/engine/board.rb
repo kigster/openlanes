@@ -12,6 +12,9 @@ module OpenLanes
     # @!attribute [r] waiting_on
     #   @return [Hash{String => Array<Integer>}] plan to the pull requests open
     #     and waiting on a person, as the human-mode watch last saw them (M4)
+    # @!attribute [r] jobs
+    #   @return [Integer] how many agents may run at once now, after any
+    #     `/concurrency` from the copilot (plan 020.00)
     Board = Data.define(:started_at,
       :status,
       :plans,
@@ -27,8 +30,9 @@ module OpenLanes
       :help,
       :about,
       :hidden,
-      :waiting_on) do
-      def initialize(selected: nil, dialog: nil, help: false, about: nil, hidden: 0, waiting_on: {}, **rest) = super
+      :waiting_on,
+      :jobs) do
+      def initialize(selected: nil, dialog: nil, help: false, about: nil, hidden: 0, waiting_on: {}, jobs: 1, **rest) = super
     end
 
     # @!attribute [r] key

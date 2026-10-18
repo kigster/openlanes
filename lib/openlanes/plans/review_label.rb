@@ -61,12 +61,27 @@ module OpenLanes
       # chewie-verifier's label, and the one the coverage gate withholds.
       READY_TO_MERGE = named("ready-to-merge")
 
+      # Not a verdict, and so not in {ALL}: {Vcs::LabelSync} never creates or
+      # recolours it. Its presence on a repository is the one sign that
+      # {Vcs::LabelMigration} has finished there. The colour of
+      # `ready-to-merge` could not be that sign: an earlier release recoloured
+      # it without moving a single pull request.
+      MIGRATED = new(name: "openlanes-r3-labels",
+        colour: "ededed",
+        meaning: "openlanes moved this repository's open PRs from M3's review labels to R3's",
+        passing: false)
+
+      # M3's names for verdicts R3 kept under another name: `review-passed`
+      # is R3's {OK_NOT_PERFECT}, and chewie's `ok-to-merge` is R3's
+      # {READY_TO_MERGE}.
+      RENAMED = { "review-passed" => OK_NOT_PERFECT, "ok-to-merge" => READY_TO_MERGE }.freeze
+
       # M3's verdicts that R3 dropped. Nothing sets them any more, but pull
       # requests labelled before R3 still carry them, so every new verdict
       # takes them off: otherwise #62's `review-passed` would sit beside its
       # next verdict, two at once. LabelSync never deletes them from the
       # repository; that stays a person's call.
-      RETIRED = %w[review-passed ok-to-merge].freeze
+      RETIRED = RENAMED.keys.freeze
 
       class << self
         # @return [Array<String>] every label name, in R3 order
