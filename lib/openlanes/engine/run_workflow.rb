@@ -46,8 +46,9 @@ module OpenLanes
         yield assignable(agents, plans) if @options[:agent]
         yield isolatable
         yield logging
+        migrated = yield labels_migrated
 
-        prepare(plans)
+        prepare(plans, migrated)
         live = yield live_for(agents)
         web  = yield web_for(live)
         runner = runner_for(agents, plans, live, web)
@@ -197,12 +198,14 @@ module OpenLanes
       # the state file, and a clean control file.
       #
       # @param plans [Array<OpenLanes::Plans::Ordinal>, nil]
+      # @param migrated [OpenLanes::Vcs::LabelMigration::Outcome, nil] what
+      #   {#labels_migrated} did, reported beside the sync
       # @return [void]
-      def prepare(plans)
+      def prepare(plans, migrated = nil)
         startup("Log", UI.log_path)
         credentials unless @dry_run || @quiet
         spec_warning(plans) unless @quiet
-        sync_labels if publishing?
+        sync_labels(migrated) if publishing?
 
         # The state file is what a harness that dies leaves for the next one.
         # It sits in .plans/ so a reboot keeps it, and it is ignored by name
@@ -218,6 +221,31 @@ module OpenLanes
         Execution::Control.reset!
       end
 
+      # M3's review labels moved onto R3's (R3), before anything else of the
+      # run: chewie's verification reads `ready-to-merge` as verified and
+      # skips CI and coverage, so a run that started with the migration still
+      # owed would trust an M3 approval as a verification, and could put a
+      # real `ready-to-merge` on that the next start's migration takes back
+      # off. So a publishing run that cannot migrate does not start. A dry
+      # run labels nothing and only warns.
+      #
+      # @return [Dry::Monads::Result] Success(Outcome or nil), or a refusal
+      def labels_migrated
+        return Success(nil) unless publishing?
+
+        Success(Vcs.label_migration(root: @root).call(dry_run: @dry_run))
+      rescue OpenLanes::Error => e
+        if @dry_run
+          warn("Review labels not migrated: #{e.message}") unless @quiet
+          return Success(nil)
+        end
+
+        refusal("Review labels not migrated: #{e.message}\n\n" \
+                "Until they are, an M3 ready-to-merge on an open pull request would read as chewie's " \
+                "verification. Start again once gh can reach the repository, or run with --no-git-push.",
+          69)
+      end
+
       # @return [Boolean] whether this run opens and labels pull requests;
       #   the same test {#publisher_for} applies, without its warning
       def publishing? = isolation == :worktree && @options[:git_push] != false
@@ -229,16 +257,11 @@ module OpenLanes
       # Against `--root`'s repository, the one the publisher opens pull
       # requests on, not whichever checkout the engine was started from.
       #
-      # M3's `ready-to-merge` comes off open pull requests first, so the
-      # sync's recolouring, which marks the migration done, never runs ahead
-      # of it: a migration that fails skips the sync, and the next run starts
-      # it again.
-      #
+      # @param migrated [OpenLanes::Vcs::LabelMigration::Outcome, nil]
       # @return [void]
-      def sync_labels
-        migrated = Vcs.label_migration(root: @root).call(dry_run: @dry_run).to_s
+      def sync_labels(migrated = nil)
         changes = Vcs.label_sync(root: @root).call(dry_run: @dry_run).select(&:write?)
-        lines = [migrated, *changes].compact.map { "  #{it}" }
+        lines = [migrated&.to_s, *changes].compact.map { "  #{it}" }
         return if lines.empty? || @quiet
 
         lead = @dry_run ? "Dry run: would sync review labels" : "Synced review labels"

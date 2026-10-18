@@ -118,11 +118,20 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
 
     # Calls the private step the way #prepare does, capturing STDERR.
-    def sync_with(**)
+    def sync_with(migrated: nil, **)
       err = CapturedStream.new
       original, $stderr = $stderr, err
-      workflow(isolation: "worktree", **).send(:sync_labels)
+      workflow(isolation: "worktree", **).send(:sync_labels, migrated)
       strip_ansi(err.string)
+    ensure
+      $stderr = original
+    end
+
+    # Calls the startup step the way #call does: its result, and STDERR.
+    def migrate_with(**)
+      err = CapturedStream.new
+      original, $stderr = $stderr, err
+      [workflow(isolation: "worktree", **).send(:labels_migrated), strip_ansi(err.string)]
     ensure
       $stderr = original
     end
@@ -171,25 +180,52 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       FileUtils.rm_rf(elsewhere)
     end
 
-    # R3: M3's `ready-to-merge` comes off open pull requests before the
-    # sync recolours the label, the mark that the migration is done.
-    it "migrates M3's ready-to-merge before it syncs, and says which pull requests moved" do
-      allow(migration).to receive(:call).and_return(OpenLanes::Vcs::LabelMigration::Outcome.new(pending: true, moves: { OpenLanes::Vcs::LabelMigration::STEPS.first => [7, 9] }))
-      err = sync_with(dry_run: false)
+    it "says which pull requests the migration moved, beside the labels it synced" do
+      moved = OpenLanes::Vcs::LabelMigration::Outcome.new(pending: true, moves: { OpenLanes::Vcs::LabelMigration::STEPS.first => [7, 9] })
 
-      aggregate_failures do
-        expect(migration).to have_received(:call).with(dry_run: false).ordered
-        expect(sync).to have_received(:call).with(dry_run: false).ordered
-        expect(err).to include("relabel ready-to-merge → review-approved on #7, #9")
-      end
+      expect(sync_with(dry_run: false, migrated: moved)).to include("relabel ready-to-merge → review-approved on #7, #9")
     end
 
-    it "leaves the labels unsynced when the migration fails, so the next run migrates again" do
-      allow(migration).to receive(:call).and_raise(OpenLanes::Error, "could not label #7: HTTP 502")
+    # R3 and Copilot on #78: chewie trusts `ready-to-merge`, so a publishing
+    # run must not start while an M3 one could still be on an open PR.
+    describe "the migration of M3's labels" do
+      it "runs before the run starts, against --root's repository" do
+        result, = migrate_with(dry_run: false)
 
-      aggregate_failures do
-        expect(sync_with(dry_run: false)).to include("Review labels not synced: could not label #7: HTTP 502")
-        expect(sync).not_to have_received(:call)
+        aggregate_failures do
+          expect(result.value!).to eq(nothing_owed)
+          expect(migration).to have_received(:call).with(dry_run: false)
+          expect(OpenLanes::Vcs).to have_received(:label_migration).with(root: plans_root.sub(%r{/\.plans\z}, ""))
+        end
+      end
+
+      it "refuses to start a publishing run it could not finish, so the next start migrates again" do
+        allow(migration).to receive(:call).and_raise(OpenLanes::Error, "could not label #7: HTTP 502")
+        result, = migrate_with(dry_run: false)
+
+        aggregate_failures do
+          expect(result.failure.status).to eq(69)
+          expect(result.failure.message).to include("Review labels not migrated: could not label #7: HTTP 502", "--no-git-push")
+        end
+      end
+
+      it "only warns under a dry run, which labels nothing" do
+        allow(migration).to receive(:call).and_raise(OpenLanes::Error, "could not list labels: HTTP 401")
+        result, err = migrate_with(dry_run: true)
+
+        aggregate_failures do
+          expect(result.value!).to be_nil
+          expect(err).to include("Review labels not migrated: could not list labels: HTTP 401")
+        end
+      end
+
+      it "is not asked for when the run opens no pull requests" do
+        result, = migrate_with(dry_run: false, git_push: false)
+
+        aggregate_failures do
+          expect(result.value!).to be_nil
+          expect(OpenLanes::Vcs).not_to have_received(:label_migration)
+        end
       end
     end
 
