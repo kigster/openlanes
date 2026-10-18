@@ -47,6 +47,8 @@ module OpenLanes
       # @return [void]
       def tick
         @mutex.synchronize do
+          next if paused
+
           left = @deadline - @now.call
           WARNINGS.each do |before, text|
             next if @fired.include?(before) || left > before
@@ -118,6 +120,24 @@ module OpenLanes
       end
 
       private
+
+      # While agents are paused (W32) the clock stands still: no warning
+      # overwrites the PAUSE in the agent's file, and on resume the deadline
+      # moves on by as long as the pause lasted, so a paused agent is never
+      # stopped for time it spent waiting.
+      #
+      # @return [Boolean] whether this tick is skipped
+      def paused
+        if Control.paused?
+          @paused_at ||= @now.call
+          return true
+        end
+        if @paused_at
+          @deadline += @now.call - @paused_at
+          @paused_at = nil
+        end
+        false
+      end
 
       # @param seconds [Integer]
       # @return [void]

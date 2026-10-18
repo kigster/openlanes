@@ -704,7 +704,7 @@ module OpenLanes
       # @return [void]
       def unblock_answered
         @unblocking.reject { it.thread.alive? }.each { settle_unblock(it) }
-        return if @runner.dry_run? || Execution::Control.quit?
+        return if @runner.dry_run? || Execution::Control.quit? || Execution::Control.paused?
 
         blocked = @runner.in_scope.select { BLOCKED.include?(it.status.key) }
         return if blocked.empty?
@@ -994,6 +994,9 @@ module OpenLanes
         # A 💣 stops new work, not work under way: agents already running
         # finish, and their plans settle, while nothing else starts.
         return nil if @runner.halted?
+        # Redis lost (W32): the agents under way are paused, and nobody new
+        # starts until it answers, since no claim could be checked.
+        return nil if Execution::Control.paused?
 
         @dependencies = @runner.dependencies(except: untouchable)
         blockers_first(@runner.in_scope).each do |subject|

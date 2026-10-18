@@ -81,6 +81,13 @@ RSpec.describe "The live controls on one invocation" do
       expect(prompt_for("luke-backend")).to include("HOLD means a person wants to say something to you", "mail read --dir")
     end
 
+    # W32
+    it "explains PAUSE and RESUME, and that a paused agent's time stands still" do
+      expect(prompt_for("luke-backend")).to include("PAUSE means the run lost touch",
+        "Your time does not run while you wait",
+        "RESUME means carry on")
+    end
+
     # `/compact` is the caller's command; an agent told to run it cannot.
     it "asks no agent to compact itself" do
       expect(prompt_for("luke-backend")).not_to include("/compact")

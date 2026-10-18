@@ -11,6 +11,8 @@ module OpenLanes
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
+  #   redis_outage_hours: 1     # how long agents stay paused for a lost Redis
+  #                             # before the run shuts down (W32); any positive number
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
@@ -61,6 +63,9 @@ module OpenLanes
   # @!attribute [r] redis_url
   #   @return [String, nil] where the live run keeps its board, its commands
   #     and its plan claims; `--redis-url` beats it, and it beats `$REDIS_URL`
+  # @!attribute [r] redis_outage_hours
+  #   @return [Numeric, nil] `redis_outage_hours` as the file says it; read
+  #     {#outage_limit}, which applies the default
   # @!attribute [r] commands
   #   @return [Hash{String => Hash{Symbol => Object}}] by command name, as
   #     typed: "run", "resync dirs"
@@ -93,6 +98,7 @@ module OpenLanes
     :frontend,
     :jobs,
     :redis_url,
+    :redis_outage_hours,
     :commands,
     :merge_by,
     :app,
@@ -101,8 +107,8 @@ module OpenLanes
     :review_max_hmm,
     :merge_max_rejections,
     :coverage) do
-    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil, commands: {},
-      merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
+    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
+      redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
       coverage: nil)
       super
     end
@@ -114,6 +120,13 @@ module OpenLanes
     #
     # @return [Integer]
     def max_rejections = merge_max_rejections || Config::DEFAULT_MAX_REJECTIONS
+
+    # Seconds a run keeps its agents paused for a Redis that stopped
+    # answering before it gives up and shuts down (W32): an hour, unless
+    # `redis_outage_hours` says otherwise.
+    #
+    # @return [Float]
+    def outage_limit = (redis_outage_hours || Config::DEFAULT_OUTAGE_HOURS) * 3600.0
 
     # The most 🤔 a review may carry and still be `review-approved` (R3).
     # Loudest first: `$OPENLANES_REVIEW_MAX_HMM`, then `review.max_hmm`, then
@@ -163,7 +176,7 @@ module OpenLanes
     # @return [String]
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
-                   "redis_url" => redis_url, "merge" => merge_settings }
+                   "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours, "merge" => merge_settings }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
@@ -187,7 +200,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url merge commands app plans questions review coverage].freeze
+    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours merge commands app plans questions review coverage].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -197,6 +210,9 @@ module OpenLanes
 
     # {#max_rejections} when the file names none (M6).
     DEFAULT_MAX_REJECTIONS = 2
+
+    # {#outage_limit} when the file names none (W32).
+    DEFAULT_OUTAGE_HOURS = 1
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
     PLAN_KEYS = %w[aging_since].freeze
@@ -262,6 +278,7 @@ module OpenLanes
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
+          redis_outage_hours: redis_outage_hours(settings, path),
           **merge(settings["merge"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
@@ -322,6 +339,16 @@ module OpenLanes
         return value.strip if value.is_a?(String) && REDIS_SCHEMES.include?(value.strip[/\A([a-z]+):/, 1])
 
         fail_with(path, "redis_url: #{value.inspect} is not a #{REDIS_SCHEMES.map { "#{it}://" }.join(", ")} URL")
+      end
+
+      # Any positive number: half an hour is `0.5`.
+      #
+      # @return [Numeric, nil]
+      def redis_outage_hours(settings, path)
+        value = settings["redis_outage_hours"]
+        return value if value.nil? || (value.is_a?(Numeric) && value.positive?)
+
+        fail_with(path, "redis_outage_hours: #{value.inspect} is not a number of hours above zero")
       end
 
       # @return [Hash{Symbol => Object}] the `merge:` settings, as keywords for {Config.new}

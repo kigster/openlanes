@@ -94,4 +94,24 @@ RSpec.describe OpenLanes::Execution::Clock do
       expect(stopped.extend!(600)).to be(false)
     end
   end
+
+  # W32: an agent paused for a lost Redis spends none of its time waiting.
+  context "when agents are paused" do
+    after { OpenLanes::Execution::Control.reset! }
+
+    it "says nothing, and moves the deadline on by as long as the pause lasted" do
+      OpenLanes::Execution::Control.pause!
+      File.write(control, "PAUSE\n")
+      at(0)
+      expect(at(1200)).to eq("PAUSE")
+
+      OpenLanes::Execution::Control.resume!
+      File.write(control, "")
+      aggregate_failures do
+        expect(at(1300)).to eq("")
+        expect(clock.remaining).to eq(1200)
+        expect(clock.phase).to eq(:calm)
+      end
+    end
+  end
 end

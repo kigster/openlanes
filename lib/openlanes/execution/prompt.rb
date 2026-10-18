@@ -488,6 +488,12 @@ module OpenLanes
           finish the essential remainder now. STOP means write what you have,
           sign your ledger entry, and end your turn.
 
+          PAUSE means the run lost touch with the machines it shares work with.
+          Finish the write you are in, start nothing new, and wait: reread this
+          file every thirty seconds until it says anything other than PAUSE.
+          Your time does not run while you wait. RESUME means carry on from
+          where you paused.
+
           HOLD means a person wants to say something to you. Finish the write
           you are in, then read your mail and wait for their next message
           before you do anything else; check every thirty seconds:

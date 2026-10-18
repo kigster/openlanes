@@ -108,6 +108,29 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    # W32
+    describe "redis_outage_hours" do
+      it "gives up on a lost Redis after an hour when the file says nothing" do
+        expect([config.redis_outage_hours, config.outage_limit]).to eq([nil, 3600.0])
+      end
+
+      it "reads any positive number of hours" do
+        openlanes_yml("redis_outage_hours: 0.5\n")
+        expect(config.outage_limit).to eq(1800.0)
+      end
+
+      it "writes itself back out" do
+        expect(described_class.new(redis_outage_hours: 6).to_yaml).to eq("redis_outage_hours: 6\n")
+      end
+
+      { "zero" => "0", "a negative" => "-2", "a word" => "soon" }.each do |label, value|
+        it "refuses #{label}" do
+          openlanes_yml("redis_outage_hours: #{value}\n")
+          expect { config }.to raise_error(OpenLanes::Error, /redis_outage_hours: .* is not a number of hours above zero/)
+        end
+      end
+    end
+
     describe "review.max_hmm" do
       it "defaults to five when neither the file nor the environment says" do
         expect(config.max_hmm(env: {})).to eq(5)
