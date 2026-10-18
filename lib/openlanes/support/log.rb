@@ -39,12 +39,31 @@ module OpenLanes
     # The level a run logs at when nothing says otherwise.
     DEFAULT_LEVEL = "info"
 
+    # SemanticLogger's colour formatter kept to one line per entry, as
+    # `standard` is: the stock one writes an exception's backtrace over many
+    # lines, which `tail -F` in the mprocs `logs` pane would scatter between
+    # the other process's lines.
+    class OneLineColor < SemanticLogger::Formatters::Color
+      # @return [String, nil]
+      def message = ("-- #{log.message.delete("\n")}" if log.message)
+
+      # @return [String, nil]
+      def exception
+        return unless log.exception
+
+        "-- Exception: #{color}#{log.exception.class}: #{log.exception.message.delete("\n")}#{color_map.clear}"
+      end
+    end
+
     # `--log-format` to SemanticLogger's formatter. `standard` is the one-line
     # formatter rather than the default one, which writes a stack trace over
-    # many lines and breaks "one line per entry".
-    FORMATS = { "standard" => :one_line, "json" => :json }.freeze
+    # many lines and breaks "one line per entry"; `color` is the same line in
+    # colour, by level, for a person reading the file with `tail -F` or `less -R`.
+    FORMATS = { "color" => OneLineColor, "standard" => :one_line, "json" => :json }.freeze
 
-    # The format a run logs in when nothing says otherwise.
+    # The format a run logs in when nothing says otherwise. Plain, so a log
+    # written in CI or by any project using the gem greps without first
+    # stripping escape codes; `just start` asks for `--log-format color`.
     DEFAULT_FORMAT = "standard"
 
     # How the engine tells the server it spawns where to log. The environment
@@ -125,6 +144,7 @@ module OpenLanes
         SemanticLogger.application = "openlanes"
         SemanticLogger.default_level = settings.level.to_sym
         formatter = FORMATS.fetch(settings.format)
+        formatter = formatter.new if formatter.is_a?(Class)
         if settings.stdout?
           SemanticLogger.add_appender(io: $stdout, formatter:)
         else

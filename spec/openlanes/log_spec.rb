@@ -40,7 +40,7 @@ RSpec.describe OpenLanes::Log do
     it "refuses a level or a format it does not know" do
       aggregate_failures do
         expect { settings(log_level: "loud") }.to raise_error(OpenLanes::Log::Invalid, /--log-level loud/)
-        expect { settings(log_format: "xml") }.to raise_error(OpenLanes::Log::Invalid, /--log-format xml: use one of standard, json/)
+        expect { settings(log_format: "xml") }.to raise_error(OpenLanes::Log::Invalid, /--log-format xml: use one of color, standard, json/)
       end
     end
   end
@@ -49,7 +49,7 @@ RSpec.describe OpenLanes::Log do
     let(:file) { File.join(root, "log", "development.log") }
 
     it "creates the log directory and writes there, signed with the process's name" do
-      described_class.setup(settings, name: "engine")
+      described_class.setup(settings(log_format: "standard"), name: "engine")
       described_class.logger.info("hello")
 
       aggregate_failures do
@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::Log do
     it "appends to what another process already wrote" do
       FileUtils.mkdir_p(File.dirname(file))
       File.write(file, "from the other process\n")
-      described_class.setup(settings)
+      described_class.setup(settings(log_format: "standard"))
       described_class.logger.info("ours")
 
       expect(File.readlines(file)).to match([
@@ -90,11 +90,27 @@ RSpec.describe OpenLanes::Log do
         "payload" => { "plan" => "003.00", "seconds" => 4.3 })
     end
 
-    it "keeps a stack trace on one line in the standard format" do
-      described_class.setup(settings)
-      described_class.logger.error("boom", RuntimeError.new("first\nsecond"))
+    %w[color standard].each do |format|
+      it "keeps a stack trace on one line in the #{format} format" do
+        described_class.setup(settings(log_format: format))
+        described_class.logger.error("boom", RuntimeError.new("first\nsecond"))
 
-      expect(File.readlines(file).size).to eq(1)
+        expect(File.readlines(file).size).to eq(1)
+      end
+    end
+
+    it "colours each line by its level under --log-format color, and not by default" do
+      described_class.setup(settings(log_format: "color"))
+      described_class.logger.warn("coloured")
+      coloured = File.read(file)
+      File.delete(file)
+      described_class.setup(settings)
+      described_class.logger.warn("plain")
+
+      aggregate_failures do
+        expect(coloured).to include("\e[").and(include("coloured"))
+        expect(File.read(file)).not_to include("\e[")
+      end
     end
 
     it "replaces its appender when set up again, rather than writing every line twice" do
@@ -121,7 +137,7 @@ RSpec.describe OpenLanes::Log do
 
     it "writes to STDOUT for --log -" do
       expect {
-        described_class.setup(settings(log: "-"))
+        described_class.setup(settings(log: "-", log_format: "standard"))
         described_class.logger.info("to stdout")
       }.to output(/openlanes -- to stdout/).to_stdout
 

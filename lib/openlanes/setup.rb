@@ -9,8 +9,8 @@ module OpenLanes
     # The gem's own root, which an installed gem and a checkout both have.
     GEM_ROOT = File.expand_path("../..", __dir__)
 
-    # The runtime tools, shipped in the gem. `Brewfile.dev` is a
-    # contributor's extras and is not.
+    # The one Brewfile, shipped in the gem: the runtime tools and a
+    # contributor's, which `bin/setup` bundles from the same file.
     BREWFILE = File.join(GEM_ROOT, "Brewfile")
 
     module_function

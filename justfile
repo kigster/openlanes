@@ -25,9 +25,11 @@ gem_url := 'https://rubygems.org/gems/' + gem_name
 recipes:
     just --choose
 
-# Start both the engine and control room with 4 concurrent workers
-run:
+# The engine, its API server and the page in mprocs, 4 agents at a time; the page reloads as you edit it
+start:
     @mprocs
+
+alias run := start
 
 # Sync all dependencies
 install:
@@ -44,18 +46,14 @@ web-install:
 web-build:
     cd web && npm run build
 
-# The page's dev server beside `openlanes web --demo`; Vite proxies /api to it
+# The page's dev server on 5173 beside this checkout's API server on 11000, which Vite proxies /api to
 web-dev:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
-    bundle exec exe/openlanes web --demo --no-open &
+    bin/log-tee api bundle exec exe/openlanes web --no-open --log-format color &
     trap 'kill %1 2>/dev/null || true' EXIT
-    cd web && npm run dev
-
-# The API server over the demo engine, serving the built page on 127.0.0.1:11000
-web-demo *args:
-    {{ rbenv }} exe/openlanes web --demo {{ args }}
+    cd web && ../bin/log-tee vite npm run dev -- --open
 
 # Cypress against two demo servers, the second as demo@second-machine; run `just web-build` first
 web-e2e:
@@ -118,7 +116,7 @@ update-workflow:
     bundle exec openlanes docs -o docs/WORKFLOW.md
 
 # Run all the tests
-test *args:
+test *args: web-build
     export ENVIRONMENT=test; {{ rbenv }} rspec {{ args }}
 
 # Score every agent's eval cases against their recordings

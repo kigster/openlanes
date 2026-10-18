@@ -1,5 +1,16 @@
 ---
+# `just start`: the engine, its API server and the page, all from this
+# checkout. The page is Vite's dev server on 5173, not the built web/dist,
+# so an edit to a .tsx or .css file is recompiled and pushed to the open
+# page at once; Vite proxies /api to the API server on 11000.
+#
+# Everything lands in log/development.log: the engine and the API server
+# through SemanticLogger, in colour here though the gem's default is plain,
+# and bin/log-tee adds Vite and what the API server prints itself. The
+# engine is not piped, so its pane keeps its live board.
 procs:
-  control-room: bundle exec lanes web
-  engine: bundle exec lanes run -j 4 --no-web --stay
+  engine: bundle exec exe/openlanes run -j 4 --no-web --stay --log-format color
+  api: bin/log-tee api bundle exec exe/openlanes web --no-open --log-format color
+  # npm ci again whenever package-lock.json is newer than what is installed.
+  web: cd web && { test node_modules/.package-lock.json -nt package-lock.json || npm ci; } && ../bin/log-tee vite npm run dev -- --open
   logs: tail -F log/development.log
