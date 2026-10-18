@@ -23,6 +23,8 @@ module OpenLanes
     #   messages    the agents, through `openlanes mail send`: what a pair
     #               says to each other, and the RESUME notes an interrupted
     #               agent leaves for its successor
+    #   memory      the harness again: each agent's journal (M2), the lines
+    #               it printed as it worked, with the answers to its questions
     #
     # A stage still Started whose harness process is gone is a crash, which is
     # how a restarted run finds what it has to resume.
@@ -466,6 +468,113 @@ module OpenLanes
       # @return [void]
       def spend_extension!(number)
         update { |data| (data["extensions"] || []).find { it["number"] == Integer(number) }&.store("spent", true) }
+      end
+
+      # ---- memory -----------------------------------------------------------
+
+      # Where the journals live in the document (M2).
+      MEMORY = "memory"
+
+      # One agent's journal on this plan, oldest round first, each entry
+      # numbered as the agent refers to it: 1 up, across every round.
+      #
+      # @param agent [String]
+      # @return [Array<OpenLanes::Plans::Journal::Round>] empty for an agent
+      #   that never printed an entry here
+      def journal(agent)
+        rounds = read.dig(MEMORY, agent, "rounds") || {}
+        first = 1
+        rounds.sort_by { |key, _| key.to_i }.map do |key, value|
+          entries = Array(value["entries"]).map { Journal::Entry.from_h(it) }
+          round = Journal::Round.new(number: key.to_i, round: value["round"], state: value["state"], entries:, first:)
+          first += entries.size
+          round
+        end
+      end
+
+      # Append entries to one of the agent's journal rounds, as they arrive.
+      #
+      # The first call of a dispatch passes no +number+ and is given the next
+      # one, under the same lock as the write, so two runs on one plan cannot
+      # both take round 3. Later calls of the same dispatch pass it back.
+      #
+      # An `override` must name an entry before its own: one pointing at
+      # itself or ahead can only be a miscount, and the prompt would draw it
+      # as overturning something it never saw.
+      #
+      # @param agent [String]
+      # @param entries [Array<OpenLanes::Plans::Journal::Entry>]
+      # @param number [Integer, nil] the journal round, nil to start one
+      # @param round [Integer, nil] the dispatcher's round, kept beside it
+      # @param state [#to_s, nil] the state the round started in
+      # @return [Array(Integer, Array<OpenLanes::Plans::Journal::Rejection>)]
+      #   the journal round written to, and what was refused
+      # @raise [OpenLanes::Error] on an agent name that is not one token
+      def journal!(agent:, entries:, number: nil, round: nil, state: nil)
+        raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+
+        rejected = []
+        update do |data|
+          rounds = ((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {}
+          number ||= rounds.keys.map(&:to_i).max.to_i + 1
+          target = (rounds[number.to_s] ||= { "round" => round, "state" => state&.to_s }.compact.merge("entries" => []))
+          count = rounds.sum { |_, value| Array(value["entries"]).size }
+          entries.each do |entry|
+            if entry.overrides && entry.overrides > count
+              rejected << Journal::Rejection.new(line: Journal.line(entry.kind, entry.text, overrides: entry.overrides),
+                reason: "entry #{count + 1} overrides #{entry.overrides}, which is not before it")
+              next
+            end
+            target["entries"] << entry.to_json_h
+            count += 1
+          end
+        end
+        [number, rejected]
+      end
+
+      # A person's answer to one of the agent's `blocked.md` questions, kept
+      # in the agent's journal with the question (M3): B1 with A1. Appended to
+      # the agent's latest round, which is the one that asked. Written once:
+      # a drain that is run again finds the same ref and answer already there.
+      # The check is made under the lock the write takes, so two drains at
+      # once (two control rooms, or a hand run beside the broker) cannot both
+      # find it missing and both write it.
+      #
+      # @param agent [String]
+      # @param ref [String] `B<n>`
+      # @param question [String]
+      # @param answer [String]
+      # @return [OpenLanes::Plans::Journal::Entry, nil] nil when it was there
+      # @raise [OpenLanes::Error] on an agent name that is not one token
+      def answer!(agent:, ref:, question:, answer:)
+        raise Error, "a journal needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
+
+        entry = Journal::Entry.new(kind: "question", text: question, ref:, answer:)
+        written = nil
+        update do |data|
+          rounds = ((data[MEMORY] ||= {})[agent] ||= {})["rounds"] ||= {}
+          next if rounds.each_value.any? { Array(it["entries"]).include?(entry.to_json_h) }
+
+          latest = rounds.keys.map(&:to_i).max || 1
+          (rounds[latest.to_s] ||= { "entries" => [] })["entries"] << entry.to_json_h
+          written = entry
+        end
+        written
+      end
+
+      # The agent whose questions `blocked.md` holds: whoever blocked last,
+      # a round that settled Blocked or a Blocked signature, since a plan
+      # blocked by hand-run agents has signatures and no stages. Neither
+      # kind outranks the other: a hand-run agent that blocks after a
+      # harness round did is the one that asked.
+      #
+      # @return [String, nil] nil when nothing on record ever blocked
+      def blocked_by
+        data = read
+        blocks = data["stages"].select { it["status"] == "Blocked" }
+                               .map { [parse_time(it["finished_at"] || it["started_at"]), it["agent"]] }
+        blocks += data["signatures"].select { it["status"] == "Blocked" }.map { [parse_time(it["at"]), it["agent"]] }
+        blocks.each_with_index.max_by { |(at, _), i| [at, i] }&.first&.last
       end
 
       # ---- last-known-state -------------------------------------------------
