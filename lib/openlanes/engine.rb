@@ -28,5 +28,20 @@ module OpenLanes
     #
     # @return [OpenLanes::Engine::CoverageGate]
     def coverage_gate(**) = CoverageGate.new(**)
+
+    @agent_locks = ->(dir) { AgentLocks.new(root: dir) }
+
+    # The plans' alock register (W31), for the repository holding +dir+; nil
+    # when the factory is, which is how the suite keeps `alock` unrun.
+    #
+    # @param dir [String] any directory in the repository, the plans' one
+    # @return [OpenLanes::Engine::AgentLocks, nil]
+    def agent_locks(dir) = @agent_locks&.call(dir)
+
+    # @param factory [#call, nil] answers `call(dir)` with an {AgentLocks}
+    # @return [void]
+    def agent_locks=(factory)
+      @agent_locks = factory
+    end
   end
 end

@@ -164,7 +164,12 @@ module OpenLanes
         @unblocking = []
         @unblock_tried = {}
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
-        @locks = PlanLocks.new
+        # Agents outside openlanes (W31). A dry run claims nothing, so it
+        # asks nothing either.
+        @agent_locks = runner.dry_run? ? nil : Engine.agent_locks(runner.tree.dir)
+        @said_outside = {}
+        @refused = Set.new
+        @locks = PlanLocks.new(agent_locks: @agent_locks)
         @verifying = {}
         @said_verifying = {}
         @finished = carried_over
@@ -541,7 +546,8 @@ module OpenLanes
       # @return [Array<String>]
       def untouchable
         busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now
-        busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) }.map { it.feature.ordinal.to_s }
+        busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) || held_outside?(it) }
+                      .map { it.feature.ordinal.to_s }
       end
 
       # Plans whose CI and coverage are being looked at off the loop's
@@ -562,6 +568,21 @@ module OpenLanes
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Boolean]
       def locked_elsewhere?(subject) = Plans::Lock.read(subject.feature.path)&.held_elsewhere? || false
+
+      # An agent outside openlanes holds the plan's folder or its worktree in
+      # alock (W31). Said once per holder, not on every tick it stays held.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean]
+      def held_outside?(subject)
+        held = @agent_locks&.held_elsewhere(subject.feature.path, checkout: @runner.checkout_path(subject))
+        ordinal = subject.feature.ordinal.to_s
+        if held && @said_outside[ordinal] != held
+          UI.log("held outside openlanes by #{held}; stepping around it", plan: ordinal)
+        end
+        @said_outside[ordinal] = held
+        !held.nil?
+      end
 
       # ---- pull requests a person owes (M4) ---------------------------------
 
@@ -898,15 +919,20 @@ module OpenLanes
       # @return [void]
       def dispatch
         ask_for_rounds
+        @refused.clear
         started = 0
         while @running.size < @runner.jobs && (pair = next_dispatchable)
           # Lost to another machine between the check and the claim: the next
           # pass sees the plan as foreign and steps around it.
           next unless @runner.claim(pair.last)
 
+          started_now = start(*pair)
+          # Lost to an agent outside openlanes (W31): the rest of this pass
+          # goes on without that plan, and the next listing shows its holder.
+          next if started_now.nil?
           # Lost the lock file to another run on this machine: the next tick
           # reads its lock and steps around the plan.
-          break unless start(*pair)
+          break unless started_now
 
           started += 1
         end
@@ -1017,6 +1043,7 @@ module OpenLanes
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
           next if locked_elsewhere?(subject)
+          next if held_outside?(subject) || @refused.include?(subject.feature.ordinal.to_s)
           # A stopped rebase holds the checkout until the harness has
           # continued or aborted it; a partner started now would build on
           # conflict markers.
@@ -1124,11 +1151,16 @@ module OpenLanes
 
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject]
-      # @return [Boolean] false when another run took the plan's lock first
+      # @return [Boolean, nil] false when another run took the plan's lock
+      #   first, nil when an agent outside openlanes holds the plan
       def start(agent, subject)
         ordinal = subject.feature.ordinal.to_s
         round = @history[[ordinal, agent.name]].count { |h| h[:state] == subject.status.key } + 1
         from = subject.status.key
+        # Before the rename, so a plan somebody outside openlanes holds is
+        # left exactly as they had it (W31).
+        return nil unless reserve(ordinal, subject, agent)
+
         subject = rename_on_start(subject, agent) unless @runner.dry_run?
         # The lock says the folder is in use, so nothing renames it while the
         # agent holds its path. It is taken before anything is recorded as
@@ -1230,6 +1262,7 @@ module OpenLanes
       rescue StandardError
         # Failed before the thread that releases it existed.
         @locks.release(ordinal) if release_owed && !@runner.dry_run?
+        @locks.unreserve(ordinal)
         raise
       end
 
@@ -1262,6 +1295,23 @@ module OpenLanes
           end
         end
         @running << job
+      end
+
+      # The plan's alock, taken before its first job starts. Refused, the
+      # plan's Redis claim goes back too, so another machine may take it.
+      #
+      # @param ordinal [String]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [Boolean] whether the job may start
+      def reserve(ordinal, subject, agent)
+        @locks.reserve(ordinal, subject.feature.path, "openlanes: #{agent.name} on #{ordinal}")
+        true
+      rescue PlanLocks::Refused => e
+        UI.log("not started: #{e.message}", level: :warn, plan: ordinal, agent: agent.name)
+        @runner.release(ordinal)
+        @refused << ordinal
+        false
       end
 
       # @param ordinal [String]
