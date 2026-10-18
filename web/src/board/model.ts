@@ -54,6 +54,12 @@ export const isMerged = (plan: Plan): boolean => plan.pr?.state === "merged";
 export const isApproved = (plan: Plan): boolean => plan.pr?.state === "approved";
 
 /**
+ * Approved or merged during this run: the engine keeps sending the plan, so its row stays, half height, for the run
+ * instead of fading after ten seconds. Loose on purpose, as an older engine sends no `finished` at all.
+ */
+export const keepsRow = (plan: Plan): boolean => plan.finished != null;
+
+/**
  * A row wears its state: lane colours while it works, green once approved, purple once GitHub reports the merge.
  * Purple means merged on GitHub and nothing less.
  */
@@ -92,12 +98,15 @@ export interface PillState {
   blocked: boolean;
 }
 
-/** The mockup's pillState: what a plan's pill looks like and says. `gone` is a merged plan whose row has left. */
+/**
+ * The mockup's pillState: what a plan's pill looks like and says. `gone` is a merged plan whose row has left. Approved
+ * is solid green and merged solid purple, both checked, for as long as the row stays; gone keeps merged's look.
+ */
 export function pillState(plan: Plan, stations: Station[], gone = false): PillState {
   const pr = plan.pr;
   if (gone) return { cls: "is-gone", mark: "✅", say: `PR #${pr?.number ?? "?"} merged on GitHub, plan complete`, blocked: false };
   if (pr && isMerged(plan)) return { cls: "is-merged", mark: "✅", say: `PR #${pr.number} merged on GitHub, plan complete`, blocked: false };
-  if (pr && isApproved(plan)) return { cls: "is-done", mark: "✓", say: `reviewed, PR #${pr.number} ready to merge`, blocked: false };
+  if (pr && isApproved(plan)) return { cls: "is-done", mark: "✅", say: `reviewed, PR #${pr.number} ready to merge`, blocked: false };
   if (plan.interrupted) {
     return { cls: "is-blocked", mark: "⭕", say: "needs a decision: keep or discard the interrupted agent's work", blocked: true };
   }

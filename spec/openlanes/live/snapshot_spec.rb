@@ -100,12 +100,15 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
           prs:   [t.open(44, "Review state labels")]
         t.plan "013.00", :new, "plain-numbers", files: { "spec.md" => spec_body }
         t.plan "012.00", :product_blocked, "linear-sync", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which?\n" }
-        t.plan "014.00", :approved, "shipped", files: { "spec.md" => spec_body }
+        t.plan "014.00", :approved, "shipped", files: { "spec.md" => spec_body }, prs: [t.merged(46, "Shipped")]
         t.plan "015.00", :new, "theirs", files: { "spec.md" => spec_body }
         t.plan "016.00", :bomb, "stack-ports", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which port range?\n" }
       end
       store.set(keys.claim("015.00"), "ffffffffffffffffffffffff:000000000000")
       claims.claim("001.00")
+      # Merged earlier in the run: on the board with no cars, as the page's 014.00 is.
+      OpenLanes::Plans::PlanState.for(path_of("014.00")).finish!("merged", at: at - 600)
+      claims.claim("014.00")
       meter.record(rows, now: at - 30)
     end
 
@@ -398,6 +401,41 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "names each as the page does" do
       expect(snapshot[:plans].map { it[:pr][:state] }).to eq(%w[rejected approved merged closed])
+    end
+  end
+
+  describe "a plan that finished in this run" do
+    let(:files) { { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n" } }
+    let(:by_ordinal) { snapshot[:plans].to_h { [it[:ordinal], it] } }
+
+    before do
+      plans do |t|
+        t.plan "001.00", :in_review, "approved", files:, prs: [t.open(1, "One")]
+        t.plan "002.00", :approved, "merged", files:, prs: [t.merged(2, "Two")]
+        t.plan "003.00", :in_review, "reviewing", files:, prs: [t.open(3, "Three")]
+      end
+      OpenLanes::Plans::PlanState.for(path_of("001.00")).finish!("approved", at: at - 120)
+      OpenLanes::Plans::PlanState.for(path_of("002.00")).finish!("merged", at: at - 60)
+      %w[001.00 002.00 003.00].each { claims.claim(it) }
+    end
+
+    it "says how and when, and nothing for a plan that has not finished" do
+      expect(by_ordinal.transform_values { it[:finished] })
+        .to eq("001.00" => { kind: "approved", at: "2026-10-13T08:58:00Z" },
+          "002.00" => { kind: "merged", at: "2026-10-13T08:59:00Z" },
+          "003.00" => nil)
+    end
+
+    it "calls hansolo's approval of an open pull request approved, though the plan is still at 👀" do
+      expect(by_ordinal["001.00"][:pr]).to include(state: "approved", merged_at: nil)
+    end
+
+    it "dates the merge from when it finished" do
+      expect(by_ordinal["002.00"][:pr]).to include(state: "merged", merged_at: "2026-10-13T08:59:00Z")
+    end
+
+    it "leaves an open pull request nobody approved open" do
+      expect(by_ordinal["003.00"][:pr]).to include(state: "open", merged_at: nil)
     end
   end
 

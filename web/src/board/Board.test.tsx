@@ -59,7 +59,7 @@ describe("Board", () => {
     const { container } = render(<Board board={board} merged retiring={noRetire} gone={none} theirs={life} />);
     const heads = container.querySelectorAll(".machine-head");
     expect(heads).toHaveLength(2);
-    expect(heads[0]).toHaveTextContent("dana@studio-mini10.0.4.124 plansthis machine");
+    expect(heads[0]).toHaveTextContent("dana@studio-mini10.0.4.126 plansthis machine");
     expect(heads[1]).toHaveTextContent("sam@ci-runner-21 plansread onlylast seen 0s ago");
     const theirs = container.querySelector(".plan.is-theirs")!;
     expect(theirs).toHaveAttribute("aria-label", "010 Cache agent registry lookups, on sam@ci-runner-2, read only");
@@ -81,6 +81,18 @@ it("keeps another machine's merged row on the board, purple, until its lifecycle
   expect(container.querySelector('[data-plan="010.00"]')).toHaveClass("is-retiring");
   rerender(<MachineBoard their={board.others[0]} me={board.me} life={{ retiring: noRetire, gone: new Map([[nodePlanKey(id, "010.00"), 1]]) }} />);
   expect(container.querySelector('[data-plan="010.00"]')).toBeNull();
+});
+
+// A plan finished this run stays on the board at half height, the narrow lanes' look, with the lanes wide; one still
+// working, or merged by an engine that never says finished, keeps its full height.
+it("draws a plan finished this run as a half-height row and every other plan full height", () => {
+  const board = sampleBoard();
+  board.me.plans.push(samplePlan({ ordinal: "009.00", pr: samplePr({ state: "merged" }) }));
+  const { container } = render(<Board board={board} merged={false} retiring={noRetire} gone={none} />);
+  const half = [...container.querySelectorAll(".plan.is-half")].map(row => row.getAttribute("data-plan"));
+  expect(half).toEqual(board.me.plans.filter(p => p.finished).map(p => p.ordinal));
+  expect(half).toEqual(["007.00", "008.00"]);
+  expect(container.querySelector('[data-plan="008.00"] .chip-merged')).not.toBeNull();
 });
 
 describe("MachineBoard", () => {

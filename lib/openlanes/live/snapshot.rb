@@ -119,6 +119,7 @@ module OpenLanes
         ordinal = subject.feature.ordinal.to_s
         state = Plans::PlanState.for(subject.feature.path)
         stages = state.stages
+        finished = state.finished
         rows = @board.rows.select { it.ordinal == ordinal }
         spent = @meter.for(ordinal, method(:price))
         started = @meter.started_at(ordinal)
@@ -134,13 +135,14 @@ module OpenLanes
           started_at:  started && iso(started),
           elapsed:     started ? (@at - started).round : 0,
           cars:        rows.map { car(it, subject, stages) },
-          pr:          pull_request(subject),
+          pr:          pull_request(subject, finished),
           questions:   questions(subject, state),
           interrupted: interrupted(stages, rows),
           claimed_by:  claimed_by(ordinal),
           unacked:     Plans.mailbox(subject.feature.path).unacked,
           last_known:  last_known(state),
-          locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash }
+          locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash,
+          finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
       end
 
       # @param status [OpenLanes::Plans::Status]
@@ -249,16 +251,24 @@ module OpenLanes
       # ---- pull request, interruption, claim --------------------------------
 
       # @param subject [OpenLanes::Plans::Subject]
+      # @param finished [OpenLanes::Plans::PlanState::Finished, nil]
       # @return [Hash, nil] `PullRequest`
-      def pull_request(subject)
+      def pull_request(subject, finished)
         pr = subject.pull_requests.find(&:open?) || subject.pull_requests.last or return nil
-        { number: pr.number.to_s[/\d+/].to_i, url: pr.url, state: pr_state(pr, subject), ci: nil, merged_at: nil }
+        merged_at = finished.at if pr.merged? && finished&.merged?
+        { number: pr.number.to_s[/\d+/].to_i, url: pr.url, state: pr_state(pr, subject, finished), ci: nil,
+          merged_at: merged_at && iso(merged_at) }
       end
 
+      # hansolo's approval leaves the plan at 👀 with its pull request open,
+      # which the status key alone reads as "open": `finished` is what says
+      # it was approved, so the page's pill turns green.
+      #
       # @return [String]
-      def pr_state(pr, subject)
+      def pr_state(pr, subject, finished)
         return "merged" if pr.merged?
         return "closed" unless pr.open?
+        return "approved" if finished&.kind == "approved"
 
         { rejected: "rejected", approved: "approved" }.fetch(subject.status.key, "open")
       end

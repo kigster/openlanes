@@ -91,6 +91,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    it "keeps the merged plan on the board for the rest of the run, and the rejected one off it" do
+      aggregate_failures do
+        expect(OpenLanes::Plans::PlanState.for(tree.everything.reload.find("003.00").feature.path).finished.kind).to eq("merged")
+        expect(dispatcher.board.plans).to include("003.00")
+        expect(dispatcher.board.plans).not_to include("001.00")
+      end
+    end
+
     it "makes one pulls call for every plan" do
       expect(github).to have_received(:pulls).once
     end

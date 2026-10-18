@@ -107,6 +107,15 @@ export interface LastKnown {
   note: string | null;
 }
 
+/**
+ * A plan whose pull request was approved or merged during this run. The engine keeps sending it for the rest of the
+ * run, so its row stays on the board at half height; after a restart it sends only the most recent one.
+ */
+export interface Finished {
+  kind: "approved" | "merged"; // matches pr.state: "approved", or "merged" with merged_at set
+  at: Iso;
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
@@ -121,6 +130,7 @@ export interface Plan {
   elapsed: number; // seconds this plan has been worked on, this run
   cars: Car[];
   pr: PullRequest | null;
+  finished: Finished | null; // null until its pull request is approved or merged
   questions: Question[];
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim

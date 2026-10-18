@@ -143,6 +143,7 @@
         }
       ],
       "pr": null,
+      "finished": null,
       "questions": [
         {
           "id": "001.00/B1",
@@ -222,6 +223,7 @@
         "ci": "pending",
         "merged_at": null
       },
+      "finished": null,
       "questions": [],
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
@@ -272,6 +274,7 @@
         }
       ],
       "pr": null,
+      "finished": null,
       "questions": [
         {
           "id": "006.00/B1",
@@ -299,6 +302,41 @@
           "asked_at": "2026-10-13T09:00:00Z"
         }
       ],
+      "interrupted": null,
+      "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+      "unacked": 0,
+      "last_known": [],
+      "locked": null
+    },
+    {
+      "ordinal": "014.00",
+      "title": "Shipped",
+      "slug": "shipped",
+      "status": {
+        "key": "approved",
+        "emoji": "✅",
+        "label": "Approved & Merged"
+      },
+      "lane": "quick",
+      "station": "pr",
+      "up": 1090000,
+      "down": 78800,
+      "cost": 4.2,
+      "started_at": "2026-10-13T09:00:00Z",
+      "elapsed": 5880,
+      "cars": [],
+      "pr": {
+        "number": 46,
+        "url": "https://github.com/kigster/openlanes/pull/46",
+        "state": "merged",
+        "ci": "passing",
+        "merged_at": "2026-10-13T09:10:00Z"
+      },
+      "finished": {
+        "kind": "merged",
+        "at": "2026-10-13T09:10:00Z"
+      },
+      "questions": [],
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 0,

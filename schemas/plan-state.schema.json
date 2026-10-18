@@ -33,6 +33,16 @@
       "type": ["string", "null"],
       "format": "date-time"
     },
+    "finished": {
+      "description": "When and how the plan finished: hansolo approved it, or its pull request merged. A merge replaces an approval. Cleared when an agent starts on the plan again, or a person rejects it.",
+      "type": "object",
+      "required": ["kind", "at"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["approved", "merged"] },
+        "at": { "type": "string", "format": "date-time" }
+      }
+    },
     "stages": {
       "description": "One record per dispatch of an agent's round, in dispatch order, written by the harness.",
       "type": "array",

@@ -78,6 +78,7 @@ export function samplePlan(over: Partial<Plan> = {}): Plan {
     elapsed: 125,
     cars: [sampleCar()],
     pr: null,
+    finished: null,
     questions: [],
     interrupted: null,
     claimed_by: null,

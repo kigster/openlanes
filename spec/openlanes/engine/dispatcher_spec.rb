@@ -1274,6 +1274,51 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         expect(attempts.first.note).to include("approved")
       end
     end
+
+    it "records the approval in state.json and keeps the plan on the board, with no cars, past LINGER" do
+      dispatcher = described_class.new(runner: runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")),
+        sleeper: ->(_) {})
+      dispatcher.run
+      later = OpenLanes::UI.monotonic + described_class::LINGER + 1
+      allow(OpenLanes::UI).to receive(:monotonic).and_return(later)
+      board = dispatcher.board
+
+      aggregate_failures do
+        expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).finished.kind).to eq("approved")
+        expect(board.plans).to eq(["001.00"])
+        expect(board.rows).to be_empty
+      end
+    end
+
+    it "forgets the approval once an agent starts on the plan again" do
+      OpenLanes::Plans::PlanState.for(path_of("001.00")).finish!("approved")
+      dispatcher = described_class.new(runner: runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer")),
+        sleeper: ->(_) {})
+      dispatcher.run
+
+      expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).finished).to be_nil
+    end
+  end
+
+  describe "a restarted engine" do
+    before do
+      plans do |t|
+        t.plan "001.00", :approved, "oldest", files: { "spec.md" => spec_body }
+        t.plan "002.00", :approved, "latest", files: { "spec.md" => spec_body }
+        t.plan "003.00", :in_review, "approved", files: { "spec.md" => spec_body, "plan.md" => "# P\n\n## U\n" }
+        t.plan "004.00", :new, "untouched", files: { "spec.md" => spec_body }
+      end
+      { "001.00" => ["merged", 3], "002.00" => ["merged", 1], "003.00" => ["approved", 2] }.each do |ordinal, (kind, hours)|
+        OpenLanes::Plans::PlanState.for(path_of(ordinal)).finish!(kind, at: Time.utc(2026, 10, 18, 12) - (hours * 3600))
+      end
+    end
+
+    it "carries over only the plan that finished last, whichever way it finished" do
+      dispatcher = described_class.new(runner: runner_with(executor_with { |*| nil }, agents: agents.only("hansolo-reviewer")),
+        sleeper: ->(_) {})
+
+      expect(dispatcher.board.plans).to eq(["002.00"])
+    end
   end
 
   describe "restarting after a dead harness" do

@@ -28,7 +28,7 @@ it("draws a pill per plan with the mockup's states and the summary, accessibly",
   expect(pill).toHaveClass("pill is-blocked");
   expect(pill).toHaveAttribute("aria-expanded", "true");
   expect(screen.getByRole("button", { name: "005 1h 38m, working, at Review" })).not.toHaveAttribute("aria-expanded");
-  expect(screen.getByText("0 merged, 0 ready to merge, 3 blocked")).toBeInTheDocument();
+  expect(screen.getByText("1 merged, 1 ready to merge, 3 blocked")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "010 1h 38m, on sam@ci-runner-2, read only, at Review" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });
@@ -90,24 +90,83 @@ it("marks other machines' approved and merged plans", () => {
   expect(screen.getByTitle(/^012 .*at somewhere/)).toBeInTheDocument();
 });
 
-it("takes the oldest purple pill off an overflowing bar once it has stayed long enough", () => {
-  vi.useFakeTimers();
+it("wears approved solid green and merged solid purple, both checked, for as long as their rows stay", async () => {
+  const finishOrder = new Map([["008.00", 1], ["007.00", 2]]);
+  const { container } = render(<StatusBar {...props({ finishOrder })} />);
+  const approved = ours().getByRole("button", { name: /^007 [^,]*, reviewed, PR #47 ready to merge$/ });
+  const merged = ours().getByRole("button", { name: /^008 [^,]*, PR #45 merged on GitHub, plan complete$/ });
+  expect(approved).toHaveClass("pill is-done");
+  expect(merged).toHaveClass("pill is-merged");
+  expect([approved, merged].map(p => p.querySelector(".pill-mark")?.textContent)).toEqual(["✅", "✅"]);
+  // Both sit after the divider, in the order they finished.
+  const ids = [...container.querySelectorAll(".pills:not(.pills-theirs) > li")].map(li => li.querySelector(".pill-id")?.textContent ?? "|");
+  expect(ids.slice(ids.indexOf("|"))).toEqual(["|", "008", "007"]);
+  expect(await axe(container)).toHaveNoViolations();
+});
+
+describe("past two lines", () => {
   const now = Date.now();
-  const gone = new Map<string, GonePlan>([
+  const gone = () => new Map<string, GonePlan>([
     ["007.00", { plan: samplePlan({ ordinal: "007.00" }), at: now - 10 * 60_000 }],
     ["006.00", { plan: samplePlan({ ordinal: "006.00" }), at: now - 20 * 60_000 }],
     ["005.00", { plan: samplePlan({ ordinal: "005.00" }), at: now }],
   ]);
-  const onDropGone = vi.fn();
-  const width = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(500);
-  render(<StatusBar {...props({ plans: [], gone, onDropGone })} />);
-  expect(onDropGone).toHaveBeenCalledWith("006.00");
-  onDropGone.mockClear();
-  width.mockReturnValue(0);
-  act(() => vi.advanceTimersByTime(15_000));
-  expect(onDropGone).not.toHaveBeenCalled();
-  width.mockRestore();
-  vi.useRealTimers();
+  beforeEach(() => vi.useFakeTimers({ now }));
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("takes the oldest purple pill off once it has stayed long enough", () => {
+    const onDropGone = vi.fn();
+    const height = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(500);
+    render(<StatusBar {...props({ plans: [], gone: gone(), onDropGone })} />);
+    expect(onDropGone).toHaveBeenCalledWith("006.00");
+    onDropGone.mockClear();
+    height.mockReturnValue(0);
+    act(() => vi.advanceTimersByTime(15_000));
+    expect(onDropGone).not.toHaveBeenCalled();
+  });
+
+  // The pills wrap rather than scroll sideways, so a wide list is no reason to take one off: only a third line is.
+  it("keeps every pill while they fit in two lines, however wide", () => {
+    const onDropGone = vi.fn();
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(5000);
+    render(<StatusBar {...props({ plans: [], gone: gone(), onDropGone })} />);
+    act(() => vi.advanceTimersByTime(15_000));
+    expect(onDropGone).not.toHaveBeenCalled();
+  });
+});
+
+// The page's bottom padding and the floating panels keep clear of the bar through --statusbar-h, so a bar that wrapped
+// to two lines writes its real height there, and takes it back when it goes.
+it("writes its real height into --statusbar-h, follows it as it changes, and puts it back on unmount", () => {
+  let resized: () => void = () => {};
+  const observe = vi.fn();
+  const disconnect = vi.fn();
+  const Real = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class {
+    constructor(callback: () => void) { resized = callback; }
+    observe = observe;
+    unobserve() {}
+    disconnect = disconnect;
+  } as unknown as typeof ResizeObserver;
+  const height = vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(60);
+  const root = document.documentElement.style;
+  try {
+    const { unmount } = render(<StatusBar {...props()} />);
+    expect(root.getPropertyValue("--statusbar-h")).toBe("60px");
+    expect(observe).toHaveBeenCalledWith(document.querySelector(".statusbar"));
+    height.mockReturnValue(110);
+    act(() => resized());
+    expect(root.getPropertyValue("--statusbar-h")).toBe("110px");
+    unmount();
+    expect(disconnect).toHaveBeenCalled();
+    expect(root.getPropertyValue("--statusbar-h")).toBe("");
+  } finally {
+    height.mockRestore();
+    globalThis.ResizeObserver = Real;
+  }
 });
 
 // Two engines on different Redis servers never see each other's claims, so the bar says which one this engine uses.
