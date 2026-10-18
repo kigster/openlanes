@@ -1679,8 +1679,8 @@ module OpenLanes
 
       # The agent signed Completed, but what it left does not justify the
       # state it advances to. The folder stays, its `next:` is not honoured,
-      # and the round is recorded as Interrupted, which is what the page
-      # lists under Needs you once the agent's rounds run out. Taking the
+      # and the round is recorded as Interrupted; once the agent's rounds run
+      # out, Needs you asks for more of them (E1). Taking the
       # signature at its word instead parked the plan: nobody else handles
       # the state it is still in, and its own agent counted itself done.
       #
@@ -1866,7 +1866,7 @@ module OpenLanes
       # The builders finished, but plan.md says nothing about how to test the
       # result. That is work an agent can do, so the builder is mailed what is
       # missing and handed its round back, once, to write it. A second refusal
-      # is Interrupted, which the page lists under Needs you. Parking the plan
+      # is Interrupted and spends a round, as any failed round does. Parking the plan
       # as finished, as a rejected push is, left 021 at 🟡 with nothing on the
       # page saying why.
       #
