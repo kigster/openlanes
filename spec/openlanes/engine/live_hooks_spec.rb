@@ -145,11 +145,24 @@ RSpec.describe "The engine's live hooks" do
         allow(OpenLanes::UI).to receive(:log)
       end
 
-      it "works alone, and says so" do
+      # W31: another machine sharing the Redis may already hold the plan, and
+      # nothing here can tell, so nothing new starts until Redis answers.
+      it "starts nothing new, and says so once per outage" do
         aggregate_failures do
-          expect([runner.claim(one), runner.foreign?(one)]).to eq([true, false])
-          expect(OpenLanes::UI).to have_received(:log).with("claims unchecked: gone", level: :warn).twice
+          expect([runner.claim(one), runner.claim(two), runner.foreign?(one)]).to eq([false, false, false])
+          expect(OpenLanes::UI).to have_received(:log)
+            .with("claims unchecked, starting nothing new until Redis answers: gone", level: :warn).once
         end
+      end
+
+      it "claims again once Redis answers, and says the next outage" do
+        runner.claim(one)
+        allow(claims).to receive(:claim).and_return(true)
+        expect(runner.claim(one)).to be(true)
+
+        allow(claims).to receive(:claim).and_raise(OpenLanes::Live::Unavailable, "gone")
+        runner.claim(one)
+        expect(OpenLanes::UI).to have_received(:log).with(/starting nothing new/, level: :warn).twice
       end
     end
 

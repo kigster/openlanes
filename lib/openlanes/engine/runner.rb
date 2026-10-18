@@ -181,19 +181,29 @@ module OpenLanes
         false
       end
 
-      # Take the plan before an agent starts on it. With Redis gone the run
-      # carries on unclaimed rather than stalling: the claim is an agreement
-      # between machines, and a machine that cannot reach the others is
-      # working alone.
+      # Take the plan before an agent starts on it. With Redis gone nothing
+      # new starts (W31): this machine cannot tell whether another one sharing
+      # the Redis already took the plan, and two machines building one spec is
+      # the collision the claim exists to prevent. Agents already running keep
+      # going. A run with no Redis at all has no claims and works alone.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Boolean] whether this machine may work it
       def claim(subject)
-        @claims.nil? || @claims.claim(subject.feature.ordinal)
+        claimed = @claims.nil? || @claims.claim(subject.feature.ordinal)
+        @claims_down = nil
+        claimed
       rescue Live::Unavailable => e
         claims_unavailable(e)
-        true
+        false
       end
+
+      # Where the plan's checkout lives when the run isolates, whether or not
+      # it has been made.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [String, nil]
+      def checkout_path(subject) = isolated? ? worktree.path_for(subject.feature) : nil
 
       # Run until nothing is dispatchable, or, staying, until a person stops
       # it.
@@ -350,7 +360,14 @@ module OpenLanes
 
       # @param error [OpenLanes::Live::Unavailable]
       # @return [void]
-      def claims_unavailable(error) = UI.log("claims unchecked: #{error.message}", level: :warn)
+      # Said once per outage: every plan asks on every tick, and the same
+      # line a hundred times buries the moment Redis went away.
+      def claims_unavailable(error)
+        return if @claims_down == error.message
+
+        @claims_down = error.message
+        UI.log("claims unchecked, starting nothing new until Redis answers: #{error.message}", level: :warn)
+      end
 
       # @return [void]
       def record_pull_request(path, publication)
