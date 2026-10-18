@@ -535,7 +535,8 @@ module OpenLanes
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
         )
         feature = Plans::Feature.parse(path)
-        brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed: "#{idea}\n\n#{marker(command)}")
+        seed = [idea, decisions(command.payload["decisions"]), marker(command)].compact.join("\n\n")
+        brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed:)
         brief.write_scaffold!
         brief.stamp!(idea_frontmatter(command.payload["frontmatter"]))
         created(feature, dispatcher)
@@ -562,6 +563,22 @@ module OpenLanes
 
           out[key] = key == "frontend" && %w[true false].include?(text) ? text == "true" : text
         end
+      end
+
+      # The interview's answers (M6) as a `## Decisions` section of the
+      # spec, so the agents downstream find them made instead of blocking to
+      # ask. A skipped interview sends none, and the spec is as it was.
+      #
+      # @param list [Array<Hash>, nil] `payload.decisions`: `question`, `answer`
+      # @return [String, nil]
+      def decisions(list)
+        rows = Array(list).filter_map do |entry|
+          next unless entry.is_a?(Hash)
+
+          question, answer = entry.transform_keys(&:to_s).values_at("question", "answer").map { it.to_s.gsub(/\s+/, " ").strip }
+          "- **#{question}** #{answer}" unless question.empty? || answer.empty?
+        end
+        "## Decisions\n\n#{rows.join("\n")}" unless rows.empty?
       end
 
       # @return [String]

@@ -16,6 +16,30 @@ RSpec.describe OpenLanes::Live do
     end
   end
 
+  # The suite sets Live.interviewer to nil before every example, which leaves
+  # the lazy branch unrun; these clear it to reach Interviewer.from_env.
+  describe ".interviewer" do
+    before { described_class.remove_instance_variable(:@interviewer) }
+
+    it "is nil without OPENROUTER_API_KEY" do
+      stub_const("ENV", ENV.to_h.except("OPENROUTER_API_KEY"))
+
+      expect(described_class.interviewer).to be_nil
+    end
+
+    it "is an Interviewer with one, built once and kept" do
+      stub_const("ENV", ENV.to_h.merge("OPENROUTER_API_KEY" => "sk-or-test"))
+      allow(OpenLanes::Live::Interviewer).to receive(:from_env).and_call_original
+
+      2.times { described_class.interviewer }
+
+      aggregate_failures do
+        expect(described_class.interviewer).to be_a(OpenLanes::Live::Interviewer)
+        expect(OpenLanes::Live::Interviewer).to have_received(:from_env).once
+      end
+    end
+  end
+
   describe ".mask" do
     it "hides a password, and only a password" do
       expect(%w[redis://:pw@h:6379/0 rediss://user:pw@h/1 redis://h:6379/0].map { described_class.mask(it) })

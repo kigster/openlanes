@@ -122,6 +122,23 @@ export async function postAppCommand(command: AppCommand): Promise<AppCommand> {
   throw new ApiError(reason ?? `POST /api/apps/commands answered ${res.status}`, res.status);
 }
 
+/** One interview question (M6): context, the options in order, and the index of the recommended one. */
+export interface InterviewQuestion {
+  context: string;
+  options: string[];
+  recommended: number;
+}
+
+/**
+ * Asks the server to grill a new idea before its spec is written (M6). No questions, with a reason, means there is no
+ * interviewer or it failed, and the plan is created as before.
+ */
+export async function postInterview(idea: string): Promise<{ questions: InterviewQuestion[]; reason?: string }> {
+  const res = await post("/api/interview", { idea });
+  if (res.ok) return (await res.json()) as { questions: InterviewQuestion[]; reason?: string };
+  return { questions: [], reason: `POST /api/interview answered ${res.status}` };
+}
+
 export const fetchChat = (page: string): Promise<ChatState> => getJson<ChatState>(`/api/chat?page=${encodeURIComponent(page)}`);
 
 /** What a page does in a chat (contract.md, "Chat between machines"). */
