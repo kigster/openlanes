@@ -5,16 +5,12 @@ import { useAsk } from "./asks";
 import { useCommand } from "./command";
 import { questionRef, type SendCommand } from "./support";
 
-export type Ask =
-  | { kind: "question"; id: string; plan: Plan; question: Question }
-  | { kind: "interrupt"; id: string; plan: Plan; interrupted: NonNullable<Plan["interrupted"]> };
+// An interrupted agent is no request: the engine resumes it from its note on its own, which is all a person ever chose.
+export type Ask = { kind: "question"; id: string; plan: Plan; question: Question };
 
-/** Every request in these plans, questions first within a plan, held ones included. */
+/** Every request in these plans, held ones included. */
 export function asksOf(plans: Plan[]): Ask[] {
-  return plans.flatMap((plan) => [
-    ...plan.questions.map((question): Ask => ({ kind: "question", id: question.id, plan, question })),
-    ...(plan.interrupted ? [{ kind: "interrupt", id: `${plan.ordinal}/interrupt`, plan, interrupted: plan.interrupted } as Ask] : []),
-  ]);
+  return plans.flatMap((plan) => plan.questions.map((question): Ask => ({ kind: "question", id: question.id, plan, question })));
 }
 
 const who = (q: Question) => q.agent ?? "the agent";

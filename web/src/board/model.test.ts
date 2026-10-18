@@ -124,7 +124,7 @@ describe("pillState", () => {
     expect(st({ pr: null }, true).say).toContain("PR #?");
     expect(st({ pr: samplePr({ state: "merged" }) })).toMatchObject({ cls: "is-merged", mark: "✅" });
     expect(st({ pr: samplePr({ state: "approved" }) })).toMatchObject({ cls: "is-done", mark: "✅", say: "reviewed, PR #44 ready to merge" });
-    expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ cls: "is-blocked", mark: "⭕" });
+    expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ blocked: false });
     expect(st({ questions: [sampleQuestion({ held: true })] })).toMatchObject({ cls: "is-blocked is-held", mark: "⏸" });
     expect(st({ questions: [sampleQuestion({ owner: "product" })] })).toMatchObject({ mark: "🛑", say: expect.stringContaining("product") });
     expect(st({ questions: [sampleQuestion({ body: "" })] })).toMatchObject({ mark: "⭕", say: "needs technical decision: B1 Redis key layout" });

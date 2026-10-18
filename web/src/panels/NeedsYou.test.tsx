@@ -26,7 +26,7 @@ describe("NeedsYou", () => {
     const { onCommand } = recorder();
     const { container } = renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("005.00"), planAt("006.00")]} onCommand={onCommand} />);
     expect(screen.getByRole("heading", { name: "Needs you (2)" })).toBeInTheDocument();
-    expect(screen.getByText("Questions and interrupted agents wait here until you act.")).toBeInTheDocument();
+    expect(screen.getByText("Questions wait here until you answer them.")).toBeInTheDocument();
     expect(screen.getByText("001.00 — luke-backend")).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -179,42 +179,10 @@ describe("NeedsYou", () => {
     expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
   });
 
-  it("resumes an interrupted agent", async () => {
-    const user = userEvent.setup();
-    const { sent, onCommand } = recorder();
-    renderPanel(<NeedsYou plans={[interrupted()]} onCommand={onCommand} />);
-    expect(screen.getByText("You interrupted rey-frontend 4 minutes ago. Its resume note says: 4 of 7 sources are read.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Keep work and resume" }));
-    expect(sent[0]).toEqual({ kind: "resume", plan: "001.00", agent: "rey-frontend", payload: {} });
-    expect(await findInline("Kept rey-frontend's work. It resumes from its note.")).toBeInTheDocument();
-  });
-
-  it("confirms a plan-wide discard, naming the other agents it stops", async () => {
-    const user = userEvent.setup();
-    const { sent, onCommand } = recorder();
-    const { container } = renderPanel(<NeedsYou plans={[interrupted()]} onCommand={onCommand} />);
-    await user.click(screen.getByRole("button", { name: "Discard work" }));
-    const confirm = screen.getByRole("group", { name: "Discard work on 001.00?" });
-    expect(confirm).toHaveTextContent("It also stops luke-backend, resets the plan's worktree and sends the plan back one state.");
-    expect(within(confirm).getByRole("button", { name: "Cancel" })).toHaveFocus();
-    expect(await axe(container)).toHaveNoViolations();
-    await user.click(within(confirm).getByRole("button", { name: "Cancel" }));
-    expect(screen.getByRole("button", { name: "Keep work and resume" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Discard work" }));
-    await user.click(within(screen.getByRole("group")).getByRole("button", { name: "Discard work" }));
-    expect(sent[0]).toEqual({ kind: "discard", plan: "001.00", agent: null, payload: {} });
-    expect(await findInline("Discarded rey-frontend's work. It starts again.")).toBeInTheDocument();
-  });
-
-  it("names no others when the interrupted agent was alone", async () => {
-    const user = userEvent.setup();
-    const plan = interrupted();
-    plan.cars = [];
-    plan.interrupted = { ...plan.interrupted!, note: "" };
-    renderPanel(<NeedsYou plans={[plan]} onCommand={recorder().onCommand} />);
-    expect(screen.getByText("You interrupted rey-frontend 4 minutes ago.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Discard work" }));
-    expect(screen.getByText(/It resets the plan's worktree and sends the plan back one state\./)).toBeInTheDocument();
+  it("asks nothing about an interrupted agent, which the engine resumes on its own", () => {
+    renderPanel(<NeedsYou plans={[interrupted()]} onCommand={recorder().onCommand} />);
+    expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Keep work and resume" })).not.toBeInTheDocument();
   });
 
   it("keeps a settled note after the snapshot drops its question", async () => {

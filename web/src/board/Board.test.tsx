@@ -161,13 +161,11 @@ describe("PlanRow", () => {
     expect(screen.getByText("Opus 5.5")).toBeInTheDocument();
   });
 
-  it("shows an interrupted plan's queued car", () => {
+  it("shows an interrupted plan's agents as they are, with nothing to decide", () => {
     render(
-      <PlanRow plan={samplePlan({ cars: [], interrupted: { agent: "leah-researcher", at: "t", note: "" } })} stations={stations} models={models} />,
+      <PlanRow plan={samplePlan({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })} stations={stations} models={models} />,
     );
-    expect(screen.getByText("interrupted")).toBeInTheDocument();
-    expect(screen.getByText("researcher")).toHaveAttribute("title", "leah-researcher");
-    expect(screen.getByText("You interrupted it. Keep its work or discard it in Needs you.")).toBeInTheDocument();
+    expect(screen.queryByText("interrupted")).not.toBeInTheDocument();
   });
 
   it("marks a failed car red and a retiring row as leaving", () => {

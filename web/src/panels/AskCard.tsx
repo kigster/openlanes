@@ -1,9 +1,7 @@
-// One request as a card: a question an agent asked, or an agent a person interrupted. Needs you shows it in the rail,
+// One request as a card: a question an agent asked. Needs you shows it in the rail,
 // the unblock widget across the board, and the drawer the question part of it; the logic is here once for all three.
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Plan, Question, QuestionOption } from "../api/types";
-import { useAsk } from "./asks";
-import { useCommand } from "./command";
 import { Feedback } from "./feedback";
 import { renderMarkdown } from "./markdown";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -158,60 +156,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   );
 }
 
-const ago = (at: string): string => {
-  const minutes = Math.round((Date.now() - Date.parse(at)) / 60000);
-  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-Math.max(0, minutes), "minute");
-};
-
-function InterruptCard({ ask, onCommand, variant }: { ask: Extract<Ask, { kind: "interrupt" }>; onCommand: SendCommand; variant: "rail" | "widget" }) {
-  const { plan, interrupted } = ask;
-  const [state, update] = useAsk(ask.id);
-  const command = useCommand(onCommand);
-  const [confirming, setConfirming] = useState(false);
-  const cancel = useRef<HTMLButtonElement>(null);
-  const keep = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (confirming) cancel.current?.focus(); }, [confirming]);
-  useEffect(() => { if (variant === "widget") keep.current?.focus(); }, [variant]);
-  // Discard is plan-wide (W9): every agent in the plan's worktree stops, so the confirmation names the others.
-  const others = plan.cars.map((c) => c.agent).filter((a) => a !== interrupted.agent);
-  const act = async (kind: "resume" | "discard", note: string) => {
-    const reply = await command.send({ kind, plan: plan.ordinal, agent: kind === "resume" ? interrupted.agent : null, payload: {} }, note);
-    if (reply && reply.status !== "refused") update({ settled: note });
-  };
-  if (state.settled) return <div className="ask is-done" data-ask={ask.id}><p className="ask-done">{state.settled}</p></div>;
-  const pending = command.pending;
-  return (
-    <div className="ask" data-ask={ask.id}>
-      <Who plan={plan} agent={interrupted.agent} />
-      <p className="ask-text">
-        You interrupted {interrupted.agent} {ago(interrupted.at)}.{interrupted.note ? ` Its resume note says: ${interrupted.note}` : ""}
-      </p>
-      {confirming ? (
-        <div className="ask-confirm" role="group" aria-label={`Discard work on ${plan.ordinal}?`}>
-          <p>
-            Discard the work on {plan.ordinal}?{" "}
-            {others.length ? `It also stops ${others.join(" and ")}, resets the plan's worktree and sends the plan back one state.`
-              : "It resets the plan's worktree and sends the plan back one state."}
-          </p>
-          <div className="ask-actions">
-            <button type="button" className="btn btn-quiet" ref={cancel} onClick={() => setConfirming(false)}>Cancel</button>
-            <button type="button" className="btn btn-alarm" disabled={pending} onClick={() => act("discard", `Discarded ${interrupted.agent}'s work. It starts again.`)}>Discard work</button>
-          </div>
-        </div>
-      ) : (
-        <div className="ask-actions">
-          <button type="button" className="btn btn-primary" ref={keep} disabled={pending} onClick={() => act("resume", `Kept ${interrupted.agent}'s work. It resumes from its note.`)}>Keep work and resume</button>
-          <button type="button" className="btn btn-alarm" onClick={() => setConfirming(true)}>Discard work</button>
-        </div>
-      )}
-      <Feedback outcome={command.outcome?.tone === "refused" ? command.outcome : null} announced={command.announced} />
-    </div>
-  );
-}
-
 /** A request, whichever kind. `onLeft` fires once a held card has faded out. */
 export function AskCard({ ask, variant, onCommand, onLeft }: { ask: Ask; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void }) {
-  return ask.kind === "question"
-    ? <QuestionCard plan={ask.plan} question={ask.question} variant={variant} onCommand={onCommand} onLeft={onLeft} />
-    : <InterruptCard ask={ask} onCommand={onCommand} variant={variant} />;
+  return <QuestionCard plan={ask.plan} question={ask.question} variant={variant} onCommand={onCommand} onLeft={onLeft} />;
 }

@@ -107,9 +107,6 @@ export function pillState(plan: Plan, stations: Station[], gone = false): PillSt
   if (gone) return { cls: "is-gone", mark: "✅", say: `PR #${pr?.number ?? "?"} merged on GitHub, plan complete`, blocked: false };
   if (pr && isMerged(plan)) return { cls: "is-merged", mark: "✅", say: `PR #${pr.number} merged on GitHub, plan complete`, blocked: false };
   if (pr && isApproved(plan)) return { cls: "is-done", mark: "✅", say: `reviewed, PR #${pr.number} ready to merge`, blocked: false };
-  if (plan.interrupted) {
-    return { cls: "is-blocked", mark: "⭕", say: "needs a decision: keep or discard the interrupted agent's work", blocked: true };
-  }
   const held = plan.questions.find(q => q.held);
   if (held) return { cls: "is-blocked is-held", mark: "⏸", say: `held blocked by you: ${held.body || held.heading}`, blocked: true };
   const open = plan.questions[0];
@@ -131,8 +128,8 @@ export function lockMark(plan: Plan): { mark: string; title: string } | null {
   return { mark: "🔑", title: `locked by pid ${pid} on ${host}, since ${started_at}` };
 }
 
-/** A plan with something for a person to answer: a question or an interrupted agent. Its red pill opens the widget. */
-export const hasRequest = (plan: Plan): boolean => plan.questions.length > 0 || plan.interrupted !== null;
+/** A plan with a question for a person to answer. Its red pill opens the widget. */
+export const hasRequest = (plan: Plan): boolean => plan.questions.length > 0;
 
 /** Finished, as the status bar sorts: approved or merged. */
 export const isFinished = (plan: Plan): boolean => isApproved(plan) || isMerged(plan);

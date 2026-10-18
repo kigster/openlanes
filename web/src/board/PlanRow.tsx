@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
 import type { Car as CarData, ModelChoice, Node, Plan, Station } from "../api/types";
-import { Car, InterruptedCar, SubagentTiles } from "./Car";
+import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, planId, who } from "./format";
 import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
@@ -71,8 +71,6 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   let cars: ReactNode;
   if (atPr && plan.pr) {
     cars = <Terminus pr={plan.pr} />;
-  } else if (plan.interrupted && !readOnly) {
-    cars = <InterruptedCar agent={plan.interrupted.agent} />;
   } else {
     cars = (
       <>
