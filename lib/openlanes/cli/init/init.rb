@@ -43,6 +43,7 @@ module OpenLanes
       # @return [void]
       def call(**options)
         quiet?(options)
+        prepare(options)
         root = Project.init_root
         path = File.join(root, Config::FILE)
         plans = File.expand_path(options.fetch(:dir, OpenLanes::PLANS_DIR), root)
@@ -61,6 +62,27 @@ module OpenLanes
       end
 
       private
+
+      # `openlanes setup`, but only when the machine is not ready, so a new
+      # project goes setup, init, start in one go and a ready machine is
+      # not made to wait on brew. A check that still fails is reported and
+      # init carries on: the file it writes needs none of them.
+      #
+      # @param options [Hash]
+      # @return [void]
+      def prepare(options)
+        return if machine.ready?
+
+        UI.line("This machine is missing something openlanes needs; running openlanes setup first.")
+        outcome = machine.call(dry_run: dry_run?(options))
+        $stderr.write(OpenLanes::Setup.render(outcome.checks))
+        warn("Still not ready: run each fix above, then openlanes setup.") unless outcome.ok?
+      end
+
+      # A named seam, so a spec can stand in for brew, gh and Redis.
+      #
+      # @return [OpenLanes::Setup::Machine]
+      def machine = @machine ||= OpenLanes::Setup.machine
 
       # The four values, each from its flag, else asked on a terminal, else
       # its default. The result is parsed back as the file would be, so
