@@ -455,7 +455,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       log = File.join(File.dirname(plans_root), "log", "development.log")
       aggregate_failures do
         expect(err.gsub(/[\s│]+/, "")).to include("Log:#{log}") # the box wraps long paths
-        written = File.read(log).gsub(/\e\[[\d;]*m/, "") # the default format is colour
+        written = File.read(log)
         expect(written).to include("engine -- run starting", "engine -- started", 'agent: "luke-backend"')
         expect(written).to match(/ W \[.*engine -- run finished -- \{attempts: \d+, failed: \d+/)
       end

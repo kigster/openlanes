@@ -11,7 +11,7 @@ RSpec.describe OpenLanes::Log do
 
   describe OpenLanes::Log::Settings do
     it "defaults to log/development.log under the root, at info, one line per entry" do
-      expect(settings).to have_attributes(file: File.join(root, "log", "development.log"), level: "info", format: "color")
+      expect(settings).to have_attributes(file: File.join(root, "log", "development.log"), level: "info", format: "standard")
     end
 
     it "takes a relative --log from the root, not the working directory" do
@@ -99,12 +99,12 @@ RSpec.describe OpenLanes::Log do
       end
     end
 
-    it "colours each line by its level by default, and not under --log-format standard" do
-      described_class.setup(settings)
+    it "colours each line by its level under --log-format color, and not by default" do
+      described_class.setup(settings(log_format: "color"))
       described_class.logger.warn("coloured")
       coloured = File.read(file)
       File.delete(file)
-      described_class.setup(settings(log_format: "standard"))
+      described_class.setup(settings)
       described_class.logger.warn("plain")
 
       aggregate_failures do

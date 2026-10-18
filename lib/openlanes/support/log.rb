@@ -61,8 +61,10 @@ module OpenLanes
     # colour, by level, for a person reading the file with `tail -F` or `less -R`.
     FORMATS = { "color" => OneLineColor, "standard" => :one_line, "json" => :json }.freeze
 
-    # The format a run logs in when nothing says otherwise.
-    DEFAULT_FORMAT = "color"
+    # The format a run logs in when nothing says otherwise. Plain, so a log
+    # written in CI or by any project using the gem greps without first
+    # stripping escape codes; `just start` asks for `--log-format color`.
+    DEFAULT_FORMAT = "standard"
 
     # How the engine tells the server it spawns where to log. The environment
     # rather than argv, for the same reason as the Redis URL: the server's
