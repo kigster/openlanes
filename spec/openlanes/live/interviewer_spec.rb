@@ -26,6 +26,16 @@ RSpec.describe OpenLanes::Live::Interviewer do
 
   def interview = interviewer.call(idea: "Export the ledger as CSV")
 
+  # Grok on #81: a slow model must not hold the dialog and a Puma thread for
+  # the HTTP client's full 40 seconds.
+  it "gives up on a model slower than its timeout" do
+    slow = Object.new
+    slow.define_singleton_method(:call) { |*| sleep 1 }
+    patient = described_class.new(adapter: slow, timeout: 0.05)
+
+    expect { patient.call(idea: "x") }.to raise_error(Timeout::Error, "no questions within 0.05s")
+  end
+
   it "asks for questions, as an extract over the idea" do
     interview
     node, answers = calls.first

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 module OpenLanes
   module Live
     # Grills a new idea before its spec.md is written (M6): the questions the
@@ -20,6 +22,11 @@ module OpenLanes
       # The most questions one idea is asked. A person is interviewed while
       # they wait, so the list stays short (M0).
       LIMIT = 5
+
+      # Seconds a person waits for the questions before the plan is created
+      # without them. The HTTP client alone allows 10 to connect and 30 to
+      # read, and a Puma thread and the dialog are held for all of it.
+      TIMEOUT = 20
 
       # What the model reads with the idea.
       PROMPT = <<~PROMPT.freeze
@@ -88,22 +95,30 @@ module OpenLanes
       # @param model [String] an OpenRouter model id
       # @param adapter [#call, nil] answers `call(node, answers)` with a Hash
       #   holding `questions`; built on first use when nil
-      def initialize(api_key: nil, model: ChoiceConverter::DEFAULT_MODEL, adapter: nil)
+      # @param timeout [Numeric] seconds before the interview is given up
+      def initialize(api_key: nil, model: ChoiceConverter::DEFAULT_MODEL, adapter: nil, timeout: TIMEOUT)
         @api_key = api_key
         @model = model
         @adapter = adapter
+        @timeout = timeout
         @mutex = Mutex.new
       end
 
       # @return [String]
       attr_reader :model
 
-      # Blocks for as long as the request takes.
+      # Blocks for at most {TIMEOUT} seconds.
       #
       # @param idea [String] Markdown, as the idea dialog sends it
       # @return [Array<OpenLanes::Live::Interviewer::Question>]
-      # @raise [StandardError] whatever the adapter raises: no network, a 4xx, bad JSON
-      def call(idea:) = self.class.render(adapter.call(node, { idea: idea.to_s }))
+      # @raise [StandardError] whatever the adapter raises: no network, a 4xx,
+      #   bad JSON, or Timeout::Error past the limit
+      def call(idea:)
+        output = Timeout.timeout(@timeout, Timeout::Error, "no questions within #{@timeout}s") do
+          adapter.call(node, { idea: idea.to_s })
+        end
+        self.class.render(output)
+      end
 
       private
 
