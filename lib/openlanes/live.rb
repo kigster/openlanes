@@ -17,6 +17,11 @@ module OpenLanes
     # Redis could not be reached, or stopped answering.
     class Unavailable < Error; end
 
+    # A stream's consumer group is not there: a Redis that restarted empty
+    # (W32) took it with everything else. Whoever reads the group creates it
+    # again; nothing is wrong with the connection.
+    class GroupMissing < Error; end
+
     module_function
 
     # W16's order: `--redis-url`, then `.openlanes.yml`'s `redis_url:`, then

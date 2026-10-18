@@ -129,9 +129,19 @@ module OpenLanes
         @ready = true
       end
 
+      # A group that went with a Redis restarted empty is made again, and
+      # the read tried once more; that it vanished once is no reason to stop
+      # the engine, as it did (#59).
+      #
       # @param id [String] "0" for this consumer's pending, ">" for new
       # @return [Array<OpenLanes::Live::Store::Entry>]
-      def read(id) = @store.xreadgroup(@keys.commands, Keys::GROUP, @node.name, id:, count: BATCH)
+      def read(id)
+        @store.xreadgroup(@keys.commands, Keys::GROUP, @node.name, id:, count: BATCH)
+      rescue GroupMissing
+        @ready = false
+        prepare
+        @store.xreadgroup(@keys.commands, Keys::GROUP, @node.name, id:, count: BATCH)
+      end
 
       # Answer the commands whose work finished since the last tick. A
       # command still at work is neither answered nor acknowledged, so an
