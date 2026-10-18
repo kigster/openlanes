@@ -1,125 +1,181 @@
 # frozen_string_literal: true
 
-# R3: M3's `ready-to-merge` meant review approval, so open pull requests that
-# carry it move to `review-approved` before the label means chewie verified.
+# R3: M3's review labels come off open pull requests, onto R3's, once per
+# repository, before anything reads `ready-to-merge` as chewie's verification.
+#
+# The double below is a tiny GitHub: open pull requests and their labels, and
+# the repository's labels, which the migration reads and changes the way the
+# real one would.
 RSpec.describe OpenLanes::Vcs::LabelMigration do
   subject(:migration) { described_class.new(github:) }
 
   let(:labels) { OpenLanes::Plans::ReviewLabel }
-  let(:github) { instance_double(OpenLanes::Vcs::GitHub, swap_label: [], open_pulls_labelled: carrying.to_h { [it, ["ready-to-merge"]] }) }
-  let(:carrying) { [7, 9] }
-  let(:colours) { { "ready-to-merge" => "2ea043", "bug" => "d73a4a" } }
+  let(:marker) { labels::MIGRATED.name }
+  let(:repository) { { "ready-to-merge" => "5319e7", "bug" => "d73a4a" } }
+  let(:pulls) do
+    {
+      7  => ["ready-to-merge"],
+      9  => %w[ready-to-merge enhancement],
+      11 => ["review-passed"],
+      12 => ["ok-to-merge"],
+      13 => %w[ok-to-merge ready-to-merge],
+      14 => ["review-rejected"]
+    }
+  end
+  let(:github) { instance_double(OpenLanes::Vcs::GitHub) }
+  let(:fail_on) { [] }
 
-  before { allow(github).to receive(:label_colours) { colours } }
+  before do
+    allow(github).to receive(:label_colours) { repository.dup }
+    allow(github).to receive(:open_pulls_labelled) { |name, **| pulls.select { |_, on| on.include?(name) }.transform_values(&:dup) }
+    allow(github).to receive(:ensure_label) { |label, **| repository[label.name] ||= label.colour }
+    allow(github).to receive(:swap_label) do |number:, add:, remove:, **|
+      raise OpenLanes::Error, "could not label ##{number}: HTTP 502" if fail_on.include?(number)
 
-  context "with a repository still on M3's ready-to-merge" do
-    it "moves every open pull request carrying it to review-approved" do
+      pulls[number] = (pulls[number] - remove) | [add.name]
+    end
+  end
+
+  def verdicts(number) = pulls[number] & (labels.known + ["enhancement"])
+
+  context "with a repository an earlier release already recoloured" do
+    # The colour is R3's, but no pull request was ever moved: kigster/openlanes.
+    it "migrates anyway, because only the marker says it is done" do
       outcome = migration.call(repo: "o/r")
 
       aggregate_failures do
         expect(outcome).to be_pending
-        expect(outcome.relabelled).to eq([7, 9])
-        expect(github).to have_received(:open_pulls_labelled).with("ready-to-merge", repo: "o/r")
-        [7, 9].each do |number|
-          expect(github).to have_received(:swap_label)
-            .with(number:, add: labels::APPROVED, remove: labels.displaced_by(labels::APPROVED), repo: "o/r")
-        end
+        expect(verdicts(7)).to eq(["review-approved"])
+        expect(verdicts(9)).to eq(%w[enhancement review-approved])
+      end
+    end
+  end
+
+  it "moves review-passed to review-ok-not-perfect" do
+    migration.call
+
+    expect(verdicts(11)).to eq(["review-ok-not-perfect"])
+  end
+
+  it "carries M3's verification over to ready-to-merge, whatever else the pull request carried" do
+    migration.call
+
+    aggregate_failures do
+      expect(verdicts(12)).to eq(["ready-to-merge"])
+      expect(verdicts(13)).to eq(["ready-to-merge"])
+    end
+  end
+
+  it "leaves a pull request with no M3 label alone" do
+    migration.call
+
+    expect(verdicts(14)).to eq(["review-rejected"])
+  end
+
+  it "marks the repository done after the last step, and says what moved in one line" do
+    outcome = migration.call
+
+    aggregate_failures do
+      expect(repository).to include(marker)
+      expect(outcome.to_s).to eq("relabel ready-to-merge → review-approved on #7, #9; " \
+                                 "review-passed → review-ok-not-perfect on #11; " \
+                                 "ok-to-merge → ready-to-merge on #12, #13")
+    end
+  end
+
+  it "creates each label it adds once, not once per pull request" do
+    migration.call
+
+    aggregate_failures do
+      expect(github).to have_received(:ensure_label).with(labels::APPROVED, repo: nil).once
+      expect(github).to have_received(:swap_label).with(hash_including(create_missing: false)).at_least(:once)
+      expect(github).not_to have_received(:swap_label).with(hash_including(create_missing: true))
+    end
+  end
+
+  it "reports every move under a dry run, and changes nothing" do
+    before = pulls.transform_values(&:dup)
+    outcome = migration.call(dry_run: true)
+
+    aggregate_failures do
+      expect(outcome.relabelled).to eq([7, 9, 11, 12, 13])
+      expect(pulls).to eq(before)
+      expect(repository).not_to include(marker)
+      expect(github).not_to have_received(:swap_label)
+    end
+  end
+
+  context "when it is interrupted half way" do
+    it "leaves the repository unmarked, and the next start moves only what is left" do
+      fail_on << 9
+      expect { migration.call }.to raise_error(OpenLanes::Error, /HTTP 502/)
+      expect(repository).not_to include(marker)
+
+      fail_on.clear
+      outcome = migration.call
+
+      aggregate_failures do
+        expect(outcome.moves.values.first).to eq([9])
+        expect(github).to have_received(:swap_label).with(hash_including(number: 7)).once
+        expect(repository).to include(marker)
       end
     end
 
-    it "takes ready-to-merge off as it adds review-approved" do
+    # The third step put ready-to-merge on #12 and kept ok-to-merge; a start
+    # after that must not read #12's ready-to-merge as M3's.
+    it "keeps a verification carried over before the interruption" do
+      allow(github).to receive(:ensure_label).with(labels::MIGRATED, repo: nil).and_raise(OpenLanes::Error, "HTTP 502")
+      expect { migration.call }.to raise_error(OpenLanes::Error, /HTTP 502/)
+      expect(pulls[12]).to include("ok-to-merge", "ready-to-merge")
+
+      allow(github).to receive(:ensure_label) { |label, **| repository[label.name] ||= label.colour }
       migration.call
 
-      expect(github).to have_received(:swap_label).with(hash_including(remove: include("ready-to-merge"))).twice
-    end
-
-    it "says which pull requests moved, in one line" do
-      expect(migration.call.to_s).to eq("relabel ready-to-merge → review-approved on #7, #9")
-    end
-
-    it "lists them but relabels none under a dry run" do
-      outcome = migration.call(dry_run: true)
-
-      aggregate_failures do
-        expect(outcome.relabelled).to eq([7, 9])
-        expect(github).not_to have_received(:swap_label)
-      end
-    end
-
-    # A colour neither M3's nor R3's is still not R3's: the sync has not run
-    # since, so nothing can have put the new meaning on.
-    it "treats any colour but R3's as M3's meaning" do
-      colours["ready-to-merge"] = "abcdef"
-
-      expect(migration.call).to be_pending
+      expect(verdicts(12)).to eq(["ready-to-merge"])
     end
   end
 
-  context "when it was interrupted half way" do
-    it "fails without the sync having run, and the next start moves only what is left" do
-      allow(github).to receive(:swap_label).with(hash_including(number: 9)).and_raise(OpenLanes::Error, "HTTP 502")
+  it "keeps the mark when only taking ok-to-merge off fails" do
+    allow(github).to receive(:swap_label).with(hash_including(remove: ["ok-to-merge"])).and_raise(OpenLanes::Error, "HTTP 502")
 
-      expect { migration.call }.to raise_error(OpenLanes::Error, /HTTP 502/)
-
-      # #7 moved and no longer carries the label; the colour is still M3's.
-      allow(github).to receive_messages(open_pulls_labelled: { 9 => ["ready-to-merge"] })
-      allow(github).to receive(:swap_label).and_return([])
-
-      aggregate_failures do
-        expect(migration.call.relabelled).to eq([9])
-        expect(github).to have_received(:swap_label).with(hash_including(number: 7)).once
-      end
+    aggregate_failures do
+      expect { migration.call }.not_to raise_error
+      expect(repository).to include(marker)
+      expect(pulls[12]).to include("ready-to-merge")
     end
   end
 
-  context "when the sync has already given ready-to-merge R3's colour" do
-    let(:colours) { { "ready-to-merge" => "5319e7" } }
+  context "with a repository already marked" do
+    before { repository[marker] = labels::MIGRATED.colour }
 
-    # A repeated start, or a pull request chewie has since verified: either
-    # way the label now means verified, and is left where it is.
+    # A repeated start, or a ready-to-merge chewie has since put on: either
+    # way it means verified, and is left where it is.
     it "does nothing, and asks GitHub for no pull requests" do
       outcome = migration.call
 
       aggregate_failures do
         expect(outcome).not_to be_pending
-        expect(outcome.relabelled).to be_empty
         expect(outcome.to_s).to be_nil
         expect(github).not_to have_received(:open_pulls_labelled)
         expect(github).not_to have_received(:swap_label)
       end
     end
-
-    it "compares the colour without case, as GitHub answers it" do
-      colours["ready-to-merge"] = "5319E7"
-
-      expect(migration.call).not_to be_pending
-    end
   end
 
-  context "with a repository that has no ready-to-merge label" do
-    let(:colours) { { "bug" => "d73a4a" } }
+  it "runs once across repeated starts" do
+    2.times { migration.call }
 
-    it "has nothing to migrate" do
+    expect(github).to have_received(:open_pulls_labelled).with("ready-to-merge", repo: nil).once
+  end
+
+  context "with a repository that never had M3's labels" do
+    let(:pulls) { {} }
+
+    it "moves nothing and marks it done" do
       aggregate_failures do
-        expect(migration.call).not_to be_pending
-        expect(github).not_to have_received(:open_pulls_labelled)
+        expect(migration.call.relabelled).to be_empty
+        expect(repository).to include(marker)
       end
     end
-  end
-
-  # The whole start, twice over: migrate, sync, migrate, sync. The sync's
-  # recolouring is what the second migration reads as done.
-  it "runs once across repeated starts", :aggregate_failures do
-    allow(github).to receive(:ensure_label)
-    allow(github).to receive(:recolour_label) { |label, **| colours[label.name] = label.colour.downcase }
-    sync = OpenLanes::Vcs::LabelSync.new(github:)
-
-    2.times do
-      migration.call
-      sync.call
-    end
-
-    expect(github).to have_received(:open_pulls_labelled).once
-    expect(github).to have_received(:swap_label).twice
   end
 end

@@ -109,7 +109,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
 
     let(:migration) { instance_double(OpenLanes::Vcs::LabelMigration) }
-    let(:nothing_owed) { OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, relabelled: []) }
+    let(:nothing_owed) { OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, moves: {}) }
 
     before do
       allow(OpenLanes::Vcs).to receive_messages(label_sync: sync, label_migration: migration)
@@ -174,7 +174,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     # R3: M3's `ready-to-merge` comes off open pull requests before the
     # sync recolours the label, the mark that the migration is done.
     it "migrates M3's ready-to-merge before it syncs, and says which pull requests moved" do
-      allow(migration).to receive(:call).and_return(OpenLanes::Vcs::LabelMigration::Outcome.new(pending: true, relabelled: [7, 9]))
+      allow(migration).to receive(:call).and_return(OpenLanes::Vcs::LabelMigration::Outcome.new(pending: true, moves: { OpenLanes::Vcs::LabelMigration::STEPS.first => [7, 9] }))
       err = sync_with(dry_run: false)
 
       aggregate_failures do

@@ -657,7 +657,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       # Publishing migrates and syncs review labels first; without this the
       # spec would run the real `gh` against whatever repository the suite is
       # checked out in.
-      owed = OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, relabelled: [])
+      owed = OpenLanes::Vcs::LabelMigration::Outcome.new(pending: false, moves: {})
       allow(OpenLanes::Vcs).to receive_messages(
         label_sync:      instance_double(OpenLanes::Vcs::LabelSync, call: []),
         label_migration: instance_double(OpenLanes::Vcs::LabelMigration, call: owed)
