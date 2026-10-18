@@ -844,8 +844,10 @@ module OpenLanes
 
       # ---- starting ---------------------------------------------------------
 
-      # Started stages a dead run left behind get the harness's own line and a
-      # place in history, so eligibility treats them as an Interrupted round.
+      # Started stages a dead run left behind get the harness's own line, and
+      # the agent starts again from its resume note without spending a round:
+      # the harness died, not the agent. Asking a person to keep or discard
+      # the work got the same answer every time, so nobody is asked.
       #
       # Two records can say a stage was stranded: the run's own state file,
       # and the plan's `state.json`. The second is what survives a run whose
@@ -885,7 +887,9 @@ module OpenLanes
         ordinal = subject.feature.ordinal.to_s
         harness_resume(subject, agent, round, "harness died")
         write_interrupted(subject, agent, round, "harness died")
-        remember(ordinal, agent.name, subject.status.key, "Interrupted", round)
+        Plans::Mailbox.new(dir: subject.feature.path).append(from: "openlanes",
+          to: agent.name,
+          body: "RESUME: the harness died during your round #{round}; carry on from your last resume note")
         @state&.record(ordinal, agent: agent.name, round:, status: "Interrupted", exit: "harness died")
         stage!(subject, agent, round, status: "Interrupted", note: "harness died", finished_at: Time.now.iso8601)
         [ordinal, agent.name, round]
