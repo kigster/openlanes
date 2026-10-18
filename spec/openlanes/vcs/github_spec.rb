@@ -379,6 +379,12 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
+    it "creates no label when the caller already has" do
+      github.swap_label(number: 12, add: label, create_missing: false)
+
+      expect(argvs.map { it[1] }).to eq(%w[pr pr])
+    end
+
     it "tolerates removing a label the pull request lacks, by retrying without it" do
       calls = 0
       allow(command).to receive(:run) do |*argv|
@@ -458,26 +464,44 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
 
     describe "#open_pulls_labelled" do
-      it "asks for the open pull requests carrying the label, by number" do
+      def lines(*pulls) = instance_double(TTY::Command::Result, out: pulls.map { "#{JSON.generate(it)}\n" }.join)
+
+      it "asks for every page of open pull requests carrying the label, with their labels" do
         allow(command).to receive(:run)
-          .and_return(instance_double(TTY::Command::Result, out: JSON.generate([{ "number" => 7 }, { "number" => 9 }])))
+          .and_return(lines({ number: 7, labels: ["ready-to-merge"] }, { number: 9, labels: %w[ready-to-merge ok-to-merge] }))
 
         aggregate_failures do
-          expect(github.open_pulls_labelled("ready-to-merge", repo: "o/r")).to eq([7, 9])
+          expect(github.open_pulls_labelled("ready-to-merge", repo: "o/r"))
+            .to eq(7 => ["ready-to-merge"], 9 => %w[ready-to-merge ok-to-merge])
           expect(command).to have_received(:run).with("gh",
-            "pr",
-            "list",
-            "--state",
-            "open",
-            "--label",
-            "ready-to-merge",
-            "--limit",
-            "1000",
-            "--json",
-            "number",
-            "-R",
-            "o/r")
+            "api",
+            "--paginate",
+            "-X",
+            "GET",
+            "repos/o/r/issues",
+            "-f",
+            "state=open",
+            "-f",
+            "labels=ready-to-merge",
+            "-f",
+            "per_page=100",
+            "--jq",
+            ".[] | select(.pull_request) | {number, labels: [.labels[].name]}")
         end
+      end
+
+      # `gh pr list` stopped at its --limit of 1000; --paginate has none.
+      it "keeps every pull request when there are more than a thousand" do
+        allow(command).to receive(:run).and_return(lines(*(1..1500).map { { number: it, labels: ["ready-to-merge"] } }))
+
+        expect(github.open_pulls_labelled("ready-to-merge").keys).to eq((1..1500).to_a)
+      end
+
+      it "names the current checkout's repository when given none" do
+        allow(command).to receive(:run).and_return(lines)
+
+        github.open_pulls_labelled("ready-to-merge")
+        expect(command).to have_received(:run).with(*%w[gh api --paginate -X GET repos/{owner}/{repo}/issues], any_args)
       end
 
       it "names the failure when gh cannot list them" do

@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
   subject(:migration) { described_class.new(github:) }
 
   let(:labels) { OpenLanes::Plans::ReviewLabel }
-  let(:github) { instance_double(OpenLanes::Vcs::GitHub, swap_label: [], open_pulls_labelled: carrying) }
+  let(:github) { instance_double(OpenLanes::Vcs::GitHub, swap_label: [], open_pulls_labelled: carrying.to_h { [it, ["ready-to-merge"]] }) }
   let(:carrying) { [7, 9] }
   let(:colours) { { "ready-to-merge" => "2ea043", "bug" => "d73a4a" } }
 
@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
       expect { migration.call }.to raise_error(OpenLanes::Error, /HTTP 502/)
 
       # #7 moved and no longer carries the label; the colour is still M3's.
-      allow(github).to receive_messages(open_pulls_labelled: [9])
+      allow(github).to receive_messages(open_pulls_labelled: { 9 => ["ready-to-merge"] })
       allow(github).to receive(:swap_label).and_return([])
 
       aggregate_failures do

@@ -52,7 +52,7 @@ module OpenLanes
       def call(repo: nil, dry_run: false)
         return Outcome.new(pending: false, relabelled: []) unless pending?(repo)
 
-        numbers = @github.open_pulls_labelled(old.name, repo:)
+        numbers = @github.open_pulls_labelled(old.name, repo:).keys
         unless dry_run
           numbers.each { @github.swap_label(number: it, add: approved, remove: Plans::ReviewLabel.displaced_by(approved), repo:) }
         end

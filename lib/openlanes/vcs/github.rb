@@ -219,24 +219,36 @@ module OpenLanes
       # The open pull requests that carry one label, asked of GitHub rather
       # than of `pull-requests.md`, which only knows the plans' own.
       #
+      # Every one of them, through the issues API with `--paginate`: `gh pr
+      # list` stops at its `--limit`, and a migration that saw only the first
+      # thousand would mark itself done with the rest still carrying the label.
+      # The issues API lists pull requests among the issues; `pull_request` is
+      # what tells them apart.
+      #
       # @param name [String] the label
       # @param repo [String, nil]
-      # @return [Array<Integer>] their numbers
+      # @return [Hash{Integer => Array<String>}] each one's number, and every
+      #   label it carries
       # @raise [OpenLanes::Error]
       def open_pulls_labelled(name, repo: nil)
         out = @command.run("gh",
-          "pr",
-          "list",
-          "--state",
-          "open",
-          "--label",
-          name,
-          "--limit",
-          "1000",
-          "--json",
-          "number",
-          *repo_flag(repo)).out
-        JSON.parse(out).map { it["number"] }
+          "api",
+          "--paginate",
+          "-X",
+          "GET",
+          "repos/#{repo || "{owner}/{repo}"}/issues",
+          "-f",
+          "state=open",
+          "-f",
+          "labels=#{name}",
+          "-f",
+          "per_page=100",
+          "--jq",
+          ".[] | select(.pull_request) | {number, labels: [.labels[].name]}").out
+        out.each_line.reject { it.strip.empty? }.to_h do |line|
+          pull = JSON.parse(line)
+          [pull["number"], Array(pull["labels"])]
+        end
       rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError => e
         raise Error, "could not list pull requests labelled #{name}: #{first_line(e)}"
       end
@@ -268,10 +280,12 @@ module OpenLanes
       # @param repo [String, nil]
       # @param add [Plans::ReviewLabel]
       # @param remove [Array<String>] label names to take off
+      # @param create_missing [Boolean] create +add+ on the repository first;
+      #   false when the caller already has, once, for many pull requests
       # @return [Array<String>] the labels the pull request is left with
       # @raise [OpenLanes::Error]
-      def swap_label(number:, add:, repo: nil, remove: [])
-        ensure_label(add, repo:)
+      def swap_label(number:, add:, repo: nil, remove: [], create_missing: true)
+        ensure_label(add, repo:) if create_missing
         removing = remove.map(&:to_s) - [add.name]
         begin
           edit_labels(number, add, removing, repo)
