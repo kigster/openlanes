@@ -6,7 +6,7 @@
     "slug": "implement-zeitwerk-loading"
   },
   "state": "approved",
-  "updated_at": "2026-10-15T09:10:34-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "yoda-writer",
@@ -71,10 +71,51 @@
   ],
   "signatures": [
     {
+      "at": "2026-09-17T13:05:10-07:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1,
+      "next": "yoda-writer"
+    },
+    {
+      "at": "2026-09-17T13:32:33-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-17T13:32:50-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-09-17T13:33:10-07:00",
+      "agent": "yoda-writer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "control file showed INTERRUPT before any spec work began"
+    },
+    {
+      "at": "2026-09-17T13:35:47-07:00",
+      "agent": "yoda-writer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-13T18:59:39-07:00",
       "agent": "yoda-writer",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-13T19:04:16-07:00",
+      "agent": "yoda-writer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-13T19:04:43-07:00",

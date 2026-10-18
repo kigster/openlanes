@@ -6,7 +6,7 @@
     "slug": "review-state-labels"
   },
   "state": "rejected",
-  "updated_at": "2026-10-15T09:39:01-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -137,6 +137,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-13T19:04:16-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-13T19:04:44-07:00",
       "agent": "leah-researcher",
       "status": "Started",
@@ -250,6 +257,20 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:29:55-07:00",
       "agent": "rey-frontend",
       "status": "Started",
@@ -260,6 +281,20 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:34:10-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:34:10-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T09:35:23-07:00",

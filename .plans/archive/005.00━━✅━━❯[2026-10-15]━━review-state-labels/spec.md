@@ -51,9 +51,6 @@ Today a reviewed PR looks the same on GitHub whether it is waiting, being review
 - In human mode, adding `review-rejected` with a comment on GitHub moves the plan to 🔴 within about 15 seconds; merging it moves the plan to ✅.
 - The publisher refuses to open a PR whose `plan.md` has no `## How to test`.
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

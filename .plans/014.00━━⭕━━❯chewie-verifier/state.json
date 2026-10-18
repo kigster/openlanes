@@ -144,10 +144,24 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:47:08-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:50:24-07:00",
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:59:26-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T10:08:40-07:00",
@@ -156,10 +170,24 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T10:10:58-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T13:58:58-07:00",
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T19:54:45-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T20:03:12-07:00",
@@ -208,6 +236,13 @@
       "agent": "luke-backend",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-17T11:27:20-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-17T11:37:21-07:00",

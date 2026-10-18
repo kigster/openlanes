@@ -80,14 +80,10 @@ RSpec.describe Agentilda::Ledger do
 
       ## Research
 
-      > [!NOTE]
-      >
       > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
 
       What was found.
 
-      > [!NOTE]
-      >
       > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
       > [2026-09-04 11:44:04 AM PDT] [ next: yoda-writer ]
     MARKDOWN
@@ -1749,14 +1745,10 @@ In `prompt_for`, add `round:` and `successor:` parameters and insert `#{ledger_s
         You sign the document you are working in: #{documents}. Get `<now>` from
         `date "+%Y-%m-%d %I:%M:%S %p %Z"`. Before you do any work, append:
 
-            > [!NOTE]
-            >
             > [<now>] [ agent: #{agent.name}   status: Started, round #{round} ]
 
         When you finish, append:
 
-            > [!NOTE]
-            >
             > [<now>] [ agent: #{agent.name}   status: Completed, round #{round} ]#{handoff}
 
         Write `Completed` only if your assignment is genuinely done. Otherwise write
@@ -4256,6 +4248,3 @@ ______________________________________________________________________
 **Placeholder scan.** No TBDs. Every code step carries the code. The one thing left to look up at execution time is the `docs` command's output flag, and the step says how.
 
 **Type consistency.** `Executor#call(agent, subject, root:, round:, successor:, handle:)` is the signature in Task 6 and what Task 8's dispatcher and specs call. `Runner::Attempt` fields `round`, `file`, `model`, `status` are defined in Task 8 and read in Tasks 9 and 11. `Board::Row` fields in Task 8 match every `Row.new` in Tasks 9 and 10. `Console#paint` is what Task 11 passes as `on_board`. `StateFile#record(ordinal, agent:, round:, **fields)` is called that way in Task 8. `Ledger::Entry.new` in Task 8 passes `file: "", line: 0` because those two have no default, matching Task 1.
-
-> [!NOTE]
-> [2026-09-06 10:31:01 AM PDT] [ agent: luke-backend status: Interrupted, round 1 (STOP arrived from the control file before any code or plan split was written. Nothing under lib/ or spec/ changed. Intended split: luke owns Tasks 1-8, 12 and 13; rey owns Tasks 9-11 and the docs. plan-backend.md, plan-frontend.md and implementation-plan.md still need writing. Baseline suite at start: see line below.) ] [2026-09-06 10:31:01 AM PDT] [ agent: luke-backend status: Interrupted, round 1 (Baseline: 867 examples, 9 failures, 3 pending) ] [2026-09-06 10:43:38 AM PDT] [ agent: luke-backend status: Started, round 2 (Extracting Tasks 1-8, 12, 13 from plan.md into files with one wave of sub-agents; plan-backend.md, plan-frontend.md and implementation-plan.md written) ]

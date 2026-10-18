@@ -144,9 +144,6 @@ From the spec: verify in the browser that an agent that fanned out is visually d
 1. Every other car stays a plain tile throughout.
 1. Automated: `bin/web-e2e` runs `web/cypress/e2e/subagents.cy.ts` against two real demo servers, nothing stubbed; `bundle exec rspec` and `bundle exec rubocop` exit 0.
 
-> [!NOTE]
->
-> [2026-10-16 07:03:02 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]
 
 ## Rebase decisions
 

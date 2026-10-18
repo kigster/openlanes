@@ -175,6 +175,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-16T18:15:36-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-16T19:10:52-07:00",
       "agent": "leah-researcher",
       "status": "Started",

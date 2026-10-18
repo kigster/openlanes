@@ -256,6 +256,13 @@
       "note": "approved"
     },
     {
+      "at": "2026-10-17T12:10:56-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "no closing ledger line"
+    },
+    {
       "at": "2026-10-18T06:34:52-07:00",
       "agent": "hansolo-reviewer",
       "status": "Started",
@@ -267,6 +274,13 @@
       "status": "Completed",
       "round": 4,
       "note": "approved"
+    },
+    {
+      "at": "2026-10-18T06:35:23-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "no closing ledger line"
     }
   ],
   "messages": [

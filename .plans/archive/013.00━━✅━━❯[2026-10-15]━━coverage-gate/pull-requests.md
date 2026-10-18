@@ -35,10 +35,6 @@ Dogfood: `Coverage.read(format: :simplecov, path: "coverage/.resultset.json")` o
 
 Note: running the suite rewrites `docs/badges/coverage_badge.svg`; it is reverted before each commit.
 
-> [!NOTE]
->
-> [2026-10-14 11:51:04 AM PDT] [ agent: luke-backend   status: Started, round 1 ]
-> [2026-10-14 12:01:20 PM PDT] [ agent: luke-backend   status: Completed, round 1 ]
 
 ## Round 1 fix (luke-backend, 2026-10-15)
 

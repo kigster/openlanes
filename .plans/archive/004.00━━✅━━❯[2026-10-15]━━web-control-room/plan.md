@@ -69,7 +69,3 @@ B2's `spec/integration/control_room_spec.rb`, against a real Redis and the real 
 - Process-kill specs flake: deadlines, not sleeps; each spec on its own Redis database.
 - Cypress and `npm run build` have not been run in this checkout yet: budget one fix cycle in F1 and B2.
 - A keyboard pass may expose Radix focus-trap bugs, widening F1.
-
-> [!NOTE]
->
-> [2026-10-15 09:10:16 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

@@ -6,7 +6,7 @@
     "slug": "lanes-with-no-active-agents"
   },
   "state": "rejected",
-  "updated_at": "2026-10-17T12:45:01-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -286,10 +286,24 @@
       "round": 1
     },
     {
+      "at": "2026-10-16T18:15:36-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-16T18:40:34-07:00",
       "agent": "rey-frontend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-16T19:03:02-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-16T19:10:07-07:00",

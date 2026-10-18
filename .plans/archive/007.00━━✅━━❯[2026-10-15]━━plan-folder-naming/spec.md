@@ -125,9 +125,6 @@ Each item names its check.
 
 When this ships, new plans are created as `NNN.MM━━<emoji>━━❯<slug>` using six single-code-point emoji; the parser still reads every old form. Finished, deferred and discarded plans live in dated `archive/`, `deferred/` and `abandoned/` folders that `list-plans --all` includes and the default view hides, and plan numbers are never reused across them. A running agent leaves `locked-by.pid`, shown as 🔑, cleared by `resync dirs` when its process is gone on this host. The first `resync dirs` on any repository migrates names, locations and `how-to-verify:` keys with `git mv`, previewable with `-n`.
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

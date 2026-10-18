@@ -12,10 +12,6 @@ Run from the plan worktree with the bundler variables unset (see the amendment i
 
 Rey's mailbox held no message at the time of signing, so the integration proof and the end-to-end run are Rey's to record when Rey signs last.
 
-> [!NOTE]
->
-> [2026-09-16 08:44:57 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]
-> [2026-09-16 08:44:57 AM PDT] [ next: hansolo-reviewer ]
 
 ## Back-end verification, luke-backend, round 1 resumed on 2026-09-16
 
@@ -35,18 +31,8 @@ Notes for hansolo-reviewer:
 - `spec.md` asked for a `jabba-briefer` agent; `plan.md` Task 12 kept the haiku, fifty-second drafter inline in `Brief`. See the amendment in `implementation-plan.md`.
 - `alo` prints nothing and exits 0 in this environment, so no lock was ever held. Every write this round was append-only.
 
-> [!NOTE]
->
-> [2026-09-16 08:45:36 AM PDT] [ agent: luke-backend   status: Started, round 1 (verification only; code landed in earlier commits) ]
 
-> [!NOTE]
->
-> [2026-09-16 08:45:36 AM PDT] [ agent: luke-backend   status: Completed, round 1 (B1-B11 verified on disk, suite 975/0, standardrb clean) ]
-> [2026-09-16 08:45:36 AM PDT] [ next: hansolo-reviewer ]
 
-> [!NOTE]
->
-> [2026-09-16 08:46:39 AM PDT] [ agent: rey-frontend   status: Started, round 2 (verification only; F1-F4 landed in commits 292d8d1, 81940f0, b7cb430) ]
 
 ## Front-end verification, rey-frontend, round 2 on 2026-09-16
 
@@ -77,15 +63,7 @@ Notes for hansolo-reviewer:
 
 Final run before signing, with a sibling luke's uncommitted `lib/agentilda/child.rb` and `spec/agentilda/child_spec.rb` edit in the tree (`Child.spawn` strips `BUNDLE_GEMFILE` and `RUBYOPT`; not a front-end file): `bundle exec rspec` 976 examples, 0 failures, 3 pending.
 
-> [!NOTE]
->
-> [2026-09-16 08:47:29 AM PDT] [ agent: rey-frontend   status: Completed, round 2 (F1-F4 verified on disk; suite 976/0/3, proof 55/0, standardrb clean, docs identical) ]
-> [2026-09-16 08:47:29 AM PDT] [ next: hansolo-reviewer ]
 
-> [!NOTE]
->
-> [2026-09-16 08:48:44 AM PDT] [ agent: rey-frontend   status: Completed, round 2 (F1-F4 verified on disk, suite 976/0, integration proof 55/0) ]
-> [2026-09-16 08:48:44 AM PDT] [ next: hansolo-reviewer ]
 
 ## Back-end verification, luke-backend (harness 36367), final measurement, 2026-09-16
 
@@ -100,10 +78,6 @@ Rey signed Completed at 08:47:29, so this luke is last. Measured after a sibling
 
 The end-to-end dry run of `./exe/agentilda run` is recorded in rey's section above and was not repeated. The `implementation-plan.md` amendment that said the bundler leak was "not fixed in code" is corrected in place: it is fixed, in `Child.environment`.
 
-> [!NOTE]
->
-> [2026-09-16 08:48:52 AM PDT] [ agent: luke-backend   status: Completed, round 1 (final: suite 976/0/3, proof 55/0, standardrb clean, Child.environment fix on disk) ]
-> [2026-09-16 08:48:52 AM PDT] [ next: hansolo-reviewer ]
 
 ## Back-end verification and integration proof, luke-backend from harness 17151, round 1 on 2026-09-16
 
@@ -141,10 +115,6 @@ Independent re-measurement by a second rey launched at 08:42; it concurs with th
 
 Locks for this section were taken from the parent checkout as `rey-frontend-36367` and released after writing. Mailbox message #5 to luke names the test behind each criterion.
 
-> [!NOTE]
->
-> [2026-09-16 08:49:12 AM PDT] [ agent: rey-frontend   status: Completed, round 1 (F1-F4 verified on disk; suite 976/0/3, proof 55/0, lint clean, docs identical, HEAD unmoved) ]
-> [2026-09-16 08:49:12 AM PDT] [ next: hansolo-reviewer ]
 
 The dry run's own words, from `./exe/agentilda run` at 08:49 with the Bundler variables unset in a subshell (`env -u` swallows all output in this sandbox, which is also why `alo` looked silent; no lock was ever held, so every write this round was an append):
 
@@ -156,10 +126,6 @@ The dry run's own words, from `./exe/agentilda run` at 08:49 with the Bundler va
 
 `.plans/` afterwards: `001.00-⚪️--clean-agent-bondaries-and-transitions` only, no `.plans/tmp`.
 
-> [!NOTE]
->
-> [2026-09-16 08:50:36 AM PDT] [ agent: luke-backend   status: Completed, round 1 (harness 17151; B1-B11 verified, Child.spawn Bundler fix added, suite 976/0/3, standardrb clean, proof 55/0) ]
-> [2026-09-16 08:50:36 AM PDT] [ next: hansolo-reviewer ]
 
 ## Front-end verification, rey-frontend (harness pid 38939), round 1 on 2026-09-16
 
@@ -178,10 +144,6 @@ Third independent measurement, from the rey launched at 08:43; it concurs with t
 
 Mailbox message #9 to luke names the test behind each criterion.
 
-> [!NOTE]
->
-> [2026-09-16 08:52:28 AM PDT] [ agent: rey-frontend   status: Completed, round 1 (F1-F4 verified on disk; suite 976/0/3, proof 55/0, lint clean, docs identical, HEAD unmoved) ]
-> [2026-09-16 08:52:28 AM PDT] [ next: hansolo-reviewer ]
 
 ## Back-end verification, luke-backend, round 1 relaunch on 2026-10-13
 

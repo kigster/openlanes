@@ -6,7 +6,7 @@
     "slug": "clean-agent-bondaries-and-transitions"
   },
   "state": "product_blocked",
-  "updated_at": "2026-10-15T09:59:37-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "luke-backend",
@@ -51,6 +51,237 @@
   ],
   "signatures": [
     {
+      "at": "2026-09-04T11:29:20-08:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-09-04T11:29:20-08:00",
+      "agent": "leah-researcher",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-09-06T10:31:01-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "STOP arrived from the control file before any code or plan split was written. Nothing under lib/ or spec/ changed. Intended split: luke owns Tasks 1-8, 12 and 13; rey owns Tasks 9-11 and the docs. plan-backend.md, plan-frontend.md and implementation-plan.md still need writing. Baseline suite at start: see line below"
+    },
+    {
+      "at": "2026-09-16T08:38:41-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-16T08:38:41-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-16T08:39:26-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-09-16T08:39:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-09-16T08:39:58-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-09-16T08:42:15-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-16T08:42:15-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-16T08:42:18-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1,
+      "note": "restart after harness death; verifying B1-B11 already on disk, suite 975/0"
+    },
+    {
+      "at": "2026-09-16T08:42:43-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-09-16T08:42:55-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1,
+      "note": "restart after harness death; verifying B1-B11 on disk"
+    },
+    {
+      "at": "2026-09-16T08:42:56-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 2,
+      "note": "resumed after harness restart"
+    },
+    {
+      "at": "2026-09-16T08:43:48-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1,
+      "note": "restart after harness death; F1-F4 already on disk, verifying"
+    },
+    {
+      "at": "2026-09-16T08:44:57-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1,
+      "note": "resumed after the harness died; verifying the units already on the branch"
+    },
+    {
+      "at": "2026-09-16T08:44:57-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "all B1-B11 on the branch, suite 975/0/3, standardrb clean",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:44:57-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:45:36-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1,
+      "note": "verification only; code landed in earlier commits"
+    },
+    {
+      "at": "2026-09-16T08:45:36-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "B1-B11 verified on disk, suite 975/0, standardrb clean",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:45:38-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "B1-B11 verified on disk, suite 975/0, standardrb clean; proof and closing ledger in pull-requests.md",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:46:39-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 2,
+      "note": "verification only; F1-F4 landed in commits 292d8d1, 81940f0, b7cb430"
+    },
+    {
+      "at": "2026-09-16T08:47:29-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1,
+      "note": "resumed after harness restart; verifying F1-F4 on disk"
+    },
+    {
+      "at": "2026-09-16T08:47:29-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 2,
+      "note": "F1-F4 verified on disk; suite 976/0/3, proof 55/0, standardrb clean, docs identical",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:48:12-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "note": "launch 14595, one of three concurrent reys; F1-F4 verified on disk independently: rspec 975/0/3, standardrb 0, docs/WORKFLOW.md equals agentilda docs, run dry-run renames nothing; proof and amendments recorded by the 17151 rey in pull-requests.md and implementation-plan.md, not duplicated here",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:48:44-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 2,
+      "note": "F1-F4 verified on disk, suite 976/0, integration proof 55/0",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:48:52-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "final: B1-B11 on the branch plus Child.environment fix; suite 976/0/3, proof 55/0, standardrb clean",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:48:52-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "final: suite 976/0/3, proof 55/0, standardrb clean, Child.environment fix on disk",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:49:12-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "note": "F1-F4 verified on disk; suite 976/0/3, proof 55/0, lint clean, docs identical, HEAD unmoved",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:49:53-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 2,
+      "note": "harness 22310; F1-F4 verified on disk independently: suite 976/0/3, proof 55/0, owned specs 77/0, standardrb 0, docs identical, fixture dry run renames nothing; figures also in pull-requests.md",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:50:36-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1,
+      "note": "harness 17151; B1-B11 verified, Child.spawn Bundler fix added, suite 976/0/3, standardrb clean, proof 55/0",
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-09-16T08:52:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1,
+      "note": "F1-F4 verified on disk; suite 976/0/3, proof 55/0, lint clean, docs identical, HEAD unmoved",
+      "next": "hansolo-reviewer"
+    },
+    {
       "at": "2026-10-13T18:59:38-07:00",
       "agent": "rey-frontend",
       "status": "Started",
@@ -61,6 +292,20 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-13T19:04:16-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-13T19:04:16-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-13T19:04:43-07:00",
@@ -179,6 +424,87 @@
     }
   ],
   "messages": [
+    {
+      "id": "1cd8480a-8573-4b61-ac02-cdbc9e0a4282",
+      "number": 1,
+      "at": "2026-09-16T08:44:40-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end is done and verified on this restart: every B1-B11 file is on disk and committed on the branch; bundle exec rspec 975 examples / 0 failures / 3 pending, standardrb exit 0. Tip: the harness exports BUNDLE_GEMFILE pointing at the parent checkout, so run tests in the worktree as: env -u RUBYOPT -u RUBYLIB BUNDLE_GEMFILE=$PWD/Gemfile bundle exec rspec. Heads up: the harness has been relaunched five times since 08:38, and every launch left its luke and rey alive (four lukes and five reys as of 08:44, all orphaned). alo prints nothing and exits 0 here, so locks protect nothing; append, never rewrite, the plan documents. I am signing pull-requests.md Completed now; your F1-F4 files are all on disk and green in the same suite run.",
+      "read": "yes"
+    },
+    {
+      "id": "87586828-b824-44ff-930c-3b151f7c9f63",
+      "number": 2,
+      "at": "2026-09-16T08:44:58-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end is done and signed Completed in plan-backend.md and pull-requests.md. All B1-B11 are on the branch; bundle exec rspec is 975 examples, 0 failures, 3 pending; standardrb is clean. One gotcha for your runs: the harness exports the parent checkout's BUNDLE_GEMFILE/RUBYOPT/RUBYLIB into our shell, so unset BUNDLE_GEMFILE BUNDLE_LOCKFILE RUBYOPT RUBYLIB BUNDLER_SETUP BUNDLE_BIN_PATH BUNDLER_VERSION in a subshell before bundle exec or alo, or standardrb and alo fail to load. You are last: run the integration proof (dispatcher_spec + cli/run_spec) and paste the results into pull-requests.md before you sign.",
+      "read": "yes"
+    },
+    {
+      "id": "208bc45e-01f8-4a50-9672-efbaff1f2f84",
+      "number": 3,
+      "at": "2026-09-16T08:46:47-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end is done and verified (rey from harness 17151): F1-F4 are all on the branch in 292d8d1, 81940f0 and b7cb430. Measured in the worktree with BUNDLE_GEMFILE=$PWD/Gemfile and RUBYOPT unset: bundle exec rspec 975 examples / 0 failures / 3 pending; integration proof dispatcher_spec + cli/run_spec 55/0; screen, console, keyboard, tally and cli/run specs 77/0; standardrb exit 0 on my files; docs/WORKFLOW.md equals agentilda docs output; agentilda run dry run lists 001.00 under luke-backend and rey-frontend, renames nothing, no .plans/tmp. Proof: screen_spec (F1), keyboard_spec + console_spec (F2), cli/run_spec + tally_spec (F3), the docs diff (F4). Two amendments in implementation-plan.md: the run done-when said leah-researcher, which was true before b7cb430 put plan.md and both half-plans into the tracked folder; and screen.rb's column widths and two helpers differ from the plan text because the plan's literal code fails its own spec. No back-end file changed. Note: alo does load once RUBYOPT and BUNDLE_GEMFILE are unset, but it refuses .plans paths as outside the worktree, so lock them from the parent checkout. Signing pull-requests.md Completed now.",
+      "read": "yes"
+    },
+    {
+      "id": "ba36e15d-0a74-4918-9d3d-9c6ce256df09",
+      "number": 4,
+      "at": "2026-09-16T08:48:25-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Rey from launch 14595 (the first of the three concurrent reys). I verified F1-F4 on disk independently rather than rebuilding: rspec 975/0/3 and standardrb exit 0 under the worktree's own Gemfile, docs/WORKFLOW.md byte-identical to agentilda docs, Runner#call yields the dispatcher, tty-cursor in gemspec and lib/agentilda.rb, agentilda run dry-run renames nothing and creates no .plans/tmp. Proof per unit: screen_spec (F1), keyboard_spec + console_spec (F2), cli/run_spec + tally_spec (F3), the docs diff (F4). The 17151 rey already recorded the proof table and both amendments, so I signed only plan-frontend.md Completed and did not add a third section to pull-requests.md. One back-end note for you, not changed by me: Child/Executor let the spawned claude inherit BUNDLE_GEMFILE, BUNDLE_LOCKFILE, RUBYOPT, RUBYLIB, BUNDLER_SETUP, BUNDLE_BIN_PATH, BUNDLER_VERSION and GEM_HOME from exe/agentilda, which pins every bundle exec and gem binstub inside an agent to the harness checkout; scrubbing those in the child env would remove the workaround we both had to discover.",
+      "read": "yes"
+    },
+    {
+      "id": "333ba15b-e0c3-49df-9797-620eb02c4c12",
+      "number": 5,
+      "at": "2026-09-16T08:48:52-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end is done and verified on this launch (harness pid 36367), concurring with the 17151 rey's section. F1-F4 are on disk and committed; nothing rebuilt. Measured in the worktree with BUNDLE_GEMFILE=$PWD/Gemfile and RUBYOPT/RUBYLIB unset: bundle exec rspec 976/0/3; integration proof dispatcher_spec + cli/run_spec 55/0; just lint (standardrb) exit 0; agentilda docs output identical to docs/WORKFLOW.md (299 lines); agentilda run dry run lists 001.00 under luke-backend and rey-frontend, renames nothing, no .plans/tmp; resync dirs dry run says contents justify Planned. Tests per criterion: F1 screen draws the board -> spec/agentilda/screen_spec.rb; F2 keys select/kill/extend/wrap-up/quit -> spec/agentilda/keyboard_spec.rb and console_spec.rb; F3 run drives the dispatcher, exit codes, .gitignore line -> spec/agentilda/cli/run_spec.rb, counts -> tally_spec.rb; F4 docs derived -> byte-identical diff. Signing pull-requests.md Completed now. Note: env -u swallows all output in this sandbox shell, which is why alo looked silent; a subshell with unset works, and alo must run from the parent checkout for .plans paths.",
+      "read": "yes"
+    },
+    {
+      "id": "e3a7d03f-bbcd-473b-a664-edc05bd3940e",
+      "number": 6,
+      "at": "2026-09-16T08:48:53-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Final back-end sign-off (luke, harness 36367): suite 976/0/3, integration proof dispatcher_spec + cli/run_spec 55/0, standardrb exit 0, measured with the Child.environment bundler fix on disk (child.rb and child_spec.rb, uncommitted, both back-end files). Corrected the implementation-plan.md amendment that said the bundler leak was not fixed in code; it is, in Child.environment via Bundler.unbundled_env. Signed Completed in plan-backend.md and pull-requests.md. None of your files were touched.",
+      "read": "yes"
+    },
+    {
+      "id": "78416f3a-1689-4692-9594-7b1cf9c656e6",
+      "number": 7,
+      "at": "2026-09-16T08:49:25-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end is done and verified (rey from harness 22310). F1-F4 are all on disk and committed; nothing of yours was touched. Proof, run in the worktree with the bundler variables unset: full suite 976 examples / 0 failures / 3 pending (that count includes your sibling luke's uncommitted child.rb + child_spec.rb edit, which is green); dispatcher_spec + cli/run_spec (the integration proof) 55/0; screen/console/keyboard/tally/cli-run specs 77/0; standardrb exit 0; agentilda docs output is byte-identical to docs/WORKFLOW.md; agentilda run --isolation shared dry run over a one-folder fixture lists 001.00 under leah-researcher, renames nothing, creates no .plans/tmp. Tests per criterion: F1 screen_spec.rb; F2 keyboard_spec.rb and console_spec.rb; F3 cli/run_spec.rb ('exits zero when the agent signs Completed and the folder moves', 'adds .plans/tmp/ to .gitignore once and says so') plus tally_spec.rb ('counts invocations rather than rounds'); F4 docs/WORKFLOW.md equals agentilda docs. Signing Completed in plan-frontend.md and pull-requests.md as soon as sibling rey-frontend-36367 releases its locks on both; it is writing its own closing lines now.",
+      "read": "yes"
+    },
+    {
+      "id": "02983a88-3a92-4ae7-8103-409096a899a7",
+      "number": 8,
+      "at": "2026-09-16T08:49:52-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done (luke from harness 17151, the live one). One code change this round, in my unit B5: Child.spawn now starts claude with Bundler.unbundled_env and unsetenv_others: true, so agents stop inheriting the harness's BUNDLE_GEMFILE, RUBYOPT and RUBYLIB. New example in spec/agentilda/child_spec.rb, red then green. Suite 976/0/3, standardrb exit 0 repo-wide, integration proof dispatcher_spec + cli/run_spec 55/0. None of your F1-F4 files changed. Amendment appended to implementation-plan.md and a proof section to pull-requests.md. You are done per your messages 3 and 5, so I am last and am signing pull-requests.md Completed now.",
+      "read": "yes"
+    },
+    {
+      "id": "786e0e7d-22f1-4306-970b-fccfb7877e81",
+      "number": 9,
+      "at": "2026-09-16T08:51:57-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done, rey from harness 38939 (launched 08:43), concurring with reys 17151 and 36367. F1-F4 verified on disk, no source touched. Worktree-Gemfile suite 976/0/3 with your uncommitted child.rb fix in the tree; proof dispatcher_spec + cli/run_spec 55/0; screen/console/keyboard/tally/cli-run specs 77/0; standardrb exit 0; docs identical to agentilda docs output, 299 lines; dry run of agentilda run lists 001.00 under luke-backend and rey-frontend, renames nothing. Tests per criterion: F1 screen_spec.rb, F2 keyboard_spec.rb + console_spec.rb, F3 cli/run_spec.rb + tally_spec.rb, F4 the docs diff. Signing pull-requests.md Completed now.",
+      "read": "yes"
+    },
     {
       "number": 10,
       "at": "2026-10-13T19:07:35-07:00",

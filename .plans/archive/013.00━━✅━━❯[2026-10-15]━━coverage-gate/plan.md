@@ -73,8 +73,3 @@ In a temp git repository with a committed `.openlanes.coverage.yml` and a `comma
 - `bundle exec rspec spec/openlanes/coverage spec/openlanes/engine/coverage_gate_spec.rb spec/openlanes/cli/coverage_spec.rb spec/openlanes/integration/coverage_gate_spec.rb`
 - `bundle exec rspec spec/openlanes/evals/corpus_spec.rb` scores the new hansolo case's pass and fail recordings.
 - By hand: in a project with a `.openlanes.coverage.yml`, `openlanes coverage NNN` prints the figure and exits 1 below the minimum.
-
-> [!NOTE]
->
-> [2026-10-14 11:48:43 AM PDT] [ agent: palpatine-planner   status: Started, round 2 ]
-> [2026-10-14 11:50:00 AM PDT] [ agent: palpatine-planner   status: Completed, round 2 ]
