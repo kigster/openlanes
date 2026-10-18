@@ -139,7 +139,7 @@ export async function postInterview(idea: string): Promise<{ questions: Intervie
   return { questions: [], reason: `POST /api/interview answered ${res.status}` };
 }
 
-export const fetchChat =(page: string): Promise<ChatState> => getJson<ChatState>(`/api/chat?page=${encodeURIComponent(page)}`);
+export const fetchChat = (page: string): Promise<ChatState> => getJson<ChatState>(`/api/chat?page=${encodeURIComponent(page)}`);
 
 /** What a page does in a chat (contract.md, "Chat between machines"). */
 export type ChatAction = "start" | "invite" | "accept" | "decline" | "leave" | "say" | "presence";

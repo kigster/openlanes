@@ -1,6 +1,6 @@
 // New idea (decision W19): the idea in Markdown, with the frontmatter every plan from it starts with as a form above
 // the editor, never as text in it. Sending it asks the engine to create the plans (create_plans).
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Frame } from "./dialogs";
 import { useCommand } from "./command";
@@ -93,6 +93,8 @@ export interface IdeaDialogProps {
   onCommand: SendCommand;
 }
 
+type Decision = { question: string; answer: string };
+
 const SUB = "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to palpatine-planner, who breaks it into plans for you to check.";
 
 export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
@@ -100,45 +102,96 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
   const [fm, setFm] = useState<IdeaFrontmatter>(IDEA_DEFAULTS);
   const [empty, setEmpty] = useState(false);
   const command = useCommand(onCommand);
-  // The interview (M6): null before it starts, then the questions, asked one at a time.
+  // The interview (M6): null before it starts, then the questions, asked one at a time, about `draft`: the idea as it
+  // was when they were asked, which is the idea sent with their answers even if the editor changed since.
   const [questions, setQuestions] = useState<InterviewQuestion[] | null>(null);
-  const [answers, setAnswers] = useState<{ question: string; answer: string }[]>([]);
+  const [draft, setDraft] = useState("");
+  const [answers, setAnswers] = useState<Decision[]>([]);
   const [own, setOwn] = useState("");
   const [asking, setAsking] = useState(false);
-  const create = async (decisions: { question: string; answer: string }[]) => {
+  // Each interview request holds a ticket; closing the dialog, editing the idea or skipping takes a new one, and a
+  // response whose ticket is stale is dropped rather than creating a plan or showing questions nobody is waiting for.
+  const ticket = useRef(0);
+  // Set from the first ⌘ Enter until the plan is created or the attempt ends: state would update a render too late
+  // to stop a second shortcut, and useCommand only stops overlapping sends, not a second interview.
+  const busy = useRef(false);
+  const reset = () => {
+    ticket.current += 1;
+    busy.current = false;
+    setAsking(false);
+    setQuestions(null);
+    setAnswers([]);
+    setOwn("");
+  };
+  const close = (next: boolean) => {
+    if (!next) reset();
+    onOpenChange(next);
+  };
+  /** @returns whether the plan was created, so a failed last answer can be sent again */
+  const create = async (text: string, decisions: Decision[]) => {
     // Research is only meaningful on the full lane, so the payload never says otherwise.
     const frontmatter = { ...fm, research: fm.lane === "full" && fm.research };
     const reply = await command.send(
-      { kind: "create_plans", plan: null, agent: null, payload: { idea: idea.trim(), frontmatter, decisions } },
+      { kind: "create_plans", plan: null, agent: null, payload: { idea: text, frontmatter, decisions } },
       "Idea sent. Its plans join this run as they are created.",
     );
-    if (reply && reply.status !== "refused") {
+    const created = reply !== null && reply.status !== "refused";
+    if (created) {
       setIdea("");
-      setQuestions(null);
-      setAnswers([]);
-      onOpenChange(false);
+      close(false);
     }
+    return created;
   };
   const go = async () => {
-    if (!idea.trim()) { setEmpty(true); return; }
+    if (busy.current) return;
+    const text = idea.trim();
+    if (!text) { setEmpty(true); return; }
+    busy.current = true;
+    const mine = ++ticket.current;
     setAsking(true);
-    const { questions: asked } = await postInterview(idea.trim()).catch(() => ({ questions: [] as InterviewQuestion[] }));
+    try {
+      const { questions: asked } = await postInterview(text).catch(() => ({ questions: [] as InterviewQuestion[] }));
+      if (ticket.current !== mine) return;
+      setAsking(false);
+      if (asked.length === 0) { await create(text, []); return; }
+      setDraft(text);
+      setAnswers([]);
+      setQuestions(asked);
+    } finally {
+      if (ticket.current === mine) busy.current = false;
+    }
+  };
+  // The questions are not worth waiting for: create the plan as before, and drop the interview still on its way.
+  const skip = async (text: string) => {
+    ticket.current += 1;
     setAsking(false);
-    if (asked.length === 0) { await create([]); return; }
-    setAnswers([]);
-    setQuestions(asked);
+    busy.current = true;
+    try {
+      await create(text, []);
+    } finally {
+      busy.current = false;
+    }
   };
   const answer = async (text: string) => {
-    if (!questions || !text.trim()) return;
+    if (!questions || !text.trim() || busy.current) return;
     const next = [...answers, { question: questions[answers.length].context, answer: text.trim() }];
-    setOwn("");
-    setAnswers(next);
-    if (next.length === questions.length) await create(next);
+    if (next.length < questions.length) {
+      setOwn("");
+      setAnswers(next);
+      return;
+    }
+    // The last answer moves on only once the plan exists: refused, the question and a typed answer stay for a retry.
+    busy.current = true;
+    try {
+      await create(draft, next);
+    } finally {
+      busy.current = false;
+    }
   };
   const current = questions?.[answers.length];
   if (current && questions) {
     return (
-      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Root open={open} onOpenChange={close}>
         <Frame
           className="idea" title={`Before the spec: question ${answers.length + 1} of ${questions.length}`}
           description={<Dialog.Description asChild><p>{current.context}</p></Dialog.Description>}
@@ -146,7 +199,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
           <div className="start-body interview">
             {current.options.map((label, i) => (
               <button
-                key={label} type="button" className={i === current.recommended ? "btn btn-primary" : "btn"}
+                key={i} type="button" className={i === current.recommended ? "btn btn-primary" : "btn"}
                 disabled={command.pending} onClick={() => void answer(`${String.fromCharCode(97 + i)}) ${label}`)}
               >
                 {String.fromCharCode(97 + i)}) {label}{i === current.recommended ? " (Recommended)" : ""}
@@ -160,14 +213,14 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
           </div>
           <div className="start-foot">
             <span className="grow">The answers go into the spec, so the agents do not stop to ask.</span>
-            <button type="button" className="btn btn-quiet" disabled={command.pending} onClick={() => void create([])}>Skip the interview</button>
+            <button type="button" className="btn btn-quiet" disabled={command.pending} onClick={() => void skip(draft)}>Skip the interview</button>
           </div>
         </Frame>
       </Dialog.Root>
     );
   }
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={close}>
       <Frame
         className="idea" title="What is the product or feature you'd like to build?"
         description={<Dialog.Description asChild><p>{empty ? "Write the idea first. A sentence is enough." : SUB}</p></Dialog.Description>}
@@ -175,7 +228,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
         <div className="start-body">
           <FrontmatterForm value={fm} onChange={setFm} />
           <MarkdownEditor
-            value={idea} onChange={(v) => { setEmpty(false); setIdea(v); }} onSubmit={go} label="Your idea, in Markdown"
+            value={idea} onChange={(v) => { setEmpty(false); setIdea(v); if (asking) reset(); }} onSubmit={go} label="Your idea, in Markdown"
             previewLabel="Preview of your idea" invalid={empty} autoFocus height="min(52vh, 460px)"
             placeholder={`# A household budget app\n\nFamilies track shared spending...\n\n## Accounts\n- Import bank statements\n\n${sendKeys()} sends it.`}
           />
@@ -184,6 +237,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
         <div className="start-foot">
           <span className="grow">This creates the plans and adds them to this run.</span>
           <Dialog.Close className="btn btn-quiet">Cancel</Dialog.Close>
+          {asking && <button type="button" className="btn btn-quiet" disabled={command.pending} onClick={() => void skip(idea.trim())}>Skip the questions</button>}
           <button type="button" className="btn btn-primary" disabled={command.pending || asking} onClick={go}>{asking ? "Preparing questions…" : "Break it into plans"}</button>
         </div>
       </Frame>

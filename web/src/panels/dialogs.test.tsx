@@ -149,6 +149,101 @@ describe("IdeaDialog", () => {
     expect(sent[0].payload.decisions).toEqual([]);
   });
 
+  // The interview's lifecycle (Copilot and Grok on #81): a slow interviewer is answered by whatever the person did
+  // in the meantime, never by a plan they did not ask for.
+  describe("while the questions are being prepared", () => {
+    const ONE = { questions: [{ context: "Who?", options: ["A", "B"], recommended: 0 }] };
+    const later = () => {
+      let resolve!: (value: { questions: { context: string; options: string[]; recommended: number }[] }) => void;
+      vi.mocked(postInterview).mockReturnValueOnce(new Promise((r) => { resolve = r; }));
+      return (value: Parameters<typeof resolve>[0]) => act(async () => { resolve(value); });
+    };
+    beforeEach(() => { vi.mocked(postInterview).mockClear(); });
+    const ctrlEnter = (el: HTMLElement) => act(async () => { fireEvent.keyDown(el, { key: "Enter", code: "Enter", keyCode: 13, ctrlKey: true }); });
+
+    it("starts one interview and creates one plan however often the shortcut is pressed", async () => {
+      const answer = later();
+      const { sent, onCommand } = recorder();
+      const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+      let content!: HTMLElement;
+      act(() => { content = typeInEditor(baseElement, "Export the ledger"); });
+      await ctrlEnter(content);
+      await ctrlEnter(content);
+      await answer({ questions: [] });
+      await ctrlEnter(content);
+      expect(postInterview).toHaveBeenCalledTimes(1);
+      expect(sent).toHaveLength(1);
+    });
+
+    it("creates nothing when the dialog is closed before the questions arrive", async () => {
+      const answer = later();
+      const { sent, onCommand } = recorder();
+      const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+      act(() => { typeInEditor(baseElement, "Export the ledger"); });
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Cancel" })); });
+      await answer({ questions: [] });
+      expect(sent).toHaveLength(0);
+    });
+
+    it("drops questions about an idea that was edited while they were prepared", async () => {
+      const answer = later();
+      const { sent, onCommand } = recorder();
+      const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+      act(() => { typeInEditor(baseElement, "Export the ledger"); });
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+      act(() => { typeInEditor(baseElement, "Import the ledger"); });
+      await answer(ONE);
+      expect(screen.getByRole("dialog", { name: "What is the product or feature you'd like to build?" })).toBeInTheDocument();
+      expect(sent).toHaveLength(0);
+    });
+
+    it("can be skipped, creating the plan as before and ignoring the questions when they come", async () => {
+      const answer = later();
+      const { sent, onCommand } = recorder();
+      const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+      act(() => { typeInEditor(baseElement, "Export the ledger"); });
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Skip the questions" })); });
+      await answer(ONE);
+      expect(sent.map((c) => c.payload.decisions)).toEqual([[]]);
+      expect(screen.queryByRole("dialog", { name: /Before the spec/ })).toBeNull();
+    });
+  });
+
+  it("keeps the last answer for a retry when creating the plan is refused", async () => {
+    vi.mocked(postInterview).mockResolvedValueOnce({ questions: [{ context: "Which format?", options: ["CSV", "XLSX"], recommended: 0 }] });
+    const sent: unknown[] = [];
+    const replies = ["refused", "accepted"] as const;
+    const onCommand = vi.fn(async (c: { payload: Record<string, unknown> }) => {
+      sent.push(c.payload.decisions);
+      return { id: "01J", status: replies[sent.length - 1], reason: "busy", at: "2026-10-18T09:00:00Z" };
+    });
+    const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} />);
+    act(() => { typeInEditor(baseElement, "Export the ledger"); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+    const own = await screen.findByRole("textbox", { name: "Type something instead" });
+    fireEvent.change(own, { target: { value: "Both" } });
+    await act(async () => { fireEvent.keyDown(own, { key: "Enter" }); });
+    expect(screen.getByRole("dialog", { name: "Before the spec: question 1 of 1" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Type something instead" })).toHaveValue("Both");
+    await act(async () => { fireEvent.keyDown(screen.getByRole("textbox", { name: "Type something instead" }), { key: "Enter" }); });
+    expect(sent).toEqual([[{ question: "Which format?", answer: "Both" }], [{ question: "Which format?", answer: "Both" }]]);
+  });
+
+  it("starts over when closed mid-interview, rather than resuming old questions", async () => {
+    vi.mocked(postInterview).mockResolvedValueOnce({ questions: [{ context: "Who?", options: ["A", "A"], recommended: 0 }] });
+    const onOpenChange = vi.fn();
+    const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={onOpenChange} onCommand={recorder().onCommand} />);
+    act(() => { typeInEditor(baseElement, "Export the ledger"); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
+    // Two identical labels from the model are two answers, not one.
+    expect(await screen.findAllByRole("button", { name: /\) A/ })).toHaveLength(2);
+    await act(async () => { fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" }); });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole("dialog", { name: "What is the product or feature you'd like to build?" })).toBeInTheDocument();
+  });
+
   it("keeps the idea and shows the reason when refused", async () => {
     const onOpenChange = vi.fn();
     const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={onOpenChange} onCommand={recorder("refused", "no planner configured").onCommand} />);
