@@ -314,7 +314,10 @@ module OpenLanes
         def tools = @all.sum(&:tools)
 
         # What the sessions already over spent, added to the running one's
-        # progress so the meter carries on rather than starting again.
+        # progress so the meter carries on rather than starting again. Their
+        # journal lines go first, for the same reason: the dispatcher counts
+        # its place in the list, and a list that started again at the
+        # continuation would have it skip the continuation's first entries.
         #
         # @param progress [OpenLanes::Execution::Transcript::Progress]
         # @return [OpenLanes::Execution::Transcript::Progress]
@@ -322,7 +325,8 @@ module OpenLanes
           before = @all[0...-1]
           progress.with(up: progress.up + before.sum(&:up),
             down: progress.down + before.sum(&:down),
-            subagents: progress.subagents + before.sum(&:spawned))
+            subagents: progress.subagents + before.sum(&:spawned),
+            journal: (before.flat_map { it.respond_to?(:journal) ? it.journal : [] } + progress.journal).freeze)
         end
       end
 

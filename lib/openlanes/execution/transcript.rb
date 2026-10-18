@@ -60,8 +60,23 @@ module OpenLanes
       # @!attribute [r] running
       #   @return [Array<String>] the sub-agents working right now, by name,
       #     oldest first; empty for a stream that never says (codex, pi)
-      Progress = Data.define(:activity, :up, :down, :subagents, :pid, :message, :context, :session, :running) do
-        def initialize(pid: nil, message: nil, context: nil, session: nil, running: [], **rest) = super
+      # @!attribute [r] journal
+      #   @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #     every journal line (M2) the agent has printed so far, in order. The
+      #     whole list rather than the latest, because a snapshot can be
+      #     skipped by a reader that is busy, and an entry must not be: the
+      #     dispatcher keeps its place in the list and writes what is past it.
+      Progress = Data.define(:activity,
+        :up,
+        :down,
+        :subagents,
+        :pid,
+        :message,
+        :context,
+        :session,
+        :running,
+        :journal) do
+        def initialize(pid: nil, message: nil, context: nil, session: nil, running: [], journal: [], **rest) = super
       end
 
       # The tools that start a sub-agent. `claude` called it `Task` and renamed
@@ -126,6 +141,9 @@ module OpenLanes
         @context = nil
         @session = nil
         @compacted = nil
+        @journal = []
+        @partial = {}
+        @pending = Hash.new(0)
       end
 
       # Everything sent to the model, which on any turn after the first is
@@ -182,7 +200,8 @@ module OpenLanes
           message: @message,
           context: @context,
           session: @session,
-          running: @running.values)
+          running: @running.values,
+          journal: @journal.dup.freeze)
       end
 
       # The sub-agents started and not yet answered, by name. A count would
@@ -194,6 +213,10 @@ module OpenLanes
 
       # @return [String, nil] the session id from the stream's `init` event
       attr_reader :session
+
+      # @return [Array<OpenLanes::Plans::Journal::Entry, OpenLanes::Plans::Journal::Rejection>]
+      #   the journal lines printed so far
+      def journal = @journal.dup
 
       # What a `/compact` reported in its `compact_boundary` event:
       # `pre_tokens`, `post_tokens` and the rest of its `compact_metadata`.
@@ -303,14 +326,75 @@ module OpenLanes
       def handle(event)
         case event["type"]
         when "assistant"
+          grew = capture_journal(event)
           capture_message(event)
           @tools += tool_calls(event)
           delegate(event)
-          announce(phrase_for(event))
+          # A journal line is published even when the phrase is the one
+          # already showing: the dispatcher keeps only the snapshots it is
+          # handed, so one held back here is lost if the round is killed
+          # before anything else publishes.
+          published = announce(phrase_for(event))
+          publish if grew && !published
         when "user" then collect(event)
-        when "stream_event" then meter(event)
+        when "stream_event"
+          stream_journal(event)
+          meter(event)
         when "system" then system_event(event)
         when "result" then record_result(event)
+        end
+      end
+
+      # Journal lines (M2) in the agent's own text. A sub-agent's are left
+      # out: it was not told the format, the journal is its parent's, and a
+      # line it printed reaches the parent as a tool result the parent can
+      # repeat if it matters. Text only, never a tool's input, so a file the
+      # agent writes that happens to hold such a line is not a journal entry.
+      #
+      # @param event [Hash]
+      # @return [Boolean] whether the journal grew
+      def capture_journal(event)
+        return false unless event["parent_tool_use_id"].nil?
+
+        lines = blocks_of(event, "text").flat_map { Plans::Journal.scan(it["text"]) }
+        fresh = lines.reject do |line|
+          next false unless @pending[line].positive?
+
+          @pending[line] -= 1
+          true
+        end
+        @journal.concat(fresh)
+        !fresh.empty?
+      end
+
+      # The finished lines of a text block still being streamed, as they
+      # arrive (`--include-partial-messages`), so an agent killed before the
+      # block's `assistant` event keeps what it printed. {#capture_journal}
+      # then skips them when that event repeats them. Main agent and
+      # `text_delta` only: a sub-agent's text and a tool's input stream too.
+      #
+      # @param event [Hash] a `stream_event`
+      # @return [void]
+      def stream_journal(event)
+        inner = event["event"]
+        return unless event["parent_tool_use_id"].nil? && inner.is_a?(Hash)
+
+        case inner["type"]
+        when "message_start" then @partial = {}
+        when "content_block_start" then @partial[inner["index"]] = { text: +"", taken: 0 }
+        when "content_block_delta"
+          return unless inner.dig("delta", "type") == "text_delta"
+
+          block = (@partial[inner["index"]] ||= { text: +"", taken: 0 })
+          block[:text] << inner.dig("delta", "text").to_s
+          cut = block[:text].rindex("\n") or return
+
+          entries = Plans::Journal.scan(block[:text][0..cut])
+          fresh = entries.drop(block[:taken])
+          block[:taken] = entries.size
+          fresh.each { @pending[it] += 1 }
+          @journal.concat(fresh)
+          publish unless fresh.empty?
         end
       end
 
@@ -578,12 +662,13 @@ module OpenLanes
       end
 
       # @param phrase [String, nil]
-      # @return [void]
+      # @return [Boolean] whether it published
       def announce(phrase)
-        return if phrase.nil? || phrase == @activity
+        return false if phrase.nil? || phrase == @activity
 
         @activity = phrase
         publish
+        true
       end
 
       # Hand the caller a whole snapshot rather than the one field that moved.

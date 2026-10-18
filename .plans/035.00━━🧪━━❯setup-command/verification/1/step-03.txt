@@ -1,0 +1,14 @@
+
+┌─ Warning ────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Dry run — nothing was installed.                                        │
+│  Would install: nothing                                                  │
+│  Checks: brew, Brewfile, claude, gh, redis                               │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+✓ brew      Homebrew is installed
+✓ Brewfile  every tool in /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-setup-command/Brewfile is installed
+✓ claude    the claude CLI is on PATH
+✓ gh        gh auth status passes
+✓ redis     redis://apollo.re1.re:6379 answers PING
+exit 0

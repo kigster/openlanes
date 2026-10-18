@@ -15,10 +15,10 @@ RSpec.describe "openlanes --help" do
     expect([positions.none?(nil), positions.compact == positions.compact.sort]).to eq([true, true])
   end
 
-  it "lists init, start and web under the web operation, and run under headless" do
+  it "lists setup, init, start and web under the web operation, and run under headless" do
     web = screen[/OPENLANES DEFAULT WEB OPERATION\n(.*?)\n\n/m, 1]
     headless = screen[/HEADLESS OPERATION\n(.*?)\n\n/m, 1]
-    expect([web.scan(/^  (\w[\w-]*)/).flatten, headless]).to match([%w[init start web], include("  run ")])
+    expect([web.scan(/^  (\w[\w-]*)/).flatten, headless]).to match([%w[setup init start web], include("  run ")])
   end
 
   it "says that start is web and run in one" do
