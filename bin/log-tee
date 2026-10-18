@@ -19,12 +19,28 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 mkdir -p "$root/log"
 log="$root/log/development.log"
 
+# BSD awk has no strftime. Without gawk the stamping process dies, tee hits a
+# closed pipe on its first line, and the command it wraps dies of EPIPE: say
+# so here instead of losing the pane.
+if ! command -v gawk >/dev/null 2>&1; then
+  echo "bin/log-tee: gawk is required (brew install gawk, or brew bundle)" >&2
+  exit 69
+fi
+
 # Each line is written the way SemanticLogger's colour format writes the
 # engine's: the command's own colour codes are stripped, and the level and
-# name are coloured instead. Blank lines are dropped.
+# name are coloured instead. A line that reads like an error or a warning is
+# levelled E or W, so a compile error or a stack trace keeps its colour.
+# Blank lines are dropped.
 exec > >(tee >(gawk -v name="$name" -v pid=$$ '
   { gsub(/\033\[[0-9;?]*[A-Za-z]/, "") }
   /^[[:space:]]*$/ { next }
-  { printf "%s \033[36mI\033[0m [%s] \033[35m%s\033[0m -- %s\n", strftime("%Y-%m-%d %H:%M:%S"), pid, name, $0; fflush() }
+  {
+    level = "I"; colour = "36"
+    if ($0 ~ /(^|[^[:alpha:]])(error|Error|ERROR|exception|Exception|failed|FATAL)([^[:alpha:]]|$)/) { level = "E"; colour = "31" }
+    else if ($0 ~ /(^|[^[:alpha:]])(warn|Warn|WARN|warning|Warning|WARNING|deprecated)([^[:alpha:]]|$)/) { level = "W"; colour = "33" }
+    printf "%s \033[%sm%s\033[0m [%s] \033[35m%s\033[0m -- %s\n", strftime("%Y-%m-%d %H:%M:%S"), colour, level, pid, name, $0
+    fflush()
+  }
 ' >> "$log")) 2>&1
 exec "$@"
