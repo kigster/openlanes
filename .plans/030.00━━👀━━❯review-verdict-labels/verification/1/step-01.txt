@@ -1,0 +1,2 @@
+Step 1: labels created/recoloured
+rspec spec/openlanes/vcs (label_sync_spec): 0 failures

@@ -6,7 +6,7 @@
     "slug": "setup-command"
   },
   "state": "verifying",
-  "updated_at": "2026-10-17T12:54:29-07:00",
+  "updated_at": "2026-10-17T12:54:41-07:00",
   "stages": [
     {
       "agent": "luke-backend",
@@ -57,7 +57,7 @@
     {
       "agent": "chewie-verifier",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "verifying",
       "started_at": "2026-10-17T12:53:39-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-setup-command",
@@ -68,7 +68,14 @@
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "68c090de-adc6-427e-8609-b68f62b2aba0"
+      "session": "68c090de-adc6-427e-8609-b68f62b2aba0",
+      "to": "verifying",
+      "finished_at": "2026-10-17T12:54:41-07:00",
+      "up": 484436,
+      "down": 4154,
+      "seconds": 59.3,
+      "note": "completed - 11 tool calls; verified PR #82; final.png pushed in 1edd95e; waiting on CI",
+      "moves": 5
     }
   ],
   "signatures": [

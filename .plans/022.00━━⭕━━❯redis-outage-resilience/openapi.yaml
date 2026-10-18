@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: openlanes board snapshot, plan 022.00 addition
+  version: "022.00"
+  description: >
+    Additive change only. The snapshot's `run` object, served by
+    `GET /api/board` and the `event: board` stream, gains `outage`. No route
+    is added or changed. Every other field is described by
+    web/src/api/types.ts and web/src/api/fixtures/snapshot.json.
+paths: {}
+components:
+  schemas:
+    Run:
+      type: object
+      description: The snapshot's `run` object (`Live::Snapshot#run`); only the new field is listed.
+      properties:
+        outage:
+          oneOf:
+            - $ref: "#/components/schemas/Outage"
+            - type: "null"
+          description: >
+            The Redis outage this run last recovered from; null until there
+            is one. A paused engine publishes nothing, so a live outage shows
+            only as a stale snapshot. Older engines omit the field.
+    Outage:
+      type: object
+      description: Built by `Live::OutageReport#to_h`, published by `Live::Publisher#outage`.
+      required: [started_at, ended_at, seconds, measured_by, reconciled_from]
+      properties:
+        started_at:
+          type: string
+          format: date-time
+          description: This node's last heartbeat before the outage, or the first failure by the engine's clock.
+          example: "2026-10-16T18:40:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          description: The probe that got an answer.
+          example: "2026-10-16T18:41:12Z"
+        seconds:
+          type: integer
+          minimum: 0
+          description: ended_at minus started_at, rounded.
+          example: 72
+        measured_by:
+          type: string
+          enum: [heartbeat, clock]
+          description: heartbeat when Redis still held one from within 15 s of the first failure; clock otherwise.
+        reconciled_from:
+          type: [string, "null"]
+          enum: [redis, file, null]
+          description: Which copy of the run state had the higher seq; null when neither copy exists.

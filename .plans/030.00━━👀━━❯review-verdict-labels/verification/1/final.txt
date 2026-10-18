@@ -1,0 +1,2 @@
+Step 4: only vader counts bomb/unlock
+verdict_spec.rb: 0 failures

@@ -6,7 +6,7 @@
     "slug": "ability-to-view-markdowns"
   },
   "state": "verifying",
-  "updated_at": "2026-10-17T12:29:59-07:00",
+  "updated_at": "2026-10-17T12:30:18-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -295,7 +295,7 @@
     {
       "agent": "chewie-verifier",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "verifying",
       "started_at": "2026-10-17T12:21:55-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/017.00-ability-to-view-markdowns",
@@ -306,7 +306,14 @@
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "7bed76e1-0888-4312-a640-3092b9d556a8"
+      "session": "7bed76e1-0888-4312-a640-3092b9d556a8",
+      "to": "verifying",
+      "finished_at": "2026-10-17T12:30:18-07:00",
+      "up": 1104997,
+      "down": 9965,
+      "seconds": 499.6,
+      "note": "completed - 22 tool calls; verified PR #79; final.png pushed in 6f62e44; waiting on CI",
+      "moves": 7
     }
   ],
   "signatures": [

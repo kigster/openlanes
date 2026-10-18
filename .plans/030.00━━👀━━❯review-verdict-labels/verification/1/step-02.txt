@@ -1,0 +1,2 @@
+Step 2: verdict mapping
+verdict_spec, review_label_spec: 0 failures (239 examples with vcs)
