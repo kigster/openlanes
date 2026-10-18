@@ -1,0 +1,43 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      root: "frontend/"
+      glob: "*.{js,ts,tsx}"
+      run: npx biome format --write {staged_files}
+      stage_fixed: true
+
+    - name: rubocop
+      root: "rails/"
+      glob: "**/*.{rb,rake}"
+      # --force-exclusion is load-bearing, not decoration. RuboCop honours
+      # AllCops/Exclude when it walks the tree itself, but IGNORES it for paths
+      # passed explicitly on the command line — which is exactly what
+      # {staged_files} does. Without this flag the vendored tax_engine gem gets
+      # autocorrected into this app's rubocop-rails-omakase style on the way in,
+      # silently forking the vendored copy from its upstream source. It happened
+      # to 29 files the first time the gem was vendored.
+      run: bundle exec rubocop -a --force-exclusion --format progress {staged_files}
+      stage_fixed: true
+
+    - name: rspec
+      root: "rails/"
+      glob: "spec/**/*_spec.rb"
+      run: bundle exec rspec --format progress
+
+    - name: gitleaks
+      # Scan ONLY staged changes; a non-zero exit blocks the commit.
+      # Fail CLOSED if gitleaks is missing — secret scanning is mandatory.
+      run: |
+        if ! command -v gitleaks >/dev/null 2>&1; then
+          echo "gitleaks is not installed — secret scanning is required before committing."
+          echo "Install it:  brew bundle   (installs gitleaks + detect-secrets + lefthook)"
+          exit 1
+        fi
+        gitleaks git --pre-commit --redact --staged --no-banner --verbose
+      fail_text: |
+        Commit blocked: gitleaks flagged a possible secret in your staged changes
+          (or gitleaks is not installed). Review the finding above.
+          - Real secret? Remove it; use Rails encrypted credentials or a secrets manager.
+          - False positive? Allowlist it in .gitleaks.toml ([[allowlists]]) or add its
+            fingerprint to .gitleaksignore. Do NOT --no-verify past a real secret.

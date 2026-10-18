@@ -116,7 +116,7 @@ update-workflow:
     bundle exec openlanes docs -o docs/WORKFLOW.md
 
 # Run all the tests
-test *args:
+test *args: web-build
     export ENVIRONMENT=test; {{ rbenv }} rspec {{ args }}
 
 # Score every agent's eval cases against their recordings

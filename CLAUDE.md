@@ -22,11 +22,13 @@ The suite is green: `bundle exec rspec` reports 0 failures and nothing pending. 
 
 ## Commands
 
-Ruby 4.0.x under rbenv. There is no `.ruby-version`, so activate before every Ruby command:
+Ruby 4.0.6 under rbenv, pinned by `.ruby-version`. Activate before every Ruby command:
 
 ```bash
 eval "$(rbenv init -)"
+bundle check || bundle install                       # dependencies; bin/setup installs the tooling too
 
+just ci                                              # rubocop, then the suite with coverage (alias: check-all)
 bundle exec rspec                                    # whole suite
 bundle exec rspec spec/openlanes/plans/ordinal_spec.rb    # one file
 bundle exec rspec spec/openlanes/engine/runner_spec.rb:42 # one example, by line
@@ -40,6 +42,27 @@ SimpleCov starts on every rspec run, not only under `COVERAGE=true`, so a single
 ### Linting
 
 `just lint` runs `bundle exec rubocop` against the project's `.rubocop.yml`, which inherits `.rubocop_todo.yml`. Keep it at zero offenses. The todo file lists paths, so a moved file must move there too.
+
+CI is CircleCI, configured in `.circleci/config.yml`: `linter`, `test`, `web` and `e2e` jobs.
+
+Commands do the work they are named for, but `.openlanes.yml` can change what a run actually does, so read a command's `--help` before starting a run.
+
+### Distribution
+
+This is a gem, not a deployed web service.
+
+- `just build` syncs dependencies (`bin/setup`) and builds the page the gem ships into `web/dist`; `gem build openlanes.gemspec` builds the package.
+- `just publish` pushes the gem to RubyGems, taking the OTP from 1Password or as `otp=`.
+- `just release` tags `v<version>`, publishes the GitHub release and refreshes the Homebrew tap. It force-updates the tag (`git tag -f`, `git push -f --tags`).
+- Publish or release only when explicitly asked to, and update this section when those recipes change.
+
+### Secrets and local changes
+
+Keep `.env` and credential values out of commits, prompts and telemetry. Preserve local changes that were already in a checkout when preparing a pull request.
+
+### Proposals not yet built
+
+`docs/software-factory-proposal.md` (2026-09-24) proposes explicit task routing, a scheduler, Jev for narrow decisions, an independent reviewer on another model family, Braintrust and evals. It is a proposal: check the current code before assuming any part of it exists.
 
 ## Architecture
 
@@ -63,7 +86,7 @@ The code repeatedly explains, in comments, which duplicated table burned it. Bef
 | Numbering rules                                      | `lib/openlanes/plans/ordinal.rb`                   | `documentation.rb`, `creator.rb`                                                  |
 | Which agent handles which state                      | `agents/*.md` frontmatter                          | `Agents::Registry`, `Roster`, `Runner` routing, `Executor` tool grants            |
 
-`openlanes docs` regenerates the whole conventions document from the first three. Hand-writing any of those tables reintroduces the bug the derivation exists to kill.
+`openlanes docs` regenerates the whole conventions document from the first three; `just update-workflow` writes it to `docs/WORKFLOW.md`. Hand-writing any of those tables reintroduces the bug the derivation exists to kill.
 
 A status answers to its key and its emoji, and to nothing else. The synonym table that used to sit in `status.rb` went stale pointing six words at a state that no longer existed, so there is deliberately no alias map.
 

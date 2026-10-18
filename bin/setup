@@ -2,20 +2,22 @@
 # vim: ft=bash
 #
 # © 2026 OpenLanes Developer Setup Script
-
-if [[ $* =~ -y || $* =~ --yes ]]; then
-  echo "Non-interactive mode engaged."
-else
-  echo "NOTE: this setup script is for developers of OpenLanes."
-  echo "Are you sure you want to continue? Press Ctrl-C to abort, or press ENTER to continue."
-  read -a answer >/dev/null
-fi
+#
+# Contributor bootstrap for a checkout of this repo. Each install step is its
+# own function. main names the order.
 
 set -euo pipefail
 IFS=$'\n\t'
-# set -v
 
-declare project_root="$( cd $(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")/.. && pwd -P)"
+declare project_root
+project_root="$(cd "$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+
+declare -a external_gems
+external_gems=(
+  "openlanes"
+  "agent-lock"
+  "agent-evals"
+)
 
 function ok() {
   echo -e "\e[1;32m[OK ✔]\e[0m $*"
@@ -25,82 +27,151 @@ function err() {
   echo -e "\e[1;31m[ERROR]\e[0m $*"
 }
 
-command -v brew>/dev/null  || {
+function confirm_developer_setup() {
+  if [[ $* =~ -y || $* =~ --yes ]]; then
+    echo "Non-interactive mode engaged."
+    return
+  fi
+
+  echo "NOTE: this setup script is for developers of OpenLanes."
+  echo "Are you sure you want to continue? Press Ctrl-C to abort, or press ENTER to continue."
+  read -r >/dev/null
+}
+
+function install_homebrew() {
+  if command -v brew >/dev/null; then
+    hash -r >/dev/null
+    return
+  fi
+
   echo "Installing homebrew, required to install dependencies. You may need to provide sudo password."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-}
-
-hash -r >/dev/null
-
-echo "Installing Brew packages defined in the Brewfile and Brewfile.dev"
-brew bundle --no-upgrade --file="${project_root}/Brewfile"
-brew bundle --no-upgrade --file="${project_root}/Brewfile.dev"
-hash -r >/dev/null
-
-mkdir -p "$(rbenv root)"/plugins
-if [[ -d "$(rbenv root)"/plugins/ruby-build ]]; then
-  echo "Updating ruby-build"
-  cd "$(rbenv root)"/plugins/ruby-build && test -d .git && git pull >/dev/null || true
-else
-  echo "Installing ruby-build"
-  git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
-fi
-
-cd "${project_root}"
-
-ruby_version="$(cat .ruby-version | tr -d '\n')"
-
-echo "ruby version needed: [${ruby_version}]"
-
-if rbenv local ${ruby_version}; then
-  echo "Ruby ${ruby_version} is already installed"
-else
-  set +e
-  echo "Ruby ${ruby_version} is not installed, installing with rv..."
-  rv ruby install ${ruby_version} -i $(rbenv root)/versions/${ruby_version}
   hash -r >/dev/null
-  # alternative way to install using rbenv
-  # bash -c "$(curl -fsSL https://bit.ly/ruby-install-0-2-1)" -- ${ruby_version}
-fi
-
-rbenv local ${ruby_version} || {
-  err "Ruby ${ruby_version} failed to install. Please install it using rbenv or your favorite ruby manager."
-  exit 1
 }
 
-ok "Ruby version ${ruby_version} is installed and current."
+function install_brew_packages() {
+  echo "Installing Brew packages defined in the Brewfile and Brewfile.dev"
+  brew bundle --no-upgrade --file="${project_root}/Brewfile"
+  hash -r >/dev/null
+}
 
-echo "Updating bundler..."
-bundle update --bundler >/dev/null 2>&1
+function install_ruby_build() {
+  local plugin_dir
+  plugin_dir="$(rbenv root)/plugins/ruby-build"
+  mkdir -p "$(rbenv root)/plugins"
 
-bundle check>/dev/null && {
-  ok "Gemfile dependencies are already satisfied."
-} || bundle install -j 12
+  if [[ -d "${plugin_dir}" ]]; then
+    echo "Updating ruby-build"
+    # A missing .git, or a pull that fails, leaves the plugin that is already there.
+    if [[ -d "${plugin_dir}/.git" ]]; then
+      git -C "${plugin_dir}" pull >/dev/null || true
+    fi
+    return
+  fi
 
-if [[ -n ${REDIS_URL:-} && $(echo ping | redis-cli -u "$REDIS_URL") == "PONG" ]]; then
-  ok "Redis is available @ [$REDIS_URL]"
-else
+  echo "Installing ruby-build"
+  git clone https://github.com/rbenv/ruby-build.git "${plugin_dir}"
+}
+
+function install_ruby() {
+  local ruby_version
+  ruby_version="$(tr -d '\n' < "${project_root}/.ruby-version")"
+
+  cd "${project_root}"
+  echo "ruby version needed: [${ruby_version}]"
+
+  if rbenv local "${ruby_version}"; then
+    echo "Ruby ${ruby_version} is already installed"
+  else
+    echo "Ruby ${ruby_version} is not installed, installing with rv..."
+    # rv's own failure is not fatal here. The rbenv local check below reports it.
+    set +e
+    rv ruby install "${ruby_version}" -i "$(rbenv root)/versions/${ruby_version}"
+    set -e
+    hash -r >/dev/null
+  fi
+
+  if ! rbenv local "${ruby_version}"; then
+    err "Ruby ${ruby_version} failed to install. Please install it using rbenv or your favorite ruby manager."
+    exit 1
+  fi
+
+  ok "Ruby version ${ruby_version} is installed and current."
+}
+
+function install_bundled_gems() {
+  cd "${project_root}"
+  echo "Updating bundler..."
+  bundle update --bundler >/dev/null 2>&1
+
+  if bundle check >/dev/null; then
+    ok "Gemfile dependencies are already satisfied."
+    return
+  fi
+
+  bundle install -j 12
+}
+
+function install_external_gems() {
+  cd "${project_root}"
+  echo "Installing a couple of external gems..."
+  gem install "${external_gems[@]}" -N
+  [[ $? -eq 0 ]] && ok "gems installed."
+}
+
+function ensure_redis() {
+  if [[ -n ${REDIS_URL:-} && $(echo ping | redis-cli -u "$REDIS_URL") == "PONG" ]]; then
+    ok "Redis is available @ [$REDIS_URL]"
+    return
+  fi
+
   unset REDIS_URL
-  /bin/ps -ef | grep -q -E '[r]edis-server' || {
+  if ! /bin/ps -ef | grep -q -E '[r]edis-server'; then
     echo "Starting local redis server..."
     brew tap homebrew/services
     brew services start redis
     sleep 1
-  }
+  fi
 
-  /bin/ps -ef | grep -q -E '[r]edis-server' || {
+  if ! /bin/ps -ef | grep -q -E '[r]edis-server'; then
     err "Redis server failed to start with brew services. Please start it manually."
     exit 1
-  }
-fi
-
-gh auth status >/dev/null || {
-  echo "We need 'gh' utility authenticated with Github... Please follow the prompts."
-  gh auth login -w
-  gh auth status >/dev/null || {
-    err "gh is not authenticated. Please run 'gh auth login' and get it authenticated."
-    exit 1
-  }
+  fi
 }
 
-ok "gh is authenticated, so you should be good to go!"
+function authenticate_github() {
+  if gh auth status >/dev/null; then
+    ok "gh is authenticated, so you should be good to go!"
+    return
+  fi
+
+  echo "We need 'gh' utility authenticated with Github... Please follow the prompts."
+  gh auth login -w
+
+  if ! gh auth status >/dev/null; then
+    err "gh is not authenticated. Please run 'gh auth login' and get it authenticated."
+    exit 1
+  fi
+
+  ok "gh is authenticated, so you should be good to go!"
+}
+
+function configure_git_hooks() {
+  command -v lefthook >/dev/null || install_external_gems
+  lefthook install
+}
+
+function main() {
+  confirm_developer_setup "$@"
+  install_homebrew
+  install_brew_packages
+  install_ruby_build
+  install_ruby
+  install_bundled_gems
+  install_external_gems
+  ensure_redis
+  authenticate_github
+  configure_git_hooks
+}
+
+main "$@"

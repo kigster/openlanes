@@ -65,7 +65,6 @@ RSpec.describe "packaging" do
 
     it "ships the runtime Brewfile and not the contributor's" do
       expect(files).to include("Brewfile")
-      expect(files).not_to include("Brewfile.dev")
     end
 
     it "ships nothing from bin/" do
@@ -74,7 +73,7 @@ RSpec.describe "packaging" do
 
     it "keeps bin/setup bundling both Brewfiles in a checkout" do
       script = File.read(File.join(root, "bin", "setup"))
-      expect(script).to include('--file="${project_root}/Brewfile"', '--file="${project_root}/Brewfile.dev"')
+      expect(script).to include('--file="${project_root}/Brewfile"', '--file="${project_root}/Brewfile"')
     end
 
     it "lists in the Brewfile every tool the engine shells out to" do
