@@ -4,7 +4,7 @@ import type { Car as CarData, ModelChoice, Node, Plan, Station } from "../api/ty
 import { Car, InterruptedCar, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, planId, who } from "./format";
-import { LANES, rowColors, rowDomId, routeOf } from "./model";
+import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
 export interface CarHandlers {
@@ -95,7 +95,8 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
     );
   }
 
-  const cls = ["plan", faded && "is-theirs", retiring && "is-retiring"].filter(Boolean).join(" ");
+  // A plan finished this run keeps its row at half height, the narrow lanes' look, whatever the lanes toggle says.
+  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring"].filter(Boolean).join(" ");
   return (
     <article
       ref={scope}

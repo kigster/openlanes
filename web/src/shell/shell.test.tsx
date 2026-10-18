@@ -59,7 +59,7 @@ describe("backlogNote", () => {
   it("names what the Action menu leaves out and why", () => {
     const board = sampleBoard();
     board.others[0].plans.push(samplePlan({ ordinal: "011.00", pr: samplePr({ state: "merged" }) }));
-    expect(backlogNote(board)).toBe("Not listed: 001, 005, 006, 002 in this run; 010 on sam@ci-runner-2; 011 complete.");
+    expect(backlogNote(board)).toBe("Not listed: 001, 005, 006, 002, 007 in this run; 010 on sam@ci-runner-2; 008, 011 complete.");
   });
 
   it("says nothing when nothing is left out", () => {

@@ -145,6 +145,7 @@
           }
         ],
         "pr": null,
+        "finished": null,
         "questions": [
           {
             "id": "001.00/B1",
@@ -214,6 +215,7 @@
           "ci": "pending",
           "merged_at": null
         },
+        "finished": null,
         "questions": [],
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
@@ -264,6 +266,7 @@
           }
         ],
         "pr": null,
+        "finished": null,
         "questions": [
           {
             "id": "006.00/B1",
@@ -315,6 +318,7 @@
         "elapsed": 0,
         "cars": [],
         "pr": null,
+        "finished": null,
         "questions": [
           {
             "id": "002.00/B1",
@@ -328,6 +332,76 @@
             "asked_at": "2026-10-13T09:00:00Z"
           }
         ],
+        "interrupted": null,
+        "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+        "unacked": 0,
+        "last_known": [],
+        "locked": null
+      },
+      {
+        "ordinal": "007.00",
+        "title": "Retry flaky webhooks",
+        "slug": "retry-flaky-webhooks",
+        "status": {
+          "key": "in_review",
+          "emoji": "👀",
+          "label": "In Review"
+        },
+        "lane": "quick",
+        "station": "pr",
+        "up": 1090000,
+        "down": 78800,
+        "cost": 4.2,
+        "started_at": "2026-10-13T09:00:00Z",
+        "elapsed": 5880,
+        "cars": [],
+        "pr": {
+          "number": 47,
+          "url": "https://github.com/kigster/openlanes/pull/47",
+          "state": "approved",
+          "ci": "passing",
+          "merged_at": null
+        },
+        "finished": {
+          "kind": "approved",
+          "at": "2026-10-13T09:20:00Z"
+        },
+        "questions": [],
+        "interrupted": null,
+        "claimed_by": "3f9a0c7be21d44a8f6031c5d",
+        "unacked": 0,
+        "last_known": [],
+        "locked": null
+      },
+      {
+        "ordinal": "008.00",
+        "title": "Trim the run log",
+        "slug": "trim-the-run-log",
+        "status": {
+          "key": "approved",
+          "emoji": "✅",
+          "label": "Approved & Merged"
+        },
+        "lane": "quick",
+        "station": "pr",
+        "up": 1090000,
+        "down": 78800,
+        "cost": 4.2,
+        "started_at": "2026-10-13T09:00:00Z",
+        "elapsed": 5880,
+        "cars": [],
+        "pr": {
+          "number": 45,
+          "url": "https://github.com/kigster/openlanes/pull/45",
+          "state": "merged",
+          "ci": "passing",
+          "merged_at": "2026-10-13T09:10:00Z"
+        },
+        "finished": {
+          "kind": "merged",
+          "at": "2026-10-13T09:10:00Z"
+        },
+        "questions": [],
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
@@ -522,6 +596,7 @@
             "ci": "pending",
             "merged_at": null
           },
+          "finished": null,
           "questions": [],
           "interrupted": null,
           "claimed_by": "c07d5e1a99b2f3046e8a1d7b",

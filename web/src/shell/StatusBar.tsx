@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Plan, Snapshot, Station } from "../api/types";
 import { planId, redactUrl, span, who } from "../board/format";
@@ -22,7 +22,7 @@ export interface StatusBarProps {
   onShowPlan: (plan: Plan) => void;
   /** Another machine's pill: open that machine's tab. */
   onOpenMachine: (nodeId: string) => void;
-  /** Takes a purple pill off an overflowing bar. */
+  /** Takes a purple pill off a bar already two lines tall. */
   onDropGone: (ordinal: string) => void;
 }
 
@@ -33,6 +33,27 @@ interface Entry {
 }
 
 const FADE = { duration: 0.3 };
+
+/**
+ * Writes the bar's real height into `--statusbar-h` whenever it changes, so the page's bottom padding and the floating
+ * panels follow a bar that wrapped to a second line instead of assuming one line's 60px. Put back on unmount, when
+ * nothing is left at the bottom to keep clear of.
+ */
+function useBarHeight(bar: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const root = document.documentElement.style;
+    const write = () => root.setProperty("--statusbar-h", `${el.offsetHeight}px`);
+    write();
+    const watch = new ResizeObserver(write);
+    watch.observe(el);
+    return () => {
+      watch.disconnect();
+      root.removeProperty("--statusbar-h");
+    };
+  }, [bar]);
+}
 const SLIDE = { duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as const };
 
 /**
@@ -42,6 +63,8 @@ const SLIDE = { duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as const };
 export function StatusBar(props: StatusBarProps) {
   const { redisUrl, plans, stations, others, gone, offBar, finishOrder, unblocking, onToggleUnblock, onShowPlan, onOpenMachine, onDropGone } = props;
   const list = useRef<HTMLOListElement>(null);
+  const bar = useRef<HTMLElement>(null);
+  useBarHeight(bar);
 
   const live = plans.filter(p => !gone.has(p.ordinal));
   const entries: Entry[] = [
@@ -52,12 +75,13 @@ export function StatusBar(props: StatusBarProps) {
   const order = (e: Entry) => finishOrder.get(e.plan.ordinal) ?? Number.MAX_SAFE_INTEGER;
   const finished = entries.filter(e => e.finished).sort((a, b) => order(a) - order(b) || a.plan.ordinal.localeCompare(b.plan.ordinal));
 
-  // When the bar runs out of room, merged plans leave it, oldest first, once each has been shown for a while.
+  // The pills wrap to two lines; when even those run out (the list scrolls), merged plans whose rows have left the
+  // board leave the bar too, oldest first, once each has been shown for a while.
   const latest = useRef({ gone, offBar, onDropGone });
   latest.current = { gone, offBar, onDropGone };
   const trim = useCallback(() => {
     const el = list.current;
-    if (!el || el.scrollWidth <= el.clientWidth + 1) return;
+    if (!el || el.scrollHeight <= el.clientHeight + 1) return;
     const now = Date.now();
     const { gone: g, offBar: off, onDropGone: drop } = latest.current;
     const leaving = [...g.values()]
@@ -106,7 +130,7 @@ export function StatusBar(props: StatusBarProps) {
   };
 
   return (
-    <footer className="statusbar" aria-labelledby="statusbar-title">
+    <footer className="statusbar" aria-labelledby="statusbar-title" ref={bar}>
       <h2 id="statusbar-title">Plans</h2>
       <ol className="pills" ref={list}>
         <AnimatePresence initial={false}>
@@ -133,7 +157,7 @@ export function StatusBar(props: StatusBarProps) {
                   onClick={() => onOpenMachine(their.node.id)}
                 >
                   <span className="pill-mark" aria-hidden="true">
-                    {merged ? "✅" : done ? "✓" : "🖥️"}
+                    {merged || done ? "✅" : "🖥️"}
                   </span>
                   <span className="pill-text">
                     <span className="pill-id">{id}</span>{" "}

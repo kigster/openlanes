@@ -5,6 +5,7 @@ import {
   hasRequest,
   isFinished,
   isWorking,
+  keepsRow,
   lockMark,
   nodePlanKey,
   modelLabel,
@@ -105,6 +106,16 @@ describe("carLook", () => {
   });
 });
 
+describe("keepsRow", () => {
+  it("keeps a plan the engine marks finished, and nothing else, even from an engine that never says", () => {
+    expect(keepsRow(samplePlan({ pr: samplePr({ state: "approved" }), finished: { kind: "approved", at: "2026-10-13T09:00:00Z" } }))).toBe(true);
+    expect(keepsRow(samplePlan({ pr: samplePr({ state: "merged" }) }))).toBe(false);
+    const older = samplePlan();
+    delete (older as Partial<typeof older>).finished;
+    expect(keepsRow(older)).toBe(false);
+  });
+});
+
 describe("pillState", () => {
   const st = (over: Parameters<typeof samplePlan>[0], gone = false) => pillState(samplePlan(over), stations, gone);
 
@@ -112,7 +123,7 @@ describe("pillState", () => {
     expect(st({}, true)).toMatchObject({ cls: "is-gone", mark: "✅" });
     expect(st({ pr: null }, true).say).toContain("PR #?");
     expect(st({ pr: samplePr({ state: "merged" }) })).toMatchObject({ cls: "is-merged", mark: "✅" });
-    expect(st({ pr: samplePr({ state: "approved" }) })).toMatchObject({ cls: "is-done", mark: "✓", say: "reviewed, PR #44 ready to merge" });
+    expect(st({ pr: samplePr({ state: "approved" }) })).toMatchObject({ cls: "is-done", mark: "✅", say: "reviewed, PR #44 ready to merge" });
     expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ cls: "is-blocked", mark: "⭕" });
     expect(st({ questions: [sampleQuestion({ held: true })] })).toMatchObject({ cls: "is-blocked is-held", mark: "⏸" });
     expect(st({ questions: [sampleQuestion({ owner: "product" })] })).toMatchObject({ mark: "🛑", say: expect.stringContaining("product") });

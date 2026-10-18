@@ -79,7 +79,7 @@ describe("under ?fixture", () => {
     expect(screen.getByRole("tab", { name: "sam@ci-runner-2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Clean agent boundaries and transitions" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Action/ })).toBeInTheDocument();
-    expect(screen.getByText("0 merged, 0 ready to merge, 3 blocked")).toBeInTheDocument();
+    expect(screen.getByText("1 merged, 1 ready to merge, 3 blocked")).toBeInTheDocument();
   });
 
   it("switches tabs with the arrow keys and shows the Logs and test tabs", async () => {

@@ -117,19 +117,23 @@ button, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
 @media (max-width: 700px) { .tests-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* Status bar: one pill per plan. Working and blocked plans first, in plan order; finished ones stack on the right in the order they finished. */
-.statusbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; height: var(--statusbar-h);
-             display: flex; align-items: center; gap: 16px; padding: 0 16px;
+/* Status bar: one pill per plan. Working and blocked plans first, in plan order; finished ones stack on the right in the order they finished.
+   Pills wrap to a second line rather than scroll sideways, so the bar grows with them: StatusBar measures its own
+   height into --statusbar-h, which the body's bottom padding and the floating panels read. Past two lines the list
+   scrolls, and StatusBar takes the oldest purple pills off. */
+.statusbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; min-height: 60px;
+             display: flex; align-items: center; gap: 16px; padding: 4px 16px;
              background: var(--plate); border-top: 1px solid var(--hairline); }
 .statusbar h2 { margin: 0; font-size: 13px; font-weight: 800; white-space: nowrap; }
-.pills { flex: 1; min-width: 0; display: flex; gap: 6px; list-style: none; margin: 0; padding: 4px 0; overflow-x: auto; scrollbar-width: thin; }
+.pills { --pill-h: 44px; --pills-gap: 6px; flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: var(--pills-gap); list-style: none; margin: 0; padding: 4px 0;
+         max-height: calc(2 * var(--pill-h) + var(--pills-gap) + 8px); overflow-y: auto; scrollbar-width: thin; }
 .pills > li { flex: none; display: flex; }
 /* Every pill's text holds 4.5:1 in both themes and every state (WCAG 1.4.3). A solid pill is its colour darkened
    toward black, keeping --solid of it; the dark theme's brighter greens and purples keep less. */
 .statusbar { --solid: 70%; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .statusbar { --solid: 55%; } }
 :root[data-theme="dark"] .statusbar { --solid: 55%; }
-.pill { --pill: var(--lane-plan); --tint: 16%; display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 3px 12px 3px 8px; border-radius: 999px;
+.pill { --pill: var(--lane-plan); --tint: 16%; display: flex; align-items: center; gap: 7px; min-height: var(--pill-h, 44px); padding: 3px 12px 3px 8px; border-radius: 999px;
         border: 1px solid color-mix(in srgb, var(--pill) 55%, transparent); background: color-mix(in srgb, var(--pill) var(--tint), var(--plate));
         color: var(--ink); cursor: pointer; font: inherit; text-align: left; white-space: nowrap; }
 .pill:hover { --tint: 26%; }
@@ -137,15 +141,14 @@ button, textarea { font: inherit; color: inherit; }
 .pill.is-blocked { --pill: var(--alarm); }
 .pill-mark { font-size: 15px; line-height: 1; width: 18px; text-align: center; }
 /* Solid pills: white text on the darkened colour. Held blocked on purpose: solid red, so it reads as a decision, not a
-   request waiting to be noticed. Merged: solid green with a checkbox, the one state that means the plan is finished.
-   Gone, its row has left the board: GitHub's merged purple, keeping the checkbox. */
+   request waiting to be noticed. Finished, both with a checkbox for as long as the row stays: approved solid green,
+   merged GitHub's merged purple, the row colours. Gone, its row has left the board: merged's purple still. */
 .pill.is-held { --solid-bg: color-mix(in srgb, var(--alarm) var(--solid), #000); }
-.pill.is-merged { --solid-bg: color-mix(in srgb, var(--go) var(--solid), #000); }
-.pill.is-gone { --solid-bg: color-mix(in srgb, var(--merged) var(--solid), #000); }
-.pill.is-held, .pill.is-merged, .pill.is-gone { background: var(--solid-bg); border-color: var(--solid-bg); color: #fff; }
-.pill.is-held:hover, .pill.is-merged:hover, .pill.is-gone:hover { background: color-mix(in srgb, var(--solid-bg) 85%, #000); }
-.pill.is-held .pill-time, .pill.is-merged .pill-time, .pill.is-gone .pill-time { color: rgb(255 255 255 / 90%); }
-.pill.is-done .pill-mark { color: var(--go); font-weight: 800; }
+.pill.is-done { --solid-bg: color-mix(in srgb, var(--go) var(--solid), #000); }
+.pill:is(.is-merged, .is-gone) { --solid-bg: color-mix(in srgb, var(--merged) var(--solid), #000); }
+.pill:is(.is-held, .is-done, .is-merged, .is-gone) { background: var(--solid-bg); border-color: var(--solid-bg); color: #fff; }
+.pill:is(.is-held, .is-done, .is-merged, .is-gone):hover { background: color-mix(in srgb, var(--solid-bg) 85%, #000); }
+.pill:is(.is-held, .is-done, .is-merged, .is-gone) .pill-time { color: rgb(255 255 255 / 90%); }
 .pill-text { display: flex; flex-direction: column; line-height: 1.15; }
 .pill-id { font-size: 13px; font-weight: 800; }
 /* --ink-soft alone is 4.2:1 on a tinted pill; a third of --ink in it keeps the time quieter than the id and legible. */
