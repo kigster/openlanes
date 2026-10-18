@@ -37,6 +37,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   def path_of(ordinal) = tree.reload.find(OpenLanes::Plans::Ordinal.parse(ordinal)).feature.path
 
+  # What has been signed for a plan, in state.json: [status, round, note].
+  def signed(ordinal) = OpenLanes::Plans::PlanState.for(path_of(ordinal)).signatures.map { it.values_at("status", "round", "note") }
+
   # The minesweeper trial: two jobs, and each agent's file written well
   # before it signed. The next tick read the half-finished folder as the next
   # state and started that state's agent beside the one still writing, the
@@ -594,8 +597,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         expect(plan_state.stages.find { |s| s["round"] == 1 }.values_at("status", "note")).to eq(["Interrupted", "harness died"])
       end
 
-      it "writes the harness's Interrupted line where the agent signs, as the state file path does" do
-        expect(File.read(File.join(path_of("001.00"), "spec.md"))).to include("Interrupted, round 1 (harness died)")
+      it "signs the harness's Interrupted in state.json, not in the agent's document" do
+        aggregate_failures do
+          expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
+          expect(File.read(File.join(path_of("001.00"), "spec.md"))).not_to include("Interrupted")
+        end
       end
 
       it "counts the stranded round against the agent's rounds" do
@@ -844,7 +850,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     let!(:built) { plans { |t| t.plan "001.00", :new, "cut-off", files: { "spec.md" => spec_body } } }
 
     # The agent did the work and was killed before its closing line. The
-    # invariant of 🔎 holds, so the harness signs on its behalf, in bold,
+    # invariant of 🔎 holds, so the harness signs on its behalf, in state.json,
     # and the plan moves.
     it "signs Completed for a killed agent whose work is on disk" do
       executor = lambda { |_agent, subject, round: 1, **|
@@ -856,8 +862,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
       text = File.read(File.join(path_of("001.00"), "spec.md"))
       aggregate_failures do
-        expect(text).to include("status: **Interrupted, round 1 (killed by harness after 15s grace)**")
-        expect(text).to include("status: Completed, round 1 (signed by harness: work verified on disk)")
+        expect(signed("001.00")).to include(["Interrupted", 1, "killed by harness after 15s grace"],
+          ["Completed", 1, "signed by harness: work verified on disk"])
+        expect(text).not_to include("signed by harness")
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:researched)
         expect(attempts.first.to).to eq(:researched)
       end
@@ -882,8 +889,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         text = File.read(File.join(path_of("001.00"), "spec.md"))
         aggregate_failures do
           expect(calls).to eq([1, 2])
-          expect(text.scan("Interrupted").size).to eq(2)
-          expect(text).not_to include("signed by harness")
+          expect(signed("001.00").map(&:first)).to eq(%w[Interrupted Interrupted])
+          expect(text).not_to include("Interrupted")
         end
       end
     end
@@ -1326,7 +1333,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     # The stranded stage is an Interrupted round, so the re-run is the
     # agent's second, and leah needs two to have it.
-    it "writes the harness Interrupted line for a stranded stage and re-runs the agent" do
+    it "signs the harness's Interrupted for a stranded stage and re-runs the agent" do
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = OpenLanes::Agents::Registry.new(dir:)
@@ -1337,9 +1344,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
         executor = executor_with { |_, _, _| nil }
         runner_with(executor, agents: two, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
-        text = File.read(File.join(path_of("001.00"), "spec.md"))
         aggregate_failures do
-          expect(text).to include("Interrupted, round 1 (harness died)")
+          expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
           expect(calls.map(&:last)).to eq([2])
         end
       end
