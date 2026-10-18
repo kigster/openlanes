@@ -72,7 +72,12 @@ module OpenLanes
       # @return [String, nil] a reason to show beside "done"
       # @raise [Refusal]
       def apply(command)
-        send(Live::Commands::HANDLERS.fetch(command.kind), command)
+        handler = Live::Commands::HANDLERS.fetch(command.kind)
+        # A kind the engine gained and the demo did not would otherwise raise
+        # NoMethodError on the demo's thread, and the board would freeze.
+        raise Refusal, "the demo cannot #{command.kind}" unless respond_to?(handler, true)
+
+        send(handler, command)
       end
 
       private
@@ -233,6 +238,46 @@ module OpenLanes
       def model!(name)
         entry = @me["models"].find { [it["id"], it["label"]].include?(name) } or raise Refusal, "claude offers no model #{name}"
         entry["id"]
+      end
+
+      # ---- lanes (plan 020.00) ----------------------------------------------
+
+      # `/stop NNN`: every running agent on the plan stops. The plan stays on
+      # the board, stopped, so `/restart` has something to bring back.
+      #
+      # @return [String]
+      def stop_plan(command)
+        cars = plan!(command)["cars"].select { it["state"] == "running" }
+        cars.each { it.merge!(SIGNALS.fetch("stop"), "held" => false) }
+        "stopped #{cars.size} agent#{"s" unless cars.size == 1} on #{command.plan} and took it off the board"
+      end
+
+      # `/restart NNN`: the plan's stopped cars run again, unless one still does.
+      #
+      # @return [String]
+      def restart_plan(command)
+        plan = plan!(command)
+        working = plan["cars"].select { it["state"] == "running" }.map { it["agent"] }
+        raise Refusal, "#{command.plan} already has an agent: #{working.join(", ")}" unless working.empty?
+
+        # A stuck car waits on a question, and a restart answers none.
+        plan["cars"].select { it["state"] == "done" }.each { it.merge!("state" => "running", "phase" => "calm", "held" => false) }
+        "#{command.plan} restarts at the next tick"
+      end
+
+      # `/concurrency N`, worded as the engine words it. Lowering it stops
+      # nobody, as in the engine.
+      #
+      # @return [String]
+      def set_concurrency(command) # rubocop:disable Naming/AccessorMethodName -- the engine's handler name
+        limit = command.payload["limit"]
+        raise Refusal, "concurrency must be a whole number of at least 1, not #{limit.inspect}" unless limit.is_a?(Integer) && limit >= 1
+
+        before = @me["run"]["jobs"]
+        @me["run"]["jobs"] = limit
+        over = running(@me).size - limit
+        wait = over.positive? ? "; the run waits for #{over} agent#{"s" unless over == 1} to finish" : ""
+        "concurrency #{before} → #{limit}#{wait}"
       end
 
       # ---- plans ------------------------------------------------------------

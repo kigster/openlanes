@@ -59,17 +59,35 @@ module OpenLanes
       # whole of it would keep the page from showing the message, or that
       # the copilot is reading, until the answer was already written.
       #
+      # A slash command ({Slash}, plan 020.00) is not the copilot's to
+      # answer: it is queued for this node's engine under the message's id,
+      # and the engine's reply comes back into the conversation as turn
+      # `"<id>.1"`. A slash message that is not a command is answered here,
+      # at once, with the usage. Neither reaches the responder, so a server
+      # with no copilot still takes them, and {Turn#slash?} tells the caller
+      # not to {#answer} them.
+      #
       # @param input [String, Hash] `CopilotMessage`: `{id, text}`
       # @return [OpenLanes::Live::Copilot::Turn] the person's turn
       # @raise [OpenLanes::Live::Copilot::Invalid] for the API server's 422
-      # @raise [OpenLanes::Live::Copilot::Unanswered] when nobody would answer
+      # @raise [OpenLanes::Live::Copilot::Unanswered] when nobody would
+      #   answer: no copilot for plain text, no live engine for a command
       def say(input)
         turn = message(input)
+        slash = Slash.parse(turn.text, id: turn.id)
         # Refused before it is stored: a message kept where nothing will ever
         # answer it reads, on the page, as a copilot that is merely slow.
-        raise Unanswered, "the copilot is not running in this server" unless @responder
+        raise Unanswered, "the copilot is not running in this server" unless slash || @responder
+        if slash.is_a?(Command) && !engine?
+          raise Unanswered, "no engine is running to apply #{turn.text.split.first}"
+        end
 
-        turn.tap { append(it) }
+        append(turn)
+        case slash
+        when Command then @store.xadd(@keys.commands, { json: JSON.generate(slash.wire) })
+        when Slash::Help then append(Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: slash.text))
+        end
+        turn
       end
 
       # Store whatever the responder answers to +turn+. A responder that
@@ -136,6 +154,13 @@ module OpenLanes
         @store.xrevrange(@keys.copilot, count:).reverse.map { JSON.parse(it.fields["json"]) }
       end
 
+      # Whether this node's engine is there to read {Keys#commands}: its
+      # snapshot key lives only while it publishes (`EX 30`), so a command
+      # queued without one would sit unanswered and the page would read on.
+      #
+      # @return [Boolean]
+      def engine? = !@store.get(@keys.snapshot).nil?
+
       # @return [Hash, nil]
       def latest_usage(turns) = turns.reverse_each.map { it["usage"] }.find(&:itself)
 
@@ -178,6 +203,10 @@ module OpenLanes
 
         # @return [Hash] as the wire carries it
         def wire = { id:, from:, kind:, text:, at: at.utc.iso8601, usage: }.merge(fields.transform_keys(&:to_sym))
+
+        # @return [Boolean] whether this is the person's slash message, which
+        #   the engine or {Slash} answers and the copilot never does
+        def slash? = from == "you" && text.start_with?("/")
 
         # @return [String]
         def to_json(*) = JSON.generate(wire)

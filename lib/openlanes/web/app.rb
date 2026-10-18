@@ -236,12 +236,13 @@ module OpenLanes
       # The person's message to the copilot (W17). It is stored and accepted
       # at once; the answer is written afterwards, apart from this request,
       # and comes on the event stream as `event: copilot`, like a command's
-      # replies do. The answer is c3po-operator's ({Context#copilot}).
+      # replies do. The answer is c3po-operator's ({Context#copilot}), except
+      # for a slash command (plan 020.00), which the engine answers.
       post "/api/copilot" do
         halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
 
         turn = copilot.say(request.body.read)
-        answer_later(turn)
+        answer_later(turn) unless turn.slash?
         status 202
         json(turn.wire)
       rescue Live::Copilot::Invalid => e

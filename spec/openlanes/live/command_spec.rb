@@ -37,6 +37,26 @@ RSpec.describe "A live command and its reply" do
       end
     end
 
+    describe "the lane controls the copilot sends" do
+      %w[stop_plan restart_plan].each do |kind|
+        it "lets #{kind} name a plan and no agent" do
+          expect(parse(kind:, plan: "20")).to have_attributes(kind:, plan: "020.00", agent: nil)
+        end
+
+        it "refuses #{kind} with no plan" do
+          expect { parse(kind:) }.to raise_error(described_class::Invalid, /#{kind} needs a plan/)
+        end
+      end
+
+      it "lets set_concurrency carry a limit and no plan" do
+        expect(parse(kind: "set_concurrency", payload: { limit: 3 })["limit"]).to eq("3")
+      end
+
+      it "refuses set_concurrency with no limit" do
+        expect { parse(kind: "set_concurrency") }.to raise_error(described_class::Invalid, /set_concurrency needs payload limit/)
+      end
+    end
+
     it "refuses JSON that is not an object" do
       expect { described_class.parse("[1]") }.to raise_error(described_class::Invalid, /JSON object/)
     end

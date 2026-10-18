@@ -58,6 +58,44 @@ RSpec.describe OpenLanes::Live::Copilot do
       expect { described_class.new(store:, keys:, responder:).say({ "id" => "01JR", "text" => "hello" }) }.not_to raise_error
     end
 
+    context "with a slash command (plan 020.00)" do
+      subject(:copilot) { described_class.new(store:, keys:) }
+
+      let(:queued) { store.xrange(keys.commands).map { JSON.parse(it.fields["json"]) } }
+
+      context "when the engine is live" do
+        before { store.set(keys.snapshot, "{}") }
+
+        let!(:turn) { copilot.say({ "id" => "01JSTOP", "text" => "/stop 20" }) }
+
+        it "stores the person's turn and queues the command under the message's id, with no copilot needed" do
+          expect([stored.map { it["id"] }, queued]).to eq([%w[01JSTOP],
+                                                           [{ "id" => "01JSTOP", "kind" => "stop_plan", "plan" => "020.00", "agent" => nil,
+                                                              "payload" => { "source" => "copilot" } }]])
+        end
+
+        it "is a turn the caller must not hand to the copilot" do
+          expect(turn.slash?).to be(true)
+        end
+      end
+
+      it "refuses it with no engine to apply it, and stores and queues nothing" do
+        expect { copilot.say({ "id" => "01JSTOP", "text" => "/restart 20" }) }
+          .to raise_error(described_class::Unanswered, "no engine is running to apply /restart")
+        expect([store.xlen(keys.copilot), store.xlen(keys.commands)]).to eq([0, 0])
+      end
+
+      it "answers an unknown one at once with the usage, engine or not, and queues nothing" do
+        copilot.say({ "id" => "01JFROB", "text" => "/frobnicate" })
+        expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JFROB you], ["01JFROB.1", "copilot"]])
+        expect([stored.last["text"], store.xlen(keys.commands)]).to match([start_with("Slash commands:"), 0])
+      end
+    end
+
+    it "hands plain text to the copilot" do
+      expect(copilot.say({ "id" => "01JP", "text" => "hi /stop" }).slash?).to be(false)
+    end
+
     {
       "[1, 2]"                                  => "a message is a JSON object",
       "{nope"                                   => /not a message/,

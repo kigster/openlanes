@@ -162,11 +162,33 @@ stubbed. Through the page only, it must show:
 4. `/restart <plan A>` → done; a car for A reappears. `/restart <plan B>` while B runs → refused, "already has an agent".
 5. `/frobnicate` → a help turn listing the three commands.
 
+## How to test
+
+- `bundle exec rspec`: 0 failures. The plan's own examples are in `spec/openlanes/live/command_spec.rb` (the three kinds), `spec/openlanes/engine/dispatcher_lane_controls_spec.rb` (stop, restart, lowering concurrency kills nothing), `spec/openlanes/live/commands_lanes_spec.rb` (handlers and the `<id>.1` copilot turn), `spec/openlanes/live/copilot/slash_spec.rb`, `spec/openlanes/live/copilot_spec.rb` and `spec/openlanes/web/app_spec.rb` (the slash grammar, help turn, 503 with no engine), and `spec/openlanes/live/snapshot_spec.rb` (`run.jobs`).
+- `bundle exec rubocop`: no offenses.
+- `just web-test`: lint and typecheck clean, every test passes. `web/src/shell/Header.test.tsx` shows "3 of 4 agents"; `web/src/copilot/Copilot.test.tsx` shows the `/stop`, `/restart`, `/concurrency` hint only while the box starts with `/`, and that the `<id>.1` turn ends "reading".
+- `OPENLANES_LANES_E2E=1 just lanes-e2e` (spends real tokens; needs `claude`, Redis and port 4778 free): 5 passing. It runs three real quick-lane plans under `openlanes start -j 3` and, through the page only, sees the header read `3 of 3`, `/concurrency 2` answered done with no car killed, `/stop A` take A's cars off the board, `/restart A` bring a car back while `/restart B` is refused with "already has an agent", and `/frobnicate` answered with the help turn.
+- By hand: `openlanes start` in a project with plans, open the control room, type `/concurrency 1` into the copilot: it answers `done: concurrency N → 1 ...` and the header limit reads 1 while the running cars stay. `/stop NNN` removes that plan's cars within a minute; `/restart NNN` puts one back. With no engine running, `/stop 1` gets "no engine is running to apply /stop".
+
 ## HTTP surface
 
 Yes, changed; no new route. `POST /api/copilot` behaves differently for messages starting with `/` (and may answer 503
 for a slash command with no live engine); `Command` gains three kinds; `GET /api/board`'s `run` gains `jobs`.
 `luke-backend` updates `contract.md` and writes `openapi.yaml` beside it covering those three endpoints.
+
+## Rebase decisions
+
+Replaying 253ce3d onto `origin/main` 0b10d65, 2026-10-17, bb8-resolver.
+
+- `plan.md`: kept the branch's copy. It is main's copy plus the `## How to test` section, and nothing in it was removed.
+- `pull-requests.md`: kept the branch's copy. It is main's copy plus the 2026-10-17 rey-frontend and luke-backend round-1 proofs, and nothing in it was removed.
+- `state.json`: kept the branch's copy. Every stage, signature and message on main is in it unchanged. It adds 3 stages, 6 signatures, mail #8 to #11, the time extension and a later `updated_at`, and marks mail #4 read.
+- `lib/openlanes/apps/probe.rb`: kept main's `listening?(port, timeout:)` (block form of `Socket.tcp`, main's Little Snitch comment) and dropped the branch's `&:remote_address` version and its Darwin 27 comment. Both are the same `remote_address` fix; main's takes a timeout so `Ports` and the spec helpers share it. The branch's finding stays recorded in `pull-requests.md`.
+- `lib/openlanes/apps/ports.rb`: kept main's `answering?(port) = Probe.listening?(port, timeout: 0.2)` and dropped the branch's own copy of the same fix.
+- `spec/openlanes/apps/supervisor_spec.rb`: kept main's `connectable?` delegating to `Probe.listening?` and dropped the branch's inline copy of the same fix.
+- `spec/openlanes/cli/app_spec.rb`: kept main's `connectable?` delegating to `Probe.listening?` and dropped the branch's inline copy of the same fix.
+- `spec/fixtures/apps/servers/server.rb`: kept main's version. Its `Socket.tcp(..., &:remote_address)` line is identical to the branch's, plus main's comment.
+- `lib/openlanes/engine/runner.rb`: kept both: main's `attr_reader :verification`, then the branch's `jobs=` (B2). They share nothing but the spot.
 
 > [!NOTE]
 >

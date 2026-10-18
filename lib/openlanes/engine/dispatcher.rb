@@ -431,6 +431,60 @@ module OpenLanes
         end
       end
 
+      # The copilot's `/stop NNN`: every agent on the plan is told STOP, and
+      # the plan leaves this run so the next tick does not start it again.
+      # Its claim is let go, so the plan is free for any machine.
+      #
+      # @param ordinal [#to_s]
+      # @return [Array<String>] the keys told STOP
+      # @raise [OpenLanes::Error] when the plan is neither running nor in scope
+      def stop_plan(ordinal)
+        ordinal = ordinal.to_s
+        keys = @running.select { plan_of(it) == ordinal }.map(&:key)
+        if keys.empty? && !in_run?(ordinal)
+          raise OpenLanes::Error, "#{ordinal} is not on this run's board: no agent is working it and it is not in scope"
+        end
+
+        told = keys.select { signal(it, Execution::Control::STOP) }
+        @runner.drop_plan(ordinal)
+        @runner.release(ordinal)
+        told
+      end
+
+      # The copilot's `/restart NNN`, for a lane that lost its agent (a Redis
+      # glitch, a killed process): the plan is put back in scope, the rounds
+      # it used up here are forgotten, and the next tick dispatches it. A
+      # plan with an agent on it already is left alone.
+      #
+      # @param ordinal [#to_s]
+      # @return [void]
+      # @raise [OpenLanes::Error] when an agent is working it, or it is not on
+      #   this node's board
+      def restart_plan(ordinal)
+        ordinal = ordinal.to_s
+        working = @running.select { plan_of(it) == ordinal }.map { it.task.agent.name }
+        raise OpenLanes::Error, "#{ordinal} already has an agent: #{working.join(", ")}" unless working.empty?
+
+        subject = fresh_by(Plans::Ordinal.parse(ordinal))
+        unless subject && (in_run?(ordinal) || @runner.dropped?(ordinal)) && !@runner.foreign?(subject)
+          raise OpenLanes::Error, "#{ordinal} is not on this node's board"
+        end
+
+        @runner.add_plan(subject.feature.ordinal)
+        @mutex.synchronize { @history.delete_if { |(plan, _), _| plan == ordinal } }
+        @finished_plans.delete(ordinal)
+        wake!
+      end
+
+      # The copilot's `/concurrency N`. Never signals a running agent.
+      #
+      # @param count [Integer]
+      # @return [void]
+      # @raise [OpenLanes::Error] as {Runner#jobs=} does
+      def concurrency=(count)
+        @runner.jobs = count
+      end
+
       # @return [OpenLanes::Engine::Board]
       def board
         up = @attempts.sum(&:up) + @running.sum { |j| j.up.to_i }
@@ -446,7 +500,8 @@ module OpenLanes
           running: @running.size,
           live_up: @running.sum { |j| j.up.to_i },
           live_down: @running.sum { |j| j.down.to_i },
-          waiting_on: @waiting_on.dup)
+          waiting_on: @waiting_on.dup,
+          jobs: @runner.jobs)
       end
 
       private
@@ -470,6 +525,13 @@ module OpenLanes
       # @param job [OpenLanes::Engine::Dispatcher::Job]
       # @return [String] the plan's ordinal
       def plan_of(job) = job.task.subject.feature.ordinal.to_s
+
+      # @param ordinal [String]
+      # @return [Boolean] whether the plan is in this run's scope now
+      def in_run?(ordinal)
+        subject = fresh_by(Plans::Ordinal.parse(ordinal))
+        !subject.nil? && @runner.in_scope?(subject)
+      end
 
       # Plans no agent may be started on and no rename may touch: one being
       # discarded or drained, one another machine holds (W26), and one whose

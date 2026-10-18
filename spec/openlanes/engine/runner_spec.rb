@@ -424,4 +424,26 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       end
     end
   end
+
+  # `/concurrency N` from the copilot (plan 020.00).
+  describe "#jobs=" do
+    let(:isolated) { described_class.new(tree:, executor:, agents:, isolation: :worktree, jobs: 4, sleeper: ->(_) {}) }
+
+    it "takes a new limit under worktree isolation" do
+      isolated.jobs = 2
+      expect(isolated.jobs).to eq(2)
+    end
+
+    it "refuses a limit under 1" do
+      expect { isolated.jobs = 0 }.to raise_error(OpenLanes::Error, /at least 1/)
+    end
+
+    it "refuses anything but a whole number" do
+      expect { isolated.jobs = "3" }.to raise_error(OpenLanes::Error, /whole number/)
+    end
+
+    it "keeps a shared run at 1" do
+      expect { runner.jobs = 2 }.to raise_error(OpenLanes::Error, /--isolation shared/)
+    end
+  end
 end

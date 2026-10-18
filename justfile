@@ -88,6 +88,19 @@ factory-e2e:
     eval "$(rbenv init - bash 2>/dev/null || true)"
     bin/factory-e2e
 
+# Real agents work three quick-lane plans while /concurrency, /stop and /restart are typed into the copilot; spends tokens, needs OPENLANES_LANES_E2E=1
+lanes-e2e:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "${OPENLANES_LANES_E2E:-}" != "1" ]]; then
+        echo "lanes-e2e runs real agents and spends real tokens; run it as OPENLANES_LANES_E2E=1 just lanes-e2e" >&2
+        exit 64
+    fi
+    (cd web && npm run build)
+    unset BUNDLE_GEMFILE BUNDLE_BIN_PATH BUNDLER_SETUP BUNDLER_VERSION RUBYOPT RUBYLIB
+    eval "$(rbenv init - bash 2>/dev/null || true)"
+    bin/lanes-e2e
+
 # Lint, type-check and unit-test the page, with coverage
 web-test:
     cd web && npm run lint && npm run typecheck && npm run coverage

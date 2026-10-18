@@ -62,6 +62,20 @@ module OpenLanes
           ordinal, agent = key.split("/", 2)
           dispatcher.prefer_model(ordinal, agent, model)
         end
+        restore_concurrency(dispatcher)
+      end
+
+      # A `/concurrency` set before the restart holds after it (plan 020.00).
+      # One this run cannot take (a shared checkout runs one agent) is said
+      # once and dropped, rather than stopping the engine from starting.
+      #
+      # @param dispatcher [OpenLanes::Engine::Dispatcher]
+      # @return [void]
+      def restore_concurrency(dispatcher)
+        limit = @run_state.concurrency or return
+        dispatcher.concurrency = limit
+      rescue OpenLanes::Error => e
+        UI.log("concurrency #{limit} from before the restart not kept: #{e.message}")
       end
 
       # Bring both copies up to the state's `seq`. The file is written by the

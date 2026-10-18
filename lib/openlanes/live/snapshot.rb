@@ -90,7 +90,8 @@ module OpenLanes
           up:             @board.up.to_i,
           down:           @board.down.to_i,
           cost:           plans.sum { it[:cost] }.round(4),
-          agents_working: @board.running.to_i }
+          agents_working: @board.running.to_i,
+          jobs:           @board.jobs.to_i }
       end
 
       # @return [String]

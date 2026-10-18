@@ -202,6 +202,18 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       end
     end
 
+    it "carries the run's concurrency limit as jobs" do
+      expect(snapshot[:run][:jobs]).to eq(1)
+    end
+
+    context "when the copilot's /concurrency has set the limit" do
+      let(:board) { super().with(jobs: 3) }
+
+      it "carries the new limit, which the page's header reads" do
+        expect(snapshot[:run]).to include(jobs: 3, agents_working: 3)
+      end
+    end
+
     context "when a person has held a question and an agent" do
       before do
         run_state.hold_question("001.00/B1")
