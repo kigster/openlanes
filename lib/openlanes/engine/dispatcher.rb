@@ -1792,7 +1792,8 @@ module OpenLanes
       # @return [OpenLanes::Engine::Runner::Attempt]
       def approved(base, subject, ordinal)
         said = @runner.verification&.hand_off(subject)
-        return base.with(status: "Completed", to: :verifying, note: "#{base.note}; approved, #{said}") if fresh_by(ordinal)&.status&.key == :verifying
+        now = fresh_by(ordinal)&.status&.key
+        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
 
         @finished_plans << ordinal
         finish(subject, "approved")

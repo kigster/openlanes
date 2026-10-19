@@ -14,7 +14,7 @@ import { useQuestion } from "./question";
 import { renderMarkdown } from "./markdown";
 import { ModelSelect } from "./ModelSelect";
 import { pend, unconfirmed, type Pending } from "./transcript";
-import { ariaSendKeys, clock, fmt, isSendKey, modelName, sendKeys, type SendCommand } from "./support";
+import { ariaSendKeys, clock, fmt, isSendKey, modelName, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 export interface AgentDrawerProps {
   plan: Plan;
@@ -38,7 +38,7 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
 }) {
   const q = useQuestion(plan, question, onCommand, onAnswered);
   // The harness's own request (E1) takes one of its options and nothing else, as on the rail.
-  const extension = question.kind === "extension";
+  const extension = optionsOnly(question);
   return (
     <div className="d-block">
       <p><strong>{extension ? question.heading : "Blocked on your answer."}</strong></p>
@@ -115,7 +115,7 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
   const [askState] = useAsk(question?.id ?? "");
   // A request for more time or rounds (E1) comes from a car still running, or one that failed out of rounds,
   // so it is shown whatever the car's state; a block only while the car is stuck on it.
-  const asking = question && !askState.settled && (car.state === "stuck" || question.kind === "extension");
+  const asking = question && !askState.settled && (car.state === "stuck" || optionsOnly(question));
 
   const used = car.context !== null && car.context_limit ? car.context / car.context_limit : null;
 

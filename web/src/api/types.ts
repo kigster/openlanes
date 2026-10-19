@@ -82,9 +82,9 @@ export interface QuestionOption {
  * harness asking for more time or another round for an agent that ran out (X<n>, E1), which offers only its options.
  */
 export interface Question {
-  id: string; // "<ordinal>/B<n>" or "<ordinal>/X<n>"
+  id: string; // "<ordinal>/B<n>", "<ordinal>/X<n>" or "<ordinal>/Q1"
   number: number;
-  kind: "block" | "extension";
+  kind: "block" | "extension" | "quality"; // quality: R4's desired_codebase_quality, asked once per project
   heading: string;
   body: string; // Markdown
   agent: string | null; // who asked, when the ledger says

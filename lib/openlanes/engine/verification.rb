@@ -15,10 +15,12 @@ module OpenLanes
       # Completed notes are verdicts, as the review phase's are.
       PHASE = "verification"
 
-      # The verdicts that go on to verification. Only `review-approved` for
-      # now; `review-ok-not-perfect` joins it under `mvp` once plan 032
-      # builds `desired_codebase_quality` (R4).
+      # The verdicts that go on to verification at every quality.
       FROM_REVIEW = [Plans::ReviewLabel::APPROVED].freeze
+
+      # The verdict whose fate `desired_codebase_quality` decides (R4): on
+      # to verification under `mvp`, back to luke and rey under `high`.
+      ON_QUALITY = Plans::ReviewLabel::OK_NOT_PERFECT
 
       module_function
 
@@ -37,8 +39,19 @@ module OpenLanes
       def outcome(**) = Outcome.new(**)
 
       # @param labels [Array<String>] a pull request's labels
+      # @param quality [Symbol, nil] {Config#desired_codebase_quality}; nil
+      #   while the project is still to be asked, which lets nothing but
+      #   {FROM_REVIEW} through
       # @return [Boolean] whether its review verdict goes on to verification
-      def from_review?(labels) = FROM_REVIEW.any? { labels.include?(it.name) }
+      def from_review?(labels, quality: nil)
+        return true if FROM_REVIEW.any? { labels.include?(it.name) }
+
+        quality == :mvp && labels.include?(ON_QUALITY.name)
+      end
+
+      # @param labels [Array<String>] a pull request's labels
+      # @return [Boolean] whether the verdict is the one the quality decides
+      def ok_not_perfect?(labels) = labels.include?(ON_QUALITY.name) && FROM_REVIEW.none? { labels.include?(it.name) }
     end
   end
 end

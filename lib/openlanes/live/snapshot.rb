@@ -312,13 +312,15 @@ module OpenLanes
 
       # The questions `blocked.md` still asks, each with its context, the
       # options it offers (D3), and who asked; then the harness's own
-      # requests for more time or rounds (E1).
+      # requests for more time or rounds (E1), and R4's quality question on
+      # the plan that asked it.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @param state [OpenLanes::Plans::PlanState]
       # @return [Array<Hash>] `Question`
       def questions(subject, state)
-        blocked(subject, state) + Engine::Extensions.questions(subject, state)
+        blocked(subject, state) + Engine::Extensions.questions(subject, state) +
+          Engine::QualityQuestion.questions(subject, state)
       end
 
       # @return [Array<Hash>] `Question`, from `blocked.md`

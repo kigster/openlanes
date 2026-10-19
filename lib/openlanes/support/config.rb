@@ -13,6 +13,8 @@ module OpenLanes
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
   #   redis_outage_hours: 1     # how long agents stay paused for a lost Redis
   #                             # before the run shuts down (W32); any positive number
+  #   desired_codebase_quality: high  # or mvp (R4): what a review that is ok but
+  #                             # not perfect does, and M5's column of defaults
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
@@ -88,6 +90,9 @@ module OpenLanes
   # @!attribute [r] review_max_hmm
   #   @return [Integer, nil] `review.max_hmm` as the file says it; read
   #     {#max_hmm}, which applies the environment and the default
+  # @!attribute [r] desired_codebase_quality
+  #   @return [Symbol, nil] one of {QUALITIES}, as the file says it; read
+  #     {#quality}, which applies the default
   # @!attribute [r] coverage
   #   @return [OpenLanes::Coverage::Config, nil] the `coverage:` section; nil
   #     when the project declares none, and then the gate sends the pull
@@ -106,20 +111,34 @@ module OpenLanes
     :questions_model,
     :review_max_hmm,
     :merge_max_rejections,
+    :desired_codebase_quality,
     :coverage) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
-      coverage: nil)
+      desired_codebase_quality: nil, coverage: nil)
       super
     end
 
     # How many times a plan's pull request may be rejected, by hansolo and
     # chewie counted together, before it stops going back to its builders
-    # (M6). Two, the value M5 gave `high`, until `desired_codebase_quality`
-    # (R4) supplies one.
+    # (M6). `merge.max_rejections` when the file says it, otherwise M5's
+    # column for {#quality} (R4); two, `high`'s, when neither is set.
     #
     # @return [Integer]
-    def max_rejections = merge_max_rejections || Config::DEFAULT_MAX_REJECTIONS
+    def max_rejections
+      merge_max_rejections || Config::MAX_REJECTIONS_BY_QUALITY.fetch(desired_codebase_quality, Config::DEFAULT_MAX_REJECTIONS)
+    end
+
+    # How much quality the project buys (R4): `high` unless the file says
+    # `mvp`. Unset reads as `high` so a project that was never asked is
+    # never quietly given less than it expected.
+    #
+    # @return [Symbol] `:high` or `:mvp`
+    def quality = desired_codebase_quality || Config::QUALITIES.first
+
+    # @return [Boolean] whether the file has no `desired_codebase_quality:`,
+    #   and so the person is still to be asked (R4)
+    def quality_unset? = desired_codebase_quality.nil?
 
     # Seconds a run keeps its agents paused for a Redis that stopped
     # answering before it gives up and shuts down (W32): an hour, unless
@@ -176,7 +195,8 @@ module OpenLanes
     # @return [String]
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
-                   "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours, "merge" => merge_settings }
+                   "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
+                   "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
@@ -200,7 +220,12 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours merge commands app plans questions review coverage].freeze
+    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
+              questions review coverage].freeze
+
+    # What `desired_codebase_quality:` may say (R4), the default first. M5's
+    # `top_notch` and `medium` were dropped.
+    QUALITIES = %i[high mvp].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -210,6 +235,9 @@ module OpenLanes
 
     # {#max_rejections} when the file names none (M6).
     DEFAULT_MAX_REJECTIONS = 2
+
+    # M5's `max_rejections` row, for the two columns R4 kept.
+    MAX_REJECTIONS_BY_QUALITY = { high: 2, mvp: 1 }.freeze
 
     # {#outage_limit} when the file names none (W32).
     DEFAULT_OUTAGE_HOURS = 1
@@ -279,6 +307,7 @@ module OpenLanes
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
           redis_outage_hours: redis_outage_hours(settings, path),
+          desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
@@ -349,6 +378,16 @@ module OpenLanes
         return value if value.nil? || (value.is_a?(Numeric) && value.positive?)
 
         fail_with(path, "redis_outage_hours: #{value.inspect} is not a number of hours above zero")
+      end
+
+      # @return [Symbol, nil]
+      def quality(settings, path)
+        return nil unless settings.key?("desired_codebase_quality")
+
+        value = settings["desired_codebase_quality"].to_s.strip.downcase.to_sym
+        return value if QUALITIES.include?(value)
+
+        fail_with(path, "desired_codebase_quality: #{settings["desired_codebase_quality"].inspect} is not one of #{QUALITIES.join(", ")}")
       end
 
       # @return [Hash{Symbol => Object}] the `merge:` settings, as keywords for {Config.new}

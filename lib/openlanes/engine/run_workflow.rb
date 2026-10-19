@@ -465,7 +465,7 @@ module OpenLanes
           outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
           agents: Agents::Registry.new,
           max_rejections: config.max_rejections)
-        Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config))
+        Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
       end
 
       # What the runner is told about idling past its fixed points. With its

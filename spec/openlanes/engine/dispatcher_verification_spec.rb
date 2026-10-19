@@ -68,14 +68,76 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "leaves a verdict other than review-approved at 👀, finished, saying why" do
-      allow(outcome).to receive(:labels).and_return(%w[review-ok-not-perfect])
+    it "leaves a verdict that goes nowhere at 👀, finished, saying why" do
+      allow(outcome).to receive(:labels).and_return(%w[review-in-progress])
 
       attempts, = run(executor("approved"), %w[hansolo-reviewer])
 
       aggregate_failures do
         expect(plan.status.key).to eq(:in_review)
-        expect(attempts.last.note).to include("awaiting merge", "labelled review-ok-not-perfect", "only review-approved")
+        expect(attempts.last.note).to include("awaiting merge", "labelled review-in-progress", "only review-approved")
+      end
+    end
+
+    describe "a review-ok-not-perfect verdict (R4)" do
+      let(:driver) { OpenLanes::Engine::Verification::Driver.new(outcome:, worktree:, app:, supervisor_factory: factory, quality:) }
+
+      before { allow(outcome).to receive(:labels).and_return(%w[review-ok-not-perfect]) }
+
+      context "with desired_codebase_quality unset" do
+        let(:quality) { nil }
+
+        it "stays 👀 and says the key is to be set" do
+          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(plan.status.key).to eq(:in_review)
+            expect(attempts.last.note).to include("labelled review-ok-not-perfect", "desired_codebase_quality is not set", "asked in the drawer")
+            expect(OpenLanes::Plans::PlanState.for(plan.feature.path).quality_ask).to include("asked_at")
+          end
+        end
+      end
+
+      context "with the key answered mid-run" do
+        let(:answers) { [nil, :mvp] }
+        let(:quality) { -> { answers.first } }
+
+        it "reads the quality afresh at every hand-off" do
+          run(executor("approved"), %w[hansolo-reviewer])
+          expect(plan.status.key).to eq(:in_review)
+
+          answers.shift
+          expect(driver.hand_off(plan)).to include("on to 🧪 verification")
+          expect(plan.status.key).to eq(:verifying)
+        end
+      end
+
+      context "with high" do
+        let(:quality) { :high }
+
+        it "goes back to 🔴 for luke and rey" do
+          attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(plan.status.key).to eq(:rejected)
+            expect(attempts.last).to have_attributes(to: :rejected)
+            expect(attempts.last.note).to include("back to 🔴", "desired_codebase_quality is high")
+            expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
+          end
+        end
+      end
+
+      context "with mvp" do
+        let(:quality) { :mvp }
+
+        it "goes on to 🧪 as an approval does" do
+          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(plan.status.key).to eq(:verifying)
+            expect(attempts.last.note).to include("on to 🧪 verification")
+          end
+        end
       end
     end
 

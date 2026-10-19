@@ -18,15 +18,17 @@ R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interf
 
 ### U3 Ask once per project when the key is missing
 
-- On the first `review-ok-not-perfect` PR with no key, the R4 question is put to the person once per project, in the drawer; the answer writes the key into `.openlanes.yml`. Not built this round.
+- On the first `review-ok-not-perfect` PR with no key, `Verification::Driver` calls `Engine::QualityQuestion.ask!`: the plan whose PR raised it holds `quality_ask` in its `state.json`; any other plan waiting on the same answer stays 👀 without asking again. Built.
+- `Live::Snapshot#questions` shows it as `<ordinal>/Q1`, kind `quality`, R4's two options; the page treats it as options-only, like an X<n> request. Built.
+- `Live::Commands` answers `Q1` with a) high or b) mvp: the key is appended to `.openlanes.yml` (comments kept, an existing key never overwritten) and the question settles. The driver reads `Config.current` at every hand-off, so the answer counts mid-run. Built.
 
 ### U4 Builders answer every non-✅ comment
 
-- `agents/luke-backend.md` and `agents/rey-frontend.md`: sent back, reply in each non-✅ comment's thread with a fix or a backed-up rebuttal. Not built this round.
+- `agents/luke-backend.md` and `agents/rey-frontend.md`: sent back, reply in each non-✅ comment's thread with a fix or a backed-up rebuttal (`gh api .../comments/<id>/replies`), listed under `## Answers, round N` in `pull-requests.md`. Built.
 
 ### U5 `openlanes init` asks it
 
-- Not built this round.
+- `--quality high|mvp`, else R4's question on a terminal; `-y` leaves the key unset so U3 asks it later. Built.
 
 ## Frontend
 
