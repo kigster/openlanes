@@ -27,6 +27,7 @@ export interface Status {
   key: string; // Plans::STATUSES key
   emoji: string;
   label: string;
+  note: string; // what the state means, for a tooltip
 }
 
 export type CarState = "running" | "done" | "failed" | "stuck";
@@ -116,10 +117,19 @@ export interface Finished {
   at: Iso;
 }
 
+/** Messages one agent sent another that the recipient has not acked yet. */
+export interface UnackedMail {
+  from: string;
+  to: string;
+  count: number;
+  since: string; // the oldest one's timestamp, as the mailbox wrote it
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
   slug: string;
+  summary: string; // spec.md's first paragraph of prose, "" when it has none
   status: Status;
   lane: Lane;
   station: string; // Station.key the plan is at
@@ -135,6 +145,7 @@ export interface Plan {
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
+  mail: UnackedMail[]; // the unacked messages, one per sender and recipient, oldest first
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
   locked: { pid: number; host: string; started_at: Iso } | null; // locked-by.pid in the plan folder, alive or not
 }

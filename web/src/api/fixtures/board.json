@@ -79,10 +79,12 @@
         "ordinal": "001.00",
         "title": "Clean agent boundaries and transitions",
         "slug": "clean-agent-boundaries",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "blocked",
           "emoji": "⭕️",
-          "label": "Technical Block"
+          "label": "Technical Block",
+          "note": "what Technical Block means"
         },
         "lane": "full",
         "station": "building",
@@ -163,6 +165,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       },
@@ -170,10 +173,12 @@
         "ordinal": "005.00",
         "title": "Review state labels",
         "slug": "review-state-labels",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "in_review",
           "emoji": "👀",
-          "label": "In Review"
+          "label": "In Review",
+          "note": "what In Review means"
         },
         "lane": "plan",
         "station": "in_review",
@@ -220,6 +225,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       },
@@ -227,10 +233,12 @@
         "ordinal": "006.00",
         "title": "Rename the trace directory",
         "slug": "rename-trace-directory",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "building",
           "emoji": "🟡",
-          "label": "Building"
+          "label": "Building",
+          "note": "what Building means"
         },
         "lane": "quick",
         "station": "building",
@@ -297,6 +305,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       },
@@ -304,10 +313,12 @@
         "ordinal": "002.00",
         "title": "Fixture without a car",
         "slug": "fixture-without-a-car",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "blocked",
           "emoji": "⭕️",
-          "label": "Technical Block"
+          "label": "Technical Block",
+          "note": "what Technical Block means"
         },
         "lane": "full",
         "station": "building",
@@ -335,6 +346,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       },
@@ -342,10 +354,12 @@
         "ordinal": "007.00",
         "title": "Retry flaky webhooks",
         "slug": "retry-flaky-webhooks",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "in_review",
           "emoji": "👀",
-          "label": "In Review"
+          "label": "In Review",
+          "note": "what In Review means"
         },
         "lane": "quick",
         "station": "pr",
@@ -370,6 +384,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       },
@@ -377,10 +392,12 @@
         "ordinal": "008.00",
         "title": "Trim the run log",
         "slug": "trim-the-run-log",
+        "summary": "The first paragraph of this plan's spec.md.",
         "status": {
           "key": "approved",
           "emoji": "✅",
-          "label": "Approved & Merged"
+          "label": "Approved & Merged",
+          "note": "what Approved & Merged means"
         },
         "lane": "quick",
         "station": "pr",
@@ -405,6 +422,7 @@
         "interrupted": null,
         "claimed_by": "3f9a0c7be21d44a8f6031c5d",
         "unacked": 0,
+        "mail": [],
         "last_known": [],
         "locked": null
       }
@@ -416,7 +434,8 @@
         "status": {
           "key": "new",
           "emoji": "⚪️",
-          "label": "New"
+          "label": "New",
+          "note": "what New means"
         },
         "lane": "full"
       },
@@ -426,7 +445,8 @@
         "status": {
           "key": "product_blocked",
           "emoji": "🅱️",
-          "label": "Product Block"
+          "label": "Product Block",
+          "note": "what Product Block means"
         },
         "lane": "plan"
       }
@@ -551,10 +571,12 @@
           "ordinal": "010.00",
           "title": "Cache agent registry lookups",
           "slug": "review-state-labels",
+          "summary": "The first paragraph of this plan's spec.md.",
           "status": {
             "key": "in_review",
             "emoji": "👀",
-            "label": "In Review"
+            "label": "In Review",
+            "note": "what In Review means"
           },
           "lane": "plan",
           "station": "in_review",
@@ -601,6 +623,7 @@
           "interrupted": null,
           "claimed_by": "c07d5e1a99b2f3046e8a1d7b",
           "unacked": 0,
+          "mail": [],
           "last_known": [],
           "locked": null
         }
@@ -612,7 +635,8 @@
           "status": {
             "key": "new",
             "emoji": "⚪️",
-            "label": "New"
+            "label": "New",
+            "note": "what New means"
           },
           "lane": "full"
         },
@@ -622,7 +646,8 @@
           "status": {
             "key": "product_blocked",
             "emoji": "🅱️",
-            "label": "Product Block"
+            "label": "Product Block",
+            "note": "what Product Block means"
           },
           "lane": "plan"
         }

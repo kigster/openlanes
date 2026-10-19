@@ -154,6 +154,24 @@ module OpenLanes
           File.file?(path) ? parse(File.read(path, encoding: "UTF-8")) : new
         end
 
+        # The spec's first paragraph of prose, which the dashboard shows when a
+        # person hovers a plan's title: headings, comments, lists, quotes and
+        # code are passed over, so a spec that opens with `## Problem
+        # statement` answers with the problem itself.
+        #
+        # @param text [String] a whole spec.md
+        # @param limit [Integer] characters kept, the rest cut at a word
+        # @return [String] "" when the spec has no prose paragraph
+        def summary(text, limit: 600)
+          _, body = Frontmatter.split(text)
+          paragraph = body.to_s.gsub(/<!--.*?-->/m, "").split(/\n\s*\n/).map(&:strip).find do |block|
+            !block.empty? && !block.match?(/\A(?:#|>|[-*+] |\d+\. |```|~~~|\||<)/)
+          end.to_s.gsub(/\s*\n\s*/, " ")
+          paragraph.length > limit ? "#{paragraph[0, limit].sub(/\s+\S*\z/, "")}…" : paragraph
+        rescue Psych::Exception
+          ""
+        end
+
         # @param text [String] a whole spec.md
         # @return [OpenLanes::Plans::Spec]
         def parse(text)

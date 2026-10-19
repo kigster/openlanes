@@ -179,6 +179,15 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
       end
     end
 
+    it "groups unacked mail by sender and recipient, oldest pair first" do
+      luke_to_rey("one")
+      rey_to_luke("two")
+      luke_to_rey("three")
+      mailbox.ack(2, by: "luke-backend")
+
+      expect(mailbox.unacked_pairs).to match([{ from: "luke-backend", to: "rey-frontend", count: 2, since: mailbox.messages.first.at }])
+    end
+
     it "treats mailbox.md history as read, since nobody is left to ack it" do
       File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
 

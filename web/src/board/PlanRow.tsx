@@ -1,9 +1,9 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
-import type { Car as CarData, ModelChoice, Node, Plan, Station } from "../api/types";
+import type { Car as CarData, ModelChoice, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
-import { fmt, planId, who } from "./format";
+import { fmt, statusTip, unackedTip, who } from "./format";
 import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
@@ -33,11 +33,11 @@ const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProp
  * Mail between the plan's agents that nobody has acked yet: a warning for a person, never an input to a round (D2).
  * Nothing at zero, so a quiet plan's meta line stays as it was.
  */
-export function UnackedBadge({ count }: { count: number }) {
+export function UnackedBadge({ count, mail = [] }: { count: number; mail?: UnackedMail[] }) {
   if (count <= 0) return null;
   const said = `${count} unacked ${count === 1 ? "message" : "messages"}`;
   return (
-    <span className="unacked is-warning" title={`${said} between this plan's agents`}>
+    <span className="unacked is-warning" title={unackedTip(count, mail)}>
       <span aria-hidden="true">✉ {count}</span>
       <span className="sr-only">{said}</span>
     </span>
@@ -102,17 +102,17 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
       id={readOnly ? undefined : rowDomId(plan.ordinal)}
       data-plan={plan.ordinal}
       style={vars({ "--lane-color": color, "--lane-bg": bg })}
-      aria-label={faded && owner ? `${planId(plan.ordinal)} ${plan.title}, on ${who(owner)}, read only` : undefined}
+      aria-label={faded && owner ? `${plan.ordinal} ${plan.title}, on ${who(owner)}, read only` : undefined}
     >
       <div className="plan-head">
         <div className="plan-id">
-          {planId(plan.ordinal)}
-          <span className="plan-status" role="img" aria-label={plan.status.label} title={plan.status.label}>{plan.status.emoji}</span>
+          {plan.ordinal}
+          <span className="plan-status" role="img" aria-label={plan.status.label} title={statusTip(plan.status)}>{plan.status.emoji}</span>
         </div>
-        <h3 className="plan-title">{plan.title}</h3>
+        <h3 className="plan-title" title={plan.summary || plan.title}>{plan.title}</h3>
         <div className="plan-meta">
           <span className="lane">{lane.label}</span>
-          <UnackedBadge count={plan.unacked} />
+          <UnackedBadge count={plan.unacked} mail={plan.mail} />
           {owner ? (
             <span>on {who(owner)}</span>
           ) : (
