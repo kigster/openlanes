@@ -4,7 +4,7 @@
 # own locks in the same register. `alock` never runs: a command double
 # answers for it, the way it answers on the command line.
 RSpec.describe OpenLanes::Engine::AgentLocks do
-  subject(:locks) { described_class.new(root:, id: "openlanes@test", command:, clock: -> { time.first }) }
+  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[luke-backend], command:, clock: -> { time.first }) }
 
   let(:root) { Dir.mktmpdir("agent-locks") }
   let(:plans) { File.join(root, ".plans") }
@@ -43,6 +43,22 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
     it "counts any lock inside the plan's worktree" do
       FileUtils.mkdir_p(checkout)
       listed << lock("lib/a.rb", tree: checkout)
+
+      expect(locks.held_elsewhere(folder, checkout:)).not_to be_nil
+    end
+
+    it "ignores the engine's own agents and their sub-agents, in the worktree or on the folder" do
+      FileUtils.mkdir_p(checkout)
+      listed.push(lock("lib/a.rb", agent: "luke-backend", tree: checkout),
+        lock("lib/b.rb", agent: "luke-backend-schema", tree: checkout),
+        lock(".plans/003.00━━🟡━━❯tax-rule-dsl/plan.md", agent: "luke-backend"))
+
+      expect(locks.held_elsewhere(folder, checkout:)).to be_nil
+    end
+
+    it "still counts an agent whose name only starts like one of the engine's" do
+      FileUtils.mkdir_p(checkout)
+      listed << lock("lib/a.rb", agent: "luke-backendish", tree: checkout)
 
       expect(locks.held_elsewhere(folder, checkout:)).not_to be_nil
     end
@@ -100,8 +116,20 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
 
       aggregate_failures do
         expect(locks.acquire(folder, "x")).to be(false)
-        expect(OpenLanes::UI).to have_received(:log).with("alock acquire failed: empty scope", level: :warn)
+        expect(OpenLanes::UI).to have_received(:log)
+          .with("alock acquire 003.00━━🟡━━❯tax-rule-dsl/** failed: empty scope", level: :warn)
       end
+    end
+
+    it "names the scope a failed release leaves held" do
+      allow(command).to receive(:run!).and_return(result(2, err: "store gone"))
+      allow(OpenLanes::UI).to receive(:log)
+      locks.release(folder)
+
+      expect(OpenLanes::UI).to have_received(:log).with(
+        "alock release 003.00━━🟡━━❯tax-rule-dsl/** failed: store gone; 003.00━━🟡━━❯tax-rule-dsl/** stays held until the engine exits",
+        level: :warn
+      )
     end
 
     it "gives the folder back" do

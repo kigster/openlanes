@@ -52,12 +52,15 @@ module OpenLanes
 
       # @param root [String] the repository whose plans are locked
       # @param id [String] the agent id the engine's own locks carry
+      # @param own [Array<String>] the engine's agents, who claim with
+      #   `AGENT_ID=<name>` or `<name>-<suffix>` as their prompt tells them to
       # @param command [TTY::Command]
       # @param clock [#call] monotonic seconds
-      def initialize(root:, id: "openlanes@#{Socket.gethostname}:#{Process.pid}",
+      def initialize(root:, id: "openlanes@#{Socket.gethostname}:#{Process.pid}", own: [],
         command: TTY::Command.new(printer: :null), clock: -> { UI.monotonic })
         @root = File.realpath(root)
         @id = id
+        @own = own
         @command = command
         @clock = clock
         @mutex = Mutex.new
@@ -70,7 +73,10 @@ module OpenLanes
       attr_reader :id
 
       # Somebody else's live lock that overlaps the plan's folder, or any
-      # lock taken inside its worktree.
+      # lock taken inside its worktree. The engine's own agents are not
+      # somebody else: they claim each file before writing it, so counting
+      # them would keep a pair's partner out of the plan while the first one
+      # works in it.
       #
       # @param dir [String] the plan folder
       # @param checkout [String, nil] the plan's worktree, when the run isolates
@@ -79,7 +85,7 @@ module OpenLanes
         folder = real(dir)
         work = checkout && real(checkout)
         held.find do |lock|
-          next false if lock.agent == @id
+          next false if ours?(lock.agent)
 
           tree = real(lock.tree)
           (work && tree == work) || (inside?(folder, tree) && overlap?(relative(folder, tree), lock.fixed))
@@ -103,6 +109,10 @@ module OpenLanes
       end
 
       private
+
+      # @param agent [String] a lock's holder
+      # @return [Boolean] the engine itself, one of its agents, or a sub-agent of one
+      def ours?(agent) = agent == @id || @own.any? { agent == it || agent.start_with?("#{it}-") }
 
       # @return [Array<Held>] every active lock, at most {FRESH} seconds old
       def held
@@ -141,7 +151,9 @@ module OpenLanes
         # 1 is a refusal; anything above is alock failing, which is said, and
         # counts as a refusal too: a plan nobody could check is left alone.
         if result.exit_status > 1
-          UI.log("alock #{args.first} failed: #{(result.err.to_s + result.out.to_s).lines.first.to_s.strip}", level: :warn)
+          left = args.first == "release" ? "; #{args[1]} stays held until the engine exits" : ""
+          UI.log("alock #{args.first} #{args[1]} failed: #{(result.err.to_s + result.out.to_s).lines.first.to_s.strip}#{left}",
+            level: :warn)
         end
         result.success?
       rescue SystemCallError

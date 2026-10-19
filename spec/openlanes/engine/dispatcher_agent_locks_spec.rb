@@ -38,7 +38,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   def folder(ordinal) = File.basename(path_of(ordinal))
 
   before do
-    OpenLanes::Engine.agent_locks = ->(_) { outside }
+    OpenLanes::Engine.agent_locks = ->(_, **) { outside }
     planned("001.00", "held")
     planned("002.00", "lost")
     planned("003.00", "free")
