@@ -5,8 +5,8 @@
     "ordinal": "025.00",
     "slug": "agent-memory-journal"
   },
-  "state": "rejected",
-  "updated_at": "2026-10-18T06:34:50-07:00",
+  "state": "discarded",
+  "updated_at": "2026-10-18T20:03:18-07:00",
   "stages": [
     {
       "agent": "luke-backend",
@@ -103,7 +103,7 @@
     {
       "agent": "luke-backend",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "rejected",
       "started_at": "2026-10-18T06:34:42-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/025.00-agent-memory-journal",
@@ -114,7 +114,9 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "session": "1211c15e-dc6f-4e23-ab32-3fe67a59132d"
+      "session": "1211c15e-dc6f-4e23-ab32-3fe67a59132d",
+      "note": "harness died",
+      "finished_at": "2026-10-18T20:02:55-07:00"
     }
   ],
   "signatures": [
@@ -174,10 +176,17 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-18T20:02:55-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     }
   ],
   "messages": [],
-  "moves": 8,
+  "moves": 9,
   "extensions": [
     {
       "number": 1,
@@ -201,6 +210,23 @@
       "asked_at": "2026-10-17T14:29:18-07:00",
       "closed": "finished",
       "settled_at": "2026-10-17T14:30:11-07:00"
+    },
+    {
+      "number": 3,
+      "agent": "luke-backend",
+      "state": "rejected",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-18T20:02:56-07:00"
     }
-  ]
+  ],
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-18T20:02:55-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Started, round 1"
+    }
+  }
 }

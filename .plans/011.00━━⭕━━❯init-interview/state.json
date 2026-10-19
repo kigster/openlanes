@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-18T06:35:07-07:00",
+  "updated_at": "2026-10-18T20:06:33-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -348,6 +348,32 @@
       "agent": "lando-broker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-18T20:03:03-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T20:03:06-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-18T20:04:00-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T20:04:05-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -360,6 +386,16 @@
       "body": "RESUME: carry on from your last resume note",
       "read": "no",
       "command": "01M57KJ82AG29YBHM0EAD9DG9T"
+    },
+    {
+      "id": "3d8d33c6-224e-4790-a132-38ea17924ebb",
+      "number": 2,
+      "at": "2026-10-18T20:04:13-07:00",
+      "from": "human",
+      "to": "luke-backend",
+      "body": "RESUME: carry on from your last resume note",
+      "read": "no",
+      "command": "01M591VRP7E7PKXN48FZ06S9X9"
     }
   ],
   "last-known-state": {
@@ -418,6 +454,19 @@
             {
               "kind": "question",
               "text": "B1 still open: human must pick a) fix probe in own PR, b) luke-backend fixes inside plan, or c) accept as is"
+            }
+          ]
+        },
+        "3": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "B1 answer 'Rebase onto main' names none of the offered options a/b/c, so it is not an answer; B1/A1 left in blocked.md (round 1 of this invocation)"
+            },
+            {
+              "kind": "question",
+              "text": "B1 still open: human must pick a) fix probe in own PR, b) luke-backend fixes inside plan, or c) accept as is, then run unblock again"
             }
           ]
         }

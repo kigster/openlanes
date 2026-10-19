@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 83 | [\[025.00\](A) Agent Memory Journal](https://github.com/kigster/openlanes/pull/83) | Open 🟡 |
+| 83 | [\[025.00\](A) Agent Memory Journal](https://github.com/kigster/openlanes/pull/83) | Closed 🔴 |
 
 ## 025.00 Agent Memory Journal — luke-backend, round 1
 

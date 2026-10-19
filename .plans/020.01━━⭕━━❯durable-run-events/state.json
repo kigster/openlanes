@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "blocked",
-  "updated_at": "2026-10-18T06:34:47-07:00",
+  "updated_at": "2026-10-18T20:06:33-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -293,6 +293,32 @@
       "status": "Completed",
       "round": 1,
       "note": "approved"
+    },
+    {
+      "at": "2026-10-18T20:03:03-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-18T20:03:07-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 2,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-18T20:04:01-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-18T20:04:07-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -420,6 +446,30 @@
             {
               "kind": "note",
               "text": "Signed Completed with --note approved although no block was answered; the note should not have been passed"
+            }
+          ]
+        },
+        "2": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 still open: A1 'Rebase onto main and retry' picks none of a/b/c and fails the answer test; B1 and A1 left in blocked.md"
+            },
+            {
+              "kind": "override",
+              "text": "Round 1 signed Completed with approved note although no block was answered; round 2 re-signed Blocked (technical) instead, since the folder stays ⭕",
+              "overrides": 2
+            },
+            {
+              "kind": "note",
+              "text": "A human must answer B1 with a, b or c. Rebasing is withheld by the boundary, so it cannot be the fix."
+            },
+            {
+              "kind": "question",
+              "text": "B1 The suite fails on this machine for a reason outside the plan The requirement \"`bundle exec rspec` exits 0\" is not met: 3224 examples, 31 failures (2026-10-17, round 1 rerun). Every failure is in `spec/openlanes/apps/*` (26) or `spec/openlanes/cli/app_spec.rb` (4, plus `ports_spec.rb:32`), and every one is `Apps::Ports::Exhausted: every port from 11100 to 11999 is taken` or a readiness probe that never sees a closed port. The cause is the machine: a TCP connect to any unused `127.0.0.1` port…",
+              "ref": "B1",
+              "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
             }
           ]
         }
