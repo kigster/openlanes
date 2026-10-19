@@ -7,3 +7,10 @@ Every back-end unit (B1 to B7) is built and tested, and `bundle exec rubocop` is
 a) Find and stop whatever accepts connects on closed local ports, then re-run `bundle exec rspec`; the plan goes on unchanged. (Recommended)
 b) Accept the 30 as an environmental baseline for this plan, and let luke-backend sign Completed.
 c) Have the `apps` specs skip, with the reason, when a closed local port accepts a connect. This is a change outside this plan, and it hides the gap on any machine with the same setup.
+
+## A1
+
+Rebase from onto main
+
+Answered by kig on 2026-10-19
+<!-- cmd:01M59P0YX70DFDEXF4PRT5SS5M -->

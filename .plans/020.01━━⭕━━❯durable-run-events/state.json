@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "blocked",
-  "updated_at": "2026-10-18T20:06:33-07:00",
+  "updated_at": "2026-10-19T01:56:15-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -319,6 +319,19 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-19T01:56:13-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:56:13-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -470,6 +483,19 @@
               "text": "B1 The suite fails on this machine for a reason outside the plan The requirement \"`bundle exec rspec` exits 0\" is not met: 3224 examples, 31 failures (2026-10-17, round 1 rerun). Every failure is in `spec/openlanes/apps/*` (26) or `spec/openlanes/cli/app_spec.rb` (4, plus `ports_spec.rb:32`), and every one is `Apps::Ports::Exhausted: every port from 11100 to 11999 is taken` or a readiness probe that never sees a closed port. The cause is the machine: a TCP connect to any unused `127.0.0.1` port…",
               "ref": "B1",
               "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
+            }
+          ]
+        },
+        "3": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 still open: A1 'Rebase onto the main branch first and retry' picks none of a/b/c, so it fails the answer test; B1 and A1 left untouched in blocked.md"
+            },
+            {
+              "kind": "note",
+              "text": "Round 3: nothing folded. blocked.md untouched. Signed Started then Blocked (technical). A human must answer B1 with a, b or c; rebasing is withheld by the boundary."
             }
           ]
         }

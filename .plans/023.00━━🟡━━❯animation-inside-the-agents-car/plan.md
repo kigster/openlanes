@@ -83,3 +83,18 @@ Answered:
 Rebase the branch onto `origin/main` before the next run, then rerun `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
 
 ---
+
+### B2 (answered) — Commit and rebase before the rspec rerun
+
+`D1` was not carried out: `HEAD` is still `7186635`, 156 commits behind `origin/main` (`0b10d65`), and the plan's work is uncommitted in the worktree. `bundle exec rspec` shows 30 port and process failures in `spec/openlanes/apps/**` and `spec/openlanes/cli/app_spec.rb`, and the same specs pass on a clean checkout of `origin/main`. A rebase cannot carry uncommitted work, and `luke-backend` may not commit or rebase, so the run could not meet "rspec exits 0" on its own. Options: commit and rebase, accept the 30 failures as baseline, or allow the port specs through the network filter.
+
+### D2 (decision) — Commit the plan's work, rebase onto origin/main, then rerun
+
+Answered:
+
+* 2026-10-18
+* By kig
+
+Commit the plan's work on `kig/023.00-animation-inside-the-agents-car`, rebase it onto `origin/main`, and rerun `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
+
+---

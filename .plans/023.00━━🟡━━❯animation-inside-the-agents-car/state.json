@@ -5,8 +5,8 @@
     "ordinal": "023.00",
     "slug": "animation-inside-the-agents-car"
   },
-  "state": "blocked",
-  "updated_at": "2026-10-18T20:06:33-07:00",
+  "state": "building",
+  "updated_at": "2026-10-19T01:56:49-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -176,6 +176,38 @@
       "seconds": 240.0,
       "note": "blocked; see blocked.md",
       "moves": 3
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "blocked",
+      "started_at": "2026-10-19T01:56:41-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/023.00-animation-inside-the-agents-car",
+      "run": {
+        "pid": 46643,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "2027946f-0c4e-4e32-a7b6-3318c7a79f87"
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-10-19T01:56:42-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/023.00-animation-inside-the-agents-car",
+      "run": {
+        "pid": 46643,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "58640992-2180-4c68-895b-2f1023bc8c03"
     }
   ],
   "signatures": [
@@ -315,6 +347,30 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-19T01:56:10-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:56:42-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:56:49-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:56:49-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
     }
   ],
   "messages": [
@@ -407,7 +463,7 @@
       "note": "agent pushed (origin/kig/ask-to-extend-limits) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: F1 and F2 are built and I signed `Completed, round 1`."
     }
   },
-  "moves": 3,
+  "moves": 4,
   "memory": {
     "luke-backend": {
       "rounds": {

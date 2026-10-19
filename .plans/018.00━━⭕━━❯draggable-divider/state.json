@@ -6,7 +6,7 @@
     "slug": "draggable-divider"
   },
   "state": "building",
-  "updated_at": "2026-10-18T20:06:33-07:00",
+  "updated_at": "2026-10-19T01:56:19-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -460,6 +460,19 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-19T01:56:10-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:56:17-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -653,6 +666,15 @@
               "text": "B1 Full rspec never exits 0 under load The requirement \"`bundle exec rspec` exits 0\" is unmet. Five full runs on 2026-10-16 (load average 6 to 14, rey running beside) each failed 1 to 4 examples, a different process/port spec every time: `spec/integration/restart_spec.rb:63`, `spec/integration/two_checkouts_spec.rb:70`, `spec/integration/control_room_spec.rb:73`, `spec/openlanes/apps/supervisor_spec.rb:74,86,133`, `spec/openlanes/apps/restart_spec.rb:77`. Each passes in isolation. This branch c…",
               "ref": "B1",
               "answer": "You must have run tests at the same time as another agent. We need to either make sure that each one uses a different redis db database or that only one plan can run tests at a time To speed up the tests and ensure no clobbering between suites, suggest using https://github.com/guilleiguaran/fakeredis gem instead of the real one. Answered by kig on 2026-10-16"
+            }
+          ]
+        },
+        "3": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 (A1, 2026-10-16) still picks none of a/b/c. It offers two either/or remedies (per-plan redis DB, or one plan at a time) plus a fakeredis suggestion. Not folded: choosing one would be my decision. B1 stays open for a human."
             }
           ]
         }
