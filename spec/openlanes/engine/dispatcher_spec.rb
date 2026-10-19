@@ -604,8 +604,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "counts the stranded round against the agent's rounds" do
-        expect(calls).to eq([])
+      it "starts the agent again on the same round, since the harness died and not the agent" do
+        expect(calls).to eq([["leah-researcher", "001.00", 1]])
+      end
+
+      it "mails the agent to carry on from its resume note" do
+        mail = OpenLanes::Plans::Mailbox.new(dir: path_of("001.00")).for("leah-researcher")
+        expect(mail.map { [it.from, it.body] }).to match([["openlanes", start_with("RESUME: the harness died during your round 1")]])
       end
     end
   end
@@ -1331,8 +1336,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   describe "restarting after a dead harness" do
     let!(:built) { plans { |t| t.plan "001.00", :new, "resumed", files: { "spec.md" => spec_body } } }
 
-    # The stranded stage is an Interrupted round, so the re-run is the
-    # agent's second, and leah needs two to have it.
+    # The stranded round is handed back, so leah still has both of hers.
     it "signs the harness's Interrupted for a stranded stage and re-runs the agent" do
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
@@ -1346,7 +1350,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         runner_with(executor, agents: two, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
         aggregate_failures do
           expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
-          expect(calls.map(&:last)).to eq([2])
+          expect(calls.map(&:last)).to eq([1, 2])
         end
       end
     end

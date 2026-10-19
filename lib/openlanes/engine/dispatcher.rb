@@ -844,8 +844,10 @@ module OpenLanes
 
       # ---- starting ---------------------------------------------------------
 
-      # Started stages a dead run left behind get the harness's own line and a
-      # place in history, so eligibility treats them as an Interrupted round.
+      # Started stages a dead run left behind get the harness's own line, and
+      # the agent starts again from its resume note without spending a round:
+      # the harness died, not the agent. Asking a person to keep or discard
+      # the work got the same answer every time, so nobody is asked.
       #
       # Two records can say a stage was stranded: the run's own state file,
       # and the plan's `state.json`. The second is what survives a run whose
@@ -885,7 +887,9 @@ module OpenLanes
         ordinal = subject.feature.ordinal.to_s
         harness_resume(subject, agent, round, "harness died")
         write_interrupted(subject, agent, round, "harness died")
-        remember(ordinal, agent.name, subject.status.key, "Interrupted", round)
+        Plans::Mailbox.new(dir: subject.feature.path).append(from: "openlanes",
+          to: agent.name,
+          body: "RESUME: the harness died during your round #{round}; carry on from your last resume note")
         @state&.record(ordinal, agent: agent.name, round:, status: "Interrupted", exit: "harness died")
         stage!(subject, agent, round, status: "Interrupted", note: "harness died", finished_at: Time.now.iso8601)
         [ordinal, agent.name, round]
@@ -1675,8 +1679,8 @@ module OpenLanes
 
       # The agent signed Completed, but what it left does not justify the
       # state it advances to. The folder stays, its `next:` is not honoured,
-      # and the round is recorded as Interrupted, which is what the page
-      # lists under Needs you once the agent's rounds run out. Taking the
+      # and the round is recorded as Interrupted; once the agent's rounds run
+      # out, Needs you asks for more of them (E1). Taking the
       # signature at its word instead parked the plan: nobody else handles
       # the state it is still in, and its own agent counted itself done.
       #
@@ -1862,7 +1866,7 @@ module OpenLanes
       # The builders finished, but plan.md says nothing about how to test the
       # result. That is work an agent can do, so the builder is mailed what is
       # missing and handed its round back, once, to write it. A second refusal
-      # is Interrupted, which the page lists under Needs you. Parking the plan
+      # is Interrupted and spends a round, as any failed round does. Parking the plan
       # as finished, as a rejected push is, left 021 at 🟡 with nothing on the
       # page saying why.
       #

@@ -1,4 +1,4 @@
-// The right rail: every question and interrupted agent waiting on a person. A held question leaves the rail; its solid
+// The right rail: every question waiting on a person. A held question leaves the rail; its solid
 // red pill in the status bar is the way back to it.
 import type { Plan } from "../api/types";
 import { AskCard } from "./AskCard";
@@ -21,7 +21,7 @@ export function NeedsYou({ plans, onCommand }: NeedsYouProps) {
   return (
     <aside className="rail" aria-labelledby="rail-title">
       <h2 id="rail-title">Needs you {open.length ? <span>({open.length})</span> : null}</h2>
-      <p className="rail-sub">Questions and interrupted agents wait here until you act.</p>
+      <p className="rail-sub">Questions wait here until you answer them.</p>
       <div className="asks" tabIndex={0} aria-label="Requests waiting on you">
         {open.length + settledCards.length === 0 ? (
           <p className="empty">Nothing waiting on you. Agents will ask here.</p>

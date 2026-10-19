@@ -167,7 +167,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
       }
       setUnblocking(plan.ordinal);
       const ask = plan.questions[0];
-      const why = ask ? ask.body || ask.heading : `you interrupted ${plan.interrupted?.agent ?? "its agent"}`;
+      const why = ask ? ask.body || ask.heading : "a question";
       announce(`${planId(plan.ordinal)} needs you: ${why}`);
     },
     [unblocking, announce],

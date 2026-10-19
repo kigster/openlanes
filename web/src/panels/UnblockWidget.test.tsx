@@ -97,14 +97,6 @@ describe("UnblockWidget", () => {
     expect(screen.getByRole("button", { name: "Hold blocked" })).toBeInTheDocument();
   });
 
-  it("offers Keep work and resume for an interrupted plan, focused", () => {
-    const plan = planAt("005.00");
-    plan.interrupted = { agent: "hansolo-reviewer", at: new Date().toISOString(), note: "" };
-    renderPanel(<UnblockWidget plan={plan} onCommand={recorder().onCommand} onClose={() => {}} />);
-    expect(screen.getByRole("button", { name: "Keep work and resume" })).toHaveFocus();
-    expect(screen.getByText("You interrupted hansolo-reviewer this minute.")).toBeInTheDocument();
-  });
-
   it("closes itself when the plan has nothing left to ask", () => {
     const onClose = vi.fn();
     renderPanel(<UnblockWidget plan={planAt("005.00")} onCommand={recorder().onCommand} onClose={onClose} />);

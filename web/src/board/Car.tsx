@@ -90,16 +90,3 @@ export function SubagentTiles({ car }: { car: CarData }) {
     </div>
   );
 }
-
-/** The car an interrupted plan shows in place of its agents until someone keeps or discards the work. */
-export function InterruptedCar({ agent }: { agent: string }) {
-  return (
-    <div className="car is-queued is-blocked">
-      <div className="car-top">
-        <span className="car-agent" title={agent}>{shortAgent(agent)}</span>
-        <span className="car-model">interrupted</span>
-      </div>
-      <div className="car-activity">You interrupted it. Keep its work or discard it in Needs you.</div>
-    </div>
-  );
-}
