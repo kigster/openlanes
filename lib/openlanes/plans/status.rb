@@ -57,7 +57,7 @@ module OpenLanes
     RESEARCH_CHAPTER = /^[ \t]{0,3}\#{2,3}[ \t]+Research\b/i
 
     # What proves `plan.md` holds a plan rather than the blank file
-    # `yoda-writer` leaves for `palpatine-planner`: any section heading. The
+    # `yoda-writer` leaves for `luthen-rael-planner`: any section heading. The
     # ledger notes are stripped first, so an agent's `Started` line does not
     # count as a plan.
     PLAN_HEADING = /^[ \t]{0,3}\#{1,3}[ \t]+\S/
@@ -193,7 +193,7 @@ module OpenLanes
       # written by opening a pull request, which happens once, when the last
       # implementer advances the plan to Ready for Review. Requiring the file to
       # *enter* Building would mean nothing could ever justify entering it, and
-      # `palpatine-planner` finishing `plan.md` would loop forever between itself
+      # `luthen-rael-planner` finishing `plan.md` would loop forever between itself
       # and a state it can never actually reach. Ready for Review is where the
       # file becomes a real requirement, once something has had the chance to
       # write it.
@@ -247,6 +247,20 @@ module OpenLanes
         requires:  %w[spec.md plan.md pull-requests.md],
         note:      "the review approved it; chewie runs the app through How to test before anything merges",
         invariant: open_pull_request("Verifying")
+      ),
+      # Completed is not done. `ready-to-merge` is a pull request's state
+      # (P2), and once every pull request of the plan carries it the plan is
+      # 🏁: palpatine rules on each, the engine merges the `auto` ones one at
+      # a time and rebases the rest onto `main`, and `merge-manually` ones
+      # wait for a person. At least one is still open, or the plan would be
+      # ✅ (P3).
+      Status.new(
+        key:       :completed,
+        emoji:     "🏁",
+        label:     "Completed",
+        requires:  %w[spec.md plan.md pull-requests.md],
+        note:      "every pull request is `ready-to-merge`; palpatine weighs each, and they merge one at a time",
+        invariant: open_pull_request("Completed")
       ),
       Status.new(
         key:       :rejected,

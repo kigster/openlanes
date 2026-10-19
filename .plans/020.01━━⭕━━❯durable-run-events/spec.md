@@ -173,7 +173,7 @@ Each item has a check.
 Assumed in this spec; each is overridable before planning:
 
 1. **PostgreSQL:** assumed optional and later (Research, not settled 1).
-2. **Sink location:** depends on 021.00. Assumed a configurable directory with a default outside `.plans/`; palpatine should read 021.00's decision first (not settled 4).
+2. **Sink location:** depends on 021.00. Assumed a configurable directory with a default outside `.plans/`; luthen-rael should read 021.00's decision first (not settled 4).
 3. **`total_cost_usd`:** not stored; needs one real stream-json run to settle (not settled 2).
 4. **Codex and pi usage field names:** read defensively, as null when absent; needs one real run each (not settled 3).
 5. **`estimated` as column or report label:** assumed a per-event field, which is the safer superset (not settled 5).

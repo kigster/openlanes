@@ -29,7 +29,7 @@
       "seconds": 42.2
     },
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Blocked",
       "from": "ready_for_planning",
@@ -153,17 +153,17 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     },
     {
       "at": "2026-10-13T19:08:33-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:09:25-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
@@ -182,13 +182,13 @@
     },
     {
       "at": "2026-10-14T11:47:17-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-14T11:49:54-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 2,
       "next": "luke-backend"

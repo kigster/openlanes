@@ -219,7 +219,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   describe "the ledger section" do
-    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "palpatine-planner")[2] }
+    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "luthen-rael-planner")[2] }
 
     let(:sign) do
       "openlanes state sign --dir \"#{plans_root}\" --plan 000.00 --agent yoda-writer --round 2"
@@ -228,7 +228,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     it "tells the agent the exact commands to sign with, under its own name, round and successor" do
       aggregate_failures do
         expect(prompt).to include("#{sign} --status Started")
-        expect(prompt).to include("#{sign} --status Completed --next palpatine-planner")
+        expect(prompt).to include("#{sign} --status Completed --next luthen-rael-planner")
       end
     end
 
@@ -720,7 +720,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "says nothing about concurrency to an agent without Task" do
-      planner = agents.find("palpatine-planner")
+      planner = agents.find("luthen-rael-planner")
 
       expect(planner.allowed_tools).not_to include("Task")
       expect(prompt_for(planner)).not_to include("concurrent sub-agents")

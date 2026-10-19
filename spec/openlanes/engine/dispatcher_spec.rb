@@ -248,17 +248,17 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     # yoda finishes, leaves a blank plan.md, signs Completed and names
-    # palpatine. The harness renames to 📋, starts palpatine, palpatine
+    # luthen-rael. The harness renames to 📋, starts luthen-rael, luthen-rael
     # writes a plan and signs, the harness renames to ⭐, luke and rey
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
-    it "moves yoda's finished work to 📋 and starts palpatine, then the pair" do
+    it "moves yoda's finished work to 📋 and starts luthen-rael, then the pair" do
       executor = executor_with do |agent, subject, _round|
         case agent.name
         when "yoda-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
-        when "palpatine-planner"
+        when "luthen-rael-planner"
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           File.write(File.join(subject.feature.path, "plan-frontend.md"), "# Front end\n\n## F1\n")
           "Completed"
@@ -267,7 +267,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner_with(executor).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[yoda-writer palpatine-planner luke-backend rey-frontend])
+        expect(calls.map(&:first)).to eq(%w[yoda-writer luthen-rael-planner luke-backend rey-frontend])
         expect(calls.count { |name, _, _| name == "yoda-writer" }).to eq(1)
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("020.00")).status.key).to eq(:building)
       end
@@ -285,7 +285,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         executor = executor_with do |agent, subject, _round|
           case agent.name
           when "yoda-writer" then File.write(File.join(subject.feature.path, "plan.md"), "") && "Completed"
-          when "palpatine-planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
+          when "luthen-rael-planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
           end
         end
         runner_with(executor).call
@@ -511,7 +511,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       it "skips research and rewriting and goes to the planner" do
         runner_with(executor).call
-        expect(seen.map(&:first).first).to eq("palpatine-planner")
+        expect(seen.map(&:first).first).to eq("luthen-rael-planner")
       end
 
       it "leaves the blank plan.md the planner expects, under the 📋 name" do

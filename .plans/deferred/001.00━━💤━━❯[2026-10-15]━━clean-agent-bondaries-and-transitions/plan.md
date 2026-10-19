@@ -21,7 +21,7 @@
 - The ledger grammar (A1): one `> [!NOTE]` block per agent per document, one entry per line, `[<ts>] [ agent: <name>   status: <Started|Completed|Almost completed|Interrupted|Blocked>, round N (<note>) ]`, and `[<ts>] [ next: <name> ]` only after `Completed`. Timestamp format `%Y-%m-%d %I:%M:%S %p %Z`.
 - The harness is the only thing that renames a plan folder (A4). No agent prompt may say `git mv`.
 - Successors start only after the predecessor's process has exited (A6).
-- Models and efforts (A18): leah haiku/xhigh, yoda sonnet/xhigh, palpatine opus/xhigh, luke and rey fable/xhigh, hansolo opus/high, lando sonnet. Timeouts (A13): yoda 300, palpatine 600, luke and rey 1200, hansolo 300, leah 1200, lando unset.
+- Models and efforts (A18): leah haiku/xhigh, yoda sonnet/xhigh, luthen-rael opus/xhigh, luke and rey fable/xhigh, hansolo opus/high, lando sonnet. Timeouts (A13): yoda 300, luthen-rael 600, luke and rey 1200, hansolo 300, leah 1200, lando unset.
 - Kill (A16): `STOP` into the control file, 15 seconds, `SIGKILL`. Timeout (A9): `WARN` at T-10m and T-5m, `WRAP_UP` at T-1m, `STOP` at T-0, `SIGKILL` at T+60s.
 - After a kill or timeout (A17) the harness checks the invariant of the state the agent was advancing to; when it holds the harness signs `Completed` for the agent with a bold `Interrupted` line above it.
 - Commit after every task with a subject of 50 characters or fewer, imperative mood, the body explaining why. Commits end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` and the session line the harness supplies.
@@ -179,7 +179,7 @@ RSpec.describe Agentilda::Ledger do
       text = <<~MD
         > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
         > [2026-09-04 11:50:00 AM PDT] [ agent: yoda-writer   status: Started, round 1 ]
-        > [2026-09-04 11:50:01 AM PDT] [ next: palpatine-planner ]
+        > [2026-09-04 11:50:01 AM PDT] [ next: luthen-rael-planner ]
       MD
       reading = described_class.parse(text, file: "spec.md")
       expect(described_class.handoff_after(reading, reading.entries.first)).to be_nil
@@ -473,7 +473,7 @@ ______________________________________________________________________
 **Files:**
 
 - Modify: `lib/agentilda/agent.rb`
-- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/palpatine-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (frontmatter only in this task)
+- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/luthen-rael-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (frontmatter only in this task)
 - Test: `spec/agentilda/agents_spec.rb`
 
 **Interfaces:**
@@ -519,7 +519,7 @@ Append to `spec/agentilda/agents_spec.rb`, inside the top-level `describe`:
 
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
-        "yoda-writer" => 300, "palpatine-planner" => 600, "luke-backend" => 1200,
+        "yoda-writer" => 300, "luthen-rael-planner" => 600, "luke-backend" => 1200,
         "rey-frontend" => 1200, "hansolo-reviewer" => 300, "leah-researcher" => 1200
       )
     end
@@ -535,7 +535,7 @@ Append to `spec/agentilda/agents_spec.rb`, inside the top-level `describe`:
     end
 
     it "strips the name to the role for the screen" do
-      expect(agents.find("palpatine-planner").role).to eq("planner")
+      expect(agents.find("luthen-rael-planner").role).to eq("planner")
     end
   end
 ```
@@ -646,10 +646,10 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Task, Skill, WebSearch, Web
 writes: [spec.md, plan.md, blocked.md]
 ```
 
-`agents/palpatine-planner.md`:
+`agents/luthen-rael-planner.md`:
 
 ```yaml
-name: palpatine-planner
+name: luthen-rael-planner
 description: Turns a signed-off specification into concurrently executable work units.
 handles: [ready_for_planning]
 advances_to: planned
@@ -727,7 +727,7 @@ writes: [spec.md, plan.md, blocked.md]
 
 Run: `eval "$(rbenv init -)" && bundle exec rspec spec/agentilda/agents_spec.rb` Expected: green.
 
-Run: `eval "$(rbenv init -)" && bundle exec rspec` Expected: the executor example "runs the model the agent's frontmatter declares" now fails because yoda is `sonnet`; change its expectation to `["--model", "sonnet"]`. Expected count afterwards: baseline failures only (the 9 named above), plus whichever `runner_spec` examples assume palpatine handles `planned`. Leave those; Task 10 rewrites `runner_spec.rb` whole.
+Run: `eval "$(rbenv init -)" && bundle exec rspec` Expected: the executor example "runs the model the agent's frontmatter declares" now fails because yoda is `sonnet`; change its expectation to `["--model", "sonnet"]`. Expected count afterwards: baseline failures only (the 9 named above), plus whichever `runner_spec` examples assume luthen-rael handles `planned`. Leave those; Task 10 rewrites `runner_spec.rb` whole.
 
 - [ ] **Step 6: Commit**
 
@@ -779,7 +779,7 @@ Append inside `RSpec.describe Agentilda::StateMachine`:
     end
 
     it "treats a plan.md holding only a ledger note as still blank", :tree do
-      note = Agentilda::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: palpatine-planner   status: Started, round 1 ]")
+      note = Agentilda::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: luthen-rael-planner   status: Started, round 1 ]")
       path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: {"spec.md" => spec_body, "plan.md" => note} }
       subject = Agentilda::Tree.new(dir: path).subjects.first
       expect(subject.best_fit.key).to eq(:ready_for_planning)
@@ -793,7 +793,7 @@ Append inside `RSpec.describe Agentilda::StateMachine`:
 
     # The 020.00 transcript: yoda finished, the folder was renamed forward,
     # and the resync renamed it straight back because nothing could enter
-    # ⭐️ without a plan.md that only palpatine writes. With 📋 between them
+    # ⭐️ without a plan.md that only luthen-rael writes. With 📋 between them
     # the resync leaves yoda's work standing.
     it "keeps a folder yoda finished at 📋 through a resync", :tree do
       path = plans { |t|
@@ -822,7 +822,7 @@ In `lib/agentilda/status.rb`, after `RESEARCH_CHAPTER`, add:
 
 ```ruby
   # What proves `plan.md` holds a plan rather than the blank file
-  # `yoda-writer` leaves for `palpatine-planner`: any section heading. The
+  # `yoda-writer` leaves for `luthen-rael-planner`: any section heading. The
   # ledger notes are stripped first, so an agent's `Started` line does not
   # count as a plan.
   PLAN_HEADING = /^[ \t]{0,3}\#{1,3}[ \t]+\S/
@@ -1451,13 +1451,13 @@ Replace every `described_class.new(root:, command:, ...)` with `described_class.
   end
 
   describe "the ledger section" do
-    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "palpatine-planner")[2] }
+    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "luthen-rael-planner")[2] }
 
     it "tells the agent the exact lines to write, with its own name, round and successor" do
       aggregate_failures do
         expect(prompt).to include("agent: yoda-writer   status: Started, round 2 ]")
         expect(prompt).to include("agent: yoda-writer   status: Completed, round 2 ]")
-        expect(prompt).to include("[ next: palpatine-planner ]")
+        expect(prompt).to include("[ next: luthen-rael-planner ]")
         expect(prompt).to include("spec.md")
       end
     end
@@ -2177,17 +2177,17 @@ RSpec.describe Agentilda::Dispatcher, :tree do
     end
 
     # yoda finishes, leaves a blank plan.md, signs Completed and names
-    # palpatine. The harness renames to 📋, starts palpatine, palpatine
+    # luthen-rael. The harness renames to 📋, starts luthen-rael, luthen-rael
     # writes a plan and signs, the harness renames to ⭐️, luke and rey
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
-    it "moves yoda's finished work to 📋 and starts palpatine, then the pair" do
+    it "moves yoda's finished work to 📋 and starts luthen-rael, then the pair" do
       executor = executor_with do |agent, subject, _round|
         case agent.name
         when "yoda-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
-        when "palpatine-planner"
+        when "luthen-rael-planner"
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           "Completed"
         else
@@ -2197,7 +2197,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       runner_with(executor).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[yoda-writer palpatine-planner luke-backend rey-frontend])
+        expect(calls.map(&:first)).to eq(%w[yoda-writer luthen-rael-planner luke-backend rey-frontend])
         expect(calls.count { |name, _, _| name == "yoda-writer" }).to eq(1)
         expect(tree.reload.find(Agentilda::Ordinal.parse("020.00")).status.key).to eq(:building)
       end
@@ -3501,7 +3501,7 @@ RSpec.describe Agentilda::Console do
   let(:screen) { instance_double(Agentilda::Screen, draw: nil) }
   let(:dispatcher) { instance_double(Agentilda::Dispatcher, kill: nil, extend: nil) }
   let(:rows) do
-    %w[001.00/leah-researcher 002.00/yoda-writer 003.00/palpatine-planner].each_with_index.map do |key, i|
+    %w[001.00/leah-researcher 002.00/yoda-writer 003.00/luthen-rael-planner].each_with_index.map do |key, i|
       Agentilda::Board::Row.new(key:, at: Time.now, ordinal: key[0, 6], file: "spec.md", agent: key.split("/").last,
         role: "x", round: 1, rounds: 1, model: "opus", up: 0, down: 0, message: nil, state: (i == 2) ? :done : :running)
     end
@@ -3999,7 +3999,7 @@ ______________________________________________________________________
 
 **Files:**
 
-- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/palpatine-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (bodies)
+- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/luthen-rael-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (bodies)
 
 - Modify: `lib/agentilda/brief.rb`
 
@@ -4063,16 +4063,16 @@ In each "When to stop" section, after "Write `blocked.md` ...": add "and sign yo
 ```markdown
 ## Done when
 
-You stop writing the spec when it is clear as day what we are building and what this spec does not cover. A competent implementer could build this without asking you anything, and `palpatine-planner` can write a competent `plan.md` without asking any questions.
+You stop writing the spec when it is clear as day what we are building and what this spec does not cover. A competent implementer could build this without asking you anything, and `luthen-rael-planner` can write a competent `plan.md` without asking any questions.
 
-Then create an empty `plan.md` next to `spec.md` (`touch plan.md`). That blank file is what the harness reads as "ready for planning"; the planner fills it. Sign `spec.md` with your `Completed` line and `next: palpatine-planner`.
+Then create an empty `plan.md` next to `spec.md` (`touch plan.md`). That blank file is what the harness reads as "ready for planning"; the planner fills it. Sign `spec.md` with your `Completed` line and `next: luthen-rael-planner`.
 ```
 
 In "When to stop and block instead", replace the two bullets about the folder becoming ⭕️/🅱️ with: "Sign `spec.md` with `Blocked, round N (technical)` for an engineering decision or `Blocked, round N (product)` for a product one; the harness parks the folder accordingly."
 
 `agents/leah-researcher.md`: in "Stop and block rather than guess", replace "Say which kind each block is: ... makes the folder 🅱️." with "Sign `spec.md` with `Blocked, round N (technical)` or `Blocked, round N (product)`; the harness parks the folder." Leave the closing paragraph about 🔎 but change "the folder moves" to "the harness moves the folder".
 
-`agents/palpatine-planner.md`: in "When you cannot decompose without a decision", add the same Blocked sentence. Add under "Write three plans": "`plan.md` already exists and is blank; write into it."
+`agents/luthen-rael-planner.md`: in "When you cannot decompose without a decision", add the same Blocked sentence. Add under "Write three plans": "`plan.md` already exists and is blank; write into it."
 
 `agents/hansolo-reviewer.md`: append:
 
@@ -4114,7 +4114,7 @@ In `README.md`:
 | :------------------ | :--------- | :------------------------------------ | :------------------------------------- | :----------------------------------------------------------- |
 | `leah-researcher`   | ⚪️         | 🔎                                    | `spec.md`                              | fans out parallel research, writes the `## Research` chapter |
 | `yoda-writer`       | 🔎, 🕰️     | 📋                                    | `spec.md`                              | writes Goal/Non-Goals/Conclusion, leaves a blank `plan.md`   |
-| `palpatine-planner` | 📋         | ⭐️                                    | `plan.md`                              | decomposes the spec into concurrent work units, three plans  |
+| `luthen-rael-planner` | 📋         | ⭐️                                    | `plan.md`                              | decomposes the spec into concurrent work units, three plans  |
 | `luke-backend`      | ⭐️, 🟡, 🔴 | 🟢 (🟡 on start, 🎨 while rey builds) | `plan-backend.md`, `pull-requests.md`  | back end: data, domain, API, tests                           |
 | `rey-frontend`      | ⭐️, 🟡, 🔴 | 🟢                                    | `plan-frontend.md`, `pull-requests.md` | interface against the contract; proves the halves join       |
 | `hansolo-reviewer`  | 🟢, 👀     | 🔴 / 👀 approved / 💩                 | `pull-requests.md`                     | adversarial review; two rejections at most, never merges     |
@@ -4138,7 +4138,7 @@ stateDiagram-v2
     InReview: 👀 In Review
     New --> Researched: leah
     Researched --> Ready: yoda
-    Ready --> Planned: palpatine
+    Ready --> Planned: luthen-rael
     Planned --> Building: luke starts
     Building --> BuildingUI: luke done, rey building
     Building --> Review: last of the pair
@@ -4225,7 +4225,7 @@ ______________________________________________________________________
 | :-------------------------------------------------------------------------------------------- | :--------------------------------------------- |
 | Dated ledger entries at start and end, naming agent, purpose (round) and outcome              | 1, 6 (the section every prompt gets)           |
 | The four outcomes plus Blocked; `next:` after Completed                                       | 1, 8                                           |
-| Yoda leaves a blank `plan.md`; the state between yoda and palpatine                           | 3, 12                                          |
+| Yoda leaves a blank `plan.md`; the state between yoda and luthen-rael                           | 3, 12                                          |
 | `--brief` on the agents, the agent's own words on the row                                     | 6, 9                                           |
 | Warn at ten, five and one minute; stop at zero; kill sixty seconds later                      | 5, 6                                           |
 | `--timeout` only tightens                                                                     | 6                                              |

@@ -34,6 +34,15 @@ module OpenLanes
         new(name: "ready-to-merge",
           colour: "5319e7",
           meaning: "chewie-verifier verified it and its E2E tests pass",
+          passing: true),
+        # palpatine's two verdicts, as the engine acted on them (P2).
+        new(name: "auto-merged",
+          colour: "953384",
+          meaning: "palpatine-risk-assessor judged it safe and the engine merged it",
+          passing: true),
+        new(name: "merge-manually",
+          colour: "0e8a16",
+          meaning: "palpatine-risk-assessor, or merge.by: human, left it for a person to merge",
           passing: true)
       ].freeze
 
@@ -60,6 +69,15 @@ module OpenLanes
 
       # chewie-verifier's label, and the one the coverage gate withholds.
       READY_TO_MERGE = named("ready-to-merge")
+
+      # The engine merged it on palpatine's `auto`.
+      AUTO_MERGED = named("auto-merged")
+
+      # palpatine said `manual`, or `merge.by: human` overrode its `auto`.
+      MERGE_MANUALLY = named("merge-manually")
+
+      # Either verdict: the pull request is complete (P2).
+      COMPLETE = [AUTO_MERGED, MERGE_MANUALLY].freeze
 
       # Not a verdict, and so not in {ALL}: {Vcs::LabelSync} never creates or
       # recolours it. Its presence on a repository is the one sign that

@@ -47,8 +47,8 @@ Some projects move from one language or framework to another. Without parity che
 - `Lifecycle.create(dir:, **)` (`lib/openlanes/lifecycle.rb:13`) calls `Creator#create(words:, after:, status:, prs:)` (`lib/openlanes/lifecycle/creator.rb:38`). That takes the next major ordinal and creates the folder in ⚪️ with a `state.json` (`creator.rb:139-148`).
 - `Brief#scaffold` writes the H1 and four headings (`lib/openlanes/lifecycle/brief.rb:29-34`, `:144-147`). A generator can write a fuller `spec.md` in place of the scaffold.
 - A new plan starts in the `full` lane, so `leah-researcher` takes it first (`agents/leah-researcher.md:4`, `handles: [new]`).
-- `palpatine-planner` then splits it into work units. Each unit has Discipline, Owns, Must not touch, Depends on and Done when (`agents/palpatine-planner.md:24-29`). This is the route M18 names: "leah inventories the old code, palpatine splits it into units".
-- leah's contract is a free-form `## Research` chapter (`agents/leah-researcher.md:20-40`) with no inventory shape. palpatine therefore has no fixed list to turn into units.
+- `luthen-rael-planner` then splits it into work units. Each unit has Discipline, Owns, Must not touch, Depends on and Done when (`agents/luthen-rael-planner.md:24-29`). This is the route M18 names: "leah inventories the old code, luthen-rael splits it into units".
+- leah's contract is a free-form `## Research` chapter (`agents/leah-researcher.md:20-40`) with no inventory shape. luthen-rael therefore has no fixed list to turn into units.
 
 **F3. Retiring the old code after the port can already be expressed.**
 
@@ -119,7 +119,7 @@ Some projects move from one language or framework to another. Without parity che
 Everything M18 needs is unbuilt, with two exceptions: plans can already be created from code (F2), and the dependency gate will exist once PR #23 merges (F3). The work divides into:
 
 - a generator that creates two linked plans;
-- a fixed inventory shape that leah writes and palpatine reads;
+- a fixed inventory shape that leah writes and luthen-rael reads;
 - a second app declaration;
 - a parity mode in chewie that compares normalised observations;
 - a per-plan human-merge override.
@@ -129,7 +129,7 @@ The interfaces still open belong to plans 011, 012 and 014. They are named in Op
 References (local, retrieved 2026-10-14):
 
 - `lib/openlanes/support/config.rb`, `lib/openlanes/lifecycle.rb`, `lib/openlanes/lifecycle/creator.rb`, `lib/openlanes/lifecycle/brief.rb`, `lib/openlanes/plans/spec.rb`, `lib/openlanes/plans/status.rb`, `lib/openlanes/plans/mailbox.rb`, `lib/openlanes/engine/dispatcher.rb`, `lib/openlanes/execution/executor.rb`
-- `agents/leah-researcher.md`, `agents/palpatine-planner.md`, `agents/yoda-writer.md`
+- `agents/leah-researcher.md`, `agents/luthen-rael-planner.md`, `agents/yoda-writer.md`
 - `docs/decisions/decisions-on-merge-modes-and-verification.md` (M1, M2, M4, M10–M18)
 - `.plans/011.00-📋 → init-interview/spec.md`, `.plans/012.00-📋 → app-runner-and-preview/spec.md`, `.plans/013.00-📋 → coverage-gate/spec.md`, `.plans/014.00-⚪️ → chewie-verifier/spec.md`
 - PR #23 `kig/008.00-plan-dependencies`: `lib/openlanes/plans/dependencies.rb`, `lib/openlanes/plans/spec.rb`
@@ -141,13 +141,13 @@ No paywalled or licensed sources were used.
 
 1. **One port plan plus one retirement plan.**
    - The generator creates two folders.
-   - leah's inventory of the old code becomes palpatine's work units inside the port plan, and each unit's `## How to test` steps are its parity probes.
+   - leah's inventory of the old code becomes luthen-rael's work units inside the port plan, and each unit's `## How to test` steps are its parity probes.
    - The retirement plan has `depends_on` pointing at the port plan, and is marked for a human to merge.
 1. **One plan per inventory row.** leah's inventory creates N plans, each with its own PR, and a retirement plan that depends on all of them.
 
 **Chosen: 1.**
 
-- M18 names one generated plan that palpatine splits into units, and palpatine already plans units inside one folder (`agents/palpatine-planner.md:24-30`).
+- M18 names one generated plan that luthen-rael splits into units, and luthen-rael already plans units inside one folder (`agents/luthen-rael-planner.md:24-30`).
 - Framing 2 needs a new agent that creates plans from research, which no contract allows today (`agents/leah-researcher.md:15`, `writes: [spec.md, blocked.md]`).
 - Open question 1 keeps framing 2 available.
 
@@ -192,8 +192,8 @@ Each item has its check.
    - `probe`, a step that exercises the entry.
 
    Check: an eval case `evals/cases/leah-researcher/port-inventory.yml` on a fixture Flask app asserts the table exists and has a row for every route in the fixture.
-1. **Inventory to units.** `agents/palpatine-planner.md` gains a rule for port plans. Every inventory row is covered by exactly one unit, and that unit's `Done when` includes the row's probe as a parity step.
-   - Check: an eval case under `evals/cases/palpatine-planner/` asserts each `I<n>` is named exactly once.
+1. **Inventory to units.** `agents/luthen-rael-planner.md` gains a rule for port plans. Every inventory row is covered by exactly one unit, and that unit's `Done when` includes the row's probe as a parity step.
+   - Check: an eval case under `evals/cases/luthen-rael-planner/` asserts each `I<n>` is named exactly once.
 1. **Old app declared beside the new one.**
    - `Config` accepts `app.legacy`, with the same `processes[]` schema as `app.processes` (plan 012).
    - Process names in `app.legacy` get a `legacy_` prefix, so `PORT_LEGACY_<NAME>` never collides with the new app's ports.
@@ -240,7 +240,7 @@ Each item has its check.
 - **Driving the app, labels, screenshots and the engine merge.** Plan 014 owns them. This plan adds a parity mode on top of plan 014's step runner.
 - **Starting processes and allocating ports.** Plan 012 owns them. This plan adds a second process list to plan 012's schema.
 - **Ports where both apps share one database.** Comparing writes needs separate stores seeded the same way (open question 5). A shared store needs a different design.
-- **Live LLM evals in CI.** The leah, palpatine and hansolo cases run offline against recordings, like the other cases under `evals/cases/`. Live runs stay manual.
+- **Live LLM evals in CI.** The leah, luthen-rael and hansolo cases run offline against recordings, like the other cases under `evals/cases/`. Live runs stay manual.
 - **Rolling back or abandoning a port midway.** A human can discard the two plans with existing commands.
 
 ## Back end / front end
@@ -248,7 +248,7 @@ Each item has its check.
 | Item | Half |
 | --- | --- |
 | 1, 2 Generator and port spec | `luke-backend` |
-| 3, 4, 6 Agent contract rules and eval cases (leah, palpatine, hansolo) | `luke-backend` |
+| 3, 4, 6 Agent contract rules and eval cases (leah, luthen-rael, hansolo) | `luke-backend` |
 | 5 `app.legacy` config and supervisor | `luke-backend` |
 | 7, 8, 9 Parity mode, normalisation, legacy start failure | `luke-backend` |
 | 10, 11 Retirement plan, per-plan `merge: human` | `luke-backend` |
@@ -264,7 +264,7 @@ Each has a recommendation. None is decided.
 
 1. **One port plan or one plan per inventory row?**
    - Recommended: one port plan with units, plus a retirement plan (see Framings).
-   - Revisit if a port grows too large for palpatine to plan as one.
+   - Revisit if a port grows too large for luthen-rael to plan as one.
 1. **Plan 014's step and observation interface.** This plan assumes plan 014 exposes:
    - a step runner, `Verification::Runner#run(step, app:) -> Observation`;
    - an `Observation` value with `kind`, `status`, `content_type`, `body`, `exit_code` and `stdout`;
@@ -297,7 +297,7 @@ Each has a recommendation. None is decided.
 
 When this ships, choosing "port" during `init` creates two linked plans.
 
-- The port plan's research is a fixed inventory of the old app's behaviour, and palpatine turns each row into a unit.
+- The port plan's research is a fixed inventory of the old app's behaviour, and luthen-rael turns each row into a unit.
 - chewie passes a unit only when the old and new apps give the same normalised output for its steps.
 - Coverage counts the new code only.
 - The retirement plan waits for the port, runs the full parity sweep once more, and always stops for a human to merge.

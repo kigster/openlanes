@@ -12,7 +12,7 @@ From the seven traces of plan `025.00` (`$TMPDIR/openlanes-traces/20261006-*`):
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | leah-researcher | haiku | xhigh | 56s | 41s | 14 | $0.17 |
 | yoda-writer | sonnet | xhigh | 456s | 429s | 39 | $1.80 |
-| palpatine-planner | opus | xhigh | 231s | 208s | 20 | $1.56 |
+| luthen-rael-planner | opus | xhigh | 231s | 208s | 20 | $1.56 |
 | luke-backend (round 1) | fable | xhigh | 137s | 1998s | 7 | $21.70 |
 | rey-frontend (round 1) | fable | xhigh | 702s | 632s | 21 | $5.40 |
 | luke-backend (round 2) | fable | xhigh | 703s | 1188s | 48 | $12.76 |
@@ -22,7 +22,7 @@ From the seven traces of plan `025.00` (`$TMPDIR/openlanes-traces/20261006-*`):
 2. `xhigh` effort on every agent, and Fable on both builders.
 3. luke-backend fanned out through the `Agent`/`Task` tool: 98 sub-agent tool calls in one round, 1998s of API time inside 137s of wall clock, $21.70.
 4. rey-frontend ran on a plan whose front end was a few lines of terminal output.
-5. Every plan walked the full spine (leah, yoda, palpatine) even when the author already knew what to build.
+5. Every plan walked the full spine (leah, yoda, luthen-rael) even when the author already knew what to build.
 
 ## Decisions
 
@@ -36,7 +36,7 @@ The Claude adapter passes `--setting-sources project,local`, `--strict-mcp-confi
 | --- | --- | --- | --- |
 | leah-researcher | haiku / xhigh | haiku / medium | lookup work |
 | yoda-writer | sonnet / xhigh | sonnet / medium | prose, not reasoning |
-| palpatine-planner | opus / xhigh | opus / high | the one place depth pays |
+| luthen-rael-planner | opus / xhigh | opus / high | the one place depth pays |
 | luke-backend | fable / xhigh | opus / high | cap at Opus |
 | rey-frontend | fable / xhigh | sonnet / medium | UI work is narrower, and only runs when there is some |
 | hansolo-reviewer | opus / high | sonnet / high | asked for: Sonnet reviews |
@@ -47,7 +47,7 @@ The Claude adapter passes `--setting-sources project,local`, `--strict-mcp-confi
 
 ### D3. The front end only starts when there is front end to build
 
-`rey-frontend` declares `needs: [plan-frontend.md]` and `toggle: frontend`. It is dispatched only when `plan-frontend.md` holds at least one work-unit heading, and never when `spec.md` says `frontend: false`. `frontend: true` forces it. Palpatine is told to write `plan-frontend.md` only when there is interface work.
+`rey-frontend` declares `needs: [plan-frontend.md]` and `toggle: frontend`. It is dispatched only when `plan-frontend.md` holds at least one work-unit heading, and never when `spec.md` says `frontend: false`. `frontend: true` forces it. luthen-rael is told to write `plan-frontend.md` only when there is interface work.
 
 ### D4. Lanes, chosen in `spec.md` frontmatter
 
@@ -62,8 +62,8 @@ phases:            # optional per-phase overrides
 ---
 ```
 
-- `full`: leah → yoda → palpatine → luke (+ rey) → han. Today's behaviour.
-- `plan`: skips research and rewriting. The harness writes a blank `plan.md` and moves the folder ⚪️ → 📋 itself (an existing edge), and palpatine plans from the spec as written.
+- `full`: leah → yoda → luthen-rael → luke (+ rey) → han. Today's behaviour.
+- `plan`: skips research and rewriting. The harness writes a blank `plan.md` and moves the folder ⚪️ → 📋 itself (an existing edge), and luthen-rael plans from the spec as written.
 - `quick`: skips research, rewriting and planning. The harness writes a one-unit `plan.md` (`## Task`) and moves the folder ⚪️ → ⭐️ through the existing `plan` event, where `r2d2-mechanic` is the only builder serving the lane. It takes the plan 🟡 → 🟢, and Han still reviews. No new state and no new edge were needed.
 - `openlanes create --lane quick "split large migration"` writes the frontmatter.
 
@@ -95,7 +95,7 @@ Writes are atomic: a lock file, a temp file, then a rename. Agents never edit it
 - **did it finish the task:** the state reached, files present or absent, required sections, the ledger signed, the paths it changed and the paths it left alone
 - **did it work at the depth requested:** words and pattern counts (sources, units, findings) between per-depth bounds, plus `max_seconds` and `max_tokens`. Too shallow fails at `deep`; too slow or too large fails at `fast`.
 
-Each case ships two recordings: `pass/` must pass and `fail/` must fail. Each is laid out as `plan/`, `repo/` and `run.json`, and a spec enforces both, so the scorers are themselves tested. Offline scoring is the default and runs in CI. `--live` runs the real agent in a temp git repo, under a token cap (300,000 by default). All 8 agents are covered by 11 cases; leah, palpatine and r2d2 each have cases at two depths. Coding and review agents are not checked for their final state, because reaching it needs a published PR and a review verdict, which an eval never produces. Their checks cover the signature, the diff and the paths left untouched.
+Each case ships two recordings: `pass/` must pass and `fail/` must fail. Each is laid out as `plan/`, `repo/` and `run.json`, and a spec enforces both, so the scorers are themselves tested. Offline scoring is the default and runs in CI. `--live` runs the real agent in a temp git repo, under a token cap (300,000 by default). All 8 agents are covered by 11 cases; leah, luthen-rael and r2d2 each have cases at two depths. Coding and review agents are not checked for their final state, because reaching it needs a published PR and a review verdict, which an eval never produces. Their checks cover the signature, the diff and the paths left untouched.
 
 ### D9. Delivery
 

@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T14:24:07-07:00",
   "stages": [
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -122,13 +122,13 @@
   "signatures": [
     {
       "at": "2026-10-17T11:27:35-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:29:59-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 1,
       "next": "luke-backend"
@@ -182,7 +182,7 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     },
     {
       "at": "2026-10-18T06:34:33-07:00",
@@ -197,7 +197,7 @@
       "id": "49adc3e2-b65e-460f-9b48-ef2807abc192",
       "number": 1,
       "at": "2026-10-17T11:29:58-07:00",
-      "from": "palpatine-planner",
+      "from": "luthen-rael-planner",
       "to": "luke-backend",
       "body": "plan.md ready. M1 code is already on main (95597c2); B1 is an end-to-end spec with a fake claude on PATH, B2 fixes what it finds (no-op if green), B3 is docs. B1 and B3 can run in parallel.",
       "read": "no"

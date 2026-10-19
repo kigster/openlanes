@@ -20,7 +20,7 @@ module OpenLanes
         example [
           "--plan 003 --agent luke-backend --round 1 --status Started",
           "--plan 003 --agent hansolo-reviewer --round 1 --status Completed --note approved",
-          "--plan 003 --agent yoda-writer --round 1 --status Completed --next palpatine-planner"
+          "--plan 003 --agent yoda-writer --round 1 --status Completed --next luthen-rael-planner"
         ]
 
         # @param options [Hash]

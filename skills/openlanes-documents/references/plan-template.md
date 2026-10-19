@@ -1,6 +1,6 @@
 # plan.md template
 
-`palpatine-planner` writes `plan.md` from a finished `spec.md`, with each builder's units under `## Backend` and `## Frontend`. Write it by hand only when you are taking the planner's place (lane `plan` skips research, not planning).
+`luthen-rael-planner` writes `plan.md` from a finished `spec.md`, with each builder's units under `## Backend` and `## Frontend`. Write it by hand only when you are taking the planner's place (lane `plan` skips research, not planning).
 
 `plan.md` stays **blank** until it is a plan: any `#`, `##` or `###` heading outside a ledger block tells openlanes the plan is written, and moves the folder from 📋 Ready for Planning to ⭐ Planned. The whole plan lands as one pull request; more than eight units means the spec is several plans.
 

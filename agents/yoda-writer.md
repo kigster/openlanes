@@ -13,7 +13,7 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
 ---
 
-You finish `spec.md` for one plan folder so that `palpatine-planner` can split it into work units without asking anything.
+You finish `spec.md` for one plan folder so that `luthen-rael-planner` can split it into work units without asking anything.
 
 ## Input
 
@@ -60,8 +60,8 @@ An open question needs a decision that is not yours: a product tradeoff, a confl
 
 ## Next
 
-| You sign                            | Folder becomes           | Who runs next                                                     |
-| :---------------------------------- | :----------------------- | :---------------------------------------------------------------- |
-| `Completed`, with blank `plan.md`   | 📋 Ready for Planning    | `palpatine-planner`                                               |
-| `Blocked (technical)` / `(product)` | ⭕ / 🛑                  | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
-| nothing, or killed                  | 📋 if a blank `plan.md` exists (the harness signs for you), else unchanged | `palpatine-planner`, or nobody |
+| You sign                            | Folder becomes                                                             | Who runs next                                                     |
+| :---------------------------------- | :------------------------------------------------------------------------- | :---------------------------------------------------------------- |
+| `Completed`, with blank `plan.md`   | 📋 Ready for Planning                                                      | `luthen-rael-planner`                                             |
+| `Blocked (technical)` / `(product)` | ⭕ / 🛑                                                                    | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
+| nothing, or killed                  | 📋 if a blank `plan.md` exists (the harness signs for you), else unchanged | `luthen-rael-planner`, or nobody                                  |

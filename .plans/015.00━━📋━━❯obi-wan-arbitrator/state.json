@@ -33,7 +33,7 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     }
   ],
   "messages": []

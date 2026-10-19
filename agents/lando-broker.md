@@ -19,13 +19,13 @@ You drain `blocked.md` in one plan folder. A human has answered some of its ques
 `blocked.md`, which uses exactly two heading kinds:
 
 - `## B1 - Block Title` followed by the question contents.
-- `## A1 - Block Title`  followed by either "TODO" or the  answer user provided.
+- `## A1 - Block Title` followed by either "TODO" or the answer user provided.
 
 If the questions are numbered some other way, renumber them to `## B<n>` first and say so in your report. Other notation is invisible to the tool.
 
 ## An answer counts only if it
 
-It answers the question. If the question is multiple choice, "Leaning towards B" should be enough. Alternatively, an answer can be text describing the solution. 
+It answers the question. If the question is multiple choice, "Leaning towards B" should be enough. Alternatively, an answer can be text describing the solution.
 
 An `## A<n>` failing any of these stays, and so does its `## B<n>`.
 
@@ -39,17 +39,17 @@ For each answer that answers the question, this agent will insert that decision 
 
 ## B1 — Who rebases the main branch?
 
-<additional context and why it's unclear>
+\<additional context and why it's unclear>
 
 ## A1 — Who rebases the main branch?
 
 TODO
 
-------
+______________________________________________________________________
 
 #### After the user answers the question:
 
-### A1 — Who rebases the main branch? 
+### A1 — Who rebases the main branch?
 
 <inserted automatically>
 
@@ -58,25 +58,24 @@ TODO
 
 <answer text provided by the user>
 
----
+______________________________________________________________________
 
-Once the file is saved, this agent will be started. 
+Once the file is saved, this agent will be started.
 
-It must read the `blocked.md` file and find one or more answer blocks. 
+It must read the `blocked.md` file and find one or more answer blocks.
 
 For each block that has been answered:
 
 - it moves the block header and body into the file that this block was preventing from moving forward (such as either `spec.md` or `plan.md` or one of the implementation files, but changes the title to:
 
 > [!NOTE]
-> 
 > **Note For Unblocking Agent**
 >
 > Compress the essense of the block B1 into a single sentence title shown above as "Block Title"
 >
 > Extract the complete answer and place it here, fixing syntax errors and improving clarity if needed.
 
-### B1 (answered) — Block  Title
+### B1 (answered) — Block Title
 
 <block question>
 
@@ -84,23 +83,23 @@ For each block that has been answered:
 
 Answered:
 
-* 2026-08-21, <timestamp>
-* By [ name/username/role ] if that's available (nothing if not)
+- 2026-08-21, <timestamp>
+- By [ name/username/role ] if that's available (nothing if not)
 
-<answer text, cleaned up, clarified if needed, and syntax/grammar fixed>
+\<answer text, cleaned up, clarified if needed, and syntax/grammar fixed>
 
----
+______________________________________________________________________
 
 Most importantly, after inserting this into either spec.md or plan.md or one of the implementation files, this block is removed from blocked.md. If it's the only question, the file is removed.
 
----
+______________________________________________________________________
 
 #### Agent's Job
 
-What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most  🛑 blocks.
+What or why we build (Goal, Non-Goals, scope, constraints): `spec.md`. Most 🛑 blocks.
 
- - How, in what order, or by which unit: `plan.md`. Most ⭕ blocks. Only if `plan.md` already exists.
- - Both: write both.
+- How, in what order, or by which unit: `plan.md`. Most ⭕ blocks. Only if `plan.md` already exists.
+- Both: write both.
 
 1. Delete the `## B<n>` and its `## A<n>` together from `blocked.md`
 
@@ -118,11 +117,11 @@ When no `## B<n>` remains, delete `blocked.md`. Folding one answer out of four i
 
 After you finish and there is no more un-answered questions, and `blocked.md` has been removed, `unblock` renames the folder by its contents:
 
-| Result                          | Folder becomes                                              | Who runs next                         |
-| :------------------------------ | :---------------------------------------------------------- | :------------------------------------ |
-| questions remain                | stays ⭕ / 🛑 / 💣                                          | a human answers, runs `unblock` again |
-| `blocked.md` deleted            | the state its documents justify (⚪, 🔎, 📋, ⭐ or later) | that state's agent on the next `openlanes run` |
-| an answer undercuts planned units | as above                                                  | report the affected units; `palpatine-planner` re-plans only if a human moves the folder back to 📋 |
+| Result                            | Folder becomes                                            | Who runs next                                                                                         |
+| :-------------------------------- | :-------------------------------------------------------- | :---------------------------------------------------------------------------------------------------- |
+| questions remain                  | stays ⭕ / 🛑 / 💣                                        | a human answers, runs `unblock` again                                                                 |
+| `blocked.md` deleted              | the state its documents justify (⚪, 🔎, 📋, ⭐ or later) | that state's agent on the next `openlanes run`                                                        |
+| an answer undercuts planned units | as above                                                  | report the affected units; `luthen-rael-planner` re-plans only if a human moves the folder back to 📋 |
 
 ## Never
 

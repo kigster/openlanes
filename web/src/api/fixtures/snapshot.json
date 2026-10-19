@@ -41,7 +41,7 @@
       "key": "ready_for_planning",
       "label": "Planning",
       "agents": [
-        "palpatine-planner"
+        "luthen-rael-planner"
       ]
     },
     {

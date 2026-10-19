@@ -16,7 +16,7 @@ Success means less time and spend per correct, reviewable PR. Starting more agen
 | --- | --- | --- |
 | `agents/leah-researcher.md`, Do steps 1-2: research fan-out and a project test run; 1,200-second timeout | Every new brief buys research orchestration and testing before scope is known | Bounded repository lookup only when an unanswered question requires it |
 | `agents/yoda-writer.md`: re-read README, other plans and code; mandatory alternative framing and at least three non-goals | Already adequate briefs pay for another discovery and rewriting pass | Invoke only to repair missing acceptance criteria or ambiguity |
-| `agents/palpatine-planner.md`: always write backend and frontend plans | Empty frontend work still becomes an agent assignment | Dispatch only tasks actually present |
+| `agents/luthen-rael-planner.md`: always write backend and frontend plans | Empty frontend work still becomes an agent assignment | Dispatch only tasks actually present |
 | `agents/luke-backend.md`: explicitly uncapped subagents; both builders run full suites | Nested concurrency escapes the visible worker count and repeats validation | Coordinator owns all worker admission and validation |
 | `lib/openlanes/cli/run/run.rb`: default jobs are CPU-derived, up to 12; tokens default to unmetered | Hardware capacity substitutes for a spending policy | Finite defaults, independent limits for plans and workers |
 | `Dispatcher#dispatch` and `#next_dispatchable`: running jobs and role eligibility determine admission | No separate repository-wide active-plan budget or declared dependency graph | Persistent scheduler with an active-plan cap and task claims |
@@ -53,7 +53,7 @@ flowchart TB
   I --> J[Human merges]
 ```
 
-Palpatine becomes the lead role, not another permanent running process. It writes one plan with acceptance criteria, task dependencies, interfaces, file ownership and validation commands. Specialists may answer a bounded design question; the lead remains the sole plan owner. Do not ask several agents to independently write competing plans.
+luthen-rael becomes the lead role, not another permanent running process. It writes one plan with acceptance criteria, task dependencies, interfaces, file ownership and validation commands. Specialists may answer a bounded design question; the lead remains the sole plan owner. Do not ask several agents to independently write competing plans.
 
 Luke implements backend, CLI and general code tasks. Rey implements actual interface work, including terminal UI where appropriate. A Ruby repository can have UI work; language alone must not decide routing. For a backend-only change, Rey receives no invocation, including no paid invocation just to report that there is nothing to do.
 
@@ -102,7 +102,7 @@ These are starting experiment settings, not demonstrated optimal values:
 | Jev decision batch | 10 seconds total including one retry | 8,000 input ceiling | Validated typed decisions |
 | Leah repository lookup | 120 seconds | 25,000 | Evidence for named questions |
 | Yoda clarification | 120 seconds | 20,000 | Acceptance-criteria patch or unresolved question |
-| Palpatine planning | 240 seconds | 50,000 | Valid task graph and interfaces |
+| luthen-rael planning | 240 seconds | 50,000 | Valid task graph and interfaces |
 | Luke or Rey task | 600 seconds | 150,000 | Patch plus acceptance evidence |
 | Han review | 300 seconds | 75,000 | Findings bound to current diff |
 | Lando answer resolution | 120 seconds | 20,000 | Applied answers and remaining blockers |

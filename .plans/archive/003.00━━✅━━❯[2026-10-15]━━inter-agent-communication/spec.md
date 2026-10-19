@@ -133,7 +133,7 @@ A **fixed schema, not freeform**. Freeform JSON is prose with braces, and the ne
 
 ### D8. `plan-backend.md` / `plan-frontend.md` fold into `plan.md`
 
-`palpatine-planner` writes `## Backend` and `## Frontend` sections inside `plan.md` instead of two sibling files. Touches `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and three agent prompts.
+`luthen-rael-planner` writes `## Backend` and `## Frontend` sections inside `plan.md` instead of two sibling files. Touches `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and three agent prompts.
 
 **Open problem, must be solved as part of this:** those files are also ledgers. `agents/luke-backend.md:11` declares `ledger: [plan-backend.md, pull-requests.md]`, luke signs `Started` and `Completed` into its own plan file, and `dispatcher.rb:467` appends the harness's `Interrupted` line there too. Merge them and two concurrently running agents do read-modify-write on one file through Claude's `Edit` tool, with no lock. Last writer wins, silently.
 
@@ -153,7 +153,7 @@ Nine references: `executor.rb:602`, `documentation.rb:323,326`, `agents/luke-bac
 
 ### D10. OpenAPI is an optional companion, never the contract
 
-When a plan exposes HTTP endpoints, `luke-backend` also writes `openapi.yaml` beside `contract.md`, and `contract.md` links to it. `palpatine-planner` decides in `plan.md` whether the plan has an HTTP surface. A later `agentilda api docs` collects every `.plans/*/openapi.yaml` for Redoc.
+When a plan exposes HTTP endpoints, `luke-backend` also writes `openapi.yaml` beside `contract.md`, and `contract.md` links to it. `luthen-rael-planner` decides in `plan.md` whether the plan has an HTTP surface. A later `agentilda api docs` collects every `.plans/*/openapi.yaml` for Redoc.
 
 OpenAPI is not the contract itself, for three reasons:
 
@@ -195,7 +195,7 @@ The decision table above predates the `openlanes` rename and part of the build. 
 | D4, D5 | Optional Redis path for mail, on the existing `Live::Store` seam | `lib/openlanes/live/store.rb:142-198` |
 | D6 | Not in this plan | decided 2026-10-13 |
 | D7 | All of it | none exists |
-| D8 | Units only: merge `plan-backend.md` / `plan-frontend.md` into `plan.md`. Signing already goes through the locked `state sign` | `lib/openlanes/execution/prompt.rb:171-176`, `agents/palpatine-planner.md:13,35-36` |
+| D8 | Units only: merge `plan-backend.md` / `plan-frontend.md` into `plan.md`. Signing already goes through the locked `state sign` | `lib/openlanes/execution/prompt.rb:171-176`, `agents/luthen-rael-planner.md:13,35-36` |
 | D9 | All of it | `lib/openlanes/presentation/documentation.rb:323,326` |
 | D10 | All of it | none exists |
 
@@ -229,7 +229,7 @@ Each item has its check.
 1. **Harness thread as the writer of Redis-borne messages.** The per-agent thread in `Dispatcher` writes drained messages into `state.json` under the plan lock. Check: spec drives a `MemoryStore` message through the thread and finds it in `state.json`.
 1. **`last-known-state`.** A fixed-schema section in `state.json` keyed by agent, last entry wins, with `source: agent | harness`; an agent entry is never overwritten by a harness one. Check: schema file under `schemas/plan-state.schema.json` validates both shapes; spec for precedence; spec that machine detail (pid, tokens, exit) is absent from the committed file.
 1. **Harness fallback writer.** On interrupt or death with no agent entry, the harness writes `source: harness` from the last ledger line, transcript phrase, round. Check: spec kills an agent without a published state and finds the harness entry.
-1. **Units merged into `plan.md`.** `palpatine-planner` writes `## Backend` and `## Frontend` in `plan.md`; `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and the three agent prompts follow. Check: `openlanes docs` regenerates with no mention of `plan-backend.md`; the `linear/mapping.rb` spec still passes.
+1. **Units merged into `plan.md`.** `luthen-rael-planner` writes `## Backend` and `## Frontend` in `plan.md`; `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and the three agent prompts follow. Check: `openlanes docs` regenerates with no mention of `plan-backend.md`; the `linear/mapping.rb` spec still passes.
 1. **`implementation-plan.md` → `contract.md`.** All nine references renamed. Check: `rg implementation-plan` over `lib agents docs` returns nothing, and the suite is green.
 1. **Optional `openapi.yaml`.** `luke-backend` writes it when `plan.md` says the plan has an HTTP surface; `contract.md` links to it; `openlanes api docs` collects `.plans/*/openapi.yaml`. Check: spec that a fixture with two files yields both, and that a file with no `openapi:` / `paths:` keys is reported.
 1. **Suite and lint stay green.** `bundle exec rspec` 0 failures, `just lint` zero offenses, coverage not below the baseline of 98.63%.
@@ -304,7 +304,7 @@ Test baseline: `RBENV_VERSION=4.0.6 bundle exec rspec` → `2214 examples, 0 fai
 | D4 Redis Streams | Not for mail. Redis is used for the live board, claims and commands, through `redis-client` with Streams and consumer groups | `openlanes.gemspec:78`, `lib/openlanes/live/store.rb:142-198` |
 | D6 PostToolUse hook | Not built. Nothing passes `--settings` or a hook to `claude` | `lib/openlanes/execution/executor.rb`, `lib/openlanes/adapters/claude.rb` |
 | D7 `last-known-state` | Not built | none |
-| D8 fold into `plan.md` | Not built. `palpatine-planner` still writes `plan-backend.md` and `plan-frontend.md`; `luke-backend` and `rey-frontend` still list them as ledgers | `agents/palpatine-planner.md:13,35-36`, `agents/luke-backend.md:11`, `agents/rey-frontend.md:9` |
+| D8 fold into `plan.md` | Not built. `luthen-rael-planner` still writes `plan-backend.md` and `plan-frontend.md`; `luke-backend` and `rey-frontend` still list them as ledgers | `agents/luthen-rael-planner.md:13,35-36`, `agents/luke-backend.md:11`, `agents/rey-frontend.md:9` |
 | D8 signing race | Signing already goes through a locked command into `state.json`; the prompt forbids hand edits | `lib/openlanes/execution/prompt.rb:171-176`, `lib/openlanes/plans/plan_state.rb:163,252-257` |
 | D9 `implementation-plan.md` → `contract.md` | Not built. The name `implementation-plan.md` is used in code, prompts and docs; `contract.md` is named only as the contract spec | `lib/openlanes/presentation/documentation.rb:323,326`, `agents/luke-backend.md:26`, `lib/openlanes/web.rb:25` |
 | D10 OpenAPI | Not built | none |

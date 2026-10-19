@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
 
       # 001.00 already has spec.md and plan.md when the round starts, so
       # ⭐️ Planned now goes straight to the pair that handles it — luke-backend
-      # and rey-frontend — rather than to palpatine-planner first, now that
+      # and rey-frontend — rather than to luthen-rael-planner first, now that
       # Building has split in two.
       it "offers each plan to the agent that handles its state" do
         runner.call

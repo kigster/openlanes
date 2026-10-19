@@ -24,5 +24,5 @@ U1 → U2 → U4, and U1 → U3 → U4. U2 and U3 own disjoint files and may run
 
 > [!NOTE]
 >
-> [2026-09-04 01:10:00 PM PDT] [ agent: palpatine-planner   status: Started, round 1 ]
-> [2026-09-04 01:14:30 PM PDT] [ agent: palpatine-planner   status: Completed, round 1 ]
+> [2026-09-04 01:10:00 PM PDT] [ agent: luthen-rael-planner   status: Started, round 1 ]
+> [2026-09-04 01:14:30 PM PDT] [ agent: luthen-rael-planner   status: Completed, round 1 ]

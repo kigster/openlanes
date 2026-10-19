@@ -10,3 +10,11 @@
 - `bundle exec rubocop` → 435 files, no offenses
 - The repo's Cypress e2e suite (`npm run cy:run`) was not run: out of time budget; the plan assumes no Cypress assertion.
 - Fix found by the proof: reduced-motion rule in `web/src/board/board.css` lost on specificity; now `.car.is-running .car-gear { animation: none; }`, pinned by `boardCss.test.ts`.
+
+## Front end proof, 023.00 (rey-frontend, round 1, 2026-10-19)
+
+- `cd web && npx vitest run` → 35 files, 364 tests passed
+- `cd web && npx tsc --noEmit` → no errors
+- F1: `Board.test.tsx` covers `is-running` and `.car-gear` on running cars, absent on done/stuck/failed/blocked/interrupted
+- F2: `boardCss.test.ts` pins the keyframe, the running rule and the reduced-motion `animation: none`
+- Integration proof: see luke's section above (gear.cy.js 4 passing, web-e2e 23/23)

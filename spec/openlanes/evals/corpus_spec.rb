@@ -14,10 +14,10 @@ RSpec.describe "the shipped eval corpus" do
     expect(cases.map(&:agent).uniq).to match_array(OpenLanes::Agents.registry.all.reject { it.handles.empty? }.map(&:name))
   end
 
-  it "holds leah, palpatine and r2d2 to two different depths each" do
+  it "holds leah, luthen-rael and r2d2 to two different depths each" do
     depths = cases.group_by(&:agent).transform_values { |list| list.map(&:depth).uniq.size }
 
-    expect(depths.slice("leah-researcher", "palpatine-planner", "r2d2-mechanic").values).to all(be >= 2)
+    expect(depths.slice("leah-researcher", "luthen-rael-planner", "r2d2-mechanic").values).to all(be >= 2)
   end
 
   OpenLanes::Evals.cases.map(&:to_s).each do |name|

@@ -21,7 +21,7 @@ Ask the tool, never a copy of its table:
 | File | For | Written by |
 | --- | --- | --- |
 | `spec.md` | what and why; its frontmatter says how to route and judge the work | `openlanes create`, the human, `leah-researcher` (`## Research`), `yoda-writer` |
-| `plan.md` | units under `## Backend` and `## Frontend`, order, the integration check; blank means "waiting for the planner"; a `## Frontend` with no unit heading starts nobody | `yoda-writer` creates it empty, `palpatine-planner` fills it |
+| `plan.md` | units under `## Backend` and `## Frontend`, order, the integration check; blank means "waiting for the planner"; a `## Frontend` with no unit heading starts nobody | `yoda-writer` creates it empty, `luthen-rael-planner` fills it |
 | `contract.md`, `openapi.yaml` | the interfaces between the halves; the HTTP surface when there is one | `luke-backend` |
 | `blocked.md` | open questions a human must decide | any agent, or a human |
 | `pull-requests.md` | the pull request table the review states are judged by | `openlanes run` when it opens the PR, `openlanes create --prs`, `openlanes resync prs` |

@@ -67,3 +67,7 @@ Results go to `integration.md`.
 ## Round 1, third run (luke, 2026-10-17)
 
 - D1 (rebase) was not carried out: `HEAD` is still 7186635 and the plan's work is uncommitted. `bundle exec rspec`: 3123 examples, 30 failures, same files. `bundle exec rubocop`: clean. The failing spec files pass on a throwaway `origin/main` checkout (118 examples, 0 failures). Blocked (technical) again, `blocked.md` B2. Integration proof unchanged (run 3 green); no file under `web/` touched this run.
+
+## Round 1, fourth run (luke, 2026-10-19)
+
+- D2 was not carried out: `HEAD` is still 7186635 (237 behind `origin/main` ca171ed), and the work is uncommitted. `bundle exec rspec`: 3123 examples, 30 failures, same files. `bundle exec rubocop`: 435 files, clean. `origin/main` now changes `Car.tsx`, `Board.test.tsx` and `board.css`, so the rebase will likely conflict there. Blocked (technical), `blocked.md` B3. No file under `web/` touched this run.

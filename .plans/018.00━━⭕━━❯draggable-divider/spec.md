@@ -52,7 +52,7 @@ The user can drag a handle on the boundary between the lanes board and the right
 | :--- | :--- | :--- |
 | 1 to 8 | Nothing. | Everything: `web/src/shell/shell.css`, `web/src/App.tsx`, a new hook beside `web/src/floating/useFloatingPanel.ts`, tests. |
 
-Luke has no work. If `palpatine-planner` needs a pair, luke's unit is to run `bundle exec rspec spec/openlanes/web` and confirm the served bundle is unaffected (167 examples, 0 failures at research time).
+Luke has no work. If `luthen-rael-planner` needs a pair, luke's unit is to run `bundle exec rspec spec/openlanes/web` and confirm the served bundle is unaffected (167 examples, 0 failures at research time).
 
 ## Open questions
 

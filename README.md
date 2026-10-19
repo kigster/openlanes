@@ -44,8 +44,8 @@ The swim lanes is the core of the "what's going on" feature of OpenLanes. Each r
 
 Depending on how you setup your project with `lanes init` command, the `new` and `researhed` stages may or may  not be part of the flow.  OpenLanes offers three levels of feature investigation:
 
-1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, Palpatine. Palpatine's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (Luke) and a frontend-engineer (Rey). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "hansolo". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "obi-wan-kenobi", makes a final call if this PR is good to go.
-2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes palpatine → luke (+ rey) → hansolo, for a spec you already trust.
+1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, luthen-rael. luthen-rael's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (Luke) and a frontend-engineer (Rey). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "hansolo". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "obi-wan-kenobi", makes a final call if this PR is good to go.
+2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes luthen-rael → luke (+ rey) → hansolo, for a spec you already trust.
 3. Quick — is a short mechanical tasks executed by a faster/simpler `r2d2-mechanic` → `hansolo`.
 
 While the project select the default, each plan can override this on a case by case basis.
@@ -82,7 +82,7 @@ config:
 flowchart TB
   B[You: brief in spec.md<br/>⚪ New] --> L[leah-researcher<br/>🔎 research]
   L --> Y[yoda-writer<br/>📋 full spec]
-  Y --> P[palpatine-planner<br/>⭐ plan.md]
+  Y --> P[luthen-rael-planner<br/>⭐ plan.md]
   P --> BE[luke-backend 🟡<br/>+ rey-frontend 🎨<br/>build]
   Q[You: --lane quick] --> R2[r2d2-mechanic<br/>🟡 one mechanical task]
   BE & R2 -->|the harness pushes<br/>and opens the PR| H[hansolo-reviewer<br/>🟢 👀 review]
@@ -211,7 +211,7 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | :------------------ | :------------------------------------------------ | :------------------------------ | :------------ | :--------- |
 | `leah-researcher`   | New                                               | Researched                      | haiku/medium  | full       |
 | `yoda-writer`       | Researched, Retroactive                           | Ready for Planning              | sonnet/medium | full       |
-| `palpatine-planner` | Ready for Planning                                | Planned                         | opus/high     | full, plan |
+| `luthen-rael-planner` | Ready for Planning                                | Planned                         | opus/high     | full, plan |
 | `luke-backend`      | Planned, Building, Changes Requested              | Ready for Review                | opus/high     | full, plan |
 | `rey-frontend`      | Planned, Building, Building UI, Changes Requested | Ready for Review                | sonnet/medium | full, plan |
 | `r2d2-mechanic`     | Planned, Building, Changes Requested              | Ready for Review                | haiku/medium  | quick      |
@@ -227,8 +227,8 @@ Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A
 
 | Lane             | Route                                                            |
 | :--------------- | :--------------------------------------------------------------- |
-| `full` (default) | leah → yoda → palpatine → luke (+ rey) → hansolo → chewie                 |
-| `plan`           | palpatine → luke (+ rey) → hansolo → chewie, for a spec you already trust |
+| `full` (default) | leah → yoda → luthen-rael → luke (+ rey) → hansolo → chewie                 |
+| `plan`           | luthen-rael → luke (+ rey) → hansolo → chewie, for a spec you already trust |
 | `quick`          | r2d2-mechanic → hansolo → chewie, for one short mechanical task           |
 
 ### Blocks

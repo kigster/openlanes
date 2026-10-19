@@ -4,7 +4,7 @@ require_relative "../live/live_context"
 
 # `openlanes start`, and `run` with its control room: the dispatcher idles
 # past every fixed point instead of ending there, and only a quit ends it. The case that asked for it: `openlanes create a web-based
-# minesweeper game`, palpatine-planner asks a question, and the run ended
+# minesweeper game`, luthen-rael-planner asks a question, and the run ended
 # with the question on a page that died with it.
 RSpec.describe "A staying run", :tree do
   include_context "with a live run"
@@ -71,12 +71,12 @@ RSpec.describe "A staying run", :tree do
 
   after { OpenLanes::Execution::Control.reset! }
 
-  describe "palpatine blocks on a question, the answer comes from the page" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("palpatine-planner", "lando-broker") }
+  describe "luthen-rael blocks on a question, the answer comes from the page" do
+    let(:agents) { OpenLanes::Agents::Registry.new.only("luthen-rael-planner", "lando-broker") }
     let(:seen) { {} }
 
     # Round one asks how big the board is; once lando-broker has drained
-    # the answer, palpatine plans.
+    # the answer, luthen-rael plans.
     let(:behaviour) do
       lambda { |agent, subject, _round|
         path = subject.feature.path
@@ -84,8 +84,8 @@ RSpec.describe "A staying run", :tree do
         when "lando-broker"
           File.delete(File.join(path, "blocked.md"))
           nil
-        when "palpatine-planner"
-          if calls.count("palpatine-planner") == 1
+        when "luthen-rael-planner"
+          if calls.count("luthen-rael-planner") == 1
             File.write(File.join(path, "blocked.md"), "## B1 Board size\n\nHow many cells a side?\n")
             "Blocked"
           else
@@ -98,7 +98,7 @@ RSpec.describe "A staying run", :tree do
     end
 
     # The page: once the question shows in Needs You, with nothing running,
-    # it is answered; once palpatine has run again and the run idles, the
+    # it is answered; once luthen-rael has run again and the run idles, the
     # person stops it.
     let(:script) do
       lambda { |_|
@@ -107,7 +107,7 @@ RSpec.describe "A staying run", :tree do
           seen[:idle] = snapshot.dig("run", "status")
           answer("01ANSWER", "B1", "Nine.")
         end
-        if calls.count("palpatine-planner") == 2 && dispatcher.running.empty? && dispatcher.board.status == :idle
+        if calls.count("luthen-rael-planner") == 2 && dispatcher.running.empty? && dispatcher.board.status == :idle
           OpenLanes::Execution::Control.quit!
         end
       }
@@ -118,11 +118,11 @@ RSpec.describe "A staying run", :tree do
       run_until_stopped
     end
 
-    it "keeps running past the block, shows the question, drains the answer, and starts palpatine again" do
+    it "keeps running past the block, shows the question, drains the answer, and starts luthen-rael again" do
       aggregate_failures do
         expect(seen[:question]).to include("id" => "020.00/B1", "body" => "How many cells a side?")
         expect(seen[:idle]).to eq("idle")
-        expect(calls).to eq(%w[palpatine-planner lando-broker palpatine-planner])
+        expect(calls).to eq(%w[luthen-rael-planner lando-broker luthen-rael-planner])
         expect(status_of("020.00")).to eq(:planned)
       end
     end

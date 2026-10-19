@@ -96,7 +96,7 @@ Two lifecycle labels stay, one is renamed:
 ### R6. A sweeping refactor runs alone
 
 - A spec may say `implementation_requirement: refactor` in its front-matter. A refactor can move and rename classes and leave every other branch with conflicts nobody can resolve.
-- palpatine-planner recognises a refactor, from that key or from what the spec asks for, and estimates the share of the codebase it touches, by files and by lines. Over 50% by either measure, it writes `execution: global-lock-required` into the plan's front-matter; otherwise `execution: concurrent`, the default. The 50% is a setting.
+- luthen-rael-planner recognises a refactor, from that key or from what the spec asks for, and estimates the share of the codebase it touches, by files and by lines. Over 50% by either measure, it writes `execution: global-lock-required` into the plan's front-matter; otherwise `execution: concurrent`, the default. The 50% is a setting.
 - A `global-lock-required` plan is built, reviewed and merged alone:
   - Once it is ready for luke, the dispatcher starts no new plan, and waits to hand it over until no other plan has an open branch or PR: each is merged or closed.
   - Plans that never started (no branch yet) do not count; they stay queued behind it.

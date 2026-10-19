@@ -353,7 +353,7 @@ Phases 2-3 depend on Phase 0's decision; Phase 1 does not and may run first or i
 
 ## Risks & Mitigation
 
-**R1 — The introduction and the research prescribe different groupings (highest risk).** The introduction says: co-locate command helpers with their command (`creator.rb` moves under `cli/create/` beside a renamed `command.rb`, multi-command helpers go to `lib/openlanes/shared/`). The research proposes layer-based groups (`models/`, `queries/`, `commands/`, `execution/`, ...) and places `creator.rb` in `commands/`. These assign the same file two different homes. Executing either without confirmation risks redoing the whole move. *Mitigation*: Phase 0 exists to force the decision before any file moves; `palpatine-planner` must treat it as the first task, resolved by the human or by an explicit precedence rule (the introduction is the human's own instruction and should win unless overridden).
+**R1 — The introduction and the research prescribe different groupings (highest risk).** The introduction says: co-locate command helpers with their command (`creator.rb` moves under `cli/create/` beside a renamed `command.rb`, multi-command helpers go to `lib/openlanes/shared/`). The research proposes layer-based groups (`models/`, `queries/`, `commands/`, `execution/`, ...) and places `creator.rb` in `commands/`. These assign the same file two different homes. Executing either without confirmation risks redoing the whole move. *Mitigation*: Phase 0 exists to force the decision before any file moves; `luthen-rael-planner` must treat it as the first task, resolved by the human or by an explicit precedence rule (the introduction is the human's own instruction and should win unless overridden).
 
 **R2 — Dash count ambiguity.** The introduction says insert `--` after the emoji; the research says "add one dash". This spec standardizes on the introduction's `--` (emoji, then two dashes, then slug). Any implementer finding the research's phrasing should follow the Goals section.
 
@@ -365,7 +365,7 @@ Phases 2-3 depend on Phase 0's decision; Phase 1 does not and may run first or i
 
 ## Resources Needed
 
-- **People/agents**: one implementer per phase; `luke-backend` for all of it — this gem has no front end, so no `rey-frontend` unit exists. `palpatine-planner` should mark Phase 0 as human-blocking if R1 is unresolved when planning starts.
+- **People/agents**: one implementer per phase; `luke-backend` for all of it — this gem has no front end, so no `rey-frontend` unit exists. `luthen-rael-planner` should mark Phase 0 as human-blocking if R1 is unresolved when planning starts.
 - **Decision input**: a human (or an explicit precedence ruling recorded in this folder) for R1. That is the only external dependency.
 - **Environment**: Ruby 4.0.x via rbenv (`eval "$(rbenv init -)"` before every Ruby command — there is no `.ruby-version`), `bundle install` already satisfied, `git` with `git mv`. No network, no credentials, no services: the suite injects doubles into the `GitHub` and `Linear::API` seams and never reaches the network.
 - **Tooling already present**: `unicode-display_width` is a runtime dependency (openlanes.gemspec:56) if width-aware rendering needs adjusting; `PlansFixture` and the `:tree` tag for real-filesystem specs; `OpenLanes.move_directory` for any plan-folder renames — do not write a second one.

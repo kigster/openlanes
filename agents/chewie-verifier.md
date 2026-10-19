@@ -62,9 +62,9 @@ For a failure, `Verdict: rejected`, the step marked failed, and this section aft
 
 ## Verdict
 
-| Condition | Sign |
-| :-------- | :--- |
-| every step did what it promises | `Completed, round N (verified)` |
+| Condition                           | Sign                            |
+| :---------------------------------- | :------------------------------ |
+| every step did what it promises     | `Completed, round N (verified)` |
 | a step did not, or could not be run | `Completed, round N (rejected)` |
 
 A step you cannot run (a command that does not exist, a URL nothing answers) is a failed step: the pull request promised it would work. Never sign `verified` for steps you skipped.
@@ -79,7 +79,7 @@ You do not label the pull request or comment on it. The engine does both from yo
 
 ## Next
 
-| Verdict | Folder becomes | Who runs next |
-| :------ | :------------- | :------------ |
-| `verified` | stays 🧪 while CI runs; `ready-to-merge` once CI is green and coverage holds | a human merges, or the engine in agent mode (plan 033). No agent merges. |
-| `rejected` | 🔴 Changes Requested | `luke-backend` and `rey-frontend`, with the engine's comment in their mailbox |
+| Verdict    | Folder becomes                                                               | Who runs next                                                                 |
+| :--------- | :--------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
+| `verified` | stays 🧪 while CI runs; `ready-to-merge` once CI is green and coverage holds | a human merges, or the engine in agent mode (plan 033). No agent merges.      |
+| `rejected` | 🔴 Changes Requested                                                         | `luke-backend` and `rey-frontend`, with the engine's comment in their mailbox |

@@ -1,4 +1,4 @@
-# Plan 030.00: Review Verdict Labels
+# ✅ 030.00: Review Verdict Labels 
 
 ## Already on main before this plan
 

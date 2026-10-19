@@ -155,7 +155,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     it "lists the agents at each station from their definitions" do
       expect(snapshot[:stations].to_h { [it[:key], it[:agents]] }).to include(
         "new"                => %w[leah-researcher],
-        "ready_for_planning" => %w[palpatine-planner],
+        "ready_for_planning" => %w[luthen-rael-planner],
         "pr"                 => [],
         "in_review"          => %w[chewie-verifier hansolo-reviewer]
       )

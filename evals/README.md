@@ -75,7 +75,7 @@ Keep recordings small and synthetic. No real names, emails or private source.
 Ideas carried over from the earlier `cases.jsonl` draft, which never ran:
 
 - yoda: a brief with an unresolved product choice must list it, not invent a policy.
-- palpatine: two units writing one file must be ordered, not parallel.
+- luthen-rael: two units writing one file must be ordered, not parallel.
 - rey: a contract mismatch with the back end must be raised, not patched around.
 - hansolo: a clean patch must be approved (false-finding rate); a missing authorisation check must be found.
 - lando: a partial answer folds one block and leaves the rest; contradictory answers fold nothing.

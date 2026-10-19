@@ -9,7 +9,7 @@ Load the `openlanes` skill first if it is not in context.
 
 ## `openlanes start`: the factory with its control room
 
-`openlanes start` is the way to run the factory for a person. It is `openlanes run` with the control room on, and it does not stop at a fixed point: when a plan blocks, palpatine-planner's questions included, it idles, shows the questions in **Needs You** on the page, takes the answer from there, drains it, and hands the plan back to its agent. It picks up plans created on the page, by `openlanes create` in another terminal, or edited by hand, rescanning `.plans/` every 5 s (`--rescan`).
+`openlanes start` is the way to run the factory for a person. It is `openlanes run` with the control room on, and it does not stop at a fixed point: when a plan blocks, luthen-rael-planner's questions included, it idles, shows the questions in **Needs You** on the page, takes the answer from there, drains it, and hands the plan back to its agent. It picks up plans created on the page, by `openlanes create` in another terminal, or edited by hand, rescanning `.plans/` every 5 s (`--rescan`).
 
 ```bash
 openlanes start              # engine and control room on http://127.0.0.1:11000, browser opened

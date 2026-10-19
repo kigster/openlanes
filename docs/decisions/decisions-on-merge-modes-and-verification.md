@@ -201,7 +201,7 @@ They are local in `/Users/kig/github/inquirex`; the Ruby gems are versioned toge
 ### M18. Porting a project to another stack
 
 - When an existing stack is detected and the user is open to alternatives, `init` asks whether to port the code or start fresh beside it.
-- A port records `from` and `to` in `docs/decisions/stack.md` and opens with a generated "Port from X to Y" plan: leah inventories the old code, palpatine splits it into units.
+- A port records `from` and `to` in `docs/decisions/stack.md` and opens with a generated "Port from X to Y" plan: leah inventories the old code, luthen-rael splits it into units.
 - Both apps run side by side. chewie checks parity: each unit's test steps run against both, and their outputs must match.
 - Coverage counts the new stack only. Retiring the old app is the last plan, and it always goes to the human before merging.
 

@@ -1,5 +1,5 @@
 id: plan-fast
-agent: palpatine-planner
+agent: luthen-rael-planner
 depth: fast
 description: >
   A one-change spec. At fast depth the plan is one or two units with every

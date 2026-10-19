@@ -52,7 +52,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "#sign!" do
     let(:reading) do
-      state.sign!(agent: "yoda-writer", round: 1, status: "Completed", next_agent: "palpatine-planner", note: "done")
+      state.sign!(agent: "yoda-writer", round: 1, status: "Completed", next_agent: "luthen-rael-planner", note: "done")
       state.ledger
     end
 
@@ -60,7 +60,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       expect([reading.entries.first.to_h.slice(:agent, :status, :round, :note, :file),
               OpenLanes::Plans::Ledger.handoff_after(reading, reading.entries.first)&.next])
         .to eq([{ agent: "yoda-writer", status: "Completed", round: 1, note: "done", file: "state.json" },
-                "palpatine-planner"])
+                "luthen-rael-planner"])
     end
 
     it "refuses a status outside the ledger's vocabulary" do

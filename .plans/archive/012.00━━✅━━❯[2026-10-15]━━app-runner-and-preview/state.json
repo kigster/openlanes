@@ -49,7 +49,7 @@
       "note": "completed - 5 tool calls"
     },
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_planning",
@@ -154,30 +154,30 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     },
     {
       "at": "2026-10-13T19:25:00-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:27:18-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Interrupted",
       "round": 1,
       "note": "interrupted, killed 60s after q"
     },
     {
       "at": "2026-10-14T11:48:25-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-14T11:50:01-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 2,
       "next": "luke-backend"

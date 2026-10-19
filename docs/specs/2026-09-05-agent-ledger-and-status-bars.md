@@ -15,7 +15,7 @@ round 2
 1 plan addressed - 2 rounds - 6m02s - 1.0 agents at a time
 ```
 
-`yoda-writer` ran twice, succeeded twice, and the plan never moved. `palpatine-planner` was never invoked. The loop then conceded on two dry rounds and stopped, with the work unfinished and nothing in the output saying why.
+`yoda-writer` ran twice, succeeded twice, and the plan never moved. `luthen-rael-planner` was never invoked. The loop then conceded on two dry rounds and stopped, with the work unfinished and nothing in the output saying why.
 
 Three separate defects meet in that transcript, and this document addresses all three plus the display that would have made them visible.
 
@@ -27,7 +27,7 @@ Three separate defects meet in that transcript, and this document addresses all 
 key: :planned, emoji: "⭐️", label: "Planned", requires: %w[spec.md plan.md]
 ```
 
-`plan.md` is written by `palpatine-planner`, and `palpatine-planner` has `handles: [planned]`. So a plan must already **be** ⭐️ Planned before the agent that produces the evidence for ⭐️ Planned is ever offered the work. Nothing can enter the state legitimately.
+`plan.md` is written by `luthen-rael-planner`, and `luthen-rael-planner` has `handles: [planned]`. So a plan must already **be** ⭐️ Planned before the agent that produces the evidence for ⭐️ Planned is ever offered the work. Nothing can enter the state legitimately.
 
 `yoda-writer` declares `advances_to: planned` and renames its folder to ⭐️ on the way out. Then the per-round serial `Resync::Dirs` pass (`runner.rb:212`) computes `best_fit`, finds no `plan.md`, concludes 🔎 Researched, and renames the folder straight back. The chain in `Runner#attempt` then reads `further_of(current)`, gets `researched`, sees `fit.key == from`, and breaks. Every round after that repeats it exactly.
 
@@ -168,21 +168,21 @@ The main thread is the puppet master. It knows which plan folder each running ag
 sequenceDiagram
     participant D as Dispatcher (main thread)
     participant Y as yoda
-    participant P as palpatine
+    participant P as luthen-rael
 
     D->>Y: start
     Y->>Y: writes "action: started"
     loop every 10s
         D->>D: read plan folder markdown
     end
-    Y->>Y: writes "accomplished" + "chain: palpatine"
+    Y->>Y: writes "accomplished" + "chain: luthen-rael"
     D-->>D: poll sees trailing chain
     D->>P: start immediately
     Y-->>D: turn ends (may be seconds later)
 ```
 
 > [!IMPORTANT]
-> The successor starts when the `chain` line **appears**, not when the previous agent's process exits. Those are different moments and the gap between them is exactly what this design is buying back. `yoda` writing its closing block and then spending forty seconds tidying up no longer costs `palpatine` forty seconds.
+> The successor starts when the `chain` line **appears**, not when the previous agent's process exits. Those are different moments and the gap between them is exactly what this design is buying back. `yoda` writing its closing block and then spending forty seconds tidying up no longer costs `luthen-rael` forty seconds.
 
 Consequences to handle explicitly:
 
@@ -227,7 +227,7 @@ stateDiagram-v2
 
     New --> Researched: leah
     Researched --> SpecReady: yoda
-    SpecReady --> Planned: palpatine
+    SpecReady --> Planned: luthen-rael
     Planned --> Building: luke starts
     Building --> BuildingUI: luke lands
     BuildingUI --> Ready: rey lands
@@ -239,7 +239,7 @@ stateDiagram-v2
 | 🏁 Spec Ready | The spec is finished, nobody has planned it | `accomplished` by yoda                                        |
 | ⭐️ Planned    | `plan.md` exists, building has not started  | `spec.md` and `plan.md`, unchanged                            |
 
-⭐️ Planned keeps `requires: %w[spec.md plan.md]` and becomes honest, because `palpatine-planner` now writes `plan.md` on the way **in** rather than being the agent that handles the state.
+⭐️ Planned keeps `requires: %w[spec.md plan.md]` and becomes honest, because `luthen-rael-planner` now writes `plan.md` on the way **in** rather than being the agent that handles the state.
 
 Accepting the existing `## Research` heading as an alternative proof for 🔎 matters: hand-written and pre-existing plan folders have no ledger, and a change that invalidated every folder already on disk would be a migration disguised as a feature.
 
@@ -250,11 +250,11 @@ Accepting the existing `## Research` heading as an alternative proof for 🔎 ma
 | `status.rb`                   | `spec_ready` entry in `STATUSES`, between `researched` and `planned`                                   |
 | `state_machine.rb`            | `SPINE`: `researched -> spec_ready -> planned`; `PREFERENCE` gains `spec_ready`; a `finish_spec` event |
 | `agents/yoda-writer.md`       | `advances_to: spec_ready`                                                                              |
-| `agents/palpatine-planner.md` | `handles: [spec_ready]`, `advances_to: planned`                                                        |
+| `agents/luthen-rael-planner.md` | `handles: [spec_ready]`, `advances_to: planned`                                                        |
 | `agents/luke-backend.md`      | `handles: [planned, rejected]`                                                                         |
 | `agents/rey-frontend.md`      | `handles: [planned, rejected]`                                                                         |
 
-🟡 Building keeps its meaning, "the back end is under way". `luke-backend` renames the folder to 🟡 when it starts rather than inheriting it from `palpatine-planner`, so the board distinguishes work in flight from work queued.
+🟡 Building keeps its meaning, "the back end is under way". `luke-backend` renames the folder to 🟡 when it starts rather than inheriting it from `luthen-rael-planner`, so the board distinguishes work in flight from work queued.
 
 Adding a state makes `docs/img/plan-spec-build.png` stale. `just docs` regenerates the mermaid source; the hand-drawn image needs redrawing separately, and that is called out rather than quietly skipped.
 
@@ -310,7 +310,7 @@ Two frontmatter keys the application reads and states in the prompt, so the numb
 | ------------------- | --------- | ----------- | ------------------------------------------------ |
 | `leah-researcher`   | 600       | `0..2`      | Research fans out, but two helpers is the budget |
 | `yoda-writer`       | 600       | `0..`       | Unbounded; yoda's helpers are cheap and parallel |
-| `palpatine-planner` | 600       | `1..9`      | Must fan out at least once; nine is the ceiling  |
+| `luthen-rael-planner` | 600       | `1..9`      | Must fan out at least once; nine is the ceiling  |
 | `luke-backend`      | 1200      | `0..`       | Plans, builds, tests                             |
 | `rey-frontend`      | 1200      | `0..`       | Plans, builds, tests                             |
 | `hansolo-reviewer`  | 300       | `0`         | One review, called immediately                   |

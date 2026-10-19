@@ -111,7 +111,7 @@ RSpec.describe OpenLanes::Plans::Ledger do
       text = <<~MD
         > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
         > [2026-09-04 11:50:00 AM PDT] [ agent: yoda-writer   status: Started, round 1 ]
-        > [2026-09-04 11:50:01 AM PDT] [ next: palpatine-planner ]
+        > [2026-09-04 11:50:01 AM PDT] [ next: luthen-rael-planner ]
       MD
       reading = described_class.parse(text, file: "spec.md")
       expect(described_class.handoff_after(reading, reading.entries.first)).to be_nil

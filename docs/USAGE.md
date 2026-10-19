@@ -75,8 +75,8 @@ Model and effort precedence, highest first: `run --model` (model only), `phases.
 
 | Lane    | Route                                            | For                                                                                       |
 | :------ | :----------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `full`  | leah → yoda → palpatine → luke (+ rey) → hansolo | features you want researched and specified                                                |
-| `plan`  | palpatine → luke (+ rey) → hansolo               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
+| `full`  | leah → yoda → luthen-rael → luke (+ rey) → hansolo | features you want researched and specified                                                |
+| `plan`  | luthen-rael → luke (+ rey) → hansolo               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
 | `quick` | r2d2-mechanic → hansolo                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
 
 `openlanes create --lane quick split big migration` writes the frontmatter for you.
@@ -127,7 +127,7 @@ openlanes run --isolation shared               # one checkout, one agent at a ti
 
 ![A terminal view of a run: luke-backend and rey-frontend building plan 001.00 together while leah-researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)
 
-![Two plans in different phases in a terminal view: luke-backend self-checking plan 000.00 while palpatine-planner, luke-backend and rey-frontend work on plan 001.00](img/openlanes-two-plan-work.png)
+![Two plans in different phases in a terminal view: luke-backend self-checking plan 000.00 while luthen-rael-planner, luke-backend and rey-frontend work on plan 001.00](img/openlanes-two-plan-work.png)
 
 ### Limits
 

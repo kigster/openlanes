@@ -58,7 +58,7 @@ Each item names its check.
 1. **Blocked-by-dependency gate in the dispatcher**: a plan with any dependency that is not ✅ is not assigned while other plans run. Check: runner spec with two plans, one waiting, asserts only the free one starts.
 1. **Order**: plans with a non-empty `blocks` are assigned before plans nobody waits for, within a round. Check: dispatcher spec on candidate ordering.
 1. **`agents/ewoki-linker.md`** with frontmatter `precedes: [ready_for_planning, planned]`, `handles: []`, Haiku, low effort. Check: `Agents::Registry` loads it and `Roster` lists it.
-1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly, not through `for_status` (Research §3). Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to palpatine (or r2d2 in `quick`).
+1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly, not through `for_status` (Research §3). Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
 1. **Ewoki output contract**: writes only `depends_on:` and a dated ledger note with one reason per dependency. Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that only the frontmatter key changed.
 1. **Hand-written key wins**: a plan that already has the key is skipped. Check: runner spec.
 1. **Building invariant**: `:building` in `status.rb` requires the `depends_on` key, per N7. Plans already in Building or later are exempt (see Settled decisions). Check: `Status` spec; `resync dirs` spec on a plan lacking it, asserting the folder does not move back.
@@ -161,9 +161,9 @@ Precedent for frontmatter that changes behaviour without changing `handles:`: `s
 
 ### 4. Where the gate sits (contradiction in N7)
 
-N7 says "before a plan's first build agent", then lists "before palpatine in plan" and "before r2d2 in quick". Palpatine handles `ready_for_planning`, not a build state. The states in question:
+N7 says "before a plan's first build agent", then lists "before luthen-rael in plan" and "before r2d2 in quick". luthen-rael handles `ready_for_planning`, not a build state. The states in question:
 
-- `full` and `plan` lanes: palpatine runs at 📋 Ready for Planning (`state_machine.rb:37-43` SPINE: `ready_for_planning` → `planned`).
+- `full` and `plan` lanes: luthen-rael runs at 📋 Ready for Planning (`state_machine.rb:37-43` SPINE: `ready_for_planning` → `planned`).
 - `quick` lane: r2d2 handles `planned` (`agents/r2d2-mechanic.md:4`), and the lane jumps there (`lanes.rb`, `TARGET`).
 
 **Answer:** gate on either state, so ewoki runs before the first agent that moves the plan toward Building in each lane. The spec should name the two states, not "first build agent".
@@ -188,7 +188,7 @@ A `depends_on` check on `:building` in `lib/openlanes/plans/status.rb` also runs
 
 ### Contradictions
 
-1. **N7 gate position.** "before the first build agent" vs "before palpatine" (palpatine is a planner). Resolved in item 4; the spec should name the states.
+1. **N7 gate position.** "before the first build agent" vs "before luthen-rael" (luthen-rael is a planner). Resolved in item 4; the spec should name the states.
 2. **Ordinal shorthand.** This spec's `depends_on: ["007"]` and N6's `[034, 045]` use bare `NNN`, which means `NNN.00` (item 2). The spec and decisions doc should both say `"NNN.MM"`.
 3. **Existing `status.rb` and N7.** N7 says ewoki writes the key; the Building invariant (item 7) would block every in-flight plan without it. The decision and the code disagree until grandfathering is decided.
 

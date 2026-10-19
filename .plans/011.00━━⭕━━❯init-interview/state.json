@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-19T01:59:01-07:00",
+  "updated_at": "2026-10-19T02:45:29-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -49,7 +49,7 @@
       "note": "interrupted, killed 60s after q; Interrupted; no rounds left"
     },
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -142,13 +142,13 @@
     },
     {
       "at": "2026-10-15T09:11:50-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:14:04-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 1,
       "next": "luke-backend"
@@ -400,6 +400,45 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-19T02:06:42-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T02:06:46-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-19T02:43:00-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T02:43:05-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-19T02:45:22-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T02:45:27-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -515,6 +554,41 @@
             {
               "kind": "decision",
               "text": "Round 5: A1 'Rebase onto main.' still names none of options a/b/c, so it is not an answer; B1/A1 left in blocked.md, no files changed"
+            },
+            {
+              "kind": "question",
+              "text": "B1 still open: a human must pick a) own-PR probe fix (recommended), b) fix inside plan, or c) accept as is, then run `openlanes unblock 011.00` again"
+            }
+          ]
+        },
+        "6": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 6: A1 still reads 'Rebase onto main.' and names none of options a/b/c, so it is not an answer; B1/A1 left in blocked.md, no files changed"
+            }
+          ]
+        },
+        "7": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 7: A1 still reads 'Rebase onto main.' and names none of options a/b/c, so it is not an answer; B1/A1 left in blocked.md, no files changed"
+            },
+            {
+              "kind": "question",
+              "text": "B1 still open: a human must pick a) own-PR probe fix (recommended), b) fix inside plan, or c) accept as is, then run `openlanes unblock 011.00` again"
+            }
+          ]
+        },
+        "8": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 8: A1 still reads 'Rebase onto main.' and names none of options a/b/c, so it is not an answer; B1/A1 left in blocked.md, no files changed"
             },
             {
               "kind": "question",

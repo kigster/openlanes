@@ -8,7 +8,7 @@ depends_on: ["033.00"]
 
 ## What we are trying to achieve
 
-palpatine-planner recognises a refactor (from `implementation_requirement: refactor` or the spec), estimates the share of the codebase it touches, and over 50% by files or lines (a setting) writes `execution: global-lock-required`; otherwise `execution: concurrent`. Such a plan starts only when no other plan has an open branch or PR, and nothing else starts until it is merged. Decided as R6 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
+luthen-rael-planner recognises a refactor (from `implementation_requirement: refactor` or the spec), estimates the share of the codebase it touches, and over 50% by files or lines (a setting) writes `execution: global-lock-required`; otherwise `execution: concurrent`. Such a plan starts only when no other plan has an open branch or PR, and nothing else starts until it is merged. Decided as R6 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
 
 ## Why it matters
 

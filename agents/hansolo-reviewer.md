@@ -40,12 +40,12 @@ Each finding gives the file and line, what is wrong, and a failing scenario: inp
 
 Count your earlier rejections of this PR: the `rejected` notes in `openlanes state show --plan NNN` (under `signatures`), plus any `(rejected` notes in `pull-requests.md` from before signatures moved there. Then pick one:
 
-| Condition                                        | Do                                                                                       | Sign                                    |
-| :----------------------------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------------------- |
-| findings, 0 earlier rejections                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected`        | `Completed, round N (rejected 1/2)`     |
-| findings, 1 earlier rejection                    | same                                                                                     | `Completed, round N (rejected 2/2)`     |
-| no findings                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"         | `Completed, round N (approved)`         |
-| code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`              | `Completed, round N (slop)`             |
+| Condition                                                                        | Do                                                                                | Sign                                |
+| :------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :---------------------------------- |
+| findings, 0 earlier rejections                                                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected` | `Completed, round N (rejected 1/2)` |
+| findings, 1 earlier rejection                                                    | same                                                                              | `Completed, round N (rejected 2/2)` |
+| no findings                                                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"  | `Completed, round N (approved)`     |
+| code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`        | `Completed, round N (slop)`         |
 
 If `pull-requests.md` lists several PRs, judge each. Approve the plan only when every PR passes.
 
@@ -57,8 +57,8 @@ If `pull-requests.md` lists several PRs, judge each. Approve the plan only when 
 
 ## Next
 
-| Verdict      | Folder becomes             | Who runs next                                         |
-| :----------- | :------------------------- | :---------------------------------------------------- |
-| `rejected`   | 🔴 Rejected                | `luke-backend` and `rey-frontend` fix your findings, then you review again |
-| `approved`   | 🧪 Verifying               | `chewie-verifier` runs the app through How to test; nobody merges before it passes. No agent merges. |
-| `slop`       | 💩                          | a human reads `rewrite.md` and decides. No agent handles 💩. |
+| Verdict    | Folder becomes | Who runs next                                                                                        |
+| :--------- | :------------- | :--------------------------------------------------------------------------------------------------- |
+| `rejected` | 🔴 Rejected    | `luke-backend` and `rey-frontend` fix your findings, then you review again                           |
+| `approved` | 🧪 Verifying   | `chewie-verifier` runs the app through How to test; nobody merges before it passes. No agent merges. |
+| `slop`     | 💩             | a human reads `rewrite.md` and decides. No agent handles 💩.                                         |

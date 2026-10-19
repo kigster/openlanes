@@ -60,7 +60,7 @@ module OpenLanes
           | :---- | :---- | :---------------------- |
           | **spec** | #{status(:new).emoji} #{status(:new).label} | `spec.md` |
           | **plan** | #{status(:planned).emoji} #{status(:planned).label} | `plan.md` |
-          | **build** | #{status(:building).emoji} → #{status(:ready_for_review).emoji} → #{status(:in_review).emoji} → #{status(:verifying).emoji} → #{status(:approved).emoji} | `pull-requests.md` |
+          | **build** | #{status(:building).emoji} → #{status(:ready_for_review).emoji} → #{status(:in_review).emoji} → #{status(:verifying).emoji} → #{status(:completed).emoji} → #{status(:approved).emoji} | `pull-requests.md` |
 
           Those files are not paperwork. They are what the tool checks: a folder may not
           claim a phase whose file is missing, and `openlanes resync dirs` renames

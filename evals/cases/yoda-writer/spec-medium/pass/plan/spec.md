@@ -60,4 +60,4 @@ When this ships, a cart cannot hold a quantity checkout would refuse, the limit 
 >
 > [2026-09-04 12:02:11 PM PDT] [ agent: yoda-writer   status: Started, round 1 ]
 > [2026-09-04 12:09:40 PM PDT] [ agent: yoda-writer   status: Completed, round 1 ]
-> [2026-09-04 12:09:41 PM PDT] [ next: palpatine-planner ]
+> [2026-09-04 12:09:41 PM PDT] [ next: luthen-rael-planner ]

@@ -80,7 +80,7 @@ Plain `openlanes resync dirs` brings every folder to its canonical form, every t
 
 ## N7. `ewoki-linker` fills in `depends_on:`
 
-- A new agent, not tied to a state, so no folder name changes. The engine runs it on any plan whose spec lacks the `depends_on:` key, before the plan's first build agent, in every lane: after yoda in `full`, before palpatine in `plan`, before r2d2 in `quick`.
+- A new agent, not tied to a state, so no folder name changes. The engine runs it on any plan whose spec lacks the `depends_on:` key, before the plan's first build agent, in every lane: after yoda in `full`, before luthen-rael in `plan`, before r2d2 in `quick`.
 - Reads this plan's spec plus the title and goals of every open plan. Writes only `depends_on:`, and a dated ledger note with one reason per dependency.
 - A dependency must name what it needs: a table, model, endpoint, module, config, or a product decision. No named thing, no dependency. Touching the same files is a merge risk, not a dependency.
 - Haiku, low effort. A plan cannot enter 🟡 Building without the key (invariant). A hand-written `depends_on:` wins; ewoki skips plans that already have the key.

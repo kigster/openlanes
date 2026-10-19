@@ -10,6 +10,6 @@
 - `./exe/openlanes eval --agent ewoki-linker --recording fail` → all three FAIL, as planted
 - Integration proof, `bundle exec rspec spec/openlanes/cli/run_linker_spec.rb spec/openlanes/engine/runner_linker_spec.rb` → `14 examples, 0 failures`
 - Temp project, 034.00 at 📋 with `depends_on: []`, 050.00 at 📋 keyless and naming 034's parser, `./exe/openlanes run --dry-run --isolation shared`:
-  - `034.00  palpatine-planner  [R:1]  no change  dry run - would invoke palpatine-planner`
+  - `034.00  luthen-rael-planner  [R:1]  no change  dry run - would invoke luthen-rael-planner`
   - `050.00  ewoki-linker       [R:1]  no change  dry run - would invoke ewoki-linker`
 - No end-to-end suite in this repository beyond the above.

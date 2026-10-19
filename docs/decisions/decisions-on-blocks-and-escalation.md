@@ -43,7 +43,7 @@ An agent that finds its plan needs another plan merged first records the depende
 
 ### D5. Two plan folders with one number are merged by the harness
 
-What happened to 010: `openlanes unblock` (started by the web page for each answer) runs `resync dirs` over every plan folder when it finishes. It renamed `010.00-📋` to `010.00-🟡` while palpatine was still writing in it. The engine's "never rename a busy plan" rule lives only in the engine's memory, so the unblock process could not see it. palpatine's next writes went to the old path and recreated `010.00-📋`, and the engine started luke on that folder as if it were a plan of its own.
+What happened to 010: `openlanes unblock` (started by the web page for each answer) runs `resync dirs` over every plan folder when it finishes. It renamed `010.00-📋` to `010.00-🟡` while luthen-rael was still writing in it. The engine's "never rename a busy plan" rule lives only in the engine's memory, so the unblock process could not see it. luthen-rael's next writes went to the old path and recreated `010.00-📋`, and the engine started luke on that folder as if it were a plan of its own.
 
 Two changes:
 
@@ -62,7 +62,7 @@ The dispatcher then:
 1. broadcasts to every running agent: who removed this file, who holds a lock that conflicts with this one, or who removed a file without a lock;
 2. tells every agent to stop what it is doing until the corruption is resolved.
 
-Work stops until it is. In the 010 incident palpatine did hold an `alock` lock on `.plans/010.00-📋 → inquirex-fixes`, and the `unblock` process renamed that plan folder without checking it. Every plan folder rename must therefore respect `alock` locks as well as `state.json`.
+Work stops until it is. In the 010 incident luthen-rael did hold an `alock` lock on `.plans/010.00-📋 → inquirex-fixes`, and the `unblock` process renamed that plan folder without checking it. Every plan folder rename must therefore respect `alock` locks as well as `state.json`.
 
 ### D7. An agent out of rounds says why and offers another round
 

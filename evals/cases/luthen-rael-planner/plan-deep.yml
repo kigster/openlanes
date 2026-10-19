@@ -1,5 +1,5 @@
 id: plan-deep
-agent: palpatine-planner
+agent: luthen-rael-planner
 depth: deep
 description: >
   A spec with a shared file and three in-scope items. At deep depth the plan

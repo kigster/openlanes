@@ -49,7 +49,7 @@
       "note": "completed - 3 tool calls"
     },
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_planning",
@@ -127,17 +127,17 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     },
     {
       "at": "2026-10-13T19:23:14-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:25:08-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 1,
       "next": "luke-backend"

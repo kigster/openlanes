@@ -52,4 +52,4 @@ The spec leaves these open; each is the smallest choice that satisfies it.
 6. **The one CLI spec that changes beyond constants.** `run_spec.rb` "the publisher" calls the private `publisher_for` on the command. It moves to `spec/openlanes/engine/run_workflow_spec.rb` unchanged in what it asserts, because the method moved.
 
 > [!NOTE]
-> palpatine-planner, round 2, 2026-10-14: Completed. Six units, all back end.
+> luthen-rael-planner, round 2, 2026-10-14: Completed. Six units, all back end.

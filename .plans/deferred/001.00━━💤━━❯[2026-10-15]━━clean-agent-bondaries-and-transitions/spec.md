@@ -29,7 +29,7 @@ If leah is ready to pass this on she adds:
 
 Yoda does the same in the beginning and the end of his term, and creates a blank file plan.md
 
-This state is called "ready-for-planning" and it's one we were missing between Yoda and Palpatine
+This state is called "ready-for-planning" and it's one we were missing between Yoda and luthen-rael
 
 Agenst Luke and Rey must be started with `--brief` to allow the agents to communicate.
 
@@ -41,11 +41,11 @@ A timeout warns the agent five minutes out and asks it to stop at zero, but neve
 
 A real run over `qualified-at` plan `020.00` invoked `yoda-writer` twice, succeeded twice, moved nothing, and exited green.
 
-`palpatine-planner` was never invoked. Six minutes and roughly 2.7M tokens bought nothing, and the closing box said OK. The cost is not the six minutes, it is that a harness which cannot tell "finished" from "stuck" cannot be left running unattended, which is the entire point of it.
+`luthen-rael-planner` was never invoked. Six minutes and roughly 2.7M tokens bought nothing, and the closing box said OK. The cost is not the six minutes, it is that a harness which cannot tell "finished" from "stuck" cannot be left running unattended, which is the entire point of it.
 
 Three defects meet in that transcript, and they are separable:
 
-1. ⭐️ Planned requires `plan.md`, which is written by `palpatine-planner`, which handles ⭐️ Planned. Nothing can legitimately enter the state, so `yoda-writer`'s rename is undone by the per-round resync every time.
+1. ⭐️ Planned requires `plan.md`, which is written by `luthen-rael-planner`, which handles ⭐️ Planned. Nothing can legitimately enter the state, so `yoda-writer`'s rename is undone by the per-round resync every time.
 1. Chaining infers the handoff from folder contents rather than being told it, so an agent that did its job correctly has no way to report the fact.
 1. The timeout terminates the child, so a long chain is capped by its slowest agent and unflushed work is lost rather than wrapped up.
 

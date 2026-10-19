@@ -1,6 +1,6 @@
 # Blocked: 002.00 implement-zeitwerk-loading
 
-palpatine-planner, round 1 (technical). The spec does not fit one pull request, and the split, plus two naming choices, need a decision before a plan can be written.
+luthen-rael-planner, round 1 (technical). The spec does not fit one pull request, and the split, plus two naming choices, need a decision before a plan can be written.
 
 Measured in the worktree on 2026-10-13 (`rg` over `lib`, `spec`, `exe`):
 

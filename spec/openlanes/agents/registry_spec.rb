@@ -189,12 +189,12 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
-        "yoda-writer"       => 900,
-        "palpatine-planner" => 600,
-        "luke-backend"      => 1200,
-        "rey-frontend"      => 1200,
-        "hansolo-reviewer"  => 300,
-        "leah-researcher"   => 1200
+        "yoda-writer"         => 900,
+        "luthen-rael-planner" => 600,
+        "luke-backend"        => 1200,
+        "rey-frontend"        => 1200,
+        "hansolo-reviewer"    => 300,
+        "leah-researcher"     => 1200
       )
     end
 
@@ -209,7 +209,7 @@ RSpec.describe OpenLanes::Agents::Registry do
     end
 
     it "strips the name to the role for the screen" do
-      expect(agents.find("palpatine-planner").role).to eq("planner")
+      expect(agents.find("luthen-rael-planner").role).to eq("planner")
     end
   end
 

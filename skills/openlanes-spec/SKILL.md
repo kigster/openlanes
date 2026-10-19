@@ -85,6 +85,6 @@ Keep the four headings `create` scaffolded (the shape is in `openlanes-documents
 openlanes run -n --plan <NNN>
 ```
 
-Done when the preview names the expected first agent: `leah-researcher` for full, `palpatine-planner` for plan, `r2d2-mechanic` for quick. A retroactive plan has already been through `yoda-writer`, so the preview names whoever handles the state it settled in. A wrong agent means the frontmatter did not parse as intended; re-read it.
+Done when the preview names the expected first agent: `leah-researcher` for full, `luthen-rael-planner` for plan, `r2d2-mechanic` for quick. A retroactive plan has already been through `yoda-writer`, so the preview names whoever handles the state it settled in. A wrong agent means the frontmatter did not parse as intended; re-read it.
 
 Report the folder, lane and depth in two lines, and offer to start the agents (`openlanes-run`).

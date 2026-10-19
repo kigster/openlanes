@@ -68,7 +68,7 @@ RSpec.describe OpenLanes::Execution::Checks do
     end
 
     it "spares the agents that write documents" do
-      %w[leah-researcher yoda-writer palpatine-planner lando-broker].each do |name|
+      %w[leah-researcher yoda-writer luthen-rael-planner lando-broker].each do |name|
         expect(described_class.apply_to?(OpenLanes::Agents.find(name))).to be(false), name
       end
     end

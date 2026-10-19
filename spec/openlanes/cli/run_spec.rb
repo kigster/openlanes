@@ -274,8 +274,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       expect(status).to eq(65)
     end
 
-    # The bug this kills: `--agent palpatine-planner --plan NNN` on a plan in
-    # a state palpatine does not handle produced an empty round, a green box
+    # The bug this kills: `--agent luthen-rael-planner --plan NNN` on a plan in
+    # a state luthen-rael does not handle produced an empty round, a green box
     # and exit 0 — a silent no-op wearing a success. The pairing that cannot
     # happen is now refused up front, naming who would take the plan.
     it "refuses an agent that handles no in-scope plan's state, naming who does" do

@@ -49,7 +49,7 @@
       "note": "completed - 4 tool calls"
     },
     {
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_planning",
@@ -134,29 +134,29 @@
       "agent": "yoda-writer",
       "status": "Completed",
       "round": 1,
-      "next": "palpatine-planner"
+      "next": "luthen-rael-planner"
     },
     {
       "at": "2026-10-13T19:26:15-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:26:38-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-14T11:48:43-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-14T11:50:00-07:00",
-      "agent": "palpatine-planner",
+      "agent": "luthen-rael-planner",
       "status": "Completed",
       "round": 2
     },
@@ -216,8 +216,8 @@
     {
       "number": 1,
       "at": "2026-10-13T19:26:38-07:00",
-      "from": "palpatine-planner",
-      "to": "palpatine-planner",
+      "from": "luthen-rael-planner",
+      "to": "luthen-rael-planner",
       "body": "RESUME: Read spec.md; nothing written. Findings: no code applies ok-to-merge or any label (rg ok-to-merge lib = nothing; M3 labels via 'openlanes review' do not exist in lib; hansolo-reviewer approves via gh pr review, a human merges). evals/cases/hansolo-reviewer/ exists (not evals/cases/hansolo). Next: decide whether gate wiring needs its own plan (likely Block technical B1: gate as standalone 'openlanes coverage' check + Engine::CoverageGate facade vs wait for label pipeline), else write plan.md/plan-backend.md/plan-frontend.md (frontend: none) with units: U1 Coverage::Config loader, U2 four parsers + fixtures, U3 gate class running command in Vcs::Worktree, U4 Reporter output, U5 hansolo eval case + agent text, U6 integration check."
     }
   ]

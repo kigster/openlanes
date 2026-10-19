@@ -1,4 +1,4 @@
-# Plan 032.00 — Desired Codebase Quality
+# ✅ 032.00 — Codebase Quality
 
 R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interface work: `rey-frontend` is not started, luke owns the plan.
 
@@ -12,7 +12,7 @@ R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interf
 
 ### Scope: which rows of M5's column this plan drives
 
-- amended: round 1 review. This plan drives two rows of M5's `high` / `mvp` column: the verdicts that go on to verification (U2) and `max_rejections` (U1).
+- amended: round 1 review. This plan drives two rows of M5's `high` / `mvp` column: the verdicts that go on to ification (U2) and `max_rejections` (U1).
 - The other rows (default depth: high medium, mvp fast; luke, rey and hansolo models: mvp Sonnet; leah: mvp off) are not wired. They need a project-wide default under `Plans::Spec`'s per-plan `depth` and `Agents::Profile`'s models, which is a plan of its own: a follow-up, "Quality drives depth and models", still to be numbered by a person.
 
 ### U2 What the quality decides at the 👀 → 🧪 hand-off

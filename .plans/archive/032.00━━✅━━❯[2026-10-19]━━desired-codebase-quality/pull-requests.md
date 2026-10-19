@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 93 | [\[032.00\](A) Desired Codebase Quality](https://github.com/kigster/openlanes/pull/93) | Open 🟡 |
+| 93 | [\[032.00\](A) Desired Codebase Quality](https://github.com/kigster/openlanes/pull/93) | Merged 🟣 |
 
 ## Round 1, luke-backend
 

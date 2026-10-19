@@ -469,7 +469,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     end
 
     it "treats a plan.md holding only a ledger note as still blank", :tree do
-      note = OpenLanes::Plans::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: palpatine-planner   status: Started, round 1 ]")
+      note = OpenLanes::Plans::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: luthen-rael-planner   status: Started, round 1 ]")
       path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => spec_body, "plan.md" => note } }
       subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
       expect(subject.best_fit.key).to eq(:ready_for_planning)
@@ -483,7 +483,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
 
     # The 020.00 transcript: yoda finished, the folder was renamed forward,
     # and the resync renamed it straight back because nothing could enter
-    # ⭐️ without a plan.md that only palpatine writes. With 📋 between them
+    # ⭐️ without a plan.md that only luthen-rael writes. With 📋 between them
     # the resync leaves yoda's work standing.
     it "keeps a folder yoda finished at 📋 through a resync", :tree do
       path = plans { |t|

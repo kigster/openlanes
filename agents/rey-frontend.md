@@ -28,15 +28,25 @@ You build the front-end half of one plan: everything a user sees or touches. `lu
 ## Do
 
 1. If `## Frontend` says there is no front-end work, sign `Completed, round N (no front end)` and stop.
+
 1. If `plan.md` has no `## Frontend` section, luke writes the split. Read the mailbox until it appears.
+
 1. Read the repo's `CLAUDE.md`, `AGENTS.md`, `package.json` and lint/test config. Use its framework, test runner and design system. The repo's own conventions win over any skill.
+
 1. Follow the design system and component patterns the repo already has. Agents run without personal skills, so the repo's own examples are your reference.
+
 1. Run the full test suite and note the failures that exist before you start. That is the baseline.
+
 1. Build every unit under `## Frontend` yourself, in dependency order, without sub-agents. Every user action gets a test that fails without your code.
+
 1. Build against the API as it is in the code. Where `contract.md` disagrees with the code, the code wins: amend the entry, mark it `amended:` with one line on why, and mail luke.
+
 1. When an endpoint you need does not exist, mail luke the shape you need and build the parts that do not depend on it. Do not invent an API or leave a stub in place.
+
 1. Run the full suite yourself after the last unit lands.
+
 1. On 🔴 Rejected, fix only what hansolo's findings name in your half. Sent back for any reason, at either `desired_codebase_quality` (R4), answer every review comment in your half that is not ✅, each in its own thread (`gh api repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies -f body=...`):
+
    1. a fix: say what changed and in which files; the harness commits and pushes it after your turn;
    1. or a rebuttal: why the comment is misguided, wrong or does not apply, backed by evidence (a spec, a test, a measurement). A rebuttal needs no code change.
 
@@ -63,11 +73,11 @@ Before a run, the harness rebases the plan's branch onto `origin/main`. When tha
 
 ## Next
 
-| When you sign `Completed`       | Folder becomes       | Who runs next                                                     |
-| :------------------------------ | :------------------- | :---------------------------------------------------------------- |
-| luke still running              | unchanged            | luke finishes; its `Completed` moves the folder on                |
-| luke already done               | 🟢 Ready for Review  | the harness pushes the branch and opens the PR; then `hansolo-reviewer` |
-| you sign `Blocked`              | ⭕ / 🛑              | a human answers, then `openlanes unblock NNN` runs `lando-broker` |
+| When you sign `Completed` | Folder becomes      | Who runs next                                                           |
+| :------------------------ | :------------------ | :---------------------------------------------------------------------- |
+| luke still running        | unchanged           | luke finishes; its `Completed` moves the folder on                      |
+| luke already done         | 🟢 Ready for Review | the harness pushes the branch and opens the PR; then `hansolo-reviewer` |
+| you sign `Blocked`        | ⭕ / 🛑             | a human answers, then `openlanes unblock NNN` runs `lando-broker`       |
 
 ## Never
 
