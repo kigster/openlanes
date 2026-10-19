@@ -8,12 +8,18 @@ R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interf
 
 - `Config::KEYS` gains `desired_codebase_quality`; `QUALITIES = %i[high mvp]`; anything else is an error naming the file. `to_yaml` writes it back.
 - `Config#max_rejections` defaults from it, M5's columns: `high` 2, `mvp` 1; unset stays 2. `merge.max_rejections` still beats it.
-- `Config#quality` reads `:high` when unset; `Config#quality_unset?` says the key is missing.
+- `Config#quality_unset?` says the key is missing. amended: round 1 review, `Config#quality` had no caller and is removed.
+
+### Scope: which rows of M5's column this plan drives
+
+- amended: round 1 review. This plan drives two rows of M5's `high` / `mvp` column: the verdicts that go on to verification (U2) and `max_rejections` (U1).
+- The other rows (default depth: high medium, mvp fast; luke, rey and hansolo models: mvp Sonnet; leah: mvp off) are not wired. They need a project-wide default under `Plans::Spec`'s per-plan `depth` and `Agents::Profile`'s models, which is a plan of its own: a follow-up, "Quality drives depth and models", still to be numbered by a person.
 
 ### U2 What the quality decides at the 👀 → 🧪 hand-off
 
 - `Verification.from_review?(labels, quality:)`: `review-approved` always goes on; `review-ok-not-perfect` goes on under `mvp` only.
 - Under `high`, an `review-ok-not-perfect` PR goes back to luke and rey: the plan moves to 🔴.
+- amended: round 1 review. That send-back is a counted rejection: `Outcome#send_back_for_quality` signs it for chewie (`rejected: …; signed by harness`), so `merge.max_rejections` and the arbitrator see it, and a PR labelled the same round after round cannot loop. Labels stay as hansolo set them. `Dispatcher#approved` treats 🔴 after a hand-off as the hand-off's result; a spec pins that only `high` reaches it.
 - With the key missing, the plan stays 👀 and the project is asked once (U3).
 
 ### U3 Ask once per project when the key is missing

@@ -18,6 +18,8 @@ It encodes the owner's speed-versus-quality choice once, so nobody is asked per 
 
 `Config::KEYS` has no quality key; `build_quality` exists only in decisions.
 
+Scope, amended after the round 1 review: of M5's column, this plan drives the verdicts that go on to verification and `max_rejections`. Default depth, the builders' and hansolo's models, and leah are a follow-up plan, "Quality drives depth and models", still to be numbered.
+
 ## How to tell it's working?
 
 - The key validates and drives M5's high or mvp column.

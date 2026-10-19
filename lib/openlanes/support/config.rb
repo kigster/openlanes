@@ -91,8 +91,8 @@ module OpenLanes
   #   @return [Integer, nil] `review.max_hmm` as the file says it; read
   #     {#max_hmm}, which applies the environment and the default
   # @!attribute [r] desired_codebase_quality
-  #   @return [Symbol, nil] one of {QUALITIES}, as the file says it; read
-  #     {#quality}, which applies the default
+  #   @return [Symbol, nil] one of {QUALITIES}, as the file says it; nil
+  #     while the project is still to be asked (R4)
   # @!attribute [r] coverage
   #   @return [OpenLanes::Coverage::Config, nil] the `coverage:` section; nil
   #     when the project declares none, and then the gate sends the pull
@@ -122,19 +122,12 @@ module OpenLanes
     # How many times a plan's pull request may be rejected, by hansolo and
     # chewie counted together, before it stops going back to its builders
     # (M6). `merge.max_rejections` when the file says it, otherwise M5's
-    # column for {#quality} (R4); two, `high`'s, when neither is set.
+    # column for `desired_codebase_quality:` (R4); two, `high`'s, when neither is set.
     #
     # @return [Integer]
     def max_rejections
       merge_max_rejections || Config::MAX_REJECTIONS_BY_QUALITY.fetch(desired_codebase_quality, Config::DEFAULT_MAX_REJECTIONS)
     end
-
-    # How much quality the project buys (R4): `high` unless the file says
-    # `mvp`. Unset reads as `high` so a project that was never asked is
-    # never quietly given less than it expected.
-    #
-    # @return [Symbol] `:high` or `:mvp`
-    def quality = desired_codebase_quality || Config::QUALITIES.first
 
     # @return [Boolean] whether the file has no `desired_codebase_quality:`,
     #   and so the person is still to be asked (R4)

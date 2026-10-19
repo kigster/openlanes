@@ -6,13 +6,13 @@ RSpec.describe OpenLanes::Config do
 
   it "reads high and mvp, in any case" do
     aggregate_failures do
-      expect(parse("desired_codebase_quality: high\n")).to have_attributes(quality: :high, quality_unset?: false)
-      expect(parse("desired_codebase_quality: MVP\n")).to have_attributes(quality: :mvp, quality_unset?: false)
+      expect(parse("desired_codebase_quality: high\n")).to have_attributes(desired_codebase_quality: :high, quality_unset?: false)
+      expect(parse("desired_codebase_quality: MVP\n")).to have_attributes(desired_codebase_quality: :mvp, quality_unset?: false)
     end
   end
 
-  it "reads as high, and as still to be asked, when the file says nothing" do
-    expect(parse("jobs: 2\n")).to have_attributes(quality: :high, quality_unset?: true, desired_codebase_quality: nil)
+  it "reads as still to be asked, when the file says nothing" do
+    expect(parse("jobs: 2\n")).to have_attributes(quality_unset?: true, desired_codebase_quality: nil)
   end
 
   it "refuses M5's dropped levels and anything else, naming the file" do

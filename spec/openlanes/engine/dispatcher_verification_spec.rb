@@ -115,14 +115,41 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       context "with high" do
         let(:quality) { :high }
 
-        it "goes back to 🔴 for luke and rey" do
+        before do
+          allow(outcome).to receive(:send_back_for_quality) do |plan:, pull:|
+            plan.machine.promote!(:rejected)
+            OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected,
+              note: "verification rejected PR ##{pull.number}, rejected 1 of 2; desired_codebase_quality is high",
+              to: :rejected)
+          end
+        end
+
+        it "goes back to 🔴 for luke and rey, counted as a rejection by the outcome" do
           attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
 
           aggregate_failures do
+            expect(outcome).to have_received(:send_back_for_quality).once
             expect(plan.status.key).to eq(:rejected)
             expect(attempts.last).to have_attributes(to: :rejected)
-            expect(attempts.last.note).to include("back to 🔴", "desired_codebase_quality is high")
+            expect(attempts.last.note).to include("back to 🔴", "rejected 1 of 2", "desired_codebase_quality is high")
             expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
+          end
+        end
+      end
+
+      # Dispatcher#approved takes a 🔴 after the hand-off as the hand-off's
+      # own result. Only the high path above may land there.
+      %i[mvp].push(nil).each do |level|
+        context "with #{level.inspect}, the only other qualities" do
+          let(:quality) { level }
+
+          it "never sends the plan to 🔴" do
+            attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+            aggregate_failures do
+              expect(plan.status.key).not_to eq(:rejected)
+              expect(attempts.last.to).not_to eq(:rejected)
+            end
           end
         end
       end

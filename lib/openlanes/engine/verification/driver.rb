@@ -209,9 +209,10 @@ module OpenLanes
 
           return nil unless subject.machine.may?(:rejected)
 
-          subject.machine.promote!(:rejected)
-          "back to 🔴: PR ##{number} is labelled #{Verification::ON_QUALITY.name}, and desired_codebase_quality is high, " \
-            "so luke and rey answer every comment that is not ✅"
+          # Counted, as any rejection is, so a PR labelled the same round
+          # after round reaches `merge.max_rejections` and the arbitrator.
+          result = @outcome.send_back_for_quality(plan: subject, pull:)
+          "back to 🔴: #{result.note}; luke and rey answer every comment that is not ✅"
         end
 
         # @return [Symbol, nil]

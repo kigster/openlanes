@@ -238,6 +238,25 @@ module OpenLanes
           end
         end
 
+        # A `review-ok-not-perfect` pull request under `high` (R4), sent back
+        # to the builders without verifying it. Signed and counted as a
+        # rejection: the builders may answer every comment with a rebuttal
+        # and no change, hansolo may label it the same again, and an
+        # uncounted send-back would then go round for ever, never reaching
+        # `merge.max_rejections` or the arbitrator.
+        #
+        # @param plan [OpenLanes::Plans::Subject] read fresh, at 👀
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @return [Result]
+        def send_back_for_quality(plan:, pull:)
+          why = "PR ##{number_of(pull)} is labelled #{ON_QUALITY.name}, and desired_codebase_quality is high"
+          sign_for_chewie(plan, Verification.round_for(plan.feature.path), why, counted: true)
+          body = <<~MARKDOWN
+            #{why}: reply in the thread of every review comment that is not ✅, with a fix or a backed-up rebuttal (R4).
+          MARKDOWN
+          send_back(plan, pull, body, nil, counted: true)
+        end
+
         # Why this checkout is not the pull request's code, asked before
         # chewie is started on it ({Driver#hand_off}); {Vcs::Publisher#commit_plan}
         # asks again before the screenshots are pushed.
@@ -420,7 +439,10 @@ module OpenLanes
             pr: number_of(pull),
             kind: :rejected,
             comments: [{ author: AGENT, url: pull.url.to_s, body: }]))
-          label = labelled.refused? ? "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}" : Plans::ReviewLabel::REJECTED.name
+          label = if labelled.nil? then "labels left as hansolo set them"
+                  elsif labelled.refused? then "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}"
+                  else Plans::ReviewLabel::REJECTED.name
+                  end
           Result.new(kind: :rejected,
             note: "verification #{counted ? "rejected" : "sent back"} PR ##{number_of(pull)}, #{tally}; #{label}" \
                   "#{"; #{moved.note}" if moved}",

@@ -179,6 +179,37 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
   end
 
+  describe "#send_back_for_quality (R4, under high)" do
+    it "signs a counted rejection, mails the builders, and moves the plan to 🔴 without touching the labels" do
+      result = outcome.send_back_for_quality(plan:, pull: pr)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :rejected)
+        expect(result.note).to include("rejected 1 of 2", "labels left as hansolo set them")
+        expect(outcome.rejections(plan)).to eq(1)
+        expect(plan.status.key).to eq(:rejected)
+        expect(mail_to).to include("luke-backend", "rey-frontend")
+        expect(labels).to eq(%w[review-approved])
+        expect(arbitration).not_to have_received(:call)
+      end
+    end
+
+    it "reaches the arbitrator at the cap, so a PR labelled ok-not-perfect round after round cannot loop for ever" do
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .sign!(agent: "chewie-verifier",
+                                   round: 1,
+                                   status: "Completed",
+                                   note: "rejected: PR #1 is labelled review-ok-not-perfect, an earlier round; signed by harness")
+
+      result = outcome.send_back_for_quality(plan:, pull: pr)
+
+      aggregate_failures do
+        expect(result.note).to include("rejected 2 of 2")
+        expect(arbitration).to have_received(:call).with(plan: anything, count: 2, max: 2)
+      end
+    end
+  end
+
   describe "#pass and #settle" do
     before { chewie_left("verified") }
 
