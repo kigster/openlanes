@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 82 | [\[035.00\](A) Setup Command](https://github.com/kigster/openlanes/pull/82) | Open 🟡 |
+| 82 | [\[035.00\](A) Setup Command](https://github.com/kigster/openlanes/pull/82) | Merged 🟣 |
 
 ## luke-backend, round 1 — verification
 

@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-19T01:56:16-07:00",
+  "updated_at": "2026-10-19T01:59:01-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -387,6 +387,19 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-19T01:58:55-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:58:59-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -493,6 +506,19 @@
             {
               "kind": "question",
               "text": "B1 still open: a human must choose a) own-PR probe fix (recommended), b) fix inside plan, or c) accept as is, then run unblock again"
+            }
+          ]
+        },
+        "5": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 5: A1 'Rebase onto main.' still names none of options a/b/c, so it is not an answer; B1/A1 left in blocked.md, no files changed"
+            },
+            {
+              "kind": "question",
+              "text": "B1 still open: a human must pick a) own-PR probe fix (recommended), b) fix inside plan, or c) accept as is, then run `openlanes unblock 011.00` again"
             }
           ]
         }

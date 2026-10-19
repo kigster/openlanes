@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "blocked",
-  "updated_at": "2026-10-19T01:56:15-07:00",
+  "updated_at": "2026-10-19T01:58:59-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -331,6 +331,19 @@
       "agent": "lando-broker",
       "status": "Blocked",
       "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-19T01:58:55-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-10-19T01:58:59-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 4,
       "note": "technical"
     }
   ],

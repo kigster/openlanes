@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 79 | [\[017.00\](A) Ability to View Markdowns](https://github.com/kigster/openlanes/pull/79) | Open 🟡 |
+| 79 | [\[017.00\](A) Ability to View Markdowns](https://github.com/kigster/openlanes/pull/79) | Merged 🟣 |
 
 ## Integration proof, luke-backend, round 1 (2026-10-15)
 

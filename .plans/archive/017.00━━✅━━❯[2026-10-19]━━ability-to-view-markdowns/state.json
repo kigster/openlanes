@@ -5,8 +5,8 @@
     "ordinal": "017.00",
     "slug": "ability-to-view-markdowns"
   },
-  "state": "verifying",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "state": "approved",
+  "updated_at": "2026-10-19T02:02:49-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -951,7 +951,7 @@
       "note": "no closing ledger line; last ledger line: Completed, round 2: approved; last seen: I found no problems with PR #79 and signed `Completed, round 2 (approved)`, but the approved label did not go on."
     }
   },
-  "moves": 7,
+  "moves": 8,
   "extensions": [
     {
       "number": 1,
@@ -986,5 +986,9 @@
       "closed": "finished",
       "settled_at": "2026-10-17T12:21:54-07:00"
     }
-  ]
+  ],
+  "finished": {
+    "kind": "merged",
+    "at": "2026-10-19T09:02:49Z"
+  }
 }

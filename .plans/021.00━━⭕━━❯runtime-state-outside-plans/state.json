@@ -6,7 +6,7 @@
     "slug": "runtime-state-outside-plans"
   },
   "state": "blocked",
-  "updated_at": "2026-10-19T01:56:15-07:00",
+  "updated_at": "2026-10-19T01:59:00-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -309,6 +309,18 @@
       "agent": "lando-broker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-10-19T01:58:55-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-19T01:58:59-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -471,6 +483,19 @@
             {
               "kind": "note",
               "text": "Round 4: blocked.md untouched and kept. No locks held, release-all freed 0."
+            }
+          ]
+        },
+        "5": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 1 (invocation 2): B1 still open. A1 ('Rebase onto the main branch first and retry') answers neither a) nor b), so it fails the answer test. blocked.md untouched."
+            },
+            {
+              "kind": "note",
+              "text": "Round 1 (invocation 2): blocked.md kept for a human to answer again. Released 0 locks. Signed Completed."
             }
           ]
         }
