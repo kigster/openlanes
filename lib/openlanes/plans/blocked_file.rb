@@ -72,6 +72,27 @@ module OpenLanes
         (lines[0...from] + section + lines[to..]).join
       end
 
+      # +text+ with answer +number+ taken out and +note+ put at the top of its
+      # question's body, so the question is open again and says why.
+      #
+      # An answer the broker read and would not fold in otherwise sits under
+      # its question for good: the page counts the question answered and
+      # hides it, and the broker refuses it every time it is asked. Before
+      # the options, because the page reads a body's options off its end.
+      #
+      # @param text [String] the whole of blocked.md
+      # @param number [Integer]
+      # @param note [String]
+      # @return [String, nil] nil when the file has no such question or answer
+      def reject(text, number, note)
+        lines = text.to_s.lines
+        from, to = spans(lines, ANSWER_BLOCK, ends: BLOCK)[number]
+        return nil unless from && bodies(text).key?(number)
+
+        reopened = (lines[0...(from - 1)] + lines[to..]).join
+        replace(reopened, number, "#{note.strip}\n\n#{bodies(reopened)[number].strip}")
+      end
+
       # @param lines [Array<String>]
       # @param pattern [Regexp] {OPEN_BLOCK} for questions, {ANSWER_BLOCK}
       #   for answers; either kind of heading ends the other's body

@@ -19,7 +19,12 @@ RSpec.describe "Unblocking from the run loop", :tree do
 
       def call(agent, subject, **)
         @calls << "#{subject.feature.ordinal}/#{agent.name}"
-        File.delete(File.join(subject.feature.path, "blocked.md")) if agent.name == "lando-broker" && !@fail
+        if agent.name == "lando-broker" && @refuse
+          OpenLanes::Plans::PlanState.for(subject.feature.path)
+                                     .journal!(agent: agent.name, entries: [OpenLanes::Plans::Journal::Entry.new(kind: "note", text: @refuse)])
+        elsif agent.name == "lando-broker" && !@fail
+          File.delete(File.join(subject.feature.path, "blocked.md"))
+        end
         OpenLanes::Execution::Executor::Result.new(ok: !@fail,
           note: "completed",
           up: 1,
@@ -30,6 +35,8 @@ RSpec.describe "Unblocking from the run loop", :tree do
       end
 
       def fail! = @fail = true
+
+      def refuse!(why) = @refuse = why
     end.new
   end
 
@@ -81,7 +88,32 @@ RSpec.describe "Unblocking from the run loop", :tree do
       aggregate_failures do
         expect(executor.calls).to eq(%w[002.00/lando-broker])
         expect(OpenLanes::UI).to have_received(:log).with("unblock failed: completed", level: :warn, plan: "002.00")
+        expect(dispatcher.send(:idle_reason, runner.in_scope))
+          .to eq("idle: unblock failed on 002.00 (completed); edit blocked.md to try again")
       end
+    end
+  end
+
+  context "when the broker will not take the answer" do
+    before do
+      executor.refuse!("'yes' names none of a/b/c; not an answer")
+      blocked("002.00", "rebase", answered)
+      drain
+    end
+
+    let(:file) { File.read(File.join(tree.reload.find("002.00").feature.path, "blocked.md")) }
+
+    it "puts the question back on the page, saying what was refused and why" do
+      aggregate_failures do
+        expect(file).not_to match(/^## A1/)
+        expect(file).to include("> **Answer not accepted:** yes", "lando-broker: 'yes' names none of a/b/c")
+        expect(OpenLanes::Lifecycle::Unblocker.questions(tree.find("002.00")).map(&:answered)).to eq([false])
+      end
+    end
+
+    it "logs which answer was refused, and why" do
+      expect(OpenLanes::UI).to have_received(:log)
+        .with("answer to B1 not accepted: lando-broker: 'yes' names none of a/b/c; not an answer", level: :warn, plan: "002.00")
     end
   end
 
