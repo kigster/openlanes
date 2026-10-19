@@ -105,6 +105,23 @@ RSpec.describe "The engine's live hooks" do
         expect(executor.calls).to eq([])
       end
     end
+
+    context "when Redis is unreachable" do
+      before do
+        building("002.00", "ledger")
+        allow(claims).to receive(:foreign?).and_raise(OpenLanes::Live::Unavailable, "gone")
+        allow(claims).to receive(:claim).and_raise(OpenLanes::Live::Unavailable, "gone")
+        Timeout.timeout(5) { dispatcher.tick }
+      end
+
+      it "returns from the tick having started nothing" do
+        expect(executor.calls).to eq([])
+      end
+
+      it "asks for each plan's claim once" do
+        expect(claims).to have_received(:claim).twice
+      end
+    end
   end
 
   describe OpenLanes::Engine::Runner, :tree do

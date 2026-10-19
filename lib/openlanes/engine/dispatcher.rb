@@ -166,7 +166,7 @@ module OpenLanes
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         # Agents outside openlanes (W31). A dry run claims nothing, so it
         # asks nothing either.
-        @agent_locks = runner.dry_run? ? nil : Engine.agent_locks(runner.tree.dir)
+        @agent_locks = runner.dry_run? ? nil : Engine.agent_locks(runner.tree.dir, own: runner.agents.all.map(&:name))
         @said_outside = {}
         @refused = Set.new
         @locks = PlanLocks.new(agent_locks: @agent_locks)
@@ -922,9 +922,15 @@ module OpenLanes
         @refused.clear
         started = 0
         while @running.size < @runner.jobs && (pair = next_dispatchable)
-          # Lost to another machine between the check and the claim: the next
-          # pass sees the plan as foreign and steps around it.
-          next unless @runner.claim(pair.last)
+          # Lost to another machine between the check and the claim, or Redis
+          # cannot say who holds it (W31). Either way the rest of this pass goes
+          # on without the plan: with Redis gone `foreign?` answers false, so
+          # without remembering the refusal `next_dispatchable` hands the same
+          # plan back and the tick never returns.
+          unless @runner.claim(pair.last)
+            @refused << pair.last.feature.ordinal.to_s
+            next
+          end
 
           started_now = start(*pair)
           # Lost to an agent outside openlanes (W31): the rest of this pass
