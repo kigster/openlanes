@@ -58,9 +58,6 @@ Redis holds only live coordination state, so cross-run questions (how often agen
 - How multi-machine writes stay consistent when two nodes share Redis and one repo.
 - Retention and redaction rules for prompts and conversation text.
 
-> [!NOTE]
->
-> [2026-10-16 06:15:36 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

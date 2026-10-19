@@ -30,9 +30,6 @@ Fix the inquirex gems in `/Users/kig/github/inquirex` so openlanes can depend on
 - Going back during a TTY run returns to the previous question with its answer filled in.
 - No real name or email appears in any README.
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

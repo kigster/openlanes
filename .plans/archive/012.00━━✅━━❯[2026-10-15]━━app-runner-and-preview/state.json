@@ -6,7 +6,7 @@
     "slug": "app-runner-and-preview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-15T09:35:38-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -163,6 +163,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-13T19:27:18-07:00",
+      "agent": "palpatine-planner",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "interrupted, killed 60s after q"
+    },
+    {
       "at": "2026-10-14T11:48:25-07:00",
       "agent": "palpatine-planner",
       "status": "Started",
@@ -185,6 +192,30 @@
       "at": "2026-10-14T11:51:28-07:00",
       "agent": "rey-frontend",
       "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:51:30-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T11:51:30-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T12:28:44-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-14T12:28:44-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
       "round": 1
     },
     {

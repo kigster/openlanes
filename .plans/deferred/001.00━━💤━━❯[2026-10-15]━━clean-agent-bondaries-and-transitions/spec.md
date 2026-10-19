@@ -11,17 +11,11 @@ The target behaviour, observable from the outside:
 It looks like so:
 
 ```markdown
-> [!NOTE]
->
-> [2026-09-04.11:29:20 AM PST] [ Agent Leah the Researcher: Starting (round 1) ]
 ```
 
 Upon completion of her ## Research section, she adds at the bottom:
 
 ```markdown
-> [!NOTE]
->
-> [2026-09-04.11:29:20 AM PST] [ Agent Leah the Researcher: Completed (round 1) ]
 ```
 
 If leah is ready to pass this on she adds:

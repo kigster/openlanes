@@ -179,7 +179,3 @@ References (local, retrieved 2026-10-13):
 - `lib/openlanes/cli/init/init.rb`, `lib/openlanes/support/config.rb`, `lib/openlanes/execution/checks.rb`
 - `docs/decisions/decisions-on-merge-modes-and-verification.md`
 - `/Users/kig/github/inquirex` (inquirex 0.10.0, inquirex-tty 0.10.0, inquirex-llm 0.10.0). Source is local and not copied here; no licence concern.
-
-> [!NOTE]
->
-> [2026-10-13 07:27:19 PM PDT] [ agent: yoda-writer   status: **Interrupted, round 1 (interrupted, killed 60s after q)** ]

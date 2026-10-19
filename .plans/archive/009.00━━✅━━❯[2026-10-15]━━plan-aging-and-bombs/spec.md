@@ -126,9 +126,6 @@ Settled from the research recommendations. Reopen any of them only through a hum
 
 When this ships, a plan blocked for 7 days with dependents becomes 💣, new work stops, and `openlanes run` exits 1 naming it. A blocked plan nobody needs moves itself to `deferred/` after 14 days with a trigger recorded. The control room shows each 💣 as a notice with Respond, Pause and Discuss and a 24 h override, and `--ignore-bombs` covers headless runs. `aging_since` in `.openlanes.yml` keeps paused weeks from counting.
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

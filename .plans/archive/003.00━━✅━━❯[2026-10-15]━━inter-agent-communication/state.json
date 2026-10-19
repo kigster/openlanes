@@ -6,7 +6,7 @@
     "slug": "inter-agent-communication"
   },
   "state": "approved",
-  "updated_at": "2026-10-15T09:10:34-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -255,6 +255,13 @@
       "status": "Interrupted",
       "round": 1,
       "note": "STOP after B4; B5, B6 remain"
+    },
+    {
+      "at": "2026-10-13T19:27:18-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "interrupted, killed 60s after q"
     },
     {
       "at": "2026-10-15T09:06:32-07:00",

@@ -6,7 +6,7 @@
     "slug": "plan-folder-naming"
   },
   "state": "approved",
-  "updated_at": "2026-10-15T09:12:23-07:00",
+  "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -135,6 +135,13 @@
       "agent": "leah-researcher",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-13T19:04:16-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-13T19:05:09-07:00",

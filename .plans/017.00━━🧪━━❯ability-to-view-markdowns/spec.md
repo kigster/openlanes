@@ -52,13 +52,7 @@ For blocked.md specifically, we may want to
 
 ## What research needs to settle
 
-> [!NOTE]
->
-> [2026-10-15 09:10:16 AM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
-> [!NOTE]
->
-> [2026-10-15 09:34:10 AM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 The list is empty. The questions below are derived from the Proposal, for the author to confirm.
 

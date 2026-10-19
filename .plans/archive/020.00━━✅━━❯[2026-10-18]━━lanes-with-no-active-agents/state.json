@@ -6,7 +6,7 @@
     "slug": "lanes-with-no-active-agents"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T06:34:54-07:00",
+  "updated_at": "2026-10-18T14:24:07-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -338,6 +338,13 @@
       "status": "Completed",
       "round": 1,
       "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-18T06:34:33-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     }
   ],
   "messages": [

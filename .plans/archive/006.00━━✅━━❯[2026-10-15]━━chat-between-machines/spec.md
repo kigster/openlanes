@@ -109,9 +109,6 @@ The section above names no list, so the questions are the ones `decisions.md` le
 - redis-rb pub/sub: https://redis.io/docs/latest/develop/use-cases/pub-sub/ruby/ (retrieved 2026-10-13)
 - Repository files: `lib/openlanes/live/*.rb`, `lib/openlanes/web/*.rb`, `web/src/chat/*`, `web/src/styles/tokens.css`, `Gemfile.lock` (read 2026-10-13)
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Framing
 

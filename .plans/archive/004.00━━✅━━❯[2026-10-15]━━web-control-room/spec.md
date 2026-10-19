@@ -117,9 +117,6 @@ Still assumed, for the owner to confirm; none stops planning:
 
 When this ships, `openlanes run` serves a tested control room on `127.0.0.1:11000`, backed by Redis and shipped inside the gem with a build order that cannot silently produce an empty package. The draft, contract and README agree with the code. Restart recovery, two-machine claim exclusion and keyboard-only operation are each covered by an automated test, and CI reports coverage of the changed code.
 
-> [!NOTE]
->
-> [2026-10-13 07:04:16 PM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (harness died)** ]
 
 ## Research
 

@@ -1561,7 +1561,7 @@ module OpenLanes
 
       # The agent stopped without saying it finished. If the state it was
       # advancing to is justified by what is on disk, the work happened and
-      # the harness signs for it, in bold, saying why it had to.
+      # the harness signs for it in state.json, saying why it had to.
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
       def verify_and_sign(job, base, reason)
@@ -1575,15 +1575,11 @@ module OpenLanes
         target = agent.advances_to
         if target && subject.machine.may?(target)
           successor = @runner.agents.for_status(Plans::STATUS_BY_KEY.fetch(target)).first&.name
-          lines = [Plans::Ledger.render(Plans::Ledger::Entry.new(at: Time.now,
-            agent: agent.name,
-            status: "Completed",
-            round: task.round,
-            note: "signed by harness: work verified on disk",
-            file: "",
-            line: 0))]
-          lines << Plans::Ledger.render_handoff(Plans::Ledger::Handoff.new(at: Time.now, next: successor, file: "", line: 0)) if successor
-          Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first), *lines)
+          Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name,
+            round:      task.round,
+            status:     "Completed",
+            note:       "signed by harness: work verified on disk",
+            next_agent: successor)
           entry = Plans::Ledger.last_for(read_ledger(task), agent.name)
           complete(job, base.with(note: "#{reason}; signed by harness"), entry, read_ledger(task))
         else
@@ -1624,17 +1620,12 @@ module OpenLanes
       # @return [OpenLanes::Plans::Ledger::Entry, nil]
       def last_line(subject, agent) = Plans::Ledger.last_for(Plans::Ledger.read(subject.feature.path, agent.ledger), agent.name)
 
+      # The harness signs in `state.json`, as the agents do through
+      # `openlanes state sign`; nothing it writes lands in the plan's documents.
+      #
       # @return [void]
       def write_interrupted(subject, agent, round, reason)
-        line = Plans::Ledger.render(Plans::Ledger::Entry.new(at: Time.now,
-          agent: agent.name,
-          status: "Interrupted",
-          round:,
-          note: reason,
-          file: "",
-          line: 0,
-          bold: true))
-        Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first), line)
+        Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name, round:, status: "Interrupted", note: reason)
       end
 
       # A Completed entry: publish if the move is to 🟢, then move the folder,

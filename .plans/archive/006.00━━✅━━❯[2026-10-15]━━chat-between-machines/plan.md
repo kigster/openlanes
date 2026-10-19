@@ -83,7 +83,3 @@ These are the spec's Out of scope list, and none is built here:
 - message history;
 - avatars;
 - any change to the copilot's behaviour or colours.
-
-> [!NOTE]
->
-> [2026-10-15 09:02:18 AM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

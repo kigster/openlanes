@@ -134,6 +134,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-13T19:27:19-07:00",
+      "agent": "yoda-writer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "interrupted, killed 60s after q"
+    },
+    {
       "at": "2026-10-15T09:11:50-07:00",
       "agent": "palpatine-planner",
       "status": "Started",
@@ -153,10 +160,24 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:29:56-07:00",
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:34:10-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T09:35:25-07:00",
@@ -177,6 +198,20 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:47:08-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:50:18-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:59:33-07:00",
       "agent": "luke-backend",
       "status": "Started",
@@ -195,10 +230,24 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T10:10:58-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T13:58:58-07:00",
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T19:54:45-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T20:03:12-07:00",
@@ -249,6 +298,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-17T11:27:20-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-17T11:34:47-07:00",
       "agent": "luke-backend",
       "status": "Started",
@@ -273,6 +329,13 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-18T06:34:33-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 2,
+      "note": "harness died"
     },
     {
       "at": "2026-10-18T06:34:37-07:00",

@@ -157,7 +157,3 @@ _Written by B1 (luke-backend, round 2)._
 - **Fix.** `Commands#call` rescues `NOGROUP`, logs it, and makes the group again on the next tick (`lib/openlanes/live/commands.rb`).
 - **Proof.** `spec/openlanes/engine/redis_outage_spec.rb`: 2 examples. Both fail with the `NOGROUP` error above when the rescue is removed, and both pass with it. Skipped, with the reason, when no `redis-server` is on `PATH`.
 - **Exit status of a real `openlanes run`.** Not recorded; the spec drives the same tick.
-
-> [!NOTE]
->
-> [2026-10-16 07:03:02 PM PDT] [ agent: luke-backend   status: **Interrupted, round 1 (harness died)** ]

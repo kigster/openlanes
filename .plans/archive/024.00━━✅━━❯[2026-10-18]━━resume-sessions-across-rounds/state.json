@@ -6,7 +6,7 @@
     "slug": "resume-sessions-across-rounds"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T14:07:57-07:00",
+  "updated_at": "2026-10-18T14:24:07-07:00",
   "stages": [
     {
       "agent": "palpatine-planner",
@@ -183,6 +183,13 @@
       "status": "Completed",
       "round": 1,
       "next": "palpatine-planner"
+    },
+    {
+      "at": "2026-10-18T06:34:33-07:00",
+      "agent": "chewie-verifier",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     }
   ],
   "messages": [

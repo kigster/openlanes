@@ -93,6 +93,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:34:15-07:00",
       "agent": "lando-broker",
       "status": "Started",
@@ -141,6 +148,13 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:50:18-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T09:59:34-07:00",

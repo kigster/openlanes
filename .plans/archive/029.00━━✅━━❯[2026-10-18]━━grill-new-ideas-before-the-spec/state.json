@@ -170,6 +170,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-17T13:02:32-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
       "at": "2026-10-17T13:07:40-07:00",
       "agent": "hansolo-reviewer",
       "status": "Started",

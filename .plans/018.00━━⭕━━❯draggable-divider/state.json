@@ -162,6 +162,20 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:27:29-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:34:16-07:00",
       "agent": "rey-frontend",
       "status": "Started",
@@ -174,6 +188,20 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T09:35:17-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:35:17-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T09:47:14-07:00",
       "agent": "rey-frontend",
       "status": "Started",
@@ -184,6 +212,20 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T09:50:18-07:00",
+      "agent": "rey-frontend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-15T09:50:18-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T09:59:32-07:00",
@@ -216,6 +258,13 @@
       "round": 1
     },
     {
+      "at": "2026-10-15T10:10:58-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
       "at": "2026-10-15T10:11:06-07:00",
       "agent": "rey-frontend",
       "status": "Started",
@@ -232,6 +281,13 @@
       "agent": "luke-backend",
       "status": "Started",
       "round": 1
+    },
+    {
+      "at": "2026-10-15T19:54:45-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
     },
     {
       "at": "2026-10-15T19:54:50-07:00",
