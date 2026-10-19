@@ -105,6 +105,23 @@ RSpec.describe "The engine's live hooks" do
         expect(executor.calls).to eq([])
       end
     end
+
+    context "when Redis is unreachable" do
+      before do
+        building("002.00", "ledger")
+        allow(claims).to receive(:foreign?).and_raise(OpenLanes::Live::Unavailable, "gone")
+        allow(claims).to receive(:claim).and_raise(OpenLanes::Live::Unavailable, "gone")
+        Timeout.timeout(5) { dispatcher.tick }
+      end
+
+      it "returns from the tick having started nothing" do
+        expect(executor.calls).to eq([])
+      end
+
+      it "asks for each plan's claim once" do
+        expect(claims).to have_received(:claim).twice
+      end
+    end
   end
 
   describe OpenLanes::Engine::Runner, :tree do
@@ -145,11 +162,24 @@ RSpec.describe "The engine's live hooks" do
         allow(OpenLanes::UI).to receive(:log)
       end
 
-      it "works alone, and says so" do
+      # W31: another machine sharing the Redis may already hold the plan, and
+      # nothing here can tell, so nothing new starts until Redis answers.
+      it "starts nothing new, and says so once per outage" do
         aggregate_failures do
-          expect([runner.claim(one), runner.foreign?(one)]).to eq([true, false])
-          expect(OpenLanes::UI).to have_received(:log).with("claims unchecked: gone", level: :warn).twice
+          expect([runner.claim(one), runner.claim(two), runner.foreign?(one)]).to eq([false, false, false])
+          expect(OpenLanes::UI).to have_received(:log)
+            .with("claims unchecked, starting nothing new until Redis answers: gone", level: :warn).once
         end
+      end
+
+      it "claims again once Redis answers, and says the next outage" do
+        runner.claim(one)
+        allow(claims).to receive(:claim).and_return(true)
+        expect(runner.claim(one)).to be(true)
+
+        allow(claims).to receive(:claim).and_raise(OpenLanes::Live::Unavailable, "gone")
+        runner.claim(one)
+        expect(OpenLanes::UI).to have_received(:log).with(/starting nothing new/, level: :warn).twice
       end
     end
 
