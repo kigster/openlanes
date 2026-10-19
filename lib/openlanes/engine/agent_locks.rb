@@ -61,6 +61,7 @@ module OpenLanes
         @root = File.realpath(root)
         @id = id
         @own = own
+        @failing = nil
         @command = command
         @clock = clock
         @mutex = Mutex.new
@@ -129,13 +130,15 @@ module OpenLanes
       # @return [Array<Held>]
       def list
         out = @command.run("alock", "list", "--json", "--dir", @root).out
-        JSON.parse(out).filter_map do |lock|
+        listed = JSON.parse(out).filter_map do |lock|
           next unless lock["status"] == "active"
 
           Held.new(agent: lock["agent_id"].to_s, scope: lock["scope"].to_s, tree: lock["tree"].to_s, intent: lock["intent"])
         end
+        @failing = nil
+        listed
       rescue TTY::Command::ExitError, JSON::ParserError => e
-        UI.log("alock list failed, plans unchecked this pass: #{e.message.lines.first.to_s.strip}", level: :warn)
+        failing(e)
         []
       rescue SystemCallError
         missing
@@ -159,6 +162,23 @@ module OpenLanes
       rescue SystemCallError
         missing
         true
+      end
+
+      # Said once per failure, not on every tick it lasts: the listing is
+      # asked for every few seconds, and the same line each time buried the
+      # log. A listing that works again clears it.
+      #
+      # @param error [Exception]
+      # @return [void]
+      def failing(error)
+        # TTY::Command's message is the command line first; the reason is in
+        # the stderr lines after it.
+        reason = error.message.lines.map(&:strip).reject(&:empty?).find { it.start_with?("stderr:") } ||
+                 error.message.lines.first.to_s.strip
+        return if @failing == reason
+
+        @failing = reason
+        UI.log("alock list failed, plans unchecked until it works: #{reason}", level: :warn)
       end
 
       # @return [void]
