@@ -123,9 +123,11 @@ module OpenLanes
         rows = @board.rows.select { it.ordinal == ordinal }
         spent = @meter.for(ordinal, method(:price))
         started = @meter.started_at(ordinal)
+        mailbox = Plans.mailbox(subject.feature.path)
         { ordinal:,
           title:       subject.feature.title,
           slug:        subject.feature.slug,
+          summary:     Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
           status:      status(subject.status),
           lane:        Plans::Spec.for(subject).lane.to_s,
           station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
@@ -139,7 +141,8 @@ module OpenLanes
           questions:   questions(subject, state),
           interrupted: interrupted(stages, rows),
           claimed_by:  claimed_by(ordinal),
-          unacked:     Plans.mailbox(subject.feature.path).unacked,
+          unacked:     mailbox.unacked,
+          mail:        mailbox.unacked_pairs,
           last_known:  last_known(state),
           locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash,
           finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
@@ -147,7 +150,7 @@ module OpenLanes
 
       # @param status [OpenLanes::Plans::Status]
       # @return [Hash] `Status`
-      def status(status) = { key: status.key.to_s, emoji: status.emoji, label: status.label }
+      def status(status) = { key: status.key.to_s, emoji: status.emoji, label: status.label, note: status.note.to_s.delete("`") }
 
       # @param subjects [Array<OpenLanes::Plans::Subject>]
       # @param taken [Array<String>] ordinals already on the board

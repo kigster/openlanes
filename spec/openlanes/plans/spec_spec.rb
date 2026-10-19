@@ -148,6 +148,39 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
   end
 
+  describe ".summary" do
+    it "is the first paragraph of prose, past the frontmatter, headings, comments and lists" do
+      text = <<~MD
+        ---
+        lane: quick
+        ---
+
+        # Init Interview
+
+        <!-- a note to the author -->
+
+        - not this list
+
+        ## Problem statement
+
+        `lanes init` interviews in the terminal,
+        then writes the answers down.
+
+        A second paragraph.
+      MD
+
+      expect(described_class.summary(text)).to eq("`lanes init` interviews in the terminal, then writes the answers down.")
+    end
+
+    it "cuts a long paragraph at a word, and says so" do
+      expect(described_class.summary("#{"word " * 200}\n", limit: 22)).to eq("word word word word…")
+    end
+
+    it "is empty for a spec with no prose, or broken frontmatter" do
+      expect([described_class.summary("# Title\n\n- a list\n"), described_class.summary("---\n: [\n---\nbody\n")]).to eq(["", ""])
+    end
+  end
+
   describe ".load" do
     let(:dir) { Dir.mktmpdir }
 

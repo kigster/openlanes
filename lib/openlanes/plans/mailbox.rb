@@ -156,6 +156,17 @@ module OpenLanes
         messages.count { |m| !m.read? && (recipient.nil? || m.to == recipient) }
       end
 
+      # The unacked messages, one entry per sender and recipient, so the
+      # dashboard can say who is waiting on whom rather than only how many.
+      #
+      # @return [Array<Hash{Symbol => String, Integer}>] `from`, `to`, `count`
+      #   and `since`, the oldest one's timestamp as written, oldest pair first
+      def unacked_pairs
+        messages.reject(&:read?).group_by { [it.from, it.to] }
+                .map { |(from, to), sent| { from:, to:, count: sent.size, since: sent.map(&:at).min.to_s } }
+                .sort_by { it[:since] }
+      end
+
       # Whether +number+ is a `mailbox.md` message: history, counted as read,
       # where an ack records nothing.
       #

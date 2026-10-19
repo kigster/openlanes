@@ -78,10 +78,12 @@
       "ordinal": "001.00",
       "title": "Clean agent boundaries and transitions",
       "slug": "clean-agent-boundaries",
+      "summary": "The first paragraph of this plan's spec.md.",
       "status": {
         "key": "blocked",
         "emoji": "⭕️",
-        "label": "Technical Block"
+        "label": "Technical Block",
+        "note": "what Technical Block means"
       },
       "lane": "full",
       "station": "building",
@@ -161,6 +163,7 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 1,
+      "mail": [{ "from": "luke-backend", "to": "rey-frontend", "count": 1, "since": "2026-10-12 09:41:07 AM PDT" }],
       "last_known": [
         {
           "agent": "rey-frontend",
@@ -178,10 +181,12 @@
       "ordinal": "005.00",
       "title": "Review state labels",
       "slug": "review-state-labels",
+      "summary": "The first paragraph of this plan's spec.md.",
       "status": {
         "key": "in_review",
         "emoji": "👀",
-        "label": "In Review"
+        "label": "In Review",
+        "note": "what In Review means"
       },
       "lane": "plan",
       "station": "in_review",
@@ -228,6 +233,7 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 0,
+      "mail": [],
       "last_known": [],
       "locked": null
     },
@@ -235,10 +241,12 @@
       "ordinal": "006.00",
       "title": "Rename the trace directory",
       "slug": "rename-trace-directory",
+      "summary": "The first paragraph of this plan's spec.md.",
       "status": {
         "key": "building",
         "emoji": "🟡",
-        "label": "Building"
+        "label": "Building",
+        "note": "what Building means"
       },
       "lane": "quick",
       "station": "building",
@@ -305,6 +313,7 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 0,
+      "mail": [],
       "last_known": [],
       "locked": null
     },
@@ -312,10 +321,12 @@
       "ordinal": "014.00",
       "title": "Shipped",
       "slug": "shipped",
+      "summary": "The first paragraph of this plan's spec.md.",
       "status": {
         "key": "approved",
         "emoji": "✅",
-        "label": "Approved & Merged"
+        "label": "Approved & Merged",
+        "note": "what Approved & Merged means"
       },
       "lane": "quick",
       "station": "pr",
@@ -340,6 +351,7 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 0,
+      "mail": [],
       "last_known": [],
       "locked": null
     }
@@ -351,7 +363,8 @@
       "status": {
         "key": "new",
         "emoji": "⚪️",
-        "label": "New"
+        "label": "New",
+        "note": "what New means"
       },
       "lane": "full"
     },
@@ -361,7 +374,8 @@
       "status": {
         "key": "product_blocked",
         "emoji": "🅱️",
-        "label": "Product Block"
+        "label": "Product Block",
+        "note": "what Product Block means"
       },
       "lane": "plan"
     }

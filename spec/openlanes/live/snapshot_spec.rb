@@ -130,6 +130,8 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     it "has the fixture's keys at every level" do
+      # Unacked mail fills `mail`, whose entries the fixture's keys describe.
+      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "luke-backend", to: "rey-frontend", body: "B1 landed")
       expect(shape(JSON.parse(JSON.generate(snapshot)))).to eq(shape(fixture))
     end
 
@@ -138,9 +140,11 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       aggregate_failures do
         expect(blocked_plan[:unacked]).to eq(1)
+        expect(blocked_plan[:status]).to include(key: "blocked", note: a_string_matching(/\S/))
+        expect(blocked_plan[:mail]).to match([{ from: "luke-backend", to: "rey-frontend", count: 1, since: anything }])
         expect(blocked_plan[:last_known]).to match([{ agent: "rey-frontend", source: "harness", at: anything, round: 1,
           status: "Interrupted", next_step: "draw the panel", note: "harness died" }])
-        expect(by_ordinal["005.00"].values_at(:unacked, :last_known)).to eq([0, []])
+        expect(by_ordinal["005.00"].values_at(:unacked, :mail, :last_known)).to eq([0, [], []])
       end
     end
 
