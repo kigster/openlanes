@@ -80,6 +80,22 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
       expect(command).to have_received(:run).twice
     end
 
+    it "says a failing listing once, not on every pass, and again after it recovers" do
+      failure = TTY::Command::ExitError.new("alock list --json", result(1, err: "can't find executable alock"))
+      answers = [:fail, :fail, :ok, :fail]
+      allow(command).to receive(:run) do
+        answers.shift == :fail ? raise(failure) : result(0, out: "[]")
+      end
+      allow(OpenLanes::UI).to receive(:log)
+      4.times do
+        locks.held_elsewhere(folder)
+        time[0] += described_class::FRESH
+      end
+
+      expect(OpenLanes::UI).to have_received(:log)
+        .with("alock list failed, plans unchecked until it works: stderr: can't find executable alock", level: :warn).twice
+    end
+
     it "checks nothing this pass when alock answers nonsense, and says so" do
       allow(command).to receive(:run).and_return(result(0, out: "not json"))
       allow(OpenLanes::UI).to receive(:log)
