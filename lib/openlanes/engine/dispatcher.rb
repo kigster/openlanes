@@ -76,7 +76,7 @@ module OpenLanes
 
       # A blocked plan whose every question has an answer, being drained by
       # the agent that handles its state, on a thread of its own.
-      Unblock = Struct.new(:ordinal, :thread, :outcome)
+      Unblock = Struct.new(:ordinal, :thread, :outcome, :agent, :rounds)
 
       # Who the harness signs its own mail as.
       HARNESS = "openlanes"
@@ -163,6 +163,7 @@ module OpenLanes
         @fenced = []
         @unblocking = []
         @unblock_tried = {}
+        @unblock_failed = {}
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         # Agents outside openlanes (W31). A dry run claims nothing, so it
         # asks nothing either.
@@ -719,7 +720,8 @@ module OpenLanes
       # that handles its state, the way `openlanes unblock` hands it over
       # (W10): the page's answer is what a person typing that command used
       # to be. Each answer set is tried once; a failed drain waits for
-      # `blocked.md` to change. Drains finished since the last tick are
+      # `blocked.md` to change. An answer the broker would not take goes back
+      # to the page ({#reopen}). Drains finished since the last tick are
       # settled first, so the plan is picked up again in this run.
       #
       # @return [void]
@@ -747,6 +749,7 @@ module OpenLanes
           next unless @runner.claim(subject)
 
           @unblock_tried[ordinal] = answers
+          @unblock_failed.delete(ordinal)
           start_unblock(agent, subject)
         end
       end
@@ -769,7 +772,9 @@ module OpenLanes
           executor: @runner.executor,
           commit: true)
         UI.log("unblocking: every question answered", plan: subject.feature.ordinal.to_s, agent: agent.name)
-        unblock = Unblock.new(ordinal: subject.feature.ordinal.to_s)
+        unblock = Unblock.new(ordinal: subject.feature.ordinal.to_s,
+          agent: agent.name,
+          rounds: Plans::PlanState.for(subject.feature.path).journal(agent.name).size)
         unblock.thread = Thread.new do
           Thread.current.report_on_exception = false
           unblock.outcome = begin
@@ -791,9 +796,12 @@ module OpenLanes
         outcome = unblock.outcome
         if outcome.is_a?(Exception) || !outcome.ok
           note = outcome.is_a?(Exception) ? outcome.message : outcome.note
+          @unblock_failed[unblock.ordinal] = note
           return UI.log("unblock failed: #{note}", level: :warn, plan: unblock.ordinal)
         end
 
+        @unblock_failed.delete(unblock.ordinal)
+        reopen(unblock, outcome) unless outcome.waiting.empty?
         @mutex.synchronize do
           @history.each { |(ordinal, _), entries| entries.reject! { it[:status] == "Blocked" } if ordinal == unblock.ordinal }
         end
@@ -801,6 +809,46 @@ module OpenLanes
         wake!
         UI.log(outcome.cleared? ? "unblocked: blocked.md retired" : "unblock folded #{outcome.folded.size}",
           plan: unblock.ordinal)
+      end
+
+      # A broker that ran cleanly and left an answer under its question did
+      # not accept it: it asks for a), b) or c) and was told something else.
+      # Left there, the page counts the question answered and hides it, and
+      # the dispatcher never retries an answer set it already tried, so the
+      # plan waits on a person who is never asked. The answer comes out and
+      # the question goes back on the page, with what was said and why the
+      # broker would not take it.
+      #
+      # @param unblock [OpenLanes::Engine::Dispatcher::Unblock]
+      # @param outcome [OpenLanes::Lifecycle::Unblocker::Outcome]
+      # @return [void]
+      def reopen(unblock, outcome)
+        path = File.join(outcome.subject.feature.path, "blocked.md")
+        text = File.read(path)
+        answers = Plans::BlockedFile.answers(text)
+        why = refusal(unblock, outcome.subject)
+        outcome.waiting.each do |question|
+          said = Plans::Journal.clip(answers[question.number].to_s.gsub(/<!--.*?-->|^Answered by .*$/, "").split.join(" "))
+          text = Plans::BlockedFile.reject(text, question.number, "> **Answer not accepted:** #{said}\n>\n> #{why}") || text
+          UI.log("answer to B#{question.number} not accepted: #{why}", level: :warn, plan: unblock.ordinal)
+        end
+        File.write(path, text)
+      rescue SystemCallError => e
+        UI.log("could not reopen the unaccepted answers: #{e.message}", level: :warn, plan: unblock.ordinal)
+      end
+
+      # What the broker wrote in its journal during this drain, last line
+      # first, since that is where it says what it did with the answers.
+      #
+      # @param unblock [OpenLanes::Engine::Dispatcher::Unblock]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [String]
+      def refusal(unblock, subject)
+        rounds = Plans::PlanState.for(subject.feature.path).journal(unblock.agent).drop(unblock.rounds.to_i)
+        said = rounds.flat_map(&:entries).last&.text
+        said ? "#{unblock.agent}: #{Plans::Journal.clip(said)}" : "#{unblock.agent} left it unfolded and said nothing"
+      rescue OpenLanes::Error, JSON::ParserError
+        "#{unblock.agent} left it unfolded"
       end
 
       # @param job [OpenLanes::Engine::Dispatcher::Job]
@@ -999,17 +1047,20 @@ module OpenLanes
         bombs = @runner.halted_by.map { it.feature.ordinal.to_s }
         return "idle: halted by 💣 #{bombs.join(", ")}; answer, or resume anyway from the page" unless bombs.empty?
 
-        blocked = waiting
-        return "idle: waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
-
-        unless @verifying.empty?
-          return "idle: #{@verifying.map { |plan, note| "#{plan} #{note}" }.join("; ")}"
+        # Every reason, not the first: a run idle on answers and on a held
+        # plan named only the answers, and the held plan looked forgotten.
+        reasons = []
+        failed = waiting.select { @unblock_failed.key?(it) }
+        blocked = waiting - failed
+        reasons << "waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
+        unless failed.empty?
+          reasons << "unblock failed on #{failed.map { "#{it} (#{@unblock_failed[it]})" }.join(", ")}; " \
+                     "edit blocked.md to try again"
         end
-
+        reasons.concat(@verifying.map { |plan, note| "#{plan} #{note}" })
         held = @runner.held(@runner.dependencies(except: untouchable))
-        return "idle: held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
-
-        "idle: nothing to do"
+        reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
+        reasons.empty? ? "idle: nothing to do" : "idle: #{reasons.join("; ")}"
       end
 
       # Blocked plans in scope that this machine may answer for: on the board

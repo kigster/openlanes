@@ -88,4 +88,31 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
       expect(described_class.replace(text, 3, "x")).to be_nil
     end
   end
+
+  describe ".reject" do
+    it "takes the answer out and puts the note at the top of its question" do
+      expect(described_class.reject(text, 1, "> Not accepted")).to eq(<<~MD)
+        # Blocked
+
+        ## B1 Budget
+
+        > Not accepted
+
+        Seven units will not fit.
+
+        ## B2 Rebase
+
+        Should I rebase first?
+      MD
+    end
+
+    it "keeps the options at the end of the body, where the page reads them" do
+      file = "## B1 Fit?\n\na) Split\nb) Wait\n\n## A1\n\nRebase onto main\n"
+      expect(described_class.reject(file, 1, "> No")).to eq("## B1 Fit?\n\n> No\n\na) Split\nb) Wait\n")
+    end
+
+    it "is nil for a question with no answer" do
+      expect(described_class.reject(text, 2, "x")).to be_nil
+    end
+  end
 end
