@@ -54,7 +54,7 @@ RSpec.describe OpenLanes::Live::MemoryStore do
   end
 
   it "refuses to read through a group nobody created" do
-    expect { store.xreadgroup("cmd", "engine", "me") }.to raise_error(OpenLanes::Live::Unavailable, /NOGROUP/)
+    expect { store.xreadgroup("cmd", "engine", "me") }.to raise_error(OpenLanes::Live::GroupMissing, /NOGROUP/)
   end
 
   it "acknowledges nothing for a group nobody created" do

@@ -152,7 +152,7 @@ module OpenLanes
       # @return [Array<Store::Entry>]
       def xreadgroup(key, group, consumer, id: ">", count: 100)
         locked do
-          state = @groups[key][group] or raise Unavailable, "NOGROUP #{group} on #{key}"
+          state = @groups[key][group] or raise GroupMissing, "NOGROUP #{group} on #{key}"
           stream = live(key) || []
           if id == ">"
             fresh = stream.select { |e| (id_of(e.id) <=> state[:last]).positive? }.first(count)

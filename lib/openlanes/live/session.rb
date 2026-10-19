@@ -26,6 +26,7 @@ module OpenLanes
         @keys = Keys.new(repo:, node: node.name)
         @run_state = RunState.new
         @record = RunRecord.new(store:, keys: @keys, run_state: @run_state)
+        @outage = Outage.new(store:, limit: Config.current.outage_limit)
         @claims = Claims.new(store:, keys: @keys)
         @publisher = Publisher.new(store:,
           keys: @keys,
@@ -69,6 +70,9 @@ module OpenLanes
       # @return [OpenLanes::Live::RunRecord]
       attr_reader :record
 
+      # @return [OpenLanes::Live::Outage]
+      attr_reader :outage
+
       # @return [Proc] the runner's `on_board:`
       def on_board = @publisher.to_proc
 
@@ -82,6 +86,9 @@ module OpenLanes
       def attach(dispatcher)
         @publisher.listen
         @publisher.on_lost { |ordinals| dispatcher.fence(ordinals) }
+        # First, so a tick that finds Redis gone pauses before anything else
+        # on it asks Redis for something (W32).
+        dispatcher.before_tick(&@outage)
         dispatcher.before_tick(&@record)
         dispatcher.before_tick(&@commands)
         dispatcher.mail = Mail.new(store: @store, keys: @keys)

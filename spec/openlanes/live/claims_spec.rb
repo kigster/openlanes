@@ -38,6 +38,21 @@ RSpec.describe OpenLanes::Live::Claims do
     end
   end
 
+  # W32: a Redis that restarted empty lost every claim. That is not another
+  # machine taking the plans, and the agents on them must not be stopped.
+  it "takes back a claim that vanished, and still loses one another node took" do
+    claims.claim("004.00")
+    claims.claim("005.00")
+    store.del(keys.claim("004.00"), keys.claim("005.00"))
+    theirs.claim("005.00")
+
+    aggregate_failures do
+      expect(claims.renew).to eq(%w[005.00])
+      expect(claims.held_by("004.00")).to eq("me:1")
+      expect(store.ttl(keys.claim("004.00"))).to be_between(89, 90)
+    end
+  end
+
   it "releases only its own claims" do
     claims.claim("004.00")
     theirs.claim("005.00")

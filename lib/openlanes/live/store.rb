@@ -178,6 +178,10 @@ module OpenLanes
       # @return [Array<Entry>]
       def xreadgroup(key, group, consumer, id: ">", count: 100)
         entries(call("XREADGROUP", "GROUP", group, consumer, "COUNT", count, "STREAMS", key, id)&.fetch(key, nil))
+      rescue RedisClient::CommandError => e
+        raise unless e.message.start_with?("NOGROUP")
+
+        raise GroupMissing, e.message.lines.first.to_s.strip
       end
 
       # @return [Integer] how many were acknowledged

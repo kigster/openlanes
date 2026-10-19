@@ -176,6 +176,29 @@ module OpenLanes
         @mutex.synchronize { @data["live"] = data }
       end
 
+      # The Redis outage under way (W32): when it began, when the agents were
+      # paused, how many times Redis was asked since. Nil when there is none.
+      #
+      # @return [Hash, nil]
+      def outage = @mutex.synchronize { @data["outage"]&.dup }
+
+      # @param record [Hash, nil] written by the next {#save}
+      # @return [void]
+      def outage=(record)
+        @mutex.synchronize { record ? @data["outage"] = record : @data.delete("outage") }
+      end
+
+      # Outages that ended, resumed or given up on, oldest first.
+      #
+      # @return [Array<Hash>]
+      def outages = @mutex.synchronize { (@data["outages"] || []).map(&:dup) }
+
+      # @param records [Array<Hash>]
+      # @return [void]
+      def outages=(records)
+        @mutex.synchronize { @data["outages"] = records }
+      end
+
       # Pull requests open and waiting on a person, by plan, as the
       # human-mode watch last saw them. Here so `openlanes list-plans`, a
       # process of its own, can say who owes what while the engine runs.

@@ -11,8 +11,17 @@ RSpec.describe OpenLanes::Live::Store, :redis do
   let(:url) { TestRedis.url(15) }
   let(:admin) { RedisClient.config(url:).new_client }
 
+  # Asked through the client, not `redis-cli`: CI's Ruby image runs a Redis
+  # beside it but has no redis-cli, so every example here skipped there, and
+  # any change to store.rb failed the changed-file coverage gate.
+  def answers?
+    admin.call("PING") == "PONG"
+  rescue RedisClient::Error
+    false
+  end
+
   around do |example|
-    if system("redis-cli", "-u", url, "ping", out: File::NULL, err: File::NULL)
+    if answers?
       admin.call("FLUSHDB")
       example.run
       admin.call("FLUSHDB")
@@ -23,6 +32,11 @@ RSpec.describe OpenLanes::Live::Store, :redis do
   end
 
   it_behaves_like "a live store"
+
+  # #59: a Redis restarted empty has no consumer group; Commands makes it again.
+  it "says a missing consumer group is missing, not that Redis is unreachable" do
+    expect { store.xreadgroup("gone", "engine", "me") }.to raise_error(OpenLanes::Live::GroupMissing, /NOGROUP/)
+  end
 
   it "waits for an entry when asked to block, and returns empty when none comes" do
     expect(store.xread("s", id: "$", block: 20)).to eq([])

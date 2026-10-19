@@ -39,9 +39,17 @@ module OpenLanes
       # Extend every claim this node holds. One that lapsed and was taken by
       # another node in the meantime is dropped from {#held}, not fought for.
       #
+      # One that is simply gone is taken back: a Redis that restarted empty
+      # (W32) has lost every claim, and reading that as "another machine
+      # took it" stopped this machine's own agents for plans nobody else
+      # wanted. `SET NX` still loses to a node that got there first.
+      #
       # @return [Array<String>] the ordinals lost
       def renew
-        lost = held.reject { |ordinal| @store.compare_and_expire(@keys.claim(ordinal), @keys.node, @ttl) }
+        lost = held.reject do |ordinal|
+          key = @keys.claim(ordinal)
+          @store.compare_and_expire(key, @keys.node, @ttl) || @store.set(key, @keys.node, ex: @ttl, nx: true)
+        end
         @mutex.synchronize { @held -= lost }
         lost
       end

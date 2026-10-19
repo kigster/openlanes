@@ -147,4 +147,23 @@ RSpec.describe OpenLanes::Execution::Control do
     expect(described_class.overdue?).to be(false)
     expect(File.exist?(path)).to be(false)
   end
+
+  # W32
+  describe "pause! and resume!" do
+    it "asks every agent to wait, then to carry on" do
+      path = described_class.register(@dir, "001.00-luke-backend")
+      described_class.pause!
+      paused = [File.read(path), described_class.paused?]
+      described_class.resume!
+
+      expect([paused, [File.read(path), described_class.paused?]]).to eq([["PAUSE\n", true], ["RESUME\n", false]])
+    end
+
+    it "is lifted by quit!, which must stop the agents whatever their clocks say" do
+      described_class.pause!
+      described_class.quit!
+
+      expect([described_class.paused?, described_class.quit?]).to eq([false, true])
+    end
+  end
 end

@@ -70,6 +70,16 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       expect(apply.map(&:id)).to eq(%w[01JA])
     end
 
+    # #59: a Redis restarted empty takes the consumer group with it, and
+    # XREADGROUP's NOGROUP stopped the engine.
+    it "makes the group again when Redis lost it, and still reads the command" do
+      commands.call(dispatcher)
+      store.del(keys.commands)
+      send_command("hold", plan: "001.00", agent: dispatcher.running.first.task.agent.name, id: "01JB")
+
+      expect(apply.map(&:id)).to eq(%w[01JB])
+    end
+
     it "carries on, and says so, when Redis goes away" do
       allow(store).to receive(:xreadgroup).and_raise(OpenLanes::Live::Unavailable, "gone")
       allow(OpenLanes::UI).to receive(:log)

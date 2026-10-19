@@ -37,6 +37,14 @@ module OpenLanes
       # compacts its session from outside (see {Executor::Handle#compact!}).
       WORDS = { "hold" => HOLD, "wrap_up" => WRAP_UP, "stop" => STOP }.freeze
 
+      # Redis stopped answering (W32): every agent stops at its next safe
+      # point and waits until the file says anything else. Its clock stands
+      # still meanwhile, so the wait costs it no time.
+      PAUSE = "PAUSE"
+
+      # Redis is back: carry on from where the PAUSE found you.
+      RESUME = "RESUME"
+
       # Seconds between {#quit!} and the harness terminating whatever is still
       # running. Long enough to write files and a handoff note; short enough
       # that q means quit rather than "quit eventually".
@@ -46,6 +54,7 @@ module OpenLanes
       @files = []
       @quit = false
       @interrupted = false
+      @paused = false
       @deadline = nil
 
       class << self
@@ -107,6 +116,9 @@ module OpenLanes
         def quit!
           stop!
           @mutex.synchronize {
+            # Quitting overrides a pause: the clocks run again, so an agent
+            # that does not stop is still stopped.
+            @paused = false
             @quit = true
             @deadline ||= UI.monotonic + GRACE
           }
@@ -126,6 +138,25 @@ module OpenLanes
             @deadline ||= UI.monotonic + GRACE
           }
         end
+
+        # Every running agent waits where it is (W32).
+        #
+        # @return [void]
+        def pause!
+          @mutex.synchronize { @paused = true }
+          broadcast(PAUSE)
+        end
+
+        # Every paused agent carries on.
+        #
+        # @return [void]
+        def resume!
+          @mutex.synchronize { @paused = false }
+          broadcast(RESUME)
+        end
+
+        # @return [Boolean] whether agents are paused; their clocks stand still
+        def paused? = @mutex.synchronize { @paused }
 
         # @return [Boolean] whether `q` has been pressed
         def quit? = @mutex.synchronize { @quit }
@@ -172,6 +203,7 @@ module OpenLanes
             @files.each { |f| FileUtils.rm_f(f) }
             @files.clear
             @quit = false
+            @paused = false
             @interrupted = false
             @deadline = nil
           }

@@ -294,6 +294,17 @@ Settled by the author on 2026-10-13.
 - The agent declares it; the page never guesses from the wording. "Should I start it, or skip the integration specs?" starts with "Should I" and is not a yes/no question, and a guess that offers Yes to it would send an answer that means nothing.
 - The answer reaches the agent as the plain word (`yes` or `no`), so an agent can branch on it without parsing prose. The agents' prompts gain one line: ask yes/no questions as yes/no, and mark them.
 
+### W32. A lost Redis pauses the run; it does not end it
+
+Settled by the author on 2026-10-18 (issue #59).
+
+- **A blip is not an outage.** Redis back within 10 seconds changes nothing.
+- **Past 10 seconds, every agent is paused.** The engine writes `PAUSE` into each running agent's control file; the agent finishes the write it is in and waits, rereading the file, until it says `RESUME`. Its clock stands still while it waits, so no agent is stopped for time it spent paused. Nothing new starts: no plan claim can be checked.
+- **The outage is recorded** in `.plans/openlanes-state.json` as it happens (`outage`: since, paused at, attempts, last attempt), and moved to `outages` when it ends, so a person can see why the agents stood still even if the run does not survive.
+- **Redis is asked again on the Fibonacci numbers**: 1, 1, 2, 3, 5, 8 … seconds apart, so a short outage is noticed at once and a long one is not hammered. The last ask falls exactly at the limit.
+- **The limit is `redis_outage_hours`** in `.openlanes.yml`, one hour by default, any positive number. Reached, the run shuts down as `q` does, and says why.
+- **A Redis that comes back empty is not an error.** It lost the commands stream's consumer group, which is made again, and every plan claim, which this machine takes back with `SET NX` rather than reading as another machine having taken it.
+
 ### W12. Order of work
 
 0. Plan `003.00` lands first, or at least its phases B and C: the JSON mailbox, Redis Streams, the hook and `last-known-state`.
