@@ -144,6 +144,39 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
   end
 
+  describe "#reject when the cap moves mid-run" do
+    subject(:outcome) do
+      described_class.new(root: repo_root,
+        publisher: OpenLanes::Vcs::Publisher.new(root: repo_root, dry_run: false),
+        github: OpenLanes::Vcs::GitHub.new,
+        outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents:),
+        agents:,
+        review:,
+        coverage_gate: gate,
+        max_rejections: -> { OpenLanes::Config.current.max_rejections },
+        arbitration:,
+        screenshots: ->(dir) { OpenLanes::Engine::Verification::Screenshots.new(dir:, which: ->(_) { false }) },
+        clock: -> { now })
+    end
+
+    before do
+      chewie_left("rejected", step: 2)
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+      outcome
+      # Q1 answered mvp after the run started, with no merge.max_rejections.
+      File.write(File.join(repo_root, OpenLanes::Config::FILE), "desired_codebase_quality: mvp\n")
+    end
+
+    it "reads the cap at the rejection, so mvp's 1 makes the first one the last" do
+      result = Dir.chdir(repo_root) { outcome.reject(checkout:, plan:, pull: pr, round:) }
+      aggregate_failures do
+        expect(result.note).to include("rejected 1 of 1")
+        expect(arbitration).to have_received(:call).with(plan: anything, count: 1, max: 1)
+      end
+    end
+  end
+
   describe "#reject with a reason chewie could not give" do
     let(:failed) do
       OpenLanes::Engine::Verification::AppSession::Failed.new(process: "web",

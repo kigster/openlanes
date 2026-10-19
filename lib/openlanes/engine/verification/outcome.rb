@@ -116,7 +116,9 @@ module OpenLanes
         # @param agents [OpenLanes::Agents::Registry] whose rejections count
         # @param review [OpenLanes::Vcs::Review]
         # @param coverage_gate [#call]
-        # @param max_rejections [Integer] see {Config#max_rejections}
+        # @param max_rejections [Integer, #call] see {Config#max_rejections};
+        #   a callable is asked at every rejection, so a quality answered or
+        #   edited mid-run moves the cap when it moves the verdict
         # @param arbitration [#call] given `plan:, count:, max:` at the cap
         # @param screenshots [#call] a round's folder to a {Screenshots}
         # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
@@ -433,8 +435,9 @@ module OpenLanes
         # @return [Result]
         def send_back(plan, pull, body, labelled, counted:)
           count = rejections(plan)
-          tally = counted ? "rejected #{count} of #{@max}" : "sent back for setup, not counted (#{count} of #{@max})"
-          @arbitration.call(plan:, count:, max: @max) if counted && count >= @max
+          max = @max.respond_to?(:call) ? @max.call : @max
+          tally = counted ? "rejected #{count} of #{max}" : "sent back for setup, not counted (#{count} of #{max})"
+          @arbitration.call(plan:, count:, max:) if counted && count >= max
           moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
             pr: number_of(pull),
             kind: :rejected,

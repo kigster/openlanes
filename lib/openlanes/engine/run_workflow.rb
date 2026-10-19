@@ -464,7 +464,9 @@ module OpenLanes
           github:,
           outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
           agents: Agents::Registry.new,
-          max_rejections: config.max_rejections)
+          # Read live, like `quality:` below: U3 asks the quality mid-run, and
+          # an answer of mvp lowers the cap to 1 as soon as it is given.
+          max_rejections: -> { Config.current.max_rejections })
         Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
       end
 
