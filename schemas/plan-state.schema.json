@@ -28,6 +28,18 @@
       "minimum": 0
     },
     "updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "quality_ask": {
+      "description": "R4's question, desired_codebase_quality, asked once per project on the first review-ok-not-perfect pull request while .openlanes.yml has no key; settled when a person answers.",
+      "type": "object",
+      "required": ["asked_at"],
+      "additionalProperties": false,
+      "properties": {
+        "asked_at": { "type": "string", "format": "date-time" },
+        "answer": { "type": "string", "enum": ["high", "mvp"] },
+        "by": { "type": "string", "minLength": 1 },
+        "settled_at": { "type": "string", "format": "date-time" }
+      }
+    },
     "resume_until": {
       "description": "Until when a 💣 on this plan does not halt the run: the control room's Resume anyway for 24 h.",
       "type": ["string", "null"],

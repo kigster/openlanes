@@ -98,8 +98,8 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     it "takes every value as a flag" do
-      run(project: "Acme", lane: "quick", frontend: false, jobs: "4")
-      expect(written).to eq("project" => "Acme", "lane" => "quick", "frontend" => false, "jobs" => 4)
+      run(project: "Acme", lane: "quick", frontend: false, jobs: "4", quality: "mvp")
+      expect(written).to eq("project" => "Acme", "lane" => "quick", "frontend" => false, "jobs" => 4, "desired_codebase_quality" => "mvp")
     end
 
     it "writes a file every other command can read" do
@@ -114,6 +114,11 @@ RSpec.describe OpenLanes::CLI::Init do
     it "asks nothing" do
       run
       expect(TTY::Prompt).not_to have_received(:new)
+    end
+
+    it "leaves desired_codebase_quality unset, to be asked on the first ok-not-perfect review" do
+      run
+      expect(OpenLanes::Config.load(repo)).to have_attributes(quality_unset?: true)
     end
   end
 
@@ -162,16 +167,17 @@ RSpec.describe OpenLanes::CLI::Init do
       allow(prompt).to receive(:ask).with(/Plans to run at once/).and_return("3")
       allow(prompt).to receive(:select).with(/Default lane/, %w[full plan quick]).and_return("plan")
       allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"]).and_return("NO")
+      allow(prompt).to receive(:select).with(/desired quality of the codebase/, hash_including).and_return("high")
       allow(prompt).to receive(:select).with(/\AWrite /, %w[YES NO]).and_return(answer)
     end
 
     it "asks for each value and writes the answers" do
       run
-      expect(written).to eq("project" => "Acme", "lane" => "plan", "frontend" => false, "jobs" => 3)
+      expect(written).to eq("project" => "Acme", "lane" => "plan", "frontend" => false, "jobs" => 3, "desired_codebase_quality" => "high")
     end
 
     it "asks only for what no flag gave" do
-      run(project: "Flagged", lane: "quick", frontend: true, jobs: "2")
+      run(project: "Flagged", lane: "quick", frontend: true, jobs: "2", quality: "mvp")
       expect(prompt).not_to have_received(:ask)
     end
 

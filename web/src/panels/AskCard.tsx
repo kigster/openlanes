@@ -6,7 +6,7 @@ import { Feedback } from "./feedback";
 import { renderMarkdown } from "./markdown";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { isWord, useQuestion, type Ask } from "./question";
-import { ariaSendKeys, isSendKey, sendKeys, type SendCommand } from "./support";
+import { ariaSendKeys, isSendKey, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 const FADE_MS = 500;
 const capital = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
@@ -134,7 +134,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   );
   // The harness's own request (E1) takes one of its options and nothing else: no words, and no hold, since
   // nothing is blocked to hold.
-  const extension = question.kind === "extension";
+  const extension = optionsOnly(question);
   const choices = (children?: ReactNode) => q.options && (
     <Choices
       options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords}

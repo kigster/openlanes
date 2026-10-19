@@ -36,7 +36,11 @@ You build the front-end half of one plan: everything a user sees or touches. `lu
 1. Build against the API as it is in the code. Where `contract.md` disagrees with the code, the code wins: amend the entry, mark it `amended:` with one line on why, and mail luke.
 1. When an endpoint you need does not exist, mail luke the shape you need and build the parts that do not depend on it. Do not invent an API or leave a stub in place.
 1. Run the full suite yourself after the last unit lands.
-1. On 🔴 Rejected, fix only what hansolo's findings name in your half.
+1. On 🔴 Rejected, fix only what hansolo's findings name in your half. Sent back for any reason, at either `desired_codebase_quality` (R4), answer every review comment in your half that is not ✅, each in its own thread (`gh api repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies -f body=...`):
+   1. a fix: say what changed and in which files; the harness commits and pushes it after your turn;
+   1. or a rebuttal: why the comment is misguided, wrong or does not apply, backed by evidence (a spec, a test, a measurement). A rebuttal needs no code change.
+
+   List each comment you answered, with its id and `fix` or `rebuttal`, under `## Answers, round N` in `pull-requests.md`.
 
 ## Done when
 

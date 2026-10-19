@@ -68,14 +68,103 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "leaves a verdict other than review-approved at 👀, finished, saying why" do
-      allow(outcome).to receive(:labels).and_return(%w[review-ok-not-perfect])
+    it "leaves a verdict that goes nowhere at 👀, finished, saying why" do
+      allow(outcome).to receive(:labels).and_return(%w[review-in-progress])
 
       attempts, = run(executor("approved"), %w[hansolo-reviewer])
 
       aggregate_failures do
         expect(plan.status.key).to eq(:in_review)
-        expect(attempts.last.note).to include("awaiting merge", "labelled review-ok-not-perfect", "only review-approved")
+        expect(attempts.last.note).to include("awaiting merge", "labelled review-in-progress", "only review-approved")
+      end
+    end
+
+    describe "a review-ok-not-perfect verdict (R4)" do
+      let(:driver) { OpenLanes::Engine::Verification::Driver.new(outcome:, worktree:, app:, supervisor_factory: factory, quality:) }
+
+      before { allow(outcome).to receive(:labels).and_return(%w[review-ok-not-perfect]) }
+
+      context "with desired_codebase_quality unset" do
+        let(:quality) { nil }
+
+        it "stays 👀 and says the key is to be set" do
+          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(plan.status.key).to eq(:in_review)
+            expect(attempts.last.note).to include("labelled review-ok-not-perfect", "desired_codebase_quality is not set", "asked in the drawer")
+            expect(OpenLanes::Plans::PlanState.for(plan.feature.path).quality_ask).to include("asked_at")
+          end
+        end
+      end
+
+      context "with the key answered mid-run" do
+        let(:answers) { [nil, :mvp] }
+        let(:quality) { -> { answers.first } }
+
+        it "reads the quality afresh at every hand-off" do
+          run(executor("approved"), %w[hansolo-reviewer])
+          expect(plan.status.key).to eq(:in_review)
+
+          answers.shift
+          expect(driver.hand_off(plan)).to include("on to 🧪 verification")
+          expect(plan.status.key).to eq(:verifying)
+        end
+      end
+
+      context "with high" do
+        let(:quality) { :high }
+
+        before do
+          allow(outcome).to receive(:send_back_for_quality) do |plan:, pull:|
+            plan.machine.promote!(:rejected)
+            OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected,
+              note: "verification rejected PR ##{pull.number}, rejected 1 of 2; desired_codebase_quality is high",
+              to: :rejected)
+          end
+        end
+
+        it "goes back to 🔴 for luke and rey, counted as a rejection by the outcome" do
+          attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(outcome).to have_received(:send_back_for_quality).once
+            expect(plan.status.key).to eq(:rejected)
+            expect(attempts.last).to have_attributes(to: :rejected)
+            expect(attempts.last.note).to include("back to 🔴", "rejected 1 of 2", "desired_codebase_quality is high")
+            expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
+          end
+        end
+      end
+
+      # Dispatcher#approved takes a 🔴 after the hand-off as the hand-off's
+      # own result. Only the high path above may land there.
+      %i[mvp].push(nil).each do |level|
+        context "with #{level.inspect}, the only other qualities" do
+          let(:quality) { level }
+
+          it "never sends the plan to 🔴" do
+            attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+            aggregate_failures do
+              expect(plan.status.key).not_to eq(:rejected)
+              expect(attempts.last.to).not_to eq(:rejected)
+            end
+          end
+        end
+      end
+
+      context "with mvp" do
+        let(:quality) { :mvp }
+
+        it "goes on to 🧪 as an approval does" do
+          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(plan.status.key).to eq(:verifying)
+            expect(attempts.last.note).to include("on to 🧪 verification")
+          end
+        end
       end
     end
 

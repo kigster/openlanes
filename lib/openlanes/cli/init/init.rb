@@ -21,6 +21,9 @@ module OpenLanes
         type: :boolean,
         desc: "Whether plans have a front end; leave it out to let each plan decide"
       option :jobs, aliases: ["-j"], desc: "How many plans `openlanes run` works on at once (default: cores - 2)"
+      option :quality,
+        values: Config::QUALITIES.map(&:to_s),
+        desc:   "desired_codebase_quality: high or mvp (R4); leave it out to be asked on the first ok-not-perfect review"
       option :yes,
         type:    :boolean,
         default: false,
@@ -84,7 +87,7 @@ module OpenLanes
       # @return [OpenLanes::Setup::Machine]
       def machine = @machine ||= OpenLanes::Setup.machine
 
-      # The four values, each from its flag, else asked on a terminal, else
+      # The five values, each from its flag, else asked on a terminal, else
       # its default. The result is parsed back as the file would be, so
       # `init` cannot write a file every other command then refuses.
       #
@@ -97,8 +100,9 @@ module OpenLanes
         lane = options[:lane] || (ask ? prompt.select("Default lane for new plans:", Plans::Spec::LANES.map(&:to_s)) : "full")
         frontend = options.key?(:frontend) ? options[:frontend] : (ask_frontend if ask)
         jobs = options[:jobs] || (prompt.ask("Plans to run at once (blank: cores - 2):") if ask)
+        quality = options[:quality] || (ask_quality if ask)
 
-        draft = Config.new(project:, lane: lane.to_sym, frontend:, jobs: count(jobs))
+        draft = Config.new(project:, lane: lane.to_sym, frontend:, jobs: count(jobs), desired_codebase_quality: quality&.to_sym)
         Config.parse(draft.to_yaml, path: File.join(root, Config::FILE))
       end
 
@@ -106,6 +110,17 @@ module OpenLanes
       def ask_frontend
         choice = prompt.select("Do plans have a front end?", ["each plan decides", "YES", "NO"])
         { "YES" => true, "NO" => false }[choice]
+      end
+
+      # R4's question. Left unanswered under -y, so the first
+      # `review-ok-not-perfect` pull request asks it instead.
+      #
+      # @return [String]
+      def ask_quality
+        prompt.select("Please indicate the desired quality of the codebase (this affects the severity of items " \
+                      "found during review that will require rework):",
+          { "High quality, but slower and more expensive: a review-ok-not-perfect PR returns to developers" => "high",
+            "Good enough, but faster and cheaper, think MVP: review-ok-not-perfect is accepted"             => "mvp" })
       end
 
       # @param value [String, Integer, nil]

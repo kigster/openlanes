@@ -34,9 +34,13 @@ module OpenLanes
         # @param supervisor_factory [#call] see {AppSession#initialize}
         # @param clock [#call] monotonic seconds
         # @param interval [Numeric] seconds between looks at CI
+        # @param quality [Symbol, nil, #call] {Config#desired_codebase_quality},
+        #   nil while the project is still to be asked (R4); a callable is
+        #   asked each time, so an answer given mid-run counts at once
         def initialize(outcome:, worktree:, app: nil, supervisor_factory: Apps.method(:supervisor),
-          clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, interval: INTERVAL)
+          clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, interval: INTERVAL, quality: nil)
           @outcome = outcome
+          @quality = quality
           @worktree = worktree
           @app = app
           @factory = supervisor_factory
@@ -52,8 +56,10 @@ module OpenLanes
         attr_reader :outcome
 
         # hansolo approved: on to 🧪, when the pull request carries a verdict
-        # that goes on to verification ({Verification::FROM_REVIEW}) and is
-        # built from the branch chewie would be run in. The checkout's branch
+        # that goes on to verification ({Verification.from_review?}) and is
+        # built from the branch chewie would be run in. A
+        # `review-ok-not-perfect` one goes back to 🔴 under `high` (R4), and
+        # stays 👀 while the project has not said which quality it wants. The checkout's branch
         # is derived from the plan, and an adopted pull request may be built
         # from any other; verifying it there would test the wrong code.
         #
@@ -65,7 +71,10 @@ module OpenLanes
 
           pull = open_pull(subject) or return nil
           labels = @outcome.labels(pull)
-          unless Verification.from_review?(labels)
+          sent = quality_says(subject, pull, labels)
+          return sent if sent
+
+          unless Verification.from_review?(labels, quality:)
             verdict = (labels & Plans::ReviewLabel.names).join(", ")
             return "stays 👀: PR ##{pull.number.to_s.delete("#")} is labelled #{verdict.empty? ? "nothing" : verdict}, " \
                    "and only #{FROM_REVIEW.map(&:name).join(", ")} goes on to verification"
@@ -185,6 +194,39 @@ module OpenLanes
         def join = @thread&.join
 
         private
+
+        # What R4 does with a `review-ok-not-perfect` pull request, short of
+        # verifying it.
+        #
+        # @return [String, nil] what happened; nil when the quality lets it
+        #   go on, or the verdict is not the one the quality decides
+        def quality_says(subject, pull, labels)
+          now = quality
+          return nil unless Verification.ok_not_perfect?(labels) && now != :mvp
+
+          number = pull.number.to_s.delete("#")
+          return unasked(subject, number) if now.nil?
+
+          return nil unless subject.machine.may?(:rejected)
+
+          # Counted, as any rejection is, so a PR labelled the same round
+          # after round reaches `merge.max_rejections` and the arbitrator.
+          result = @outcome.send_back_for_quality(plan: subject, pull:)
+          "back to 🔴: #{result.note}; luke and rey answer every comment that is not ✅"
+        end
+
+        # @return [Symbol, nil]
+        def quality = @quality.respond_to?(:call) ? @quality.call : @quality
+
+        # The key is missing: R4's question goes to a person, once per
+        # project, and the plan waits on it at 👀.
+        #
+        # @return [String]
+        def unasked(subject, number)
+          asked = QualityQuestion.ask!(subject.feature.path) ? "asked in the drawer" : "already asked on another plan"
+          "stays 👀: PR ##{number} is labelled #{Verification::ON_QUALITY.name}, " \
+            "and desired_codebase_quality is not set in #{Config::FILE}; say high or mvp (#{asked})"
+        end
 
         # One plan's look, as it stood when the look began.
         Pending = Data.define(:plan, :subject, :round, :pull, :checkout)

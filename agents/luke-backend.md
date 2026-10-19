@@ -42,7 +42,11 @@ When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `
 1. Run the full suite yourself after the last unit lands.
 1. If `.openlanes.yml` has no `coverage:` section, add one for this stack (M15), without disturbing its other keys. `command` runs the whole suite and `minimum` is the lowest line percentage that merges (95 unless the plan says otherwise). Then give exactly one of: `report_command`, a command whose STDOUT is the line percentage as a bare number (e.g. `cat coverage/coverage.json | jq '.total.lines.percent'`); or `report`, the report file's path, with `format`, one of `lcov`, `cobertura`, `istanbul`, `simplecov`. Run both commands once and check the figure prints. Never lower an existing `minimum`.
 1. When the contract changes, edit the entry in place, mark it `amended:` with one line on why, and mail rey. When rey asks for something, answer in the mailbox. Do not wait on replies: write your assumption into `contract.md`, mail it, and carry on.
-1. On 🔴 Rejected, fix only what hansolo's findings name in your half.
+1. On 🔴 Rejected, fix only what hansolo's findings name in your half. Sent back for any reason, at either `desired_codebase_quality` (R4), answer every review comment in your half that is not ✅, each in its own thread (`gh api repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies -f body=...`):
+   1. a fix: say what changed and in which files; the harness commits and pushes it after your turn;
+   1. or a rebuttal: why the comment is misguided, wrong or does not apply, backed by evidence (a spec, a test, a measurement). A rebuttal needs no code change.
+
+   List each comment you answered, with its id and `fix` or `rebuttal`, under `## Answers, round N` in `pull-requests.md`.
 
 ## Done when
 

@@ -116,7 +116,9 @@ module OpenLanes
         # @param agents [OpenLanes::Agents::Registry] whose rejections count
         # @param review [OpenLanes::Vcs::Review]
         # @param coverage_gate [#call]
-        # @param max_rejections [Integer] see {Config#max_rejections}
+        # @param max_rejections [Integer, #call] see {Config#max_rejections};
+        #   a callable is asked at every rejection, so a quality answered or
+        #   edited mid-run moves the cap when it moves the verdict
         # @param arbitration [#call] given `plan:, count:, max:` at the cap
         # @param screenshots [#call] a round's folder to a {Screenshots}
         # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
@@ -236,6 +238,25 @@ module OpenLanes
           when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
           else gated(checkout:, plan:, pull:, round:, verdict: seen.verdict)
           end
+        end
+
+        # A `review-ok-not-perfect` pull request under `high` (R4), sent back
+        # to the builders without verifying it. Signed and counted as a
+        # rejection: the builders may answer every comment with a rebuttal
+        # and no change, hansolo may label it the same again, and an
+        # uncounted send-back would then go round for ever, never reaching
+        # `merge.max_rejections` or the arbitrator.
+        #
+        # @param plan [OpenLanes::Plans::Subject] read fresh, at 👀
+        # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @return [Result]
+        def send_back_for_quality(plan:, pull:)
+          why = "PR ##{number_of(pull)} is labelled #{ON_QUALITY.name}, and desired_codebase_quality is high"
+          sign_for_chewie(plan, Verification.round_for(plan.feature.path), why, counted: true)
+          body = <<~MARKDOWN
+            #{why}: reply in the thread of every review comment that is not ✅, with a fix or a backed-up rebuttal (R4).
+          MARKDOWN
+          send_back(plan, pull, body, nil, counted: true)
         end
 
         # Why this checkout is not the pull request's code, asked before
@@ -414,13 +435,17 @@ module OpenLanes
         # @return [Result]
         def send_back(plan, pull, body, labelled, counted:)
           count = rejections(plan)
-          tally = counted ? "rejected #{count} of #{@max}" : "sent back for setup, not counted (#{count} of #{@max})"
-          @arbitration.call(plan:, count:, max: @max) if counted && count >= @max
+          max = @max.respond_to?(:call) ? @max.call : @max
+          tally = counted ? "rejected #{count} of #{max}" : "sent back for setup, not counted (#{count} of #{max})"
+          @arbitration.call(plan:, count:, max:) if counted && count >= max
           moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
             pr: number_of(pull),
             kind: :rejected,
             comments: [{ author: AGENT, url: pull.url.to_s, body: }]))
-          label = labelled.refused? ? "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}" : Plans::ReviewLabel::REJECTED.name
+          label = if labelled.nil? then "labels left as hansolo set them"
+                  elsif labelled.refused? then "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}"
+                  else Plans::ReviewLabel::REJECTED.name
+                  end
           Result.new(kind: :rejected,
             note: "verification #{counted ? "rejected" : "sent back"} PR ##{number_of(pull)}, #{tally}; #{label}" \
                   "#{"; #{moved.note}" if moved}",
