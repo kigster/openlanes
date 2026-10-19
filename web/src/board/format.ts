@@ -1,5 +1,5 @@
 // Number and time formats, exactly as the mockup prints them, so counters read the same everywhere.
-import type { Node, Snapshot } from "../api/types";
+import type { Node, Snapshot, Status, UnackedMail } from "../api/types";
 
 /** 1.24M, 86.0k, 412. */
 export const fmt = (n: number): string =>
@@ -18,6 +18,23 @@ export const span = (s: number): string => {
 };
 
 export const dollars = (n: number): string => "$" + n.toFixed(2);
+
+/**
+ * What the badge's tooltip says: how many, who is waiting on whom, and that nothing waits on it. A count alone left a
+ * person guessing whether the red pill was something to fix.
+ */
+export const unackedTip = (count: number, mail: UnackedMail[]): string => {
+  const lines = mail.map(m => `${m.from} → ${m.to}: ${m.count}, oldest ${m.since}`);
+  return [
+    `${count} ${count === 1 ? "message" : "messages"} between this plan's agents that the recipient has not acked yet:`,
+    ...lines,
+    "",
+    "A warning only: no round waits on it. It clears when the recipient acks the mail, usually on its next round.",
+  ].join("\n");
+};
+
+/** A status emoji's tooltip: its name, then what it means, so ⭕ beside a plan is not left to be guessed. */
+export const statusTip = (status: Status): string => (status.note ? `${status.label}: ${status.note}` : status.label);
 
 /** Plan numbers are plain NNN (W21) when the ordinal is a whole plan, 001.00; a sub-plan keeps its suffix. */
 export const planId = (ordinal: string): string => (ordinal.endsWith(".00") ? ordinal.slice(0, -3) : ordinal);
