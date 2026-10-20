@@ -107,7 +107,7 @@ module OpenLanes
         return :merged if pull.merged?
         return :closed unless pull.open?
 
-        label = ReviewLabel::ALL.rfind { labels.include?(it.name) }
+        label = ReviewLabel::ALL.reverse.find { labels.include?(it.name) }
         label ? key_for(label.name) : UNLABELLED
       end
 

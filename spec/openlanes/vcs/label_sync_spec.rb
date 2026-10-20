@@ -25,12 +25,10 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
           "review-vulnerability"  => :create,
           "review-ok-not-perfect" => :create,
           "review-approved"       => :create,
-          "ready-to-merge"        => :create,
-          "auto-merged"           => :create,
-          "merge-manually"        => :create
+          "ready-to-merge"        => :create
         )
         expect(github).to have_received(:recolour_label).with(labels::REJECTED, repo: "o/r")
-        expect(github).to have_received(:ensure_label).exactly(7).times
+        expect(github).to have_received(:ensure_label).exactly(5).times
       end
     end
 
@@ -44,7 +42,7 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
       changes = sync.call(dry_run: true)
 
       aggregate_failures do
-        expect(changes.count(&:write?)).to eq(8)
+        expect(changes.count(&:write?)).to eq(6)
         expect(github).not_to have_received(:ensure_label)
         expect(github).not_to have_received(:recolour_label)
       end

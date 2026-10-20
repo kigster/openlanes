@@ -89,12 +89,11 @@ module OpenLanes
       # @return [Boolean]
       def serves?(lane) = lanes.empty? || lanes.include?(lane.to_sym)
 
-      # The word after the last hyphen: `researcher`, `backend`, and `planner`
-      # for `luthen-rael-planner`, whose name has two words before its role.
-      # What the screen's agent column shows, the name being too long for it.
+      # The word after the hyphen: `researcher`, `backend`. What the screen's
+      # agent column shows, the name being too long for it.
       #
       # @return [String]
-      def role = name.split("-").last.to_s
+      def role = name.split("-", 2).last.to_s
     end
 
     # More rounds than this costs tokens and buys nothing: an agent that has

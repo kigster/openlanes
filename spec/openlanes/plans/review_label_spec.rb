@@ -3,7 +3,7 @@
 # R3 in docs/decisions/decisions-on-three-reviewers-and-auto-merge.md is the
 # source; these examples hold the code to it, colour for colour.
 RSpec.describe OpenLanes::Plans::ReviewLabel do
-  it "carries the seven R3 labels and palpatine's two verdicts (P2), with their colours, in order" do
+  it "carries the seven R3 labels with their colours, in order" do
     expect(described_class::ALL.to_h { |l| [l.name, l.colour] }).to eq(
       "ready-for-review"      => "c2e0c6",
       "review-in-progress"    => "FFBE20",
@@ -11,14 +11,12 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
       "review-vulnerability"  => "FF0050",
       "review-ok-not-perfect" => "E8E890",
       "review-approved"       => "109a10",
-      "ready-to-merge"        => "5319e7",
-      "auto-merged"           => "953384",
-      "merge-manually"        => "0e8a16"
+      "ready-to-merge"        => "5319e7"
     )
   end
 
-  it "counts the passing verdicts, and everything after them, as passing" do
-    expect(described_class.passing.map(&:name)).to eq(%w[review-ok-not-perfect review-approved ready-to-merge auto-merged merge-manually])
+  it "counts exactly three labels as passing" do
+    expect(described_class.passing.map(&:name)).to eq(%w[review-ok-not-perfect review-approved ready-to-merge])
   end
 
   it "keeps no M3 label that R3 retired or renamed" do
