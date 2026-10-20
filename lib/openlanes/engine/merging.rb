@@ -24,9 +24,14 @@ module OpenLanes
       # The two verdicts palpatine may give.
       VERDICTS = %w[auto manual].freeze
 
-      # A verdict in a signature note, with or without the pull request it
-      # is for: `auto`, `manual #13`, `auto #12, manual #13`.
-      VERDICT = /\b(auto|manual)\b(?:\s+#?(\d+))?/i
+      # One verdict, with or without the pull request it is for.
+      VERDICT = /(auto|manual)(?:\s+#?(\d+))?/i
+
+      # The only notes read at all: `auto`, `manual #13`, `auto #12, manual #13`,
+      # with at most one bare verdict, first. Matched against the whole note,
+      # because a scan found the `auto` in "do not auto-merge" and would have
+      # merged the plan.
+      NOTE = /\A\s*#{VERDICT}(?:\s*,\s*(?:auto|manual)\s+#?\d+)*\s*\z/i
 
       # How long a rebased sibling's zero checks still mean "CI has not
       # registered on the new head yet", as {Verification::Outcome::NO_CHECKS_GRACE}
@@ -52,18 +57,24 @@ module OpenLanes
         # The verdict for each pull request, read off palpatine's note. A
         # bare verdict covers every pull request it does not name; a pull
         # request the note says nothing about, or a note that is missing or
-        # says neither word, is `manual` (P4): a wrong `manual` costs a
+        # not in the {NOTE} shape, is `manual` (P4): a wrong `manual` costs a
         # person ten minutes, a wrong `auto` can ship an outage.
         #
         # @param note [String, nil]
         # @param numbers [Array<Integer>] the `ready-to-merge` pull requests
         # @return [Hash{Integer => String}]
         def verdicts(note, numbers)
+          return numbers.to_h { [it, "manual"] } unless readable?(note)
+
           found = note.to_s.scan(VERDICT).map { |word, number| [word.downcase, number&.to_i] }
           named = found.select(&:last).to_h { |word, number| [number, word] }
           bare = found.find { |_, number| number.nil? }&.first || "manual"
           numbers.to_h { |n| [n, named.fetch(n, bare)] }
         end
+
+        # @param note [String, nil]
+        # @return [Boolean] whether the note is in the {NOTE} shape
+        def readable?(note) = note.to_s.match?(NOTE)
       end
 
       # @param github [Vcs::GitHub]
@@ -89,6 +100,11 @@ module OpenLanes
       # @return [Result]
       def assess(subject, note)
         numbers = subject.pull_requests.select(&:open?).map { number_of(it) }
+        unless note.nil? || self.class.readable?(note)
+          UI.log("palpatine's note is not a verdict list, so every pull request is manual: #{note.inspect}",
+            level: :warn,
+            plan:  subject.feature.ordinal.to_s)
+        end
         Plans::PlanState.for(subject.feature.path).assess!(self.class.verdicts(note, numbers), at: @clock.call)
         advance(subject)
       end
@@ -126,7 +142,7 @@ module OpenLanes
       def step(subject, pull, record)
         number = number_of(pull)
         repo = Vcs::GitHub.repo_of(pull.url)
-        live = @github.pull_request(number.to_s)
+        live = @github.pull_request(pull.url || number.to_s)
         return settled_by_someone(subject, number, live[:state]) unless live[:open]
 
         machine = Plans::PullRequestMachine.new(pull, live[:labels])
@@ -136,7 +152,7 @@ module OpenLanes
         return leave(machine, number, repo, "palpatine said manual") if verdict == "manual"
         return leave(machine, number, repo, "merge.by is #{merge_by}") unless merge_by == :auto
 
-        merge(subject, machine, number, repo, record)
+        merge(subject, machine, number, repo, record, live[:head])
       end
 
       # Merged or closed on GitHub, by the engine a moment ago or by a person
@@ -162,17 +178,23 @@ module OpenLanes
 
       # Merge once CI is green on the head as it stands, then rebase the
       # siblings. A merge GitHub refuses, a conflict among the reasons, is
-      # left for a person rather than retried every poll.
+      # left for a person rather than retried every poll. So is one with no
+      # CI at all: nobody watches this merge, and no checks is no evidence.
+      # The merge names the head read before the checks, so a push in
+      # between makes GitHub refuse it rather than merge a head CI never saw.
       #
+      # @param head [String, nil] the head commit, as read before the checks
       # @return [Result, nil]
-      def merge(subject, machine, number, repo, record)
+      def merge(subject, machine, number, repo, record, head)
         ci = Vcs::CiGate.verdict(@github.checks(number:, repo:))
         ci = :registering if ci == :none && registering?(record, number)
         return Result.new(note: "PR ##{number} waits on CI before it merges") if %i[pending registering].include?(ci)
         return reject(subject, number, repo, "CI is red on PR ##{number} after its rebase onto main.") if ci == :red
+        return leave(machine, number, repo, "no CI checks ran") if ci == :none
+        return leave(machine, number, repo, "its head commit could not be read") if head.to_s.empty?
 
         begin
-          @github.merge(number:, repo:)
+          @github.merge(number:, repo:, head:)
         rescue OpenLanes::Error => e
           return leave(machine, number, repo, e.message)
         end

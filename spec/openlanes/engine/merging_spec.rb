@@ -43,9 +43,18 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(described_class.verdicts("auto #12, manual #13", [12, 13, 14])).to eq(12 => "auto", 13 => "manual", 14 => "manual")
         expect(described_class.verdicts("Auto", [1, 2])).to eq(1 => "auto", 2 => "auto")
-        expect(described_class.verdicts("manual #2; auto", [1, 2])).to eq(1 => "auto", 2 => "manual")
+        expect(described_class.verdicts("auto, manual #2", [1, 2])).to eq(1 => "auto", 2 => "manual")
         expect(described_class.verdicts(nil, [1])).to eq(1 => "manual")
         expect(described_class.verdicts("looks fine to me", [1])).to eq(1 => "manual")
+      end
+    end
+
+    it "reads anything but a bare verdict list as manual for every pull request" do
+      aggregate_failures do
+        expect(described_class.verdicts("Do not auto-merge; drops a column.", [1, 2])).to eq(1 => "manual", 2 => "manual")
+        expect(described_class.verdicts("Risky: do not auto-merge #13. manual", [13])).to eq(13 => "manual")
+        expect(described_class.verdicts("manual #2; auto", [1, 2])).to eq(1 => "manual", 2 => "manual")
+        expect(described_class.verdicts("auto #1, manual", [1, 2])).to eq(1 => "manual", 2 => "manual")
       end
     end
   end
@@ -139,6 +148,44 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         expect(merging.assess(plan, "auto").note).to eq("PR #1 waits on CI before it merges")
         expect(merges).to be_empty
         expect(labels).to eq(%w[ready-to-merge])
+      end
+    end
+
+    it "leaves for a person a pull request no CI ran on" do
+      edit_gh { it["prs"]["1"]["checks"] = [] }
+      result = merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(result.note).to eq("PR #1 merge-manually: no CI checks ran")
+        expect(merges).to be_empty
+        expect(labels).to eq(%w[merge-manually])
+      end
+    end
+
+    it "merges only the head CI was read for, and leaves a moved branch for a person" do
+      edit_gh { it["prs"]["1"]["head"] = "moved" }
+      github = OpenLanes::Vcs::GitHub.new
+      allow(github).to(receive(:pull_request).and_wrap_original { |m, *a| m.call(*a).merge(head: "c0ffee1") })
+      mover = described_class.new(github:,
+        outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by: :auto)
+      result = mover.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(gh_calls.find { it.take(2) == %w[pr merge] }).to include("--match-head-commit", "c0ffee1")
+        expect(result.note).to start_with("PR #1 merge-manually: could not merge #1: Head branch was modified")
+        expect(labels).to eq(%w[merge-manually])
+      end
+    end
+
+    it "logs a note it cannot read, and merges nothing" do
+      allow(OpenLanes::UI).to receive(:log)
+      merging.assess(plan, "Do not auto-merge; drops a column.")
+
+      aggregate_failures do
+        expect(OpenLanes::UI).to have_received(:log).with(/not a verdict list.*Do not auto-merge/, hash_including(level: :warn))
+        expect(merges).to be_empty
+        expect(labels).to eq(%w[merge-manually])
       end
     end
 

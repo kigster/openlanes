@@ -179,10 +179,11 @@ RSpec.describe OpenLanes::Vcs::GitHub do
   end
 
   describe "#merge" do
-    it "merges with a merge commit, so the branch's history stays as reviewed" do
-      github.merge(number: 12, repo: "acme/widgets")
+    it "merges with a merge commit, pinned to the head CI was read for" do
+      github.merge(number: 12, head: "abc123", repo: "acme/widgets")
 
-      expect(command).to have_received(:run).with("gh", "pr", "merge", "12", "--merge", "-R", "acme/widgets")
+      expect(command).to have_received(:run)
+        .with("gh", "pr", "merge", "12", "--merge", "--match-head-commit", "abc123", "-R", "acme/widgets")
     end
 
     it "names the pull request GitHub refused to merge" do
@@ -190,7 +191,7 @@ RSpec.describe OpenLanes::Vcs::GitHub do
         .and_raise(TTY::Command::ExitError.new("gh pr merge",
           instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "not mergeable")))
 
-      expect { github.merge(number: 12) }.to raise_error(OpenLanes::Error, /could not merge #12: not mergeable/)
+      expect { github.merge(number: 12, head: "abc123") }.to raise_error(OpenLanes::Error, /could not merge #12: not mergeable/)
     end
   end
 

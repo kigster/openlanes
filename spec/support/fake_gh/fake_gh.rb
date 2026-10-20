@@ -31,10 +31,11 @@ def flag(name) = (i = ARGV.index(name)) && ARGV[i + 1]
 
 def flags(name) = ARGV.each_index.select { ARGV[it] == name }.map { ARGV[it + 1] }
 
-def pr!(state, number) = state["prs"][number.to_s] || fail_with("GraphQL: Could not resolve to a PullRequest with the number of #{number}.")
+def pr!(state, ref) = state["prs"][ref.to_s[/(\d+)\z/, 1].to_s] || fail_with("GraphQL: Could not resolve to a PullRequest with the number of #{ref}.")
 
 def row(number, pull)
   { "number" => number.to_i, "title" => pull["title"], "url" => pull["url"], "headRefName" => pull["branch"],
+    "headRefOid" => pull.fetch("head", "c0ffee#{number.to_i}"),
     "files" => [], "state" => pull["state"], "isDraft" => false, "mergedAt" => pull["merged_at"], "body" => "",
     "labels" => pull["labels"].map { { "name" => it } } }
 end
@@ -79,7 +80,7 @@ in ["pr", "comment"]
 in ["pr", "view"]
   pr = pr!(state, ARGV[2])
   fields = flag("--json").split(",")
-  data = row(ARGV[2], pr).merge("comments" => pr["comments"], "reviews" => [])
+  data = row(ARGV[2][/(\d+)\z/, 1], pr).merge("comments" => pr["comments"], "reviews" => [])
   puts JSON.generate(data.slice(*fields))
 in ["pr", "checks"]
   checks = pr!(state, ARGV[2])["checks"]
@@ -90,6 +91,8 @@ in ["pr", "checks"]
 in ["pr", "merge"]
   pr = pr!(state, ARGV[2])
   fail_with("Pull request #{pr["url"]} is not mergeable: #{pr["unmergeable"]}") if pr["unmergeable"]
+  head = flag("--match-head-commit")
+  fail_with("Head branch was modified. Review and try the merge again.") if head && head != pr.fetch("head", "c0ffee#{ARGV[2].to_i}")
   pr["state"] = "MERGED"
   pr["merged_at"] = "2026-10-20T12:00:00Z"
   save(state)
