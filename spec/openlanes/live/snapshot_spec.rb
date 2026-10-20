@@ -156,7 +156,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(snapshot[:stations].to_h { [it[:key], it[:agents]] }).to include(
         "new"                => %w[leah-researcher],
         "ready_for_planning" => %w[luthen-rael-planner],
-        "pr"                 => [],
+        "pr"                 => %w[palpatine-risk-assessor],
         "in_review"          => %w[chewie-verifier hansolo-reviewer]
       )
     end
