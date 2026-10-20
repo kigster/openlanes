@@ -119,6 +119,9 @@ module OpenLanes
       # slop). Anyone else's note is only a note.
       REVIEW_PHASE = "review"
 
+      # Seconds between passes over the 🏁 plans' pull requests.
+      MERGE_POLL = 30
+
       # @param runner [OpenLanes::Engine::Runner]
       # @param state [OpenLanes::Engine::StateFile, nil] nil under a dry run
       # @param rounds [Integer, nil] `--rounds`, a cap that only tightens
@@ -184,6 +187,8 @@ module OpenLanes
         @locks = PlanLocks.new(agent_locks: @agent_locks)
         @verifying = {}
         @said_verifying = {}
+        @said_merging = {}
+        @merges_polled = nil
         @finished = carried_over
       end
 
@@ -245,6 +250,7 @@ module OpenLanes
           drain_mail
           watch_pull_requests
           settle_verifications
+          settle_merges
           # On threads: a kill waits out TERM before KILL, and the board must not.
           @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
           dispatch unless Execution::Control.quit? || resting?
@@ -1122,6 +1128,8 @@ module OpenLanes
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           # Verified and waiting on CI: the engine's to settle, not chewie's.
           next if @runner.verification&.awaiting_ci?(subject)
+          # palpatine ruled on this visit to 🏁: the merges are the engine's.
+          next if @runner.merging&.assessed?(subject)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
           next if locked_elsewhere?(subject)
@@ -1616,6 +1624,10 @@ module OpenLanes
 
         attempt = if (why = stopped_for(ordinal))
                     stopped_by_harness(job, base, why)
+                  elsif assessor?(agent) && !(result.ok && entry&.completed?)
+                    # No verdict is `manual` (P4), never a second try at `auto`.
+                    write_interrupted(fresh(task), agent, task.round, reason_for(result)) if fresh(task) && result.killed
+                    assessed(job, base, nil)
                   elsif result.killed || (result.ok && (entry.nil? || entry.status == "Started"))
                     verify_and_sign(job, base, reason_for(result))
                   elsif !result.ok
@@ -1784,6 +1796,8 @@ module OpenLanes
         # Only a reviewer rules. A builder that signed `Completed (approved)`
         # once had its own work taken as approved: the plan was parked as
         # finished at 🟡, never reviewed and never published.
+        return assessed(job, base, entry.note) if assessor?(agent)
+
         verdict = verdict_of(entry) if [REVIEW_PHASE, Verification::PHASE].include?(agent.phase.to_s)
         return verified(job, base, subject, verdict) if agent.phase.to_s == Verification::PHASE && @runner.verification
 
@@ -1856,6 +1870,57 @@ module OpenLanes
       def built_locally(attempt, ordinal)
         @finished_plans << ordinal
         attempt.with(note: "#{attempt.note}; built locally, no pull request in this run, so it waits for one")
+      end
+
+      # ---- merging (P1 to P5) ------------------------------------------------
+
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [Boolean] whether this agent's note carries merge verdicts
+      def assessor?(agent) = agent.phase.to_s == Merging::PHASE && !@runner.merging.nil?
+
+      # palpatine finished, or stopped without a verdict. The engine labels,
+      # merges and rebases from here; the folder moves only to ✅ or 🔴.
+      #
+      # @param note [String, nil] the Completed note; nil reads as `manual`
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def assessed(job, base, note)
+        task = job.task
+        subject = fresh(task) or return base.with(ok: false, note: "plan folder vanished")
+        remember(plan_of(job), task.agent.name, job.state, "Completed", task.round)
+        result = @runner.merging.assess(subject, note)
+        wake!
+        base.with(status: "Completed", to: result.to || job.state, note: "#{base.note}; #{result.note}")
+      rescue OpenLanes::Error => e
+        base.with(ok: false, status: "Completed", note: "#{base.note}; merge not settled: #{e.message}")
+      end
+
+      # One pass over every assessed 🏁 plan, at most once per
+      # {MERGE_POLL} seconds: GitHub is asked three times per pull request.
+      #
+      # @return [void]
+      def settle_merges
+        merging = @runner.merging or return
+        return if @runner.dry_run?
+
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        return if @merges_polled && now - @merges_polled < MERGE_POLL
+
+        @merges_polled = now
+        busy = untouchable
+        @runner.in_scope.each do |subject|
+          ordinal = subject.feature.ordinal.to_s
+          next if busy.include?(ordinal) || !merging.assessed?(subject)
+
+          result = merging.advance(subject)
+          next if @said_merging[ordinal] == result.note && !result.to
+
+          @said_merging[ordinal] = result.note
+          @finished_plans.delete(ordinal) if result.to
+          UI.log(result.note, plan: ordinal)
+          wake! if result.to || result.merged
+        rescue OpenLanes::Error => e
+          UI.log("merge not settled: #{e.message.lines.first.to_s.strip}", level: :warn, plan: ordinal)
+        end
       end
 
       # ---- verification (plan 014) -----------------------------------------
