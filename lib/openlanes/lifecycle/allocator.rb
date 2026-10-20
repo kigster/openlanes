@@ -23,6 +23,13 @@ module OpenLanes
     #   the shared git directory, so two `create`s at once cannot both take
     #   the number they both just saw was free.
     #
+    # Decided 2026-10-20, on top of that: the primary checkout must also be on
+    # the default branch (origin's HEAD, else `main`). A plan minted on a
+    # feature branch there is a plan `main` does not know about until that
+    # branch merges, which is the same split by another road. The rule covers
+    # new folders, their opening `spec.md` and `depends_on:`; every other file
+    # in a plan folder is still written from worktrees, as agents do.
+    #
     # Outside a git repository there are no branches and no worktrees, and
     # the checkout's own `.plans` is the whole truth, as before.
     #
@@ -37,7 +44,11 @@ module OpenLanes
       # else's forks; their numbers were never handed out here.
       REFS = %w[refs/heads refs/remotes/origin].freeze
 
-      # Raised when a plan would be minted in a linked worktree.
+      # The branch plans are minted on when origin names no default.
+      DEFAULT_BRANCH = "main"
+
+      # Raised when a plan would be minted in a linked worktree, or in the
+      # primary checkout off its default branch.
       class Refused < OpenLanes::Error; end
 
       # The repository around a `.plans` directory, as git reports it.
@@ -50,7 +61,11 @@ module OpenLanes
       #   @return [String] this checkout's root
       # @!attribute [r] plans
       #   @return [String] the `.plans` directory, relative to +toplevel+
-      Repository = Data.define(:git_dir, :common_dir, :toplevel, :plans) do
+      # @!attribute [r] branch
+      #   @return [String, nil] the checked-out branch; nil on a detached HEAD
+      # @!attribute [r] default_branch
+      #   @return [String] origin's HEAD, else {DEFAULT_BRANCH}
+      Repository = Data.define(:git_dir, :common_dir, :toplevel, :plans, :branch, :default_branch) do
         # A linked worktree has a git directory of its own under the common
         # one; the primary checkout's git directory is the common one.
         #
@@ -62,6 +77,9 @@ module OpenLanes
 
         # @return [String]
         def lock_path = File.join(common_dir, LOCK_FILE)
+
+        # @return [Boolean]
+        def on_default_branch? = branch == default_branch
       end
 
       # @param dir [String] the `.plans` directory; need not exist yet
@@ -77,14 +95,18 @@ module OpenLanes
 
       # @return [String, nil] why a plan may not be minted here, or nil when it may
       def refusal
-        repo = repository
-        return unless repo&.worktree?
+        repo = repository or return
+        if repo.worktree?
+          return "plans are created only in the primary checkout, #{repo.primary}; this is a worktree of it"
+        end
+        return if repo.on_default_branch?
 
-        "plans are created only in the primary checkout, #{repo.primary}; this is a worktree of it"
+        "plans are created only on #{repo.default_branch} in the primary checkout; " \
+          "#{repo.primary} is on #{repo.branch || "a detached HEAD"}"
       end
 
       # @return [void]
-      # @raise [Refused] in a linked worktree
+      # @raise [Refused] in a linked worktree, or off the default branch
       def refuse!
         message = refusal
         raise Refused, message if message
@@ -99,7 +121,7 @@ module OpenLanes
       #
       # @yieldreturn [Object]
       # @return [Object] the block's value
-      # @raise [Refused] in a linked worktree
+      # @raise [Refused] in a linked worktree, or off the default branch
       def hold
         refuse!
         repo = repository or return yield
@@ -149,7 +171,22 @@ module OpenLanes
         git_dir, common_dir, toplevel = out.lines.map(&:chomp)
         return nil if toplevel.to_s.empty?
 
-        Repository.new(git_dir:, common_dir:, toplevel:, plans: relative_plans(base, toplevel))
+        Repository.new(git_dir:,
+          common_dir:,
+          toplevel:,
+          plans: relative_plans(base, toplevel),
+          branch: git(toplevel, "symbolic-ref", "--short", "-q", "HEAD")&.chomp,
+          default_branch: default_branch(toplevel))
+      end
+
+      # origin's HEAD names the default branch where a clone recorded it; a
+      # repository with no origin, or one never told, falls back to `main`.
+      #
+      # @param toplevel [String]
+      # @return [String]
+      def default_branch(toplevel)
+        head = git(toplevel, "symbolic-ref", "--short", "-q", "refs/remotes/origin/HEAD")&.chomp
+        head.to_s.empty? ? DEFAULT_BRANCH : head.delete_prefix("origin/")
       end
 
       # git answers with resolved paths (`/private/var` on macOS) while +dir+

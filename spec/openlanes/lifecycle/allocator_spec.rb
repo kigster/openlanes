@@ -171,4 +171,37 @@ RSpec.describe OpenLanes::Lifecycle::Allocator, :tree do
       expect(described_class.new(dir: worktree_plans).taken.map(&:to_s)).to eq(["001.00"])
     end
   end
+
+  context "when the primary checkout is off its default branch" do
+    let(:refusal) do
+      "plans are created only on main in the primary checkout; #{File.realpath(repo_root)} is on kig/side"
+    end
+
+    before { repo_git("checkout", "-q", "-b", "kig/side") }
+
+    it "refuses to create a plan, naming the branch it is on" do
+      result = creator.create(words:)
+
+      aggregate_failures do
+        expect(result.failure).to eq(refusal)
+        expect(Dir.children(plans_root)).to contain_exactly("001.00━━⚪━━❯initial-spec")
+      end
+    end
+
+    it "names a detached HEAD as one" do
+      repo_git("checkout", "-q", "--detach")
+
+      expect(allocator.refusal).to end_with("is on a detached HEAD")
+    end
+
+    it "takes origin's HEAD as the default branch when the clone recorded one" do
+      repo_git("update-ref", "refs/remotes/origin/kig/side", "HEAD")
+      repo_git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/kig/side")
+
+      aggregate_failures do
+        expect(allocator.repository.default_branch).to eq("kig/side")
+        expect(allocator.refusal).to be_nil
+      end
+    end
+  end
 end

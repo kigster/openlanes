@@ -11,11 +11,11 @@ Every project keeps its plans in a `.plans/` directory at its root. Each medium-
 
 There are three phases, and each one has a file that proves it happened:
 
-| Phase     | State                  | The file that proves it |
-| :-------- | :--------------------- | :---------------------- |
-| **spec**  | ⚪ New                 | `spec.md`               |
-| **plan**  | ⭐ Planned             | `plan.md`               |
-| **build** | 🟡 → 🟢 → 👀 → 🧪 → ✅ | `pull-requests.md`      |
+| Phase     | State                       | The file that proves it |
+| :-------- | :-------------------------- | :---------------------- |
+| **spec**  | ⚪ New                      | `spec.md`               |
+| **plan**  | ⭐ Planned                  | `plan.md`               |
+| **build** | 🟡 → 🟢 → 👀 → 🧪 → 🏁 → ✅ | `pull-requests.md`      |
 
 Those files are not paperwork. They are what the tool checks: a folder may not claim a phase whose file is missing, and `openlanes resync dirs` renames any folder whose emoji its contents do not support.
 
@@ -38,7 +38,7 @@ A folder name holds no space, so it needs no quoting in a shell, and every state
 - **`MM` is `00` for an ordinary plan** — one specified before it was built.
 - **`MM` from `01` to `99` marks a retroactive plan**: work that shipped with no specification, documented after the fact. `openlanes create --after 001` takes the next free slot in the gap after 001.
 - **A number is taken if any branch holds it.** "Highest" counts the primary checkout's `.plans` (archived plans included) and `.plans` on every local branch and every `origin/*` branch, read without a fetch, so a plan on an unmerged branch keeps its number.
-- **Plans are created only in the primary checkout.** In a linked worktree, `openlanes create` and `resync prs` adoption refuse and name the primary checkout. Numbers are handed out under a lock in the shared git directory, so two creates at once cannot take the same one.
+- **Plans are created only in the primary checkout, on its default branch** (origin's HEAD, else `main`). In a linked worktree, or on any other branch, `openlanes create`, the page's new plan and `resync prs` adoption refuse and say why. The same holds for an opening `spec.md` and for `depends_on:`; every other file in a plan folder may be written from a worktree. Numbers are handed out under a lock in the shared git directory, so two creates at once cannot take the same one.
 
 `001.01` is a **sibling of 001 that arrived later, not a part of 001**. The dot reads as containment in almost every other numbering scheme, and here it does not — which is worth saying wherever the scheme is described, because the containment reading is the one a new reader brings.
 
@@ -95,6 +95,7 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 |   🟢   | **Ready for Review**   | `ready_for_review`   | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is green on CI and waiting for a reviewer                                |
 |   👀   | **In Review**          | `in_review`          | `spec.md`, `plan.md`, `pull-requests.md` | a reviewer has picked it up and has not ruled yet                                           |
 |   🧪   | **Verifying**          | `verifying`          | `spec.md`, `plan.md`, `pull-requests.md` | the review approved it; chewie runs the app through How to test before anything merges      |
+|   🏁   | **Completed**          | `completed`          | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is `ready-to-merge`; palpatine weighs each, and they merge one at a time |
 |   🔴   | **Changes Requested**  | `rejected`           | `spec.md`, `plan.md`, `pull-requests.md` | the review asked for fixes; resubmit once they are made                                     |
 |   ✅   | **Approved & Merged**  | `approved`           | `pull-requests.md`                       | reviewed, approved, and every pull request merged                                           |
 |   😎   | **Deployed**           | `deployed`           | `deployed.md`                            | live in production; `deployed.md` names the release, date and SHA                           |
@@ -109,7 +110,7 @@ This is only for work that does not exist yet. `create --after <plan> --prs <n,.
 
 "Files required" is a **minimum**, not an exact match: a ⚪ folder that has grown a `plan.md` still satisfies ⚪, and is ⭐ anyway. That is why `resync dirs` moves a folder to the furthest state its contents justify rather than only fixing outright lies.
 
-Some states share their requirements on purpose, and are told apart only by the folder name. ⭕ Technical Block and 🛑 Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐ 🟡 🎨 🟢 👀 🧪 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
+Some states share their requirements on purpose, and are told apart only by the folder name. ⭕ Technical Block and 🛑 Product Block both mean "a human must decide before this can move"; *which* human is recorded nowhere but the emoji. ⭐ 🟡 🎨 🟢 👀 🧪 🏁 🔴 all mean "the work exists and pull requests are open"; whether anyone has started reviewing is written down nowhere either.
 
 So nothing re-derives one of them from a folder's contents — otherwise every ⭕ would silently become 🛑 the first time anything resynced. A folder falling back into that group from outside lands on its weakest member, ⭐ Planned, because that is all its contents can prove.
 
@@ -142,7 +143,8 @@ An entry that names no decider, carries no date, or restates the options instead
 | 🎨 Building UI        | 🟢 ⭕ 🛑 💤 ❌                | 🟢 Ready for Review   |
 | 🟢 Ready for Review   | 👀 ❌                         | 👀 In Review          |
 | 👀 In Review          | 🧪 ✅ 🔴 💩 ❌                | 🧪 Verifying          |
-| 🧪 Verifying          | ✅ 🔴 ❌                      | ✅ Approved & Merged  |
+| 🧪 Verifying          | 🏁 ✅ 🔴 ❌                   | 🏁 Completed          |
+| 🏁 Completed          | ✅ 🔴 ❌                      | ✅ Approved & Merged  |
 | 🔴 Changes Requested  | 🎨 🟢 ⭕ 🛑 💤 ❌             | 🎨 Building UI        |
 | ✅ Approved & Merged  | 🟡 😎 ❌                      | 😎 Deployed           |
 | 😎 Deployed           | 😱 ❌                         | —                     |
@@ -172,6 +174,7 @@ stateDiagram-v2
     ready_for_review : 🟢 Ready for Review
     in_review : 👀 In Review
     verifying : 🧪 Verifying
+    completed : 🏁 Completed
     rejected : 🔴 Changes Requested
     approved : ✅ Approved & Merged
     deployed : 😎 Deployed
@@ -229,11 +232,14 @@ stateDiagram-v2
     rolled_back --> ready_for_review
     ready_for_review --> in_review
     in_review --> verifying
+    verifying --> completed
     in_review --> approved
     verifying --> approved
+    completed --> approved
     retroactive --> approved
     in_review --> rejected
     verifying --> rejected
+    completed --> rejected
     in_review --> shit
     approved --> deployed
     deployed --> rolled_back
@@ -276,6 +282,7 @@ stateDiagram-v2
     ready_for_review --> discarded
     in_review --> discarded
     verifying --> discarded
+    completed --> discarded
     rejected --> discarded
     approved --> discarded
     deployed --> discarded
@@ -292,19 +299,19 @@ stateDiagram-v2
 
 ## Files allowed in a plan folder
 
-| File               | Required by                                                                                 |
-| :----------------- | :------------------------------------------------------------------------------------------ |
-| `spec.md`          | the specification; written first                                                            |
-| `plan.md`          | the execution plan; written from the spec                                                   |
-| `contract.md`      | the contract between the two halves of building                                             |
-| `openapi.yaml`     | the HTTP surface, when the plan has one                                                     |
-| `pull-requests.md` | 🟢 Ready for Review, 👀 In Review, 🧪 Verifying, 🔴 Changes Requested, ✅ Approved & Merged |
-| `deployed.md`      | 😎 Deployed                                                                                 |
-| `rollback.md`      | 😱 Rolled Back                                                                              |
-| `rewrite.md`       | 💩 Scrapped by Review                                                                       |
-| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block, 💣 Bomb                                               |
-| `delayed.md`       | 💤 Deferred                                                                                 |
-| `discarded.md`     | ❌ Discarded                                                                                |
+| File               | Required by                                                                                               |
+| :----------------- | :-------------------------------------------------------------------------------------------------------- |
+| `spec.md`          | the specification; written first                                                                          |
+| `plan.md`          | the execution plan; written from the spec                                                                 |
+| `contract.md`      | the contract between the two halves of building                                                           |
+| `openapi.yaml`     | the HTTP surface, when the plan has one                                                                   |
+| `pull-requests.md` | 🟢 Ready for Review, 👀 In Review, 🧪 Verifying, 🏁 Completed, 🔴 Changes Requested, ✅ Approved & Merged |
+| `deployed.md`      | 😎 Deployed                                                                                               |
+| `rollback.md`      | 😱 Rolled Back                                                                                            |
+| `rewrite.md`       | 💩 Scrapped by Review                                                                                     |
+| `blocked.md`       | ⭕ Technical Block, 🛑 Product Block, 💣 Bomb                                                             |
+| `delayed.md`       | 💤 Deferred                                                                                               |
+| `discarded.md`     | ❌ Discarded                                                                                              |
 
 `contract.md` is the one file no state requires. `luke-backend` writes it before it writes code, and `rey-frontend` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
 
@@ -344,15 +351,17 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
-| Label                   | Colour   | Passing | Meaning                                                     |
-| ----------------------- | -------- | ------- | ----------------------------------------------------------- |
-| `ready-for-review`      | `c2e0c6` | no      | luke and rey are done; the PR waits for a free review slot  |
-| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                  |
-| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                       |
-| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                |
-| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default) |
-| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                         |
-| `ready-to-merge`        | `5319e7` | yes     | chewie-verifier verified it and its E2E tests pass          |
+| Label                   | Colour   | Passing | Meaning                                                                    |
+| ----------------------- | -------- | ------- | -------------------------------------------------------------------------- |
+| `ready-for-review`      | `c2e0c6` | no      | luke and rey are done; the PR waits for a free review slot                 |
+| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                                 |
+| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                                      |
+| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                               |
+| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)                |
+| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                                        |
+| `ready-to-merge`        | `5319e7` | yes     | chewie-verifier verified it and its E2E tests pass                         |
+| `auto-merged`           | `953384` | yes     | palpatine-risk-assessor judged it safe and the engine merged it            |
+| `merge-manually`        | `0e8a16` | yes     | palpatine-risk-assessor, or merge.by: human, left it for a person to merge |
 
 ## If a real issue tracker arrives, this scheme retires
 
