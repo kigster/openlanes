@@ -87,6 +87,17 @@ in ["pr", "checks"]
   puts JSON.generate(checks)
   exit 1 if checks.any? { it["bucket"] == "fail" }
   exit 8 if checks.any? { it["bucket"] == "pending" }
+in ["pr", "merge"]
+  pr = pr!(state, ARGV[2])
+  fail_with("Pull request #{pr["url"]} is not mergeable: #{pr["unmergeable"]}") if pr["unmergeable"]
+  pr["state"] = "MERGED"
+  pr["merged_at"] = "2026-10-20T12:00:00Z"
+  save(state)
+in ["pr", "update-branch"]
+  pr = pr!(state, ARGV[2])
+  fail_with("Cannot update PR branch due to conflicts") if pr["conflicts"]
+  pr["checks"] = []
+  save(state)
 in ["pr", "list"]
   puts JSON.generate(state["prs"].map { |number, pr| row(number, pr) })
 else

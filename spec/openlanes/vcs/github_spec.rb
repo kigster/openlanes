@@ -178,6 +178,38 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#merge" do
+    it "merges with a merge commit, so the branch's history stays as reviewed" do
+      github.merge(number: 12, repo: "acme/widgets")
+
+      expect(command).to have_received(:run).with("gh", "pr", "merge", "12", "--merge", "-R", "acme/widgets")
+    end
+
+    it "names the pull request GitHub refused to merge" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr merge",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "not mergeable")))
+
+      expect { github.merge(number: 12) }.to raise_error(OpenLanes::Error, /could not merge #12: not mergeable/)
+    end
+  end
+
+  describe "#update_branch" do
+    it "rebases the pull request onto its base on GitHub's side" do
+      github.update_branch(number: 13, repo: "acme/widgets")
+
+      expect(command).to have_received(:run).with("gh", "pr", "update-branch", "13", "--rebase", "-R", "acme/widgets")
+    end
+
+    it "says the branch did not rebase, conflicts among the reasons" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr update-branch",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "conflicts")))
+
+      expect { github.update_branch(number: 13) }.to raise_error(OpenLanes::Error, /could not rebase #13 onto its base: conflicts/)
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")

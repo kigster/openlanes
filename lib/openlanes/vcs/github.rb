@@ -344,6 +344,34 @@ module OpenLanes
         raise Error, "could not read checks of ##{number}: #{e.message.lines.first.to_s.strip}"
       end
 
+      # Merge one pull request, as the engine does on palpatine's `auto`
+      # (P4). A merge commit, which is how this repository's history reads;
+      # the branch is left alone, since the plan's worktree still has it
+      # checked out. Agents never reach this: `gh pr merge` is ungrantable.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error] when GitHub refuses, a conflict among the reasons
+      def merge(number:, repo: nil)
+        @command.run("gh", "pr", "merge", number.to_s, "--merge", *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not merge ##{number}: #{first_line(e)}"
+      end
+
+      # Rebase a pull request's branch onto its base on GitHub's side (P5),
+      # for a sibling built from a branch no worktree of this run holds.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error] when the rebase conflicts or GitHub refuses
+      def update_branch(number:, repo: nil)
+        @command.run("gh", "pr", "update-branch", number.to_s, "--rebase", *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not rebase ##{number} onto its base: #{first_line(e)}"
+      end
+
       # @param number [Integer]
       # @param repo [String, nil]
       # @return [Array<Hash>] `{author:, body:, url:}`, conversation comments then reviews
