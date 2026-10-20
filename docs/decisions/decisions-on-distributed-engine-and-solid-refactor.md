@@ -150,6 +150,17 @@ Decided 2026-10-20.
 - It adds a vendor-neutral `Judgment` port. Jev is one backend, used only when the `TYPESAFE_API_KEY` environment variable is set. Without it, nothing loads or calls TypeSafe, and the default adapter answers.
 - `042` (the watchdog) now depends on `045` as well, because its conflict explanation goes through `Judgment`.
 
+### S20. One plan at a time per group of linked plans
+
+Decided 2026-10-20.
+
+- Unfinished plans joined by an unfinished `depends_on:` edge, in either direction, form a group. Separate groups run side by side.
+- A group works on one plan at a time: the first in topological order (ties by ordinal) that is neither parked nor waiting on its own dependencies.
+- A plan whose build is already under way keeps the turn over an untouched one, so no work in progress is stranded. Nothing running is ever stopped.
+- A blocked plan (waiting on a person) gives up the turn. The next plan that does not depend on it may start, and its dependents keep waiting.
+- An edge to a finished plan joins nothing. Once `038` ships, `039`, `040` and `045` part ways and run side by side.
+- Everything else is held as "queued behind NNN.MM", which shows in the idle reason beside the existing dependency waits.
+
 ## Plan folders
 
 | Epic step | Plan | Depends on |

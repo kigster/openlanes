@@ -9,10 +9,21 @@ module OpenLanes
     #
     # Every answer is an array of canonical `NNN.MM` strings, sorted. Asking
     # about a plan the tree does not hold answers empty rather than raising.
+    #
+    # Plans joined by an unfinished edge, in either direction, form a group,
+    # and a group works on one plan at a time (#95): the first in topological
+    # order that may start, so two plans that will meet in a common dependent
+    # are never built against each other's moving code. Separate groups run
+    # side by side. An edge to a finished plan joins nothing, so the
+    # dependents of a shipped plan part ways.
     class Dependencies
       # The states in which a dependency is done. Everything else, blocked and
       # deferred included, keeps the dependent waiting.
       DONE = %i[approved deployed].freeze
+
+      # The states before the build. Work in them is documents only, so a plan
+      # here gives up its group's turn to one whose code is already under way.
+      BEFORE_BUILD = %i[retroactive new researched ready_for_planning planned].freeze
 
       # @param tree [OpenLanes::Plans::Tree]
       # @param status_of [#call, nil] the state to judge a plan by, when it is
@@ -62,16 +73,70 @@ module OpenLanes
       # @return [Array<Array<String>>]
       def cycles = @cycles ||= components.select { looped?(it.first) }.map { cycle_of(it.first) }.sort
 
+      # Unfinished plans joined by an unfinished edge, in either direction.
+      #
+      # @return [Array<Array<String>>] each group sorted, groups by first ordinal
+      def groups
+        @groups ||= begin
+          # Union-find, walked in a loop rather than recursively, so a long
+          # chain of plans cannot raise SystemStackError inside a tick.
+          root = unfinished.to_h { [it, it] }
+          find = lambda do |x|
+            x = root[x] = root[root[x]] until root[x] == x
+            x
+          end
+          unfinished.each do |from|
+            open_edges.fetch(from).each { |to| root[find.call(from)] = find.call(to) if root.key?(to) }
+          end
+          unfinished.group_by { find.call(it) }.values.map(&:sort).sort
+        end
+      end
+
+      # Each group in topological order, prerequisites first, ties by
+      # ordinal. Plans on a cycle cannot be ordered and come last.
+      #
+      # @return [Array<Array<String>>] parallel to {#groups}
+      def order = @order ||= groups.map { sorted(it) }
+
+      # The plan whose turn it is in this plan's group, or nil when no plan
+      # in it may start: the first in {#order} that may, preferring one whose
+      # build is already under way, so work already done is never stranded.
+      #
+      # @param ordinal [OpenLanes::Plans::Ordinal, String]
+      # @return [String, nil]
+      def head(ordinal)
+        wanted = key(ordinal)
+        line = order.find { it.include?(wanted) } or return nil
+        (@heads ||= {}).fetch(line.first) do
+          ready = line.select { startable?(it) }
+          @heads[line.first] = ready.find { !BEFORE_BUILD.include?(states[it]) } || ready.first
+        end
+      end
+
       # Why the engine must not start this plan, or nil when it may. A cycle
       # outranks a plain wait, since waiting on a cycle never ends. An entry
       # naming no plan is said apart from a real wait: a typo such as
       # "099.00" holds the plan forever, and "waiting on 099.00" in the held
-      # report read like a wait that would end on its own.
+      # report read like a wait that would end on its own. A plan free of
+      # all three still waits while another plan holds its group's turn.
       #
       # @param ordinal [OpenLanes::Plans::Ordinal, String]
-      # @return [String, nil] e.g. "waiting on 034.00", "unknown plan 099.00"
-      #   or "cycle: 034.00 → 050.00 → 034.00"
+      # @return [String, nil] e.g. "waiting on 034.00", "unknown plan 099.00",
+      #   "cycle: 034.00 → 050.00 → 034.00" or "queued behind 034.00"
       def reason(ordinal)
+        own = own_reason(ordinal) and return own
+
+        first = head(ordinal)
+        "queued behind #{first}" if first && first != key(ordinal)
+      end
+
+      private
+
+      # {#reason} without the group's turn: what this plan's own edges say.
+      #
+      # @param ordinal [OpenLanes::Plans::Ordinal, String]
+      # @return [String, nil]
+      def own_reason(ordinal)
         cycle = cycle_of(ordinal)
         return "cycle: #{cycle.join(" → ")}" if cycle
 
@@ -83,7 +148,36 @@ module OpenLanes
         parts.join("; ") unless parts.empty?
       end
 
-      private
+      # @return [Boolean] whether this plan could take its group's turn:
+      #   neither parked nor done, and free of its own reasons to wait
+      def startable?(ordinal) = !StateMachine::SETTLED.include?(states[ordinal]) && own_reason(ordinal).nil?
+
+      # @return [Array<String>] plans in the tree that are not done
+      def unfinished = @unfinished ||= declared.keys.reject { done?(it) }.sort
+
+      # Kahn's algorithm over the group's open edges, taking the lowest
+      # ordinal whenever several plans are free. The free list stays sorted
+      # by binary insertion, so a group of thousands sorts in a blink.
+      #
+      # @param group [Array<String>]
+      # @return [Array<String>]
+      def sorted(group)
+        members = group.to_set
+        pending = group.to_h { |plan| [plan, open_edges.fetch(plan).count { members.include?(it) }] }
+        free = pending.select { |_, n| n.zero? }.keys.sort
+        out = []
+        until free.empty?
+          plan = free.shift
+          out << plan
+          pending.delete(plan)
+          blocks_of(plan).each do |waiter|
+            next unless pending.key?(waiter) && (pending[waiter] -= 1).zero?
+
+            free.insert(free.bsearch_index { it >= waiter } || free.size, waiter)
+          end
+        end
+        out + pending.keys.sort
+      end
 
       # @return [String]
       def key(ordinal) = (ordinal.is_a?(Ordinal) ? ordinal : Ordinal.parse(ordinal)).to_s
