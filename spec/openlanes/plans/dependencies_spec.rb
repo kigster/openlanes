@@ -220,4 +220,109 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       expect(graph.send(:components).map(&:size)).to eq([50_000])
     end
   end
+
+  # Plans joined by an unfinished `depends_on:` edge, in either direction,
+  # form a group, and a group works on one plan at a time: the first in
+  # topological order that may start. Separate groups run side by side.
+  describe "one plan per group" do
+    context "when two roots share an unfinished dependent" do
+      before do
+        plans do |t|
+          t.plan "034.00", :planned, "parser", files: { "spec.md" => spec_body }
+          t.plan "040.00", :planned, "lexer", files: { "spec.md" => spec_body }
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00", "040.00") }
+          t.plan "060.00", :planned, "loner", files: { "spec.md" => spec_body }
+        end
+      end
+
+      it "groups them, and keeps the loner apart" do
+        expect(deps.groups).to eq([%w[034.00 040.00 050.00], %w[060.00]])
+      end
+
+      it "starts only the head of each group" do
+        expect(deps.reason("034.00")).to be_nil
+        expect(deps.reason("040.00")).to eq("queued behind 034.00")
+        expect(deps.reason("050.00")).to eq("waiting on 034.00, 040.00")
+        expect(deps.reason("060.00")).to be_nil
+      end
+    end
+
+    context "when the order is topological rather than by ordinal" do
+      before do
+        plans do |t|
+          t.plan "030.00", :planned, "last", files: { "spec.md" => needs("040.00") }
+          t.plan "040.00", :planned, "middle", files: { "spec.md" => needs("050.00") }
+          t.plan "050.00", :planned, "first", files: { "spec.md" => spec_body }
+        end
+      end
+
+      it "sorts the group so prerequisites come first" do
+        expect(deps.order).to eq([%w[050.00 040.00 030.00]])
+        expect(deps.reason("050.00")).to be_nil
+      end
+    end
+
+    context "when the head has shipped" do
+      before do
+        plans do |t|
+          t.plan "038.00", :approved, "seams", files: { "spec.md" => spec_body }, prs: [t.merged(1, "Ship")]
+          t.plan "039.00", :planned, "journal", files: { "spec.md" => needs("038.00") }
+          t.plan "040.00", :planned, "adapters", files: { "spec.md" => needs("038.00") }
+        end
+      end
+
+      it "drops the finished edges, so its dependents run side by side" do
+        expect(deps.groups).to eq([%w[039.00], %w[040.00]])
+        expect(deps.reason("039.00")).to be_nil
+        expect(deps.reason("040.00")).to be_nil
+      end
+    end
+
+    context "when the head is waiting on a person" do
+      before do
+        plans do |t|
+          t.plan "034.00", :blocked, "parser", files: { "spec.md" => spec_body, "blocked.md" => "# Q\n" }
+          t.plan "040.00", :planned, "lexer", files: { "spec.md" => spec_body }
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00", "040.00") }
+        end
+      end
+
+      it "lets the next plan that does not depend on it start" do
+        expect(deps.reason("040.00")).to be_nil
+        expect(deps.reason("050.00")).to eq("waiting on 034.00, 040.00")
+      end
+    end
+
+    context "when a later plan in the group is already under way" do
+      before do
+        plans do |t|
+          t.plan "034.00", :planned, "parser", files: { "spec.md" => spec_body }
+          t.plan "040.00", :building, "lexer", files: { "spec.md" => spec_body }
+          t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00", "040.00") }
+        end
+      end
+
+      # Stopping work already done would waste it, so the plan in progress
+      # keeps its turn and the untouched root waits.
+      it "keeps the plan in progress as the head" do
+        expect(deps.reason("040.00")).to be_nil
+        expect(deps.reason("034.00")).to eq("queued behind 040.00")
+      end
+    end
+  end
+
+  # The dispatcher asks on every tick, so grouping and sorting a long chain
+  # must neither recurse nor go quadratic.
+  it "groups and sorts a 50,000-plan chain without recursing", :tree do
+    plans { |t| t.plan "001.00", :planned, "seed", files: { "spec.md" => spec_body } }
+    graph = described_class.new(tree)
+    ids = (0...50_000).map { format("%06d", it) }
+    chain = ids.each_with_index.to_h { |o, i| [o, i.zero? ? [] : [ids[i - 1]]] }
+    allow(graph).to receive_messages(open_edges: chain, unfinished: ids.reverse.sort)
+    allow(graph).to receive(:blocks_of) { |o| [ids[o.to_i + 1]].compact }
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    expect(graph.order).to eq([ids])
+    expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 5
+  end
 end
