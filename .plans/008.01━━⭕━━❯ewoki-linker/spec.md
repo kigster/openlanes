@@ -15,6 +15,38 @@ This is step 2 of the three-plan delivery settled in `.plans/008.00-🟢 → pla
 
 After this ships, every plan reaching 📋 Ready for Planning or ⭐️ Planned without a `depends_on:` key gets `ewoki-linker` once, before the agent that would move it toward Building. Ewoki writes only the key and a dated ledger note giving one reason per dependency. A key a human wrote is never touched.
 
+### When it runs
+
+The dependency graph between the plans is a new concept and its most importabt use is the ability to apply topological sort to interdependen plans to first build plans orher plans depend on. Not every plan will alwaye depend on another plan or several, therefore using topplogical sort inimplemented plans can form several independent DAGs. This determines which plans can be implemented concurrenrly (disjoint DAGs) and which must wait for another plan(s) to merge before they can be on the board.
+
+> [!important]
+>
+> The linker should run only in the primary repo (not a worktree) which is where plans are created, committed and pushed, never from a worktree (except after the plan becomes a task in progress). 
+>
+> it should run after a new plan is created and briefed, and it should run on the entire corpus of plans that are yet to be done and those missing "depends_on: " completely or its value is "[]". 
+>
+> It also scans and adds this keyword to the plans withoit it or with the valuw [] before the openlanes engine starts up and begins to implement plans, choosing which to startup. The linker should skip any plans with `depends_on: [ non-empty ]` and only double check the plans with empty value, or without `depends_on` keyword entirely. The keyword "none" inside the square brackets should be inserted if no prior or future plan is a dependency.
+
+### New Command
+
+build a new command that refuses to run in a worktree and can only run on main repo on main branch. moreover it performs git pull on main prior to running to ensure the completeness of plans.
+
+The command is called `link` and it accepts --plans in which case only those plans are checked for being dependant on others. Without this flag all non archived plans are checked according to rules above. 
+
+If a missing dependency declaration is found, it is written into the plan, or as many as necessary. The agent notifies the dispatcher that the linking is complete with one of two outcomes:
+
+1. no new links are found. This completes the linker's operation, and if it was invoked ad a command, it exits reporting no new links were found.
+
+2. if new links are found, the dispatcher cuts a local branch of main called $USER/plan-linking-NNN.MM where NNN.MM is rhe number of the first plan modified. however all plans changed with thr new links are included in the branch and pushed as a PR. This PR is not added to any pull-requests.md and is merged by the dispatcher as soon as its CI goes green. visually the UI can add a dedocated lane for system tasks. if it had one, the auto linking would. e visible tbere until its pr is mwrged, if there is a PR.
+
+## Topological Sort
+
+When the engine starts without the specific plans passed as argumebts, it must sort each todo plan using tsort based on the declared dependencies. 
+
+im a DAG of connected plans only the first one can ve worked on until merge before any work on the second begins.
+
+A plan from a separate DAG thats the first in the list can also ve worked in parallel, and up to the number of workers specified,
+
 ## Non-Goals
 
 1. The Building invariant and grandfathering (008.02, item 10).
