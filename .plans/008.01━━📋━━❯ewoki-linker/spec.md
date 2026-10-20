@@ -17,35 +17,35 @@ After this ships, every plan reaching 📋 Ready for Planning or ⭐️ Planned 
 
 ### When it runs
 
-The dependency graph between the plans is a new concept and its most importabt use is the ability to apply topological sort to interdependen plans to first build plans orher plans depend on. Not every plan will alwaye depend on another plan or several, therefore using topplogical sort inimplemented plans can form several independent DAGs. This determines which plans can be implemented concurrenrly (disjoint DAGs) and which must wait for another plan(s) to merge before they can be on the board.
+The dependency graph between plans is a new concept, and its most important use is the ability to apply a topological sort to interdependent plans, so that plans other plans depend on are built first. Not every plan will always depend on one or more other plans; therefore, when topologically sorted, unimplemented plans can form several independent DAGs. This determines which plans can be implemented concurrently (disjoint DAGs) and which must wait for other plans to merge before they can be on the board.
 
 > [!important]
 >
-> The linker should run only in the primary repo (not a worktree) which is where plans are created, committed and pushed, never from a worktree (except after the plan becomes a task in progress). 
+> The linker should run only in the primary repo, which is where plans are created, committed and pushed, and never from a worktree (except after the plan becomes a task in progress).
 >
-> it should run after a new plan is created and briefed, and it should run on the entire corpus of plans that are yet to be done and those missing "depends_on: " completely or its value is "[]". 
+> It should run after a new plan is created and briefed, and it should run on the entire corpus of plans that are yet to be done and that are missing `depends_on:` completely or whose value is `[]`.
 >
-> It also scans and adds this keyword to the plans withoit it or with the valuw [] before the openlanes engine starts up and begins to implement plans, choosing which to startup. The linker should skip any plans with `depends_on: [ non-empty ]` and only double check the plans with empty value, or without `depends_on` keyword entirely. The keyword "none" inside the square brackets should be inserted if no prior or future plan is a dependency.
+> It also scans and adds this key to plans without it, or with the value `[]`, before the openlanes engine starts up and begins to implement plans, choosing which to start. The linker should skip any plans with `depends_on: [ non-empty ]` and only double-check the plans with an empty value or without the `depends_on` key entirely. The keyword `none` inside the square brackets should be inserted if no prior or future plan is a dependency.
 
 ### New Command
 
-build a new command that refuses to run in a worktree and can only run on main repo on main branch. moreover it performs git pull on main prior to running to ensure the completeness of plans.
+Build a new command that refuses to run in a worktree and can only run in the main repo on the main branch. Moreover, it performs `git pull` on main before running, to ensure the plans are complete.
 
-The command is called `link` and it accepts --plans in which case only those plans are checked for being dependant on others. Without this flag all non archived plans are checked according to rules above. 
+The command is called `link`, and it accepts `--plans`, in which case only those plans are checked for being dependent on others. Without this flag, all non-archived plans are checked according to the rules above.
 
-If a missing dependency declaration is found, it is written into the plan, or as many as necessary. The agent notifies the dispatcher that the linking is complete with one of two outcomes:
+If a missing dependency declaration is found, it is written into the plan, as many as necessary. The agent notifies the dispatcher that linking is complete with one of two outcomes:
 
-1. no new links are found. This completes the linker's operation, and if it was invoked ad a command, it exits reporting no new links were found.
+1. No new links are found. This completes the linker's operation, and if it was invoked as a command, it exits reporting that no new links were found.
 
-2. if new links are found, the dispatcher cuts a local branch of main called $USER/plan-linking-NNN.MM where NNN.MM is rhe number of the first plan modified. however all plans changed with thr new links are included in the branch and pushed as a PR. This PR is not added to any pull-requests.md and is merged by the dispatcher as soon as its CI goes green. visually the UI can add a dedocated lane for system tasks. if it had one, the auto linking would. e visible tbere until its pr is mwrged, if there is a PR.
+2. If new links are found, the dispatcher cuts a local branch of main called `$USER/plan-linking-NNN.MM`, where `NNN.MM` is the number of the first plan modified. However, all plans changed with the new links are included in the branch and pushed as a PR. This PR is not added to any `pull-requests.md` and is merged by the dispatcher as soon as its CI goes green. Visually, the UI can add a dedicated lane for system tasks. If it had one, the auto-linking would be visible there until its PR is merged, if there is a PR.
 
 ## Topological Sort
 
-When the engine starts without the specific plans passed as argumebts, it must sort each todo plan using tsort based on the declared dependencies. 
+When the engine starts without specific plans passed as arguments, it must sort the todo plans using tsort, based on the declared dependencies.
 
-im a DAG of connected plans only the first one can ve worked on until merge before any work on the second begins.
+In a DAG of connected plans, only the first one can be worked on, until it merges, before any work on the second begins.
 
-A plan from a separate DAG thats the first in the list can also ve worked in parallel, and up to the number of workers specified,
+A plan that is first in a separate DAG can also be worked on in parallel, up to the number of workers specified.
 
 ## Non-Goals
 
