@@ -47,6 +47,8 @@ In a DAG of connected plans, only the first one can be worked on, until it merge
 
 A plan that is first in a separate DAG can also be worked on in parallel, up to the number of workers specified.
 
+Finally, two or more plans with the same `depends_on` plan(s) can run in parallel once their dependencies are completed.
+
 ## Non-Goals
 
 1. The Building invariant and grandfathering (008.02, item 10).
