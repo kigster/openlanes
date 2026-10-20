@@ -137,9 +137,18 @@ Overlapping plans: `021` (runtime state outside plans), `022` (Redis outage resi
 ### S18. Conflicts are found by file overlap and explained by Jev
 
 - **Detection** is deterministic. It compares the files this plan's worktree diff touches with those touched by other in-flight plans' diffs and planned in their `plan.md` work units.
-- **Explanation.** When something overlaps, TypeSafe's Jev gives a typed "do these contradict?" judgment plus an explanation for the person.
-- **Fallback.** If Jev fails, times out, or is not configured, the project's default adapter explains it with its cheapest model. If that fails too, the question goes out with the file overlap alone.
+- **Explanation.** When something overlaps and `TYPESAFE_API_KEY` is set, TypeSafe's Jev gives a typed "do these contradict?" judgment plus an explanation for the person.
+- **Fallback.** If `TYPESAFE_API_KEY` is unset, or Jev fails or times out, the project's default adapter explains it with its cheapest model. If that fails too, the question goes out with the file overlap alone.
 - **Before building:** under rule R5, read TypeSafe's terms and privacy policy, since plan diffs would leave the machine. Report anything unusual to the owner first.
+
+### S19. A SOLID sweep follows the seams, and Jev is optional behind TYPESAFE_API_KEY
+
+Decided 2026-10-20.
+
+- A new plan, `045.00` solid-sweep, does the broad ~80% SOLID pass that S10 left out of `038`: one responsibility per class, collaborators injected through the `038` ports, facade-only access between namespaces, a functional core, and the S15 move to concurrent-ruby and dry-monads.
+- It depends on `038` and runs alone under the global lock.
+- It adds a vendor-neutral `Judgment` port. Jev is one backend, used only when the `TYPESAFE_API_KEY` environment variable is set. Without it, nothing loads or calls TypeSafe, and the default adapter answers.
+- `042` (the watchdog) now depends on `045` as well, because its conflict explanation goes through `Judgment`.
 
 ## Plan folders
 
@@ -149,8 +158,9 @@ Overlapping plans: `021` (runtime state outside plans), `022` (Redis outage resi
 | 7 journal | `039.00` progress-journal | 038 |
 | 2 adapters | `040.00` gemini-and-grok-adapters | 038 |
 | 3 recovery | `041.00` idle-start-and-crash-recovery | 039 |
-| 4 watchdog | `042.00` stuck-plan-watchdog | 041 |
+| 4 watchdog | `042.00` stuck-plan-watchdog | 041, 045 |
 | 5 registry | `043.00` client-registry-and-remote-ui | 039 |
 | 6 authority | `044.00` authoritative-control-room | 043 |
+| 8 sweep | `045.00` solid-sweep | 038 |
 
 `040` and `043` can run beside the `041`→`042` chain once their dependencies land.
