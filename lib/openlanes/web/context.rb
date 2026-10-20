@@ -45,6 +45,9 @@ module OpenLanes
     # @!attribute [r] listen
     #   @return [OpenLanes::Web::Listen] the addresses served, which decide
     #     the Host headers answered
+    # @!attribute [r] credentials
+    #   @return [OpenLanes::Web::AdminAuth::Credentials, nil] the login asked
+    #     of every request from off this machine; nil asks for none
     # @!attribute [r] stopping
     #   @return [Concurrent::AtomicBoolean] set when the server shuts down, so
     #     open streams end on the `stop` nudge that follows
@@ -62,9 +65,10 @@ module OpenLanes
       :background,
       :chat,
       :listen,
+      :credentials,
       :stopping) do
       def initialize(dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
-        background: Context::THREAD, listen: Listen.parse(nil), stopping: Concurrent::AtomicBoolean.new, **rest)
+        background: Context::THREAD, listen: Listen.parse(nil), credentials: nil, stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end
 

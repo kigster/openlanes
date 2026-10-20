@@ -12,15 +12,7 @@ module OpenLanes
         aliases: ["-p"],
         default: OpenLanes::Web::DEFAULT_PORT.to_s,
         desc:    "Port to listen on"
-      option :ips,
-        aliases: ["-i"],
-        desc:    "Comma-separated addresses to listen on, e.g. 127.0.0.1,192.168.1.20 " \
-                 "(default: #{OpenLanes::Web::HOST}). The page has no login: anyone who reaches it can stop agents"
-      option :all_interfaces,
-        aliases: ["-I"],
-        type:    :boolean,
-        default: false,
-        desc:    "Listen on every interface, the same as --ips #{OpenLanes::Web::Listen::EVERYWHERE}"
+      listen_options
       option :redis_url,
         desc: "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes.yml redis_url, else $REDIS_URL, " \
               "else #{Live::DEFAULT_URL})"
@@ -42,8 +34,9 @@ module OpenLanes
         "                 # serve the live run of this checkout",
         "--demo --no-open # the sample run, for Cypress and npm run dev",
         "--port 4848      # somewhere other than 11000",
-        "-I               # reachable from other machines, on every interface",
+        "-I --admin-credentials admin:s3cret # reachable from other machines, behind a login",
         "-i 127.0.0.1,192.168.1.20 -p 4848 # loopback and one LAN address",
+        "--bind 0.0.0.0 --admin-credentials admin:s3cret # every interface, behind a login",
         "--demo --port 11101 --identity demo@second-machine # a second machine for the chat"
       ]
 
@@ -54,6 +47,7 @@ module OpenLanes
         root = File.dirname(tree.dir)
         logging(options, root:)
         listen = listen_for(options)
+        credentials = credentials_for(options, listen)
         url = Live.redis_url(option: redis_url_option(options), config: Config.current)
         node = node_for(root, options)
         stores = stores_for(url, options)
@@ -68,9 +62,10 @@ module OpenLanes
           node:,
           demo:,
           copilot:,
-          listen:)
+          listen:,
+          credentials:)
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
-        serve(server, options, keys:, node:, url: stores.current.url)
+        serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
         demo&.stop
         copilot.stop if copilot.respond_to?(:stop)
@@ -89,21 +84,6 @@ module OpenLanes
         Log.setup(Log::Settings.from(options, root:), name: "web")
       rescue Log::Invalid => e
         refuse(e.message, 64)
-      end
-
-      # `--ips`, or `-I` for every interface. Both at once is refused rather
-      # than one quietly winning, since they disagree about who can reach it.
-      #
-      # @param options [Hash]
-      # @return [OpenLanes::Web::Listen]
-      def listen_for(options)
-        if options[:all_interfaces]
-          refuse("Pass --ips or -I, not both.", 64) unless options[:ips].to_s.strip.empty?
-          return OpenLanes::Web::Listen.parse(OpenLanes::Web::Listen::EVERYWHERE)
-        end
-        OpenLanes::Web::Listen.parse(options[:ips])
-      rescue OpenLanes::Web::Listen::Invalid => e
-        refuse("--ips: #{e.message}", 64)
       end
 
       # `--redis-url`, else the URL `openlanes run` hands its server through the
@@ -164,7 +144,7 @@ module OpenLanes
       # Listen until INT or TERM.
       #
       # @return [void]
-      def serve(server, options, keys:, node:, url:)
+      def serve(server, options, keys:, node:, url:, credentials:)
         begin
           server.start
         rescue Errno::EADDRINUSE
@@ -180,24 +160,26 @@ module OpenLanes
                "#{"Also on: #{(server.urls - [server.url]).join(", ")}\n" if server.listen.public?}" \
                "Redis: #{Live.mask(url)} as #{node.label} (#{keys.node}), repository #{keys.repo}")
         end
-        exposed(server)
+        exposed(server, credentials)
         Log.logger.info("listening", url: server.url, urls: server.urls, demo: options[:demo], repo: keys.repo)
         OpenLanes::Web.open(server.url) if options[:open]
         server.wait
       end
 
       # Said even under --quiet, and logged: listening beyond this machine
-      # hands anyone who reaches it the controls, and that is never silent.
+      # hands anyone with the login the controls, and that is never silent.
+      # {#credentials_for} has already refused a public server without one.
       #
       # @param server [OpenLanes::Web::Server]
+      # @param credentials [OpenLanes::Web::AdminAuth::Credentials]
       # @return [void]
-      def exposed(server)
+      def exposed(server, credentials)
         return unless server.listen.public?
 
         ips = server.listen.public_ips.join(", ")
-        warn("Listening on #{ips}: the page has no login, so anyone who can reach this machine on port " \
-             "#{server.port} can stop agents, answer their questions and message them.")
-        Log.logger.warn("listening beyond loopback", ips: server.listen.public_ips, port: server.port)
+        warn("Listening on #{ips}, behind a login as #{credentials.user}: anyone with it who can reach this " \
+             "machine on port #{server.port} can stop agents, answer their questions and message them.")
+        Log.logger.warn("listening beyond loopback", ips: server.listen.public_ips, port: server.port, user: credentials.user)
       end
     end
   end
