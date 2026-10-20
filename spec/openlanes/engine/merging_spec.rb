@@ -250,4 +250,74 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
   end
+
+  context "when the plan's own checkout builds the sibling" do
+    subject(:merging) do
+      described_class.new(github: OpenLanes::Vcs::GitHub.new,
+        outcomes:  OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by:  :auto,
+        worktree:,
+        publisher:)
+    end
+
+    let(:numbers) { [1, 2] }
+    let(:own) { Dir.mktmpdir("openlanes-own-checkout") }
+    let(:checkout) { OpenLanes::Vcs::Worktree::Checkout.new(ordinal: "033.00", branch: "kig/033", path: own, created: false) }
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, path_for: own, checkout_for: checkout) }
+    let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, branch_mismatch: nil, pushed!: nil) }
+    let(:refresh) { instance_double(OpenLanes::Vcs::Refresh, abort!: nil) }
+
+    def outcome(kind, **) = OpenLanes::Vcs::Refresh::Outcome.new(kind:, **)
+
+    before { allow(OpenLanes::Vcs::Refresh).to receive(:new).with(path: own).and_return(refresh) }
+
+    after { FileUtils.rm_rf(own) }
+
+    it "rebases it locally and pushes it with the lease, not through GitHub" do
+      allow(refresh).to receive(:call).and_return(outcome(:rebased, base: "origin/main"))
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(publisher).to have_received(:pushed!).with(checkout, "HEAD").once
+        expect(rebases).to be_empty
+      end
+    end
+
+    it "sends the plan to 🔴 naming the files when the local rebase conflicts" do
+      allow(refresh).to receive(:call).and_return(outcome(:conflicted, base: "origin/main", files: %w[lib/a.rb]))
+      result = merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(refresh).to have_received(:abort!).with("conflicts after a sibling merged")
+        expect(result.note).to include("PR #2 no longer rebases onto origin/main: conflicts in lib/a.rb.")
+        expect(result.to).to eq(:rejected)
+      end
+    end
+
+    it "lets GitHub rebase it when the local tree refuses" do
+      allow(refresh).to receive(:call).and_return(outcome(:skipped, reason: "dirty tree"))
+      merging.assess(plan, "auto")
+
+      expect(rebases).to eq([2])
+    end
+
+    it "lets GitHub rebase a sibling built from another branch" do
+      allow(publisher).to receive(:branch_mismatch).and_return("PR #2 is built from kig/other")
+      merging.assess(plan, "auto")
+
+      expect(rebases).to eq([2])
+    end
+
+    it "keeps the merge and logs a rebase it could not finish" do
+      allow(refresh).to receive(:call).and_return(outcome(:rebased, base: "origin/main"))
+      allow(publisher).to receive(:pushed!).and_raise(OpenLanes::Error, "lease refused")
+      allow(OpenLanes::UI).to receive(:log)
+      result = merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(result).to have_attributes(merged: true)
+        expect(OpenLanes::UI).to have_received(:log).with(/rebase after merging #1 not finished: lease refused/, hash_including(level: :warn))
+      end
+    end
+  end
 end
