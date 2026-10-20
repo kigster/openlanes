@@ -10,7 +10,7 @@ c) Make `Ports.free?` rely on the bind alone and drop the connect probe, in a se
 
 ## A1
 
-Have you tried rebasing onto main so you get a fix to this problem from the main branch?
+the only type of spec failure we are ok to ignore on tbe macbook is this one "Ports::Exhausted: every port from 11100 to 11999". consider it soecs passing and move on,
 
 Answered by kig on 2026-10-17
 <!-- cmd:01M55TQ36D6A0G9VZMZMQ3RAHN -->
