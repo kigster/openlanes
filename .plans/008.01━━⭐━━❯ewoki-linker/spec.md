@@ -60,9 +60,77 @@ A plan from a separate DAG thats the first in the list can also ve worked in par
 Each item names its check. Numbers follow the 008.00 spec.
 
 6. **`agents/ewoki-linker.md`** with frontmatter `precedes: [ready_for_planning, planned]`, `handles: []`, Haiku, low effort. `precedes:` is read in exactly one place, a new `Agents::Registry#preceding(status)`, which the dispatcher, `Roster` and `Executor` all call; none of them parses the key itself. Check: `Registry` loads it, `#preceding(:planned)` returns it, `Roster` lists it, and its tool grants match an agent that may edit `spec.md` only.
-1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
+1. **Dispatcher ewoki gate** (dropped by D1): before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
 1. **Ewoki output contract**: writes only two things, both in `spec.md`: the `depends_on:` frontmatter key (quoted canonical `"NNN.MM"` strings, `[]` when none), and its ledger entries in the `> [!NOTE]` block that `Plans::Ledger` reads (Started, then Completed), with one reason per dependency on the lines below its Completed entry, each naming the thing the plan needs (N7: shared files are a merge risk, not a dependency). Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that the diff to `spec.md` touches only the frontmatter key and the NOTE block, and that no other file in the folder changed except the harness's own `state.json` signature.
 1. **Hand-written key wins**: a plan that already has the key, even `[]`, is skipped. Check: runner spec.
+
+## Decisions
+
+### B1 (answered) — Where the linker runs
+
+Item 7 runs ewoki in each plan's worktree, while "When it runs" says the linker runs only on `main` in the primary repo. Which holds?
+
+### D1 (decision) — Primary repo only
+
+- Answered on 2026-10-20
+- By the product owner
+
+Primary repo only. The `link` command runs on `main`, and `run` makes a pre-pass on `main` before the first round. The per-plan dispatcher gate (item 7) is dropped.
+
+### B2 (answered) — What "no dependencies" looks like
+
+Item 8 writes `[]` for "none", and item 9 never touches an existing key. "When it runs" re-checks `[]`. How does a human say "no dependencies, leave it alone"?
+
+### D2 (decision) — `[none]` means checked, none
+
+- Answered on 2026-10-20
+- By the product owner
+
+Write `depends_on: [none]` for "checked, none". Re-check a missing key and `[]`. Skip `[none]` and any non-empty list. `Spec#depends_on` reads `[none]` as no edges.
+
+### B3 (answered) — Auto-merging the linking PR
+
+The linking PR could be merged by the dispatcher on green CI. Today `gh pr merge` is in `UNGRANTABLE`, and CLAUDE.md keeps merging out of agents' reach. Who merges?
+
+### D3 (decision) — Harness merges, narrowly
+
+- Answered on 2026-10-20
+- By the product owner
+
+The harness, never an agent, merges the linking PR on green CI through the `GitHub` seam. It does so only when the diff touches nothing but `depends_on:` lines in `.plans/*/spec.md`. `gh pr merge` stays in `UNGRANTABLE` for agents.
+
+### B4 (answered) — What topological sort adds to the existing gate
+
+008.00 already holds a plan whose `depends_on:` names a plan not yet ✅. What does tsort add?
+
+### D4 (decision) — Order only
+
+- Answered on 2026-10-20
+- By the product owner
+
+Order only. With no plan arguments, `run` sorts candidates by `TSort` over `Dependencies`, with the roots of each disjoint DAG first and the ordinal as tie-break. Holding stays with the 008.00 gate.
+
+### B5 (answered) — Split into plans
+
+Items 6–9, `link`, the main-branch guard, `git pull`, the branch and PR flow, the run pre-pass and tsort come to about twelve units. Should this be one plan or several?
+
+### D5 (decision) — Two plans
+
+- Answered on 2026-10-20
+- By the product owner
+
+Two plans. 008.01 covers the agent, `Registry#preceding`, executor grants, the `link` command with its main and pull guard, the `[none]` rule, and evals. A new 008.03 covers the linking PR flow (with the narrow auto-merge from D3), the `run` pre-pass and tsort ordering.
+
+### B6 (answered) — System lane in the UI
+
+The spec says the UI "can add" a dedicated lane for system tasks. In scope or not?
+
+### D6 (decision) — Out of scope
+
+- Answered on 2026-10-20
+- By the product owner
+
+Out of scope. The System lane is a follow-up for 008.02 or the web plans.
 
 ## How to tell it's working?
 
