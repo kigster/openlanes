@@ -342,20 +342,13 @@ module OpenLanes
         return Success(nil) if live.nil? || @options[:web] == false
 
         port = Integer(@options[:port] || OpenLanes::Web::DEFAULT_PORT)
-        listen = @options[:listen] || OpenLanes::Web::Listen.parse(nil)
-        web = OpenLanes::Web.launcher(root: @root,
-          plans_dir:   @tree.dir,
-          port:,
-          redis_url:   live.store.url,
-          listen:,
-          credentials: @options[:credentials]).start
+        web = OpenLanes::Web.launcher(root: @root, plans_dir: @tree.dir, port:, redis_url: live.store.url).start
         unless web.ready?
           web.stop
           return without_web(web, live)
         end
 
         startup("Control room", web.port == port ? web.url : "#{web.url} (#{port} was taken)")
-        startup("Also on", "#{(listen.urls(web.port) - [web.url]).join(", ")}, behind a login") if listen.public?
         OpenLanes::Web.open(browser_url(web)) unless @options[:open] == false
         Success(web)
       end

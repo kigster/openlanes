@@ -188,7 +188,7 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     end
 
     context "with --ips" do
-      let(:result) { run(ips: "127.0.0.1, 192.168.1.20", admin_credentials: "admin:s3cret") }
+      let(:result) { run(ips: "127.0.0.1, 192.168.1.20") }
 
       it "listens on each, and answers to them in the Host header" do
         result
@@ -196,56 +196,21 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
         expect([listen.ips, built[:server][:context].listen]).to eq([%w[127.0.0.1 192.168.1.20], listen])
       end
 
-      it "puts the login on the context" do
-        result
-        expect(built[:server][:context].credentials).to eq(OpenLanes::Web::AdminAuth.parse("admin:s3cret"))
-      end
-
-      it "prints the other addresses and warns who can drive it, even with --quiet" do
-        quiet = unwrapped(run(ips: "192.168.1.20", admin_credentials: "admin:s3cret", quiet: true)[1])
-        expect([stderr, quiet]).to match([include("Also on: http://192.168.1.20:11000", "behind a login as admin"),
-                                          include("Listening on 192.168.1.20", "behind a login as admin")])
-      end
-
-      it "never prints the password" do
-        expect(stderr).not_to include("s3cret")
+      it "prints the other addresses and warns that the page has no login, even with --quiet" do
+        quiet = unwrapped(run(ips: "192.168.1.20", quiet: true)[1])
+        expect([stderr, quiet]).to match([include("Also on: http://192.168.1.20:11000", "no login"),
+                                          include("Listening on 192.168.1.20", "no login")])
       end
 
       it "logs the warning" do
         result
         log = File.read(File.join(File.dirname(plans_root), "log", "development.log"))
-        expect([log.include?("listening beyond loopback"), log.include?("s3cret")]).to eq([true, false])
+        expect(log).to include("listening beyond loopback")
       end
-
-      it "refuses without a login, naming the flag" do
-        _, err, status = run(ips: "192.168.1.20")
-        expect([unwrapped(err), status]).to match([include("Listening on 192.168.1.20 needs a login",
-          "--admin-credentials USER:PASSWORD"), 64])
-      end
-
-      it "takes the login from the environment the engine hands it" do
-        stub_const("ENV", ENV.to_h.merge(OpenLanes::Web::AdminAuth::ENV_NAME => "ops:hunter2"))
-        run(ips: "192.168.1.20")
-        expect(built[:server][:context].credentials.user).to eq("ops")
-      end
-
-      it "refuses a login that is not USER:PASSWORD" do
-        expect(run(ips: "192.168.1.20", admin_credentials: "admin")).to match([anything,
-                                                                               include("--admin-credentials takes USER:PASSWORD"), 64])
-      end
-    end
-
-    it "takes --bind as --ips" do
-      expect(described_class.options.find { it.name == :ips }.aliases).to include("--bind")
-    end
-
-    it "asks no login on loopback, unless one is given" do
-      result
-      expect(built[:server][:context].credentials).to be_nil
     end
 
     context "with -I" do
-      let(:result) { run(all_interfaces: true, admin_credentials: "admin:s3cret") }
+      let(:result) { run(all_interfaces: true) }
 
       it "listens everywhere, and opens the page on loopback" do
         result
@@ -262,7 +227,7 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     end
 
     context "when an address is not this machine's" do
-      let(:result) { run(ips: "10.255.255.1", admin_credentials: "admin:s3cret") }
+      let(:result) { run(ips: "10.255.255.1") }
 
       before { allow(server).to receive(:start).and_raise(Errno::EADDRNOTAVAIL) }
 

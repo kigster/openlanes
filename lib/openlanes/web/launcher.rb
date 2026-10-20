@@ -40,17 +40,12 @@ module OpenLanes
       #   its requests; the engine's own, so both processes write one file
       # @param ready_within [Float]
       # @param probe [Proc, nil] answers whether the server is up; `/healthz` by default
-      # @param listen [OpenLanes::Web::Listen] the addresses the server listens on
-      # @param credentials [OpenLanes::Web::AdminAuth::Credentials, nil] its
-      #   login for requests from off this machine, handed over in {#env}
       def initialize(root:, plans_dir:, port:, redis_url:, log: default_log(root), logging: Log.settings,
-        ready_within: READY_WITHIN, probe: nil, listen: Listen.parse(nil), credentials: nil)
+        ready_within: READY_WITHIN, probe: nil)
         @root = root
         @plans_dir = plans_dir
         @port = Integer(port)
         @redis_url = redis_url
-        @listen = listen
-        @credentials = credentials
         @log = log
         @logging = logging
         @ready_within = ready_within
@@ -66,29 +61,21 @@ module OpenLanes
       # @return [Integer] the port asked for, or the free one {#start} moved to
       attr_reader :port
 
-      # Loopback, where the login is never asked. Every server it launches
-      # answers there: on loopback by default, and on a wildcard under -I.
-      #
       # @return [String]
       def url = "http://#{HOST}:#{@port}"
 
-      # @return [Array<String>] what is spawned; the Redis URL and the
-      #   credentials are in {#env}, never here
+      # @return [Array<String>] what is spawned; the Redis URL is in {#env}, never here
       def argv
-        ips = @listen.public? ? ["--ips", @listen.ips.join(",")] : []
-        [EXE, "web", "--port", @port.to_s, "--no-open", "--dir", @plans_dir, *ips]
+        [EXE, "web", "--port", @port.to_s, "--no-open", "--dir", @plans_dir]
       end
 
-      # The Redis URL, the login, and where to log. A server left to find its
-      # own log would resolve `log/development.log` from its own root and
-      # defaults, and a `--log` typed on `run` would move the engine's lines
-      # but not the server's.
+      # The Redis URL, and where to log. A server left to find its own log
+      # would resolve `log/development.log` from its own root and defaults,
+      # and a `--log` typed on `run` would move the engine's lines but not
+      # the server's.
       #
       # @return [Hash{String => String}] added to the server's environment
-      def env
-        login = @credentials ? { AdminAuth::ENV_NAME => "#{@credentials.user}:#{@credentials.password}" } : {}
-        { REDIS_URL_ENV => @redis_url, **login, **(@logging ? @logging.env : {}) }
-      end
+      def env = { REDIS_URL_ENV => @redis_url, **(@logging ? @logging.env : {}) }
 
       # Spawn the server on the first free port from the one asked for, and
       # wait for it to answer. A taken port is skipped before spawning, never

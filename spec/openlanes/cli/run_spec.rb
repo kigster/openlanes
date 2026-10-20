@@ -827,32 +827,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     it "starts beside the run on the store the board is published to, and prints its URL" do
       result
       aggregate_failures do
-        expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root),
-          plans_dir: plans_root,
-          port: 4848,
-          redis_url: "memory://",
-          listen: OpenLanes::Web::Listen.parse(nil),
-          credentials: nil)
+        expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root), plans_dir: plans_root, port: 4848, redis_url: "memory://")
         expect(stderr).to include("Control room: http://127.0.0.1:11000")
       end
-    end
-
-    context "with -I and a login" do
-      let(:result) { run(dry_run: false, rounds: 1, port: "4848", all_interfaces: true, admin_credentials: "admin:s3cret") }
-
-      it "hands the server the addresses and the login, and says it answers elsewhere behind it" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Web).to have_received(:launcher)
-            .with(hash_including(listen: OpenLanes::Web::Listen.parse("0.0.0.0"),
-              credentials: OpenLanes::Web::AdminAuth.parse("admin:s3cret")))
-          expect(stderr).to include("behind a login")
-        end
-      end
-    end
-
-    it "refuses -I without a login, before any agent starts" do
-      expect(run(dry_run: false, all_interfaces: true)).to match([anything, include("needs a login"), 64])
     end
 
     it "names the port it asked for when the server had to move off it" do

@@ -41,30 +41,6 @@ RSpec.describe OpenLanes::Web::Launcher do
     expect(launcher.env).to eq("OPENLANES_REDIS_URL" => "redis://localhost:6379/9")
   end
 
-  describe "listening past loopback" do
-    subject(:public_launcher) do
-      described_class.new(root: dir,
-        plans_dir: dir,
-        port:,
-        redis_url: "r",
-        listen:      OpenLanes::Web::Listen.parse("0.0.0.0"),
-        credentials: OpenLanes::Web::AdminAuth.parse("admin:s3cret"))
-    end
-
-    it "passes the addresses on the command line" do
-      expect(public_launcher.argv.last(2)).to eq(["--ips", "0.0.0.0"])
-    end
-
-    it "hands the login over through the environment, never the command line" do
-      expect([public_launcher.env, public_launcher.argv.join(" ")])
-        .to match([include("OPENLANES_ADMIN_CREDENTIALS" => "admin:s3cret"), satisfy { !it.include?("s3cret") }])
-    end
-
-    it "still probes and opens the page on loopback, where no login is asked" do
-      expect(public_launcher.url).to eq("http://127.0.0.1:#{port}")
-    end
-  end
-
   it "hands the engine's log settings to the server too, so both write one file" do
     logging = OpenLanes::Log::Settings.new(file: File.join(dir, "log", "development.log"), level: "debug", format: "json")
     launcher = described_class.new(root: dir, plans_dir: dir, port:, redis_url: "redis://localhost:6379/9", logging:)

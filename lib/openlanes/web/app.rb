@@ -48,7 +48,6 @@ module OpenLanes
         # @return [Class] a subclass serving that context
         def serving(context)
           Class.new(self) do
-            use AdminAuth, credentials: context.credentials if context.credentials
             set :context, context
             set :host_authorization, { permitted_hosts: LOCAL_HOSTS + context.listen.permitted_hosts }
             set :public_folder, context.dist

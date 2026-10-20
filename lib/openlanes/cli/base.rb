@@ -163,65 +163,7 @@ module OpenLanes
           desc:   "color or standard (one line per entry, with or without colour) or json (default: #{Log::DEFAULT_FORMAT})"
       end
 
-      # `--ips` (alias `--bind`), `-I` and `--admin-credentials`, for the
-      # commands that serve the control room: `web`, and `run` and `start`
-      # through the server they launch.
-      #
-      # @return [void]
-      def self.listen_options
-        option :ips,
-          aliases: ["-i", "--bind"],
-          desc:    "Comma-separated addresses the control room listens on, e.g. 127.0.0.1,192.168.1.20 " \
-                   "(default: #{OpenLanes::Web::HOST}). Any address past loopback needs --admin-credentials"
-        option :all_interfaces,
-          aliases: ["-I"],
-          type:    :boolean,
-          default: false,
-          desc:    "Listen on every interface, the same as --ips #{OpenLanes::Web::Listen::EVERYWHERE}"
-        option :admin_credentials,
-          desc: "USER:PASSWORD, the Basic auth login asked of every request from off this machine; required " \
-                "when listening past loopback (default: $#{OpenLanes::Web::AdminAuth::ENV_NAME})"
-      end
-
       private
-
-      # `--ips`, or `-I` for every interface. Both at once is refused rather
-      # than one quietly winning, since they disagree about who can reach it.
-      #
-      # @param options [Hash]
-      # @return [OpenLanes::Web::Listen]
-      def listen_for(options)
-        if options[:all_interfaces]
-          refuse("Pass --ips or -I, not both.", 64) unless options[:ips].to_s.strip.empty?
-          return OpenLanes::Web::Listen.parse(OpenLanes::Web::Listen::EVERYWHERE)
-        end
-        OpenLanes::Web::Listen.parse(options[:ips])
-      rescue OpenLanes::Web::Listen::Invalid => e
-        refuse("--ips: #{e.message}", 64)
-      end
-
-      # `--admin-credentials`, else the ones `openlanes run` hands its server
-      # through the environment. Listening past loopback without them is
-      # refused: the page can stop agents and answer for a person, and a
-      # server anyone on the network can drive is never a default.
-      #
-      # @param options [Hash]
-      # @param listen [OpenLanes::Web::Listen]
-      # @param env [Hash]
-      # @return [OpenLanes::Web::AdminAuth::Credentials, nil]
-      def credentials_for(options, listen, env: ENV)
-        text = [options[:admin_credentials], env[OpenLanes::Web::AdminAuth::ENV_NAME]].find { !it.to_s.empty? }
-        if text.nil?
-          return unless listen.public?
-
-          refuse("Listening on #{listen.public_ips.join(", ")} needs a login: pass --admin-credentials USER:PASSWORD, " \
-                 "or set $#{OpenLanes::Web::AdminAuth::ENV_NAME}.",
-            64)
-        end
-        OpenLanes::Web::AdminAuth.parse(text)
-      rescue OpenLanes::Web::AdminAuth::Invalid => e
-        refuse("--admin-credentials #{e.message}.", 64)
-      end
 
       # @param options [Hash]
       # @return [OpenLanes::Plans::Tree]
