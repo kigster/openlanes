@@ -102,7 +102,10 @@ RSpec.describe OpenLanes::Web::RequestLog do
   end
 
   it "is what Web.app serves the routes through" do
-    context = instance_double(OpenLanes::Web::Context, dist: Dir.tmpdir, listen: OpenLanes::Web::Listen.parse(nil))
+    context = instance_double(OpenLanes::Web::Context,
+      dist:        Dir.tmpdir,
+      listen:      OpenLanes::Web::Listen.parse(nil),
+      credentials: nil)
 
     expect(OpenLanes::Web.app(context)).to be_a(described_class)
   end

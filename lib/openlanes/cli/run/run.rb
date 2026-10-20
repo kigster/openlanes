@@ -62,7 +62,8 @@ module OpenLanes
         desc:    "Open the control room in the browser; --no-open only prints its URL"
       option :port,
         default: OpenLanes::Web::DEFAULT_PORT.to_s,
-        desc:    "Port the control room listens on, on 127.0.0.1"
+        desc:    "Port the control room listens on"
+      listen_options
       option :ignore_bombs,
         type:    :boolean,
         default: false,
@@ -87,14 +88,17 @@ module OpenLanes
         "--no-web               # headless: no control room, no browser; ends when the tree settles",
         "--no-web --stay        # headless, but up for a page `openlanes web` serves on its own",
         "--until-settled        # with the control room, but ending when the tree settles",
-        "--ignore-bombs         # keep working while a 💣 stands"
+        "--ignore-bombs         # keep working while a 💣 stands",
+        "-I --admin-credentials admin:s3cret # the control room on every interface, behind a login"
       ]
 
       # @param options [Hash]
       # @return [void]
       def call(**options)
         tree = tree_for(options)
-        exit(unwrap(workflow(tree, options.merge(quiet: quiet?(options))).call))
+        listen = listen_for(options)
+        options = options.merge(quiet: quiet?(options), listen:, credentials: credentials_for(options, listen))
+        exit(unwrap(workflow(tree, options).call))
       end
 
       private
