@@ -307,7 +307,8 @@ RSpec.describe OpenLanes::Plans::StateMachine do
         building_ui: :building,
         ready_for_review: :building_ui,
         in_review: :ready_for_review,
-        verifying: :in_review)
+        verifying: :in_review,
+        completed: :verifying)
     end
 
     it "refuses with the earlier state's own violation when the folder does not fit it" do
@@ -332,7 +333,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expected = {
         retroactive: :planned, new: :researched, researched: :ready_for_planning, ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
-        ready_for_review: :in_review, in_review: :verifying, verifying: :approved, approved: :deployed,
+        ready_for_review: :in_review, in_review: :verifying, verifying: :completed, completed: :approved, approved: :deployed,
         rejected: :building_ui, rolled_back: :ready_for_review, shit: :planned,
         discarded: nil, blocked: nil, deployed: nil
       }
@@ -436,7 +437,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     # at a state that had been renamed out of existence.
     it "resolves nothing else, because a state has exactly two names" do
       aggregate_failures do
-        %w[white star yellow green complete completed done wip ready aborted nonsense].each do |word|
+        %w[white star yellow green complete done wip ready aborted nonsense].each do |word|
           expect(OpenLanes::Plans.status(word)).to be_nil, "expected #{word.inspect} not to resolve"
         end
       end

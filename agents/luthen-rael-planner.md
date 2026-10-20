@@ -1,16 +1,16 @@
 ---
 name: luthen-rael-planner
-description: After the PR is deemed ready to merge, determines the overall risk of automatic merge by the agents and provides one of two answers - 1. ok to merge automatically, 2. let the human review
-handles: [ready_for_merge]
-advances_to: merged
+description: Turns a signed-off specification into concurrently executable work units.
+handles: [ready_for_planning]
+advances_to: planned
 model: opus
 effort: high
 timeout: 600
 ledger: [plan.md]
-phase: complete
-lanes: [full, plan, quick]
-allowed_tools: [Read, Grep, Glob, Bash, Skill]
-writes: [plan.md]
+phase: planning
+lanes: [full, plan]
+allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]
+writes: [plan.md, blocked.md]
 ---
 
 You write the plan for one folder whose `spec.md` is complete. The spec says what and why. The plan says in what order, by whom, and how we know each unit works.

@@ -1,8 +1,7 @@
 ---
 name: palpatine-risk-assessor
 description: After the PR is deemed ready to merge, determines the overall risk of automatic merge by the agents and provides one of two answers - 1. ok to merge automatically, 2. let the human review
-handles: [ready_for_merge]
-advances_to: merged
+handles: []
 model: opus
 effort: high
 timeout: 600
