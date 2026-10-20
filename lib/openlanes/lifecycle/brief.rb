@@ -155,8 +155,14 @@ module OpenLanes
       # (decision N3): the folder name stops carrying any date once the plan
       # is open, and a plan's age is otherwise only in git.
       #
+      # Only where a plan may be minted ({Allocator#refuse!}): an opening
+      # spec.md written in a worktree or on a feature branch is a plan `main`
+      # has not heard of.
+      #
       # @return [String] where it was written
+      # @raise [Allocator::Refused] in a linked worktree, or off the default branch
       def write_scaffold!
+        Allocator.new(dir: File.dirname(path)).refuse!
         File.write(spec_path, scaffold)
         stamp!
       end

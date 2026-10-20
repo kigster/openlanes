@@ -42,6 +42,18 @@ RSpec.describe OpenLanes::Lifecycle::Brief, :tree do
     it "returns the path it wrote" do
       expect(brief.write_scaffold!).to eq(File.join(path, "spec.md"))
     end
+
+    it "refuses off the default branch, where a plan may not be minted, and writes nothing" do
+      init_repo
+      repo_git("commit", "-q", "--allow-empty", "-m", "empty")
+      repo_git("checkout", "-q", "-b", "kig/side")
+
+      aggregate_failures do
+        expect { brief.write_scaffold! }
+          .to raise_error(OpenLanes::Lifecycle::Allocator::Refused, /only on main in the primary checkout/)
+        expect(File).not_to exist(File.join(path, "spec.md"))
+      end
+    end
   end
 
   describe "#stamp!" do
