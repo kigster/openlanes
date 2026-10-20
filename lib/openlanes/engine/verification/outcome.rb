@@ -232,7 +232,7 @@ module OpenLanes
           seen ||= look(checkout:, plan:, pull:, round:)
           number = number_of(pull)
           case seen.ci
-          when :labelled then ready(number, "already #{Plans::ReviewLabel::READY_TO_MERGE}")
+          when :labelled then ready(plan, number, "already #{Plans::ReviewLabel::READY_TO_MERGE}")
           when :registering then Result.new(kind: :waiting, note: "🧪 no checks yet on PR ##{number}; waiting for CI to start")
           when :pending then Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}")
           when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
@@ -300,10 +300,9 @@ module OpenLanes
           result = @review.call(pr: pull.url || number_of(pull), label: Plans::ReviewLabel::READY_TO_MERGE)
           return Result.new(kind: :waiting, note: "🧪 #{Plans::ReviewLabel::READY_TO_MERGE} refused: #{result.reason}") if result.refused?
 
-          # Plan 033 merges here in agent mode (R5): `ready-to-merge`, green
-          # CI on the PR and on main, and a clean merge. Until then nothing
-          # merges, and in human mode nothing ever does (M4).
-          ready(number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
+          # Nothing merges here: the plan goes on to 🏁, where palpatine
+          # weighs each pull request and {Engine::Merging} acts on it (P1).
+          ready(plan, number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
         end
 
         # The coverage gate's verdict on this round's commit, run once. A
@@ -343,7 +342,35 @@ module OpenLanes
         end
 
         # @return [Result]
-        def ready(number, why) = Result.new(kind: :ready, note: "PR ##{number} #{why}; waiting for it to merge")
+        # `ready-to-merge` is on. Once every open pull request of the plan
+        # carries it, the plan is 🏁 Completed (P1), and palpatine is next.
+        #
+        # @return [Result]
+        def ready(plan, number, why)
+          # Waiting, not ready: the look comes round again, and finds this
+          # one labelled and the others perhaps labelled by then.
+          unless every_pull_ready?(plan, number)
+            return Result.new(kind: :waiting, note: "PR ##{number} #{why}; waiting for the plan's other pull requests")
+          end
+
+          unless plan.machine.may?(:completed)
+            why_not = Plans::STATUS_BY_KEY.fetch(:completed).violation(plan) || "#{plan.status} cannot become 🏁"
+            return Result.new(kind: :ready, note: "PR ##{number} #{why}; stays 🧪: #{why_not}")
+          end
+
+          plan.machine.promote!(:completed)
+          Result.new(kind: :ready, to: :completed, note: "PR ##{number} #{why}; on to 🏁, for palpatine to weigh")
+        end
+
+        # @param labelled [Integer] the pull request just labelled, not asked again
+        # @return [Boolean]
+        def every_pull_ready?(plan, labelled)
+          plan.pull_requests.select(&:open?).all? do |pull|
+            next true if number_of(pull) == labelled
+
+            @github.labels(number: number_of(pull), repo: Vcs::GitHub.repo_of(pull.url)).include?(Plans::ReviewLabel::READY_TO_MERGE.name)
+          end
+        end
 
         # @return [Boolean]
         def labelled_ready?(number, repo) = @github.labels(number:, repo:).include?(Plans::ReviewLabel::READY_TO_MERGE.name)
