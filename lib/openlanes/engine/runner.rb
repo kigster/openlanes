@@ -235,7 +235,7 @@ module OpenLanes
       # @param except [Array<String>] ordinals an agent or a drain is in
       # @param now [Time]
       # @return [OpenLanes::Lifecycle::Aging::Result]
-      def age!(except: [], now: Time.now)
+      def age!(except: [], now: Clock::System.now)
         subjects = in_scope.reject { except.include?(it.feature.ordinal.to_s) || foreign?(it) }
         result = Lifecycle.age(tree:, subjects:, since: @aging_since, now:, commit: !dry_run?)
         @would_bomb = result.bombed if dry_run?
@@ -254,7 +254,7 @@ module OpenLanes
       #
       # @param now [Time]
       # @return [Array<OpenLanes::Plans::Subject>]
-      def halted_by(now: Time.now)
+      def halted_by(now: Clock::System.now)
         return [] if @ignore_bombs
 
         bombs.reject { Plans::PlanState.for(it.feature.path).resumed?(now:) }

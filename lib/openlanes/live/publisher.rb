@@ -77,9 +77,9 @@ module OpenLanes
         @meter.record(board.rows, now:)
         snapshot = build(board, now)
         json = JSON.generate(snapshot)
-        @store.multi do |tx|
+        EventBus.for(@store).transaction do |tx|
           tx.set(@keys.snapshot, json, ex: Keys::SNAPSHOT_TTL)
-          tx.xadd(@keys.board, { seq: snapshot[:seq], json: }, maxlen: Keys::BOARD_LENGTH)
+          tx.append(@keys.board, { seq: snapshot[:seq], json: }, maxlen: Keys::BOARD_LENGTH)
           tx.hset(@keys.nodes, @node.name, JSON.generate(@node.wire(heartbeat_at: now)))
         end
         nudge(snapshot)

@@ -64,7 +64,7 @@ module OpenLanes
       # @param stay [Boolean] whether a control room can answer at all
       # @param auto [Boolean] false to ask and never grant on its own
       # @param now [Proc] the wall clock
-      def initialize(stay:, auto: true, now: -> { Time.now })
+      def initialize(stay:, auto: true, now: -> { Clock::System.now })
         @stay = stay
         @auto = auto
         @now = now

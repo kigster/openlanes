@@ -225,7 +225,7 @@ module OpenLanes
         end
 
         command = { plan:, action:, target: }
-        store.xadd(context.keys.app_commands, { json: JSON.generate(command) }, maxlen: Apps::Runner::COMMANDS_LENGTH)
+        Live::EventBus.for(store).append(context.keys.app_commands, { json: JSON.generate(command) }, maxlen: Apps::Runner::COMMANDS_LENGTH)
         status 202
         json(command)
       end

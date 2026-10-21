@@ -8,6 +8,16 @@ module OpenLanes
       # Pi's `--thinking` scale already uses these words.
       THINKING = Adapters::EFFORTS
 
+      # `--no-session` every time: nothing resumes, nothing compacts, and
+      # nothing refuses a denied tool but the after-check.
+      CAPABILITIES = Capabilities.new(compacts: false,
+        resumes: false,
+        enforces_tool_denial: false,
+        compact_prompt: nil)
+
+      # @return [OpenLanes::Adapters::Capabilities]
+      def capabilities = CAPABILITIES
+
       # @param invocation [OpenLanes::Adapters::Invocation]
       # @return [Array<String>]
       def argv(invocation)

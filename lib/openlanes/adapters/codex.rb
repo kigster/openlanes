@@ -13,6 +13,15 @@ module OpenLanes
       # Codex says `xhigh` for the top of its scale and has no `max`.
       EFFORT = { "low" => "low", "medium" => "medium", "high" => "high", "xhigh" => "xhigh", "max" => "xhigh" }.freeze
 
+      # No session to resume, so nothing to compact, and no denylist of its own.
+      CAPABILITIES = Capabilities.new(compacts: false,
+        resumes: false,
+        enforces_tool_denial: false,
+        compact_prompt: nil)
+
+      # @return [OpenLanes::Adapters::Capabilities]
+      def capabilities = CAPABILITIES
+
       # @param invocation [OpenLanes::Adapters::Invocation]
       # @return [Array<String>]
       def argv(invocation)

@@ -44,12 +44,14 @@ module OpenLanes
         # @param chdir [String, nil]
         # @param env [Hash{String => String}] what the adapter adds on top of
         #   {.environment}, e.g. claude's autocompact threshold
+        # @param spawner [#spawn] {OpenLanes::Spawner::System} unless a spec
+        #   starts nothing
         # @return [OpenLanes::Execution::Child]
-        def spawn(argv, chdir: nil, env: {})
+        def spawn(argv, chdir: nil, env: {}, spawner: Spawner::System)
           reader, writer = IO.pipe
           options = { out: writer, err: writer, in: File::NULL, unsetenv_others: true, pgroup: true }
           options[:chdir] = chdir if chdir
-          pid = Process.spawn(environment.merge(env), *argv, **options)
+          pid = spawner.spawn(environment.merge(env), *argv, **options)
           writer.close
           track(new(pid:, reader:))
         end

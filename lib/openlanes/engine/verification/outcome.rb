@@ -124,7 +124,7 @@ module OpenLanes
         # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Time.now })
+          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now })
           @root = root
           @publisher = publisher
           @github = github

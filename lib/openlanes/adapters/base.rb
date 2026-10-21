@@ -47,30 +47,44 @@ module OpenLanes
       # @return [OpenLanes::Adapters::Model, nil]
       def model_entry(name) = models.find { |m| m.id == name.to_s }
 
+      # What this CLI can do. Abstract on purpose: every adapter declares all
+      # of it, and the Executor and Dispatcher branch on these, never on
+      # {#name}.
+      #
+      # @return [OpenLanes::Adapters::Capabilities]
+      def capabilities = raise NotImplementedError, "#{self.class} must declare its capabilities"
+
+      # The flags that start this CLI without the operator's personal
+      # plugins, skills, hooks and MCP servers; empty where {#argv} builds
+      # them itself.
+      #
+      # @return [Array<String>]
+      def lean_flags = []
+
       # What, sent into a resumed session, makes this CLI compact it (W28);
       # nil for a CLI that cannot resume one, whose agents are therefore never
       # compacted mid-round.
       #
       # @return [String, nil]
-      def compact_prompt = nil
+      def compact_prompt = capabilities.compact_prompt
 
       # @return [Boolean] whether an agent on this CLI can be compacted and
       #   carried on in the same session
-      def compacts? = !compact_prompt.nil?
+      def compacts? = capabilities.compacts
 
       # Whether {#argv} honours {Invocation#resume}. The copilot (W17) keeps
       # one conversation across messages only on a CLI that says yes; on any
       # other each message starts afresh, and says so.
       #
       # @return [Boolean]
-      def resumes? = false
+      def resumes? = capabilities.resumes
 
       # Whether the CLI itself refuses the denied tools, rather than only being
       # asked not to use them. The prompt says which, because telling an agent
       # a guard exists when it does not is how it stops being careful.
       #
       # @return [Boolean]
-      def enforces_tool_denial? = false
+      def enforces_tool_denial? = capabilities.enforces_tool_denial
     end
   end
 end

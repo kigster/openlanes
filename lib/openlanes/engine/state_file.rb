@@ -131,14 +131,14 @@ module OpenLanes
       def begin_run!(root:)
         @mutex.synchronize do
           @data.delete("waiting_on")
-          @data["run"] = { "pid" => @pid, "host" => Socket.gethostname, "root" => root, "started_at" => Time.now.iso8601,
-                          "heartbeat_at" => Time.now.iso8601 }
+          @data["run"] = { "pid" => @pid, "host" => Socket.gethostname, "root" => root,
+                          "started_at" => Clock::System.now.iso8601, "heartbeat_at" => Clock::System.now.iso8601 }
         end
       end
 
       # @return [void]
       def heartbeat!
-        @mutex.synchronize { @data["run"]["heartbeat_at"] = Time.now.iso8601 }
+        @mutex.synchronize { @data["run"]["heartbeat_at"] = Clock::System.now.iso8601 }
       end
 
       # @param ordinal [String]
