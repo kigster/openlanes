@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::Engine::PlanLocks do
   subject(:locks) { described_class.new }
 
   let(:dir) { Dir.mktmpdir }
-  let(:file) { File.join(dir, OpenLanes::Plans::Lock::FILENAME) }
+  let(:file) { OpenLanes::Plans::Lock.path(dir) }
 
   after { FileUtils.rm_rf(dir) }
 

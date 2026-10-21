@@ -170,9 +170,14 @@ describe("predicates and labels", () => {
 
 describe("lockMark", () => {
   it("shows 🔑 with who holds the lock, and nothing for an unlocked plan", () => {
-    const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z" };
+    const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: false };
     expect(lockMark(samplePlan({ locked }))).toEqual({ mark: "🔑", title: expect.stringContaining("4242") });
     expect(lockMark(samplePlan({ locked }))?.title).toContain("studio-mini");
     expect(lockMark(samplePlan({ locked: null }))).toBeNull();
+  });
+
+  it("says a foreign lock is held on its host since the start time", () => {
+    const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: true };
+    expect(lockMark(samplePlan({ locked }))).toEqual({ mark: "🔑", title: "held on studio-mini since 2026-10-13T09:00:00Z" });
   });
 });

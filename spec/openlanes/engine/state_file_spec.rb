@@ -8,8 +8,30 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
   let(:path) { File.join(plans_root, described_class::FILENAME) }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
 
-  it "lives in .plans, beside the plan folders rather than under them" do
-    expect(described_class.for(tree)).to eq(path)
+  it "lives in the runtime state directory, not in .plans" do
+    expect(described_class.for(tree)).to eq(OpenLanes::Runtime.state_file(root: File.dirname(plans_root)))
+  end
+
+  it "leaves no openlanes-state.json under .plans after a save" do
+    saved = described_class.new(path: described_class.for(tree), legacy: described_class.legacy_for(tree))
+    saved.begin_run!(root: "/repo")
+    saved.save
+    expect(Dir.glob(File.join(plans_root, "**", "openlanes-state.json*"))).to be_empty
+  end
+
+  it "records the host, and never calls a run on another host dead" do
+    dead = described_class.new(path:, pid: 999_999_999)
+    dead.begin_run!(root: "/repo")
+    dead.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
+    dead.save
+    allow(Socket).to receive(:gethostname).and_return("elsewhere.invalid")
+
+    fresh = described_class.new(path:, pid: 4242).load
+    aggregate_failures do
+      expect(JSON.parse(File.read(path)).dig("run", "host")).not_to eq("elsewhere.invalid")
+      expect(fresh).not_to be_previous_run_dead
+      expect(fresh.stranded).to be_empty
+    end
   end
 
   it "starts empty, saves atomically, and loads what it saved" do
@@ -71,9 +93,10 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
   # One that died under the old layout still has to be picked up, or its
   # Started stages are invisible and it silently restarts from zero.
   describe "the file a run left in the old tmp/ directory" do
-    subject(:loaded) { described_class.new(path:, pid: 4242).load }
+    subject(:loaded) { described_class.new(path:, pid: 4242, legacy: described_class.legacy_for(tree)).load }
 
-    let(:legacy) { described_class.legacy_for(tree) }
+    let(:path) { described_class.for(tree) }
+    let(:legacy) { described_class.legacy_for(tree).last }
     let(:stage) { { "agent" => "yoda-writer", "round" => 1, "status" => "Started" } }
     let(:written) { { "run" => { "pid" => 999_999_999 }, "plans" => { "001.00" => { "stages" => [stage] } } } }
 
@@ -104,39 +127,62 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
     end
   end
 
+  describe "the file a run left in .plans itself" do
+    subject(:loaded) { described_class.new(path: described_class.for(tree), pid: 4242, legacy: described_class.legacy_for(tree)).load }
+
+    let(:legacy) { described_class.legacy_for(tree).first }
+
+    before do
+      File.write(legacy,
+        JSON.generate({ "run" => { "pid" => 999_999_999 },
+                                                 "plans" => { "003.00" => { "stages" => [{ "agent" => "a", "round" => 1, "status" => "Started" }] } } }))
+    end
+
+    it "is read, reported stranded, and left on disk" do
+      aggregate_failures do
+        expect(loaded.stranded.map(&:first)).to eq(["003.00"])
+        expect(File.file?(legacy)).to be(true)
+      end
+    end
+  end
+
   describe ".ensure_ignored!" do
     subject(:root) { File.dirname(plans_root) }
 
-    it "adds both lines to .gitignore once, and says so" do
+    it "adds the temp-file line to .gitignore once, and says so" do
       system("git", "-C", root, "init", "-q")
       aggregate_failures do
         expect(described_class.ensure_ignored!(root)).to be(true)
-        expect(File.read(File.join(root, ".gitignore"))).to include(".plans/openlanes-state.json\n")
+        expect(File.read(File.join(root, ".gitignore"))).to include(".plans/**/*.tmp\n")
         expect(described_class.ensure_ignored!(root)).to be(false)
       end
     end
 
-    it "ignores the sibling save writes and renames over the file" do
+    it "makes git ignore the temp siblings plan documents are written through" do
       system("git", "-C", root, "init", "-q")
       described_class.ensure_ignored!(root)
-      expect(File.read(File.join(root, ".gitignore"))).to include(".plans/openlanes-state.json.*.tmp\n")
+      %w[state.json.1.2.tmp blocked.md.1.tmp].each do |name|
+        expect(system("git", "-C", root, "check-ignore", "-q", ".plans/001.00━━⚪━━❯x/#{name}")).to be(true)
+      end
+    end
+
+    it "leaves unrelated content and legacy lines alone, appending only its block" do
+      system("git", "-C", root, "init", "-q")
+      before = "/node_modules\n.plans/openlanes-state.json\nlocked-by.pid\n"
+      File.write(File.join(root, ".gitignore"), before)
+      described_class.ensure_ignored!(root)
+      expect(File.read(File.join(root, ".gitignore"))).to eq("#{before}.plans/**/*.tmp\n")
+    end
+
+    it "matches the repository's own .gitignore too" do
+      repo = File.expand_path("../../..", __dir__)
+      %w[state.json.1.2.tmp blocked.md.1.tmp].each do |name|
+        expect(system("git", "-C", repo, "check-ignore", "-q", "--no-index", ".plans/001.00━━⚪━━❯x/#{name}")).to be(true)
+      end
     end
 
     it "does nothing outside a repository" do
       expect(described_class.ensure_ignored!(File.dirname(plans_root))).to be(false)
-    end
-  end
-
-  describe ".ensure_ignored! and the plan lock" do
-    it "makes git ignore a plan's lock file, even where the state file was ignored already" do
-      Dir.mktmpdir do |root|
-        system("git", "-C", root, "init", "-q")
-        File.write(File.join(root, ".gitignore"), "#{described_class::IGNORE.first}\n")
-
-        expect(described_class.ensure_ignored!(root)).to be(true)
-        expect(system("git", "-C", root, "check-ignore", "-q", ".plans/001.00━━⚪━━❯x/locked-by.pid")).to be(true)
-        expect(described_class.ensure_ignored!(root)).to be(false)
-      end
     end
   end
 end

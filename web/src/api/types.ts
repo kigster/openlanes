@@ -147,7 +147,7 @@ export interface Plan {
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
   mail: UnackedMail[]; // the unacked messages, one per sender and recipient, oldest first
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
-  locked: { pid: number; host: string; started_at: Iso } | null; // locked-by.pid in the plan folder, alive or not
+  locked: { pid: number; host: string; started_at: Iso; foreign: boolean } | null; // the plan's lock, alive or not; foreign: held by another machine
 }
 
 export interface LogLine {

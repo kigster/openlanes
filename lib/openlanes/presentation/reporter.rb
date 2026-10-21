@@ -105,7 +105,8 @@ module OpenLanes
         [UI.paint(text, :bold), UI.paint(rule, :bright_yellow)].join("\n")
       end
 
-      # A plan an agent is working on wears 🔑 before its name, and a plan
+      # A plan an agent is working on wears 🔑 before its name (a lock held by
+      # another machine adds where and since when), and a plan
       # moved aside carries the date it was moved. In the title cell rather
       # than columns of their own, so the pull requests stay where every other
       # row puts them.
@@ -115,7 +116,12 @@ module OpenLanes
       def title_for(subject)
         feature = subject.feature
         title = feature.archived_on ? "#{feature.title} [#{feature.archived_on.strftime("%F")}]" : feature.title
-        Plans::Lock.read(feature.path) ? "🔑 #{title}" : title
+        lock = Plans::Lock.read(feature.path)
+        return title unless lock
+
+        # A lock from another machine is never cleared, so say whose it is.
+        note = lock.foreign? ? " (held on #{lock.host} since #{lock.started_at.utc.iso8601})" : ""
+        "🔑 #{title}#{note}"
       end
 
       # One line per plan, plus a continuation line for each extra pull request

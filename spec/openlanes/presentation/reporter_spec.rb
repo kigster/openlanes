@@ -222,5 +222,25 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
       expect(described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).render).to include("🔑 Locked")
       expect(Dir.children(plans_root)).to include(File.basename(dir))
     end
+
+    it "wears 🔑 for a legacy locked-by.pid, with no held-on text for a local lock" do
+      plans { |t| t.plan "009.00", :new, "locked-one", files: { "spec.md" => "# Spec" } }
+      dir = OpenLanes::Plans::Tree.new(dir: plans_root).find("009.00").feature.path
+      File.write(File.join(dir, "locked-by.pid"),
+        JSON.generate(pid: Process.pid, host: Socket.gethostname, started_at: Time.now.utc.iso8601))
+
+      out = described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).render
+      expect(out).to include("🔑 Locked")
+      expect(out).not_to include("held on")
+    end
+
+    it "says where a foreign lock is held, and since when" do
+      plans { |t| t.plan "009.00", :new, "locked-one", files: { "spec.md" => "# Spec" } }
+      foreign = OpenLanes::Plans::Lock.new(pid: 7, host: "studio-mini", started_at: Time.utc(2026, 10, 13, 9))
+      allow(OpenLanes::Plans::Lock).to receive(:read).and_return(foreign)
+
+      out = described_class.new(tree: OpenLanes::Plans::Tree.new(dir: plans_root)).render
+      expect(out).to include("🔑 Locked").and include("held on studio-mini since 2026-10-13T09:00:00Z")
+    end
   end
 end

@@ -87,7 +87,8 @@
             "type": "string"
           },
           "run": {
-            "description": "The harness process that dispatched it, so a restart can tell a crash from a live run.",
+            "description": "Deprecated: written by releases before 021.00, read so their crashes still resume. The harness pid and host now live in the run's state file outside the repository.",
+            "deprecated": true,
             "type": "object",
             "required": ["pid", "host"],
             "additionalProperties": false,

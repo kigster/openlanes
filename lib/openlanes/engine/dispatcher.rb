@@ -919,9 +919,12 @@ module OpenLanes
       # the work got the same answer every time, so nobody is asked.
       #
       # Two records can say a stage was stranded: the run's own state file,
-      # and the plan's `state.json`. The second is what survives a run whose
-      # state file was lost, or a plan carried to another checkout. A stage
-      # either names is resumed once.
+      # which holds the pid and host of every stage it started, and the
+      # plan's `state.json`, whose stages carry a `run` only when an older
+      # release wrote them. The pid and host are about one machine, so new
+      # stages no longer put them in a committed file; the second check stays
+      # so a crash under the old layout still resumes. A stage either names is
+      # resumed once.
       #
       # @return [void]
       def resume_stranded
@@ -1273,7 +1276,6 @@ module OpenLanes
           from:       from.to_s,
           started_at: Time.now.iso8601,
           cwd:        task.root,
-          run:        { pid: Process.pid, host: Socket.gethostname },
           **profile_fields(agent, subject))
         @state&.record(ordinal,
           agent:      agent.name,

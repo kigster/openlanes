@@ -58,8 +58,8 @@ RSpec.describe "module facades", :tree do
   end
 
   describe OpenLanes::Engine do
-    it "places the restart file in the tree" do
-      expect(described_class.state_file(tree).path).to eq(File.join(dir, OpenLanes::Engine::StateFile::FILENAME))
+    it "places the restart file in the runtime state directory" do
+      expect(described_class.state_file(tree).path).to eq(OpenLanes::Runtime.state_file(root: File.dirname(dir)))
     end
   end
 

@@ -1,0 +1,1 @@
+rspec lock+reporter: 51 examples, 0 failures
