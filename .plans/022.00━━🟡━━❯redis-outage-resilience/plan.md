@@ -157,3 +157,47 @@ _Written by B1 (luke-backend, round 2)._
 - **Fix.** `Commands#call` rescues `NOGROUP`, logs it, and makes the group again on the next tick (`lib/openlanes/live/commands.rb`).
 - **Proof.** `spec/openlanes/engine/redis_outage_spec.rb`: 2 examples. Both fail with the `NOGROUP` error above when the rescue is removed, and both pass with it. Skipped, with the reason, when no `redis-server` is on `PATH`.
 - **Exit status of a real `openlanes run`.** Not recorded; the spec drives the same tick.
+
+## How to test
+
+Run from the repository root, with `eval "$(rbenv init -)"` first. The Redis specs need `redis-server` on `PATH`; without it they skip and say why.
+
+- `bundle exec rspec`: 3175 examples, 0 failures.
+- `bundle exec rubocop`: no offenses.
+- The #59 crash (B1): `bundle exec rspec spec/openlanes/engine/redis_outage_spec.rb` gives 2 examples, 0 failures. Remove the `NOGROUP` rescue in `lib/openlanes/live/commands.rb` and both fail with `NOGROUP No such key … consumer group 'engine'`.
+- Backoff and the outage flag (B2): `bundle exec rspec spec/openlanes/live/backoff_spec.rb spec/openlanes/live/outage_spec.rb` passes. The delays double up to the cap, and the flag trips once and clears on the first successful ping.
+- `PAUSE` (B3): `bundle exec rspec spec/openlanes/execution/control_spec.rb spec/openlanes/execution/live_controls_spec.rb spec/openlanes/execution/prompt_spec.rb` passes. `resume!` clears `PAUSE` and leaves a `WRAP_UP` in place.
+- Resume report and `run.outage` (B4): `bundle exec rspec spec/openlanes/live/outage_report_spec.rb spec/openlanes/live/run_record_spec.rb spec/openlanes/live/snapshot_spec.rb` passes, covering both the heartbeat case and the clock-plus-file case.
+- Dispatcher wiring (B5): `bundle exec rspec spec/openlanes/engine/dispatcher_outage_spec.rb` passes. Nothing is assigned while paused, a local `STOP` is still honoured, and assignment resumes after recovery.
+- Integration check against real Redis (B6): `bundle exec rspec spec/openlanes/live/redis_outage_integration_spec.rb` gives 3 examples, 0 failures. Redis is killed (pause, `PAUSE`), restarted (`run.outage` read back with `seconds > 0`), then restarted with its data wiped (`reconciled_from: "file"`).
+- Knobs and docs (B7): `bundle exec rspec spec/openlanes/config_backoff_spec.rb` passes. `.openlanes.yml` `redis.backoff.{initial,cap,jitter}` reaches the dispatcher and falls back to `1`, `30`, `full`. README's "When Redis goes away" section describes the pause, probe and resume.
+- Outage notice on the page (F1): `just web-test` passes lint, type-check and the unit suite. `Header.test.tsx`, "Redis outage notice", shows the stale alert when the snapshot is more than 15 s old, the "Redis was down N s" line when `run.outage` is set, and nothing when the snapshot is fresh and `run.outage` is `null`.
+- End to end: `just web-build && just web-e2e` runs 5 Cypress specs, and all 23 tests pass.
+- By hand: start `openlanes run` against a local Redis, then stop Redis mid-run with `redis-cli shutdown nosave`. The run keeps going, assigns nothing, and running agents' control files read `PAUSE`. Start Redis again on the same port: the log prints `Redis is back after Ns (by heartbeat|clock), run state from redis|file; resuming`, and `PAUSE` is cleared.
+- Port probe (taken from `origin/main`, `ff03ca48`): `bundle exec rspec spec/openlanes/apps spec/openlanes/cli/app_spec.rb` gives 112 examples, 0 failures, including behind Little Snitch.
+
+## Rebase decisions
+
+_Rebase of `a15b34e8` onto `origin/main` `1e417939` (bb8-resolver, 2026-10-21). Main had already shipped its own Redis pause (W32, PR #90: `ec5b95eb`, `b2881e1d`, `71b4a778`) and its own #59 fix (`14a7f439`). Where the two designs disagreed, main's was kept and the branch's report, `run.outage`, page notice and real-Redis check were moved onto it. Several "How to test" lines above now name files this rebase removed._
+
+- `lib/openlanes/live/outage.rb`: kept main's `Outage` (10 s grace, Fibonacci probes, `redis_outage_hours` give-up, state-file record). Added `Window` and `on_resume` so `OutageReport` still gets the ended outage. Dropped the branch's `trip!`/`probe!`/`due?` API.
+- `lib/openlanes/live/backoff.rb`, `spec/openlanes/live/backoff_spec.rb`, `spec/openlanes/config_backoff_spec.rb`: removed. Main's Fibonacci schedule replaces the jittered backoff, so `redis.backoff` no longer configures anything.
+- `lib/openlanes/support/config.rb`, `engine/runner.rb`, `engine/run_workflow.rb`: main's side. No `redis:`/`backoff:` keys. `redis_outage_hours` is the only knob.
+- `lib/openlanes/engine/dispatcher.rb`: main's side. Main's `Outage` pings on its own `before_tick`, so the branch's `unavailable!`, `live_store`, `probe_live`, `on_recover` and the paused-skip in `tick` are redundant and were dropped.
+- `lib/openlanes/execution/control.rb`: main's `pause!`/`resume!` (broadcast `RESUME`). The branch cleared the file instead, which contradicts main's agent prompt.
+- `lib/openlanes/execution/prompt.rb`: main's side. The branch's second `PAUSE` paragraph duplicated main's and said "carry on when the file is empty", which contradicts `RESUME`.
+- `lib/openlanes/live/commands.rb`: main's side. Main's `GroupMissing` rescue in `#read` (`14a7f439`) already recreates the group in the same tick, so the branch's `NOGROUP` rescue was dead code.
+- `lib/openlanes/live/session.rb`: kept the branch's `recover` (report line, `RunRecord#reconcile`, `publisher.outage`), wired through `@outage.on_resume`. Added an `outage:` keyword so a spec can run the outage on its own clock.
+- `lib/openlanes/live/publisher.rb`: both: main's `redis_url:` and the branch's `outage:` in the snapshot. Dropped `on_unavailable` along with `Dispatcher#unavailable!`.
+- `lib/openlanes/live/snapshot.rb`: both keywords (`redis_url:`, `outage:`) and both run fields (`jobs`, `outage`).
+- `spec/openlanes/live/outage_spec.rb`, `spec/openlanes/engine/dispatcher_outage_spec.rb`: main's specs, plus one example each for `on_resume`/`Window` and for the session publishing `run.outage`.
+- `spec/openlanes/execution/control_spec.rb`, `live_controls_spec.rb`: main's side. The branch's examples tested the dropped clear-on-resume behaviour and the dropped prompt paragraph.
+- `spec/openlanes/live/outage_report_spec.rb`: `Window` no longer has `error:`, so it was removed from the fixture.
+- `spec/openlanes/engine/redis_outage_spec.rb`: kept the restart-empty regression. Dropped "says why", because main recreates the group without logging.
+- `spec/openlanes/live/redis_outage_integration_spec.rb`: rewritten for main's `Outage`. It still uses a real `redis-server`, with an injected monotonic clock and wall clock so the 10 s grace and Fibonacci probes pass in ticks. It now expects `RESUME` in the control file, not an empty file.
+- `README.md`: main's config line and "A lost Redis" bullet. "When Redis goes away" was rewritten to describe main's grace, Fibonacci probes and give-up, plus the branch's resume line, `run.outage` and restart-empty handling. The `redis.backoff` YAML block was removed.
+- `web/src/api/types.ts`, `fixtures/snapshot.json`, `shell/Header.tsx`, `Header.test.tsx`, `shell.css`: both sides (main's `jobs`, narrow-lanes toggle and Redis status bar; the branch's `outage` field, `now` prop and outage notice). `fixtures/snapshot-outage.json` was regenerated from main's `snapshot.json` plus the branch's `run.outage`.
+- `.plans/022.00…/contract.md`, `plan.md`, `pull-requests.md`, `state.json`: the branch's copies, which are strict supersets of main's sync from the same run.
+- `.plans/045.00━━⚪━━❯solid-sweep/state.json`: main's file kept. Git paired the branch's deletion of the old `022.00━━⚪━━` `state.json` with this file as a rename, so the conflict was spurious.
+
+Checks after the resolution: `bundle exec rspec` 4094 examples, 0 failures. `bundle exec rubocop` no offenses. `web`: lint and typecheck clean, `npm run coverage` 450 tests passed.

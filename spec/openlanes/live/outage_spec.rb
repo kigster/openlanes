@@ -95,6 +95,21 @@ RSpec.describe OpenLanes::Live::Outage do
       end
     end
 
+    # Plan 022: the window {OutageReport} turns into `run.outage`.
+    it "hands the ended outage to every on_resume hook" do
+      windows = []
+      outage.on_resume { windows << it }
+      run_until(time[0] + 2)
+      up[0] = true
+      run_until(time[0] + 3)
+
+      aggregate_failures do
+        expect(windows).to eq([outage.window])
+        expect(outage.window.seconds.round).to eq(saved["outages"].last["seconds"])
+        expect(outage.window.ended_at - outage.window.started_at).to be_within(0.001).of(outage.window.seconds)
+      end
+    end
+
     it "shuts the run down once Redis has been gone for the limit" do
       run_until(limit + 1)
 

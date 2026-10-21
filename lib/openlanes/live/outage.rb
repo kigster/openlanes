@@ -26,6 +26,11 @@ module OpenLanes
       # How many past outages the state file keeps.
       HISTORY = 20
 
+      # One outage that ended in Redis answering: wall-clock bounds, and the
+      # length by the monotonic clock, which a changed system time cannot
+      # skew. {OutageReport} turns it into `run.outage` (plan 022).
+      Window = Data.define(:started_at, :ended_at, :seconds)
+
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param limit [Numeric] seconds paused before the run gives up
       # @param clock [#call] monotonic seconds
@@ -38,6 +43,7 @@ module OpenLanes
         @state = :up
         @down_since = nil
         @last_ping = nil
+        @resumed = []
       end
 
       # @return [Symbol] :up, :paused or :gave_up
@@ -61,6 +67,15 @@ module OpenLanes
 
       # @return [Proc] {#call}, for `Dispatcher#before_tick`
       def to_proc = method(:call).to_proc
+
+      # Something to run once Redis answers again, after the agents resume.
+      #
+      # @yieldparam window [Window]
+      # @return [void]
+      def on_resume(&hook) = @resumed << hook
+
+      # @return [Window, nil] the last outage that ended in Redis answering
+      attr_reader :window
 
       private
 
@@ -116,8 +131,12 @@ module OpenLanes
         @record["seconds"] = (now - @down_since).round
         UI.log("Redis answers again after #{(now - @down_since).round}s and #{@attempts} attempts: resuming every agent")
         Execution::Control.resume!
+        @window = Window.new(started_at: @wall.call - (now - @down_since),
+          ended_at: @wall.call,
+          seconds: now - @down_since)
         @down_since = nil
         save(over: true)
+        @resumed.each { |hook| hook.call(@window) }
       end
 
       # @return [void]

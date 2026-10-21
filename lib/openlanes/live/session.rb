@@ -19,14 +19,16 @@ module OpenLanes
       # @param node [OpenLanes::Live::Node]
       # @param repo [String]
       # @param clock [Proc] wall time
+      # @param outage [OpenLanes::Live::Outage] what pauses the run while
+      #   Redis is gone; a spec hands in one on its own clock
       def initialize(store:, root:, tree:, agents:, project: nil, node: Node.current(root:), repo: Repo.for(root),
-        clock: -> { Time.now })
+        clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit))
         @store = store
         @node = node
         @keys = Keys.new(repo:, node: node.name)
         @run_state = RunState.new
         @record = RunRecord.new(store:, keys: @keys, run_state: @run_state)
-        @outage = Outage.new(store:, limit: Config.current.outage_limit)
+        @outage = outage
         @claims = Claims.new(store:, keys: @keys)
         @publisher = Publisher.new(store:,
           keys: @keys,
@@ -92,6 +94,23 @@ module OpenLanes
         dispatcher.before_tick(&@record)
         dispatcher.before_tick(&@commands)
         dispatcher.mail = Mail.new(store: @store, keys: @keys)
+        @outage.on_resume { recover(it) }
+      end
+
+      # Redis answers again: say how long it was gone and which copy of the
+      # run state won, and publish that as `run.outage`.
+      #
+      # @param window [OpenLanes::Live::Outage::Window]
+      # @return [OpenLanes::Live::OutageReport]
+      def recover(window)
+        report = OutageReport.new(store: @store,
+          keys: @keys,
+          node: @node,
+          window:,
+          reconciled_from: @record.reconcile)
+        UI.log(report.line)
+        @publisher.outage = report.to_h
+        report
       end
 
       # The run is over: the run state is written down, claims go back, and

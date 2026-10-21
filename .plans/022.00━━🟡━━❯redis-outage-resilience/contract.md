@@ -19,6 +19,10 @@ Answered:
 
 The 30 failures in `spec/openlanes/apps` and `spec/openlanes/cli/app_spec.rb` are accepted as an environmental baseline for this plan. The host's listener on closed local ports is not fixed here, and the `apps` specs are not changed to skip. Completion of this plan is judged on every other spec passing and on the coverage gate, with these 30 recorded as known.
 
+### Baseline cleared (round 3, 2026-10-21)
+
+amended: the B1 answer was "rebase onto main", but this branch's `HEAD` (`7186635`) is still behind `origin/main` and agents may not rebase. The cause was not the host: behind Little Snitch, `Socket.tcp` with `connect_timeout` returns a socket for a refused connect, and only `getpeername` raises `EINVAL`. `origin/main` already fixed that in `ff03ca48`. This branch takes the same fix, so the later rebase applies cleanly: `lib/openlanes/apps/probe.rb` and `lib/openlanes/apps/ports.rb` are copied verbatim from `origin/main`, and the `connectable?` helper in `spec/openlanes/apps/supervisor_spec.rb` and `spec/openlanes/cli/app_spec.rb` is replaced with main's one-line version. Full suite: 3175 examples, 0 failures.
+
 ## Interfaces rey reads
 
 No route is added or changed. `GET /api/board` and the `event: board` stream gain an optional `run.outage`:
@@ -76,4 +80,4 @@ amended: the prompt asks for a `coverage:` section in `.openlanes.yml`, but this
 - [x] B7 README "When Redis goes away", `redis.backoff` through `Config`, `Runner`, `RunWorkflow` (`spec/openlanes/config_backoff_spec.rb`)
 - [x] `openapi.yaml`
 - [x] `.openlanes.coverage.yml`
-- [ ] `bundle exec rspec` exits 0: blocked on the 30 baseline failures
+- [x] `bundle exec rspec` exits 0 (round 3: 3175 examples, 0 failures, after the probe fix from `origin/main`)

@@ -60,6 +60,12 @@ module OpenLanes
         @on_lost = block
       end
 
+      # {OutageReport#to_h} of the outage this run last recovered from,
+      # published as `run.outage` from the next snapshot on.
+      #
+      # @return [Hash, nil]
+      attr_accessor :outage
+
       # @return [OpenLanes::Live::Meter]
       attr_reader :meter
 
@@ -158,6 +164,7 @@ module OpenLanes
           # environment: the page's status bar says which Redis the claims and
           # run state really live in, and only the store that wrote them knows.
           redis_url:   @store.url,
+          outage:      @outage,
           log:).to_h
       end
 

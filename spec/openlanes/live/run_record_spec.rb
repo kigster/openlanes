@@ -91,6 +91,38 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
     end
   end
 
+  # Plan 022: after an outage, the same seq rule names the copy that won,
+  # and the next flush rewrites the one that is behind.
+  context "when reconciling after Redis comes back" do
+    before do
+      record.call(dispatcher)
+      run_state.hold_question("001.00/B1")
+      record.call(dispatcher)
+    end
+
+    it "names Redis when it kept everything" do
+      expect(record.reconcile).to eq(:redis)
+    end
+
+    it "names the file when Redis came back empty, and reloads Redis from the engine" do
+      store.del(keys.run)
+      aggregate_failures do
+        expect(record.reconcile).to eq(:file)
+        record.flush
+        expect(in_redis["seq"]).to eq(run_state.seq)
+      end
+    end
+
+    it "names the file when Redis rolled back to an older seq" do
+      store.hset(keys.run, "seq", "0")
+      expect(record.reconcile).to eq(:file)
+    end
+  end
+
+  it "reconciles to nothing when neither copy exists" do
+    expect(record.reconcile).to be_nil
+  end
+
   context "with nothing kept anywhere" do
     before { record.call(dispatcher) }
 

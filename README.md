@@ -278,6 +278,15 @@ Global flag: `-C, --no-color`.
 - **`PLANS_DIR`**: the plans directory, `.plans` by default.
 - **A lost Redis** does not stop the run. After 10 seconds without an answer every agent is paused through its control file (its clock stands still), nothing new starts, and the outage is recorded in `.plans/openlanes-state.json`. Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds; when it answers, the agents resume. If it has not answered within `redis_outage_hours` (1 by default, any positive number), the run shuts down the way `q` does.
 
+### When Redis goes away
+
+A run that loses Redis mid-way pauses rather than ending:
+
+- **Pause.** After 10 seconds without an answer no new plan is assigned. Agents already at work read `PAUSE` in their control file, finish the write they are in and wait, their clocks standing still. Ctrl-C, `q` and a local `STOP` keep working.
+- **Probe.** Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds. If it has not answered within `redis_outage_hours`, the run shuts down the way `q` does.
+- **Resume.** The agents read `RESUME`, assignment resumes, and one line is logged: `Redis is back after 72s (by heartbeat), run state from file; resuming`. The duration is measured from this node's last heartbeat in Redis, or by the engine's own clock when Redis came back without one. The run state is taken from whichever of Redis and `.plans/openlanes-state.json` has the higher `seq`. The page shows the same as `run.outage`.
+- **Restarted empty.** A Redis that comes back without its data (no AOF, an old RDB snapshot) is handled too: the engine makes its commands group again rather than failing (issue #59).
+
 ## Further reading
 
 - [`docs/USAGE.md`](docs/USAGE.md): settings, spec frontmatter, running and limits, handoffs, safety rails, GitHub and Linear, the factory integration test.
