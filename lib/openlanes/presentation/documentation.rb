@@ -168,8 +168,9 @@ module OpenLanes
           the subfolders: a number in `archive/` is never handed out again.
           `openlanes list-plans` shows the open plans; `--all` adds the rest.
 
-          While an agent works in a plan, the folder holds a git-ignored
-          `#{OpenLanes::Plans::Lock::FILENAME}` (pid, host, start time) and `list-plans`
+          While an agent works in a plan, its lock (pid, host, start time) sits in the
+          runtime state directory outside the repository (a legacy
+          `#{OpenLanes::Plans::Lock::FILENAME}` in the folder is still read), and `list-plans`
           shows 🔑. The folder is never renamed while it is locked. `resync dirs` clears a
           lock whose process is gone from this machine, and only reports one from another.
 

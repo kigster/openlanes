@@ -143,6 +143,33 @@ RSpec.describe OpenLanes::Plans::Lock do
       expect(described_class.write(dir).pid).to eq(Process.pid)
     end
 
+    # The same debris, where this release writes it: the O_EXCL create fails,
+    # nothing reads back, and only the file's age says nobody is filling it.
+    it "clears unreadable debris in the state directory, and claims" do
+      path = described_class.path(dir)
+      File.write(path, "")
+      old = Time.now - described_class::UNREADABLE_GRACE - 1
+      File.utime(old, old, path)
+
+      expect(described_class.write(dir).pid).to eq(Process.pid)
+      expect(described_class.read(dir).pid).to eq(Process.pid)
+    end
+
+    # Between clearing a dead lock and retrying, another run can claim it;
+    # two lost races end the attempt rather than loop.
+    it "gives up when another run claims it first, twice" do
+      dead = Process.spawn("true")
+      Process.wait(dead)
+      File.write(described_class.path(dir), JSON.generate("pid" => dead, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
+      allow(described_class).to receive(:remove)
+
+      expect { described_class.write(dir) }.to raise_error(described_class::Held, /claimed it first/)
+    end
+
+    it "sees no fresh claim when the lock file is already gone" do
+      expect(described_class.send(:fresh?, dir)).to be(false)
+    end
+
     # Each claimant names a different live process, as eight runs would.
     it "lets only one of many concurrent claims win" do
       live = Array.new(8) { Process.spawn("sleep", "30") }
@@ -174,6 +201,13 @@ RSpec.describe OpenLanes::Plans::Lock do
       Process.wait(pid)
 
       expect(described_class.write(dir, pid:)).not_to be_alive
+    end
+
+    # A process this user may not signal (launchd, init) is still running.
+    it "is true for a local process it may not signal" do
+      lock = described_class.new(pid: 1, host: Socket.gethostname, started_at: Time.now)
+
+      expect(lock).to be_alive
     end
 
     it "is never declared dead from another host" do
