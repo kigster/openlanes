@@ -47,6 +47,14 @@ module OpenLanes
     end
 
     # @param root [String]
+    # @return [String] the directory each run's {Engine::EventJournal} is appended to
+    def journal_dir(root:)
+      path = File.join(dir(root:), "journal")
+      FileUtils.mkdir_p(path)
+      path
+    end
+
+    # @param root [String]
     # @return [String] the run's {Engine::StateFile}
     def state_file(root:) = File.join(dir(root:), "openlanes-state.json")
   end
