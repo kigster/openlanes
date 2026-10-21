@@ -21,6 +21,13 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     File.write(File.join(dir, "published.txt"), "abc1234\n") if published
   end
 
+  def skipped!(number = 1)
+    dir = File.join(plan.feature.path, "verification", number.to_s)
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, "report.md"), "Verdict: skipped (mvp)\n")
+    File.write(File.join(dir, "published.txt"), "skipped\n")
+  end
+
   describe "#hand_off" do
     before { plans { |t| t.plan "014.00", :in_review, "x", files:, prs: [t.open(7, "X")] } }
 
@@ -116,6 +123,53 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     end
   end
 
+  # Plan 035: the three qualities take three paths at the 👀 → 🧪 hand-off
+  # of `review-ok-not-perfect`. Depth, models and build rounds are a later
+  # plan; this one only moves the folder.
+  describe "#hand_off of review-ok-not-perfect at each quality" do
+    subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
+
+    before do
+      plans { |t| t.plan "014.00", :in_review, "x", files:, prs: [t.open(7, "X")] }
+      allow(outcome).to receive_messages(labels: %w[review-ok-not-perfect], mismatch: nil)
+      allow(outcome).to receive(:send_back_for_quality) do |plan:, quality:, **|
+        to = OpenLanes::Engine::Verification::Outcome::SEND_BACK.fetch(quality)
+        plan.machine.promote!(to)
+        OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "sent", to:)
+      end
+    end
+
+    context "with mvp" do
+      let(:quality) { :mvp }
+
+      it "goes on to 🧪" do
+        expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
+        expect(plan.status.key).to eq(:verifying)
+        expect(outcome).not_to have_received(:send_back_for_quality)
+      end
+    end
+
+    context "with standard" do
+      let(:quality) { :standard }
+
+      it "sends the plan back to 🟡" do
+        expect(driver.hand_off(plan)).to include("back to 🟡")
+        expect(plan.status.key).to eq(:building)
+        expect(outcome).to have_received(:send_back_for_quality).with(plan: anything, pull: anything, quality: :standard)
+      end
+    end
+
+    context "with high" do
+      let(:quality) { :high }
+
+      it "sends the plan back to 🔴" do
+        expect(driver.hand_off(plan)).to include("back to 🔴")
+        expect(plan.status.key).to eq(:rejected)
+        expect(outcome).to have_received(:send_back_for_quality).with(plan: anything, pull: anything, quality: :high)
+      end
+    end
+  end
+
   describe "#awaiting_ci?" do
     before { plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] } }
 
@@ -129,6 +183,35 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       verified!
 
       expect(driver.awaiting_ci?(plan)).to be(true)
+    end
+  end
+
+  # A skip written under mvp must not keep waiting on CI after the project
+  # raises the bar: chewie has to run.
+  describe "#awaiting_ci? of a skipped round after quality changes" do
+    subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
+
+    before do
+      plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] }
+      skipped!
+    end
+
+    context "with mvp still set" do
+      let(:quality) { :mvp }
+
+      it "waits on CI" do
+        expect(driver.awaiting_ci?(plan)).to be(true)
+      end
+    end
+
+    %i[high standard].each do |level|
+      context "with quality switched to #{level}" do
+        let(:quality) { level }
+
+        it "does not accept the skipped round" do
+          expect(driver.awaiting_ci?(plan)).to be(false)
+        end
+      end
     end
   end
 

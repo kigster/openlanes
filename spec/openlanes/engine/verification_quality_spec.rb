@@ -43,4 +43,19 @@ RSpec.describe OpenLanes::Engine::Verification do
       end
     end
   end
+
+  # Plan 035, the table in spec.md: mvp goes on, standard to 🟡, high to 🔴.
+  # `max_rejections` is 2 for both high and standard; depth and models are
+  # a later plan. This is the engine difference this one ships.
+  describe "the three qualities at the 👀 → 🧪 hand-off" do
+    it "takes a different path at each level for review-ok-not-perfect" do
+      aggregate_failures do
+        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :mvp)).to be(true)
+        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :standard)).to be(false)
+        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :high)).to be(false)
+        expect(OpenLanes::Engine::Verification::Outcome::SEND_BACK).to eq(high: :rejected, standard: :building)
+        expect(OpenLanes::Engine::Verification::Outcome::SEND_BACK).not_to have_key(:mvp)
+      end
+    end
+  end
 end

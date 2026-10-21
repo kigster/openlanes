@@ -142,14 +142,21 @@ module OpenLanes
         # evidence ({Round#published?}); one chewie reported but the engine
         # never published goes back to chewie, in a new round. Skipped is the
         # mvp path ({#skip}): chewie never ran, but CI and the coverage gate
-        # still stand.
+        # still stand. A skip written under `mvp` is not a wait once the
+        # project has switched to `high` or `standard`: chewie must run.
         #
         # @return [Boolean] whether the plan waits on CI rather than on chewie
         def awaiting_ci?(subject)
           return false unless subject.status.key == :verifying
 
           round = Round.latest(subject.feature.path)
-          !round.nil? && round.published? && %i[verified skipped].include?(round.report&.verdict)
+          return false unless round&.published?
+
+          case round.report&.verdict
+          when :verified then true
+          when :skipped then quality == :mvp
+          else false
+          end
         end
 
         # Look at CI for every plan waiting on it, on a thread of its own:
