@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import * as Tabs from "@radix-ui/react-tabs";
 import { MotionConfig, useReducedMotion } from "motion/react";
@@ -11,6 +11,8 @@ import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
 import { isWorking, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
 import { useLifecycle } from "./board/useLifecycle";
+import { useSideWidth } from "./floating/useSideWidth";
+import { ColumnDivider } from "./shell/ColumnDivider";
 import { Header } from "./shell/Header";
 import { Logs } from "./shell/Logs";
 import { StatusBar } from "./shell/StatusBar";
@@ -96,6 +98,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const { me, others } = board;
   const { announce } = useAnnounce();
   const reduced = useReducedMotion() ?? false;
+  const layoutRef = useRef<HTMLElement | null>(null);
+  const side = useSideWidth(layoutRef);
   const send = useSendCommand();
   const onCommand = useCallback<SendCommand>(command => send.mutateAsync(command), [send]);
   const life = useLifecycle(me.plans, reduced);
@@ -281,7 +285,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <PlanDrawer plan={unblockPlan} />
-        <main className="layout" data-lanes={lanes.lanes}>
+        <main className="layout" data-lanes={lanes.lanes} ref={layoutRef} style={{ "--side-width": `${side.width}px` } as CSSProperties}>
           <Tabs.Content value="board" className="board" forceMount hidden={current !== "board"}>
             <Board
               board={board}
@@ -316,6 +320,9 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <AgentDrawer plan={drawer} car={drawerCar} models={me.models} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
             <NeedsYou plans={me.plans} onCommand={onCommand} />
+          )}
+          {side.wide && (
+            <ColumnDivider width={side.width} min={side.min} max={side.max} onResize={side.setWidth} onNudge={side.nudge} onReset={side.reset} layoutRef={layoutRef} />
           )}
         </main>
       </Tabs.Root>
