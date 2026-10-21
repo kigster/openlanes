@@ -91,8 +91,9 @@ module OpenLanes
 
       # Fields asked of `gh pr view`, which unlike `pr list` can be told about
       # one pull request in another repository.
-      VIEW_FIELDS = %w[number title url headRefName headRefOid state isDraft mergedAt body labels
-                      mergeStateStatus].freeze
+      VIEW_FIELDS = %w[
+        number title url headRefName headRefOid state isDraft mergedAt body labels mergeStateStatus
+      ].freeze
 
       # A reference to one pull request: a bare number, a `#`-prefixed number,
       # or a full URL to a GitHub pull request or a GitLab merge request.
