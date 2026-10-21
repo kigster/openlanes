@@ -37,7 +37,7 @@ module OpenLanes
       # @param stream [#puts, nil] where the lines go; nil means whatever
       #   `$stderr` is when a line is written, so a spec swapping it is heard
       # @param clock [Proc] wall time, injectable for a fixed timestamp
-      def initialize(stream: nil, clock: -> { Time.now })
+      def initialize(stream: nil, clock: -> { Clock::System.now })
         @stream = stream
         @clock = clock
         @lock = Mutex.new

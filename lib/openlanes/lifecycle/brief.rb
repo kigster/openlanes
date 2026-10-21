@@ -212,7 +212,7 @@ module OpenLanes
         ["claude",
          "-p", prompt, "--add-dir", root,
          "--model", BRIEF_MODEL,
-         *Adapters::Claude::LEAN,
+         *Adapters.lean_flags("claude"),
          "--allowedTools", ALLOWED_TOOLS.join(","),
          "--disallowedTools", DENIED_TOOLS.join(",")]
       end

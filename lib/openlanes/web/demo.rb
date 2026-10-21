@@ -117,9 +117,9 @@ module OpenLanes
         # one it is really publishing through, as the engine does.
         snapshot["redis_url"] = Live.redact(@store.url)
         json = JSON.generate(snapshot)
-        @store.multi do |tx|
+        Live::EventBus.for(@store).transaction do |tx|
           tx.set(@keys.snapshot(name), json, ex: Live::Keys::SNAPSHOT_TTL)
-          tx.xadd(@keys.board(name), { seq: snapshot["seq"], json: }, maxlen: Live::Keys::BOARD_LENGTH)
+          tx.append(@keys.board(name), { seq: snapshot["seq"], json: }, maxlen: Live::Keys::BOARD_LENGTH)
           tx.hset(@keys.nodes, name, JSON.generate(snapshot["node"]))
         end
       end
@@ -155,10 +155,10 @@ module OpenLanes
         # copilot waits for an engine reply that never comes. Once only: a
         # redelivery has its turn already.
         turn = Live::Commands.echo_turn(reply) if !first && command.payload["source"] == "copilot"
-        @store.multi do |tx|
+        Live::EventBus.for(@store).transaction do |tx|
           tx.hset(@keys.done, reply.id, reply.to_json) unless first
-          tx.xadd(@keys.replies, { json: reply.to_json }, maxlen: Live::Keys::REPLIES_LENGTH)
-          tx.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Live::Keys::COPILOT_LENGTH) if turn
+          tx.append(@keys.replies, { json: reply.to_json }, maxlen: Live::Keys::REPLIES_LENGTH)
+          tx.append(@keys.copilot, { json: turn.to_json }, maxlen: Live::Keys::COPILOT_LENGTH) if turn
           tx.xack(@keys.commands, Live::Keys::GROUP, entry.id)
         end
         reply
@@ -177,8 +177,8 @@ module OpenLanes
       # @return [OpenLanes::Live::Reply]
       def refuse(entry, reason)
         reply = Live::Reply.new(id: entry.id, status: "refused", reason:, at: @clock.call)
-        @store.multi do |tx|
-          tx.xadd(@keys.replies, { json: reply.to_json }, maxlen: Live::Keys::REPLIES_LENGTH)
+        Live::EventBus.for(@store).transaction do |tx|
+          tx.append(@keys.replies, { json: reply.to_json }, maxlen: Live::Keys::REPLIES_LENGTH)
           tx.xack(@keys.commands, Live::Keys::GROUP, entry.id)
         end
         reply

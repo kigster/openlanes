@@ -219,6 +219,10 @@ module OpenLanes
       end
     end
 
+    # Serialises {.report_line} across worker threads. Created here, once:
+    # a lazy `||=` let two threads that arrived together each make their own.
+    @print_mutex = Mutex.new
+
     class << self
       # Set by the CLI's --quiet. Silences spinners and bars along with
       # everything else, so a quiet run really is quiet.
@@ -547,7 +551,7 @@ module OpenLanes
       def report_line(text, bullet: "·")
         return if quiet
 
-        (@print_mutex ||= Mutex.new).synchronize { line(text, bullet:) }
+        @print_mutex.synchronize { line(text, bullet:) }
       end
 
       # A sensible worker count: agents are mostly waiting on a model rather

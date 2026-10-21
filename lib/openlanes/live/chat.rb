@@ -622,10 +622,10 @@ module OpenLanes
       end
 
       # @return [Integer] receivers
-      def publish(channel, data) = store.publish(channel, JSON.generate(data))
+      def publish(channel, data) = EventBus.for(store).publish(channel, JSON.generate(data))
 
       # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber]
-      def subscriber = @subscriber ||= store.subscriber(channels: [inbox], patterns: [@keys.chat_rooms(db:)])
+      def subscriber = @subscriber ||= EventBus.for(store).subscribe(channels: [inbox], patterns: [@keys.chat_rooms(db:)])
 
       # {UI.log} alone reaches only a log file or a tap, and `openlanes web`
       # sets up neither, so there the one warning an outage gets would be

@@ -160,7 +160,7 @@ module OpenLanes
     # @raise [OpenLanes::Live::Command::Invalid] for the API server's 422
     def enqueue(store:, keys:, input:)
       command = Command.parse(input)
-      store.xadd(keys.commands, { json: JSON.generate(command.wire) })
+      EventBus.for(store).append(keys.commands, { json: JSON.generate(command.wire) })
       Reply.new(id: command.id, status: "accepted")
     end
 
