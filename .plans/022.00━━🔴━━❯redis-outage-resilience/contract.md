@@ -41,15 +41,20 @@ Built in `Live::OutageReport#to_h`, published by `Publisher#outage`, set by `Ses
 
 ## Back-end interfaces (built)
 
-- `Live::Backoff.new(initial: 1.0, cap: 30.0, jitter: :full)`, `#delay(attempt, rand:)`.
-- `Live::Outage`: `#trip!`, `#paused?`, `#due?`, `#probe!`, `#window`.
-- `Execution::Control::PAUSE`, `.pause!`, `.resume!` (clears `PAUSE` only), `.paused?`.
-- `RunRecord#reconcile` returns `:redis`, `:file` or nil.
-- `Dispatcher#unavailable!(error)`, `#paused?`, `#outage`, `#live_store=`, `#on_recover { |window| }`, `backoff:` keyword. While paused: no dispatch, no before-tick hooks, no mail drain; reaping, control files, the clock and Ctrl-C still run. `probe_live` runs first in every tick.
-- `Publisher#on_unavailable { |error| }`, `#outage=`. `Commands#call` trips the dispatcher on `Unavailable`.
-- `Commands#call` rescues `NOGROUP` and makes its consumer group again on the next tick. This was the #59 crash (plan.md, Reproduction).
-- `Config#backoff` from `.openlanes.yml` `redis.backoff.{initial,cap,jitter}`, the defaults when unset; `Runner.new(backoff:)` hands it to the dispatcher, and `RunWorkflow` passes `Config.current.backoff`.
-- `Session#attach` wires `live_store`, `on_unavailable` and `on_recover`; `Session#recover(window)` logs `OutageReport#line` and sets `publisher.outage`.
+amended (round 4): this list used to name a `Live::Backoff`, `Config#backoff`, `redis.backoff.*` keys, `Runner.new(backoff:)`, `Dispatcher#unavailable!` and `#probe_live`, `Publisher#on_unavailable`, and a `NOGROUP` rescue in `Commands#call`. None of them exist on this branch. What main already had, and what this branch adds on top, follows.
+
+On `main` before this branch, not built here:
+
+- `Live::Outage` (`ec5b95eb`): 10 s grace, then `Execution::Control.pause!` (`PAUSE`), Fibonacci probes of 1, 1, 2, 3, 5, 8 … s, `Control.resume!` (`RESUME`) when Redis answers, and shutdown after `redis_outage_hours`. No initial, cap or jitter setting exists.
+- The #59 fix (`14a7f439`): `Store#xreadgroup` raises `GroupMissing` on `NOGROUP`, and `Commands` makes its consumer group again.
+
+Built on this branch:
+
+- `Live::Outage::Window` (`started_at`, `ended_at`, `seconds`), `Outage#window`, `Outage#on_resume { |window| }`.
+- `RunRecord#reconcile` returns `:redis`, `:file` or nil, sharing `newest` with `restore`.
+- `Live::OutageReport.new(store:, keys:, node:, window:, reconciled_from:)`, `#to_h` (the `run.outage` shape above), `#line`.
+- `Snapshot` takes `outage:`, `nil` by default; `Publisher#outage` / `#outage=` carries it into every snapshot from then on.
+- `Session.new(outage:)`; `Session#attach` registers `outage.on_resume`; `Session#recover(window)` logs `OutageReport#line` and sets `publisher.outage`.
 
 ## File ownership
 
@@ -59,25 +64,30 @@ Built in `Live::OutageReport#to_h`, published by `Publisher#outage`, set by `Ses
 
 ## Build order
 
-B1 → B2, B3 → B4 → B5 → B6 → B7. F1 depends only on the wire shape above.
+B1, B2 → B4 → B5 → B6 → B7. B3 is main's. F1 depends only on the wire shape above.
 
 ## Integration proof
 
-`spec/openlanes/live/redis_outage_integration_spec.rb` (B6, 3 examples, passing): real `redis-server` on an ephemeral port, real `Store`, `Session`, `Publisher`, `Dispatcher`; kill Redis, assert pause and `PAUSE`; restart, assert the read-back snapshot carries `run.outage` with `seconds > 0`; restart with the data dir wiped, assert `reconciled_from: "file"`.
+`spec/openlanes/live/redis_outage_integration_spec.rb` (B6, 3 examples, passing): real `redis-server` on an ephemeral port, real `Store`, `Session`, `Publisher`, `Dispatcher`. Example 1: a snapshot reaches the real Redis. Example 2: kill Redis, assert pause and `PAUSE`; restart it, assert the read-back snapshot carries `run.outage` with `seconds > 0`, `measured_by: "heartbeat"`, `reconciled_from: "redis"`. Example 3: restart with the data dir wiped, assert `reconciled_from: "file"`.
+
+`spec/openlanes/engine/redis_outage_spec.rb` (B1, 1 example) is a real-Redis regression test for main's #59 fix `14a7f439`; it passes on `main` without this branch.
 
 ## Coverage gate
 
 amended: the prompt asks for a `coverage:` section in `.openlanes.yml`, but this repo's `Config` rejects unknown keys there. The gate reads `.openlanes.coverage.yml` instead (`Coverage::Config::FILE`), which allows exactly `command`, `report`, `format` and `minimum`. Written as `bundle exec rspec`, `coverage/.resultset.json`, `simplecov`, 95. The full-suite run prints `Coverage: 97.86%`. The gate withholds while the 30 baseline failures stand, because it puts the command's own verdict first.
 
-## Status, round 2
+## Status, round 4
 
-- [x] B1 reproduce #59 (`spec/openlanes/engine/redis_outage_spec.rb`; plan.md, Reproduction)
-- [x] B2 backoff and outage (`backoff_spec.rb`, `outage_spec.rb`)
-- [x] B3 `PAUSE` (`control_spec.rb`, `live_controls_spec.rb`)
+amended: the round 2 list claimed `backoff_spec.rb`, `config_backoff_spec.rb`, a `redis.backoff` key and a `NOGROUP` rescue of our own. None are on this branch.
+
+- [x] B1 #59 regression against real Redis (`spec/openlanes/engine/redis_outage_spec.rb`, 1 example; the fix is main's `14a7f439`)
+- [x] B2 `Outage::Window`, `#window`, `#on_resume` (`outage_spec.rb`)
+- [ ] B2 configurable backoff (initial, cap, jitter): not built; main's Fibonacci schedule stands (plan.md, amendment at the top)
+- [x] B3 `PAUSE`: on main already (`ec5b95eb`), nothing built here
 - [x] B4 report and `run.outage` (`outage_report_spec.rb`, `run_record_spec.rb`, `snapshot_spec.rb`)
-- [x] B5 dispatcher wiring (`spec/openlanes/engine/dispatcher_outage_spec.rb`)
+- [x] B5 session wiring (`spec/openlanes/engine/dispatcher_outage_spec.rb`)
 - [x] B6 real-Redis integration spec (`spec/openlanes/live/redis_outage_integration_spec.rb`, `spec/support/redis_server.rb`)
-- [x] B7 README "When Redis goes away", `redis.backoff` through `Config`, `Runner`, `RunWorkflow` (`spec/openlanes/config_backoff_spec.rb`)
+- [x] B7 README: one "A lost Redis" paragraph, the duplicate section folded in
 - [x] `openapi.yaml`
 - [x] `.openlanes.coverage.yml`
-- [x] `bundle exec rspec` exits 0 (round 3: 3175 examples, 0 failures, after the probe fix from `origin/main`)
+- [x] `bundle exec rspec` exits 0
