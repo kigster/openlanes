@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "verifying",
-  "updated_at": "2026-10-21T01:46:21-07:00",
+  "updated_at": "2026-10-21T01:51:52-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -417,14 +417,21 @@
     {
       "agent": "chewie-verifier",
       "round": 2,
-      "status": "Started",
+      "status": "Completed",
       "from": "verifying",
       "started_at": "2026-10-21T01:42:08-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "ea8a8ab2-866f-442f-9468-92239802fe97"
+      "session": "ea8a8ab2-866f-442f-9468-92239802fe97",
+      "to": "verifying",
+      "finished_at": "2026-10-21T01:46:25-07:00",
+      "up": 268372,
+      "down": 3005,
+      "seconds": 252.1,
+      "note": "completed - 5 tool calls; verified PR #105; final.png pushed in 8679c6e; waiting on CI",
+      "moves": 14
     }
   ],
   "signatures": [
@@ -861,6 +868,13 @@
       "status": "Completed",
       "round": 2,
       "note": "Completed, round 3 (verified)"
+    },
+    {
+      "at": "2026-10-21T01:51:52-07:00",
+      "agent": "chewie-verifier",
+      "status": "Completed",
+      "round": 3,
+      "note": "rejected: CI is red on PR #105 after verification; signed by harness"
     }
   ],
   "messages": [
