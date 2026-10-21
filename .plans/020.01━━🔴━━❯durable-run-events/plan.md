@@ -109,3 +109,19 @@ Pair contract (spec, "Back end / front end"): `luke-backend` mails `rey-frontend
 ## HTTP surface
 
 No. This plan adds no HTTP API and changes none; `luke-backend` writes no `openapi.yaml`.
+
+## How to test
+
+Run each command from the repository root, after `eval "$(rbenv init -)"`.
+
+- `bundle exec rspec spec/openlanes/events` → 0 failures. Covers B1 to B3, B5 and B6: event identity and the payload allowlist (an unlisted key raises), the usage mapping (an unknown cost is `nil`, never `0`), the sink and its location under `$XDG_STATE_HOME`, the log reader and aggregates, and the PR and human-answer events, recorded once.
+- `bundle exec rspec spec/openlanes/engine/events_emit_spec.rb spec/openlanes/config_spec.rb` → 0 failures. Covers B4, `run_started`, `agent_started`, `agent_finished`, `block_raised`, `failure` and `run_finished` from a real `Runner` round, and B3's `events:` key: off by default, `enabled` must be `true` or `false`, and `dir` must be absolute.
+- `bundle exec rspec spec/openlanes/cli/events spec/openlanes/presentation/events_report_spec.rb` → 0 failures. Covers F1, the `openlanes events report` command and its table and JSON output.
+- `bundle exec rspec spec/integration/events_report_spec.rb` → 2 examples, 0 failures. The end-to-end proof: a real `Runner` round, a real `Unblocker` and `PrOutcomes` with the GitHub double, then `exe/openlanes events report --format json` as a subprocess. The report shows completion, blocks, time to answer, a merged PR and usage.
+- `bundle exec rspec spec/openlanes/docs` → 0 failures. Covers F2: `docs/events.md` exists, names the three multi-machine points, and `README.md` links to it.
+- `bundle exec rspec` → 0 failures. The only pending specs are the ones that need `web/dist`. Then `bundle exec rubocop` → no offenses.
+- By hand, in a scratch git repo that has an empty `.plans/` and a `.openlanes.yml` holding `events: { enabled: true }`:
+  - `XDG_STATE_HOME=$PWD/state <checkout>/exe/openlanes events report` prints a box saying there is no event log at `.../state/openlanes/<project>-<6 hex>/events` yet. Nothing gets written inside the repository.
+  - Change `enabled` to `maybe` and run it again: it refuses with `events.enabled: "maybe" is not true or false`.
+  - Run `openlanes run` on a plan with events enabled, then run `openlanes events report`. It prints the table: completion rate, blocks, time to answer, PR outcomes, and usage per adapter and model. A computed cost carries `(est.)`, and a codex or pi cost reads `unknown`. `--format json` gives the same figures for scripts.
+- Read `docs/events.md`. It explains the config key, the default path, every event kind with its allowed fields, what is never stored, and how events behave across several machines.

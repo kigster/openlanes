@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module OpenLanes
   module Lifecycle
     # Draining a plan's `blocked.md`, and saying what happened.
@@ -178,9 +180,10 @@ module OpenLanes
       # @return [Outcome]
       def drain(subject, &progress)
         before = { subject.feature.ordinal.to_s => self.class.questions(subject) }
+        block = Digest::SHA256.hexdigest(subject.read("blocked.md").to_s)
         result = applying? ? invoke(subject, progress || proc {}) : [false, "not attempted: a dry run"]
         tree.reload
-        outcome(subject, result, before).tap { answered(it) }
+        outcome(subject, result, before).tap { answered(it, block) }
       end
 
       private
@@ -188,9 +191,16 @@ module OpenLanes
       # One `human_answered` per question the agent folded that had an
       # answer waiting: its number and when, never its text.
       #
+      # `blocked.md` numbers from B1 every time a plan blocks, so the number
+      # alone made a re-block's answer share the first answer's event id, and
+      # the log dropped it as a duplicate. The file's digest as it stood
+      # before the drain tells the two blocks apart, while two runs draining
+      # the same file still agree on one id.
+      #
       # @param outcome [Outcome]
+      # @param block [String] digest of `blocked.md` before the drain
       # @return [void]
-      def answered(outcome)
+      def answered(outcome, block)
         return unless outcome.ok
 
         plan = outcome.subject.feature.ordinal.to_s
@@ -198,7 +208,7 @@ module OpenLanes
         outcome.before.select { it.answered && outcome.folded.include?(it.number) }.each do |question|
           @events.record(:human_answered,
             plan:,
-            seq: question.number,
+            seq: [block, question.number],
             once: true,
             block: "B#{question.number}",
             answered_at: at.utc.iso8601(3))

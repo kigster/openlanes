@@ -83,6 +83,31 @@ RSpec.describe "PR and human-answer events", :tree do
       expect(File.read(sink.path)).not_to include("vendor")
     end
 
+    it "keeps a re-block's B1 answer apart from the first block's, across runs" do
+      plans { |t| t.plan("001.00", :blocked, "a-feature", files: { "spec.md" => spec_body, "blocked.md" => body }) }
+      described_class.new(tree:, agent:, executor: folding(1, 2), commit: true, events: sink)
+                     .drain(tree.reload.find("001.00"))
+      reblocked = "# Blocked\n\n## B1. Which region\n\n## A1. The one nearest\n"
+      File.write(File.join(tree.reload.find("001.00").feature.path, "blocked.md"), reblocked)
+      described_class.new(tree:, agent:, executor: folding(1), commit: true, events: sink.with(run: "r2"))
+                     .drain(tree.reload.find("001.00"))
+
+      expect(lines.map { it["payload"]["block"] }).to eq(%w[B1 B1])
+      expect(events.size).to eq(2)
+    end
+
+    it "dedupes the same drain seen by two runs" do
+      plans { |t| t.plan("001.00", :blocked, "a-feature", files: { "spec.md" => spec_body, "blocked.md" => body }) }
+      [sink, sink.with(run: "r2")].each do |each|
+        path = File.join(tree.reload.find("001.00").feature.path, "blocked.md")
+        File.write(path, body)
+        described_class.new(tree:, agent:, executor: folding(1), commit: true, events: each).drain(tree.reload.find("001.00"))
+      end
+
+      expect(lines.size).to eq(2)
+      expect(events.size).to eq(1)
+    end
+
     it "records nothing on a dry run" do
       plans { |t| t.plan("001.00", :blocked, "a-feature", files: { "spec.md" => spec_body, "blocked.md" => body }) }
       described_class.new(tree:, agent:, executor: folding(1), commit: false, events: sink).drain(tree.reload.find("001.00"))

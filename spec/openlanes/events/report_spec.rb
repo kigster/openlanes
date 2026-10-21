@@ -15,6 +15,34 @@ RSpec.describe OpenLanes::Events::Report do
     expect(result).to have_attributes(blocks: 3, runs_needing_feedback: 2, intervention_rate: 0.6667)
   end
 
+  context "when one Blocked signing leaves B1, B2 and B3 open" do
+    def event(id, kind, at, **payload)
+      OpenLanes::Events::Event.new(event_id: id,
+        kind:,
+        at: Time.iso8601(at),
+        plan: "001.00",
+        run: "r1",
+        agent: "luke-backend",
+        payload: { "round" => 1 }.merge(payload))
+    end
+
+    let(:three) do
+      [event("s", "agent_started", "2026-10-16T12:00:00Z"),
+       event("b", "block_raised", "2026-10-16T12:10:00Z", "blocks" => 3),
+       event("f", "agent_finished", "2026-10-16T12:11:00Z", "status" => "Blocked"),
+       *(1..3).map { event("a#{it}", "human_answered", "2026-10-16T12:1#{it}:00Z", "block" => "B#{it}") }]
+    end
+    let(:result) { OpenLanes::Events.report(three) }
+
+    it "counts three blocks on one run" do
+      expect(result).to have_attributes(blocks: 3, runs_needing_feedback: 1)
+    end
+
+    it "pairs each of the three questions with its own answer" do
+      expect(result.time_to_answer).to eq(count: 3, median_s: 120.0, max_s: 180.0)
+    end
+  end
+
   it "pairs each block with the next answer on the same run" do
     expect(result.time_to_answer).to eq(count: 2, median_s: 450.0, max_s: 600.0)
   end

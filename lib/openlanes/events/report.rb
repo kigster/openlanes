@@ -34,7 +34,7 @@ module OpenLanes
       # @!attribute [r] completion_rate
       #   @return [Float, nil] share of those that finished `Completed`; nil with none
       # @!attribute [r] blocks
-      #   @return [Integer] every `block_raised`
+      #   @return [Integer] the questions every `block_raised` left open
       # @!attribute [r] runs_needing_feedback
       #   @return [Integer] unique agent runs with at least one block
       # @!attribute [r] intervention_rate
@@ -78,11 +78,11 @@ module OpenLanes
       def call
         finished = by_run(of("agent_finished"))
         started = by_run(of("agent_started")).keys | finished.keys
-        blocked = of("block_raised")
+        blocked = of("block_raised").sort_by { Time.iso8601(it.at) }
         feedback = blocked.map { run_key(it) }.uniq.size
         Result.new(runs: finished.size,
           completion_rate: rate(finished.values.count { it.payload["status"] == "Completed" }, finished.size),
-          blocks: blocked.size,
+          blocks: blocked.sum { questions(it) },
           runs_needing_feedback: feedback,
           intervention_rate: rate(feedback, started.size),
           time_to_answer: time_to_answer(blocked),
@@ -109,19 +109,30 @@ module OpenLanes
       # @return [Float, nil]
       def rate(part, whole) = whole.zero? ? nil : (part.to_f / whole).round(4)
 
-      # Each block is paired with the first answer on the same plan that
-      # came after it; an answer is used once. By plan, not by run: the
-      # unblocker drains a plan's questions and does not know which agent's
-      # round asked them, and a blocked plan runs no other agent meanwhile.
+      # One `block_raised` is one Blocked signing, and the questions it
+      # left open are in its payload. Counting events instead made `blocks`
+      # equal the run count whenever an agent asked several questions at
+      # once. An event with no count still stands for one block.
+      #
+      # @return [Integer]
+      def questions(block) = [block.payload["blocks"].to_i, 1].max
+
+      # Each question of a block is paired with the first answer on the
+      # same plan that came after it; an answer is used once. By plan, not
+      # by run: the unblocker drains a plan's questions and does not know
+      # which agent's round asked them, and a blocked plan runs no other
+      # agent meanwhile.
       #
       # @return [Hash{Symbol => Object}]
       def time_to_answer(blocked)
-        answers = of("human_answered").group_by(&:plan)
-        waits = blocked.filter_map do |block|
+        answers = of("human_answered").sort_by { stamp(it) }.group_by(&:plan)
+        waits = blocked.flat_map do |block|
+          raised = Time.iso8601(block.at)
           pool = answers.fetch(block.plan, [])
-          answer = pool.find { stamp(it) >= Time.iso8601(block.at) } or next
-          pool.delete(answer)
-          stamp(answer) - Time.iso8601(block.at)
+          pool.select { stamp(it) >= raised }.first(questions(block)).map do |answer|
+            pool.delete(answer)
+            stamp(answer) - raised
+          end
         end.sort
         { count: waits.size, median_s: median(waits), max_s: waits.last&.round(1) }
       end
