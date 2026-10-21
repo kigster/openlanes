@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 104 | [\[018.00\](A) Draggable Divider](https://github.com/kigster/openlanes/pull/104) | Open 🟡 |
+
 ## Front end proof (rey-frontend, round 1)
 
 - `cd web && npx vitest run --coverage`: 35 files, 361 tests passed; lines 99.74%.
@@ -57,3 +61,29 @@ Run in `openlanes.worktrees/018.00-draggable-divider` after rey's front end land
 
 - `cd web && npx vitest run`: 35 files, 361 tests passed. eslint and `tsc --noEmit`: clean.
 - Nothing outside `web/` in `git status`.
+
+## Answers, round 1 (rey-frontend)
+
+The review was one conversation comment with three numbered findings; there are no inline threads to reply in.
+
+- Finding 1 (coverage): `fix`. `web/src/shell/ColumnDivider.test.tsx` gains tests for the missing-layout guards in pointerdown/pointermove and the `setPointerCapture` catch. `npm run coverage:changed`: ColumnDivider.tsx 100% (35/35), useSideWidth.ts 100%, App.tsx 99.3%.
+- Finding 2 (default width): `fix`. `web/src/floating/useSideWidth.ts` now defaults to `clamp(360px, 30vw, 432px)` computed from `window.innerWidth` (432 at 1600px), and Home/double-click reset to that default and clear the stored value. Tests in `useSideWidth.test.ts`; `cypress/e2e/divider.cy.ts` expects 420 at its 1400px window. The spec's "360px unchanged" described a column that `main` had already made a clamp.
+- Finding 3 (max includes padding): `rebuttal`. Spec point 1 says 60% of the layout width, and `main.layout` is the layout element; the review itself marks it not blocking. Left as is.
+
+## Proof (rey-frontend, round 1 review fixes, 2026-10-20)
+
+- `cd web && npx vitest run --coverage`: 466 tests passed. `npm run lint`, `npm run typecheck`: clean.
+- `E2E_PORT=11890 E2E_PEER_PORT=11891 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`: 7 specs, 32 tests, all passed (`divider.cy.ts` 7/7).
+- Only `web/` changed.
+
+## Answers, round 1
+
+hansolo's review of round 1 named three findings, all in rey's half (`web/src/shell/ColumnDivider.tsx`, `web/src/shell/shell.css`, `web/src/floating/useSideWidth.ts`); rey fixed them (mail #20). PR 104 has no inline review threads (`gh api repos/kigster/openlanes/pulls/104/comments` returns `[]`), so luke answered none: no fix, no rebuttal.
+
+## Integration proof (luke-backend, round 2, 2026-10-20, last to finish)
+
+- `cd web && npm run coverage:changed`: every changed file ok; `src/shell/ColumnDivider.tsx` 100.0% (35/35), `src/floating/useSideWidth.ts` 100.0%, `src/App.tsx` 99.3% (finding 1).
+- `just web-build`: built, exit 0.
+- `E2E_PORT=11890 E2E_PEER_PORT=11891 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`: 7 specs, 32 tests, all passed (`divider.cy.ts` 7/7), exit 0.
+- `bundle exec rubocop`: 526 files inspected, no offenses detected.
+- `bundle exec rspec`: 3984 examples, 0 failures. An earlier run the same hour failed `spec/integration/two_checkouts_spec.rb:45,70` because plan 021.00's worktree was running that spec on `redis://localhost:6379/10` at the same time (a third engine showed up as peer and claimant); alone it passed 3/0, then the full rerun was clean. This branch changes nothing under `lib/` or `spec/`.

@@ -51,8 +51,8 @@ button, textarea { font: inherit; color: inherit; }
 /* Layout */
 .tabs-root { display: contents; }
 /* The right column holds Needs you or an agent's drawer, one at a time, so both share its width. With the divider
-   present (above 960px) --side-width is always set: 360px until a person drags it, then the stored width. The clamp is
-   the fallback for when it is not set: up to 432px, the drawer's 360px made 20% wider for the transcript, giving back
+   present (above 960px) --side-width is always set: the clamp below, computed in JS, until a person drags it, then the
+   stored width. The clamp is the fallback for when it is not set: up to 432px, the drawer's 360px made 20% wider for the transcript, giving back
    to 360px on a 1024-1280px laptop, where a fixed 432px left the board little more than half the screen. */
 .layout { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) var(--side-width, clamp(360px, 30vw, 432px)); gap: 20px; padding: 20px 24px; align-items: start; }
 /* The drag handle sits in the 20px gap, as a child of .layout so it stays put when the drawer scrolls. */

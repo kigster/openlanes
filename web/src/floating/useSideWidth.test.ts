@@ -14,6 +14,25 @@ describe("useSideWidth", () => {
     expect(result.current.max).toBe(840);
   });
 
+  it("defaults to the layout's old clamp(360px, 30vw, 432px)", () => {
+    const widthAt = (w: number) => {
+      vi.stubGlobal("innerWidth", w);
+      return renderHook(() => useSideWidth(layout(1400))).result.current.width;
+    };
+    expect([widthAt(1600), widthAt(1400), widthAt(1100)]).toEqual([432, 420, 360]);
+    vi.unstubAllGlobals();
+  });
+
+  it("resets to that default, not to 360", () => {
+    vi.stubGlobal("innerWidth", 1600);
+    const { result } = renderHook(() => useSideWidth(layout(1600)));
+    act(() => result.current.nudge(24));
+    expect(result.current.width).toBe(456);
+    act(() => result.current.reset());
+    expect(result.current.width).toBe(432);
+    vi.unstubAllGlobals();
+  });
+
   it("restores a stored width on remount", () => {
     const first = renderHook(() => useSideWidth(layout(1400)));
     act(() => first.result.current.setWidth(500));
@@ -62,7 +81,7 @@ describe("useSideWidth", () => {
     expect(result.current.width).toBe(384);
     act(() => result.current.reset());
     expect(result.current.width).toBe(360);
-    expect(localStorage.getItem(SIDE_WIDTH_KEY)).toBe("360");
+    expect(localStorage.getItem(SIDE_WIDTH_KEY)).toBeNull();
   });
 
   it("follows the media query", () => {

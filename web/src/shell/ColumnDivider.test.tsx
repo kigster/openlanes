@@ -47,6 +47,32 @@ describe("ColumnDivider", () => {
     expect(props.onResize).not.toHaveBeenCalled();
   });
 
+  it("does nothing when the layout element is gone", () => {
+    const { props, sep } = setup();
+    props.layoutRef.current = null as unknown as HTMLDivElement;
+    fireEvent.pointerDown(sep, { clientX: 590, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(sep, { clientX: 500, pointerId: 1 });
+    expect(props.onResize).not.toHaveBeenCalled();
+  });
+
+  it("stops a drag whose layout vanished mid-way", () => {
+    const { props, sep } = setup();
+    fireEvent.pointerDown(sep, { clientX: 590, button: 0, pointerId: 1 });
+    props.layoutRef.current = null as unknown as HTMLDivElement;
+    fireEvent.pointerMove(sep, { clientX: 500, pointerId: 1 });
+    expect(props.onResize).not.toHaveBeenCalled();
+  });
+
+  it("still drags when the browser rejects the pointer id", () => {
+    const { props, sep } = setup();
+    sep.setPointerCapture = vi.fn(() => {
+      throw new DOMException("no such pointer", "NotFoundError");
+    });
+    fireEvent.pointerDown(sep, { clientX: 590, button: 0, pointerId: 99 });
+    fireEvent.pointerMove(sep, { clientX: 540, pointerId: 99 });
+    expect(props.onResize).toHaveBeenLastCalledWith(450);
+  });
+
   it("widens on ArrowLeft, narrows on ArrowRight, resets on Home", () => {
     const { props, sep } = setup();
     fireEvent.keyDown(sep, { key: "ArrowLeft" });

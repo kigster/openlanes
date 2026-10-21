@@ -112,10 +112,3 @@ Run from the repository root, with Ruby activated (`eval "$(rbenv init -)"`).
    - Scroll the panel, and the handle stays visible.
    - Narrow the window to 960px or less: the handle is gone and the layout is a single column.
 1. `bundle exec rspec`, on a quiet machine (D1). This branch changes no Ruby. On macOS 27.0.1 with Ruby 4.0.6, the port and process specs under `spec/openlanes/apps`, `spec/openlanes/cli/app_spec.rb` and `spec/integration` fail on every run, whatever the load: `Socket.tcp(..., connect_timeout:)` reports a refused connect as connected. Those failures exist on `main` too and need their own fix.
-
-## Rebase decisions
-
-- `web/src/App.tsx`: kept main's `<PlanDrawer>` and `data-lanes` on `main.layout`, and added the branch's `ref` and `--side-width` style to the same element. The two edits touched the same line but not the same concern.
-- `web/src/shell/shell.css`: kept the branch's `--side-width` track and `.col-divider` rules, with main's `clamp(360px, 30vw, 432px)` as the `var()` fallback and its comment folded in. The hook always sets `--side-width` above 960px (default 360, which the spec, the vitest cases and `divider.cy.ts` assert), so main's responsive default now applies only when the variable is unset. Reviewer: decide whether the no-drag default should follow main's clamp; that changes `useSideWidth`'s default and its tests.
-- `pull-requests.md` (add/add): took the branch's version; main's is a strict prefix of it, the branch adds the 2026-10-20 rerun section.
-- `state.json` (main renamed the folder `🟡` to `⭕`): wrote the branch's file at the `⭕` path and dropped the stale `🟡` copy. Main's stages, messages and signatures are a strict prefix of the branch's, so nothing from main is lost.

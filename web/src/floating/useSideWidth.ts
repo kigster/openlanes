@@ -4,8 +4,14 @@
 import { useCallback, useEffect, useState, type RefObject } from "react";
 
 export const SIDE_WIDTH_KEY = "openlanes-side-width";
-/** The column's default and narrowest width, in px: what the layout was before the divider. */
+/** The column's narrowest width, in px. */
 export const MIN_SIDE = 360;
+/** The widest the column starts out: the default is `clamp(360px, 30vw, 432px)`, what the layout was before the divider. */
+export const DEFAULT_SIDE_MAX = 432;
+const DEFAULT_SIDE_RATIO = 0.3;
+
+/** The width with nothing stored, matching the CSS clamp the layout had before the divider, so nobody's board shifts. */
+const defaultWidth = (): number => Math.min(DEFAULT_SIDE_MAX, Math.max(MIN_SIDE, Math.round(window.innerWidth * DEFAULT_SIDE_RATIO)));
 /** The widest the column may grow, as a share of the layout's width, so the board always keeps the larger part. */
 export const MAX_SIDE_RATIO = 0.6;
 /** One arrow key press on the divider. */
@@ -14,12 +20,12 @@ export const SIDE_STEP = 24;
 /** The divider is absent from the DOM at 960px and below, where the layout is a single column. */
 const WIDE = "(min-width: 961px)";
 
-function read(): number {
+function read(): number | null {
   try {
     const n = Number.parseInt(localStorage.getItem(SIDE_WIDTH_KEY) ?? "", 10);
-    return Number.isFinite(n) ? n : MIN_SIDE;
+    return Number.isFinite(n) ? n : null;
   } catch {
-    return MIN_SIDE; // a private window: the default
+    return null; // a private window: the default
   }
 }
 
@@ -70,7 +76,7 @@ export function useSideWidth(layoutRef: RefObject<HTMLElement | null>): SideWidt
   const layoutWidth = layoutRef.current?.clientWidth || window.innerWidth;
   const min = MIN_SIDE;
   const max = Math.max(min, Math.floor(layoutWidth * MAX_SIDE_RATIO));
-  const width = Math.min(max, Math.max(min, stored));
+  const width = Math.min(max, Math.max(min, stored ?? defaultWidth()));
 
   const setWidth = useCallback(
     (px: number) => {
@@ -83,8 +89,8 @@ export function useSideWidth(layoutRef: RefObject<HTMLElement | null>): SideWidt
   );
   const nudge = useCallback((delta: number) => setWidth(width + delta), [setWidth, width]);
   const reset = useCallback(() => {
-    setStored(MIN_SIDE);
-    write(MIN_SIDE);
+    setStored(null);
+    write(null);
   }, []);
 
   return { width, min, max, wide, setWidth, nudge, reset };
