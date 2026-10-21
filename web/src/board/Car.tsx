@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan } from "../api/types";
 import { clock, fmt, shortAgent } from "./format";
+import { Gear } from "./Gear";
 import { carLook, lockMark, modelLabel } from "./model";
 
 interface CarProps {
@@ -23,10 +24,12 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   const look = carLook(plan, car);
   const readOnly = !onOpen;
   const lock = lockMark(plan);
-  const cls = ["car", look.blocked && "is-blocked", readOnly && "is-readonly"].filter(Boolean).join(" ");
+  const spinning = car.state === "running" && !look.blocked;
+  const cls = ["car", look.blocked && "is-blocked", spinning && "is-running", readOnly && "is-readonly"].filter(Boolean).join(" ");
   return (
     <div className={cls} data-car={car.key}>
       <div className="car-top">
+        {spinning && <Gear />}
         {/* The tile shows the role (luke-backend reads "backend"); the full name stays the accessible name and the
             tooltip, and still contains the visible text, so voice control can say either. */}
         {readOnly ? (

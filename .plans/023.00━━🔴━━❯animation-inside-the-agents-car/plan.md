@@ -113,3 +113,11 @@ Answered:
 A person commits the plan's work on `kig/023.00-animation-inside-the-agents-car`, runs `git rebase origin/main`, resolves the conflicts in `Car.tsx`, `Board.test.tsx` and `board.css`, then reruns `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
 
 ---
+
+## How to test
+
+- Web suite: `cd web && npm run lint && npm run typecheck && npm run coverage`. All tests pass (35 files, 364 tests), including `Board.test.tsx` (gear present on running cars, absent on done, stuck, failed, blocked and interrupted) and `boardCss.test.ts` (keyframe, running rule, reduced-motion stop).
+- Ruby suite: `bundle exec rspec && bundle exec rubocop`. Both exit 0; the port-detection specs under `spec/openlanes/apps` pass.
+- By eye: `just web-build && just web-demo`, open `http://127.0.0.1:11000`. Every running, unblocked car shows a small gear left of the agent name, turning slowly. Done, stuck, failed, blocked and interrupted cars show no gear.
+- Reduced motion: enable "Reduce motion" in the OS (or emulate `prefers-reduced-motion: reduce` in browser devtools) and reload. The gear is still there and does not turn.
+- Layout: with several running cars on the board, the card header keeps the name on the left and the status on the right, with no wrapping.

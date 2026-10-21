@@ -136,9 +136,13 @@ module OpenLanes
       #   run does not stay
       # @param converter [#call, nil] rewrites prose questions into choices
       #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
+      # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
+      #   journal (S9); nil keeps none
       def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
-        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil)
+        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil)
         @runner = runner
+        @journal = journal
+        @journaled = {}
         @extensions = extensions || Extensions.new(stay:)
         @watch = watch
         @watching = nil
@@ -210,6 +214,7 @@ module OpenLanes
 
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def run
+        journal!(:run_started, jobs: @runner.jobs)
         resume_stranded
         loop do
           tick
@@ -217,6 +222,7 @@ module OpenLanes
 
           @sleeper.call(1)
         end
+        journal!(:run_ended, reason: Execution::Control.quit? ? "quit" : "fixed point")
         @attempts
       end
 
@@ -294,7 +300,9 @@ module OpenLanes
       # @param seconds [Integer]
       # @return [void]
       def extend(key, seconds)
-        @running.find { |j| j.key == key }&.handle&.extend!(seconds)
+        job = @running.find { |j| j.key == key } or return
+        job.handle&.extend!(seconds)
+        journal!(:extension, plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name, seconds:)
       end
 
       # A person's answer to an `X<n>` request (E1). A time choice reaches
@@ -1303,6 +1311,7 @@ module OpenLanes
           model:      model_for(agent, subject),
           file:       agent.ledger.first,
           started_at: @clock.now.iso8601)
+        journal!(:plan_assigned, plan: ordinal, agent: agent.name, round:)
         UI.log("started", **task.log_fields)
         @invocations[job.key] = @clock.now
         @runner.events.record(:agent_started, **event_fields(job))
@@ -1492,6 +1501,7 @@ module OpenLanes
           job.status = entry&.status
           record_session(job)
           record_journal(job)
+          journal_progress(job)
           @state&.record(job.task.subject.feature.ordinal.to_s,
             agent:  job.task.agent.name,
             round:  job.task.round,
@@ -1563,8 +1573,10 @@ module OpenLanes
           # What it printed since the last tick, before anything is made of
           # its outcome: a killed round keeps every line it got out.
           record_journal(job)
+          journal_progress(job)
           attempt = settle(job)
           announce(job, attempt)
+          journal_end(job, attempt)
           # A requeue, or a compaction that stopped the agent and then could
           # not happen, hands the round back: the stop was a person's choice.
           requeued = @requeued.delete(job.key)
@@ -2056,6 +2068,7 @@ module OpenLanes
         subject = fresh(task) or return base.with(ok: false, note: "plan folder vanished")
         remember(subject.feature.ordinal.to_s, task.agent.name, job.state, "Blocked", task.round)
         target = verdict_of(entry) == :product ? :product_blocked : :blocked
+        journal!(:question, plan: subject.feature.ordinal.to_s, agent: task.agent.name, note: target.to_s)
         if subject.machine.may?(target)
           subject.machine.promote!(target)
           base.with(to: target, status: "Blocked", note: "blocked; see blocked.md")
@@ -2284,6 +2297,79 @@ module OpenLanes
           @history[[ordinal, job.task.agent.name]].reject! { |h| h[:state] == job.state && h[:round] == job.task.round }
         end
         @finished_plans.delete(ordinal)
+      end
+
+      # One event in the progress journal, when the run keeps one. A disk
+      # that refuses the write is reported, not raised: the agents already
+      # running are worth more than the record of them.
+      #
+      # @return [void]
+      def journal!(kind, **fields)
+        @journal&.append(kind, **fields)
+      rescue SystemCallError, IOError => e
+        UI.log("journal write failed: #{e.class}: #{e.message}", level: :warn)
+      end
+
+      # The agent's pid and start time the first time it is seen, its
+      # session id once its stream names it, and the trace's size whenever
+      # it grew: the in-flight picture a replay rebuilds.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [void]
+      def journal_progress(job)
+        return unless @journal
+
+        handle = job.handle
+        pid = handle&.pid or return
+        seen = (@journaled[job.key] ||= {})
+        who = { plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name }
+        unless seen[:pid] == pid
+          seen.replace(pid:, session: handle.session, offset: 0)
+          journal!(:agent_started,
+            **who,
+            round:       job.task.round,
+            pid:,
+            started_at:  Execution::ProcessStart.of(pid)&.utc&.iso8601,
+            session_id:  handle.session,
+            output_file: handle.trace)
+        end
+        if handle.session && seen[:session] != handle.session
+          seen[:session] = handle.session
+          journal!(:agent_session, **who, session_id: handle.session)
+        end
+        offset = handle.trace && File.exist?(handle.trace) ? File.size(handle.trace) : 0
+        return unless offset > seen[:offset]
+
+        seen[:offset] = offset
+        journal!(:agent_offset, **who, offset:)
+      end
+
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @return [void]
+      def journal_end(job, attempt)
+        return unless @journal
+
+        who = { plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name }
+        journal!(:agent_ended, **who, exit: attempt.ok ? 0 : 1, note: attempt.note.to_s) if @journaled.delete(job.key)
+        return unless attempt.advanced?
+
+        journal!(:transition, plan: who[:plan], from: attempt.from.to_s, to: attempt.to.to_s, event: event_between(attempt.from, attempt.to))
+      end
+
+      # The aasm event that moved +from+ to +to+. A destination names one
+      # forward event, but a retreat lands on the same states by `step_back`,
+      # so the edge, not the destination alone, says which fired.
+      #
+      # @param from [Symbol, #to_sym]
+      # @param to [Symbol, #to_sym]
+      # @return [String]
+      def event_between(from, to)
+        from = from.to_sym
+        to = to.to_sym
+        return "step_back" unless Plans::StateMachine.inbound.fetch(to, []).include?(from)
+
+        Plans::StateMachine.event_for.fetch(to).to_s
       end
 
       # @return [void]
