@@ -64,7 +64,13 @@
 .car:has(.car-open[aria-expanded="true"]) { border-color: var(--ink); }
 .car:hover, .car:has(.car-open[aria-expanded="true"]) { border-left-color: var(--lane-color); }
 .car.is-blocked:hover, .car.is-blocked:has(.car-open[aria-expanded="true"]) { border-left-color: var(--alarm); }
-.car-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.car-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.car-gear { flex: none; width: 14px; height: 14px; color: var(--ink-soft); }
+/* The name takes the free space, so it stays on the left and the model on the right however many marks sit around it:
+   with the gear as a third child, space-between split the slack on both sides and the name drifted toward the middle. */
+.car-top > :is(.car-agent, .car-open) { margin-right: auto; }
+.car.is-running .car-gear { animation: car-gear-spin 2s linear infinite; }
+@keyframes car-gear-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .car-agent { font-weight: 800; letter-spacing: -0.01em; }
 .car-model { color: var(--ink-soft); font-size: 13px; }
 .car-activity { font: 12px/1.4 var(--mono); color: var(--ink-soft); margin: 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -141,4 +147,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .seg::after, .cars, .stop, .car { transition: none; }
+  /* index.css shortens animations to 0.01ms, which an infinite spin survives as a flicker; stop it outright.
+     Same selector as the spin rule: a bare .car-gear loses to it on specificity and the gear keeps turning. */
+  .car.is-running .car-gear { animation: none; }
 }
