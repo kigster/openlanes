@@ -67,11 +67,14 @@ module OpenLanes
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
       #   pull requests go through once palpatine has ruled; nil when the
       #   run publishes nothing
+      # @param quality_gate [#call, nil] true while `.openlanes.yml` has
+      #   no `desired_codebase_quality:`, which holds every new agent back
+      #   (plan 035); nil runs ungated
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
-        merging: nil)
+        merging: nil, quality_gate: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -94,6 +97,7 @@ module OpenLanes
         @verification = verification
         @journal = dry_run ? nil : journal
         @merging = merging
+        @quality_gate = quality_gate
         @would_bomb = []
         @attempts = []
         @dropped = []
@@ -274,6 +278,10 @@ module OpenLanes
 
       # @return [Boolean] whether a 💣 keeps every new agent from starting
       def halted? = !halted_by.empty?
+
+      # @return [Boolean] whether R4's question must be answered before any
+      #   new agent starts (plan 035)
+      def awaiting_quality? = @quality_gate&.call ? true : false
 
       # Plans in scope the dependency gate holds back, with the reason: a
       # dependency that is not done yet, or a cycle that no order can break.

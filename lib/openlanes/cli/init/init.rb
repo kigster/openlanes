@@ -23,7 +23,7 @@ module OpenLanes
       option :jobs, aliases: ["-j"], desc: "How many plans `openlanes run` works on at once (default: cores - 2)"
       option :quality,
         values: Config::QUALITIES.map(&:to_s),
-        desc:   "desired_codebase_quality: high or mvp (R4); leave it out to be asked on the first ok-not-perfect review"
+        desc:   "desired_codebase_quality: high, standard or mvp (R4); asked on a terminal when left out"
       option :yes,
         type:    :boolean,
         default: false,
@@ -58,6 +58,7 @@ module OpenLanes
 
         File.write(path, config.to_yaml) unless keep
         FileUtils.mkdir_p(plans)
+        decide(plans, config) unless keep
         puts path
         report(path, plans, keep, options)
       rescue OpenLanes::Error => e
@@ -112,15 +113,26 @@ module OpenLanes
         { "YES" => true, "NO" => false }[choice]
       end
 
-      # R4's question. Left unanswered under -y, so the first
-      # `review-ok-not-perfect` pull request asks it instead.
+      # R4's question, always put on a terminal (plan 035), in the words
+      # {Engine::QualityQuestion::CHOICES} gives the page. Left unanswered
+      # only under -y, where the run asks it before any work starts.
       #
       # @return [String]
       def ask_quality
-        prompt.select("Please indicate the desired quality of the codebase (this affects the severity of items " \
-                      "found during review that will require rework):",
-          { "High quality, but slower and more expensive: a review-ok-not-perfect PR returns to developers" => "high",
-            "Good enough, but faster and cheaper, think MVP: review-ok-not-perfect is accepted"             => "mvp" })
+        prompt.select("#{Engine::QualityQuestion::HEADING}. #{Engine::QualityQuestion::BODY}",
+          Engine::QualityQuestion::CHOICES.to_h { [it.label, it.quality.to_s] })
+      end
+
+      # The quality chosen, written down in `decisions.md` with every
+      # option it was chosen from.
+      #
+      # @param plans [String]
+      # @param config [OpenLanes::Config]
+      # @return [void]
+      def decide(plans, config)
+        return if config.quality_unset?
+
+        Engine::QualityQuestion.record(plans, config.desired_codebase_quality, by: "openlanes init")
       end
 
       # @param value [String, Integer, nil]

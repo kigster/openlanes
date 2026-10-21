@@ -210,10 +210,10 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
 
     it "writes the chosen quality into .openlanes.yml, and refuses what is not a choice or not open" do
       send_command("answer", plan: "001.00", question: "Q1", text: "maybe")
-      send_command("answer", plan: "001.00", question: "Q1", text: "b) Good enough, but faster and cheaper")
+      send_command("answer", plan: "001.00", question: "Q1", text: "c) mvp: the fastest")
       send_command("answer", plan: "001.00", question: "Q1", text: "a")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(['Q1 takes a) or b), not "maybe"', "desired_codebase_quality: mvp in .openlanes.yml",
+        expect(apply.map(&:reason)).to eq(['Q1 takes a), b) or c), not "maybe"', "desired_codebase_quality: mvp in .openlanes.yml",
                                            "001.00 has no open question Q1"])
         expect(File.read(config)).to eq("desired_codebase_quality: mvp\n")
         expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).quality_ask).to include("answer" => "mvp", "by" => "dana")

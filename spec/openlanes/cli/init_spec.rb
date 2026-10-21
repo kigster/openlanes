@@ -119,6 +119,16 @@ RSpec.describe OpenLanes::CLI::Init do
     it "leaves desired_codebase_quality unset, to be asked on the first ok-not-perfect review" do
       run
       expect(OpenLanes::Config.load(repo)).to have_attributes(quality_unset?: true)
+      expect(File).not_to exist(File.join(repo, ".plans", "decisions.md"))
+    end
+
+    it "takes standard and writes the choice, with all three options, into decisions.md" do
+      run(quality: "standard")
+      aggregate_failures do
+        expect(OpenLanes::Config.load(repo)).to have_attributes(desired_codebase_quality: :standard)
+        expect(File.read(File.join(repo, ".plans", "decisions.md")))
+          .to include("## desired_codebase_quality: standard", "Decided by openlanes init", "a) high: ", "c) mvp: ")
+      end
     end
   end
 

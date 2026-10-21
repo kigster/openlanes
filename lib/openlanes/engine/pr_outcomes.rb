@@ -51,19 +51,20 @@ module OpenLanes
 
       # `review-rejected` with comments: 🔴, and the comments to the builders.
       # A plan already at 🔴 has been told; one at 🟢 passes through 👀, the
-      # only state the machine rejects from.
+      # only state the machine rejects from. A send-back under `standard`
+      # names 🟡 instead (plan 035), and is mailed to whoever builds there.
       def reject(outcome)
         subject = find(outcome.plan) or return nil
-        return nil if subject.status.key == :rejected
+        return nil if subject.status.key == outcome.to
 
-        moved = walk(subject, :rejected) or return nil
+        moved = walk(subject, outcome.to) or return nil
         # A person overruled the approval: the board must stop showing it
         # as finished.
         Plans::PlanState.for(moved.feature.path).unfinish!
         mailed = mail(moved, outcome)
         Applied.new(plan: outcome.plan,
           pr: outcome.pr,
-          to: :rejected,
+          to: outcome.to,
           note: "PR ##{outcome.pr} labelled #{Plans::ReviewLabel::REJECTED.name}; mailed #{mailed.join(", ")}")
       end
 
@@ -143,7 +144,7 @@ module OpenLanes
       # @return [Array<String>] who was mailed
       def mail(subject, outcome)
         body = ["PR ##{outcome.pr} was labelled #{Plans::ReviewLabel::REJECTED.name} on GitHub.", *comments(outcome)].join("\n\n")
-        status = Plans::STATUS_BY_KEY.fetch(:rejected)
+        status = Plans::STATUS_BY_KEY.fetch(outcome.to)
         @agents.all.select { it.handles?(status) }.map(&:name).each do |name|
           Plans::Mailbox.new(dir: subject.feature.path).append(from: SENDER, to: name, body:)
         end

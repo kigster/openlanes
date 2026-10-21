@@ -1115,6 +1115,7 @@ module OpenLanes
         # Redis lost (W32): the agents under way are paused, and nobody new
         # starts until it answers, since no claim could be checked.
         return nil if Execution::Control.paused?
+        return nil if quality_awaited?
 
         @dependencies = @runner.dependencies(except: untouchable)
         blockers_first(@runner.in_scope).each do |subject|
@@ -1146,6 +1147,25 @@ module OpenLanes
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # No agent starts while `.openlanes.yml` has no `desired_codebase_quality:`
+      # (plan 035): every level changes what the builders and reviewers aim
+      # for, so work done before the answer would be done to the wrong
+      # standard. The question goes on the first plan in scope, where the
+      # page shows it, and is said once in the log. The answer lifts the
+      # gate on the next tick: {Config.current} rereads a changed file.
+      #
+      # @return [Boolean]
+      def quality_awaited?
+        return false unless @runner.awaiting_quality?
+
+        asker = @runner.in_scope.first or return true
+        QualityQuestion.ask!(asker.feature.path)
+        @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                 "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts",
+          plan: asker.feature.ordinal.to_s) || true
+        true
       end
 
       # The dependency gate: a plan whose `depends_on:` names anything not yet
@@ -1934,13 +1954,14 @@ module OpenLanes
 
       # hansolo approved. Into 🧪 when the run verifies and the pull request
       # carries a verdict that goes on to verification; otherwise the plan is
-      # finished at 👀, as it was before chewie existed.
+      # finished at 👀, as it was before chewie existed. A 🔴 or, under
+      # `standard`, a 🟡 after the hand-off is the hand-off's own send-back.
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
       def approved(base, subject, ordinal)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
-        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
+        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected building].include?(now)
 
         @finished_plans << ordinal
         finish(subject, "approved")

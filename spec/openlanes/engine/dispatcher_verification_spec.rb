@@ -116,10 +116,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         let(:quality) { :high }
 
         before do
-          allow(outcome).to receive(:send_back_for_quality) do |plan:, pull:|
+          allow(outcome).to receive(:send_back_for_quality) do |plan:, pull:, quality:|
             plan.machine.promote!(:rejected)
             OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected,
-              note: "verification rejected PR ##{pull.number}, rejected 1 of 2; desired_codebase_quality is high",
+              note: "verification rejected PR ##{pull.number}, rejected 1 of 2; desired_codebase_quality is #{quality}",
               to: :rejected)
           end
         end
@@ -132,6 +132,31 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
             expect(plan.status.key).to eq(:rejected)
             expect(attempts.last).to have_attributes(to: :rejected)
             expect(attempts.last.note).to include("back to 🔴", "rejected 1 of 2", "desired_codebase_quality is high")
+            expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
+          end
+        end
+      end
+
+      context "with standard" do
+        let(:quality) { :standard }
+
+        before do
+          allow(outcome).to receive(:send_back_for_quality) do |plan:, pull:, quality:|
+            plan.machine.promote!(:building)
+            OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected,
+              note: "verification rejected PR ##{pull.number}, rejected 1 of 2; desired_codebase_quality is #{quality}",
+              to: :building)
+          end
+        end
+
+        it "goes back to 🟡 for luke and rey, counted as a rejection by the outcome (plan 035)" do
+          attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+
+          aggregate_failures do
+            expect(outcome).to have_received(:send_back_for_quality).with(plan: anything, pull: anything, quality: :standard)
+            expect(plan.status.key).to eq(:building)
+            expect(attempts.last).to have_attributes(to: :building)
+            expect(attempts.last.note).to include("back to 🟡", "desired_codebase_quality is standard")
             expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
           end
         end

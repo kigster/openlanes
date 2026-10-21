@@ -68,6 +68,48 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     end
   end
 
+  # Plan 035: under mvp an approved pull request is not run through chewie.
+  # Its round is written verified and published by the engine, so the plan
+  # waits on CI and the coverage gate at 🧪 as a verified one would.
+  describe "#hand_off of an approved pull request under mvp" do
+    subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
+
+    before do
+      plans { |t| t.plan "014.00", :in_review, "x", files:, prs: [t.open(7, "X")] }
+      allow(outcome).to receive_messages(labels: labels, mismatch: nil)
+    end
+
+    let(:labels) { %w[review-approved] }
+    let(:quality) { :mvp }
+
+    it "skips chewie and waits on CI" do
+      aggregate_failures do
+        expect(driver.hand_off(plan)).to eq("on to 🧪, verification skipped: PR #7 is review-approved and " \
+                                            "desired_codebase_quality is mvp; waiting on CI")
+        expect(plan.status.key).to eq(:verifying)
+        expect(driver.awaiting_ci?(plan)).to be(true)
+        expect(File.read(OpenLanes::Engine::Verification.latest(plan.feature.path).report_path)).to include("Skipped")
+      end
+    end
+
+    context "with standard" do
+      let(:quality) { :standard }
+
+      it "goes on to chewie" do
+        expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
+        expect(driver.awaiting_ci?(plan)).to be(false)
+      end
+    end
+
+    context "with an ok-not-perfect verdict" do
+      let(:labels) { %w[review-ok-not-perfect] }
+
+      it "goes on to chewie" do
+        expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
+      end
+    end
+  end
+
   describe "#awaiting_ci?" do
     before { plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(7, "X")] } }
 

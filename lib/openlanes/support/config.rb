@@ -13,7 +13,7 @@ module OpenLanes
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
   #   redis_outage_hours: 1     # how long agents stay paused for a lost Redis
   #                             # before the run shuts down (W32); any positive number
-  #   desired_codebase_quality: high  # or mvp (R4): what a review that is ok but
+  #   desired_codebase_quality: high  # standard or mvp (R4): what a review that is ok but
   #                             # not perfect does, and M5's column of defaults
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
@@ -216,9 +216,9 @@ module OpenLanes
     KEYS = %w[project lane frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
               questions review coverage].freeze
 
-    # What `desired_codebase_quality:` may say (R4), the default first. M5's
+    # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
-    QUALITIES = %i[high mvp].freeze
+    QUALITIES = %i[high standard mvp].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -229,8 +229,8 @@ module OpenLanes
     # {#max_rejections} when the file names none (M6).
     DEFAULT_MAX_REJECTIONS = 2
 
-    # M5's `max_rejections` row, for the two columns R4 kept.
-    MAX_REJECTIONS_BY_QUALITY = { high: 2, mvp: 1 }.freeze
+    # M5's `max_rejections` row, one column per quality.
+    MAX_REJECTIONS_BY_QUALITY = { high: 2, standard: 2, mvp: 1 }.freeze
 
     # {#outage_limit} when the file names none (W32).
     DEFAULT_OUTAGE_HOURS = 1

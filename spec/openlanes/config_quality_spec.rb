@@ -19,7 +19,7 @@ RSpec.describe OpenLanes::Config do
     aggregate_failures do
       %w[top_notch medium 3].each do |level|
         expect { parse("desired_codebase_quality: #{level}\n") }
-          .to raise_error(OpenLanes::Error, %r{/p/\.openlanes\.yml: desired_codebase_quality: .* is not one of high, mvp})
+          .to raise_error(OpenLanes::Error, %r{/p/\.openlanes\.yml: desired_codebase_quality: .* is not one of high, standard, mvp})
       end
     end
   end

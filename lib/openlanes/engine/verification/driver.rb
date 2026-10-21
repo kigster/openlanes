@@ -58,7 +58,7 @@ module OpenLanes
         # hansolo approved: on to 🧪, when the pull request carries a verdict
         # that goes on to verification ({Verification.from_review?}) and is
         # built from the branch chewie would be run in. A
-        # `review-ok-not-perfect` one goes back to 🔴 under `high` (R4), and
+        # `review-ok-not-perfect` one goes back to 🔴 under `high` and `standard` (R4), and
         # stays 👀 while the project has not said which quality it wants. The checkout's branch
         # is derived from the plan, and an adopted pull request may be built
         # from any other; verifying it there would test the wrong code.
@@ -87,9 +87,10 @@ module OpenLanes
           # it into 🧪: the newest round otherwise may be one verified before
           # a rejection and a rebuild, and would be taken for this one,
           # waiting on CI, with the fixes never verified.
-          Verification.round_for(subject.feature.path).make!
+          round = Verification.round_for(subject.feature.path).make!
+          skipped = skip(round, pull, labels)
           subject.machine.promote!(:verifying)
-          "on to 🧪 verification"
+          skipped || "on to 🧪 verification"
         rescue OpenLanes::Error => e
           "stays 👀: #{e.message}"
         end
@@ -207,12 +208,31 @@ module OpenLanes
           number = pull.number.to_s.delete("#")
           return unasked(subject, number) if now.nil?
 
-          return nil unless subject.machine.may?(:rejected)
+          to = Outcome::SEND_BACK.fetch(now, :rejected)
+          return nil unless subject.machine.may?(to)
 
           # Counted, as any rejection is, so a PR labelled the same round
           # after round reaches `merge.max_rejections` and the arbitrator.
-          result = @outcome.send_back_for_quality(plan: subject, pull:)
-          "back to 🔴: #{result.note}; luke and rey answer every comment that is not ✅"
+          result = @outcome.send_back_for_quality(plan: subject, pull:, quality: now)
+          "back to #{Plans::STATUS_BY_KEY.fetch(to).emoji}: #{result.note}; luke and rey answer every comment that is not ✅"
+        end
+
+        # An approved pull request under `mvp` (plan 035): the round is
+        # written verified and published here, in chewie's place, so the
+        # plan waits on CI and the coverage gate ({#awaiting_ci?}) and
+        # chewie is never started on it.
+        #
+        # @param round [Round] made for this hand-off
+        # @return [String, nil] what happened; nil when chewie verifies it
+        def skip(round, pull, labels)
+          now = quality
+          return nil unless Verification.skips_verification?(labels, quality: now)
+
+          why = "PR ##{pull.number.to_s.delete("#")} is #{Plans::ReviewLabel::APPROVED.name} and " \
+                "desired_codebase_quality is #{now}"
+          File.write(round.report_path, "# Verification, round #{round.number}\n\nVerdict: verified\n\nSkipped: #{why}.\n")
+          round.publish!("skipped")
+          "on to 🧪, verification skipped: #{why}; waiting on CI"
         end
 
         # @return [Symbol, nil]
@@ -225,7 +245,7 @@ module OpenLanes
         def unasked(subject, number)
           asked = QualityQuestion.ask!(subject.feature.path) ? "asked in the drawer" : "already asked on another plan"
           "stays 👀: PR ##{number} is labelled #{Verification::ON_QUALITY.name}, " \
-            "and desired_codebase_quality is not set in #{Config::FILE}; say high or mvp (#{asked})"
+            "and desired_codebase_quality is not set in #{Config::FILE}; say #{Config::QUALITIES.join(", ")} (#{asked})"
         end
 
         # One plan's look, as it stood when the look began.

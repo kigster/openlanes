@@ -304,15 +304,15 @@ module OpenLanes
         settled["grant"] == "live" ? "#{settled["agent"]} has #{settled["seconds"] / 60} more minutes" : "#{settled["agent"]} gets one more round"
       end
 
-      # R4's answer: a) high or b) mvp, written into `.openlanes.yml` (U3).
+      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
       # Only the letter counts, as for {#extension}.
       #
       # @return [String]
       def quality(command, dispatcher)
         subject = subject!(command, dispatcher)
         name = Engine::QualityQuestion::NAME
-        letter = command["text"].to_s.strip[/\A([ab])\)?(?:\s|\z)/i, 1] or
-          raise Refusal, "#{name} takes a) or b), not #{command["text"].to_s.strip[0, 40].inspect}"
+        letter = command["text"].to_s.strip[/\A([a-c])\)?(?:\s|\z)/i, 1] or
+          raise Refusal, "#{name} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
         chosen = Engine::QualityQuestion.answer!(subject.feature.path, letter, by: @node.user, root: File.dirname(dispatcher.runner.tree.dir)) or
           raise Refusal, "#{command.plan} has no open question #{name}"
         dispatcher.wake!

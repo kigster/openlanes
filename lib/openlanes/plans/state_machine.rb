@@ -155,8 +155,12 @@ module OpenLanes
             to: :planned
         end
 
+        # From 👀 too (plan 035): under `desired_codebase_quality: standard`
+        # a `review-ok-not-perfect` pull request goes back to the builders
+        # at 🟡, a lighter send-back than `high`'s 🔴.
         event :build, guard: :justified? do
-          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked bomb deferred],
+          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked bomb deferred
+                               in_review],
             to: :building
         end
 
