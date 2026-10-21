@@ -4,7 +4,7 @@ import { axe } from "vitest-axe";
 import { Board, MachineBoard } from "./Board";
 import { PlanRow } from "./PlanRow";
 import { nodePlanKey } from "./model";
-import { sampleBoard, sampleCar, samplePlan, samplePr } from "./sample";
+import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const none = new Map<string, unknown>();
 const noRetire = new Set<string>();
@@ -247,5 +247,28 @@ describe("locked plan", () => {
   it("shows no 🔑 when the plan is unlocked", () => {
     render(<PlanRow plan={samplePlan({ locked: null })} stations={stations} models={models} />);
     expect(screen.queryByText("🔑")).toBeNull();
+  });
+});
+
+describe("running gear", () => {
+  const { stations, models } = sampleBoard().me;
+  const draw = (plan = samplePlan()) => render(<PlanRow plan={plan} stations={stations} models={models} />).container;
+
+  it("spins a gear in a running, unblocked car", () => {
+    const car = draw().querySelector(".car")!;
+    expect(car).toHaveClass("is-running");
+    expect(car.querySelector(".car-top > .car-gear:first-child")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it.each(["done", "stuck", "failed"] as const)("shows no gear on a %s car", state => {
+    const container = draw(samplePlan({ cars: [sampleCar({ state })] }));
+    expect(container.querySelector(".car")).not.toHaveClass("is-running");
+    expect(container.querySelector(".car-gear")).toBeNull();
+  });
+
+  it("shows no gear on a running car blocked by an open question", () => {
+    const container = draw(samplePlan({ questions: [sampleQuestion()] }));
+    expect(container.querySelector(".car-gear")).toBeNull();
+    expect(container.querySelector(".car")).not.toHaveClass("is-running");
   });
 });
