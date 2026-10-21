@@ -18,4 +18,9 @@ describe("board.css gear", () => {
     // The selector must match the spin rule's: a bare .car-gear is less specific and loses, so the gear kept turning.
     expect(block).toMatch(/\.car\.is-running \.car-gear\s*\{\s*animation:\s*none;/);
   });
+
+  it("keeps the name on the left when the gear joins the header", () => {
+    // Under space-between alone, a third child (the gear) split the slack around the name and it left the edge.
+    expect(css).toMatch(/\.car-top > :is\(\.car-agent, \.car-open\)\s*\{\s*margin-right:\s*auto;/);
+  });
 });

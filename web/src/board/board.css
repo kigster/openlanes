@@ -66,6 +66,9 @@
 .car.is-blocked:hover, .car.is-blocked:has(.car-open[aria-expanded="true"]) { border-left-color: var(--alarm); }
 .car-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
 .car-gear { flex: none; width: 14px; height: 14px; color: var(--ink-soft); }
+/* The name takes the free space, so it stays on the left and the model on the right however many marks sit around it:
+   with the gear as a third child, space-between split the slack on both sides and the name drifted toward the middle. */
+.car-top > :is(.car-agent, .car-open) { margin-right: auto; }
 .car.is-running .car-gear { animation: car-gear-spin 2s linear infinite; }
 @keyframes car-gear-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .car-agent { font-weight: 800; letter-spacing: -0.01em; }
