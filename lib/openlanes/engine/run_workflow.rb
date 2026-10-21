@@ -398,8 +398,20 @@ module OpenLanes
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
+          journal:      (journal_for(live) unless @dry_run),
           **staying(web, live)
         )
+      end
+
+      # The run's progress journal (S9), under the runtime directory and
+      # never under `.plans/`, mirrored to the live bus when there is one.
+      #
+      # @param live [OpenLanes::Live::Session, nil]
+      # @return [OpenLanes::Engine::EventJournal]
+      def journal_for(live)
+        return EventJournal.new(root: @root) unless live
+
+        EventJournal.new(root: @root, node: live.keys.node, bus: Live::EventBus.for(live.store), channel: live.keys.journal)
       end
 
       # @return [OpenLanes::Execution::Executor]

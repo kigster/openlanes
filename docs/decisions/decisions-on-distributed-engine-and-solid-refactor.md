@@ -72,7 +72,7 @@ Overlapping plans: `021` (runtime state outside plans), `022` (Redis outage resi
 
 ### S9. The journal is an NDJSON file per node, mirrored to Redis
 
-- Each node keeps an append-only NDJSON journal in `.openlanes/journal/`, a git-ignored runtime directory, as `021` proposed.
+- Each node keeps an append-only NDJSON journal under the XDG runtime directory, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<hash>/journal/<run id>.ndjson`, as plan `021` settled it (amended by `039.00`: the draft's repo-local directory was rejected in `decisions-on-runtime-state.md`). See `decisions-on-progress-journal.md`.
 - Each line is one event, fsync'd and schema-versioned.
 - The file is the source of truth for recovery, so it survives a Redis outage or data loss. Recovery replays it.
 - Each event is also published over Redis pub/sub so the UIs stay in sync.

@@ -62,10 +62,12 @@ module OpenLanes
       # @param verification [OpenLanes::Engine::Verification::Driver, nil]
       #   what a 🧪 plan is run through (plan 014); nil when the run publishes
       #   nothing, and an approved plan then finishes at 👀
+      # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
+      #   journal each engine event is appended to; nil keeps none
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
-        watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil)
+        watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil)
         @tree = tree
         @executor = executor
         @agents = agents
@@ -86,6 +88,7 @@ module OpenLanes
         @aging_since = aging_since
         @extensions = extensions
         @verification = verification
+        @journal = dry_run ? nil : journal
         @would_bomb = []
         @attempts = []
         @dropped = []
@@ -220,7 +223,8 @@ module OpenLanes
           stay:     @stay,
           rescan:   @rescan,
           watch:      @watch,
-          extensions: @extensions)
+          extensions: @extensions,
+          journal:    @journal)
         yield dispatcher if block_given?
         @attempts = dispatcher.run
       end

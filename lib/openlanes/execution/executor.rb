@@ -125,6 +125,10 @@ module OpenLanes
         # @return [String, nil] the CLI's session id, once its stream named it
         attr_accessor :session
 
+        # @return [String, nil] the raw NDJSON trace the agent's stream is
+        #   copied into, so the engine journal can name it and its offset
+        attr_accessor :trace
+
         # @return [OpenLanes::Execution::Executor::Compaction, nil] the latest
         #   compaction asked for
         def compaction = @mutex.synchronize { @compaction }
@@ -541,6 +545,7 @@ module OpenLanes
         handle ||= Handle.new
         before = Boundary.snapshot(root)
         trace = trace_path(agent, subject)
+        handle.trace = trace
         profile = profile_for(agent, subject)
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
         handle.control = control

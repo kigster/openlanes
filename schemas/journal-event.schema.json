@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kigster/openlanes/schemas/journal-event.schema.json",
+  "title": "openlanes engine journal event",
+  "description": "One line of a node's NDJSON progress journal, written by OpenLanes::Engine::EventJournal under Runtime.journal_dir. Append-only, fsync'd per event.",
+  "type": "object",
+  "required": ["v", "seq", "at", "node", "run_id", "kind"],
+  "properties": {
+    "v": { "const": 1 },
+    "seq": { "type": "integer", "minimum": 1 },
+    "at": { "type": "string", "format": "date-time" },
+    "node": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": [
+        "run_started", "run_ended", "plan_assigned", "agent_started", "agent_session",
+        "agent_offset", "agent_ended", "transition", "extension", "question"
+      ]
+    },
+    "plan": { "type": "string", "pattern": "^\\d{3}\\.\\d{2}$" },
+    "agent": { "type": "string", "minLength": 1 },
+    "round": { "type": "integer", "minimum": 0 },
+    "pid": { "type": "integer", "minimum": 1 },
+    "started_at": { "type": ["string", "null"], "format": "date-time" },
+    "session_id": { "type": ["string", "null"] },
+    "output_file": { "type": ["string", "null"] },
+    "offset": { "type": "integer", "minimum": 0 },
+    "exit": { "type": ["integer", "null"] },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "event": { "type": "string" },
+    "seconds": { "type": "number", "minimum": 0 },
+    "note": { "type": "string" },
+    "reason": { "type": "string" },
+    "jobs": { "type": "integer", "minimum": 1 },
+    "isolation": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "plan_assigned" } } },
+      "then": { "required": ["plan", "agent"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "agent_started" } } },
+      "then": { "required": ["plan", "agent", "pid", "started_at", "session_id", "output_file"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "agent_session" } } },
+      "then": { "required": ["plan", "agent", "session_id"], "properties": { "session_id": { "type": "string" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "agent_offset" } } },
+      "then": { "required": ["plan", "agent", "offset"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "agent_ended" } } },
+      "then": { "required": ["plan", "agent", "exit"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "transition" } } },
+      "then": { "required": ["plan", "from", "to"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "extension" } } },
+      "then": { "required": ["plan", "agent", "seconds"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "question" } } },
+      "then": { "required": ["plan", "agent", "note"] }
+    }
+  ]
+}

@@ -62,6 +62,14 @@ module OpenLanes
       # @return [String]
       def run(of = node) = "#{base}:#{of}:run"
 
+      # Pub/sub: `{json}`, one line of this node's {Engine::EventJournal},
+      # mirrored after it is fsync'd. The file is the record; a subscriber
+      # that misses a message reads the file.
+      #
+      # @param of [String]
+      # @return [String]
+      def journal(of = node) = "#{base}:#{of}:journal"
+
       # Stream: `{json}`, one `CopilotTurn`: the conversation with this
       # node's copilot (W17), the person's messages and its answers in the
       # order they were said. {Copilot} writes and reads it.
