@@ -35,11 +35,3 @@ Under `mvp` a `review-approved` PR still moves to 🧪, but `Driver#skip` writes
 ## Frontend
 
 No units: the page already renders whatever options `QualityQuestion.questions` returns.
-
-## Rebase decisions
-
-Replaying 0c45d14 onto `origin/main` 1e41793, 2026-10-21, bb8-resolver. Both sides renamed the folder ⚪ to 🟡 and added the same three files. Main's copies come from 1e41793 (Sync plan folders with the last engine run), a snapshot taken just after round 3 started (`updated_at` 18:55:22). The branch's copies come from the round that finished U3 and U5 (01:41:10). The two sides never disagree; main's copy is just older.
-
-- `plan.md`: kept the branch's copy. It is main's copy with U3 (partial → done) and U5 (not started → done) updated to match the code this commit carries (`in_review → building` edge, `Outcome::SEND_BACK`, `Driver#skip`, `Verification.skips_verification?`), and nothing else differs.
-- `pull-requests.md`: kept the branch's copy. It is main's bare `# Pull Requests` heading plus luke-backend's round 3 verification, and nothing in it was removed.
-- `state.json`: kept the branch's copy. Every stage, signature, extension and memory round on main is in it unchanged. It closes round 3 as Interrupted ("harness died"), adds the resumed session's stage, 3 signatures, the RESUME mail #1, memory round 3 and a later `updated_at`. `last-known-state` takes the branch's harness record (round 3, 01:20:02) over main's older agent record (round 2, 17:33:36), whose remaining units, U3 and U5, are done.
