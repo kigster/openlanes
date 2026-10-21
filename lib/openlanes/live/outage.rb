@@ -9,8 +9,9 @@ module OpenLanes
     # control file ({Execution::Control::PAUSE}), nothing new starts, and the
     # outage goes into the run's state file, the record that survives Redis.
     # Redis is then asked again after 1, 1, 2, 3, 5, 8 … seconds, the
-    # Fibonacci numbers, so a short outage is noticed quickly and a long one
-    # is not hammered. When it answers, the agents carry on, their clocks
+    # Fibonacci numbers capped at {MAX_GAP}, so a short outage is noticed
+    # quickly, a long one is not hammered, and a Redis that comes back is
+    # never left unnoticed for more than {MAX_GAP} seconds. When it answers, the agents carry on, their clocks
     # having stood still meanwhile. When it has not answered for
     # `redis_outage_hours` (an hour by default), the run shuts down the way
     # `q` does, and says why.
@@ -22,6 +23,11 @@ module OpenLanes
 
       # Seconds between pings while Redis answers.
       PING_EVERY = 1
+
+      # The longest gap between two asks while paused, in seconds. Without
+      # it the Fibonacci gaps pass 16 minutes within fifteen asks, and a Redis
+      # back after 17 minutes would leave every agent paused for 10 more.
+      MAX_GAP = 30
 
       # How many past outages the state file keeps.
       HISTORY = 20
@@ -149,11 +155,11 @@ module OpenLanes
         save(over: true)
       end
 
-      # The next Fibonacci gap, but never past the limit: the gaps outgrow an
-      # hour within twenty asks, and the last ask is the one at the limit.
+      # The next Fibonacci gap, capped at {MAX_GAP}, and never past the
+      # limit: the last ask is the one at the limit.
       #
       # @return [Float]
-      def next_probe(now) = [now + @delays.next, @down_since + @limit].min
+      def next_probe(now) = [now + [@delays.next, MAX_GAP].min, @down_since + @limit].min
 
       # @return [Boolean]
       def answers?
