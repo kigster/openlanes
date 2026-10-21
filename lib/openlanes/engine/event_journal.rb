@@ -65,6 +65,7 @@ module OpenLanes
         # O_APPEND, so each line lands whole at the end even beside another
         # writer, and one `write` per line, so a kill tears at most the last.
         @file = File.open(@path, File::WRONLY | File::APPEND | File::CREAT, 0o644)
+        seal_torn_tail
       end
 
       # Append one event, durable on return.
@@ -118,6 +119,18 @@ module OpenLanes
         rescue JSON::ParserError
           seq
         end
+      end
+
+      # A run killed mid-write leaves a fragment with no newline. The next
+      # line appended straight after it fused with it, and the replay then
+      # dropped both as one torn line, losing an event it had acknowledged.
+      def seal_torn_tail
+        return if File.empty?(@path)
+        return if File.open(@path, "rb") { it.seek(-1, IO::SEEK_END) && it.read(1) } == "\n"
+
+        @file.write("\n")
+        @file.flush
+        @file.fsync
       end
 
       def mirror(event)

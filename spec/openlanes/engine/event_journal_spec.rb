@@ -53,6 +53,17 @@ RSpec.describe OpenLanes::Engine::EventJournal do
     again.close
   end
 
+  it "starts a fresh line after a torn tail, so the next event survives a replay" do
+    journal.append(:run_started)
+    journal.close
+    File.open(journal.path, "a") { it.write("{\"v\":1,\"seq\":2,\"run_i") }
+    again = described_class.new(root:, run_id: "r1", node: "n")
+    again.append(:run_ended, reason: "quit")
+    again.close
+    picture = OpenLanes::Engine::EventJournal::Replay.call(again.path)
+    expect([picture.torn, picture.seq, picture.running?]).to eq([1, 2, false])
+  end
+
   context "with a bus" do
     let(:bus) { instance_double(OpenLanes::Live::EventBus::Base, publish: 1) }
 

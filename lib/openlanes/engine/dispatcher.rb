@@ -221,7 +221,7 @@ module OpenLanes
 
           @sleeper.call(1)
         end
-        journal!(:run_ended, reason: "fixed point")
+        journal!(:run_ended, reason: Execution::Control.quit? ? "quit" : "fixed point")
         @attempts
       end
 
@@ -2297,7 +2297,22 @@ module OpenLanes
         journal!(:agent_ended, **who, exit: attempt.ok ? 0 : 1, note: attempt.note.to_s) if @journaled.delete(job.key)
         return unless attempt.advanced?
 
-        journal!(:transition, plan: who[:plan], from: attempt.from.to_s, to: attempt.to.to_s, event: attempt.to.to_s)
+        journal!(:transition, plan: who[:plan], from: attempt.from.to_s, to: attempt.to.to_s, event: event_between(attempt.from, attempt.to))
+      end
+
+      # The aasm event that moved +from+ to +to+. A destination names one
+      # forward event, but a retreat lands on the same states by `step_back`,
+      # so the edge, not the destination alone, says which fired.
+      #
+      # @param from [Symbol, #to_sym]
+      # @param to [Symbol, #to_sym]
+      # @return [String]
+      def event_between(from, to)
+        from = from.to_sym
+        to = to.to_sym
+        return "step_back" unless Plans::StateMachine.inbound.fetch(to, []).include?(from)
+
+        Plans::StateMachine.event_for.fetch(to).to_s
       end
 
       # @return [void]

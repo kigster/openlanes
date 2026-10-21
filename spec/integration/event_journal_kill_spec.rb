@@ -47,6 +47,61 @@ RSpec.describe "progress journal under SIGKILL" do
     expect(picture).to be_running
     expect(picture.agents.map { [it.plan, it.pid, it.session_id, it.output_file] }).to eq([["039.00", pid, "s-1", "/t/trace.ndjson"]])
     expect(picture.agents.first.offset).to be >= (acked.max - 3) * 64
-    expect(Dir.glob(File.join(root, ".plans", "**", "*"))).to be_empty
+  end
+
+  # A real engine: a Runner round over a real .plans tree, its one agent a
+  # fake that names its pid, session and trace and then never returns.
+  context "with an engine killed mid-round", :tree do
+    # Not `root`: the outer after hook removes that, and here it is the fixture's.
+    let(:project) { File.dirname(plans_root) }
+    # let!, so the child inherits the parent's paths rather than minting its own.
+    let!(:agents_dir) { Dir.mktmpdir }
+    let!(:trace) { File.join(Dir.mktmpdir, "trace.ndjson") }
+
+    after { FileUtils.rm_rf(agents_dir) }
+
+    def run_engine
+      $stderr.reopen(File::NULL)
+      File.write(File.join(agents_dir, "leah.md"),
+        "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\n" \
+        "adapter: claude\nledger: [spec.md]\n---\nbody")
+      trace_file = trace
+      executor = lambda { |_agent, _subject, handle:, **|
+        handle.child = Struct.new(:pid).new(Process.pid)
+        handle.trace = trace_file
+        handle.session = "s-1"
+        File.write(trace_file, "{}\n{}\n")
+        sleep
+      }
+      OpenLanes::Engine::Runner.new(tree:      OpenLanes::Plans::Tree.new(dir: plans_root),
+        executor:,
+        agents:    OpenLanes::Agents::Registry.new(dir: agents_dir),
+        isolation: :shared,
+        jobs:      1,
+        sleeper:   ->(_) { sleep 0.02 },
+        journal:   OpenLanes::Engine::EventJournal.new(root: project, run_id: "engine", node: "n"),
+        extensions: OpenLanes::Engine::Extensions.new(stay: false, auto: false)).call
+    end
+
+    it "replays the agent in flight and leaves nothing of its own under .plans" do
+      plans { |t| t.plan "001.00", :new, "remember", files: { "spec.md" => spec_body } }
+      path = File.join(OpenLanes::Runtime.journal_dir(root: project), "engine.ndjson")
+      # exit!, so the child never runs the suite's at_exit hooks or cleanups.
+      pid = fork do
+        run_engine
+      ensure
+        exit!(1)
+      end
+      deadline = Time.now + 10
+      sleep 0.02 until (File.exist?(path) && File.read(path).include?('"agent_offset"')) || Time.now > deadline
+      Process.kill(:KILL, pid)
+      Process.wait(pid)
+
+      picture = OpenLanes::Engine::EventJournal::Replay.call(path)
+      expect(picture).to be_running
+      expect(picture.agents.map { [it.plan, it.agent, it.pid, it.session_id, it.output_file, it.offset] })
+        .to eq([["001.00", "leah-researcher", pid, "s-1", trace, File.size(trace)]])
+      expect(Dir.glob(File.join(plans_root, "**", "{*.ndjson,*.lock,*.tmp,openlanes-state.json}"))).to eq([])
+    end
   end
 end
