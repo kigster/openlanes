@@ -10,7 +10,8 @@ module OpenLanes
     # `auto-merged` or `merge-manually`, merging the `auto` ones one at a
     # time under `merge.by: auto`, and rebasing the siblings left open onto
     # `main` after each merge. A rebase that raises leaves that sibling for a
-    # person rather than retrying the merge on its old green CI, and a branch
+    # person, and every other open sibling is still rebased or left in the
+    # same pass, rather than retrying the merge on old green CI. A branch
     # GitHub still reports as `BEHIND` is never merged. Every step is asked of
     # GitHub as it stands, so {#advance} may be called on every poll and does
     # nothing twice. That is also how a sibling waits for CI on its rebased
@@ -226,13 +227,16 @@ module OpenLanes
       # lease; a sibling from any other branch is rebased on GitHub's side.
       # A conflict still sends the plan to 🔴. Anything else that raises
       # (a refused push, a GitHub update that did not finish) leaves that
-      # sibling for a person: returning nil used to keep `ready-to-merge`
-      # and the old green CI, and the next pass merged a head that never
-      # saw the new `main`.
+      # sibling for a person, and the walk continues: returning from the
+      # first raise used to skip later siblings, which kept `ready-to-merge`
+      # and the old green CI. GitHub's `BEHIND` is silent unless the base
+      # requires branches to be up to date, so each sibling must be rebased
+      # or left in this pass.
       #
-      # @return [Result, nil] the rejection a conflict caused, or the leave a
+      # @return [Result, nil] the rejection a conflict caused, or the leaves a
       #   rebase that raised caused; nil when every sibling rebased
       def rebase_siblings(subject, merged)
+        notes = []
         subject.pull_requests.select(&:open?).each do |pull|
           number = number_of(pull)
           repo = Vcs::GitHub.repo_of(pull.url)
@@ -244,11 +248,16 @@ module OpenLanes
           UI.log("rebase after merging ##{merged} not finished: #{e.message}",
             level: :warn,
             plan:  subject.feature.ordinal.to_s)
-          live = @github.pull_request(pull.url || number.to_s)
-          machine = Plans::PullRequestMachine.new(pull, live[:labels])
-          return leave(machine, number, repo, "rebase onto main failed: #{e.message}", comment: true)
+          notes << leave_unrebased(pull, number, repo, e.message).note
         end
-        nil
+        notes.empty? ? nil : Result.new(note: notes.join("; "))
+      end
+
+      # @return [Result]
+      def leave_unrebased(pull, number, repo, error)
+        live = @github.pull_request(pull.url || number.to_s)
+        machine = Plans::PullRequestMachine.new(pull, live[:labels])
+        leave(machine, number, repo, "rebase onto main failed: #{error}", comment: true)
       end
 
       # @param status [String, nil] GitHub's `mergeStateStatus`

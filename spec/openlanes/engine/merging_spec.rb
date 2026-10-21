@@ -339,5 +339,22 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         expect(labels(2)).to eq(%w[merge-manually])
       end
     end
+
+    context "with two siblings still open" do
+      let(:numbers) { [1, 2, 3] }
+
+      it "leaves the later sibling too when an earlier rebase raises, and the next pass merges neither" do
+        allow(refresh).to receive(:call).and_return(outcome(:rebased, base: "origin/main"))
+        allow(publisher).to receive(:pushed!).and_raise(OpenLanes::Error, "lease refused")
+        merging.assess(plan, "auto")
+        merging.advance(plan)
+
+        aggregate_failures do
+          expect(labels(2)).to eq(%w[merge-manually])
+          expect(labels(3)).to eq(%w[merge-manually])
+          expect(merges).to eq([1])
+        end
+      end
+    end
   end
 end
