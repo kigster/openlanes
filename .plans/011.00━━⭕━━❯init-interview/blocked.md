@@ -1,18 +1,16 @@
-# Blocked, round 2 (technical)
+# Blocked
 
-Requirement not met: "`bundle exec rspec` and `bundle exec rubocop` each exit 0". Rubocop does. Rspec does not, and the failures are in files this plan does not own and did not change.
+## B2 The probe fix is on main, but this branch has not been rebased onto it
 
-## B1 The app specs fail on this machine's Ruby and macOS, outside this plan
+B1 was answered a): fix the probe in its own PR, then re-run this plan's checks unchanged. That fix landed on `origin/main` as `ff03ca48` (PR #72, `apps/ports.rb` and `apps/probe.rb`). On this host, a detached `origin/main` checkout runs `spec/openlanes/apps` and `spec/openlanes/cli/app_spec.rb` at 115 examples, 0 failures. This branch is still at `ce65c43`, which predates the fix, so the full suite here still reports 3107 examples and the same 30 failures. The plan's work sits uncommitted in the worktree, and the harness withholds `git commit` and `git rebase` from me, so I cannot bring the fix in myself. A rebase will conflict: all six tracked files this plan edits (`README.md`, `lib/openlanes.rb`, `lib/openlanes/cli/init/init.rb`, `lib/openlanes/support/config.rb`, `spec/openlanes/cli/init_spec.rb`, `spec/openlanes/config_spec.rb`) also changed on `main`, `config.rb` by 263 lines.
 
-`bundle exec rspec` reports 3107 examples, 30 failures, all of them in `spec/openlanes/apps/` (ports, probe, restart, runner, supervisor) and `spec/openlanes/cli/app_spec.rb`. Round 1 ran the same suite with 0 failures. The cause is a call that behaves differently on this host (Darwin 27, Ruby 4.0.6): `Socket.tcp("127.0.0.1", port, connect_timeout: 0.2)` returns a socket for a port nothing listens on, where `Socket.tcp` with no timeout and `TCPSocket.new` both raise `Errno::ECONNREFUSED`. So `Apps::Ports#answering?` sees every port from 11100 to 11999 as taken, and `Apps::Probe.listening?` (and so `ready?`) sees closed ports as open. It happens both inside and outside the sandbox. Without the app specs the suite is clean: 2995 examples, 0 failures, 9 pending. This plan's own specs run 146 examples with 0 failures. `git status` shows nothing changed under `lib/openlanes/apps` or `spec/openlanes/apps`.
-
-a) Fix the probe in its own small PR (a non-blocking connect that checks `SO_ERROR`, in `apps/ports.rb` and `apps/probe.rb`), merge it, then re-run this plan's checks unchanged. (Recommended)
-b) Let luke-backend fix the probe inside this plan. The PR then reaches beyond `init`.
-c) Accept this plan as it stands: judge it on the suite without the app specs, with the failures and their cause written in `pull-requests.md`.
+a) Commit this plan's work on `kig/011.00-init-interview` and rebase it onto `origin/main`, handing the conflicts to luke-backend's rebase step; then the checks are re-run unchanged. (Recommended)
+b) Copy `ff03ca48`'s changes to `apps/ports.rb`, `apps/probe.rb` and their specs into this branch now, so the suite goes green before the rebase. The fix then exists twice until the rebase, which is still needed.
+c) Publish as it is, with the 30 host-only failures noted, and rebase when the pull request is reviewed.
 
 ## A1
 
-Rebase onto main.
+a) Commit this plan's work on `kig/011.00-init-interview` and rebase it onto `origin/main`, handing the conflicts to luke-backend's rebase step; then the checks are re-run unchanged.
 
-Answered by kig on 2026-10-17
-<!-- cmd:01M55TQQZZYYQF69554D3967FK -->
+Answered by kig on 2026-10-20
+<!-- cmd:01M5E2RYTF8TK6ASGCHYFKPAGY -->

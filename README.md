@@ -168,7 +168,7 @@ A plan that is no longer active moves into a subfolder, with the date it moved i
 
 `.plans/` itself then lists only the work still open. Plan numbers count every folder, so a number is never reused. Reviving a plan moves it back into `.plans/` and drops the date.
 
-While an agent works on a plan, the folder holds `locked-by.pid` with the process id, host and start time. The file is git-ignored, so the folder name never changes for a lock. `list-plans` and the control room show the plan with 🔑, and `resync dirs` removes a lock whose process is gone on this host.
+While an agent works on a plan, its lock (process id, host and start time) sits in the runtime state directory, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<hash>/locks/<ordinal>.lock`, beside the run's `openlanes-state.json`. Nothing runtime is written under `.plans/`, and the folder name never changes for a lock. `list-plans` and the control room show the plan with 🔑, adding the host for a lock taken on another machine, which is never cleared automatically. `resync dirs` removes a lock whose process is gone on this host. A legacy `locked-by.pid` or `.plans/openlanes-state.json` from an older release is still read, for one release. See `docs/decisions/decisions-on-runtime-state.md`.
 
 See [`docs/decisions/decisions-on-plan-folder-naming.md`](docs/decisions/decisions-on-plan-folder-naming.md) for the decisions behind it.
 

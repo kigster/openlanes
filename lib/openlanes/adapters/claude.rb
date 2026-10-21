@@ -105,18 +105,21 @@ module OpenLanes
         rank && rank > LADDER.index(CEILING) ? CEILING : model.to_s
       end
 
-      # @return [Boolean]
-      def enforces_tool_denial? = true
+      # `--disallowedTools` is refused by the CLI itself, and `--resume
+      # <session id>` carries a conversation on. `claude -p --resume <id>
+      # "/compact"` compacts the session and prints a `compact_boundary`
+      # event; the agent cannot run it on itself, because `/compact` is the
+      # caller's command, not a tool.
+      CAPABILITIES = Capabilities.new(compacts: true,
+        resumes: true,
+        enforces_tool_denial: true,
+        compact_prompt: "/compact")
 
-      # @return [Boolean] `--resume <session id>` carries a conversation on
-      def resumes? = true
+      # @return [OpenLanes::Adapters::Capabilities]
+      def capabilities = CAPABILITIES
 
-      # `claude -p --resume <id> "/compact"` compacts the session and prints a
-      # `compact_boundary` event; the agent cannot run it on itself, because
-      # `/compact` is the caller's command, not a tool.
-      #
-      # @return [String]
-      def compact_prompt = "/compact"
+      # @return [Array<String>]
+      def lean_flags = LEAN
 
       # @return [Hash{String => String}]
       def environment = { AUTOCOMPACT_VARIABLE => AUTOCOMPACT.to_s }

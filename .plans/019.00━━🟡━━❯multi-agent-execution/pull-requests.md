@@ -86,3 +86,12 @@ Re-run in the worktree, 2026-10-19, on `fd58a1f8` (rebased onto `origin/main` `2
 - `bundle exec rubocop`: 518 files inspected, no offenses detected
 - `just web-build`: `✓ built in 3.17s`, exit 0
 - Integration proof and the repo's e2e suite: `E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`, exit 0: `actions` 5/5, `board` 6/6, `chat` 4/4, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2, `subagents` 2/2; `All specs passed!  00:39  27  27`
+
+## Verification (rey-frontend, round 1, on 0c36052d)
+
+Re-run 2026-10-20 after the rebase; tree clean. The e2e proof is luke's `bin/web-e2e` 27/27 above.
+
+- `npm run typecheck`, `npm run lint`: pass
+- `npm test`: 40 files, 450 tests pass
+- `bundle exec rspec`: 3999 examples, 0 failures on the second run; the first run showed 1 failure that did not recur and that I did not identify
+- `bundle exec rubocop`: 526 files, no offenses

@@ -32,7 +32,7 @@ module OpenLanes
       # @param agents [Agents::Registry] who handles 🔴, and so gets the comments
       # @param clock [#call] the time a merge is recorded at
       # @param events [Events::Sink, Events::NullSink] where an applied outcome is recorded
-      def initialize(tree_dir:, agents:, clock: -> { Time.now }, events: Events::NullSink.new)
+      def initialize(tree_dir:, agents:, clock: -> { Clock::System.now }, events: Events::NullSink.new)
         @tree_dir = tree_dir
         @agents = agents
         @clock = clock

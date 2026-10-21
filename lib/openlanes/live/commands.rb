@@ -202,10 +202,10 @@ module OpenLanes
         reply = Reply.new(id:, status:, reason:, at: @clock.call)
         json = reply.to_json
         turn = Commands.echo_turn(reply) if echo
-        @store.multi do |tx|
+        EventBus.for(@store).transaction do |tx|
           tx.hset(@keys.done, id, json)
-          tx.xadd(@keys.replies, { json: }, maxlen: Keys::REPLIES_LENGTH)
-          tx.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH) if turn
+          tx.append(@keys.replies, { json: }, maxlen: Keys::REPLIES_LENGTH)
+          tx.append(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH) if turn
           tx.xack(@keys.commands, Keys::GROUP, entry.id)
           @record&.write(tx)
         end
@@ -215,8 +215,8 @@ module OpenLanes
 
       # @return [OpenLanes::Live::Reply] the first reply, sent again
       def answer_again(entry, first)
-        @store.multi do |tx|
-          tx.xadd(@keys.replies, { json: first }, maxlen: Keys::REPLIES_LENGTH)
+        EventBus.for(@store).transaction do |tx|
+          tx.append(@keys.replies, { json: first }, maxlen: Keys::REPLIES_LENGTH)
           tx.xack(@keys.commands, Keys::GROUP, entry.id)
         end
         News.publish(store: @store, keys: @keys, kind: "reply")

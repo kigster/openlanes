@@ -610,10 +610,10 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   describe "the state file" do
     before { building_plan }
 
-    # The run's memory sits in .plans/ beside the plan folders. It is about
-    # one machine and must not ride along in a commit, so somebody's
-    # .gitignore is edited once, and the edit is announced once.
-    it "adds the state file to .gitignore once and says so" do
+    # Plan documents are written through `.tmp` siblings inside .plans/,
+    # which must not ride along in a commit, so somebody's .gitignore is
+    # edited once, and the edit is announced once.
+    it "adds the temp-file line to .gitignore once and says so" do
       root = File.dirname(plans_root)
       system("git", "-C", root, "init", "-q")
       with_executor
@@ -621,9 +621,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       _out, second, = run(dry_run: false)
 
       aggregate_failures do
-        expect(unwrapped(first)).to include("Added .plans/openlanes-state.json")
-        expect(unwrapped(second)).not_to include("Added .plans/openlanes-state.json")
-        expect(File.read(File.join(root, ".gitignore")).scan(%r{^\.plans/openlanes-state\.json$}).size).to eq(1)
+        expect(unwrapped(first)).to include("Added .plans/**/*.tmp")
+        expect(unwrapped(second)).not_to include("Added .plans/**/*.tmp")
+        expect(File.read(File.join(root, ".gitignore")).scan(%r{^\.plans/\*\*/\*\.tmp$}).size).to eq(1)
       end
     end
 

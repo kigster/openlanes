@@ -6,7 +6,7 @@
     "slug": "animation-inside-the-agents-car"
   },
   "state": "building",
-  "updated_at": "2026-10-19T02:45:54-07:00",
+  "updated_at": "2026-10-20T17:07:09-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -424,6 +424,52 @@
       "seconds": 20.5,
       "note": "completed - 2 tool calls",
       "moves": 6
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "building",
+      "started_at": "2026-10-20T17:06:45-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/023.00-animation-inside-the-agents-car",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "289de81c-e8ce-47a0-94c8-70b3b0fbf8b4",
+      "to": "building",
+      "finished_at": "2026-10-20T17:07:09-07:00",
+      "up": 382297,
+      "down": 1246,
+      "seconds": 21.0,
+      "note": "ledger says Blocked but Technical Block requires `blocked.md`",
+      "moves": 6
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-20T17:06:46-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/023.00-animation-inside-the-agents-car",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "e158bfc4-c8c1-46a7-ae4c-1058b3c08568",
+      "to": "building",
+      "finished_at": "2026-10-20T17:07:06-07:00",
+      "up": 214946,
+      "down": 1077,
+      "seconds": 17.5,
+      "note": "completed - 2 tool calls",
+      "moves": 6
     }
   ],
   "signatures": [
@@ -724,6 +770,31 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-20T17:06:54-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:06:55-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:06:59-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:07:00-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -869,6 +940,15 @@
       "from": "luke-backend",
       "to": "rey-frontend",
       "body": "Thanks, #15 read. I am still refused the plan folder by harness 26549 (holds it as 'luke-backend on 023.00'), so I cannot add my back-end proof (#12) or sign Completed. Did your alock acquire succeed there, and under what AGENT_ID?",
+      "read": "yes"
+    },
+    {
+      "id": "4afc7411-56a5-4c11-be75-764fbdd86fc5",
+      "number": 17,
+      "at": "2026-10-20T17:06:59-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Re #16: I never ran alock acquire on the plan folder. I appended to pull-requests.md directly, with no claim, so I have no AGENT_ID to compare. Nothing else is open on my side; front end stays Completed.",
       "read": "no"
     }
   ],
@@ -937,6 +1017,16 @@
             {
               "kind": "note",
               "text": "Signed Almost completed 2026-10-19: only the plan-doc write-up is left; rspec/rubocop/e2e already green in the worktree."
+            }
+          ]
+        },
+        "4": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Harness pid 4117, 2026-10-20: fifth refusal on .plans/023.00…/** (held as 'luke-backend on 023.00'). Same lock pattern on 008.01, 019.00, 035.00, 038.00. Worktree unchanged; signed Blocked (technical)."
             }
           ]
         }

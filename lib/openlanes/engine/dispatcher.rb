@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "monitor"
+
 require "socket"
 
 module OpenLanes
@@ -120,7 +122,10 @@ module OpenLanes
       # @param runner [OpenLanes::Engine::Runner]
       # @param state [OpenLanes::Engine::StateFile, nil] nil under a dry run
       # @param rounds [Integer, nil] `--rounds`, a cap that only tightens
-      # @param sleeper [Proc] how a tick waits; the suite passes a no-op
+      # @param sleeper [Proc, nil] how a tick waits; the suite passes a no-op.
+      #   Kept beside +clock+ until 045; nil waits on +clock+
+      # @param clock [#now, #sleep] the time source, {OpenLanes::Clock::System}
+      #   unless a spec moves time itself
       # @param on_board [Proc, nil] receives a {Board} each tick
       # @param stay [Boolean] keep running past every fixed point, idle, until
       #   a person stops the run
@@ -131,7 +136,7 @@ module OpenLanes
       #   run does not stay
       # @param converter [#call, nil] rewrites prose questions into choices
       #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
-      def initialize(runner:, state: nil, rounds: nil, sleeper: ->(seconds) { sleep(seconds) }, on_board: nil,
+      def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
         stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil)
         @runner = runner
         @extensions = extensions || Extensions.new(stay:)
@@ -146,7 +151,9 @@ module OpenLanes
         @said = nil
         @state = state
         @rounds_cap = rounds
-        @sleeper = sleeper
+        @clock = clock
+        @tick_lock = Monitor.new
+        @sleeper = sleeper || ->(seconds) { clock.sleep(seconds) }
         @on_board = on_board
         @running = []
         @recent = []
@@ -215,23 +222,30 @@ module OpenLanes
 
       # One cycle. Public so the suite can drive it by hand.
       #
+      # One tick at a time: two that overlapped each read the plan as free
+      # and handed it to an agent apiece (the stress spec saw one plan
+      # started eight times by eight ticks). A `Monitor`, so a hook that
+      # ticks from inside a tick does not deadlock on itself.
+      #
       # @return [void]
       def tick
-        @before_tick.each { |hook| hook.call(self) }
-        reap
-        finish_discards
-        unblock_answered
-        convert_questions
-        poll
-        ask_for_time
-        drain_mail
-        watch_pull_requests
-        settle_verifications
-        # On threads: a kill waits out TERM before KILL, and the board must not.
-        @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
-        dispatch unless Execution::Control.quit? || resting?
-        persist
-        @on_board&.call(board)
+        @tick_lock.synchronize do
+          @before_tick.each { |hook| hook.call(self) }
+          reap
+          finish_discards
+          unblock_answered
+          convert_questions
+          poll
+          ask_for_time
+          drain_mail
+          watch_pull_requests
+          settle_verifications
+          # On threads: a kill waits out TERM before KILL, and the board must not.
+          @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
+          dispatch unless Execution::Control.quit? || resting?
+          persist
+          @on_board&.call(board)
+        end
       end
 
       # A run ends at a fixed point: nothing running and nothing left to
@@ -660,7 +674,7 @@ module OpenLanes
       # @param kind [String] one of {Plans::PlanState::FINISH_KINDS}
       # @return [void]
       def finish(subject, kind)
-        at = Time.now
+        at = @clock.now
         kept = @runner.dry_run? ? Plans::PlanState::Finished.new(kind:, at:) : Plans::PlanState.for(subject.feature.path).finish!(kind, at:)
         @mutex.synchronize { @finished[subject.feature.ordinal.to_s] = kept }
       end
@@ -861,7 +875,7 @@ module OpenLanes
         task = job.task
         job.frame = job.frame.to_i + 1
         Board::Row.new(key: job.key,
-          at: Time.now,
+          at: @clock.now,
           ordinal: task.subject.feature.ordinal.to_s,
           file: job.file || task.agent.ledger.first.to_s,
           agent: task.agent.name,
@@ -923,9 +937,12 @@ module OpenLanes
       # the work got the same answer every time, so nobody is asked.
       #
       # Two records can say a stage was stranded: the run's own state file,
-      # and the plan's `state.json`. The second is what survives a run whose
-      # state file was lost, or a plan carried to another checkout. A stage
-      # either names is resumed once.
+      # which holds the pid and host of every stage it started, and the
+      # plan's `state.json`, whose stages carry a `run` only when an older
+      # release wrote them. The pid and host are about one machine, so new
+      # stages no longer put them in a committed file; the second check stays
+      # so a crash under the old layout still resumes. A stage either names is
+      # resumed once.
       #
       # @return [void]
       def resume_stranded
@@ -964,7 +981,7 @@ module OpenLanes
           to: agent.name,
           body: "RESUME: the harness died during your round #{round}; carry on from your last resume note")
         @state&.record(ordinal, agent: agent.name, round:, status: "Interrupted", exit: "harness died")
-        stage!(subject, agent, round, status: "Interrupted", note: "harness died", finished_at: Time.now.iso8601)
+        stage!(subject, agent, round, status: "Interrupted", note: "harness died", finished_at: @clock.now.iso8601)
         [ordinal, agent.name, round]
       end
 
@@ -1275,9 +1292,8 @@ module OpenLanes
           reset:      true,
           status:     "Started",
           from:       from.to_s,
-          started_at: Time.now.iso8601,
+          started_at: @clock.now.iso8601,
           cwd:        task.root,
-          run:        { pid: Process.pid, host: Socket.gethostname },
           **profile_fields(agent, subject))
         @state&.record(ordinal,
           agent:      agent.name,
@@ -1286,9 +1302,9 @@ module OpenLanes
           state:      from.to_s,
           model:      model_for(agent, subject),
           file:       agent.ledger.first,
-          started_at: Time.now.iso8601)
+          started_at: @clock.now.iso8601)
         UI.log("started", **task.log_fields)
-        @invocations[job.key] = Time.now
+        @invocations[job.key] = @clock.now
         @runner.events.record(:agent_started, **event_fields(job))
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
@@ -1621,7 +1637,7 @@ module OpenLanes
             task.round,
             status:      outcome,
             to:          attempt.to.to_s,
-            finished_at: Time.now.iso8601,
+            finished_at: @clock.now.iso8601,
             up:          attempt.up.to_i,
             down:        attempt.down.to_i,
             seconds:     attempt.seconds.to_f.round(1),
@@ -1633,7 +1649,7 @@ module OpenLanes
           round:    task.round,
           status:   outcome,
           exit:     attempt.ok ? "ok" : attempt.note,
-          ended_at: Time.now.iso8601,
+          ended_at: @clock.now.iso8601,
           up:       attempt.up,
           down:     attempt.down)
         attempt
@@ -1706,7 +1722,7 @@ module OpenLanes
         else
           harness_resume(subject, agent, task.round, reason, last:, phrase: job.message)
           remember(subject.feature.ordinal.to_s, agent.name, job.state, "Interrupted", task.round)
-          base.with(ok: false, status: "Interrupted", note: "#{reason}; #{retry_note(agent, Plans::Ledger::Entry.new(at: Time.now, agent: agent.name, status: "Interrupted", round: task.round, file: "", line: 0))}")
+          base.with(ok: false, status: "Interrupted", note: "#{reason}; #{retry_note(agent, Plans::Ledger::Entry.new(at: @clock.now, agent: agent.name, status: "Interrupted", round: task.round, file: "", line: 0))}")
         end
       end
 

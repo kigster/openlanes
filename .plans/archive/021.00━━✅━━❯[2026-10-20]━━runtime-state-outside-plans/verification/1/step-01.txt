@@ -1,0 +1,1 @@
+rspec runtime/integration/restart: 15 examples, 0 failures

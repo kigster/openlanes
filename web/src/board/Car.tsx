@@ -44,6 +44,7 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
             {lock.mark}
           </span>
         )}
+        {lock && plan.locked?.foreign && <span className="car-lock-note">{lock.title}</span>}
         {look.label ? (
           <span className="car-model">{look.label}</span>
         ) : readOnly || !modelSlot ? (

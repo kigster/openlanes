@@ -84,7 +84,7 @@ module OpenLanes
 
         append(turn)
         case slash
-        when Command then @store.xadd(@keys.commands, { json: JSON.generate(slash.wire) })
+        when Command then EventBus.for(@store).append(@keys.commands, { json: JSON.generate(slash.wire) })
         when Slash::Help then append(Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: slash.text))
         end
         turn
@@ -170,7 +170,7 @@ module OpenLanes
       #
       # @return [void]
       def append(turn)
-        @store.xadd(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH)
+        EventBus.for(@store).append(@keys.copilot, { json: turn.to_json }, maxlen: Keys::COPILOT_LENGTH)
         News.publish(store: @store, keys: @keys, kind: "copilot")
       end
     end

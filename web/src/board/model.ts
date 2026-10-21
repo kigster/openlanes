@@ -121,11 +121,12 @@ export function pillState(plan: Plan, stations: Station[], gone = false): PillSt
   return { cls: "", mark: "🛠️", say: `working, at ${at}`, blocked: false };
 }
 
-/** The mark a plan wears while a process holds its folder lock, and what hovering it says. Null when unlocked. */
+/** The mark a plan wears while a process holds its lock, and what hovering it says. Null when unlocked. */
 export function lockMark(plan: Plan): { mark: string; title: string } | null {
   if (!plan.locked) return null;
-  const { pid, host, started_at } = plan.locked;
-  return { mark: "🔑", title: `locked by pid ${pid} on ${host}, since ${started_at}` };
+  const { pid, host, started_at, foreign } = plan.locked;
+  const title = foreign ? `held on ${host} since ${started_at}` : `locked by pid ${pid} on ${host}, since ${started_at}`;
+  return { mark: "🔑", title };
 }
 
 /** A plan with a question for a person to answer. Its red pill opens the widget. */
