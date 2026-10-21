@@ -125,7 +125,7 @@ eval *args:
 
 # Run tests with coverage
 test-coverage *args:
-    export ENVIRONMENT=test; export COVERAGE=true; {{ rbenv }} rspec {{ args }}
+    export ENVIRONMENT=test; export COVERAGE=true; export COVERAGE_BADGE=1; {{ rbenv }} rspec {{ args }}
 
 ci: lint test-coverage
 
