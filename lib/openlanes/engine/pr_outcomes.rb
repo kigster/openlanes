@@ -125,7 +125,24 @@ module OpenLanes
         return if applied.to.nil? && kind != "pr_reviewed" && before == row_state(outcome)
 
         verdict = kind == "pr_reviewed" ? { verdict: "rejected" } : {}
-        @events.record(kind, plan: outcome.plan.to_s, seq: outcome.pr, once: true, number: outcome.pr, **verdict)
+        seq = kind == "pr_reviewed" ? [outcome.pr, rejections(outcome)] : outcome.pr
+        @events.record(kind, plan: outcome.plan.to_s, seq:, once: true, number: outcome.pr, **verdict)
+      end
+
+      # Which rejection of this PR it is: the mail {#reject} leaves in the
+      # plan folder, counted per recipient. A PR rejected again after a fix
+      # round is a second review, not the first one seen twice, so it needs
+      # its own event id; two runs noticing the same rejection still agree.
+      # Only rejections are recorded: the watch sees an approval only as
+      # the merge that follows it, which is `pr_merged`.
+      #
+      # @return [Integer]
+      def rejections(outcome)
+        subject = find(outcome.plan) or return 0
+        prefix = "PR ##{outcome.pr} was labelled "
+        Plans::Mailbox.new(dir: subject.feature.path).messages
+                      .select { it.from == SENDER && it.body.start_with?(prefix) }
+                      .group_by(&:to).values.map(&:size).max || 0
       end
 
       # @return [String, nil] the outcome's row state in `pull-requests.md`

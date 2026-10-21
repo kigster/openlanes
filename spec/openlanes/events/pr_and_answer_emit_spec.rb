@@ -39,6 +39,20 @@ RSpec.describe "PR and human-answer events", :tree do
       expect(lines.map { [it["kind"], it["payload"]] }).to eq([["pr_reviewed", { "number" => 11, "verdict" => "rejected" }]])
     end
 
+    # Regression: the event id once left the round out, so a PR rejected
+    # again after a fix round was deduped into its first rejection.
+    it "records a second rejection of the same PR after a fix round as a second review" do
+      plans { |t| t.plan "001.00", :in_review, "judged", files:, prs: [t.open(11, "a")] }
+      effects.apply(outcome("001.00", 11, :rejected))
+      tree.find("001.00").machine.promote!(:ready_for_review)
+      effects.apply(outcome("001.00", 11, :rejected))
+
+      aggregate_failures do
+        expect(lines.map { it["kind"] }).to eq(%w[pr_reviewed pr_reviewed])
+        expect(events.map { it.kind.to_s }).to eq(%w[pr_reviewed pr_reviewed])
+      end
+    end
+
     it "dedupes the same merge seen by two runs" do
       plans { |t| t.plan "003.00", :in_review, "merged", files:, prs: [t.open(13, "c")] }
       described_class.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new, events: sink)
