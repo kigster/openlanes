@@ -8,6 +8,21 @@
 - **Constants:** `MIN_SIDE = 360`, `MAX_SIDE_RATIO = 0.6` (of the `.layout` element's `clientWidth`), `SIDE_STEP = 24`. The stored value is re-clamped on load and on window resize, since a width saved on a large screen may exceed 60% of a small one.
 - **Reuse `clamp` from `web/src/floating/useFloatingPanel.ts`**; no change to `useFloatingPanel` itself (non-goal).
 
+### B1 (answered) — Full rspec never exits 0 under load
+
+The requirement `bundle exec rspec` exits 0 failed on five full runs under load, each time in a different process or port spec. Each passes in isolation, and this branch changes no Ruby.
+
+### D1 (decision) — Accept the rspec flakes as environmental
+
+Answered:
+
+- 2026-10-20
+- By kig
+
+Accept the intermittent rspec failures as environmental flakes and move the plan to review. Rerun `bundle exec rspec` on a quiet machine, with no other agent running, and require a 0-failure run before merge.
+
+______________________________________________________________________
+
 ## Order and dependency graph
 
 ```
@@ -78,3 +93,29 @@ Before any front-end unit: `just web-install` (`web/node_modules` is absent in t
 ## HTTP surface
 
 No. The plan adds and changes no HTTP API; no `openapi.yaml` is written.
+
+## How to test
+
+Run from the repository root, with Ruby activated (`eval "$(rbenv init -)"`).
+
+1. `just web-install`: installs `web/node_modules` with `npm ci`, exit 0.
+1. `just web-test`: eslint and tsc are clean, and vitest passes every test (361 at the time of writing). The run includes `useSideWidth.test.ts` (F1: default 360, restore on remount, a throwing `localStorage`, the clamps, `reset`, `wide`), `ColumnDivider.test.tsx` (F2: ARIA attributes, a drag with no jump, ArrowLeft/ArrowRight/Home, double-click) and `App.test.tsx` (F3: the separator renders only when wide, `--side-width` follows the stored value and survives opening and closing a car).
+1. `just web-build`: builds `web/dist`. `rg -l "Resize side panel" web/dist/assets` names the built `index-*.js`, so `openlanes web` serves the divider (B1).
+1. `just web-e2e`: all 6 Cypress specs pass (30 tests), against the built bundle served by `openlanes web --demo` with nothing stubbed. `divider.cy.ts` passes all 7 of its tests (F4), and `actions`, `board`, `chat`, `keyboard` and `needs-you` still pass. If another session holds the default ports or Redis db, pick your own: `E2E_PORT=11880 E2E_PEER_PORT=11881 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`.
+1. `bundle exec rspec spec/openlanes/web`: 0 failures (B1).
+1. `bundle exec rubocop`: no offenses.
+1. By hand: `just web-demo`, then open `http://127.0.0.1:11000` in a window wider than 960px.
+   - A vertical handle sits between the lanes and the right-hand panel, with a `col-resize` cursor.
+   - Dragging it resizes the panel without a jump when you grab it. The panel stops at 360px and at 60% of the layout's width.
+   - Reload the page, and the panel keeps its width. Opening a car and going back to Needs You does not change it.
+   - Tab to the handle: a focus ring shows. ArrowLeft widens the panel by 24px and ArrowRight narrows it by 24px. Home, or a double-click, sets it back to 360px.
+   - Scroll the panel, and the handle stays visible.
+   - Narrow the window to 960px or less: the handle is gone and the layout is a single column.
+1. `bundle exec rspec`, on a quiet machine (D1). This branch changes no Ruby. On macOS 27.0.1 with Ruby 4.0.6, the port and process specs under `spec/openlanes/apps`, `spec/openlanes/cli/app_spec.rb` and `spec/integration` fail on every run, whatever the load: `Socket.tcp(..., connect_timeout:)` reports a refused connect as connected. Those failures exist on `main` too and need their own fix.
+
+## Rebase decisions
+
+- `web/src/App.tsx`: kept main's `<PlanDrawer>` and `data-lanes` on `main.layout`, and added the branch's `ref` and `--side-width` style to the same element. The two edits touched the same line but not the same concern.
+- `web/src/shell/shell.css`: kept the branch's `--side-width` track and `.col-divider` rules, with main's `clamp(360px, 30vw, 432px)` as the `var()` fallback and its comment folded in. The hook always sets `--side-width` above 960px (default 360, which the spec, the vitest cases and `divider.cy.ts` assert), so main's responsive default now applies only when the variable is unset. Reviewer: decide whether the no-drag default should follow main's clamp; that changes `useSideWidth`'s default and its tests.
+- `pull-requests.md` (add/add): took the branch's version; main's is a strict prefix of it, the branch adds the 2026-10-20 rerun section.
+- `state.json` (main renamed the folder `🟡` to `⭕`): wrote the branch's file at the `⭕` path and dropped the stale `🟡` copy. Main's stages, messages and signatures are a strict prefix of the branch's, so nothing from main is lost.

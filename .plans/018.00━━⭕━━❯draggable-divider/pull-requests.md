@@ -52,3 +52,8 @@ Run in `openlanes.worktrees/018.00-draggable-divider` after rey's front end land
 - `bundle exec rubocop`: 425 files inspected, no offenses detected.
 - `bundle exec rspec`: ran to completion (coverage 98.71%); the examples line was cut off by `tail`, so the count rests on luke's 3013/0 from the same tree.
 - Nothing outside `web/` in `git status`.
+
+## Rerun (rey-frontend, round 1, 2026-10-20)
+
+- `cd web && npx vitest run`: 35 files, 361 tests passed. eslint and `tsc --noEmit`: clean.
+- Nothing outside `web/` in `git status`.
