@@ -1066,18 +1066,21 @@ module OpenLanes
       # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
       # @return [String] what an idle run is waiting for
       def idle_reason(subjects)
-        # Asked before the empty-scope "finished" line: `[].all?` is true,
-        # and a gated run with nobody in scope would otherwise look done
-        # while R4's question is still open.
-        if @runner.awaiting_quality?
-          return "idle: desired_codebase_quality is not set in #{Config::FILE}; " \
-                 "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts"
-        end
-
         # Finished plans move into archive/ (N3), so an empty top level after
         # a run that shipped everything is "finished", not "no plans yet".
-        if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
-          return "idle: no plans yet; create one from the page or with openlanes create"
+        # `[].all?` is true, which is the finished case when every plan has
+        # left the top level; an empty *scope* with work still sitting
+        # elsewhere is not that, and under R4 it is the quality gate.
+        if subjects.empty?
+          all = @runner.tree.everything.reload.subjects
+          return "idle: no plans yet; create one from the page or with openlanes create" if all.empty?
+          if all.all? { FINISHED.include?(it.status.key) }
+            return "idle: every plan is finished; create the next one from the page"
+          end
+          if @runner.awaiting_quality?
+            return "idle: desired_codebase_quality is not set in #{Config::FILE}; " \
+                   "no plan in scope to ask #{QualityQuestion::NAME} on"
+          end
         end
         if subjects.all? { FINISHED.include?(it.status.key) }
           return "idle: every plan is finished; create the next one from the page"
