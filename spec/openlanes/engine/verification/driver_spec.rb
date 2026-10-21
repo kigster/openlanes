@@ -69,8 +69,9 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
   end
 
   # Plan 035: under mvp an approved pull request is not run through chewie.
-  # Its round is written verified and published by the engine, so the plan
-  # waits on CI and the coverage gate at 🧪 as a verified one would.
+  # Its round is written skipped and published by the engine, so the plan
+  # waits on CI and the coverage gate at 🧪 as a verified one would, without
+  # a later reader taking the report for chewie's own verdict.
   describe "#hand_off of an approved pull request under mvp" do
     subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
 
@@ -82,13 +83,18 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     let(:labels) { %w[review-approved] }
     let(:quality) { :mvp }
 
-    it "skips chewie and waits on CI" do
+    it "skips chewie, writes a skipped verdict, and waits on CI" do
+      said = driver.hand_off(plan)
+      report = File.read(OpenLanes::Engine::Verification.latest(plan.feature.path).report_path)
+
       aggregate_failures do
-        expect(driver.hand_off(plan)).to eq("on to 🧪, verification skipped: PR #7 is review-approved and " \
-                                            "desired_codebase_quality is mvp; waiting on CI")
+        expect(said).to eq("on to 🧪, verification skipped: PR #7 is review-approved and " \
+                           "desired_codebase_quality is mvp; waiting on CI")
         expect(plan.status.key).to eq(:verifying)
         expect(driver.awaiting_ci?(plan)).to be(true)
-        expect(File.read(OpenLanes::Engine::Verification.latest(plan.feature.path).report_path)).to include("Skipped")
+        expect(report).to include("Verdict: skipped (mvp)")
+        expect(report).not_to match(/^Verdict:\s*verified/i)
+        expect(OpenLanes::Engine::Verification::Report.parse(report).verdict).to eq(:skipped)
       end
     end
 

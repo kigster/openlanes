@@ -1066,6 +1066,14 @@ module OpenLanes
       # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
       # @return [String] what an idle run is waiting for
       def idle_reason(subjects)
+        # Asked before the empty-scope "finished" line: `[].all?` is true,
+        # and a gated run with nobody in scope would otherwise look done
+        # while R4's question is still open.
+        if @runner.awaiting_quality?
+          return "idle: desired_codebase_quality is not set in #{Config::FILE}; " \
+                 "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts"
+        end
+
         # Finished plans move into archive/ (N3), so an empty top level after
         # a run that shipped everything is "finished", not "no plans yet".
         if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
@@ -1153,14 +1161,22 @@ module OpenLanes
       # (plan 035): every level changes what the builders and reviewers aim
       # for, so work done before the answer would be done to the wrong
       # standard. The question goes on the first plan in scope, where the
-      # page shows it, and is said once in the log. The answer lifts the
-      # gate on the next tick: {Config.current} rereads a changed file.
+      # page shows it, and is said once in the log. With nobody in scope
+      # there is no folder to hang the question on, and that is said too,
+      # rather than waiting with no line. The answer lifts the gate on the
+      # next tick: {Config.current} rereads a changed file.
       #
       # @return [Boolean]
       def quality_awaited?
         return false unless @runner.awaiting_quality?
 
-        asker = @runner.in_scope.first or return true
+        asker = @runner.in_scope.first
+        unless asker
+          @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                   "no plan in scope to ask #{QualityQuestion::NAME} on") || true
+          return true
+        end
+
         QualityQuestion.ask!(asker.feature.path)
         @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
                                  "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts",
@@ -1955,13 +1971,17 @@ module OpenLanes
       # hansolo approved. Into 🧪 when the run verifies and the pull request
       # carries a verdict that goes on to verification; otherwise the plan is
       # finished at 👀, as it was before chewie existed. A 🔴 or, under
-      # `standard`, a 🟡 after the hand-off is the hand-off's own send-back.
+      # `standard`, a 🟡 after the hand-off is the hand-off's own send-back,
+      # signed as one so the ledger does not call a return to 🟡 "approved".
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
       def approved(base, subject, ordinal)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
-        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected building].include?(now)
+        if %i[verifying rejected building].include?(now)
+          word = now == :verifying ? "approved" : "sent back"
+          return base.with(status: "Completed", to: now, note: "#{base.note}; #{word}, #{said}")
+        end
 
         @finished_plans << ordinal
         finish(subject, "approved")

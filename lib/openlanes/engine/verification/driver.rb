@@ -138,16 +138,18 @@ module OpenLanes
         end
 
         # @param subject [OpenLanes::Plans::Subject]
-        # A verified round counts only once the engine pushed its evidence
-        # ({Round#published?}); one chewie reported but the engine never
-        # published goes back to chewie, in a new round.
+        # A verified or skipped round counts only once the engine pushed its
+        # evidence ({Round#published?}); one chewie reported but the engine
+        # never published goes back to chewie, in a new round. Skipped is the
+        # mvp path ({#skip}): chewie never ran, but CI and the coverage gate
+        # still stand.
         #
         # @return [Boolean] whether the plan waits on CI rather than on chewie
         def awaiting_ci?(subject)
           return false unless subject.status.key == :verifying
 
           round = Round.latest(subject.feature.path)
-          !round.nil? && round.published? && round.report&.verdict == :verified
+          !round.nil? && round.published? && %i[verified skipped].include?(round.report&.verdict)
         end
 
         # Look at CI for every plan waiting on it, on a thread of its own:
@@ -218,9 +220,11 @@ module OpenLanes
         end
 
         # An approved pull request under `mvp` (plan 035): the round is
-        # written verified and published here, in chewie's place, so the
+        # written skipped and published here, in chewie's place, so the
         # plan waits on CI and the coverage gate ({#awaiting_ci?}) and
-        # chewie is never started on it.
+        # chewie is never started on it. The verdict is `skipped`, not
+        # `verified`: a later reader of report.md must not take this for
+        # chewie having run.
         #
         # @param round [Round] made for this hand-off
         # @return [String, nil] what happened; nil when chewie verifies it
@@ -230,7 +234,8 @@ module OpenLanes
 
           why = "PR ##{pull.number.to_s.delete("#")} is #{Plans::ReviewLabel::APPROVED.name} and " \
                 "desired_codebase_quality is #{now}"
-          File.write(round.report_path, "# Verification, round #{round.number}\n\nVerdict: verified\n\nSkipped: #{why}.\n")
+          File.write(round.report_path,
+            "# Verification, round #{round.number}\n\nVerdict: skipped (#{now})\n\nSkipped: #{why}.\n")
           round.publish!("skipped")
           "on to 🧪, verification skipped: #{why}; waiting on CI"
         end

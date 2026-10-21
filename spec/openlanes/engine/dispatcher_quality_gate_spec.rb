@@ -51,4 +51,26 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     ungated = OpenLanes::Engine::Runner.new(tree:, executor:, agents:, isolation: :shared, claims:, sleeper: ->(_) {})
     expect(ungated).not_to be_awaiting_quality
   end
+
+  # An empty in_scope used to return true from quality_awaited? with no log,
+  # so the engine idled with nothing saying why.
+  it "says so when no plan in scope can carry the question" do
+    allow(OpenLanes::UI).to receive(:log)
+    empty = OpenLanes::Engine::Runner.new(tree:,
+      executor:,
+      agents:,
+      isolation: :shared,
+      claims:,
+      plans: [],
+      sleeper: ->(_) {},
+      quality_gate: -> { true })
+    gated = described_class.new(runner: empty, sleeper: ->(_) {})
+
+    gated.tick
+
+    aggregate_failures do
+      expect(OpenLanes::UI).to have_received(:log).with(a_string_including("no plan in scope"))
+      expect(gated.send(:idle_reason, [])).to include("desired_codebase_quality is not set")
+    end
+  end
 end

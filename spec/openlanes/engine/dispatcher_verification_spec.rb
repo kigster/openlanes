@@ -131,7 +131,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
             expect(outcome).to have_received(:send_back_for_quality).once
             expect(plan.status.key).to eq(:rejected)
             expect(attempts.last).to have_attributes(to: :rejected)
-            expect(attempts.last.note).to include("back to 🔴", "rejected 1 of 2", "desired_codebase_quality is high")
+            expect(attempts.last.note).to include("sent back", "back to 🔴", "rejected 1 of 2", "desired_codebase_quality is high")
+            expect(attempts.last.note).not_to include("approved,")
             expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
           end
         end
@@ -156,7 +157,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
             expect(outcome).to have_received(:send_back_for_quality).with(plan: anything, pull: anything, quality: :standard)
             expect(plan.status.key).to eq(:building)
             expect(attempts.last).to have_attributes(to: :building)
-            expect(attempts.last.note).to include("back to 🟡", "desired_codebase_quality is standard")
+            expect(attempts.last.note).to include("sent back", "back to 🟡", "desired_codebase_quality is standard")
+            expect(attempts.last.note).not_to include("approved,")
             expect(dispatcher.instance_variable_get(:@finished_plans)).not_to include("014.00")
           end
         end
