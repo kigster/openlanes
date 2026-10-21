@@ -83,7 +83,7 @@ module OpenLanes
       # @param worktree [Vcs::Worktree, nil] where a plan's own branch is checked out
       # @param publisher [Vcs::Publisher, nil] pushes a rebased branch, with the lease
       # @param clock [#call]
-      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Time.now })
+      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Clock::System.now })
         @github = github
         @outcomes = outcomes
         @merge_by = merge_by
