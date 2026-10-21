@@ -98,6 +98,13 @@ module OpenLanes
       klass.new
     end
 
+    # The lean-start flags of one CLI, so a caller building its own argv
+    # never names an adapter class.
+    #
+    # @param name [String, Symbol, nil]
+    # @return [Array<String>]
+    def lean_flags(name = DEFAULT) = self.for(name).lean_flags
+
     # @param name [String, Symbol, nil]
     # @return [Boolean]
     def known?(name) = registry.key?((name || DEFAULT).to_s)

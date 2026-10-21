@@ -6,7 +6,7 @@
     "slug": "draggable-divider"
   },
   "state": "rejected",
-  "updated_at": "2026-10-20T17:40:09-07:00",
+  "updated_at": "2026-10-20T17:41:18-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -249,7 +249,7 @@
     {
       "agent": "luke-backend",
       "round": 2,
-      "status": "Started",
+      "status": "Completed",
       "from": "rejected",
       "started_at": "2026-10-20T17:29:38-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/018.00-draggable-divider",
@@ -260,7 +260,37 @@
       "adapter": "claude",
       "model": "opus",
       "effort": "high",
-      "session": "33d9a117-f73c-4b94-98e6-4e0b4789309c"
+      "session": "33d9a117-f73c-4b94-98e6-4e0b4789309c",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-20T17:40:19-07:00",
+      "up": 889326,
+      "down": 6884,
+      "seconds": 632.6,
+      "note": "completed - 12 tool calls; pushed to https://github.com/kigster/openlanes/pull/104",
+      "moves": 4
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-20T17:40:22-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/018.00-draggable-divider",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "7f14cc37-c62d-4556-8c68-887471ddc167",
+      "to": "rejected",
+      "finished_at": "2026-10-20T17:41:18-07:00",
+      "up": 453937,
+      "down": 4757,
+      "seconds": 55.5,
+      "note": "completed - 7 tool calls (rejected 2/2)",
+      "moves": 6
     }
   ],
   "signatures": [
@@ -786,6 +816,19 @@
       "status": "Completed",
       "round": 2,
       "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-20T17:40:27-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:41:12-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 2/2"
     }
   ],
   "messages": [
@@ -1165,9 +1208,23 @@
           ]
         }
       }
+    },
+    "hansolo-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Rejected PR 104 (2/2): plan.md and spec.md still say default and reset are 360px, but code now defaults to clamp(360px,30vw,432px), so 420px at 1400px. Round-1 coverage and default-width findings are fixed."
+            }
+          ]
+        }
+      }
     }
   },
-  "moves": 3,
+  "moves": 6,
   "extensions": [
     {
       "number": 1,

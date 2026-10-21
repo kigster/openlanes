@@ -54,6 +54,11 @@ ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
 
+# Locks and run records live under the XDG state directory (Runtime). Pointed
+# at a per-run temp directory so no example writes into the developer's home.
+ENV["XDG_STATE_HOME"] = Dir.mktmpdir("openlanes-state")
+at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
+
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
 

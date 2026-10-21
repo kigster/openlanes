@@ -207,13 +207,12 @@ module OpenLanes
         spec_warning(plans) unless @quiet
         sync_labels(migrated) if publishing?
 
-        # The state file is what a harness that dies leaves for the next one.
-        # It sits in .plans/ so a reboot keeps it, and it is ignored by name
-        # so it never rides along in a commit. Editing somebody's .gitignore
-        # is announced, the once it happens. The runner drops the file on a
-        # dry run, which is why it can be built unconditionally.
+        # The state file and the locks live in the runtime state directory,
+        # outside the repository; what is left to ignore is the temp siblings
+        # plan documents are written to and renamed over. Editing somebody's
+        # .gitignore is announced, the once it happens.
         if !@dry_run && StateFile.ensure_ignored!(@root) && !@quiet
-          info("Added #{StateFile::IGNORE.join(" and ")} to .gitignore: the run keeps its state there.")
+          info("Added #{StateFile::IGNORE.join(" and ")} to .gitignore: plan documents are written through these.")
         end
 
         # Control files from a previous run would otherwise be read as orders

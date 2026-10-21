@@ -1351,6 +1351,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         aggregate_failures do
           expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
           expect(calls.map(&:last)).to eq([1, 2])
+          expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).stages.flat_map(&:keys)).not_to include("run")
         end
       end
     end

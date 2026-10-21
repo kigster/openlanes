@@ -1,0 +1,1 @@
+scratch run: .plans holds only spec.md, state.json; no locked-by.pid

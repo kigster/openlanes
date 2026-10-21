@@ -49,7 +49,7 @@ module OpenLanes
       # @param plan_dir [String] the asking plan's folder
       # @param at [Time]
       # @return [Boolean] whether this plan holds the open question
-      def ask!(plan_dir, at: Time.now)
+      def ask!(plan_dir, at: Clock::System.now)
         holder = open_in(File.dirname(plan_dir))
         return holder == plan_dir if holder
 
@@ -99,7 +99,7 @@ module OpenLanes
       # @param at [Time]
       # @return [Symbol, nil] the quality chosen; nil when the question was not open
       # @raise [ArgumentError] on a letter that is not one of {CHOICES}
-      def answer!(plan_dir, letter, by:, root:, at: Time.now)
+      def answer!(plan_dir, letter, by:, root:, at: Clock::System.now)
         choice = CHOICES.find { it.letter == letter.to_s.downcase } or
           raise ArgumentError, "#{letter} is not one of #{CHOICES.map { "#{it.letter})" }.join(", ")}"
         Plans::PlanState.for(plan_dir).settle_quality_ask!(answer: choice.quality, by:, at:) or return nil

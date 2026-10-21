@@ -31,7 +31,7 @@ module OpenLanes
       # @param tree_dir [String] the `.plans` directory, reread after each rename
       # @param agents [Agents::Registry] who handles 🔴, and so gets the comments
       # @param clock [#call] the time a merge is recorded at
-      def initialize(tree_dir:, agents:, clock: -> { Time.now })
+      def initialize(tree_dir:, agents:, clock: -> { Clock::System.now })
         @tree_dir = tree_dir
         @agents = agents
         @clock = clock

@@ -116,3 +116,17 @@ $ bundle exec rubocop
 ```
 
 The 30 failures come from the host, not this plan. `Socket.tcp("127.0.0.1", <closed port>, connect_timeout: 0.2)` connects on Darwin 27 with Ruby 4.0.6, while plain `Socket.tcp` and `TCPSocket.new` get `ECONNREFUSED`. Blocked (technical): see `blocked.md` B1.
+
+## Build, round 3 (luke-backend)
+
+B1 was answered a): the probe fix landed on `origin/main` as `ff03ca48` (PR #72). This branch is still at `ce65c43` and does not have it. No code changed.
+
+```
+$ bundle exec rspec        # this branch, ANTHROPIC_API_KEY and OPENAI_API_KEY unset
+3107 examples, 30 failures, 9 pending    # the same spec/openlanes/apps/** and cli/app_spec.rb examples
+
+$ bundle exec rspec spec/openlanes/apps spec/openlanes/cli/app_spec.rb    # a detached origin/main checkout, same host
+115 examples, 0 failures
+```
+
+The suite goes green here only once the branch is rebased onto `origin/main`, which I cannot do. Blocked (technical): see `blocked.md` B2.

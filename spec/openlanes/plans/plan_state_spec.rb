@@ -225,6 +225,19 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "a stage written by this release" do
+    it "carries no run, and the schema accepts it" do
+      state.stage!(agent: "luke-backend", round: 1, status: "Started", started_at: Time.now.iso8601)
+      aggregate_failures do
+        expect(written["stages"].flat_map(&:keys)).not_to include("run")
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+        expect(state.stranded(alive: ->(_pid) { false })).to eq([])
+      end
+    end
+  end
+
+  # Stages an older release wrote carry `run`; a crash under that layout
+  # must still resume.
   describe "#stranded" do
     before do
       state.stage!(agent: "luke-backend", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })

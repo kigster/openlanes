@@ -38,7 +38,9 @@ RSpec.describe "the control room across a restart", :redis do
 
   def hold(question) = { id: "hold-#{question}", kind: "hold_blocked", plan: "003.00", payload: { question: } }
 
-  def live_state = JSON.parse(File.read(File.join(plans, "openlanes-state.json"))).fetch("live", {})
+  # The engine inherits this process's XDG_STATE_HOME, so its run record lands
+  # in the state directory keyed by `root`, not under `.plans/`.
+  def live_state = JSON.parse(File.read(OpenLanes::Runtime.state_file(root:))).fetch("live", {})
 
   it "replays to a reconnecting page what it missed while the API server was down" do
     first = room.sse("/api/events")

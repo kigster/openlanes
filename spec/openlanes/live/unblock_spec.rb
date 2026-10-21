@@ -45,7 +45,9 @@ RSpec.describe "Unblocking from the run loop", :tree do
   def drain
     dispatcher.tick
     dispatcher.instance_variable_get(:@unblocking).each { it.thread.join(2) }
-    dispatcher.tick
+    # The agent the second tick starts records its call on its own thread, a
+    # moment later; under a loaded suite the assertion could run first.
+    start_agents
   end
 
   before { allow(OpenLanes::UI).to receive(:log) }

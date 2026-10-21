@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "blocked",
-  "updated_at": "2026-10-19T02:45:29-07:00",
+  "updated_at": "2026-10-20T17:11:25-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -105,6 +105,29 @@
       "session": "08d9c380-8db6-44ce-af5b-00ef7d6a4c59",
       "note": "harness died",
       "finished_at": "2026-10-18T06:34:33-07:00"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "blocked",
+      "started_at": "2026-10-20T17:07:33-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/011.00-init-interview",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "1ccfca11-91f4-473e-bc23-fcb6cc49b573",
+      "to": "blocked",
+      "finished_at": "2026-10-20T17:11:25-07:00",
+      "up": 851491,
+      "down": 8170,
+      "seconds": 231.8,
+      "note": "blocked; see blocked.md",
+      "moves": 3
     }
   ],
   "signatures": [
@@ -439,6 +462,43 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-20T17:06:42-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:06:47-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:07:13-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:07:30-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:07:39-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:11:15-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [
@@ -492,10 +552,15 @@
       "state": "building",
       "round": 2,
       "limit": "rounds",
-      "asked_at": "2026-10-17T11:46:09-07:00"
+      "asked_at": "2026-10-17T11:46:09-07:00",
+      "answer": "b",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 600,
+      "settled_at": "2026-10-20T17:07:48-07:00"
     }
   ],
-  "moves": 1,
+  "moves": 3,
   "memory": {
     "lando-broker": {
       "rounds": {
@@ -593,6 +658,30 @@
             {
               "kind": "question",
               "text": "B1 still open: a human must pick a) own-PR probe fix (recommended), b) fix inside plan, or c) accept as is, then run `openlanes unblock 011.00` again"
+            },
+            {
+              "kind": "question",
+              "text": "B1 The app specs fail on this machine's Ruby and macOS, outside this plan > **Answer not accepted:** Rebase onto main. > > lando-broker left it unfolded and said nothing `bundle exec rspec` reports 3107 examples, 30 failures, all of them in `spec/openlanes/apps/` (ports, probe, restart, runner, supervisor) and `spec/openlanes/cli/app_spec.rb`. Round 1 ran the same suite with 0 failures. The cause is a call that behaves differently on this host (Darwin 27, Ruby 4.0.6): `Socket.tcp(\"127.0.0.1\", p…",
+              "ref": "B1",
+              "answer": "a) Fix the probe in its own small PR (a non-blocking connect that checks `SO_ERROR`, in `apps/ports.rb` and `apps/probe.rb`), merge it, then re-run this plan's checks unchanged. Answered by kig on 2026-10-20"
+            }
+          ]
+        }
+      }
+    },
+    "luke-backend": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "blocked",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B2: branch needs commit + rebase onto origin/main to pick up ff03ca48; a) harness commits and rebases (recommended), b) copy the probe fix in now, c) publish with 30 host-only failures"
+            },
+            {
+              "kind": "decision",
+              "text": "Signed Blocked (technical) instead of copying the probe fix in, because the B1 answer a) said to re-run this plan's checks unchanged"
             }
           ]
         }

@@ -42,7 +42,8 @@ module OpenLanes
       # @param kind [String] one of {KINDS}
       # @return [Integer] how many subscriptions heard it, 0 when Redis did not answer
       def publish(store:, keys:, kind:)
-        store.publish(keys.news(db: store.db), JSON.generate(kind:))
+        bus = EventBus.for(store)
+        bus.publish(keys.news(db: bus.db), JSON.generate(kind:))
       rescue Unavailable
         0
       end
@@ -54,7 +55,7 @@ module OpenLanes
       # @param keys [OpenLanes::Live::Keys]
       # @return [OpenLanes::Live::Subscriber, OpenLanes::Live::MemorySubscriber]
       # @raise [OpenLanes::Live::Unavailable]
-      def subscribe(store:, keys:) = store.subscriber(channels: [keys.news(db: store.db)])
+      def subscribe(store:, keys:) = EventBus.for(store).then { it.subscribe(channels: [keys.news(db: it.db)]) }
     end
   end
 end

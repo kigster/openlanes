@@ -43,9 +43,12 @@ module OpenLanes
       # @param listen [OpenLanes::Web::Listen] the addresses the server listens on
       # @param credentials [OpenLanes::Web::AdminAuth::Credentials, nil] its
       #   login for requests from off this machine, handed over in {#env}
+      # @param spawner [#spawn] what starts the server process
       def initialize(root:, plans_dir:, port:, redis_url:, log: default_log(root), logging: Log.settings,
-        ready_within: READY_WITHIN, probe: nil, listen: Listen.parse(nil), credentials: nil)
+        ready_within: READY_WITHIN, probe: nil, listen: Listen.parse(nil), credentials: nil,
+        spawner: Spawner::System)
         @root = root
+        @spawner = spawner
         @plans_dir = plans_dir
         @port = Integer(port)
         @redis_url = redis_url
@@ -102,7 +105,7 @@ module OpenLanes
         return taken unless free
 
         @port = free
-        @pid = Process.spawn(env, *argv, chdir: @root, pgroup: true, in: File::NULL, %i[out err] => [@log, "a"])
+        @pid = @spawner.spawn(env, *argv, chdir: @root, pgroup: true, in: File::NULL, %i[out err] => [@log, "a"])
         @ready = wait_until_ready
         self
       end

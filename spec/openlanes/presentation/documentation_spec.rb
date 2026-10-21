@@ -31,6 +31,15 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       expect(document).to include("`.plans/archive/`", "`.plans/deferred/`", "`.plans/abandoned/`", "locked-by.pid")
     end
 
+    # The lock moved to the runtime state directory; a document that still
+    # says the folder holds one teaches the layout this plan removed.
+    it "places the lock in the runtime state directory, not the plan folder" do
+      aggregate_failures do
+        expect(document).to include("runtime state directory outside the repository")
+        expect(document).not_to include("the folder holds a git-ignored")
+      end
+    end
+
     it "carries one row per review label, derived from ReviewLabel::ALL" do
       OpenLanes::Plans::ReviewLabel::ALL.each do |label|
         expect(document.scan(/^\| `#{label.name}` \| `#{label.colour}` \|/).size).to eq(1)

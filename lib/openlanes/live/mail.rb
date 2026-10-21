@@ -41,8 +41,8 @@ module OpenLanes
       # @return [void]
       def publish(plan:, message:)
         payload = JSON.generate("plan" => plan.to_s, "message" => wire(message))
-        @store.multi do |tx|
-          tx.xadd(@keys.mail, { json: payload })
+        EventBus.for(@store).transaction do |tx|
+          tx.append(@keys.mail, { json: payload })
           tx.xtrim(@keys.mail, minid: cutoff)
           tx.expire(@keys.mail, Keys::MAIL_TTL)
         end
