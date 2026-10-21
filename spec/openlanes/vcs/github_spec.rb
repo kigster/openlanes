@@ -280,7 +280,8 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     let(:payload) do
       { number: 12, title: "Add health checks", url: "https://github.com/o/r/pull/12",
        state: "MERGED", isDraft: false, mergedAt: "2026-08-01T10:00:00Z",
-       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }] }.to_json
+       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }],
+       mergeStateStatus: "BEHIND" }.to_json
     end
 
     it "reads one pull request by number or URL" do
@@ -288,6 +289,15 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
 
       expect(described_class.new(command:).pull_request("12")).to include(number: 12, state: "Merged 🟣", body: "Adds /healthz.")
+    end
+
+    it "asks gh for mergeStateStatus and carries it as merge_state" do
+      viewed = github.pull_request("12")
+
+      aggregate_failures do
+        expect(command).to have_received(:run).with("gh", "pr", "view", "12", "--json", described_class::VIEW_FIELDS.join(","))
+        expect(viewed).to include(merge_state: "BEHIND")
+      end
     end
 
     # PrWatch asks for a pull request `gh pr list` left out, and reads it as

@@ -9,10 +9,13 @@ module OpenLanes
     # machine happens here: labelling each `ready-to-merge` pull request
     # `auto-merged` or `merge-manually`, merging the `auto` ones one at a
     # time under `merge.by: auto`, and rebasing the siblings left open onto
-    # `main` after each merge. Every step is asked of GitHub as it stands, so
-    # {#advance} may be called on every poll and does nothing twice. That is
-    # also how a sibling waits for CI on its rebased head, and how a person's
-    # merge of a `merge-manually` pull request is noticed in either mode.
+    # `main` after each merge. A rebase that raises leaves that sibling for a
+    # person rather than retrying the merge on its old green CI, and a branch
+    # GitHub still reports as `BEHIND` is never merged. Every step is asked of
+    # GitHub as it stands, so {#advance} may be called on every poll and does
+    # nothing twice. That is also how a sibling waits for CI on its rebased
+    # head, and how a person's merge of a `merge-manually` pull request is
+    # noticed in either mode.
     #
     # The plan reaches ✅ through {PrOutcomes}, once nothing is left open,
     # exactly as when a person merges the last pull request by hand.
@@ -152,7 +155,7 @@ module OpenLanes
         return leave(machine, number, repo, "palpatine said manual") if verdict == "manual"
         return leave(machine, number, repo, "merge.by is #{merge_by}") unless merge_by == :auto
 
-        merge(subject, machine, number, repo, record, live[:head])
+        merge(subject, machine, number, repo, record, live[:head], merge_state: live[:merge_state])
       end
 
       # Merged or closed on GitHub, by the engine a moment ago or by a person
@@ -166,13 +169,16 @@ module OpenLanes
         Result.new(note: "PR ##{number} #{kind}", to: applied&.to)
       end
 
+      # @param comment [Boolean] post +why+ on the pull request, so a person
+      #   looking at it sees why the engine stepped away
       # @return [Result]
-      def leave(machine, number, repo, why)
+      def leave(machine, number, repo, why, comment: false)
         machine.fire!(:leave_for_a_person)
         @github.swap_label(number:,
           repo:,
           add: Plans::ReviewLabel::MERGE_MANUALLY,
           remove: Plans::ReviewLabel.displaced_by(Plans::ReviewLabel::MERGE_MANUALLY))
+        @github.comment(number:, repo:, body: why) if comment
         Result.new(note: "PR ##{number} #{Plans::ReviewLabel::MERGE_MANUALLY}: #{why}")
       end
 
@@ -182,16 +188,20 @@ module OpenLanes
       # CI at all: nobody watches this merge, and no checks is no evidence.
       # The merge names the head read before the checks, so a push in
       # between makes GitHub refuse it rather than merge a head CI never saw.
+      # A branch still behind `main` is the same: CI on that head never saw
+      # the commit just merged, so a person rebases it.
       #
       # @param head [String, nil] the head commit, as read before the checks
+      # @param merge_state [String, nil] GitHub's `mergeStateStatus`
       # @return [Result, nil]
-      def merge(subject, machine, number, repo, record, head)
+      def merge(subject, machine, number, repo, record, head, merge_state: nil)
         ci = Vcs::CiGate.verdict(@github.checks(number:, repo:))
         ci = :registering if ci == :none && registering?(record, number)
         return Result.new(note: "PR ##{number} waits on CI before it merges") if %i[pending registering].include?(ci)
         return reject(subject, number, repo, "CI is red on PR ##{number} after its rebase onto main.") if ci == :red
         return leave(machine, number, repo, "no CI checks ran") if ci == :none
         return leave(machine, number, repo, "its head commit could not be read") if head.to_s.empty?
+        return leave(machine, number, repo, "its branch is behind main", comment: true) if behind?(merge_state)
 
         begin
           @github.merge(number:, repo:, head:)
@@ -214,8 +224,14 @@ module OpenLanes
       # Every pull request of the plan still open, onto `main` (P5). The
       # plan's own branch is rebased in its worktree and pushed with the
       # lease; a sibling from any other branch is rebased on GitHub's side.
+      # A conflict still sends the plan to 🔴. Anything else that raises
+      # (a refused push, a GitHub update that did not finish) leaves that
+      # sibling for a person: returning nil used to keep `ready-to-merge`
+      # and the old green CI, and the next pass merged a head that never
+      # saw the new `main`.
       #
-      # @return [Result, nil] the rejection a conflict caused, nil when every one rebased
+      # @return [Result, nil] the rejection a conflict caused, or the leave a
+      #   rebase that raised caused; nil when every sibling rebased
       def rebase_siblings(subject, merged)
         subject.pull_requests.select(&:open?).each do |pull|
           number = number_of(pull)
@@ -224,12 +240,20 @@ module OpenLanes
           return reject(subject, number, repo, why) if why
 
           Plans::PlanState.for(subject.feature.path).rebased!(number, at: @clock.call)
+        rescue OpenLanes::Error => e
+          UI.log("rebase after merging ##{merged} not finished: #{e.message}",
+            level: :warn,
+            plan:  subject.feature.ordinal.to_s)
+          live = @github.pull_request(pull.url || number.to_s)
+          machine = Plans::PullRequestMachine.new(pull, live[:labels])
+          return leave(machine, number, repo, "rebase onto main failed: #{e.message}", comment: true)
         end
         nil
-      rescue OpenLanes::Error => e
-        UI.log("rebase after merging ##{merged} not finished: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
-        nil
       end
+
+      # @param status [String, nil] GitHub's `mergeStateStatus`
+      # @return [Boolean]
+      def behind?(status) = status.to_s.upcase == "BEHIND"
 
       # @return [String, nil] why the rebase failed, nil when it went through
       def rebase(subject, pull, number, repo)

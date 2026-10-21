@@ -200,6 +200,18 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
+    it "does not merge a pull request whose branch is behind main" do
+      edit_gh { it["prs"]["1"]["merge_state"] = "BEHIND" }
+      result = merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(result.note).to eq("PR #1 merge-manually: its branch is behind main")
+        expect(merges).to be_empty
+        expect(labels).to eq(%w[merge-manually])
+        expect(gh.dig("prs", "1", "comments").map { it["body"] }).to include("its branch is behind main")
+      end
+    end
+
     context "with a sibling" do
       let(:numbers) { [1, 2] }
 
@@ -308,15 +320,23 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       expect(rebases).to eq([2])
     end
 
-    it "keeps the merge and logs a rebase it could not finish" do
+    it "leaves the sibling for a person when its rebase raises, and the next pass does not merge it" do
       allow(refresh).to receive(:call).and_return(outcome(:rebased, base: "origin/main"))
       allow(publisher).to receive(:pushed!).and_raise(OpenLanes::Error, "lease refused")
       allow(OpenLanes::UI).to receive(:log)
-      result = merging.assess(plan, "auto")
+      first = merging.assess(plan, "auto")
+      later = merging.advance(plan)
 
       aggregate_failures do
-        expect(result).to have_attributes(merged: true)
+        expect(first).to have_attributes(merged: true)
+        expect(first.note).to include("PR #2 merge-manually: rebase onto main failed: lease refused")
         expect(OpenLanes::UI).to have_received(:log).with(/rebase after merging #1 not finished: lease refused/, hash_including(level: :warn))
+        expect(labels(2)).to eq(%w[merge-manually])
+        expect(gh.dig("prs", "2", "comments").map { it["body"] }).to include("rebase onto main failed: lease refused")
+        expect(merges).to eq([1])
+        expect(later.note).not_to include("auto-merged")
+        expect(merges).to eq([1])
+        expect(labels(2)).to eq(%w[merge-manually])
       end
     end
   end

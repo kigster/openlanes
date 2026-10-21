@@ -37,7 +37,8 @@ def row(number, pull)
   { "number" => number.to_i, "title" => pull["title"], "url" => pull["url"], "headRefName" => pull["branch"],
     "headRefOid" => pull.fetch("head", "c0ffee#{number.to_i}"),
     "files" => [], "state" => pull["state"], "isDraft" => false, "mergedAt" => pull["merged_at"], "body" => "",
-    "labels" => pull["labels"].map { { "name" => it } } }
+    "labels" => pull["labels"].map { { "name" => it } },
+    "mergeStateStatus" => pull.fetch("merge_state", "CLEAN") }
 end
 
 case ARGV.take(2)
