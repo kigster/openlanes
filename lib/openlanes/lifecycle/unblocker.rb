@@ -92,8 +92,10 @@ module OpenLanes
       #   phrase describing what the agent is doing
       # @param root [String] the repository the agent works in
       # @param commit [Boolean] false plans the invocation and changes nothing
-      def initialize(tree:, agent:, executor:, root: nil, commit: false)
+      # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each answer drained
+      def initialize(tree:, agent:, executor:, root: nil, commit: false, events: Events::NullSink.new)
         @tree = tree
+        @events = events
         @agent = agent
         @executor = executor
         @root = root || File.dirname(tree.dir)
@@ -178,10 +180,30 @@ module OpenLanes
         before = { subject.feature.ordinal.to_s => self.class.questions(subject) }
         result = applying? ? invoke(subject, progress || proc {}) : [false, "not attempted: a dry run"]
         tree.reload
-        outcome(subject, result, before)
+        outcome(subject, result, before).tap { answered(it) }
       end
 
       private
+
+      # One `human_answered` per question the agent folded that had an
+      # answer waiting: its number and when, never its text.
+      #
+      # @param outcome [Outcome]
+      # @return [void]
+      def answered(outcome)
+        return unless outcome.ok
+
+        plan = outcome.subject.feature.ordinal.to_s
+        at = Time.now
+        outcome.before.select { it.answered && outcome.folded.include?(it.number) }.each do |question|
+          @events.record(:human_answered,
+            plan:,
+            seq: question.number,
+            once: true,
+            block: "B#{question.number}",
+            answered_at: at.utc.iso8601(3))
+        end
+      end
 
       # @param subject [OpenLanes::Plans::Subject]
       # @param progress [OpenLanes::UI::Line]

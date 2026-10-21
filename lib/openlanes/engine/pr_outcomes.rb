@@ -31,20 +31,28 @@ module OpenLanes
       # @param tree_dir [String] the `.plans` directory, reread after each rename
       # @param agents [Agents::Registry] who handles 🔴, and so gets the comments
       # @param clock [#call] the time a merge is recorded at
-      def initialize(tree_dir:, agents:, clock: -> { Time.now })
+      # @param events [Events::Sink, Events::NullSink] where an applied outcome is recorded
+      def initialize(tree_dir:, agents:, clock: -> { Time.now }, events: Events::NullSink.new)
         @tree_dir = tree_dir
         @agents = agents
         @clock = clock
+        @events = events
       end
+
+      # The event each outcome kind is recorded as.
+      EVENT_KINDS = { rejected: "pr_reviewed", merged: "pr_merged", closed: "pr_closed" }.freeze
 
       # @param outcome [PrWatch::Outcome]
       # @return [Applied, nil] nil when the folder already said so
       def apply(outcome)
-        case outcome.kind
-        when :rejected then reject(outcome)
-        when :merged then merged(outcome)
-        when :closed then closed(outcome)
-        end
+        before = row_state(outcome)
+        applied = case outcome.kind
+                  when :rejected then reject(outcome)
+                  when :merged then merged(outcome)
+                  when :closed then closed(outcome)
+                  end
+        announce(outcome, applied, before)
+        applied
       end
 
       private
@@ -105,6 +113,24 @@ module OpenLanes
         # while claiming some other state.
         File.delete(note) if written && to.nil?
         applied(outcome, to, "closed unmerged")
+      end
+
+      # Recorded only when something changed: the watch asks every 15
+      # seconds, and a row already saying merged is not a second merge.
+      #
+      # @return [void]
+      def announce(outcome, applied, before)
+        kind = EVENT_KINDS[outcome.kind]
+        return if applied.nil? || kind.nil?
+        return if applied.to.nil? && kind != "pr_reviewed" && before == row_state(outcome)
+
+        verdict = kind == "pr_reviewed" ? { verdict: "rejected" } : {}
+        @events.record(kind, plan: outcome.plan.to_s, seq: outcome.pr, once: true, number: outcome.pr, **verdict)
+      end
+
+      # @return [String, nil] the outcome's row state in `pull-requests.md`
+      def row_state(outcome)
+        find(outcome.plan)&.pull_requests&.find { it.number.to_s.delete("#").to_i == outcome.pr }&.state
       end
 
       # @return [Applied]

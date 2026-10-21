@@ -77,6 +77,40 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "events:" do
+      it "reads enabled and an absolute dir" do
+        openlanes_yml("events:\n  enabled: true\n  dir: /var/log/openlanes\n")
+        expect(config).to have_attributes(events_enabled: true, events_dir: "/var/log/openlanes")
+        expect(config.to_yaml).to include("events:\n  enabled: true\n  dir: \"/var/log/openlanes\"")
+      end
+
+      it "is off with no directory when absent" do
+        openlanes_yml("jobs: 2\n")
+        expect(config).to have_attributes(events_enabled: false, events_dir: nil)
+        expect(config.to_yaml).not_to include("events")
+      end
+
+      it "refuses a value that is not a mapping" do
+        openlanes_yml("events: true\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events: must be a mapping/)
+      end
+
+      it "refuses a key it does not know" do
+        openlanes_yml("events:\n  sink: postgres\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events\.sink: unknown key; known: enabled, dir/)
+      end
+
+      it "refuses an enabled that is not a boolean" do
+        openlanes_yml("events:\n  enabled: sometimes\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events\.enabled: "sometimes" is not true or false/)
+      end
+
+      it "refuses a relative dir" do
+        openlanes_yml("events:\n  dir: log/events\n")
+        expect { config }.to raise_error(OpenLanes::Error, %r{events\.dir: "log/events" is not an absolute path})
+      end
+    end
+
     describe "questions.model" do
       it "reads the model that rewrites prose questions" do
         openlanes_yml("questions:\n  model: google/gemini-3.5-flash\n")
