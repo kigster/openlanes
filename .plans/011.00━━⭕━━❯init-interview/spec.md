@@ -73,6 +73,23 @@ Each item is checkable by a spec or a command.
 | `stack.md` writer | luke-backend |
 | Any web surface | none (v2.0) |
 
+## Decisions
+
+### B1 (answered) — App specs fail on this host, outside this plan
+
+`bundle exec rspec` fails 30 examples, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb`, because `Socket.tcp` with `connect_timeout:` reports a closed port as open on this host (Darwin 27, Ruby 4.0.6). This plan changes none of those files.
+
+### D1 (decision) — Fix the probe in its own PR first
+
+Answered:
+
+- 2026-10-20, 17:07 PDT
+- By kig
+
+Fix the probe in its own small PR: a non-blocking connect that checks `SO_ERROR`, in `apps/ports.rb` and `apps/probe.rb`. Merge it, then re-run this plan's checks unchanged. This plan does not take the probe fix itself.
+
+______________________________________________________________________
+
 ## Open questions
 
 Unsettled items from the research, and what had to be assumed. None is answered here.
