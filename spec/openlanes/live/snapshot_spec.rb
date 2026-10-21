@@ -125,7 +125,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       dir = Dir.glob(File.join(plans_root, "001.00*")).first
       OpenLanes::Plans::Lock.write(dir, now: Time.utc(2026, 10, 13, 9))
 
-      expect(by_ordinal["001.00"][:locked]).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z")
+      expect(by_ordinal["001.00"][:locked]).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z", foreign: false)
       expect(by_ordinal.except("001.00").values.map { it[:locked] }.uniq).to eq([nil])
     end
 

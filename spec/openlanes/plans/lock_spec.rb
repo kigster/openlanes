@@ -11,7 +11,7 @@ RSpec.describe OpenLanes::Plans::Lock do
     written = described_class.write(dir, now: Time.utc(2026, 10, 13, 9))
 
     expect(described_class.read(dir)).to eq(written)
-    expect(written.to_json_hash).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z")
+    expect(written.to_json_hash).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z", foreign: false)
   end
 
   it "reads nothing when there is no lock" do
@@ -28,7 +28,64 @@ RSpec.describe OpenLanes::Plans::Lock do
     described_class.write(dir)
     described_class.remove(dir)
 
-    expect(File.exist?(File.join(dir, described_class::FILENAME))).to be(false)
+    expect(File.exist?(described_class.path(dir))).to be(false)
+  end
+
+  describe "outside the plan folder" do
+    let(:plans) { File.join(dir, ".plans") }
+    let(:folder) { File.join(plans, "007.00━━🟡━━❯thing").tap { FileUtils.mkdir_p(it) } }
+
+    def legacy(pid, host: Socket.gethostname)
+      File.write(File.join(folder, described_class::FILENAME),
+        JSON.generate("pid" => pid, "host" => host, "started_at" => "2026-10-13T09:00:00Z"))
+    end
+
+    it "writes into the runtime state directory, named for the ordinal, and nothing into the folder" do
+      described_class.write(folder)
+
+      aggregate_failures do
+        expect(described_class.path(folder)).to start_with(OpenLanes::Runtime.state_home)
+        expect(File.basename(described_class.path(folder))).to eq("007.00.lock")
+        expect(Dir.children(folder)).to be_empty
+      end
+    end
+
+    it "still reads the lock after the folder is renamed" do
+      described_class.write(folder)
+      renamed = File.join(plans, "007.00━━🎨━━❯thing")
+      File.rename(folder, renamed)
+
+      expect(described_class.read(renamed)&.pid).to eq(Process.pid)
+    end
+
+    it "reads a legacy locked-by.pid" do
+      legacy(Process.ppid)
+
+      expect(described_class.read(folder).pid).to eq(Process.ppid)
+    end
+
+    it "keeps a foreign lock held and never stale, and remove leaves it" do
+      legacy(1, host: "elsewhere.invalid")
+      lock = described_class.read(folder)
+      described_class.remove(folder)
+
+      aggregate_failures do
+        expect(lock).to be_foreign
+        expect(lock).to be_held_elsewhere
+        expect(lock).not_to be_stale
+        expect(lock.to_json_hash[:foreign]).to be(true)
+        expect(File).to exist(File.join(folder, described_class::FILENAME))
+      end
+    end
+
+    it "removes a legacy lock a dead local process left" do
+      dead = Process.spawn("true")
+      Process.wait(dead)
+      legacy(dead)
+      described_class.remove(folder)
+
+      expect(File).not_to exist(File.join(folder, described_class::FILENAME))
+    end
   end
 
   # A plain File.write let two runs that both saw no lock both claim the
@@ -73,7 +130,7 @@ RSpec.describe OpenLanes::Plans::Lock do
 
     # Between another run's O_EXCL create and its write the file is empty.
     it "refuses an unreadable lock young enough to be mid-write" do
-      File.write(file, "")
+      File.write(described_class.path(dir), "")
 
       expect { described_class.write(dir) }.to raise_error(described_class::Held, /unreadable/)
     end

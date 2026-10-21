@@ -216,7 +216,7 @@ module OpenLanes
       # @param round [Integer]
       # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
-      #   effort, up, down, seconds, note, to, run, session, cwd
+      #   effort, up, down, seconds, note, to, session, cwd; `run` only in files older releases wrote
       # @return [Hash] the stage as written
       def stage!(agent:, round:, reset: false, **fields)
         stage = nil
@@ -314,7 +314,9 @@ module OpenLanes
       def moves = read["moves"].to_i
 
       # Stages a dead harness left Started. Nobody is working them, and nobody
-      # will finish them unless a run picks them up.
+      # will finish them unless a run picks them up. Only a stage an older
+      # release wrote carries `run`; newer ones leave it to the run's
+      # {Engine::StateFile}, so they are never reported here.
       #
       # @param alive [Proc] pid → Boolean
       # @param pid [Integer] this run, which is never its own crash

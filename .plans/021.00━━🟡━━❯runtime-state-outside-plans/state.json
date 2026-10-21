@@ -5,8 +5,8 @@
     "ordinal": "021.00",
     "slug": "runtime-state-outside-plans"
   },
-  "state": "blocked",
-  "updated_at": "2026-10-19T02:45:27-07:00",
+  "state": "building",
+  "updated_at": "2026-10-20T17:40:46-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -153,6 +153,68 @@
       "seconds": 526.0,
       "note": "completed - 8 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; rey-frontend was asked to add it",
       "moves": 1
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-10-20T17:21:11-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/021.00-runtime-state-outside-plans",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "a7af5299-ecc2-4650-8efc-970b592cf0d7",
+      "to": "building",
+      "finished_at": "2026-10-20T17:24:28-07:00",
+      "up": 159237,
+      "down": 1275,
+      "seconds": 196.9,
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261020-172111-021.00-luke-backend-4117-58fa.ndjson",
+      "moves": 3
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-20T17:21:12-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/021.00-runtime-state-outside-plans",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "5962aeef-a81a-48fc-8405-ce8311bc391d",
+      "to": "building",
+      "finished_at": "2026-10-20T17:21:33-07:00",
+      "up": 208564,
+      "down": 1472,
+      "seconds": 18.8,
+      "note": "completed - 3 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "luke-backend",
+      "round": 2,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-10-20T17:29:32-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/021.00-runtime-state-outside-plans",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "a7af5299-ecc2-4650-8efc-970b592cf0d7"
     }
   ],
   "signatures": [
@@ -358,6 +420,61 @@
       "status": "Completed",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-20T17:06:46-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:06:46-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:07:45-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:08:09-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-20T17:21:19-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:21:22-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:21:28-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:29:42-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-20T17:40:37-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 2
     }
   ],
   "messages": [
@@ -413,7 +530,7 @@
       "from": "rey-frontend",
       "to": "luke-backend",
       "body": "Front end done. F1: reporter_spec.rb:234-243 (🔑 plain, 'held on' foreign only). F2: model.test.ts:158, Board.test.tsx:180-189. vitest 358/0, tsc clean, rubocop clean. rspec shows 30 sandbox-only port-probe failures in apps/ specs, untouched files.",
-      "read": "no"
+      "read": "yes"
     },
     {
       "id": "c4df6cb6-a538-4691-9564-784ab89058bc",
@@ -443,6 +560,15 @@
       "body": "RESUME: carry on from your last resume note",
       "read": "no",
       "command": "01M591VTC3RSG518AG38HBH7K8"
+    },
+    {
+      "id": "edbe62c6-a0e3-425f-9153-27b33b2f25a3",
+      "number": 10,
+      "at": "2026-10-20T17:40:31-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Round 2: back end done. B1 fixed: the 30 apps/ failures came from Socket.tcp(connect_timeout:) treating refused connects as connected on Ruby 4.0/macOS 27. Now TCPSocket.new in probe.rb, ports.rb and 3 spec probes (incl. spec/openlanes/cli/app_spec.rb). bundle exec rspec 3148/0 exit 0, rubocop clean. Proof in pull-requests.md.",
+      "read": "no"
     }
   ],
   "last-known-state": {
@@ -459,9 +585,16 @@
       "round": 1,
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/add-web-listen-ips, origin/kig/ask-to-extend-limits) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The background notification says the command was stopped at its time limit."
+    },
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-20T17:24:28-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261020-172111-021.00-luke-backend-4117-58fa.ndjson; last ledger line: Started, round 1; last seen: Probe closed localhost port, check proxy env, rerun control_room spec"
     }
   },
-  "moves": 1,
+  "moves": 3,
   "memory": {
     "luke-backend": {
       "rounds": {
@@ -472,6 +605,35 @@
               "text": "B1 The suite cannot exit 0 on this machine The plan requires `bundle exec rspec` to exit 0. Every unit is done, rubocop is clean, and the suite has one failure this plan caused, now fixed (`spec/integration/restart_spec.rb` read the run record from `.plans/`). 30 failures are left, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb`, and a clean checkout of `HEAD` (0d0d99c) fails the same 30 out of 112. The cause is the machine: right now a TCP connect to a localhost port nobody …",
               "ref": "B1",
               "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
+            },
+            {
+              "kind": "question",
+              "text": "B1 The suite cannot exit 0 on this machine > **Answer not accepted:** Rebase onto the main branch first and retry > > lando-broker: Round 9: blocked.md kept for a human to answer again. No control-file warnings. Released 0 locks. Signed Completed. The plan requires `bundle exec rspec` to exit 0. Every unit is done, rubocop is clean, and the suite has one failure this plan caused, now fixed (`spec/integration/restart_spec.rb` read the run record from `.plans/`). 30 failures are left, all in `spe…",
+              "ref": "B1",
+              "answer": "a) Turn off whatever intercepts localhost connects, re-run `bundle exec rspec`, and unblock once it exits 0. Answered by kig on 2026-10-20"
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B1 fixed: on Ruby 4.0.6 + macOS 27, Socket.tcp(connect_timeout:) returns a socket for a refused connect. probe.rb, ports.rb and 3 spec probes now use TCPSocket.new(connect_timeout:)"
+            },
+            {
+              "kind": "override",
+              "text": "B1's cause was a Ruby Socket.tcp bug, not a localhost interceptor; the human's answer (turn the interceptor off) no longer applies",
+              "overrides": 2
+            },
+            {
+              "kind": "note",
+              "text": "two_checkouts_spec shares Redis db 10 across worktrees; another worktree's suite running at the same time, or an orphaned engine, makes it fail. Rerun once db 10 is free"
+            },
+            {
+              "kind": "done",
+              "text": "Round 2: bundle exec rspec 3148/0 exit 0, rubocop 0 offenses, recorded in pull-requests.md, rey mailed (#10), signed Completed"
             }
           ]
         }
@@ -570,8 +732,36 @@
               "text": "Round 8: blocked.md kept for a human to answer again. Released 0 locks. Signed Completed."
             }
           ]
+        },
+        "9": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 9: B1 still open. A1 ('Rebase onto the main branch first and retry') answers neither a) nor b), so it fails the answer test. blocked.md untouched."
+            },
+            {
+              "kind": "note",
+              "text": "Round 9: blocked.md kept for a human to answer again. No control-file warnings. Released 0 locks. Signed Completed."
+            }
+          ]
         }
       }
     }
-  }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-20T17:24:30-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-20T17:29:30-07:00"
+    }
+  ]
 }

@@ -21,6 +21,7 @@ mermaid.html
 .plans/tmp/
 .plans/openlanes-state.json
 .plans/openlanes-state.json.*.tmp
+.plans/**/*.tmp
 /.env
 /.env.*
 !.env.example

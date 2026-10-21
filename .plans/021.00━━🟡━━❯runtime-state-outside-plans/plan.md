@@ -122,3 +122,36 @@ Deviation from the spec's half table: `live/snapshot.rb` goes to the back end (B
 ## HTTP surface
 
 Yes, one change. The control-room snapshot's per-plan `locked` object gains `foreign: boolean`; `pid`, `host`, `started_at`, and `null` for no lock, are unchanged. No route is added or removed. B3 writes `openapi.yaml` beside `contract.md` describing the `locked` object, so `openlanes api docs` lists it.
+
+## Decisions
+
+### B1 (answered) — Suite exit 0 needs localhost connects unintercepted
+
+The plan requires `bundle exec rspec` to exit 0. On the build machine a TCP connect to an unused localhost port succeeds, probably through a VPN or local proxy network extension, so `Ports.free?` and `Probe.ready?` see every port as taken. 30 examples in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb` fail, and a clean checkout of `HEAD` (0d0d99c) fails the same 30. None of those files belong to this plan.
+
+### D1 (decision) — Turn off the localhost interception before the suite gate
+
+Answered:
+
+- 2026-10-20
+- By kig
+
+Option a: turn off whatever intercepts localhost connects, re-run `bundle exec rspec`, and unblock once it exits 0. The 30 environmental failures are not accepted as baseline.
+
+## How to test
+
+- `bundle exec rspec spec/openlanes/runtime_spec.rb spec/integration/runtime_state_spec.rb spec/integration/restart_spec.rb`: no failures. Runtime state (run record, locks) lives under `$XDG_STATE_HOME/openlanes/`, not `.plans/`.
+- `bundle exec rspec spec/openlanes/plans/lock_spec.rb spec/openlanes/presentation/reporter_spec.rb`: 🔑 shows for a state-dir lock and a legacy `locked-by.pid`; "held on <host> since <time>" only for a foreign lock.
+- `cd web && npx vitest run && npx tsc --noEmit`: all pass; the board shows nothing for no lock, a plain mark for a local lock, and the host for a foreign one.
+- `bundle exec rspec && bundle exec rubocop`: rubocop clean. On a machine where a closed localhost port accepts connects, 30 failures appear in `spec/openlanes/apps/` and `cli/app_spec.rb`; they also fail on clean `main`.
+- `ls .plans/*/` after `openlanes run` in a scratch project: no `locked-by.pid` or run-state file is written there.
+
+## Rebase decisions
+
+- `.plans/021.00━━⭕━━❯runtime-state-outside-plans/` (removed): main renamed the folder to ⭕ with a `blocked.md`, the branch to 🟡. The 🟡 folder holds every file of the ⭕ one plus the answered B1 and the verification notes, so it is kept and the stale ⭕ copy (blocked on B1, since answered) is dropped.
+- `.plans/045.00━━⚪━━❯solid-sweep/state.json`: git paired it with the branch's deleted 021 ⚪ `state.json`. The branch never touched plan 045, so main's file is kept.
+- `lib/openlanes/apps/ports.rb`, `lib/openlanes/apps/probe.rb`, `spec/fixtures/apps/servers/server.rb`, `spec/openlanes/apps/supervisor_spec.rb`, `spec/openlanes/cli/app_spec.rb`: main fixed the same refused-connect bug with `Probe.listening?` (asks the peer address), so main's side is kept and the branch's `TCPSocket.new` variant is dropped. The "Verification, luke-backend, round 2" note in `pull-requests.md` still describes `TCPSocket`; the fix that landed is main's.
+- `lib/openlanes/engine/dispatcher.rb`: keeps main's `cwd: task.root` and drops the `run:` pid/host, which now lives in the runtime state file.
+- `lib/openlanes/plans/plan_state.rb`: doc comment lists main's `session, cwd` and notes `run` only appears in files older releases wrote.
+- `spec/openlanes/engine/dispatcher_spec.rb`: main's resumed-round expectations (`[1, 2]`, `signed(...)`) plus the branch's check that no stage carries `run`.
+- `spec/openlanes/plans/plan_state_spec.rb`: both kept, main's `#finish!` block and the branch's "a stage written by this release" block.

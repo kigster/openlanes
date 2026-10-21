@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "socket"
 
 module OpenLanes
   module Engine
@@ -11,56 +12,49 @@ module OpenLanes
     # The ledger inside each document is the record humans read and the
     # dispatcher acts on; this is the index of it, plus what the ledger cannot
     # hold: which run wrote what, process ids, tokens, and whether the run
-    # that wrote a `Started` is still alive. It sits in `.plans/` rather than
-    # the system temp dir because a reboot must not lose it, and it is
-    # gitignored because it is about one machine's run, not the plan.
+    # that wrote a `Started` is still alive. It sits in the runtime state
+    # directory ({OpenLanes::Runtime}) rather than the system temp dir because
+    # a reboot must not lose it, and outside `.plans/` because it is about one
+    # machine's run, not the plan: in `.plans/` every `git status` and every
+    # snapshot of the tree had to learn to ignore it.
     class StateFile
       FILENAME = "openlanes-state.json"
 
-      # Where it used to live, one directory down. Read by {#load} when the
-      # current path holds nothing, so a run started under the old layout is
-      # picked up rather than silently restarted from zero. Nothing writes
-      # here any more and nothing deletes it: the file left behind is the
-      # only record a half-finished run has.
+      # The oldest place it lived, under `.plans/tmp/`. Read by {#load} after
+      # `.plans/` itself, so a run started under either old layout is picked
+      # up rather than silently restarted from zero. Nothing writes to either
+      # any more and nothing deletes them: the file left behind is the only
+      # record a half-finished run has.
       LEGACY_DIRNAME = "tmp"
 
-      # The lines {.ensure_ignored!} adds. The second covers the sibling
-      # {#save} writes and renames over the first — brief, but `.plans/` is a
-      # directory whose other contents are committed, so a `git status` run
-      # during that instant must not offer it.
-      # The third is the lock an agent holds on a plan folder while it works
-      # ({Plans::Lock}), which names a process on this machine and nowhere else.
-      IGNORE = ["#{OpenLanes::PLANS_DIR}/#{FILENAME}", "#{OpenLanes::PLANS_DIR}/#{FILENAME}.*.tmp",
-                Plans::Lock::FILENAME].freeze
+      # The line {.ensure_ignored!} adds: the `<name>.<pid>.tmp` siblings
+      # `state.json` and `blocked.md` are written to and renamed over, inside
+      # plan folders whose other contents are committed. Brief, but a
+      # `git status` during that instant must not offer one.
+      IGNORE = ["#{OpenLanes::PLANS_DIR}/**/*.tmp"].freeze
 
-      # A literal path git can be asked about for each {IGNORE} line that is
-      # not one already. The temp-file glob rides with the state file.
-      PROBES = { Plans::Lock::FILENAME => "#{OpenLanes::PLANS_DIR}/000.00/#{Plans::Lock::FILENAME}" }.freeze
+      # A literal path git can be asked about for the {IGNORE} line.
+      PROBE = "#{OpenLanes::PLANS_DIR}/000.00/state.json.1.2.tmp".freeze
 
       # @param tree [OpenLanes::Plans::Tree]
-      # @return [String]
-      def self.for(tree) = File.join(tree.dir, FILENAME)
+      # @return [String] in the runtime state directory, keyed by the tree's root
+      def self.for(tree) = Runtime.state_file(root: File.dirname(File.expand_path(tree.dir)))
 
       # @param tree [OpenLanes::Plans::Tree]
-      # @return [String] where {LEGACY_DIRNAME} put it
-      def self.legacy_for(tree) = File.join(tree.dir, LEGACY_DIRNAME, FILENAME)
+      # @return [Array<String>] where older releases wrote it, newest first
+      def self.legacy_for(tree) = [File.join(tree.dir, FILENAME), File.join(tree.dir, LEGACY_DIRNAME, FILENAME)]
 
-      # Add the ignore lines once. Editing somebody's `.gitignore` is a thing
-      # to announce, which is why this returns whether it did.
-      #
-      # Git answers for a literal path, and the temp-file line is a glob no
-      # path equals, so it is written with the state file's line and never
-      # asked about. The lock line is asked about on its own: a repository
-      # that ignored the state file before locks existed still needs it.
+      # Add the ignore line once. Editing somebody's `.gitignore` is a thing
+      # to announce, which is why this returns whether it did. Lines an older
+      # release wrote are left where they are: removing a line is editing
+      # something this method did not write.
       #
       # @param root [String] repository root
       # @return [Boolean] true when lines were added
       def self.ensure_ignored!(root)
         return false unless system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
-        missing = []
-        missing.concat(IGNORE.first(2)) unless ignored?(root, IGNORE.first)
-        missing << IGNORE.last unless ignored?(root, PROBES.fetch(IGNORE.last))
+        missing = ignored?(root, PROBE) ? [] : IGNORE
         return false if missing.empty?
 
         path = File.join(root, ".gitignore")
@@ -78,9 +72,12 @@ module OpenLanes
 
       # @param path [String]
       # @param pid [Integer] this run's process id
-      def initialize(path:, pid: Process.pid)
+      # @param legacy [Array<String>, nil] older locations {#load} falls back
+      #   to; by default the two beside and under +path+'s directory
+      def initialize(path:, pid: Process.pid, legacy: nil)
         @path = path
         @pid = pid
+        @legacy = legacy
         @data = { "run" => {}, "plans" => {} }
         @mutex = Mutex.new
       end
@@ -88,11 +85,11 @@ module OpenLanes
       # @return [String]
       attr_reader :path
 
-      # Where a run started before the file moved up out of {LEGACY_DIRNAME}
-      # would have written. {#load} falls back to it; {#save} never uses it.
+      # Where a run started under an older layout would have written.
+      # {#load} falls back to them in order; {#save} never uses them.
       #
-      # @return [String]
-      def legacy_path = File.join(File.dirname(path), LEGACY_DIRNAME, File.basename(path))
+      # @return [Array<String>]
+      def legacy_paths = @legacy || [File.join(File.dirname(path), LEGACY_DIRNAME, File.basename(path))]
 
       # Reads the current path, or the legacy one when the current path holds
       # nothing. A run interrupted under the old layout is otherwise invisible
@@ -102,7 +99,7 @@ module OpenLanes
       # @return [self]
       def load
         @mutex.synchronize do
-          source = [path, legacy_path].find { |candidate| File.file?(candidate) }
+          source = [path, *legacy_paths].find { |candidate| File.file?(candidate) }
           @data = JSON.parse(File.read(source)) if source
           @data = { "run" => {}, "plans" => {} } unless @data.is_a?(Hash) && @data["plans"].is_a?(Hash)
         end
@@ -134,7 +131,7 @@ module OpenLanes
       def begin_run!(root:)
         @mutex.synchronize do
           @data.delete("waiting_on")
-          @data["run"] = { "pid" => @pid, "root" => root, "started_at" => Time.now.iso8601,
+          @data["run"] = { "pid" => @pid, "host" => Socket.gethostname, "root" => root, "started_at" => Time.now.iso8601,
                           "heartbeat_at" => Time.now.iso8601 }
         end
       end
@@ -222,10 +219,17 @@ module OpenLanes
       # @return [Boolean] whether a run wrote this file and is still alive
       def running? = !@data.dig("run", "pid").nil? && !previous_run_dead?
 
+      # A run recorded on another host is never provably dead: its pid names
+      # a process on a machine this one cannot see. A record with no `host`
+      # predates the field and keeps the local check.
+      #
       # @return [Boolean] whether the run that last wrote this file is gone
       def previous_run_dead?
         previous = @data.dig("run", "pid")
         return false if previous.nil? || previous == @pid
+
+        host = @data.dig("run", "host")
+        return false if host && host != Socket.gethostname
 
         Process.kill(0, previous)
         false

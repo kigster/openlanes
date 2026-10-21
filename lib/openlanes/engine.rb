@@ -19,7 +19,7 @@ module OpenLanes
 
     # @param tree [OpenLanes::Plans::Tree]
     # @return [OpenLanes::Engine::StateFile]
-    def state_file(tree) = StateFile.new(path: StateFile.for(tree))
+    def state_file(tree) = StateFile.new(path: StateFile.for(tree), legacy: StateFile.legacy_for(tree))
 
     # @return [OpenLanes::Engine::Tally]
     def tally(**) = Tally.new(**)

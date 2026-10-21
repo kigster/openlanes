@@ -65,7 +65,7 @@ The top of `.plans` holds only plans somebody may still work on. A plan in one o
 
 `openlanes resync dirs` does the moving, with `git mv`, and moves a plan back to the top, undated, once its state is open again. The date is the folder's last rename in git, else `state.json`'s `updated_at`, else today. Numbers span the subfolders: a number in `archive/` is never handed out again. `openlanes list-plans` shows the open plans; `--all` adds the rest.
 
-While an agent works in a plan, the folder holds a git-ignored `locked-by.pid` (pid, host, start time) and `list-plans` shows 🔑. The folder is never renamed while it is locked. `resync dirs` clears a lock whose process is gone from this machine, and only reports one from another.
+While an agent works in a plan, its lock (pid, host, start time) sits in the runtime state directory outside the repository (a legacy `locked-by.pid` in the folder is still read), and `list-plans` shows 🔑. The folder is never renamed while it is locked. `resync dirs` clears a lock whose process is gone from this machine, and only reports one from another.
 
 ## Starting a feature that does not exist yet
 
