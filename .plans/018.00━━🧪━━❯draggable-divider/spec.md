@@ -35,9 +35,9 @@ The user can drag a handle on the boundary between the lanes board and the right
 1. Width is clamped to a minimum of 360px (today's width) and a maximum of 60% of the layout width. Check: tests drag past each bound and assert the clamped value.
 1. The width applies to whichever panel is shown, `AgentDrawer` or `NeedsYou`, and is kept when switching between them. Check: open and close a car and assert the width is unchanged.
 1. The width persists in `localStorage` under a new key in the shape of `openlanes-merged` (`web/src/App.tsx:36-52`), tolerating a throwing `localStorage`. Check: a test stores a width, remounts, and asserts it; another stubs `localStorage` to throw and asserts the default.
-1. Keyboard: the handle is focusable, Left/Right arrows change the width by a fixed step, Home resets to 360px. Check: keyboard test asserting `aria-valuenow` changes.
-1. Double-clicking the handle resets the width to 360px. Check: test.
-1. Default behaviour with no stored value is unchanged: 360px. Check: existing `App.test.tsx` and Cypress specs that select `.drawer` still pass.
+1. Keyboard: the handle is focusable, Left/Right arrows change the width by a fixed step, Home resets to 360px (amended: to the default clamp, see the round 2 deviation in open questions). Check: keyboard test asserting `aria-valuenow` changes.
+1. Double-clicking the handle resets the width to 360px (amended: to the default clamp, see the round 2 deviation). Check: test.
+1. Default behaviour with no stored value is unchanged: 360px (amended: `main` already had `clamp(360px, 30vw, 432px)`, so unchanged means that clamp). Check: existing `App.test.tsx` and Cypress specs that select `.drawer` still pass.
 
 ## Out of scope
 
@@ -64,6 +64,8 @@ Each carries the default this spec assumes. A human can change it without reshap
 1. At 960px and below, is the divider dropped? **Assumed: yes**, the single-column layout is untouched (`web/src/shell/shell.css:54`).
 1. Keyboard support. **Assumed: yes**, arrows, Home; no precedent exists in `web/src`, so step size (assumed 24px) is a guess.
 1. Is a narrower-than-360px column ever wanted? **Assumed: no.**
+
+1. **Deviation (round 2):** the spec says the default and the Home/double-click reset are 360px. `main` already had `clamp(360px, 30vw, 432px)` for that column, so the default and reset value are that clamp (420px in a 1400px window); 360px stays the drag minimum. Points 6, 7 and 8 read accordingly.
 1. Not run at research: Vitest and Cypress (`web/node_modules` is absent). Baseline pass state of `App.test.tsx` and the Cypress specs is unknown until dependencies are installed.
 
 ## Risks to planning or execution

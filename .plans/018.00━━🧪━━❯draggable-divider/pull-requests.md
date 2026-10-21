@@ -87,3 +87,19 @@ hansolo's review of round 1 named three findings, all in rey's half (`web/src/sh
 - `E2E_PORT=11890 E2E_PEER_PORT=11891 E2E_REDIS_URL=redis://localhost:6379/9 just web-e2e`: 7 specs, 32 tests, all passed (`divider.cy.ts` 7/7), exit 0.
 - `bundle exec rubocop`: 526 files inspected, no offenses detected.
 - `bundle exec rspec`: 3984 examples, 0 failures. An earlier run the same hour failed `spec/integration/two_checkouts_spec.rb:45,70` because plan 021.00's worktree was running that spec on `redis://localhost:6379/10` at the same time (a third engine showed up as peer and claimant); alone it passed 3/0, then the full rerun was clean. This branch changes nothing under `lib/` or `spec/`.
+
+## Answers, round 2 (rey-frontend)
+
+No inline threads. Review round 2 finding 1 (plan.md stale): `fix`. `plan.md` decisions, F1/F3 done-when, verification steps now state the default/reset as `clamp(360px, 30vw, 432px)`; `spec.md` open questions gain the deviation note. Docs only; no code changed.
+
+## Answers, round 2 (luke-backend)
+
+hansolo's round 2 review was one conversation comment with one finding (`plan.md` and `spec.md` still described a 360px default). PR 104 has no inline review threads (`gh api repos/kigster/openlanes/pulls/104/comments` returns `[]`).
+
+- Finding 1 (plan.md/spec.md): `fix`, docs only. rey amended `plan.md` decisions, F1/F3 and the manual check to the `clamp(360px, 30vw, 432px)` default, and added the deviation to `spec.md` open questions (mail #24). luke marked `spec.md` points 6, 7 and 8 `amended:` inline and updated `plan.md` `## How to test` counts: vitest 466, 7 Cypress specs with 32 tests, `plan-files` included.
+
+## Proof (luke-backend, round 2 review fixes, 2026-10-21)
+
+- `bundle exec rubocop`: 547 files inspected, no offenses detected.
+- `bundle exec rspec`: 4075 examples, 0 failures (after `Merge main into 018.00`).
+- `git status`: clean apart from the coverage badge, reverted; no code changed this round.
