@@ -6,9 +6,432 @@
     "slug": "gemini-and-grok-adapters"
   },
   "state": "new",
-  "updated_at": "2026-10-20T03:10:12-07:00",
-  "stages": [],
-  "signatures": [],
+  "updated_at": "2026-10-21T21:19:23-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T01:27:42-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T01:29:01-07:00",
+      "up": 808086,
+      "down": 10747,
+      "seconds": 78.7,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 2,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T01:34:15-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T01:34:35-07:00",
+      "up": 282972,
+      "down": 2723,
+      "seconds": 17.5,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 3,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T11:39:03-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T11:39:24-07:00",
+      "up": 306275,
+      "down": 1347,
+      "seconds": 14.3,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 4,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T12:40:10-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T12:40:29-07:00",
+      "up": 326307,
+      "down": 1292,
+      "seconds": 12.0,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 5,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T12:40:58-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T12:41:18-07:00",
+      "up": 346669,
+      "down": 1354,
+      "seconds": 12.0,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 6,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-21T12:43:05-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e",
+      "to": "new",
+      "finished_at": "2026-10-21T12:43:17-07:00",
+      "up": 244585,
+      "down": 1094,
+      "seconds": 9.9,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Started",
+      "from": "new",
+      "started_at": "2026-10-21T21:19:04-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-21T01:27:47-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T01:28:53-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 1,
+      "note": "research done, spec.md write refused by lock held by openlanes@macbook-m3-kig.re1.re:82944"
+    },
+    {
+      "at": "2026-10-21T01:34:20-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T01:34:26-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 2,
+      "note": "spec.md chapter not written: lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 08:34:13Z)"
+    },
+    {
+      "at": "2026-10-21T11:39:09-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T11:39:13-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 3,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 18:39:01Z)"
+    },
+    {
+      "at": "2026-10-21T12:40:15-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:40:18-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 4,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 19:40:08Z)"
+    },
+    {
+      "at": "2026-10-21T12:41:04-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:41:07-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 5,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 19:40:56Z)"
+    },
+    {
+      "at": "2026-10-21T12:43:11-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T12:43:11-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 6,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944"
+    },
+    {
+      "at": "2026-10-21T21:19:11-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:19:15-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 1,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:51493 (since 04:19:02Z)"
+    }
+  ],
   "messages": [],
-  "moves": 1
+  "moves": 1,
+  "memory": {
+    "leah-researcher": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Spec 'What research needs to settle' is empty; questions were derived from 'How to tell it's working'. Confirm them."
+            },
+            {
+              "kind": "question",
+              "text": "Gemini stream-json usage: stats or usage? Needs one live run; that is a network call outside the test rule."
+            },
+            {
+              "kind": "todo",
+              "text": "Write the ## Research chapter to spec.md once the orchestrator releases its lock on the plan folder."
+            },
+            {
+              "kind": "done",
+              "text": "Research: adapters registry, Stream meter, Gemini and Grok upstream docs and local help checked; anchors recorded above."
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 2: spec.md claim refused again; parent run holds lock on plan folder (re-taken 08:34:13Z). Chapter draft is in the round 2 reply."
+            },
+            {
+              "kind": "todo",
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+            },
+            {
+              "kind": "question",
+              "text": "Confirm the derived research questions: the spec's 'What research needs to settle' list is empty."
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 3: plan-folder lock still held by parent run (re-taken 18:39:01Z); spec.md not written. Draft chapter is in the round 2 reply."
+            },
+            {
+              "kind": "todo",
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+            }
+          ]
+        },
+        "4": {
+          "round": 4,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4: plan-folder lock still held by parent run (re-taken 19:40:08Z); spec.md not written. Draft chapter is in the round 2 reply."
+            },
+            {
+              "kind": "todo",
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+            }
+          ]
+        },
+        "5": {
+          "round": 5,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: plan-folder lock still held by parent run (re-taken 19:40:56Z); spec.md not written. Draft chapter is in the round 2 reply. Rounds 2-5 changed nothing; the lock needs a human or the parent to release it."
+            },
+            {
+              "kind": "question",
+              "text": "Parent run keeps the plan-folder lock; should the orchestrator release it or grant the researcher a claim on spec.md?"
+            }
+          ]
+        },
+        "6": {
+          "round": 6,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 6: plan-folder lock still held by parent run (re-taken 19:43:03Z); spec.md not written. Rounds 2-6 changed nothing; stop automatic rounds until the lock is released."
+            },
+            {
+              "kind": "question",
+              "text": "Should the orchestrator release the plan-folder lock, or grant the researcher a claim on spec.md?"
+            }
+          ]
+        },
+        "7": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "New run (PID 51493, 2026-10-22): plan-folder lock still held by parent run; spec.md not written. Findings are in the round 2 reply. spec.md 'What research needs to settle' is still empty."
+            },
+            {
+              "kind": "question",
+              "text": "Parent run keeps the plan-folder lock. Release it, or grant the researcher a claim on spec.md? And who fills the empty 'What research needs to settle' list?"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T01:29:02-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T01:34:12-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T01:34:36-07:00",
+      "answer": "b",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 600,
+      "settled_at": "2026-10-21T11:38:58-07:00",
+      "spent": true
+    },
+    {
+      "number": 3,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:39:26-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:40:02-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:40:30-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:40:54-07:00"
+    },
+    {
+      "number": 5,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:41:18-07:00",
+      "answer": "c",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 1200,
+      "settled_at": "2026-10-21T12:43:02-07:00",
+      "spent": true
+    },
+    {
+      "number": 6,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:43:18-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-21T21:19:23-07:00"
+    }
+  ],
+  "last-known-state": {
+    "leah-researcher": {
+      "source": "harness",
+      "at": "2026-10-21T21:19:23-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Almost completed, round 1: spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:51493 (since 04:19:02Z); last seen: I have not written the `## Research` chapter."
+    }
+  }
 }

@@ -6,9 +6,385 @@
     "slug": "client-registry-and-remote-ui"
   },
   "state": "new",
-  "updated_at": "2026-10-20T03:10:15-07:00",
-  "stages": [],
-  "signatures": [],
+  "updated_at": "2026-10-21T21:18:23-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:16:53-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "to": "new",
+      "finished_at": "2026-10-21T11:19:03-07:00",
+      "up": 1447177,
+      "down": 20316,
+      "seconds": 128.4,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:24:09-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "to": "new",
+      "finished_at": "2026-10-21T11:24:32-07:00",
+      "up": 424017,
+      "down": 2960,
+      "seconds": 22.7,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:39:21-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "to": "new",
+      "finished_at": "2026-10-21T11:39:41-07:00",
+      "up": 342371,
+      "down": 1469,
+      "seconds": 16.2,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:41:15-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "to": "new",
+      "finished_at": "2026-10-21T12:41:35-07:00",
+      "up": 363272,
+      "down": 1261,
+      "seconds": 12.6,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:43:20-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "to": "new",
+      "finished_at": "2026-10-21T12:43:37-07:00",
+      "up": 384240,
+      "down": 1325,
+      "seconds": 12.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T21:18:04-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/043.00-client-registry-and-remote-ui",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "new",
+      "finished_at": "2026-10-21T21:18:23-07:00",
+      "up": 439629,
+      "down": 1947,
+      "seconds": 17.8,
+      "note": "no closing ledger line; Interrupted; no rounds left",
+      "session": "5b4a4ef8-36ed-4843-bd43-1b009369df29",
+      "moves": 1
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-21T11:16:58-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T11:18:54-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T11:24:14-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:24:26-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:39:29-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T11:39:34-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T12:41:20-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:41:24-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:43:25-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:43:30-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T21:18:17-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T21:18:18-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T21:18:23-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "no closing ledger line"
+    }
+  ],
   "messages": [],
-  "moves": 1
+  "moves": 1,
+  "last-known-state": {
+    "leah-researcher": {
+      "source": "agent",
+      "at": "2026-10-21T21:18:17-07:00",
+      "round": 6,
+      "status": "Interrupted",
+      "done": [
+        "Round 1 research (code read",
+        "123 specs green",
+        "RFC 6750); rounds 2-6 found the same lock"
+      ],
+      "remaining": [
+        "Write ## Research into spec.md; blocked: lock on 043.00/** held by openlanes pid 51493",
+        "refreshed 04:18:02Z"
+      ],
+      "next_step": "When the lock is free, acquire spec.md, write ## Research from round 1 findings, release, sign Completed",
+      "files_touched": [
+        "spec.md (not written)"
+      ]
+    }
+  },
+  "memory": {
+    "leah-researcher": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Research list in spec.md is empty; derived questions from the 'How to tell it's working' checks and 'What already exists'"
+            },
+            {
+              "kind": "note",
+              "text": "Auth contradiction: spec says one bearer token; code uses Basic (--admin-credentials) plus per-start CSRF token from GET /api/session"
+            },
+            {
+              "kind": "note",
+              "text": "Silent client drop is read-driven: nodes hash pruned only in Live.board when the 30s snapshot key expired; hash fields have no TTL"
+            },
+            {
+              "kind": "note",
+              "text": "spec.md duplicates title and sections and has an empty 'What research needs to settle' list; fix in yoda rewrite"
+            },
+            {
+              "kind": "question",
+              "text": "Plan folder lock held by openlanes pid 82944 refused leah-researcher acquire of spec.md; release it or confirm it is meant for this agent"
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 2: plan folder lock still held by openlanes pid 82944 (** on folder); acquire refused twice; spec.md not written; signed Interrupted with resume record"
+            },
+            {
+              "kind": "decision",
+              "text": "No second research wave in round 2: round 1 findings still hold and writing is blocked, so more research cannot be recorded"
+            },
+            {
+              "kind": "question",
+              "text": "Release the orchestrator's lock on the 043.00 plan folder (or confirm it is meant for leah-researcher) so the Research chapter can be written"
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 3: orchestrator lock on 043.00/** (pid 82944) still held and refreshed at 18:39:20Z; acquire refused; spec.md not written; signed Interrupted with resume record"
+            },
+            {
+              "kind": "question",
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+            }
+          ]
+        },
+        "4": {
+          "round": 4,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4: orchestrator lock on 043.00/** (pid 82944) still held, refreshed 19:41:13Z; acquire refused; spec.md not written; signed Interrupted with resume record"
+            },
+            {
+              "kind": "question",
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+            }
+          ]
+        },
+        "5": {
+          "round": 5,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: orchestrator lock on 043.00/** (pid 82944) still held, refreshed 19:43:19Z; acquire refused; spec.md not written; signed Interrupted with resume record"
+            },
+            {
+              "kind": "question",
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+            }
+          ]
+        },
+        "6": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 6: lock on 043.00/** now held by openlanes pid 51493 (refreshed 04:18:02Z); acquire refused; spec.md not written; signed Interrupted with resume record"
+            },
+            {
+              "kind": "question",
+              "text": "Release the lock on the 043.00 plan folder held by pid 51493, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:19:04-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T11:24:06-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:24:34-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T11:39:17-07:00"
+    },
+    {
+      "number": 3,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:39:43-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:41:07-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:41:35-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:43:17-07:00"
+    }
+  ]
 }

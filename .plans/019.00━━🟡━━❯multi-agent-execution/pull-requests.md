@@ -95,3 +95,40 @@ Re-run 2026-10-20 after the rebase; tree clean. The e2e proof is luke's `bin/web
 - `npm test`: 40 files, 450 tests pass
 - `bundle exec rspec`: 3999 examples, 0 failures on the second run; the first run showed 1 failure that did not recur and that I did not identify
 - `bundle exec rubocop`: 526 files, no offenses
+
+## Verification (rey-frontend, round 1, 2026-10-21)
+
+Re-run on 0c36052d; tree clean (the coverage badge the suite rewrites was reverted). The e2e proof is luke's `bin/web-e2e` 27/27 above.
+
+- `npm run typecheck`, `npm run lint`: pass
+- `npm test`: 40 files, 450 tests pass
+- `bundle exec rspec`: 3999 examples, 0 failures
+- `bundle exec rubocop`: 526 files, no offenses
+
+## Verification (luke-backend, round 1, third resume after the harness died)
+
+Re-run in the worktree, 2026-10-21, on `0c36052d` (rebased onto `e7fbd80c`), no code changed this round.
+
+- `bundle exec rspec`: 3999 examples, 0 failures, exit 0
+- `bundle exec rubocop`: 526 files inspected, no offenses detected
+- `just web-build`: `✓ built in 3.15s`, exit 0
+- Integration proof and the repo's e2e suite: `E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`, exit 0: `actions` 5/5, `board` 6/6, `chat` 4/4, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2, `subagents` 2/2; `All specs passed!  00:40  27  27`
+- Flake seen on 2026-10-20, outside this plan's files: one full run failed 3 integration examples (e.g. the luthen-rael staying-run spec). The cause is `Errno::ENOENT` from `Plans::Subject#read` (`lib/openlanes/plans/subject.rb:31`): `blocked.md` was drained between its `file?` check and `File.read`. The next run failed 1 example, and later runs were clean. rey reported the same flake (#17). Left for a separate fix.
+
+## Verification (rey-frontend, round 1, on 7b246298)
+
+Re-run after the rebase; tree clean. The e2e proof is luke's `bin/web-e2e` above.
+
+- `npm run typecheck`, `npm run lint`: pass
+- `npm test`: 43 files, 484 tests pass
+- `bundle exec rspec`: 4174 examples, 0 failures
+- `bundle exec rubocop`: 559 files, no offenses
+
+## Verification (luke-backend, round 1, fourth resume after the harness died)
+
+Re-run in the worktree, 2026-10-21, on `7b246298` (rebased onto `origin/main` `667bcf0e`), tree clean, no code changed this round.
+
+- `bundle exec rspec`: 4174 examples, 0 failures, exit 0
+- `bundle exec rubocop`: 559 files inspected, no offenses detected
+- `just web-build`: `✓ built in 3.45s`, exit 0
+- Integration proof and the repo's e2e suite: `E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`, exit 0: `actions` 5/5, `board` 6/6, `chat` 4/4, `divider` 7/7, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2, `subagents` 2/2; `All specs passed!  00:42  34  34`

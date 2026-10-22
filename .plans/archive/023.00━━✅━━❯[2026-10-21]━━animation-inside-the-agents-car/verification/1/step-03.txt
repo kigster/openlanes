@@ -1,0 +1,5 @@
+$ just web-build
+built in 2.92s
+$ just web-demo
+error: justfile does not contain recipe `web-demo`
+Did you mean `web-dev`?

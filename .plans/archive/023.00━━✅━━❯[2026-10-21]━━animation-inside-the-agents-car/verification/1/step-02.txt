@@ -1,0 +1,3 @@
+$ bundle exec rspec && bundle exec rubocop
+4075 examples, 0 failures
+547 files inspected, no offenses detected

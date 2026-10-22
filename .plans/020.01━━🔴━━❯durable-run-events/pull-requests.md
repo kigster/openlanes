@@ -36,3 +36,23 @@ hansolo's findings sit in one top-level conversation comment (id 6305090921), no
 - 6305090921, finding 2 (`blocks` counted signings): **fix**. `Report#call` sums `payload["blocks"]` per `block_raised` (an event without a count is 1), and time-to-answer pairs each of a block's questions with its own answer. Files: `lib/openlanes/events/report.rb`; spec in `spec/openlanes/events/report_spec.rb` ("when one Blocked signing leaves B1, B2 and B3 open": blocks 3, runs_needing_feedback 1, 3 answers). Fixture `spec/fixtures/events/node-b.jsonl` now says `blocks: 1` for 021.00, so the fixture still totals 3 blocks over 2 runs.
 
 Checks, 2026-10-20: `bundle exec rspec` → 4089 examples, 0 failures, 9 pending (web/dist missing). `bundle exec rubocop` → 551 files, no offenses. `bundle exec rspec spec/integration/events_report_spec.rb` → 2 examples, 0 failures.
+
+## Answers, round 2 (rey-frontend)
+
+chewie-verifier refused the commit for an edited `docs/badges/coverage_badge.svg`. HEAD already restored it (a3250ad9): `git diff origin/main -- docs/badges` is empty and the tree is clean. No front-end file is implicated; no code change. Did not run the suite, since a run rewrites the badge.
+
+## Answers, round 2
+
+chewie-verifier's "sent back for setup, verification round 1" is one top-level comment, not a review thread; `gh pr comment` is withheld, so the answer lives here.
+
+- chewie-verifier round 1 (refused to commit: `docs/badges/coverage_badge.svg` edited): **fix**, already on the branch. `spec/spec_helper.rb:39` rewrites the badge on every rspec run, and `296143d2` carried that rewrite into the plan's commit. `a3250ad9` ("Restore the coverage badge from main") put it back; `git diff origin/main -- docs/badges` is now empty. After this round's suite run `git status --short` is empty too, so nothing outside the plan's files is left for the harness to commit.
+
+Checks, 2026-10-21: `bundle exec rspec` → 4180 examples, 0 failures, 9 pending (web/dist missing); `bundle exec rubocop` → 572 files, no offenses.
+
+## Answers, round 3
+
+chewie-verifier's "rejected, verification round 3" (CI red on #105) is one top-level comment, not a review thread; `gh pr comment` is withheld, so the answer lives here.
+
+- chewie-verifier round 3 (CI red): **fix**, ported. R2D2 fixed it on the remote branch in `1edd015b` ("Record a re-rejected PR as a second pr_reviewed event"); CI on remote head `cec4e2cf` is green (test, linter, web, e2e). The harness's rebase left the local branch without that commit, so a push of the rebased branch would have dropped it. Its `lib` and `spec` hunks are applied verbatim to the working tree, badge hunk excluded: `pr_reviewed` is keyed `[pr, rejection index]` counted from github mail; fixture `node-a.jsonl` fixture-11 verdict `rejected`. Files: `lib/openlanes/engine/pr_outcomes.rb`, `spec/fixtures/events/node-a.jsonl`, `spec/openlanes/events/pr_and_answer_emit_spec.rb`.
+
+Checks, 2026-10-21: `bundle exec rspec` → 4265 examples, 0 failures, 9 pending (web/dist missing); `bundle exec rubocop` → 584 files, no offenses. `docs/badges` untouched after the run.

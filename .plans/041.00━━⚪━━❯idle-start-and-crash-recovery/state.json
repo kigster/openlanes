@@ -6,9 +6,450 @@
     "slug": "idle-start-and-crash-recovery"
   },
   "state": "new",
-  "updated_at": "2026-10-20T03:10:13-07:00",
-  "stages": [],
-  "signatures": [],
+  "updated_at": "2026-10-21T21:18:23-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:16:48-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:17:38-07:00",
+      "up": 510954,
+      "down": 8135,
+      "seconds": 48.4,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:22:45-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:23:09-07:00",
+      "up": 244834,
+      "down": 2608,
+      "seconds": 18.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:39:14-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:39:37-07:00",
+      "up": 268843,
+      "down": 1697,
+      "seconds": 17.2,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:40:17-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:40:32-07:00",
+      "up": 289931,
+      "down": 1436,
+      "seconds": 14.0,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:41:05-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:41:18-07:00",
+      "up": 206966,
+      "down": 1026,
+      "seconds": 10.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 6,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:43:14-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:43:26-07:00",
+      "up": 220165,
+      "down": 1014,
+      "seconds": 10.3,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T21:18:00-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "new",
+      "finished_at": "2026-10-21T21:18:23-07:00",
+      "up": 384210,
+      "down": 1565,
+      "seconds": 14.7,
+      "note": "Interrupted; no rounds left",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "moves": 1
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-21T11:16:54-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T11:17:30-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "lock refused"
+    },
+    {
+      "at": "2026-10-21T11:22:51-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:22:59-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:39:21-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T11:39:28-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T12:40:23-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:40:27-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:41:11-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:41:13-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:43:20-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T12:43:22-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T21:18:07-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:18:12-07:00",
+      "agent": "leah-researcher",
+      "status": "Interrupted",
+      "round": 1
+    }
+  ],
   "messages": [],
-  "moves": 1
+  "moves": 1,
+  "last-known-state": {
+    "leah-researcher": {
+      "source": "agent",
+      "at": "2026-10-21T21:18:11-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "Checked spec.md claim: held by engine pid 51493 (since 04:17:58Z)",
+        "refused; no mail"
+      ],
+      "remaining": [
+        "## Research chapter in spec.md and blocked.md; research questions list still empty"
+      ],
+      "next_step": "When the claim is free: run the test command, then write ## Research from the round-2 resume record findings",
+      "files_touched": [
+        "spec.md"
+      ]
+    }
+  },
+  "memory": {
+    "leah-researcher": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "spec.md claim refused: held by openlanes pid 82944 (leah-researcher on 041.00); research chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Left the held lock alone and signed Interrupted with a resume record instead of writing spec.md"
+            },
+            {
+              "kind": "note",
+              "text": "StateFile#previous_run_dead? uses kill -0 only; no start-time check, so a reused pid is treated as a live engine"
+            },
+            {
+              "kind": "note",
+              "text": "Child.spawn is pipe plus pgroup owned by the engine; agents do not outlive the engine today"
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 2: spec.md claim still held by engine pid 82944 (re-claimed 18:22:43Z); chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Did not break the engine's claim; signed Interrupted with resume record again"
+            },
+            {
+              "kind": "todo",
+              "text": "Run the test command and the web search for 041.00 once the spec.md claim is free"
+            },
+            {
+              "kind": "question",
+              "text": "What research needs to settle is empty in spec.md: confirm the three How-to-tell checks are the questions"
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 3: spec.md claim still held by engine pid 82944 (re-claimed 18:39:13Z); chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Skipped the rspec run: it writes a coverage badge outside the plan folder"
+            },
+            {
+              "kind": "todo",
+              "text": "Release or hand over the engine's spec.md claim, then write ## Research and run the test command"
+            }
+          ]
+        },
+        "4": {
+          "round": 4,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4: spec.md claim still held by engine pid 82944 (re-claimed 19:40:15Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims the plan folder each round and blocks the researcher: release it or change the handover"
+            }
+          ]
+        },
+        "5": {
+          "round": 5,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: spec.md claim still held by engine pid 82944 (re-claimed 19:41:03Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims the plan folder every round: needs a human to release it or fix the handover before more rounds can run"
+            }
+          ]
+        },
+        "6": {
+          "round": 6,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 6: spec.md claim still held by engine pid 82944 (re-claimed 19:43:13Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Six rounds blocked by the engine's plan-folder claim: a human must release it or fix the handover"
+            }
+          ]
+        },
+        "7": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "New engine run pid 51493 holds the 041.00 spec.md claim (since 04:17:58Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims plan folders for researchers every run: needs a human to release them or fix the handover"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:17:39-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T11:22:42-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:23:10-07:00",
+      "answer": "b",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 600,
+      "settled_at": "2026-10-21T11:39:06-07:00",
+      "spent": true
+    },
+    {
+      "number": 3,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:39:39-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:40:13-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:40:34-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:41:01-07:00"
+    },
+    {
+      "number": 5,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:41:18-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:43:08-07:00"
+    },
+    {
+      "number": 6,
+      "agent": "leah-researcher",
+      "state": "new",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:43:27-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-21T21:18:23-07:00"
+    }
+  ]
 }
