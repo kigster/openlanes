@@ -46,8 +46,8 @@ describe("ActionMenu", () => {
     await user.click(within(await open(user)).getByText("Choose an existing plan"));
     const menu = screen.getByRole("menu");
     expect(within(menu).getByText("012.00 Linear two-way sync")).toBeInTheDocument();
-    expect(within(menu).getByText("Product Block, plan, blocked 🅱️")).toBeInTheDocument();
-    expect(within(menu).getByText("New, full")).toBeInTheDocument();
+    expect(within(menu).getByText("Product Block, planning, blocked 🅱️")).toBeInTheDocument();
+    expect(within(menu).getByText("New, research")).toBeInTheDocument();
     expect(within(menu).getByText("Not listed: 001.00 in this run.")).toBeInTheDocument();
     const filter = within(menu).getByRole("searchbox", { name: "Filter plans" });
     await waitFor(() => expect(filter).toHaveFocus());
