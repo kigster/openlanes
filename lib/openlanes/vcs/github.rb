@@ -348,6 +348,22 @@ module OpenLanes
         raise Error, "could not read checks of ##{number}: #{e.message.lines.first.to_s.strip}"
       end
 
+      # CI on a branch's tip, `main` above all (R5): a pull request green on
+      # its own head still lands on whatever `main` is, so a red `main` holds
+      # every merge. Check runs, mapped onto the buckets `gh pr checks` uses,
+      # so {CiGate.verdict} reads both alike.
+      #
+      # @param branch [String]
+      # @param repo [String, nil]
+      # @return [Array<Hash>] `{name:, bucket:}`
+      # @raise [OpenLanes::Error] when GitHub cannot be read
+      def branch_checks(branch:, repo: nil)
+        out = @command.run("gh", "api", "repos/#{repo || "{owner}/{repo}"}/commits/#{branch}/check-runs").out
+        Array(JSON.parse(out)["check_runs"]).map { |c| { name: c["name"].to_s, bucket: bucket_of(c) } }
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not read checks of #{branch}: #{first_line(e)}"
+      end
+
       # Merge one pull request, as the engine does on palpatine's `auto`
       # (P4). A merge commit, which is how this repository's history reads;
       # the branch is left alone, since the plan's worktree still has it
@@ -421,6 +437,21 @@ module OpenLanes
       private
 
       def repo_flag(repo) = repo ? ["-R", repo] : []
+
+      # A check run as a `gh pr checks` bucket. An unlisted conclusion is a
+      # failure, as {CiGate} treats an unknown bucket.
+      #
+      # @param run [Hash] one entry of `check_runs`
+      # @return [String]
+      def bucket_of(run)
+        return "pending" unless run["status"].to_s == "completed"
+
+        case run["conclusion"].to_s
+        when "success", "neutral" then "pass"
+        when "skipped" then "skipping"
+        else "fail"
+        end
+      end
 
       # The first line `gh` wrote to stderr, which is the one naming the problem.
       def first_line(error)

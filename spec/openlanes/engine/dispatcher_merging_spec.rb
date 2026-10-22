@@ -43,7 +43,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     plans { |t| t.plan "033.00", :completed, "merge-risk", files:, prs: [t.open(7, "Part")] }
     assessed = false
     allow(merging).to receive(:assessed?) { assessed }
-    allow(merging).to receive(:advance).and_return(OpenLanes::Engine::Merging::Result.new(note: "waiting"))
+    allow(merging).to receive_messages(advance: OpenLanes::Engine::Merging::Result.new(note: "waiting"), rebase_queued: [])
     allow(merging).to receive(:assess) do |_, note|
       notes << note
       assessed = true
