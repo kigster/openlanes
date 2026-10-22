@@ -68,7 +68,7 @@ module OpenLanes
 
       TOP = %w[id agent depth description fixture expect].freeze
       FIXTURE = %w[state slug files repo].freeze
-      EXPECT = %w[state signed files_exist files_absent sections contains excludes changed_paths untouched depth].freeze
+      EXPECT = %w[state signed files_exist files_absent sections contains excludes changed_paths untouched spec_only depth].freeze
       BOUNDS = %w[words count changed_files changed_lines max_seconds max_tokens].freeze
 
       # What each bound may carry. `words` and `count` take one mapping or a
