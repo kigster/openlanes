@@ -62,7 +62,7 @@ module OpenLanes
         # @return [Array<String>]
         def plan(plan)
           lines = ["- #{plan["ordinal"]} #{plan["title"]}: #{plan.dig("status", "emoji")} #{plan.dig("status", "label")}, " \
-                   "#{plan["lane"]} lane, #{minutes(plan["elapsed"])} worked, $#{format("%.2f", plan["cost"].to_f)}" \
+                   "starts at #{plan["starts"]}, #{minutes(plan["elapsed"])} worked, $#{format("%.2f", plan["cost"].to_f)}" \
                    "#{", PR ##{plan.dig("pr", "number")} #{plan.dig("pr", "state")}" if plan["pr"]}"]
           Array(plan["cars"]).each { lines << car(it) }
           Array(plan["questions"]).each { lines << question(it) }

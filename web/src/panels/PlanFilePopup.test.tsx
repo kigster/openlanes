@@ -5,7 +5,7 @@ import * as api from "../api/planFiles";
 import { PlanFilePopup } from "./PlanFilePopup";
 import { renderPanel, typeInEditor } from "./testing";
 
-const FILE = "---\nlane: full\n---\n# Hello\n\nBody text\n";
+const FILE = "---\nstarts: research\n---\n# Hello\n\nBody text\n";
 
 beforeEach(() => {
   vi.spyOn(api, "readPlanFile").mockResolvedValue({ body: FILE, etag: '"e1"' });
@@ -17,7 +17,7 @@ describe("PlanFilePopup", () => {
   it("renders the markdown and the frontmatter", async () => {
     renderPanel(<PlanFilePopup ordinal="017.00" name="spec.md" editable onClose={() => {}} />);
     expect(await screen.findByRole("heading", { name: "Hello" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Frontmatter")).toHaveTextContent("lane: full");
+    expect(screen.getByLabelText("Frontmatter")).toHaveTextContent("starts: research");
     expect(api.readPlanFile).toHaveBeenCalledWith("017.00", "spec.md");
   });
 
@@ -43,7 +43,7 @@ describe("PlanFilePopup", () => {
     await waitFor(() => expect(save).toHaveBeenCalled());
     const [ordinal, name, text, etag, csrf] = save.mock.calls[0];
     expect([ordinal, name, etag, csrf]).toEqual(["017.00", "spec.md", '"e1"', "tok"]);
-    expect(text.startsWith("---\nlane: full\n---\n")).toBe(true);
+    expect(text.startsWith("---\nstarts: research\n---\n")).toBe(true);
     expect(text).toContain("more");
     await waitFor(() => expect(screen.queryByRole("button", { name: "Save Changes" })).toBeNull());
   });

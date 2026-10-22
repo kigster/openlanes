@@ -226,10 +226,10 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       it("puts every round in the same column") { expect(columns.uniq.size).to eq(1) }
     end
 
-    # Unparseable frontmatter routes as lane: full with every override
+    # Unparseable frontmatter routes as starts: research with every override
     # dropped; the run has to say so before it assigns anyone.
     it "names a plan whose spec.md frontmatter does not parse" do
-      plans { |t| t.plan("002.00", :new, "bad-yaml", files: { "spec.md" => "---\nlane: quick\nhow-to-verify:\n  - `rg x`\n---\n# Bad\n" }) }
+      plans { |t| t.plan("002.00", :new, "bad-yaml", files: { "spec.md" => "---\nstarts: building\nhow-to-verify:\n  - `rg x`\n---\n# Bad\n" }) }
       _out, err, = run
 
       expect(unwrapped(err)).to include("frontmatter ignored", "002.00", "not valid YAML")

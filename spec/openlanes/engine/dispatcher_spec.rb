@@ -506,7 +506,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     context "with the plan lane" do
       let!(:built) do
-        plans { |t| t.plan "001.00", :new, "known", files: { "spec.md" => "---\nlane: plan\n---\n#{spec_body}" } }
+        plans { |t| t.plan "001.00", :new, "known", files: { "spec.md" => "---\nstarts: planning\n---\n#{spec_body}" } }
       end
 
       it "skips research and rewriting and goes to the planner" do
@@ -523,7 +523,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "with the quick lane" do
       let!(:built) do
         plans do |t|
-          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}" }
+          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" }
         end
       end
 
@@ -541,7 +541,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "with the quick lane on a dry run" do
       let!(:built) do
         plans do |t|
-          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}" }
+          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" }
         end
       end
 
@@ -956,7 +956,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   describe "a build finished in a run that opens no pull request" do
     let!(:built) do
       plans do |t|
-        t.plan "001.00", :new, "tic-tac-toe", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}" }
+        t.plan "001.00", :new, "tic-tac-toe", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" }
       end
     end
 
@@ -1035,7 +1035,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
     let(:files) do
-      { "spec.md" => "---\nlane: quick\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n", "pull-requests.md" => "# Pull Requests\n" }
+      { "spec.md" => "---\nstarts: building\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n", "pull-requests.md" => "# Pull Requests\n" }
     end
     let!(:built) { plans { |t| t.plan "001.00", :building, "tic-tac-toe", files: } }
     let(:roster) { agents.only("r2d2-mechanic") }
@@ -1400,15 +1400,15 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    %w[full plan quick].each do |lane|
-      context "with the #{lane} lane" do
+    %w[research planning building].each do |starts|
+      context "with starts #{starts}" do
         let!(:built) do
           plans do |t|
             t.plan "034.00", :blocked, "stuck", files: { "blocked.md" => "## B1 Which?\n" }
             t.plan "050.00",
               :ready_for_planning,
               "waiter",
-              files: { "spec.md" => frontmatter(lane:, depends_on: '["034.00"]') }
+              files: { "spec.md" => frontmatter(starts:, depends_on: '["034.00"]') }
           end
         end
 

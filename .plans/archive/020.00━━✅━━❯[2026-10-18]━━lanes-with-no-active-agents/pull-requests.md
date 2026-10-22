@@ -43,7 +43,7 @@
 - `bundle exec rspec`: 3142 examples, 0 failures. `bundle exec rubocop`: 433 files, no offenses.
 - Rerun for `## How to test`, now in plan.md. `bundle exec rspec`: 3142 examples, 0 failures (one earlier full run failed once in `spec/integration/restart_spec.rb:43`, which passed 3/3 alone and on the rerun). `bundle exec rubocop`: no offenses.
 
-## luke-backend, round 1 (hansolo's 💩 on `DemoBoard`)
+## luke-backend, round 1 (hansolo's 🚫 on `DemoBoard`)
 
 - `DemoBoard` gains `stop_plan`, `restart_plan`, `set_concurrency`, worded as the engine words them; `/restart` refuses while a car runs ("already has an agent") and brings back only stopped cars. `DemoBoard#apply` now refuses any kind it has no handler for ("the demo cannot …") instead of raising `NoMethodError` on the demo thread; that also covers `respond`, `pause_discuss` and `resume_anyway`, which had the same latent crash.
 - `Demo#answer` writes the `"<id>.1"` copilot turn for `payload.source == "copilot"`, in the same `MULTI`, not on redelivery. The turn is built by `Live::Commands.echo_turn`, now a class method, so engine and demo share one definition.

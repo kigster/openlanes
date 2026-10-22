@@ -1,6 +1,6 @@
 ---
 name: openlanes-spec
-description: "Create a openlanes plan and write its spec.md: choose the lane (full, plan, quick) and depth, and record implementation suggestions, requirements, done criteria and verification. Use when the user wants to start, spec or file a feature, task or fix in a project using `.plans/`, wants to document work that already shipped, or wants to add implementation detail to an existing plan's spec."
+description: "Create a openlanes plan and write its spec.md: choose the lane (research, planning, building) and depth, and record implementation suggestions, requirements, done criteria and verification. Use when the user wants to start, spec or file a feature, task or fix in a project using `.plans/`, wants to document work that already shipped, or wants to add implementation detail to an existing plan's spec."
 ---
 
 # openlanes-spec: from intent to a spec the agents can work
@@ -51,7 +51,7 @@ Add what the user told you, and ask for the two keys that decide whether the wor
 
 ```yaml
 ---
-lane: full
+starts: research
 depth: medium
 frontend: false                 # omit to inherit .openlanes.yml; true forces the front-end agent, false forbids it
 implementation_suggestions:     # offered to agents, who may take a better route and say why

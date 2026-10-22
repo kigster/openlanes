@@ -14,9 +14,9 @@ module OpenLanes
       desc "Write .openlanes.yml at the project root and create the plans directory"
 
       option :project, desc: "Heading for INDEX.md and similar (default: the root's directory name)"
-      option :lane,
-        values: Plans::Spec::LANES.map(&:to_s),
-        desc:   "Default lane for `openlanes create`: full, plan or quick (default: full)"
+      option :starts,
+        values: Plans::Spec::STARTS.map(&:to_s),
+        desc:   "Where new plans start: research, planning or building (default: research)"
       option :frontend,
         type: :boolean,
         desc: "Whether plans have a front end; leave it out to let each plan decide"
@@ -38,7 +38,7 @@ module OpenLanes
       example [
         "                                   # ask for each value on a terminal",
         "-y --project 'Equilibris App'       # ask nothing",
-        "-y --lane plan --no-frontend -j 4   # a command-line tool, four plans at once",
+        "-y --starts planning --no-frontend -j 4   # a command-line tool, four plans at once",
         "-n                                  # show the file, write nothing"
       ]
 
@@ -98,12 +98,12 @@ module OpenLanes
       def settings(root, options)
         ask = interactive?(options)
         project = options[:project] || (ask ? prompt.ask("Project name:", default: File.basename(root)) : File.basename(root))
-        lane = options[:lane] || (ask ? prompt.select("Default lane for new plans:", Plans::Spec::LANES.map(&:to_s)) : "full")
+        starts = options[:starts] || (ask ? prompt.select("Where a new plan starts:", Plans::Spec::STARTS.map(&:to_s)) : "research")
         frontend = options.key?(:frontend) ? options[:frontend] : (ask_frontend if ask)
         jobs = options[:jobs] || (prompt.ask("Plans to run at once (blank: cores - 2):") if ask)
         quality = options[:quality] || (ask_quality if ask)
 
-        draft = Config.new(project:, lane: lane.to_sym, frontend:, jobs: count(jobs), desired_codebase_quality: quality&.to_sym)
+        draft = Config.new(project:, starts: starts.to_sym, frontend:, jobs: count(jobs), desired_codebase_quality: quality&.to_sym)
         Config.parse(draft.to_yaml, path: File.join(root, Config::FILE))
       end
 

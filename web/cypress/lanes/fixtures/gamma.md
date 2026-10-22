@@ -1,6 +1,6 @@
 ---
 title: Lane note gamma
-lane: quick
+starts: building
 ---
 
 # Lane note gamma

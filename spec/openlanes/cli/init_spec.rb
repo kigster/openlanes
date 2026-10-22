@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::CLI::Init do
       _out, err, = run
       expect(machine).to have_received(:call).with(dry_run: false)
       expect(err).to include("running openlanes setup first", "✓ gh")
-      expect(written).to eq("project" => "acme-app", "lane" => "full")
+      expect(written).to eq("project" => "acme-app", "starts" => "research")
     end
 
     it "installs nothing on a dry run" do
@@ -85,7 +85,7 @@ RSpec.describe OpenLanes::CLI::Init do
   context "without a terminal" do
     it "writes the file at the repository root, not where it was typed" do
       run
-      expect(written).to eq("project" => "acme-app", "lane" => "full")
+      expect(written).to eq("project" => "acme-app", "starts" => "research")
     end
 
     it "creates the plans directory beside it" do
@@ -98,13 +98,13 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     it "takes every value as a flag" do
-      run(project: "Acme", lane: "quick", frontend: false, jobs: "4", quality: "mvp")
-      expect(written).to eq("project" => "Acme", "lane" => "quick", "frontend" => false, "jobs" => 4, "desired_codebase_quality" => "mvp")
+      run(project: "Acme", starts: "building", frontend: false, jobs: "4", quality: "mvp")
+      expect(written).to eq("project" => "Acme", "starts" => "building", "frontend" => false, "jobs" => 4, "desired_codebase_quality" => "mvp")
     end
 
     it "writes a file every other command can read" do
-      run(lane: "plan", jobs: "2")
-      expect(OpenLanes::Config.load(repo)).to have_attributes(lane: :plan, jobs: 2)
+      run(starts: "planning", jobs: "2")
+      expect(OpenLanes::Config.load(repo)).to have_attributes(starts: :planning, jobs: 2)
     end
 
     it "refuses jobs that are not a count" do
@@ -164,7 +164,7 @@ RSpec.describe OpenLanes::CLI::Init do
     it "prints the file and writes nothing" do
       out, err, = result
       expect([out, unwrapped(err), File.exist?(file), Dir.exist?(File.join(repo, ".plans"))])
-        .to match(["project: Acme\nlane: full\n", include("nothing was written", "Would write"), false, false])
+        .to match(["project: Acme\nstarts: research\n", include("nothing was written", "Would write"), false, false])
     end
   end
 
@@ -175,7 +175,7 @@ RSpec.describe OpenLanes::CLI::Init do
     before do
       allow(prompt).to receive(:ask).with("Project name:", default: "acme-app").and_return("Acme")
       allow(prompt).to receive(:ask).with(/Plans to run at once/).and_return("3")
-      allow(prompt).to receive(:select).with(/Default lane/, %w[full plan quick]).and_return("plan")
+      allow(prompt).to receive(:select).with(/Where a new plan starts/, %w[research planning building]).and_return("planning")
       allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"]).and_return("NO")
       allow(prompt).to receive(:select).with(/desired quality of the codebase/, hash_including).and_return("high")
       allow(prompt).to receive(:select).with(/\AWrite /, %w[YES NO]).and_return(answer)
@@ -183,11 +183,11 @@ RSpec.describe OpenLanes::CLI::Init do
 
     it "asks for each value and writes the answers" do
       run
-      expect(written).to eq("project" => "Acme", "lane" => "plan", "frontend" => false, "jobs" => 3, "desired_codebase_quality" => "high")
+      expect(written).to eq("project" => "Acme", "starts" => "planning", "frontend" => false, "jobs" => 3, "desired_codebase_quality" => "high")
     end
 
     it "asks only for what no flag gave" do
-      run(project: "Flagged", lane: "quick", frontend: true, jobs: "2", quality: "mvp")
+      run(project: "Flagged", starts: "building", frontend: true, jobs: "2", quality: "mvp")
       expect(prompt).not_to have_received(:ask)
     end
 

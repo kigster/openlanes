@@ -583,7 +583,7 @@ module OpenLanes
         return {} unless form.is_a?(Hash)
 
         form = form.transform_keys(&:to_s)
-        form.slice("lane", "frontend", "depth").each_with_object({}) do |(key, value), out|
+        form.slice("starts", "frontend", "depth").each_with_object({}) do |(key, value), out|
           text = value.to_s.strip
           next if text.empty? || text == "auto"
 

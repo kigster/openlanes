@@ -1249,9 +1249,9 @@ module OpenLanes
         @runner.age!(except: busy)
       end
 
-      # Plans whose lane skips research, rewriting or planning are moved past
+      # Plans whose `starts:` skips research, rewriting or planning are moved past
       # those phases before anyone is assigned, so the first agent they meet
-      # is the one their lane starts with.
+      # is the one that value starts with.
       #
       # @param busy [Array<String>] ordinals an agent is working right now
       # @return [void]
@@ -1260,7 +1260,7 @@ module OpenLanes
           next if busy.include?(subject.feature.ordinal.to_s)
 
           moved = Lifecycle::Lanes.advance(subject, commit: true) or next
-          UI.log("lane: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+          UI.log("starts: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
         end
       end
 
@@ -2067,7 +2067,7 @@ module OpenLanes
       def target_for(agent, verdict, partner_running)
         case verdict
         when :rejected then :rejected
-        when :slop then :shit
+        when :slop then :rewrite
         else partner_running ? agent.holds_at : agent.advances_to
         end
       end

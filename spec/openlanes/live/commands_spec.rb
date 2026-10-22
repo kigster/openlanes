@@ -666,7 +666,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       before do
         send_command("create_plans",
           idea:        "A tic-tac-toe game",
-          frontmatter: { lane: "quick", research: false, frontend: "false", depth: "fast" })
+          frontmatter: { starts: "building", research: false, frontend: "false", depth: "fast" })
         apply
       end
 
@@ -674,7 +674,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
 
       it "writes the lane, front end and depth into spec.md, where routing reads them" do
         aggregate_failures do
-          expect([spec.lane, spec.frontend, spec.depth]).to eq([:quick, false, :fast])
+          expect([spec.starts, spec.frontend, spec.depth]).to eq([:building, false, :fast])
           expect(spec.problems).to be_empty
           expect(created.read("spec.md")).to include("A tic-tac-toe game")
         end
@@ -685,12 +685,12 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       before do
         send_command("create_plans",
           idea:        "A tic-tac-toe game",
-          frontmatter: { lane: "full", research: true, frontend: "auto", depth: "auto" })
+          frontmatter: { starts: "research", research: true, frontend: "auto", depth: "auto" })
         apply
       end
 
       it "writes only the lane, and nothing for auto or research" do
-        expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\nlane: full\n---\n\n# ")
+        expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\nstarts: research\n---\n\n# ")
       end
     end
 

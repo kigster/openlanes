@@ -28,7 +28,7 @@ hansolo's review arrived as one PR conversation comment, not inline review comme
 
 hansolo's round-2 review is again one PR conversation comment, with no inline threads to reply in.
 
-1. `docs/WORKFLOW.md` contradicts the state machine: **fix**. Ran `just update-workflow`; `docs/WORKFLOW.md` now has `in_review --> building` in the mermaid diagram and the 👀 row reads `🟡 🧪 ✅ 🔴 💩 ❌`. No other line changed.
+1. `docs/WORKFLOW.md` contradicts the state machine: **fix**. Ran `just update-workflow`; `docs/WORKFLOW.md` now has `in_review --> building` in the mermaid diagram and the 👀 row reads `🟡 🧪 ✅ 🔴 🚫 ❌`. No other line changed.
 
 ## Verification, round 5 (luke-backend)
 

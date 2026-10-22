@@ -21,7 +21,7 @@ export interface Station {
   agents: string[]; // agents whose `handles:` includes this station
 }
 
-export type Lane = "full" | "plan" | "quick";
+export type Starts = "research" | "planning" | "building";
 
 export interface Status {
   key: string; // Plans::STATUSES key
@@ -131,7 +131,7 @@ export interface Plan {
   slug: string;
   summary: string; // spec.md's first paragraph of prose, "" when it has none
   status: Status;
-  lane: Lane;
+  starts: Starts;
   station: string; // Station.key the plan is at
   up: number;
   down: number;
@@ -195,7 +195,7 @@ export interface Snapshot {
   run: Run;
   stations: Station[];
   plans: Plan[]; // plans this node is working on
-  backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "lane">>; // not complete, not claimed: for "Choose an existing plan"
+  backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "starts">>; // not complete, not claimed: for "Choose an existing plan"
   models: ModelChoice[];
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
   redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"

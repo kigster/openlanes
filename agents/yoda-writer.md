@@ -8,7 +8,7 @@ effort: medium
 timeout: 900
 ledger: [spec.md]
 phase: specification
-lanes: [full]
+starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
 ---

@@ -1,6 +1,6 @@
 ---
 created: 2026-10-16
-lane: plan
+starts: planning
 ---
 
 # Resume Sessions Across Rounds

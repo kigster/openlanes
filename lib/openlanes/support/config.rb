@@ -7,7 +7,7 @@ module OpenLanes
   # A project's `.openlanes.yml`, at its root:
   #
   #   project: Equilibris App   # heading for INDEX.md; default: the root's name
-  #   lane: full                # default lane for `openlanes create`
+  #   starts: research          # default for `openlanes create`: one of Spec::STARTS
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
@@ -43,7 +43,7 @@ module OpenLanes
   # spec.md frontmatter, this file, the built-in default. The file supplies
   # defaults and nothing else.
   #
-  # `jobs`, `lane` and `project` are each one command's option said once for
+  # `jobs`, `starts` and `project` are each one command's option said once for
   # the whole project, so each has a second spelling under `commands:`.
   # Writing both is an error rather than a tie-break: two answers to one
   # question is a file somebody will edit in the wrong place.
@@ -56,8 +56,8 @@ module OpenLanes
   #   @return [String, nil] the file, nil when the project has none
   # @!attribute [r] project
   #   @return [String, nil]
-  # @!attribute [r] lane
-  #   @return [Symbol, nil] one of {Plans::Spec::LANES}
+  # @!attribute [r] starts
+  #   @return [Symbol, nil] one of {Plans::Spec::STARTS}
   # @!attribute [r] frontend
   #   @return [Boolean, nil] nil when each plan decides
   # @!attribute [r] jobs
@@ -99,7 +99,7 @@ module OpenLanes
   #     request back to its builder to write one
   Config = Data.define(:path,
     :project,
-    :lane,
+    :starts,
     :frontend,
     :jobs,
     :redis_url,
@@ -113,7 +113,7 @@ module OpenLanes
     :merge_max_rejections,
     :desired_codebase_quality,
     :coverage) do
-    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
+    def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
       desired_codebase_quality: nil, coverage: nil)
       super
@@ -187,7 +187,7 @@ module OpenLanes
     #
     # @return [String]
     def to_yaml
-      settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
+      settings = { "project" => project, "starts" => starts&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
                    "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
@@ -213,7 +213,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
+    KEYS = %w[project starts frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
               questions review coverage].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
@@ -251,7 +251,7 @@ module OpenLanes
     REDIS_SCHEMES = %w[redis rediss unix].freeze
 
     # Top-level keys that are one command's option, by the command that takes it.
-    SHORTHANDS = { project: "index", lane: "create", jobs: "run" }.freeze
+    SHORTHANDS = { project: "index", starts: "create", jobs: "run" }.freeze
 
     class << self
       # @param root [String] the project root
@@ -295,7 +295,7 @@ module OpenLanes
 
         config = new(path:,
           project:   project(settings, path),
-          lane:      lane(settings, path),
+          starts:    starts_at(settings, path),
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
@@ -329,13 +329,13 @@ module OpenLanes
       end
 
       # @return [Symbol, nil]
-      def lane(settings, path)
-        return nil unless settings.key?("lane")
+      def starts_at(settings, path)
+        return nil unless settings.key?("starts")
 
-        value = settings["lane"].to_s.strip.downcase.to_sym
-        return value if Plans::Spec::LANES.include?(value)
+        value = settings["starts"].to_s.strip.downcase.to_sym
+        return value if Plans::Spec::STARTS.include?(value)
 
-        fail_with(path, "lane: #{settings["lane"].inspect} is not one of #{Plans::Spec::LANES.join(", ")}")
+        fail_with(path, "starts: #{settings["starts"].inspect} is not one of #{Plans::Spec::STARTS.join(", ")}")
       end
 
       # @return [Boolean, nil]

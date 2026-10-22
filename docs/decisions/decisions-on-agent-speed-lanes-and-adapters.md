@@ -53,7 +53,7 @@ The Claude adapter passes `--setting-sources project,local`, `--strict-mcp-confi
 
 ```yaml
 ---
-lane: quick        # full (default) | plan | quick
+starts: building        # full (default) | plan | quick
 frontend: false    # optional; true forces, false forbids, absent = decided by plan-frontend.md
 depth: fast        # fast | medium | deep, optional, sets the default effort
 phases:            # optional per-phase overrides
@@ -65,9 +65,9 @@ phases:            # optional per-phase overrides
 - `full`: leah → yoda → luthen-rael → luke (+ rey) → han. Today's behaviour.
 - `plan`: skips research and rewriting. The harness writes a blank `plan.md` and moves the folder ⚪️ → 📋 itself (an existing edge), and luthen-rael plans from the spec as written.
 - `quick`: skips research, rewriting and planning. The harness writes a one-unit `plan.md` (`## Task`) and moves the folder ⚪️ → ⭐️ through the existing `plan` event, where `r2d2-mechanic` is the only builder serving the lane. It takes the plan 🟡 → 🟢, and Han still reviews. No new state and no new edge were needed.
-- `openlanes create --lane quick "split large migration"` writes the frontmatter.
+- `openlanes create --starts building "split large migration"` writes the frontmatter.
 
-Agents declare the lanes they serve (`lanes: [full]`, …). Absent means every lane.
+Agents declare the lanes they serve (`starts: [research]`, …). Absent means every lane.
 
 ### D5. Per-agent coding agent, model and effort, overridable per phase
 
