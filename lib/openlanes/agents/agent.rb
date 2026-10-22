@@ -52,6 +52,10 @@ module OpenLanes
     # @!attribute [r] toggle
     #   @return [String, nil] a spec.md frontmatter key that switches it off
     #     when false and on when true
+    # @!attribute [r] confined_to
+    #   @return [Array<String>] the plan files, relative to its folder, that
+    #     are all it may edit; empty means it is not confined. Enforced by
+    #     {Execution::Executor}, not asked for in the prompt.
     Agent = Data.define(:name,
       :description,
       :handles,
@@ -72,14 +76,18 @@ module OpenLanes
       :phase,
       :lanes,
       :needs,
-      :toggle) do
+      :toggle,
+      :confined_to) do
       def initialize(ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: Adapters::DEFAULT,
-        phase: nil, lanes: [], needs: [], toggle: nil, **rest)
+        phase: nil, lanes: [], needs: [], toggle: nil, confined_to: [], **rest)
         super
       end
 
       # @return [Boolean] whether this agent changes anything on disk
       def read_only? = advances_to.nil?
+
+      # @return [Boolean] whether {#confined_to} limits what it may edit
+      def confined? = !confined_to.empty?
 
       # @param status [OpenLanes::Plans::Status]
       # @return [Boolean]

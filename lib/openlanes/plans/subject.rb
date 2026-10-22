@@ -32,6 +32,12 @@ module OpenLanes
         end
       end
 
+      # Forget the memoized reads, after the caller wrote a file itself: the
+      # guards would otherwise judge the contents from before the write.
+      #
+      # @return [self]
+      def reread! = tap { @reads = {} }
+
       # @return [Array<OpenLanes::Plans::PullRequest>]
       def pull_requests = @pull_requests ||= PullRequests.new(dir: feature.path).all
 

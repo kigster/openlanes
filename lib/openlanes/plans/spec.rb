@@ -54,6 +54,11 @@ module OpenLanes
     #   @return [Array<String>, nil] canonical `NNN.MM` ordinals of the plans
     #     this one waits for. nil when the key is absent ("not checked yet"),
     #     which is not the same as `[]` ("checked, none").
+    # @!attribute [r] linked
+    #   @return [Boolean] whether an agent or a person has answered the key:
+    #     `[none]` or a non-empty list. A missing key and a bare `[]` are both
+    #     unanswered, since `[]` is what a template leaves behind as often as
+    #     what a linker writes on purpose.
     # @!attribute [r] how_to_test
     #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
     #     {#how_to_verify} when the spec has no such section (until plan 007).
@@ -68,12 +73,16 @@ module OpenLanes
       :completed_when,
       :how_to_verify,
       :depends_on,
+      :linked,
       :how_to_test,
       :problems) do
       def initialize(lane: :full, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, problems: [])
+        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [])
         super
       end
+
+      # @return [Boolean] see {#linked}
+      def linked? = linked
 
       # @param phase [String, Symbol, nil]
       # @return [Hash{String => String}] what the author set for that phase
@@ -119,6 +128,11 @@ module OpenLanes
       # The plans this one waits for. Quoted canonical ordinals only: YAML
       # reads a bare `[034]` as octal 28, a silent wrong answer.
       DEPENDS_ON_KEY = "depends_on"
+
+      # The one word {DEPENDS_ON_KEY} takes besides a plan number:
+      # `depends_on: [none]` says someone looked and found nothing, where
+      # `[]` cannot be told apart from a template nobody filled in.
+      NO_DEPENDENCIES = "none"
 
       # Where `how-to-verify:` lives now (decision M10): a section of the
       # spec's body, written by its author like every other, rather than a
@@ -229,6 +243,7 @@ module OpenLanes
             completed_when: notes(meta, COMPLETED_WHEN_KEY, problems),
             how_to_verify: notes(meta, HOW_TO_VERIFY_KEY, problems),
             depends_on: depends_on(meta, problems),
+            linked: linked?(meta),
             how_to_test: notes(meta, HOW_TO_VERIFY_KEY, []),
             problems:)
         end
@@ -403,12 +418,19 @@ module OpenLanes
         # by the time it reaches here. `"034"` is normalised to `"034.00"`, so
         # every caller compares one form.
         #
+        # {NO_DEPENDENCIES} on its own reads as `[]`: no edges, and no
+        # problem. Beside a plan number it contradicts that number, so it is
+        # named and dropped, and the numbers stand.
+        #
         # @return [Array<String>, nil] nil when the key is absent
         def depends_on(meta, problems)
           return nil unless meta.key?(DEPENDS_ON_KEY)
 
-          value = meta[DEPENDS_ON_KEY]
-          items = value.nil? ? [] : Array(value)
+          items = dependency_items(meta)
+          if items.include?(NO_DEPENDENCIES)
+            items -= [NO_DEPENDENCIES]
+            problems << "#{DEPENDS_ON_KEY}: #{NO_DEPENDENCIES} cannot stand beside a plan number" if items.any?
+          end
           items.filter_map do |item|
             ordinal = item.is_a?(String) && Ordinal.parse(item)
             next ordinal.to_s if ordinal
@@ -417,6 +439,15 @@ module OpenLanes
             nil
           end.uniq.sort
         end
+
+        # @return [Array<Object>] the key's entries, a scalar as one entry
+        def dependency_items(meta)
+          value = meta[DEPENDS_ON_KEY]
+          value.nil? ? [] : Array(value)
+        end
+
+        # @return [Boolean] true for `[none]` or any non-empty list
+        def linked?(meta) = meta.key?(DEPENDS_ON_KEY) && dependency_items(meta).any?
 
         # @return [Hash]
         def phases(value, problems)

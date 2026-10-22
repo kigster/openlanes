@@ -72,21 +72,27 @@ Each item names its check. Numbers follow the 008.00 spec.
 
 Item 7 runs ewoki in each plan's worktree, while "When it runs" says the linker runs only on `main` in the primary repo. Which holds?
 
-### D1 (decision) — Primary repo only
+### D1 (decision) — It Depends on When
 
 - Answered on 2026-10-20
 - By the product owner
 
-Primary repo only. The `link` command runs on `main`, and `run` makes a pre-pass on `main` before the first round. The per-plan dispatcher gate (item 7) is dropped.
+Whereever the spec has finished being written, and is ready to go into planning during the automated process.
+
+During the creation of new plans (at the end of the create command but only on that plan). 
+
+The `link` command should ideally run on `main`, and should print a warning when it's run in a worktree. But it can also run in a worktree. 
 
 ### B2 (answered) — What "no dependencies" looks like
 
-Item 8 writes `[]` for "none", and item 9 never touches an existing key. "When it runs" re-checks `[]`. How does a human say "no dependencies, leave it alone"?
+Item 8 writes `[]` for "don't know", and item 9 never touches an existing key. "When it runs", any [] are checked. 
 
 ### D2 (decision) — `[none]` means checked, none
 
 - Answered on 2026-10-20
 - By the product owner
+
+The ones that are skipped are either the ones that have plans, eg `[ "008.01", "009.00" ] or it has the word "none": [ none ]
 
 Write `depends_on: [none]` for "checked, none". Re-check a missing key and `[]`. Skip `[none]` and any non-empty list. `Spec#depends_on` reads `[none]` as no edges.
 
@@ -121,7 +127,7 @@ Items 6–9, `link`, the main-branch guard, `git pull`, the branch and PR flow, 
 - Answered on 2026-10-20
 - By the product owner
 
-Two plans. 008.01 covers the agent, `Registry#preceding`, executor grants, the `link` command with its main and pull guard, the `[none]` rule, and evals. A new 008.03 covers the linking PR flow (with the narrow auto-merge from D3), the `run` pre-pass and tsort ordering.
+Everything is in this one plan.
 
 ### B6 (answered) — System lane in the UI
 
