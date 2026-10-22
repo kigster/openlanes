@@ -237,6 +237,24 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
+    it "merges when CI on main reports commit statuses only, as CircleCI does" do
+      edit_gh do |gh|
+        gh["main_checks"] = []
+        gh["main_statuses"] = [{ "context" => "ci/circleci: test", "state" => "success" }]
+      end
+
+      expect(merging.assess(plan, "auto")).to have_attributes(to: :approved, merged: true)
+    end
+
+    it "holds the merge on a red status on main beside a green check run" do
+      edit_gh { it["main_statuses"] = [{ "context" => "ci/circleci: test", "state" => "failure" }] }
+
+      aggregate_failures do
+        expect(merging.assess(plan, "auto").note).to eq("PR #1 waits on CI on main, which is red")
+        expect(merges).to be_empty
+      end
+    end
+
     it "does not merge a pull request whose branch is behind main" do
       edit_gh { it["prs"]["1"]["merge_state"] = "BEHIND" }
       result = merging.assess(plan, "auto")

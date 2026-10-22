@@ -350,16 +350,21 @@ module OpenLanes
 
       # CI on a branch's tip, `main` above all (R5): a pull request green on
       # its own head still lands on whatever `main` is, so a red `main` holds
-      # every merge. Check runs, mapped onto the buckets `gh pr checks` uses,
-      # so {CiGate.verdict} reads both alike.
+      # every merge. Check runs and commit statuses both, mapped onto the
+      # buckets `gh pr checks` uses, so {CiGate.verdict} reads them alike.
+      # CircleCI reports statuses only: reading check runs alone saw no CI on
+      # `main` and held every merge, and missed a red status beside a green run.
       #
       # @param branch [String]
       # @param repo [String, nil]
       # @return [Array<Hash>] `{name:, bucket:}`
       # @raise [OpenLanes::Error] when GitHub cannot be read
       def branch_checks(branch:, repo: nil)
-        out = @command.run("gh", "api", "repos/#{repo || "{owner}/{repo}"}/commits/#{branch}/check-runs").out
-        Array(JSON.parse(out)["check_runs"]).map { |c| { name: c["name"].to_s, bucket: bucket_of(c) } }
+        commit = "repos/#{repo || "{owner}/{repo}"}/commits/#{branch}"
+        runs = JSON.parse(@command.run("gh", "api", "#{commit}/check-runs").out)["check_runs"]
+        statuses = JSON.parse(@command.run("gh", "api", "#{commit}/status").out)["statuses"]
+        Array(runs).map { |c| { name: c["name"].to_s, bucket: bucket_of(c) } } +
+          Array(statuses).map { |s| { name: s["context"].to_s, bucket: status_bucket(s) } }
       rescue TTY::Command::ExitError, JSON::ParserError => e
         raise Error, "could not read checks of #{branch}: #{first_line(e)}"
       end
@@ -449,6 +454,19 @@ module OpenLanes
         case run["conclusion"].to_s
         when "success", "neutral" then "pass"
         when "skipped" then "skipping"
+        else "fail"
+        end
+      end
+
+      # A commit status as a `gh pr checks` bucket. `error`, and any state
+      # GitHub adds later, is a failure.
+      #
+      # @param status [Hash] one entry of `statuses`
+      # @return [String]
+      def status_bucket(status)
+        case status["state"].to_s
+        when "success" then "pass"
+        when "pending" then "pending"
         else "fail"
         end
       end
