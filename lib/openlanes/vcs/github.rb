@@ -283,16 +283,19 @@ module OpenLanes
       # @param number [Integer]
       # @param repo [String, nil]
       # @param add [Plans::ReviewLabel]
+      # @param also [Array<Plans::ReviewLabel>] labels added beside +add+ that
+      #   are not verdicts, such as {Plans::ReviewLabel::OPENLANES}
       # @param remove [Array<String>] label names to take off
       # @param create_missing [Boolean] create +add+ on the repository first;
       #   false when the caller already has, once, for many pull requests
       # @return [Array<String>] the labels the pull request is left with
       # @raise [OpenLanes::Error]
-      def swap_label(number:, add:, repo: nil, remove: [], create_missing: true)
-        ensure_label(add, repo:) if create_missing
-        removing = remove.map(&:to_s) - [add.name]
+      def swap_label(number:, add:, repo: nil, also: [], remove: [], create_missing: true)
+        adding = [add, *also]
+        adding.each { ensure_label(it, repo:) } if create_missing
+        removing = remove.map(&:to_s) - adding.map(&:name)
         begin
-          edit_labels(number, add, removing, repo)
+          edit_labels(number, adding, removing, repo)
         rescue Error
           raise if removing.empty?
 
@@ -300,7 +303,7 @@ module OpenLanes
           # edit (open question 6). Adding alone would leave any of `removing`
           # it does carry beside the new one, two verdicts at once, so ask what
           # is still there and take exactly that off. A second failure is real.
-          edit_labels(number, add, labels(number:, repo:) & removing, repo)
+          edit_labels(number, adding, labels(number:, repo:) & removing, repo)
         end
         labels(number:, repo:)
       end
@@ -477,13 +480,12 @@ module OpenLanes
         stderr.empty? ? error.message.lines.first.to_s.strip : stderr
       end
 
-      def edit_labels(number, add, removing, repo)
+      def edit_labels(number, adding, removing, repo)
         @command.run("gh",
           "pr",
           "edit",
           number.to_s,
-          "--add-label",
-          add.name,
+          *adding.flat_map { ["--add-label", it.name] },
           *removing.flat_map { |r| ["--remove-label", r] },
           *repo_flag(repo))
       rescue TTY::Command::ExitError => e

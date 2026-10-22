@@ -2,8 +2,9 @@
 
 module OpenLanes
   module Vcs
-    # Makes the repository's review labels match {Plans::ReviewLabel::ALL}
-    # (R3): creates the missing, recolours the mismatched, leaves the rest.
+    # Makes the repository's labels match {Plans::ReviewLabel::SYNCED}: R3's
+    # review labels and `openlanes`. Creates the missing, recolours the
+    # mismatched, leaves the rest.
     #
     # Run once when the engine starts on a project. Labelling a pull request
     # still creates a missing label on first use, but never recolours one, so
@@ -34,7 +35,7 @@ module OpenLanes
 
       # @param github [GitHub]
       # @param labels [Array<Plans::ReviewLabel>]
-      def initialize(github: GitHub.new, labels: Plans::ReviewLabel::ALL)
+      def initialize(github: GitHub.new, labels: Plans::ReviewLabel::SYNCED)
         @github = github
         @labels = labels
       end

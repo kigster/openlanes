@@ -79,6 +79,17 @@ module OpenLanes
       # Either verdict: the pull request is complete (P2).
       COMPLETE = [AUTO_MERGED, MERGE_MANUALLY].freeze
 
+      # Not a verdict, and so not in {ALL}, which a new verdict takes off: it
+      # marks every pull request openlanes opened, and stays there. The
+      # publisher adds it beside {INITIAL}, and {SYNCED} keeps its colour.
+      OPENLANES = new(name: "openlanes",
+        colour: "00FFFF",
+        meaning: "opened by openlanes from a plan in .plans",
+        passing: false)
+
+      # Every label {Vcs::LabelSync} creates and recolours when a run starts.
+      SYNCED = [*ALL, OPENLANES].freeze
+
       # Not a verdict, and so not in {ALL}: {Vcs::LabelSync} never creates or
       # recolours it. Its presence on a repository is the one sign that
       # {Vcs::LabelMigration} has finished there. The colour of
