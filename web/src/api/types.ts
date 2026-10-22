@@ -164,6 +164,15 @@ export interface ModelChoice {
   rates: { in: number; out: number }; // dollars per million tokens
 }
 
+/** Set once the engine has recovered from a Redis outage this run (plan 022); absent or null otherwise. */
+export interface Outage {
+  started_at: Iso;
+  ended_at: Iso;
+  seconds: number;
+  measured_by: "heartbeat" | "clock";
+  reconciled_from: "redis" | "file" | null;
+}
+
 export interface Run {
   status: "running" | "wrapping_up" | "quitting" | "idle";
   started_at: Iso | null;
@@ -172,6 +181,7 @@ export interface Run {
   cost: number;
   agents_working: number;
   jobs: number; // the run's concurrency limit, changed live by /concurrency
+  outage?: Outage | null; // optional: an engine older than plan 022 never sends it
 }
 
 /** What the engine publishes every tick, per node. The page's whole state. */

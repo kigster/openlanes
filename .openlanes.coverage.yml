@@ -1,0 +1,4 @@
+command: bundle exec rspec
+report:  coverage/.resultset.json
+format:  simplecov
+minimum: 95

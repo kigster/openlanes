@@ -4,6 +4,12 @@ import { axe } from "vitest-axe";
 import { Header, type HeaderProps } from "./Header";
 import { currentTheme } from "./useTheme";
 import { sampleBoard } from "../board/sample";
+import type { Snapshot } from "../api/types";
+import freshJson from "../api/fixtures/snapshot.json";
+import recoveredJson from "../api/fixtures/snapshot-outage.json";
+
+const fresh = freshJson as unknown as Snapshot;
+const recovered = recoveredJson as unknown as Snapshot;
 
 const props = (over: Partial<HeaderProps> = {}): HeaderProps => ({
   snapshot: sampleBoard().me,
@@ -128,4 +134,23 @@ it("offers narrow lanes as a pressed-or-not toggle", async () => {
 it("has no lanes toggle when nobody handles it", () => {
   render(<Header {...props()} />);
   expect(screen.queryByRole("button", { name: "Narrow lanes" })).toBeNull();
+});
+
+describe("Redis outage notice", () => {
+  const at = Date.parse(fresh.at);
+  it("says nothing when the snapshot is fresh and no outage is recorded", () => {
+    render(<Header {...props({ snapshot: fresh, now: at + 5000 })} />);
+    expect(screen.queryByText(/Redis/)).toBeNull();
+  });
+
+  it("warns when the snapshot is older than the threshold", () => {
+    render(<Header {...props({ snapshot: fresh, now: at + 42000 })} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Engine not publishing for 42 s, Redis may be down");
+  });
+
+  it("reports a recovered outage and which side the run state came from", () => {
+    render(<Header {...props({ snapshot: recovered, now: Date.parse(recovered.at) + 1000 })} />);
+    expect(screen.getByTestId("outage-recovered")).toHaveTextContent("Redis was down 72 s (by heartbeat), run state from redis");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
