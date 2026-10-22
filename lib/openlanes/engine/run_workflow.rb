@@ -394,6 +394,7 @@ module OpenLanes
           dry_run:      @dry_run,
           publisher:,
           verification: verification_for(publisher, worktree),
+          merging:      merging_for(publisher, worktree),
           on_board:     live&.on_board,
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -486,6 +487,25 @@ module OpenLanes
           # an answer of mvp lowers the cap to 1 as soon as it is given.
           max_rejections: -> { Config.current.max_rejections })
         Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
+      end
+
+      # Merging (P1 to P5) labels, merges and rebases on GitHub, so it runs
+      # only where verification does: a plan never published has no pull
+      # request to merge, and a dry run changes nothing.
+      #
+      # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil]
+      # @return [OpenLanes::Engine::Merging, nil]
+      def merging_for(publisher, worktree)
+        return nil if publisher.nil? || worktree.nil? || @dry_run
+
+        Merging.new(github: Vcs.github,
+          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
+          # Read live, as the quality is: a person may switch `merge.by`
+          # while a plan waits at 🏁.
+          merge_by: -> { Config.current.merger },
+          worktree:,
+          publisher:)
       end
 
       # What the runner is told about idling past its fixed points. With its

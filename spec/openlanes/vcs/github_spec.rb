@@ -178,6 +178,39 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#merge" do
+    it "merges with a merge commit, pinned to the head CI was read for" do
+      github.merge(number: 12, head: "abc123", repo: "acme/widgets")
+
+      expect(command).to have_received(:run)
+        .with("gh", "pr", "merge", "12", "--merge", "--match-head-commit", "abc123", "-R", "acme/widgets")
+    end
+
+    it "names the pull request GitHub refused to merge" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr merge",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "not mergeable")))
+
+      expect { github.merge(number: 12, head: "abc123") }.to raise_error(OpenLanes::Error, /could not merge #12: not mergeable/)
+    end
+  end
+
+  describe "#update_branch" do
+    it "rebases the pull request onto its base on GitHub's side" do
+      github.update_branch(number: 13, repo: "acme/widgets")
+
+      expect(command).to have_received(:run).with("gh", "pr", "update-branch", "13", "--rebase", "-R", "acme/widgets")
+    end
+
+    it "says the branch did not rebase, conflicts among the reasons" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr update-branch",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "conflicts")))
+
+      expect { github.update_branch(number: 13) }.to raise_error(OpenLanes::Error, /could not rebase #13 onto its base: conflicts/)
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")
@@ -247,7 +280,8 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     let(:payload) do
       { number: 12, title: "Add health checks", url: "https://github.com/o/r/pull/12",
        state: "MERGED", isDraft: false, mergedAt: "2026-08-01T10:00:00Z",
-       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }] }.to_json
+       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }],
+       mergeStateStatus: "BEHIND" }.to_json
     end
 
     it "reads one pull request by number or URL" do
@@ -255,6 +289,15 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
 
       expect(described_class.new(command:).pull_request("12")).to include(number: 12, state: "Merged 🟣", body: "Adds /healthz.")
+    end
+
+    it "asks gh for mergeStateStatus and carries it as merge_state" do
+      viewed = github.pull_request("12")
+
+      aggregate_failures do
+        expect(command).to have_received(:run).with("gh", "pr", "view", "12", "--json", described_class::VIEW_FIELDS.join(","))
+        expect(viewed).to include(merge_state: "BEHIND")
+      end
     end
 
     # PrWatch asks for a pull request `gh pr list` left out, and reads it as

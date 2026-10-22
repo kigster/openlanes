@@ -135,7 +135,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
 
   after { [origin, worktrees].each { FileUtils.rm_rf(it) } }
 
-  it "takes a passing PR from approval to ready-to-merge once CI is green" do
+  it "takes a passing PR from approval to ready-to-merge once CI is green, and the plan on to 🏁" do
     runner, attempts = run(agent)
     pushed = on_origin.grep(%r{/verification/1/}).map { File.basename(it) }
     checks("pending")
@@ -151,7 +151,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
       expect(pushed).to contain_exactly("final.png", "report.md")
       expect(waiting).to eq(%w[review-approved])
       expect(labels).to eq(%w[ready-to-merge])
-      expect(plan.status.key).to eq(:verifying)
+      expect(plan.status.key).to eq(:completed)
       expect(gh_calls.map { it.take(2) }).not_to include(%w[pr merge])
       expect(alive_children).to be_empty
     end

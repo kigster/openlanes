@@ -571,6 +571,39 @@ module OpenLanes
         update { |data| (data["extensions"] || []).find { it["number"] == Integer(number) }&.store("spent", true) }
       end
 
+      # ---- merge risk ---------------------------------------------------------
+
+      # palpatine's verdicts for this visit to 🏁 (P1, P4), keyed by pull
+      # request number, plus the moments the engine rebased a sibling (P5).
+      # A visit is told apart by {#moves}: a plan sent back to 🔴 and
+      # brought to 🏁 again has moved since, so its old verdicts no longer
+      # stand and palpatine weighs the new code.
+      #
+      # @return [Hash, nil] `moves`, `at`, `verdicts` and `rebased`, nil when
+      #   palpatine has not ruled on this visit
+      def merge_risk
+        record = read["merge_risk"] or return nil
+        record["moves"] == moves ? record : nil
+      end
+
+      # @param verdicts [Hash{Integer, String => String}] number => `auto` or `manual`
+      # @param at [Time]
+      # @return [Hash] the record kept
+      def assess!(verdicts, at: Time.now)
+        update do |data|
+          data["merge_risk"] = { "moves" => data["moves"].to_i, "at" => at.iso8601,
+                                 "verdicts" => verdicts.to_h { |n, v| [n.to_s, v.to_s] }, "rebased" => {} }
+        end
+        merge_risk
+      end
+
+      # @param number [Integer] the sibling pull request the engine rebased
+      # @param at [Time]
+      # @return [void]
+      def rebased!(number, at: Time.now)
+        update { |data| data["merge_risk"]&.fetch("rebased")&.store(number.to_s, at.iso8601) }
+      end
+
       # ---- memory -----------------------------------------------------------
 
       # Where the journals live in the document (M2).

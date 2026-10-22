@@ -91,7 +91,9 @@ module OpenLanes
 
       # Fields asked of `gh pr view`, which unlike `pr list` can be told about
       # one pull request in another repository.
-      VIEW_FIELDS = %w[number title url headRefName state isDraft mergedAt body labels].freeze
+      VIEW_FIELDS = %w[
+        number title url headRefName headRefOid state isDraft mergedAt body labels mergeStateStatus
+      ].freeze
 
       # A reference to one pull request: a bare number, a `#`-prefixed number,
       # or a full URL to a GitHub pull request or a GitLab merge request.
@@ -119,8 +121,8 @@ module OpenLanes
       # One pull request, by number or URL.
       #
       # @param ref [String] "12", "#12" or "https://github.com/o/r/pull/12"
-      # @return [Hash] `{number:, title:, url:, branch:, state:, open:, labels:, body:}`,
-      #   the keys {#pulls} gives a row plus the body
+      # @return [Hash] `{number:, title:, url:, branch:, head:, state:, open:, labels:, body:, merge_state:}`,
+      #   the keys {#pulls} gives a row plus the body and GitHub's `mergeStateStatus`
       # @raise [OpenLanes::Error]
       def pull_request(ref)
         out = @command.run("gh", "pr", "view", ref.to_s, "--json", VIEW_FIELDS.join(",")).out
@@ -128,14 +130,16 @@ module OpenLanes
 
         pr = JSON.parse(out)
         {
-          number: pr["number"],
-          title:  pr["title"].to_s,
-          url:    pr["url"].to_s,
-          branch: pr["headRefName"].to_s,
-          state:  self.class.state_label(pr),
-          open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
-          labels: Array(pr["labels"]).map { |l| l["name"] },
-          body:   pr["body"].to_s
+          number:      pr["number"],
+          title:       pr["title"].to_s,
+          url:         pr["url"].to_s,
+          branch:      pr["headRefName"].to_s,
+          head:        pr["headRefOid"].to_s,
+          state:       self.class.state_label(pr),
+          open:        pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+          labels:      Array(pr["labels"]).map { |l| l["name"] },
+          body:        pr["body"].to_s,
+          merge_state: pr["mergeStateStatus"].to_s
         }
       rescue TTY::Command::ExitError, JSON::ParserError => e
         raise Error, "could not read pull request #{ref}: #{e.message.lines.first.to_s.strip}"
@@ -342,6 +346,36 @@ module OpenLanes
         JSON.parse(out).map { |c| { name: c["name"].to_s, bucket: c["bucket"].to_s } }
       rescue JSON::ParserError => e
         raise Error, "could not read checks of ##{number}: #{e.message.lines.first.to_s.strip}"
+      end
+
+      # Merge one pull request, as the engine does on palpatine's `auto`
+      # (P4). A merge commit, which is how this repository's history reads;
+      # the branch is left alone, since the plan's worktree still has it
+      # checked out. Agents never reach this: `gh pr merge` is ungrantable.
+      #
+      # @param number [Integer]
+      # @param head [String] the head commit CI was read for; GitHub refuses
+      #   the merge once the branch has moved past it
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error] when GitHub refuses, a conflict among the reasons
+      def merge(number:, head:, repo: nil)
+        @command.run("gh", "pr", "merge", number.to_s, "--merge", "--match-head-commit", head, *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not merge ##{number}: #{first_line(e)}"
+      end
+
+      # Rebase a pull request's branch onto its base on GitHub's side (P5),
+      # for a sibling built from a branch no worktree of this run holds.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error] when the rebase conflicts or GitHub refuses
+      def update_branch(number:, repo: nil)
+        @command.run("gh", "pr", "update-branch", number.to_s, "--rebase", *repo_flag(repo))
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not rebase ##{number} onto its base: #{first_line(e)}"
       end
 
       # @param number [Integer]
