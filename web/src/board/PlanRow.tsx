@@ -25,6 +25,8 @@ interface PlanRowProps extends CarHandlers {
   faded?: boolean;
   /** A merged row on its way out: it fades, then folds away. */
   retiring?: boolean;
+  /** The row above belongs to another dependency group: the groove between them runs deeper. */
+  dagBreak?: boolean;
 }
 
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
@@ -45,7 +47,7 @@ export function UnackedBadge({ count, mail = [] }: { count: number; mail?: Unack
 }
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
+export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
   const lane = LANES[plan.lane];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
@@ -94,7 +96,7 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   }
 
   // A plan finished this run keeps its row at half height, the narrow lanes' look, whatever the lanes toggle says.
-  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring"].filter(Boolean).join(" ");
+  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring", dagBreak && "is-dag-break"].filter(Boolean).join(" ");
   return (
     <article
       ref={scope}

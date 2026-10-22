@@ -14,13 +14,13 @@ export interface LaneLook {
 }
 
 /**
- * The lanes as lifecycle/lanes.rb moves them: full enters at New, plan at Planning, quick at Building and skips
+ * The lanes as lifecycle/lanes.rb moves them: full enters at New, plan at Linking, quick at Building and skips
  * Building UI. The Snapshot names a plan's lane but not where the lane enters, so this table is the one fact the page
  * keeps for itself (see the report on the contract).
  */
 export const LANES: Record<Lane, LaneLook> = {
   full: { label: "Full lane", color: "var(--lane-full)", bg: "var(--lane-full-bg)", from: "new", skip: [] },
-  plan: { label: "Plan lane", color: "var(--lane-plan)", bg: "var(--lane-plan-bg)", from: "ready_for_planning", skip: [] },
+  plan: { label: "Plan lane", color: "var(--lane-plan)", bg: "var(--lane-plan-bg)", from: "ready_for_linking", skip: [] },
   quick: { label: "Quick lane", color: "var(--lane-quick)", bg: "var(--lane-quick-bg)", from: "building", skip: ["building_ui"] },
 };
 
@@ -172,3 +172,8 @@ export const nodePlanKey = (nodeId: string, ordinal: string): string => `${nodeI
 
 /** An agent still at work: running, or stuck waiting on a person. Done and failed cars only linger on the board. */
 export const isWorking = (car: Car): boolean => car.state === "running" || car.state === "stuck";
+
+/** Whether the row at `i` starts a different dependency group from the row above it. */
+export function dagBreak(plans: Pick<Plan, "group">[], i: number): boolean {
+  return i > 0 && plans[i].group !== plans[i - 1].group;
+}

@@ -17,7 +17,7 @@ export interface Node {
 
 export interface Station {
   key: string; // a Status key on StateMachine::SPINE, or "pr"
-  label: string; // "New", "Researched", "Planning", "Building", "Building UI", "Review", "Pull request"
+  label: string; // "New", "Researched", "Linking", "Planning", "Building", "Building UI", "Review", "Pull request"
   agents: string[]; // agents whose `handles:` includes this station
 }
 
@@ -132,6 +132,7 @@ export interface Plan {
   summary: string; // spec.md's first paragraph of prose, "" when it has none
   status: Status;
   lane: Lane;
+  group: string; // lowest ordinal of its depends_on group; plans in no group name themselves
   station: string; // Station.key the plan is at
   up: number;
   down: number;
