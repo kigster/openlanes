@@ -138,7 +138,52 @@ module OpenLanes
         Result.new(note: notes.empty? ? "waiting on every pull request" : notes.join("; "))
       end
 
+      # The plans whose checkouts wait on a rebase after a merge.
+      #
+      # @return [Array<String>] ordinals
+      def pending_rebases = queued.keys
+
+      # Rebase every queued checkout no agent is running in onto `main`, and
+      # push the ones that moved. A busy checkout stays queued, so its
+      # `HEAD` moves only between runs, before its next boundary snapshot.
+      # A conflict is aborted and left for that plan's next round, whose own
+      # pre-run rebase hands it to bb8; uncommitted work is refused by
+      # {Vcs::Refresh} and never touched.
+      #
+      # @param busy [Array<String>] ordinals with an agent running
+      # @return [Array<String>] one line per checkout handled, for the log
+      def rebase_queued(busy:)
+        (queued.keys - busy).map do |ordinal|
+          other = queued.delete(ordinal)
+          rebase_checkout(other)
+        rescue OpenLanes::Error => e
+          "#{ordinal} not rebased onto main: #{e.message.lines.first.to_s.strip}"
+        end
+      end
+
       private
+
+      # @param other [Plans::Subject]
+      # @return [String]
+      def rebase_checkout(other)
+        feature = other.feature
+        checkout = @worktree.checkout_for(feature)
+        refresh = Vcs::Refresh.new(path: checkout.path)
+        outcome = refresh.call
+        ordinal = feature.ordinal.to_s
+        if outcome.conflicted?
+          refresh.abort!("conflicts after a merge to main")
+          return "#{ordinal} conflicts with main in #{outcome.files.join(", ")}; its next round resolves it"
+        end
+        return "#{ordinal} not rebased: #{outcome.reason}" unless outcome.done?
+        return "#{ordinal} already on main" if outcome.kind == :current
+        # A branch with no pull request was never published, and a rebase
+        # is no reason to publish it.
+        return "#{ordinal} rebased onto main" unless other.pull_requests.any?(&:open?)
+
+        @publisher.pushed!(checkout, "HEAD")
+        "#{ordinal} rebased onto main"
+      end
 
       # One pull request, one step along its machine.
       #
@@ -203,12 +248,18 @@ module OpenLanes
         return leave(machine, number, repo, "no CI checks ran") if ci == :none
         return leave(machine, number, repo, "its head commit could not be read") if head.to_s.empty?
         return leave(machine, number, repo, "its branch is behind main", comment: true) if behind?(merge_state)
+        return leave(machine, number, repo, "it does not merge clean onto main", comment: true) if dirty?(merge_state)
+        return Result.new(note: "PR ##{number} waits on GitHub to work out whether it merges clean") if unknown?(merge_state)
+
+        main = main_ci(repo)
+        return Result.new(note: "PR ##{number} waits on CI on main, which is #{main}") unless main == :green
 
         begin
           @github.merge(number:, repo:, head:)
         rescue OpenLanes::Error => e
           return leave(machine, number, repo, e.message)
         end
+        queue_other_plans(subject)
         machine.fire!(:merge_automatically)
         @github.swap_label(number:,
           repo:,
@@ -263,6 +314,40 @@ module OpenLanes
       # @param status [String, nil] GitHub's `mergeStateStatus`
       # @return [Boolean]
       def behind?(status) = status.to_s.upcase == "BEHIND"
+
+      # @param status [String, nil] GitHub's `mergeStateStatus`
+      # @return [Boolean] whether the merge would conflict
+      def dirty?(status) = status.to_s.upcase == "DIRTY"
+
+      # @param status [String, nil] GitHub's `mergeStateStatus`
+      # @return [Boolean] whether GitHub is still computing it
+      def unknown?(status) = status.to_s.upcase == "UNKNOWN"
+
+      # CI on `main` (R5). No checks at all reads as `:none`, which holds
+      # the merge like red does: nobody watches it, and no checks is no
+      # evidence `main` builds.
+      #
+      # @return [Symbol] as {Vcs::CiGate.verdict}
+      def main_ci(repo) = Vcs::CiGate.verdict(@github.branch_checks(branch: "main", repo:))
+
+      # Every other plan whose checkout exists, to be rebased onto `main`
+      # once no agent is running in it (R5). Never done here: a rebase moves
+      # `HEAD`, and an agent's after-check would blame the agent for it.
+      #
+      # @return [void]
+      def queue_other_plans(subject)
+        return if @worktree.nil? || @publisher.nil?
+
+        Plans::Tree.new(dir: File.dirname(subject.feature.path)).subjects.each do |other|
+          next if other.feature.ordinal == subject.feature.ordinal || other.status.terminal?
+          next unless File.directory?(@worktree.path_for(other.feature))
+
+          queued[other.feature.ordinal.to_s] = other
+        end
+      end
+
+      # @return [Hash{String => Plans::Subject}] checkouts waiting on a rebase, by plan
+      def queued = @queued ||= {}
 
       # @return [String, nil] why the rebase failed, nil when it went through
       def rebase(subject, pull, number, repo)

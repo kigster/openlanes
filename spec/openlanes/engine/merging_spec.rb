@@ -200,6 +200,61 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
+    it "does not merge a pull request that does not merge clean" do
+      edit_gh { it["prs"]["1"]["merge_state"] = "DIRTY" }
+      result = merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(result.note).to eq("PR #1 merge-manually: it does not merge clean onto main")
+        expect(merges).to be_empty
+      end
+    end
+
+    it "waits while GitHub has not worked out whether it merges clean" do
+      edit_gh { it["prs"]["1"]["merge_state"] = "UNKNOWN" }
+
+      aggregate_failures do
+        expect(merging.assess(plan, "auto").note).to include("waits on GitHub")
+        expect(merges).to be_empty
+        expect(labels).to eq(%w[ready-to-merge])
+      end
+    end
+
+    it "holds the merge while CI on main is red, pending or missing" do
+      runs = { "red"     => [{ "name" => "ci", "status" => "completed", "conclusion" => "failure" }],
+               "pending" => [{ "name" => "ci", "status" => "in_progress", "conclusion" => nil }],
+               "none"    => [] }
+      notes = runs.map do |_, checks|
+        edit_gh { it["main_checks"] = checks }
+        merging.assess(plan, "auto").note
+      end
+
+      aggregate_failures do
+        expect(notes).to eq(["PR #1 waits on CI on main, which is red", "PR #1 waits on CI on main, which is pending",
+                             "PR #1 waits on CI on main, which is none"])
+        expect(merges).to be_empty
+        expect(labels).to eq(%w[ready-to-merge])
+      end
+    end
+
+    it "merges when CI on main reports commit statuses only, as CircleCI does" do
+      edit_gh do |gh|
+        gh["main_checks"] = []
+        gh["main_statuses"] = [{ "context" => "ci/circleci: test", "state" => "success" }]
+      end
+
+      expect(merging.assess(plan, "auto")).to have_attributes(to: :approved, merged: true)
+    end
+
+    it "holds the merge on a red status on main beside a green check run" do
+      edit_gh { it["main_statuses"] = [{ "context" => "ci/circleci: test", "state" => "failure" }] }
+
+      aggregate_failures do
+        expect(merging.assess(plan, "auto").note).to eq("PR #1 waits on CI on main, which is red")
+        expect(merges).to be_empty
+      end
+    end
+
     it "does not merge a pull request whose branch is behind main" do
       edit_gh { it["prs"]["1"]["merge_state"] = "BEHIND" }
       result = merging.assess(plan, "auto")
@@ -355,6 +410,92 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
           expect(merges).to eq([1])
         end
       end
+    end
+  end
+
+  context "when another plan has a checkout" do
+    subject(:merging) do
+      described_class.new(github: OpenLanes::Vcs::GitHub.new,
+        outcomes:  OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by:  :auto,
+        worktree:,
+        publisher:)
+    end
+
+    let(:other) { Dir.mktmpdir("openlanes-other-checkout") }
+    let(:missing) { File.join(other, "never-made") }
+    let(:checkout) { OpenLanes::Vcs::Worktree::Checkout.new(ordinal: "034.00", branch: "kig/034", path: other, created: false) }
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout) }
+    let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, branch_mismatch: nil, pushed!: nil) }
+    let(:refresh) { instance_double(OpenLanes::Vcs::Refresh, abort!: nil) }
+
+    def outcome(kind, **) = OpenLanes::Vcs::Refresh::Outcome.new(kind:, **)
+
+    before do
+      plans { |t| t.plan "034.00", :building, "other-work", prs: [t.open(9, "Other")] }
+      allow(worktree).to receive(:path_for) { |feature| feature.ordinal.to_s == "034.00" ? other : missing }
+      allow(OpenLanes::Vcs::Refresh).to receive(:new).with(path: other).and_return(refresh)
+      allow(refresh).to receive(:call).and_return(outcome(:rebased, base: "origin/main"))
+    end
+
+    after { FileUtils.rm_rf(other) }
+
+    it "queues its rebase after a merge and never moves it from inside the merge" do
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(merges).to eq([1])
+        expect(merging.pending_rebases).to eq(%w[034.00])
+        expect(refresh).not_to have_received(:call)
+      end
+    end
+
+    it "keeps the rebase queued while an agent runs in that checkout, leaving its HEAD alone" do
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(merging.rebase_queued(busy: %w[034.00])).to be_empty
+        expect(refresh).not_to have_received(:call)
+        expect(merging.pending_rebases).to eq(%w[034.00])
+      end
+    end
+
+    it "rebases and pushes it once the checkout is idle" do
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(merging.rebase_queued(busy: [])).to eq(["034.00 rebased onto main"])
+        expect(publisher).to have_received(:pushed!).with(checkout, "HEAD").once
+        expect(merging.pending_rebases).to be_empty
+      end
+    end
+
+    it "leaves a checkout with uncommitted work untouched and unpushed" do
+      allow(refresh).to receive(:call).and_return(outcome(:skipped, reason: "uncommitted changes in the worktree"))
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(merging.rebase_queued(busy: [])).to eq(["034.00 not rebased: uncommitted changes in the worktree"])
+        expect(publisher).not_to have_received(:pushed!)
+      end
+    end
+
+    it "aborts a conflicting rebase and leaves it to that plan's next round" do
+      allow(refresh).to receive(:call).and_return(outcome(:conflicted, base: "origin/main", files: %w[lib/a.rb]))
+      merging.assess(plan, "auto")
+
+      aggregate_failures do
+        expect(merging.rebase_queued(busy: []).first).to include("conflicts with main in lib/a.rb")
+        expect(refresh).to have_received(:abort!).with("conflicts after a merge to main")
+        expect(publisher).not_to have_received(:pushed!)
+      end
+    end
+
+    it "queues nothing when the merge does not happen" do
+      edit_gh { it["main_checks"] = [] }
+      merging.assess(plan, "auto")
+
+      expect(merging.pending_rebases).to be_empty
     end
   end
 end

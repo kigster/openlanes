@@ -87,21 +87,14 @@
     {
       "agent": "chewie-verifier",
       "round": 1,
-      "status": "Completed",
+      "status": "Started",
       "from": "verifying",
       "started_at": "2026-10-21T21:56:20-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/033.00-auto-merge-passing-prs",
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "b83f8c80-3010-4405-a553-7d8268a770ec",
-      "to": "verifying",
-      "finished_at": "2026-10-21T22:09:31-07:00",
-      "up": 58471,
-      "down": 109,
-      "seconds": 784.1,
-      "note": "completed - 11 tool calls; verified PR #113; final.png pushed in 124436e; waiting on CI",
-      "moves": 8
+      "session": "b83f8c80-3010-4405-a553-7d8268a770ec"
     }
   ],
   "signatures": [

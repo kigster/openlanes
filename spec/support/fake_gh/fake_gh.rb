@@ -102,6 +102,11 @@ in ["pr", "update-branch"]
   fail_with("Cannot update PR branch due to conflicts") if pr["conflicts"]
   pr["checks"] = []
   save(state)
+in ["api", %r{/commits/[^/]+/check-runs\z}]
+  green = [{ "name" => "ci", "status" => "completed", "conclusion" => "success" }]
+  puts JSON.generate("check_runs" => state.fetch("main_checks", green))
+in ["api", %r{/commits/[^/]+/status\z}]
+  puts JSON.generate("statuses" => state.fetch("main_statuses", []))
 in ["pr", "list"]
   puts JSON.generate(state["prs"].map { |number, pr| row(number, pr) })
 else

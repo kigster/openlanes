@@ -1921,6 +1921,9 @@ module OpenLanes
         rescue OpenLanes::Error => e
           UI.log("merge not settled: #{e.message.lines.first.to_s.strip}", level: :warn, plan: ordinal)
         end
+        # Read again: a merge above may have queued checkouts, and an agent
+        # started since the first read must keep its HEAD (R5).
+        merging.rebase_queued(busy: untouchable).each { UI.log(it) }
       end
 
       # ---- verification (plan 014) -----------------------------------------

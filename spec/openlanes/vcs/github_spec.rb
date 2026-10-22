@@ -611,6 +611,55 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
+    describe "#branch_checks" do
+      def answer(check_runs: [], statuses: [])
+        allow(command).to receive(:run) do |*argv|
+          body = argv.last.end_with?("/status") ? { "statuses" => statuses } : { "check_runs" => check_runs }
+          instance_double(TTY::Command::Result, out: JSON.generate(body))
+        end
+      end
+
+      it "maps check runs and commit statuses onto gh's buckets, both together" do
+        answer(check_runs: [{ "name" => "lint", "status" => "completed", "conclusion" => "success" },
+                            { "name" => "e2e", "status" => "queued" },
+                            { "name" => "docs", "status" => "completed", "conclusion" => "skipped" },
+                            { "name" => "spec", "status" => "completed", "conclusion" => "timed_out" }],
+          statuses: [{ "context" => "ci/circleci: test", "state" => "success" },
+                     { "context" => "ci/circleci: web", "state" => "pending" },
+                     { "context" => "ci/circleci: e2e", "state" => "error" }])
+
+        expect(github.branch_checks(branch: "main", repo: "o/r")).to eq([
+                                                                          { name: "lint", bucket: "pass" },
+                                                                          { name: "e2e", bucket: "pending" },
+                                                                          { name: "docs", bucket: "skipping" },
+                                                                          { name: "spec", bucket: "fail" },
+                                                                          { name: "ci/circleci: test", bucket: "pass" },
+                                                                          { name: "ci/circleci: web", bucket: "pending" },
+                                                                          { name: "ci/circleci: e2e", bucket: "fail" }
+                                                                        ])
+        expect(command).to have_received(:run).with("gh", "api", "repos/o/r/commits/main/status")
+      end
+
+      it "reads a main with statuses only as green" do
+        answer(statuses: [{ "context" => "ci/circleci: test", "state" => "success" }])
+
+        expect(OpenLanes::Vcs::CiGate.verdict(github.branch_checks(branch: "main"))).to eq(:green)
+      end
+
+      it "reads a red status beside a green check run as red" do
+        answer(check_runs: [{ "name" => "lint", "status" => "completed", "conclusion" => "success" }],
+          statuses: [{ "context" => "ci/circleci: test", "state" => "failure" }])
+
+        expect(OpenLanes::Vcs::CiGate.verdict(github.branch_checks(branch: "main"))).to eq(:red)
+      end
+
+      it "names the branch it could not read" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 404"))
+
+        expect { github.branch_checks(branch: "main") }.to raise_error(OpenLanes::Error, /could not read checks of main: HTTP 404/)
+      end
+    end
+
     it "reads conversation comments and reviews, skipping empty bodies" do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result,
         out: JSON.generate(
