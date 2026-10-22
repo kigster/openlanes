@@ -46,7 +46,7 @@ This starts all the parts, and it's recommended to start this inside a `screen` 
 
 ## Running OpenLanes via mprocs
 
-If you want to see how OpenLanes runs and what it logs, you can drop this `mprocs.yml` file in the root of your repo, and use `mprocs` command to start OpenLanes:
+If you want to see how OpenLanes runs and what it logs, you can drop this `mprocs.yml` file in the root of your repo, and use `mprocs` command to start OpenLanes. The Ruby Gem sources comes with one, but it's not distributed as part of the gem package. The gem souces are available [on Guthub](https://github.com/kigster/openlanes).
 
 ```yaml
 ---
@@ -71,9 +71,7 @@ procs:
 
 You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `ol`.
 
-![The openlanes control room: plan 000 on the board between Planning and Building, with luke-backend and rey-frontend working on it side by side, and the luke-backend panel open showing its model, tokens, context use and a box to message it](docs/img/openlanes-control-room.avif)
-
-## 
+![The openlanes control room](docs/img/openlanes-control-room.avif)
 
 ## Picture is worth a few words ;) 
 

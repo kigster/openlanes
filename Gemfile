@@ -22,8 +22,10 @@ end
 
 group :development, :test do
   gem "rubocop"
-  gem "rubocop-rspec"
   gem "rubocop-rake"
-  gem "rubocop-rubycw"
+  gem "rubocop-rspec"
   gem "rubocop-on-rbs"
+  gem "rubocop-rubycw"
+  gem "newrelic-infinite_tracing"
+  gem "newrelic_rpm"
 end
