@@ -38,7 +38,9 @@ def row(number, pull)
     "headRefOid" => pull.fetch("head", "c0ffee#{number.to_i}"),
     "files" => [], "state" => pull["state"], "isDraft" => false, "mergedAt" => pull["merged_at"], "body" => "",
     "labels" => pull["labels"].map { { "name" => it } },
-    "mergeStateStatus" => pull.fetch("merge_state", "CLEAN") }
+    "mergeStateStatus" => pull.fetch("merge_state", "CLEAN"),
+    "baseRefName" => pull.fetch("base", "main"),
+    "mergeCommit" => pull["merge_commit"] && { "oid" => pull["merge_commit"] } }
 end
 
 case ARGV.take(2)
@@ -96,6 +98,7 @@ in ["pr", "merge"]
   fail_with("Head branch was modified. Review and try the merge again.") if head && head != pr.fetch("head", "c0ffee#{ARGV[2].to_i}")
   pr["state"] = "MERGED"
   pr["merged_at"] = "2026-10-20T12:00:00Z"
+  pr["merge_commit"] ||= "5feedface#{ARGV[2].to_i}"
   save(state)
 in ["pr", "update-branch"]
   pr = pr!(state, ARGV[2])
@@ -108,7 +111,11 @@ in ["api", %r{/commits/[^/]+/check-runs\z}]
 in ["api", %r{/commits/[^/]+/status\z}]
   puts JSON.generate("statuses" => state.fetch("main_statuses", []))
 in ["pr", "list"]
-  puts JSON.generate(state["prs"].map { |number, pr| row(number, pr) })
+  head = flag("--head")
+  wanted = flag("--state")
+  rows = state["prs"].select { |_, pr| head.nil? || pr["branch"] == head }
+  rows = rows.select { |_, pr| pr["state"] == "MERGED" } if wanted == "merged"
+  puts JSON.generate(rows.map { |number, pr| row(number, pr) })
 else
   fail_with("fake gh: no answer for gh #{ARGV.join(" ")}", 2)
 end
