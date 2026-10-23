@@ -117,6 +117,34 @@
         }
       }
     },
+    "rulings": {
+      "description": "obi-wan-kenobi-arbitrator's rulings, written by the engine from the agent's ruling block, never by the agent (M7). Absent on plans never arbitrated.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "kind", "outcome", "reason", "trigger"],
+        "additionalProperties": false,
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "kind": { "enum": ["cap", "appeal", "dispute", "passed_check"] },
+          "pr": { "type": ["integer", "null"], "minimum": 1 },
+          "round": { "type": ["integer", "null"], "minimum": 1 },
+          "outcome": { "type": "string", "minLength": 1 },
+          "findings": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "struck": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" } },
+              "critical": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" } }
+            }
+          },
+          "winner": { "type": ["string", "null"] },
+          "reason": { "type": "string", "minLength": 1 },
+          "trigger": { "type": "string", "minLength": 1 },
+          "sha": { "type": "string", "description": "The PR head a passed_check ruled on, so a re-poll does not re-run it." }
+        }
+      }
+    },
     "last-known-state": {
       "description": "One resume record per agent, last one wins: written by the agent through `openlanes state resume`, or by the harness when the agent could not.",
       "type": "object",

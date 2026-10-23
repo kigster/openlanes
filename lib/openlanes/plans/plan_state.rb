@@ -104,6 +104,34 @@ module OpenLanes
       # @return [Array<Hash>]
       def messages = read["messages"]
 
+      # @return [Array<Hash>] the arbitrator's rulings, oldest first; empty on
+      #   a plan written before rulings existed
+      def rulings = read["rulings"] || []
+
+      # Record one ruling, written by the engine from the arbitrator's block
+      # (M7: the agent itself writes nothing), under the same lock as {#sign!}.
+      #
+      # @param kind [String] cap, appeal, dispute or passed_check
+      # @param pr [Integer, nil]
+      # @param round [Integer, nil]
+      # @param outcome [String]
+      # @param findings [Hash] `{ "struck" => [...], "critical" => [...] }`
+      # @param winner [String, nil] dispute only
+      # @param reason [String]
+      # @param trigger [String] what started the arbitration
+      # @param sha [String, nil] the PR head a passed_check ruled on
+      # @param at [Time]
+      # @return [Hash] the ruling as written
+      def rule!(kind:, pr:, round:, outcome:, findings:, winner:, reason:, trigger:, sha: nil, at: Time.now) # rubocop:disable Naming/MethodParameterName -- `pr` is the ruling block's own key
+        ids = (findings || {}).transform_keys(&:to_s)
+        ruling = { "at" => at.iso8601, "kind" => kind.to_s, "pr" => pr && Integer(pr), "round" => round && Integer(round),
+                   "outcome" => outcome.to_s,
+                   "findings" => { "struck" => Array(ids["struck"]).map(&:to_s), "critical" => Array(ids["critical"]).map(&:to_s) },
+                   "winner" => winner, "reason" => reason.to_s, "trigger" => trigger.to_s, "sha" => sha }.compact
+        update { |data| (data["rulings"] ||= []) << ruling }
+        ruling
+      end
+
       # @return [String, nil]
       def state = read["state"]
 
