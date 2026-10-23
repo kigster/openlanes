@@ -293,10 +293,40 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
       aggregate_failures do
         expect(waiting).to have_attributes(kind: :waiting, note: "🧪 waiting on CI for PR #1")
-        expect(ready.kind).to eq(:ready)
+        expect(ready).to have_attributes(kind: :ready, to: :completed)
         expect(labels).to eq(%w[ready-to-merge])
         expect(gh_calls.map { it.take(2) }).not_to include(%w[pr merge])
-        expect(plan.status.key).to eq(:verifying)
+        expect(plan.status.key).to eq(:completed)
+      end
+    end
+
+    context "when the plan has a sibling not yet ready-to-merge" do
+      before do
+        plan_path = plan.feature.path
+        File.write(File.join(plan_path, "pull-requests.md"), <<~MARKDOWN)
+          # Pull Requests
+
+          | Pull Request Number | Pull Request Name | Status |
+          | ------------------: | :---------------- | -----: |
+          | 2 | [Sibling](https://github.com/example/repo/pull/2) | Open 🟡 |
+          | 1 | [Chewie verifier](https://github.com/example/repo/pull/1) | Open 🟡 |
+        MARKDOWN
+        edit_gh do |state|
+          state["prs"]["2"] = gh_pr(title: "Sibling", url: "https://github.com/example/repo/pull/2", labels: %w[review-in-progress])
+          state["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }]
+        end
+      end
+
+      it "labels this one ready-to-merge and keeps the plan at 🧪 until every one is (P1)" do
+        outcome.pass(checkout:, plan:, pull: pr, round:)
+        result = outcome.settle(checkout:, plan:, pull: pr, round:)
+
+        aggregate_failures do
+          expect(result).to have_attributes(kind: :waiting, to: nil)
+          expect(result.note).to end_with("waiting for the plan's other pull requests")
+          expect(labels).to eq(%w[ready-to-merge])
+          expect(plan.status.key).to eq(:verifying)
+        end
       end
     end
 

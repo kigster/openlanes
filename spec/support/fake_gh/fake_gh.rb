@@ -31,12 +31,14 @@ def flag(name) = (i = ARGV.index(name)) && ARGV[i + 1]
 
 def flags(name) = ARGV.each_index.select { ARGV[it] == name }.map { ARGV[it + 1] }
 
-def pr!(state, number) = state["prs"][number.to_s] || fail_with("GraphQL: Could not resolve to a PullRequest with the number of #{number}.")
+def pr!(state, ref) = state["prs"][ref.to_s[/(\d+)\z/, 1].to_s] || fail_with("GraphQL: Could not resolve to a PullRequest with the number of #{ref}.")
 
 def row(number, pull)
   { "number" => number.to_i, "title" => pull["title"], "url" => pull["url"], "headRefName" => pull["branch"],
+    "headRefOid" => pull.fetch("head", "c0ffee#{number.to_i}"),
     "files" => [], "state" => pull["state"], "isDraft" => false, "mergedAt" => pull["merged_at"], "body" => "",
-    "labels" => pull["labels"].map { { "name" => it } } }
+    "labels" => pull["labels"].map { { "name" => it } },
+    "mergeStateStatus" => pull.fetch("merge_state", "CLEAN") }
 end
 
 case ARGV.take(2)
@@ -79,7 +81,7 @@ in ["pr", "comment"]
 in ["pr", "view"]
   pr = pr!(state, ARGV[2])
   fields = flag("--json").split(",")
-  data = row(ARGV[2], pr).merge("comments" => pr["comments"], "reviews" => [])
+  data = row(ARGV[2][/(\d+)\z/, 1], pr).merge("comments" => pr["comments"], "reviews" => [])
   puts JSON.generate(data.slice(*fields))
 in ["pr", "checks"]
   checks = pr!(state, ARGV[2])["checks"]
@@ -87,6 +89,24 @@ in ["pr", "checks"]
   puts JSON.generate(checks)
   exit 1 if checks.any? { it["bucket"] == "fail" }
   exit 8 if checks.any? { it["bucket"] == "pending" }
+in ["pr", "merge"]
+  pr = pr!(state, ARGV[2])
+  fail_with("Pull request #{pr["url"]} is not mergeable: #{pr["unmergeable"]}") if pr["unmergeable"]
+  head = flag("--match-head-commit")
+  fail_with("Head branch was modified. Review and try the merge again.") if head && head != pr.fetch("head", "c0ffee#{ARGV[2].to_i}")
+  pr["state"] = "MERGED"
+  pr["merged_at"] = "2026-10-20T12:00:00Z"
+  save(state)
+in ["pr", "update-branch"]
+  pr = pr!(state, ARGV[2])
+  fail_with("Cannot update PR branch due to conflicts") if pr["conflicts"]
+  pr["checks"] = []
+  save(state)
+in ["api", %r{/commits/[^/]+/check-runs\z}]
+  green = [{ "name" => "ci", "status" => "completed", "conclusion" => "success" }]
+  puts JSON.generate("check_runs" => state.fetch("main_checks", green))
+in ["api", %r{/commits/[^/]+/status\z}]
+  puts JSON.generate("statuses" => state.fetch("main_statuses", []))
 in ["pr", "list"]
   puts JSON.generate(state["prs"].map { |number, pr| row(number, pr) })
 else

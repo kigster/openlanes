@@ -81,6 +81,32 @@ RSpec.describe OpenLanes::Live::Outage do
       expect(pings.map { it - paused_at }).to eq([1, 2, 4, 7, 12])
     end
 
+    it "never waits more than #{described_class::MAX_GAP} seconds between asks" do
+      paused_at = time[0]
+      pings.clear
+      run_until(paused_at + 600)
+
+      gaps = pings.each_cons(2).map { |a, b| b - a }
+      aggregate_failures do
+        expect(gaps.max).to eq(described_class::MAX_GAP)
+        expect(gaps.last(5)).to all(eq(described_class::MAX_GAP))
+      end
+    end
+
+    # Regression: the uncapped schedule asked at ~16.6 and then ~26.8 minutes,
+    # so a Redis back at 17 minutes left every agent paused for 10 more.
+    it "resumes within #{described_class::MAX_GAP} seconds of Redis coming back after 17 minutes" do
+      run_until(17 * 60)
+      up[0] = true
+      back_at = time[0]
+      run_until(back_at + described_class::MAX_GAP)
+
+      aggregate_failures do
+        expect(outage.state).to eq(:up)
+        expect(OpenLanes::Execution::Control).not_to be_paused
+      end
+    end
+
     it "resumes the agents when Redis answers, and files the outage away" do
       run_until(time[0] + 2)
       up[0] = true
@@ -92,6 +118,21 @@ RSpec.describe OpenLanes::Live::Outage do
         expect(File.read(control)).to eq("RESUME\n")
         expect(saved).not_to have_key("outage")
         expect(saved["outages"].last).to include("resumed_at", "attempts" => 3)
+      end
+    end
+
+    # Plan 022: the window {OutageReport} turns into `run.outage`.
+    it "hands the ended outage to every on_resume hook" do
+      windows = []
+      outage.on_resume { windows << it }
+      run_until(time[0] + 2)
+      up[0] = true
+      run_until(time[0] + 3)
+
+      aggregate_failures do
+        expect(windows).to eq([outage.window])
+        expect(outage.window.seconds.round).to eq(saved["outages"].last["seconds"])
+        expect(outage.window.ended_at - outage.window.started_at).to be_within(0.001).of(outage.window.seconds)
       end
     end
 

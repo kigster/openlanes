@@ -195,6 +195,40 @@ describe("under ?fixture", () => {
   });
 });
 
+describe("the column divider", () => {
+  const wide = () =>
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: true, media: query, addEventListener() {}, removeEventListener() {} }));
+  const layout = () => document.querySelector<HTMLElement>("main.layout")!;
+  beforeEach(() => window.history.replaceState(null, "", "/?fixture"));
+
+  it("renders a separator and applies the stored width when the window is wide", async () => {
+    wide();
+    localStorage.setItem("openlanes-side-width", "480");
+    renderApp();
+    expect(await screen.findByRole("separator", { name: "Resize side panel" })).toHaveAttribute("aria-valuenow", "480");
+    expect(layout().style.getPropertyValue("--side-width")).toBe("480px");
+  });
+
+  it("renders no separator in a narrow window", async () => {
+    renderApp();
+    await screen.findByText("Fixture data");
+    expect(screen.queryByRole("separator")).toBeNull();
+  });
+
+  it("keeps the width when a car's drawer opens and closes", async () => {
+    wide();
+    localStorage.setItem("openlanes-side-width", "480");
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await screen.findByRole("tab", { name: /Logs/ }));
+    await user.click(pills().getByRole("button", { name: /^005 [^,]*, working/ }));
+    await user.click(screen.getByRole("button", { name: "hansolo-reviewer" }));
+    expect(layout().style.getPropertyValue("--side-width")).toBe("480px");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(layout().style.getPropertyValue("--side-width")).toBe("480px");
+  });
+});
+
 it("opens the idea dialog when the page is loaded at #start", async () => {
   window.history.replaceState(null, "", "/?fixture#start");
   renderApp();

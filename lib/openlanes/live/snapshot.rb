@@ -35,9 +35,12 @@ module OpenLanes
       #   to choose ({ChoiceJudge}); nil leaves the parser's verdict alone
       # @param redis_url [String, nil] the store the engine itself is using,
       #   unredacted: the snapshot redacts it ({Live.redact})
+      # @param outage [Hash, nil] {OutageReport#to_h} of the outage this run
+      #   last recovered from; nil when there was none
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
-        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil)
+        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil,
+        outage: nil)
         @board = board
         @tree = tree
         @agents = agents
@@ -55,6 +58,7 @@ module OpenLanes
         @adapter = adapter
         @judge = judge
         @redis_url = redis_url
+        @outage = outage
       end
 
       # @return [Hash]
@@ -91,7 +95,8 @@ module OpenLanes
           down:           @board.down.to_i,
           cost:           plans.sum { it[:cost] }.round(4),
           agents_working: @board.running.to_i,
-          jobs:           @board.jobs.to_i }
+          jobs:           @board.jobs.to_i,
+          outage:         @outage }
       end
 
       # @return [String]

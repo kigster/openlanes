@@ -1,0 +1,1 @@
+just web-build: exit 0; Resize side panel found in web/dist/assets/index-BQYqqaez.js

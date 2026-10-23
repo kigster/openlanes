@@ -69,11 +69,14 @@ module OpenLanes
       #   journal each engine event is appended to; nil keeps none
       # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
       #   the durable run log (plan 020.01); {#call} scopes it to this run
+      # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
+      #   pull requests go through once palpatine has ruled; nil when the
+      #   run publishes nothing
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
-        events: Events::NullSink.new)
+        merging: nil, events: Events::NullSink.new)
         @tree = tree
         @events = events
         @executor = executor
@@ -96,6 +99,7 @@ module OpenLanes
         @extensions = extensions
         @verification = verification
         @journal = dry_run ? nil : journal
+        @merging = merging
         @would_bomb = []
         @attempts = []
         @dropped = []
@@ -106,6 +110,9 @@ module OpenLanes
 
       # @return [OpenLanes::Engine::Verification::Driver, nil]
       attr_reader :verification
+
+      # @return [OpenLanes::Engine::Merging, nil]
+      attr_reader :merging
 
       # A new concurrency limit, from the copilot's `/concurrency N`. Nothing
       # running is stopped: the dispatcher fills only while fewer agents run

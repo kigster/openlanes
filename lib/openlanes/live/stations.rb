@@ -37,8 +37,8 @@ module OpenLanes
         [:ready_for_planning, "Planning", %i[ready_for_planning]],
         [:building, "Building", %i[planned building rejected]],
         [:building_ui, "Building UI", %i[building_ui]],
-        [:in_review, "Review", %i[ready_for_review in_review verifying completed]],
-        [:pr, "Pull request", %i[approved deployed]]
+        [:in_review, "Review", %i[ready_for_review in_review verifying]],
+        [:pr, "Pull request", %i[completed approved deployed]]
       ].freeze
 
       module_function

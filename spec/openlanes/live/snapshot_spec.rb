@@ -156,7 +156,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(snapshot[:stations].to_h { [it[:key], it[:agents]] }).to include(
         "new"                => %w[leah-researcher],
         "ready_for_planning" => %w[luthen-rael-planner],
-        "pr"                 => [],
+        "pr"                 => %w[palpatine-risk-assessor],
         "in_review"          => %w[chewie-verifier hansolo-reviewer]
       )
     end
@@ -198,6 +198,25 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "offers as backlog what is neither finished, nor ours, nor another machine's" do
       expect(snapshot[:backlog].map { it[:ordinal] }).to eq(%w[012.00 013.00 016.00])
+    end
+
+    it "has no outage in the run unless one was given" do
+      expect(snapshot[:run]).to include(outage: nil)
+    end
+
+    it "carries the outage this run recovered from" do
+      outage = { started_at: "2026-10-16T18:40:00Z", ended_at: "2026-10-16T18:41:12Z", seconds: 72,
+                 measured_by: "heartbeat", reconciled_from: "redis" }
+      run = described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        at:,
+        outage:).to_h[:run]
+      expect(run[:outage]).to eq(outage)
     end
 
     it "describes the run, the node and the models" do

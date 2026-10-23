@@ -20,7 +20,8 @@
     "down": 202400,
     "cost": 14.8,
     "agents_working": 4,
-    "jobs": 4
+    "jobs": 4,
+    "outage": null
   },
   "stations": [
     {

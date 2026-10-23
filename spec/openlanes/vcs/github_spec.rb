@@ -178,6 +178,39 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#merge" do
+    it "merges with a merge commit, pinned to the head CI was read for" do
+      github.merge(number: 12, head: "abc123", repo: "acme/widgets")
+
+      expect(command).to have_received(:run)
+        .with("gh", "pr", "merge", "12", "--merge", "--match-head-commit", "abc123", "-R", "acme/widgets")
+    end
+
+    it "names the pull request GitHub refused to merge" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr merge",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "not mergeable")))
+
+      expect { github.merge(number: 12, head: "abc123") }.to raise_error(OpenLanes::Error, /could not merge #12: not mergeable/)
+    end
+  end
+
+  describe "#update_branch" do
+    it "rebases the pull request onto its base on GitHub's side" do
+      github.update_branch(number: 13, repo: "acme/widgets")
+
+      expect(command).to have_received(:run).with("gh", "pr", "update-branch", "13", "--rebase", "-R", "acme/widgets")
+    end
+
+    it "says the branch did not rebase, conflicts among the reasons" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh pr update-branch",
+          instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "conflicts")))
+
+      expect { github.update_branch(number: 13) }.to raise_error(OpenLanes::Error, /could not rebase #13 onto its base: conflicts/)
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")
@@ -247,7 +280,8 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     let(:payload) do
       { number: 12, title: "Add health checks", url: "https://github.com/o/r/pull/12",
        state: "MERGED", isDraft: false, mergedAt: "2026-08-01T10:00:00Z",
-       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }] }.to_json
+       body: "Adds /healthz.", labels: [{ name: "ready-to-merge" }],
+       mergeStateStatus: "BEHIND" }.to_json
     end
 
     it "reads one pull request by number or URL" do
@@ -255,6 +289,15 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: payload))
 
       expect(described_class.new(command:).pull_request("12")).to include(number: 12, state: "Merged 🟣", body: "Adds /healthz.")
+    end
+
+    it "asks gh for mergeStateStatus and carries it as merge_state" do
+      viewed = github.pull_request("12")
+
+      aggregate_failures do
+        expect(command).to have_received(:run).with("gh", "pr", "view", "12", "--json", described_class::VIEW_FIELDS.join(","))
+        expect(viewed).to include(merge_state: "BEHIND")
+      end
     end
 
     # PrWatch asks for a pull request `gh pr list` left out, and reads it as
@@ -565,6 +608,55 @@ RSpec.describe OpenLanes::Vcs::GitHub do
         allow(command).to receive(:run!).and_return(checks_result(out: "nope"))
 
         expect { github.checks(number: 3) }.to raise_error(OpenLanes::Error, /could not read checks of #3/)
+      end
+    end
+
+    describe "#branch_checks" do
+      def answer(check_runs: [], statuses: [])
+        allow(command).to receive(:run) do |*argv|
+          body = argv.last.end_with?("/status") ? { "statuses" => statuses } : { "check_runs" => check_runs }
+          instance_double(TTY::Command::Result, out: JSON.generate(body))
+        end
+      end
+
+      it "maps check runs and commit statuses onto gh's buckets, both together" do
+        answer(check_runs: [{ "name" => "lint", "status" => "completed", "conclusion" => "success" },
+                            { "name" => "e2e", "status" => "queued" },
+                            { "name" => "docs", "status" => "completed", "conclusion" => "skipped" },
+                            { "name" => "spec", "status" => "completed", "conclusion" => "timed_out" }],
+          statuses: [{ "context" => "ci/circleci: test", "state" => "success" },
+                     { "context" => "ci/circleci: web", "state" => "pending" },
+                     { "context" => "ci/circleci: e2e", "state" => "error" }])
+
+        expect(github.branch_checks(branch: "main", repo: "o/r")).to eq([
+                                                                          { name: "lint", bucket: "pass" },
+                                                                          { name: "e2e", bucket: "pending" },
+                                                                          { name: "docs", bucket: "skipping" },
+                                                                          { name: "spec", bucket: "fail" },
+                                                                          { name: "ci/circleci: test", bucket: "pass" },
+                                                                          { name: "ci/circleci: web", bucket: "pending" },
+                                                                          { name: "ci/circleci: e2e", bucket: "fail" }
+                                                                        ])
+        expect(command).to have_received(:run).with("gh", "api", "repos/o/r/commits/main/status")
+      end
+
+      it "reads a main with statuses only as green" do
+        answer(statuses: [{ "context" => "ci/circleci: test", "state" => "success" }])
+
+        expect(OpenLanes::Vcs::CiGate.verdict(github.branch_checks(branch: "main"))).to eq(:green)
+      end
+
+      it "reads a red status beside a green check run as red" do
+        answer(check_runs: [{ "name" => "lint", "status" => "completed", "conclusion" => "success" }],
+          statuses: [{ "context" => "ci/circleci: test", "state" => "failure" }])
+
+        expect(OpenLanes::Vcs::CiGate.verdict(github.branch_checks(branch: "main"))).to eq(:red)
+      end
+
+      it "names the branch it could not read" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 404"))
+
+        expect { github.branch_checks(branch: "main") }.to raise_error(OpenLanes::Error, /could not read checks of main: HTTP 404/)
       end
     end
 

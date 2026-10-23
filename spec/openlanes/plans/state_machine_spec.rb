@@ -299,7 +299,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       end
     end
 
-    it "derives every step back from the spine, as far as verification" do
+    it "derives every step back from the spine, as far as 🏁" do
       expect(described_class::RETREAT).to eq(researched: :new,
         ready_for_planning: :researched,
         planned: :ready_for_planning,
@@ -329,7 +329,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
   end
 
   describe "#spine_next" do
-    it "walks spec → plan → build → review → verify → merge → ship" do
+    it "walks spec → plan → build → review → verify → complete → merge → ship" do
       expected = {
         retroactive: :planned, new: :researched, researched: :ready_for_planning, ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
@@ -437,7 +437,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     # at a state that had been renamed out of existence.
     it "resolves nothing else, because a state has exactly two names" do
       aggregate_failures do
-        %w[white star yellow green complete done wip ready aborted nonsense].each do |word|
+        %w[white star yellow green complete finished done wip ready aborted nonsense].each do |word|
           expect(OpenLanes::Plans.status(word)).to be_nil, "expected #{word.inspect} not to resolve"
         end
       end

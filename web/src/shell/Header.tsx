@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Snapshot } from "../api/types";
 import type { ConnectionState } from "../api/events";
 import { dollars, fmt, secondsBetween, who } from "../board/format";
@@ -22,6 +22,22 @@ export interface HeaderProps {
   stopAll?: ReactNode;
   /** The round ? pill and its dialog: HelpDialog from src/panels. */
   help?: ReactNode;
+  /** Clock override in epoch ms, for tests; the page ticks its own every few seconds. */
+  now?: number;
+}
+
+/** A snapshot older than this, while the stream says live, means the engine stopped publishing. */
+export const STALE_AFTER_SECONDS = 15;
+
+/** Epoch ms, refreshed every 5 s so a stale snapshot is noticed while nothing else re-renders. */
+function useNow(override?: number): number {
+  const [tick, setTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (override !== undefined) return;
+    const id = setInterval(() => setTick(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, [override]);
+  return override ?? tick;
 }
 
 const SUN = (
@@ -37,9 +53,14 @@ const MOON = (
 );
 
 /** The top bar: the project, this machine, the run's totals as plain text, and the run-wide controls. */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, actionMenu, stopAll, help }: HeaderProps) {
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, actionMenu, stopAll, help, now }: HeaderProps) {
   const { theme, toggle } = useTheme();
   const { node, run } = snapshot;
+  const clock = useNow(now);
+  // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
+  const silent = Math.floor((clock - Date.parse(snapshot.at)) / 1000);
+  const stale = connection === "live" && silent > STALE_AFTER_SECONDS;
+  const { outage } = run;
   const minutes = Math.floor(secondsBetween(run.started_at, snapshot.at) / 60);
   // The project is openlanes itself when the tool works on its own repository, and the logo already says so (W18).
   const titled = snapshot.project.toLowerCase() !== "openlanes";
@@ -111,6 +132,16 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
       </button>
       {stopAll}
       {help}
+      {stale && (
+        <p className="outage-notice is-stale" role="alert">
+          Engine not publishing for {silent} s, Redis may be down
+        </p>
+      )}
+      {outage && (
+        <p className="outage-notice is-recovered" role="status" data-testid="outage-recovered">
+          Redis was down {outage.seconds} s (by {outage.measured_by}), run state from {outage.reconciled_from ?? "nowhere"}
+        </p>
+      )}
     </header>
   );
 }

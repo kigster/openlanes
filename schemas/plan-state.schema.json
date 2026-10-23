@@ -123,6 +123,18 @@
       "propertyNames": { "$ref": "#/$defs/agent" },
       "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
     },
+    "merge_risk": {
+      "description": "palpatine-risk-assessor's verdicts for this visit to Completed (P1, P4), by pull request number, and when the engine rebased a sibling onto main (P5). Stands only while moves still equals the count it was written at.",
+      "type": "object",
+      "required": ["moves", "at", "verdicts", "rebased"],
+      "additionalProperties": false,
+      "properties": {
+        "moves": { "type": "integer", "minimum": 0 },
+        "at": { "type": "string", "format": "date-time" },
+        "verdicts": { "type": "object", "additionalProperties": { "enum": ["auto", "manual"] } },
+        "rebased": { "type": "object", "additionalProperties": { "type": "string", "format": "date-time" } }
+      }
+    },
     "memory": {
       "description": "Each agent's journal (M2): what it printed as one-line JSON while it worked, kept by the harness, the only writer. Entries are numbered 1 up across an agent's rounds, in order; a later one wins.",
       "type": "object",

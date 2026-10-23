@@ -50,7 +50,7 @@ module OpenLanes
         @state_file = dispatcher.state_file
         redis = read_redis
         file = @state_file&.live
-        newer = [redis, file].compact.max_by { it["seq"].to_i }
+        newer = newest(redis, file)
         # A copy that is missing is behind, unless both are: then there is
         # nothing to keep until a person changes something.
         @in_redis = redis ? redis["seq"].to_i : (newer && -1) || 0
@@ -76,6 +76,23 @@ module OpenLanes
         dispatcher.concurrency = limit
       rescue OpenLanes::Error => e
         UI.log("concurrency #{limit} from before the restart not kept: #{e.message}")
+      end
+
+      # After Redis comes back: which copy is the newer, by the same `seq`
+      # rule as {#restore}. An RDB rollback leaves Redis behind or empty and
+      # the file wins. The engine's own state kept going through the outage,
+      # so nothing is restored from either; both marks are reset to what is
+      # really there, so the next {#flush} rewrites whichever copy is behind.
+      #
+      # @return [Symbol, nil] `:redis` or `:file`, or nil with neither copy
+      def reconcile
+        @warned = false
+        redis = read_redis
+        file = @state_file&.live
+        @in_redis = redis ? redis["seq"].to_i : -1
+        @in_file = file ? file["seq"].to_i : -1
+        newer = newest(redis, file) or return nil
+        newer.equal?(redis) ? :redis : :file
       end
 
       # Bring both copies up to the state's `seq`. The file is written by the
@@ -111,6 +128,13 @@ module OpenLanes
       end
 
       private
+
+      # The copy with the higher `seq`; Redis on a tie, being listed first.
+      #
+      # @param redis [Hash, nil]
+      # @param file [Hash, nil]
+      # @return [Hash, nil]
+      def newest(redis, file) = [redis, file].compact.max_by { it["seq"].to_i }
 
       # @return [void]
       def mirror

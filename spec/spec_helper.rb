@@ -11,6 +11,11 @@ require "coverage/badge"
 # The directory is made up front because the move happens in `at_exit`, and
 # without it the whole suite dies there — which reports as a passing run
 # followed by a stack trace.
+#
+# The badge is a tracked file, so only a run that asks for it (`just
+# test-coverage` sets COVERAGE_BADGE) moves it there. Every other run left
+# docs/badges dirty, and chewie-verifier, which runs the suite as a How to test
+# step, was then refused its commit for "changes outside its plan folder".
 REPO_ROOT = File.expand_path("..", __dir__)
 BADGE_DIR = File.join(REPO_ROOT, "docs", "badges")
 FileUtils.mkdir_p(BADGE_DIR)
@@ -36,7 +41,7 @@ SimpleCov.at_exit do
   # rubocop: disable RSpec/Output
   puts "Coverage: #{SimpleCov.result.covered_percent.round(2)}%"
   # rubocop: enable RSpec/Output
-  FileUtils.mv("coverage/badge.svg", File.join(BADGE_DIR, "coverage_badge.svg"))
+  FileUtils.mv("coverage/badge.svg", File.join(BADGE_DIR, "coverage_badge.svg")) if ENV["COVERAGE_BADGE"]
 end
 
 require "tmpdir"
