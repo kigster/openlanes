@@ -93,6 +93,16 @@ module OpenLanes
         end
       end
 
+      # Anybody's live lock taken inside one checkout, the engine's own
+      # included: a worktree with a lock in it is in use, whoever holds it.
+      #
+      # @param checkout [String]
+      # @return [Held, nil]
+      def held_in(checkout)
+        work = real(checkout)
+        held.find { real(it.tree) == work }
+      end
+
       # Claim the plan's folder. False when somebody holds it, in which case
       # the plan is left alone; true when alock is not installed.
       #

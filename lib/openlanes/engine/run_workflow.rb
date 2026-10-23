@@ -505,7 +505,9 @@ module OpenLanes
           # while a plan waits at 🏁.
           merge_by: -> { Config.current.merger },
           worktree:,
-          publisher:)
+          publisher:,
+          # A merged plan's checkout with somebody's lock in it stays.
+          held:     ->(path) { Engine.agent_locks(@tree.dir)&.held_in(path)&.to_s })
       end
 
       # What the runner is told about idling past its fixed points. With its
