@@ -79,13 +79,13 @@ module OpenLanes
         stack = settle_stack(extracted)
 
         Config.new(**basics,
-          redis_url:     @defaults.redis_url,
-          commands:      @defaults.commands,
-          app:           @defaults.app,
+          redis_url:                @defaults.redis_url,
+          commands:                 @defaults.commands,
+          app:                      @defaults.app,
           merge_by:,
           ci:,
           desired_codebase_quality:,
-          stack:         stack.empty? ? nil : stack.to_h)
+          stack:                    stack.empty? ? nil : stack.to_h)
       end
 
       private

@@ -150,10 +150,10 @@ RSpec.describe OpenLanes::Setup::Interview do
         stack: { language: "elixir" },
         ci: { provider: :external, config: nil })
       expect(interview(ask: false, defaults: current).call).to have_attributes(
-        ci:            { provider: :external, config: nil },
-        merge_by:      :auto,
+        ci:                       { provider: :external, config: nil },
+        merge_by:                 :auto,
         desired_codebase_quality: :mvp,
-        stack:         { language: "elixir" }
+        stack:                    { language: "elixir" }
       )
     end
 

@@ -128,7 +128,7 @@ module OpenLanes
     :stack) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil)
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -265,7 +265,6 @@ module OpenLanes
     # What may check a pull request (M21). `external` is a CI openlanes does
     # not scaffold; `none` is a decision, not a missing answer.
     CI_PROVIDERS = %i[github_actions circleci jenkins external none].freeze
-
 
     # What `stack:` may hold. `from` and `to` are set when a port is planned.
     STACK_FIELDS = %i[language frameworks front_end persistence caching logins deployment domain from to].freeze

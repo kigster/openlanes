@@ -257,8 +257,8 @@ RSpec.describe OpenLanes::Config do
     it "reads each of them" do
       openlanes_yml(full)
       expect(config).to have_attributes(
-        ci:            { provider: :github_actions, config: ".github/workflows/ci.yml" },
-        stack:         { language: "ruby", frameworks: %w[rails sinatra], persistence: "postgres",
+        ci:    { provider: :github_actions, config: ".github/workflows/ci.yml" },
+        stack: { language: "ruby", frameworks: %w[rails sinatra], persistence: "postgres",
                          from: "sinatra", to: "rails" }
       )
     end

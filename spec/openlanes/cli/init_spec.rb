@@ -102,8 +102,12 @@ RSpec.describe OpenLanes::CLI::Init do
 
     it "takes every value as a flag" do
       run(project: "Acme", lane: "quick", frontend: false, jobs: "4", quality: "mvp")
-      expect(written).to eq("project" => "Acme", "lane" => "quick", "frontend" => false, "jobs" => 4,
-        "desired_codebase_quality" => "mvp", **decided)
+      expect(written).to eq("project" => "Acme",
+        "lane" => "quick",
+        "frontend" => false,
+        "jobs" => 4,
+        "desired_codebase_quality" => "mvp",
+**decided)
     end
 
     it "writes a file every other command can read" do
@@ -257,9 +261,9 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     {
-      { ci: "travis" }             => /--ci must be one of/,
-      { merge_by: "robot" }        => /--merge-by must be one of/,
-      { quality: "perfect" }       => /--quality must be one of/
+      { ci: "travis" }       => /--ci must be one of/,
+      { merge_by: "robot" }  => /--merge-by must be one of/,
+      { quality: "perfect" } => /--quality must be one of/
     }.each do |flags, message|
       it "refuses #{flags}" do
         _out, err, status = run(yes: true, **flags)
