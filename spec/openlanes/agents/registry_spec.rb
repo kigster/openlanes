@@ -229,9 +229,9 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "tells hansolo the verdict words and the two-rejection rule" do
+    it "tells hansolo the verdict words, the finding headings and the configured cap" do
       prompt = agents.find("hansolo-reviewer").prompt
-      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(approved)", "(slop)", "👍🏼 to deploy")
+      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected N+1/M)", "### F<n> [critical|minor]", "(approved)", "(slop)", "👍🏼 to deploy")
     end
 
     it "lets hansolo comment, but neither review nor edit a pull request" do
@@ -331,6 +331,28 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "is withheld git rebase and git commit like every agent, and granted nothing" do
       expect(bb8.may).to eq([])
+    end
+  end
+
+  # M7: the arbitrator reads and answers; the engine records and acts.
+  describe "obi-wan-kenobi-arbitrator, as the repository defines it" do
+    let(:shipped) { described_class.new }
+    let(:obi) { shipped.find("obi-wan-kenobi-arbitrator") }
+
+    it "is reached by the builders' appeals and disputes" do
+      expect(%w[luke-backend rey-frontend].map { shipped.find(it).prompt })
+        .to all(include("--note \"appeal: F<n> because <reason>\"", "--to obi-wan-kenobi-arbitrator", "dispute:"))
+    end
+
+    it "is read-only and is never offered a plan state" do
+      offered = OpenLanes::Plans::STATUSES.flat_map { |status| shipped.for_status(status).map(&:name) }
+
+      aggregate_failures do
+        expect(obi).to have_attributes(handles: [], advances_to: nil, phase: "arbitration", model: "opus", may: [])
+        expect(obi.allowed_tools).to eq(["Read", "Grep", "Glob", "Bash(gh pr view:*)", "Bash(gh pr diff:*)",
+                                         "Bash(openlanes state show:*)", "Bash(openlanes mail read:*)"])
+        expect(offered).not_to include("obi-wan-kenobi-arbitrator")
+      end
     end
   end
 end
