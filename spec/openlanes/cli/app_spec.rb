@@ -150,6 +150,61 @@ RSpec.describe "openlanes app" do
       expect(err).to include("014.00's app did not start", "in #{project} (kig/012.00-app-runner)")
     end
 
+    # The checkout's own `.openlanes.yml` is read again, so a worktree can
+    # break `app:` while the project root's file stays sound.
+    it "refuses a worktree whose app: it cannot read, naming that file" do
+      dirname = OpenLanes::Plans.plan_dirname("014.00", OpenLanes::Plans.status(:planned), "next")
+      FileUtils.mkdir_p(File.join(project, ".plans", dirname))
+      checkout = OpenLanes::Vcs.worktree(root: project).path_for(OpenLanes::Plans::Feature.parse(dirname))
+      FileUtils.mkdir_p(checkout)
+      File.write(File.join(checkout, ".openlanes.yml"), "app:\n  processes: []\n")
+      _, err, status = command(OpenLanes::CLI::App::Start, plan: "14")
+      expect([status, err]).to match([65, /app\.processes: must be a list/])
+    ensure
+      FileUtils.rm_rf(File.dirname(checkout)) if checkout
+    end
+
+    # Redis answering: the board is filed beside the demo's, and Ctrl-C only
+    # raises the runner's flag, since a trap may not take a lock.
+    it "publishes under demo/ with --demo, and stops the runner on TERM" do
+      store = OpenLanes::Live.memory_store
+      allow(OpenLanes::Live).to receive(:connect).and_return(store)
+      given = {}
+      allow(OpenLanes::Apps).to receive(:runner).and_wrap_original do |original, **kwargs|
+        given.update(kwargs)
+        original.call(**kwargs).tap do |runner|
+          allow(runner).to receive(:call) do
+            kwargs[:supervisor][:output].call("web", "listening")
+            Signal.trap("TERM", "DEFAULT").call(Signal.list["TERM"])
+            wait_for(2) { runner.stopping.true? }
+          end
+        end
+      end
+      _, err, status = command(OpenLanes::CLI::App::Start, demo: true)
+      expect([status, given[:store], given[:keys].repo]).to eq([0, store, "demo/#{OpenLanes::Live.keys(root: project).repo}"])
+      expect(err).to include("Starting 012.00's app in #{project} (kig/012.00-app-runner)", "web: listening")
+    end
+
+    # The registry drops dead owners when read, so only a process that dies
+    # between the read and the TERM reaches this; the race is staged.
+    it "says so when the process holding the ports went before the TERM" do
+      sleeper = Process.spawn("sleep", "30")
+      OpenLanes::Apps::Ports.new(path: ports_file, owner: sleeper, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
+      allow(Process).to receive(:kill).and_call_original
+      allow(Process).to receive(:kill).with("TERM", sleeper).and_raise(Errno::ESRCH)
+      _, err, status = command(OpenLanes::CLI::App::Stop)
+      expect([status, err]).to match([0, /#{sleeper} had already stopped/])
+    ensure
+      Process.kill("KILL", sleeper) if sleeper
+      Process.wait(sleeper) if sleeper
+    end
+
+    it "refuses to stop a process that is not the caller's" do
+      OpenLanes::Apps::Ports.new(path: ports_file, owner: 1, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
+      _, err, status = command(OpenLanes::CLI::App::Stop, plan: "12")
+      expect([status, err]).to match([77, /1 is not yours to stop/])
+    end
+
     it "refuses a plan the project does not have" do
       FileUtils.mkdir_p(File.join(project, ".plans"))
       _, err, status = command(OpenLanes::CLI::App::Start, plan: "99")
