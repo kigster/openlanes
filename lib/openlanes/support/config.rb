@@ -19,6 +19,12 @@ module OpenLanes
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
   #                             # the plan stops going back to its builders (M6)
+  #   ci:                       # what checks a pull request (M21); `openlanes init` settles it
+  #     provider: github_actions
+  #     config: .github/workflows/ci.yml
+  #   stack:                    # the project's stack, also written to docs/decisions/stack.md
+  #     language: ruby
+  #     frameworks: [rails]
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
@@ -76,6 +82,11 @@ module OpenLanes
   # @!attribute [r] merge_max_rejections
   #   @return [Integer, nil] `merge.max_rejections` as the file says it; read
   #     {#max_rejections}, which applies the default
+  # @!attribute [r] ci
+  #   @return [Hash{Symbol => Object}, nil] `{provider:, config:}`, provider one of {CI_PROVIDERS}
+  # @!attribute [r] stack
+  #   @return [Hash{Symbol => Object}, nil] only the {STACK_FIELDS} that were answered;
+  #     `frameworks` is an Array, every other field a String
   # @!attribute [r] app
   #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes app
   #     start` runs; nil when the project declares none, and then nothing
@@ -112,10 +123,12 @@ module OpenLanes
     :review_max_hmm,
     :merge_max_rejections,
     :desired_codebase_quality,
-    :coverage) do
+    :coverage,
+    :ci,
+    :stack) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil)
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil)
       super
     end
 
@@ -189,7 +202,9 @@ module OpenLanes
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
-                   "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings }
+                   "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings,
+                   "ci" => ci && { "provider" => ci[:provider].to_s, "config" => ci[:config] }.compact,
+                   "stack" => stack&.transform_keys(&:to_s) }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
@@ -214,7 +229,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project lane frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
-              questions review coverage].freeze
+              questions review coverage ci stack].freeze
 
     # What `desired_codebase_quality:` may say (R4), the default first. M5's
     # `top_notch` and `medium` were dropped.
@@ -246,6 +261,17 @@ module OpenLanes
 
     # The variable that beats `review.max_hmm`.
     MAX_HMM_ENV = "OPENLANES_REVIEW_MAX_HMM"
+
+    # What may check a pull request (M21). `external` is a CI openlanes does
+    # not scaffold; `none` is a decision, not a missing answer.
+    CI_PROVIDERS = %i[github_actions circleci jenkins external none].freeze
+
+
+    # What `stack:` may hold. `from` and `to` are set when a port is planned.
+    STACK_FIELDS = %i[language frameworks front_end persistence caching logins deployment domain from to].freeze
+
+    # The one stack field that is a list.
+    STACK_LISTS = %i[frameworks].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -302,6 +328,8 @@ module OpenLanes
           redis_outage_hours: redis_outage_hours(settings, path),
           desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
+          ci:        ci(settings["ci"], path),
+          stack:     stack(settings["stack"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
@@ -412,6 +440,62 @@ module OpenLanes
         return max if max.nil? || (max.is_a?(Integer) && max.positive?)
 
         fail_with(path, "merge.max_rejections: #{max.inspect} is not a whole number above zero")
+      end
+
+      # @return [Hash{Symbol => Object}, nil]
+      def ci(value, path)
+        return nil if value.nil?
+
+        fail_with(path, "ci: must be a mapping, e.g. `ci: { provider: none }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        unknown = settings.keys - %w[provider config]
+        fail_with(path, "ci: unknown key #{unknown.join(", ")}; known: provider, config") unless unknown.empty?
+
+        provider = settings["provider"].to_s.strip.downcase.to_sym
+        unless CI_PROVIDERS.include?(provider)
+          fail_with(path, "ci.provider: #{settings["provider"].inspect} is not one of #{CI_PROVIDERS.join(", ")}")
+        end
+
+        config = settings["config"]
+        unless config.nil? || (config.is_a?(String) && !config.strip.empty?)
+          fail_with(path, "ci.config: must be a path, not #{config.inspect}")
+        end
+
+        { provider:, config: config&.strip }
+      end
+
+      # Free text, but never blank: a blank field is one nobody answered,
+      # and it is left out rather than written as a placeholder.
+      #
+      # @return [Hash{Symbol => Object}, nil]
+      def stack(value, path)
+        return nil if value.nil?
+
+        fail_with(path, "stack: must be a mapping of field to value") unless value.is_a?(Hash)
+
+        fields = value.transform_keys { it.to_s.to_sym }
+        unknown = fields.keys - STACK_FIELDS
+        unless unknown.empty?
+          fail_with(path,
+            "stack: unknown field#{"s" unless unknown.size == 1} #{unknown.join(", ")}; " \
+            "known: #{STACK_FIELDS.join(", ")}")
+        end
+
+        fields.compact.to_h { |field, v| [field, stack_value(field, v, path)] }
+      end
+
+      # @return [String, Array<String>]
+      def stack_value(field, value, path)
+        if STACK_LISTS.include?(field)
+          list = Array(value)
+          return list.map(&:strip) if list.all? { it.is_a?(String) && !it.strip.empty? }
+
+          fail_with(path, "stack.#{field}: must be a list of names, not #{value.inspect}")
+        end
+        return value.strip if value.is_a?(String) && !value.strip.empty?
+
+        fail_with(path, "stack.#{field}: must be a non-empty name, not #{value.inspect}")
       end
 
       # @return [Hash{String => Hash{Symbol => Object}}]
