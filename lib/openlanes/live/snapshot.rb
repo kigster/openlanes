@@ -37,10 +37,12 @@ module OpenLanes
       #   unredacted: the snapshot redacts it ({Live.redact})
       # @param outage [Hash, nil] {OutageReport#to_h} of the outage this run
       #   last recovered from; nil when there was none
+      # @param max_rejections [#call] `merge.max_rejections`, asked once per
+      #   snapshot, so an edited `.openlanes.yml` shows on the next one
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil,
-        outage: nil)
+        outage: nil, max_rejections: -> { Config.current.max_rejections })
         @board = board
         @tree = tree
         @agents = agents
@@ -59,6 +61,7 @@ module OpenLanes
         @judge = judge
         @redis_url = redis_url
         @outage = outage
+        @max_rejections = max_rejections
       end
 
       # @return [Hash]
@@ -150,7 +153,23 @@ module OpenLanes
           mail:        mailbox.unacked_pairs,
           last_known:  last_known(state),
           locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash,
-          finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
+          finished:    finished && { kind: finished.kind, at: iso(finished.at) },
+          rejections:  { count: counter.call(subject), max: max_rejections },
+          ruling:      state.rulings.last,
+          arbitrating: stages.any? { it["agent"] == Arbitration::AGENT && !it["finished_at"] } }
+      end
+
+      # @return [OpenLanes::Arbitration::Counter]
+      def counter = @counter ||= Arbitration.counter(agents: @agents)
+
+      # A `.openlanes.yml` that does not parse shows the default cap rather
+      # than taking the whole page down; `openlanes run` refuses it anyway.
+      #
+      # @return [Integer]
+      def max_rejections
+        @max ||= @max_rejections.call
+      rescue Error
+        @max = Config::DEFAULT_MAX_REJECTIONS
       end
 
       # @param status [OpenLanes::Plans::Status]
