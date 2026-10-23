@@ -1,9 +1,7 @@
 # Verification, round 1
 
-Verdict: verified
+Verdict: rejected
 
-## Steps
+Written by the engine: the round failed where chewie-verifier could not say so.
 
-1. The key validates and drives M5's high or mvp column: passed
-2. Missing key plus a first ok-not-perfect PR shows the question once: passed
-3. Under high, every non-✅ comment gets a reply in its thread: passed
+The coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.

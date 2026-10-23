@@ -6,7 +6,7 @@
     "slug": "three-quality-levels"
   },
   "state": "verifying",
-  "updated_at": "2026-10-23T14:57:23-07:00",
+  "updated_at": "2026-10-23T15:04:57-07:00",
   "stages": [
     {
       "agent": "luke-backend",
@@ -220,14 +220,21 @@
     {
       "agent": "chewie-verifier",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "verifying",
       "started_at": "2026-10-23T14:44:23-07:00",
       "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels",
       "adapter": "claude",
       "model": "sonnet",
       "effort": "medium",
-      "session": "2e41122a-47b1-438a-917e-566226b7898f"
+      "session": "2e41122a-47b1-438a-917e-566226b7898f",
+      "to": "verifying",
+      "finished_at": "2026-10-23T14:59:40-07:00",
+      "up": 61992,
+      "down": 300,
+      "seconds": 912.4,
+      "note": "completed - 12 tool calls; verified PR #111; final.png pushed in ee7943a; waiting on CI",
+      "moves": 10
     }
   ],
   "signatures": [
@@ -377,6 +384,13 @@
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
+    },
+    {
+      "at": "2026-10-23T15:04:57-07:00",
+      "agent": "chewie-verifier",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected: The coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage; signed by harness"
     }
   ],
   "messages": [
