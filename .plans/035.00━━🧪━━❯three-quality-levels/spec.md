@@ -1,6 +1,6 @@
 ---
 created: 2026-10-16
-starts: planning
+lane: plan
 depends_on: ["032.00"]
 ---
 
