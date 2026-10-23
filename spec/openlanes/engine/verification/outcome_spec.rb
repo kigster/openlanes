@@ -89,6 +89,28 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
+    # M8: after a cap/go ruling the next failure goes to a person, not back to the builders.
+    it "blocks the plan with blocked.md when it fails the last verification a go ruling gave it" do
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .rule!(kind: "cap",
+                                   pr: 1,
+                                   round: 1,
+                                   outcome: "go",
+                                   findings: {},
+                                   winner: nil,
+                                   reason: "minor only",
+                                   trigger: "cap",
+                                   at: now - 60)
+      OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+      result = outcome.reject(checkout:, plan:, pull: pr, round:)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :blocked)
+        expect(plan.status.key).to eq(:blocked)
+        expect(plan.read("blocked.md")).to include("## B1", "(Recommended)")
+      end
+    end
+
     it "keeps only the failing step and final.png, and none of the engine's own note" do
       outcome.reject(checkout:, plan:, pull: pr, round:)
       pushed = origin_files.grep(%r{/verification/1/}).map { File.basename(it) }

@@ -249,6 +249,7 @@ module OpenLanes
           ask_for_time
           drain_mail
           watch_pull_requests
+          arbitrate
           settle_verifications
           settle_merges
           # On threads: a kill waits out TERM before KILL, and the board must not.
@@ -1230,6 +1231,7 @@ module OpenLanes
       # @return [Boolean]
       def eligible?(agent, subject)
         ordinal = subject.feature.ordinal.to_s
+        return false if @runner.arbitration&.holds?(subject)
         return false if @running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
 
         past = @history[[ordinal, agent.name]].select { |h| h[:state] == subject.status.key }
@@ -1976,6 +1978,23 @@ module OpenLanes
         rejected = @runner.verification.reject(task, subject, why: result.to_markdown)
         note = rejected&.note || "no open pull request to reject"
         base.with(ok: !rejected.nil?, status: "Completed", to: rejected&.to || job.state, note: "#{result.headline}; #{note}")
+      end
+
+      # The arbitrator's step (plan 015): every plan nothing is running on is
+      # asked for a trigger, and the ruling is applied before anything is
+      # assigned, so a capped plan never reaches its builders.
+      #
+      # @return [void]
+      def arbitrate
+        arbitration = @runner.arbitration or return
+        return if @runner.dry_run?
+
+        busy = untouchable
+        arbitration.tick(@runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }).each do |outcome|
+          note = outcome.error || outcome.effects.ruling.values_at("kind", "outcome").join(": ")
+          UI.log("⚖️ #{outcome.trigger}: #{note}", level: outcome.error ? :warn : :info)
+          wake!
+        end
       end
 
       # What the last look at CI found for the verified plans, logged, and

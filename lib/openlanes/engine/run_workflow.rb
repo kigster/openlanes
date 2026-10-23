@@ -395,6 +395,7 @@ module OpenLanes
           publisher:,
           verification: verification_for(publisher, worktree),
           merging:      merging_for(publisher, worktree),
+          arbitration:  arbitration_for(publisher, worktree),
           on_board:     live&.on_board,
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -487,6 +488,18 @@ module OpenLanes
           # an answer of mvp lowers the cap to 1 as soon as it is given.
           max_rejections: -> { Config.current.max_rejections })
         Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
+      end
+
+      # The arbitrator (plan 015) rules on pull requests and labels them, so
+      # it runs only where verification does.
+      #
+      # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil]
+      # @return [OpenLanes::Engine::Arbitration, nil]
+      def arbitration_for(publisher, worktree)
+        return nil if publisher.nil? || worktree.nil? || @dry_run
+
+        Arbitration.new(tree_dir: @tree.dir, agents: Agents::Registry.new, github: Vcs.github, root: @root)
       end
 
       # Merging (P1 to P5) labels, merges and rebases on GitHub, so it runs
