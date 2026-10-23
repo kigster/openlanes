@@ -130,7 +130,8 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     end
 
     it "runs the engine in stay mode, rescanning every five seconds" do
-      expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true, rescan: 5))
+      expect(OpenLanes::Engine::Runner).to have_received(:new)
+        .with(hash_including(stay: true, rescan: OpenLanes::Engine::Dispatcher::RESCAN))
     end
 
     # start is the command `run` points people at to watch their pull
