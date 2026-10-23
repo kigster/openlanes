@@ -44,9 +44,12 @@ module OpenLanes
       # @param granted [Array<String>] commands lifted for this agent
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
+      # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
-        instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil)
+        instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
+        max_rejections: -> { Config.current.max_rejections })
         @rebase = rebase
+        @max_rejections = max_rejections
         @agent = agent
         @subject = subject
         @root = root
@@ -81,7 +84,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -107,6 +110,31 @@ module OpenLanes
           else, never write it anyway. Before your closing signature, run
           `AGENT_ID=#{agent.name} alock release-all`.
         PROMPT
+      end
+
+      # A reviewer's cap and the findings the arbitrator struck (M6, M8):
+      # hansolo once hard-coded "2", and a struck finding raised again would
+      # count a rejection the arbitrator already voided.
+      #
+      # @return [String] empty for any agent outside the review phase
+      def review_section
+        return "" unless agent.phase.to_s == "review"
+
+        struck = Plans::PlanState.for(subject.feature.path).rulings.flat_map { Array(it.dig("findings", "struck")) }.uniq
+        <<~TEXT
+          ## Rejection cap
+
+          `merge.max_rejections` is #{review_cap}: sign `rejected N/#{review_cap}`, where N counts this rejection.
+          #{struck.empty? ? "No finding has been struck." : "Struck by the arbitrator, never to be raised again: #{struck.join(", ")}."}
+
+        TEXT
+      end
+
+      # @return [Integer]
+      def review_cap
+        @max_rejections.call
+      rescue Error
+        Config::DEFAULT_MAX_REJECTIONS
       end
 
       # What an agent resolving a stopped rebase is told. Its own definition

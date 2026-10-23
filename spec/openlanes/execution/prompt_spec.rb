@@ -33,6 +33,35 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     expect(text).not_to include("snapshot the harness overwrites")
   end
 
+  describe "a reviewer's rejection cap and struck findings (plan 015)" do
+    let(:agent) { OpenLanes::Agents.find("hansolo-reviewer") }
+
+    def prompt = described_class.new(agent:, subject: plan, root: "/repo", profile:, max_rejections: -> { 3 }).to_s
+
+    it "gives hansolo the configured cap" do
+      expect(prompt).to include("`merge.max_rejections` is 3: sign `rejected N/3`", "No finding has been struck.")
+    end
+
+    it "lists a struck finding" do
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .rule!(kind: "appeal",
+                                   pr: 4,
+                                   round: 1,
+                                   outcome: "struck",
+                                   findings: { struck: %w[F2] },
+                                   winner: nil,
+                                   reason: "r",
+                                   trigger: "appeal")
+      expect(prompt).to include("Struck by the arbitrator, never to be raised again: F2.")
+    end
+
+    it "tells a builder nothing about the cap" do
+      builder = OpenLanes::Agents.find("luke-backend")
+      expect(described_class.new(agent: builder, subject: plan, root: "/repo", profile: OpenLanes::Agents::Profile.resolve(builder)).to_s)
+        .not_to include("## Rejection cap")
+    end
+  end
+
   it "opens with the agent's own definition" do
     expect(text).to start_with(agent.prompt)
   end

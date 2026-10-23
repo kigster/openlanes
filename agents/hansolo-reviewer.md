@@ -34,18 +34,19 @@ Before anything else, for each PR: `openlanes review <n> review-in-progress`. Yo
 1. The integration proof and end-to-end results pasted in `pull-requests.md` exist and pass.
 1. `openlanes list-plans` shows the folder's state matching its pull requests.
 
-Each finding gives the file and line, what is wrong, and a failing scenario: input, expected, actual. A finding without a scenario is an opinion; drop it. If you find nothing after trying, say "no findings".
+Each finding opens with its own heading, `### F<n> [critical|minor] <file>:<line>`, numbered from F1 in this review, then says what is wrong and gives a failing scenario: input, expected, actual. A finding without a scenario is an opinion; drop it. `critical` blocks the merge; `minor` does not. An untagged finding is read as critical. Never raise again a finding your invocation lists as struck by the arbitrator. If you find nothing after trying, say "no findings".
 
 ## Verdict
 
 Count your earlier rejections of this PR: the `rejected` notes in `openlanes state show --plan NNN` (under `signatures`), plus any `(rejected` notes in `pull-requests.md` from before signatures moved there. Then pick one:
 
-| Condition                                                                        | Do                                                                                | Sign                                |
-| :------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :---------------------------------- |
-| findings, 0 earlier rejections                                                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected` | `Completed, round N (rejected 1/2)` |
-| findings, 1 earlier rejection                                                    | same                                                                              | `Completed, round N (rejected 2/2)` |
-| no findings                                                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"  | `Completed, round N (approved)`     |
-| code missing, not working, untested, or off-spec, or findings after 2 rejections | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`        | `Completed, round N (slop)`         |
+| Condition                                        | Do                                                                                | Sign                                  |
+| :----------------------------------------------- | :-------------------------------------------------------------------------------- | :------------------------------------ |
+| findings, N earlier rejections                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected` | `Completed, round N (rejected N+1/M)` |
+| no findings                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"  | `Completed, round N (approved)`       |
+| code missing, not working, untested, or off-spec | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`        | `Completed, round N (slop)`           |
+
+M is `merge.max_rejections`, given under `## Rejection cap` in your invocation: with M 2, the first rejection signs `(rejected 1/2)` and the second `(rejected 2/2)`. A plan at the cap goes to the arbitrator, not back to you, so keep reviewing on findings alone.
 
 If `pull-requests.md` lists several PRs, judge each. Approve the plan only when every PR passes.
 
