@@ -55,7 +55,7 @@ RSpec.describe OpenLanes::Setup::Interview do
 
     it "asks in order: merge, quality, stack, port" do
       interview.call
-      marks = ["Who merges", "How much quality", "Language:", "Domain:", "open to a different stack"]
+      marks = ["Who merges", "desired quality", "Language:", "Domain:", "open to a different stack"]
       expect(marks.map { asked.index(it) }).to eq(marks.map { asked.index(it) }.sort)
     end
   end
@@ -93,7 +93,7 @@ RSpec.describe OpenLanes::Setup::Interview do
     it "skips every question the description answered" do
       config = interview.call
       expect([config.merge_by, config.desired_codebase_quality, config.stack]).to eq([:auto, :mvp, { language: "go" }])
-      expect(%w[Who\ merges How\ much\ quality Language:].map { asked.include?(it) }).to eq([false, false, false])
+      expect(["Who merges", "desired quality", "Language:"].map { asked.include?(it) }).to eq([false, false, false])
     end
   end
 

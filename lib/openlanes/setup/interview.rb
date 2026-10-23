@@ -36,6 +36,15 @@ module OpenLanes
         domain:      "Domain:"
       }.freeze
 
+      QUALITY_QUESTION = "Please indicate the desired quality of the codebase (this affects the severity of items " \
+                         "found during review that will require rework):"
+
+      # Label → `desired_codebase_quality` (R4), the default first.
+      QUALITY_CHOICES = {
+        "High quality, but slower and more expensive: a review-ok-not-perfect PR returns to developers" => :high,
+        "Good enough, but faster and cheaper, think MVP: review-ok-not-perfect is accepted"             => :mvp
+      }.freeze
+
       PORT_ANSWERS = ["Port the code", "Start fresh beside it"].freeze
 
       # The answer offered first when `desired_codebase_quality` is asked
@@ -66,9 +75,7 @@ module OpenLanes
         extracted = describe
         merge_by = pick(:merge_by, extracted) { choose("Who merges a reviewed pull request?", Config::MERGERS, @defaults.merger) }
         quality = @defaults.desired_codebase_quality || DEFAULT_QUALITY
-        desired_codebase_quality = pick(:desired_codebase_quality, extracted) do
-          choose("How much quality to buy?", Config::QUALITIES, quality)
-        end
+        desired_codebase_quality = pick(:desired_codebase_quality, extracted) { ask_quality(quality) }
         stack = settle_stack(extracted)
 
         Config.new(**basics,
@@ -199,6 +206,15 @@ module OpenLanes
                    end
         jobs = @given[:jobs] || (ask? ? @prompt.ask("Plans to run at once (blank: cores - 2):") : @defaults.jobs)
         { project:, lane: lane.to_sym, frontend:, jobs: count(jobs) }
+      end
+
+      # R4's question, worded as `openlanes init` has always asked it.
+      #
+      # @param default [Symbol]
+      # @return [Symbol]
+      def ask_quality(default)
+        choices = QUALITY_CHOICES.to_h { |label, value| [label, value.to_s] }
+        @prompt.select(QUALITY_QUESTION, choices, default: choices.key(default.to_s)).to_sym
       end
 
       # @return [Boolean, nil]
