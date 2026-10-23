@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openlanes (3.0.1)
+    openlanes (4.0.0)
       aasm
       agent-lock
       concurrent-ruby
@@ -265,6 +265,7 @@ PLATFORMS
 
 DEPENDENCIES
   coverage-badge
+  debug_inspector (~> 1.2)
   json_schemer
   openlanes!
   rack-test
@@ -321,7 +322,7 @@ CHECKSUMS
   newrelic-infinite_tracing (10.9.1) sha256=43f7376f6294c49faeac45818b463612cc49d0c9d7aa7f82ff4fe33b33b84214
   newrelic_rpm (10.9.1) sha256=7a2c8f0bd6c3407f7d981999d46e0d5c39c53bee9ca737f0e083d3b6dcc8f0c3
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
-  openlanes (3.0.1)
+  openlanes (4.0.0)
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
   parser (3.3.12.0) sha256=21a6d7f755d5a24dfbdc6e6b772e4e879a52e7631a88bc5a3a134606052c9828
