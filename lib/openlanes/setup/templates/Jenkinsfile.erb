@@ -1,0 +1,15 @@
+pipeline {
+  agent { docker { image '<%= image %>' } }
+  stages {
+<% if lint -%>
+    stage('Lint') {
+      steps { sh '<%= lint %>' }
+    }
+<% end -%>
+<% if test -%>
+    stage('Test') {
+      steps { sh '<%= test %>' }
+    }
+<% end -%>
+  }
+}

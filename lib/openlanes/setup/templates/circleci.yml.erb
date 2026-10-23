@@ -1,0 +1,23 @@
+version: 2.1
+
+jobs:
+  check:
+    docker:
+      - image: <%= image %>
+    steps:
+      - checkout
+<% if lint -%>
+      - run:
+          name: Lint
+          command: <%= lint %>
+<% end -%>
+<% if test -%>
+      - run:
+          name: Test
+          command: <%= test %>
+<% end -%>
+
+workflows:
+  check:
+    jobs:
+      - check

@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: <%= image %>
+    steps:
+      - uses: actions/checkout@v4
+<% if just -%>
+      - uses: extractions/setup-just@v2
+<% end -%>
+<% if lint -%>
+      - name: Lint
+        run: <%= lint %>
+<% end -%>
+<% if test -%>
+      - name: Test
+        run: <%= test %>
+<% end -%>
