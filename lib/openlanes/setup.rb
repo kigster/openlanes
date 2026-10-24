@@ -5,6 +5,9 @@ module OpenLanes
   # gem's `Brewfile`, then what brew cannot install. `openlanes setup` and
   # `openlanes init` both come through here, so the two ask the same
   # questions of the machine and never disagree about whether it is ready.
+  #
+  # It also holds what `openlanes init` settles about a project before any
+  # plan exists (plan 011): its CI, who merges, and its stack.
   module Setup
     # The gem's own root, which an installed gem and a checkout both have.
     GEM_ROOT = File.expand_path("../..", __dir__)
@@ -17,6 +20,21 @@ module OpenLanes
 
     # @return [OpenLanes::Setup::Machine]
     def machine(**) = Machine.new(**)
+
+    # @return [OpenLanes::Setup::Interview]
+    def interview(**) = Interview.new(**)
+
+    # @param root [String]
+    # @return [OpenLanes::Setup::StackDetector::Detection]
+    def detect_stack(root) = StackDetector.new(root).call
+
+    # @param root [String]
+    # @return [Array<OpenLanes::Setup::CiDetector::Found>]
+    def detect_ci(root) = CiDetector.new(root).call
+
+    # @param env [#[]]
+    # @return [OpenLanes::Setup::Extractor, nil] nil with no API key
+    def extractor(env = ENV) = Extractor.from_env(env)
 
     # One line per check, ✓ or ✗, and under each ✗ the command that fixes it.
     #

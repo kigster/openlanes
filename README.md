@@ -136,6 +136,20 @@ openlanes list-plans              # every open plan, its state and its pull requ
 
 `openlanes start` runs until you press **Stop All Local** on the page or Ctrl-C. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run --until-settled` (or `--no-web`) stops at the first round in which no plan changed state.
 
+`init` settles four project-wide decisions before any plan exists, in this order: CI (it names what the folder already runs, or offers to scaffold GitHub Actions, CircleCI or Jenkins), who merges a reviewed pull request (`human` or `auto`), the desired codebase quality (`high` or `mvp`), and the stack, detected from marker files such as `Gemfile` or `package.json`. With `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set it first asks you to describe the app, and skips the questions the description answered. The stack is also written to `docs/decisions/stack.md`.
+
+```bash
+openlanes init -y --ci github_actions --merge-by auto --quality mvp   # ask nothing, no network
+openlanes init --reconfigure      # ask again with the current answers as defaults; shows the diff first
+openlanes init --reconfigure -n   # the diff only, nothing written
+```
+
+Under `-y` the defaults are `--ci none` (or what the folder already runs), `--merge-by human`, and no `desired_codebase_quality` (the first ok-not-perfect review asks it); a folder with two languages gets no `stack:`.
+
+> [!NOTE]
+>
+> `.openlanes.yml` files written by this release can hold `ci:` and `stack:`. An older openlanes refuses those keys as unknown, so upgrade every machine that reads the file.
+
 For a small mechanical task, skip research and planning:
 
 ```bash
@@ -277,7 +291,7 @@ Global flag: `-C, --no-color`.
 
 ## Configuration
 
-- **`.openlanes.yml`** at the project root: `project`, `lane`, `frontend`, `jobs`, `redis_url`, `redis_outage_hours`, and per-command defaults under `commands:`. A typed flag beats `spec.md` frontmatter, which beats `.openlanes.yml`, which beats the built-in default. Unknown keys are an error.
+- **`.openlanes.yml`** at the project root: `project`, `lane`, `frontend`, `jobs`, `redis_url`, `redis_outage_hours`, `desired_codebase_quality`, `merge`, `ci`, `stack`, and per-command defaults under `commands:`. A typed flag beats `spec.md` frontmatter, which beats `.openlanes.yml`, which beats the built-in default. Unknown keys are an error.
 - **`spec.md` frontmatter**: `lane`, `frontend`, `depth`, per-phase `adapter` / `model` / `effort`, `implementation_suggestions`, `implementation_requirements`, `task-completed-when`, `how-to-verify`.
 - **`PLANS_DIR`**: the plans directory, `.plans` by default.
 - **A lost Redis** does not stop the run. After 10 seconds without an answer every agent is paused through its control file (its clock stands still), nothing new starts, and the outage is recorded in `.plans/openlanes-state.json`. Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds, never more than 30 seconds apart, each gap drawn at random below that (full jitter) so engines sharing one Redis do not ask in step; `redis_backoff:` in `.openlanes.yml` changes the three (`initial: 1`, `cap: 30`, `jitter: true`). When it answers, the agents resume. If it has not answered within `redis_outage_hours` (1 by default, any positive number), the run shuts down the way `q` does. On resume the log says how long Redis was gone and which copy of the run state won, e.g. `Redis is back after 72s (by heartbeat), run state from file; resuming`: the length comes from this node's last heartbeat in Redis, or from the engine's own clock when Redis came back without one, and the run state from whichever of Redis and `.plans/openlanes-state.json` has the higher `seq`. The board page shows the same as `run.outage`, and warns while the engine has not published for more than 15 seconds. A Redis that restarts empty (no AOF, an old RDB snapshot) does not stop the run either: the engine makes its commands group again (issue #59).
