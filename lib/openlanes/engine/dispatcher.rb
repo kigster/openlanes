@@ -1826,7 +1826,7 @@ module OpenLanes
         partner_running = @running.any? { |j| j.task.subject.feature.ordinal.to_s == ordinal }
         target = target_for(agent, verdict, partner_running)
 
-        return approved(base, subject, ordinal) if verdict == :approved
+        return approved(job, base, subject, ordinal) if verdict == :approved
         return built_locally(base.with(status: "Completed"), ordinal) if verdict == :verified
 
         attempt = base.with(status: "Completed")
@@ -1959,7 +1959,8 @@ module OpenLanes
       # finished at 👀, as it was before chewie existed.
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
-      def approved(base, subject, ordinal)
+      def approved(job, base, subject, ordinal)
+        record_approval(job, subject)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
         return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
@@ -1967,6 +1968,26 @@ module OpenLanes
         @finished_plans << ordinal
         finish(subject, "approved")
         base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge#{"; #{said}" if said}")
+      end
+
+      # The approval goes into the event log as the `pr_reviewed` a person's
+      # rejection is recorded as, or the report would count reviews from
+      # rejections alone. The watch never sees an approval (only the merge
+      # after it), so the reviewer's verdict is where it is known. Keyed by
+      # the round, so a PR approved again after a fix cycle is a second
+      # review, and a restarted round noticing the same signing is not.
+      # A plan with no open pull request has nothing to count it against.
+      #
+      # @return [void]
+      def record_approval(job, subject)
+        pull = subject.pull_requests.find(&:open?) or return
+        number = pull.number.to_s.delete("#").to_i
+        @runner.events.record(:pr_reviewed,
+          plan:    subject.feature.ordinal.to_s,
+          seq:     [number, "approved", job.task.round],
+          once:    true,
+          number:,
+          verdict: "approved")
       end
 
       # chewie signed. The engine commits, comments and labels from its

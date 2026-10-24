@@ -133,8 +133,8 @@ module OpenLanes
       # plan folder, counted per recipient. A PR rejected again after a fix
       # round is a second review, not the first one seen twice, so it needs
       # its own event id; two runs noticing the same rejection still agree.
-      # Only rejections are recorded: the watch sees an approval only as
-      # the merge that follows it, which is `pr_merged`.
+      # The watch sees an approval only as the merge that follows it, so
+      # approvals are recorded by the dispatcher, from the reviewer's verdict.
       #
       # @return [Integer]
       def rejections(outcome)

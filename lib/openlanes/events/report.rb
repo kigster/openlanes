@@ -42,7 +42,8 @@ module OpenLanes
       # @!attribute [r] time_to_answer
       #   @return [Hash{Symbol => Object}] `count`, `median_s`, `max_s`
       # @!attribute [r] pr_outcomes
-      #   @return [Hash{String => Integer}] `opened`, `reviewed`, `merged`, `closed`
+      #   @return [Hash{String => Integer}] `opened`, `reviewed`, `approved`,
+      #     `rejected`, `merged`, `closed`
       # @!attribute [r] usage_by_run
       #   @return [Array<Usage>]
       # @!attribute [r] usage_by_model
@@ -66,6 +67,9 @@ module OpenLanes
       # The PR kinds, as the outcome keys they count under.
       PR_KINDS = { "pr_opened" => "opened", "pr_reviewed" => "reviewed", "pr_merged" => "merged",
                    "pr_closed" => "closed" }.freeze
+
+      # The verdicts a `pr_reviewed` carries, counted under their own keys.
+      VERDICTS = %w[approved rejected].freeze
 
       # @param events [Array<OpenLanes::Events::Event>] already deduplicated
       # @param skipped_lines [Integer]
@@ -148,12 +152,19 @@ module OpenLanes
         (sorted.size.odd? ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2.0).round(1)
       end
 
-      # Each PR counts once per outcome, whatever re-asked the watch.
+      # Each PR counts once per outcome, whatever re-asked the watch, and
+      # once per verdict: a PR rejected and later approved is one of each.
       #
       # @return [Hash{String => Integer}]
       def pr_outcomes
-        PR_KINDS.to_h { |kind, key| [key, of(kind).map { [it.project, it.plan, it.payload["number"]] }.uniq.size] }
+        counts = PR_KINDS.to_h { |kind, key| [key, prs(of(kind))] }
+        reviews = of("pr_reviewed")
+        verdicts = VERDICTS.to_h { |verdict| [verdict, prs(reviews.select { it.payload["verdict"] == verdict })] }
+        counts.slice("opened", "reviewed").merge(verdicts, counts.slice("merged", "closed"))
       end
+
+      # @return [Integer] the distinct pull requests among +events+
+      def prs(events) = events.map { [it.project, it.plan, it.payload["number"]] }.uniq.size
 
       # @return [Array<Usage>]
       def usage(finished, &run)

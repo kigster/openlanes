@@ -48,7 +48,12 @@ RSpec.describe OpenLanes::Events::Report do
   end
 
   it "counts each PR outcome once" do
-    expect(result.pr_outcomes).to eq("opened" => 2, "reviewed" => 1, "merged" => 1, "closed" => 1)
+    expect(result.pr_outcomes).to eq("opened" => 2,
+      "reviewed" => 1,
+      "approved" => 1,
+      "rejected" => 1,
+      "merged" => 1,
+      "closed" => 1)
   end
 
   it "groups usage by adapter and model, never across adapters, and keeps unpriced cost nil" do

@@ -6,3 +6,4 @@
 {"event_id":"fixture-18","kind":"pr_opened","at":"2026-10-16T11:40:00.000Z","project":"demo","plan":"021.00","run":null,"agent":null,"adapter":null,"model":null,"payload":{"number":11}}
 {"event_id":"fixture-19","kind":"pr_merged","at":"2026-10-16T13:15:00.000Z","project":"demo","plan":"020.01","run":null,"agent":null,"adapter":null,"model":null,"payload":{"number":10}}
 {"event_id":"fixture-20","kind":"pr_closed","at":"2026-10-16T13:20:00.000Z","project":"demo","plan":"021.00","run":null,"agent":null,"adapter":null,"model":null,"payload":{"number":11}}
+{"event_id":"fixture-21","kind":"pr_reviewed","at":"2026-10-16T13:05:00.000Z","project":"demo","plan":"020.01","run":null,"agent":null,"adapter":null,"model":null,"payload":{"number":10,"verdict":"approved"}}
