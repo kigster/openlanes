@@ -24,9 +24,9 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
   def mail_to = OpenLanes::Plans::PlanState.for(plan.feature.path).messages.map { it["to"] }
   def rulings = OpenLanes::Plans::PlanState.for(plan.feature.path).rulings
 
-  def ruling(kind, outcome, struck: [], critical: [], reason: "Because the spec says so.")
+  def ruling(kind, outcome, struck: [], critical: [], reason: "Because the spec says so.", pr: 7) # rubocop:disable Naming/MethodParameterName -- the ruling's own key
     OpenLanes::Arbitration::Ruling.new(kind:,
-      pr: 7,
+      pr:,
       outcome:,
       struck:,
       critical:,
@@ -132,5 +132,46 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
         expect(mail_to).to eq(%w[luke-backend rey-frontend])
       end
     end
+
+    context "when the plan is at 🟡, which has no edge to 🔴" do
+      let(:state_key) { :ready_for_review }
+
+      it "too_lenient sets no label either, so GitHub and the folder agree" do
+        result = apply("passed_check", "too_lenient")
+
+        aggregate_failures do
+          expect([result.to, result.label, result.refused]).to eq([nil, nil, "a plan at ready_for_review cannot move to rejected"])
+          expect([plan.status.key, labels]).to eq([:ready_for_review, %w[review-ok-not-perfect]])
+          expect(comments.last).to include("Label not set: a plan at ready_for_review cannot move to rejected")
+        end
+      end
+    end
+  end
+
+  describe "a ruling that names another pull request" do
+    before { edit_gh { it["prs"]["8"] = gh_pr(title: "Other", url: "https://github.com/example/repo/pull/8", labels: %w[review-rejected]) } }
+
+    it "labels and comments on neither, and says so on the plan's own" do
+      result = effects.apply(plan:, ruling: ruling("cap", "go", pr: 8), trigger: "cap", round: 1)
+
+      aggregate_failures do
+        expect([result.to, result.label, result.refused]).to eq([nil, nil, "the ruling names PR #8, not this plan's #7"])
+        expect([labels, gh.dig("prs", "8", "labels"), gh.dig("prs", "8", "comments")]).to eq([%w[review-rejected], %w[review-rejected], []])
+        expect(comments.last).to include("Label not set: the ruling names PR #8")
+        expect(rulings.last["pr"]).to eq(7)
+        expect(plan.status.key).to eq(:rejected)
+      end
+    end
+
+    it "takes the plan's own when the ruling names none" do
+      result = effects.apply(plan:, ruling: ruling("cap", "go", pr: nil), trigger: "cap", round: 1)
+      expect([result.to, labels]).to eq([:ready_for_review, %w[ready-to-merge]])
+    end
+  end
+
+  it "records the round of hansolo's latest review beside the struck ids" do
+    OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "hansolo-reviewer", round: 3, status: "Completed", note: "rejected 1/2")
+    apply("appeal", "upheld")
+    expect(rulings.last["review"]).to eq(3)
   end
 end
