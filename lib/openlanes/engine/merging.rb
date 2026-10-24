@@ -264,7 +264,7 @@ module OpenLanes
       # merge, and no checks is no evidence. The merge names the head read
       # before the checks, so a push in between makes GitHub refuse it rather
       # than merge a head CI never saw. A branch behind `main`, or one that
-      # conflicts with it, waits for {PullRequestUpkeep} to bring it up to
+      # conflicts with it, waits for {Upkeep} to bring it up to
       # date: CI on that head never saw the commit just merged.
       #
       # @param head [String, nil] the head commit, as read before the checks

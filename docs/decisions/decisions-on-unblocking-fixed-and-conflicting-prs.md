@@ -40,7 +40,11 @@ Decided 2026-10-24, with Konstantin, after rejected pull requests kept `review-r
 ## Implementation
 
 - `Plans::ReviewLabel::ADDRESSED`, `WAITING`, `CONFLICTS`, `CONFLICTS_RESOLVED`; the `address` event on `Plans::PullRequestMachine`.
-- `Engine::PullRequestUpkeep`: `#address` (U1) and `#sweep` (U2, U4), with three new reads on `Vcs::GitHub`: `labelled_at`, `head_committed_at`, `branch_head`.
-- `Dispatcher#upkeep_pull_requests` runs both once per merge poll. A conflict becomes a bb8-resolver rebase job in the plan's checkout (`resolve_conflict`); its resolution is pushed and asked about again (`swept`). A clean local rebase is pushed at most once per head of `main`.
+- `Engine::Upkeep`, one class per duty, behind `Upkeep::Keeper`, the only object the dispatcher talks to:
+  - `Addressing` (U1) reads two new `Vcs::GitHub` calls, `labelled_at` and `head_committed_at`.
+  - `Sweep` (U2, U4) reads `branch_head` and each pull request, classifies it with `Verdict` (pure, no I/O), and acts through `Actions` (every label, comment and branch update it writes).
+  - `Owed` is the sweep's only memory: who still owes an answer, and the once-per-head-of-`main` push gate.
+  - `Resolution` (U3) decides what follows a rebase. It pushes through a callable, so it knows neither the publisher nor the runner.
+- `Dispatcher#upkeep_pull_requests` runs the keeper once per merge poll. The dispatcher keeps only the scheduling: slots, locks, and the bb8-resolver rebase job (`resolve_conflict`).
 - `Engine::Merging` waits on `BEHIND` and `DIRTY` instead of labelling them `merge-manually`.
 - The sweep needs a publisher and worktree isolation, so it is off in dry runs and shared-tree runs.

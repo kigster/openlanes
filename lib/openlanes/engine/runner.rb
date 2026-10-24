@@ -72,7 +72,7 @@ module OpenLanes
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
       #   pull requests go through once palpatine has ruled; nil when the
       #   run publishes nothing
-      # @param upkeep [OpenLanes::Engine::PullRequestUpkeep, nil] relabels
+      # @param upkeep [OpenLanes::Engine::Upkeep::Keeper, nil] relabels
       #   fixed pull requests and sweeps waiting ones for conflicts with
       #   `main` (U1 to U4); nil when the run publishes nothing
       # @param quality_gate [#call, nil] true while `.openlanes.yml` has
@@ -122,7 +122,7 @@ module OpenLanes
       # @return [OpenLanes::Engine::Merging, nil]
       attr_reader :merging
 
-      # @return [OpenLanes::Engine::PullRequestUpkeep, nil]
+      # @return [OpenLanes::Engine::Upkeep::Keeper, nil]
       attr_reader :upkeep
 
       # A new concurrency limit, from the copilot's `/concurrency N`. Nothing
@@ -396,15 +396,6 @@ module OpenLanes
         record_pull_request(subject.feature.path, publication) if publication.published? && !publication.updated
         publication
       end
-
-      # Push a branch the harness rebased in its checkout, with the lease,
-      # as {Merging} pushes a rebased sibling. Nothing is committed: a
-      # resolved rebase already is.
-      #
-      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
-      # @return [void]
-      # @raise [OpenLanes::Error] when the push is refused
-      def push_rebased(checkout) = @publisher.pushed!(checkout, "HEAD")
 
       private
 

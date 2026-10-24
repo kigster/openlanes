@@ -543,11 +543,11 @@ module OpenLanes
       # Under the same conditions as {#merging_for}: it labels and pushes, so
       # a run that publishes nothing has none.
       #
-      # @return [OpenLanes::Engine::PullRequestUpkeep, nil]
+      # @return [OpenLanes::Engine::Upkeep::Keeper, nil]
       def upkeep_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        PullRequestUpkeep.new(github: Vcs.github)
+        Upkeep.keeper(github: Vcs.github, push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
       end
 
       # What the runner is told about idling past its fixed points. With its

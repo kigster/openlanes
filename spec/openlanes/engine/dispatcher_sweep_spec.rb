@@ -20,7 +20,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
   let(:checkout) { worktree.checkout_for(plan.feature) }
   let(:github) { instance_double(OpenLanes::Vcs::GitHub) }
   let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, pushed!: nil) }
-  let(:upkeep) { OpenLanes::Engine::PullRequestUpkeep.new(github:) }
+  let(:upkeep) { OpenLanes::Engine::Upkeep.keeper(github:, push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }) }
 
   let(:executor) do
     lambda { |agent, _subject, root:, rebase: nil, **|
