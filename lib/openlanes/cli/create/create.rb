@@ -38,12 +38,11 @@ module OpenLanes
         default: true,
         desc:
           "For a new feature (no --prs), attempt spec.md's four headings from project context via `claude`. --no-draft leaves them bare"
-      option :lane,
-        aliases: ["-l"],
-        values:  Plans::Spec::LANES.map(&:to_s),
+      option :starts,
+        values: Plans::Spec::STARTS.map(&:to_s),
         desc:
-          "Route the plan: full (research, spec, plan, build), plan (skip research and rewriting), " \
-          "quick (one agent does a short mechanical task). Written into spec.md's frontmatter"
+          "Where the plan starts: research (the whole spine), planning (skip research), " \
+          "building (one agent, a short mechanical task). Written into spec.md as starts:"
       option :depth,
         values: Plans::Spec::DEPTHS.map(&:to_s),
         desc:   "How hard every phase should think: fast, medium or deep. Written into spec.md's frontmatter"
@@ -62,7 +61,7 @@ module OpenLanes
         "--after 018 --pr https://…/pull/12 verify # verify the pull request by number or URL",
         "--status ready billing sync         # opens at ⭐ instead of ⚪",
         "--from notes/tax-dsl.md             # title and opening prose from the file's frontmatter and body",
-        "--lane quick split big migration    # r2d2-mechanic does it and opens the PR; no research, spec or plan"
+        "--starts building split big migration    # r2d2-mechanic does it and opens the PR; no research, spec or plan"
       ]
 
       # @param words [Array<String>]
@@ -70,7 +69,7 @@ module OpenLanes
       # @return [void]
       def call(words:, **options)
         workflow = Lifecycle.create_plan(dir: options.fetch(:dir, OpenLanes::PLANS_DIR),
-          **options.slice(:root, :after, :status, :prs, :spec, :draft, :lane, :depth),
+          **options.slice(:root, :after, :status, :prs, :spec, :draft, :starts, :depth),
           from: typed_path(options[:from]))
         created = unwrap(workflow.call(words))
 

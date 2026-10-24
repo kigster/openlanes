@@ -23,7 +23,7 @@ const BUILT = /^finished: completed\b.*built locally/;
 const DEAD = ["discarded", "deferred"];
 
 interface Question { id: string; heading: string; body: string; options: Array<{ label: string; recommended: boolean }> | null; held: boolean }
-interface Plan { ordinal: string; title: string; lane: string; status: { key: string; emoji: string; label: string }; questions: Question[]; cars: Array<{ key: string; state: string; message: string }> }
+interface Plan { ordinal: string; title: string; starts: string; status: { key: string; emoji: string; label: string }; questions: Question[]; cars: Array<{ key: string; state: string; message: string }> }
 interface LogLine { source: string; text: string; plan: string | null }
 interface Board { me: { plans: Plan[]; run: { status: string }; log: LogLine[] } | null }
 
@@ -86,7 +86,7 @@ describe("the factory builds a tic-tac-toe page", () => {
     cy.get(MODAL).should("not.exist");
 
     cy.contains(".plan-title", /tic.?tac.?toe/i, { timeout: 30000 }).should("be.visible")
-      .closest("[data-plan]").find(".lane").should("contain", "Quick");
+      .closest("[data-plan]").find(".lane").should("contain", "Building");
 
     watch(deadline, new Set());
 

@@ -169,8 +169,8 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "reads the adapter, phase, lanes, needs and toggle" do
       rey = agents.find("rey-frontend")
-      expect([rey.adapter, rey.phase, rey.lanes, rey.needs, rey.toggle])
-        .to eq(["claude", "frontend", %i[full plan], ["plan.md#frontend"], "frontend"])
+      expect([rey.adapter, rey.phase, rey.starts, rey.needs, rey.toggle])
+        .to eq(["claude", "frontend", %i[research planning], ["plan.md#frontend"], "frontend"])
     end
 
     it "refuses an effort outside the scale" do

@@ -1,27 +1,27 @@
 // What a plan looks like on the board, derived from the Snapshot alone. Pure functions, so the rules (which stop is
 // skipped, when a row turns green, what a pill says) are tested without rendering anything.
-import type { Car, Lane, ModelChoice, Plan, Question, Station } from "../api/types";
+import type { Car, ModelChoice, Plan, Question, Starts, Station } from "../api/types";
 import { planId } from "./format";
 
-export interface LaneLook {
+export interface StartsLook {
   label: string;
   color: string;
   bg: string;
-  /** The station the lane enters at; stations before it are drawn off. */
+  /** The station this starts value enters at; stations before it are drawn off. */
   from: string;
-  /** Stations the lane passes without stopping: a hollow ring. */
+  /** Stations this starts value passes without stopping: a hollow ring. */
   skip: string[];
 }
 
 /**
- * The lanes as lifecycle/lanes.rb moves them: full enters at New, plan at Planning, quick at Building and skips
- * Building UI. The Snapshot names a plan's lane but not where the lane enters, so this table is the one fact the page
- * keeps for itself (see the report on the contract).
+ * Plans::Spec::STARTS, as lifecycle/lanes.rb moves them: research enters at New, planning at Planning, building at
+ * Building and skips Building UI. The Snapshot names a plan's starts value but not where it enters, so this table is
+ * the one fact the page keeps for itself.
  */
-export const LANES: Record<Lane, LaneLook> = {
-  full: { label: "Full lane", color: "var(--lane-full)", bg: "var(--lane-full-bg)", from: "new", skip: [] },
-  plan: { label: "Plan lane", color: "var(--lane-plan)", bg: "var(--lane-plan-bg)", from: "ready_for_planning", skip: [] },
-  quick: { label: "Quick lane", color: "var(--lane-quick)", bg: "var(--lane-quick-bg)", from: "building", skip: ["building_ui"] },
+export const STARTS: Record<Starts, StartsLook> = {
+  research: { label: "Research", color: "var(--starts-research)", bg: "var(--starts-research-bg)", from: "new", skip: [] },
+  planning: { label: "Planning", color: "var(--starts-planning)", bg: "var(--starts-planning-bg)", from: "ready_for_planning", skip: [] },
+  building: { label: "Building", color: "var(--starts-building)", bg: "var(--starts-building-bg)", from: "building", skip: ["building_ui"] },
 };
 
 export type StopState = "off" | "skip" | "done" | "here" | "ahead";
@@ -40,8 +40,8 @@ export function stationIndex(stations: Station[], key: string): number {
   return Math.max(0, stations.findIndex(s => s.key === key));
 }
 
-export function routeOf(plan: Pick<Plan, "lane" | "station">, stations: Station[]): Route {
-  const lane = LANES[plan.lane];
+export function routeOf(plan: Pick<Plan, "starts" | "station">, stations: Station[]): Route {
+  const lane = STARTS[plan.starts];
   const at = stationIndex(stations, plan.station);
   const from = stationIndex(stations, lane.from);
   const stops = stations.map((s, i): StopState =>
@@ -66,7 +66,7 @@ export const keepsRow = (plan: Plan): boolean => plan.finished != null;
 export function rowColors(plan: Plan): { color: string; bg: string } {
   if (isMerged(plan)) return { color: "var(--merged)", bg: "color-mix(in srgb, var(--merged) 16%, var(--plate))" };
   if (isApproved(plan)) return { color: "var(--go)", bg: "color-mix(in srgb, var(--go) 14%, var(--plate))" };
-  const lane = LANES[plan.lane];
+  const lane = STARTS[plan.starts];
   return { color: lane.color, bg: lane.bg };
 }
 

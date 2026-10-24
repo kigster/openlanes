@@ -303,7 +303,7 @@ module OpenLanes
         @me["plans"] << plan_from({ "ordinal" => ordinal,
                                     "title" => title,
                                     "status" => { "key" => "new", "emoji" => "⚪", "label" => "New" },
-                                    "lane" => "full" })
+                                    "starts" => "research" })
         "created #{ordinal} #{slug(title)}"
       end
 

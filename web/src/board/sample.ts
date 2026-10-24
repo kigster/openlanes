@@ -70,7 +70,7 @@ export function samplePlan(over: Partial<Plan> = {}): Plan {
     slug: "clean-agent-boundaries",
     summary: "Agents may write docs and code, but nothing leaves the machine.",
     status: { key: "building", emoji: "🟡", label: "Building", note: "an agent is building the plan's work units" },
-    lane: "full",
+    starts: "research",
     station: "building",
     up: 5000,
     down: 300,

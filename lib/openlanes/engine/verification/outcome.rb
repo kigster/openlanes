@@ -64,6 +64,10 @@ module OpenLanes
         # counting it would reach the arbitrator a round early.
         REJECTION = %r{\Arejected(?=\z|[\s:/])}i
 
+        # Where {#send_back_for_quality} sends a plan, by quality (plan 035):
+        # `standard` back to 🟡 for another build, `high` to 🔴 as a rejection.
+        SEND_BACK = { high: :rejected, standard: :building }.freeze
+
         # How long after the verification commit zero checks still means
         # "CI has not registered yet" rather than "this project has no CI".
         # Right after {#pass} pushes `final.png` the new head can report no
@@ -240,7 +244,7 @@ module OpenLanes
           end
         end
 
-        # A `review-ok-not-perfect` pull request under `high` (R4), sent back
+        # A `review-ok-not-perfect` pull request under `high` (to 🔴) or `standard` (to 🟡, plan 035), sent back
         # to the builders without verifying it. Signed and counted as a
         # rejection: the builders may answer every comment with a rebuttal
         # and no change, hansolo may label it the same again, and an
@@ -249,14 +253,16 @@ module OpenLanes
         #
         # @param plan [OpenLanes::Plans::Subject] read fresh, at 👀
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
+        # @param quality [Symbol] the {Config#desired_codebase_quality} that sent it back
         # @return [Result]
-        def send_back_for_quality(plan:, pull:)
-          why = "PR ##{number_of(pull)} is labelled #{ON_QUALITY.name}, and desired_codebase_quality is high"
+        def send_back_for_quality(plan:, pull:, quality: :high)
+          to = SEND_BACK.fetch(quality, :rejected)
+          why = "PR ##{number_of(pull)} is labelled #{ON_QUALITY.name}, and desired_codebase_quality is #{quality}"
           sign_for_chewie(plan, Verification.round_for(plan.feature.path), why, counted: true)
           body = <<~MARKDOWN
             #{why}: reply in the thread of every review comment that is not ✅, with a fix or a backed-up rebuttal (R4).
           MARKDOWN
-          send_back(plan, pull, body, nil, counted: true)
+          send_back(plan, pull, body, nil, counted: true, to:)
         end
 
         # Why this checkout is not the pull request's code, asked before
@@ -460,7 +466,7 @@ module OpenLanes
         end
 
         # @return [Result]
-        def send_back(plan, pull, body, labelled, counted:)
+        def send_back(plan, pull, body, labelled, counted:, to: :rejected)
           count = rejections(plan)
           max = @max.respond_to?(:call) ? @max.call : @max
           tally = counted ? "rejected #{count} of #{max}" : "sent back for setup, not counted (#{count} of #{max})"
@@ -468,7 +474,8 @@ module OpenLanes
           moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
             pr: number_of(pull),
             kind: :rejected,
-            comments: [{ author: AGENT, url: pull.url.to_s, body: }]))
+            comments: [{ author: AGENT, url: pull.url.to_s, body: }],
+            to:))
           label = if labelled.nil? then "labels left as hansolo set them"
                   elsif labelled.refused? then "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}"
                   else Plans::ReviewLabel::REJECTED.name

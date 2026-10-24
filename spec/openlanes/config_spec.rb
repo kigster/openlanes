@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Config do
       before do
         openlanes_yml(<<~YAML)
           project: Equilibris App
-          lane: plan
+          starts: planning
           frontend: false
           jobs: 4
           commands:
@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "reads the top-level settings" do
-        expect(config).to have_attributes(path:, project: "Equilibris App", lane: :plan, frontend: false, jobs: 4)
+        expect(config).to have_attributes(path:, project: "Equilibris App", starts: :planning, frontend: false, jobs: 4)
       end
 
       it "folds jobs into run's defaults" do
@@ -44,7 +44,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "folds lane into create's defaults, as the string a flag would be" do
-        expect(config.for(:create)).to eq(lane: "plan")
+        expect(config.for(:create)).to eq(starts: "planning")
       end
 
       it "folds project into index's defaults" do
@@ -237,7 +237,7 @@ RSpec.describe OpenLanes::Config do
     # signal, so every one of these names the file.
     {
       "an unknown key"                 => ["jobz: 4\n", /unknown key jobz/],
-      "a lane that is not one"         => ["lane: fast\n", /lane: "fast" is not one of full, plan, quick/],
+      "a lane that is not one"         => ["starts: fast\n", /starts: "fast" is not one of research, planning, building/],
       "a frontend that is not boolean" => ["frontend: maybe\n", /frontend: "maybe" is not true or false/],
       "jobs that are not a count"      => ["jobs: 0\n", /jobs: 0 is not a whole number/],
       "a blank project"                => ["project: ' '\n", /project: must be a non-empty name/],
@@ -325,8 +325,8 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "gives create its lane" do
-      openlanes_yml("lane: quick\n")
-      expect(OpenLanes::CLI::Create.default_params[:lane]).to eq("quick")
+      openlanes_yml("starts: building\n")
+      expect(OpenLanes::CLI::Create.default_params[:starts]).to eq("building")
     end
 
     it "gives index its heading" do
@@ -335,14 +335,14 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "loses to a flag typed on the command line" do
-      openlanes_yml("lane: quick\n")
-      parsed = Dry::CLI::Parser.call(OpenLanes::CLI::Create, %w[--lane plan some words], "openlanes create")
-      expect(parsed.arguments[:lane]).to eq("plan")
+      openlanes_yml("starts: building\n")
+      parsed = Dry::CLI::Parser.call(OpenLanes::CLI::Create, %w[--starts planning some words], "openlanes create")
+      expect(parsed.arguments[:starts]).to eq("planning")
     end
 
     it "adds nothing from a file that cannot be read" do
-      openlanes_yml("lane: [\n")
-      expect(OpenLanes::CLI::Create.default_params).not_to have_key(:lane)
+      openlanes_yml("starts: [\n")
+      expect(OpenLanes::CLI::Create.default_params).not_to have_key(:starts)
     end
   end
 

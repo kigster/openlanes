@@ -300,8 +300,8 @@ module OpenLanes
         invariant: nil
       ),
       Status.new(
-        key:       :shit,
-        emoji:     "💩",
+        key:       :rewrite,
+        emoji:     "🚫",
         label:     "Scrapped by Review",
         requires:  %w[rewrite.md],
         note:      "the review scrapped the work; the plan survives, the pull requests do not",

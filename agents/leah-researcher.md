@@ -9,7 +9,7 @@ network: true
 timeout: 1200
 ledger: [spec.md]
 phase: research
-lanes: [full]
+starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Task, WebSearch, WebFetch]
 writes: [spec.md, blocked.md]
 ---
