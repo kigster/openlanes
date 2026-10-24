@@ -64,3 +64,46 @@ No new review comment since chewie-verifier's round 3 (CI red), answered in roun
 - Branch drift, **fix**: R2D2's merge of `origin/main` (`238c254a`) resolved the plan's two new `Time.now` calls onto the clock seam; the local rebased branch still had them. Now aligned: `lib/openlanes/engine/dispatcher.rb` (`@invocations[job.key] = @clock.now`) and `lib/openlanes/engine/runner.rb` (`mint_run` reads `Clock::System.now`). Every other plan file already matched the remote's patch.
 
 Checks, 2026-10-23: `bundle exec rspec` → 4265 examples, 0 failures, 45 pending (36 need Redis at localhost:6379/15, which is not answering on this machine; 9 need web/dist). `bundle exec rubocop` → 584 files, no offenses. `docs/badges` untouched.
+
+## Answers, round 5
+
+hansolo-reviewer's "Review round 1… rejected 2/2" is one top-level conversation comment, not a review thread. `gh pr comment` is withheld, so the answer lives here.
+
+- Finding 1 (the diff builds JSONL, but the spec asks for an ActiveRecord sink and a Reports page): no code change. This is a scope decision and it belongs to a human, as the finding itself says. It is asked as `blocked.md` B1, which offers a follow-up 020.02 as the recommended answer, and B2, which asks what the page reads from. Signed Blocked (product).
+- Finding 2 (`plan.md` empty, contract stale): **fix**. `plan.md` now lists the as-built units B1–B6 and F1–F2 (the deleted plan, restored unchanged, since it matches the diff), plus a "Waiting on B1" section naming the database and Reports page work. In `contract.md`, an `amended:` note under the header says the contract describes the JSONL design as built and that the database interfaces will be written once B1 and B2 are answered. Files: `plan.md`, `contract.md`, `blocked.md`. No source file changed.
+
+## Answers, round 5 (rey-frontend)
+
+hansolo's round-1 re-review (top-level comment; `gh pr comment` withheld) has two findings. Finding 1 (JSONL vs the spec's AR sink, nav button and Reports page) needs a human ruling, as the review itself says: blocked.md B1, no code changed. Finding 2 (empty plan.md, stale contract.md) is luke-backend's; plan.md holds 17 KB here, contract.md is luke's to rewrite. No rebuttal, no fix from the front end.
+
+## luke-backend, round 1 after D1 (2026-10-23)
+
+hansolo's finding 1 is answered by D1 (b): the database sink and the Reports page are being built in this pull request. Finding 2: `plan.md` now has units B7 to B10 and F3 to F5, and `contract.md` has the D1 section, its amendments and its status, with `openapi.yaml` beside it. Built so far: B7, B8, and B10's reader and route. B9 and the D1 integration proof are still to do, so this round is signed "Almost completed", not "Completed".
+
+## luke-backend, round 2 after D1 (2026-10-23)
+
+Every back-end unit, B7 to B10, is built. This round added B9 (`Database::Loader`, `openlanes events migrate`, `openlanes events load`), the route spec, and the integration proof.
+
+- `bundle exec rspec spec/integration/reports_api_spec.rb spec/openlanes/web/reports_api_spec.rb` → 4 examples, 0 failures. `GET /api/reports` reads the SQLite database, `exe/openlanes events report --format json` reads the JSONL log in its own process, and both give the same `result`.
+- By hand, in a scratch repo with `events: { enabled: true, database: sqlite }`:
+  - `exe/openlanes events migrate` printed the 4 migration versions.
+  - `exe/openlanes events load` printed `0 events loaded, 0 already there; 0 plans and 12 agents synced`.
+  - `events load -n` previewed the load and changed nothing.
+- PostgreSQL was checked by hand against local PostgreSQL 18 on a scratch database, which was dropped afterwards. See `contract.md`, "Status (D1)".
+- rey has not reported F3 to F5 done, so I am not last, and the repo's end-to-end suite was not run by me.
+
+## Front end, round 2 (rey-frontend)
+
+- `bundle exec rspec spec/integration/events_report_spec.rb spec/integration/reports_api_spec.rb` → 4 examples, 0 failures
+- `bundle exec rspec` → 4327 examples, 0 failures, 45 pending
+- `bundle exec rubocop` → 615 files, no offenses
+- `cd web && npx vitest run` →       Tests  484 passed (484); `npm run lint` and `npm run typecheck` clean
+- `web/cypress/e2e/reports.cy.ts` written (API intercepted); not run, it needs the demo server.
+
+### Last to finish (luke-backend, round 2)
+
+rey's mail #8 (18:55) says the front end is done, so these ran after both halves landed:
+
+- `bundle exec rspec spec/integration/reports_api_spec.rb spec/integration/events_report_spec.rb spec/openlanes/web/reports_api_spec.rb` → 6 examples, 0 failures.
+- `bundle exec rspec` → 4327 examples, 0 failures, 45 pending, exit 0. `bundle exec rubocop` → 615 files, no offenses, exit 0.
+- `just web-e2e` (Cypress) was **not run**. The worktree has no `web/dist`, so it needs `just web-build` (an `npm` install and a build) first, and that did not fit in this round's time. `web/cypress/e2e/reports.cy.ts` is still unrun locally, so CI's `e2e` job is its first real run.

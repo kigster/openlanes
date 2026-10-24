@@ -6,6 +6,8 @@
 
 ## Picture is worth a few words ;) 
 
+![openlanes](docs/img/openlanes-busy.avif)
+
 Here is the screenshot of the web component of open lanes. When you run `lanes start` locally, this web UI automatcally opens and you can add your specifications here, or add existing plans to be executed in parallel with other plans.
 
 The software uses distributed locking using redis, so `$REDIS_URL`  is the only thing you need to configure.
