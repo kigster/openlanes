@@ -417,6 +417,7 @@ module OpenLanes
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
+          events:       events,
           journal:      (journal_for(live) unless @dry_run),
           quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
           **staying(web, live)
@@ -482,7 +483,15 @@ module OpenLanes
           return nil
         end
 
-        Vcs.publisher(root:, dry_run: @dry_run)
+        Vcs.publisher(root:, dry_run: @dry_run, events:)
+      end
+
+      # The durable run log (plan 020.01), one per run: the null sink on a
+      # dry run or when `.openlanes.yml` leaves `events:` off.
+      #
+      # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
+      def events
+        @events ||= @dry_run ? Events::NullSink.new : Events.emitter(root: @root)
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs
@@ -500,7 +509,7 @@ module OpenLanes
         outcome = Verification.outcome(root: @root,
           publisher:,
           github:,
-          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
+          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new, events:),
           agents: Agents::Registry.new,
           # Read live, like `quality:` below: U3 asks the quality mid-run, and
           # an answer of mvp lowers the cap to 1 as soon as it is given.

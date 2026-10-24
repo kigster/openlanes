@@ -19,7 +19,7 @@ The live control room and plan artifacts expose useful run information, but Open
 
 ## Proposal
 
-Add a small event model and storage boundary for plan, run, agent, block/answer, and PR lifecycle events. Keep Redis for live state. Start with a local/self-hosted durable sink and make PostgreSQL an optional backend if that is the chosen deployment path.
+Add a small event model and storage boundary for plan, run, agent, block/answer, and PR lifecycle events. Keep Redis for live state. Start with a local, self-hosted durable sink.
 
 ## Acceptance criteria
 
@@ -53,12 +53,12 @@ Redis holds only live coordination state, so cross-run questions (how often agen
 - `lib/openlanes/execution/transcript.rb`: parses `stream-json` output. Raw NDJSON traces go to `Dir.tmpdir/openlanes-traces`, outside the repo, per `CLAUDE.md`.
 - `lib/openlanes/vcs/github.rb`: the `gh` seam, a source for PR opened/merged/closed facts.
 - `docs/decisions/decisions-on-blocks-and-escalation.md`: block semantics, relevant to block vs unique-run counts.
-- Not found: any event model, durable sink, or PostgreSQL integration in `lib/`. I did not finish searching `lib/openlanes/web/events.rb` or `live/subscriber.rb`, which may already emit events.
+- Not found: any event model or durable sink in `lib/`. I did not finish searching `lib/openlanes/web/events.rb` or `live/subscriber.rb`, which may already emit events.
 
 ## What research needs to settle
 
 - Does `live/subscriber.rb` or `web/events.rb` already form an event stream that can be persisted instead of a new model?
-- Which sink for a single machine: append-only JSONL, SQLite, or PostgreSQL? The issue leans PostgreSQL as optional; the repo has no decision on it yet.
+- Which durable sink for a single machine, and where its files live?
 - Event identity for idempotency: which key (plan `NNN.MM`, run id, round, agent, block id)?
 - Which provider usage fields are reliable per adapter (`claude`, `codex`, `pi`), and where estimates must be labelled.
 - How multi-machine writes stay consistent when two nodes share Redis and one repo.
@@ -74,15 +74,7 @@ Method: read the code the feature touches; no test run was needed for these answ
 No. `web/events.rb:1-30` is a polled SSE view of Redis snapshots, replies, chat and copilot turns. It keeps no history and drops nothing into storage. `live/subscriber.rb:1-20` is a Redis pub/sub connection, so messages not read are lost. Neither is a source of record. Build the event model from the engine's own transitions (`engine/dispatcher.rb`, `live/run_record.rb:39`), not from the view layer.
 
 **Q2. Which sink on one machine?**
-An ActiveRecord-based recording system compatible with any database, but especially SQLite for solo-machine developers or PostgreSQL for distributed use. 
-
-Use AR migrations, create the database "openlanes_development," and create the initial table `events` (append-only).
-
-Create an agents table, including their Markdown description imported from the file system. 
-
-Create a table for "plans" that contains plan's ID (but a UUIDv7 primary key) and the title, but no state emoji in the title.
-
-Create a tasks table for plans that are "in flight". This can be populated by events (use pub/sub model) initially. 
+Append-only JSONL, one file per node, outside the repo. It needs no dependency or server, an `event_id` makes a replayed line a no-op at read time, and node files merge across machines by union.
 
 **Q3. Idempotency key.**
 Recommendation: `event_id = sha256(node_id, checkout_id, ordinal, round, agent, invocation_start, kind, seq)`. Evidence: `Live::Meter` already keys one invocation by `[agent, round, since]` (`live/meter.rb:1-20`, `since` on `engine/board.rb:53`); `Live::Node` gives `id` (digest of `user@host`) and `checkout_id` (`live/node.rb:1-20`); `RunState#seq` is monotonic only inside one node (`live/run_state.rb:21,50,62`), so it cannot be a global key. Replaying the same invocation must produce the same `event_id`, so a duplicate write is a no-op on a unique index or a line-level dedupe at read time.
@@ -96,29 +88,21 @@ Recommendation: `event_id = sha256(node_id, checkout_id, ordinal, round, agent, 
 **Q5. Retention and redaction.**
 Nothing in `lib/` redacts or expires anything. Recommendation: store only IDs, timestamps, adapter, model, usage, outcome, and error class. Never store prompts, transcripts, or agent text except agent's definition. Raw traces stay in `Dir.tmpdir/openlanes-traces` (`CLAUDE.md`), outside the sink.
 
-## Framings
+## Framing
 
-1. **Event log first.** An append-only, node-local file of immutable events; reports are folds over it. Cheap, no server, idempotent by key, merges across machines by file union.
-2. **Database first.** ActiveRecord tables (`events`, `agents`, `plans`, `tasks`) on SQLite or PostgreSQL, as Research Q2 sketches; the UI reads from it and live state migrates out of Redis over time.
-
-Picked: **1** for this plan. The branch implements it (`lib/openlanes/events/{event,sink,log,report}.rb`), it meets "optional for a single-machine install" with no dependency, and a database can later be loaded from the same events. Framing 2 stays an open question (Q1) because Research Q2 and the Goal addendum ask for it.
+**Event log.** An append-only, node-local file of immutable events; reports are folds over it. Cheap, no server, idempotent by key, merges across machines by file union. The branch implements it (`lib/openlanes/events/{event,sink,log,report}.rb`), and it meets "optional for a single-machine install" with no dependency.
 
 ## Goal 
 
 After this ships, a single-machine install can opt in to a durable, append-only log of run, agent, block/answer and PR lifecycle events, and `openlanes` can answer from that log how often agents complete, how often they needed a human, how long answers took, what happened to the PRs, and what usage each run or model cost. Nothing in the log contains source code, prompts, or conversation text.
 
-However, the UI can begin to use PostgreSQL for display purposes, and some functionality will later begin migrating out of redis.
-
-Produce a nav button that swaps the page to a reports URL, which shows the reports that can be generated via CLI and through the same classes shown on the UI. If we have any shadcn components to show the data visually, please do so.
-
-Board and Reports are separate  pages, and loading one closes the other.
+This log and `openlanes events report` are the whole feature.
 
 ## Non-Goals
 
 - Completely replacing Redis or changing live coordination (claims, snapshots, pub/sub).
 - Storing prompts, transcripts, agent text or code. Raw traces stay in `Dir.tmpdir/openlanes-traces`.
 - Billing-grade cost accuracy. Cost is an estimate unless a provider reports it.
-- Shipping a PostgreSQL backend in this plan (see Out of scope).
 - Back-filling events for runs that happened before the sink existed.
 
 ## In scope
@@ -141,8 +125,7 @@ Each item has a check.
 
 ## Out of scope
 
-- **ActiveRecord/SQLite/PostgreSQL sink, `agents`/`plans`/`tasks` tables** (Research Q2). Why: contradicts the JSONL sink in In scope item 4 and adds a database dependency to a single-machine install. See Q1.
-- **UI reading from PostgreSQL, Board/Reports pages, nav button, shadcn charts** (Goal addendum). Why: no front-end work exists in the branch diff (`git diff --stat main...HEAD` touches no `web/`), and it depends on a database sink. See Q1 and Q2.
+- **A database-backed event store.** Why: deferred to a later plan.
 - **Provider-reported cost (`total_cost_usd`).** Why: Research Q4 says sources disagree on per-call vs cumulative; not read anywhere in `lib/`.
 - **Retention or expiry of event files.** Why: nothing expires today (Research Q5); events hold no free text, so the cost of keeping them is low.
 - **Back-filling past runs.** Why: Non-Goal; no source holds the data.
@@ -151,36 +134,18 @@ Each item has a check.
 
 Every In scope item (1-11) is back end (`luke-backend`): `lib/openlanes/events/*`, `engine/*` emit points, `support/config.rb`, `cli/events/subcommands/report.rb`, `docs/events.md`. The only presentation piece is the terminal renderer `presentation/events_report.rb`, also back end (a string-returning renderer, STDOUT is the deliverable).
 
-Front end (`rey-frontend`): nothing in scope. The Reports page and nav button are out of scope pending Q2; `rey-frontend`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
-
-## Decisions
-
-### B1 (answered) — Sink: JSONL or ActiveRecord with a Reports page?
-
-Research Q2 asks for an ActiveRecord sink (`events`, `agents`, `plans`, `tasks`; SQLite or PostgreSQL), a nav button and a web Reports page. The branch ships an append-only JSONL sink and the `openlanes events report` CLI. Options offered: (a) JSONL stays, the CLI is the whole front end; (b) build the AR/PostgreSQL sink plus the nav button and Reports page; (c) JSONL now, AR and Reports as plan 020.02.
-
-### D1 (decision) — Build the database sink and the Reports page
-
-Answered:
-
-- 2026-10-23
-- By kig
-
-Option (b) is chosen. The plan delivers an ActiveRecord sink on SQLite or PostgreSQL with the `events`, `agents`, `plans` and `tasks` tables, a nav button, and a web Reports page. The Reports page shows the reports that the CLI generates, through the same classes. Board and Reports are separate pages; loading one closes the other. This is the largest of the three options and adds a dependency, migrations and web work. Supersedes the JSONL-only scope in In scope item 4 and the Out of scope entries for the database and front end.
+Front end (`rey-frontend`): nothing in scope beyond the CLI; `rey-frontend`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
 
 ## Open questions
 
-1. **Q1. Sink: JSONL or database?** Research Q2 and the Goal addendum ask for ActiveRecord with SQLite/PostgreSQL; In scope item 4 and the branch ship JSONL. Assumed: JSONL now, database later as a consumer of the same events. Needs a human decision (product).
-2. **Q2. Reports page in the web UI.** Asked for in the Goal addendum, not built, not in this scope. Assumed: a follow-up plan after Q1.
-3. **Q3. Research cites "contradiction 4"** (In scope item 6) but `## Research` has no list of contradictions; it is unanchored. Assumed: it means "Redis must not be on the write path", which Q1/Q3 of Research support.
-4. **Q4. `total_cost_usd`.** Check real `claude` stream-json output before ever storing it (Research Q4).
-5. **Q5. Codex and pi usage fields** vary by version; read defensively. Which pi fields are reliable is unverified.
-6. **Q6. Event file location and rotation.** Assumed: outside the repo, one file per node (item 4); `events/location.rb` holds the rule and was not re-verified here.
-7. **Q7. Leah's unsettled list** (Research "What research needs to settle"): sink choice (Q1), idempotency key (answered, Research Q3), per-adapter usage (Q4/Q5), multi-machine consistency (answered by one-writer-per-file, item 11), retention (out of scope).
+1. **Q1. Research cites "contradiction 4"** (In scope item 6) but `## Research` has no list of contradictions; it is unanchored. Assumed: it means "Redis must not be on the write path", which Research Q1 and Q3 support.
+2. **Q2. `total_cost_usd`.** Check real `claude` stream-json output before ever storing it (Research Q4).
+3. **Q3. Codex and pi usage fields** vary by version; read defensively. Which pi fields are reliable is unverified.
+4. **Q4. Event file location and rotation.** Assumed: outside the repo, one file per node (item 4); `events/location.rb` holds the rule and was not re-verified here.
+5. **Q5. Leah's unsettled list** (Research "What research needs to settle"): sink choice (answered, Research Q2), idempotency key (answered, Research Q3), per-adapter usage (Q2/Q3), multi-machine consistency (answered by one-writer-per-file, item 11), retention (out of scope).
 
 ## Risks to planning or execution
 
-- The spec, Research Q2 and the Goal addendum disagree about the sink; planners could split work around the database that is not built. Mitigation: Out of scope names it.
 - Code is already built and verified in three rounds (`verification/`), so a planner may over-plan; units should be limited to gaps against the items above.
 - Codex/pi cost recorded as `0` would read as free; item 8 guards it.
 - `event_id` includes `seq`, which is monotonic only per node (Research Q3); a change to what feeds the digest silently breaks dedupe across nodes.
@@ -188,4 +153,4 @@ Option (b) is chosen. The plan delivers an ActiveRecord sink on SQLite or Postgr
 
 ## Conclusion
 
-When this ships, an install can set a `.openlanes.yml` key and get an append-only JSONL log per node recording run, agent, block/answer, PR and failure events with stable `event_id`s and no free text. `openlanes events report` merges node files, dedupes, and prints completion and intervention rates, time-to-answer, PR outcomes and usage by run and model, with costs labelled as estimates and `null` where unknown. `docs/events.md` explains multi-machine behaviour. A database sink and a web Reports page do not exist and wait on Q1.
+When this ships, an install can set a `.openlanes.yml` key and get an append-only JSONL log per node recording run, agent, block/answer, PR and failure events with stable `event_id`s and no free text. `openlanes events report` merges node files, dedupes, and prints completion and intervention rates, time-to-answer, PR outcomes and usage by run and model, with costs labelled as estimates and `null` where unknown. `docs/events.md` explains multi-machine behaviour.
