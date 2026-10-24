@@ -509,6 +509,13 @@ RSpec.describe OpenLanes::Plans::StateMachine do
         expect(subject.best_fit.key).to eq(:ready_for_planning)
       end
 
+      it "refuses to step a linked 📋 back to 🔗, so a discarded planner round stays at 📋", :tree do
+        path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => linked, "plan.md" => "" } }
+        machine = OpenLanes::Plans::Tree.new(dir: path).subjects.first.machine
+
+        expect(machine.retreat_refusal).to include("Ready for Linking")
+      end
+
       it "steps onward from a refused 🔗 to its sibling 📋", :tree do
         path = plans { |t| t.plan "020.00", :researched, "q", files: { "spec.md" => linked, "plan.md" => "" } }
         machine = OpenLanes::Plans::Tree.new(dir: path).subjects.first.machine

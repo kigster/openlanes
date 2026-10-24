@@ -92,5 +92,16 @@ RSpec.describe OpenLanes::Lifecycle::Lanes, :tree do
       expect(described_class.advance(subject_plan, commit: true)).to eq(%i[new planned])
       expect(subject_plan.read("plan.md")).to eq("## Mine\n")
     end
+
+    # Intended: 🔗 needs a blank plan.md. The sweep is what links it.
+    it "skips 🔗 for a quick-lane plan with an authored plan.md, and leaves it to openlanes link" do
+      plans do |t|
+        t.plan "001.00", :new, "task", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}", "plan.md" => "## Mine\n" }
+      end
+      described_class.advance(subject_plan, commit: true)
+      linker = OpenLanes::Lifecycle::Linker.new(tree: tree.reload, registry: OpenLanes::Agents.registry, executor: nil)
+
+      expect([subject_plan.status.key, linker.candidates.map { it.feature.ordinal.to_s }]).to eq([:planned, ["001.00"]])
+    end
   end
 end

@@ -19,6 +19,12 @@ module OpenLanes
     module Lanes
       # Where each lane jumps, from each state it jumps from. Anything later
       # has already been worked.
+      #
+      # One plan skips 🔗 on purpose: a quick-lane plan whose author already
+      # wrote `plan.md` cannot sit at 🔗, which needs it blank, so it goes
+      # straight to ⭐ unlinked (see {.target}). `openlanes link` still finds
+      # it, since it sweeps every unfinished plan that has not answered
+      # `depends_on:`, whatever its state.
       HOPS = {
         plan:  { new: :ready_for_linking, researched: :ready_for_linking },
         quick: { new: :ready_for_linking, researched: :ready_for_linking, ready_for_planning: :planned }

@@ -60,6 +60,11 @@ module OpenLanes
       # the last state an agent works in. States off the path (🔴 💩 ⏪ and
       # the birth state) have no single state behind them and step back
       # nowhere.
+      #
+      # 📋 steps back to 🔗, and 🔗 refuses a spec that answers `depends_on:`,
+      # so discarding a round on a linked 📋 is refused and the plan stays at
+      # 📋. That is intended: the planner works at 📋 without renaming, so 📋
+      # is the state its work started from, and the key is still good.
       RETREAT = Enumerator.produce(:new) { SPINE.fetch(it) { raise StopIteration } }
                           .take_while { it != :approved }
                           .each_cons(2).to_h { |before, after| [after, before] }
