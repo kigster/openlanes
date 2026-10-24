@@ -413,6 +413,7 @@ module OpenLanes
           publisher:,
           verification: verification_for(publisher, worktree),
           merging:      merging_for(publisher, worktree),
+          upkeep:       upkeep_for(publisher, worktree),
           on_board:     live&.on_board,
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -536,6 +537,17 @@ module OpenLanes
           publisher:,
           # A merged plan's checkout with somebody's lock in it stays.
           held:     ->(path) { Engine.agent_locks(@tree.dir)&.held_in(path)&.to_s })
+      end
+
+      # Pull requests nobody is working on, kept from going stale (U1 to U4).
+      # Under the same conditions as {#merging_for}: it labels and pushes, so
+      # a run that publishes nothing has none.
+      #
+      # @return [OpenLanes::Engine::PullRequestUpkeep, nil]
+      def upkeep_for(publisher, worktree)
+        return nil if publisher.nil? || worktree.nil? || @dry_run
+
+        PullRequestUpkeep.new(github: Vcs.github)
       end
 
       # What the runner is told about idling past its fixed points. With its

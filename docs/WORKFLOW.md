@@ -679,6 +679,7 @@ A pull request carries one of these at a time, set through `openlanes review <pr
 | `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                                 |
 | `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                                      |
 | `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                               |
+| `review-addressed`      | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review   |
 | `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)                |
 | `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                                        |
 | `ready-to-merge`        | `5319e7` | yes     | chewie-verifier verified it and its E2E tests pass                         |

@@ -42,7 +42,8 @@ module OpenLanes
         :recorded_session,
         :journal,
         :journaled,
-        :journal_round) do
+        :journal_round,
+        :sweep) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -267,6 +268,7 @@ module OpenLanes
           watch_pull_requests
           settle_verifications
           settle_merges
+          upkeep_pull_requests
           # On threads: a kill waits out TERM before KILL, and the board must not.
           @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
           dispatch unless Execution::Control.quit? || resting?
@@ -1678,6 +1680,7 @@ module OpenLanes
         base = attempt_for(job)
         # Before anything reads the ledger: a resolution signs nothing, so
         # whatever the ledger holds is the plan's previous round, not this one.
+        return swept(job, base, result) if job.sweep
         return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
         return base if job.rebase
         return crashed(job, base, result) if result.is_a?(Exception)
@@ -1994,6 +1997,131 @@ module OpenLanes
         merging.rebase_queued(busy: untouchable).each { UI.log(it) }
       end
 
+      # ---- pull requests nobody is working on (U1 to U4) --------------------
+
+      # At most once per {MERGE_POLL}, as {#settle_merges}: GitHub is asked
+      # about every rejected pull request, and about every waiting one each
+      # time `main` moves.
+      #
+      # @return [void]
+      def upkeep_pull_requests
+        upkeep = @runner.upkeep or return
+        return if @runner.dry_run?
+
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        return if @upkept && now - @upkept < MERGE_POLL
+
+        @upkept = now
+        upkeep.address.each { UI.log(it) }
+        sweep = upkeep.sweep(@runner.in_scope, busy: untouchable)
+        sweep.notes.each { UI.log(it) }
+        sweep.conflicts.each { resolve_conflict(upkeep, it) }
+      rescue OpenLanes::Error => e
+        UI.log("pull requests not kept up this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # Rebase a waiting pull request's branch onto `main` in its plan's
+      # checkout (U3). A stop on conflicts becomes a bb8-resolver job, as a
+      # pre-run rebase's does (D10); a rebase that goes through on its own is
+      # pushed at once. Either way the sweep asks GitHub again afterwards,
+      # and relabels the pull request once it merges clean. A plan that
+      # cannot be started now, with every slot taken or somebody in it, is
+      # asked about on the next sweep.
+      #
+      # @param upkeep [OpenLanes::Engine::PullRequestUpkeep]
+      # @param conflict [OpenLanes::Engine::PullRequestUpkeep::Conflict]
+      # @return [void]
+      def resolve_conflict(upkeep, conflict)
+        ordinal = conflict.ordinal
+        resolver = @runner.agents.find(Rebase::RESOLVER)
+        return UI.log("conflicts left on PR ##{conflict.number}: no #{Rebase::RESOLVER} is defined", level: :warn, plan: ordinal) unless resolver
+
+        subject = @runner.tree.find(ordinal)
+        if subject.nil? || @running.size >= @runner.jobs || untouchable.include?(ordinal) || !@runner.claim(subject)
+          return upkeep.recheck(conflict)
+        end
+        return upkeep.recheck(conflict) unless reserve(ordinal, subject, resolver)
+
+        unless lock(ordinal, subject)
+          @locks.unreserve(ordinal)
+          return upkeep.recheck(conflict)
+        end
+
+        begin
+          task = @runner.prepare(resolver, subject, 1, hold: rebases.hold(ordinal))
+        rescue StandardError
+          @locks.release(ordinal)
+          raise
+        end
+        return conflict_job(task, conflict) if task.refresh&.conflicted?
+
+        rebased_alone(task, conflict, upkeep)
+      end
+
+      # @return [void]
+      def conflict_job(task, conflict)
+        job = Job.new(key: "#{conflict.ordinal}/#{task.agent.name}",
+          task:,
+          handle:     Execution::Executor::Handle.new,
+          started_at: UI.monotonic,
+          from:       task.subject.status.key,
+          state:      task.subject.status.key,
+          up:         0,
+          down:       0,
+          subagents:  0,
+          frame:      0,
+          sweep:      conflict)
+        start_rebase(job, conflict.ordinal)
+      end
+
+      # No conflict stopped the rebase in the checkout: push whatever moved,
+      # and let GitHub say on the next sweep whether it merges clean now.
+      # Once per head of `main`: a checkout that rebases clean while GitHub
+      # still says `DIRTY` would otherwise be pushed and asked about again on
+      # every poll, for ever. A rebase held by a spent ladder is not retried
+      # until `main` moves either (D10).
+      #
+      # @return [void]
+      def rebased_alone(task, conflict, upkeep)
+        outcome = task.refresh
+        if task.checkout.nil? || !outcome&.done?
+          UI.log("PR ##{conflict.number} not rebased: #{outcome&.reason || "no checkout to rebase in"}", level: :warn, plan: conflict.ordinal)
+          return
+        end
+        return UI.log("PR ##{conflict.number} already pushed against this main; waiting for it to move", plan: conflict.ordinal) unless upkeep.attempt?(conflict)
+
+        @runner.push_rebased(task.checkout)
+        upkeep.recheck(conflict)
+        UI.log("PR ##{conflict.number} rebased onto main and pushed", plan: conflict.ordinal)
+      rescue OpenLanes::Error => e
+        UI.log("PR ##{conflict.number} rebased but not pushed: #{e.message.lines.first.to_s.strip}", level: :warn, plan: conflict.ordinal)
+      ensure
+        @locks.release(conflict.ordinal)
+      end
+
+      # A sweep's resolution ended (U3). Resolved: the rebased branch is
+      # pushed and GitHub asked again, which relabels it `conflicts-resolved`
+      # once it merges clean. Aborted: `conflicts` stays, and the next sweep
+      # tries one step up bb8-resolver's ladder, until the ladder is spent
+      # and the next move of `main` starts it again (D10).
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def swept(job, base, result)
+        number = job.sweep.number
+        return base.with(ok: false, note: "conflicts on PR ##{number}: #{result.message}") if result.is_a?(Exception)
+
+        unless result.ok
+          @runner.upkeep&.recheck(job.sweep) unless rebases.hold(job.sweep.ordinal)
+          return base.with(note: "conflicts on PR ##{number}: #{result.note}")
+        end
+
+        @runner.push_rebased(job.task.checkout)
+        @runner.upkeep&.recheck(job.sweep)
+        base.with(note: "PR ##{number} pushed after its rebase onto main; #{result.note}")
+      rescue OpenLanes::Error => e
+        base.with(ok: false, note: "PR ##{number} resolved but not pushed: #{e.message.lines.first.to_s.strip}")
+      end
+
       # ---- verification (plan 014) -----------------------------------------
 
       # @param agent [OpenLanes::Agents::Agent]
@@ -2157,7 +2285,10 @@ module OpenLanes
           @mutex.synchronize { @asked_how_to_test.delete(task.subject.feature.ordinal.to_s) }
           verb = publication.updated ? "pushed to" : "opened"
           note = "#{attempt.note}; #{verb} #{publication.url}"
-          note += "; #{Plans::ReviewLabel::INITIAL} not applied: #{publication.label_error}" if publication.label_error
+          if publication.label_error
+            label = publication.updated ? Plans::ReviewLabel::ADDRESSED : Plans::ReviewLabel::INITIAL
+            note += "; #{label} not applied: #{publication.label_error}"
+          end
           Published.new(attempt: attempt.with(note:), subject: fresh(task) || subject, refused: false)
         else
           unchanged
