@@ -61,6 +61,19 @@ RSpec.describe OpenLanes::Plans::PullRequestMachine do
       expect(machine("merge-manually").fire!(:reject)).to eq(:review_rejected)
     end
 
+    it "takes a rejected pull request whose fixes arrived to review-addressed, and back into review (U1)" do
+      aggregate_failures do
+        expect(machine("review-rejected").fire!(:address)).to eq(:review_addressed)
+        expect(machine("review-vulnerability").fire!(:address)).to eq(:review_addressed)
+        expect(machine("review-addressed").fire!(:start_review)).to eq(:review_in_progress)
+        expect(machine("review-approved").may?(:address)).to be(false)
+      end
+    end
+
+    it "reads review-addressed over a stale review-rejected left beside it" do
+      expect(machine("review-rejected", "review-addressed").key).to eq(:review_addressed)
+    end
+
     it "flags a vulnerability from review" do
       expect(machine("review-in-progress").fire!(:flag_vulnerability)).to eq(:review_vulnerability)
     end

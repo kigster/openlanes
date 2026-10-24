@@ -200,13 +200,15 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
-    it "does not merge a pull request that does not merge clean" do
+    # U3: the conflict sweep hands it to bb8-resolver, and the verdict stays.
+    it "waits on a pull request that does not merge clean, rather than leaving it for a person" do
       edit_gh { it["prs"]["1"]["merge_state"] = "DIRTY" }
       result = merging.assess(plan, "auto")
 
       aggregate_failures do
-        expect(result.note).to eq("PR #1 merge-manually: it does not merge clean onto main")
+        expect(result.note).to eq("PR #1 waits on its conflicts with main being resolved")
         expect(merges).to be_empty
+        expect(labels).to eq(%w[ready-to-merge])
       end
     end
 
@@ -255,15 +257,15 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
-    it "does not merge a pull request whose branch is behind main" do
+    # U4: the conflict sweep rebases it on GitHub, and CI runs on the new head.
+    it "waits on a pull request whose branch is behind main" do
       edit_gh { it["prs"]["1"]["merge_state"] = "BEHIND" }
       result = merging.assess(plan, "auto")
 
       aggregate_failures do
-        expect(result.note).to eq("PR #1 merge-manually: its branch is behind main")
+        expect(result.note).to eq("PR #1 waits on its branch being rebased onto main")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[merge-manually])
-        expect(gh.dig("prs", "1", "comments").map { it["body"] }).to include("its branch is behind main")
+        expect(labels).to eq(%w[ready-to-merge])
       end
     end
 

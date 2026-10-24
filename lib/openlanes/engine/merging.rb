@@ -259,13 +259,13 @@ module OpenLanes
       end
 
       # Merge once CI is green on the head as it stands, then rebase the
-      # siblings. A merge GitHub refuses, a conflict among the reasons, is
-      # left for a person rather than retried every poll. So is one with no
-      # CI at all: nobody watches this merge, and no checks is no evidence.
-      # The merge names the head read before the checks, so a push in
-      # between makes GitHub refuse it rather than merge a head CI never saw.
-      # A branch still behind `main` is the same: CI on that head never saw
-      # the commit just merged, so a person rebases it.
+      # siblings. A merge GitHub refuses is left for a person rather than
+      # retried every poll. So is one with no CI at all: nobody watches this
+      # merge, and no checks is no evidence. The merge names the head read
+      # before the checks, so a push in between makes GitHub refuse it rather
+      # than merge a head CI never saw. A branch behind `main`, or one that
+      # conflicts with it, waits for {Upkeep} to bring it up to
+      # date: CI on that head never saw the commit just merged.
       #
       # @param head [String, nil] the head commit, as read before the checks
       # @param merge_state [String, nil] GitHub's `mergeStateStatus`
@@ -277,8 +277,12 @@ module OpenLanes
         return reject(subject, number, repo, "CI is red on PR ##{number} after its rebase onto main.") if ci == :red
         return leave(machine, number, repo, "no CI checks ran") if ci == :none
         return leave(machine, number, repo, "its head commit could not be read") if head.to_s.empty?
-        return leave(machine, number, repo, "its branch is behind main", comment: true) if behind?(merge_state)
-        return leave(machine, number, repo, "it does not merge clean onto main", comment: true) if dirty?(merge_state)
+        # The conflict sweep owns a stale branch (U3, U4): it rebases a
+        # `BEHIND` one on GitHub and hands a `DIRTY` one to bb8-resolver.
+        # Leaving either for a person, as this once did, stopped an `auto`
+        # merge for good over a conflict an agent could resolve.
+        return Result.new(note: "PR ##{number} waits on its branch being rebased onto main") if behind?(merge_state)
+        return Result.new(note: "PR ##{number} waits on its conflicts with main being resolved") if dirty?(merge_state)
         return Result.new(note: "PR ##{number} waits on GitHub to work out whether it merges clean") if unknown?(merge_state)
 
         main = main_ci(repo)
