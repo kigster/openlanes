@@ -298,6 +298,70 @@ RSpec.describe OpenLanes::Config do
     end
   end
 
+  describe "ci: and stack:" do
+    subject(:config) { described_class.load(root) }
+
+    let(:full) do
+      <<~YAML
+        ci:
+          provider: github_actions
+          config: .github/workflows/ci.yml
+        stack:
+          language: ruby
+          frameworks: [rails, sinatra]
+          persistence: postgres
+          from: sinatra
+          to: rails
+      YAML
+    end
+
+    it "reads each of them" do
+      openlanes_yml(full)
+      expect(config).to have_attributes(
+        ci:    { provider: :github_actions, config: ".github/workflows/ci.yml" },
+        stack: { language: "ruby", frameworks: %w[rails sinatra], persistence: "postgres",
+                         from: "sinatra", to: "rails" }
+      )
+    end
+
+    it "round-trips them through to_yaml" do
+      openlanes_yml(full)
+      expect(described_class.parse(config.to_yaml, path:)).to have_attributes(
+        ci: config.ci, stack: config.stack
+      )
+    end
+
+    it "takes a CI provider without a config file" do
+      openlanes_yml("ci: { provider: none }\n")
+      expect(config.ci).to eq(provider: :none, config: nil)
+    end
+
+    it "loads an older file that has none of them" do
+      openlanes_yml("starts: planning\n")
+      expect(config).to have_attributes(ci: nil, stack: nil)
+    end
+
+    it "leaves them out of the file when unset" do
+      expect(described_class.new(starts: :planning).to_yaml).to eq("starts: planning\n")
+    end
+
+    {
+      "ci: { provider: travis }"           => /ci.provider: "travis" is not one of/,
+      "ci: { provider: none, runner: x }"  => /ci: unknown key runner/,
+      "ci: github_actions"                 => /ci: must be a mapping/,
+      "ci: { provider: none, config: 3 }"  => /ci.config: must be a path/,
+      "stack: ruby"                        => /stack: must be a mapping/,
+      "stack: { language: ruby, os: mac }" => /stack: unknown field os/,
+      "stack: { language: '  ' }"          => /stack.language: must be a non-empty name/,
+      "stack: { frameworks: [rails, 3] }"  => /stack.frameworks: must be a list of names/
+    }.each do |text, message|
+      it "refuses #{text}" do
+        openlanes_yml("#{text}\n")
+        expect { config }.to raise_error(OpenLanes::Error, message)
+      end
+    end
+  end
+
   describe ".current" do
     before { Dir.chdir(root) }
 

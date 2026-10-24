@@ -55,6 +55,8 @@ loader.ignore("#{__dir__}/openlanes/cli/mail/mail.rb")
 loader.ignore("#{__dir__}/openlanes/cli/state/state.rb")
 loader.ignore("#{__dir__}/openlanes/cli/app/app.rb")
 loader.ignore("#{__dir__}/openlanes/linear/mapping.rb")
+# ERB templates for the CI scaffold, not Ruby constants.
+loader.ignore("#{__dir__}/openlanes/setup/templates")
 loader.setup
 
 # Spec → Plan → Build.
