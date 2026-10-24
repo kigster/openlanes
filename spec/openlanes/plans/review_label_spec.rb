@@ -3,20 +3,25 @@
 # R3 in docs/decisions/decisions-on-three-reviewers-and-auto-merge.md is the
 # source; these examples hold the code to it, colour for colour.
 RSpec.describe OpenLanes::Plans::ReviewLabel do
-  it "carries the seven R3 labels with their colours, in order" do
+  it "carries the R3 labels, 036.00's two response labels and palpatine's verdicts, in order" do
     expect(described_class::ALL.to_h { |l| [l.name, l.colour] }).to eq(
       "ready-for-review"      => "c2e0c6",
       "review-in-progress"    => "FFBE20",
       "review-rejected"       => "F90000",
       "review-vulnerability"  => "FF0050",
+      "responding-to-review"  => "F9A825",
+      "review-responded"      => "BFD4F2",
       "review-ok-not-perfect" => "E8E890",
       "review-approved"       => "109a10",
-      "ready-to-merge"        => "5319e7"
+      "ready-to-merge"        => "5319e7",
+      "auto-merged"           => "953384",
+      "merge-manually"        => "0e8a16"
     )
   end
 
-  it "counts exactly three labels as passing" do
-    expect(described_class.passing.map(&:name)).to eq(%w[review-ok-not-perfect review-approved ready-to-merge])
+  it "counts the three R3 passing labels and palpatine's two verdicts as passing" do
+    expect(described_class.passing.map(&:name))
+      .to eq(%w[review-ok-not-perfect review-approved ready-to-merge auto-merged merge-manually])
   end
 
   it "keeps no M3 label that R3 retired or renamed" do
@@ -24,7 +29,7 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
   end
 
   it "fits every meaning in GitHub's 100-character label description" do
-    expect([*described_class::ALL, described_class::MIGRATED].map { it.meaning.length }).to all(be <= 100)
+    expect([*described_class::SYNCED, described_class::MIGRATED].map { it.meaning.length }).to all(be <= 100)
   end
 
   # LabelSync walks ALL; the migration's marker must be one it never touches.
@@ -32,6 +37,24 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
     aggregate_failures do
       expect(described_class::ALL).not_to include(described_class::MIGRATED)
       expect(described_class.known).not_to include(described_class::MIGRATED.name)
+    end
+  end
+
+  describe "rebase-in-progress" do
+    let(:rebasing) { described_class::REBASING }
+
+    it "is a side label, not a verdict" do
+      aggregate_failures do
+        expect(described_class::ALL).not_to include(rebasing)
+        expect(described_class.known).not_to include(rebasing.name)
+        expect(described_class::SYNCED).to include(rebasing)
+      end
+    end
+
+    it "stays on through every verdict swap" do
+      described_class::ALL.each do |label|
+        expect(described_class.displaced_by(label)).not_to include("rebase-in-progress")
+      end
     end
   end
 

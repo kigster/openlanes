@@ -435,6 +435,43 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       expect { github.swap_label(number: 12, add: label) }.to raise_error(OpenLanes::Error, /could not label #12: no such PR/)
     end
 
+    # 036.00: one batched read of every open pull request's mergeability.
+    describe "#mergeability" do
+      let(:rows) do
+        [
+          { "number" => 7, "mergeable" => "MERGEABLE", "mergeStateStatus" => "CLEAN", "headRefOid" => "aaa" },
+          { "number" => 8, "mergeable" => "CONFLICTING", "mergeStateStatus" => "DIRTY", "headRefOid" => "bbb" },
+          { "number" => 9, "mergeable" => "UNKNOWN", "mergeStateStatus" => "UNKNOWN", "headRefOid" => "ccc" }
+        ]
+      end
+
+      before { allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: JSON.generate(rows))) }
+
+      it "asks gh once for every open pull request" do
+        github.mergeability(repo: "o/r")
+
+        expect(command).to have_received(:run).once
+                                              .with("gh", "pr", "list", "--state", "open", "--limit", "200", "--json", "number,mergeable,mergeStateStatus,headRefOid", "-R", "o/r")
+      end
+
+      it "parses MERGEABLE, CONFLICTING and UNKNOWN rows" do
+        read = github.mergeability
+
+        aggregate_failures do
+          expect(read.keys).to eq([7, 8, 9])
+          expect(read[7]).to have_attributes(state: "CLEAN", head_sha: "aaa", clean?: true, conflicting?: false, unknown?: false)
+          expect(read[8]).to have_attributes(state: "DIRTY", clean?: false, conflicting?: true, unknown?: false)
+          expect(read[9]).to have_attributes(clean?: false, conflicting?: false, unknown?: true)
+        end
+      end
+
+      it "names the failure when gh cannot list them" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 502"))
+
+        expect { github.mergeability }.to raise_error(OpenLanes::Error, /could not read mergeability: HTTP 502/)
+      end
+    end
+
     describe "#label_colours" do
       it "lists the repository's labels by name, colours in lower case" do
         allow(command).to receive(:run).and_return(

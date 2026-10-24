@@ -34,7 +34,7 @@ module OpenLanes
 
       # @param github [GitHub]
       # @param labels [Array<Plans::ReviewLabel>]
-      def initialize(github: GitHub.new, labels: Plans::ReviewLabel::ALL)
+      def initialize(github: GitHub.new, labels: Plans::ReviewLabel::SYNCED)
         @github = github
         @labels = labels
       end

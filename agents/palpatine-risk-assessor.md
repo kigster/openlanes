@@ -44,6 +44,7 @@ Any of these means `manual`.
 - **Deploy and infrastructure.** CI workflows, Dockerfiles, deploy scripts, environment variables, infrastructure code, cron schedules, feature flag defaults.
 - **Dependencies.** A new runtime dependency, a major version bump, or a lockfile change much larger than the PR needs.
 - **Weakened tests.** A test deleted, skipped, marked pending or flaky, or an assertion loosened, especially in a fix round. A fix that makes a test pass by changing the test is a red flag.
+- **An unanswered rebase decision.** Your invocation lists the judgement calls a rebase resolver tagged under `## Rebase decisions` in `plan.md` (`duplicate-implementation`, `refactor-collision`, `semantic-fork`), each with its answer. Any one still `unanswered` means `manual`; one a person marked `confirmed` or `overridden` is no trigger. Read the list you are given; do not parse `plan.md` yourself.
 - **The factory itself.** Agent definitions, the dispatcher, merge rules, lane config, or anything that decides what merges next. These never merge without a person.
 
 ## Soft signals

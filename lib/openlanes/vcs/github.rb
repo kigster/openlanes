@@ -253,6 +253,57 @@ module OpenLanes
         raise Error, "could not list pull requests labelled #{name}: #{first_line(e)}"
       end
 
+      # Whether one open pull request merges cleanly onto its base (036.00),
+      # as GitHub computed it.
+      #
+      # @!attribute [r] mergeable
+      #   @return [String] `MERGEABLE`, `CONFLICTING` or `UNKNOWN`
+      # @!attribute [r] state
+      #   @return [String] GitHub's `mergeStateStatus`: `CLEAN`, `DIRTY`, `BEHIND`, …
+      # @!attribute [r] head_sha
+      #   @return [String] the commit GitHub computed it for
+      Mergeability = Data.define(:number, :mergeable, :state, :head_sha) do
+        # @return [Boolean] whether the branch conflicts with its base
+        def conflicting? = mergeable == "CONFLICTING"
+
+        # `UNKNOWN` means GitHub is still computing: that is "not yet", never
+        # clean, or a branch nobody checked would carry `ready-to-merge`.
+        #
+        # @return [Boolean]
+        def unknown? = !%w[MERGEABLE CONFLICTING].include?(mergeable)
+
+        # @return [Boolean] whether it merges without a conflict
+        def clean? = mergeable == "MERGEABLE"
+      end
+
+      # Every open pull request's mergeability, in one call, so a caller reads
+      # it on an interval rather than once per pull request per tick.
+      #
+      # @param repo [String, nil]
+      # @return [Hash{Integer => Mergeability}] keyed by number
+      # @raise [OpenLanes::Error]
+      def mergeability(repo: nil)
+        out = @command.run("gh",
+          "pr",
+          "list",
+          "--state",
+          "open",
+          "--limit",
+          @limit.to_s,
+          "--json",
+          "number,mergeable,mergeStateStatus,headRefOid",
+          *repo_flag(repo)).out
+        JSON.parse(out).to_h do |pr|
+          number = Integer(pr["number"])
+          [number, Mergeability.new(number:,
+            mergeable: pr["mergeable"].to_s,
+            state: pr["mergeStateStatus"].to_s,
+            head_sha: pr["headRefOid"].to_s)]
+        end
+      rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError, ArgumentError, TypeError => e
+        raise Error, "could not read mergeability: #{first_line(e)}"
+      end
+
       # Give an existing label its colour and description back (R3). Only
       # {LabelSync} calls this, and only for the labels openlanes owns.
       #

@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
 
   let(:github) { instance_double(OpenLanes::Vcs::GitHub, ensure_label: nil, recolour_label: nil) }
   let(:labels) { OpenLanes::Plans::ReviewLabel }
-  let(:in_r3_colours) { labels::ALL.to_h { [it.name, it.colour.downcase] } }
+  let(:in_r3_colours) { labels::SYNCED.to_h { [it.name, it.colour.downcase] } }
 
   before { allow(github).to receive(:label_colours).and_return(have) }
 
@@ -23,12 +23,17 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
           "review-in-progress"    => :create,
           "review-rejected"       => :recolour,
           "review-vulnerability"  => :create,
+          "responding-to-review"  => :create,
+          "review-responded"      => :create,
           "review-ok-not-perfect" => :create,
           "review-approved"       => :create,
-          "ready-to-merge"        => :create
+          "ready-to-merge"        => :create,
+          "auto-merged"           => :create,
+          "merge-manually"        => :create,
+          "rebase-in-progress"    => :create
         )
         expect(github).to have_received(:recolour_label).with(labels::REJECTED, repo: "o/r")
-        expect(github).to have_received(:ensure_label).exactly(5).times
+        expect(github).to have_received(:ensure_label).exactly(10).times
       end
     end
 
@@ -42,7 +47,7 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
       changes = sync.call(dry_run: true)
 
       aggregate_failures do
-        expect(changes.count(&:write?)).to eq(6)
+        expect(changes.count(&:write?)).to eq(11)
         expect(github).not_to have_received(:ensure_label)
         expect(github).not_to have_received(:recolour_label)
       end
@@ -57,6 +62,20 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
         expect(sync.call.map(&:action).uniq).to eq([:keep])
         expect(sync.call.first.to_s).to eq("keep ready-for-review")
         expect(github).not_to have_received(:ensure_label)
+        expect(github).not_to have_received(:recolour_label)
+      end
+    end
+  end
+
+  # 036.00: the side label a sync puts on must exist before the first sync.
+  context "with a repository that has every verdict but no rebase-in-progress" do
+    let(:have) { labels::ALL.to_h { [it.name, it.colour.downcase] } }
+
+    it "creates rebase-in-progress and nothing else" do
+      sync.call(repo: "o/r")
+
+      aggregate_failures do
+        expect(github).to have_received(:ensure_label).once.with(labels::REBASING, repo: "o/r")
         expect(github).not_to have_received(:recolour_label)
       end
     end

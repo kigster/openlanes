@@ -38,8 +38,21 @@ module OpenLanes
         state :merged
         state :closed
 
+        # Back to review: a pull request no one labelled yet, or one whose
+        # builders answered a rejection and junction 2 rebased (036.00). A
+        # rejection goes through `respond` and `responded` first.
         event :submit do
-          transitions from: %i[unlabelled review_rejected review_vulnerability], to: :ready_for_review
+          transitions from: %i[unlabelled review_responded], to: :ready_for_review
+        end
+
+        # The builders start on what the reviewers found.
+        event :respond do
+          transitions from: %i[review_rejected review_vulnerability], to: :responding_to_review
+        end
+
+        # The fixes are in and junction 2 rebased the branch onto `main`.
+        event :responded do
+          transitions from: %i[responding_to_review], to: :review_responded
         end
 
         event :start_review do
@@ -48,9 +61,9 @@ module OpenLanes
 
         # The reviewers' verdicts, and chewie's rejection after them. A
         # rejection also reaches back from `ready-to-merge` and
-        # `merge-manually`: a pull request that no longer rebases onto
-        # `main` after its sibling merged goes back to the builders (P5), and
-        # a person may reject one they were asked to merge.
+        # `merge-manually`, for a person who rejects one they were asked to
+        # merge. A sibling's merge that leaves it conflicting is `conflict`,
+        # not a rejection (P5, amended by 036.00).
         event :reject do
           transitions from: %i[review_in_progress review_ok_not_perfect review_approved ready_to_merge merge_manually],
             to: :review_rejected
@@ -83,6 +96,14 @@ module OpenLanes
           transitions from: %i[ready_to_merge], to: :merge_manually
         end
 
+        # `main` moved and the branch no longer merges cleanly. The label that
+        # promised a clean merge comes off at once, and the idle-conflict
+        # sync rebases it; no review re-runs, since a rebase never moves a
+        # pull request back into review (036.00).
+        event :conflict do
+          transitions from: %i[ready_to_merge merge_manually], to: :review_approved
+        end
+
         # GitHub's own states. A person may merge or close at any point; an
         # `auto-merged` pull request is merged already.
         event :merged do
@@ -107,7 +128,8 @@ module OpenLanes
         return :merged if pull.merged?
         return :closed unless pull.open?
 
-        label = ReviewLabel::ALL.reverse.find { labels.include?(it.name) }
+        # {ReviewLabel::REBASING} is not in ALL, so it never reads as a state.
+        label = ReviewLabel::ALL.rfind { labels.include?(it.name) }
         label ? key_for(label.name) : UNLABELLED
       end
 

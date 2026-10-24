@@ -29,6 +29,16 @@ module OpenLanes
           colour: "FF0050",
           meaning: "at least one 💣; sits beside review-rejected",
           passing: false),
+        # The builders' answer to a rejection (036.00): fixing, then fixed and
+        # rebased by junction 2, then `submit` sends it back to review.
+        new(name: "responding-to-review",
+          colour: "F9A825",
+          meaning: "luke and rey are fixing what the reviewers found",
+          passing: false),
+        new(name: "review-responded",
+          colour: "BFD4F2",
+          meaning: "the fixes are in and the branch is rebased onto main; waits to go back to review",
+          passing: false),
         new(name: "review-ok-not-perfect", colour: "E8E890", meaning: "no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)", passing: true),
         new(name: "review-approved", colour: "109a10", meaning: "no ⛔️ or 💣, few 🤔", passing: true),
         new(name: "ready-to-merge",
@@ -61,6 +71,12 @@ module OpenLanes
       # reason {REJECTED} is.
       VULNERABILITY = named("review-vulnerability")
 
+      # The builders are fixing a rejection.
+      RESPONDING = named("responding-to-review")
+
+      # The fixes are in and junction 2 rebased the branch.
+      RESPONDED = named("review-responded")
+
       # The verdict for a review with no ⛔️ or 💣 but too many 🤔.
       OK_NOT_PERFECT = named("review-ok-not-perfect")
 
@@ -88,6 +104,19 @@ module OpenLanes
         colour: "ededed",
         meaning: "openlanes moved this repository's open PRs from M3's review labels to R3's",
         passing: false)
+
+      # Not a state but a side label (036.00): on for exactly as long as
+      # {Engine::Sync} rebases the branch, beside whatever review label the
+      # pull request carries. Kept out of {ALL}, so no verdict ever displaces
+      # it and {PullRequestMachine} never reads a state off it. Unlike
+      # {MIGRATED}, {Vcs::LabelSync} creates it.
+      REBASING = new(name: "rebase-in-progress",
+        colour: "0075ca",
+        meaning: "openlanes is rebasing this branch onto main; it comes off when the sync ends",
+        passing: false)
+
+      # Every label {Vcs::LabelSync} makes exist on a repository.
+      SYNCED = [*ALL, REBASING].freeze
 
       # M3's names for verdicts R3 kept under another name: `review-passed`
       # is R3's {OK_NOT_PERFECT}, and chewie's `ok-to-merge` is R3's
