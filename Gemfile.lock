@@ -101,6 +101,9 @@ GEM
     grpc (1.84.0-arm64-darwin)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
+    grpc (1.84.0-x86_64-linux-gnu)
+      google-protobuf (>= 3.25, < 5.0)
+      googleapis-common-protos-types (~> 1.0)
     hana (1.3.7)
     inquirex (0.12.1)
       ostruct (~> 0.6)
@@ -263,6 +266,8 @@ GEM
 
 PLATFORMS
   arm64-darwin-25
+  ruby
+  x86_64-linux
 
 DEPENDENCIES
   coverage-badge
@@ -313,6 +318,7 @@ CHECKSUMS
   googleapis-common-protos-types (1.20.0) sha256=5e374b06bcfc7e13556e7c0d87b99f1fa3d42de6396a1de3d8fc13aefb4dd07f
   grpc (1.84.0) sha256=df2dd2d379fe3419a58af64f2fab514202437e28b7df5b441a16da542486a98f
   grpc (1.84.0-arm64-darwin) sha256=aee56ed688f44750832fbc50c17eb1c75ce1c0d38693dc08d4f37560e1646277
+  grpc (1.84.0-x86_64-linux-gnu) sha256=3e9be3e4c4734a2a4977aa34446c604b1542a21fe67e4b7772be01602eac6bb3
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
   inquirex (0.12.1) sha256=ec9bda0f2de064935144c4ec258c81b939c6883dfbe3a58ef6a6568c909b075e
   inquirex-llm (0.12.1) sha256=ba97590a48d1d6c49f009abbbd70139933d89b908fb4ec612e5d4eda4bdc3889
