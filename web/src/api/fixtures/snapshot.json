@@ -172,7 +172,14 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 1,
-      "mail": [{ "from": "luke-backend", "to": "rey-frontend", "count": 1, "since": "2026-10-12 09:41:07 AM PDT" }],
+      "mail": [
+        {
+          "from": "luke-backend",
+          "to": "rey-frontend",
+          "count": 1,
+          "since": "2026-10-12 09:41:07 AM PDT"
+        }
+      ],
       "last_known": [
         {
           "agent": "rey-frontend",
@@ -184,7 +191,13 @@
           "note": "harness died; last seen writing plan-frontend.md"
         }
       ],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "005.00",
@@ -245,7 +258,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 1,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "006.00",
@@ -326,7 +345,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "014.00",
@@ -365,7 +390,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     }
   ],
   "backlog": [

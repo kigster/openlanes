@@ -104,6 +104,39 @@ module OpenLanes
       # @return [Array<Hash>]
       def messages = read["messages"]
 
+      # @return [Array<Hash>] the arbitrator's rulings, oldest first; empty on
+      #   a plan written before rulings existed
+      def rulings = read["rulings"] || []
+
+      # Record one ruling, written by the engine from the arbitrator's block
+      # (M7: the agent itself writes nothing), under the same lock as {#sign!}.
+      #
+      # @param kind [String] cap, appeal, dispute or passed_check
+      # @param pr [Integer, nil]
+      # @param round [Integer, nil]
+      # @param outcome [String]
+      # @param findings [Hash] `{ "struck" => [...], "critical" => [...] }`,
+      #   with `"headings"` mapping a struck id to its heading when known
+      # @param winner [String, nil] dispute only
+      # @param reason [String]
+      # @param trigger [String] what started the arbitration
+      # @param review [Integer, nil] the round of hansolo's review the struck
+      #   ids belong to: hansolo numbers from F1 in every review
+      # @param at [Time]
+      # @return [Hash] the ruling as written
+      def rule!(kind:, pr:, round:, outcome:, findings:, winner:, reason:, trigger:, review: nil, at: Time.now) # rubocop:disable Naming/MethodParameterName -- `pr` is the ruling block's own key
+        ids = (findings || {}).transform_keys(&:to_s)
+        headings = (ids["headings"] || {}).to_h { |id, heading| [id.to_s, heading.to_s] }
+        ruling = { "at" => at.iso8601, "kind" => kind.to_s, "pr" => pr && Integer(pr), "round" => round && Integer(round),
+                   "outcome" => outcome.to_s,
+                   "findings" => { "struck" => Array(ids["struck"]).map(&:to_s), "critical" => Array(ids["critical"]).map(&:to_s),
+                                   "headings" => (headings unless headings.empty?) }.compact,
+                   "winner" => winner, "reason" => reason.to_s, "trigger" => trigger.to_s,
+                   "review" => review && Integer(review) }.compact
+        update { |data| (data["rulings"] ||= []) << ruling }
+        ruling
+      end
+
       # @return [String, nil]
       def state = read["state"]
 

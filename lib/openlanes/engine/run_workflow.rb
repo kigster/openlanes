@@ -413,6 +413,7 @@ module OpenLanes
           publisher:,
           verification: verification_for(publisher, worktree),
           merging:      merging_for(publisher, worktree),
+          arbitration:  arbitration_for(publisher, worktree),
           upkeep:       upkeep_for(publisher, worktree),
           on_board:     live&.on_board,
           claims:       live&.claims,
@@ -436,12 +437,15 @@ module OpenLanes
         EventJournal.new(root: @root, node: live.keys.node, bus: Live::EventBus.for(live.store), channel: live.keys.journal)
       end
 
+      # @param instructions [String, nil] what the agent hears on top of its
+      #   definition; `--prompt` by default, the brief for the arbitrator,
+      #   which otherwise runs under the same operator limits as every agent
       # @return [OpenLanes::Execution::Executor]
-      def executor
+      def executor(instructions: instructions_from(@options[:prompt]))
         Execution.executor(root:         @root,
           timeout:      @options[:timeout]&.to_i,
           dry_run:      @dry_run,
-          instructions: instructions_from(@options[:prompt]),
+          instructions:,
           model:        @options[:model],
           max_tokens:   @options[:max_tokens]&.to_i,
           lean:         !@options[:user_config])
@@ -516,6 +520,22 @@ module OpenLanes
           # an answer of mvp lowers the cap to 1 as soon as it is given.
           max_rejections: -> { Config.current.max_rejections })
         Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
+      end
+
+      # The arbitrator (plan 015) rules on pull requests and labels them, so
+      # it runs only where verification does.
+      #
+      # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil]
+      # @return [OpenLanes::Engine::Arbitration, nil]
+      def arbitration_for(publisher, worktree)
+        return nil if publisher.nil? || worktree.nil? || @dry_run
+
+        Arbitration.new(tree_dir: @tree.dir,
+          agents: Agents::Registry.new,
+          github: Vcs.github,
+          root: @root,
+          executor: ->(brief) { executor(instructions: brief) })
       end
 
       # Merging (P1 to P5) labels, merges and rebases on GitHub, so it runs

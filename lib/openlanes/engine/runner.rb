@@ -72,6 +72,9 @@ module OpenLanes
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
       #   pull requests go through once palpatine has ruled; nil when the
       #   run publishes nothing
+      # @param arbitration [OpenLanes::Engine::Arbitration, nil] the
+      #   arbitrator's engine step (plan 015); nil when the run publishes
+      #   nothing, since every ruling lands on a pull request
       # @param upkeep [OpenLanes::Engine::Upkeep::Keeper, nil] relabels
       #   fixed pull requests and sweeps waiting ones for conflicts with
       #   `main` (U1 to U4); nil when the run publishes nothing
@@ -82,7 +85,7 @@ module OpenLanes
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
-        merging: nil, upkeep: nil, quality_gate: nil, events: Events::NullSink.new)
+        merging: nil, arbitration: nil, upkeep: nil, quality_gate: nil, events: Events::NullSink.new)
         @tree = tree
         @events = events
         @executor = executor
@@ -106,6 +109,7 @@ module OpenLanes
         @verification = verification
         @journal = dry_run ? nil : journal
         @merging = merging
+        @arbitration = arbitration
         @upkeep = upkeep
         @quality_gate = quality_gate
         @would_bomb = []
@@ -122,6 +126,8 @@ module OpenLanes
       # @return [OpenLanes::Engine::Merging, nil]
       attr_reader :merging
 
+      # @return [OpenLanes::Engine::Arbitration, nil]
+      attr_reader :arbitration
       # @return [OpenLanes::Engine::Upkeep::Keeper, nil]
       attr_reader :upkeep
 
