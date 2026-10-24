@@ -187,6 +187,24 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
+    # The executor expands confined_to against the plan folder, so a path
+    # that climbs out of it would grant Edit on a file outside.
+    ["../Gemfile", "/etc/hosts", "~/x", "docs/../../x", ""].each do |file|
+      it "refuses confined_to #{file.inspect}, which is not inside the plan folder" do
+        Dir.mktmpdir do |dir|
+          File.write(File.join(dir, "x.md"), "---\nname: x\nconfined_to: [#{file.to_json}]\n---\nbody\n")
+          expect { described_class.new(dir:).all }.to raise_error(OpenLanes::Error, /confined_to #{Regexp.escape(file.inspect)}/)
+        end
+      end
+    end
+
+    it "accepts confined_to naming a file inside the plan folder" do
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "x.md"), "---\nname: x\nconfined_to: [spec.md, notes/a.md]\n---\nbody\n")
+        expect(described_class.new(dir:).find("x").confined_to).to eq(%w[spec.md notes/a.md])
+      end
+    end
+
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
         "yoda-writer"         => 900,

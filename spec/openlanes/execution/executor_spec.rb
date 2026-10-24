@@ -350,9 +350,19 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       expect(allowed).not_to include("Write", "Edit")
     end
 
-    it "may run this checkout's openlanes and read-only commands, nothing else in Bash" do
-      expect(allowed.grep(/\ABash/)).to eq(["Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE}:*)",
-                                            *described_class::CONFINED_COMMANDS.map { "Bash(#{it}:*)" }])
+    it "may run this checkout's openlanes state and two read-only commands, nothing else in Bash" do
+      expect(allowed.grep(/\ABash/)).to eq(["Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE} state:*)",
+                                            "Bash(ls:*)", "Bash(git status:*)"])
+    end
+
+    # rg --pre runs a program; git log, show and diff take --output=<file>.
+    # A Bash(cmd:*) grant reaches every flag, so none of them may be granted.
+    it "is granted no command that has a flag which executes or writes" do
+      expect(allowed.grep(/\ABash\((rg|grep|find|xargs|sed|git (log|show|diff))\b/)).to be_empty
+    end
+
+    it "may not run any other openlanes subcommand" do
+      expect(allowed).not_to include("Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE}:*)")
     end
 
     it "is refused outright on an adapter that cannot enforce it" do

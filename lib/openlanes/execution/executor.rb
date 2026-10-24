@@ -354,8 +354,18 @@ module OpenLanes
       CONFINED_TOOLS = %w[Read Grep Glob Edit Bash].freeze
 
       # The commands a confined agent may run besides this checkout's own
-      # `openlanes`, which signs its ledger. Each one reads; none writes.
-      CONFINED_COMMANDS = ["rg", "ls", "git log", "git show", "git diff", "git status"].freeze
+      # `openlanes state`, which signs its ledger. A grant is `Bash(cmd:*)`,
+      # so every flag of a listed command is reachable: `rg --pre` runs any
+      # program and `git log|show|diff --output=` writes any file, which is
+      # how the first version of this list escaped its own confinement. Only
+      # commands with no flag that executes or writes belong here; Read, Grep
+      # and Glob cover the rest.
+      CONFINED_COMMANDS = ["ls", "git status"].freeze
+
+      # The one `openlanes` subcommand a confined agent may run: `state`
+      # shows and signs its ledger. The whole executable would hand it
+      # `run`, `link` and `resync`, which rename folders.
+      CONFINED_CLI = "#{Prompt::EXECUTABLE} state".freeze
 
       # Commands that leave the machine, denied to every agent by default.
       #
@@ -733,7 +743,7 @@ module OpenLanes
         return agent.allowed_tools unless agent.confined?
 
         edits = agent.confined_to.map { "Edit(/#{File.expand_path(it, subject.feature.path)})" }
-        commands = [Prompt::EXECUTABLE, *CONFINED_COMMANDS].map { "Bash(#{it}:*)" }
+        commands = [CONFINED_CLI, *CONFINED_COMMANDS].map { "Bash(#{it}:*)" }
         %w[Read Grep Glob] + edits + commands
       end
 
