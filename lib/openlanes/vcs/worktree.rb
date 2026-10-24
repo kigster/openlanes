@@ -56,6 +56,18 @@ module OpenLanes
 
         # @return [String] where {.seeder} looks, for a person
         def seeder_search = "$#{SEEDER_ENV}, #{SEEDER_NAME} on PATH, #{SEEDER_HOMES.join(", ")}"
+
+        # The main checkout of the repository +path+ is in, even when +path+
+        # is itself a worktree. Worktrees live beside the main checkout, so a
+        # command run from inside one and rooted there looks for
+        # `<worktree>.worktrees` and finds nothing.
+        #
+        # @param path [String] any checkout of the repository
+        # @return [String] the main checkout; +path+ when git cannot say
+        def main_root(path)
+          common = `git -C #{path.shellescape} rev-parse --path-format=absolute --git-common-dir 2>/dev/null`.strip
+          common.empty? ? path : File.dirname(common)
+        end
       end
 
       # One plan's isolated checkout.
@@ -212,7 +224,82 @@ module OpenLanes
       #
       # @return [Array<String>] paths removed
       def prune
-        list.select { |path| clean?(path) }.each { |path| remove(path) }
+        list.select { |path| clean?(path) }.select { |path| remove(path) }
+      end
+
+      # @param path [String] a checkout
+      # @return [String] the branch it has checked out; empty when detached
+      def branch_of(path) = `git -C #{path.shellescape} branch --show-current 2>/dev/null`.strip
+
+      # Every checkout of one plan: the one at {#path_for}, and any other
+      # whose folder starts with the same ordinal. A folder-name parse that
+      # once leaked the status into the slug (`018.00-018.00━━🟡━━❯x`) gave a
+      # plan three checkouts, and only the ordinal finds all of them.
+      #
+      # @param feature [OpenLanes::Plans::Feature]
+      # @return [Array<String>] absolute paths, as git lists them
+      def checkouts_of(feature)
+        prefix = "#{feature.ordinal}-"
+        list.select { File.basename(it).start_with?(prefix) }
+      end
+
+      # Remove a checkout whose work is on the default branch, and its local
+      # branch with it.
+      #
+      # A merged pull request ends a plan's worktree; left behind, they piled
+      # up to forty-eight in one repository, each looking like work in
+      # progress. Removal cannot be undone for anything that never left the
+      # machine, so every condition below has to hold first, and a refusal
+      # says which one failed and leaves the checkout exactly as it was.
+      #
+      # "On the default branch" is a tree comparison, never `git log
+      # main..branch`: a squash merge rewrites every hash, so that log lists
+      # every commit of a branch that landed whole. A stacked pull request
+      # merged into its parent's branch reports MERGED too, which is why the
+      # base is checked.
+      #
+      # @param path [String] a checkout from {#list}
+      # @param merge_commit [String] the commit the pull request merged as
+      # @param base [String] the branch the pull request merged into
+      # @param default_branch [String]
+      # @param held [#call, nil] path -> who holds a lock in it, or nil
+      # @param dry_run [Boolean] check everything, remove nothing
+      # @return [Retirement]
+      def retire(path, merge_commit:, base:, default_branch: Refresh.default_branch(root), held: nil, dry_run: false)
+        branch = branch_of(path)
+        sha = `git -C #{path.shellescape} rev-parse HEAD 2>/dev/null`.strip
+        refusal = retire_refusal(path, sha, merge_commit, base, default_branch, held)
+        return Retirement.new(path:, branch:, sha:, removed: false, reason: refusal) if refusal
+        return Retirement.new(path:, branch:, sha:, removed: false, reason: "would be removed: landed in #{merge_commit[0, 8]}") if dry_run
+        return Retirement.new(path:, branch:, sha:, removed: false, reason: "git refused to remove it") unless remove(path)
+
+        # -D, not -d: a squash-merged branch looks unmerged to -d. The tree
+        # comparison above is the check that makes this safe.
+        system("git", "-C", root, "branch", "-D", branch, out: File::NULL, err: File::NULL) unless branch.empty?
+        Retirement.new(path:, branch:, sha:, removed: true, reason: "landed in #{merge_commit[0, 8]}")
+      end
+
+      # What {#retire} did with one checkout.
+      #
+      # @!attribute [r] path
+      #   @return [String]
+      # @!attribute [r] branch
+      #   @return [String] empty for a detached checkout
+      # @!attribute [r] sha
+      #   @return [String] the branch's last commit, so it can be restored
+      # @!attribute [r] removed
+      #   @return [Boolean]
+      # @!attribute [r] reason
+      #   @return [String] why it was removed, or why not
+      Retirement = Data.define(:path, :branch, :sha, :removed, :reason) do
+        # @return [Boolean]
+        def removed? = removed
+
+        # @return [String] one line for the progress log
+        def to_s
+          name = File.basename(path)
+          removed? ? "worktree #{name} removed (#{branch} was #{sha[0, 8]}): #{reason}" : "worktree #{name} kept: #{reason}"
+        end
       end
 
       # Where one plan's checkout lives, whether or not it has been made.
@@ -255,10 +342,14 @@ module OpenLanes
         true
       end
 
+      # Never `--force`: git refuses a checkout with uncommitted or untracked
+      # work, and that refusal is the last guard against deleting it.
+      # Ignored files, the seeded `.env` among them, do not count.
+      #
       # @param path [String]
-      # @return [void]
+      # @return [Boolean] whether git removed it
       def remove(path)
-        system("git", "-C", root, "worktree", "remove", "--force", path, out: File::NULL, err: File::NULL)
+        system("git", "-C", root, "worktree", "remove", path, out: File::NULL, err: File::NULL)
       end
 
       private
@@ -279,6 +370,56 @@ module OpenLanes
       # @param path [String]
       # @return [Boolean]
       def clean?(path) = `git -C #{path.shellescape} status --porcelain 2>/dev/null`.strip.empty?
+
+      # The first reason {#retire} must not remove a checkout, or nil.
+      #
+      # @return [String, nil]
+      def retire_refusal(path, sha, merge_commit, base, default_branch, held)
+        return "not a worktree openlanes manages" unless managed?(path)
+        return "its pull request merged into #{base}, not #{default_branch}" unless base == default_branch
+        return "it has uncommitted changes" unless clean?(path)
+
+        holder = held&.call(path)
+        return "#{holder} holds a lock in it" if holder
+        return "merge commit #{merge_commit[0, 8]} is not in this repository, even after a fetch" unless commit?(merge_commit)
+
+        "its branch has work that is not in #{merge_commit[0, 8]}" unless landed?(sha, merge_commit)
+      end
+
+      # @param path [String]
+      # @return [Boolean] one of {#list}, and not the main checkout
+      def managed?(path)
+        here = canonical(path)
+        here != canonical(root) && list.any? { canonical(it) == here }
+      end
+
+      # Present locally, fetching once if not: the engine merged it a moment
+      # ago on GitHub, and nothing has fetched since.
+      #
+      # @param sha [String]
+      # @return [Boolean]
+      def commit?(sha)
+        known = -> { system("git", "-C", root, "cat-file", "-e", "#{sha}^{commit}", out: File::NULL, err: File::NULL) }
+        known.call || (system("git", "-C", root, "fetch", "--quiet", "origin", out: File::NULL, err: File::NULL) && known.call)
+      end
+
+      # The branch tip's tree is the merge commit's, or every file the branch
+      # changed reads the same in the merge commit. The second covers a
+      # default branch that moved on before the merge.
+      #
+      # @param sha [String] the branch tip
+      # @param merge_commit [String]
+      # @return [Boolean]
+      def landed?(sha, merge_commit)
+        tree = ->(ref) { `git -C #{root.shellescape} rev-parse #{"#{ref}^{tree}".shellescape} 2>/dev/null`.strip }
+        return true if tree.call(sha) == tree.call(merge_commit)
+
+        fork = `git -C #{root.shellescape} merge-base #{sha.shellescape} #{merge_commit.shellescape} 2>/dev/null`.strip
+        return false if fork.empty?
+
+        files = `git -C #{root.shellescape} diff --name-only #{fork.shellescape} #{sha.shellescape} 2>/dev/null`.lines(chomp: true)
+        files.empty? || system("git", "-C", root, "diff", "--quiet", sha, merge_commit, "--", *files, out: File::NULL, err: File::NULL)
+      end
 
       # A new branch starts from the freshly fetched default branch on
       # `origin`, not from whatever the main checkout has checked out: that

@@ -1,0 +1,615 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "020.01",
+    "slug": "durable-run-events"
+  },
+  "state": "building",
+  "updated_at": "2026-10-23T19:01:39-07:00",
+  "stages": [
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Completed",
+      "from": "new",
+      "started_at": "2026-10-16T19:10:46-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "note": "completed - 19 tool calls",
+      "finished_at": "2026-10-16T19:12:22-07:00",
+      "to": "researched",
+      "up": 1036355,
+      "down": 15085,
+      "seconds": 96.5
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-16T19:12:23-07:00",
+      "run": {
+        "pid": 31063,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-16T19:13:04-07:00",
+      "up": 219090,
+      "down": 4574,
+      "seconds": 41.4,
+      "note": "completed - 4 tool calls"
+    },
+    {
+      "agent": "yoda-writer",
+      "round": 1,
+      "status": "Completed",
+      "from": "researched",
+      "started_at": "2026-10-23T18:10:34-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "63d5c686-f6fe-4db0-9b91-e9ee62abc182",
+      "to": "ready_for_planning",
+      "finished_at": "2026-10-23T18:11:21-07:00",
+      "up": 458061,
+      "down": 5493,
+      "seconds": 46.6,
+      "note": "completed - 10 tool calls",
+      "moves": 2
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-23T18:11:24-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "2c00dd67-f5de-4ffe-9ebf-2fea58ed43dd",
+      "to": "rejected",
+      "finished_at": "2026-10-23T18:12:24-07:00",
+      "up": 493437,
+      "down": 5222,
+      "seconds": 58.6,
+      "note": "completed - 8 tool calls (rejected 2/2)",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "rejected",
+      "started_at": "2026-10-23T18:12:26-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "00a6500e-928e-4eca-9fc3-3069e391ebb4",
+      "to": "product_blocked",
+      "finished_at": "2026-10-23T18:15:08-07:00",
+      "up": 1498205,
+      "down": 12170,
+      "seconds": 161.3,
+      "note": "ledger says Blocked but ",
+      "moves": 6
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "rejected",
+      "started_at": "2026-10-23T18:14:15-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "05b8ed20-cafe-4bb9-ab1a-bde477cbba8e",
+      "to": "product_blocked",
+      "finished_at": "2026-10-23T18:14:48-07:00",
+      "up": 389405,
+      "down": 3075,
+      "seconds": 33.0,
+      "note": "blocked; see blocked.md",
+      "moves": 6
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "product_blocked",
+      "started_at": "2026-10-23T18:27:54-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "964a6045-6b87-4421-903e-a62da2577609",
+      "to": "building",
+      "finished_at": "2026-10-23T18:43:25-07:00",
+      "up": 10848163,
+      "down": 67455,
+      "seconds": 929.7,
+      "note": "Almost completed; no rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-10-23T18:27:55-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "6f54c5a9-52dd-4023-80d6-30902fad03da",
+      "to": "building",
+      "finished_at": "2026-10-23T18:32:45-07:00",
+      "up": 651718,
+      "down": 3177,
+      "seconds": 288.8,
+      "note": "Almost completed; no rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "luke-backend",
+      "round": 2,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-23T18:48:27-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "964a6045-6b87-4421-903e-a62da2577609",
+      "to": "building",
+      "finished_at": "2026-10-23T19:01:39-07:00",
+      "up": 7111833,
+      "down": 24632,
+      "seconds": 789.2,
+      "note": "completed - 34 tool calls; publish refused: To github.com:kigster/openlanes",
+      "moves": 7
+    },
+    {
+      "agent": "rey-frontend",
+      "round": 2,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-23T18:48:27-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/020.01-durable-run-events",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "6f54c5a9-52dd-4023-80d6-30902fad03da",
+      "to": "building",
+      "finished_at": "2026-10-23T18:55:57-07:00",
+      "up": 2448134,
+      "down": 18742,
+      "seconds": 448.5,
+      "note": "completed - 23 tool calls; next: names hansolo-reviewer, who does not handle 🟡 Building",
+      "moves": 7
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-23T18:10:39-07:00",
+      "agent": "yoda-writer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:11:16-07:00",
+      "agent": "yoda-writer",
+      "status": "Completed",
+      "round": 1,
+      "next": "luthen-rael-planner"
+    },
+    {
+      "at": "2026-10-23T18:11:29-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:12:16-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 2/2"
+    },
+    {
+      "at": "2026-10-23T18:12:35-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:14:19-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:14:44-07:00",
+      "agent": "rey-frontend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "product"
+    },
+    {
+      "at": "2026-10-23T18:14:55-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "product"
+    },
+    {
+      "at": "2026-10-23T18:27:38-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:27:54-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:28:00-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:28:02-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:32:39-07:00",
+      "agent": "rey-frontend",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:43:11-07:00",
+      "agent": "luke-backend",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T18:48:33-07:00",
+      "agent": "rey-frontend",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-23T18:48:34-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-23T18:55:48-07:00",
+      "agent": "rey-frontend",
+      "status": "Completed",
+      "round": 2,
+      "next": "hansolo-reviewer"
+    },
+    {
+      "at": "2026-10-23T19:00:54-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 2,
+      "next": "hansolo-reviewer"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ca533e69-817c-416e-a8a8-cdd50294a680",
+      "number": 1,
+      "at": "2026-10-23T18:14:43-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end blocked (product) on hansolo's finding 1: JSONL vs AR sink + Reports page (blocked.md B1). Finding 2 (plan.md, contract.md stale) is yours; I touched no code.",
+      "read": "yes"
+    },
+    {
+      "id": "6d98f4f6-de29-4d05-bdde-1252211d83ba",
+      "number": 2,
+      "at": "2026-10-23T18:14:54-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "hansolo rejected #105 on scope (JSONL vs the spec's AR/PostgreSQL sink + Reports page). I restored plan.md as built, noted in contract.md that it covers JSONL only, and blocked (product) in blocked.md: B1 asks where the DB sink and Reports page go (recommended: follow-up 020.02), B2 what the page reads from. No front-end work for you until those are answered.",
+      "read": "yes"
+    },
+    {
+      "id": "9f4e0b63-820c-44d2-8a45-061eeea93b77",
+      "number": 3,
+      "at": "2026-10-23T18:30:55-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "D1 answered b (DB sink + Reports page in this PR). contract.md now has 'Database sink and Reports page (D1)'; openapi.yaml in the plan folder defines GET /api/reports (200 {source, generated_at, result=Report::Result#to_h}; 400/404/503 {error,message}). plan.md has your units F3 (nav button + /reports route, Board unmounts), F4 (Reports page, shadcn charts), F5 (report --source database|log, docs). F3/F4 can start now against openapi.yaml. I write lib/openlanes/cli.rb first (migrate/load registrations). Building B7 now.",
+      "read": "no"
+    },
+    {
+      "id": "d7ffaf02-ffb3-4ed7-9326-02a4f4a81383",
+      "number": 4,
+      "at": "2026-10-23T18:32:38-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Read #2. F1 (events report CLI, presenter, integration spec) and F2 (docs) are already in the tree; the 12 events examples, rspec and rubocop pass. I'm making no changes while B1/B2 are open. If a DB sink or Reports page lands in 020.02, I'll rework only the report units then.",
+      "read": "yes"
+    },
+    {
+      "id": "36388916-bf3d-431d-807e-724054d72828",
+      "number": 5,
+      "at": "2026-10-23T18:39:19-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "B1/B2 are closed: D1 = b, in THIS PR (not 020.02). Landed: GET /api/reports (lib/openlanes/web/app.rb + web/reports.rb), live now. 200 {source, generated_at, result}, 400/404/503 {error,message}, per openapi.yaml. Build F3/F4 against it. Events.source(root:,config:) gives F5 its reader (Database::Reader or Log, both #events(since:, plan:), #skipped_lines, #source). Not yet: events migrate/load CLI (B9). I haven't touched cli.rb yet, so you may edit report.rb freely.",
+      "read": "no"
+    },
+    {
+      "id": "eb489999-ca4b-4fde-a546-de9cf0eb10c6",
+      "number": 6,
+      "at": "2026-10-23T18:52:08-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Back end done: B7-B10. New this round: openlanes events migrate / events load (registered in lib/openlanes/cli.rb; I wrote only the 2 require lines and 2 register lines, so cli.rb is yours now). Integration proof spec/integration/reports_api_spec.rb shows GET /api/reports (SQLite) == events report --format json (JSONL). F5: use OpenLanes::Events.source(root:, config:) in report.rb for --source; Log and Database::Reader both answer #events(since:, plan:), #skipped_lines, #source. contract.md amendments list the rest. I did not touch report.rb, web/ or docs/.",
+      "read": "no"
+    },
+    {
+      "id": "ea19707d-5a01-4e3d-895e-c61d8a36d682",
+      "number": 7,
+      "at": "2026-10-23T18:52:54-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "F3/F4/F5 landed. Tests: web/src/shell/PageNav.test.tsx (button switches routes, Board stream closed on /reports), web/src/reports/ReportsPage.test.tsx (unknown, (est.), 404/503 messages), spec/openlanes/cli/events/report_spec.rb (--source both), docs spec (database section), web/cypress/e2e/reports.cy.ts (intercepted, not run: needs demo). No chart lib in repo, so bars are CSS. FYI rubocop flags YOUR lib/openlanes/cli/events/subcommands/{load,migrate}.rb (Layout/MultilineMethodArgumentLineBreaks, load.rb:54 and migrate.rb:48); I did not touch them.",
+      "read": "no"
+    },
+    {
+      "id": "c09797b0-347f-4749-9a9d-0eafbef3660a",
+      "number": 8,
+      "at": "2026-10-23T18:55:48-07:00",
+      "from": "rey-frontend",
+      "to": "luke-backend",
+      "body": "Front end done (F3, F4, F5); rspec, rubocop, vitest, lint, typecheck all green. Proof recorded in pull-requests.md.",
+      "read": "yes"
+    }
+  ],
+  "moves": 7,
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "yoda-writer",
+      "state": "researched",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-23T17:38:01-07:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-10-23T17:41:00-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "yoda-writer",
+      "state": "researched",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-23T17:48:00-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-23T18:10:32-07:00"
+    },
+    {
+      "number": 3,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-23T18:11:25-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-23T18:12:24-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-23T18:42:54-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-23T18:43:25-07:00"
+    },
+    {
+      "number": 5,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-23T18:43:25-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-23T18:48:25-07:00"
+    },
+    {
+      "number": 6,
+      "agent": "rey-frontend",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-23T18:43:25-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-23T18:48:25-07:00"
+    }
+  ],
+  "memory": {
+    "yoda-writer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "researched",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Picked event-log framing (JSONL) over DB-first: branch already implements it; DB sink and Reports page moved to Out of scope, Q1/Q2 open"
+            },
+            {
+              "kind": "note",
+              "text": "Plan is retroactive (MM=01); note says built on branch, PR #105 open. Research Q2 and Goal addendum contradict In scope item 4"
+            },
+            {
+              "kind": "done",
+              "text": "spec.md completed with all sections, blank plan.md touched, signed Completed"
+            }
+          ]
+        }
+      }
+    },
+    "luke-backend": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Restored plan.md as-built (deleted plan from 41b53908^, unchanged) plus a header note and a 'Waiting on B1' section for the AR sink and Reports page"
+            },
+            {
+              "kind": "done",
+              "text": "Added an amended: note to contract.md saying it covers JSONL as built; DB interfaces get written once B1/B2 are answered. Answers, round 5 added to pull-requests.md"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1: where the AR sink and Reports page go (a: follow-up 020.02, recommended; b: this PR; c: drop them). B2: what the page reads from (a: DB events table, recommended; b: JSONL)"
+            },
+            {
+              "kind": "todo",
+              "text": "After B1/B2 are answered: write the DB contract (migrations, tables, loader, page interface) in contract.md before any code; B7+/F3+ in plan.md, or in 020.02 if B1=a"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Does the sink stay JSONL, or become ActiveRecord with a Reports page? hansolo's round-1 re-review (fresh read of spec.md) rejects the branch because spec.md Research Q2 asks for an ActiveRecord sink (events, agents, plans, tasks tables; SQLite or PostgreSQL), a nav button and a web Reports page, while the branch ships append-only JSONL and the `openlanes events report` CLI. Spec Q1 says the sink choice needs a human decision. The front end cannot build a Reports page, or confirm the CLI is t…",
+              "ref": "B1",
+              "answer": "b) Build the AR/PostgreSQL sink plus the nav button and Reports page. Large scope: new dependency, migrations, web work. Answered by kig on 2026-10-23"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "product_blocked",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Full suite after B7/B8/B10: 4307 examples, 0 failures; rubocop 607 files clean. Signed Almost completed; resume record names B9 as next step"
+            }
+          ]
+        },
+        "3": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 2 signed Completed (next hansolo). rey done (mail #8). Integration proof 6 examples green; full rspec 4327/0 exit 0; rubocop 615 clean. just web-e2e NOT run (no web/dist, no time); recorded in pull-requests.md"
+            },
+            {
+              "kind": "todo",
+              "text": "If hansolo or CI flags it: run just web-build && just web-e2e to exercise web/cypress/e2e/reports.cy.ts locally; it has never run"
+            }
+          ]
+        }
+      }
+    },
+    "rey-frontend": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "F1/F2 already built; 12 events examples pass, rspec and rubocop green. Luke blocked (product) on B1/B2: DB sink and Reports page scope. No front-end changes until answered."
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "F3 nav+/reports route (usePage, PageNav), F4 ReportsPage with CSS bars (no chart lib in repo), F5 report --source and docs database section. rspec 4327/0 fail, rubocop clean, vitest 484 pass, lint and typecheck clean."
+            },
+            {
+              "kind": "note",
+              "text": "web/cypress/e2e/reports.cy.ts written with intercepts but not run: needs the demo server."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "last-known-state": {
+    "luke-backend": {
+      "source": "agent",
+      "at": "2026-10-23T18:39:27-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "D1 contract+openapi.yaml",
+        "plan.md B7-B10/F3-F5",
+        "B7",
+        "B8",
+        "B10 reader+route+Web::Reports"
+      ],
+      "remaining": [
+        "B9 Loader + events migrate/load CLI + cli.rb registration",
+        "rack-test route spec",
+        "spec/integration/reports_api_spec.rb",
+        "pg path untested"
+      ],
+      "next_step": "Write lib/openlanes/events/database/loader.rb (JSONL Log#all -> EventRow.append; PlanRow.ensure per tree feature; AgentRow upsert from Agents.registry with sha256 digest), then cli/events/subcommands/{migrate,load}.rb",
+      "files_touched": [
+        "openlanes.gemspec",
+        "Gemfile.lock",
+        "lib/openlanes.rb",
+        "lib/openlanes/support/config.rb",
+        "lib/openlanes/events.rb",
+        "lib/openlanes/events/{sink",
+        "log",
+        "bus",
+        "database}.rb",
+        "lib/openlanes/events/database/*",
+        "lib/openlanes/web/{app",
+        "context",
+        "reports}.rb",
+        "spec/openlanes/events/*",
+        "spec/openlanes/events_emitter_spec.rb",
+        "spec/openlanes/web/reports_spec.rb",
+        "spec/openlanes/config_spec.rb"
+      ]
+    }
+  }
+}

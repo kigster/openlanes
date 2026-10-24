@@ -130,6 +130,9 @@ module OpenLanes
     register "review", Review
     register "eval", Eval
     register "worktree", Worktree
+    # Beside the command, not instead of it: dry-cli runs `worktree 002` as
+    # before, since "002" names no subcommand.
+    register "worktree prune", WorktreePrune
     register "coverage", Coverage
     register "docs", Docs
     register "states", States, aliases: %w[diagram]
