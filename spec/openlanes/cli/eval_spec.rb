@@ -50,6 +50,22 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
       end
     end
 
+    context "with the agent named as an argument" do
+      let(:options) { { name: "r2d2-mechanic" } }
+
+      it "scores only that agent's cases, as --agent does" do
+        expect(result[:out].scan(/^│ \S+/).map { it.delete_prefix("│ ") }).to eq(%w[Case task-fast task-medium])
+      end
+    end
+
+    context "with both an argument and --agent" do
+      let(:options) { { name: "leah-researcher", agent: "r2d2-mechanic" } }
+
+      it "lets --agent win" do
+        expect(result[:out]).not_to include("leah-researcher")
+      end
+    end
+
     context "with --case and --depth" do
       let(:options) { { case: "research-fast", depth: "deep" } }
 

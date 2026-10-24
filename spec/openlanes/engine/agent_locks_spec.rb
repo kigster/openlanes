@@ -27,6 +27,24 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
 
   after { FileUtils.rm_rf(root) }
 
+  # Asked before a merged plan's checkout is removed: any lock at all in it
+  # means somebody is in there, the engine's own agents included.
+  describe "#held_in" do
+    before { FileUtils.mkdir_p(checkout) }
+
+    it "names whoever holds a lock in the checkout, one of the engine's agents included" do
+      listed << lock("lib/a.rb", agent: "luke-backend", tree: checkout)
+
+      expect(locks.held_in(checkout).to_s).to eq("luke-backend (refactoring)")
+    end
+
+    it "ignores locks taken in any other tree" do
+      listed << lock("lib/a.rb")
+
+      expect(locks.held_in(checkout)).to be_nil
+    end
+  end
+
   describe "#held_elsewhere" do
     it "names somebody else's lock on the plan's folder" do
       listed << lock(".plans/003.00━━🟡━━❯tax-rule-dsl/spec.md")

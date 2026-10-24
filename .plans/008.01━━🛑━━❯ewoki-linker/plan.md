@@ -130,6 +130,21 @@ Answered:
 
 The 30 failures in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb` are accepted as outside this plan. The plan goes to review as is, without fixing the host's local port behaviour. `bundle exec rspec` therefore does not exit 0 on this machine; the rest of the suite and `just lint` are green.
 
+### B2 (answered) — Which pull request carries this plan
+
+This worktree's build was superseded by PR #114. On 2026-10-23 the worktree moved from `kig/008.01-ewoki-linker` to `kig/eval-agent-positional`, and commit `6d04fb82` salvaged one piece of `0398136d Ewoki Linker` into PR #122 (open). That commit says the rest is superseded by PR #114 (`kig/ewoki-linker`, open, titled "008.01 🔗 ewoki-linker"), which implements this plan. Signing Completed here would push `kig/008.01-ewoki-linker` (`0398136d`) and open a second, conflicting pull request for the same plan.
+
+Options offered: (a) adopt PR #114 as this plan's pull request, recording it in `pull-requests.md`, so the plan moves to 🟢 and hansolo reviews #114, leaving `kig/008.01-ewoki-linker` unpublished (recommended); (b) close #114 and publish `0398136d` after switching the worktree back, once PR #122 has merged; (c) mark 008.01 done outside the pipeline and merge #114 by hand.
+
+### D6 (decision) — Adopt PR #114 for this plan
+
+Answered:
+
+- 2026-10-23
+- By kig
+
+Option (a). PR #114 (`kig/ewoki-linker`) is this plan's pull request. Record it in `pull-requests.md`, so the plan moves to 🟢 and hansolo reviews #114. Leave `kig/008.01-ewoki-linker` (`0398136d`) unpublished. The worktree stays on `kig/eval-agent-positional` until PR #122 is resolved.
+
 ______________________________________________________________________
 
 ## Task completed when

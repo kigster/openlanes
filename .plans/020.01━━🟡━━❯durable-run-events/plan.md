@@ -1,5 +1,11 @@
 # Plan 020.01: Durable Run Events
 
+> [!NOTE]
+>
+> **As built, restored 2026-10-23 by `luke-backend`.** The previous `plan.md` was deleted in `41b53908` and re-created empty, which `hansolo-reviewer` rejected (finding 2): the plan described neither the diff nor the new direction. The units below are that deleted plan, unchanged, because they are exactly what #105 ships: an opt-in JSONL event log and `openlanes events report`.
+>
+> **D1 (2026-10-23):** B1 was answered **b**, so the database direction belongs in this pull request. That is Research Q2 (ActiveRecord on SQLite or PostgreSQL, with the tables `events`, `agents`, `plans` and `tasks`) and the Goal (a nav button and a Reports page). Its units are B7 to B10 under `## Backend` and F3 to F5 under `## Frontend`, and their interfaces are in `contract.md`, in **Database sink and Reports page (D1)**.
+
 Builds the opt-in, append-only JSONL event log from `spec.md` (In scope 1 to 11) and the `openlanes events report` command that reads it. One pull request, eight units.
 
 ## Decisions taken while planning
@@ -85,7 +91,63 @@ Pair contract (spec, "Back end / front end"): `luke-backend` mails `rey-frontend
 - **Shape:** each class takes `events:` defaulting to the `NullSink`. `Publisher` emits `pr_opened` with the PR number. `PrOutcomes` emits `pr_reviewed`, `pr_merged` or `pr_closed` only when it actually applies a change, so the watch re-asking every 15 seconds does not multiply events (and `event_id` dedupes anything that slips through). `Unblocker` emits `human_answered` per drained question, carrying the block id and answer time, never the answer text.
 - **Done when:** `pr_and_answer_emit_spec.rb`, on `PlansFixture` trees with the `GitHub` double, shows each PR kind emitted once when an outcome is applied twice, and `human_answered` emitted per answered `B<n>` with no answer text in the payload (spec item 2).
 
+### B7 Database dependencies, connection and migrations (D1)
+
+- **Discipline:** back end.
+- **Owns:** `openlanes.gemspec` (`activerecord`, `sqlite3`), `Gemfile.lock`, `lib/openlanes/events/database.rb`, `lib/openlanes/events/database/record.rb`, `lib/openlanes/events/database/url.rb`, `lib/openlanes/events/database/migrate/*.rb`, `lib/openlanes/support/config.rb` (`events.database` only), `spec/openlanes/events/database/{database,url}_spec.rb`, `spec/openlanes/config_spec.rb` (the new examples only).
+- **Depends on:** B3.
+- **Shape:** see contract, "Dependencies and configuration" and "Tables". `Database.connect(url)` connects an abstract `Record` base and never `ActiveRecord::Base`. `Database.migrate(url)` runs the four migrations through `ActiveRecord::MigrationContext`.
+- **Done when:** a spec migrates a temp SQLite file and finds the four tables with their unique indexes; `url_spec.rb` covers `sqlite`, `postgresql`, an explicit URL, the env override and a malformed value; the config specs show `events.database` without `enabled: true` refused.
+
+### B8 Bus, recorder and tasks projection (D1)
+
+- **Discipline:** back end.
+- **Owns:** `lib/openlanes/events/bus.rb`, `lib/openlanes/events/database/{event_row,plan_row,agent_row,task_row,recorder,tasks}.rb`, `lib/openlanes/events.rb` (`emitter`, `database_url`), `spec/openlanes/events/bus_spec.rb`, `spec/openlanes/events/database/{recorder,tasks}_spec.rb`.
+- **Depends on:** B7.
+- **Shape:** see contract, "Write path". The `events` rows are append-only (`readonly?` once persisted), and a duplicate `event_id` is skipped.
+- **Done when:** recording the same event twice leaves one row; a raising database subscriber still leaves the JSONL line; `agent_started` then `agent_finished` moves a task from `running` to `completed`, a blocked finish to `blocked`, and `run_finished` closes a leftover `running` as `failed`.
+
+### B9 Loader, plans and agents sync, `events migrate` and `events load` (D1)
+
+- **Discipline:** back end.
+- **Owns:** `lib/openlanes/events/database/loader.rb`, `lib/openlanes/cli/events/subcommands/{migrate,load}.rb`, `lib/openlanes/cli.rb` (those two registrations, written first), `spec/openlanes/events/database/loader_spec.rb`, `spec/openlanes/cli/events/{migrate,load}_spec.rb`.
+- **Depends on:** B8.
+- **Shape:** see contract, "CLI". Plans are upserted by `ordinal` with an emoji-free title, and agents by `name` with their Markdown body and `digest`.
+- **Done when:** loading the two-node fixture twice inserts the events once; a `PlansFixture` tree yields `plans` rows whose titles carry no emoji; `--dry-run` writes nothing; with no database configured both commands exit 1 and name the key.
+
+### B10 Reader, `Events.source` and `GET /api/reports` (D1)
+
+- **Discipline:** back end.
+- **Owns:** `lib/openlanes/events/database/reader.rb`, `lib/openlanes/events.rb` (`source`), `lib/openlanes/web/app.rb` (the `/api/reports` route only), `openapi.yaml` (plan folder), `spec/openlanes/events/database/reader_spec.rb`, `spec/openlanes/web/reports_api_spec.rb`, `spec/integration/reports_api_spec.rb`.
+- **Depends on:** B8.
+- **Shape:** see contract, "HTTP surface". `Reader#events` returns `Event` values, so `Events.report` is the one aggregation behind the CLI and the page.
+- **Done when:** `reports_api_spec.rb` covers 200 from the database, 200 from the log, 400, 404 and 503; the integration spec shows `GET /api/reports` and `events report --format json --source database` agree.
+
 ## Frontend
+
+### F3 Nav button and the `/reports` route (D1)
+
+- **Discipline:** front end.
+- **Owns:** `web/src/shell/**` (the nav), the router entry for `/reports`, and their tests.
+- **Depends on:** nothing; builds against `openapi.yaml`.
+- **Shape:** a nav button swaps the page between Board and Reports. They are separate pages, and loading one unmounts the other, closing its event stream.
+- **Done when:** a component test shows the button switches routes and the Board's `EventSource` is closed on `/reports`.
+
+### F4 Reports page (D1)
+
+- **Discipline:** front end.
+- **Owns:** `web/src/reports/**`, `web/cypress/e2e/reports*.cy.ts`.
+- **Depends on:** F3; B10 for the live check.
+- **Shape:** renders every `Result` field from `GET /api/reports`, with shadcn chart components where the repo has them. `cost_usd: null` renders `unknown`, and `estimated` renders `(est.)`. The 404 and 503 bodies render their `message`.
+- **Done when:** unit tests cover the `unknown` and `(est.)` cases and the 404 and 503 states; the Cypress spec described in the contract's integration proof passes.
+
+### F5 `events report --source` and docs (D1)
+
+- **Discipline:** front end (CLI and docs).
+- **Owns:** `lib/openlanes/cli/events/subcommands/report.rb`, its spec, `docs/events.md` (the database section).
+- **Depends on:** B10.
+- **Shape:** `--source database|log`, defaulting to the database when one is configured. The docs cover `events.database`, `events migrate` and `events load`, and the Reports page.
+- **Done when:** the CLI spec covers both sources, and the docs spec checks the database section.
 
 ### F1 `openlanes events report` command, and the integration check
 
@@ -108,7 +170,7 @@ Pair contract (spec, "Back end / front end"): `luke-backend` mails `rey-frontend
 
 ## HTTP surface
 
-No. This plan adds no HTTP API and changes none; `luke-backend` writes no `openapi.yaml`.
+Yes, since D1: `GET /api/reports` (B10), described in `openapi.yaml` in this folder and in `contract.md`.
 
 ## How to test
 
@@ -125,3 +187,5 @@ Run each command from the repository root, after `eval "$(rbenv init -)"`.
   - Change `enabled` to `maybe` and run it again: it refuses with `events.enabled: "maybe" is not true or false`.
   - Run `openlanes run` on a plan with events enabled, then run `openlanes events report`. It prints the table: completion rate, blocks, time to answer, PR outcomes, and usage per adapter and model. A computed cost carries `(est.)`, and a codex or pi cost reads `unknown`. `--format json` gives the same figures for scripts.
 - Read `docs/events.md`. It explains the config key, the default path, every event kind with its allowed fields, what is never stored, and how events behave across several machines.
+
+- D1, once B7 to B10 land: `bundle exec rspec spec/openlanes/events/database spec/openlanes/web/reports_api_spec.rb spec/integration/reports_api_spec.rb` → 0 failures. Then, with `events: { enabled: true, database: sqlite }`, run `openlanes events migrate` and `openlanes events load` twice. The second load inserts 0 rows. `curl localhost:<port>/api/reports` returns the figures that `openlanes events report --format json` prints.
