@@ -101,17 +101,13 @@ Nothing in `lib/` redacts or expires anything. Recommendation: store only IDs, t
 1. **Event log first.** An append-only, node-local file of immutable events; reports are folds over it. Cheap, no server, idempotent by key, merges across machines by file union.
 2. **Database first.** ActiveRecord tables (`events`, `agents`, `plans`, `tasks`) on SQLite or PostgreSQL, as Research Q2 sketches; the UI reads from it and live state migrates out of Redis over time.
 
-Picked: **1** for this plan. The branch implements it (`lib/openlanes/events/{event,sink,log,report}.rb`), it meets "optional for a single-machine install" with no dependency, and a database can later be loaded from the same events. Framing 2 stays an open question (Q1) because Research Q2 and the Goal addendum ask for it.
+Picked: **1** for this plan. The branch implements it (`lib/openlanes/events/{event,sink,log,report}.rb`), it meets "optional for a single-machine install" with no dependency, and a database can later be loaded from the same events. Framing 2 is plan 020.02 (D2): PostgreSQL tables loaded from these same events.
 
 ## Goal 
 
 After this ships, a single-machine install can opt in to a durable, append-only log of run, agent, block/answer and PR lifecycle events, and `openlanes` can answer from that log how often agents complete, how often they needed a human, how long answers took, what happened to the PRs, and what usage each run or model cost. Nothing in the log contains source code, prompts, or conversation text.
 
-However, the UI can begin to use PostgreSQL for display purposes, and some functionality will later begin migrating out of redis.
-
-Produce a nav button that swaps the page to a reports URL, which shows the reports that can be generated via CLI and through the same classes shown on the UI. If we have any shadcn components to show the data visually, please do so.
-
-Board and Reports are separate  pages, and loading one closes the other.
+The PostgreSQL tables, the nav button and the Reports page are plan 020.02 (D2). Without PostgreSQL, this log and `openlanes events report` are the whole feature.
 
 ## Non-Goals
 
@@ -141,8 +137,8 @@ Each item has a check.
 
 ## Out of scope
 
-- **ActiveRecord/SQLite/PostgreSQL sink, `agents`/`plans`/`tasks` tables** (Research Q2). Why: contradicts the JSONL sink in In scope item 4 and adds a database dependency to a single-machine install. See Q1.
-- **UI reading from PostgreSQL, Board/Reports pages, nav button, shadcn charts** (Goal addendum). Why: no front-end work exists in the branch diff (`git diff --stat main...HEAD` touches no `web/`), and it depends on a database sink. See Q1 and Q2.
+- **PostgreSQL tables (`events`, `agents`, `plans`, `tasks`), nav button, Reports page.** Why: plan 020.02 (D2).
+- **SQLite.** Why: D2; without PostgreSQL the JSONL log and CLI report cover a single machine.
 - **Provider-reported cost (`total_cost_usd`).** Why: Research Q4 says sources disagree on per-call vs cumulative; not read anywhere in `lib/`.
 - **Retention or expiry of event files.** Why: nothing expires today (Research Q5); events hold no free text, so the cost of keeping them is low.
 - **Back-filling past runs.** Why: Non-Goal; no source holds the data.
@@ -151,7 +147,7 @@ Each item has a check.
 
 Every In scope item (1-11) is back end (`luke-backend`): `lib/openlanes/events/*`, `engine/*` emit points, `support/config.rb`, `cli/events/subcommands/report.rb`, `docs/events.md`. The only presentation piece is the terminal renderer `presentation/events_report.rb`, also back end (a string-returning renderer, STDOUT is the deliverable).
 
-Front end (`rey-frontend`): nothing in scope. The Reports page and nav button are out of scope pending Q2; `rey-frontend`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
+Front end (`rey-frontend`): nothing in scope. The Reports page and nav button are plan 020.02 (D2); `rey-frontend`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
 
 ## Decisions
 
@@ -168,10 +164,26 @@ Answered:
 
 Option (b) is chosen. The plan delivers an ActiveRecord sink on SQLite or PostgreSQL with the `events`, `agents`, `plans` and `tasks` tables, a nav button, and a web Reports page. The Reports page shows the reports that the CLI generates, through the same classes. Board and Reports are separate pages; loading one closes the other. This is the largest of the three options and adds a dependency, migrations and web work. Supersedes the JSONL-only scope in In scope item 4 and the Out of scope entries for the database and front end.
 
+### D2 (decision) — PostgreSQL is optional and lives in plan 020.02
+
+Answered:
+
+- 2026-10-23
+- By kig
+
+Supersedes D1. Recorded in `docs/decisions/decisions-on-durable-events-in-postgresql.md`.
+
+1. The JSONL log and `openlanes events report` stay, and ship in this plan (#105) as they are.
+2. PostgreSQL is optional. With it configured, events also land in a PostgreSQL `events` table, and the Reports page and the other database-backed pages work. Without it, those pages are off and nothing else changes.
+3. A new plan, 020.02, `depends_on: 020.01`, builds the PostgreSQL side: the tables `events`, `agents` (the markdown definition imported from `agents/*.md`), `plans` (UUIDv7 primary key, the `NNN.MM` ordinal unique, the title without the state emoji) and `tasks` (plans in flight), plus the nav button and the Reports page.
+4. `tasks` is filled from the events as each one is written, never from Redis pub/sub, so Redis stays off the write path.
+5. PostgreSQL only, no SQLite.
+6. The project's PostgreSQL class is PG-lax. 020.02 writes it into `CLAUDE.md` before its first migration.
+
 ## Open questions
 
-1. **Q1. Sink: JSONL or database?** Research Q2 and the Goal addendum ask for ActiveRecord with SQLite/PostgreSQL; In scope item 4 and the branch ship JSONL. Assumed: JSONL now, database later as a consumer of the same events. Needs a human decision (product).
-2. **Q2. Reports page in the web UI.** Asked for in the Goal addendum, not built, not in this scope. Assumed: a follow-up plan after Q1.
+1. **Q1. Sink: JSONL or database?** Answered by D2: JSONL here, PostgreSQL optionally in 020.02.
+2. **Q2. Reports page in the web UI.** Answered by D2: plan 020.02.
 3. **Q3. Research cites "contradiction 4"** (In scope item 6) but `## Research` has no list of contradictions; it is unanchored. Assumed: it means "Redis must not be on the write path", which Q1/Q3 of Research support.
 4. **Q4. `total_cost_usd`.** Check real `claude` stream-json output before ever storing it (Research Q4).
 5. **Q5. Codex and pi usage fields** vary by version; read defensively. Which pi fields are reliable is unverified.
@@ -188,4 +200,4 @@ Option (b) is chosen. The plan delivers an ActiveRecord sink on SQLite or Postgr
 
 ## Conclusion
 
-When this ships, an install can set a `.openlanes.yml` key and get an append-only JSONL log per node recording run, agent, block/answer, PR and failure events with stable `event_id`s and no free text. `openlanes events report` merges node files, dedupes, and prints completion and intervention rates, time-to-answer, PR outcomes and usage by run and model, with costs labelled as estimates and `null` where unknown. `docs/events.md` explains multi-machine behaviour. A database sink and a web Reports page do not exist and wait on Q1.
+When this ships, an install can set a `.openlanes.yml` key and get an append-only JSONL log per node recording run, agent, block/answer, PR and failure events with stable `event_id`s and no free text. `openlanes events report` merges node files, dedupes, and prints completion and intervention rates, time-to-answer, PR outcomes and usage by run and model, with costs labelled as estimates and `null` where unknown. `docs/events.md` explains multi-machine behaviour. The optional PostgreSQL tables and the web Reports page are plan 020.02.
