@@ -1,5 +1,9 @@
 # Contract: 020.01 Durable Run Events
 
+> [!NOTE]
+>
+> This contract was written without PostgreSQL in the spec. You will need to update it or rewrite it for the PostgreSQL direction.
+
 Owner: `luke-backend`. No HTTP surface, so no `openapi.yaml`.
 
 ## Baseline
