@@ -231,7 +231,7 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "tells hansolo the verdict words, the finding headings and the configured cap" do
       prompt = agents.find("hansolo-reviewer").prompt
-      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected N+1/M)", "### F<n> [critical|minor]", "(approved)", "(slop)", "👍🏼 to deploy")
+      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(approved)", "(slop)", "👍🏼 to deploy")
     end
 
     it "lets hansolo comment, but neither review nor edit a pull request" do
