@@ -65,6 +65,9 @@
 .car:hover, .car:has(.car-open[aria-expanded="true"]) { border-left-color: var(--lane-color); }
 .car.is-blocked:hover, .car.is-blocked:has(.car-open[aria-expanded="true"]) { border-left-color: var(--alarm); }
 .car-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.car-gear { flex: none; align-self: center; color: var(--ink-soft); }
+.car.is-running .car-gear { animation: car-gear-spin 2s linear infinite; }
+@keyframes car-gear-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .car-agent { font-weight: 800; letter-spacing: -0.01em; }
 .car-model { color: var(--ink-soft); font-size: 13px; }
 .car-activity { font: 12px/1.4 var(--mono); color: var(--ink-soft); margin: 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -141,4 +144,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .seg::after, .cars, .stop, .car { transition: none; }
+  /* The global 0.01ms rule does not stop an infinite spin, and this must beat .car.is-running .car-gear. */
+  .car.is-running .car-gear { animation: none; }
 }

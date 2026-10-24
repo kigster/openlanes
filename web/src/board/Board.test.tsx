@@ -4,7 +4,7 @@ import { axe } from "vitest-axe";
 import { Board, MachineBoard } from "./Board";
 import { PlanRow } from "./PlanRow";
 import { nodePlanKey } from "./model";
-import { sampleBoard, sampleCar, samplePlan, samplePr } from "./sample";
+import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const none = new Map<string, unknown>();
 const noRetire = new Set<string>();
@@ -235,5 +235,31 @@ describe("locked plan", () => {
   it("shows no 🔑 when the plan is unlocked", () => {
     render(<PlanRow plan={samplePlan({ locked: null })} stations={stations} models={models} />);
     expect(screen.queryByText("🔑")).toBeNull();
+  });
+});
+
+describe("running gear", () => {
+  const stations = sampleBoard().me.stations;
+  const models = sampleBoard().me.models;
+  const draw = (plan: ReturnType<typeof samplePlan>) => render(<PlanRow plan={plan} stations={stations} models={models} />).container;
+
+  it("turns a gear in a running, unblocked car, first in its top row", () => {
+    const container = draw(samplePlan({ cars: [sampleCar({ state: "running" })] }));
+    expect(container.querySelector(".car")).toHaveClass("is-running");
+    const gear = container.querySelector(".car-top > .car-gear");
+    expect(gear).toBe(container.querySelector(".car-top")?.firstElementChild);
+    expect(gear).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it.each(["done", "stuck", "failed"] as const)("has no gear on a %s car", state => {
+    const container = draw(samplePlan({ cars: [sampleCar({ state })] }));
+    expect(container.querySelector(".car")).not.toHaveClass("is-running");
+    expect(container.querySelector(".car-gear")).toBeNull();
+  });
+
+  it("has no gear on a running car blocked by an unanswered question", () => {
+    const container = draw(samplePlan({ cars: [sampleCar({ state: "running" })], questions: [sampleQuestion({ agent: "luke-backend" })] }));
+    expect(container.querySelector(".car")).not.toHaveClass("is-running");
+    expect(container.querySelector(".car-gear")).toBeNull();
   });
 });
