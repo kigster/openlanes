@@ -546,15 +546,15 @@ module OpenLanes
       # Written out by hand, this table is the one that went stale: it named
       # three phases and a build chain that skipped 🔎, 📋 and 🎨, and it
       # claimed `pull-requests.md` proved 🟡. The path is the forward spine,
-      # the lane's jump in {Lifecycle::Lanes::TARGET}, and the agents that
+      # the jump out of ⚪ in {Lifecycle::Lanes::HOPS}, and the agents that
       # serve the lane. A state drops out when nobody serving the lane handles
       # it and some agent that does advances past it.
       #
       # @return [String]
       def starts_section
         rows = Plans::Spec::STARTS.map { |starts| starts_row(starts) }
-        plan_at = stated(Lifecycle::Lanes::TARGET.fetch(:planning))
-        build_at = stated(Lifecycle::Lanes::TARGET.fetch(:building))
+        plan_at = stated(Lifecycle::Lanes::HOPS.dig(:planning, :new))
+        build_at = stated(Lifecycle::Lanes::HOPS.fetch(:building).values.last)
 
         <<~MARKDOWN
           A feature takes one of three paths, chosen by `starts:` in its `spec.md`
@@ -714,7 +714,7 @@ module OpenLanes
       # @param to [Symbol]
       # @return [String]
       def starts_edge(starts, from, to)
-        jump = Lifecycle::Lanes::TARGET[starts] == to && from == :new && Plans::StateMachine::SPINE[from] != to
+        jump = Lifecycle::Lanes::HOPS.dig(starts, :new) == to && from == :new && Plans::StateMachine::SPINE[from] != to
         "    #{from} --> #{to}#{" : harness" if jump}"
       end
 
@@ -726,24 +726,24 @@ module OpenLanes
       end
 
       # What the harness writes so a starts value may skip the agents before its
-      # jump. An empty stub is the blank `plan.md` that makes 📋 honest; anything
-      # else is the one-unit plan that makes ⭐ honest. `full` writes nothing.
+      # jump. A jump that ends at 🔗 leaves the blank `plan.md` that makes it
+      # honest; one carried on to ⭐ leaves the one-unit plan that makes ⭐
+      # honest. `research` writes nothing.
       #
       # @param starts [Symbol]
       # @return [String]
       def harness_writes(starts)
-        stub = Lifecycle::Lanes::STUB[starts]
-        return "—" unless stub
-        return "a blank `plan.md`" if stub.strip.empty?
+        hops = Lifecycle::Lanes::HOPS[starts] or return "—"
+        return "a one-unit `plan.md`" if hops.value?(:planned)
 
-        "a one-unit `plan.md`"
+        "a blank `plan.md`"
       end
 
       # @param starts [Symbol]
       # @return [Array<Symbol>] forward-spine states this starts value actually enters
       def starts_path(starts)
         spine = forward_spine
-        jump = Lifecycle::Lanes::TARGET[starts]
+        jump = Lifecycle::Lanes::HOPS.dig(starts, :new)
         entered = jump ? [:new, *spine.drop_while { it != jump }] : spine
         entered.reject { |key| passed_over?(starts, spine, key) }
       end

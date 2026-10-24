@@ -116,7 +116,11 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
       aggregate_failures do
         expect(github).to have_received(:swap_label)
-          .with(number: 7, repo: "example/repo", add: OpenLanes::Plans::ReviewLabel::INITIAL, remove: [])
+          .with(number: 7,
+            repo: "example/repo",
+            add: OpenLanes::Plans::ReviewLabel::INITIAL,
+            also: [OpenLanes::Plans::ReviewLabel::OPENLANES],
+            remove: [])
         expect(publication.label_error).to be_nil
       end
     end
@@ -243,6 +247,7 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
           .with(number: 7,
             repo: "example/repo",
             add: OpenLanes::Plans::ReviewLabel::INITIAL,
+            also: [OpenLanes::Plans::ReviewLabel::OPENLANES],
             remove: OpenLanes::Plans::ReviewLabel.known)
       end
 

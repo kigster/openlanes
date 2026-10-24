@@ -46,6 +46,10 @@ module OpenLanes
     # @return [OpenLanes::Lifecycle::UnblockWorkflow] `openlanes unblock`, without the command
     def unblock(**) = UnblockWorkflow.new(**)
 
+    # @param options [Hash] passed to {Linker#initialize}
+    # @return [OpenLanes::Lifecycle::Linker] `openlanes link`, without the command
+    def link(**) = Linker.new(**)
+
     # @return [OpenLanes::Lifecycle::Unblocker]
     def unblocker(**) = Unblocker.new(**)
 

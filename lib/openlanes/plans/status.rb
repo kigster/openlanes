@@ -84,6 +84,18 @@ module OpenLanes
       }
     end
 
+    # 🔗 Ready for Linking and 📋 Ready for Planning share one invariant:
+    # `plan.md` exists and nobody has planned in it yet.
+    #
+    # @param label [String]
+    # @return [Proc]
+    def self.blank_plan(label)
+      lambda { |subject|
+        body = Ledger.stripped(subject.read("plan.md"))
+        "#{label}, but `plan.md` already holds a plan" if body.match?(PLAN_HEADING)
+      }
+    end
+
     # A question that is still somebody's to answer, written as its own heading:
     # `## B1`, `## B2`. The number is what `blocked.md` gets referenced by in
     # conversation and in pull requests, so it is also the only part of the file
@@ -160,16 +172,32 @@ module OpenLanes
           "Researched, but `spec.md` has no `## Research` chapter" unless body.match?(RESEARCH_CHAPTER)
         }
       ),
+      # 🔗 and 📋 hold the same files: a finished `spec.md` and the blank
+      # `plan.md` yoda-writer leaves. What tells them apart is whether
+      # `ewoki-linker` has answered `depends_on:`, which the folder name
+      # records and the invariant deliberately does not: a 📋 plan written
+      # before the linker existed would otherwise be renamed backwards by
+      # `resync`. The two are a {StateMachine::FAMILIES family} for that reason.
+      Status.new(
+        key:       :ready_for_linking,
+        emoji:     "🔗",
+        label:     "Ready for Linking",
+        requires:  %w[spec.md plan.md],
+        note:      "the specification is finished; ewoki-linker writes its `depends_on:` before the planner starts",
+        # Whether `depends_on:` is answered is what tells 🔗 from 📋 on disk,
+        # so a 📋 plan coming back from ⭕ is not sent to be linked again.
+        invariant: lambda { |subject|
+          blank_plan("Ready for Linking").call(subject) ||
+            ("Ready for Linking, but `spec.md` already answers `depends_on:`" if Spec.for(subject).linked?)
+        }
+      ),
       Status.new(
         key:       :ready_for_planning,
         emoji:     "📋",
         label:     "Ready for Planning",
         requires:  %w[spec.md plan.md],
         note:      "the specification is finished; `plan.md` exists and is still blank, waiting for the planner",
-        invariant: lambda { |s|
-          body = Ledger.stripped(s.read("plan.md"))
-          "Ready for Planning, but `plan.md` already holds a plan" if body.match?(PLAN_HEADING)
-        }
+        invariant: blank_plan("Ready for Planning")
       ),
       Status.new(
         key:       :planned,

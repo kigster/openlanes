@@ -14,13 +14,13 @@ export interface StartsLook {
 }
 
 /**
- * Plans::Spec::STARTS, as lifecycle/lanes.rb moves them: research enters at New, planning at Planning, building at
+ * Plans::Spec::STARTS, as lifecycle/lanes.rb moves them: research enters at New, planning at Linking, building at
  * Building and skips Building UI. The Snapshot names a plan's starts value but not where it enters, so this table is
  * the one fact the page keeps for itself.
  */
 export const STARTS: Record<Starts, StartsLook> = {
   research: { label: "Research", color: "var(--starts-research)", bg: "var(--starts-research-bg)", from: "new", skip: [] },
-  planning: { label: "Planning", color: "var(--starts-planning)", bg: "var(--starts-planning-bg)", from: "ready_for_planning", skip: [] },
+  planning: { label: "Planning", color: "var(--starts-planning)", bg: "var(--starts-planning-bg)", from: "ready_for_linking", skip: [] },
   building: { label: "Building", color: "var(--starts-building)", bg: "var(--starts-building-bg)", from: "building", skip: ["building_ui"] },
 };
 
@@ -172,3 +172,8 @@ export const nodePlanKey = (nodeId: string, ordinal: string): string => `${nodeI
 
 /** An agent still at work: running, or stuck waiting on a person. Done and failed cars only linger on the board. */
 export const isWorking = (car: Car): boolean => car.state === "running" || car.state === "stuck";
+
+/** Whether the row at `i` starts a different dependency group from the row above it. */
+export function dagBreak(plans: Pick<Plan, "group">[], i: number): boolean {
+  return i > 0 && plans[i].group !== plans[i - 1].group;
+}

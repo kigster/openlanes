@@ -500,6 +500,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     # luke `starts_as` 🟡, so a ⭐ folder moves the moment he is dispatched.
     # The stub signs Almost completed rather than Completed: the attempt is
     # then ok without claiming 🟢, and the plan sits at 🟡 where it landed.
+    # Narrowed to luke: the stub's ledger line replaces plan.md, which then
+    # reads as blank, and ewoki-linker and luthen-rael would take it from there.
     it "shows a plan that actually moved as from -> to" do
       plans { |t| t.plan("002.00", :planned, "moves", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       with_executor { |subject, agent|
@@ -507,7 +509,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
           "> [2026-09-04 11:29:20 AM PDT] [ agent: #{agent.name}   status: Almost completed, round 1 ]\n")
         [true, "paused"]
       }
-      out, err, = run(dry_run: false)
+      out, err, = run(dry_run: false, agent: "luke-backend")
 
       expect(out).to include("planned -> building")
       expect(unwrapped(err)).to include("1 advanced")

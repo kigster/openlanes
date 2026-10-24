@@ -13,7 +13,11 @@ This is step 2 of the three-plan delivery settled in `.plans/008.00-🟢 → pla
 
 ## Goal
 
-After this ships, every plan reaching 📋 Ready for Planning or ⭐️ Planned without a `depends_on:` key gets `ewoki-linker` once, before the agent that would move it toward Building. Ewoki writes only the key and a dated ledger note giving one reason per dependency. A key a human wrote is never touched.
+After this ships, every plan whose specification is finished passes through a new state, 🔗 Ready for Linking, where `ewoki-linker` writes its `depends_on:` key before the planner starts; the plan moves on to 📋 only once the key is answered. Plans that were already at 📋 Ready for Planning or later when this shipped are linked by `openlanes link`. Ewoki writes only the key and a dated ledger note giving one reason per dependency. A key a human wrote is never touched.
+
+> [!NOTE]
+>
+> Amended on 2026-10-23, in review of PR #114: the build adds the 🔗 state instead of the `precedes:` hook this spec first described (D1 places linking "wherever the spec has finished being written"). Non-Goal 5, items 6 and 9, the branch-and-PR flow and the How-to-tell list were changed to match. The product owner confirms or reverses this through `blocked.md` B2.
 
 ### When it runs
 
@@ -37,11 +41,11 @@ If a missing dependency declaration is found, it is written into the plan, as ma
 
 1. No new links are found. This completes the linker's operation, and if it was invoked as a command, it exits reporting that no new links were found.
 
-2. If new links are found, the dispatcher cuts a local branch of main called `$USER/plan-linking-NNN.MM`, where `NNN.MM` is the number of the first plan modified. However, all plans changed with the new links are included in the branch and pushed as a PR. This PR is not added to any `pull-requests.md` and is merged by the dispatcher as soon as its CI goes green. Visually, the UI can add a dedicated lane for system tasks. If it had one, the auto-linking would be visible there until its PR is merged, if there is a PR.
+2. If new links are found, it reports how many plans it linked and asks the user to commit the current branch. `link` commits nothing. The `$USER/plan-linking-NNN.MM` branch, its pull request and the harness merge of D3 are deferred to a follow-up plan (Non-Goal 6).
 
 ## Topological Sort
 
-When the engine starts without specific plans passed as arguments, it must sort the todo plans using tsort, based on the declared dependencies.
+When the engine starts without specific plans passed as arguments, it must sort the todo plans using tsort, based on the declared dependencies. Already on `main` before this plan: `Plans::Dependencies#order` sorts each dependency group topologically (Kahn's algorithm, ordinal as tie-break), and `#head` gives each group one plan at a time. This plan adds no second sort.
 
 In a DAG of connected plans, only the first one can be worked on, until it merges, before any work on the second begins.
 
@@ -55,16 +59,17 @@ Finally, two or more plans with the same `depends_on` plan(s) can run in paralle
 1. The choice card for more than three dependencies (008.02, item 11).
 1. Docs regeneration beyond what the new agent file needs (008.02, item 13).
 1. Running ewoki through the web server as `c3po-operator` does.
-1. Changing any folder name or adding a state: ewoki's `advances_to` is nil.
+1. Changing any folder name or adding a state beyond the one 🔗 `ready_for_linking` state ewoki handles (amended 2026-10-23).
+1. The `$USER/plan-linking-NNN.MM` branch, its pull request and the harness merge of D3 (amended 2026-10-23: a follow-up plan).
 
 ## In scope
 
 Each item names its check. Numbers follow the 008.00 spec.
 
-6. **`agents/ewoki-linker.md`** with frontmatter `precedes: [ready_for_planning, planned]`, `handles: []`, Haiku, low effort. `precedes:` is read in exactly one place, a new `Agents::Registry#preceding(status)`, which the dispatcher, `Roster` and `Executor` all call; none of them parses the key itself. Check: `Registry` loads it, `#preceding(:planned)` returns it, `Roster` lists it, and its tool grants match an agent that may edit `spec.md` only.
+6. **`agents/ewoki-linker.md`** with frontmatter `handles: [ready_for_linking]`, `advances_to: ready_for_planning`, `confined_to: [spec.md]` (amended 2026-10-23; was `precedes:`). The harness leaves 🔗 only when `spec.md` answers `depends_on:`. Check: `Registry` loads it, `Roster` lists it as `Ready for Linking → Ready for Planning`, and its tool grants are those of an agent that may edit `spec.md` only.
 1. **Dispatcher ewoki gate** (dropped by D1): before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
 1. **Ewoki output contract**: writes only two things, both in `spec.md`: the `depends_on:` frontmatter key (quoted canonical `"NNN.MM"` strings, `[]` when none), and its ledger entries in the `> [!NOTE]` block that `Plans::Ledger` reads (Started, then Completed), with one reason per dependency on the lines below its Completed entry, each naming the thing the plan needs (N7: shared files are a merge risk, not a dependency). Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that the diff to `spec.md` touches only the frontmatter key and the NOTE block, and that no other file in the folder changed except the harness's own `state.json` signature.
-1. **Hand-written key wins**: a plan that already has the key, even `[]`, is skipped. Check: runner spec.
+1. **Hand-written key wins**: a plan whose key holds `[none]` or plan numbers is skipped; a missing key and `[]` are re-checked (D2). Check: runner spec.
 
 ## Decisions
 
@@ -72,21 +77,27 @@ Each item names its check. Numbers follow the 008.00 spec.
 
 Item 7 runs ewoki in each plan's worktree, while "When it runs" says the linker runs only on `main` in the primary repo. Which holds?
 
-### D1 (decision) — Primary repo only
+### D1 (decision) — It Depends on When
 
 - Answered on 2026-10-20
 - By the product owner
 
-Primary repo only. The `link` command runs on `main`, and `run` makes a pre-pass on `main` before the first round. The per-plan dispatcher gate (item 7) is dropped.
+Whereever the spec has finished being written, and is ready to go into planning during the automated process.
+
+During the creation of new plans (at the end of the create command but only on that plan). 
+
+The `link` command should ideally run on `main`, and should print a warning when it's run in a worktree. But it can also run in a worktree. 
 
 ### B2 (answered) — What "no dependencies" looks like
 
-Item 8 writes `[]` for "none", and item 9 never touches an existing key. "When it runs" re-checks `[]`. How does a human say "no dependencies, leave it alone"?
+Item 8 writes `[]` for "don't know", and item 9 never touches an existing key. "When it runs", any [] are checked. 
 
 ### D2 (decision) — `[none]` means checked, none
 
 - Answered on 2026-10-20
 - By the product owner
+
+The ones that are skipped are either the ones that have plans, eg `[ "008.01", "009.00" ] or it has the word "none": [ none ]
 
 Write `depends_on: [none]` for "checked, none". Re-check a missing key and `[]`. Skip `[none]` and any non-empty list. `Spec#depends_on` reads `[none]` as no edges.
 
@@ -121,7 +132,7 @@ Items 6–9, `link`, the main-branch guard, `git pull`, the branch and PR flow, 
 - Answered on 2026-10-20
 - By the product owner
 
-Two plans. 008.01 covers the agent, `Registry#preceding`, executor grants, the `link` command with its main and pull guard, the `[none]` rule, and evals. A new 008.03 covers the linking PR flow (with the narrow auto-merge from D3), the `run` pre-pass and tsort ordering.
+Everything is in this one plan.
 
 ### B6 (answered) — System lane in the UI
 
@@ -137,8 +148,9 @@ Out of scope. The System lane is a follow-up for 008.02 or the web plans.
 ## How to tell it's working?
 
 - `bundle exec rspec` and `just lint` stay green.
-- `./exe/openlanes agents list` shows `ewoki-linker` with `precedes ready_for_planning, planned`.
-- In a temp project with two plans at 📋, where 050's spec mentions 034's parser and has no `depends_on:` key, `./exe/openlanes run --dry-run --isolation shared` reports `would invoke ewoki-linker` for 050 and not for a plan whose spec already has `depends_on: []`.
+- `./exe/openlanes agents list` shows `ewoki-linker` as `Ready for Linking → Ready for Planning`.
+- In a temp project with a plan at 🔗 whose spec has no `depends_on:` key, `./exe/openlanes run --dry-run --isolation shared` reports `would invoke ewoki-linker` for it, and not for a 🔗 plan whose spec already has `depends_on: [none]`.
+- In a temp project with two plans at 📋, where 050's spec mentions 034's parser and has no `depends_on:` key, `./exe/openlanes link -n` prints `would invoke ewoki-linker for 050.00` and not for a plan whose spec already has `depends_on: [none]`.
 - `./exe/openlanes evals ewoki-linker` (offline scoring) passes every case.
 
 ## Open questions
@@ -150,4 +162,4 @@ Out of scope. The System lane is a follow-up for 008.02 or the web plans.
 
 - **Dispatcher size.** The gate touches candidate building, which every plan goes through. Keep it in its own method with a spec per lane.
 - **Over-linking.** Haiku at low effort may link plans that merely share files. The eval cases carry that guarantee; the prompt alone does not.
-- **`precedes:` read in several places.** Removed by design: `Agents::Registry#preceding` is the only reader (item 6).
+- **A plan leaving 🔗 unlinked.** Removed by design: the edges out of 🔗 are guarded on `Spec#linked?`, so a linker that times out or writes nothing leaves the plan at 🔗.

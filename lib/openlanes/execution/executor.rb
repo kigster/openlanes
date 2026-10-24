@@ -346,6 +346,27 @@ module OpenLanes
       # agent that ran, found nothing, and reported success.
       DENIED_TOOLS = %w[WebFetch WebSearch].freeze
 
+      # The whole tool set of a {Agents::Agent#confined? confined} agent.
+      # `--tools` takes every other tool away and `dontAsk` refuses whatever
+      # the allow list below does not name, so Edit reaches only its files
+      # and Bash only these commands: a prompt that says "only spec.md" is a
+      # request, this is the check.
+      CONFINED_TOOLS = %w[Read Grep Glob Edit Bash].freeze
+
+      # The commands a confined agent may run besides this checkout's own
+      # `openlanes state`, which signs its ledger. A grant is `Bash(cmd:*)`,
+      # so every flag of a listed command is reachable: `rg --pre` runs any
+      # program and `git log|show|diff --output=` writes any file, which is
+      # how the first version of this list escaped its own confinement. Only
+      # commands with no flag that executes or writes belong here; Read, Grep
+      # and Glob cover the rest.
+      CONFINED_COMMANDS = ["ls", "git status"].freeze
+
+      # The one `openlanes` subcommand a confined agent may run: `state`
+      # shows and signs its ledger. The whole executable would hand it
+      # `run`, `link` and `resync`, which rename folders.
+      CONFINED_CLI = "#{Prompt::EXECUTABLE} state".freeze
+
       # Commands that leave the machine, denied to every agent by default.
       #
       # These are passed to `claude` as `Bash(<command>:*)` tool specifiers, so
@@ -542,11 +563,21 @@ module OpenLanes
             seconds: 0.0)
         end
 
+        profile = profile_for(agent, subject)
+        if agent.confined? && !profile.adapter.enforces_tool_denial?
+          return Result.new(ok: false,
+            note: "#{agent.name} is confined to #{agent.confined_to.join(", ")}, and #{profile.adapter.executable} cannot enforce that",
+            up: 0,
+            down: 0,
+            subagents: 0,
+            delegated: 0,
+            seconds: 0.0)
+        end
+
         handle ||= Handle.new
         before = Boundary.snapshot(root)
         trace = trace_path(agent, subject)
         handle.trace = trace
-        profile = profile_for(agent, subject)
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
         handle.control = control
         resume = nil unless profile.adapter.resumes?
@@ -677,12 +708,13 @@ module OpenLanes
             root:,
             model:           profile.model,
             effort:          profile.effort,
-            allowed_tools:   agent.allowed_tools,
+            allowed_tools:   allowed_for(agent, subject),
             denied_tools:    denied_for(agent),
             denied_commands: denied_commands(agent),
             network:         agent.network,
             lean:            @lean,
-            resume:
+            resume:,
+            tools:           (CONFINED_TOOLS if agent.confined?)
           )
         )
       end
@@ -697,6 +729,22 @@ module OpenLanes
       def denied_for(agent)
         tools = agent.network ? [] : DENIED_TOOLS
         tools + denied_commands(agent).map { |command| "Bash(#{command}:*)" }
+      end
+
+      # What this agent may use on this plan: its own `allowed_tools`, or for
+      # a confined agent Edit on its files and nothing else that writes. The
+      # leading `/` makes the rule absolute (`//Users/...`); one slash alone
+      # is read relative to the settings file.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Array<String>]
+      def allowed_for(agent, subject)
+        return agent.allowed_tools unless agent.confined?
+
+        edits = agent.confined_to.map { "Edit(/#{File.expand_path(it, subject.feature.path)})" }
+        commands = [CONFINED_CLI, *CONFINED_COMMANDS].map { "Bash(#{it}:*)" }
+        %w[Read Grep Glob] + edits + commands
       end
 
       # @param agent [OpenLanes::Agents::Agent]
@@ -780,7 +828,7 @@ module OpenLanes
           return nil
         end
         unless (why = uncompactable(handle, profile))
-          compacted = compact(agent, model, root:, profile:, trace:, handle:, sessions:)
+          compacted = compact(agent, model, subject:, root:, profile:, trace:, handle:, sessions:)
           why = compacted unless compacted == true
         end
         if why
@@ -790,7 +838,7 @@ module OpenLanes
 
         Control.write(handle.control, "")
         prompt = Prompt.new(agent:, subject:, root:, profile:, control: handle.control).continuation
-        child = launch(resumption(agent, profile, root:, session: handle.session, prompt:, model:),
+        child = launch(resumption(agent, profile, subject:, root:, session: handle.session, prompt:, model:),
           root:, profile:, trace:, handle:, sessions:,
           &)
         compaction.done!(compacted_note(agent, sessions, model, compaction))
@@ -820,9 +868,10 @@ module OpenLanes
       # `/compact` sent into the stopped session.
       #
       # @return [true, String] true, or why it failed
-      def compact(agent, model, root:, profile:, trace:, handle:, sessions:)
+      def compact(agent, model, subject:, root:, profile:, trace:, handle:, sessions:)
         argv = resumption(agent,
           profile,
+          subject:,
           root:,
           session: handle.session,
           prompt: profile.adapter.compact_prompt,
@@ -846,22 +895,23 @@ module OpenLanes
       end
 
       # The argv that carries an existing session on, with the boundary flags
-      # every invocation gets.
+      # every invocation gets, confined as the first invocation was.
       #
       # @return [Array<String>]
-      def resumption(agent, profile, root:, session:, prompt:, model:, slash_commands: false)
+      def resumption(agent, profile, subject:, root:, session:, prompt:, model:, slash_commands: false)
         profile.adapter.argv(
           Adapters::Invocation.new(prompt:,
             root:,
             model:,
             effort:          profile.effort,
-            allowed_tools:   agent.allowed_tools,
+            allowed_tools:   allowed_for(agent, subject),
             denied_tools:    denied_for(agent),
             denied_commands: denied_commands(agent),
             network:         agent.network,
             lean:            @lean,
             resume:          session,
-            slash_commands:)
+            slash_commands:,
+            tools:           (CONFINED_TOOLS if agent.confined?))
         )
       end
 

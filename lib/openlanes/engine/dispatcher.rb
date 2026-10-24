@@ -1270,7 +1270,10 @@ module OpenLanes
 
       # Plans whose `starts:` skips research, rewriting or planning are moved past
       # those phases before anyone is assigned, so the first agent they meet
-      # is the one that value starts with.
+      # is the one that value starts with. A plan may take more than one hop
+      # in a tick: a `building` spec already linked goes ⚪ → 📋 → ⭐ at once,
+      # since no agent works it in between and a run could otherwise settle
+      # at 📋 with the builder never asked.
       #
       # @param busy [Array<String>] ordinals an agent is working right now
       # @return [void]
@@ -1278,8 +1281,11 @@ module OpenLanes
         @runner.in_scope.each do |subject|
           next if busy.include?(subject.feature.ordinal.to_s)
 
-          moved = Lifecycle::Lanes.advance(subject, commit: true) or next
-          UI.log("starts: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+          Plans::StateMachine::SPINE.size.times do
+            moved = Lifecycle::Lanes.advance(subject, commit: true) or break
+            UI.log("starts: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+            subject = Plans::Tree.new(dir: @runner.tree.dir).find(subject.feature.ordinal) or break
+          end
         end
       end
 
@@ -1787,7 +1793,7 @@ module OpenLanes
         # otherwise be the "last ledger line" the resume record quotes.
         last = last_line(subject, agent)
         write_interrupted(subject, agent, task.round, reason)
-        target = agent.advances_to
+        target = agent.advances_to&.then { subject.machine.onward(it) }
         if target && subject.machine.may?(target)
           successor = @runner.agents.for_status(Plans::STATUS_BY_KEY.fetch(target)).first&.name
           Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name,
@@ -1879,6 +1885,7 @@ module OpenLanes
 
           attempt = published.attempt
           subject = published.subject
+          target = subject.machine.onward(target)
           return unjustified(job, attempt, subject, target) unless subject.machine.may?(target)
 
           subject.machine.promote!(target)

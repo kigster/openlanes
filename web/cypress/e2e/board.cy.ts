@@ -6,7 +6,8 @@ describe("the board", () => {
 
   it("loads this machine's plans with their agents", () => {
     cy.contains("Clean agent boundaries and transitions");
-    cy.get('[data-car="005.00/hansolo-reviewer"]').should("be.visible");
+    // The 🔗 Linking station widened the spine past 1440px, so the board scrolls sideways to reach the review cars.
+    cy.get('[data-car="005.00/hansolo-reviewer"]').scrollIntoView().should("be.visible");
     cy.get(".tab-machine").should("contain", "sam@ci-runner-2");
   });
 
