@@ -486,7 +486,7 @@ module OpenLanes
         # @return [Boolean] whether the plan reached ⭕️
         def block(plan)
           subject = Plans::Tree.new(dir: File.dirname(plan.feature.path)).find(plan.feature.ordinal.to_s) or return false
-          File.write(File.join(subject.feature.path, "blocked.md"), <<~MD)
+          OpenLanes::Arbitration.block(subject, <<~MD)
             # Blocked
 
             ## B1 Verification failed again after the arbitrator ruled go at the cap
@@ -496,12 +496,6 @@ module OpenLanes
             a) Send it back to the builders for one more round. (Recommended)
             b) Close the pull request and replan.
           MD
-          return false unless subject.machine.may?(:blocked)
-
-          subject.machine.promote!(:blocked)
-          true
-        rescue Plans::StateMachine::Refused
-          false
         end
 
         # @return [String] Markdown
