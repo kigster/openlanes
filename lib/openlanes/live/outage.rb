@@ -9,10 +9,13 @@ module OpenLanes
     # control file ({Execution::Control::PAUSE}), nothing new starts, and the
     # outage goes into the run's state file, the record that survives Redis.
     # Redis is then asked again after 1, 1, 2, 3, 5, 8 … seconds, the
-    # Fibonacci numbers capped at {MAX_GAP}, so a short outage is noticed
+    # Fibonacci numbers scaled by `redis_backoff.initial` and capped at
+    # `redis_backoff.cap` ({MAX_GAP} by default), so a short outage is noticed
     # quickly, a long one is not hammered, and a Redis that comes back is
-    # never left unnoticed for more than {MAX_GAP} seconds. When it answers, the agents carry on, their clocks
-    # having stood still meanwhile. When it has not answered for
+    # never left unnoticed for longer than the cap. With full jitter (the
+    # default) each gap is drawn uniformly below that, so engines sharing one
+    # Redis do not all ask in the same second. When it answers, the agents
+    # carry on, their clocks having stood still meanwhile. When it has not answered for
     # `redis_outage_hours` (an hour by default), the run shuts down the way
     # `q` does, and says why.
     #
@@ -41,9 +44,18 @@ module OpenLanes
       # @param limit [Numeric] seconds paused before the run gives up
       # @param clock [#call] monotonic seconds
       # @param wall [#call] wall time, for the state file
-      def initialize(store:, limit:, clock: -> { UI.monotonic }, wall: -> { Time.now })
+      # @param initial [Numeric] seconds before the first ask; the Fibonacci gaps are its multiples
+      # @param cap [Numeric] the longest gap between two asks
+      # @param jitter [Boolean] full jitter: each gap is drawn from [0, gap)
+      # @param random [#rand] the jitter's source; a spec hands in a fixed one
+      def initialize(store:, limit:, clock: -> { UI.monotonic }, wall: -> { Time.now },
+        initial: 1, cap: MAX_GAP, jitter: true, random: Random.new)
         @store = store
         @limit = limit
+        @initial = initial
+        @cap = cap
+        @jitter = jitter
+        @random = random
         @clock = clock
         @wall = wall
         @state = :up
@@ -155,11 +167,17 @@ module OpenLanes
         save(over: true)
       end
 
-      # The next Fibonacci gap, capped at {MAX_GAP}, and never past the
+      # The next Fibonacci gap, scaled, capped, jittered, and never past the
       # limit: the last ask is the one at the limit.
       #
       # @return [Float]
-      def next_probe(now) = [now + [@delays.next, MAX_GAP].min, @down_since + @limit].min
+      def next_probe(now) = [now + gap, @down_since + @limit].min
+
+      # @return [Float] seconds to the next ask
+      def gap
+        gap = [@delays.next * @initial, @cap].min.to_f
+        @jitter ? gap * @random.rand : gap
+      end
 
       # @return [Boolean]
       def answers?
