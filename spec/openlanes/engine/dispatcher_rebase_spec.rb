@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
   let(:worktree) do
     OpenLanes::Vcs::Worktree.new(root: repo_root, dir: File.join(tmp, "project.worktrees"), user: "tester", seeder: nil)
   end
-  let(:files) { { "spec.md" => "---\nlane: quick\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n" } }
+  let(:files) { { "spec.md" => "---\nstarts: building\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n" } }
   let!(:built) { plans { |t| t.plan "001.00", :building, "tic-tac-toe", files: } }
   let(:upstream) { publish_with_origin(repo_root, tmp) }
   let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }

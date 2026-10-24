@@ -561,7 +561,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     context "with the plan lane" do
       let!(:built) do
-        plans { |t| t.plan "001.00", :new, "known", files: { "spec.md" => "---\nlane: plan\n---\n#{spec_body}" } }
+        plans { |t| t.plan "001.00", :new, "known", files: { "spec.md" => "---\nstarts: planning\n---\n#{spec_body}" } }
       end
 
       it "skips research and rewriting, links, and goes to the planner" do
@@ -578,7 +578,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "with the quick lane" do
       let!(:built) do
         plans do |t|
-          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}" }
+          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" }
         end
       end
 
@@ -596,7 +596,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "with the quick lane on a dry run" do
       let!(:built) do
         plans do |t|
-          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nlane: quick\n---\n#{spec_body}" }
+          t.plan "001.00", :new, "split-migration", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" }
         end
       end
 
@@ -1011,7 +1011,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   describe "a build finished in a run that opens no pull request" do
     let!(:built) do
       plans do |t|
-        t.plan "001.00", :new, "tic-tac-toe", files: { "spec.md" => "---\nlane: quick\ndepends_on: [none]\n---\n#{spec_body}" }
+        t.plan "001.00", :new, "tic-tac-toe", files: { "spec.md" => "---\nstarts: building\ndepends_on: [none]\n---\n#{spec_body}" }
       end
     end
 
@@ -1090,7 +1090,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
     let(:files) do
-      { "spec.md" => "---\nlane: quick\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n", "pull-requests.md" => "# Pull Requests\n" }
+      { "spec.md" => "---\nstarts: building\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n", "pull-requests.md" => "# Pull Requests\n" }
     end
     let!(:built) { plans { |t| t.plan "001.00", :building, "tic-tac-toe", files: } }
     let(:roster) { agents.only("r2d2-mechanic") }
@@ -1333,6 +1333,33 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
     end
 
+    context "with the event log on" do
+      let(:log_dir) { Dir.mktmpdir("events") }
+      let(:sink) { OpenLanes::Events::Sink.new(dir: log_dir, node: "n1", checkout: "c1", project: "demo") }
+      let(:reviews) { OpenLanes::Events::Log.new(dir: log_dir).events.select { it.kind == "pr_reviewed" } }
+
+      after { FileUtils.rm_rf(log_dir) }
+
+      it "records the approval as a review of the open pull request" do
+        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+
+        expect(reviews.map { [it.plan, it.payload] }).to eq([["001.00", { "number" => 7, "verdict" => "approved" }]])
+      end
+
+      it "counts it in the report's approvals" do
+        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+        outcomes = OpenLanes::Events.report(OpenLanes::Events::Log.new(dir: log_dir).events).pr_outcomes
+
+        expect(outcomes).to include("reviewed" => 1, "approved" => 1, "rejected" => 0)
+      end
+
+      it "records nothing for a rejection, which the pull request watch records" do
+        runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer"), events: sink).call
+
+        expect(reviews).to be_empty
+      end
+    end
+
     it "leaves an approval at 👀 and treats the plan as finished for this run" do
       attempts = runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")).call
       aggregate_failures do
@@ -1455,15 +1482,15 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    %w[full plan quick].each do |lane|
-      context "with the #{lane} lane" do
+    %w[research planning building].each do |starts|
+      context "with starts #{starts}" do
         let!(:built) do
           plans do |t|
             t.plan "034.00", :blocked, "stuck", files: { "blocked.md" => "## B1 Which?\n" }
             t.plan "050.00",
               :ready_for_planning,
               "waiter",
-              files: { "spec.md" => frontmatter(lane:, depends_on: '["034.00"]') }
+              files: { "spec.md" => frontmatter(starts:, depends_on: '["034.00"]') }
           end
         end
 

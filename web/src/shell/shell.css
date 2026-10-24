@@ -98,8 +98,8 @@ button, textarea { font: inherit; color: inherit; }
 .log li { display: grid; grid-template-columns: 76px 44px 132px minmax(0, 1fr); gap: 12px; padding: 1px 16px; }
 .log time, .log .lvl, .log .src { color: var(--ink-soft); }
 .log .msg { overflow-wrap: anywhere; }
-.log .is-warn { background: color-mix(in srgb, var(--lane-plan) 16%, transparent); }
-.log .is-warn .lvl { color: var(--lane-plan); }
+.log .is-warn { background: color-mix(in srgb, var(--starts-planning) 16%, transparent); }
+.log .is-warn .lvl { color: var(--starts-planning); }
 .log .is-error { background: color-mix(in srgb, var(--alarm) 13%, transparent); }
 .log .is-error .lvl { color: var(--alarm); font-weight: 600; }
 .log .is-debug .msg { color: var(--ink-soft); }
@@ -139,7 +139,7 @@ button, textarea { font: inherit; color: inherit; }
 .statusbar { --solid: 70%; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .statusbar { --solid: 55%; } }
 :root[data-theme="dark"] .statusbar { --solid: 55%; }
-.pill { --pill: var(--lane-plan); --tint: 16%; display: flex; align-items: center; gap: 7px; min-height: var(--pill-h, 44px); padding: 3px 12px 3px 8px; border-radius: 999px;
+.pill { --pill: var(--starts-planning); --tint: 16%; display: flex; align-items: center; gap: 7px; min-height: var(--pill-h, 44px); padding: 3px 12px 3px 8px; border-radius: 999px;
         border: 1px solid color-mix(in srgb, var(--pill) 55%, transparent); background: color-mix(in srgb, var(--pill) var(--tint), var(--plate));
         color: var(--ink); cursor: pointer; font: inherit; text-align: left; white-space: nowrap; }
 .pill:hover { --tint: 26%; }

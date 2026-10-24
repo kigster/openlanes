@@ -50,14 +50,14 @@ module OpenLanes
         approved:           :deployed,
         rejected:           :building_ui,
         rolled_back:        :ready_for_review,
-        shit:               :planned
+        rewrite:            :planned
       }.freeze
 
       # One step back along the spine, for the one move that goes backwards: a
       # person discarding an interrupted round (W9) sends the plan back to the
       # state the work started from. Derived from {SPINE}, walking it from ⚪:
       # each state on that path steps back to the one before it, as far as 🏁,
-      # the last state an agent works in. States off the path (🔴 💩 ⏪ and
+      # the last state an agent works in. States off the path (🔴 🚫 ⏪ and
       # the birth state) have no single state behind them and step back
       # nowhere.
       #
@@ -75,7 +75,7 @@ module OpenLanes
       # a block outranks progress, and `retroactive` is last because it is the
       # absence of documents rather than the presence of any.
       PREFERENCE = %i[
-        discarded rolled_back shit deferred blocked product_blocked bomb
+        discarded rolled_back rewrite deferred blocked product_blocked bomb
         deployed approved rejected completed verifying in_review ready_for_review building_ui building planned ready_for_planning
         ready_for_linking researched new
         retroactive
@@ -157,7 +157,7 @@ module OpenLanes
         # Entered by the harness when `yoda-writer` completes; `resync`
         # reaches it on a blank `plan.md`, the weakest of its family.
         event :ready_to_link, guard: :justified? do
-          transitions from: %i[researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: %i[researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :ready_for_linking
         end
 
@@ -174,7 +174,7 @@ module OpenLanes
         # 📋 folder from before the linker existed is not renamed back.
         event :ready_to_plan, guard: :justified? do
           transitions from: :ready_for_linking, to: :ready_for_planning, guard: :linked?
-          transitions from: %i[researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: %i[researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :ready_for_planning
         end
 
@@ -185,12 +185,16 @@ module OpenLanes
         # `yoda-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
           transitions from: :ready_for_linking, to: :planned, guard: :linked?
-          transitions from: %i[ready_for_planning researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: %i[ready_for_planning researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :planned
         end
 
+        # From 👀 too (plan 035): under `desired_codebase_quality: standard`
+        # a `review-ok-not-perfect` pull request goes back to the builders
+        # at 🟡, a lighter send-back than `high`'s 🔴.
         event :build, guard: :justified? do
-          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked bomb deferred],
+          transitions from: %i[planned rewrite approved rolled_back retroactive blocked product_blocked bomb deferred
+                               in_review],
             to: :building
         end
 
@@ -245,7 +249,7 @@ module OpenLanes
         end
 
         event :slop, guard: :justified? do
-          transitions from: %i[in_review], to: :shit
+          transitions from: %i[in_review], to: :rewrite
         end
 
         event :deploy, guard: :justified? do

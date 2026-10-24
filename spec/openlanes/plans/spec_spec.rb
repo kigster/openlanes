@@ -9,8 +9,8 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "reads lane, frontend and depth" do
-      expect(parse("lane: quick\nfrontend: false\ndepth: deep").to_h.slice(:lane, :frontend, :depth))
-        .to eq(lane: :quick, frontend: false, depth: :deep)
+      expect(parse("starts: building\nfrontend: false\ndepth: deep").to_h.slice(:starts, :frontend, :depth))
+        .to eq(starts: :building, frontend: false, depth: :deep)
     end
 
     it "reads per-phase overrides" do
@@ -40,20 +40,20 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "has neither completion list unless the author wrote them" do
-      expect(parse("lane: plan").to_h.slice(:completed_when, :how_to_verify))
+      expect(parse("starts: planning").to_h.slice(:completed_when, :how_to_verify))
         .to eq(completed_when: [], how_to_verify: [])
     end
 
     it "has no requirements unless the author wrote some" do
-      expect(parse("lane: plan").requirements).to eq([])
+      expect(parse("starts: planning").requirements).to eq([])
     end
 
     it "has no suggestions unless the author wrote some" do
-      expect(parse("lane: plan").suggestions).to eq([])
+      expect(parse("starts: planning").suggestions).to eq([])
     end
 
     it "returns no override for a phase the author did not name" do
-      expect(parse("lane: plan").override_for("review")).to eq({})
+      expect(parse("starts: planning").override_for("review")).to eq({})
     end
   end
 
@@ -61,7 +61,7 @@ RSpec.describe OpenLanes::Plans::Spec do
     let(:heading) { described_class::HOW_TO_TELL }
 
     it "reads the items under the heading in the body" do
-      spec = described_class.parse("---\nlane: plan\n---\n# T\n\n#{heading}\n\n- run it\n- see green\n\n## Next\n\n- not this\n")
+      spec = described_class.parse("---\nstarts: planning\n---\n# T\n\n#{heading}\n\n- run it\n- see green\n\n## Next\n\n- not this\n")
       expect(spec.how_to_test).to eq(["run it", "see green"])
     end
 
@@ -90,14 +90,14 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "is empty when neither exists" do
-      expect(parse("lane: plan").how_to_test).to eq([])
+      expect(parse("starts: planning").how_to_test).to eq([])
     end
   end
 
   describe "what it ignores, and says so" do
     it "an unknown lane falls back to full" do
-      expect(parse("lane: express").to_h.slice(:lane, :problems))
-        .to eq(lane: :full, problems: ["lane: \"express\" is not one of full, plan, quick"])
+      expect(parse("starts: express").to_h.slice(:starts, :problems))
+        .to eq(starts: :research, problems: ["starts: \"express\" is not one of research, planning, building"])
     end
 
     it "a frontend that is not a boolean" do
@@ -144,7 +144,7 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "frontmatter that is not YAML" do
-      expect(parse("lane: [unclosed").problems.first).to start_with("spec.md frontmatter is not valid YAML")
+      expect(parse("starts: [unclosed").problems.first).to start_with("spec.md frontmatter is not valid YAML")
     end
   end
 
@@ -152,7 +152,7 @@ RSpec.describe OpenLanes::Plans::Spec do
     it "is the first paragraph of prose, past the frontmatter, headings, comments and lists" do
       text = <<~MD
         ---
-        lane: quick
+        starts: building
         ---
 
         # Init Interview
@@ -185,8 +185,8 @@ RSpec.describe OpenLanes::Plans::Spec do
     let(:dir) { Dir.mktmpdir }
 
     it "reads spec.md from a plan folder" do
-      File.write(File.join(dir, "spec.md"), "---\nlane: plan\n---\n# T\n")
-      expect(described_class.load(dir).lane).to eq(:plan)
+      File.write(File.join(dir, "spec.md"), "---\nstarts: planning\n---\n# T\n")
+      expect(described_class.load(dir).starts).to eq(:planning)
     end
 
     it "is the default when there is no spec.md" do
@@ -196,7 +196,7 @@ RSpec.describe OpenLanes::Plans::Spec do
 
   describe "depends_on" do
     it "is nil when the key is absent" do
-      expect(parse("lane: plan").depends_on).to be_nil
+      expect(parse("starts: planning").depends_on).to be_nil
     end
 
     it "is empty when the key is present and empty" do
@@ -240,7 +240,7 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     {
-      "lane: plan"                     => false,
+      "starts: planning"               => false,
       "depends_on: []"                 => false,
       "depends_on: [none]"             => true,
       'depends_on: ["034.00"]'         => true,
@@ -272,10 +272,10 @@ RSpec.describe OpenLanes::Plans::Spec do
     def migrate(text) = described_class.migrate_how_to_verify(text)
 
     it "adds the section at the end when the spec has none, and keeps the other keys as written" do
-      before = "---\nlane: quick # the short one\nhow-to-verify:\n  - bundle exec rspec\n  - just lint\n---\n# Title\n\n## Goal\n\nWork.\n"
+      before = "---\nstarts: building # the short one\nhow-to-verify:\n  - bundle exec rspec\n  - just lint\n---\n# Title\n\n## Goal\n\nWork.\n"
 
       expect(migrate(before)).to eq(
-        "---\nlane: quick # the short one\n---\n# Title\n\n## Goal\n\nWork.\n\n" \
+        "---\nstarts: building # the short one\n---\n# Title\n\n## Goal\n\nWork.\n\n" \
         "## How to tell it's working?\n\n- bundle exec rspec\n- just lint\n"
       )
     end
@@ -293,34 +293,34 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     it "leaves a spec without the key untouched" do
-      ["# Plain\n", "---\nlane: quick\n---\n# T\n", "---\n: [\n---\n# Broken\n"].each do |text|
+      ["# Plain\n", "---\nstarts: building\n---\n# T\n", "---\n: [\n---\n# Broken\n"].each do |text|
         expect(migrate(text)).to equal(text)
       end
     end
 
     # A regex took the blank line for the end of the entry and left `- b`
-    # behind in the frontmatter, now under `lane:`.
+    # behind in the frontmatter, now under `starts:`.
     it "removes the whole list when a blank line separates its items" do
-      before = "---\nhow-to-verify:\n  - a\n\n  - b\nlane: quick\n---\n# T\n"
+      before = "---\nhow-to-verify:\n  - a\n\n  - b\nstarts: building\n---\n# T\n"
 
-      expect(migrate(before)).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n- b\n")
+      expect(migrate(before)).to eq("---\nstarts: building\n---\n# T\n\n## How to tell it's working?\n\n- a\n- b\n")
     end
 
     # A quoted key passed `meta.key?` but no regex removed it, so every
     # resync appended the checks again.
     it "removes a quoted key, and a second migration changes nothing" do
       ["\"how-to-verify\"", "'how-to-verify'"].each do |key|
-        once = migrate("---\n#{key}: [a]\nlane: quick\n---\n# T\n")
+        once = migrate("---\n#{key}: [a]\nstarts: building\n---\n# T\n")
 
         aggregate_failures do
-          expect(once).to eq("---\nlane: quick\n---\n# T\n\n## How to tell it's working?\n\n- a\n")
+          expect(once).to eq("---\nstarts: building\n---\n# T\n\n## How to tell it's working?\n\n- a\n")
           expect(migrate(once)).to equal(once)
         end
       end
     end
 
     it "leaves a flow-mapping frontmatter alone rather than cut a shared line" do
-      text = "---\n{lane: quick, how-to-verify: a}\n---\n# T\n"
+      text = "---\n{starts: building, how-to-verify: a}\n---\n# T\n"
 
       expect(migrate(text)).to equal(text)
     end

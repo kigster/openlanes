@@ -76,7 +76,7 @@ module OpenLanes
     # A plan in one of these states is reported and skipped. To import them,
     # decide where they belong and move the entry into {PLACEMENTS}.
     UNPLACED = {
-      shit:        "the plan survives and its pull requests do not; whether that is work still to do " \
+      rewrite:     "the plan survives and its pull requests do not; whether that is work still to do " \
                    "or work abandoned depends on what the team does next",
       rolled_back: "it shipped and was pulled; whether that reopens this work or opens new work " \
                    "depends on what broke"

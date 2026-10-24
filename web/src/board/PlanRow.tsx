@@ -4,7 +4,7 @@ import type { Car as CarData, ModelChoice, Node, Plan, Station, UnackedMail } fr
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, statusTip, unackedTip, who } from "./format";
-import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
+import { STARTS, keepsRow, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
 export interface CarHandlers {
@@ -48,7 +48,7 @@ export function UnackedBadge({ count, mail = [] }: { count: number; mail?: Unack
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
 export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
-  const lane = LANES[plan.lane];
+  const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
   const readOnly = Boolean(owner);

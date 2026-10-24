@@ -29,7 +29,7 @@ RSpec.describe OpenLanes::Lifecycle::Linker, :tree do
     end
   end
 
-  def spec(key = nil) = "---\nlane: full\n#{key && "#{key}\n"}---\n# Spec\n"
+  def spec(key = nil) = "---\nstarts: research\n#{key && "#{key}\n"}---\n# Spec\n"
 
   def ordinals(list) = list.map { it.feature.ordinal.to_s }
 
@@ -125,7 +125,7 @@ RSpec.describe OpenLanes::Lifecycle::Linker, :tree do
     context "when a spec's frontmatter is not YAML" do
       let(:writes) { nil }
 
-      before { File.write(File.join(tree.find("050.00").feature.path, "spec.md"), "---\nlane: [full\n---\n# Spec\n") }
+      before { File.write(File.join(tree.find("050.00").feature.path, "spec.md"), "---\nstarts: [research\n---\n# Spec\n") }
 
       it "names the plan as failed, with what is wrong" do
         note = linker.call.failed.to_h { |s, n| [s.feature.ordinal.to_s, n] }.fetch("050.00")

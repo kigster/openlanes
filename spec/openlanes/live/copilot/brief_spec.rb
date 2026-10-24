@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::Live::Copilot::Brief do
   let(:others) { [] }
   let(:plan) do
     { "ordinal" => "003.00", "title" => "Ledger export", "status" => { "emoji" => "🟢", "label" => "Ready for review" },
-      "lane" => "plan", "elapsed" => 1800, "cost" => 1.5, "pr" => { "number" => 41, "state" => "open" },
+      "starts" => "planning", "elapsed" => 1800, "cost" => 1.5, "pr" => { "number" => 41, "state" => "open" },
       "cars" => [], "questions" => [],
       "interrupted" => { "agent" => "rey-frontend", "at" => "2026-10-13T10:00:00Z", "note" => "left a resume note" } }
   end
@@ -17,7 +17,7 @@ RSpec.describe OpenLanes::Live::Copilot::Brief do
   end
 
   it "names the plan, its pull request and its interruption" do
-    expect(text).to include("003.00 Ledger export: 🟢 Ready for review, plan lane, 30m worked, $1.50, PR #41 open",
+    expect(text).to include("003.00 Ledger export: 🟢 Ready for review, starts at planning, 30m worked, $1.50, PR #41 open",
       "interrupted: rey-frontend at 2026-10-13T10:00:00Z: left a resume note")
   end
 

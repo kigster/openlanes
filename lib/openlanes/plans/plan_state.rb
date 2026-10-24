@@ -548,7 +548,7 @@ module OpenLanes
         quality_ask
       end
 
-      # @param answer [String] "high" or "mvp"
+      # @param answer [String] "high", "standard" or "mvp"
       # @param by [String]
       # @param at [Time]
       # @return [Hash, nil] the ask as settled; nil when none is open

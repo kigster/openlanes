@@ -30,7 +30,7 @@ module OpenLanes
       # not the report, is what the dispatcher acts on.
       #
       # @!attribute [r] verdict
-      #   @return [Symbol, nil] :verified or :rejected
+      #   @return [Symbol, nil] :verified, :rejected or :skipped
       # @!attribute [r] step
       #   @return [Integer, nil] the failing step's number
       # @!attribute [r] what
@@ -78,6 +78,7 @@ module OpenLanes
           # @return [Symbol, nil]
           def verdict(lines)
             word = lines.filter_map { it[/\A\s*\**Verdict\**\s*:\s*\**\s*(\w+)/i, 1] }.first.to_s.downcase
+            return :skipped if word.start_with?("skip")
             return :verified if word.start_with?("verif", "pass")
 
             :rejected if word.start_with?("reject", "fail")

@@ -1,6 +1,6 @@
 ---
 depends_on: ["008.00"]
-lane: plan
+starts: planning
 ---
 
 # Ewoki Linker

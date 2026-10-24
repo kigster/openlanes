@@ -20,12 +20,12 @@ RSpec.describe "openlanes link" do
     plans.plan "050.00",
       :ready_for_linking,
       "parser-consumer",
-      files: { "spec.md" => "---\nlane: full\n---\n# Parser Consumer\n\nCalls the parser plan 034 builds.\n",
+      files: { "spec.md" => "---\nstarts: research\n---\n# Parser Consumer\n\nCalls the parser plan 034 builds.\n",
                "plan.md" => "" }
     plans.plan "051.00",
       :ready_for_planning,
       "readme-badge",
-      files: { "spec.md" => "---\nlane: full\ndepends_on: [none]\n---\n# README Badge\n" }
+      files: { "spec.md" => "---\nstarts: research\ndepends_on: [none]\n---\n# README Badge\n" }
     git("init", "-q", "--initial-branch=main")
     git("add", "-A")
     git("-c", "user.name=Example Dev", "-c", "user.email=dev@example.test", "commit", "-qm", "plans")

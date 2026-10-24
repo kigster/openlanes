@@ -93,7 +93,7 @@
           "label": "Technical Block",
           "note": "what Technical Block means"
         },
-        "lane": "full",
+        "starts": "research",
         "group": "001.00",
         "station": "building",
         "up": 1250000,
@@ -188,7 +188,7 @@
           "label": "In Review",
           "note": "what In Review means"
         },
-        "lane": "plan",
+        "starts": "planning",
         "group": "005.00",
         "station": "in_review",
         "up": 1090000,
@@ -249,7 +249,7 @@
           "label": "Building",
           "note": "what Building means"
         },
-        "lane": "quick",
+        "starts": "building",
         "group": "006.00",
         "station": "building",
         "up": 476200,
@@ -330,7 +330,7 @@
           "label": "Technical Block",
           "note": "what Technical Block means"
         },
-        "lane": "full",
+        "starts": "research",
         "group": "002.00",
         "station": "building",
         "up": 0,
@@ -372,7 +372,7 @@
           "label": "In Review",
           "note": "what In Review means"
         },
-        "lane": "quick",
+        "starts": "building",
         "group": "007.00",
         "station": "pr",
         "up": 1090000,
@@ -411,7 +411,7 @@
           "label": "Approved & Merged",
           "note": "what Approved & Merged means"
         },
-        "lane": "quick",
+        "starts": "building",
         "group": "008.00",
         "station": "pr",
         "up": 1090000,
@@ -450,7 +450,7 @@
           "label": "New",
           "note": "what New means"
         },
-        "lane": "full"
+        "starts": "research"
       },
       {
         "ordinal": "012.00",
@@ -461,7 +461,7 @@
           "label": "Product Block",
           "note": "what Product Block means"
         },
-        "lane": "plan"
+        "starts": "planning"
       }
     ],
     "models": [
@@ -598,7 +598,7 @@
             "label": "In Review",
             "note": "what In Review means"
           },
-          "lane": "plan",
+          "starts": "planning",
           "group": "010.00",
           "station": "in_review",
           "up": 1090000,
@@ -659,7 +659,7 @@
             "label": "New",
             "note": "what New means"
           },
-          "lane": "full"
+          "starts": "research"
         },
         {
           "ordinal": "012.00",
@@ -670,7 +670,7 @@
             "label": "Product Block",
             "note": "what Product Block means"
           },
-          "lane": "plan"
+          "starts": "planning"
         }
       ],
       "models": [

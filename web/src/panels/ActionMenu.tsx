@@ -85,7 +85,7 @@ export function ActionMenu({ backlog, onCommand, note, ideaOpen, onIdeaOpenChang
                   return (
                     <Item
                       key={p.ordinal} title={`${p.ordinal} ${p.title}`}
-                      sub={`${p.status.label}, ${p.lane}${blocked ? `, blocked ${p.status.emoji}` : ""}`}
+                      sub={`${p.status.label}, ${p.starts}${blocked ? `, blocked ${p.status.emoji}` : ""}`}
                       onSelect={() => void add(p.ordinal)}
                     />
                   );

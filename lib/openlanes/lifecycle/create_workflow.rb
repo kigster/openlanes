@@ -35,10 +35,10 @@ module OpenLanes
       # @param from [String, nil] a seed markdown file, already resolved
       # @param spec [Boolean] with +prs+, write spec.md from them
       # @param draft [Boolean] without +prs+, attempt the four headings
-      # @param lane [String, nil] written into spec.md's frontmatter
+      # @param starts [String, nil] written into spec.md's frontmatter as `starts:`
       # @param depth [String, nil] written into spec.md's frontmatter
       def initialize(dir:, root: nil, after: nil, status: nil, prs: nil, from: nil, spec: true, draft: true,
-        lane: nil, depth: nil)
+        starts: nil, depth: nil)
         @dir = dir
         @root = root
         @after = after
@@ -47,7 +47,7 @@ module OpenLanes
         @from = from
         @spec = spec
         @draft = draft
-        @settings = { "lane" => lane, "depth" => depth }.compact
+        @settings = { "starts" => starts, "depth" => depth }.compact
       end
       # rubocop:enable Metrics/ParameterLists
 
@@ -204,7 +204,7 @@ module OpenLanes
         brief.write_scaffold!
         draft(brief, feature, seed) if @draft
         # After the draft, so a drafting agent that rewrites the file cannot
-        # drop `--lane` and `--depth`.
+        # drop `--starts` and `--depth`.
         brief.stamp!(@settings)
         brief.spec_path
       end

@@ -4,9 +4,10 @@
 RSpec.describe OpenLanes::Config do
   def parse(text) = described_class.parse(text, path: "/p/.openlanes.yml")
 
-  it "reads high and mvp, in any case" do
+  it "reads high, standard and mvp, in any case" do
     aggregate_failures do
       expect(parse("desired_codebase_quality: high\n")).to have_attributes(desired_codebase_quality: :high, quality_unset?: false)
+      expect(parse("desired_codebase_quality: Standard\n")).to have_attributes(desired_codebase_quality: :standard, quality_unset?: false)
       expect(parse("desired_codebase_quality: MVP\n")).to have_attributes(desired_codebase_quality: :mvp, quality_unset?: false)
     end
   end
@@ -19,7 +20,7 @@ RSpec.describe OpenLanes::Config do
     aggregate_failures do
       %w[top_notch medium 3].each do |level|
         expect { parse("desired_codebase_quality: #{level}\n") }
-          .to raise_error(OpenLanes::Error, %r{/p/\.openlanes\.yml: desired_codebase_quality: .* is not one of high, mvp})
+          .to raise_error(OpenLanes::Error, %r{/p/\.openlanes\.yml: desired_codebase_quality: .* is not one of high, standard, mvp})
       end
     end
   end
@@ -31,6 +32,7 @@ RSpec.describe OpenLanes::Config do
   it "defaults max_rejections from M5's column, below merge.max_rejections" do
     aggregate_failures do
       expect(parse("desired_codebase_quality: high\n").max_rejections).to eq(2)
+      expect(parse("desired_codebase_quality: standard\n").max_rejections).to eq(2)
       expect(parse("desired_codebase_quality: mvp\n").max_rejections).to eq(1)
       expect(parse("desired_codebase_quality: mvp\nmerge:\n  max_rejections: 3\n").max_rejections).to eq(3)
       expect(described_class.new.max_rejections).to eq(2)

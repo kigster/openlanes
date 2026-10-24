@@ -54,7 +54,7 @@ module OpenLanes
 
       # The stop a plan in +state+ is shown at. A state a {GROUPS} entry
       # names is shown at that stop, which is how 🔴 Rejected lands at
-      # Building. Any other state off the spine (💩, 😱) is shown where the
+      # Building. Any other state off the spine (🚫, 😱) is shown where the
       # spine takes it next; one with no way forward (⭕, 🛑) where the
       # plan was when it stopped, which only its history knows.
       #

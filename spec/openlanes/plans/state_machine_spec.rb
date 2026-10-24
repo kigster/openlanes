@@ -280,10 +280,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(described_class.new(subject).promote!.key).to eq(:building_ui)
     end
 
-    it "sends a review that found slop to 💩, keeping the plan and dropping the work" do
+    it "sends a review that found slop to 🚫, keeping the plan and dropping the work" do
       subject = built(:in_review, files: { "rewrite.md" => "start over" }, prs: ["Open 🟡"])
 
-      expect(described_class.new(subject).promote!(:shit).key).to eq(:shit)
+      expect(described_class.new(subject).promote!(:rewrite).key).to eq(:rewrite)
     end
   end
 
@@ -336,7 +336,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
         ready_for_linking: :ready_for_planning, ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
         ready_for_review: :in_review, in_review: :verifying, verifying: :completed, completed: :approved, approved: :deployed,
-        rejected: :building_ui, rolled_back: :ready_for_review, shit: :planned,
+        rejected: :building_ui, rolled_back: :ready_for_review, rewrite: :planned,
         discarded: nil, blocked: nil, deployed: nil
       }
 

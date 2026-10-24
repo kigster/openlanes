@@ -5,7 +5,7 @@ module OpenLanes
     # What the author of `spec.md` asked of the harness, in its frontmatter:
     #
     #   ---
-    #   lane: quick              # full (default) | plan | quick
+    #   starts: building         # research (default) | planning | building
     #   frontend: false          # true forces rey-frontend, false forbids it
     #   depth: fast              # fast | medium | deep
     #   phases:
@@ -25,11 +25,11 @@ module OpenLanes
     #
     # The body is the specification; this is how it should be worked. A value
     # this does not recognise is ignored and named in {#problems}, rather than
-    # stopping the run: a typo in `lane:` should cost the author their lane,
-    # not their plan.
+    # stopping the run: a typo in `starts:` should cost the author where the
+    # plan starts, not the plan.
     #
-    # @!attribute [r] lane
-    #   @return [Symbol] :full, :plan or :quick
+    # @!attribute [r] starts
+    #   @return [Symbol] :research, :planning or :building
     # @!attribute [r] frontend
     #   @return [Boolean, nil] nil when the plan decides
     # @!attribute [r] depth
@@ -67,7 +67,7 @@ module OpenLanes
     #     {#how_to_verify} when the spec has no such section (until plan 007).
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
-    Spec = Data.define(:lane,
+    Spec = Data.define(:starts,
       :frontend,
       :depth,
       :phases,
@@ -79,7 +79,7 @@ module OpenLanes
       :linked,
       :how_to_test,
       :problems) do
-      def initialize(lane: :full, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
+      def initialize(starts: :research, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
         completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [])
         super
       end
@@ -96,11 +96,12 @@ module OpenLanes
     end
 
     class Spec
-      # Every route a plan can take through the agents.
-      #   full  — research, specification, planning, build, review
-      #   plan  — the spec is already what the author wants: plan, build, review
-      #   quick — a short mechanical task: one agent builds it, then review
-      LANES = %i[full plan quick].freeze
+      # Where a plan starts. {Lifecycle::Lanes} jumps `planning` and `building`
+      # past the phases before that point; `research` walks the spine.
+      #   research — research, specification, planning, build, review
+      #   planning — the spec is already what the author wants: plan, build, review
+      #   building — a short mechanical task: one agent builds it, then review
+      STARTS = %i[research planning building].freeze
 
       # How much each phase should think, and what an eval holds it to.
       DEPTHS = %i[fast medium deep].freeze
@@ -237,7 +238,7 @@ module OpenLanes
         # @return [OpenLanes::Plans::Spec]
         def from(meta)
           problems = []
-          new(lane:     choice(meta, "lane", LANES, :full, problems),
+          new(starts:     choice(meta, "starts", STARTS, :research, problems),
             frontend: switch(meta, "frontend", problems),
             depth:    choice(meta, "depth", DEPTHS, nil, problems),
             phases:   phases(meta["phases"], problems),

@@ -51,10 +51,10 @@ RSpec.describe OpenLanes::Linear do
     end
 
     # An issue in the wrong column reads exactly like an issue in the right
-    # one, so the honest answer to "where does 💩 go" is to decline to say.
+    # one, so the honest answer to "where does 🚫 go" is to decline to say.
     it "declines to place a state whose column is a question about the team, not the plan" do
       aggregate_failures do
-        expect(described_class.placement(OpenLanes::Plans.status(:shit))).to be_nil
+        expect(described_class.placement(OpenLanes::Plans.status(:rewrite))).to be_nil
         expect(described_class.placement(OpenLanes::Plans.status(:rolled_back))).to be_nil
       end
     end
@@ -100,7 +100,7 @@ RSpec.describe OpenLanes::Linear do
 
   describe ".reason_unplaced" do
     it "gives the reason a state was deliberately left out" do
-      expect(described_class.reason_unplaced(OpenLanes::Plans.status(:shit))).to include("the plan survives and its pull requests do not")
+      expect(described_class.reason_unplaced(OpenLanes::Plans.status(:rewrite))).to include("the plan survives and its pull requests do not")
     end
 
     # Deliberately left out and never thought about are different problems,

@@ -16,12 +16,12 @@ RSpec.describe OpenLanes::CLI::Link, :tree do
   end
 
   def keyless(ordinal = "050.00", state = :ready_for_linking)
-    plans { |t| t.plan ordinal, state, "parser-consumer", files: { "spec.md" => "---\nlane: full\n---\n# Parser Consumer\n", "plan.md" => "" } }
+    plans { |t| t.plan ordinal, state, "parser-consumer", files: { "spec.md" => "---\nstarts: research\n---\n# Parser Consumer\n", "plan.md" => "" } }
   end
 
   def spec_of(ordinal) = File.read(File.join(Dir.glob(File.join(plans_root, "#{ordinal}*")).first, "spec.md"))
 
-  def write_key(subject) = File.write(File.join(subject.feature.path, "spec.md"), "---\nlane: full\ndepends_on: [none]\n---\n# Linked\n")
+  def write_key(subject) = File.write(File.join(subject.feature.path, "spec.md"), "---\nstarts: research\ndepends_on: [none]\n---\n# Linked\n")
 
   def invoke(**)
     out = CapturedStream.new
@@ -115,8 +115,8 @@ RSpec.describe OpenLanes::CLI::Link, :tree do
 
   it "reports a dependency cycle and exits 1" do
     plans do |t|
-      t.plan "060.00", :ready_for_planning, "left", files: { "spec.md" => "---\nlane: full\ndepends_on: [\"061.00\"]\n---\n# Left\n" }
-      t.plan "061.00", :ready_for_planning, "right", files: { "spec.md" => "---\nlane: full\ndepends_on: [\"060.00\"]\n---\n# Right\n" }
+      t.plan "060.00", :ready_for_planning, "left", files: { "spec.md" => "---\nstarts: research\ndepends_on: [\"061.00\"]\n---\n# Left\n" }
+      t.plan "061.00", :ready_for_planning, "right", files: { "spec.md" => "---\nstarts: research\ndepends_on: [\"060.00\"]\n---\n# Right\n" }
     end
 
     expect(invoke).to include(err: a_string_including("dependency cycle"), status: 1)

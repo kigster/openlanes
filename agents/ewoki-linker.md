@@ -8,7 +8,7 @@ effort: medium
 timeout: 900
 ledger: [spec.md]
 phase: linking
-lanes: [full, plan, quick]
+starts: [research, planning, building]
 adapter: claude
 allowed_tools: [Read, Grep, Glob, Bash, Edit]
 confined_to: [spec.md]

@@ -6,9 +6,9 @@
   --ink-soft: #45556E; /* 4.5:1 or better on every tinted surface, down to #C8D0DB */
   --hairline: #D3DAE3;
   --road: #B9C3D0;
-  --lane-full: #1F5FD1;
-  --lane-plan: #C98700;
-  --lane-quick: #1E8C3A;
+  --starts-research: #1F5FD1;
+  --starts-planning: #C98700;
+  --starts-building: #1E8C3A;
   --alarm: #D1343B;
   --go: #1E9E5A;
   --merged: #8250DF;
@@ -34,9 +34,9 @@
   /* Each lane's row is washed in its colour, blue full, yellow plan, green quick, mixed into the plate
      so the wash stays dark enough for the cars and lines to read on top of it. */
   --wash: 18%;
-  --lane-full-bg: color-mix(in srgb, #1F5FD1 var(--wash), var(--plate));
-  --lane-plan-bg: color-mix(in srgb, #F2C200 var(--wash), var(--plate));
-  --lane-quick-bg: color-mix(in srgb, #1FA347 var(--wash), var(--plate));
+  --starts-research-bg: color-mix(in srgb, #1F5FD1 var(--wash), var(--plate));
+  --starts-planning-bg: color-mix(in srgb, #F2C200 var(--wash), var(--plate));
+  --starts-building-bg: color-mix(in srgb, #1FA347 var(--wash), var(--plate));
   --label-progress: #FFF3B0;
   --label-approved: #0B6E2E;
   --focus: #1F5FD1;
@@ -64,9 +64,9 @@
     --ink-soft: #8D9AB0;
     --hairline: #26324A;
     --road: #3A4864;
-    --lane-full: #5B8DF0;
-    --lane-plan: #F0B43C;
-    --lane-quick: #4CC76A;
+    --starts-research: #5B8DF0;
+    --starts-planning: #F0B43C;
+    --starts-building: #4CC76A;
     --alarm: #F06A6F;
     --go: #45D08A;
     --merged: #A371F7;
@@ -94,9 +94,9 @@
   --ink-soft: #8D9AB0;
   --hairline: #26324A;
   --road: #3A4864;
-  --lane-full: #5B8DF0;
-  --lane-plan: #F0B43C;
-  --lane-quick: #4CC76A;
+  --starts-research: #5B8DF0;
+  --starts-planning: #F0B43C;
+  --starts-building: #4CC76A;
   --alarm: #F06A6F;
   --go: #45D08A;
   --merged: #A371F7;

@@ -1,5 +1,5 @@
 project: openlanes
-lane: full
+starts: research
 jobs: 7
 coverage:
   command: bundle exec rspec
