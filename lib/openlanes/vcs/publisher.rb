@@ -476,8 +476,9 @@ module OpenLanes
         lines[(start + 1)..].take_while { |l| !l.start_with?("## ", "# ") }.join.strip
       end
 
-      # Put `ready-for-review` on the pull request, and `openlanes` beside it,
-      # which says who opened it and is never taken off. A resubmission also takes
+      # Put `ready-for-review` on a new pull request, or `review-addressed` on
+      # one the fixes were pushed to (U1), and `openlanes` beside it, which
+      # says who opened it and is never taken off. A resubmission also takes
       # off whatever verdict the last review left: a `review-rejected` still
       # there after the fixes are pushed reads to the watch as a fresh
       # rejection, and the 🟢 plan would be sent straight back to 🔴.
@@ -490,13 +491,17 @@ module OpenLanes
         remove = resubmitted ? Plans::ReviewLabel.known : []
         @github.swap_label(number:,
           repo: GitHub.repo_of(url),
-          add: Plans::ReviewLabel::INITIAL,
+          add: review_label(resubmitted:),
           also: [Plans::ReviewLabel::OPENLANES],
           remove:)
         nil
       rescue Error => e
         e.message
       end
+
+      # @param resubmitted [Boolean]
+      # @return [Plans::ReviewLabel] what a push to the pull request asks for
+      def review_label(resubmitted:) = resubmitted ? Plans::ReviewLabel::ADDRESSED : Plans::ReviewLabel::INITIAL
 
       # The specification's own Goal section, verbatim. A pull request body that
       # paraphrases the spec is a second copy that drifts; quoting it is not.
