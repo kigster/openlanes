@@ -11,6 +11,8 @@
   --starts-building: #1E8C3A;
   --alarm: #D1343B;
   --go: #1E9E5A;
+  /* The recommended answer, filled: --go darkened until white text on it clears 4.5:1. */
+  --go-solid: #187E48; --go-solid-ink: #FFFFFF;
   --merged: #8250DF;
   /* The highlight colour: the orange of the logo's mark, RGB (211, 87, 40). The same in both themes. */
   --highlight: #D35728; --on-highlight: #FFFFFF;
@@ -69,6 +71,7 @@
     --starts-building: #4CC76A;
     --alarm: #F06A6F;
     --go: #45D08A;
+    --go-solid: #45D08A; --go-solid-ink: #0B1A12;
     --merged: #A371F7;
     --groove: color-mix(in srgb, #000 45%, var(--plate));
     --groove-shade: rgb(0 0 0 / 70%);
@@ -99,6 +102,7 @@
   --starts-building: #4CC76A;
   --alarm: #F06A6F;
   --go: #45D08A;
+  --go-solid: #45D08A; --go-solid-ink: #0B1A12;
   --merged: #A371F7;
   --groove: color-mix(in srgb, #000 45%, var(--plate));
   --groove-shade: rgb(0 0 0 / 70%);
