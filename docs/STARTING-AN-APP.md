@@ -11,7 +11,7 @@ mkdir ~/src/my-app && cd ~/src/my-app
 git init
 ```
 
-**From an example** _(planned, plan 047.00)_: the [`openlanes-examples`](https://github.com/kigster/openlanes-examples) repository holds `macos-clipboard`, `rust-logtail` and `rails-habits`. `ol new` copies one out into a fresh repository of its own. Never run `ol start` inside the examples checkout: the agents would rewrite the template itself.
+**From an example** _(planned, plan 047.00)_: the [`openlanes-examples`](https://github.com/kigster/openlanes-examples) repository holds `macos-clipboard`, `rust-logtail`, `rails-habits` and `astro-blog`, and takes pull requests for templates of other stacks. `ol new` copies one out into a fresh repository of its own. Never run `ol start` inside the examples checkout: the agents would rewrite the template itself.
 
 ```bash
 ol new --example rust-logtail ~/src/logtail   # copies, runs git init and ol init -y

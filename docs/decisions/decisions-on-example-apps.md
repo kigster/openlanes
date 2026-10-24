@@ -12,15 +12,17 @@ Decided 2026-10-24, with Konstantin. The goal: a person can make a fresh project
 - The examples repository has its own CI, one job per template (a macOS runner for `macos-clipboard`).
 - Rejected: `examples/` in this repository (above); one GitHub template repository per app, which means one repository per template to keep current; and running in place, which leaves a built example to clean before it can run again.
 
-## E2. Three templates
+## E2. Four templates
 
 | Template | Stack | App |
 | --- | --- | --- |
 | `macos-clipboard` | Swift, SwiftUI, built with `swift build` (SwiftPM) | Clipboard history in the menu bar |
 | `rust-logtail` | Rust | `logtail`: a CLI that follows and filters JSON logs |
 | `rails-habits` | Ruby on Rails | Habit tracker with streaks |
+| `astro-blog` | Astro, TypeScript, static output | A markdown blog: posts, tags, RSS |
 
 - Each template ships a `README.md`, `.plans/APPLICATION.md` and a skeleton that compiles.
+- `astro-blog` is the front-end-only case: `frontend: true`, no back end, so plans route to rey-frontend alone and its checks are a static build plus Playwright against the built site. Astro over Next.js because its default output is static files with no server; Next.js pulls in server components and API routes, which blur "front end only".
 - The macOS app needs Xcode, and chewie cannot run a GUI headless, so verification for it is manual.
 
 ## E3. Each template ships seed plans
@@ -48,3 +50,9 @@ Decided 2026-10-24, with Konstantin. The goal: a person can make a fresh project
 - [`docs/STARTING-AN-APP.md`](../STARTING-AN-APP.md) walks from an empty directory, or an example, to `ol start`, marking the steps not built yet. The README's Quick Start links to it.
 - [`docs/application-template.md`](../application-template.md) is the shape of `APPLICATION.md`: what it is, goals, non-goals, stack and constraints, and what done looks like. `ol init` writes it to `.plans/APPLICATION.md` when the file is missing (plan 048.00).
 - Every example's `README.md` follows the guide: what the app is, what to install, how to build and run it, and `ol start`. The guide is the one source for the steps, so the template READMEs link to it rather than restating them.
+
+## E8. Anyone can contribute a template for their stack
+
+- `openlanes-examples` takes pull requests for new templates. Its `CONTRIBUTING.md` holds the checklist a template must pass: the README shape from E7, an `APPLICATION.md` from the template with real non-goals, a skeleton that builds on a clean machine, two or three ⚪ seed plans, the `.openlanes-template` marker, a minimum openlanes version, and a CI job.
+- `ol new --example` lists whatever folders the repository holds, so a merged template needs no change to the gem.
+- A template that fails its CI job for two releases is moved to `unmaintained/` rather than kept broken in the list.
