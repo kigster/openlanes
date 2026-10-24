@@ -58,6 +58,10 @@ When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `
 
    List each comment you answered, with its id and `fix` or `rebuttal`, under `## Answers, round N` in `pull-requests.md`.
 
+1. To appeal one of hansolo's findings (`### F<n> …`) you believe is wrong or out of scope, sign `Completed` with `--note "appeal: F<n> because <reason>"`, giving the evidence in the reason. The engine runs `obi-wan-kenobi-arbitrator` on it; a struck finding is not raised again. Appeal one finding per signature, and fix the rest.
+
+1. When you and rey amend the same `contract.md` entry back and forth, stop arguing in the mailbox: `openlanes mail send --to obi-wan-kenobi-arbitrator` with a body starting `dispute: <the contract.md entry>`, and keep building on your own assumption until the ruling arrives by mail.
+
 ## Done when
 
 - [ ] Every unit under `## Backend` is implemented, with tests, as files under the repo's source and test directories. `git status` shows more than Markdown.

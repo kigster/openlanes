@@ -83,6 +83,41 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "#rule!" do
+    it "reads as no rulings on a state.json written before rulings existed" do
+      state.sign!(agent: "luke-backend", round: 1, status: "Started")
+      expect([written.key?("rulings"), state.rulings]).to eq([false, []])
+    end
+
+    context "with one ruling recorded" do
+      before do
+        state.rule!(kind: "appeal",
+          pr: 26,
+          round: 2,
+          outcome: "struck",
+          findings: { struck: %w[F2], critical: [] },
+          winner: nil,
+          reason: "F2 asks for a test the spec rules out",
+          trigger: "appeal")
+      end
+
+      it "writes it back as a dated entry the schema accepts" do
+        aggregate_failures do
+          expect(state.rulings.map { it.values_at("kind", "pr", "round", "outcome", "trigger") })
+            .to eq([["appeal", 26, 2, "struck", "appeal"]])
+          expect(state.rulings.first["findings"]).to eq("struck" => %w[F2], "critical" => [])
+          expect(Time.iso8601(state.rulings.first["at"])).to be_a(Time)
+          expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+        end
+      end
+    end
+
+    it "is refused by the schema with an unknown kind" do
+      state.rule!(kind: "drift", pr: nil, round: nil, outcome: "x", findings: nil, winner: nil, reason: "r", trigger: "t")
+      expect(schema.validate(written).to_a).not_to be_empty
+    end
+  end
+
   describe "#message!" do
     it "numbers messages from one, or after a number already taken" do
       state.message!(from: "a", to: "b", body: "one", after: 4)

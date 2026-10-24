@@ -72,6 +72,9 @@ module OpenLanes
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
       #   pull requests go through once palpatine has ruled; nil when the
       #   run publishes nothing
+      # @param arbitration [OpenLanes::Engine::Arbitration, nil] the
+      #   arbitrator's engine step (plan 015); nil when the run publishes
+      #   nothing, since every ruling lands on a pull request
       # @param quality_gate [#call, nil] true while `.openlanes.yml` has
       #   no `desired_codebase_quality:`, which holds every new agent back
       #   (plan 035); nil runs ungated
@@ -79,7 +82,7 @@ module OpenLanes
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
-        merging: nil, quality_gate: nil, events: Events::NullSink.new)
+        merging: nil, arbitration: nil, quality_gate: nil, events: Events::NullSink.new)
         @tree = tree
         @events = events
         @executor = executor
@@ -103,6 +106,7 @@ module OpenLanes
         @verification = verification
         @journal = dry_run ? nil : journal
         @merging = merging
+        @arbitration = arbitration
         @quality_gate = quality_gate
         @would_bomb = []
         @attempts = []
@@ -117,6 +121,9 @@ module OpenLanes
 
       # @return [OpenLanes::Engine::Merging, nil]
       attr_reader :merging
+
+      # @return [OpenLanes::Engine::Arbitration, nil]
+      attr_reader :arbitration
 
       # A new concurrency limit, from the copilot's `/concurrency N`. Nothing
       # running is stopped: the dispatcher fills only while fewer agents run
