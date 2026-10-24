@@ -5,8 +5,8 @@
     "ordinal": "035.00",
     "slug": "three-quality-levels"
   },
-  "state": "verifying",
-  "updated_at": "2026-10-23T15:04:57-07:00",
+  "state": "rejected",
+  "updated_at": "2026-10-23T15:05:05-07:00",
   "stages": [
     {
       "agent": "luke-backend",
@@ -412,9 +412,36 @@
       "body": "Are you able to reproduce the error with number of arguments?",
       "read": "no",
       "command": "01M5NB9VJQWX6X7BNBYWRPERDJ"
+    },
+    {
+      "id": "ebf9cbb6-54e0-40f0-b402-434c64304585",
+      "number": 3,
+      "at": "2026-10-23T15:05:04-07:00",
+      "from": "github",
+      "to": "luke-backend",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "read": "no"
+    },
+    {
+      "id": "8fee2c96-3363-4918-815e-0885f8d52847",
+      "number": 4,
+      "at": "2026-10-23T15:05:05-07:00",
+      "from": "github",
+      "to": "r2d2-mechanic",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "read": "no"
+    },
+    {
+      "id": "0ec3364d-030c-430b-9a16-591ac1b7e4bb",
+      "number": 5,
+      "at": "2026-10-23T15:05:05-07:00",
+      "from": "github",
+      "to": "rey-frontend",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "read": "no"
     }
   ],
-  "moves": 10,
+  "moves": 11,
   "last-known-state": {
     "luke-backend": {
       "source": "harness",

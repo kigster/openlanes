@@ -9,6 +9,7 @@ gemspec
 
 gem "rake"
 gem "yard"
+gem "debug_inspector", "~>1.2"
 
 group :test do
   gem "coverage-badge"

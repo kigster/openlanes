@@ -132,3 +132,110 @@ Re-run in the worktree, 2026-10-21, on `7b246298` (rebased onto `origin/main` `6
 - `bundle exec rubocop`: 559 files inspected, no offenses detected
 - `just web-build`: `✓ built in 3.45s`, exit 0
 - Integration proof and the repo's e2e suite: `E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`, exit 0: `actions` 5/5, `board` 6/6, `chat` 4/4, `divider` 7/7, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2, `subagents` 2/2; `All specs passed!  00:42  34  34`
+
+## Verification (luke-backend, round 1, fifth resume)
+
+Re-run in the worktree, 2026-10-23, on `f8f950c3` ("End sub-agent tiles when their tasks finish", the same 15-file change salvaged from `7b246298` onto `origin/main` `cdb57836`). Tree clean, no code changed this round.
+
+The machine's Redis on 6379 was down. With nothing listening, 45 examples (`spec/integration/*`, `spec/openlanes/live/*`) are pending rather than run, and `chat.cy.ts` fails to see its second machine. So the runs below used a throwaway `redis-server --port 16399 --save ''`, stopped afterwards.
+
+- `bundle exec rspec` (Redis down): 4210 examples, 0 failures, 45 pending, exit 0
+- `OPENLANES_TEST_REDIS_URL=redis://localhost:16399/15 bundle exec rspec`: 4210 examples, 0 failures, 0 pending, exit 0
+- `bundle exec rubocop`: 564 files inspected, no offenses detected
+- `just web-build`: `✓ built in 3.17s`, exit 0
+- Integration proof and the repo's e2e suite: `E2E_REDIS_URL=redis://localhost:16399/14 E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`, exit 0: `actions` 5/5, `board` 6/6, `chat` 4/4, `divider` 7/7, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2, `subagents` 2/2; `All specs passed!  00:41  34  34`
+
+## Verification (rey-frontend, round 1, on f8f950c3)
+
+Re-run after the rebase; tree clean. The e2e proof is luke's `bin/web-e2e` 34/34 above.
+
+- `npm run typecheck`, `npm run lint`: pass
+- `npm test`: 43 files, 487 tests pass
+- `bundle exec rspec`: 4210 examples, 0 failures, 45 pending
+- `bundle exec rubocop`: 564 files, no offenses
+- The 45 pending are the control-room integration specs, which skip themselves when their
+  environment is unmet (`spec/support/control_room_process.rb`, `.unmet`). `just web-build`
+  cleared the `web/dist` reason; the rest stay pending because Redis does not answer at
+  `redis://localhost:6379/11` in this sandbox (`CannotConnectError: setsockopt(2)`). Not the
+  front end's half, and rspec exits 0.
+
+### Integration proof, run by rey-frontend on f8f950c3
+
+`E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`: 34 tests, 33 passing, 1 failing.
+
+- `subagents.cy.ts` 2/2 — the proof this plan owns, passing.
+- `actions` 5/5, `board` 6/6 (axe included), `divider` 7/7, `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2.
+- `chat.cy.ts` 3/4: one failure. Not a front-end unit of this plan, and luke reported this
+  same suite at 34/34 on 7b246298, so it is either flaky or environment-dependent here. I ran
+  out of time to diagnose it; luke should confirm before review.
+
+## Verification (rey-frontend, 🎨 round, on f8f950c3)
+
+Tree clean; no code changed this round. I am last, so I ran the e2e suite myself.
+
+- `npm test`: 43 files, 487 tests pass
+- `bundle exec rspec`: 4210 examples, 0 failures, 45 pending (the control-room integration
+  specs self-skipping; Redis does not answer at `redis://localhost:6379/11` here)
+- `bundle exec rubocop`: 564 files, no offenses
+- `E2E_PORT=11180 E2E_PEER_PORT=11181 bin/web-e2e`: 34 tests, 33 passing, 1 failing.
+  `subagents.cy.ts` 2/2 (the proof this plan owns), `actions` 5/5, `board` 6/6, `divider` 7/7,
+  `keyboard` 5/5, `needs-you` 3/3, `plan-files` 2/2; `chat.cy.ts` 3/4.
+
+### The chat.cy.ts failure is not this plan's, and the evidence says it came from main
+
+Reproduced twice. The assertion is
+`Expected to find element: button[aria-label="Chat with demo@second-machine"], but never found it`
+(`web/cypress/e2e/chat.cy.ts:80`). The spec's earlier assertion passes, so the peer server is up
+and answers `/api/session` as `demo@second-machine`; the page simply never lists it. The failure
+screenshot shows the header's machine pill reading `sam@ci-runner-2`, the fixture's machine, with
+the live peer absent.
+
+Why it is not ours:
+
+- This branch touches no presence, session or header code. `git diff --stat origin/main...HEAD`
+  is `Car.tsx`, `Car.test.tsx`, `board.css`, `model.test.ts`, `subagents.cy.ts`, `transcript.rb`,
+  `executor.rb`, `board.rb`, `demo_board.rb` and their specs. `demo_board.rb` only adds the
+  `FANNED`/`FAN` sub-agent cycle.
+- luke had this suite at 34/34 on `7b246298`, whose base was `667bcf0e`. The rebase onto
+  `cdb57836` brought in plan 022.00 (Redis outage resilience), which changed
+  `lib/openlanes/live/session.rb`, `publisher.rb`, `snapshot.rb`, `run_record.rb`, `outage.rb`
+  and `web/src/shell/Header.tsx` — the session, presence-publishing and header-rendering paths
+  the failing assertion depends on.
+
+I did not isolate it further: confirming against a clean `origin/main` checkout needs a second
+worktree and a build, which did not fit this round's budget. Suggested owner: plan 022.00, or
+whoever owns chat presence. Not a blocker for this plan's own acceptance criteria.
+
+## Verification (rey-frontend, round 2, on f8f950c3)
+
+Tree clean; no code changed this round.
+
+- `npm test`: 43 files, 487 tests pass
+- `bundle exec rspec`: 4210 examples, 0 failures, 45 pending (as in round 1)
+- `bundle exec rubocop`: 564 files, no offenses
+
+### chat.cy.ts: isolated, and it is main's, not ours
+
+Round 1 argued this from the diff. This round proves it by running the suite on a clean
+checkout of `origin/main` with our branch absent:
+
+```
+git worktree add --detach /tmp/rey-main-check cdb57836
+cd /tmp/rey-main-check && npm run build && E2E_PORT=11190 E2E_PEER_PORT=11191 bin/web-e2e
+```
+
+Result: 7 specs (no `subagents.cy.ts`, since the branch is not there), 32 tests, 31 passing,
+`chat.cy.ts` 3/4, failing on the identical assertion:
+
+```
+AssertionError: Timed out retrying after 8000ms: Expected to find element:
+`button[aria-label="Chat with demo@second-machine"]`, but never found it.
+```
+
+So `cdb57836` fails `chat.cy.ts` on its own. This plan's branch neither causes nor worsens it,
+and the suspect named in round 1 stands: plan 022.00 landed on main between luke's green 34/34
+and this base, changing `lib/openlanes/live/session.rb`, `publisher.rb`, `snapshot.rb` and
+`web/src/shell/Header.tsx`. The temp worktree has been removed.
+
+Nothing here blocks this plan. It does mean `main` is shipping a broken chat presence path,
+which is worth a plan of its own.
