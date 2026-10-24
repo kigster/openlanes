@@ -125,6 +125,20 @@ export interface UnackedMail {
   since: string; // the oldest one's timestamp, as the mailbox wrote it
 }
 
+/** The latest arbitration ruling on a plan, as the live snapshot carries it (contract.md, `ruling`). */
+export interface Ruling {
+  at: Iso;
+  kind: "cap" | "appeal" | "dispute" | "passed_check";
+  pr: number | null;
+  round: number | null;
+  outcome: string; // cap: go|no_go; appeal: upheld|struck; dispute: the winner; passed_check: fair|too_harsh|too_lenient
+  findings: { struck: string[]; critical: string[]; headings?: Record<string, string> }; // headings: a struck id's heading
+  winner: string | null;
+  reason: string;
+  trigger: string;
+  review?: number; // the round of hansolo's review the ids belong to
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
@@ -145,6 +159,9 @@ export interface Plan {
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
+  rejections?: { count: number; max: number }; // reviewer rejections so far, against merge.max_rejections
+  ruling?: Ruling | null; // the arbitrator's latest ruling, null when there is none
+  arbitrating?: boolean; // the arbitrator is on this plan now
   mail: UnackedMail[]; // the unacked messages, one per sender and recipient, oldest first
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
   locked: { pid: number; host: string; started_at: Iso; foreign: boolean } | null; // the plan's lock, alive or not; foreign: held by another machine

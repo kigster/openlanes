@@ -51,5 +51,12 @@ RSpec.describe OpenLanes::Config do
       expect { parse("merge:\n  max_rejections: 0\n") }
         .to raise_error(OpenLanes::Error, /merge\.max_rejections: 0 is not a whole number above zero/)
     end
+
+    ["-1", '"two"'].each do |value|
+      it "refuses #{value}" do
+        expect { parse("merge:\n  max_rejections: #{value}\n") }
+          .to raise_error(OpenLanes::Error, /merge\.max_rejections: .* is not a whole number above zero/)
+      end
+    end
   end
 end
