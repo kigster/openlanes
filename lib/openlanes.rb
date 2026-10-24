@@ -30,6 +30,7 @@ loader.collapse("#{__dir__}/openlanes/cli/docs")
 loader.collapse("#{__dir__}/openlanes/cli/eval")
 loader.collapse("#{__dir__}/openlanes/cli/index")
 loader.collapse("#{__dir__}/openlanes/cli/init")
+loader.collapse("#{__dir__}/openlanes/cli/link")
 loader.collapse("#{__dir__}/openlanes/cli/list_plans")
 loader.collapse("#{__dir__}/openlanes/cli/review")
 loader.collapse("#{__dir__}/openlanes/cli/run")
@@ -54,6 +55,8 @@ loader.ignore("#{__dir__}/openlanes/cli/mail/mail.rb")
 loader.ignore("#{__dir__}/openlanes/cli/state/state.rb")
 loader.ignore("#{__dir__}/openlanes/cli/app/app.rb")
 loader.ignore("#{__dir__}/openlanes/linear/mapping.rb")
+# ERB templates for the CI scaffold, not Ruby constants.
+loader.ignore("#{__dir__}/openlanes/setup/templates")
 loader.setup
 
 # Spec → Plan → Build.

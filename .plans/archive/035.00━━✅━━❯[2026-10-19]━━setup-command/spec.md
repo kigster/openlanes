@@ -1,6 +1,6 @@
 ---
 created: 2026-10-17
-lane: plan
+starts: planning
 ---
 
 # Setup Command

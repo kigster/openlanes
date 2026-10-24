@@ -1,0 +1,33 @@
+version: 2.1
+
+jobs:
+  check:
+    docker:
+      - image: <%= image %>
+    steps:
+      - checkout
+<% if just -%>
+      - run:
+          name: Install just
+          command: <%= just_install %>
+<% end -%>
+<% if install -%>
+      - run:
+          name: Install dependencies
+          command: <%= install %>
+<% end -%>
+<% if lint -%>
+      - run:
+          name: Lint
+          command: <%= lint %>
+<% end -%>
+<% if test -%>
+      - run:
+          name: Test
+          command: <%= test %>
+<% end -%>
+
+workflows:
+  check:
+    jobs:
+      - check

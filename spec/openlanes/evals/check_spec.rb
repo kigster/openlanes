@@ -225,4 +225,75 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
                           ])
     end
   end
+
+  # ewoki-linker may write one frontmatter line and sign for it; anything
+  # more is the author's spec rewritten under them.
+  describe "spec_only" do
+    let(:kind) { :spec_only }
+    let(:original) { "---\ntitle: Parser consumer\n---\n\n# 050\n\nUses 034's parser.\n" }
+    let(:args) { { before: { "spec.md" => original } } }
+    let(:signed) do
+      "\n> [!NOTE]\n>\n> [2026-10-16 10:00:00 AM PDT] [ agent: ewoki-linker   status: Completed, round 1 ]\n" \
+        ">\n> 034.00: 050 calls the parser 034 builds.\n"
+    end
+
+    def linked(line) = original.sub("title: Parser consumer\n", "title: Parser consumer\n#{line}\n") + signed
+
+    context "when only depends_on and a signed NOTE were added" do
+      let(:files) { { "spec.md" => linked('depends_on: ["034.00"]'), "state.json" => "{}" } }
+
+      it "passes" do
+        expect(verdict.ok).to be(true)
+        expect(verdict.detail).to eq('depends_on: ["034.00"]')
+      end
+    end
+
+    context "when the plan needs nothing" do
+      let(:files) { { "spec.md" => linked("depends_on: [none]") } }
+
+      it("passes") { expect(verdict.ok).to be(true) }
+    end
+
+    context "when the value is an empty list" do
+      let(:files) { { "spec.md" => linked("depends_on: []") } }
+
+      it "fails, since [] reads as unanswered" do
+        expect(verdict.ok).to be(false)
+        expect(verdict.detail).to include("not [none] or quoted")
+      end
+    end
+
+    context "when the spec body was edited too" do
+      let(:files) { { "spec.md" => linked('depends_on: ["034.00"]').sub("Uses", "Needs") } }
+
+      it "fails" do
+        expect(verdict.ok).to be(false)
+        expect(verdict.detail).to include('outside depends_on')
+      end
+    end
+
+    context "when the value is an unquoted number" do
+      let(:files) { { "spec.md" => linked("depends_on: [34]") } }
+
+      it "fails" do
+        expect(verdict.ok).to be(false)
+        expect(verdict.detail).to include("not [none] or quoted")
+      end
+    end
+
+    context "when plan.md was touched" do
+      let(:files) { { "spec.md" => linked("depends_on: [none]"), "plan.md" => "# Plan\n" } }
+
+      it "fails" do
+        expect(verdict.ok).to be(false)
+        expect(verdict.detail).to eq("changed plan.md")
+      end
+    end
+
+    context "when no depends_on line was written" do
+      let(:files) { { "spec.md" => original + signed } }
+
+      it("fails") { expect(verdict.detail).to eq("spec.md has no depends_on: line") }
+    end
+  end
 end

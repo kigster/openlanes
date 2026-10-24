@@ -1,0 +1,938 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "008.01",
+    "slug": "ewoki-linker"
+  },
+  "state": "product_blocked",
+  "updated_at": "2026-10-23T14:46:13-07:00",
+  "stages": [
+    {
+      "agent": "palpatine-planner",
+      "round": 1,
+      "status": "Blocked",
+      "from": "new",
+      "started_at": "2026-10-20T03:28:12-07:00",
+      "cwd": "/Users/kig/.t3/worktrees/openlanes/t3-a926cb3b.worktrees/008.01-ewoki-linker",
+      "run": {
+        "pid": 36356,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "eb5e1c1b-b35b-4d1c-837b-c5a5dbcba960",
+      "to": "product_blocked",
+      "finished_at": "2026-10-20T03:29:42-07:00",
+      "up": 602765,
+      "down": 7231,
+      "seconds": 88.7,
+      "note": "blocked; see blocked.md",
+      "moves": 1
+    },
+    {
+      "agent": "luthen-rael-planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-10-20T17:06:40-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "51cbf413-1a27-46aa-ac1c-9fb59c6ba29f",
+      "to": "planned",
+      "finished_at": "2026-10-20T17:09:28-07:00",
+      "up": 806647,
+      "down": 19327,
+      "seconds": 167.0,
+      "note": "completed - 12 tool calls",
+      "moves": 2
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "planned",
+      "started_at": "2026-10-20T17:09:31-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "ee576ffd-14ea-4250-9a94-eaabaed93a1e",
+      "to": "blocked",
+      "finished_at": "2026-10-20T17:21:08-07:00",
+      "up": 5124253,
+      "down": 33406,
+      "seconds": 696.1,
+      "note": "blocked; see blocked.md",
+      "moves": 4
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "blocked",
+      "started_at": "2026-10-20T18:55:35-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "run": {
+        "pid": 4117,
+        "host": "macbook-m3-kig.re1.re"
+      },
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "1a93d05c-7b62-48ca-9cf8-479202e18d0d",
+      "note": "harness died",
+      "finished_at": "2026-10-21T01:20:02-07:00"
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-10-21T01:20:14-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "f0a8528e-5e7b-4507-91fb-726c1aaea942",
+      "to": "building",
+      "finished_at": "2026-10-21T01:27:09-07:00",
+      "up": 531929,
+      "down": 3798,
+      "seconds": 414.1,
+      "note": "completed - 9 tool calls; publish refused: error: src refspec kig/008.01-ewoki-linker does not match any",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-21T21:32:11-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "f0a8528e-5e7b-4507-91fb-726c1aaea942",
+      "to": "building",
+      "finished_at": "2026-10-21T21:37:41-07:00",
+      "up": 641308,
+      "down": 3493,
+      "seconds": 329.6,
+      "note": "ledger says Completed but 🟢 Ready for Review is not justified: Ready for Review requires an open pull request; none are recorded",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-21T21:42:46-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "f0a8528e-5e7b-4507-91fb-726c1aaea942",
+      "to": "building",
+      "finished_at": "2026-10-21T21:48:15-07:00",
+      "up": 1079764,
+      "down": 5987,
+      "seconds": 328.4,
+      "note": "ledger says Completed but 🟢 Ready for Review is not justified: Ready for Review requires an open pull request; none are recorded",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-22T08:09:01-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-22T08:09:03-07:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.8,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261022-080901-008.01-luke-backend-51493-ab1b.ndjson",
+      "session": "6ff21e4a-f0cf-4e46-aa7f-8baaa6b36513",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-22T08:09:12-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-22T08:09:14-07:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.6,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261022-080912-008.01-luke-backend-51493-7f60.ndjson",
+      "session": "174880e4-a6ee-493c-9fc5-0d703e70de12",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-22T08:09:49-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-22T08:09:51-07:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.7,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261022-080949-008.01-luke-backend-51493-c383.ndjson",
+      "session": "8b260749-bc69-43ec-a891-6fefa6ca7528",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 6,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-22T08:10:22-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-10-22T08:10:24-07:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.6,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261022-081022-008.01-luke-backend-51493-29fa.ndjson",
+      "session": "dc03fc82-7169-4ad1-9548-7da24f74ddae",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "building",
+      "started_at": "2026-10-23T14:28:20-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "dc03fc82-7169-4ad1-9548-7da24f74ddae",
+      "to": "blocked",
+      "finished_at": "2026-10-23T14:29:35-07:00",
+      "up": 699385,
+      "down": 6652,
+      "seconds": 73.5,
+      "note": "blocked; see blocked.md",
+      "moves": 6
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Completed",
+      "from": "blocked",
+      "started_at": "2026-10-23T14:37:48-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "7888d6f0-dc1c-4721-9ed3-85947708ff04",
+      "to": "ready_for_review",
+      "finished_at": "2026-10-23T14:38:58-07:00",
+      "up": 910307,
+      "down": 5870,
+      "seconds": 67.8,
+      "note": "completed - 15 tool calls",
+      "moves": 8
+    },
+    {
+      "agent": "hansolo-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-10-23T14:39:00-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8ab3b44e-5aab-4c74-bc62-e9067201575b",
+      "to": "rejected",
+      "finished_at": "2026-10-23T14:44:47-07:00",
+      "up": 713871,
+      "down": 5851,
+      "seconds": 346.7,
+      "note": "completed - 11 tool calls (rejected 1/2)",
+      "moves": 10
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Blocked",
+      "from": "rejected",
+      "started_at": "2026-10-23T14:44:49-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/008.01-ewoki-linker",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "9fbe6863-6eb4-4c16-8286-53b0f38b042d",
+      "to": "product_blocked",
+      "finished_at": "2026-10-23T14:46:13-07:00",
+      "up": 722568,
+      "down": 7784,
+      "seconds": 82.5,
+      "note": "blocked; see blocked.md",
+      "moves": 11
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-20T03:28:20-07:00",
+      "agent": "palpatine-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T03:29:28-07:00",
+      "agent": "palpatine-planner",
+      "status": "Blocked",
+      "round": 1,
+      "note": "product"
+    },
+    {
+      "at": "2026-10-20T03:33:15-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T03:33:40-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1,
+      "note": "approved"
+    },
+    {
+      "at": "2026-10-20T17:06:46-07:00",
+      "agent": "luthen-rael-planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:09:13-07:00",
+      "agent": "luthen-rael-planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "luke-backend"
+    },
+    {
+      "at": "2026-10-20T17:09:45-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T17:20:54-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-20T18:55:19-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T18:55:31-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-20T18:55:41-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T01:20:02-07:00",
+      "agent": "luke-backend",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-10-21T01:20:20-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T01:26:59-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:32:21-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:37:32-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:42:56-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T21:48:05-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 2
+    },
+    {
+      "at": "2026-10-23T14:28:59-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:29:18-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-23T14:37:19-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:37:45-07:00",
+      "agent": "lando-broker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:37:55-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:38:48-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:39:08-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:44:42-07:00",
+      "agent": "hansolo-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-10-23T14:44:55-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:45:58-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "product"
+    }
+  ],
+  "messages": [
+    {
+      "id": "69c97626-f0ae-4a30-bff8-f9908bdd3e9f",
+      "number": 1,
+      "at": "2026-10-20T03:29:27-07:00",
+      "from": "palpatine-planner",
+      "to": "luke-backend",
+      "body": "No plan this round. Blocked (product): spec's new 'link'/tsort chapters contradict items 6-9; see blocked.md B1-B6. Don't start building.",
+      "read": "no"
+    },
+    {
+      "id": "efeee8f3-dd59-46ef-b34b-8b8b7aab0c42",
+      "number": 2,
+      "at": "2026-10-21T01:20:02-07:00",
+      "from": "openlanes",
+      "to": "luke-backend",
+      "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
+      "read": "no"
+    },
+    {
+      "id": "29cc4b3f-b5c0-481d-bca1-e71461f1cd99",
+      "number": 3,
+      "at": "2026-10-23T14:29:17-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "Blocked round 1 (technical): this worktree's 0398136d is superseded by PR #114 (kig/ewoki-linker), as kig noted in 6d04fb82. Nothing built or published. See blocked.md B1.",
+      "read": "no"
+    },
+    {
+      "id": "361a9fcf-c8b9-44f8-ad42-e92f80d2175f",
+      "number": 4,
+      "at": "2026-10-23T14:38:47-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "B1 answered (a): PR #114 is this plan's PR, recorded in pull-requests.md. No code changed this round; back end done.",
+      "read": "no"
+    },
+    {
+      "id": "8eff4e3a-4e09-4076-8e29-a3df90046c7e",
+      "number": 5,
+      "at": "2026-10-23T14:45:57-07:00",
+      "from": "luke-backend",
+      "to": "rey-frontend",
+      "body": "🔴 round: blocked before fixing. See blocked.md B2 (spec's precedes model or #114's 🔗 state) and B3 (this worktree is on #122's branch, so fixes would land on the wrong PR). I changed no code.",
+      "read": "no"
+    }
+  ],
+  "memory": {
+    "palpatine-planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round-1 code from contract.md (Registry#preceding, agents/ewoki-linker.md, evals) is NOT on HEAD; origin/kig/008.01-spec-ewoki-linker only carried spec/plan docs. Plan starts from zero."
+            },
+            {
+              "kind": "decision",
+              "text": "Blocked (product) rather than plan: spec 'When it runs'/'link'/tsort chapters contradict In-scope items 7-9 and push scope to ~12 units (>8)."
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1-B6: where linker runs (main vs worktree gate), [] vs [none] semantics, auto-merge vs UNGRANTABLE gh pr merge, what tsort adds over 008.00 gate, split into plans, system UI lane."
+            },
+            {
+              "kind": "note",
+              "text": "Folder lock .plans/008.01…/** is held by harness pid 36356 with intent naming palpatine-planner; alock acquire refused, wrote blocked.md under it as the harness's own invocation."
+            },
+            {
+              "kind": "todo",
+              "text": "After answers: write plan.md. Reuse plan-prior-to-tsort.md U1-U7 shapes where still valid, add link command / pull guard / PR flow / tsort per B-answers."
+            },
+            {
+              "kind": "question",
+              "text": "B1 Where the linker runs Item 7 runs ewoki inside the run loop: a dispatcher gate in front of each 📋/⭐️ plan, in that plan's worktree. \"When it runs\" says the linker must run only in the primary repo, on `main`, never in a worktree, over the whole corpus, before the engine starts and after `create`/brief. Both can't hold. a) Primary repo only: the `link` command, plus a pre-pass `run` makes on `main` before the first round. Drop the per-plan dispatcher gate (item 7). (Recommended) b) Both: the …",
+              "ref": "B1",
+              "answer": "Decided 2026-10-20 by the product owner: (a) primary repo only. The `link` command, plus a pre-pass `run` makes on `main` before the first round. Drop the per-plan dispatcher gate (item 7)."
+            },
+            {
+              "kind": "question",
+              "text": "B2 What \"no dependencies\" looks like, and whether `[]` gets re-checked Item 8 writes `[]` when there are none, and item 9 says a key that is already there, even `[]`, is never touched. \"When it runs\" says `[]` gets re-checked and the \"none\" case is written as the keyword `none` in brackets. If `[]` means \"not linked yet\", a human has no way to write \"no dependencies, leave it alone\". a) Write `depends_on: [none]` for \"checked, none\". Re-check a missing key and `[]`. Skip `[none]` and any non-em…",
+              "ref": "B2",
+              "answer": "Decided 2026-10-20 by the product owner: (a) write `depends_on: [none]` for \"checked, none\". Re-check a missing key and `[]`; skip `[none]` and any non-empty list. `Spec#depends_on` reads `[none]` as no edges."
+            },
+            {
+              "kind": "question",
+              "text": "B3 Auto-merging the linking PR \"New links\" means a branch `$USER/plan-linking-NNN.MM`, a pushed PR, and the dispatcher merging it once CI goes green. Today `gh pr merge` is in `UNGRANTABLE`, and CLAUDE.md says \"Merging is not [grantable]. Keep that line where it is.\" The harness (not an agent) would be the one merging, but it would be the first automatic merge to `main` anywhere in openlanes. a) The harness opens the PR and stops. A human merges it. `link` prints the PR URL and `run` waits for …",
+              "ref": "B3",
+              "answer": "Decided 2026-10-20 by the product owner: (b) the harness, never an agent, merges the linking PR on green CI through the `GitHub` seam, and only when its diff touches nothing but `depends_on:` lines in `.plans/*/spec.md`. `gh pr merge` stays in `UNGRANTABLE` for agents."
+            },
+            {
+              "kind": "question",
+              "text": "B4 What topological sort adds to the existing gate 008.00 already holds a plan whose `depends_on:` names anything not yet ✅ (`Dispatcher` line ~1118, `Plans::Dependencies#waiting_on`). So \"only the first plan in a DAG is worked on until it merges\" already happens. What's left is order: which ready plans claim the `jobs` workers first. a) Order only: when `run` gets no plan arguments, sort the candidates by `TSort` over `Dependencies`, roots of each disjoint DAG first, ordinal as the tie-break. …",
+              "ref": "B4",
+              "answer": "Decided 2026-10-20 by the product owner: (a) order only. With no plan arguments, `run` sorts candidates by `TSort` over `Dependencies`, roots of each disjoint DAG first, ordinal as the tie-break. Holding stays with the 008.00 gate."
+            },
+            {
+              "kind": "question",
+              "text": "B5 Split into plans Items 6–9 plus `link`, the main-branch guard and `git pull`, the branch/PR flow, the run pre-pass and tsort come to about twelve units. That's more than one reviewable pull request. a) Two plans. 008.01: the agent, `Registry#preceding`, executor grants, the `link` command with its main/pull guard and the `none` rule, evals. A new 008.03: the linking PR flow, the `run` pre-pass and tsort ordering. (Recommended) b) Three plans: linker plus `link` command / PR flow plus pre-pas…",
+              "ref": "B5",
+              "answer": "Decided 2026-10-20 by the product owner: (a) two plans. 008.01: the agent, `Registry#preceding`, executor grants, the `link` command with its main/pull guard and the `[none]` rule, evals. A new 008.03: the linking PR flow (with the narrow auto-merge from A3), the `run` pre-pass and tsort ordering."
+            },
+            {
+              "kind": "question",
+              "text": "B6 System lane in the UI The spec says the UI \"can add\" a dedicated lane for system tasks, where the linking PR would sit until it merges. a) Out of scope here. Note it as a follow-up for 008.02 or the web plans. (Recommended) b) In scope: a front-end unit for `rey-frontend` that adds a \"System\" lane to the board.",
+              "ref": "B6",
+              "answer": "Decided 2026-10-20 by the product owner: (a) out of scope. Note the System lane as a follow-up for 008.02 or the web plans."
+            }
+          ]
+        }
+      }
+    },
+    "lando-broker": {
+      "rounds": {
+        "1": {
+          "state": "🛑 Product Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Folded B1-B6 answers into spec.md ## Decisions as D1-D6; primary repo only, [none] keyword, harness-only narrow auto-merge, tsort order-only, two plans (008.01 and 008.03), System lane out of scope"
+            },
+            {
+              "kind": "done",
+              "text": "Deleted blocked.md; all six blocks answered and folded; signed Completed for 008.01 round 1"
+            },
+            {
+              "kind": "note",
+              "text": "Signed Completed with an unneeded --note approved; the brief only specifies that note for the approved-variant signature. Flag to the human."
+            },
+            {
+              "kind": "note",
+              "text": "Item 7 in spec.md is marked (dropped by D1) rather than rewritten; the 008.01 scope items 6-9 still need reconciling with D5 at planning time"
+            }
+          ]
+        }
+      }
+    },
+    "luthen-rael-planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Worktree holds uncommitted round-1 build of plan-prior-to-tsort.md (old U1-U7); U1, U2, U3, U5, U6 carry over"
+            },
+            {
+              "kind": "decision",
+              "text": "Per D1, U5 removes the dispatcher gate: Routing.preceding_for, Dispatcher LINK_ATTEMPTS/park_unlinked, run_workflow takers, *_linker_spec files, and the without('ewoki-linker') changes"
+            },
+            {
+              "kind": "decision",
+              "text": "link checks only the states Registry#preceding answers (📋 and ⭐️); precedes: is the single source of truth, and 🟡 and later are grandfathered"
+            },
+            {
+              "kind": "decision",
+              "text": "Dropped the 3-attempt limit along with the gate; a failed link exits non-zero and the next link retries. 008.03 decides whether the run pre-pass needs a limit"
+            },
+            {
+              "kind": "decision",
+              "text": "How-to-test item 3 is impossible as written (D1 drops the gate, D2 re-checks []). It is verified by U7: link --dry-run, with [none] standing in for []"
+            },
+            {
+              "kind": "decision",
+              "text": "CLI registers 'eval', not 'evals'; U8 adds an evals alias so how-to-test item 4 runs as written"
+            },
+            {
+              "kind": "done",
+              "text": "Wrote plan.md with 8 back-end units, no frontend and no HTTP surface; signed Completed with --next luke-backend"
+            }
+          ]
+        }
+      }
+    },
+    "luke-backend": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 1 replanned: plan.md now has U1-U8 under D1-D6; U1-U3 built earlier, U5 reverts the dispatcher gate, U4/U6/U7/U8 new"
+            },
+            {
+              "kind": "done",
+              "text": "U5: reverted routing.rb, engine/, their specs and live_context to HEAD; patch + 3 linker specs backed up in /tmp/008.01-luke-backup-1792541429"
+            },
+            {
+              "kind": "done",
+              "text": "U4: Spec#linked? and NO_DEPENDENCIES ([none] reads as [], no problem; beside a number it is a problem); spec_spec green"
+            },
+            {
+              "kind": "done",
+              "text": "U6: Vcs::Mainline (primary?, on_branch?, refusal, pull --ff-only) + Vcs.mainline, 8 examples on real temp repos"
+            },
+            {
+              "kind": "done",
+              "text": "U2: ewoki-linker.md body now writes [none] (never []), one reason per dependency, N7 kept"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1: suite can't exit 0 here, 30 apps/ failures because every local TCP port answers; fix the host (recommended) or accept as outside the plan"
+            },
+            {
+              "kind": "done",
+              "text": "All U1-U8 built; signed Blocked round 1 (technical) only for the machine-caused apps/ failures; locks released"
+            },
+            {
+              "kind": "question",
+              "text": "B1 The suite cannot exit 0 on this machine The implementation requirement says `bundle exec rspec` exits 0. It reports 30 failures, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_spec.rb`, because every TCP connect to 127.0.0.1 succeeds here, even to port 1 with nothing listening (a proxy or network filter on the host), so `Apps::Ports` finds no free port. This plan changes nothing under `apps/`; every other example passes and rubocop is clean. All eight units are built. a) Fix or tu…",
+              "ref": "B1",
+              "answer": "b) Accept the 30 apps failures as outside this plan and send it to review as is. Answered by kig on 2026-10-20"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Resumed after harness died: re-verified rubocop clean, rspec 3177/30 failures all in apps/ (accepted by B1 answer b / D5), agents list and evals ewoki-linker all PASS"
+            },
+            {
+              "kind": "note",
+              "text": "rspec rewrites docs/badges/coverage_badge.svg on every run; revert it before signing (openlanes keeps it unchanged)"
+            },
+            {
+              "kind": "done",
+              "text": "Recorded resumed checks in pull-requests.md; released locks; signed Completed round 1"
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Harness committed work as 338804aa and rebased onto main 667bcf0e; re-verified: rubocop 565 files clean, rspec 4213 examples 0 failures (B1 port failures gone), agents list ok, evals all PASS, link_spec green"
+            },
+            {
+              "kind": "note",
+              "text": "Earlier publish failed: harness pushed kig/008.01-ewoki-linker but worktree branch is kig/008.01-spec-ewoki-linker; there is also a stray local branch kig/008.01-008.01━━⭕━━❯ewoki-linker. Harness bug, not plan work"
+            },
+            {
+              "kind": "done",
+              "text": "Recorded post-rebase checks in pull-requests.md; signed Completed round 1 again"
+            }
+          ]
+        },
+        "4": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 1 Completed was rejected by the harness: 🟢 needs an open PR, and publish failed because the reused worktree sat on kig/008.01-spec-ewoki-linker (merged spec PR #29) while Worktree#branch_for derives kig/008.01-ewoki-linker"
+            },
+            {
+              "kind": "decision",
+              "text": "Ran git switch -c kig/008.01-ewoki-linker at 338804aa (HEAD SHA unchanged) so the publisher's push matches; spec branch left untouched; undo: git switch kig/008.01-spec-ewoki-linker && git branch -D kig/008.01-ewoki-linker"
+            },
+            {
+              "kind": "done",
+              "text": "Round 2: rubocop clean, rspec exit 0 (4213/0 failures), agents list ok, evals 3/3 PASS; recorded in pull-requests.md; signed Completed round 2"
+            }
+          ]
+        },
+        "5": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "2026-10-23: kig switched this worktree to kig/eval-agent-positional (6d04fb82, PR #122) and wrote that the rest of 0398136d is superseded by PR #114 (kig/ewoki-linker), which implements 008.01"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1: which PR is this plan's? a) adopt PR #114 and record it in pull-requests.md (Recommended), b) close #114 and publish 0398136d after #122 merges, c) human merges #114 outside the pipeline"
+            },
+            {
+              "kind": "done",
+              "text": "Round 1 after OAuth interrupt: built nothing, changed no branch, appended a note to pull-requests.md, mailed rey, signed Blocked round 1 (technical)"
+            },
+            {
+              "kind": "note",
+              "text": "Other plans' agents are also named luke-backend, so alock release-all also dropped their dispatcher.rb and runner.rb locks. Re-acquired both right away. Release by path, not release-all"
+            },
+            {
+              "kind": "question",
+              "text": "B1 This worktree's build was superseded by PR #114 On 2026-10-23 kig switched this plan's worktree (`openlanes.worktrees/008.01-ewoki-linker`) from `kig/008.01-ewoki-linker` to `kig/eval-agent-positional`. They salvaged one piece of `0398136d Ewoki Linker` into PR #122 (open) and wrote in that commit that \"the rest of that commit is superseded by PR #114\". PR #114 (`kig/ewoki-linker`, open, from the `openlanes.worktrees/ewoki-linker` worktree) is titled \"008.01 🔗 ewoki-linker\" and implements th…",
+              "ref": "B1",
+              "answer": "a) Adopt PR #114 as this plan's pull request: record it in `pull-requests.md`, so the plan moves to 🟢 and hansolo reviews #114. Leave `kig/008.01-ewoki-linker` unpublished. Answered by kig on 2026-10-23"
+            }
+          ]
+        },
+        "6": {
+          "round": 1,
+          "state": "blocked",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B1 answer (a) applied: PR #114 (kig/ewoki-linker, head 36c8f690, Open) recorded in the pull-requests.md table; kig/008.01-ewoki-linker left unpublished; no code changed"
+            },
+            {
+              "kind": "done",
+              "text": "Checked #114 read-only: CircleCI linter/test/web/e2e green; eval --agent ewoki-linker 3/3 PASS; mailed rey; signed Completed round 1"
+            },
+            {
+              "kind": "note",
+              "text": "#114 models linking as its own state (Ready for Linking -> Ready for Planning), not the spec's 'precedes ready_for_planning, planned'; flagged for hansolo in pull-requests.md"
+            },
+            {
+              "kind": "note",
+              "text": "The harness (ol start, pid 91087) holds the alock on .plans/008.01*/**, so the agent's own acquire is refused; I wrote the plan docs under the parent's claim"
+            }
+          ]
+        },
+        "7": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "🔴 round: hansolo rejected #114 (1 of 2) over a spec mismatch: the PR adds a 🔗 state where the spec asks for precedes:, plus missing tsort/plan-linking and scope creep. Grok also rejected (newrelic require, rg --pre/git --output confinement escape, 🔗→📋 guard)"
+            },
+            {
+              "kind": "note",
+              "text": "At #114 head 36c8f690: CI green and the packaging_spec/ol-tee finding is fixed. Still open: newrelic require, CONFINED_COMMANDS flags, dispatcher guard, linked? validity, Linker unchanged, whole-tree cycle check, Gemfile.lock platforms"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B2: spec's precedes model or #114's 🔗 state. a) amend spec, keep 🔗, fix code (Recommended) b) rework #114 to precedes c) publish 0398136d instead"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B3: this worktree is on kig/eval-agent-positional (#122), so fixes would land on the wrong PR. a) remove ewoki-linker worktree, switch this one to kig/ewoki-linker (Recommended) b) kig fixes outside pipeline c) I edit ../ewoki-linker, kig commits"
+            },
+            {
+              "kind": "done",
+              "text": "Changed no code and replied to no review thread; appended a note to pull-requests.md, mailed rey (#5), signed Blocked round 1 (product)"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "moves": 11,
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-22T08:10:24-07:00",
+      "round": 6,
+      "status": "Interrupted",
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261022-081022-008.01-luke-backend-51493-29fa.ndjson; last ledger line: Completed, round 2; last seen: Failed to authenticate: OAuth session expired and could not be refreshed"
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T21:37:42-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T21:42:43-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T21:48:16-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-22T08:08:53-07:00"
+    },
+    {
+      "number": 3,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-10-22T08:09:04-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-22T08:09:09-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-10-22T08:09:18-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-22T08:09:45-07:00"
+    },
+    {
+      "number": 5,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-10-22T08:09:52-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-22T08:10:15-07:00"
+    },
+    {
+      "number": 6,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-10-22T08:10:25-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-23T14:29:35-07:00"
+    },
+    {
+      "number": 7,
+      "agent": "hansolo-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-10-23T14:39:02-07:00",
+      "answer": "b",
+      "by": "kig",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-10-23T14:40:31-07:00"
+    }
+  ]
+}

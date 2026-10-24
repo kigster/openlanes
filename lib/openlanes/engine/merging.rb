@@ -87,13 +87,16 @@ module OpenLanes
       # @param worktree [Vcs::Worktree, nil] where a plan's own branch is checked out
       # @param publisher [Vcs::Publisher, nil] pushes a rebased branch, with the lease
       # @param clock [#call]
-      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Clock::System.now })
+      # @param held [#call, nil] path -> who holds an alock lock in it, or nil;
+      #   a merged plan's checkout somebody holds is not retired
+      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Clock::System.now }, held: nil)
         @github = github
         @outcomes = outcomes
         @merge_by = merge_by
         @worktree = worktree
         @publisher = publisher
         @clock = clock
+        @held = held
       end
 
       # palpatine signed, or its run ended without a signature: keep the
@@ -192,7 +195,7 @@ module OpenLanes
         number = number_of(pull)
         repo = Vcs::GitHub.repo_of(pull.url)
         live = @github.pull_request(pull.url || number.to_s)
-        return settled_by_someone(subject, number, live[:state]) unless live[:open]
+        return settled_by_someone(subject, number, live[:state], live:) unless live[:open]
 
         machine = Plans::PullRequestMachine.new(pull, live[:labels])
         return nil unless machine.key == :ready_to_merge
@@ -208,11 +211,38 @@ module OpenLanes
       # at any time, in either mode.
       #
       # @param state [String] as {Vcs::GitHub.state_label} words it
+      # @param live [Hash, nil] the pull request as {Vcs::GitHub#pull_request} read it
+      # @param ref [String, nil] how to read it when +live+ is nil
       # @return [Result]
-      def settled_by_someone(subject, number, state)
+      def settled_by_someone(subject, number, state, live: nil, ref: nil)
         kind = state.to_s.match?(/merged/i) ? :merged : :closed
         applied = @outcomes.apply(PrWatch::Outcome.new(plan: subject.feature.ordinal.to_s, pr: number, kind:))
+        retire(subject, number, live || ref) if kind == :merged
         Result.new(note: "PR ##{number} #{kind}", to: applied&.to)
+      end
+
+      # A merged pull request ends its plan's worktree, once it is the
+      # plan's last open one: a sibling still open is rebased in that
+      # checkout after this merge. {Vcs::Worktree#retire} decides whether
+      # each checkout's work really landed; this only says when to ask.
+      # Never fatal: a checkout left behind costs disk, and a merge that
+      # failed over one would cost the plan.
+      #
+      # @param pull [Hash, String, nil] the merged pull request as read, or a ref to read it by
+      # @return [void]
+      def retire(subject, number, pull)
+        return if @worktree.nil? || pull.nil?
+        return if fresh(subject).pull_requests.any? { it.open? && number_of(it) != number }
+
+        ordinal = subject.feature.ordinal.to_s
+        live = pull.is_a?(Hash) ? pull : @github.pull_request(pull)
+        return if live[:merge_commit].to_s.empty?
+
+        @worktree.checkouts_of(subject.feature).each do |path|
+          UI.log(@worktree.retire(path, merge_commit: live[:merge_commit], base: live[:base], held: @held).to_s, plan: ordinal)
+        end
+      rescue OpenLanes::Error => e
+        UI.log("worktree not retired: #{e.message.lines.first.to_s.strip}", level: :warn, plan: ordinal)
       end
 
       # @param comment [Boolean] post +why+ on the pull request, so a person
@@ -265,7 +295,7 @@ module OpenLanes
           repo:,
           add: Plans::ReviewLabel::AUTO_MERGED,
           remove: Plans::ReviewLabel.displaced_by(Plans::ReviewLabel::AUTO_MERGED))
-        merged = settled_by_someone(subject, number, "Merged")
+        merged = settled_by_someone(subject, number, "Merged", ref: repo ? "https://github.com/#{repo}/pull/#{number}" : number.to_s)
         done = Result.new(note: "PR ##{number} #{Plans::ReviewLabel::AUTO_MERGED}", to: merged.to, merged: true)
         return done if merged.to
 

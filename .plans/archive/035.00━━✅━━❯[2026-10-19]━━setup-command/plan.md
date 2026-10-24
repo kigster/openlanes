@@ -19,7 +19,7 @@ The gemspec no longer ships `bin/*`; `bin/setup` bundles `Brewfile` and `Brewfil
 
 ## Frontend
 
-None: `lane: plan`, a command-line change.
+None: `starts: planning`, a command-line change.
 
 ## Decisions
 

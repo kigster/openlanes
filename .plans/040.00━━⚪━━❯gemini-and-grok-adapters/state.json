@@ -6,7 +6,7 @@
     "slug": "gemini-and-grok-adapters"
   },
   "state": "new",
-  "updated_at": "2026-10-21T21:19:23-07:00",
+  "updated_at": "2026-10-23T14:04:09-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -133,6 +133,25 @@
       "model": "haiku",
       "effort": "medium",
       "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e"
+    },
+    {
+      "agent": "leah-researcher",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "new",
+      "started_at": "2026-10-23T14:02:59-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/040.00-gemini-and-grok-adapters",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "7e69eded-181f-4e64-a733-60270993b7d3",
+      "to": "new",
+      "finished_at": "2026-10-23T14:04:09-07:00",
+      "up": 580170,
+      "down": 7917,
+      "seconds": 68.9,
+      "note": "Almost completed; no rounds left",
+      "moves": 1
     }
   ],
   "signatures": [
@@ -226,6 +245,19 @@
       "status": "Almost completed",
       "round": 1,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:51493 (since 04:19:02Z)"
+    },
+    {
+      "at": "2026-10-23T14:03:06-07:00",
+      "agent": "leah-researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:03:59-07:00",
+      "agent": "leah-researcher",
+      "status": "Almost completed",
+      "round": 1,
+      "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:91087 (since 2026-10-23T21:02:56Z); findings in reply"
     }
   ],
   "messages": [],
@@ -340,6 +372,32 @@
             {
               "kind": "question",
               "text": "Parent run keeps the plan-folder lock. Release it, or grant the researcher a claim on spec.md? And who fills the empty 'What research needs to settle' list?"
+            }
+          ]
+        },
+        "8": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 1 rerun: plan-folder lock still held by parent 91087 (intent leah-researcher on 040.00, since 21:02:56Z); spec.md not written; chapter in reply"
+            },
+            {
+              "kind": "question",
+              "text": "Release the plan-folder lock or grant a claim on spec.md? Who fills the empty 'What research needs to settle' list?"
+            },
+            {
+              "kind": "todo",
+              "text": "Write ## Research to spec.md once lock is free; then sign Completed --next yoda-writer"
+            },
+            {
+              "kind": "done",
+              "text": "Gemini and Grok CLI help and upstream headless docs checked; anchors in chapter draft"
+            },
+            {
+              "kind": "question",
+              "text": "OK one live gemini and grok run (network) to settle token and JSON field names?"
             }
           ]
         }

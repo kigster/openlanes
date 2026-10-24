@@ -6,7 +6,12 @@ require "tmpdir"
 # Fibonacci schedule, and either comes back, resuming them, or is given up
 # on after the configured hours, shutting the run down.
 RSpec.describe OpenLanes::Live::Outage do
-  subject(:outage) { described_class.new(store:, limit:, clock: -> { time[0] }, wall: -> { Time.at(1_800_000_000 + time[0]) }) }
+  subject(:outage) do
+    described_class.new(store:, limit:, clock: -> { time[0] }, wall: -> { Time.at(1_800_000_000 + time[0]) }, **backoff)
+  end
+
+  # Jitter off, so the schedule is exact; the jitter has its own examples.
+  let(:backoff) { { jitter: false } }
 
   let(:time) { [0.0] }
   let(:limit) { 3600.0 }
@@ -90,6 +95,44 @@ RSpec.describe OpenLanes::Live::Outage do
       aggregate_failures do
         expect(gaps.max).to eq(described_class::MAX_GAP)
         expect(gaps.last(5)).to all(eq(described_class::MAX_GAP))
+      end
+    end
+
+    context "with redis_backoff settings" do
+      let(:backoff) { { initial: 2, cap: 5, jitter: false } }
+
+      it "scales the gaps by the initial delay and caps them" do
+        paused_at = time[0]
+        pings.clear
+        run_until(paused_at + 30)
+
+        expect(pings.map { it - paused_at }).to eq([2, 4, 8, 13, 18, 23, 28])
+      end
+    end
+
+    context "with full jitter" do
+      let(:draws) { [0.5, 0.0, 0.99] }
+      let(:backoff) do
+        fractions = draws
+        { cap: 5, random: Object.new.tap { |r| r.define_singleton_method(:rand) { fractions.shift || 0.5 } } }
+      end
+
+      it "draws each gap from below the capped one" do
+        paused_at = time[0]
+        pings.clear
+        run_until(paused_at + 6)
+
+        # 1 * 0.5 at +11.5 is asked on the next tick; then 1 * 0.0, then 2 * 0.99.
+        expect(pings.map { it - paused_at }).to eq([1, 2, 4, 6])
+      end
+
+      it "never draws a gap above the cap" do
+        paused_at = time[0]
+        pings.clear
+        draws.replace(Array.new(50, 0.999))
+        run_until(paused_at + 300)
+
+        expect(pings.each_cons(2).map { |a, b| b - a }.max).to be <= 5
       end
     end
 

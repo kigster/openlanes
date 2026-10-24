@@ -89,6 +89,28 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
+    # M8: after a cap/go ruling the next failure goes to a person, not back to the builders.
+    it "blocks the plan with blocked.md when it fails the last verification a go ruling gave it" do
+      OpenLanes::Plans::PlanState.for(plan.feature.path)
+                                 .rule!(kind: "cap",
+                                   pr: 1,
+                                   round: 1,
+                                   outcome: "go",
+                                   findings: {},
+                                   winner: nil,
+                                   reason: "minor only",
+                                   trigger: "cap",
+                                   at: now - 60)
+      OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+      result = outcome.reject(checkout:, plan:, pull: pr, round:)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :blocked)
+        expect(plan.status.key).to eq(:blocked)
+        expect(plan.read("blocked.md")).to include("## B1", "(Recommended)")
+      end
+    end
+
     it "keeps only the failing step and final.png, and none of the engine's own note" do
       outcome.reject(checkout:, plan:, pull: pr, round:)
       pushed = origin_files.grep(%r{/verification/1/}).map { File.basename(it) }
@@ -212,7 +234,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
   end
 
-  describe "#send_back_for_quality (R4, under high)" do
+  describe "#send_back_for_quality (R4, under high and standard)" do
     it "signs a counted rejection, mails the builders, and moves the plan to 🔴 without touching the labels" do
       result = outcome.send_back_for_quality(plan:, pull: pr)
 
@@ -224,6 +246,21 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         expect(mail_to).to include("luke-backend", "rey-frontend")
         expect(labels).to eq(%w[review-approved])
         expect(arbitration).not_to have_received(:call)
+      end
+    end
+
+    it "moves the plan from 👀 to 🟡 under standard, still counted (plan 035)" do
+      # Sent back at the hand-off, so from 👀, where the fixture's 🧪 is not.
+      status = OpenLanes::Plans::STATUS_BY_KEY
+      File.rename(plan.feature.path, plan.feature.path.sub(status.fetch(:verifying).emoji, status.fetch(:in_review).emoji))
+      result = outcome.send_back_for_quality(plan:, pull: pr, quality: :standard)
+
+      aggregate_failures do
+        expect(result).to have_attributes(kind: :rejected, to: :building)
+        expect(result.note).to include("rejected 1 of 2")
+        expect(outcome.rejections(plan)).to eq(1)
+        expect(plan.status.key).to eq(:building)
+        expect(mail_to).to include("luke-backend")
       end
     end
 

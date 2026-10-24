@@ -1,6 +1,6 @@
 # Contract: 029.00 Grill new ideas before the spec
 
-`spec.md` says `lane: plan` and `plan.md` has no `## Frontend` units, so rey-frontend is not started. luke-backend owns both halves.
+`spec.md` says `starts: planning` and `plan.md` has no `## Frontend` units, so rey-frontend is not started. luke-backend owns both halves.
 
 ## Baseline
 

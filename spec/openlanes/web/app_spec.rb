@@ -561,8 +561,8 @@ RSpec.describe OpenLanes::Web::App, :tree do
   end
 
   describe "PUT /api/plans/:ordinal/files/:name" do
-    let(:spec_md) { "---\nlane: full\n---\n\n# The spec\n" }
-    let(:edited) { "---\nlane: full\n---\n\n# The spec, edited\n" }
+    let(:spec_md) { "---\nstarts: research\n---\n\n# The spec\n" }
+    let(:edited) { "---\nstarts: research\n---\n\n# The spec, edited\n" }
     let(:path) { File.join(Dir[File.join(plans_root, "004.00*")].first, "spec.md") }
 
     before do
@@ -625,7 +625,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
 
     it "refuses changed frontmatter" do
-      save("spec.md", edited.sub("lane: full", "lane: quick"))
+      save("spec.md", edited.sub("starts: research", "starts: building"))
       expect([last_response.status, body["error"], File.read(path)]).to eq([422, "the frontmatter of spec.md is locked", spec_md])
     end
 

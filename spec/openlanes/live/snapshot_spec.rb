@@ -327,6 +327,70 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
   end
 
+  describe "rejections, the latest ruling and an arbitration under way (plan 015)" do
+    subject(:plan) do
+      described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        at:,
+        claims:,
+        max_rejections: -> { 3 }).to_h[:plans].first
+    end
+
+    before do
+      building("001.00", "tax-rule-dsl")
+      claims.claim("001.00")
+    end
+
+    it "carries a zero count, no ruling and no arbitration on a plan with neither" do
+      expect(plan.slice(:rejections, :ruling, :arbitrating)).to eq(rejections: { count: 0, max: 3 }, ruling: nil, arbitrating: false)
+    end
+
+    context "with two rejections, one ruling and the arbitrator running" do
+      before do
+        state = OpenLanes::Plans::PlanState.for(path_of("001.00"))
+        state.sign!(agent: "hansolo-reviewer", round: 1, status: "Completed", note: "rejected 1/3", at: at - 300)
+        state.sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected: CI is red", at: at - 200)
+        state.rule!(kind: "appeal",
+          pr: 4,
+          round: 1,
+          outcome: "upheld",
+          findings: {},
+          winner: nil,
+          reason: "F1 stands",
+          trigger: "appeal",
+          at: at - 100)
+        state.stage!(agent: "obi-wan-kenobi-arbitrator", round: 1, status: "Started", started_at: at.iso8601)
+      end
+
+      it "carries the count, the latest ruling and the marker" do
+        aggregate_failures do
+          expect(plan[:rejections]).to eq(count: 2, max: 3)
+          expect(plan[:ruling].values_at("kind", "outcome", "reason")).to eq(["appeal", "upheld", "F1 stands"])
+          expect(plan[:arbitrating]).to be(true)
+        end
+      end
+    end
+
+    it "shows the default cap when .openlanes.yml does not parse" do
+      broken = described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        at:,
+        claims:,
+        max_rejections: -> { raise OpenLanes::Error, "bad yaml" })
+      expect(broken.to_h[:plans].first[:rejections][:max]).to eq(OpenLanes::Config::DEFAULT_MAX_REJECTIONS)
+    end
+  end
+
   describe "a plan whose agent was interrupted" do
     before do
       building("001.00", "tax-rule-dsl")

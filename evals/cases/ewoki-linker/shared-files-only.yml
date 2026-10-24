@@ -1,0 +1,46 @@
+id: shared-files-only
+agent: ewoki-linker
+depth: fast
+description: >
+  Both plans add a flag to lib/calc/cli.rb, and neither uses anything the
+  other builds. Sharing a file is a merge risk, not a dependency (N7), so
+  the linker writes depends_on: [none]. Linking 034.00 here is the over-linking
+  this case exists to catch.
+fixture:
+  state: ready_for_linking
+  slug: precision-flag
+  files:
+    spec.md: |
+      ---
+      lane: plan
+      ---
+      # Precision Flag
+
+      `calc --precision 4` rounds the printed result to four places. The flag
+      is parsed in `lib/calc/cli.rb`, beside the existing options.
+  repo:
+    lib/calc/cli.rb: |
+      module Calc
+        module CLI
+          def self.options(argv) = { precision: nil, verbose: false }
+        end
+      end
+    .plans/034.00━━📋━━❯verbose-flag/spec.md: |
+      ---
+      lane: plan
+      depends_on: [none]
+      ---
+      # Verbose Flag
+
+      `calc --verbose` prints each step. The flag is parsed in `lib/calc/cli.rb`.
+expect:
+  signed: true
+  spec_only: true
+  contains:
+    spec.md: ['depends_on: [none]']
+  untouched: [lib/calc/cli.rb]
+  depth:
+    fast:
+      changed_files: { max: 0 }
+      max_seconds: 300
+      max_tokens: 60000

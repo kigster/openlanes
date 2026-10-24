@@ -122,9 +122,9 @@ RSpec.describe "Review labels, end to end", :tree do
     publication = publish
     number = publication.url[/\d+\z/]
 
-    aggregate_failures "the publisher opens it with ready-for-review and its How to test" do
+    aggregate_failures "the publisher opens it with ready-for-review, openlanes and its How to test" do
       expect(publication.label_error).to be_nil
-      expect(labels(number)).to eq(%w[ready-for-review])
+      expect(labels(number)).to contain_exactly("openlanes", "ready-for-review")
       expect(plan("001.00").pull_requests.map(&:url)).to eq([publication.url])
     end
     plan("001.00").machine.promote!(:ready_for_review)
@@ -132,7 +132,7 @@ RSpec.describe "Review labels, end to end", :tree do
     _, _, status = openlanes("review", number, "review-in-progress")
     aggregate_failures "hansolo starts" do
       expect(status).to eq(0)
-      expect(labels(number)).to eq(%w[review-in-progress])
+      expect(labels(number)).to contain_exactly("openlanes", "review-in-progress")
     end
 
     edit_gh { it["prs"][number]["checks"] = [{ "name" => "rspec", "state" => "FAILURE", "bucket" => "fail" }] }
@@ -140,19 +140,19 @@ RSpec.describe "Review labels, end to end", :tree do
     aggregate_failures "no passing verdict over red CI" do
       expect(status).not_to eq(0)
       expect(err).to include("CI is red")
-      expect(labels(number)).to eq(%w[review-in-progress])
+      expect(labels(number)).to contain_exactly("openlanes", "review-in-progress")
     end
 
     _, _, status = openlanes("review", number, "review-rejected")
     aggregate_failures "a rejection is accepted" do
       expect(status).to eq(0)
-      expect(labels(number)).to eq(%w[review-rejected])
+      expect(labels(number)).to contain_exactly("openlanes", "review-rejected")
     end
 
     _, _, status = openlanes("review", number, "review-vulnerability")
     aggregate_failures "a vulnerability sits beside the rejection" do
       expect(status).to eq(0)
-      expect(labels(number)).to contain_exactly("review-rejected", "review-vulnerability")
+      expect(labels(number)).to contain_exactly("openlanes", "review-rejected", "review-vulnerability")
     end
 
     edit_gh do |data|

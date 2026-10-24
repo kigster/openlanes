@@ -330,6 +330,52 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  describe "a confined agent" do
+    let(:linker) { agents.find("ewoki-linker") }
+    let(:argv) { executor.invocation(linker, subject_plan) }
+    let(:allowed) { argv.each_cons(2).find { |flag, _| flag == "--allowedTools" }.last.split(",") }
+    let(:spec_path) { File.join(subject_plan.feature.path, "spec.md") }
+
+    it "is ewoki-linker, confined to its plan's spec.md" do
+      expect(linker.confined_to).to eq(%w[spec.md])
+    end
+
+    it "gets a fixed tool set that refuses whatever the allow list does not name" do
+      expect(argv.each_cons(2).to_a).to include(["--tools", "Read,Grep,Glob,Edit,Bash"], %w[--permission-mode dontAsk])
+      expect(argv).to include("--restricted")
+    end
+
+    it "may edit that one file, by its absolute path, and nothing else" do
+      expect(allowed.grep(/\AEdit/)).to eq(["Edit(/#{spec_path})"])
+      expect(allowed).not_to include("Write", "Edit")
+    end
+
+    it "may run this checkout's openlanes state and two read-only commands, nothing else in Bash" do
+      expect(allowed.grep(/\ABash/)).to eq(["Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE} state:*)",
+                                            "Bash(ls:*)", "Bash(git status:*)"])
+    end
+
+    # rg --pre runs a program; git log, show and diff take --output=<file>.
+    # A Bash(cmd:*) grant reaches every flag, so none of them may be granted.
+    it "is granted no command that has a flag which executes or writes" do
+      expect(allowed.grep(/\ABash\((rg|grep|find|xargs|sed|git (log|show|diff))\b/)).to be_empty
+    end
+
+    it "may not run any other openlanes subcommand" do
+      expect(allowed).not_to include("Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE}:*)")
+    end
+
+    it "is refused outright on an adapter that cannot enforce it" do
+      codex = linker.with(adapter: "codex")
+      result = executor.call(codex, subject_plan)
+      expect([result.ok, result.note]).to eq([false, "ewoki-linker is confined to spec.md, and codex cannot enforce that"])
+    end
+
+    it "leaves an unconfined agent's tools alone" do
+      expect(executor.invocation(agent, subject_plan)).not_to include("--restricted")
+    end
+  end
+
   describe "the network boundary" do
     it "denies the web to an agent that did not ask for it" do
       expect(denied(agent_with(network: false))).to include("WebFetch", "WebSearch")

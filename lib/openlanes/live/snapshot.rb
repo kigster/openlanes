@@ -37,10 +37,12 @@ module OpenLanes
       #   unredacted: the snapshot redacts it ({Live.redact})
       # @param outage [Hash, nil] {OutageReport#to_h} of the outage this run
       #   last recovered from; nil when there was none
+      # @param max_rejections [#call] `merge.max_rejections`, asked once per
+      #   snapshot, so an edited `.openlanes.yml` shows on the next one
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil,
-        outage: nil)
+        outage: nil, max_rejections: -> { Config.current.max_rejections })
         @board = board
         @tree = tree
         @agents = agents
@@ -59,6 +61,7 @@ module OpenLanes
         @judge = judge
         @redis_url = redis_url
         @outage = outage
+        @max_rejections = max_rejections
       end
 
       # @return [Hash]
@@ -134,7 +137,8 @@ module OpenLanes
           slug:        subject.feature.slug,
           summary:     Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
           status:      status(subject.status),
-          lane:        Plans::Spec.for(subject).lane.to_s,
+          starts:      Plans::Spec.for(subject).starts.to_s,
+          group:       group_of(ordinal),
           station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
           up:          spent[:up],
           down:        spent[:down],
@@ -150,7 +154,35 @@ module OpenLanes
           mail:        mailbox.unacked_pairs,
           last_known:  last_known(state),
           locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash,
-          finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
+          finished:    finished && { kind: finished.kind, at: iso(finished.at) },
+          rejections:  { count: counter.call(subject), max: max_rejections },
+          ruling:      state.rulings.last,
+          arbitrating: stages.any? { it["agent"] == Arbitration::AGENT && !it["finished_at"] } }
+      end
+
+      # @return [OpenLanes::Arbitration::Counter]
+      def counter = @counter ||= Arbitration.counter(agents: @agents)
+
+      # A `.openlanes.yml` that does not parse shows the default cap rather
+      # than taking the whole page down; `openlanes run` refuses it anyway.
+      #
+      # @return [Integer]
+      def max_rejections
+        @max ||= @max_rejections.call
+      rescue Error
+        @max = Config::DEFAULT_MAX_REJECTIONS
+      end
+
+      # The dependency group a plan belongs to, named by its lowest ordinal:
+      # plans joined by an unfinished `depends_on:` edge share one, and the
+      # board draws a deeper groove where the group changes between rows. A
+      # plan in no group (finished, or linked to nothing open) is its own.
+      #
+      # @param ordinal [String]
+      # @return [String]
+      def group_of(ordinal)
+        @group_of ||= @tree.dependencies.groups.each_with_object({}) { |g, out| g.each { out[it] = g.first } }
+        @group_of.fetch(ordinal, ordinal)
       end
 
       # @param status [OpenLanes::Plans::Status]
@@ -165,7 +197,7 @@ module OpenLanes
                 .reject { |s| foreign?(s.feature.ordinal.to_s) }
                 .map do |s|
           { ordinal: s.feature.ordinal.to_s, title: s.feature.title, status: status(s.status),
-            lane: Plans::Spec.for(s).lane.to_s }
+            starts: Plans::Spec.for(s).starts.to_s }
         end
       end
 

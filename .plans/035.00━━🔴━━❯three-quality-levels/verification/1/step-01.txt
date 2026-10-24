@@ -1,0 +1,2 @@
+step 1: openlanes init -y --quality high|standard|mvp wrote desired_codebase_quality each; bogus rejected; decisions.md lists a/b/c.
+specs: 75 examples, 0 failures (config_quality, quality_question, verification_quality, dispatcher_quality_gate, outcome, init)

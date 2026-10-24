@@ -39,6 +39,13 @@
       ]
     },
     {
+      "key": "ready_for_linking",
+      "label": "Linking",
+      "agents": [
+        "ewoki-linker"
+      ]
+    },
+    {
       "key": "ready_for_planning",
       "label": "Planning",
       "agents": [
@@ -86,7 +93,8 @@
         "label": "Technical Block",
         "note": "what Technical Block means"
       },
-      "lane": "full",
+      "starts": "research",
+      "group": "001.00",
       "station": "building",
       "up": 1250000,
       "down": 90200,
@@ -164,7 +172,14 @@
       "interrupted": null,
       "claimed_by": "3f9a0c7be21d44a8f6031c5d",
       "unacked": 1,
-      "mail": [{ "from": "luke-backend", "to": "rey-frontend", "count": 1, "since": "2026-10-12 09:41:07 AM PDT" }],
+      "mail": [
+        {
+          "from": "luke-backend",
+          "to": "rey-frontend",
+          "count": 1,
+          "since": "2026-10-12 09:41:07 AM PDT"
+        }
+      ],
       "last_known": [
         {
           "agent": "rey-frontend",
@@ -176,7 +191,13 @@
           "note": "harness died; last seen writing plan-frontend.md"
         }
       ],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "005.00",
@@ -189,7 +210,8 @@
         "label": "In Review",
         "note": "what In Review means"
       },
-      "lane": "plan",
+      "starts": "planning",
+      "group": "005.00",
       "station": "in_review",
       "up": 1090000,
       "down": 78800,
@@ -236,7 +258,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 1,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "006.00",
@@ -249,7 +277,8 @@
         "label": "Building",
         "note": "what Building means"
       },
-      "lane": "quick",
+      "starts": "building",
+      "group": "006.00",
       "station": "building",
       "up": 476200,
       "down": 33400,
@@ -316,7 +345,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     },
     {
       "ordinal": "014.00",
@@ -329,7 +364,8 @@
         "label": "Approved & Merged",
         "note": "what Approved & Merged means"
       },
-      "lane": "quick",
+      "starts": "building",
+      "group": "014.00",
       "station": "pr",
       "up": 1090000,
       "down": 78800,
@@ -354,7 +390,13 @@
       "unacked": 0,
       "mail": [],
       "last_known": [],
-      "locked": null
+      "locked": null,
+      "rejections": {
+        "count": 0,
+        "max": 2
+      },
+      "ruling": null,
+      "arbitrating": false
     }
   ],
   "backlog": [
@@ -367,7 +409,7 @@
         "label": "New",
         "note": "what New means"
       },
-      "lane": "full"
+      "starts": "research"
     },
     {
       "ordinal": "012.00",
@@ -378,7 +420,7 @@
         "label": "Product Block",
         "note": "what Product Block means"
       },
-      "lane": "plan"
+      "starts": "planning"
     }
   ],
   "models": [

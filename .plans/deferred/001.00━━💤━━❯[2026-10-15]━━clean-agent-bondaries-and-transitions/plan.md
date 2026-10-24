@@ -861,7 +861,7 @@ In `lib/agentilda/state_machine.rb`:
       # a blank `plan.md`. Without it ⭐️ Planned required a file only the
       # agent handling ⭐️ Planned writes, and nothing could enter it.
       event :ready_to_plan, guard: :justified? do
-        transitions from: %i[researched new retroactive shit blocked product_blocked deferred],
+        transitions from: %i[researched new retroactive rewrite blocked product_blocked deferred],
           to: :ready_for_planning
       end
 ```
@@ -2865,7 +2865,7 @@ module Agentilda
     def target_for(agent, verdict, partner_running)
       case verdict
       when :rejected then :rejected
-      when :slop then :shit
+      when :slop then :rewrite
       else partner_running ? agent.holds_at : agent.advances_to
       end
     end
@@ -4084,12 +4084,12 @@ Your ledger line in `pull-requests.md` carries the verdict in its note, and the 
 - `Completed, round N (rejected 1/2)` on your first rejection of a pull request, `(rejected 2/2)` on the second. Request the changes on GitHub with `gh pr review --request-changes` and say exactly what fails. The folder becomes 🔴 and the pair fixes it.
 - You may reject a pull request twice. On the third look you either approve or scrap it.
 - `Completed, round N (approved)`: approve with `gh pr review --approve` and comment "👍🏼 to deploy" with `gh pr comment`. The folder stays 👀 until a human merges. Nothing here merges.
-- `Completed, round N (slop)`: write `rewrite.md` saying why, and the folder becomes 💩.
+- `Completed, round N (slop)`: write `rewrite.md` saying why, and the folder becomes 🚫.
 
 If `pull-requests.md` lists several pull requests, judge each; the plan is done only when every one is approved.
 ```
 
-Delete the sentence in the opening paragraph about changing "the status to `shit`" and the item 6 instruction to change the status; the verdict word does it.
+Delete the sentence in the opening paragraph about changing "the status to `rewrite`" and the item 6 instruction to change the status; the verdict word does it.
 
 `agents/lando-broker.md`: replace "Do not rename the plan folder. `resync dirs` reads ..." with "Do not rename the plan folder; the harness does, from your `Completed` line in `plan.md`."
 
@@ -4117,7 +4117,7 @@ In `README.md`:
 | `luthen-rael-planner` | 📋         | ⭐️                                    | `plan.md`                              | decomposes the spec into concurrent work units, three plans  |
 | `luke-backend`      | ⭐️, 🟡, 🔴 | 🟢 (🟡 on start, 🎨 while rey builds) | `plan-backend.md`, `pull-requests.md`  | back end: data, domain, API, tests                           |
 | `rey-frontend`      | ⭐️, 🟡, 🔴 | 🟢                                    | `plan-frontend.md`, `pull-requests.md` | interface against the contract; proves the halves join       |
-| `hansolo-reviewer`  | 🟢, 👀     | 🔴 / 👀 approved / 💩                 | `pull-requests.md`                     | adversarial review; two rejections at most, never merges     |
+| `hansolo-reviewer`  | 🟢, 👀     | 🔴 / 👀 approved / 🚫                 | `pull-requests.md`                     | adversarial review; two rejections at most, never merges     |
 | `lando-broker`      | ⭕️, 🅱️     | ⭐️                                    | `plan.md`                              | folds answered blocks into spec.md/plan.md                   |
 
 - Replace "### Chaining: one plan, several agents, one round" with "### The ledger: how an agent hands off" describing the entry grammar, the `next:` line, that the harness renames, and the state file under `.plans/tmp/`.
