@@ -42,8 +42,61 @@ RSpec.describe OpenLanes::Setup::CiScaffold do
     expect(scaffold(:jenkins).commands).to eq(["bundle exec rubocop", "bundle exec rspec"])
   end
 
-  it "names no commands for an unknown stack" do
-    expect(scaffold(:jenkins, nil).commands).to eq([])
+  it "names no commands for an unknown stack, and writes no file that would check nothing" do
+    expect([scaffold(:jenkins, nil).commands, scaffold(:jenkins, nil).call]).to eq(
+      [[], described_class::Result.new(path: "Jenkinsfile", written: false, skipped: described_class::NOTHING_TO_RUN)]
+    )
+    expect(File.exist?(File.join(root, "Jenkinsfile"))).to be(false)
+  end
+
+  {
+    "Ruby"       => "bundle exec rspec",
+    "TypeScript" => "npm test",
+    "javascript" => "npm test",
+    "golang"     => "go test ./..."
+  }.each do |language, command|
+    it "reads #{language.inspect} as its table key" do
+      expect(scaffold(:jenkins, OpenLanes::Setup::Stack.new(language:)).commands).to include(command)
+    end
+  end
+
+  {
+    "ruby"   => "bundle install",
+    "node"   => "npm ci",
+    "elixir" => "mix deps.get"
+  }.each do |language, install|
+    it "installs #{language} dependencies before lint and test, on every provider" do
+      stack = OpenLanes::Setup::Stack.new(language:)
+      described_class.providers.each { scaffold(it, stack).call }
+      texts = described_class::PATHS.values.map { read(it) }
+      expect(texts).to all(satisfy { it.index(install) && it.index(install) < it.index(described_class::COMMANDS[language].first) })
+    end
+  end
+
+  it "installs the project and the python tools from pyproject.toml, else requirements.txt" do
+    python = OpenLanes::Setup::Stack.new(language: "python")
+    from_requirements = scaffold(:jenkins, python).install
+    File.write(File.join(root, "pyproject.toml"), "")
+    expect([from_requirements, scaffold(:jenkins, python).install])
+      .to eq(["pip install -r requirements.txt ruff pytest", "pip install -e . ruff pytest"])
+  end
+
+  it "installs just on CircleCI and Jenkins when the commands are just recipes" do
+    File.write(File.join(root, "justfile"), "lint:\n  rubocop\n\ntest:\n  rspec\n")
+    %i[circleci jenkins].each { scaffold(it).call }
+    expect([read(".circleci/config.yml"), read("Jenkinsfile")]).to all(include("just.systems/install.sh"))
+    expect(read("Jenkinsfile")).to include("--to .bin", "PATH=$PWD/.bin:$PATH just test")
+  end
+
+  it "does not read test-unit as a test recipe" do
+    File.write(File.join(root, "justfile"), "lint:\n  rubocop\n\ntest-unit:\n  rspec\n")
+    expect(scaffold(:jenkins).commands).to eq(["bundle exec rubocop", "bundle exec rspec"])
+  end
+
+  it "uses an image with git and curl when the language is unknown" do
+    File.write(File.join(root, "justfile"), "lint:\n  true\n\ntest:\n  true\n")
+    scaffold(:github_actions, nil).call
+    expect(read(".github/workflows/ci.yml")).to include("container: #{described_class::FALLBACK_IMAGE}")
   end
 
   it "leaves an existing file byte-identical" do

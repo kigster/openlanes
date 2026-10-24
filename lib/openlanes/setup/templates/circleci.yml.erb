@@ -6,6 +6,16 @@ jobs:
       - image: <%= image %>
     steps:
       - checkout
+<% if just -%>
+      - run:
+          name: Install just
+          command: <%= just_install %>
+<% end -%>
+<% if install -%>
+      - run:
+          name: Install dependencies
+          command: <%= install %>
+<% end -%>
 <% if lint -%>
       - run:
           name: Lint

@@ -68,6 +68,12 @@ RSpec.describe OpenLanes::Setup::StackDetector do
     expect([detection.languages, detection.stack, detection.mixed?, detection.hints]).to eq([[], nil, false, []])
   end
 
+  it "reads a package.json beside a Gemfile as asset tooling, and names Ruby" do
+    touch("Gemfile")
+    touch("package.json", "{}")
+    expect([detection.languages, detection.stack.language]).to eq([%w[ruby node], "ruby"])
+  end
+
   it "reports two languages as mixed, with no stack" do
     touch("Gemfile")
     touch("go.mod")

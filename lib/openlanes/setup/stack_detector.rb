@@ -8,6 +8,10 @@ module OpenLanes
     #
     # It never guesses between two languages: a folder with a Gemfile and a
     # go.mod is reported as mixed, with no stack, and the interview asks.
+    # The one exception is a package.json beside one other language: that
+    # is a Rails or Django app's asset tooling, so the other language is the
+    # stack. Reading it as mixed left the stack unset under `-y`, and the CI
+    # scaffold then had no commands to run.
     class StackDetector
       # What one folder looks like.
       #
@@ -53,7 +57,8 @@ module OpenLanes
       # @return [OpenLanes::Setup::StackDetector::Detection]
       def call
         languages = LANGUAGES.filter_map { |language, markers| language if markers.any? { file?(it) } }
-        stack = languages.one? ? refine(languages.first) : nil
+        primary = languages.one? ? languages : languages - %w[node]
+        stack = primary.one? ? refine(primary.first) : nil
         Detection.new(languages:, stack:, hints: HINTS.select { file?(it) })
       end
 

@@ -1,14 +1,24 @@
 pipeline {
   agent { docker { image '<%= image %>' } }
   stages {
+<% if just -%>
+    stage('Install just') {
+      steps { sh '<%= just_install.sub("/usr/local/bin", ".bin") %>' }
+    }
+<% end -%>
+<% if install -%>
+    stage('Install dependencies') {
+      steps { sh '<%= install %>' }
+    }
+<% end -%>
 <% if lint -%>
     stage('Lint') {
-      steps { sh '<%= lint %>' }
+      steps { sh '<%= "PATH=$PWD/.bin:$PATH " if just %><%= lint %>' }
     }
 <% end -%>
 <% if test -%>
     stage('Test') {
-      steps { sh '<%= test %>' }
+      steps { sh '<%= "PATH=$PWD/.bin:$PATH " if just %><%= test %>' }
     }
 <% end -%>
   }

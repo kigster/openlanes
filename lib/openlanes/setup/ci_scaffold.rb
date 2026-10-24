@@ -9,8 +9,16 @@ module OpenLanes
     # commands (M21). It never overwrites: a file already there is somebody's
     # CI, and replacing it is not a scaffold's call.
     class CiScaffold
-      # What happened: where the file is, and whether this call wrote it.
-      Result = Data.define(:path, :written)
+      # What happened: where the file is, whether this call wrote it, and
+      # when it did not because nothing would be checked, why.
+      Result = Data.define(:path, :written, :skipped) do
+        def initialize(path:, written:, skipped: nil) = super
+      end
+
+      # Said when no lint or test command is known. A CI that only checks
+      # out the code passes every time, and a harness that gates on CI
+      # would read that as green.
+      NOTHING_TO_RUN = "no lint or test command is known for this stack, so no CI file was written"
 
       # Provider → the file it reads, relative to the root.
       PATHS = {
@@ -35,6 +43,30 @@ module OpenLanes
         "elixir" => ["mix credo", "mix test"],
         "python" => ["ruff check .", "pytest"]
       }.freeze
+
+      # Language → the step that installs what {COMMANDS} runs. Go and Rust
+      # need none: their toolchains fetch dependencies, and the rust image
+      # ships clippy. Python installs the project, else its requirements.
+      INSTALLS = {
+        "ruby"   => "bundle install",
+        "node"   => "npm ci",
+        "elixir" => "mix local.hex --force && mix deps.get"
+      }.freeze
+
+      # Names a person or a model may give a language → the key the tables use.
+      LANGUAGES = { "javascript" => "node", "typescript" => "node", "js" => "node", "ts" => "node",
+                    "nodejs" => "node", "node.js" => "node", "golang" => "go", "py" => "python",
+                    "rb" => "ruby" }.freeze
+
+      # Installs `just` into /usr/local/bin. GitHub Actions has setup-just;
+      # CircleCI and Jenkins run in a bare language image that lacks it.
+      # Jenkins runs its docker agent as the jenkins user, who cannot write
+      # /usr/local/bin, so its template installs into the workspace instead.
+      JUST_INSTALL = "curl --proto =https --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin"
+
+      # The image when the language is unknown: Ubuntu with curl and git,
+      # which a bare ubuntu image lacks and checkout needs.
+      FALLBACK_IMAGE = "buildpack-deps:noble"
 
       # Container image per language, for the providers that run in one.
       IMAGES = {
@@ -71,22 +103,40 @@ module OpenLanes
       def commands
         return %w[lint test].map { "just #{it}" } if %w[lint test].all? { recipe?(it) }
 
-        COMMANDS.fetch(@stack&.language.to_s, [])
+        COMMANDS.fetch(language, [])
+      end
+
+      # @return [Boolean] whether there is anything for the CI to check
+      def runnable? = !commands.empty?
+
+      # @return [String] the stack's language as the tables key it, so
+      #   "Ruby" or "TypeScript" from an answer still finds its commands
+      def language
+        word = @stack&.language.to_s.strip.downcase
+        LANGUAGES.fetch(word, word)
+      end
+
+      # @return [String, nil] the dependency install step, nil when none
+      def install
+        return INSTALLS[language] unless language == "python"
+
+        file?("pyproject.toml") ? "pip install -e . ruff pytest" : "pip install -r requirements.txt ruff pytest"
       end
 
       # @return [String] the file's contents
       def render
         lint, test = commands
-        image = IMAGES.fetch(@stack&.language.to_s, "ubuntu:24.04")
+        image = IMAGES.fetch(language, FALLBACK_IMAGE)
         just = commands.first.to_s.start_with?("just ")
         ERB.new(File.read(File.join(TEMPLATE_DIR, TEMPLATES.fetch(@provider))), trim_mode: "-")
-           .result_with_hash(lint:, test:, image:, just:)
+           .result_with_hash(lint:, test:, image:, just:, install:, just_install: JUST_INSTALL)
       end
 
       # @param dry_run [Boolean] report what would be written, write nothing
       # @return [OpenLanes::Setup::CiScaffold::Result]
       def call(dry_run: false)
         target = File.join(@root, path)
+        return Result.new(path:, written: false, skipped: NOTHING_TO_RUN) unless runnable?
         return Result.new(path:, written: false) if File.exist?(target) || dry_run
 
         FileUtils.mkdir_p(File.dirname(target))
@@ -97,10 +147,14 @@ module OpenLanes
       private
 
       # @return [Boolean] whether the justfile defines the recipe
+      # The name must end at whitespace or the colon, so `test-unit:` is not
+      # read as a `test` recipe.
       def recipe?(name)
         file = %w[justfile Justfile .justfile].map { File.join(@root, it) }.find { File.file?(it) }
-        !file.nil? && File.read(file).match?(/^#{name}\b[^:=]*:(?!=)/)
+        !file.nil? && File.read(file).match?(/^#{name}(?=[\s:])[^:=]*:(?!=)/)
       end
+
+      def file?(name) = File.file?(File.join(@root, name))
     end
   end
 end
