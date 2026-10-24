@@ -1,14 +1,81 @@
-# Open Lanes Depot
+# Open Lanes: AI Software Factory
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/kigster/openlanes/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/kigster/openlanes/tree/main) ![Coverage](docs/badges/coverage_badge.svg) [![Copilot](https://github.com/kigster/openlanes/actions/workflows/agents/copilot-pull-request-reviewer/badge.svg)](https://github.com/kigster/openlanes/actions/workflows/agents/copilot-pull-request-reviewer) [![Dependabot Updates](https://github.com/kigster/openlanes/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/kigster/openlanes/actions/workflows/dependabot/dependabot-updates)
 
-`openlanes` is a CLI software factory. You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `ol`.
+> [!IMPORTANT]
+>
+> OpenLanes is one of few factories that can autonomously execute and implement features and merge them autonomously as well. This is configurable, and if turned on a dedicated agent provides risk assessment of whether or not this plan is safe to merge without human oversight. 
+
+**OpenLanes®**  is an open source CLI software factory written in Ruby (but can build products in any language), that runs inside your project repo. It can help create specifications for new features (from CLI or the Web UI), and it manages the various states of development of this feature, passing it from one specialized agent to the next.
+
+In a very brief and simplified way, creating a new feature creates it's `.plans` folder and the `spec.md` file, which is then populated by an initial agent based on the title, the spec.md is then opened in your system editor to allow you to define additional details, then a researcher agent adds some amount of research (based on both your existing codebase and external web searches), the writer then polishes the spec, before it is passeed to another agent that determines any interdependencies between plans and records it. 
+
+Next phase is the planning phase, performed by a single agent who creates `plan.md`, with backend and front-end features split as there is a dedicated agent for each.
+
+After the planner is finished, builders pick it up and when they are done in their worktree, the harness (ruby dispatcher) submits a pull request and invokes several agents to perform PR review. There are three types of reviewers who all use different models, and one specializes on security.  The reviewers are able to create and attach the PR labels used in this process. They can reject the PR (and almost always do), which returns it to the builders who address the feedback and re-submit the PR. The number of times this may occur is defined by "rounds" and in most cases the builders fix the PR to reviewer satisfaction.
+
+A currently planned but not yet implemented feature is once the PR has `review-approved` label, another agent determines the risk surface area and depending on what it finds attaches one of two labels: `auto-merge` or `human-should-merge` etc.
+
+`.plans/001.00-<emoji>-plan-title/{spec.md,plan.md,....}`
+
+Additional files are created in the plan's folder, and when the plan is finished it's moved into `.plans/archive` folder.
+
+## The Tech Stack
+
+The harness and the Engine is written in Ruby, and uses deterministic state machine to move plans from one state to the next. 
+
+The engine & backend use redis (defined by `$REDIS_URL`) for coordination and resource locking, and AASM gem for state machine transitions.
+
+The web control room uses - React 19 and TypeScript 5.8, built with Vite 6, Tailwind CSS 4 and Radix UI, TanStack Query fetches data; @microsoft/fetch-event-source receives the server's event stream.
+
+CodeMirror 6 edits Markdown. marked and DOMPurify render it, and highlight.js colors code blocks.
+
+## Quick Start
+
+```bash
+brew tap kigster/tap
+brew install openlanes
+
+# cd into your project directory, which can be nearly blank or can be an established codebase
+ol setup      # downloads dependencies, ensures your `gh` is authenticated or runs `gh auth login -w`
+ol init       # interactively creates the configuration file .openlanes.yml for project specific settings
+ol start -j 8 # number of concurrent processes allowed
+```
+
+This starts all the parts, and it's recommended to start this inside a `screen` or a `tmux` session that survives your terminal disconnecting.
+
+## Running OpenLanes via mprocs
+
+If you want to see how OpenLanes runs and what it logs, you can drop this `mprocs.yml` file in the root of your repo, and use `mprocs` command to start OpenLanes. The Ruby Gem sources comes with one, but it's not distributed as part of the gem package. The gem souces are available [on Guthub](https://github.com/kigster/openlanes).
+
+```yaml
+---
+# `just start`: the engine, its API server and the page, all from this
+# checkout. The page is Vite's dev server on 5173, not the built web/dist,
+# so an edit to a .tsx or .css file is recompiled and pushed to the open
+# page at once; Vite proxies /api to the API server on 11000.
+#
+# Everything lands in log/development.log: the engine and the API server
+# through SemanticLogger, in colour here though the gem's default is plain,
+# and bin/ol-tee adds Vite and what the API server prints itself. The
+# engine is not piped, so its pane keeps its live board.
+procs:
+  engine: ol run -j 4 --no-web --stay --log-format color
+  api: bin/ol-tee api bundle exec exe/openlanes web --no-open --log-format color
+  # npm ci again whenever package-lock.json is newer than what is installed.
+  web: bin/ol-web
+  logs: tail -F log/development.log
+```
+
+
+
+You write a short feature brief; a team of specialist coding agents researches it, specifies it, plans it, builds it and reviews it, until it is a set of reviewed, CI-passing pull requests. You merge. Every feature is a folder under `.plans/`, and the folder's name is its state. The gem installs three names for the same executable: `openlanes`, `lanes` and `ol`.
+
+![The openlanes control room](docs/img/openlanes-control-room.avif)
 
 ## Picture is worth a few words ;) 
 
-![openlanes](docs/img/openlanes-busy.avif)
-
-Here is the screenshot of the web component of open lanes. When you run `lanes start` locally, this web UI automatcally opens and you can add your specifications here, or add existing plans to be executed in parallel with other plans.
+Above is the screenshot of the web component of open lanes. When you run `ol start` locally, this web UI automatcally opens and you can add your specifications via the UI, or you can execute `ol create` command on the CLI at the root of your project.
 
 The software uses distributed locking using redis, so `$REDIS_URL`  is the only thing you need to configure.
 
@@ -56,14 +123,6 @@ While the project select the default, each plan can override this on a case by c
 
 This is where you can communicate with the agents if they get stuck. You can also pop out a copilot window that allows you to chat with the main dispatcher AI.
 
-### More Features
-
-Are coming soon!
-
-
-
-![The openlanes control room: plan 000 on the board between Planning and Building, with luke-backend and rey-frontend working on it side by side, and the luke-backend panel open showing its model, tokens, context use and a box to message it](docs/img/openlanes-one-plan.avif)
-
 ## What it is
 
 **OpenLanes®** is an open source software factory written in Ruby. Its agents run on Claude Code by default, through `claude -p`, which skips loading your own configuration, skills and plugins; `codex` and `pi` can stand in per phase.
@@ -86,7 +145,7 @@ flowchart TB
   L --> Y[yoda-writer<br/>📋 full spec]
   Y --> P[luthen-rael-planner<br/>⭐ plan.md]
   P --> BE[luke-backend 🟡<br/>+ rey-frontend 🎨<br/>build]
-  Q[You: --lane quick] --> R2[r2d2-mechanic<br/>🟡 one mechanical task]
+  Q[You: --starts building] --> R2[r2d2-mechanic<br/>🟡 one mechanical task]
   BE & R2 -->|the harness pushes<br/>and opens the PR| H[hansolo-reviewer<br/>🟢 👀 review]
   H -->|🔴 changes requested| BE & R2
   H -->|approved| C[chewie-verifier<br/>🧪 runs the app through How to test]
@@ -100,7 +159,7 @@ flowchart TB
 
 Agents may write code, tests and plan documents, but never commit, push or merge. The harness checks that, then publishes the branch and opens the pull request itself.
 
-## Install
+## Manual Install
 
 Requirements:
 
@@ -113,21 +172,25 @@ Requirements:
 | Redis                                                          | the control room (`start`, `web`); `run` falls back to headless without it      |
 
 ```bash
-gem install openlanes agent-lock -N
-openlanes --help
-openlanes skills install            # copy the bundled skills into ~/.agents/skills (-n to preview)
-eval "$(openlanes completion zsh)"  # or bash; add to your shell rc
+gem install openlanes agent-lock agent-evals -N
+ol --help
+ol skills install    # copy the bundled skills into ~/.agents/skills (-n to preview)
+echo 'eval "$(ol completion zsh)"'  >> ~/.zshrc  # or bash; add to your shell rc
+echo 'eval "$(ol completion bash)"' >> ~/.bashrc # for bash; add to your shell rc
 ```
 
-[`agent-lock`](https://github.com/kigster/agent-lock) (`alock`) lets several agents share one checkout without overwriting each other's files. `skills install` copies rather than links, so re-run it with `--overwrite` after upgrading the gem.
+[`agent-lock`](https://github.com/kigster/agent-lock) (`alock`) lets several agents share one checkout without overwriting each other's files.
 
-## Quick start
+`skills install` copies rather than links, so re-run it with `--overwrite` after upgrading the gem.
+
+## Usage
 
 Run these anywhere inside your project:
 
 ```bash
-openlanes init                    # .openlanes.yml and .plans/ at the project root; -y asks nothing
-openlanes create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md, drafted and opened
+ol setup
+ol init                    # .openlanes.yml and .plans/ at the project root; -y asks nothing
+ol create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md, drafted and opened
                                   # finish the brief in spec.md and save it
 openlanes run -n                  # dry run: which agent would take which plan
 openlanes start                   # engine plus control room on http://127.0.0.1:11000
@@ -153,7 +216,7 @@ Under `-y` the defaults are `--ci none` (or what the folder already runs), `--me
 For a small mechanical task, skip research and planning:
 
 ```bash
-openlanes create --lane quick split big migration
+openlanes create --starts building split big migration
 ```
 
 ## Core concepts
@@ -198,6 +261,7 @@ Generated by `openlanes docs`; `openlanes states` draws every transition.
 | :----: | :------ | :------------- |
 | ⚪ | New | `spec.md` |
 | 🔎 | Researched | `spec.md` |
+| 🔗 | Linked | `spec.md` |
 | 📋 | Ready for Planning | `spec.md`, `plan.md` |
 | ⭐ | Planned | `spec.md`, `plan.md` |
 | 🟡 | Building | `spec.md`, `plan.md` |
@@ -209,7 +273,7 @@ Generated by `openlanes docs`; `openlanes states` draws every transition.
 | ✅ | Approved & Merged | `pull-requests.md` |
 | 😎 | Deployed | `deployed.md` |
 | 😱 | Rolled Back | `rollback.md` |
-| 💩 | Scrapped by Review | `rewrite.md` |
+| 🚫 | Scrapped by Review | `rewrite.md` |
 | ⭕ | Technical Block | `blocked.md` |
 | 🛑 | Product Block | `blocked.md` |
 | 💣 | Bomb | `blocked.md` |
@@ -238,6 +302,7 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | `lando-broker`      | Technical Block, Product Block, Bomb              | by contents                     | haiku/low     | all        |
 | `bb8-resolver`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
 | `c3po-operator`     | none: the control room's read-only copilot        | read-only                       | haiku/low     | all        |
+| `ewoki-linker` | After spec is written, determines if the current plan depends on another plan and inserts `depends_on` into frontmatter. | Ready for Planning | sonnet/medium | all |
 
 Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A plan's `spec.md` frontmatter can change the adapter, model and effort per phase.
 
@@ -264,28 +329,29 @@ When an agent hits a question that is not its to answer, it writes numbered ques
 
 Run `openlanes <command> --help` for flags and examples. Anything that writes to disk, GitHub or Linear previews with `-n` / `--dry-run` where it makes sense.
 
-| Command                                       | What it does                                                                               |
-| :-------------------------------------------- | :----------------------------------------------------------------------------------------- |
-| `init`                                        | write `.openlanes.yml` at the project root and create `.plans/`                            |
-| `start`                                       | the engine plus its control room, until Stop All Local or Ctrl-C                           |
-| `web`                                         | serve the control room alone; `--demo` replays a sample run                                |
-| `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`                                     |
+| Command                                       | What it does                                                 |
+| :-------------------------------------------- | :----------------------------------------------------------- |
+| `init`                                        | write `.openlanes.yml` at the project root and create `.plans/` |
+| `start`                                       | the engine plus its control room, until Stop All Local or Ctrl-C |
+| `web`                                         | serve the control room alone; `--demo` replays a sample run  |
+| `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`       |
 | `run`                                         | run the agents over the plans; `-n` to preview, `--until-settled` to stop at a fixed point |
-| `list-plans` (`status`, `st`)                 | open plans, their states and pull requests (`--all`: archived too)                         |
-| `index` (`idx`)                               | write `.plans/INDEX.md`                                                                    |
-| `unblock`                                     | fold answered questions from `blocked.md` back into the plan                               |
-| `worktree`                                    | create and seed a worktree for one plan                                                    |
-| `resync dirs` / `resync prs`                  | fix folder names; add `[NNN.MM]` prefixes to pull request titles                           |
-| `agents list` / `agents describe`, `describe` | the agent roster; one agent's definition                                                   |
-| `mail send` / `mail read`                     | messages between agents on one plan                                                        |
-| `state sign` / `state show`                   | an agent's signature in `state.json`; print it                                             |
-| `eval`                                        | score agents against `evals/cases`; `--live` runs them for real                            |
-| `docs`                                        | generate the conventions document from the state machine                                   |
-| `states` (`diagram`)                          | draw every state and transition                                                            |
-| `linear import` / `linear projects`           | export plans to Linear, one way                                                            |
-| `skills install`                              | copy the bundled skills into `~/.agents/skills`                                            |
-| `completion`                                  | print a bash or zsh completion script                                                      |
-| `version`                                     | print the version                                                                          |
+| `list-plans` (`status`, `st`)                 | open plans, their states and pull requests (`--all`: archived too) |
+| `index` (`idx`)                               | write `.plans/INDEX.md`                                      |
+| `unblock`                                     | fold answered questions from `blocked.md` back into the plan |
+| `worktree`                                    | create and seed a worktree for one plan                      |
+| `resync dirs` / `resync prs`                  | fix folder names; add `[NNN.MM]` prefixes to pull request titles |
+| `agents list` / `agents describe`, `describe` | the agent roster; one agent's definition                     |
+| `mail send` / `mail read`                     | messages between agents on one plan                          |
+| `state sign` / `state show`                   | an agent's signature in `state.json`; print it               |
+| `eval`                                        | score agents against `evals/cases`; `--live` runs them for real |
+| `docs`                                        | generate the conventions document from the state machine     |
+| `states` (`diagram`)                          | draw every state and transition                              |
+| `linear import` / `linear projects`           | export plans to Linear, one way                              |
+| `skills install`                              | copy the bundled skills into `~/.agents/skills`              |
+| `completion`                                  | print a bash or zsh completion script                        |
+| `link`                                        | adds `depends_on` to specs to ensure plans are executed in the right order. |
+| `version`                                     | print the version                                            |
 
 Global flag: `-C, --no-color`.
 
@@ -295,6 +361,7 @@ Global flag: `-C, --no-color`.
 - **`spec.md` frontmatter**: `lane`, `frontend`, `depth`, per-phase `adapter` / `model` / `effort`, `implementation_suggestions`, `implementation_requirements`, `task-completed-when`, `how-to-verify`.
 - **`PLANS_DIR`**: the plans directory, `.plans` by default.
 - **A lost Redis** does not stop the run. After 10 seconds without an answer every agent is paused through its control file (its clock stands still), nothing new starts, and the outage is recorded in `.plans/openlanes-state.json`. Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds, never more than 30 seconds apart, each gap drawn at random below that (full jitter) so engines sharing one Redis do not ask in step; `redis_backoff:` in `.openlanes.yml` changes the three (`initial: 1`, `cap: 30`, `jitter: true`). When it answers, the agents resume. If it has not answered within `redis_outage_hours` (1 by default, any positive number), the run shuts down the way `q` does. On resume the log says how long Redis was gone and which copy of the run state won, e.g. `Redis is back after 72s (by heartbeat), run state from file; resuming`: the length comes from this node's last heartbeat in Redis, or from the engine's own clock when Redis came back without one, and the run state from whichever of Redis and `.plans/openlanes-state.json` has the higher `seq`. The board page shows the same as `run.outage`, and warns while the engine has not published for more than 15 seconds. A Redis that restarts empty (no AOF, an old RDB snapshot) does not stop the run either: the engine makes its commands group again (issue #59).
+- **`events:`** in `.openlanes.yml`: `enabled` and `dir` for the opt-in durable run log, read back with `openlanes events report`. See [`docs/events.md`](docs/events.md).
 
 ## Further reading
 

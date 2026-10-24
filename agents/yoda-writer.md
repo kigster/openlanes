@@ -2,13 +2,13 @@
 name: yoda-writer
 description: Turns a researched spec.md into a complete specification and leaves a blank plan.md for the planner.
 handles: [researched, retroactive]
-advances_to: ready_for_planning
+advances_to: ready_for_linking
 model: sonnet
 effort: medium
 timeout: 900
 ledger: [spec.md]
 phase: specification
-lanes: [full]
+starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
 ---

@@ -62,10 +62,10 @@ RSpec.describe OpenLanes::Lifecycle::Brief, :tree do
     let(:spec_md) { File.join(path, "spec.md") }
 
     it "puts created: back when a draft rewrote the file without it, keeping the author's keys" do
-      File.write(spec_md, "---\nlane: quick\n---\n\n# Drafted\n")
+      File.write(spec_md, "---\nstarts: building\n---\n\n# Drafted\n")
       brief.stamp!("depth" => "fast")
 
-      expect(File.read(spec_md)).to eq("---\ncreated: 2026-10-13\nlane: quick\ndepth: fast\n---\n\n# Drafted\n")
+      expect(File.read(spec_md)).to eq("---\ncreated: 2026-10-13\nstarts: building\ndepth: fast\n---\n\n# Drafted\n")
     end
 
     it "never moves a created: date already there" do

@@ -26,9 +26,9 @@ The work could proceed and we chose not to yet. openlanes refuses the state unle
 **Trigger:** revisit once plan 021 is merged.
 ```
 
-## rewrite.md — 💩 Scrapped by Review
+## rewrite.md — 🚫 Scrapped by Review
 
-Written by `hansolo-reviewer` when the work is missing, broken, untested, off-spec, or still failing after two rejections. The plan survives; the pull requests do not. No agent handles 💩: a human reads this and decides whether to re-plan, rewrite the spec, or discard.
+Written by `hansolo-reviewer` when the work is missing, broken, untested, off-spec, or still failing after two rejections. The plan survives; the pull requests do not. No agent handles 🚫: a human reads this and decides whether to re-plan, rewrite the spec, or discard.
 
 ```markdown
 # Rate Feed Sync — Rewrite

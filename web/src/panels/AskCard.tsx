@@ -23,7 +23,7 @@ function HoldButton({ held, onClick, disabled }: { held: boolean; onClick: () =>
 }
 
 /**
- * A question's options, one full-width button each, stacked (D3), the recommended one tagged; then "Type something
+ * A question's options, one full-width button each, stacked (D3), the recommended one tagged and filled green; then "Type something
  * instead", always the last choice, which opens the text box under them. Once it is open the button goes, and the
  * box's own Send takes its place. A request for more time (E1) has nothing to say in words, so it has no such choice.
  */
@@ -36,7 +36,7 @@ export function Choices({ options, onChoose, onWords, inWords, disabled, words =
       <div className="ask-choices" role="group" aria-label="Choose an answer">
         {options.map((option) => (
           <button
-            key={option.letter} type="button" className={`btn btn-choice${option.recommended ? " is-recommended" : ""}`}
+            key={option.letter} type="button" className={`btn btn-choice${option.recommended ? " is-recommended btn-recommended" : ""}`}
             disabled={disabled} onClick={() => onChoose(option)}
           >
             {!isWord(option) && <span className="choice-letter" aria-hidden="true">{option.letter})</span>}

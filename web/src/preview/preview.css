@@ -7,7 +7,7 @@
 .preview-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 20px; border-bottom: 1px solid var(--hairline); }
 .preview-state { font-weight: 700; }
 .preview-state.is-running { color: var(--go); }
-.preview-state.is-restarting { color: var(--lane-plan); }
+.preview-state.is-restarting { color: var(--starts-planning); }
 .preview-state.is-failed { color: var(--alarm); }
 .preview-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .preview-error { flex-basis: 100%; color: var(--alarm); font-size: 14px; }

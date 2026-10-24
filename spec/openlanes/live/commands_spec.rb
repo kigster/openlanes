@@ -210,10 +210,10 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
 
     it "writes the chosen quality into .openlanes.yml, and refuses what is not a choice or not open" do
       send_command("answer", plan: "001.00", question: "Q1", text: "maybe")
-      send_command("answer", plan: "001.00", question: "Q1", text: "b) Good enough, but faster and cheaper")
+      send_command("answer", plan: "001.00", question: "Q1", text: "c) mvp: the fastest")
       send_command("answer", plan: "001.00", question: "Q1", text: "a")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(['Q1 takes a) or b), not "maybe"', "desired_codebase_quality: mvp in .openlanes.yml",
+        expect(apply.map(&:reason)).to eq(['Q1 takes a), b) or c), not "maybe"', "desired_codebase_quality: mvp in .openlanes.yml",
                                            "001.00 has no open question Q1"])
         expect(File.read(config)).to eq("desired_codebase_quality: mvp\n")
         expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).quality_ask).to include("answer" => "mvp", "by" => "dana")
@@ -666,7 +666,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       before do
         send_command("create_plans",
           idea:        "A tic-tac-toe game",
-          frontmatter: { lane: "quick", research: false, frontend: "false", depth: "fast" })
+          frontmatter: { starts: "building", research: false, frontend: "false", depth: "fast" })
         apply
       end
 
@@ -674,7 +674,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
 
       it "writes the lane, front end and depth into spec.md, where routing reads them" do
         aggregate_failures do
-          expect([spec.lane, spec.frontend, spec.depth]).to eq([:quick, false, :fast])
+          expect([spec.starts, spec.frontend, spec.depth]).to eq([:building, false, :fast])
           expect(spec.problems).to be_empty
           expect(created.read("spec.md")).to include("A tic-tac-toe game")
         end
@@ -685,12 +685,12 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       before do
         send_command("create_plans",
           idea:        "A tic-tac-toe game",
-          frontmatter: { lane: "full", research: true, frontend: "auto", depth: "auto" })
+          frontmatter: { starts: "research", research: true, frontend: "auto", depth: "auto" })
         apply
       end
 
       it "writes only the lane, and nothing for auto or research" do
-        expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\nlane: full\n---\n\n# ")
+        expect(created.read("spec.md")).to start_with("---\ncreated: #{Date.today.iso8601}\nstarts: research\n---\n\n# ")
       end
     end
 

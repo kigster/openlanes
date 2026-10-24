@@ -65,7 +65,7 @@ RSpec.describe OpenLanes::CLI::Init do
       _out, err, = run
       expect(machine).to have_received(:call).with(dry_run: false)
       expect(err).to include("running openlanes setup first", "✓ gh")
-      expect(written).to eq("project" => "acme-app", "lane" => "full", **decided)
+      expect(written).to eq("project" => "acme-app", "starts" => "research", **decided)
     end
 
     it "installs nothing on a dry run" do
@@ -88,7 +88,7 @@ RSpec.describe OpenLanes::CLI::Init do
   context "without a terminal" do
     it "writes the file at the repository root, not where it was typed" do
       run
-      expect(written).to eq("project" => "acme-app", "lane" => "full", **decided)
+      expect(written).to eq("project" => "acme-app", "starts" => "research", **decided)
     end
 
     it "creates the plans directory beside it" do
@@ -101,9 +101,9 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     it "takes every value as a flag" do
-      run(project: "Acme", lane: "quick", frontend: false, jobs: "4", quality: "mvp")
+      run(project: "Acme", starts: "building", frontend: false, jobs: "4", quality: "mvp")
       expect(written).to eq("project" => "Acme",
-        "lane" => "quick",
+        "starts" => "building",
         "frontend" => false,
         "jobs" => 4,
         "desired_codebase_quality" => "mvp",
@@ -111,8 +111,8 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     it "writes a file every other command can read" do
-      run(lane: "plan", jobs: "2")
-      expect(OpenLanes::Config.load(repo)).to have_attributes(lane: :plan, jobs: 2)
+      run(starts: "planning", jobs: "2")
+      expect(OpenLanes::Config.load(repo)).to have_attributes(starts: :planning, jobs: 2)
     end
 
     it "refuses jobs that are not a count" do
@@ -127,6 +127,16 @@ RSpec.describe OpenLanes::CLI::Init do
     it "leaves desired_codebase_quality unset, to be asked on the first ok-not-perfect review" do
       run
       expect(OpenLanes::Config.load(repo)).to have_attributes(quality_unset?: true)
+      expect(File).not_to exist(File.join(repo, ".plans", "decisions.md"))
+    end
+
+    it "takes standard and writes the choice, with all three options, into decisions.md" do
+      run(quality: "standard")
+      aggregate_failures do
+        expect(OpenLanes::Config.load(repo)).to have_attributes(desired_codebase_quality: :standard)
+        expect(File.read(File.join(repo, ".plans", "decisions.md")))
+          .to include("## desired_codebase_quality: standard", "Decided by openlanes init", "a) high: ", "c) mvp: ")
+      end
     end
   end
 
@@ -162,7 +172,7 @@ RSpec.describe OpenLanes::CLI::Init do
     it "prints the file and writes nothing" do
       out, err, = result
       expect([out, unwrapped(err), File.exist?(file), Dir.exist?(File.join(repo, ".plans"))])
-        .to match([start_with("project: Acme\nlane: full\nmerge:\n  by: human\n"),
+        .to match([start_with("project: Acme\nstarts: research\nmerge:\n  by: human\n"),
                    include("nothing was written", "Would write"), false, false])
     end
   end
@@ -174,7 +184,7 @@ RSpec.describe OpenLanes::CLI::Init do
     before do
       allow(prompt).to receive(:ask).with("Project name:", default: "acme-app").and_return("Acme")
       allow(prompt).to receive(:ask).with(/Plans to run at once/, default: nil).and_return("3")
-      allow(prompt).to receive(:select).with(/Default lane/, %w[full plan quick], default: "full").and_return("plan")
+      allow(prompt).to receive(:select).with(/Where a new plan starts/, %w[research planning building], default: "research").and_return("planning")
       allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"], default: "each plan decides")
                                        .and_return("NO")
       allow(prompt).to receive(:select).with(/desired quality of the codebase/, hash_including, any_args).and_return("high")
@@ -189,7 +199,7 @@ RSpec.describe OpenLanes::CLI::Init do
     it "asks for each value and writes the answers" do
       run
       expect(written).to eq("project" => "Acme",
-        "lane" => "plan",
+        "starts" => "planning",
         "frontend" => false,
         "jobs" => 3,
         "merge" => { "by" => "auto" },
@@ -199,13 +209,13 @@ RSpec.describe OpenLanes::CLI::Init do
 
     it "asks only for what no flag gave" do
       run(project: "Flagged",
-        lane: "quick",
+        starts: "building",
         frontend: true,
         jobs: "2",
         ci: "none",
         merge_by: "human",
         quality: "mvp")
-      expect(prompt).not_to have_received(:select).with(/CI setup|merges|desired quality|Default lane/, any_args)
+      expect(prompt).not_to have_received(:select).with(/CI setup|merges|desired quality|Where a new plan starts/, any_args)
       expect(prompt).not_to have_received(:ask).with(/Project name|Plans to run/, any_args)
     end
 
@@ -290,14 +300,14 @@ RSpec.describe OpenLanes::CLI::Init do
 
   describe "--reconfigure" do
     before do
-      File.write(file, "project: Acme\nlane: plan\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
+      File.write(file, "project: Acme\nstarts: planning\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
     end
 
     # Keys the interview never asks about, which --reconfigure once dropped.
     let(:unasked) do
       <<~YAML
         project: Acme
-        lane: plan
+        starts: planning
         merge:
           by: auto
           max_rejections: 3
@@ -317,7 +327,7 @@ RSpec.describe OpenLanes::CLI::Init do
       out, = run(reconfigure: true, yes: true, quality: "high")
       expect([out, written]).to match([include("- desired_codebase_quality: mvp", "+ desired_codebase_quality: high"),
                                        include("project" => "Acme",
-                                         "lane" => "plan",
+                                         "starts" => "planning",
                                          "merge" => { "by" => "auto" },
                                          "desired_codebase_quality" => "high")])
     end
@@ -351,7 +361,7 @@ RSpec.describe OpenLanes::CLI::Init do
     end
 
     it "lists a moved line rather than hiding it" do
-      File.write(file, "lane: plan\nproject: Acme\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
+      File.write(file, "starts: planning\nproject: Acme\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
       out, = run(reconfigure: true, yes: true, quality: "mvp")
       expect(out.lines.map(&:chomp)).to include("- project: Acme", "+ project: Acme")
     end

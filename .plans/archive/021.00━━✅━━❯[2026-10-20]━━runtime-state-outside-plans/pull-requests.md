@@ -84,7 +84,7 @@ $ bundle exec rubocop
 
 ## Answers, round 1
 
-Review comment 6305230803 (kigster, 💩 round 1, rejected 1/2) is a top-level PR comment, so it has no thread to reply in; each finding is answered here. There are no inline review comments on #106.
+Review comment 6305230803 (kigster, 🚫 round 1, rejected 1/2) is a top-level PR comment, so it has no thread to reply in; each finding is answered here. There are no inline review comments on #106.
 
 1. **fix** — `lib/openlanes/presentation/documentation.rb` now says the lock sits in the runtime state directory, with a legacy `locked-by.pid` still read. `openlanes docs` output is byte-identical to `docs/WORKFLOW.md`, so `just update-workflow` no longer reverts it. New example in `spec/openlanes/presentation/documentation_spec.rb` fails if the old "the folder holds a git-ignored" wording returns.
 2. **fix** — the red `ci/circleci: test` job (build 1201) passed `Run tests` and failed `Coverage of changed files`: `lib/openlanes/plans/lock.rb` at 92.98%. Four examples in `spec/openlanes/plans/lock_spec.rb` cover the uncovered branches: unreadable debris in the state directory, two lost claim races, `fresh?` on a missing file, and `alive?` on a pid it may not signal (EPERM). `lock.rb` is now 100%. The `CONFLICTING` state is the pushed branch (5ae150b, on the old base); the harness rebased the local branch onto `main` (e7fbd80c) before this round, and it pushes that.

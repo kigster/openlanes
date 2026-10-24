@@ -37,7 +37,13 @@ files = options[:files] || begin
   abort "coverage-changed: git diff against #{options[:base]} failed" unless $?.success?
   listed.split("\n")
 end
-files = files.map(&:strip).select { it.start_with?("lib/") && it.end_with?(".rb") }
+# openlanes.gemspec requires version.rb, and Bundler evaluates the gemspec
+# before spec_helper starts SimpleCov, so the file is loaded but never
+# measured and would read 0% on every version bump. A constant with no
+# behaviour has nothing a test could cover.
+UNMEASURABLE = %w[lib/openlanes/version.rb].freeze
+
+files = files.map(&:strip).select { it.start_with?("lib/") && it.end_with?(".rb") } - UNMEASURABLE
 
 if files.empty?
   puts "coverage-changed: no changed files under lib/"

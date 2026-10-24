@@ -13,8 +13,10 @@ module OpenLanes
       #   :rejected — carries `review-rejected`; `comments` are what to fix
       #   :merged, :closed — no longer open, merged or not
       #   :waiting — still open, waiting on a person
-      Outcome = Data.define(:plan, :pr, :kind, :comments) do
-        def initialize(comments: [], **rest) = super
+      #   `to` is where a :rejected one sends the plan: 🔴, or 🟡 for a
+      #   send-back under `desired_codebase_quality: standard` (plan 035)
+      Outcome = Data.define(:plan, :pr, :kind, :comments, :to) do
+        def initialize(comments: [], to: :rejected, **rest) = super
       end
 
       # @param github [Vcs::GitHub]

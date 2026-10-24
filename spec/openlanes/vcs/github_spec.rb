@@ -422,6 +422,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
+    it "adds the labels in also: beside the verdict, one --add-label each, and never removes them" do
+      openlanes = OpenLanes::Plans::ReviewLabel::OPENLANES
+      github.swap_label(number: 12, add: label, also: [openlanes], remove: %w[review-rejected openlanes], create_missing: false)
+
+      expect(argvs.first).to eq(%w[gh pr edit 12 --add-label ready-for-review --add-label openlanes --remove-label review-rejected])
+    end
+
     it "creates no label when the caller already has" do
       github.swap_label(number: 12, add: label, create_missing: false)
 

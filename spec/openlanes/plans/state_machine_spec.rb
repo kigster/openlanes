@@ -209,10 +209,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(machine.allowed).to include(:planned)
     end
 
-    it "offers only 📋 while plan.md is still blank" do
+    it "offers 🔗 and 📋 while plan.md is still blank, and not ⭐" do
       machine = machine_for(:new, files: { "spec.md" => "x", "plan.md" => "" })
 
-      expect(machine.allowed).to include(:ready_for_planning)
+      expect(machine.allowed).to include(:ready_for_linking, :ready_for_planning)
       expect(machine.allowed).not_to include(:planned)
     end
 
@@ -280,10 +280,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(described_class.new(subject).promote!.key).to eq(:building_ui)
     end
 
-    it "sends a review that found slop to 💩, keeping the plan and dropping the work" do
+    it "sends a review that found slop to 🚫, keeping the plan and dropping the work" do
       subject = built(:in_review, files: { "rewrite.md" => "start over" }, prs: ["Open 🟡"])
 
-      expect(described_class.new(subject).promote!(:shit).key).to eq(:shit)
+      expect(described_class.new(subject).promote!(:rewrite).key).to eq(:rewrite)
     end
   end
 
@@ -301,7 +301,8 @@ RSpec.describe OpenLanes::Plans::StateMachine do
 
     it "derives every step back from the spine, as far as 🏁" do
       expect(described_class::RETREAT).to eq(researched: :new,
-        ready_for_planning: :researched,
+        ready_for_linking: :researched,
+        ready_for_planning: :ready_for_linking,
         planned: :ready_for_planning,
         building: :planned,
         building_ui: :building,
@@ -331,10 +332,11 @@ RSpec.describe OpenLanes::Plans::StateMachine do
   describe "#spine_next" do
     it "walks spec → plan → build → review → verify → complete → merge → ship" do
       expected = {
-        retroactive: :planned, new: :researched, researched: :ready_for_planning, ready_for_planning: :planned,
+        retroactive: :planned, new: :researched, researched: :ready_for_linking,
+        ready_for_linking: :ready_for_planning, ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
         ready_for_review: :in_review, in_review: :verifying, verifying: :completed, completed: :approved, approved: :deployed,
-        rejected: :building_ui, rolled_back: :ready_for_review, shit: :planned,
+        rejected: :building_ui, rolled_back: :ready_for_review, rewrite: :planned,
         discarded: nil, blocked: nil, deployed: nil
       }
 
@@ -444,16 +446,103 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     end
   end
 
-  describe "📋 Ready for Planning" do
-    it "sits on the spine between researched and planned" do
-      expect(described_class::SPINE[:researched]).to eq(:ready_for_planning)
-      expect(described_class::SPINE[:ready_for_planning]).to eq(:planned)
+  describe "🔗 Ready for Linking" do
+    it "sits on the spine between researched and 📋" do
+      expect(described_class::SPINE[:researched]).to eq(:ready_for_linking)
+      expect(described_class::SPINE[:ready_for_linking]).to eq(:ready_for_planning)
     end
 
-    it "is justified by a spec and a plan.md that holds no plan yet", :tree do
+    it "is where a researched folder with a blank plan.md lands, the floor of its family", :tree do
       path = plans { |t|
         t.plan "020.00",
           :researched,
+          "qualified",
+          files: {
+            "spec.md" => "#{spec_body}\n## Research\n\nFound.\n", "plan.md" => ""
+          }
+      }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+      expect(subject.best_fit.key).to eq(:ready_for_linking)
+    end
+
+    it "stays at 🔗 while depends_on is unanswered, and says why", :tree do
+      path = plans { |t| t.plan "020.00", :ready_for_linking, "q", files: { "spec.md" => spec_body, "plan.md" => "" } }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
+      aggregate_failures do
+        expect(subject.machine.may?(:ready_for_planning)).to be(false)
+        expect(subject.machine.may?(:planned)).to be(false)
+        expect(subject.machine.onward(:ready_for_planning)).to eq(:ready_for_planning)
+        expect { subject.machine.promote!(:ready_for_planning) }
+          .to raise_error(described_class::Refused, /until `spec.md` answers `depends_on:`/)
+        expect(subject.best_fit.key).to eq(:ready_for_linking)
+      end
+    end
+
+    it "moves on to 📋 once depends_on is answered", :tree do
+      linked_spec = "---\ndepends_on: [none]\n---\n#{spec_body}"
+      path = plans { |t| t.plan "020.00", :ready_for_linking, "q", files: { "spec.md" => linked_spec, "plan.md" => "" } }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
+      expect(subject.machine.may?(:ready_for_planning)).to be(true)
+    end
+
+    it "leaves a 📋 plan from before the linker at 📋, unlinked", :tree do
+      path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => spec_body, "plan.md" => "" } }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
+      expect(subject.best_fit.key).to eq(:ready_for_planning)
+    end
+
+    it "is blockable, so a linker that finds a cycle can stop the plan" do
+      expect(described_class::BLOCKABLE).to include(:ready_for_linking)
+    end
+
+    context "when spec.md already answers depends_on" do
+      let(:linked) { "---\ndepends_on: [none]\n---\n#{spec_body}\n## Research\n\nFound.\n" }
+
+      it "refuses 🔗, so an unblocked 📋 plan comes back to 📋", :tree do
+        path = plans { |t| t.plan "020.00", :blocked, "q", files: { "spec.md" => linked, "plan.md" => "" } }
+        subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
+        expect(subject.machine.may?(:ready_for_linking)).to be(false)
+        expect(subject.best_fit.key).to eq(:ready_for_planning)
+      end
+
+      it "refuses to step a linked 📋 back to 🔗, so a discarded planner round stays at 📋", :tree do
+        path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => linked, "plan.md" => "" } }
+        machine = OpenLanes::Plans::Tree.new(dir: path).subjects.first.machine
+
+        expect(machine.retreat_refusal).to include("Ready for Linking")
+      end
+
+      it "steps onward from a refused 🔗 to its sibling 📋", :tree do
+        path = plans { |t| t.plan "020.00", :researched, "q", files: { "spec.md" => linked, "plan.md" => "" } }
+        machine = OpenLanes::Plans::Tree.new(dir: path).subjects.first.machine
+
+        expect(machine.onward(:ready_for_linking)).to eq(:ready_for_planning)
+      end
+    end
+
+    it "leaves a target alone when it fits, or when nothing in its family does", :tree do
+      path = plans { |t| t.plan "020.00", :researched, "q", files: { "spec.md" => spec_body, "plan.md" => "" } }
+      machine = OpenLanes::Plans::Tree.new(dir: path).subjects.first.machine
+
+      expect(machine.onward(:ready_for_linking)).to eq(:ready_for_linking)
+      expect(machine.onward(:planned)).to eq(:planned)
+    end
+  end
+
+  describe "📋 Ready for Planning" do
+    it "sits on the spine between 🔗 and planned" do
+      expect(described_class::SPINE[:ready_for_linking]).to eq(:ready_for_planning)
+      expect(described_class::SPINE[:ready_for_planning]).to eq(:planned)
+    end
+
+    it "is justified by a spec and a plan.md that holds no plan yet, and keeps its name", :tree do
+      path = plans { |t|
+        t.plan "020.00",
+          :ready_for_planning,
           "qualified",
           files: {
             "spec.md" => "#{spec_body}\n## Research\n\nFound.\n", "plan.md" => ""

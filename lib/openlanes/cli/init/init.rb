@@ -14,16 +14,16 @@ module OpenLanes
       desc "Write .openlanes.yml at the project root and create the plans directory"
 
       option :project, desc: "Heading for INDEX.md and similar (default: the root's directory name)"
-      option :lane,
-        values: Plans::Spec::LANES.map(&:to_s),
-        desc:   "Default lane for `openlanes create`: full, plan or quick (default: full)"
+      option :starts,
+        values: Plans::Spec::STARTS.map(&:to_s),
+        desc:   "Where new plans start: research, planning or building (default: research)"
       option :frontend,
         type: :boolean,
         desc: "Whether plans have a front end; leave it out to let each plan decide"
       option :jobs, aliases: ["-j"], desc: "How many plans `openlanes run` works on at once (default: cores - 2)"
       option :quality,
         values: Config::QUALITIES.map(&:to_s),
-        desc:   "desired_codebase_quality: high or mvp (R4); leave it out to be asked on the first ok-not-perfect review"
+        desc:   "desired_codebase_quality: high, standard or mvp (R4); asked on a terminal when left out"
       option :ci,
         values: Config::CI_PROVIDERS.map(&:to_s),
         desc:   "What checks pull requests: github_actions, circleci, jenkins, external or none " \
@@ -47,7 +47,7 @@ module OpenLanes
       example [
         "                                   # ask for each value on a terminal",
         "-y --project 'Equilibris App'       # ask nothing",
-        "-y --lane plan --no-frontend -j 4   # a command-line tool, four plans at once",
+        "-y --starts planning --no-frontend -j 4   # a command-line tool, four plans at once",
         "-y --ci github_actions --merge-by auto --quality mvp",
         "--reconfigure                       # ask again, show what changed",
         "-n                                  # show the file, write nothing"
@@ -77,6 +77,7 @@ module OpenLanes
 
         write(root, path, config, options) unless keep
         FileUtils.mkdir_p(plans)
+        decide(plans, config) unless keep
         puts path
         report(path, plans, keep, options)
       rescue OpenLanes::Error => e
@@ -133,7 +134,7 @@ module OpenLanes
       # @param options [Hash]
       # @return [Hash{Symbol => Object}]
       def given(options)
-        given = options.slice(:project, :lane).compact
+        given = options.slice(:project, :starts).compact
         given[:frontend] = options[:frontend] if options.key?(:frontend)
         given[:jobs] = count(options[:jobs]) if options[:jobs]
         given[:ci] = member(:ci, options[:ci], Config::CI_PROVIDERS) if options[:ci]
@@ -148,6 +149,18 @@ module OpenLanes
         return word if values.include?(word)
 
         refuse("--#{flag.to_s.tr("_", "-")} must be one of #{values.join(", ")}, not #{value.inspect}.", 64)
+      end
+
+      # The quality chosen, written down in `decisions.md` with every
+      # option it was chosen from.
+      #
+      # @param plans [String]
+      # @param config [OpenLanes::Config]
+      # @return [void]
+      def decide(plans, config)
+        return if config.quality_unset?
+
+        Engine::QualityQuestion.record(plans, config.desired_codebase_quality, by: "openlanes init")
       end
 
       # @param value [String, Integer, nil]

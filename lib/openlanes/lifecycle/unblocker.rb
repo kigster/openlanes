@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module OpenLanes
   module Lifecycle
     # Draining a plan's `blocked.md`, and saying what happened.
@@ -92,8 +94,10 @@ module OpenLanes
       #   phrase describing what the agent is doing
       # @param root [String] the repository the agent works in
       # @param commit [Boolean] false plans the invocation and changes nothing
-      def initialize(tree:, agent:, executor:, root: nil, commit: false)
+      # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each answer drained
+      def initialize(tree:, agent:, executor:, root: nil, commit: false, events: Events::NullSink.new)
         @tree = tree
+        @events = events
         @agent = agent
         @executor = executor
         @root = root || File.dirname(tree.dir)
@@ -176,12 +180,40 @@ module OpenLanes
       # @return [Outcome]
       def drain(subject, &progress)
         before = { subject.feature.ordinal.to_s => self.class.questions(subject) }
+        block = Digest::SHA256.hexdigest(subject.read("blocked.md").to_s)
         result = applying? ? invoke(subject, progress || proc {}) : [false, "not attempted: a dry run"]
         tree.reload
-        outcome(subject, result, before)
+        outcome(subject, result, before).tap { answered(it, block) }
       end
 
       private
+
+      # One `human_answered` per question the agent folded that had an
+      # answer waiting: its number and when, never its text.
+      #
+      # `blocked.md` numbers from B1 every time a plan blocks, so the number
+      # alone made a re-block's answer share the first answer's event id, and
+      # the log dropped it as a duplicate. The file's digest as it stood
+      # before the drain tells the two blocks apart, while two runs draining
+      # the same file still agree on one id.
+      #
+      # @param outcome [Outcome]
+      # @param block [String] digest of `blocked.md` before the drain
+      # @return [void]
+      def answered(outcome, block)
+        return unless outcome.ok
+
+        plan = outcome.subject.feature.ordinal.to_s
+        at = Time.now
+        outcome.before.select { it.answered && outcome.folded.include?(it.number) }.each do |question|
+          @events.record(:human_answered,
+            plan:,
+            seq: [block, question.number],
+            once: true,
+            block: "B#{question.number}",
+            answered_at: at.utc.iso8601(3))
+        end
+      end
 
       # @param subject [OpenLanes::Plans::Subject]
       # @param progress [OpenLanes::UI::Line]

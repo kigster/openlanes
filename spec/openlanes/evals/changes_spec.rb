@@ -23,6 +23,12 @@ RSpec.describe OpenLanes::Evals::Changes, :tree do
     expect(changes.paths).to eq(%w[lib/a.rb lib/gone.rb lib/new.rb])
   end
 
+  it "does not count a plan the fixture seeded as deleted" do
+    seeded = described_class.between(before.merge(".plans/034.00-y/spec.md" => "seed\n"), dir)
+
+    expect(seeded.paths).to eq(%w[lib/a.rb lib/gone.rb lib/new.rb])
+  end
+
   it "counts lines added plus lines removed" do
     expect(changes.lines).to eq(5)
   end

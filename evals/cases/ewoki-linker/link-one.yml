@@ -1,0 +1,45 @@
+id: link-one
+agent: ewoki-linker
+depth: fast
+description: >
+  The evaluator walks the tree that plan 034.00's parser returns, so it
+  cannot be built before 034 lands. The linker writes depends_on: ["034.00"]
+  with a reason that names the parser, and touches nothing else: a spec body
+  "tidied" on the way past, or an unquoted 34, fails however right the link.
+fixture:
+  state: ready_for_linking
+  slug: expression-evaluator
+  files:
+    spec.md: |
+      ---
+      lane: full
+      ---
+      # Expression Evaluator
+
+      `Calc::Evaluator.call(tree)` computes the value of the tree that
+      `Calc::Parser.parse` returns. The parser comes from plan 034.00; this plan
+      only walks its output and does the arithmetic.
+  repo:
+    README.md: |
+      # Calc
+
+      A calculator.
+    .plans/034.00━━⭐━━❯token-parser/spec.md: |
+      ---
+      lane: full
+      depends_on: [none]
+      ---
+      # Token Parser
+
+      `Calc::Parser.parse(text)` turns `1 + 2 * 3` into a tree of nodes.
+expect:
+  signed: true
+  spec_only: true
+  contains:
+    spec.md: ['depends_on: ["034.00"]', '/> 034\.00: .*[Pp]arser/']
+  untouched: [README.md]
+  depth:
+    fast:
+      changed_files: { max: 0 }
+      max_seconds: 300
+      max_tokens: 60000

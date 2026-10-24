@@ -23,6 +23,7 @@ brew 'kigster/tap/sopsy'
 # Pre-commit hooks to check for secrets
 brew 'gitleaks'
 brew 'detect-secrets'
+brew 'lefthook'
 
 # Multi-processor Manager (similar to foreman in ruby)
 brew 'mprocs'
@@ -33,7 +34,7 @@ brew 'rbenv'
 brew 'gh'
 brew 'mermaid-cli'
 brew 'circleci'
-brew 'gawk'        # bin/log-tee stamps each line with strftime, which BSD awk lacks
+brew 'gawk'        # bin/ol-tee stamps each line with strftime, which BSD awk lacks
 brew 'git'         # worktrees, branches, the boundary's reflog check
 brew 'imagemagick' # Verification::Screenshots recompresses each PNG with `magick`
 brew 'jq'          # coverage report_command, and reading traces back (Executor::TRACE_DIR)

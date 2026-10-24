@@ -62,8 +62,11 @@ module OpenLanes
       # @param dry_run [Boolean]
       # @param github [OpenLanes::Vcs::GitHub] asked which branch an open pull
       #   request is built from
-      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: GitHub.new)
+      # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each pull request opened
+      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: GitHub.new,
+        events: Events::NullSink.new)
         @root = root
+        @events = events
         @command = command
         @github = github
         @base = base
@@ -112,11 +115,20 @@ module OpenLanes
         commit(checkout, title)
         push(checkout)
         url = open ? open.url : create_pull_request(checkout, subject, title)
+        opened(subject, url) unless open
         label_error = url.nil? ? nil : label_for_review(url, resubmitted: !open.nil?)
 
         Publication.new(**base_fields(subject, checkout, title), url:, refusal: nil, updated: !open.nil?, label_error:)
       rescue TTY::Command::ExitError => e
         refuse(subject, checkout, title, git_complaint(e))
+      end
+
+      # @return [void]
+      def opened(subject, url)
+        number = url && GitHub.number_of(url)
+        return unless number
+
+        @events.record(:pr_opened, plan: subject.feature.ordinal.to_s, seq: number, once: true, number:)
       end
 
       # Why a push from this checkout would not reach the pull request, as
@@ -464,7 +476,8 @@ module OpenLanes
         lines[(start + 1)..].take_while { |l| !l.start_with?("## ", "# ") }.join.strip
       end
 
-      # Put `ready-for-review` on the pull request. A resubmission also takes
+      # Put `ready-for-review` on the pull request, and `openlanes` beside it,
+      # which says who opened it and is never taken off. A resubmission also takes
       # off whatever verdict the last review left: a `review-rejected` still
       # there after the fixes are pushed reads to the watch as a fresh
       # rejection, and the 🟢 plan would be sent straight back to 🔴.
@@ -475,7 +488,11 @@ module OpenLanes
       def label_for_review(url, resubmitted: false)
         number = GitHub.number_of(url)
         remove = resubmitted ? Plans::ReviewLabel.known : []
-        @github.swap_label(number:, repo: GitHub.repo_of(url), add: Plans::ReviewLabel::INITIAL, remove:)
+        @github.swap_label(number:,
+          repo: GitHub.repo_of(url),
+          add: Plans::ReviewLabel::INITIAL,
+          also: [Plans::ReviewLabel::OPENLANES],
+          remove:)
         nil
       rescue Error => e
         e.message

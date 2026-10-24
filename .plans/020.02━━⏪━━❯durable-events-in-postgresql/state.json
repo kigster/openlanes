@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "020.02",
+    "slug": "durable-events-in-postgresql"
+  },
+  "state": "retroactive",
+  "updated_at": "2026-10-23T21:37:23-07:00",
+  "stages": [],
+  "signatures": [],
+  "messages": [],
+  "moves": 1
+}

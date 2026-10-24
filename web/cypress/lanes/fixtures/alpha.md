@@ -1,6 +1,6 @@
 ---
 title: Lane note alpha
-lane: quick
+starts: building
 ---
 
 # Lane note alpha

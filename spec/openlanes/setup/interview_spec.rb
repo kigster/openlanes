@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Setup::Interview do
   let(:prompt) { TTY::Prompt::Test.new }
   let(:out) { StringIO.new }
   let(:extractor) { nil }
-  let(:given) { { project: "Acme", lane: "full", frontend: false, jobs: 2 } }
+  let(:given) { { project: "Acme", starts: "research", frontend: false, jobs: 2 } }
   # Keys for TTY::Prompt::Test: Enter takes the highlighted choice or the default.
   let(:enter) { "\r" }
   let(:down) { "\e[B" }
@@ -32,9 +32,9 @@ RSpec.describe OpenLanes::Setup::Interview do
       touch(".github/workflows/ci.yml")
       touch("Gemfile")
       touch("Gemfile.lock", "GEM\n  specs:\n    rails (8.0.1)\n")
-      # merge (Enter: human), quality (Down, Enter: mvp), eight stack questions (Enter each),
+      # merge (Enter: human), quality (Down twice, Enter: mvp), eight stack questions (Enter each),
       # open to another stack (n)
-      answer(enter, down, enter, *Array.new(8, "\n"), "n\n")
+      answer(enter, down, down, enter, *Array.new(8, "\n"), "n\n")
     end
 
     it "names the CI and asks nothing about it" do
@@ -135,7 +135,7 @@ RSpec.describe OpenLanes::Setup::Interview do
   end
 
   context "when the jobs answer is not a count" do
-    let(:given) { { project: "Acme", lane: "full", frontend: false } }
+    let(:given) { { project: "Acme", starts: "research", frontend: false } }
 
     # CI (Enter), merge (Enter), quality (Enter), eight stack questions, then jobs twice.
     before { answer(enter, enter, enter, *Array.new(8, "\n"), "many\n", "3\n") }

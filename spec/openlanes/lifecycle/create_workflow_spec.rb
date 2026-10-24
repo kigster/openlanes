@@ -28,9 +28,9 @@ RSpec.describe OpenLanes::Lifecycle::CreateWorkflow, :tree do
   end
 
   it "stamps lane and depth into spec.md's frontmatter" do
-    spec = create("split", "migration", lane: "quick", depth: "fast").value!.spec
+    spec = create("split", "migration", starts: "building", depth: "fast").value!.spec
 
-    expect(OpenLanes::Plans::Spec.parse(File.read(spec)).to_h.slice(:lane, :depth)).to eq(lane: :quick, depth: :fast)
+    expect(OpenLanes::Plans::Spec.parse(File.read(spec)).to_h.slice(:starts, :depth)).to eq(starts: :building, depth: :fast)
   end
 
   describe "a seed file" do

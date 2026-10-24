@@ -36,15 +36,6 @@ module OpenLanes
         domain:      "Domain:"
       }.freeze
 
-      QUALITY_QUESTION = "Please indicate the desired quality of the codebase (this affects the severity of items " \
-                         "found during review that will require rework):"
-
-      # Label → `desired_codebase_quality` (R4), the default first.
-      QUALITY_CHOICES = {
-        "High quality, but slower and more expensive: a review-ok-not-perfect PR returns to developers" => :high,
-        "Good enough, but faster and cheaper, think MVP: review-ok-not-perfect is accepted"             => :mvp
-      }.freeze
-
       PORT_ANSWERS = ["Port the code", "Start fresh beside it"].freeze
 
       # The answer offered first when `desired_codebase_quality` is asked
@@ -198,7 +189,7 @@ module OpenLanes
       def basics
         name = @defaults.project || File.basename(@root)
         project = @given[:project] || (ask? ? @prompt.ask("Project name:", default: name) : name)
-        lane = @given[:lane] || (ask? ? ask_lane : @defaults.lane || :full)
+        starts = @given[:starts] || (ask? ? ask_starts : @defaults.starts || :research)
         frontend = if @given.key?(:frontend)
                      @given[:frontend]
                    else
@@ -209,13 +200,13 @@ module OpenLanes
                else
                  (ask? ? ask_jobs : count(@defaults.jobs))
                end
-        { project:, lane: lane.to_sym, frontend:, jobs: }
+        { project:, starts: starts.to_sym, frontend:, jobs: }
       end
 
       # @return [String]
-      def ask_lane
-        lanes = Plans::Spec::LANES.map(&:to_s)
-        @prompt.select("Default lane for new plans:", lanes, default: (@defaults.lane || lanes.first).to_s)
+      def ask_starts
+        starts = Plans::Spec::STARTS.map(&:to_s)
+        @prompt.select("Where a new plan starts:", starts, default: (@defaults.starts || starts.first).to_s)
       end
 
       # Re-asked until the answer is a count, so a typo is caught at its own
@@ -228,13 +219,16 @@ module OpenLanes
         end.then { count(it) }
       end
 
-      # R4's question, worded as `openlanes init` has always asked it.
+      # R4's question, in the words {Engine::QualityQuestion::CHOICES} gives
+      # the page (plan 035).
       #
       # @param default [Symbol]
       # @return [Symbol]
       def ask_quality(default)
-        choices = QUALITY_CHOICES.to_h { |label, value| [label, value.to_s] }
-        @prompt.select(QUALITY_QUESTION, choices, default: choices.key(default.to_s)).to_sym
+        choices = Engine::QualityQuestion::CHOICES.to_h { [it.label, it.quality.to_s] }
+        @prompt.select("#{Engine::QualityQuestion::HEADING}. #{Engine::QualityQuestion::BODY}",
+          choices,
+          default: choices.key(default.to_s)).to_sym
       end
 
       # @return [Boolean, nil]

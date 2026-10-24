@@ -134,7 +134,8 @@ module OpenLanes
           slug:        subject.feature.slug,
           summary:     Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
           status:      status(subject.status),
-          lane:        Plans::Spec.for(subject).lane.to_s,
+          starts:      Plans::Spec.for(subject).starts.to_s,
+          group:       group_of(ordinal),
           station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
           up:          spent[:up],
           down:        spent[:down],
@@ -153,6 +154,18 @@ module OpenLanes
           finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
       end
 
+      # The dependency group a plan belongs to, named by its lowest ordinal:
+      # plans joined by an unfinished `depends_on:` edge share one, and the
+      # board draws a deeper groove where the group changes between rows. A
+      # plan in no group (finished, or linked to nothing open) is its own.
+      #
+      # @param ordinal [String]
+      # @return [String]
+      def group_of(ordinal)
+        @group_of ||= @tree.dependencies.groups.each_with_object({}) { |g, out| g.each { out[it] = g.first } }
+        @group_of.fetch(ordinal, ordinal)
+      end
+
       # @param status [OpenLanes::Plans::Status]
       # @return [Hash] `Status`
       def status(status) = { key: status.key.to_s, emoji: status.emoji, label: status.label, note: status.note.to_s.delete("`") }
@@ -165,7 +178,7 @@ module OpenLanes
                 .reject { |s| foreign?(s.feature.ordinal.to_s) }
                 .map do |s|
           { ordinal: s.feature.ordinal.to_s, title: s.feature.title, status: status(s.status),
-            lane: Plans::Spec.for(s).lane.to_s }
+            starts: Plans::Spec.for(s).starts.to_s }
         end
       end
 

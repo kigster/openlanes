@@ -4,7 +4,7 @@
 
 ```markdown
 ---
-lane: full                      # full | plan | quick
+starts: research                      # research | planning | building
 depth: medium                   # fast | medium | deep
 frontend: false                 # omit to inherit .openlanes.yml; true forces the front-end agent, false forbids it
 implementation_suggestions:     # offered to agents, who may take a better route and say why

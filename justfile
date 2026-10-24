@@ -51,9 +51,9 @@ web-dev:
     #!/usr/bin/env bash
     set -euo pipefail
     eval "$(rbenv init - bash 2>/dev/null || true)"
-    bin/log-tee api bundle exec exe/openlanes web --no-open --log-format color &
+    bin/ol-tee api bundle exec exe/openlanes web --no-open --log-format color &
     trap 'kill %1 2>/dev/null || true' EXIT
-    cd web && ../bin/log-tee vite npm run dev -- --open
+    cd web && ../bin/ol-tee vite npm run dev -- --open
 
 # Cypress against two demo servers, the second as demo@second-machine; run `just web-build` first
 web-e2e:

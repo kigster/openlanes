@@ -34,6 +34,7 @@ module OpenLanes
       GROUPS = [
         [:new, "New", %i[new]],
         [:researched, "Researched", %i[researched retroactive]],
+        [:ready_for_linking, "Linking", %i[ready_for_linking]],
         [:ready_for_planning, "Planning", %i[ready_for_planning]],
         [:building, "Building", %i[planned building rejected]],
         [:building_ui, "Building UI", %i[building_ui]],
@@ -53,7 +54,7 @@ module OpenLanes
 
       # The stop a plan in +state+ is shown at. A state a {GROUPS} entry
       # names is shown at that stop, which is how 🔴 Rejected lands at
-      # Building. Any other state off the spine (💩, 😱) is shown where the
+      # Building. Any other state off the spine (🚫, 😱) is shown where the
       # spine takes it next; one with no way forward (⭕, 🛑) where the
       # plan was when it stopped, which only its history knows.
       #
