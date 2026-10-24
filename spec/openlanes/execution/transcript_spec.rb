@@ -297,6 +297,90 @@ RSpec.describe OpenLanes::Execution::Transcript do
     end
   end
 
+  # The tile's extra lines: the sub-agents in flight now, which has to fall
+  # again when they end, unlike the cumulative count beside it. `claude`
+  # also reports each one as `task_started` and `task_notification` system
+  # events, which end it as surely as its `tool_result` does.
+  describe "sub-agents in flight, from task events" do
+    def begun(id) = started(id, tool_use_id: "toolu_#{id}")
+    def ended(id, status) = { type: "system", subtype: "task_notification", task_id: id, status: }.to_json + "\n"
+    def result = { type: "result", result: "done", is_error: false }.to_json + "\n"
+
+    it "counts started tasks until each one's notification arrives" do
+      feed(begun("a"), begun("b"), ended("a", "completed"))
+      after_first = transcript.running.size
+      feed(ended("b", "completed"))
+
+      expect([after_first, transcript.running.size, transcript.spawned]).to eq([1, 0, 2])
+    end
+
+    it "names a task by its subagent_type, as a Task call is named" do
+      feed({ type: "system", subtype: "task_started", task_id: "a", tool_use_id: "toolu_a", subagent_type: "Explore" }.to_json + "\n")
+
+      expect(transcript.running).to eq(["Explore"])
+    end
+
+    it "counts a sub-agent seen as both its Task call and its task_started once" do
+      call = { type: "tool_use", id: "toolu_a", name: "Task", input: { subagent_type: "Explore" } }
+      feed({ type: "assistant", message: { content: [call] } }.to_json + "\n", begun("a"))
+
+      expect(transcript.running).to eq(["Explore"])
+    end
+
+    it "ends a task that failed or was stopped" do
+      feed(begun("a"), begun("b"), ended("a", "failed"), ended("b", "stopped"))
+
+      expect(transcript.running).to be_empty
+    end
+
+    it "keeps a task in flight on a status it does not know" do
+      feed(begun("a"), ended("a", "pending"))
+
+      expect(transcript.running.size).to eq(1)
+    end
+
+    it "does not reopen a task whose notification overtook its start" do
+      feed(ended("a", "completed"), begun("a"))
+
+      expect(transcript.running).to be_empty
+    end
+
+    it "is empty once the result arrives, while the cumulative count stays" do
+      feed(begun("a"), begun("b"), result)
+
+      expect([transcript.running.size, transcript.spawned, transcript.progress.subagents]).to eq([0, 2, 2])
+    end
+
+    it "is empty once the stream ends without a result" do
+      feed(begun("a"))
+      transcript.finish
+
+      expect(transcript.progress.running).to eq([])
+    end
+
+    it "is published on every progress" do
+      counts = []
+      watched = described_class.new { counts << it.running.size }
+      [begun("a"), ended("a", "completed")].each { watched.push(it) }
+
+      expect(counts).to eq([1, 0])
+    end
+
+    # Recorded from `claude -p --output-format stream-json --verbose` with a
+    # prompt that fanned out to two sub-agents, ids and paths made fictional.
+    it "replays a real fan-out to none in flight and 2 spawned" do
+      counts = []
+      replay = described_class.new { counts << it.running.size }
+      replay.push(File.read(File.expand_path("../../fixtures/streams/subagent-fanout.ndjson", __dir__)))
+      replay.finish
+
+      aggregate_failures do
+        expect(counts.max).to eq(2)
+        expect([replay.running, replay.spawned]).to eq([[], 2])
+      end
+    end
+  end
+
   describe "#finish" do
     it "consumes a last line that never got its newline" do
       transcript.push(assistant(tool("Bash", { "command" => "bundle exec rspec" })).chomp)

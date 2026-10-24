@@ -37,6 +37,31 @@ RSpec.describe OpenLanes::Web::DemoBoard do
       expect(me["run"]["up"]).to eq(me["plans"].sum { it["up"] })
     end
 
+    # What F3's Cypress spec watches: one car whose sub-agents cycle 3, 1, 0
+    # every 12 ticks, and no other car with any.
+    it "fans one car out to 3 and later back to 0, and no other" do
+      fanned = car(described_class::FANNED)
+      seen = 24.times.map do |i|
+        board.advance(Time.utc(2026, 10, 13, 9, 1, i))
+        fanned["subagents"].size
+      end
+      others = me["plans"].flat_map { it["cars"] }.reject { it["key"] == described_class::FANNED }
+
+      aggregate_failures do
+        expect(seen).to include(3, 1, 0)
+        expect(seen.drop(seen.index(3))).to include(0)
+        expect(others.map { it["subagents"] }.uniq).to eq([[]])
+      end
+    end
+
+    it "has nothing in flight once the fanned-out car stops" do
+      fanned = car(described_class::FANNED)
+      fanned["state"] = "done"
+      board.advance(Time.utc(2026, 10, 13, 9, 2))
+
+      expect(fanned["subagents"]).to eq([])
+    end
+
     it "moves the other machine's clock too" do
       expect(board.others.first["at"]).to eq("2026-10-13T09:00:03Z")
     end

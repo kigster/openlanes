@@ -25,9 +25,19 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   const readOnly = !onOpen;
   const lock = lockMark(plan);
   const spinning = car.state === "running" && !look.blocked;
-  const cls = ["car", look.blocked && "is-blocked", spinning && "is-running", readOnly && "is-readonly"].filter(Boolean).join(" ");
+  // At most three lines: more would crowd the 248px tile, and the count itself is in the label. An older engine's
+  // read-only board sends no list, read as none.
+  const running = car.subagents?.length ?? 0;
+  const fanned = Math.min(running, 3);
+  const fanLabel = fanned ? `${running} sub-agent${running === 1 ? "" : "s"} running` : undefined;
+  const cls = ["car", look.blocked && "is-blocked", spinning && "is-running", readOnly && "is-readonly", fanned > 0 && "car-fanned"]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <div className={cls} data-car={car.key}>
+    <div className={cls} data-car={car.key} title={fanLabel} aria-label={fanLabel}>
+      {Array.from({ length: fanned }, (_, i) => (
+        <span key={i} className="car-stack-line" aria-hidden="true" style={{ "--n": i } as React.CSSProperties} />
+      ))}
       <div className="car-top">
         {spinning && <Gear />}
         {/* The tile shows the role (luke-backend reads "backend"); the full name stays the accessible name and the

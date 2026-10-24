@@ -322,6 +322,8 @@ module OpenLanes
         # journal lines go first, for the same reason: the dispatcher counts
         # its place in the list, and a list that started again at the
         # continuation would have it skip the continuation's first entries.
+        # `running` is left as the live session reports it: a session that is
+        # over has no sub-agent still in flight.
         #
         # @param progress [OpenLanes::Execution::Transcript::Progress]
         # @return [OpenLanes::Execution::Transcript::Progress]

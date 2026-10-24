@@ -71,6 +71,9 @@
 .car:has(.car-open[aria-expanded="true"]) { border-color: var(--ink); }
 .car:hover, .car:has(.car-open[aria-expanded="true"]) { border-left-color: var(--lane-color); }
 .car.is-blocked:hover, .car.is-blocked:has(.car-open[aria-expanded="true"]) { border-left-color: var(--alarm); }
+/* One line per sub-agent in flight, up to three, stacked outward from the tile's right edge. */
+.car-stack-line { position: absolute; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--lane-color);
+                  right: calc(-5px - var(--n) * 4px); opacity: calc(.9 - var(--n) * .2); pointer-events: none; }
 .car-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
 .car-gear { flex: none; width: 14px; height: 14px; color: var(--ink-soft); }
 /* The name takes the free space, so it stays on the left and the model on the right however many marks sit around it:
