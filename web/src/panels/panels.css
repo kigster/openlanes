@@ -21,6 +21,13 @@
 .ask-choices .btn-choice { background: var(--choice-bg); }
 .ask-choices .btn-choice:hover:not(:disabled) { background: var(--choice-bg-hover); }
 .btn-choice.is-recommended { border-color: var(--ink); border-width: 2px; }
+/* The recommended answer, filled green wherever options are offered. Scoped twice so it outranks both .btn's plate
+   background and .ask-choices' wash. */
+.btn.btn-recommended, .ask-choices .btn-choice.btn-recommended { background: var(--go-solid); color: var(--go-solid-ink); border-color: var(--go-solid); }
+.btn.btn-recommended:hover:not(:disabled), .ask-choices .btn-choice.btn-recommended:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--go-solid) 88%, #000); border-color: color-mix(in srgb, var(--go-solid) 88%, #000);
+}
+.btn-recommended .choice-tag { background: var(--go-solid-ink); color: var(--go-solid); }
 .choice-letter { font-weight: 800; flex: none; }
 .choice-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .choice-tag { flex: none; align-self: center; padding: 1px 8px; border-radius: 999px; background: var(--ink); color: var(--plate); font-size: 12px; font-weight: 700; }

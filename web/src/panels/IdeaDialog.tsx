@@ -199,7 +199,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
           <div className="start-body interview">
             {current.options.map((label, i) => (
               <button
-                key={i} type="button" className={i === current.recommended ? "btn btn-primary" : "btn"}
+                key={i} type="button" className={i === current.recommended ? "btn btn-recommended" : "btn"}
                 disabled={command.pending} onClick={() => void answer(`${String.fromCharCode(97 + i)}) ${label}`)}
               >
                 {String.fromCharCode(97 + i)}) {label}{i === current.recommended ? " (Recommended)" : ""}

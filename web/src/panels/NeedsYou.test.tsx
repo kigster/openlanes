@@ -123,6 +123,8 @@ describe("NeedsYou", () => {
       "a)Carry the remote URL and the worktree nameRecommended", "b)Carry the checkout path", "Type something instead",
     ]);
     expect(within(group).getAllByRole("button")[0]).toHaveClass("is-recommended");
+    expect(within(group).getAllByRole("button")[0]).toHaveClass("btn-recommended");
+    within(group).getAllByRole("button").slice(1).forEach((b) => expect(b).not.toHaveClass("btn-recommended"));
     expect(screen.getByText("Redis keys need one name per checkout. Which?")).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
   });
