@@ -16,7 +16,7 @@ No front end: `plan-frontend.md` has no units, so rey-frontend is not started an
 | `Lifecycle.retitle_prs(tree:, github:, adopt:, root:, commit:)` | `Success(Array<Resync::Prs::Change>)`, `Failure(Refusal(…, 69))` |
 | `Presentation.pr_changes(changes, dry_run:)` | `PrChanges` with `#lines` (STDOUT rows) and `#report` (STDERR) |
 | `Lifecycle.unblock(tree:, agent:, root:, dry_run:, quiet:).call(tokens)` | `Success(0 \| 1 \| 65 \| 66)`, `Failure(Refusal(…, 65))` for an unknown agent |
-| `Lifecycle.create_plan(dir:, root:, after:, status:, prs:, from:, spec:, draft:, lane:, depth:).call(words)` | `Success(CreateWorkflow::Created(path, message, spec))`, `Failure(Refusal(…, 64 \| 65 \| 66))` |
+| `Lifecycle.create_plan(dir:, root:, after:, status:, prs:, from:, spec:, draft:, starts:, depth:).call(words)` | `Success(CreateWorkflow::Created(path, message, spec))`, `Failure(Refusal(…, 64 \| 65 \| 66))` |
 | `Engine.run(tree:, origin:, **options).call` | `Success(0 \| 1)`, `Failure(Refusal(…, 64 \| 65 \| 66))` |
 | `Engine.start(tree:, origin:, rescan:, **options).call` | `Success(0)`, `Failure(Refusal(…, 69))` without Redis or the control room |
 

@@ -13,6 +13,10 @@ module OpenLanes
     # @return [OpenLanes::Vcs::Worktree]
     def worktree(root:, **) = Worktree.new(root:, **)
 
+    # @param root [String] repository root
+    # @return [OpenLanes::Vcs::Mainline]
+    def mainline(root:, **) = Mainline.new(root:, **)
+
     # @return [OpenLanes::Vcs::Publisher]
     def publisher(**) = Publisher.new(**)
 

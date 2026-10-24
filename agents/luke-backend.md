@@ -10,7 +10,7 @@ effort: high
 timeout: 1200
 ledger: [plan.md, pull-requests.md, plan-backend.md]
 phase: build
-lanes: [full, plan]
+starts: [research, planning]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
 ---

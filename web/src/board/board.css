@@ -15,6 +15,11 @@
 .plan::before { content: ""; position: absolute; z-index: 1; left: 10px; right: 10px; top: -3px; height: 6px; border-radius: 3px;
                 background: var(--groove); pointer-events: none;
                 box-shadow: inset 0 2px 3px var(--groove-shade), inset 0 -1px 0 var(--groove-light), 0 1px 0 var(--groove-light); }
+/* Where the dependency group changes between rows, the groove runs deeper: taller, darker, and lit by a white line
+   along its floor, so plans that never wait on each other read as separate tracks. */
+.plan.is-dag-break::before { top: -5px; height: 10px; border-radius: 5px; background: var(--groove-deep);
+                             box-shadow: inset 0 3px 5px var(--groove-deep-shade), inset 0 -2px 0 var(--groove-edge),
+                                         0 1px 0 var(--groove-light); }
 .plan.is-retiring { overflow: hidden; }
 .plan-head { padding: 0 16px 0 20px; }
 .plan-id { font-weight: 800; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }

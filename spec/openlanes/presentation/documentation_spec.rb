@@ -9,6 +9,15 @@ RSpec.describe OpenLanes::Presentation::Documentation do
 
   let(:document) { documentation.render }
 
+  def happy_diagram(starts)
+    document[/^### Starts at `#{starts}`\n\n#### The Happy Path\n\n```mermaid\n(.*?)```/m, 1].to_s
+  end
+
+  def failure_diagram(starts)
+    section = document[%r{^### Starts at `#{starts}`\n.*?\n</details>}m].to_s
+    section[/<details>.*?```mermaid\n(.*?)```/m, 1].to_s
+  end
+
   describe "#render" do
     it "says plainly that it is generated, and how to regenerate it" do
       aggregate_failures do
@@ -46,6 +55,55 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       end
     end
 
+    it "renders one path per starts value, along the states that value actually walks" do
+      rows = document.lines.grep(/^\| \*\*(research|planning|building)\*\* /)
+      step = lambda { |key|
+        state = OpenLanes::Plans::STATUS_BY_KEY.fetch(key)
+        "#{state.emoji} #{state.label}"
+      }
+
+      aggregate_failures do
+        expect(rows.map { |row| row[/^\| \*\*(\w+)\*\*/, 1] }).to eq(%w[research planning building])
+        spine = Enumerator.produce(:new) { OpenLanes::Plans::StateMachine::SPINE.fetch(it) { raise StopIteration } }
+        spine.each { |key| expect(rows[0]).to include(step[key]) }
+        expect(rows[1]).to include(step[:ready_for_linking], step[:ready_for_planning], step[:building_ui], "a blank `plan.md`")
+        expect(rows[1]).not_to include(step[:researched])
+        expect(rows[2]).to include(step[:ready_for_linking], step[:planned], step[:ready_for_review], "a one-unit `plan.md`")
+        expect(rows[2]).not_to include(step[:researched], step[:building_ui])
+      end
+    end
+
+    it "draws the happy path for each starts value left to right" do
+      aggregate_failures do
+        expect(happy_diagram(:research)).to include("direction LR", "new --> researched", "building --> building_ui", "approved --> deployed")
+        expect(happy_diagram(:research)).not_to include(": harness", "rejected -->")
+        expect(happy_diagram(:planning)).to include("new --> ready_for_linking : harness", "building --> building_ui")
+        expect(happy_diagram(:planning)).not_to include("researched :")
+        expect(happy_diagram(:building)).to include("new --> ready_for_linking : harness", "building --> ready_for_review")
+        expect(happy_diagram(:building)).not_to include("building_ui :", "researched :")
+      end
+    end
+
+    it "draws the failure states a starts value can return from, inside the toggle" do
+      aggregate_failures do
+        expect(failure_diagram(:research)).to include(
+          "direction TB",
+          "in_review --> rejected : request_changes",
+          "verifying --> rejected : request_changes",
+          "completed --> rejected : request_changes",
+          "rejected --> building_ui : build_ui",
+          "in_review --> building : build",
+          "in_review --> rewrite : slop",
+          "rewrite --> planned : plan",
+          "deployed --> rolled_back : rollback",
+          "rolled_back --> building : build"
+        )
+        expect(failure_diagram(:planning)).to include("rejected --> building_ui : build_ui", "rewrite --> ready_for_planning : ready_to_plan")
+        expect(failure_diagram(:building)).to include("rejected --> ready_for_review : submit", "rewrite --> planned : plan")
+        expect(failure_diagram(:building)).not_to include("rejected --> building_ui")
+      end
+    end
+
     it "documents every state the machine knows — emoji, label and key" do
       aggregate_failures do
         OpenLanes::Plans::STATUSES.each do |status|
@@ -75,7 +133,7 @@ RSpec.describe OpenLanes::Presentation::Documentation do
     end
 
     it "renders every transition into the mermaid diagram" do
-      diagram = document[/```mermaid\n(.*?)```/m, 1]
+      diagram = document[%r{<summary>Mermaid source for the diagram above </summary>.*?```mermaid\n(.*?)```}m, 1]
 
       aggregate_failures do
         expect(diagram).to include("stateDiagram-v2")

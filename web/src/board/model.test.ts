@@ -1,6 +1,6 @@
 import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, shortAgent, span, stamp, who } from "./format";
 import {
-  LANES,
+  STARTS,
   carLook,
   hasRequest,
   isFinished,
@@ -61,27 +61,27 @@ describe("format", () => {
 
 describe("routeOf", () => {
   it("fills the full lane up to its station", () => {
-    const r = routeOf({ lane: "full", station: "building" }, stations);
-    expect(r.stops).toEqual(["done", "done", "done", "here", "ahead", "ahead", "ahead"]);
-    expect(r.segs).toEqual(["done", "done", "done", "ahead", "ahead", "ahead"]);
+    const r = routeOf({ starts: "research", station: "building" }, stations);
+    expect(r.stops).toEqual(["done", "done", "done", "done", "here", "ahead", "ahead", "ahead"]);
+    expect(r.segs).toEqual(["done", "done", "done", "done", "ahead", "ahead", "ahead"]);
     expect(r.late).toBe(false);
   });
 
   it("draws the stations a lane does not use as off, and its skips as hollow rings", () => {
-    const r = routeOf({ lane: "quick", station: "in_review" }, stations);
-    expect(r.stops).toEqual(["off", "off", "off", "done", "skip", "here", "ahead"]);
-    expect(r.segs.slice(0, 3)).toEqual(["off", "off", "off"]);
+    const r = routeOf({ starts: "building", station: "in_review" }, stations);
+    expect(r.stops).toEqual(["off", "off", "off", "off", "done", "skip", "here", "ahead"]);
+    expect(r.segs.slice(0, 4)).toEqual(["off", "off", "off", "off"]);
     expect(r.late).toBe(true);
   });
 
   it("treats an unknown station as the first", () => {
-    expect(routeOf({ lane: "plan", station: "nowhere" }, stations).at).toBe(0);
+    expect(routeOf({ starts: "planning", station: "nowhere" }, stations).at).toBe(0);
   });
 });
 
 describe("rowColors", () => {
   it("is the lane while working, green once approved, purple once merged", () => {
-    expect(rowColors(samplePlan({ lane: "quick" })).color).toBe(LANES.quick.color);
+    expect(rowColors(samplePlan({ starts: "building" })).color).toBe(STARTS.building.color);
     expect(rowColors(samplePlan({ pr: samplePr({ state: "approved" }) })).color).toBe("var(--go)");
     expect(rowColors(samplePlan({ pr: samplePr({ state: "merged" }) })).color).toBe("var(--merged)");
   });

@@ -44,14 +44,19 @@ module OpenLanes
     #   @return [String] which coding agent runs it: `claude`, `codex` or `pi`
     # @!attribute [r] phase
     #   @return [String, nil] the word a spec's `phases:` map uses to reach it
-    # @!attribute [r] lanes
-    #   @return [Array<Symbol>] the lanes it works in; empty means every lane
+    # @!attribute [r] starts
+    #   @return [Array<Symbol>] which {Plans::Spec::STARTS} values this agent
+    #     works on; empty means every one
     # @!attribute [r] needs
     #   @return [Array<String>] plan files that must hold at least one work-unit
     #     heading before it is dispatched
     # @!attribute [r] toggle
     #   @return [String, nil] a spec.md frontmatter key that switches it off
     #     when false and on when true
+    # @!attribute [r] confined_to
+    #   @return [Array<String>] the plan files, relative to its folder, that
+    #     are all it may edit; empty means it is not confined. Enforced by
+    #     {Execution::Executor}, not asked for in the prompt.
     Agent = Data.define(:name,
       :description,
       :handles,
@@ -70,24 +75,28 @@ module OpenLanes
       :holds_at,
       :adapter,
       :phase,
-      :lanes,
+      :starts,
       :needs,
-      :toggle) do
+      :toggle,
+      :confined_to) do
       def initialize(ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: Adapters::DEFAULT,
-        phase: nil, lanes: [], needs: [], toggle: nil, **rest)
+        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], **rest)
         super
       end
 
       # @return [Boolean] whether this agent changes anything on disk
       def read_only? = advances_to.nil?
 
+      # @return [Boolean] whether {#confined_to} limits what it may edit
+      def confined? = !confined_to.empty?
+
       # @param status [OpenLanes::Plans::Status]
       # @return [Boolean]
       def handles?(status) = handles.include?(status.key)
 
-      # @param lane [Symbol]
+      # @param value [Symbol] one of {Plans::Spec::STARTS}
       # @return [Boolean]
-      def serves?(lane) = lanes.empty? || lanes.include?(lane.to_sym)
+      def serves?(value) = starts.empty? || starts.include?(value.to_sym)
 
       # The word after the last hyphen: `researcher`, `backend`, and `planner`
       # for `luthen-rael-planner`, whose name has two words before its role.

@@ -62,4 +62,4 @@ If `pull-requests.md` lists several PRs, judge each. Approve the plan only when 
 | :--------- | :------------- | :--------------------------------------------------------------------------------------------------- |
 | `rejected` | 🔴 Rejected    | `luke-backend` and `rey-frontend` fix your findings, then you review again                           |
 | `approved` | 🧪 Verifying   | `chewie-verifier` runs the app through How to test; nobody merges before it passes. No agent merges. |
-| `slop`     | 💩             | a human reads `rewrite.md` and decides. No agent handles 💩.                                         |
+| `slop`     | 🚫             | a human reads `rewrite.md` and decides. No agent handles 🚫.                                         |

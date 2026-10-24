@@ -157,7 +157,7 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .d-context p { margin: 0 0 6px; }
 .d-context strong { color: var(--ink); }
 .d-ctx-bar { position: relative; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 10%, transparent); }
-.d-ctx-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--lane-full); transition: width .4s ease; }
+.d-ctx-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--starts-research); transition: width .4s ease; }
 .d-ctx-bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--highlight); }
 .d-last-known { margin: 0 0 16px; font-size: 13px; overflow-x: auto; }
 .d-last-known h3 { margin: 0 0 6px; font-size: 13px; color: var(--ink); }

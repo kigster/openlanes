@@ -1,0 +1,42 @@
+id: none
+agent: ewoki-linker
+depth: fast
+description: >
+  A README badge needs nothing any other plan builds. The linker writes
+  depends_on: [none] rather than leaving the key out, since a missing key sends
+  the plan back to `openlanes link` every time, and links nothing for company.
+fixture:
+  state: ready_for_linking
+  slug: readme-badge
+  files:
+    spec.md: |
+      ---
+      lane: quick
+      ---
+      # README Badge
+
+      Add a licence badge under the title in `README.md`.
+  repo:
+    README.md: |
+      # Calc
+
+      A calculator.
+    .plans/034.00━━⭐━━❯token-parser/spec.md: |
+      ---
+      lane: full
+      depends_on: [none]
+      ---
+      # Token Parser
+
+      `Calc::Parser.parse(text)` turns `1 + 2 * 3` into a tree of nodes.
+expect:
+  signed: true
+  spec_only: true
+  contains:
+    spec.md: ['depends_on: [none]']
+  untouched: [README.md]
+  depth:
+    fast:
+      changed_files: { max: 0 }
+      max_seconds: 300
+      max_tokens: 60000

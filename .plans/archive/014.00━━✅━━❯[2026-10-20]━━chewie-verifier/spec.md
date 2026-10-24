@@ -164,7 +164,7 @@ Gathered 2026-10-14. Repository claims cite `file:line` on `origin/main` (b2b517
 ### Where verification sits today: nowhere
 
 - **No code after review.** hansolo's approved verdict ends the plan's run with the folder still at 👀: `lib/openlanes/engine/dispatcher.rb:1090-1093` adds it to `@finished_plans` with "approved, awaiting merge". On the 005 branch the same block is at `dispatcher.rb:1147-1150`.
-- **No state for it.** `in_review` (👀) is followed only by `approve` → ✅, `request_changes` → 🔴 and `slop` → 💩 (`lib/openlanes/plans/state_machine.rb:181-191`). `approved` requires every PR merged (`lib/openlanes/plans/status.rb:251-263`). No agent handles `approved` or later (`state_machine.rb:98-111`, `SETTLED`).
+- **No state for it.** `in_review` (👀) is followed only by `approve` → ✅, `request_changes` → 🔴 and `slop` → 🚫 (`lib/openlanes/plans/state_machine.rb:181-191`). `approved` requires every PR merged (`lib/openlanes/plans/status.rb:251-263`). No agent handles `approved` or later (`state_machine.rb:98-111`, `SETTLED`).
 - **No agent.** `agents/` holds nine files; none is `chewie-verifier`. `rg -n "chewie|ready-to-merge" lib agents spec` finds nothing on `main`.
 - **hansolo's hand-off says a human merges.** `agents/hansolo-reviewer.md:58`: "`approved` | stays 👀; the run ends | a human merges. No agent merges."
 

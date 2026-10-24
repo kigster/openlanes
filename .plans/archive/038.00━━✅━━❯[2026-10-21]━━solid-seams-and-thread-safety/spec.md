@@ -1,6 +1,6 @@
 ---
 created: 2026-10-20
-lane: full
+starts: research
 ---
 
 # Solid Seams and Thread Safety

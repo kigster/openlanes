@@ -36,7 +36,7 @@ When the root is not the current directory, print one line on STDERR naming it (
 
 ```yaml
 project: Equilibris App   # heading for INDEX.md and similar; default: the root's directory name
-lane: full                # default lane for `openlanes create`: full | plan | quick
+starts: research                # default lane for `openlanes create`: research | planning | building
 frontend: false           # project default for a spec's `frontend:`; omit to let each plan decide
 jobs: 4                   # how many plans `openlanes run` works on at once
 commands:                 # per-command option defaults, what openlanes.json used to hold

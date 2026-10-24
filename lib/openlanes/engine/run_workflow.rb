@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tty-prompt"
+
 module OpenLanes
   module Engine
     # `openlanes run` without the command: narrow the roster and the plans,
@@ -194,6 +196,21 @@ module OpenLanes
         refusal(e.message, 64)
       end
 
+      # R4's question on the terminal, before any agent starts (plan 035),
+      # when `.openlanes.yml` has no `desired_codebase_quality:` and a person
+      # is there to answer. Without a terminal the dispatcher holds every
+      # plan and the page asks instead ({Dispatcher#quality_awaited?}).
+      #
+      # @return [Symbol, nil] the quality chosen
+      def ask_quality
+        return if @dry_run || !Config.current.quality_unset? || !($stdin.tty? && $stderr.tty?)
+
+        quality = TTY::Prompt.new(output: $stderr)
+                             .select("#{QualityQuestion::HEADING}. #{QualityQuestion::BODY}",
+                               QualityQuestion::CHOICES.to_h { [it.label, it.quality] })
+        QualityQuestion.settle!(root: @root, plans_dir: @tree.dir, quality:, by: "openlanes run")
+      end
+
       # The warnings that must land before the first agent,
       # the state file, and a clean control file.
       #
@@ -205,6 +222,7 @@ module OpenLanes
         startup("Log", UI.log_path)
         credentials unless @dry_run || @quiet
         spec_warning(plans) unless @quiet
+        ask_quality
         sync_labels(migrated) if publishing?
 
         # The state file and the locks live in the runtime state directory,
@@ -400,7 +418,9 @@ module OpenLanes
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
+          events:       events,
           journal:      (journal_for(live) unless @dry_run),
+          quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
           **staying(web, live)
         )
       end
@@ -467,7 +487,15 @@ module OpenLanes
           return nil
         end
 
-        Vcs.publisher(root:, dry_run: @dry_run)
+        Vcs.publisher(root:, dry_run: @dry_run, events:)
+      end
+
+      # The durable run log (plan 020.01), one per run: the null sink on a
+      # dry run or when `.openlanes.yml` leaves `events:` off.
+      #
+      # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
+      def events
+        @events ||= @dry_run ? Events::NullSink.new : Events.emitter(root: @root)
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs
@@ -485,7 +513,7 @@ module OpenLanes
         outcome = Verification.outcome(root: @root,
           publisher:,
           github:,
-          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
+          outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new, events:),
           agents: Agents::Registry.new,
           # Read live, like `quality:` below: U3 asks the quality mid-run, and
           # an answer of mvp lowers the cap to 1 as soon as it is given.
@@ -525,7 +553,9 @@ module OpenLanes
           # while a plan waits at 🏁.
           merge_by: -> { Config.current.merger },
           worktree:,
-          publisher:)
+          publisher:,
+          # A merged plan's checkout with somebody's lock in it stays.
+          held:     ->(path) { Engine.agent_locks(@tree.dir)&.held_in(path)&.to_s })
       end
 
       # What the runner is told about idling past its fixed points. With its

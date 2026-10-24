@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
+require "socket"
+
 module OpenLanes
   module Engine
     # Drives specialist agents over a `.plans` tree until nothing is left to
@@ -54,7 +57,7 @@ module OpenLanes
       #   other machines; nil when the run is not live, and every plan is ours
       # @param stay [Boolean] idle past fixed points until a person stops
       #   the run; see {Dispatcher#done?}
-      # @param rescan [Integer] seconds between rescans while idle
+      # @param rescan [Integer] ticks between rescans while idle
       # @param watch [OpenLanes::Engine::PrWatch, nil] see {Dispatcher#initialize}
       # @param ignore_bombs [Boolean] `--ignore-bombs`: a 💣 halts nothing
       # @param aging_since [Date, nil] `plans.aging_since`, the floor of every
@@ -64,18 +67,24 @@ module OpenLanes
       #   nothing, and an approved plan then finishes at 👀
       # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
       #   journal each engine event is appended to; nil keeps none
+      # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
+      #   the durable run log (plan 020.01); {#call} scopes it to this run
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
       #   pull requests go through once palpatine has ruled; nil when the
       #   run publishes nothing
       # @param arbitration [OpenLanes::Engine::Arbitration, nil] the
       #   arbitrator's engine step (plan 015); nil when the run publishes
       #   nothing, since every ruling lands on a pull request
+      # @param quality_gate [#call, nil] true while `.openlanes.yml` has
+      #   no `desired_codebase_quality:`, which holds every new agent back
+      #   (plan 035); nil runs ungated
       def initialize(tree:, executor:, agents: Agents::Registry.new, isolation: :shared, jobs: 1, worktree: nil,
         plans: nil, publisher: nil, dry_run: false, rounds: nil, state: nil,
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
-        merging: nil, arbitration: nil)
+        merging: nil, arbitration: nil, quality_gate: nil, events: Events::NullSink.new)
         @tree = tree
+        @events = events
         @executor = executor
         @agents = agents
         @isolation = isolation
@@ -98,13 +107,14 @@ module OpenLanes
         @journal = dry_run ? nil : journal
         @merging = merging
         @arbitration = arbitration
+        @quality_gate = quality_gate
         @would_bomb = []
         @attempts = []
         @dropped = []
         @jobs = isolated? ? jobs : 1
       end
 
-      attr_reader :jobs, :worktree, :tree, :attempts, :executor, :agents
+      attr_reader :jobs, :worktree, :tree, :attempts, :executor, :agents, :events
 
       # @return [OpenLanes::Engine::Verification::Driver, nil]
       attr_reader :verification
@@ -230,6 +240,8 @@ module OpenLanes
       #   console can attach itself and reach the running jobs
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def call
+        @events = @events.with(run: mint_run)
+        @events.record(:run_started, jobs: @jobs, isolation: @isolation.to_s)
         dispatcher = Dispatcher.new(runner: self,
           state:    @state,
           rounds:   @rounds,
@@ -242,7 +254,16 @@ module OpenLanes
           journal:    @journal)
         yield dispatcher if block_given?
         @attempts = dispatcher.run
+      ensure
+        @events.record(:run_finished, rounds: @attempts.map(&:round).max || 0, changed: @attempts.count(&:advanced?))
       end
+
+      # An id for this run and nothing else: a digest of the process and the
+      # moment it started. No run id existed before (the state file keeps a
+      # pid and a start time), and the log needs one to group usage by run.
+      #
+      # @return [String] 16 hex digits
+      def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Clock::System.now.utc.iso8601(6)}")[0, 16]
 
       # @return [Array<OpenLanes::Plans::Subject>]
       def blocked = in_scope.select { |s| Dispatcher::BLOCKED.include?(s.status.key) }
@@ -281,6 +302,10 @@ module OpenLanes
 
       # @return [Boolean] whether a 💣 keeps every new agent from starting
       def halted? = !halted_by.empty?
+
+      # @return [Boolean] whether R4's question must be answered before any
+      #   new agent starts (plan 035)
+      def awaiting_quality? = @quality_gate&.call ? true : false
 
       # Plans in scope the dependency gate holds back, with the reason: a
       # dependency that is not done yet, or a cycle that no order can break.

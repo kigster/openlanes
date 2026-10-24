@@ -75,7 +75,7 @@ describe("HelpDialog", () => {
 describe("IdeaDialog", () => {
   it("shows the frontmatter form with its explanations, and passes axe", async () => {
     const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={() => {}} onCommand={recorder().onCommand} />);
-    expect(screen.getByRole("group", { name: "Lane" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Starts" })).toBeInTheDocument();
     expect(screen.getByText("Complex feature engaging all agents; costs the most in tokens.")).toBeInTheDocument();
     expect(screen.getByText(/No sends the spec straight to the copywriter/)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Your idea, in Markdown" })).toBeInTheDocument();
@@ -87,8 +87,8 @@ describe("IdeaDialog", () => {
     renderPanel(<IdeaDialog open onOpenChange={() => {}} onCommand={recorder().onCommand} />);
     await user.click(within(screen.getByRole("group", { name: "Research?" })).getByRole("radio", { name: "Yes" }));
     expect(screen.getByText(/Yes adds a research section/)).toBeInTheDocument();
-    await user.click(screen.getByRole("radio", { name: "Quick" }));
-    expect(screen.getByText("The plan and quick lanes skip research, so there is nothing to choose.")).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "Building" }));
+    expect(screen.getByText("Planning and building skip research, so there is nothing to choose.")).toBeInTheDocument();
     expect(within(screen.getByRole("group", { name: "Research?" })).getByRole("radio", { name: "Yes" })).toBeDisabled();
     await user.click(screen.getByRole("radio", { name: "Plan decides" }));
     await user.click(within(screen.getByRole("group", { name: "Front end" })).getByRole("radio", { name: "No" }));
@@ -106,13 +106,13 @@ describe("IdeaDialog", () => {
     expect(screen.getByText("Write the idea first. A sentence is enough.")).toBeInTheDocument();
     expect(sent).toHaveLength(0);
     await user.click(within(screen.getByRole("group", { name: "Research?" })).getByRole("radio", { name: "Yes" }));
-    await user.click(screen.getByRole("radio", { name: "Plan" }));
+    await user.click(screen.getByRole("radio", { name: "Planning" }));
     let content!: HTMLElement;
     act(() => { content = typeInEditor(baseElement, "# Budgets\n\nTrack spending."); });
     await act(async () => { fireEvent.keyDown(content, { key: "Enter", code: "Enter", keyCode: 13, ctrlKey: true }); });
     expect(sent).toEqual([{
       kind: "create_plans", plan: null, agent: null,
-      payload: { idea: "# Budgets\n\nTrack spending.", frontmatter: { lane: "plan", research: false, frontend: "auto", depth: "auto" }, decisions: [] },
+      payload: { idea: "# Budgets\n\nTrack spending.", frontmatter: { starts: "planning", research: false, frontend: "auto", depth: "auto" }, decisions: [] },
     }]);
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByTestId("announcer")).toHaveTextContent("Idea sent. Its plans join this run as they are created.");

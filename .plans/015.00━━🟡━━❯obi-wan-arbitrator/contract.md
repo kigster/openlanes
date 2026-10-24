@@ -68,10 +68,12 @@ B1, B2 → B3, B4, B6 → B5, B7 → F1. F1 needs only the shapes above, so rey 
 
 - Round 1: B1 (agent, `Arbitration::Ruling`), B2 (`PlanState#rule!`, schema, `state show`), B3 (`Arbitration::Counter`), B4 (`Arbitration::Effects`), B6 prompt half, B7 (snapshot fields).
 - Round 2: B5 — `Engine::Arbitration` (triggers in the spec's order, `#holds?`, `#tick`, `Asker` runs the agent through the executor and reads its answer from the trace), wired into `Runner`, `RunWorkflow#arbitration_for` and `Dispatcher#tick` / `#eligible?`; `Verification::Outcome` blocks the plan on the first chewie rejection after `cap/go`. B6: appeal and dispute steps in luke's and rey's texts.
-- Not built: the `(passed)` verdict word (see Assumptions); the arbitrator's eval cases (the evals harness has no ruling check yet); a dispatcher-level spec driving real ticks (the engine step is proven in `spec/openlanes/engine/arbitration_spec.rb` over a real tree and the fake `gh`, with only the agent's answer canned).
+- Round 3: the integration proof, `spec/openlanes/engine/dispatcher_arbitration_spec.rb` (real `Dispatcher#run` ticks, a capped 🔴 plan never reaches luke or rey, `no_go` ends it at ⭕️ with `## B1` quoting the ruling, one engine-posted PR comment, and `Live::Snapshot` carries `ruling` and `rejections: {count: 0, max: 2}`). Evals gained a `ruling` check (the final answer parsed by `Arbitration::Ruling.parse`; `run.json` carries `answer`, a live run reads it from the trace) and the case `evals/cases/obi-wan-kenobi-arbitrator/cap-medium` with pass and fail recordings.
+- Not built: the `(passed)` verdict word (see Assumptions).
 
 ## Assumptions
 
 - `arbitrating` is derived from open stages, not a new flag, so a killed arbitrator reads `false` once the harness closes its stage.
 - amended: `passed_check` runs at `mvp` only. `Config::QUALITIES` is `high|mvp` (R4 dropped `medium` and `top_notch`), so "medium and mvp" reads as `mvp`; `high` and unset run none.
+- Confirmed by rey (mail #2): the three snapshot keys above are what `web/src/api/types.ts` reads, all optional there.
 - amended: hansolo's "passed" verdict is the existing `review-ok-not-perfect` label (`ReviewLabel::RENAMED` maps `review-passed` to it), so no `(passed)` signature word was added; the trigger reads the label, keyed by hansolo's latest signature instead of the head SHA.

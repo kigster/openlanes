@@ -144,10 +144,10 @@ RSpec.describe "openlanes linear", :tree do
         expect(status).to eq(69)
       end
 
-      # 💩 and 😱 have no decided place on a board; guessing would file them
+      # 🚫 and 😱 have no decided place on a board; guessing would file them
       # in a column that reads exactly like the right one.
       it "reports the states nothing knows where to file" do
-        plans { |t| t.plan("002.00", :shit, "scrapped", files: { "rewrite.md" => "# Rewrite" }) }
+        plans { |t| t.plan("002.00", :rewrite, "scrapped", files: { "rewrite.md" => "# Rewrite" }) }
         _out, err, = run(command, team: "TAX", project: "Tax Rule DSL")
 
         expect(unwrapped(err)).to include("Not imported", "002.00", "Linear::PLACEMENTS")

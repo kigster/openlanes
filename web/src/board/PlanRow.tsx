@@ -4,7 +4,7 @@ import type { Car as CarData, ModelChoice, Node, Plan, Station, UnackedMail } fr
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, statusTip, unackedTip, who } from "./format";
-import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
+import { STARTS, keepsRow, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
 export interface CarHandlers {
@@ -25,6 +25,8 @@ interface PlanRowProps extends CarHandlers {
   faded?: boolean;
   /** A merged row on its way out: it fades, then folds away. */
   retiring?: boolean;
+  /** The row above belongs to another dependency group: the groove between them runs deeper. */
+  dagBreak?: boolean;
 }
 
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
@@ -65,8 +67,8 @@ export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
 }
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
-  const lane = LANES[plan.lane];
+export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
+  const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
   const readOnly = Boolean(owner);
@@ -114,7 +116,7 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   }
 
   // A plan finished this run keeps its row at half height, the narrow lanes' look, whatever the lanes toggle says.
-  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring"].filter(Boolean).join(" ");
+  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring", dagBreak && "is-dag-break"].filter(Boolean).join(" ");
   return (
     <article
       ref={scope}

@@ -164,7 +164,7 @@ Precedent for frontmatter that changes behaviour without changing `handles:`: `s
 N7 says "before a plan's first build agent", then lists "before luthen-rael in plan" and "before r2d2 in quick". luthen-rael handles `ready_for_planning`, not a build state. The states in question:
 
 - `full` and `plan` lanes: luthen-rael runs at 📋 Ready for Planning (`state_machine.rb:37-43` SPINE: `ready_for_planning` → `planned`).
-- `quick` lane: r2d2 handles `planned` (`agents/r2d2-mechanic.md:4`), and the lane jumps there (`lanes.rb`, `TARGET`).
+- `quick` starts: r2d2 handles `planned` (`agents/r2d2-mechanic.md:4`), and the lane jumps there (`lanes.rb`, `TARGET`).
 
 **Answer:** gate on either state, so ewoki runs before the first agent that moves the plan toward Building in each lane. The spec should name the two states, not "first build agent".
 

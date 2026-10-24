@@ -8,7 +8,7 @@ effort: medium
 timeout: 1200
 ledger: [plan.md, pull-requests.md, plan-frontend.md]
 phase: frontend
-lanes: [full, plan]
+starts: [research, planning]
 needs: ["plan.md#frontend"]
 toggle: frontend
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]

@@ -92,7 +92,8 @@ module OpenLanes
       # Fields asked of `gh pr view`, which unlike `pr list` can be told about
       # one pull request in another repository.
       VIEW_FIELDS = %w[
-        number title url headRefName headRefOid state isDraft mergedAt body labels mergeStateStatus
+        number title url headRefName headRefOid baseRefName mergeCommit state isDraft mergedAt body labels
+        mergeStateStatus
       ].freeze
 
       # A reference to one pull request: a bare number, a `#`-prefixed number,
@@ -130,16 +131,18 @@ module OpenLanes
 
         pr = JSON.parse(out)
         {
-          number:      pr["number"],
-          title:       pr["title"].to_s,
-          url:         pr["url"].to_s,
-          branch:      pr["headRefName"].to_s,
-          head:        pr["headRefOid"].to_s,
-          state:       self.class.state_label(pr),
-          open:        pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
-          labels:      Array(pr["labels"]).map { |l| l["name"] },
-          body:        pr["body"].to_s,
-          merge_state: pr["mergeStateStatus"].to_s
+          number:       pr["number"],
+          title:        pr["title"].to_s,
+          url:          pr["url"].to_s,
+          branch:       pr["headRefName"].to_s,
+          head:         pr["headRefOid"].to_s,
+          state:        self.class.state_label(pr),
+          open:         pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+          labels:       Array(pr["labels"]).map { |l| l["name"] },
+          body:         pr["body"].to_s,
+          merge_state:  pr["mergeStateStatus"].to_s,
+          base:         pr["baseRefName"].to_s,
+          merge_commit: pr.dig("mergeCommit", "oid").to_s
         }
       rescue TTY::Command::ExitError, JSON::ParserError => e
         raise Error, "could not read pull request #{ref}: #{e.message.lines.first.to_s.strip}"
@@ -152,6 +155,30 @@ module OpenLanes
       def pull_requests(refs)
         UI.stepping(refs, "Fetching pull requests") { |ref| ref }
         refs.map { |ref| pull_request(ref) }
+      end
+
+      # The pull request a branch merged through, newest first, for
+      # `worktree prune` to ask whether a checkout's work landed.
+      #
+      # @param branch [String]
+      # @return [Hash, nil] `{number:, base:, merge_commit:}`; nil when none merged
+      def merged_pull_for(branch)
+        out = @command.run("gh",
+          "pr",
+          "list",
+          "--state",
+          "merged",
+          "--head",
+          branch,
+          "--limit",
+          "1",
+          "--json",
+          "number,baseRefName,mergeCommit").out
+        pr = JSON.parse(out.to_s.strip.empty? ? "[]" : out).first or return nil
+
+        { number: pr["number"], base: pr["baseRefName"].to_s, merge_commit: pr.dig("mergeCommit", "oid").to_s }
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not list the pull requests of #{branch}: #{e.message.lines.first.to_s.strip}"
       end
 
       # `gh` speaks in enums; `pull-requests.md` speaks in the words the state
@@ -283,16 +310,19 @@ module OpenLanes
       # @param number [Integer]
       # @param repo [String, nil]
       # @param add [Plans::ReviewLabel]
+      # @param also [Array<Plans::ReviewLabel>] labels added beside +add+ that
+      #   are not verdicts, such as {Plans::ReviewLabel::OPENLANES}
       # @param remove [Array<String>] label names to take off
       # @param create_missing [Boolean] create +add+ on the repository first;
       #   false when the caller already has, once, for many pull requests
       # @return [Array<String>] the labels the pull request is left with
       # @raise [OpenLanes::Error]
-      def swap_label(number:, add:, repo: nil, remove: [], create_missing: true)
-        ensure_label(add, repo:) if create_missing
-        removing = remove.map(&:to_s) - [add.name]
+      def swap_label(number:, add:, repo: nil, also: [], remove: [], create_missing: true)
+        adding = [add, *also]
+        adding.each { ensure_label(it, repo:) } if create_missing
+        removing = remove.map(&:to_s) - adding.map(&:name)
         begin
-          edit_labels(number, add, removing, repo)
+          edit_labels(number, adding, removing, repo)
         rescue Error
           raise if removing.empty?
 
@@ -300,7 +330,7 @@ module OpenLanes
           # edit (open question 6). Adding alone would leave any of `removing`
           # it does carry beside the new one, two verdicts at once, so ask what
           # is still there and take exactly that off. A second failure is real.
-          edit_labels(number, add, labels(number:, repo:) & removing, repo)
+          edit_labels(number, adding, labels(number:, repo:) & removing, repo)
         end
         labels(number:, repo:)
       end
@@ -477,13 +507,12 @@ module OpenLanes
         stderr.empty? ? error.message.lines.first.to_s.strip : stderr
       end
 
-      def edit_labels(number, add, removing, repo)
+      def edit_labels(number, adding, removing, repo)
         @command.run("gh",
           "pr",
           "edit",
           number.to_s,
-          "--add-label",
-          add.name,
+          *adding.flat_map { ["--add-label", it.name] },
           *removing.flat_map { |r| ["--remove-label", r] },
           *repo_flag(repo))
       rescue TTY::Command::ExitError => e
