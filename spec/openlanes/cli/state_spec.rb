@@ -40,6 +40,13 @@ RSpec.describe "openlanes state", :tree do
     expect(JSON.parse(out)["signatures"].map { |s| s["status"] }).to eq(["Started"])
   end
 
+  it "lists the plan's rulings" do
+    OpenLanes::Plans::PlanState.for(Dir[File.join(plans_root, "001.00*")].first)
+                               .rule!(kind: "cap", pr: 7, round: 3, outcome: "no_go", findings: {}, winner: nil, reason: "still failing", trigger: "cap")
+    out, = show(plan: "001")
+    expect(JSON.parse(out)["rulings"].map { it.values_at("kind", "outcome") }).to eq([%w[cap no_go]])
+  end
+
   # Decision N3: an archived plan is still a plan; `--plan` finds it there.
   it "shows a plan that has moved into archive/" do
     plans do |t|

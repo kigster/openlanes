@@ -46,6 +46,26 @@ export function UnackedBadge({ count, mail = [] }: { count: number; mail?: Unack
   );
 }
 
+/**
+ * "rejected 2 of 3": how close the plan is to the rejection cap, where the arbitrator takes over. Nothing at zero, so a
+ * plan nobody has rejected keeps its meta line.
+ */
+export function RejectionsBadge({ rejections }: { rejections?: { count: number; max: number } }) {
+  if (!rejections || rejections.count <= 0) return null;
+  return <span className="rejections" title="Reviewer rejections so far, against the cap after which the arbitrator rules">rejected {rejections.count} of {rejections.max}</span>;
+}
+
+/** ⚖️ while the arbitrator is working on the plan, and only then. */
+export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
+  if (!arbitrating) return null;
+  return (
+    <span className="arbitrating" title="The arbitrator is ruling on this plan">
+      <span aria-hidden="true">⚖️</span>
+      <span className="sr-only">arbitrating</span>
+    </span>
+  );
+}
+
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
 export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
   const lane = STARTS[plan.starts];
@@ -114,6 +134,8 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
         <h3 className="plan-title" title={plan.summary || plan.title}>{plan.title}</h3>
         <div className="plan-meta">
           <span className="lane">{lane.label}</span>
+          <RejectionsBadge rejections={plan.rejections} />
+          <ArbitratingMarker arbitrating={plan.arbitrating} />
           <UnackedBadge count={plan.unacked} mail={plan.mail} />
           {owner ? (
             <span>on {who(owner)}</span>

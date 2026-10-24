@@ -265,6 +265,7 @@ module OpenLanes
           ask_for_time
           drain_mail
           watch_pull_requests
+          arbitrate
           settle_verifications
           settle_merges
           # On threads: a kill waits out TERM before KILL, and the board must not.
@@ -291,7 +292,7 @@ module OpenLanes
         return false if @stay
         # Nor does an ending run return in the middle of one: what it finds
         # is acted on, on the next tick, before the run reports.
-        return false if @runner.verification&.busy?
+        return false if @runner.verification&.busy? || @runner.arbitration&.busy?
 
         next_dispatchable.nil?
       end
@@ -590,7 +591,7 @@ module OpenLanes
       #
       # @return [Array<String>]
       def untouchable
-        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now
+        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now + arbitrating_now
         busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) || held_outside?(it) }
                       .map { it.feature.ordinal.to_s }
       end
@@ -603,6 +604,12 @@ module OpenLanes
       #
       # @return [Array<String>]
       def verifying_now = @runner.verification&.looking || []
+
+      # Plans the arbitrator is being asked about off the loop's thread,
+      # untouchable for the same reason until its ruling is applied.
+      #
+      # @return [Array<String>]
+      def arbitrating_now = @runner.arbitration&.asking || []
 
       # The Redis claim covers machines that share one; the lock file covers
       # a second run on this machine, or one that never reached Redis.
@@ -1294,6 +1301,9 @@ module OpenLanes
       # @return [Boolean]
       def eligible?(agent, subject)
         ordinal = subject.feature.ordinal.to_s
+        # A capped plan is the arbitrator's; one it is being asked about
+        # waits for the ruling, which may move it.
+        return false if @runner.arbitration&.holds?(subject) || arbitrating_now.include?(ordinal)
         return false if @running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
 
         past = @history[[ordinal, agent.name]].select { |h| h[:state] == subject.status.key }
@@ -2070,6 +2080,28 @@ module OpenLanes
         rejected = @runner.verification.reject(task, subject, why: result.to_markdown)
         note = rejected&.note || "no open pull request to reject"
         base.with(ok: !rejected.nil?, status: "Completed", to: rejected&.to || job.state, note: "#{result.headline}; #{note}")
+      end
+
+      # The arbitrator's step (plan 015): every plan nothing is running on is
+      # asked for a trigger, and a ruling that came back is applied before
+      # anything is assigned, so a capped plan never reaches its builders.
+      # The agent itself runs off this thread; see {Arbitration#tick}.
+      #
+      # @return [void]
+      def arbitrate
+        arbitration = @runner.arbitration or return
+        return if @runner.dry_run?
+
+        # The plans being asked about are untouchable to everything but the
+        # ruling, which is about to be applied.
+        busy = untouchable - arbitration.asking
+        arbitration.tick(@runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }).each do |outcome|
+          note = outcome.error || outcome.effects.ruling.values_at("kind", "outcome").join(": ")
+          UI.log("⚖️ #{outcome.trigger}: #{note}", level: outcome.error ? :warn : :info, plan: outcome.plan)
+          # A ruling moved the plan or freed it for its builders; a refused
+          # one waits out its back-off, so nothing is worth a rescan for it.
+          wake! unless outcome.error
+        end
       end
 
       # What the last look at CI found for the verified plans, logged, and

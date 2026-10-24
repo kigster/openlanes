@@ -61,8 +61,9 @@ module OpenLanes
         # word, as `rejected`, `rejected 1/2` (hansolo) or `rejected: …` (the
         # harness signing for chewie). Anchored rather than searched for: an
         # approving note that says "nothing to reject" is not a rejection, and
-        # counting it would reach the arbitrator a round early.
-        REJECTION = %r{\Arejected(?=\z|[\s:/])}i
+        # counting it would reach the arbitrator a round early. Spelled once,
+        # in {OpenLanes::Arbitration::Counter}, which does the counting.
+        REJECTION = OpenLanes::Arbitration::Counter::REJECTION
 
         # Where {#send_back_for_quality} sends a plan, by quality (plan 035):
         # `standard` back to 🟡 for another build, `high` to 🔴 as a rejection.
@@ -128,7 +129,7 @@ module OpenLanes
         # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration.new, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now })
+          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now })
           @root = root
           @publisher = publisher
           @github = github
@@ -279,22 +280,12 @@ module OpenLanes
         # @raise [OpenLanes::Error] when GitHub cannot be asked
         def labels(pull) = @github.labels(number: number_of(pull), repo: Vcs::GitHub.repo_of(pull.url))
 
-        # Every rejection of this plan so far, hansolo's and chewie's
-        # together (M6). Derived from their signatures every time, never
-        # stored: a count kept beside the ledger is a second answer to one
-        # question.
+        # Every rejection of this plan toward the cap, hansolo's and chewie's
+        # together (M6), as {OpenLanes::Arbitration::Counter} counts them.
         #
         # @param plan [OpenLanes::Plans::Subject]
         # @return [Integer]
-        def rejections(plan)
-          judges = @agents.all.select { %w[review verification].include?(it.phase.to_s) }
-          files = judges.flat_map(&:ledger).uniq
-          names = judges.map(&:name)
-          Plans::Ledger.read(plan.feature.path, files).entries
-                       .select { names.include?(it.agent) && it.completed? && it.note.to_s.strip.match?(REJECTION) }
-                       .uniq { [it.agent, it.note, it.at.to_i / 60] }
-                       .size
-        end
+        def rejections(plan) = OpenLanes::Arbitration.counter(agents: @agents).call(plan)
 
         private
 
@@ -471,6 +462,8 @@ module OpenLanes
           max = @max.respond_to?(:call) ? @max.call : @max
           tally = counted ? "rejected #{count} of #{max}" : "sent back for setup, not counted (#{count} of #{max})"
           @arbitration.call(plan:, count:, max:) if counted && count >= max
+          # Asked before the move: the rename leaves +plan+'s path behind.
+          last_chance = after_go?(plan, count, counted)
           moved = @outcomes.apply(PrWatch::Outcome.new(plan: plan.feature.ordinal.to_s,
             pr: number_of(pull),
             kind: :rejected,
@@ -482,8 +475,34 @@ module OpenLanes
                   end
           Result.new(kind: :rejected,
             note: "verification #{counted ? "rejected" : "sent back"} PR ##{number_of(pull)}, #{tally}; #{label}" \
-                  "#{"; #{moved.note}" if moved}",
-            to: moved&.to)
+                  "#{"; #{moved.note}" if moved}#{"; blocked: the last verification after a go ruling failed" if (blocked = last_chance && block(plan))}",
+            to: blocked ? :blocked : moved&.to)
+        end
+
+        # The first counted rejection after a `cap/go` ruling (M8): the
+        # arbitrator already gave the plan its last chance, so it goes to a
+        # person rather than back to the builders.
+        #
+        # @return [Boolean]
+        def after_go?(plan, count, counted)
+          return false unless counted && count == 1
+
+          Plans::PlanState.for(plan.feature.path).rulings.select { it["kind"] == "cap" }.last&.fetch("outcome", nil) == "go"
+        end
+
+        # @return [Boolean] whether the plan reached ⭕️
+        def block(plan)
+          subject = Plans::Tree.new(dir: File.dirname(plan.feature.path)).find(plan.feature.ordinal.to_s) or return false
+          OpenLanes::Arbitration.block(subject, <<~MD)
+            # Blocked
+
+            ## B1 Verification failed again after the arbitrator ruled go at the cap
+
+            The arbitrator gave this plan one last verification, and it failed. Read chewie's comment on the pull request.
+
+            a) Send it back to the builders for one more round. (Recommended)
+            b) Close the pull request and replan.
+          MD
         end
 
         # @return [String] Markdown
