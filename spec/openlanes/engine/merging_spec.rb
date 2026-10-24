@@ -425,7 +425,8 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
     let(:other) { Dir.mktmpdir("openlanes-other-checkout") }
     let(:missing) { File.join(other, "never-made") }
     let(:checkout) { OpenLanes::Vcs::Worktree::Checkout.new(ordinal: "034.00", branch: "kig/034", path: other, created: false) }
-    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout) }
+    # The merged plan has no checkout of its own here, so nothing to retire.
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout, checkouts_of: []) }
     let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, branch_mismatch: nil, pushed!: nil) }
     let(:refresh) { instance_double(OpenLanes::Vcs::Refresh, abort!: nil) }
 
@@ -496,6 +497,75 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       merging.assess(plan, "auto")
 
       expect(merging.pending_rebases).to be_empty
+    end
+  end
+
+  # Whether a checkout's work landed is Vcs::Worktree's question, asked of
+  # real repositories in its own spec. Here: whether, when, and with what.
+  describe "retiring the plan's worktree" do
+    subject(:merging) do
+      described_class.new(github: OpenLanes::Vcs::GitHub.new,
+        outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by: -> { merge_by },
+        worktree:,
+        clock:    -> { now },
+        held:)
+    end
+
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkouts_of: ["/w/033.00-merge-risk"]) }
+    let(:held) { ->(_path) {} }
+    let(:retired) do
+      OpenLanes::Vcs::Worktree::Retirement.new(path: "/w/033.00-merge-risk",
+        branch: "kig/033.00-merge-risk",
+        sha: "a" * 40,
+        removed: true,
+        reason: "landed in 5feedfac")
+    end
+
+    before { allow(worktree).to receive(:retire).and_return(retired) }
+
+    it "retires it once a person merges the plan's pull request" do
+      merging.assess(plan, "manual")
+      edit_gh { it["prs"]["1"].merge!("state" => "MERGED", "merged_at" => "2026-10-20T12:00:00Z", "merge_commit" => "c0mm1t") }
+      merging.advance(plan)
+
+      expect(worktree).to have_received(:retire).with("/w/033.00-merge-risk", merge_commit: "c0mm1t", base: "main", held:)
+    end
+
+    it "retires it once the engine merges it, with the commit GitHub merged it as" do
+      merging.assess(plan, "auto")
+
+      expect(worktree).to have_received(:retire).with("/w/033.00-merge-risk", merge_commit: "5feedface1", base: "main", held:)
+    end
+
+    it "leaves it alone when the pull request was closed unmerged" do
+      merging.assess(plan, "manual")
+      edit_gh { it["prs"]["1"]["state"] = "CLOSED" }
+      merging.advance(plan)
+
+      expect(worktree).not_to have_received(:retire)
+    end
+
+    it "logs a retirement GitHub could not answer for, and carries on" do
+      allow(worktree).to receive(:retire).and_raise(OpenLanes::Error, "boom")
+      allow(OpenLanes::UI).to receive(:log)
+
+      expect(merging.assess(plan, "auto")).to have_attributes(merged: true)
+      expect(OpenLanes::UI).to have_received(:log).with("worktree not retired: boom", level: :warn, plan: "033.00")
+    end
+
+    context "with a second pull request still open" do
+      let(:numbers) { [1, 2] }
+
+      # The sibling is rebased in that very checkout after the merge.
+      it "keeps the checkout" do
+        allow(OpenLanes::Vcs::Refresh).to receive(:new).and_return(instance_double(OpenLanes::Vcs::Refresh,
+          call: OpenLanes::Vcs::Refresh::Outcome.new(kind: :current)))
+        allow(worktree).to receive_messages(path_for: "/w/033.00-merge-risk", checkout_for: nil)
+        merging.assess(plan, "auto")
+
+        expect(worktree).not_to have_received(:retire)
+      end
     end
   end
 end

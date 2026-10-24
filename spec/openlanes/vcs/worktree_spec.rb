@@ -325,6 +325,152 @@ RSpec.describe OpenLanes::Vcs::Worktree do
     end
   end
 
+  describe "#retire" do
+    def git(dir, *) = system("git", "-C", dir, *, out: File::NULL, err: File::NULL)
+    def head(dir) = `git -C #{dir} rev-parse HEAD`.strip
+    def branch?(name) = git(repo, "show-ref", "--verify", "--quiet", "refs/heads/#{name}")
+
+    def commit(dir, file, body, message = "edit #{file}")
+      File.write(File.join(dir, file), body)
+      git(dir, "add", "-A")
+      git(dir, "commit", "-qm", message)
+      head(dir)
+    end
+
+    let(:checkout) { worktrees.checkout_for(feature) }
+    let(:branch) { "tester/002.00-tenancy-households" }
+
+    # What GitHub does on a squash merge: one new commit on main holding the
+    # branch's files, under a hash the branch never had. main moved on first,
+    # so the trees differ and only the files the branch changed can match.
+    def squash_merge(files)
+      commit(repo, "CHANGELOG.md", "unrelated\n", "someone else's work")
+      files.each { |file, body| File.write(File.join(repo, file), body) }
+      git(repo, "add", "-A")
+      git(repo, "commit", "-qm", "Squashed (#7)")
+      head(repo)
+    end
+
+    it "removes a checkout whose squash-merged work is on main, and its branch" do
+      commit(checkout.path, "household.rb", "class Household; end\n")
+      merged = squash_merge("household.rb" => "class Household; end\n")
+
+      retired = worktrees.retire(checkout.path, merge_commit: merged, base: "main")
+
+      aggregate_failures do
+        expect(retired).to be_removed
+        expect(retired.branch).to eq(branch)
+        expect(File.directory?(checkout.path)).to be(false)
+        expect(branch?(branch)).to be(false)
+        expect(retired.to_s).to start_with("worktree 002.00-tenancy-households removed (#{branch} was ")
+      end
+    end
+
+    it "removes a checkout whose tip is the merge commit itself" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+
+      expect(worktrees.retire(checkout.path, merge_commit: tip, base: "main")).to be_removed
+    end
+
+    it "keeps a checkout with a commit the merge does not hold" do
+      commit(checkout.path, "household.rb", "class Household; end\n")
+      merged = squash_merge("household.rb" => "class Household; end\n")
+      commit(checkout.path, "ledger.rb", "class Ledger; end\n")
+
+      retired = worktrees.retire(checkout.path, merge_commit: merged, base: "main")
+
+      aggregate_failures do
+        expect(retired).not_to be_removed
+        expect(retired.reason).to eq("its branch has work that is not in #{merged[0, 8]}")
+        expect(File.directory?(checkout.path)).to be(true)
+        expect(branch?(branch)).to be(true)
+        expect(retired.to_s).to eq("worktree 002.00-tenancy-households kept: #{retired.reason}")
+      end
+    end
+
+    it "keeps a checkout with uncommitted work" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+      File.write(File.join(checkout.path, "notes.md"), "half a thought\n")
+
+      expect(worktrees.retire(checkout.path, merge_commit: tip, base: "main").reason).to eq("it has uncommitted changes")
+    end
+
+    # A stacked pull request merges into its parent's branch and reports
+    # MERGED all the same, while main never sees it.
+    it "keeps a checkout whose pull request merged anywhere but main" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+
+      expect(worktrees.retire(checkout.path, merge_commit: tip, base: "tester/001.00-parent").reason)
+        .to eq("its pull request merged into tester/001.00-parent, not main")
+    end
+
+    it "keeps a checkout somebody holds a lock in" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+      held = ->(path) { path == checkout.path ? "luke-backend (fixing a spec)" : nil }
+
+      expect(worktrees.retire(checkout.path, merge_commit: tip, base: "main", held:).reason)
+        .to eq("luke-backend (fixing a spec) holds a lock in it")
+    end
+
+    it "keeps a checkout when the merge commit cannot be found" do
+      commit(checkout.path, "household.rb", "class Household; end\n")
+
+      expect(worktrees.retire(checkout.path, merge_commit: "f" * 40, base: "main").reason)
+        .to eq("merge commit ffffffff is not in this repository, even after a fetch")
+    end
+
+    it "never touches the main checkout" do
+      expect(worktrees.retire(repo, merge_commit: head(repo), base: "main").reason).to eq("not a worktree openlanes manages")
+    end
+
+    it "checks everything and removes nothing on a dry run" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+
+      retired = worktrees.retire(checkout.path, merge_commit: tip, base: "main", dry_run: true)
+
+      aggregate_failures do
+        expect(retired.reason).to eq("would be removed: landed in #{tip[0, 8]}")
+        expect(File.directory?(checkout.path)).to be(true)
+        expect(branch?(branch)).to be(true)
+      end
+    end
+
+    # A locked worktree is one git will not remove without --force, which
+    # retire never passes.
+    it "says so when git refuses the removal" do
+      tip = commit(checkout.path, "household.rb", "class Household; end\n")
+      git(repo, "worktree", "lock", checkout.path)
+
+      expect(worktrees.retire(checkout.path, merge_commit: tip, base: "main").reason).to eq("git refused to remove it")
+    end
+  end
+
+  describe ".main_root" do
+    it "finds the main checkout from inside a worktree, where worktrees live beside it" do
+      checkout = worktrees.checkout_for(feature)
+
+      expect(File.realpath(described_class.main_root(checkout.path))).to eq(File.realpath(repo))
+    end
+
+    it "answers the path itself outside any repository" do
+      expect(described_class.main_root(tmp)).to eq(tmp)
+    end
+  end
+
+  describe "#checkouts_of" do
+    # The slug once carried the status, so one plan got a checkout per
+    # state it passed through; the ordinal is what they share.
+    it "finds every checkout of the plan by its ordinal, and nobody else's" do
+      own = worktrees.checkout_for(feature)
+      stray = worktrees.checkout_for(feature.with(slug: "002.00━━🟡━━❯tenancy-households"))
+      worktrees.checkout_for(feature.with(ordinal: OpenLanes::Plans::Ordinal.parse("003.00"), slug: "ledger"))
+
+      found = worktrees.checkouts_of(feature).map { File.realpath(it) }
+
+      expect(found).to contain_exactly(File.realpath(own.path), File.realpath(stray.path))
+    end
+  end
+
   describe "#prune" do
     it "removes checkouts an agent left untouched, since they are pure cost" do
       checkout = worktrees.checkout_for(feature)
