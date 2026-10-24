@@ -59,7 +59,8 @@ RSpec.describe "packaging" do
   end
 
   # Plan 035: `openlanes setup` bundles the shipped Brewfile; bin/ holds
-  # contributor tools, which an installed gem cannot run.
+  # contributor tools, which an installed gem cannot run. bin/ol-tee is the
+  # one exception the gemspec names on purpose.
   describe "the gem's files" do
     let(:files) { Gem::Specification.load(File.join(root, "openlanes.gemspec")).files }
 
@@ -67,8 +68,8 @@ RSpec.describe "packaging" do
       expect(files).to include("Brewfile")
     end
 
-    it "ships nothing from bin/" do
-      expect(files.grep(%r{\Abin/})).to be_empty
+    it "ships nothing from bin/ but ol-tee" do
+      expect(files.grep(%r{\Abin/})).to eq(["bin/ol-tee"])
     end
 
     it "keeps bin/setup bundling the same Brewfile in a checkout" do

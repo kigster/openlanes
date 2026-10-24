@@ -225,6 +225,36 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(spec.problems).to contain_exactly(a_string_including("depends_on: 28"))
     end
 
+    it "reads [none] as no dependencies, with no problem" do
+      spec = parse("depends_on: [none]")
+
+      expect(spec.depends_on).to eq([])
+      expect(spec.problems).to be_empty
+    end
+
+    it "names [none] beside a plan number as a problem, and keeps the number" do
+      spec = parse('depends_on: [none, "034.00"]')
+
+      expect(spec.depends_on).to eq(["034.00"])
+      expect(spec.problems).to contain_exactly(a_string_including("none cannot stand beside"))
+    end
+
+    {
+      "lane: plan"                     => false,
+      "depends_on: []"                 => false,
+      "depends_on: [none]"             => true,
+      'depends_on: ["034.00"]'         => true,
+      'depends_on: [none, "034"]'      => true,
+      "depends_on: [soon]"             => false,
+      'depends_on: ""'                 => false,
+      "depends_on: [034]"              => false,
+      'depends_on: ["soon", "041.00"]' => false
+    }.each do |yaml, linked|
+      it "is #{"not " unless linked}linked for #{yaml}" do
+        expect(parse(yaml).linked?).to be(linked)
+      end
+    end
+
     it "drops a string that is not a plan number, and says so" do
       spec = parse('depends_on: ["soon", "041.00"]')
 

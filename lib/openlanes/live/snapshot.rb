@@ -135,6 +135,7 @@ module OpenLanes
           summary:     Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
           status:      status(subject.status),
           lane:        Plans::Spec.for(subject).lane.to_s,
+          group:       group_of(ordinal),
           station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
           up:          spent[:up],
           down:        spent[:down],
@@ -151,6 +152,18 @@ module OpenLanes
           last_known:  last_known(state),
           locked:      Plans::Lock.read(subject.feature.path)&.to_json_hash,
           finished:    finished && { kind: finished.kind, at: iso(finished.at) } }
+      end
+
+      # The dependency group a plan belongs to, named by its lowest ordinal:
+      # plans joined by an unfinished `depends_on:` edge share one, and the
+      # board draws a deeper groove where the group changes between rows. A
+      # plan in no group (finished, or linked to nothing open) is its own.
+      #
+      # @param ordinal [String]
+      # @return [String]
+      def group_of(ordinal)
+        @group_of ||= @tree.dependencies.groups.each_with_object({}) { |g, out| g.each { out[it] = g.first } }
+        @group_of.fetch(ordinal, ordinal)
       end
 
       # @param status [OpenLanes::Plans::Status]

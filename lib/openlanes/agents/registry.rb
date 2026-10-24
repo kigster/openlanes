@@ -114,7 +114,8 @@ module OpenLanes
           phase:         meta["phase"]&.to_s,
           lanes:         Array(meta["lanes"]).map { |l| l.to_s.to_sym },
           needs:         Array(meta["needs"]).map(&:to_s),
-          toggle:        meta["toggle"]&.to_s
+          toggle:        meta["toggle"]&.to_s,
+          confined_to:   confined_to(meta["confined_to"], path)
         )
       end
 
@@ -141,6 +142,22 @@ module OpenLanes
         return value.to_s if Adapters.known?(value)
 
         raise OpenLanes::Error, "#{File.basename(path)}: adapter #{value.inspect} is not one of #{Adapters.names.join(", ")}"
+      end
+
+      # `confined_to:` names files inside the plan folder. The executor
+      # expands each against that folder, so `../Gemfile` or an absolute path
+      # would grant Edit outside it; refuse those when the definition loads.
+      #
+      # @param value [Object, nil]
+      # @param path [String]
+      # @return [Array<String>]
+      # @raise [OpenLanes::Error]
+      def confined_to(value, path)
+        Array(value).map(&:to_s).each do |file|
+          next unless file.empty? || file.start_with?("/", "~") || Pathname.new(file).each_filename.include?("..")
+
+          raise OpenLanes::Error, "#{File.basename(path)}: confined_to #{file.inspect} is not a file inside the plan folder"
+        end
       end
 
       # @param value [Object, nil]

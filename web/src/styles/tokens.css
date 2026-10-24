@@ -27,6 +27,10 @@
   --groove: color-mix(in srgb, #000 10%, var(--plate));
   --groove-shade: rgb(0 0 0 / 28%);
   --groove-light: rgb(255 255 255 / 85%);
+  /* Between plans in different dependency groups: a deeper, darker channel with a white line along its floor. */
+  --groove-deep: color-mix(in srgb, #000 24%, var(--plate));
+  --groove-deep-shade: rgb(0 0 0 / 50%);
+  --groove-edge: rgb(255 255 255 / 95%);
   /* Each lane's row is washed in its colour, blue full, yellow plan, green quick, mixed into the plate
      so the wash stays dark enough for the cars and lines to read on top of it. */
   --wash: 18%;
@@ -69,6 +73,9 @@
     --groove: color-mix(in srgb, #000 45%, var(--plate));
     --groove-shade: rgb(0 0 0 / 70%);
     --groove-light: rgb(255 255 255 / 7%);
+    --groove-deep: color-mix(in srgb, #000 70%, var(--plate));
+    --groove-deep-shade: rgb(0 0 0 / 90%);
+    --groove-edge: rgb(255 255 255 / 30%);
     --wash: 9%;
     --inv-plate: #EDF1F6; --inv-enamel: #DFE6EF; --inv-ink: #13233F; --inv-ink-soft: #55657D;
     --inv-hairline: #C6D0DD; --inv-alarm: #C42F36; --inv-go: #1E8C4E; --inv-focus: #1F5FD1; --inv-scheme: light;
@@ -96,6 +103,9 @@
   --groove: color-mix(in srgb, #000 45%, var(--plate));
   --groove-shade: rgb(0 0 0 / 70%);
   --groove-light: rgb(255 255 255 / 7%);
+  --groove-deep: color-mix(in srgb, #000 70%, var(--plate));
+  --groove-deep-shade: rgb(0 0 0 / 90%);
+  --groove-edge: rgb(255 255 255 / 30%);
   --wash: 9%;
   --inv-plate: #EDF1F6; --inv-enamel: #DFE6EF; --inv-ink: #13233F; --inv-ink-soft: #55657D;
   --inv-hairline: #C6D0DD; --inv-alarm: #C42F36; --inv-go: #1E8C4E; --inv-focus: #1F5FD1; --inv-scheme: light;
