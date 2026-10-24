@@ -5,8 +5,8 @@
     "ordinal": "020.01",
     "slug": "durable-run-events"
   },
-  "state": "rejected",
-  "updated_at": "2026-10-23T14:31:36-07:00",
+  "state": "researched",
+  "updated_at": "2026-10-23T17:19:47-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -48,5 +48,8 @@
       "seconds": 41.4,
       "note": "completed - 4 tool calls"
     }
-  ]
+  ],
+  "signatures": [],
+  "messages": [],
+  "moves": 1
 }
