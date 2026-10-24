@@ -25,11 +25,14 @@ module OpenLanes
       # @!attribute [r] linked
       #   @return [Array<OpenLanes::Plans::Subject>] plans whose key is now written
       # @!attribute [r] unchanged
-      #   @return [Array<OpenLanes::Plans::Subject>] the agent ran and wrote nothing
+      #   @return [Array<OpenLanes::Plans::Subject>] on a dry run, the plans
+      #     that would be linked. A real run that leaves a key unanswered
+      #     reports it under {#failed} instead.
       # @!attribute [r] failed
       #   @return [Array<Array(OpenLanes::Plans::Subject, String)>] each with its note
       # @!attribute [r] cycles
-      #   @return [Array<Array<String>>] dependency cycles in the tree after the run
+      #   @return [Array<Array<String>>] dependency cycles after the run, among
+      #     the plans asked for when `--plans` named some
       Result = Data.define(:linked, :unchanged, :failed, :cycles) do
         # @return [Boolean]
         def ok? = failed.empty? && cycles.empty?
@@ -63,6 +66,9 @@ module OpenLanes
         end
       end
 
+      # Every plan is linked before any is advanced, so a key that closes a
+      # cycle is seen before its plan moves on to 📋.
+      #
       # @param dry_run [Boolean] invoke no agent; every candidate is reported unchanged
       # @return [Result]
       # @raise [OpenLanes::Error] when no agent handles {STATE}
@@ -76,33 +82,77 @@ module OpenLanes
 
           outcome = @executor.call(worker, subject, root: @root)
           next failed << [subject, outcome.note.to_s] unless outcome.ok
-          next unchanged << subject unless Plans::Spec.load(subject.feature.path).linked?
+
+          spec = Plans::Spec.load(subject.feature.path)
+          next failed << [subject, unanswered(spec)] unless spec.linked?
 
           linked << subject
-          advance(subject)
         end
+        dependencies = @tree.reload.dependencies
+        failed += unknown(linked, dependencies)
+        cycles = scoped(dependencies.cycles, linked)
+        on_cycle = cycles.flatten
+        linked.reject { on_cycle.include?(it.feature.ordinal.to_s) }.each { advance(it.feature.ordinal) }
         @tree.reload
-        Result.new(linked:, unchanged:, failed:, cycles: @tree.dependencies.cycles)
+        Result.new(linked:, unchanged:, failed:, cycles:)
       end
 
       private
 
       # 🔗 → 📋, as the run loop does when the agent completes. Anywhere else
-      # the folder keeps its name: the key is all this sweep owes it.
+      # the folder keeps its name: the key is all this sweep owes it. The
+      # folder is found again by ordinal, since a reload may have renamed it.
       #
+      # @param ordinal [OpenLanes::Plans::Ordinal]
       # @return [void]
-      def advance(subject)
+      def advance(ordinal)
+        subject = @tree.reload.find(ordinal) or return
         machine = subject.machine
         machine.promote!(:ready_for_planning) if subject.status.key == STATE && machine.may?(:ready_for_planning)
+      end
+
+      # An agent that ran cleanly and left the key unanswered is a failure:
+      # reported as "No new dependencies found." it read as success, and a
+      # spec with malformed frontmatter always ended here.
+      #
+      # @param spec [OpenLanes::Plans::Spec]
+      # @return [String]
+      def unanswered(spec)
+        ["ran, but spec.md still does not answer depends_on:", *spec.problems].join("; ")
+      end
+
+      # A plan number nobody has is an edge `Dependencies#waiting_on` waits
+      # on forever.
+      #
+      # @return [Array<Array(OpenLanes::Plans::Subject, String)>]
+      def unknown(linked, dependencies)
+        linked.filter_map do |subject|
+          missing = dependencies.unknown(subject.feature.ordinal)
+          [subject, "depends_on names #{missing.join(", ")}, which no plan here has"] if missing.any?
+        end
+      end
+
+      # With `--plans`, only a cycle through a plan asked for or linked is
+      # this run's business; one among unrelated plans would fail every
+      # narrowed run and dry run alike.
+      #
+      # @return [Array<Array<String>>]
+      def scoped(cycles, linked)
+        return cycles if @plans.nil? || @plans.empty?
+
+        mine = linked.map { it.feature.ordinal.to_s } + wanted.map(&:to_s)
+        cycles.select { |cycle| cycle.intersect?(mine) }
       end
 
       # @return [Boolean]
       def wanted?(subject)
         return true if @plans.nil? || @plans.empty?
 
-        wanted = @plans.flat_map { |t| t.to_s.split(",") }.filter_map { |t| Plans::Ordinal.parse(t.strip) }
         wanted.include?(subject.feature.ordinal)
       end
+
+      # @return [Array<OpenLanes::Plans::Ordinal>] the plans `--plans` named
+      def wanted = Array(@plans).flat_map { |t| t.to_s.split(",") }.filter_map { |t| Plans::Ordinal.parse(t.strip) }
     end
   end
 end

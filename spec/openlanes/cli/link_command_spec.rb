@@ -76,8 +76,13 @@ RSpec.describe OpenLanes::CLI::Link, :tree do
     end
   end
 
-  it "says nothing new was found when the agent wrote no key" do
+  it "says nothing new was found, and fails the plan, when the agent wrote no key" do
     keyless
+    expect(invoke).to include(out: "No new dependencies found.\nfailed 050.00: ran, but spec.md still does not answer depends_on:\n",
+      status: 1)
+  end
+
+  it "exits 0 with nothing found when no plan needs a link" do
     expect(invoke).to include(out: "No new dependencies found.\n", status: 0)
   end
 

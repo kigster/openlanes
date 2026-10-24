@@ -25,6 +25,7 @@ RSpec.describe OpenLanes::Lifecycle::Linker, :tree do
       t.plan "052.00", :ready_for_planning, "none", files: { "spec.md" => spec("depends_on: [none]") }
       t.plan "053.00", :planned, "linked", files: { "spec.md" => spec('depends_on: ["034.00"]') }
       t.plan "054.00", :approved, "shipped", files: { "spec.md" => spec }
+      t.plan "034.00", :approved, "depended-on", files: { "spec.md" => spec("depends_on: [none]") }
     end
   end
 
@@ -76,6 +77,32 @@ RSpec.describe OpenLanes::Lifecycle::Linker, :tree do
         expect(result.cycles).to include(%w[050.00 053.00 050.00])
         expect(result).not_to be_ok
       end
+
+      it "leaves a plan whose new key closed the cycle at 🔗" do
+        linker.call
+        expect(tree.reload.find("050.00").status.key).to eq(:ready_for_linking)
+      end
+
+      context "with --plans naming a plan off that cycle" do
+        let(:only) { %w[051] }
+
+        it "does not fail on a cycle among plans it was not asked about" do
+          result = linker.call
+          expect([result.cycles, result.ok?]).to eq([[], true])
+        end
+      end
+    end
+
+    context "when a key names a plan nobody has" do
+      let(:writes) { 'depends_on: ["099.00"]' }
+
+      it "reports it as a failure, since nothing would ever release the wait" do
+        result = linker.call
+
+        expect(result.failed.map { |s, note| [s.feature.ordinal.to_s, note] })
+          .to include(["050.00", "depends_on names 099.00, which no plan here has"])
+        expect(result).not_to be_ok
+      end
     end
 
     it "invokes nothing on a dry run" do
@@ -88,7 +115,22 @@ RSpec.describe OpenLanes::Lifecycle::Linker, :tree do
     context "when the agent writes nothing" do
       let(:writes) { nil }
 
-      it("reports the plan unchanged") { expect(ordinals(linker.call.unchanged)).to eq(%w[050.00 051.00]) }
+      it "reports each plan as a failure, not as nothing found" do
+        result = linker.call
+
+        expect([ordinals(result.failed.map(&:first)), result.unchanged, result.ok?]).to eq([%w[050.00 051.00], [], false])
+      end
+    end
+
+    context "when a spec's frontmatter is not YAML" do
+      let(:writes) { nil }
+
+      before { File.write(File.join(tree.find("050.00").feature.path, "spec.md"), "---\nlane: [full\n---\n# Spec\n") }
+
+      it "names the plan as failed, with what is wrong" do
+        note = linker.call.failed.to_h { |s, n| [s.feature.ordinal.to_s, n] }.fetch("050.00")
+        expect(note).to start_with("ran, but spec.md still does not answer depends_on:")
+      end
     end
 
     context "when the agent fails" do
