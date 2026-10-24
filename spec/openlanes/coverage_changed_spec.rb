@@ -51,6 +51,13 @@ RSpec.describe "bin/coverage-changed" do
     expect(out).to include("no changed files under lib/")
   end
 
+  it "skips version.rb, which the gemspec loads before SimpleCov starts" do
+    out, _err, status = run("lib/openlanes/version.rb")
+
+    expect(status).to be_success
+    expect(out).to include("no changed files under lib/")
+  end
+
   it "counts a changed file SimpleCov never loaded as 0%" do
     out, err, status = run("lib/untested.rb")
 

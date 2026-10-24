@@ -128,7 +128,8 @@ describe("IdeaDialog", () => {
     act(() => { typeInEditor(baseElement, "Export the ledger"); });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Break it into plans" })); });
     expect(await screen.findByRole("dialog", { name: "Before the spec: question 1 of 2" })).toHaveAccessibleDescription("Who opens the export?");
-    expect(screen.getByRole("button", { name: "a) The accountant (Recommended)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "a) The accountant (Recommended)" })).toHaveClass("btn-recommended");
+    expect(screen.getByRole("button", { name: "b) Anyone" })).not.toHaveClass("btn-recommended");
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "a) The accountant (Recommended)" })); });
     expect(screen.getByRole("button", { name: "b) XLSX (Recommended)" })).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Type something instead" }), { target: { value: "Both" } });
