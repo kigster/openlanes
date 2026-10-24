@@ -240,11 +240,15 @@ RSpec.describe OpenLanes::Plans::Spec do
     end
 
     {
-      "lane: plan"                => false,
-      "depends_on: []"            => false,
-      "depends_on: [none]"        => true,
-      'depends_on: ["034.00"]'    => true,
-      'depends_on: [none, "034"]' => true
+      "lane: plan"                     => false,
+      "depends_on: []"                 => false,
+      "depends_on: [none]"             => true,
+      'depends_on: ["034.00"]'         => true,
+      'depends_on: [none, "034"]'      => true,
+      "depends_on: [soon]"             => false,
+      'depends_on: ""'                 => false,
+      "depends_on: [034]"              => false,
+      'depends_on: ["soon", "041.00"]' => false
     }.each do |yaml, linked|
       it "is #{"not " unless linked}linked for #{yaml}" do
         expect(parse(yaml).linked?).to be(linked)

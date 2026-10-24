@@ -52,13 +52,16 @@ module OpenLanes
     #     checks that show it is.
     # @!attribute [r] depends_on
     #   @return [Array<String>, nil] canonical `NNN.MM` ordinals of the plans
-    #     this one waits for. nil when the key is absent ("not checked yet"),
-    #     which is not the same as `[]` ("checked, none").
+    #     this one waits for, `[]` for `[none]`. nil when the key is absent.
+    #     Whether the key is answered is {#linked}, not this list: `[]` and
+    #     `[none]` both read as no edges.
     # @!attribute [r] linked
     #   @return [Boolean] whether an agent or a person has answered the key:
-    #     `[none]` or a non-empty list. A missing key and a bare `[]` are both
-    #     unanswered, since `[]` is what a template leaves behind as often as
-    #     what a linker writes on purpose.
+    #     `[none]`, or quoted plan numbers and nothing else. A missing key and
+    #     a bare `[]` are unanswered, since `[]` is what a template leaves
+    #     behind as often as what a linker writes on purpose. So is a value
+    #     with anything else in it (`[soon]`, `""`, the octal `[034]`): it
+    #     would skip 🔗 while naming no plan, and ewoki-linker rewrites it.
     # @!attribute [r] how_to_test
     #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
     #     {#how_to_verify} when the spec has no such section (until plan 007).
@@ -446,8 +449,11 @@ module OpenLanes
           value.nil? ? [] : Array(value)
         end
 
-        # @return [Boolean] true for `[none]` or any non-empty list
-        def linked?(meta) = meta.key?(DEPENDS_ON_KEY) && dependency_items(meta).any?
+        # @return [Boolean] true for `[none]` or a list of quoted plan numbers
+        def linked?(meta)
+          items = dependency_items(meta)
+          items.any? && items.all? { it == NO_DEPENDENCIES || (it.is_a?(String) && Ordinal.parse(it)) }
+        end
 
         # @return [Hash]
         def phases(value, problems)
