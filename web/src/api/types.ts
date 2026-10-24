@@ -132,10 +132,11 @@ export interface Ruling {
   pr: number | null;
   round: number | null;
   outcome: string; // cap: go|no_go; appeal: upheld|struck; dispute: the winner; passed_check: fair|too_harsh|too_lenient
-  findings: { struck: string[]; critical: string[] };
+  findings: { struck: string[]; critical: string[]; headings?: Record<string, string> }; // headings: a struck id's heading
   winner: string | null;
   reason: string;
   trigger: string;
+  review?: number; // the round of hansolo's review the ids belong to
 }
 
 export interface Plan {

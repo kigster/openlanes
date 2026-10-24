@@ -25,6 +25,17 @@ RSpec.describe OpenLanes::Arbitration::Ruling do
     expect([ruling.struck, ruling.critical, ruling.findings]).to eq([%w[F2], %w[F1], { "struck" => %w[F2], "critical" => %w[F1] }])
   end
 
+  it "keeps a struck finding's heading beside its id" do
+    ruling = described_class.parse(answer(<<~YAML))
+      kind: appeal
+      outcome: struck
+      findings:
+        struck: ["F2 lib/a.rb:10 asks for a test the spec rules out", "F3: cosmetic"]
+      reason: out of scope
+    YAML
+    expect([ruling.struck, ruling.headings]).to eq([%w[F2 F3], { "F2" => "lib/a.rb:10 asks for a test the spec rules out", "F3" => "cosmetic" }])
+  end
+
   it "takes a dispute's winner as its outcome" do
     ruling = described_class.parse(answer("kind: dispute\nwinner: rey-frontend\nreason: the code wins\n"))
     expect([ruling.outcome, ruling.winner]).to eq(%w[rey-frontend rey-frontend])

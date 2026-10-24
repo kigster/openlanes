@@ -42,17 +42,29 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
       expect(prompt).to include("`merge.max_rejections` is 3: sign `rejected N/3`", "No finding has been struck.")
     end
 
-    it "lists a struck finding" do
+    def strike(id, review:, heading: nil)
       OpenLanes::Plans::PlanState.for(plan.feature.path)
                                  .rule!(kind: "appeal",
                                    pr: 4,
                                    round: 1,
                                    outcome: "struck",
-                                   findings: { struck: %w[F2] },
+                                   findings: { struck: [id], headings: heading ? { id => heading } : {} },
                                    winner: nil,
                                    reason: "r",
-                                   trigger: "appeal")
-      expect(prompt).to include("Struck by the arbitrator, never to be raised again: F2.")
+                                   trigger: "appeal",
+                                   review:)
+    end
+
+    it "names a struck finding by the review that raised it and its heading" do
+      strike("F2", review: 1, heading: "lib/a.rb:10 asks for an out-of-scope test")
+      expect(prompt).to include("never to be raised again", "- F2 of review round 1: lib/a.rb:10 asks for an out-of-scope test")
+    end
+
+    # hansolo numbers from F1 in every review: round 2's F2 is another finding.
+    it "keeps the same id from two reviews apart" do
+      strike("F2", review: 1)
+      strike("F2", review: 2)
+      expect(prompt).to include("- F2 of review round 1\n", "- F2 of review round 2\n")
     end
 
     it "tells a builder nothing about the cap" do

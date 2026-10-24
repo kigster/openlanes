@@ -135,13 +135,19 @@
             "additionalProperties": false,
             "properties": {
               "struck": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" } },
-              "critical": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" } }
+              "critical": { "type": "array", "items": { "type": "string", "pattern": "^F[0-9]+$" } },
+              "headings": {
+                "description": "A struck id's heading, as the arbitrator quoted it: ids restart at F1 in every review.",
+                "type": "object",
+                "propertyNames": { "pattern": "^F[0-9]+$" },
+                "additionalProperties": { "type": "string" }
+              }
             }
           },
           "winner": { "type": ["string", "null"] },
           "reason": { "type": "string", "minLength": 1 },
           "trigger": { "type": "string", "minLength": 1 },
-          "sha": { "type": "string", "description": "The PR head a passed_check ruled on, so a re-poll does not re-run it." }
+          "review": { "type": "integer", "minimum": 1, "description": "The round of hansolo's review the struck and critical ids belong to." }
         }
       }
     },

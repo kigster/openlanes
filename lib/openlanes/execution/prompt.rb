@@ -114,20 +114,32 @@ module OpenLanes
 
       # A reviewer's cap and the findings the arbitrator struck (M6, M8):
       # hansolo once hard-coded "2", and a struck finding raised again would
-      # count a rejection the arbitrator already voided.
+      # count a rejection the arbitrator already voided. hansolo numbers from
+      # F1 in every review, so a bare id would ban a different finding next
+      # round: each is named with the review it came from and its heading.
       #
       # @return [String] empty for any agent outside the review phase
       def review_section
         return "" unless agent.phase.to_s == "review"
 
-        struck = Plans::PlanState.for(subject.feature.path).rulings.flat_map { Array(it.dig("findings", "struck")) }.uniq
+        struck = Plans::PlanState.for(subject.feature.path).rulings.flat_map { struck_findings(it) }.uniq
         <<~TEXT
           ## Rejection cap
 
           `merge.max_rejections` is #{review_cap}: sign `rejected N/#{review_cap}`, where N counts this rejection.
-          #{struck.empty? ? "No finding has been struck." : "Struck by the arbitrator, never to be raised again: #{struck.join(", ")}."}
+          #{struck.empty? ? "No finding has been struck." : "Struck by the arbitrator, never to be raised again, whatever id it would carry now:\n#{struck.map { "- #{it}" }.join("\n")}"}
 
         TEXT
+      end
+
+      # @param ruling [Hash] one entry of `state.json`'s `rulings`
+      # @return [Array<String>] "F2 of review round 3: lib/a.rb:10 …"
+      def struck_findings(ruling)
+        headings = ruling.dig("findings", "headings") || {}
+        Array(ruling.dig("findings", "struck")).map do |id|
+          from = ruling["review"] ? "#{id} of review round #{ruling["review"]}" : "#{id} of the review struck at #{ruling["at"]}"
+          headings[id] ? "#{from}: #{headings[id]}" : from
+        end
       end
 
       # @return [Integer]

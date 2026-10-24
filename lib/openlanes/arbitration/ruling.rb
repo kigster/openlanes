@@ -8,7 +8,12 @@ module OpenLanes
     # its answer with. The engine, not the agent, records and applies it
     # (M7), so a block that cannot be read is refused by name rather than
     # guessed at: a guessed ruling would move a plan nobody ruled on.
-    class Ruling < Data.define(:kind, :pr, :outcome, :struck, :critical, :winner, :reason)
+    #
+    # `headings` maps a struck id to the rest of its entry, when the
+    # arbitrator wrote one (`F2 lib/a.rb:10 asks for an out-of-scope test`):
+    # hansolo numbers its findings afresh in every review, so an id alone
+    # names a different finding a round later.
+    class Ruling < Data.define(:kind, :pr, :outcome, :struck, :critical, :winner, :reason, :headings)
       # The outcomes each kind may give.
       OUTCOMES = {
         "cap"          => %w[go no_go],
@@ -16,6 +21,10 @@ module OpenLanes
         "dispute"      => %w[luke-backend rey-frontend],
         "passed_check" => %w[fair too_harsh too_lenient]
       }.freeze
+
+      # One entry of `findings.struck` or `findings.critical`: an id, then
+      # optionally the finding's heading.
+      ENTRY = /\A(F\d+)\b[ \t:-]*(.*)\z/i
 
       # The fenced block, with `ruling` as its info string.
       BLOCK = /^```ruling[ \t]*\n(.*?)^```[ \t]*$/m
@@ -64,22 +73,31 @@ module OpenLanes
           raise IllegalOutcome, "#{kind} cannot rule #{outcome.inspect}" unless outcomes.include?(outcome)
 
           findings = data["findings"].is_a?(Hash) ? data["findings"].transform_keys(&:to_s) : {}
+          struck = entries(findings["struck"])
           new(kind:,
             pr:       data["pr"] && Integer(data["pr"], exception: false),
             outcome:,
-            struck:   ids(findings["struck"]),
-            critical: ids(findings["critical"]),
+            struck:   struck.keys,
+            critical: entries(findings["critical"]).keys,
             winner:   kind == "dispute" ? outcome : nil,
-            reason:   data["reason"].to_s.strip)
+            reason:   data["reason"].to_s.strip,
+            headings: struck.reject { |_, heading| heading.empty? })
         end
 
         # @param list [Array, String, nil]
-        # @return [Array<String>] finding ids, upper-cased
-        def ids(list) = Array(list).map { it.to_s.strip.upcase }.grep(/\AF\d+\z/)
+        # @return [Hash{String => String}] finding id, upper-cased, to the
+        #   heading written after it (empty when none was)
+        def entries(list)
+          Array(list).filter_map { it.to_s.strip.match(ENTRY) }.to_h { [it[1].upcase, it[2].strip] }
+        end
       end
 
+      # @param headings [Hash{String => String}] defaults to none, so a
+      #   ruling built by hand needs no headings
+      def initialize(headings: {}, **) = super
+
       # @return [Hash] the `findings` entry {Plans::PlanState#rule!} takes
-      def findings = { "struck" => struck, "critical" => critical }
+      def findings = { "struck" => struck, "critical" => critical, "headings" => (headings unless headings.empty?) }.compact
 
       # @return [String] the line the engine's PR comment opens with
       def headline = "⚖️ Ruling (#{kind}): #{outcome}"
