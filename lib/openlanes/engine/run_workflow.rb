@@ -416,12 +416,15 @@ module OpenLanes
         EventJournal.new(root: @root, node: live.keys.node, bus: Live::EventBus.for(live.store), channel: live.keys.journal)
       end
 
+      # @param instructions [String, nil] what the agent hears on top of its
+      #   definition; `--prompt` by default, the brief for the arbitrator,
+      #   which otherwise runs under the same operator limits as every agent
       # @return [OpenLanes::Execution::Executor]
-      def executor
+      def executor(instructions: instructions_from(@options[:prompt]))
         Execution.executor(root:         @root,
           timeout:      @options[:timeout]&.to_i,
           dry_run:      @dry_run,
-          instructions: instructions_from(@options[:prompt]),
+          instructions:,
           model:        @options[:model],
           max_tokens:   @options[:max_tokens]&.to_i,
           lean:         !@options[:user_config])
@@ -499,7 +502,11 @@ module OpenLanes
       def arbitration_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Arbitration.new(tree_dir: @tree.dir, agents: Agents::Registry.new, github: Vcs.github, root: @root)
+        Arbitration.new(tree_dir: @tree.dir,
+          agents: Agents::Registry.new,
+          github: Vcs.github,
+          root: @root,
+          executor: ->(brief) { executor(instructions: brief) })
       end
 
       # Merging (P1 to P5) labels, merges and rebases on GitHub, so it runs
