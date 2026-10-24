@@ -175,13 +175,15 @@ RSpec.describe "openlanes app" do
         original.call(**kwargs).tap do |runner|
           allow(runner).to receive(:call) do
             kwargs[:supervisor][:output].call("web", "listening")
-            Signal.trap("TERM", "DEFAULT").call(Signal.list["TERM"])
-            wait_for(2) { runner.stopping.true? }
+            # The handler returns the thread that raises the flag; joining it
+            # needs no polling.
+            Signal.trap("TERM", "DEFAULT").call(Signal.list["TERM"]).join
+            given[:stopped] = runner.stopping.true?
           end
         end
       end
       _, err, status = command(OpenLanes::CLI::App::Start, demo: true)
-      expect([status, given[:store], given[:keys].repo]).to eq([0, store, "demo/#{OpenLanes::Live.keys(root: project).repo}"])
+      expect([status, given[:store], given[:keys].repo, given[:stopped]]).to eq([0, store, "demo/#{OpenLanes::Live.keys(root: project).repo}", true])
       expect(err).to include("Starting 012.00's app in #{project} (kig/012.00-app-runner)", "web: listening")
     end
 
