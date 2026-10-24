@@ -1278,6 +1278,33 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
     end
 
+    context "with the event log on" do
+      let(:log_dir) { Dir.mktmpdir("events") }
+      let(:sink) { OpenLanes::Events::Sink.new(dir: log_dir, node: "n1", checkout: "c1", project: "demo") }
+      let(:reviews) { OpenLanes::Events::Log.new(dir: log_dir).events.select { it.kind == "pr_reviewed" } }
+
+      after { FileUtils.rm_rf(log_dir) }
+
+      it "records the approval as a review of the open pull request" do
+        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+
+        expect(reviews.map { [it.plan, it.payload] }).to eq([["001.00", { "number" => 7, "verdict" => "approved" }]])
+      end
+
+      it "counts it in the report's approvals" do
+        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+        outcomes = OpenLanes::Events.report(OpenLanes::Events::Log.new(dir: log_dir).events).pr_outcomes
+
+        expect(outcomes).to include("reviewed" => 1, "approved" => 1, "rejected" => 0)
+      end
+
+      it "records nothing for a rejection, which the pull request watch records" do
+        runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer"), events: sink).call
+
+        expect(reviews).to be_empty
+      end
+    end
+
     it "leaves an approval at 👀 and treats the plan as finished for this run" do
       attempts = runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")).call
       aggregate_failures do

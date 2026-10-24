@@ -31,6 +31,9 @@ module OpenLanes
   #   review:
   #     max_hmm: 5              # most 🤔 a review may carry and be approved (R3);
   #                             # $OPENLANES_REVIEW_MAX_HMM beats it
+  #   events:                   # the durable run log (plan 020.01), off by default
+  #     enabled: true
+  #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
   #   app:                      # how to run the app a plan builds (M12)
   #     kind: web
   #     processes:
@@ -104,6 +107,11 @@ module OpenLanes
   #   @return [OpenLanes::Coverage::Config, nil] the `coverage:` section; nil
   #     when the project declares none, and then the gate sends the pull
   #     request back to its builder to write one
+  # @!attribute [r] events_enabled
+  #   @return [Boolean] `events.enabled`: whether runs append to the event log
+  # @!attribute [r] events_dir
+  #   @return [String, nil] `events.dir`: an absolute path; nil takes
+  #     {Events::Location}'s default
   Config = Data.define(:path,
     :project,
     :lane,
@@ -120,10 +128,12 @@ module OpenLanes
     :review_max_hmm,
     :merge_max_rejections,
     :desired_codebase_quality,
-    :coverage) do
+    :coverage,
+    :events_enabled,
+    :events_dir) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil)
+      desired_codebase_quality: nil, coverage: nil, events_enabled: false, events_dir: nil)
       super
     end
 
@@ -205,6 +215,7 @@ module OpenLanes
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
       settings["coverage"] = coverage.to_h if coverage
+      settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -223,7 +234,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project lane frontend jobs redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions review coverage].freeze
+              questions review coverage events].freeze
 
     # What `desired_codebase_quality:` may say (R4), the default first. M5's
     # `top_notch` and `medium` were dropped.
@@ -258,6 +269,9 @@ module OpenLanes
 
     # The variable that beats `review.max_hmm`.
     MAX_HMM_ENV = "OPENLANES_REVIEW_MAX_HMM"
+
+    # Every key `events:` may hold.
+    EVENT_KEYS = %w[enabled dir].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -320,7 +334,8 @@ module OpenLanes
           **plans(settings["plans"], path),
           **questions(settings["questions"], path),
           **review(settings["review"], path),
-          coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil)
+          coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
+          **events(settings["events"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -502,6 +517,33 @@ module OpenLanes
         return { review_max_hmm: max } if max.is_a?(Integer) && !max.negative?
 
         fail_with(path, "review.max_hmm: #{max.inspect} is not a whole number")
+      end
+
+      # @return [Hash{Symbol => Object}] the `events:` settings, as keywords for {Config.new}
+      def events(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "events: must be a mapping, e.g. `events: { enabled: true }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - EVENT_KEYS).each do |key|
+          fail_with(path, "events.#{key}: unknown key; known: #{EVENT_KEYS.join(", ")}")
+        end
+        enabled = settings.fetch("enabled", false)
+        fail_with(path, "events.enabled: #{enabled.inspect} is not true or false") unless [true, false].include?(enabled)
+
+        { events_enabled: enabled, events_dir: events_dir(settings["dir"], path) }
+      end
+
+      # A relative directory would land wherever the command was started,
+      # which is a different log per shell; so only an absolute one is taken.
+      #
+      # @return [String, nil]
+      def events_dir(value, path)
+        return nil if value.nil?
+        return File.expand_path(value.strip) if value.is_a?(String) && value.strip.match?(%r{\A[/~]})
+
+        fail_with(path, "events.dir: #{value.inspect} is not an absolute path")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a

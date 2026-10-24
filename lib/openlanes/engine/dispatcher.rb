@@ -185,6 +185,7 @@ module OpenLanes
         @asked_how_to_test = Set.new
         @preferred = {}
         @started_at = UI.monotonic
+        @invocations = {}
         @mutex = Mutex.new
         @before_tick = []
         @requeued = []
@@ -665,7 +666,9 @@ module OpenLanes
         # Every agent defined, not this run's roster: the mail waits in the
         # plan folder for whichever run next starts the builders, and a run
         # typed with `--agent hansolo-reviewer` must not lose it.
-        effects = PrOutcomes.new(tree_dir: @runner.tree.dir, agents: Agents::Registry.new(dir: @runner.agents.dir))
+        effects = PrOutcomes.new(tree_dir: @runner.tree.dir,
+          agents: Agents::Registry.new(dir: @runner.agents.dir),
+          events: @runner.events)
         outcomes.each do |outcome|
           next if outcome.kind == :waiting || untouchable.include?(outcome.plan)
 
@@ -813,7 +816,8 @@ module OpenLanes
         unblocker = Lifecycle::Unblocker.new(tree: Plans::Tree.new(dir: @runner.tree.dir),
           agent:,
           executor: @runner.executor,
-          commit: true)
+          commit: true,
+          events: @runner.events)
         UI.log("unblocking: every question answered", plan: subject.feature.ordinal.to_s, agent: agent.name)
         unblock = Unblock.new(ordinal: subject.feature.ordinal.to_s,
           agent: agent.name,
@@ -1332,6 +1336,8 @@ module OpenLanes
           started_at: @clock.now.iso8601)
         journal!(:plan_assigned, plan: ordinal, agent: agent.name, round:)
         UI.log("started", **task.log_fields)
+        @invocations[job.key] = @clock.now
+        @runner.events.record(:agent_started, **event_fields(job))
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
@@ -1592,6 +1598,7 @@ module OpenLanes
           record_journal(job)
           journal_progress(job)
           attempt = settle(job)
+          announce(job, attempt)
           journal_end(job, attempt)
           # A requeue, or a compaction that stopped the agent and then could
           # not happen, hands the round back: the stop was a person's choice.
@@ -1819,7 +1826,7 @@ module OpenLanes
         partner_running = @running.any? { |j| j.task.subject.feature.ordinal.to_s == ordinal }
         target = target_for(agent, verdict, partner_running)
 
-        return approved(base, subject, ordinal) if verdict == :approved
+        return approved(job, base, subject, ordinal) if verdict == :approved
         return built_locally(base.with(status: "Completed"), ordinal) if verdict == :verified
 
         attempt = base.with(status: "Completed")
@@ -1952,7 +1959,8 @@ module OpenLanes
       # finished at 👀, as it was before chewie existed.
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
-      def approved(base, subject, ordinal)
+      def approved(job, base, subject, ordinal)
+        record_approval(job, subject)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
         return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
@@ -1960,6 +1968,26 @@ module OpenLanes
         @finished_plans << ordinal
         finish(subject, "approved")
         base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge#{"; #{said}" if said}")
+      end
+
+      # The approval goes into the event log as the `pr_reviewed` a person's
+      # rejection is recorded as, or the report would count reviews from
+      # rejections alone. The watch never sees an approval (only the merge
+      # after it), so the reviewer's verdict is where it is known. Keyed by
+      # the round, so a PR approved again after a fix cycle is a second
+      # review, and a restarted round noticing the same signing is not.
+      # A plan with no open pull request has nothing to count it against.
+      #
+      # @return [void]
+      def record_approval(job, subject)
+        pull = subject.pull_requests.find(&:open?) or return
+        number = pull.number.to_s.delete("#").to_i
+        @runner.events.record(:pr_reviewed,
+          plan:    subject.feature.ordinal.to_s,
+          seq:     [number, "approved", job.task.round],
+          once:    true,
+          number:,
+          verdict: "approved")
       end
 
       # chewie signed. The engine commits, comments and labels from its
@@ -2158,6 +2186,56 @@ module OpenLanes
         fresh(job.task)&.then { harness_resume(it, job.task.agent, base.round, error.message.lines.first.to_s.strip, phrase: job.message) }
         remember(base.ordinal, base.agent, job.state, "Interrupted", base.round)
         base.with(ok: false, note: error.message.lines.first.to_s.strip)
+      end
+
+      # The durable record of one settled attempt: `agent_finished` always,
+      # `block_raised` when the agent signed Blocked, `failure` when the
+      # attempt failed. Fire and forget: the sink never raises.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @return [void]
+      def announce(job, attempt)
+        events = @runner.events
+        fields = event_fields(job)
+        @invocations.delete(job.key)
+        return unless events.enabled?
+
+        status = attempt.status || (attempt.ok ? "Completed" : "Interrupted")
+        usage = Events::Usage.from(adapter: fields[:adapter],
+          model: fields[:model],
+          totals: { up: attempt.up, down: attempt.down },
+          subagents_spawned: attempt.subagents.to_i)
+        events.record(:agent_finished, **fields, status:, duration_s: attempt.seconds, **usage.to_h.transform_keys(&:to_sym))
+        events.record(:block_raised, **fields, blocks: blocked_count(job)) if status.start_with?("Blocked")
+        return if attempt.ok
+
+        error = job.result.is_a?(Exception) ? job.result.class.name : "AttemptFailed"
+        events.record(:failure, **fields, error_class: error)
+      rescue StandardError => e
+        UI.log("event not recorded", plan: job.task.subject.feature.ordinal.to_s, error: e.class.name)
+      end
+
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [Hash{Symbol => Object}] what every agent event of this job carries
+      def event_fields(job)
+        task = job.task
+        { plan: task.subject.feature.ordinal.to_s, round: task.round, agent: task.agent.name,
+          invocation_start: @invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject) }
+      end
+
+      # @return [String, nil]
+      def adapter_name(job)
+        adapter_for(job).name.to_s
+      rescue StandardError
+        nil
+      end
+
+      # @return [Integer] the open `## B<n>` questions the plan now carries
+      def blocked_count(job)
+        subject = fresh(job.task) or return 0
+        path = File.join(subject.feature.path, "blocked.md")
+        File.file?(path) ? File.read(path).scan(Plans::OPEN_BLOCK).size : 0
       end
 
       # @param job [OpenLanes::Engine::Dispatcher::Job]
