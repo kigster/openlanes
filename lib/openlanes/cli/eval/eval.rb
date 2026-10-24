@@ -11,6 +11,7 @@ module OpenLanes
       standalone!
       desc "Score agents against evals/cases: recorded folders by default, real runs with --live"
 
+      argument :name, required: false, desc: "Only this agent's cases, as `--agent` says it"
       option :agent, aliases: ["-a"], desc: "Only this agent's cases"
       option :case, aliases: ["-c"], desc: "Only the case with this id"
       option :depth,
@@ -36,9 +37,11 @@ module OpenLanes
         "--live -c research-fast --max-tokens 100000"
       ]
 
+      # @param name [String, nil] the positional spelling of `--agent`
       # @param options [Hash]
       # @return [void]
-      def call(**options)
+      def call(name: nil, **options)
+        options = options.merge(agent: name) if name && options[:agent].nil?
         quiet?(options)
         refuse("--max-tokens only applies to --live runs.", 64) if options[:max_tokens] && !options[:live]
         cases = selected(options)
