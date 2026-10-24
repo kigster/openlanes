@@ -27,7 +27,10 @@ module OpenLanes
         dry_run = dry_run?(options)
         mainline = Vcs.mainline(root:)
         mainline.warnings.each { warn(it) }
-        refuse(mainline.note, 69) if !dry_run && mainline.mainline? && !mainline.pull
+        if !dry_run && mainline.mainline?
+          refuse(mainline.note, 69) unless mainline.pull
+          warn(mainline.note)
+        end
 
         linker = OpenLanes::Lifecycle.link(tree:,
           registry: OpenLanes::Agents.registry,

@@ -107,6 +107,12 @@ RSpec.describe OpenLanes::CLI::Link, :tree do
     expect(invoke).to include(err: a_string_including("git pull failed"), status: 69)
   end
 
+  it "says what it pulled on the mainline" do
+    allow(mainline).to receive_messages(mainline?: true, pull: true, note: "pulled origin/main")
+
+    expect(invoke).to include(err: a_string_including("pulled origin/main"), status: 0)
+  end
+
   it "reports a dependency cycle and exits 1" do
     plans do |t|
       t.plan "060.00", :ready_for_planning, "left", files: { "spec.md" => "---\nlane: full\ndepends_on: [\"061.00\"]\n---\n# Left\n" }

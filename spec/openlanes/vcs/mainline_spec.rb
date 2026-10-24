@@ -90,6 +90,30 @@ RSpec.describe OpenLanes::Vcs::Mainline do
       expect(mainline.note).to include("pulled origin/main")
     end
 
+    it "tells the user to commit first when a pull would overwrite local edits" do
+      File.write(File.join(local, "NEWS.md"), "an uncommitted edit\n")
+      git(local, "add", "NEWS.md")
+      mainline = described_class.new(root: local)
+
+      expect(mainline.pull).to be(false)
+      expect(mainline.note).to include("git pull --ff-only failed", "commit the spec.md edits from the last link first")
+    end
+
+    it "never waits on a credential prompt" do
+      allow(Open3).to receive(:capture3).and_call_original
+      described_class.new(root: local).pull
+
+      expect(Open3).to have_received(:capture3).with({ "GIT_TERMINAL_PROMPT" => "0" }, "git", "-C", local, "pull", "--ff-only", "--quiet")
+    end
+
+    it "reads the mainline branch from origin/HEAD" do
+      git(local, "checkout", "-q", "-b", "trunk")
+      git(local, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/trunk")
+      git(local, "update-ref", "refs/remotes/origin/trunk", "HEAD")
+
+      expect(described_class.new(root: local).branch).to eq("trunk")
+    end
+
     it "reports a diverged pull as a failure" do
       commit(local, "LOCAL.md", "only here\n")
       mainline = described_class.new(root: local)
@@ -97,6 +121,17 @@ RSpec.describe OpenLanes::Vcs::Mainline do
       expect(mainline.pull).to be(false)
       expect(mainline.note).to include("git pull --ff-only failed")
     end
+  end
+
+  it "says a directory outside git is not a checkout, rather than a linked worktree" do
+    outside = File.join(tmp, "outside")
+    FileUtils.mkdir_p(outside)
+
+    expect(described_class.new(root: outside).warnings).to contain_exactly(a_string_including("is not a git checkout"))
+  end
+
+  it "falls back to main when origin/HEAD is unset" do
+    expect(described_class.new(root: repo).branch).to eq("main")
   end
 
   it "is reached through the Vcs facade" do
