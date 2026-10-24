@@ -20,11 +20,13 @@ module OpenLanes
       private
 
       # Always stays, at the rescan asked for, and watches the pull requests
-      # a person merges the way a staying `run` does.
+      # a person merges the way a staying `run` does. `--rescan` is seconds
+      # and the dispatcher counts ticks, so a 5 passed through unconverted
+      # would rescan every 2.5 s.
       #
       # @param _web [OpenLanes::Web::Launcher]
       # @return [Hash]
-      def staying(_web, _live = nil) = { stay: true, rescan: @rescan, watch: watch }
+      def staying(_web, _live = nil) = { stay: true, rescan: Dispatcher.ticks(@rescan), watch: watch }
 
       # @param message [String]
       # @return [Dry::Monads::Result::Failure]

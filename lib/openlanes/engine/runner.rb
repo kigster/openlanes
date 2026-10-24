@@ -57,7 +57,7 @@ module OpenLanes
       #   other machines; nil when the run is not live, and every plan is ours
       # @param stay [Boolean] idle past fixed points until a person stops
       #   the run; see {Dispatcher#done?}
-      # @param rescan [Integer] seconds between rescans while idle
+      # @param rescan [Integer] ticks between rescans while idle
       # @param watch [OpenLanes::Engine::PrWatch, nil] see {Dispatcher#initialize}
       # @param ignore_bombs [Boolean] `--ignore-bombs`: a 💣 halts nothing
       # @param aging_since [Date, nil] `plans.aging_since`, the floor of every

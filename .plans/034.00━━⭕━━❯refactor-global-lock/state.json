@@ -1,0 +1,116 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "034.00",
+    "slug": "refactor-global-lock"
+  },
+  "state": "blocked",
+  "updated_at": "2026-10-23T14:38:25-07:00",
+  "stages": [
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-10-23T14:04:16-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/034.00-refactor-global-lock",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "4ee79a2e-09c7-4839-83de-ccb505aa9bab"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-23T14:04:22-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:13:36-07:00",
+      "agent": "luke-backend",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-10-23T14:38:15-07:00",
+      "agent": "lando-broker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:38:23-07:00",
+      "agent": "lando-broker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    }
+  ],
+  "messages": [],
+  "moves": 3,
+  "memory": {
+    "luke-backend": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 in blocked.md: the full suite has 6 subprocess failures because a concurrent gem install (pid 75308) keeps rewriting the rbenv gem dir. Asked the human to stop it and rerun, accept the failures, or hold the plan."
+            },
+            {
+              "kind": "todo",
+              "text": "Next round: run bundle pristine, then bundle exec rspec. If it's green, sign Completed. contract.md, plan.md and pull-requests.md are already written."
+            },
+            {
+              "kind": "question",
+              "text": "B1 The suite cannot go green while gems are being reinstalled The implementation requirement says `bundle exec rspec` must exit 0. Every in-process spec passes, the new ones included (733 examples across the touched areas), and `bundle exec rubocop` reports no offenses. The full suite still ends with 6 failures. All of them are specs that spawn `exe/openlanes` as a subprocess (`spec/integration/mail_round_trip_spec.rb:133,145`, `spec/integration/review_labels_spec.rb:121,189`, `spec/openlanes/i…",
+              "ref": "B1",
+              "answer": "Add debug_inspector gem to the Gemfile. And why are dependent on agentilda at all? Answered by kig on 2026-10-23"
+            }
+          ]
+        }
+      }
+    },
+    "lando-broker": {
+      "rounds": {
+        "1": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "question",
+              "text": "B1 answer ('add debug_inspector to Gemfile; why depend on agentilda?') does not pick a/b/c and asks a question back; left open"
+            },
+            {
+              "kind": "note",
+              "text": "blocked.md B1 heading lacks the ' - ' separator used in the spec; numbering is already B1/A1, so no renumbering needed"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "last-known-state": {
+    "luke-backend": {
+      "source": "harness",
+      "at": "2026-10-23T14:13:52-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Blocked, round 1: technical; last seen: {\"openlanes_memory\":{\"kind\":\"question\",\"text\":\"B1 in blocked.md: the full suite has 6 subprocess failures because a concurrent gem install (pid 75308) keeps rewriting the rbenv gem dir."
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "luke-backend",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-23T14:13:52-07:00"
+    }
+  ]
+}

@@ -22,7 +22,7 @@ module OpenLanes
       # @param outage [OpenLanes::Live::Outage] what pauses the run while
       #   Redis is gone; a spec hands in one on its own clock
       def initialize(store:, root:, tree:, agents:, project: nil, node: Node.current(root:), repo: Repo.for(root),
-        clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit))
+        clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit, **Config.current.redis_backoff))
         @store = store
         @node = node
         @keys = Keys.new(repo:, node: node.name)

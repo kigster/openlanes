@@ -165,6 +165,33 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "redis_backoff" do
+      it "is empty when the file says nothing, so Live::Outage applies its defaults" do
+        expect(config.redis_backoff).to eq({})
+      end
+
+      it "reads initial, cap and jitter" do
+        openlanes_yml("redis_backoff:\n  initial: 2\n  cap: 10\n  jitter: false\n")
+        expect(config.redis_backoff).to eq(initial: 2, cap: 10, jitter: false)
+      end
+
+      it "writes itself back out" do
+        expect(described_class.new(redis_backoff: { cap: 10 }).to_yaml).to eq("redis_backoff:\n  cap: 10\n")
+      end
+
+      {
+        "a list"            => ["redis_backoff: [1]\n", /redis_backoff: must be a mapping/],
+        "an unknown key"    => ["redis_backoff:\n  max: 3\n", /redis_backoff.max: unknown key; known: initial, cap, jitter/],
+        "a zero cap"        => ["redis_backoff:\n  cap: 0\n", /redis_backoff.cap: 0 is not a number of seconds above zero/],
+        "a word for jitter" => ["redis_backoff:\n  jitter: full\n", /redis_backoff.jitter: "full" is not true or false/]
+      }.each do |label, (yaml, message)|
+        it "refuses #{label}" do
+          openlanes_yml(yaml)
+          expect { config }.to raise_error(OpenLanes::Error, message)
+        end
+      end
+    end
+
     describe "review.max_hmm" do
       it "defaults to five when neither the file nor the environment says" do
         expect(config.max_hmm(env: {})).to eq(5)

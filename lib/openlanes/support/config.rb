@@ -13,6 +13,10 @@ module OpenLanes
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
   #   redis_outage_hours: 1     # how long agents stay paused for a lost Redis
   #                             # before the run shuts down (W32); any positive number
+  #   redis_backoff:            # how a lost Redis is asked again (plan 022)
+  #     initial: 1              # seconds; the Fibonacci gaps are its multiples
+  #     cap: 30                 # seconds, the longest gap between two asks
+  #     jitter: true            # full jitter: each gap drawn from [0, gap)
   #   desired_codebase_quality: high  # or mvp (R4): what a review that is ok but
   #                             # not perfect does, and M5's column of defaults
   #   merge:
@@ -71,6 +75,9 @@ module OpenLanes
   # @!attribute [r] redis_outage_hours
   #   @return [Numeric, nil] `redis_outage_hours` as the file says it; read
   #     {#outage_limit}, which applies the default
+  # @!attribute [r] redis_backoff
+  #   @return [Hash{Symbol => Object}] `redis_backoff:` as typed, keyed
+  #     :initial, :cap, :jitter; {Live::Outage} applies the defaults
   # @!attribute [r] commands
   #   @return [Hash{String => Hash{Symbol => Object}}] by command name, as
   #     typed: "run", "resync dirs"
@@ -112,6 +119,7 @@ module OpenLanes
     :jobs,
     :redis_url,
     :redis_outage_hours,
+    :redis_backoff,
     :commands,
     :merge_by,
     :app,
@@ -124,7 +132,7 @@ module OpenLanes
     :events_enabled,
     :events_dir) do
     def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
-      redis_outage_hours: nil, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
+      redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
       desired_codebase_quality: nil, coverage: nil, events_enabled: false, events_dir: nil)
       super
     end
@@ -199,6 +207,7 @@ module OpenLanes
     def to_yaml
       settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
+                   "redis_backoff" => (redis_backoff.transform_keys(&:to_s) unless redis_backoff.empty?),
                    "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
@@ -224,7 +233,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours desired_codebase_quality merge commands app plans
+    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
               questions review coverage events].freeze
 
     # What `desired_codebase_quality:` may say (R4), the default first. M5's
@@ -245,6 +254,9 @@ module OpenLanes
 
     # {#outage_limit} when the file names none (W32).
     DEFAULT_OUTAGE_HOURS = 1
+
+    # Every key `redis_backoff:` may hold.
+    BACKOFF_KEYS = %w[initial cap jitter].freeze
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
     PLAN_KEYS = %w[aging_since].freeze
@@ -314,6 +326,7 @@ module OpenLanes
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
           redis_outage_hours: redis_outage_hours(settings, path),
+          redis_backoff: redis_backoff(settings["redis_backoff"], path),
           desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
           commands:  commands(settings["commands"], path),
@@ -386,6 +399,23 @@ module OpenLanes
         return value if value.nil? || (value.is_a?(Numeric) && value.positive?)
 
         fail_with(path, "redis_outage_hours: #{value.inspect} is not a number of hours above zero")
+      end
+
+      # @return [Hash{Symbol => Object}] `redis_backoff:`, checked key by key
+      def redis_backoff(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "redis_backoff: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        value.transform_keys(&:to_s).to_h do |key, setting|
+          fail_with(path, "redis_backoff.#{key}: unknown key; known: #{BACKOFF_KEYS.join(", ")}") unless BACKOFF_KEYS.include?(key)
+          if key == "jitter"
+            fail_with(path, "redis_backoff.jitter: #{setting.inspect} is not true or false") unless [true, false].include?(setting)
+          elsif !(setting.is_a?(Numeric) && setting.positive?)
+            fail_with(path, "redis_backoff.#{key}: #{setting.inspect} is not a number of seconds above zero")
+          end
+          [key.to_sym, setting]
+        end
       end
 
       # @return [Symbol, nil]

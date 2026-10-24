@@ -6,7 +6,7 @@
     "slug": "init-interview"
   },
   "state": "building",
-  "updated_at": "2026-10-21T21:27:03-07:00",
+  "updated_at": "2026-10-23T14:21:26-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -146,6 +146,25 @@
       "down": 10966,
       "seconds": 172.0,
       "note": "ledger says Blocked but Technical Block, but `blocked.md` names no open question",
+      "moves": 5
+    },
+    {
+      "agent": "luke-backend",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-10-23T14:13:41-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/011.00-init-interview",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "2334fc7e-5437-48a5-b52f-d5752562914e",
+      "to": "building",
+      "finished_at": "2026-10-23T14:21:26-07:00",
+      "up": 2629119,
+      "down": 8799,
+      "seconds": 463.9,
+      "note": "ledger says Completed but 🟢 Ready for Review is not justified: Ready for Review requires an open pull request; none are recorded",
       "moves": 5
     }
   ],
@@ -564,6 +583,18 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-10-23T14:13:52-07:00",
+      "agent": "luke-backend",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:21:17-07:00",
+      "agent": "luke-backend",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [

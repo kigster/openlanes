@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 113 | [\[033.00\](A) Auto Merge Passing PRS](https://github.com/kigster/openlanes/pull/113) | Open 🟡 |
+| 113 | [\[033.00\](A) Auto Merge Passing PRS](https://github.com/kigster/openlanes/pull/113) | Merged 🟣 |
 
 ## luke-backend, round 1
 

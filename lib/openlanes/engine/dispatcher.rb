@@ -6,8 +6,8 @@ require "socket"
 
 module OpenLanes
   module Engine
-    # The loop. One tick a second: reap what finished and settle it against
-    # the ledger, poll what is running for its latest line, start what is
+    # The loop. A tick every {TICK} seconds: reap what finished and settle it
+    # against the ledger, poll what is running for its latest line, start what is
     # dispatchable, heartbeat the state file, hand the screen a board.
     #
     # Nothing here guesses. An agent that finished says so in its document;
@@ -102,11 +102,26 @@ module OpenLanes
       # Seconds a kill waits between STOP and SIGKILL.
       KILL_GRACE = 15
 
+      # Seconds between ticks. The spec promises the page sees an engine
+      # change within a second, and the board crosses two waits to get there:
+      # this one, then the event stream's wait for a nudge (or, without a
+      # subscription, its {Web::Events::POLL} of 0.25 s). At one second a
+      # tick, a rename just after one reached the page in up to 1.25 s; half
+      # a second leaves the worst case near 0.75 s.
+      TICK = 0.5
+
       # Seconds between rescans of the tree while a staying run has nothing
       # to do. A command from the page rescans at once; this interval is for
-      # what arrives by other means: a folder edited by hand, `openlanes create`
-      # typed in another terminal, a `blocked.md` answered in an editor.
-      RESCAN = 5
+      # what arrives by other means: a folder edited by hand, `openlanes
+      # create` typed in another terminal, a `blocked.md` answered in an editor.
+      RESCAN_SECONDS = 5
+
+      # {RESCAN_SECONDS} as ticks, which is what the idle count compares.
+      RESCAN = (RESCAN_SECONDS / TICK).round
+
+      # @param seconds [Integer] an interval as a person states it
+      # @return [Integer] the same interval in ticks, at least one
+      def self.ticks(seconds) = [(seconds / TICK).round, 1].max
 
       # Plans with nothing left to do, which an idle staying run reports
       # reaching rather than ending on. Not `Status#terminal?`:
@@ -132,7 +147,7 @@ module OpenLanes
       # @param on_board [Proc, nil] receives a {Board} each tick
       # @param stay [Boolean] keep running past every fixed point, idle, until
       #   a person stops the run
-      # @param rescan [Integer] idle ticks, about a second each, between
+      # @param rescan [Integer] idle ticks, {TICK} seconds each, between
       #   rescans of the tree while staying
       # @param watch [OpenLanes::Engine::PrWatch, nil] the human-mode watch
       #   over open pull requests (M4); nil when nobody merges by hand or the
@@ -225,7 +240,7 @@ module OpenLanes
           tick
           break if done?
 
-          @sleeper.call(1)
+          @sleeper.call(TICK)
         end
         journal!(:run_ended, reason: Execution::Control.quit? ? "quit" : "fixed point")
         @attempts
@@ -1037,7 +1052,7 @@ module OpenLanes
 
       # Whether an idle staying run skips this tick's dispatch. Dispatching
       # reloads the tree and runs `resync dirs` over it, which is cheap once
-      # but not once a second for hours with nothing to find, so an idle run
+      # but not twice a second for hours with nothing to find, so an idle run
       # looks again every {RESCAN} ticks, or at once when woken. Commands,
       # drains and the board still run every tick; only the scan waits.
       #
