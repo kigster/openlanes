@@ -465,12 +465,33 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(subject.best_fit.key).to eq(:ready_for_linking)
     end
 
-    it "moves on to 📋, and 📋 is never sent back to 🔗 by a resync", :tree do
+    it "stays at 🔗 while depends_on is unanswered, and says why", :tree do
       path = plans { |t| t.plan "020.00", :ready_for_linking, "q", files: { "spec.md" => spec_body, "plan.md" => "" } }
       subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
 
+      aggregate_failures do
+        expect(subject.machine.may?(:ready_for_planning)).to be(false)
+        expect(subject.machine.may?(:planned)).to be(false)
+        expect(subject.machine.onward(:ready_for_planning)).to eq(:ready_for_planning)
+        expect { subject.machine.promote!(:ready_for_planning) }
+          .to raise_error(described_class::Refused, /until `spec.md` answers `depends_on:`/)
+        expect(subject.best_fit.key).to eq(:ready_for_linking)
+      end
+    end
+
+    it "moves on to 📋 once depends_on is answered", :tree do
+      linked_spec = "---\ndepends_on: [none]\n---\n#{spec_body}"
+      path = plans { |t| t.plan "020.00", :ready_for_linking, "q", files: { "spec.md" => linked_spec, "plan.md" => "" } }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
       expect(subject.machine.may?(:ready_for_planning)).to be(true)
-      expect(subject.best_fit.key).to eq(:ready_for_linking)
+    end
+
+    it "leaves a 📋 plan from before the linker at 📋, unlinked", :tree do
+      path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => spec_body, "plan.md" => "" } }
+      subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
+
+      expect(subject.best_fit.key).to eq(:ready_for_planning)
     end
 
     it "is blockable, so a linker that finds a cycle can stop the plan" do

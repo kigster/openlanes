@@ -23,6 +23,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     }
   end
 
+  # What ewoki-linker's one Edit does: answer `depends_on:` in spec.md.
+  # 🔗 refuses to move on until it is answered.
+  def link(subject)
+    file = File.join(subject.feature.path, "spec.md")
+    text = File.read(file)
+    File.write(file, text.start_with?("---\n") ? text.sub("---\n", "---\ndepends_on: [none]\n") : "---\ndepends_on: [none]\n---\n#{text}")
+  end
+
   def runner_with(executor, **)
     OpenLanes::Engine::Runner.new(tree:,
       executor:,
@@ -211,6 +219,35 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  # 📋 reads only a blank plan.md, so a linker that wrote nothing used to
+  # pass straight on to the planner with "work verified on disk".
+  describe "an ewoki-linker that never answers depends_on" do
+    let!(:built) { plans { |t| t.plan "032.00", :ready_for_linking, "unlinked", files: { "spec.md" => spec_body, "plan.md" => "" } } }
+    let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("032.00")) }
+
+    def run_linker(result)
+      executor = lambda { |agent, subject, round: 1, **|
+        calls << agent.name
+        if result.ok
+          OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
+            "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
+        end
+        result
+      }
+      runner_with(executor, agents: agents.only("ewoki-linker", "luthen-rael-planner"), rounds: 1).call
+    end
+
+    it "stays at 🔗 when it signs Completed but its Edit did not land" do
+      run_linker(OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0))
+      expect([plan.status.key, calls.uniq]).to eq([:ready_for_linking, ["ewoki-linker"]])
+    end
+
+    it "stays at 🔗 when it times out" do
+      run_linker(OpenLanes::Execution::Executor::Result.new(ok: false, note: "timed out after 900s", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 900.0))
+      expect([plan.status.key, calls.uniq]).to eq([:ready_for_linking, ["ewoki-linker"]])
+    end
+  end
+
   describe "a Completed the folder cannot honour" do
     let!(:built) { plans { |t| t.plan "031.00", :new, "unresearched", files: { "spec.md" => spec_body } } }
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("031.00")) }
@@ -259,6 +296,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         when "yoda-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
+        when "ewoki-linker" then link(subject) && "Completed"
         when "luthen-rael-planner"
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           File.write(File.join(subject.feature.path, "plan-frontend.md"), "# Front end\n\n## F1\n")
@@ -286,6 +324,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         executor = executor_with do |agent, subject, _round|
           case agent.name
           when "yoda-writer" then File.write(File.join(subject.feature.path, "plan.md"), "") && "Completed"
+          when "ewoki-linker" then link(subject) && "Completed"
           when "luthen-rael-planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
           end
         end
@@ -452,6 +491,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     let(:executor) do
       lambda { |agent, subject, **|
         seen << [agent.name, subject.feature.ordinal.to_s]
+        link(subject) if agent.name == "ewoki-linker"
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "noop", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
     end

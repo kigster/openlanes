@@ -161,8 +161,15 @@ module OpenLanes
         # required a file only the agent handling ⭐ Planned writes, and
         # nothing could enter it. The sources before 🔗 stay, so a person may
         # still move a plan whose `depends_on:` they wrote by hand.
+        #
+        # Leaving 🔗 also needs the key answered. 📋's invariant reads only a
+        # blank `plan.md`, so without this an `ewoki-linker` that timed out,
+        # or signed Completed without its Edit landing, passed on to the
+        # planner unlinked. The guard sits on this edge and not on 📋, so a
+        # 📋 folder from before the linker existed is not renamed back.
         event :ready_to_plan, guard: :justified? do
-          transitions from: %i[ready_for_linking researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: :ready_for_linking, to: :ready_for_planning, guard: :linked?
+          transitions from: %i[researched new retroactive shit blocked product_blocked bomb deferred],
             to: :ready_for_planning
         end
 
@@ -172,7 +179,8 @@ module OpenLanes
         # planned. What research buys is not enforced here; it is enforced by
         # `yoda-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
-          transitions from: %i[ready_for_planning ready_for_linking researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: :ready_for_linking, to: :planned, guard: :linked?
+          transitions from: %i[ready_for_planning researched new retroactive shit blocked product_blocked bomb deferred],
             to: :planned
         end
 
@@ -488,12 +496,18 @@ module OpenLanes
       # @return [Boolean]
       def justified? = STATUS_BY_KEY.fetch(aasm.to_state).satisfied_by?(subject)
 
+      # The second guard, on the edges out of 🔗 only.
+      #
+      # @return [Boolean] whether `spec.md` answers `depends_on:`
+      def linked? = Spec.for(subject).linked?
+
       # @param to [Symbol]
       # @return [String]
       def refusal(to)
         return "#{describe(key)} cannot become #{describe(to)}" unless self.class.edge?(key, to)
 
-        STATUS_BY_KEY.fetch(to).violation(subject)
+        STATUS_BY_KEY.fetch(to).violation(subject) ||
+          ("#{describe(key)} cannot become #{describe(to)} until `spec.md` answers `depends_on:`" if key == :ready_for_linking && !linked?)
       end
 
       # @param key [Symbol]
