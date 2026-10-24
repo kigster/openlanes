@@ -199,10 +199,15 @@ RSpec.describe "openlanes app" do
       Process.wait(sleeper) if sleeper
     end
 
+    # PID 1 is alive everywhere, so the registry keeps it; the TERM itself is
+    # stubbed, since a suite running as root would otherwise signal init.
     it "refuses to stop a process that is not the caller's" do
       OpenLanes::Apps::Ports.new(path: ports_file, owner: 1, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
+      allow(Process).to receive(:kill).and_call_original
+      allow(Process).to receive(:kill).with("TERM", 1).and_raise(Errno::EPERM)
       _, err, status = command(OpenLanes::CLI::App::Stop, plan: "12")
       expect([status, err]).to match([77, /1 is not yours to stop/])
+      expect(Process).to have_received(:kill).with("TERM", 1)
     end
 
     it "refuses a plan the project does not have" do
