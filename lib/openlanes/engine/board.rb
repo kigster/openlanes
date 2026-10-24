@@ -3,7 +3,7 @@
 module OpenLanes
   module Engine
     # What the screen draws: everything about the run, as values, refreshed
-    # once a second by the dispatcher. The screen paints it and knows nothing
+    # every tick by the dispatcher. The screen paints it and knows nothing
     # about threads; the dispatcher builds it and knows nothing about cells.
     #
     # @!attribute [r] rows

@@ -1,0 +1,1 @@
+step 2: quality_question_spec + dispatcher_quality_gate_spec pass: question asked once (quality_ask recorded, shown once as Q1), gate waits.

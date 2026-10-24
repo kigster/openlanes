@@ -23,7 +23,7 @@ module OpenLanes
       @options = options.reject { %i[dry_run web stay until_settled].include?(it.name) }
 
       option :rescan,
-        default: Engine::Dispatcher::RESCAN.to_s,
+        default: Engine::Dispatcher::RESCAN_SECONDS.to_s,
         desc:    "Seconds between rescans of .plans while idle; a command from the page rescans at once"
 
       example [
@@ -36,7 +36,7 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
-        @rescan = Integer(options.fetch(:rescan, Engine::Dispatcher::RESCAN), exception: false)
+        @rescan = Integer(options.fetch(:rescan, Engine::Dispatcher::RESCAN_SECONDS), exception: false)
         refuse("--rescan takes a whole number of seconds, at least 1.", 64) unless @rescan&.positive?
 
         super

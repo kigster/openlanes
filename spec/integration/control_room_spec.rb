@@ -61,10 +61,11 @@ RSpec.describe "the control room, end to end", :redis do
     stream.wait_for(deadline: 5) { it.name == "board" && status_key(plan_on(it.data, "003.00") || {}) == "product_blocked" }
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-    # The engine reads the tree once a tick (1 s) and the server polls Redis
-    # every 0.25 s, so a rename at the worst moment takes 1.25 s to reach the
-    # page; measured runs land at 1.0 to 1.1 s. The bound allows that and no more.
-    expect(elapsed).to be <= 1.5
+    # The engine reads the tree once a tick (Dispatcher::TICK, 0.5 s) and the
+    # stream waits at most Web::Events::POLL (0.25 s) for it, so a rename at
+    # the worst moment takes about 0.75 s plus the publish to reach the page.
+    # The spec says a second.
+    expect(elapsed).to be <= 1.0
   end
 
   # `hold` needs a running agent, and an agent costs money, so the command that

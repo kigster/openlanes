@@ -1437,4 +1437,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
   end
+
+  describe ".ticks" do
+    it "turns seconds into ticks, so five seconds is ten half-second ticks" do
+      expect(described_class.ticks(5)).to eq(10)
+    end
+
+    it "never answers fewer than one tick" do
+      expect(described_class.ticks(0.1)).to eq(1)
+    end
+  end
 end

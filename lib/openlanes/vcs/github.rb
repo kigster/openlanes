@@ -92,7 +92,8 @@ module OpenLanes
       # Fields asked of `gh pr view`, which unlike `pr list` can be told about
       # one pull request in another repository.
       VIEW_FIELDS = %w[
-        number title url headRefName headRefOid state isDraft mergedAt body labels mergeStateStatus
+        number title url headRefName headRefOid baseRefName mergeCommit state isDraft mergedAt body labels
+        mergeStateStatus
       ].freeze
 
       # A reference to one pull request: a bare number, a `#`-prefixed number,
@@ -130,16 +131,18 @@ module OpenLanes
 
         pr = JSON.parse(out)
         {
-          number:      pr["number"],
-          title:       pr["title"].to_s,
-          url:         pr["url"].to_s,
-          branch:      pr["headRefName"].to_s,
-          head:        pr["headRefOid"].to_s,
-          state:       self.class.state_label(pr),
-          open:        pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
-          labels:      Array(pr["labels"]).map { |l| l["name"] },
-          body:        pr["body"].to_s,
-          merge_state: pr["mergeStateStatus"].to_s
+          number:       pr["number"],
+          title:        pr["title"].to_s,
+          url:          pr["url"].to_s,
+          branch:       pr["headRefName"].to_s,
+          head:         pr["headRefOid"].to_s,
+          state:        self.class.state_label(pr),
+          open:         pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+          labels:       Array(pr["labels"]).map { |l| l["name"] },
+          body:         pr["body"].to_s,
+          merge_state:  pr["mergeStateStatus"].to_s,
+          base:         pr["baseRefName"].to_s,
+          merge_commit: pr.dig("mergeCommit", "oid").to_s
         }
       rescue TTY::Command::ExitError, JSON::ParserError => e
         raise Error, "could not read pull request #{ref}: #{e.message.lines.first.to_s.strip}"
@@ -152,6 +155,30 @@ module OpenLanes
       def pull_requests(refs)
         UI.stepping(refs, "Fetching pull requests") { |ref| ref }
         refs.map { |ref| pull_request(ref) }
+      end
+
+      # The pull request a branch merged through, newest first, for
+      # `worktree prune` to ask whether a checkout's work landed.
+      #
+      # @param branch [String]
+      # @return [Hash, nil] `{number:, base:, merge_commit:}`; nil when none merged
+      def merged_pull_for(branch)
+        out = @command.run("gh",
+          "pr",
+          "list",
+          "--state",
+          "merged",
+          "--head",
+          branch,
+          "--limit",
+          "1",
+          "--json",
+          "number,baseRefName,mergeCommit").out
+        pr = JSON.parse(out.to_s.strip.empty? ? "[]" : out).first or return nil
+
+        { number: pr["number"], base: pr["baseRefName"].to_s, merge_commit: pr.dig("mergeCommit", "oid").to_s }
+      rescue TTY::Command::ExitError, JSON::ParserError => e
+        raise Error, "could not list the pull requests of #{branch}: #{e.message.lines.first.to_s.strip}"
       end
 
       # `gh` speaks in enums; `pull-requests.md` speaks in the words the state
