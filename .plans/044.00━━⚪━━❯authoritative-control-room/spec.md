@@ -1,6 +1,6 @@
 ---
 created: 2026-10-20
-lane: full
+starts: research
 depends_on: ["043.00"]
 ---
 

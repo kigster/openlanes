@@ -46,12 +46,12 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
 
   describe "choosing a lane" do
     let(:spec_md) do
-      out, = run("split", "big", "migration", lane: "quick", depth: "fast", draft: false, open: false)
+      out, = run("split", "big", "migration", starts: "building", depth: "fast", draft: false, open: false)
       File.read(File.join(out.strip, "spec.md"))
     end
 
     it "writes the lane and depth into spec.md's frontmatter" do
-      expect(OpenLanes::Plans::Spec.parse(spec_md).to_h.slice(:lane, :depth)).to eq(lane: :quick, depth: :fast)
+      expect(OpenLanes::Plans::Spec.parse(spec_md).to_h.slice(:starts, :depth)).to eq(starts: :building, depth: :fast)
     end
 
     it "keeps the scaffold below the frontmatter" do

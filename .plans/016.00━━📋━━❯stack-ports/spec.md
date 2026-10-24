@@ -178,7 +178,7 @@ Each item has its check.
 1. **Port plan generator.** `Lifecycle.port(dir:, from:, to:)` creates two folders through `Creator#create`, `NNN.00-⚪️ → port-from-<from>-to-<to>` and `NNN+1.00-⚪️ → retire-<from>`, each with a generated `spec.md`.
    - Check: a spec on a `PlansFixture` tree asserts both folder names, their ordinals, and each `spec.md`'s frontmatter and headings.
 1. **Port spec content.** The port plan's `spec.md` carries:
-   - frontmatter `port: { from: <from>, to: <to> }` and `lane: full`;
+   - frontmatter `port: { from: <from>, to: <to> }` and `starts: research`;
    - an `implementation_requirements:` entry saying `.openlanes.coverage.yml` measures the `<to>` code only (M18, F7);
    - a `## What research needs to settle` that asks leah for the inventory (item 3);
    - a `## How to tell it's working?` that says every inventory row passes parity.

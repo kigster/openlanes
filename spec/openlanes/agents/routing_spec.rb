@@ -51,7 +51,7 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
   end
 
   it "gives a quick-lane plan to r2d2-mechanic alone" do
-    plan_with("spec.md" => "---\nlane: quick\n---\n#{spec_body}")
+    plan_with("spec.md" => "---\nstarts: building\n---\n#{spec_body}")
     expect(routed).to eq(%w[r2d2-mechanic])
   end
 

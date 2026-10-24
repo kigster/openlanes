@@ -34,7 +34,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
   let(:board) do
     { seq: 3, at: "2026-10-13T20:00:00Z", node: { id: "aaaa", user: "pat", host: "box", me: true },
       run: { status: "running", up: 5000, down: 300, cost: 0.42, agents_working: 1 },
-      plans: [{ ordinal: "002.00", title: "Cart retention", status: { emoji: "🔨", label: "Building" }, lane: "full",
+      plans: [{ ordinal: "002.00", title: "Cart retention", status: { emoji: "🔨", label: "Building" }, starts: "research",
                 elapsed: 600, cost: 0.4, pr: nil, interrupted: nil,
                 cars: [{ key: "002.00/luke-backend", agent: "luke-backend", state: "running", phase: "calm", round: 1, rounds: 2,
                          model: "claude-opus-5-5", up: 5000, down: 300, elapsed: 600, remaining: 300, held: false,

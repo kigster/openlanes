@@ -1,6 +1,6 @@
 ---
 created: 2026-10-16
-lane: full
+starts: research
 ---
 
 # Runtime State Outside Plans

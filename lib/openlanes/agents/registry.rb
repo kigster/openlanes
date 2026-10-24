@@ -112,7 +112,7 @@ module OpenLanes
           holds_at:      symbol_or_nil(meta["holds_at"]),
           adapter:       adapter(meta["adapter"], path),
           phase:         meta["phase"]&.to_s,
-          lanes:         Array(meta["lanes"]).map { |l| l.to_s.to_sym },
+          starts:        Array(meta["starts"]).map { |l| l.to_s.to_sym },
           needs:         Array(meta["needs"]).map(&:to_s),
           toggle:        meta["toggle"]&.to_s
         )

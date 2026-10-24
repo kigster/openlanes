@@ -92,7 +92,7 @@
         "label": "Technical Block",
         "note": "what Technical Block means"
       },
-      "lane": "full",
+      "starts": "research",
       "station": "building",
       "up": 1250000,
       "down": 90200,
@@ -202,7 +202,7 @@
         "label": "In Review",
         "note": "what In Review means"
       },
-      "lane": "plan",
+      "starts": "planning",
       "station": "in_review",
       "up": 1090000,
       "down": 78800,
@@ -262,7 +262,7 @@
         "label": "Building",
         "note": "what Building means"
       },
-      "lane": "quick",
+      "starts": "building",
       "station": "building",
       "up": 476200,
       "down": 33400,
@@ -342,7 +342,7 @@
         "label": "Approved & Merged",
         "note": "what Approved & Merged means"
       },
-      "lane": "quick",
+      "starts": "building",
       "station": "pr",
       "up": 1090000,
       "down": 78800,
@@ -380,7 +380,7 @@
         "label": "New",
         "note": "what New means"
       },
-      "lane": "full"
+      "starts": "research"
     },
     {
       "ordinal": "012.00",
@@ -391,7 +391,7 @@
         "label": "Product Block",
         "note": "what Product Block means"
       },
-      "lane": "plan"
+      "starts": "planning"
     }
   ],
   "models": [

@@ -1087,8 +1087,19 @@ module OpenLanes
       def idle_reason(subjects)
         # Finished plans move into archive/ (N3), so an empty top level after
         # a run that shipped everything is "finished", not "no plans yet".
-        if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
-          return "idle: no plans yet; create one from the page or with openlanes create"
+        # `[].all?` is true, which is the finished case when every plan has
+        # left the top level; an empty *scope* with work still sitting
+        # elsewhere is not that, and under R4 it is the quality gate.
+        if subjects.empty?
+          all = @runner.tree.everything.reload.subjects
+          return "idle: no plans yet; create one from the page or with openlanes create" if all.empty?
+          if all.all? { FINISHED.include?(it.status.key) }
+            return "idle: every plan is finished; create the next one from the page"
+          end
+          if @runner.awaiting_quality?
+            return "idle: desired_codebase_quality is not set in #{Config::FILE}; " \
+                   "no plan in scope to ask #{QualityQuestion::NAME} on"
+          end
         end
         if subjects.all? { FINISHED.include?(it.status.key) }
           return "idle: every plan is finished; create the next one from the page"
@@ -1134,6 +1145,7 @@ module OpenLanes
         # Redis lost (W32): the agents under way are paused, and nobody new
         # starts until it answers, since no claim could be checked.
         return nil if Execution::Control.paused?
+        return nil if quality_awaited?
 
         @dependencies = @runner.dependencies(except: untouchable)
         blockers_first(@runner.in_scope).each do |subject|
@@ -1165,6 +1177,33 @@ module OpenLanes
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # No agent starts while `.openlanes.yml` has no `desired_codebase_quality:`
+      # (plan 035): every level changes what the builders and reviewers aim
+      # for, so work done before the answer would be done to the wrong
+      # standard. The question goes on the first plan in scope, where the
+      # page shows it, and is said once in the log. With nobody in scope
+      # there is no folder to hang the question on, and that is said too,
+      # rather than waiting with no line. The answer lifts the gate on the
+      # next tick: {Config.current} rereads a changed file.
+      #
+      # @return [Boolean]
+      def quality_awaited?
+        return false unless @runner.awaiting_quality?
+
+        asker = @runner.in_scope.first
+        unless asker
+          @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                   "no plan in scope to ask #{QualityQuestion::NAME} on") || true
+          return true
+        end
+
+        QualityQuestion.ask!(asker.feature.path)
+        @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                 "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts",
+          plan: asker.feature.ordinal.to_s) || true
+        true
       end
 
       # The dependency gate: a plan whose `depends_on:` names anything not yet
@@ -1229,9 +1268,9 @@ module OpenLanes
         @runner.age!(except: busy)
       end
 
-      # Plans whose lane skips research, rewriting or planning are moved past
+      # Plans whose `starts:` skips research, rewriting or planning are moved past
       # those phases before anyone is assigned, so the first agent they meet
-      # is the one their lane starts with.
+      # is the one that value starts with.
       #
       # @param busy [Array<String>] ordinals an agent is working right now
       # @return [void]
@@ -1240,7 +1279,7 @@ module OpenLanes
           next if busy.include?(subject.feature.ordinal.to_s)
 
           moved = Lifecycle::Lanes.advance(subject, commit: true) or next
-          UI.log("lane: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+          UI.log("starts: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
         end
       end
 
@@ -1956,14 +1995,19 @@ module OpenLanes
 
       # hansolo approved. Into 🧪 when the run verifies and the pull request
       # carries a verdict that goes on to verification; otherwise the plan is
-      # finished at 👀, as it was before chewie existed.
+      # finished at 👀, as it was before chewie existed. A 🔴 or, under
+      # `standard`, a 🟡 after the hand-off is the hand-off's own send-back,
+      # signed as one so the ledger does not call a return to 🟡 "approved".
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
       def approved(job, base, subject, ordinal)
         record_approval(job, subject)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
-        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
+        if %i[verifying rejected building].include?(now)
+          word = now == :verifying ? "approved" : "sent back"
+          return base.with(status: "Completed", to: now, note: "#{base.note}; #{word}, #{said}")
+        end
 
         @finished_plans << ordinal
         finish(subject, "approved")
@@ -2066,7 +2110,7 @@ module OpenLanes
       def target_for(agent, verdict, partner_running)
         case verdict
         when :rejected then :rejected
-        when :slop then :shit
+        when :slop then :rewrite
         else partner_running ? agent.holds_at : agent.advances_to
         end
       end

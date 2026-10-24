@@ -8,7 +8,7 @@ effort: high
 timeout: 600
 ledger: [plan.md]
 phase: completion
-lanes: [full, plan, quick]
+starts: [research, planning, building]
 allowed_tools: [Read, Grep, Glob, Bash, Edit, Write, Skill]
 writes: [plan.md]
 ---

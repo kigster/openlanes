@@ -222,7 +222,7 @@ RSpec.describe OpenLanes::Linear::Import, :tree do
   describe "a plan whose state nobody has decided how to file" do
     before do
       plans do |t|
-        t.plan "009.00", :shit, "scrapped-work", files: { "rewrite.md" => "Start again." }
+        t.plan "009.00", :rewrite, "scrapped-work", files: { "rewrite.md" => "Start again." }
         t.plan "010.00", :rolled_back, "pulled", files: { "rollback.md" => "It broke checkout." }
       end
     end
@@ -234,7 +234,7 @@ RSpec.describe OpenLanes::Linear::Import, :tree do
     # Skipping quietly and filing it somewhere plausible are the same failure
     # wearing different clothes: nobody finds out.
     it "reports it, grouped by the state that stopped it" do
-      expect(import.unplaced.transform_keys(&:key)).to eq(shit: ["009.00"], rolled_back: ["010.00"])
+      expect(import.unplaced.transform_keys(&:key)).to eq(rewrite: ["009.00"], rolled_back: ["010.00"])
     end
   end
 

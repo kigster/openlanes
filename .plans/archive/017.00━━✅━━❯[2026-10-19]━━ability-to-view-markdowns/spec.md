@@ -1,6 +1,6 @@
 ---
 created: 2026-10-15
-lane: full
+starts: research
 ---
 
 # What This Is

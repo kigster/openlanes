@@ -16,7 +16,7 @@ module OpenLanes
     # a copy that drifts from the frontmatter the loop actually routes on.
     class Roster
       # Columns, so the header and the rows cannot drift apart.
-      HEADINGS = ["Agent", "Handles", "Advances to", "Runs on", "Lanes"].freeze
+      HEADINGS = ["Agent", "Handles", "Advances to", "Runs on", "Starts"].freeze
 
       # What an agent with no `advances_to` is, in the one word that explains why
       # `run` never offers it work.
@@ -98,7 +98,7 @@ module OpenLanes
          handles(agent),
          UI.paint(advances(agent), agent.read_only? ? :bright_black : :green),
          UI.paint(runs_on(agent), :bright_black),
-         UI.paint(agent.lanes.empty? ? "all" : agent.lanes.join(", "), :bright_black)]
+         UI.paint(agent.starts.empty? ? "all" : agent.starts.join(", "), :bright_black)]
       end
 
       # The agent's own settings, before any spec.md overrides them: the

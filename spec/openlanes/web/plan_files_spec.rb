@@ -5,7 +5,7 @@ require "digest"
 RSpec.describe OpenLanes::Web::PlanFiles, :tree do
   subject(:files) { described_class.new(plans_dir: plans_root) }
 
-  let(:spec_md) { "---\nlane: full\ncreated: 2026-10-15\n---\n\n# The spec\n" }
+  let(:spec_md) { "---\nstarts: research\ncreated: 2026-10-15\n---\n\n# The spec\n" }
   let(:folder) do
     plans do |t|
       t.plan("017.00",
@@ -82,7 +82,7 @@ RSpec.describe OpenLanes::Web::PlanFiles, :tree do
     end
 
     it "refuses changed frontmatter in spec.md" do
-      body = edited.sub("lane: full", "lane: quick")
+      body = edited.sub("starts: research", "starts: building")
       expect { files.write("017.00", "spec.md", body:, if_match: etag_of(spec_md)) }
         .to raise_error(described_class::FrontmatterChanged, "the frontmatter of spec.md is locked")
       expect(File.read(File.join(folder, "spec.md"))).to eq(spec_md)
@@ -94,7 +94,7 @@ RSpec.describe OpenLanes::Web::PlanFiles, :tree do
     end
 
     it "refuses frontmatter added to a plan.md that had none" do
-      expect { files.write("017.00", "plan.md", body: "---\nlane: quick\n---\n# The plan\n", if_match: etag_of("# The plan\n")) }
+      expect { files.write("017.00", "plan.md", body: "---\nstarts: building\n---\n# The plan\n", if_match: etag_of("# The plan\n")) }
         .to raise_error(described_class::FrontmatterChanged, "the frontmatter of plan.md is locked")
     end
 

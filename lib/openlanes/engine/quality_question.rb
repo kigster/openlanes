@@ -30,17 +30,32 @@ module OpenLanes
       #   @return [String]
       Choice = Data.define(:letter, :quality, :label)
 
-      # @return [Array<Choice>]
+      # @return [Array<Choice>] R4's three levels (plan 035), strictest first,
+      #   in the words the spec gives them: the terminal, the page and
+      #   `decisions.md` all read these, so they cannot drift apart
       CHOICES = [
         Choice.new(letter: "a",
           quality: :high,
-          label: "High quality, but slower and more expensive. A PR review labelled \"review-ok-not-perfect\" " \
-                 "returns to developers for fixes."),
+          label: "high: the highest quality software design, modularity, low inter-module coupling, high " \
+                 "intra-module cohesion, design patterns, events, immutability and functional programming, at the " \
+                 "cost of slower delivery, more rounds per plan and high standards for accepting the review. SOLID " \
+                 "classes and maximum reuse in OO code; the most sophisticated UI. A \"review-ok-not-perfect\" PR " \
+                 "returns to developers."),
         Choice.new(letter: "b",
+          quality: :standard,
+          label: "standard: a reasonable middle ground. Similar modularity and full test coverage, but less strict on " \
+                 "SOLID, immutability and functional programming; likely fewer rounds and faster delivery. A " \
+                 "\"review-ok-not-perfect\" PR returns to developers."),
+        Choice.new(letter: "c",
           quality: :mvp,
-          label: "Good enough, but faster and cheaper, think MVP (\"review-ok-not-perfect\" is accepted, " \
-                 "as it contains no blocking issues).")
+          label: "mvp: the fastest and least designed codebase, for MVPs and prototypes, not for software with paying " \
+                 "customers. Cheapest in AI tokens, most likely to have bugs, and a less sophisticated UI. A " \
+                 "\"review-ok-not-perfect\" PR is accepted, as it has no blocking issues.")
       ].freeze
+
+      # Where the answer is written down beside the plans, with every option
+      # it was chosen from (plan 035).
+      DECISIONS = "decisions.md"
 
       module_function
 
@@ -93,7 +108,7 @@ module OpenLanes
       # Settle the question and write the key, unless the file has one by now.
       #
       # @param plan_dir [String]
-      # @param letter [String] "a" or "b"
+      # @param letter [String] "a", "b" or "c"
       # @param by [String]
       # @param root [String] the project root, where `.openlanes.yml` lives
       # @param at [Time]
@@ -105,7 +120,27 @@ module OpenLanes
         Plans::PlanState.for(plan_dir).settle_quality_ask!(answer: choice.quality, by:, at:) or return nil
 
         write_key(root, choice.quality)
+        record(File.dirname(plan_dir), choice.quality, by:, at:)
         choice.quality
+      end
+
+      # The answer given on a terminal at the start of a run (plan 035):
+      # the same key and `decisions.md` entry as {.answer!}, and a question
+      # an earlier run left open on the page is settled with it, so the
+      # page stops asking what the terminal already answered.
+      #
+      # @param root [String] the project root, where `.openlanes.yml` lives
+      # @param plans_dir [String]
+      # @param quality [Symbol] one of {Config::QUALITIES}
+      # @param by [String]
+      # @param at [Time]
+      # @return [Symbol] the quality
+      def settle!(root:, plans_dir:, quality:, by:, at: Time.now)
+        holder = open_in(plans_dir)
+        Plans::PlanState.for(holder).settle_quality_ask!(answer: quality, by:, at:) if holder
+        write_key(root, quality)
+        record(plans_dir, quality, by:, at:)
+        quality
       end
 
       # Appended rather than rewritten through {Config#to_yaml}, which
@@ -119,6 +154,35 @@ module OpenLanes
         text = File.file?(path) ? File.read(path, encoding: "UTF-8") : ""
         text += "\n" unless text.empty? || text.end_with?("\n")
         File.write(path, "#{text}desired_codebase_quality: #{quality}\n")
+      end
+
+      # Append the answer to `decisions.md` in the plans directory, under the
+      # three options it was picked from, so a later reader sees what each
+      # level promised and not just its name.
+      #
+      # @param plans_dir [String]
+      # @param quality [Symbol] one of {Config::QUALITIES}
+      # @param by [String]
+      # @param at [Time]
+      # @return [String] the file's path
+      def record(plans_dir, quality, by:, at: Time.now)
+        path = File.join(plans_dir, DECISIONS)
+        text = File.file?(path) ? File.read(path, encoding: "UTF-8") : "# Decisions\n"
+        text += "\n" unless text.end_with?("\n")
+        File.write(path, "#{text}\n#{entry(quality, by:, at:)}")
+        path
+      end
+
+      # @return [String] one `decisions.md` section
+      def entry(quality, by:, at:)
+        options = CHOICES.map { "#{it.letter}) #{it.label}#{" **(chosen)**" if it.quality == quality}" }
+        <<~MARKDOWN
+          ## desired_codebase_quality: #{quality}
+
+          #{HEADING}. Decided by #{by} on #{at.strftime("%Y-%m-%d")}, written to `#{Config::FILE}`.
+
+          #{options.join("\n\n")}
+        MARKDOWN
       end
     end
   end

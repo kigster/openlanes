@@ -134,7 +134,7 @@ module OpenLanes
           slug:        subject.feature.slug,
           summary:     Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
           status:      status(subject.status),
-          lane:        Plans::Spec.for(subject).lane.to_s,
+          starts:        Plans::Spec.for(subject).starts.to_s,
           station:     Stations.key_for(subject.status.key, before: stages.last&.fetch("from", nil)&.to_sym).to_s,
           up:          spent[:up],
           down:        spent[:down],
@@ -165,7 +165,7 @@ module OpenLanes
                 .reject { |s| foreign?(s.feature.ordinal.to_s) }
                 .map do |s|
           { ordinal: s.feature.ordinal.to_s, title: s.feature.title, status: status(s.status),
-            lane: Plans::Spec.for(s).lane.to_s }
+            starts: Plans::Spec.for(s).starts.to_s }
         end
       end
 
