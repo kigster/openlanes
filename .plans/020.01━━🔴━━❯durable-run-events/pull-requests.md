@@ -56,3 +56,11 @@ chewie-verifier's "rejected, verification round 3" (CI red on #105) is one top-l
 - chewie-verifier round 3 (CI red): **fix**, ported. R2D2 fixed it on the remote branch in `1edd015b` ("Record a re-rejected PR as a second pr_reviewed event"); CI on remote head `cec4e2cf` is green (test, linter, web, e2e). The harness's rebase left the local branch without that commit, so a push of the rebased branch would have dropped it. Its `lib` and `spec` hunks are applied verbatim to the working tree, badge hunk excluded: `pr_reviewed` is keyed `[pr, rejection index]` counted from github mail; fixture `node-a.jsonl` fixture-11 verdict `rejected`. Files: `lib/openlanes/engine/pr_outcomes.rb`, `spec/fixtures/events/node-a.jsonl`, `spec/openlanes/events/pr_and_answer_emit_spec.rb`.
 
 Checks, 2026-10-21: `bundle exec rspec` → 4265 examples, 0 failures, 9 pending (web/dist missing); `bundle exec rubocop` → 584 files, no offenses. `docs/badges` untouched after the run.
+
+## Answers, round 4
+
+No new review comment since chewie-verifier's round 3 (CI red), answered in round 3. CI on remote head `238c254a` is green (test, linter, web, e2e).
+
+- Branch drift, **fix**: R2D2's merge of `origin/main` (`238c254a`) resolved the plan's two new `Time.now` calls onto the clock seam; the local rebased branch still had them. Now aligned: `lib/openlanes/engine/dispatcher.rb` (`@invocations[job.key] = @clock.now`) and `lib/openlanes/engine/runner.rb` (`mint_run` reads `Clock::System.now`). Every other plan file already matched the remote's patch.
+
+Checks, 2026-10-23: `bundle exec rspec` → 4265 examples, 0 failures, 45 pending (36 need Redis at localhost:6379/15, which is not answering on this machine; 9 need web/dist). `bundle exec rubocop` → 584 files, no offenses. `docs/badges` untouched.

@@ -6,7 +6,7 @@
     "slug": "durable-run-events"
   },
   "state": "rejected",
-  "updated_at": "2026-10-21T21:39:57-07:00",
+  "updated_at": "2026-10-23T14:31:36-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -47,6 +47,6 @@
       "down": 4574,
       "seconds": 41.4,
       "note": "completed - 4 tool calls"
-    },
+    }
   ]
 }
