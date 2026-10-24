@@ -134,6 +134,17 @@ RSpec.describe OpenLanes::Setup::Interview do
     end
   end
 
+  context "when the jobs answer is not a count" do
+    let(:given) { { project: "Acme", lane: "full", frontend: false } }
+
+    # CI (Enter), merge (Enter), quality (Enter), eight stack questions, then jobs twice.
+    before { answer(enter, enter, enter, *Array.new(8, "\n"), "many\n", "3\n") }
+
+    it "asks it again at once" do
+      expect([interview.call.jobs, asked]).to match([3, include("whole number above zero")])
+    end
+  end
+
   context "without asking" do
     let(:prompt) { nil }
 
@@ -154,6 +165,23 @@ RSpec.describe OpenLanes::Setup::Interview do
         merge_by:                 :auto,
         desired_codebase_quality: :mvp,
         stack:                    { language: "elixir" }
+      )
+    end
+
+    it "keeps every key it does not ask about" do
+      current = OpenLanes::Config.new(redis_url: "redis://cache.example.test:6379",
+        merge_max_rejections: 3,
+        review_max_hmm: 2,
+        questions_model: "claude-sonnet-4-5",
+        redis_outage_hours: 4,
+        commands: { lint: { run: "x" } })
+      expect(interview(ask: false, defaults: current).call).to have_attributes(
+        redis_url:            "redis://cache.example.test:6379",
+        merge_max_rejections: 3,
+        review_max_hmm:       2,
+        questions_model:      "claude-sonnet-4-5",
+        redis_outage_hours:   4,
+        commands:             { lint: { run: "x" } }
       )
     end
 

@@ -78,10 +78,11 @@ module OpenLanes
         desired_codebase_quality = pick(:desired_codebase_quality, extracted) { ask_quality(quality) }
         stack = settle_stack(extracted)
 
-        Config.new(**basics,
-          redis_url:                @defaults.redis_url,
-          commands:                 @defaults.commands,
-          app:                      @defaults.app,
+        # Starts from the current file, so every key the interview does not
+        # ask about (coverage:, review:, questions:, merge.max_rejections,
+        # plans.aging_since) survives --reconfigure. Building a fresh Config
+        # here once dropped them, and losing coverage: turns the gate off.
+        @defaults.with(**basics,
           merge_by:,
           ci:,
           desired_codebase_quality:,
@@ -197,15 +198,34 @@ module OpenLanes
       def basics
         name = @defaults.project || File.basename(@root)
         project = @given[:project] || (ask? ? @prompt.ask("Project name:", default: name) : name)
-        lane = @given[:lane] ||
-               (ask? ? @prompt.select("Default lane for new plans:", Plans::Spec::LANES.map(&:to_s)) : @defaults.lane || :full)
+        lane = @given[:lane] || (ask? ? ask_lane : @defaults.lane || :full)
         frontend = if @given.key?(:frontend)
                      @given[:frontend]
                    else
                      (ask? ? ask_frontend : @defaults.frontend)
                    end
-        jobs = @given[:jobs] || (ask? ? @prompt.ask("Plans to run at once (blank: cores - 2):") : @defaults.jobs)
-        { project:, lane: lane.to_sym, frontend:, jobs: count(jobs) }
+        jobs = if @given.key?(:jobs)
+                 count(@given[:jobs])
+               else
+                 (ask? ? ask_jobs : count(@defaults.jobs))
+               end
+        { project:, lane: lane.to_sym, frontend:, jobs: }
+      end
+
+      # @return [String]
+      def ask_lane
+        lanes = Plans::Spec::LANES.map(&:to_s)
+        @prompt.select("Default lane for new plans:", lanes, default: (@defaults.lane || lanes.first).to_s)
+      end
+
+      # Re-asked until the answer is a count, so a typo is caught at its own
+      # question rather than after every later one has been answered.
+      #
+      # @return [Integer, nil]
+      def ask_jobs
+        @prompt.ask("Plans to run at once (blank: cores - 2):", default: @defaults.jobs&.to_s) do |q|
+          q.validate(/\A\s*(?:[1-9]\d*)?\s*\z/, "Enter a whole number above zero, or leave it blank.")
+        end.then { count(it) }
       end
 
       # R4's question, worded as `openlanes init` has always asked it.
@@ -219,8 +239,9 @@ module OpenLanes
 
       # @return [Boolean, nil]
       def ask_frontend
-        choice = @prompt.select("Do plans have a front end?", ["each plan decides", "YES", "NO"])
-        { "YES" => true, "NO" => false }[choice]
+        choices = { "each plan decides" => nil, "YES" => true, "NO" => false }
+        @prompt.select("Do plans have a front end?", choices.keys, default: choices.key(@defaults.frontend))
+               .then { choices[it] }
       end
 
       # @return [Integer, nil]
