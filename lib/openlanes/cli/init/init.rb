@@ -73,9 +73,9 @@ module OpenLanes
         return preview(path, plans, config, keep, changes) if dry_run?(options)
 
         $stdout.write(changes) if changes
-        return unless keep || confirmed?(path, options)
+        return unless keep || confirmed?(root, path, config, options)
 
-        write(root, path, config) unless keep
+        write(root, path, config, options) unless keep
         FileUtils.mkdir_p(plans)
         puts path
         report(path, plans, keep, options)
@@ -161,41 +161,99 @@ module OpenLanes
 
       # `.openlanes.yml`, `docs/decisions/stack.md` when the stack is known,
       # and the CI file when openlanes scaffolds the provider and the folder
-      # does not already run it.
+      # does not already run it. One list, so the diff, the confirm prompt
+      # and the write cannot disagree about what is written.
       #
-      # @return [void]
-      def write(root, path, config)
-        File.write(path, config.to_yaml)
+      # @return [Array<Array(String, String)>] absolute path, contents
+      def outputs(root, path, config)
         stack = config.stack && OpenLanes::Setup::Stack.from_h(config.stack)
-        OpenLanes::Setup::StackDocument.new(stack).write(root) if stack
+        files = [[path, config.to_yaml]]
+        files << [File.join(root, OpenLanes::Setup::StackDocument::PATH), OpenLanes::Setup::StackDocument.new(stack).render] if stack
+        scaffold = scaffold(root, config)
+        files << [File.join(root, scaffold.path), scaffold.render] if scaffold&.runnable? && !File.exist?(File.join(root, scaffold.path))
+        files
+      end
+
+      # @return [OpenLanes::Setup::CiScaffold, nil] nil when openlanes does not
+      #   scaffold the provider, or the folder already runs it
+      def scaffold(root, config)
         provider = config.ci&.dig(:provider)
         return unless OpenLanes::Setup::CiScaffold.providers.include?(provider)
         return if OpenLanes::Setup.detect_ci(root).any? { it.provider == provider }
 
-        OpenLanes::Setup::CiScaffold.new(root, provider:, stack: OpenLanes::Setup::Stack.from_h(config.stack)).call
+        OpenLanes::Setup::CiScaffold.new(root, provider:, stack: OpenLanes::Setup::Stack.from_h(config.stack))
       end
 
-      # What --reconfigure would change, file by file, as removed and added lines.
+      # @return [void]
+      def write(root, path, config, options)
+        outputs(root, path, config).each do |file, contents|
+          FileUtils.mkdir_p(File.dirname(file))
+          File.write(file, contents)
+        end
+        scaffold = scaffold(root, config)
+        return if quiet?(options) || scaffold.nil? || scaffold.runnable?
+
+        warn("CI: #{OpenLanes::Setup::CiScaffold::NOTHING_TO_RUN}. Add lint and test recipes to the justfile, " \
+             "or name the stack's language, and run openlanes init --reconfigure.")
+      end
+
+      # What --reconfigure would change, file by file, as removed and added
+      # lines in file order.
       #
       # @return [String] "No changes." when nothing changes
       def diff(root, path, config)
-        stack = config.stack ? OpenLanes::Setup::StackDocument.new(OpenLanes::Setup::Stack.from_h(config.stack)).render : ""
-        doc = File.join(root, OpenLanes::Setup::StackDocument::PATH)
-        [[path, config.to_yaml], [doc, stack]].filter_map { |file, after|
+        outputs(root, path, config).filter_map { |file, after|
           before = File.file?(file) ? File.read(file) : ""
           next if before == after
 
-          old, new = before.lines.map(&:chomp), after.lines.map(&:chomp)
-          ["--- #{file}", *(old - new).map { "- #{it}" }, *(new - old).map { "+ #{it}" }].join("\n")
+          ["--- #{file}", *line_diff(before.lines.map(&:chomp), after.lines.map(&:chomp))].join("\n")
         }.then { it.empty? ? "No changes.\n" : "#{it.join("\n\n")}\n" }
       end
 
-      # @param path [String]
+      # The changed lines, in order, by longest common subsequence. A set
+      # difference here once hid a moved line and a repeated key such as `by:`.
+      #
+      # @param old [Array<String>]
+      # @param new [Array<String>]
+      # @return [Array<String>] "- line" and "+ line"
+      def line_diff(old, new)
+        lcs = Array.new(old.size + 1) { Array.new(new.size + 1, 0) }
+        old.size.downto(1) do |i|
+          new.size.downto(1) do |j|
+            lcs[i - 1][j - 1] = old[i - 1] == new[j - 1] ? lcs[i][j] + 1 : [lcs[i][j - 1], lcs[i - 1][j]].max
+          end
+        end
+        walk_diff(old, new, lcs)
+      end
+
+      # @return [Array<String>]
+      def walk_diff(old, new, lcs)
+        i = j = 0
+        lines = []
+        while i < old.size || j < new.size
+          if i < old.size && j < new.size && old[i] == new[j]
+            i += 1
+            j += 1
+          elsif j < new.size && (i == old.size || lcs[i][j + 1] >= lcs[i + 1][j])
+            lines << "+ #{new[j]}"
+            j += 1
+          else
+            lines << "- #{old[i]}"
+            i += 1
+          end
+        end
+        lines
+      end
+
+      # Names every file the write would touch, not only `.openlanes.yml`.
+      #
       # @param options [Hash]
       # @return [Boolean]
-      def confirmed?(path, options)
+      def confirmed?(root, path, config, options)
         return true unless interactive?(options)
-        return true if prompt.select("Write #{path}?", %w[YES NO]) == "YES"
+
+        files = outputs(root, path, config).map(&:first)
+        return true if prompt.select("Write #{files.join(", ")}?", %w[YES NO]) == "YES"
 
         warn("Nothing was written.") unless quiet?(options)
         false

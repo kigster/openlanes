@@ -173,9 +173,10 @@ RSpec.describe OpenLanes::CLI::Init do
 
     before do
       allow(prompt).to receive(:ask).with("Project name:", default: "acme-app").and_return("Acme")
-      allow(prompt).to receive(:ask).with(/Plans to run at once/).and_return("3")
-      allow(prompt).to receive(:select).with(/Default lane/, %w[full plan quick]).and_return("plan")
-      allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"]).and_return("NO")
+      allow(prompt).to receive(:ask).with(/Plans to run at once/, default: nil).and_return("3")
+      allow(prompt).to receive(:select).with(/Default lane/, %w[full plan quick], default: "full").and_return("plan")
+      allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"], default: "each plan decides")
+                                       .and_return("NO")
       allow(prompt).to receive(:select).with(/desired quality of the codebase/, hash_including, any_args).and_return("high")
       allow(prompt).to receive(:select).with(/\AWrite /, %w[YES NO]).and_return(answer)
       allow(prompt).to receive(:select).with(/CI setup/, anything).and_return("No CI for now")
@@ -234,9 +235,24 @@ RSpec.describe OpenLanes::CLI::Init do
         "ci" => { "provider" => "jenkins", "config" => "Jenkinsfile" })
     end
 
-    it "scaffolds the CI file it records" do
+    it "scaffolds the CI file it records, installing the stack's dependencies" do
+      File.write(File.join(repo, "Gemfile"), "")
       run(yes: true, ci: "circleci")
-      expect(File.file?(File.join(repo, ".circleci/config.yml"))).to be(true)
+      expect(File.read(File.join(repo, ".circleci/config.yml"))).to include("bundle install", "bundle exec rspec")
+    end
+
+    it "writes no CI file, and says why, when nothing would be checked" do
+      _out, err, = run(yes: true, ci: "circleci")
+      expect([written["ci"], File.exist?(File.join(repo, ".circleci/config.yml")), unwrapped(err)])
+        .to match([{ "provider" => "circleci", "config" => ".circleci/config.yml" }, false, include("no CI file was written")])
+    end
+
+    it "scaffolds a Rails app with a package.json as Ruby" do
+      File.write(File.join(repo, "Gemfile"), "")
+      File.write(File.join(repo, "package.json"), "{}")
+      run(yes: true, ci: "github_actions")
+      expect([written["stack"], File.read(File.join(repo, ".github/workflows/ci.yml"))])
+        .to match([{ "language" => "ruby" }, include("bundle exec rubocop")])
     end
 
     it "names the CI the folder already runs, and leaves it alone" do
@@ -277,6 +293,26 @@ RSpec.describe OpenLanes::CLI::Init do
       File.write(file, "project: Acme\nlane: plan\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
     end
 
+    # Keys the interview never asks about, which --reconfigure once dropped.
+    let(:unasked) do
+      <<~YAML
+        project: Acme
+        lane: plan
+        merge:
+          by: auto
+          max_rejections: 3
+        review:
+          max_hmm: 2
+        questions:
+          model: claude-sonnet-4-5
+        coverage:
+          command: bundle exec rspec
+          report: coverage/.resultset.json
+          format: simplecov
+          minimum: 90
+      YAML
+    end
+
     it "keeps the current answers, changes the flagged one, and prints the diff under -y" do
       out, = run(reconfigure: true, yes: true, quality: "high")
       expect([out, written]).to match([include("- desired_codebase_quality: mvp", "+ desired_codebase_quality: high"),
@@ -297,6 +333,27 @@ RSpec.describe OpenLanes::CLI::Init do
       File.write(File.join(repo, "Gemfile"), "")
       out, = run(reconfigure: true, yes: true)
       expect(out).to include("docs/decisions/stack.md", "+ - **Language:** ruby")
+    end
+
+    it "keeps every key the interview does not ask about" do
+      File.write(file, unasked)
+      run(reconfigure: true, yes: true, quality: "high")
+      expect(written).to include("merge" => { "by" => "auto", "max_rejections" => 3 },
+        "review" => { "max_hmm" => 2 },
+        "questions" => { "model" => "claude-sonnet-4-5" },
+        "coverage" => include("minimum" => 90))
+    end
+
+    it "shows the CI file it would write in the diff" do
+      File.write(File.join(repo, "Gemfile"), "")
+      out, = run(reconfigure: true, yes: true, ci: "jenkins")
+      expect(out).to include("Jenkinsfile", "+ ", "bundle install")
+    end
+
+    it "lists a moved line rather than hiding it" do
+      File.write(file, "lane: plan\nproject: Acme\nmerge:\n  by: auto\ndesired_codebase_quality: mvp\n")
+      out, = run(reconfigure: true, yes: true, quality: "mvp")
+      expect(out.lines.map(&:chomp)).to include("- project: Acme", "+ project: Acme")
     end
 
     it "says so when nothing changes" do
