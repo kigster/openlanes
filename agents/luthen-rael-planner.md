@@ -24,7 +24,7 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
 1. Decide what this plan depends on, and write it as the `depends_on:` key in the frontmatter of this plan's `spec.md`:
    - A plan depends on another only when it needs a feature that plan builds. Touching the same files is a merge risk, not a dependency.
    - Name plans as quoted canonical ordinals: `depends_on: ["034.00", "050.01"]`. A bare `[034]` reads as octal 28.
-   - Write `depends_on: [none]` when the plan needs nothing; never leave `[]`, which reads as "not checked yet".
+   - Write `depends_on: [none]` when the plan needs nothing. An empty `[]` means the same to the runner, but `[none]` says someone looked; only a missing key reads as "not checked yet".
    - Any number of dependencies is fine; the runner builds them in topological order.
    - Keep a key that already holds `[none]` or plan numbers: a person wrote it, and it stands.
    - In `spec.md` you change that one key and nothing else.
