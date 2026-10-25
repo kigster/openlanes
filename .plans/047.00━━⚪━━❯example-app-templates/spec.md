@@ -1,6 +1,7 @@
 ---
 created: 2026-10-24
 starts: research
+depends_on: ["054.00"]
 ---
 
 # Example App Templates
