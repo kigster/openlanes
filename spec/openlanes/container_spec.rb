@@ -41,13 +41,52 @@ RSpec.describe OpenLanes::Container do
 
     it "puts the event bus over the process's Redis" do
       store = OpenLanes::Live.memory_store
-      described_class.stub("redis", store) do
-        expect(OpenLanes::Live::EventBus.for(described_class["redis"])).to be_a(OpenLanes::Live::EventBus::MemoryBus)
+      described_class.stub("redis", store)
+
+      expect(described_class["event_bus"]).to have_attributes(class: OpenLanes::Live::EventBus::MemoryBus, store:)
+    end
+
+    # A memoized bus kept the first example's store, so the second one's
+    # events landed in a stream nobody read.
+    it "builds the bus over whichever Redis is stubbed now" do
+      first = OpenLanes::Live.memory_store
+      second = OpenLanes::Live.memory_store
+
+      described_class.stub("redis", first) { described_class["event_bus"] }
+      described_class.stub("redis", second) do
+        expect(described_class["event_bus"].store).to be(second)
       end
     end
 
     it "registers Redis and the event bus without connecting" do
       expect(described_class.keys).to include("redis", "event_bus")
+    end
+  end
+
+  describe "the Redis provider" do
+    # A source of its own, so starting and stopping it leaves the suite's
+    # container, and its memoized connection, alone.
+    let(:source) do
+      source_class = described_class.providers[:redis].source.class
+      source_class.new(provider_container: Dry::Core::Container.new, target_container: described_class)
+    end
+    let(:connection) { instance_double(OpenLanes::Live::Store, close: nil) }
+
+    before { allow(OpenLanes::Live).to receive(:connect).and_return(connection) }
+
+    it "closes the connection it made when stopped" do
+      source.start
+      source.container["redis"]
+      source.stop
+
+      expect(connection).to have_received(:close)
+    end
+
+    it "stops without connecting when Redis was never resolved" do
+      source.start
+      source.stop
+
+      expect(OpenLanes::Live).not_to have_received(:connect)
     end
   end
 
