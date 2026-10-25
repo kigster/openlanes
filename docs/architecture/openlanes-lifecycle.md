@@ -13,7 +13,6 @@ classDiagram
   class OpenLanes__Lifecycle__Brief["Brief"]
   class OpenLanes__Lifecycle__CreateWorkflow["CreateWorkflow"]
   class OpenLanes__Lifecycle__Creator["Creator"]
-  class OpenLanes__Lifecycle__Linker["Linker"]
   class OpenLanes__Lifecycle__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__Lifecycle__Resync__Prs["Resync::Prs"]
   class OpenLanes__Lifecycle__UnblockWorkflow["UnblockWorkflow"]
@@ -60,10 +59,6 @@ classDiagram
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PullRequests : uses
-  OpenLanes__Lifecycle__Linker ..> OpenLanes__Error : uses
-  OpenLanes__Lifecycle__Linker ..> OpenLanes__Plans__Dependencies : uses
-  OpenLanes__Lifecycle__Linker ..> OpenLanes__Plans__Ordinal : uses
-  OpenLanes__Lifecycle__Linker ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__PlanState : uses
