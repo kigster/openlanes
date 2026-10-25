@@ -10,30 +10,23 @@ Show each small business its next estimated-tax filing deadline, moved for weeke
 
 ## Research
 
-### 1. Which deadlines apply
+### Reuse in this repo
 
-Estimated tax is due in four instalments: the 15th of April, June, September and January of the following year (https://tax.example.gov/estimated-payments, retrieved 2026-09-04). The instalment schedule is the same for sole proprietors and single-member companies; partnerships pass the obligation to their partners (https://tax.example.gov/partnerships/estimated, retrieved 2026-09-04). A state-level schedule exists for the fictional state of Westland and follows the federal dates with one exception, a January instalment due on the 31st (https://revenue.westland.example.gov/estimated, retrieved 2026-09-04).
+- `lib/calendar.rb:3`: `Calendar::HOLIDAYS`, a hard-coded list of three holidays for 2025 only. It answers question 3: the codebase knows some holidays, but nothing for 2026 and nothing about observed dates.
 
-### 2. Weekends and holidays
+### Existing components
 
-When a due date falls on a Saturday, Sunday or legal holiday, the deadline moves to the next business day (https://tax.example.gov/publications/deadlines#weekend-rule, retrieved 2026-09-04). Legal holidays include those observed in the capital district, which adds Emancipation Day, observed on the nearest weekday when it falls on a weekend (https://dc.example.gov/holidays, retrieved 2026-09-04). The observed-date rule is where most calendars go wrong: a holiday on a Saturday is observed on the Friday before, which does not move a Monday deadline.
+- [holidays](https://github.com/holidays/holidays): holiday definitions by region, including observed-date rules; fits as the source for the weekend and holiday shift.
+- [business_time](https://github.com/bokmann/business_time): business-day arithmetic over a holiday list; fits for "the next business day" once the holidays are known.
 
-### 3. What the codebase knows
+### Open questions for yoda
 
-`lib/calendar.rb:2` hard-codes three holidays for 2025 only. Nothing computes observed dates, and nothing knows the capital district's holiday. Running the calendar against 2026 returns no holidays at all, so every 2026 deadline would be computed as if no holiday existed.
-
-### Contradictions
-
-1. The draft says "weekends and holidays"; the code knows 2025 only. Production runs the code, so today every holiday-adjacent deadline in 2026 is wrong.
-2. The federal page lists the January instalment as the 15th; Westland lists the 31st. Both are right for their own return, so the product must show two deadlines, not one.
-
-### Could not settle
-
-1. Whether the product should show Westland deadlines at all, or federal only. This is a product decision for yoda to lift.
-2. Whether disaster-area postponements, which move deadlines per county, are in scope (https://tax.example.gov/disaster-relief, retrieved 2026-09-04).
+1. Which deadlines apply, and from which authority: federal only, or state schedules as well?
+2. When a deadline falls on a weekend or holiday, which rule moves it, and does an observed holiday count?
+3. Should `Calendar::HOLIDAYS` be replaced by a package, or extended by hand each year?
 
 > [!NOTE]
 >
-> [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
-> [2026-09-04 11:47:51 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-> [2026-09-04 11:47:52 AM PDT] [ next: yoda-writer ]
+> [2026-10-24 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
+> [2026-10-24 11:32:51 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
+> [2026-10-24 11:32:52 AM PDT] [ next: yoda-writer ]

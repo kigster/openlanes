@@ -212,7 +212,7 @@ RSpec.describe OpenLanes::Agents::Registry do
         "luke-backend"        => 1200,
         "rey-frontend"        => 1200,
         "hansolo-reviewer"    => 300,
-        "leah-researcher"     => 1200
+        "leah-researcher"     => 300
       )
     end
 

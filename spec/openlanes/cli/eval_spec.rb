@@ -70,7 +70,7 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
       let(:options) { { case: "research-fast", depth: "deep" } }
 
       it "holds the recording to the other depth's bounds" do
-        expect([result[:status], result[:out]]).to match([1, /research-fast.*deep.*FAIL.*words in spec.md#Research 250..3000 @deep/m])
+        expect([result[:status], result[:out]]).to match([1, /research-fast.*deep.*FAIL.*count .* in spec.md#Research 2..8 @deep/m])
       end
     end
 
