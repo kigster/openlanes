@@ -52,7 +52,7 @@ module OpenLanes
       # @param github [Vcs::GitHub]
       # @param clock [#call]
       # @return [Keeper]
-      def keeper(push:, github: Container["github"], clock: -> { Container["clock"].now })
+      def keeper(push:, github: Container["github"], clock: Container["clock"].method(:now))
         owed = Owed.new
         Keeper.new(addressing: Addressing.new(github:),
           sweep: Sweep.new(github:, owed:, actions: Actions.new(github:, clock:)),
