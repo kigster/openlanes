@@ -2,7 +2,7 @@
 name: yoda-writer
 description: Turns a researched spec.md into a complete specification and leaves a blank plan.md for the planner.
 handles: [researched, retroactive]
-advances_to: ready_for_linking
+advances_to: ready_for_planning
 model: sonnet
 effort: medium
 timeout: 900

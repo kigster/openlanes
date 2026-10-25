@@ -33,7 +33,7 @@ module OpenLanes
 
       # `depends_on: [none]` or `depends_on: ["034.00", "041.01"]`, nothing
       # looser: an unquoted 34 reads back as an Integer and names no plan, and
-      # `[]` reads as a key nobody answered, so `link` would run the agent again.
+      # `[]` reads as a key nobody answered, so the planner would be asked again.
       DEPENDS_ON_LINE = /\Adepends_on:\s*\[\s*(none|"\d{3}\.\d{2}"(\s*,\s*"\d{3}\.\d{2}")*)\s*\]\z/
 
       class << self
@@ -178,7 +178,7 @@ module OpenLanes
         # An agent allowed to write one frontmatter key and sign for it: in the
         # plan folder only spec.md changed (state.json is the harness's), and
         # spec.md differs from the fixture only in its `depends_on:` line and
-        # its ledger blocks. A linker that "tidies" the spec body while it is
+        # its ledger blocks. An agent that "tidies" the spec body while it is
         # there has rewritten the author's words, which is the failure this
         # check exists for.
         #

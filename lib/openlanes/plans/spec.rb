@@ -59,9 +59,9 @@ module OpenLanes
     #   @return [Boolean] whether an agent or a person has answered the key:
     #     `[none]`, or quoted plan numbers and nothing else. A missing key and
     #     a bare `[]` are unanswered, since `[]` is what a template leaves
-    #     behind as often as what a linker writes on purpose. So is a value
+    #     behind as often as what a planner writes on purpose. So is a value
     #     with anything else in it (`[soon]`, `""`, the octal `[034]`): it
-    #     would skip 🔗 while naming no plan, and ewoki-linker rewrites it.
+    #     names no plan, and the planner rewrites it.
     # @!attribute [r] how_to_test
     #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
     #     {#how_to_verify} when the spec has no such section (until plan 007).

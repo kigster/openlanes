@@ -9,17 +9,17 @@ RSpec.describe OpenLanes::Lifecycle::Lanes, :tree do
   end
 
   describe ".target" do
-    it "sends a starts: planning plan to 🔗" do
+    it "sends a starts: planning plan to 📋, where the planner answers depends_on" do
       plan_with("starts: planning")
-      expect(described_class.target(subject_plan).key).to eq(:ready_for_linking)
+      expect(described_class.target(subject_plan).key).to eq(:ready_for_planning)
     end
 
-    it "sends a starts: building plan to 🔗 too, so it is linked like any other" do
+    it "sends a starts: building plan straight to ⭐️, so the planner never sees it" do
       plan_with("starts: building")
-      expect(described_class.target(subject_plan).key).to eq(:ready_for_linking)
+      expect(described_class.target(subject_plan).key).to eq(:planned)
     end
 
-    it "sends a linked starts: building plan on from 📋 to ⭐️, past the planner" do
+    it "sends a starts: building plan on from 📋 to ⭐️, past the planner" do
       plans do |t|
         t.plan "001.00",
           :ready_for_planning,
@@ -59,21 +59,16 @@ RSpec.describe OpenLanes::Lifecycle::Lanes, :tree do
     it "reports the move without writing on a dry run" do
       plan_with("starts: building")
       expect([described_class.advance(subject_plan, commit: false), subject_plan.file?("plan.md")])
-        .to eq([%i[new ready_for_linking], false])
+        .to eq([%i[new planned], false])
     end
 
-    it "steps a plan whose spec is already linked past 🔗 to 📋" do
-      plan_with("starts: planning\ndepends_on: [\"002.00\"]")
-      expect(described_class.advance(subject_plan, commit: true)).to eq(%i[new ready_for_planning])
-    end
-
-    it "writes a blank plan.md and moves a starts: planning plan to 🔗" do
+    it "writes a blank plan.md and moves a starts: planning plan to 📋" do
       plan_with("starts: planning")
       described_class.advance(subject_plan, commit: true)
-      expect([subject_plan.status.key, subject_plan.read("plan.md")]).to eq([:ready_for_linking, ""])
+      expect([subject_plan.status.key, subject_plan.read("plan.md")]).to eq([:ready_for_planning, ""])
     end
 
-    it "writes the one-unit plan once a starts: building plan is linked, criteria and all" do
+    it "writes the one-unit plan for a starts: building plan at 📋, criteria and all" do
       plans do |t|
         t.plan "001.00",
           :ready_for_planning,
@@ -91,17 +86,6 @@ RSpec.describe OpenLanes::Lifecycle::Lanes, :tree do
       end
       expect(described_class.advance(subject_plan, commit: true)).to eq(%i[new planned])
       expect(subject_plan.read("plan.md")).to eq("## Mine\n")
-    end
-
-    # Intended: 🔗 needs a blank plan.md. The sweep is what links it.
-    it "skips 🔗 for a starts: building plan with an authored plan.md, and leaves it to openlanes link" do
-      plans do |t|
-        t.plan "001.00", :new, "task", files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}", "plan.md" => "## Mine\n" }
-      end
-      described_class.advance(subject_plan, commit: true)
-      linker = OpenLanes::Lifecycle::Linker.new(tree: tree.reload, registry: OpenLanes::Agents.registry, executor: nil)
-
-      expect([subject_plan.status.key, linker.candidates.map { it.feature.ordinal.to_s }]).to eq([:planned, ["001.00"]])
     end
   end
 end

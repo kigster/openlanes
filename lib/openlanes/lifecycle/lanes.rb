@@ -2,16 +2,17 @@
 
 module OpenLanes
   module Lifecycle
-    # Moves a plan past the phases before where it starts. Every plan that
-    # jumps passes through 🔗, so ewoki-linker answers `depends_on:` before
-    # anyone plans or builds.
+    # Moves a plan past the phases before where it starts.
     #
     # `planning` has a specification its author already trusts, so research
     # and rewriting are skipped: the harness writes the blank `plan.md`
-    # yoda-writer would have left and moves the folder to 🔗. `building` is
-    # a short mechanical task: it goes to 🔗 the same way, and once linked
-    # (📋) the harness writes a one-unit `plan.md` in the planner's place and
-    # moves it to ⭐, where r2d2-mechanic is the only builder.
+    # yoda-writer would have left and moves the folder to 📋, where the
+    # planner answers `depends_on:` while it plans. `building` is a short
+    # mechanical task: the harness writes a one-unit `plan.md` in the
+    # planner's place and moves it straight to ⭐, where r2d2-mechanic is the
+    # only builder. It never rests at 📋, where the planner would be assigned
+    # before the next hop. Nobody answers `depends_on:` for it unless its
+    # author did, and an absent key waits for nothing.
     #
     # Every move is an ordinary transition through the state machine, so the
     # invariants still decide; the harness only supplies the file the
@@ -19,15 +20,9 @@ module OpenLanes
     module Lanes
       # Where each starts value jumps, from each state it jumps from.
       # `research` does not jump. Anything later has already been worked.
-      #
-      # One plan skips 🔗 on purpose: a `building` plan whose author already
-      # wrote `plan.md` cannot sit at 🔗, which needs it blank, so it goes
-      # straight to ⭐ unlinked (see {.target}). `openlanes link` still finds
-      # it, since it sweeps every unfinished plan that has not answered
-      # `depends_on:`, whatever its state.
       HOPS = {
-        planning: { new: :ready_for_linking, researched: :ready_for_linking },
-        building: { new: :ready_for_linking, researched: :ready_for_linking, ready_for_planning: :planned }
+        planning: { new: :ready_for_planning, researched: :ready_for_planning },
+        building: { new: :planned, researched: :planned, ready_for_planning: :planned }
       }.freeze
 
       # What the harness writes into `plan.md` for a `building` plan's ⭐.
@@ -44,15 +39,11 @@ module OpenLanes
       # Where this plan's `starts:` says it should be, when that is somewhere other
       # than where it is.
       #
-      # A `building` plan whose author already wrote `plan.md` cannot sit at
-      # 🔗, which needs it blank, so it goes to ⭐ as it always did.
-      #
       # @param subject [OpenLanes::Plans::Subject]
       # @param spec [OpenLanes::Plans::Spec]
       # @return [OpenLanes::Plans::Status, nil]
       def target(subject, spec = Plans::Spec.for(subject))
         key = HOPS.dig(spec.starts, subject.status.key) or return nil
-        key = :planned if spec.starts == :building && key == :ready_for_linking && authored?(subject)
         Plans.status(key)
       end
 
@@ -76,7 +67,7 @@ module OpenLanes
         [from, landing]
       end
 
-      # 🔗 gets the blank `plan.md` yoda-writer leaves; a `building` plan's ⭐
+      # 📋 gets the blank `plan.md` yoda-writer leaves; a `building` plan's ⭐
       # gets {QUICK_PLAN} and the spec's completion criteria, over a blank
       # one. A `plan.md` the author wrote is never replaced.
       #

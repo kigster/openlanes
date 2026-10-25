@@ -66,10 +66,10 @@ RSpec.describe OpenLanes::Presentation::Documentation do
         expect(rows.map { |row| row[/^\| \*\*(\w+)\*\*/, 1] }).to eq(%w[research planning building])
         spine = Enumerator.produce(:new) { OpenLanes::Plans::StateMachine::SPINE.fetch(it) { raise StopIteration } }
         spine.each { |key| expect(rows[0]).to include(step[key]) }
-        expect(rows[1]).to include(step[:ready_for_linking], step[:ready_for_planning], step[:building_ui], "a blank `plan.md`")
+        expect(rows[1]).to include(step[:ready_for_planning], step[:building_ui], "a blank `plan.md`")
         expect(rows[1]).not_to include(step[:researched])
-        expect(rows[2]).to include(step[:ready_for_linking], step[:planned], step[:ready_for_review], "a one-unit `plan.md`")
-        expect(rows[2]).not_to include(step[:researched], step[:building_ui])
+        expect(rows[2]).to include(step[:planned], step[:ready_for_review], "a one-unit `plan.md`")
+        expect(rows[2]).not_to include(step[:researched], step[:ready_for_planning], step[:building_ui])
       end
     end
 
@@ -77,9 +77,9 @@ RSpec.describe OpenLanes::Presentation::Documentation do
       aggregate_failures do
         expect(happy_diagram(:research)).to include("direction LR", "new --> researched", "building --> building_ui", "approved --> deployed")
         expect(happy_diagram(:research)).not_to include(": harness", "rejected -->")
-        expect(happy_diagram(:planning)).to include("new --> ready_for_linking : harness", "building --> building_ui")
+        expect(happy_diagram(:planning)).to include("new --> ready_for_planning : harness", "building --> building_ui")
         expect(happy_diagram(:planning)).not_to include("researched :")
-        expect(happy_diagram(:building)).to include("new --> ready_for_linking : harness", "building --> ready_for_review")
+        expect(happy_diagram(:building)).to include("new --> planned : harness", "building --> ready_for_review")
         expect(happy_diagram(:building)).not_to include("building_ui :", "researched :")
       end
     end

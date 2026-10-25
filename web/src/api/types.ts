@@ -17,7 +17,7 @@ export interface Node {
 
 export interface Station {
   key: string; // a Status key on StateMachine::SPINE, or "pr"
-  label: string; // "New", "Researched", "Linking", "Planning", "Building", "Building UI", "Review", "Pull request"
+  label: string; // "New", "Researched", "Planning", "Building", "Building UI", "Review", "Pull request"
   agents: string[]; // agents whose `handles:` includes this station
 }
 

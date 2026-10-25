@@ -330,13 +330,17 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # No shipped agent is confined since ewoki-linker retired (A17), so the
+  # confinement is declared here, as its frontmatter would declare it.
   describe "a confined agent" do
-    let(:linker) { agents.find("ewoki-linker") }
+    let(:linker) do
+      agent.with(name: "spec-keeper", adapter: "claude", confined_to: %w[spec.md], allowed_tools: %w[Read Grep Glob Bash Edit])
+    end
     let(:argv) { executor.invocation(linker, subject_plan) }
     let(:allowed) { argv.each_cons(2).find { |flag, _| flag == "--allowedTools" }.last.split(",") }
     let(:spec_path) { File.join(subject_plan.feature.path, "spec.md") }
 
-    it "is ewoki-linker, confined to its plan's spec.md" do
+    it "is confined to its plan's spec.md" do
       expect(linker.confined_to).to eq(%w[spec.md])
     end
 
@@ -368,7 +372,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     it "is refused outright on an adapter that cannot enforce it" do
       codex = linker.with(adapter: "codex")
       result = executor.call(codex, subject_plan)
-      expect([result.ok, result.note]).to eq([false, "ewoki-linker is confined to spec.md, and codex cannot enforce that"])
+      expect([result.ok, result.note]).to eq([false, "spec-keeper is confined to spec.md, and codex cannot enforce that"])
     end
 
     it "leaves an unconfined agent's tools alone" do

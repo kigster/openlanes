@@ -726,7 +726,7 @@ module OpenLanes
       end
 
       # What the harness writes so a starts value may skip the agents before its
-      # jump. A jump that ends at 🔗 leaves the blank `plan.md` that makes it
+      # jump. A jump that ends at 📋 leaves the blank `plan.md` that makes it
       # honest; one carried on to ⭐ leaves the one-unit plan that makes ⭐
       # honest. `research` writes nothing.
       #

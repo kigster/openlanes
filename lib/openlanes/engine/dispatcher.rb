@@ -1280,7 +1280,7 @@ module OpenLanes
       # Plans whose `starts:` skips research, rewriting or planning are moved past
       # those phases before anyone is assigned, so the first agent they meet
       # is the one that value starts with. A plan may take more than one hop
-      # in a tick: a `building` spec already linked goes ⚪ → 📋 → ⭐ at once,
+      # in a tick: a plan already at 📋 with a `building` spec still goes on to ⭐,
       # since no agent works it in between and a run could otherwise settle
       # at 📋 with the builder never asked.
       #

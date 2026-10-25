@@ -22,7 +22,7 @@ describe("Board", () => {
     expect(within(row).getByText("needs you")).toBeInTheDocument();
     const plan = board.me.plans.find(p => p.ordinal === "001.00")!;
     expect(within(row).getByRole("img", { name: plan.status.label })).toHaveTextContent(plan.status.emoji);
-    expect(row.querySelectorAll(".stop.is-done")).toHaveLength(4);
+    expect(row.querySelectorAll(".stop.is-done")).toHaveLength(3);
     expect(row.querySelector(".stop.is-here")).not.toBeNull();
     expect(await axe(container)).toHaveNoViolations();
   });

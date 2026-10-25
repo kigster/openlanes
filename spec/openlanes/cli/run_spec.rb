@@ -501,7 +501,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     # The stub signs Almost completed rather than Completed: the attempt is
     # then ok without claiming 🟢, and the plan sits at 🟡 where it landed.
     # Narrowed to luke: the stub's ledger line replaces plan.md, which then
-    # reads as blank, and ewoki-linker and luthen-rael would take it from there.
+    # reads as blank, and luthen-rael would take it from there.
     it "shows a plan that actually moved as from -> to" do
       plans { |t| t.plan("002.00", :planned, "moves", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       with_executor { |subject, agent|
