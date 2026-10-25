@@ -49,7 +49,6 @@ module OpenLanes
         @draft = draft
         @settings = { "starts" => starts, "depth" => depth }.compact
       end
-      # rubocop:enable Metrics/ParameterLists
 
       # @param words [Array<String>] the topic; empty when +from+ names it
       # @return [Dry::Monads::Result] Success({Created}), or Failure({Refusal})

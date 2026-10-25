@@ -26,11 +26,27 @@ plugins:
 Layout/LineLength:
   Max: 120
 
-Metrics/MethodLength:
-  Max: 50
-
+# A8 in docs/decisions/decisions-on-dry-rb-architecture.md. The relaxed
+# config inherited above turns the whole Metrics department off, which is
+# why `just lint` stayed clean while `rubocop --only Metrics/ClassLength`
+# (which enables the cop it names) found 58 classes over. Each A8 cop is
+# enabled here by name instead; what exceeds it today is listed, file by
+# file, in .rubocop_todo.yml, and a refactor takes files off that list.
 Metrics/ClassLength:
+  Enabled: true
   Max: 100
+
+Metrics/MethodLength:
+  Enabled: true
+  Max: 10
+
+Metrics/ParameterLists:
+  Enabled: true
+  Max: 4
+
+Metrics/AbcSize:
+  Enabled: true
+  Max: 20
 
 # --- Alignment Rules (your main obsession) ---
 
