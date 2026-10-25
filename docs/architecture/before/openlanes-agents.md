@@ -1,0 +1,25 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Agents
+
+```mermaid
+classDiagram
+  class OpenLanes__Agents__Agent["Agent"]
+  class OpenLanes__Agents__Profile["Profile"]
+  class OpenLanes__Agents__Registry["Registry"]
+  class OpenLanes__Agents__Roster["Roster"]
+  class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
+  class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__Agents__Registry : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__Engine__Rebase : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__UI : uses
+```

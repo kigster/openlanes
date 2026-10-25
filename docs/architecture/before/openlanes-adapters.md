@@ -1,0 +1,26 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Adapters
+
+```mermaid
+classDiagram
+  class OpenLanes__Adapters__Base["Base"]
+  class OpenLanes__Adapters__Capabilities["Capabilities"]
+  class OpenLanes__Adapters__Claude["Claude"]
+  class OpenLanes__Adapters__Codex["Codex"]
+  class OpenLanes__Adapters__Invocation["Invocation"]
+  class OpenLanes__Adapters__Model["Model"]
+  class OpenLanes__Adapters__Pi["Pi"]
+  class OpenLanes__Adapters__Stream["Stream"]
+  class OpenLanes__Execution__Transcript["OpenLanes::Execution::Transcript"]
+  OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Stream : uses
+  OpenLanes__Adapters__Claude --|> OpenLanes__Adapters__Base : inherits
+  OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Claude ..> OpenLanes__Execution__Transcript : uses
+  OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
+  OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Pi --|> OpenLanes__Adapters__Base : inherits
+  OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Stream ..> OpenLanes__Execution__Transcript : uses
+```

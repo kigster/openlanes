@@ -1,0 +1,38 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Presentation
+
+```mermaid
+classDiagram
+  class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Lifecycle__Brief["OpenLanes::Lifecycle::Brief"]
+  class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
+  class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
+  class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
+  class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Presentation__ApiDocs["ApiDocs"]
+  class OpenLanes__Presentation__Diagram["Diagram"]
+  class OpenLanes__Presentation__Documentation["Documentation"]
+  class OpenLanes__Presentation__EventsReport["EventsReport"]
+  class OpenLanes__Presentation__PrChanges["PrChanges"]
+  class OpenLanes__Presentation__Reporter["Reporter"]
+  class OpenLanes__Presentation__Viewer["Viewer"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Presentation__Diagram ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Presentation__Diagram ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Brief : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Presentation__PrChanges ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Presentation__Reporter ..> OpenLanes__UI : uses
+  OpenLanes__Presentation__Viewer ..> OpenLanes__Error : uses
+```

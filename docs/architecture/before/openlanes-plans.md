@@ -1,0 +1,78 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Plans
+
+```mermaid
+classDiagram
+  class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Plans__Choices["Choices"]
+  class OpenLanes__Plans__Dependencies["Dependencies"]
+  class OpenLanes__Plans__Feature["Feature"]
+  class OpenLanes__Plans__Index["Index"]
+  class OpenLanes__Plans__Journal__Entry["Journal::Entry"]
+  class OpenLanes__Plans__Journal__Rejection["Journal::Rejection"]
+  class OpenLanes__Plans__Journal__Round["Journal::Round"]
+  class OpenLanes__Plans__LastKnownState["LastKnownState"]
+  class OpenLanes__Plans__Ledger__Entry["Ledger::Entry"]
+  class OpenLanes__Plans__Ledger__Handoff["Ledger::Handoff"]
+  class OpenLanes__Plans__Ledger__Problem["Ledger::Problem"]
+  class OpenLanes__Plans__Ledger__Reading["Ledger::Reading"]
+  class OpenLanes__Plans__Lock["Lock"]
+  class OpenLanes__Plans__Lock__Held["Lock::Held"]
+  class OpenLanes__Plans__Mailbox["Mailbox"]
+  class OpenLanes__Plans__Ordinal["Ordinal"]
+  class OpenLanes__Plans__PlanState["PlanState"]
+  class OpenLanes__Plans__PullRequest["PullRequest"]
+  class OpenLanes__Plans__PullRequestMachine["PullRequestMachine"]
+  class OpenLanes__Plans__PullRequestMachine__Refused["PullRequestMachine::Refused"]
+  class OpenLanes__Plans__PullRequests["PullRequests"]
+  class OpenLanes__Plans__ReviewLabel["ReviewLabel"]
+  class OpenLanes__Plans__Spec["Spec"]
+  class OpenLanes__Plans__StateMachine["StateMachine"]
+  class OpenLanes__Plans__StateMachine__Refused["StateMachine::Refused"]
+  class OpenLanes__Plans__Status["Status"]
+  class OpenLanes__Plans__Subject["Subject"]
+  class OpenLanes__Plans__Tree["Tree"]
+  class OpenLanes__Plans__Verdict["Verdict"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__Lock ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Lock__Held --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__Mailbox ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Mailbox ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__Ordinal ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Entry : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Rejection : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Round : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__LastKnownState : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Entry : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Handoff : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Reading : uses
+  OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Error : uses
+  OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__PullRequestMachine__Refused : uses
+  OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Plans__PullRequestMachine__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__PullRequests ..> OpenLanes__Plans__PullRequest : uses
+  OpenLanes__Plans__ReviewLabel ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
+  OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses
+  OpenLanes__Plans__StateMachine__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__Subject ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__UI : uses
+  OpenLanes__Plans__Tree ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Plans__Tree ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__Tree ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans__Tree ..> OpenLanes__Plans__Subject : uses
+  OpenLanes__Plans__Verdict ..> OpenLanes__Plans__ReviewLabel : uses
+```

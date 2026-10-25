@@ -1,0 +1,33 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Evals
+
+```mermaid
+classDiagram
+  class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Evals__Case["Case"]
+  class OpenLanes__Evals__Changes["Changes"]
+  class OpenLanes__Evals__Check["Check"]
+  class OpenLanes__Evals__Evidence["Evidence"]
+  class OpenLanes__Evals__Invalid["Invalid"]
+  class OpenLanes__Evals__Live["Live"]
+  class OpenLanes__Evals__Recording["Recording"]
+  class OpenLanes__Evals__Run["Run"]
+  class OpenLanes__Evals__Score["Score"]
+  class OpenLanes__Evals__Scorer["Scorer"]
+  class OpenLanes__Evals__Verdict["Verdict"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  OpenLanes__Evals__Case ..> OpenLanes__Evals__Invalid : uses
+  OpenLanes__Evals__Case ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Evals__Invalid --|> OpenLanes__Error : inherits
+  OpenLanes__Evals__Live ..> OpenLanes__Error : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Evals__Invalid : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Evals__Run : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Evals__Scorer : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Changes : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Evidence : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Invalid : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Run : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Score : uses
+```

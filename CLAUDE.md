@@ -86,7 +86,7 @@ The code repeatedly explains, in comments, which duplicated table burned it. Bef
 | Numbering rules                                      | `lib/openlanes/plans/ordinal.rb`                   | `documentation.rb`, `creator.rb`                                                  |
 | Which agent handles which state                      | `agents/*.md` frontmatter                          | `Agents::Registry`, `Roster`, `Runner` routing, `Executor` tool grants            |
 
-`openlanes docs` regenerates the whole conventions document from the first three; `just update-workflow` writes it to `docs/WORKFLOW.md`. Hand-writing any of those tables reintroduces the bug the derivation exists to kill.
+`just update-architecture` regenerates `docs/architecture/` from `lib/`, and `spec/openlanes/docs/architecture_doc_spec.rb` fails when it is stale; `docs/architecture/before/` is frozen. `openlanes docs` regenerates the whole conventions document from the first three; `just update-workflow` writes it to `docs/WORKFLOW.md`. Hand-writing any of those tables reintroduces the bug the derivation exists to kill.
 
 A status answers to its key and its emoji, and to nothing else. The synonym table that used to sit in `status.rb` went stale pointing six words at a state that no longer existed, so there is deliberately no alias map.
 
@@ -134,6 +134,8 @@ lib/openlanes/
                          documentation.rb (`openlanes docs`), diagram.rb (`openlanes states`), reporter.rb, viewer.rb
   support/               collapsed by Zeitwerk, so these stay OpenLanes::UI, ::Markdown, ::Frontmatter,
                          ::Project (the root search) and ::Config (.openlanes.yml)
+  uml/                   OpenLanes::Uml — `openlanes uml`: Prism parses lib/ (and app/), Model draws classes and typed edges,
+                         NamespaceMap and ClassDiagram render Mermaid, Writer fills docs/architecture/
   skills/                OpenLanes::Skills — the bundled skills/*/SKILL.md, and the installer that copies them
   linear/                one-way export of .plans to Linear projects and issues
   evals/                 OpenLanes::Evals — per-agent cases (evals/cases/<agent>/<id>.yml), deterministic

@@ -1,0 +1,23 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes
+
+```mermaid
+classDiagram
+  class OpenLanes__Apps__Definition["OpenLanes::Apps::Definition"]
+  class OpenLanes__Config["Config"]
+  class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
+  class OpenLanes__Error["Error"]
+  class OpenLanes__Launcher["Launcher"]
+  class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Refusal["Refusal"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
+  OpenLanes__Config ..> OpenLanes__Coverage__Config : uses
+  OpenLanes__Config ..> OpenLanes__Error : uses
+  OpenLanes__Config ..> OpenLanes__Live__ChoiceConverter : uses
+  OpenLanes__Config ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Launcher ..> OpenLanes__UI : uses
+```
