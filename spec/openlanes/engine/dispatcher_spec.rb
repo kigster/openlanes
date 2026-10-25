@@ -23,8 +23,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     }
   end
 
-  # What ewoki-linker's one Edit does: answer `depends_on:` in spec.md.
-  # 🔗 refuses to move on until it is answered.
+  # What luthen-rael does to spec.md while it plans: answer `depends_on:`.
   def link(subject)
     file = File.join(subject.feature.path, "spec.md")
     text = File.read(file)
@@ -106,8 +105,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       aggregate_failures do
         expect(seen).to eq([["leah-researcher", :new], ["yoda-writer", :researched]])
         expect(attempts.map { [it.agent, it.from, it.to] })
-          .to eq([["leah-researcher", :new, :researched], ["yoda-writer", :researched, :ready_for_linking]])
-        expect(plan.status.key).to eq(:ready_for_linking)
+          .to eq([["leah-researcher", :new, :researched], ["yoda-writer", :researched, :ready_for_planning]])
+        expect(plan.status.key).to eq(:ready_for_planning)
       end
     end
 
@@ -115,7 +114,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       stages = OpenLanes::Plans::PlanState.for(plan.feature.path).stages
       aggregate_failures do
         expect(stages.map { [it["agent"], it["status"], it["from"], it["to"]] })
-          .to eq([%w[leah-researcher Completed new researched], %w[yoda-writer Completed researched ready_for_linking]])
+          .to eq([%w[leah-researcher Completed new researched], %w[yoda-writer Completed researched ready_for_planning]])
         expect(state.stages("030.00").map { it["status"] }.uniq).to eq(["Completed"])
       end
     end
@@ -172,13 +171,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     after { FileUtils.rm_rf(worktrees) }
 
     shared_examples "a chain that moves the folder" do
-      it "runs leah then yoda, each from the state it handles, and leaves the plan 🔗" do
+      it "runs leah then yoda, each from the state it handles, and leaves the plan 📋" do
         attempts = run_in_worktrees
         seen = Array.new(order.size) { order.pop }
         aggregate_failures do
           expect(seen).to eq([["leah-researcher", :new, true], ["yoda-writer", :researched, true]])
-          expect(attempts.map { [it.from, it.to] }).to eq([%i[new researched], %i[researched ready_for_linking]])
-          expect(tree.reload.subjects.first.status.key).to eq(:ready_for_linking)
+          expect(attempts.map { [it.from, it.to] }).to eq([%i[new researched], %i[researched ready_for_planning]])
+          expect(tree.reload.subjects.first.status.key).to eq(:ready_for_planning)
         end
       end
     end
@@ -219,35 +218,6 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
-  # 📋 reads only a blank plan.md, so a linker that wrote nothing used to
-  # pass straight on to the planner with "work verified on disk".
-  describe "an ewoki-linker that never answers depends_on" do
-    let!(:built) { plans { |t| t.plan "032.00", :ready_for_linking, "unlinked", files: { "spec.md" => spec_body, "plan.md" => "" } } }
-    let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("032.00")) }
-
-    def run_linker(result)
-      executor = lambda { |agent, subject, round: 1, **|
-        calls << agent.name
-        if result.ok
-          OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
-            "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
-        end
-        result
-      }
-      runner_with(executor, agents: agents.only("ewoki-linker", "luthen-rael-planner"), rounds: 1).call
-    end
-
-    it "stays at 🔗 when it signs Completed but its Edit did not land" do
-      run_linker(OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0))
-      expect([plan.status.key, calls.uniq]).to eq([:ready_for_linking, ["ewoki-linker"]])
-    end
-
-    it "stays at 🔗 when it times out" do
-      run_linker(OpenLanes::Execution::Executor::Result.new(ok: false, note: "timed out after 900s", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 900.0))
-      expect([plan.status.key, calls.uniq]).to eq([:ready_for_linking, ["ewoki-linker"]])
-    end
-  end
-
   describe "a Completed the folder cannot honour" do
     let!(:built) { plans { |t| t.plan "031.00", :new, "unresearched", files: { "spec.md" => spec_body } } }
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("031.00")) }
@@ -285,19 +255,18 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     # yoda finishes, leaves a blank plan.md, signs Completed and names
-    # luthen-rael. The harness renames to 🔗, ewoki-linker signs, the harness
-    # renames to 📋, starts luthen-rael, luthen-rael
-    # writes a plan and signs, the harness renames to ⭐, luke and rey
+    # luthen-rael. The harness renames to 📋 and starts luthen-rael, who
+    # answers depends_on, writes a plan and signs; the harness renames to ⭐, luke and rey
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
-    it "moves yoda's finished work through 🔗 to 📋 and starts luthen-rael, then the pair" do
+    it "moves yoda's finished work to 📋 and starts luthen-rael, then the pair" do
       executor = executor_with do |agent, subject, _round|
         case agent.name
         when "yoda-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
-        when "ewoki-linker" then link(subject) && "Completed"
         when "luthen-rael-planner"
+          link(subject)
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           File.write(File.join(subject.feature.path, "plan-frontend.md"), "# Front end\n\n## F1\n")
           "Completed"
@@ -306,7 +275,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner_with(executor).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[yoda-writer ewoki-linker luthen-rael-planner luke-backend rey-frontend])
+        expect(calls.map(&:first)).to eq(%w[yoda-writer luthen-rael-planner luke-backend rey-frontend])
+        expect(OpenLanes::Plans::Spec.load(path_of("020.00")).depends_on).to eq([])
         expect(calls.count { |name, _, _| name == "yoda-writer" }).to eq(1)
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("020.00")).status.key).to eq(:building)
       end
@@ -324,7 +294,6 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         executor = executor_with do |agent, subject, _round|
           case agent.name
           when "yoda-writer" then File.write(File.join(subject.feature.path, "plan.md"), "") && "Completed"
-          when "ewoki-linker" then link(subject) && "Completed"
           when "luthen-rael-planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
           end
         end
@@ -342,7 +311,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
       attempts = runner_with(executor).call
       yoda = attempts.find { |a| a.agent == "yoda-writer" }
-      expect([yoda.from, yoda.to]).to eq(%i[researched ready_for_linking])
+      expect([yoda.from, yoda.to]).to eq(%i[researched ready_for_planning])
     end
 
     context "when a row is running" do
@@ -537,7 +506,6 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     let(:executor) do
       lambda { |agent, subject, **|
         seen << [agent.name, subject.feature.ordinal.to_s]
-        link(subject) if agent.name == "ewoki-linker"
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "noop", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
     end
@@ -591,28 +559,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    context "with a 🔗 plan whose spec already answers depends_on" do
-      let!(:built) do
-        plans do |t|
-          t.plan "001.00", :ready_for_linking, "known", files: { "spec.md" => "---\ndepends_on: [none]\n---\n#{spec_body}", "plan.md" => "" }
-        end
-      end
-
-      it "never invokes ewoki-linker, and hands the plan to the planner" do
-        runner_with(executor).call
-        expect(seen.map(&:first)).not_to include("ewoki-linker")
-        expect(seen.map(&:first).first).to eq("luthen-rael-planner")
-      end
-    end
-
     context "with the plan lane" do
       let!(:built) do
         plans { |t| t.plan "001.00", :new, "known", files: { "spec.md" => "---\nstarts: planning\n---\n#{spec_body}" } }
       end
 
-      it "skips research and rewriting, links, and goes to the planner" do
+      it "skips research and rewriting, and goes to the planner" do
         runner_with(executor).call
-        expect(seen.map(&:first).first(2)).to eq(%w[ewoki-linker luthen-rael-planner])
+        expect(seen.map(&:first).first).to eq("luthen-rael-planner")
       end
 
       it "leaves the blank plan.md the planner expects, under the 📋 name" do
@@ -628,9 +582,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "links the plan, then hands it straight to r2d2-mechanic" do
+      it "hands the plan straight to r2d2-mechanic" do
         runner_with(executor).call
-        expect(seen.map(&:first).uniq).to eq(%w[ewoki-linker r2d2-mechanic])
+        expect(seen.map(&:first).uniq).to eq(%w[r2d2-mechanic])
       end
 
       it "writes a one-unit plan.md so the folder may claim ⭐ and then 🟡" do
@@ -646,9 +600,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "previews ewoki-linker, the lane's first agent, and writes nothing" do
+      it "previews r2d2-mechanic, the lane's first agent, and writes nothing" do
         runner_with(executor, dry_run: true).call
-        expect([seen.map(&:first).uniq, tree.reload.subjects.first.read("plan.md")]).to eq([%w[ewoki-linker], nil])
+        expect([seen.map(&:first).uniq, tree.reload.subjects.first.read("plan.md")]).to eq([%w[r2d2-mechanic], nil])
       end
     end
   end

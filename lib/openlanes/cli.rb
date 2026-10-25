@@ -23,7 +23,6 @@ require_relative "cli/run/run"
 require_relative "cli/setup/setup"
 require_relative "cli/start/start"
 require_relative "cli/unblock/unblock"
-require_relative "cli/link/link"
 require_relative "cli/version/version"
 require_relative "cli/web/web"
 require_relative "cli/states/states"
@@ -107,7 +106,6 @@ module OpenLanes
         "index",
         "resync",
         "unblock",
-        "link",
         "review",
         "worktree",
         "coverage",
@@ -132,7 +130,6 @@ module OpenLanes
     register "start", Start
     register "web", Web
     register "unblock", Unblock
-    register "link", Link
     register "review", Review
     register "eval", Eval
     register "worktree", Worktree

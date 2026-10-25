@@ -226,7 +226,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
     end
   end
 
-  # ewoki-linker may write one frontmatter line and sign for it; anything
+  # An agent confined to one frontmatter line may write it and sign; anything
   # more is the author's spec rewritten under them.
   describe "spec_only" do
     let(:kind) { :spec_only }

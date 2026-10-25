@@ -34,7 +34,6 @@ module OpenLanes
       GROUPS = [
         [:new, "New", %i[new]],
         [:researched, "Researched", %i[researched retroactive]],
-        [:ready_for_linking, "Linking", %i[ready_for_linking]],
         [:ready_for_planning, "Planning", %i[ready_for_planning]],
         [:building, "Building", %i[planned building rejected]],
         [:building_ui, "Building UI", %i[building_ui]],

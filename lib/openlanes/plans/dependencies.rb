@@ -23,7 +23,7 @@ module OpenLanes
 
       # The states before the build. Work in them is documents only, so a plan
       # here gives up its group's turn to one whose code is already under way.
-      BEFORE_BUILD = %i[retroactive new researched ready_for_linking ready_for_planning planned].freeze
+      BEFORE_BUILD = %i[retroactive new researched ready_for_planning planned].freeze
 
       # @param tree [OpenLanes::Plans::Tree]
       # @param status_of [#call, nil] the state to judge a plan by, when it is

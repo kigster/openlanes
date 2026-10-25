@@ -74,7 +74,7 @@ RSpec.describe "A staying run", :tree do
   describe "luthen-rael blocks on a question, the answer comes from the page" do
     let(:agents) { OpenLanes::Agents::Registry.new.only("luthen-rael-planner", "lando-broker") }
     let(:seen) { {} }
-    # Linked, so the answered block returns it to 📋 rather than to 🔗.
+    # depends_on is answered, as luthen-rael leaves it once he has planned.
     let(:linked_spec) { "---\ndepends_on: [none]\n---\n#{spec_body}" }
 
     # Round one asks how big the board is; once lando-broker has drained

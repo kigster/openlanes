@@ -45,13 +45,6 @@
       ]
     },
     {
-      "key": "ready_for_linking",
-      "label": "Linking",
-      "agents": [
-        "ewoki-linker"
-      ]
-    },
-    {
       "key": "ready_for_planning",
       "label": "Planning",
       "agents": [

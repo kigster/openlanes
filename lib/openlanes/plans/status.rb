@@ -84,8 +84,8 @@ module OpenLanes
       }
     end
 
-    # 🔗 Ready for Linking and 📋 Ready for Planning share one invariant:
-    # `plan.md` exists and nobody has planned in it yet.
+    # 📋 Ready for Planning's invariant: `plan.md` exists and nobody has
+    # planned in it yet.
     #
     # @param label [String]
     # @return [Proc]
@@ -170,25 +170,6 @@ module OpenLanes
         invariant: lambda { |s|
           body = s.read("spec.md").to_s
           "Researched, but `spec.md` has no `## Research` chapter" unless body.match?(RESEARCH_CHAPTER)
-        }
-      ),
-      # 🔗 and 📋 hold the same files: a finished `spec.md` and the blank
-      # `plan.md` yoda-writer leaves. What tells them apart is whether
-      # `ewoki-linker` has answered `depends_on:`, which the folder name
-      # records and the invariant deliberately does not: a 📋 plan written
-      # before the linker existed would otherwise be renamed backwards by
-      # `resync`. The two are a {StateMachine::FAMILIES family} for that reason.
-      Status.new(
-        key:       :ready_for_linking,
-        emoji:     "🔗",
-        label:     "Ready for Linking",
-        requires:  %w[spec.md plan.md],
-        note:      "the specification is finished; ewoki-linker writes its `depends_on:` before the planner starts",
-        # Whether `depends_on:` is answered is what tells 🔗 from 📋 on disk,
-        # so a 📋 plan coming back from ⭕ is not sent to be linked again.
-        invariant: lambda { |subject|
-          blank_plan("Ready for Linking").call(subject) ||
-            ("Ready for Linking, but `spec.md` already answers `depends_on:`" if Spec.for(subject).linked?)
         }
       ),
       Status.new(

@@ -7,8 +7,8 @@ module OpenLanes
     # The checkout a command that reads every plan should stand in: the
     # primary one, not a linked worktree, on the mainline branch, and current
     # with its upstream. A plan worktree's `.plans` is a snapshot the harness
-    # overwrites when it publishes, so a linker run there writes keys nobody
-    # keeps, and one on a feature branch links against plans `main` has
+    # overwrites when it publishes, so a run that writes keys there writes them nobody
+    # keeps, and one on a feature branch reads plans `main` has
     # already moved past. Both are warned about rather than refused (008.01
     # D1): a person may have a reason, and the warning tells them the cost.
     class Mainline
@@ -20,7 +20,7 @@ module OpenLanes
       PULL_ENV = { "GIT_TERMINAL_PROMPT" => "0" }.freeze
 
       # What git says when a pull would clobber local edits, most often the
-      # last `link` run's uncommitted spec.md changes.
+      # uncommitted spec.md changes.
       DIRTY = /would be overwritten|uncommitted changes|unstaged changes/
 
       # @param root [String] repository root

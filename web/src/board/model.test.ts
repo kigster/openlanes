@@ -62,15 +62,15 @@ describe("format", () => {
 describe("routeOf", () => {
   it("fills the full lane up to its station", () => {
     const r = routeOf({ starts: "research", station: "building" }, stations);
-    expect(r.stops).toEqual(["done", "done", "done", "done", "here", "ahead", "ahead", "ahead"]);
-    expect(r.segs).toEqual(["done", "done", "done", "done", "ahead", "ahead", "ahead"]);
+    expect(r.stops).toEqual(["done", "done", "done", "here", "ahead", "ahead", "ahead"]);
+    expect(r.segs).toEqual(["done", "done", "done", "ahead", "ahead", "ahead"]);
     expect(r.late).toBe(false);
   });
 
   it("draws the stations a lane does not use as off, and its skips as hollow rings", () => {
     const r = routeOf({ starts: "building", station: "in_review" }, stations);
-    expect(r.stops).toEqual(["off", "off", "off", "off", "done", "skip", "here", "ahead"]);
-    expect(r.segs.slice(0, 4)).toEqual(["off", "off", "off", "off"]);
+    expect(r.stops).toEqual(["off", "off", "off", "done", "skip", "here", "ahead"]);
+    expect(r.segs.slice(0, 3)).toEqual(["off", "off", "off"]);
     expect(r.late).toBe(true);
   });
 

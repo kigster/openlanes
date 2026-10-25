@@ -37,8 +37,7 @@ module OpenLanes
       SPINE = {
         retroactive:        :planned,
         new:                :researched,
-        researched:         :ready_for_linking,
-        ready_for_linking:  :ready_for_planning,
+        researched:         :ready_for_planning,
         ready_for_planning: :planned,
         planned:            :building,
         building:           :building_ui,
@@ -61,10 +60,6 @@ module OpenLanes
       # the birth state) have no single state behind them and step back
       # nowhere.
       #
-      # 📋 steps back to 🔗, and 🔗 refuses a spec that answers `depends_on:`,
-      # so discarding a round on a linked 📋 is refused and the plan stays at
-      # 📋. That is intended: the planner works at 📋 without renaming, so 📋
-      # is the state its work started from, and the key is still good.
       RETREAT = Enumerator.produce(:new) { SPINE.fetch(it) { raise StopIteration } }
                           .take_while { it != :approved }
                           .each_cons(2).to_h { |before, after| [after, before] }
@@ -77,7 +72,7 @@ module OpenLanes
       PREFERENCE = %i[
         discarded rolled_back rewrite deferred blocked product_blocked bomb
         deployed approved rejected completed verifying in_review ready_for_review building_ui building planned ready_for_planning
-        ready_for_linking researched new
+        researched new
         retroactive
       ].freeze
 
@@ -87,10 +82,6 @@ module OpenLanes
       #
       # ⭕ and 🛑 both mean "a human must decide before this moves"; *which*
       # human is recorded nowhere but the emoji.
-      #
-      # 🔗 and 📋 are both a finished spec beside a blank `plan.md`; whether
-      # `ewoki-linker` has been is recorded only by the name. A folder arriving
-      # from 🔎 lands on 🔗, so nothing reaches the planner unlinked.
       #
       # ⭐ 🟡 🎨 look identical on disk: a `spec.md` and a `plan.md` with work
       # units in it. Whether nobody has started, the back end is under way, or
@@ -104,15 +95,8 @@ module OpenLanes
       # Contents that fit the family justify only its floor, never its ceiling.
       FAMILIES = [
         %i[blocked product_blocked bomb],
-        %i[ready_for_linking ready_for_planning],
         %i[planned building building_ui ready_for_review in_review verifying completed rejected]
       ].freeze
-
-      # Family members whose contents do tell them apart from a sibling, so a
-      # failing invariant is news rather than noise. 🔗 reads `depends_on:`;
-      # ⭐ with an open pull request, by contrast, is still ⭐ until an agent
-      # says otherwise, and every other member is as mute as ⭐.
-      SEPARABLE = %i[ready_for_linking].freeze
 
       # States the agent loop leaves alone: work that is finished (✅ 😎), work
       # that was dropped (❌), and work waiting on a human (⭕ 🛑 💣 💤).
@@ -135,7 +119,7 @@ module OpenLanes
       # The agents spec checks every prompt that describes blocking against it.
       #
       # Review is absent: a reviewer rules, it does not ask.
-      BLOCKABLE = %i[new researched retroactive ready_for_linking ready_for_planning planned building building_ui rejected].freeze
+      BLOCKABLE = %i[new researched retroactive ready_for_planning planned building building_ui rejected].freeze
 
       # Rerouting a transition below makes the hand-drawn
       # `docs/img/plan-spec-build.png` stale — `just docs` will show you, because
@@ -153,27 +137,12 @@ module OpenLanes
           transitions from: %i[new retroactive blocked product_blocked bomb deferred], to: :researched
         end
 
-        # The specification is done and nobody has said what it waits for.
-        # Entered by the harness when `yoda-writer` completes; `resync`
-        # reaches it on a blank `plan.md`, the weakest of its family.
-        event :ready_to_link, guard: :justified? do
-          transitions from: %i[researched new retroactive rewrite blocked product_blocked bomb deferred],
-            to: :ready_for_linking
-        end
-
         # The specification is done and the planner has not started. Entered
-        # by the harness when `ewoki-linker` completes. Without it ⭐ Planned
-        # required a file only the agent handling ⭐ Planned writes, and
-        # nothing could enter it. The sources before 🔗 stay, so a person may
-        # still move a plan whose `depends_on:` they wrote by hand.
-        #
-        # Leaving 🔗 also needs the key answered. 📋's invariant reads only a
-        # blank `plan.md`, so without this an `ewoki-linker` that timed out,
-        # or signed Completed without its Edit landing, passed on to the
-        # planner unlinked. The guard sits on this edge and not on 📋, so a
-        # 📋 folder from before the linker existed is not renamed back.
+        # by the harness when `yoda-writer` completes; `resync` reaches it on a
+        # blank `plan.md`. Without it ⭐ Planned required a file only the agent
+        # handling ⭐ Planned writes, and nothing could enter it. The planner
+        # answers `depends_on:` here, while it plans (A17).
         event :ready_to_plan, guard: :justified? do
-          transitions from: :ready_for_linking, to: :ready_for_planning, guard: :linked?
           transitions from: %i[researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :ready_for_planning
         end
@@ -184,7 +153,6 @@ module OpenLanes
         # planned. What research buys is not enforced here; it is enforced by
         # `yoda-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
-          transitions from: :ready_for_linking, to: :planned, guard: :linked?
           transitions from: %i[ready_for_planning researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :planned
         end
@@ -397,9 +365,7 @@ module OpenLanes
 
       # Where a move toward `to` honestly lands. A family's members differ
       # only in what their invariants read, so when `to` refuses and the next
-      # spine state is its sibling and fits, that sibling is the landing:
-      # yoda-writer finishing a spec whose `depends_on:` a person already
-      # wrote goes straight to 📋 instead of failing at 🔗.
+      # spine state is its sibling and fits, that sibling is the landing.
       #
       # @param to [Symbol]
       # @return [Symbol] `to`, or its sibling on the spine
@@ -468,9 +434,6 @@ module OpenLanes
       #
       # - **Already inside one** — the current name wins. Re-deriving it would be
       #   a guess dressed up as a correction, and every ⭕ would become 🛑.
-      #   Except for a {SEPARABLE} member whose own invariant now fails: a 🔗
-      #   whose `depends_on:` got written is 📋, and staying would run the
-      #   linker on a plan it has nothing left to do for.
       # - **Arriving from outside** — the *weakest* member the contents fit
       #   wins, not the furthest. A 📋 folder whose `plan.md` grew work units
       #   lands on ⭐, not 🟡, because nobody has started. A ✅ folder found
@@ -484,11 +447,7 @@ module OpenLanes
         return nil if fitting.empty?
 
         best = PREFERENCE.filter_map { |k| fitting.find { |s| s.key == k } }.first || fitting.first
-        if self.class.family_of(key).include?(best.key)
-          return status if !SEPARABLE.include?(key) || status.satisfied_by?(subject)
-
-          return STATUS_BY_KEY.fetch(self.class.family_of(key).find { |k| fitting.any? { |s| s.key == k } })
-        end
+        return status if self.class.family_of(key).include?(best.key)
 
         family = self.class.family_of(best.key)
         return best if family.empty?
@@ -505,18 +464,12 @@ module OpenLanes
       # @return [Boolean]
       def justified? = STATUS_BY_KEY.fetch(aasm.to_state).satisfied_by?(subject)
 
-      # The second guard, on the edges out of 🔗 only.
-      #
-      # @return [Boolean] whether `spec.md` answers `depends_on:`
-      def linked? = Spec.for(subject).linked?
-
       # @param to [Symbol]
       # @return [String]
       def refusal(to)
         return "#{describe(key)} cannot become #{describe(to)}" unless self.class.edge?(key, to)
 
-        STATUS_BY_KEY.fetch(to).violation(subject) ||
-          ("#{describe(key)} cannot become #{describe(to)} until `spec.md` answers `depends_on:`" if key == :ready_for_linking && !linked?)
+        STATUS_BY_KEY.fetch(to).violation(subject)
       end
 
       # @param key [Symbol]

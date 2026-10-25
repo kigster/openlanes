@@ -366,7 +366,7 @@ module OpenLanes
 
       # The one `openlanes` subcommand a confined agent may run: `state`
       # shows and signs its ledger. The whole executable would hand it
-      # `run`, `link` and `resync`, which rename folders.
+      # `run` and `resync`, which rename folders.
       CONFINED_CLI = "#{Prompt::EXECUTABLE} state".freeze
 
       # Commands that leave the machine, denied to every agent by default.

@@ -14,13 +14,13 @@ export interface StartsLook {
 }
 
 /**
- * Plans::Spec::STARTS, as lifecycle/lanes.rb moves them: research enters at New, planning at Linking, building at
+ * Plans::Spec::STARTS, as lifecycle/lanes.rb moves them: research enters at New, planning at Planning, building at
  * Building and skips Building UI. The Snapshot names a plan's starts value but not where it enters, so this table is
  * the one fact the page keeps for itself.
  */
 export const STARTS: Record<Starts, StartsLook> = {
   research: { label: "Research", color: "var(--starts-research)", bg: "var(--starts-research-bg)", from: "new", skip: [] },
-  planning: { label: "Planning", color: "var(--starts-planning)", bg: "var(--starts-planning-bg)", from: "ready_for_linking", skip: [] },
+  planning: { label: "Planning", color: "var(--starts-planning)", bg: "var(--starts-planning-bg)", from: "ready_for_planning", skip: [] },
   building: { label: "Building", color: "var(--starts-building)", bg: "var(--starts-building-bg)", from: "building", skip: ["building_ui"] },
 };
 
