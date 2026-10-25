@@ -4,6 +4,9 @@ Decided 2026-10-16 by the owner (kig). Grilling session, one question at a time.
 
 Amends M3 and M5 in [decisions-on-merge-modes-and-verification.md](decisions-on-merge-modes-and-verification.md).
 
+> [!NOTE]
+> Amended 2026-10-25 by [decisions-on-agent-names-models-and-reviewers.md](decisions-on-agent-names-models-and-reviewers.md): a new reviewer roster (R1), `review-passed` replacing `review-ok-not-perfect` (R3), and the label decided by the reviewers' majority verdict instead of the pooled emoji count.
+
 ## Reviewers
 
 ### R1. Three reviewers, each from its own angle
