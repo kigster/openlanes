@@ -9,15 +9,21 @@ Jobs that call the Example Corp billing API fail on transient 503 responses. Ret
 
 ## Research
 
-1. Yes. `lib/retry_policy.rb:1` defines `RetryPolicy`: three attempts, 0.5 s base, doubling. `BillingClient#charge` (`lib/billing_client.rb:2`) does not use it yet.
-2. The billing API asks for exponential backoff starting at 500 ms and honouring `Retry-After` on 503 (https://docs.example.com/billing/errors, retrieved 2026-09-04). The existing policy matches except for `Retry-After`.
+### Reuse in this repo
 
-### Could not settle
+- `lib/retry_policy.rb:2`: `RetryPolicy`, bounded exponential backoff (three attempts, 0.5 s base, doubling). `BillingClient#charge` (`lib/billing_client.rb:2`) does not use it yet.
 
-1. Whether `charge` is idempotent on retry; the API docs do not say.
+### Existing components
+
+- [retriable](https://github.com/kamui/retriable): block-level retries with exponential backoff and jitter; fits if the policy should grow jitter, otherwise the repository's own policy is enough.
+
+### Open questions for yoda
+
+1. What backoff does the billing API ask clients to use, and does it send `Retry-After` on 503?
+2. Is `charge` idempotent on retry?
 
 > [!NOTE]
 >
-> [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
-> [2026-09-04 11:31:42 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-> [2026-09-04 11:31:43 AM PDT] [ next: yoda-writer ]
+> [2026-10-24 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
+> [2026-10-24 11:30:42 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
+> [2026-10-24 11:30:43 AM PDT] [ next: yoda-writer ]

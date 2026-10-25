@@ -37,9 +37,17 @@ RSpec.describe OpenLanes::Evals::Live do
 
         ## Research
 
-        1. `lib/retry_policy.rb:1` already retries three times with doubling delays from 0.5 s.
-        2. The billing API asks for backoff from 500 ms (https://docs.example.com/billing/errors, retrieved 2026-09-04).
-           The policy does not honour `Retry-After` yet, the one gap between code and documentation.
+        ### Reuse in this repo
+
+        - `lib/retry_policy.rb:1` already retries three times with doubling delays from 0.5 s.
+
+        ### Existing components
+
+        - [retriable](https://github.com/kamui/retriable): block retries with backoff; the policy already covers it.
+
+        ### Open questions for yoda
+
+        1. What backoff does the billing API ask for, and does it send `Retry-After`?
 
         > [!NOTE]
         >

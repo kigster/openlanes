@@ -180,16 +180,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   describe "the clock" do
     it "takes the tighter of the agent's own budget and --timeout" do
-      leah = agents.find("leah-researcher") # 1200 in frontmatter
+      luke = agents.find("luke-backend") # 1200 in frontmatter
       aggregate_failures do
-        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(leah)).to eq(900)
-        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(leah)).to eq(1200)
+        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(luke)).to eq(900)
+        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(luke)).to eq(1200)
       end
     end
 
     it "lets an agent's own clock stand when nobody passed --timeout" do
-      leah = agents.find("leah-researcher") # 1200 in frontmatter
-      expect(described_class.new(root:, spawn:).timeout_for(leah)).to eq(1200)
+      luke = agents.find("luke-backend") # 1200 in frontmatter
+      expect(described_class.new(root:, spawn:).timeout_for(luke)).to eq(1200)
     end
 
     it "falls back to the default only for an agent that declares no clock of its own" do
@@ -760,9 +760,10 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "tells an agent that can fan out to spend its budget concurrently" do
-      researcher = agents.find("leah-researcher")
-      expect(researcher.allowed_tools).to include("Task")
-      expect(prompt_for(researcher)).to include("one wave of concurrent sub-agents")
+      # No shipped agent dispatches sub-agents since leah stopped (A7), so
+      # the fan-out is granted here rather than read off a definition.
+      fanning = agent.with(allowed_tools: [*agent.allowed_tools, "Task"])
+      expect(prompt_for(fanning)).to include("one wave of concurrent sub-agents")
     end
 
     it "says nothing about concurrency to an agent without Task" do
