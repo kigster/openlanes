@@ -4,15 +4,6 @@ require "ipaddr"
 require "json"
 require "rack/utils"
 require "sinatra/base"
-# New Relic is in the Gemfile's development group, not the gemspec, so an
-# installed gem has no agent. Without this guard `openlanes web` and
-# `openlanes start` raised LoadError outside a bundle.
-begin
-  require "newrelic_rpm"
-  require "newrelic/infinite_tracing"
-rescue LoadError
-  # No agent installed: serve without telemetry.
-end
 
 module OpenLanes
   module Web
