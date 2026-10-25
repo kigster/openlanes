@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Board, MachineBoard } from "./Board";
 import { PlanRow } from "./PlanRow";
-import { nodePlanKey } from "./model";
+import { dagBreak, nodePlanKey } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const none = new Map<string, unknown>();
@@ -270,5 +270,21 @@ describe("running gear", () => {
     const container = draw(samplePlan({ questions: [sampleQuestion()] }));
     expect(container.querySelector(".car-gear")).toBeNull();
     expect(container.querySelector(".car")).not.toHaveClass("is-running");
+  });
+});
+
+describe("dagBreak", () => {
+  it("marks a row whose dependency group differs from the row above, and never the first", () => {
+    const plans = [samplePlan({ ordinal: "001.00", group: "001.00" }), samplePlan({ ordinal: "002.00", group: "001.00" }),
+      samplePlan({ ordinal: "003.00", group: "003.00" })];
+    expect(plans.map((_, i) => dagBreak(plans, i))).toEqual([false, false, true]);
+  });
+
+  it("deepens the groove above the first plan of another group", () => {
+    const board = sampleBoard();
+    board.me.plans = [samplePlan({ ordinal: "001.00", group: "001.00" }), samplePlan({ ordinal: "003.00", group: "003.00" })];
+    const { container } = render(<Board board={board} merged={false} retiring={noRetire} gone={none} />);
+    expect(container.querySelector('[data-plan="001.00"]')).not.toHaveClass("is-dag-break");
+    expect(container.querySelector('[data-plan="003.00"]')).toHaveClass("is-dag-break");
   });
 });

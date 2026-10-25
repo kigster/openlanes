@@ -29,6 +29,12 @@ module OpenLanes
           colour: "FF0050",
           meaning: "at least one 💣; sits beside review-rejected",
           passing: false),
+        # The harness's, never a reviewer's: a fix reached a rejected pull
+        # request, by the publisher or by anyone else's push (decision U1).
+        new(name: "review-addressed",
+          colour: "A2FF02",
+          meaning: "fixes were pushed after review-rejected; the PR waits for another review",
+          passing: false),
         new(name: "review-ok-not-perfect", colour: "E8E890", meaning: "no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)", passing: true),
         new(name: "review-approved", colour: "109a10", meaning: "no ⛔️ or 💣, few 🤔", passing: true),
         new(name: "ready-to-merge",
@@ -61,6 +67,9 @@ module OpenLanes
       # reason {REJECTED} is.
       VULNERABILITY = named("review-vulnerability")
 
+      # The harness's label for a rejected pull request whose fixes arrived (U1).
+      ADDRESSED = named("review-addressed")
+
       # The verdict for a review with no ⛔️ or 💣 but too many 🤔.
       OK_NOT_PERFECT = named("review-ok-not-perfect")
 
@@ -78,6 +87,34 @@ module OpenLanes
 
       # Either verdict: the pull request is complete (P2).
       COMPLETE = [AUTO_MERGED, MERGE_MANUALLY].freeze
+
+      # Not a verdict, and so not in {ALL}, which a new verdict takes off: it
+      # marks every pull request openlanes opened, and stays there. The
+      # publisher adds it beside {INITIAL}, and {SYNCED} keeps its colour.
+      OPENLANES = new(name: "openlanes",
+        colour: "00FFFF",
+        meaning: "opened by openlanes from a plan in .plans",
+        passing: false)
+
+      # Verdicts after which nobody works on a pull request until it merges,
+      # so nothing but the conflict sweep notices it go stale against `main` (U2).
+      WAITING = [OK_NOT_PERFECT, APPROVED, READY_TO_MERGE, MERGE_MANUALLY].freeze
+
+      # Not a verdict, and so not in {ALL}: it sits beside whatever verdict
+      # the pull request carries, which a resolved conflict keeps (U3).
+      CONFLICTS = new(name: "conflicts",
+        colour: "B60205",
+        meaning: "no longer merges clean onto main; bb8-resolver rebases it",
+        passing: false)
+
+      # What {CONFLICTS} becomes once the resolution is pushed (U3).
+      CONFLICTS_RESOLVED = new(name: "conflicts-resolved",
+        colour: "008B75",
+        meaning: "a conflict with main was resolved and pushed; CI runs on the new head",
+        passing: false)
+
+      # Every label {Vcs::LabelSync} creates and recolours when a run starts.
+      SYNCED = [*ALL, OPENLANES, CONFLICTS, CONFLICTS_RESOLVED].freeze
 
       # Not a verdict, and so not in {ALL}: {Vcs::LabelSync} never creates or
       # recolours it. Its presence on a repository is the one sign that

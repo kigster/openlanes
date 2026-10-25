@@ -180,16 +180,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   describe "the clock" do
     it "takes the tighter of the agent's own budget and --timeout" do
-      leah = agents.find("leah-researcher") # 1200 in frontmatter
+      luke = agents.find("luke-backend") # 1200 in frontmatter
       aggregate_failures do
-        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(leah)).to eq(900)
-        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(leah)).to eq(1200)
+        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(luke)).to eq(900)
+        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(luke)).to eq(1200)
       end
     end
 
     it "lets an agent's own clock stand when nobody passed --timeout" do
-      leah = agents.find("leah-researcher") # 1200 in frontmatter
-      expect(described_class.new(root:, spawn:).timeout_for(leah)).to eq(1200)
+      luke = agents.find("luke-backend") # 1200 in frontmatter
+      expect(described_class.new(root:, spawn:).timeout_for(luke)).to eq(1200)
     end
 
     it "falls back to the default only for an agent that declares no clock of its own" do
@@ -327,6 +327,56 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
     it "ignores one that is set to nothing, which is how a shell unsets it in practice" do
       expect(described_class.foreign_credentials({ "ANTHROPIC_API_KEY" => "  " })).to be_empty
+    end
+  end
+
+  # No shipped agent is confined since ewoki-linker retired (A17), so the
+  # confinement is declared here, as its frontmatter would declare it.
+  describe "a confined agent" do
+    let(:linker) do
+      agent.with(name: "spec-keeper", adapter: "claude", confined_to: %w[spec.md], allowed_tools: %w[Read Grep Glob Bash Edit])
+    end
+    let(:argv) { executor.invocation(linker, subject_plan) }
+    let(:allowed) { argv.each_cons(2).find { |flag, _| flag == "--allowedTools" }.last.split(",") }
+    let(:spec_path) { File.join(subject_plan.feature.path, "spec.md") }
+
+    it "is confined to its plan's spec.md" do
+      expect(linker.confined_to).to eq(%w[spec.md])
+    end
+
+    it "gets a fixed tool set that refuses whatever the allow list does not name" do
+      expect(argv.each_cons(2).to_a).to include(["--tools", "Read,Grep,Glob,Edit,Bash"], %w[--permission-mode dontAsk])
+      expect(argv).to include("--restricted")
+    end
+
+    it "may edit that one file, by its absolute path, and nothing else" do
+      expect(allowed.grep(/\AEdit/)).to eq(["Edit(/#{spec_path})"])
+      expect(allowed).not_to include("Write", "Edit")
+    end
+
+    it "may run this checkout's openlanes state and two read-only commands, nothing else in Bash" do
+      expect(allowed.grep(/\ABash/)).to eq(["Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE} state:*)",
+                                            "Bash(ls:*)", "Bash(git status:*)"])
+    end
+
+    # rg --pre runs a program; git log, show and diff take --output=<file>.
+    # A Bash(cmd:*) grant reaches every flag, so none of them may be granted.
+    it "is granted no command that has a flag which executes or writes" do
+      expect(allowed.grep(/\ABash\((rg|grep|find|xargs|sed|git (log|show|diff))\b/)).to be_empty
+    end
+
+    it "may not run any other openlanes subcommand" do
+      expect(allowed).not_to include("Bash(#{OpenLanes::Execution::Prompt::EXECUTABLE}:*)")
+    end
+
+    it "is refused outright on an adapter that cannot enforce it" do
+      codex = linker.with(adapter: "codex")
+      result = executor.call(codex, subject_plan)
+      expect([result.ok, result.note]).to eq([false, "spec-keeper is confined to spec.md, and codex cannot enforce that"])
+    end
+
+    it "leaves an unconfined agent's tools alone" do
+      expect(executor.invocation(agent, subject_plan)).not_to include("--restricted")
     end
   end
 
@@ -714,9 +764,10 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "tells an agent that can fan out to spend its budget concurrently" do
-      researcher = agents.find("leah-researcher")
-      expect(researcher.allowed_tools).to include("Task")
-      expect(prompt_for(researcher)).to include("one wave of concurrent sub-agents")
+      # No shipped agent dispatches sub-agents since leah stopped (A7), so
+      # the fan-out is granted here rather than read off a definition.
+      fanning = agent.with(allowed_tools: [*agent.allowed_tools, "Task"])
+      expect(prompt_for(fanning)).to include("one wave of concurrent sub-agents")
     end
 
     it "says nothing about concurrency to an agent without Task" do
@@ -739,6 +790,36 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       argv = executor.invocation(agent, lying)
 
       expect(argv.join(" ")).to include("The folder's name is not currently justified")
+    end
+  end
+
+  # A resumed session's meter carries on from the sessions before it, but
+  # only the live session's sub-agents can still be running: the tile must
+  # not inherit the earlier session's finished fan-out.
+  describe "the sessions of one invocation" do
+    def event(**fields) = "#{fields.to_json}\n"
+
+    it "starts a resumed session with none in flight while keeping the earlier spawns" do
+      earlier = OpenLanes::Execution::Transcript.new
+      earlier.push(event(type: "system", subtype: "task_started", task_id: "a"))
+      earlier.push(event(type: "system", subtype: "task_started", task_id: "b"))
+      earlier.finish
+      firsts = []
+      resumed = OpenLanes::Execution::Transcript.new { firsts << it }
+      sessions = described_class::Sessions.new << earlier << resumed
+      resumed.push(event(type: "system", subtype: "init", session_id: "sess-2"))
+
+      carried = sessions.carry(firsts.first)
+      expect([carried.running, carried.subagents]).to eq([[], 2])
+    end
+
+    it "passes the live session's own sub-agents in flight through" do
+      sessions = described_class::Sessions.new << OpenLanes::Execution::Transcript.new
+      live = OpenLanes::Execution::Transcript.new
+      sessions << live
+      live.push(event(type: "system", subtype: "task_started", task_id: "c"))
+
+      expect(sessions.carry(live.progress).running).to eq(["sub-agent"])
     end
   end
 end

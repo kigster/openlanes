@@ -21,7 +21,7 @@ export interface Station {
   agents: string[]; // agents whose `handles:` includes this station
 }
 
-export type Lane = "full" | "plan" | "quick";
+export type Starts = "research" | "planning" | "building";
 
 export interface Status {
   key: string; // Plans::STATUSES key
@@ -125,13 +125,28 @@ export interface UnackedMail {
   since: string; // the oldest one's timestamp, as the mailbox wrote it
 }
 
+/** The latest arbitration ruling on a plan, as the live snapshot carries it (contract.md, `ruling`). */
+export interface Ruling {
+  at: Iso;
+  kind: "cap" | "appeal" | "dispute" | "passed_check";
+  pr: number | null;
+  round: number | null;
+  outcome: string; // cap: go|no_go; appeal: upheld|struck; dispute: the winner; passed_check: fair|too_harsh|too_lenient
+  findings: { struck: string[]; critical: string[]; headings?: Record<string, string> }; // headings: a struck id's heading
+  winner: string | null;
+  reason: string;
+  trigger: string;
+  review?: number; // the round of hansolo's review the ids belong to
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
   slug: string;
   summary: string; // spec.md's first paragraph of prose, "" when it has none
   status: Status;
-  lane: Lane;
+  starts: Starts;
+  group: string; // lowest ordinal of its depends_on group; plans in no group name themselves
   station: string; // Station.key the plan is at
   up: number;
   down: number;
@@ -145,6 +160,9 @@ export interface Plan {
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
+  rejections?: { count: number; max: number }; // reviewer rejections so far, against merge.max_rejections
+  ruling?: Ruling | null; // the arbitrator's latest ruling, null when there is none
+  arbitrating?: boolean; // the arbitrator is on this plan now
   mail: UnackedMail[]; // the unacked messages, one per sender and recipient, oldest first
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
   locked: { pid: number; host: string; started_at: Iso; foreign: boolean } | null; // the plan's lock, alive or not; foreign: held by another machine
@@ -195,7 +213,7 @@ export interface Snapshot {
   run: Run;
   stations: Station[];
   plans: Plan[]; // plans this node is working on
-  backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "lane">>; // not complete, not claimed: for "Choose an existing plan"
+  backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "starts">>; // not complete, not claimed: for "Choose an existing plan"
   models: ModelChoice[];
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
   redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"

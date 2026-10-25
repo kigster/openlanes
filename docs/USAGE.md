@@ -11,17 +11,17 @@ Every command that reads or writes plans first finds the project root and works 
 1. a directory holding `.openlanes.yml` or `.plans/`;
 1. failing that, a directory holding `.git`.
 
-Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
+Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `uml`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
 
 ### `openlanes init`
 
-Writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--lane`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, and an existing file is kept unless `--overwrite`.
+Writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--starts`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, and an existing file is kept unless `--overwrite`.
 
 ### `.openlanes.yml`
 
 ```yaml
 project: Demo App         # heading for INDEX.md; default: the root's directory name
-lane: full                # default lane for `openlanes create`: full | plan | quick
+starts: research          # default for `openlanes create`: research | planning | building
 frontend: false           # a spec's `frontend:` when spec.md says nothing; omit to let each plan decide
 jobs: 4                   # how many plans `openlanes run` works on at once
 redis_url: redis://localhost:6379/0   # the Redis the live run shares
@@ -33,7 +33,7 @@ commands:                 # option defaults for any command, by the name you typ
 ```
 
 - Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes.yml`, the built-in default.
-- `jobs`, `lane` and `project` are the same settings as `commands.run.jobs`, `commands.create.lane` and `commands.index.project`. Set either spelling, not both.
+- `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
 
@@ -45,7 +45,7 @@ Every key is optional:
 
 ```yaml
 ---
-lane: quick          # full (default) | plan | quick
+starts: building     # research (default) | planning | building
 frontend: false      # true forces rey-frontend; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
@@ -79,7 +79,7 @@ Model and effort precedence, highest first: `run --model` (model only), `phases.
 | `plan`  | luthen-rael → luke (+ rey) → hansolo               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
 | `quick` | r2d2-mechanic → hansolo                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
 
-`openlanes create --lane quick split big migration` writes the frontmatter for you.
+`openlanes create --starts building split big migration` writes the frontmatter for you.
 
 ## Running the agents
 

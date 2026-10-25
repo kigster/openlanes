@@ -9,7 +9,9 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
 
   before do
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-      original.call(**keywords, sleeper: ->(_) {})
+      # The temp project has no desired_codebase_quality:, whose gate
+      # (plan 035, dispatcher_quality_gate_spec) would hold every plan.
+      original.call(**keywords, sleeper: ->(_) {}, quality_gate: nil)
     end
     allow(OpenLanes::Live).to receive(:connect).and_return(OpenLanes::Live.memory_store)
     plans { |t| t.plan("001.00", :building, "tax-rule-dsl", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
@@ -79,6 +81,24 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     allow(OpenLanes::Execution::Executor).to receive(:new).and_return(executor)
 
     expect(call(dry_run: false, rounds: 1).first.value!).to eq(1)
+  end
+
+  # Plan 035: a real run holds every plan while the key is missing, so its
+  # agent is never called.
+  it "holds a real run while desired_codebase_quality is missing" do
+    gates = []
+    allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
+      gates << keywords[:quality_gate]
+      original.call(**keywords, sleeper: ->(_) {})
+    end
+    executor = instance_double(OpenLanes::Execution::Executor, call: nil)
+    allow(OpenLanes::Execution::Executor).to receive(:new).and_return(executor)
+
+    call(dry_run: false, rounds: 1)
+    aggregate_failures do
+      expect(executor).not_to have_received(:call)
+      expect(gates.last.call).to be(true)
+    end
   end
 
   # Moved here from run_spec.rb with the method it tests.

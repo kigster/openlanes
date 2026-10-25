@@ -5,7 +5,7 @@ module OpenLanes
     # What the author of `spec.md` asked of the harness, in its frontmatter:
     #
     #   ---
-    #   lane: quick              # full (default) | plan | quick
+    #   starts: building         # research (default) | planning | building
     #   frontend: false          # true forces rey-frontend, false forbids it
     #   depth: fast              # fast | medium | deep
     #   phases:
@@ -25,11 +25,11 @@ module OpenLanes
     #
     # The body is the specification; this is how it should be worked. A value
     # this does not recognise is ignored and named in {#problems}, rather than
-    # stopping the run: a typo in `lane:` should cost the author their lane,
-    # not their plan.
+    # stopping the run: a typo in `starts:` should cost the author where the
+    # plan starts, not the plan.
     #
-    # @!attribute [r] lane
-    #   @return [Symbol] :full, :plan or :quick
+    # @!attribute [r] starts
+    #   @return [Symbol] :research, :planning or :building
     # @!attribute [r] frontend
     #   @return [Boolean, nil] nil when the plan decides
     # @!attribute [r] depth
@@ -52,14 +52,22 @@ module OpenLanes
     #     checks that show it is.
     # @!attribute [r] depends_on
     #   @return [Array<String>, nil] canonical `NNN.MM` ordinals of the plans
-    #     this one waits for. nil when the key is absent ("not checked yet"),
-    #     which is not the same as `[]` ("checked, none").
+    #     this one waits for, `[]` for `[none]`. nil when the key is absent.
+    #     Whether the key is answered is {#linked}, not this list: `[]` and
+    #     `[none]` both read as no edges.
+    # @!attribute [r] linked
+    #   @return [Boolean] whether an agent or a person has answered the key:
+    #     `[none]`, or quoted plan numbers and nothing else. A missing key and
+    #     a bare `[]` are unanswered, since `[]` is what a template leaves
+    #     behind as often as what a planner writes on purpose. So is a value
+    #     with anything else in it (`[soon]`, `""`, the octal `[034]`): it
+    #     names no plan, and the planner rewrites it.
     # @!attribute [r] how_to_test
     #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
     #     {#how_to_verify} when the spec has no such section (until plan 007).
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
-    Spec = Data.define(:lane,
+    Spec = Data.define(:starts,
       :frontend,
       :depth,
       :phases,
@@ -68,12 +76,16 @@ module OpenLanes
       :completed_when,
       :how_to_verify,
       :depends_on,
+      :linked,
       :how_to_test,
       :problems) do
-      def initialize(lane: :full, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, problems: [])
+      def initialize(starts: :research, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
+        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [])
         super
       end
+
+      # @return [Boolean] see {#linked}
+      def linked? = linked
 
       # @param phase [String, Symbol, nil]
       # @return [Hash{String => String}] what the author set for that phase
@@ -84,11 +96,12 @@ module OpenLanes
     end
 
     class Spec
-      # Every route a plan can take through the agents.
-      #   full  — research, specification, planning, build, review
-      #   plan  — the spec is already what the author wants: plan, build, review
-      #   quick — a short mechanical task: one agent builds it, then review
-      LANES = %i[full plan quick].freeze
+      # Where a plan starts. {Lifecycle::Lanes} jumps `planning` and `building`
+      # past the phases before that point; `research` walks the spine.
+      #   research — research, specification, planning, build, review
+      #   planning — the spec is already what the author wants: plan, build, review
+      #   building — a short mechanical task: one agent builds it, then review
+      STARTS = %i[research planning building].freeze
 
       # How much each phase should think, and what an eval holds it to.
       DEPTHS = %i[fast medium deep].freeze
@@ -119,6 +132,11 @@ module OpenLanes
       # The plans this one waits for. Quoted canonical ordinals only: YAML
       # reads a bare `[034]` as octal 28, a silent wrong answer.
       DEPENDS_ON_KEY = "depends_on"
+
+      # The one word {DEPENDS_ON_KEY} takes besides a plan number:
+      # `depends_on: [none]` says someone looked and found nothing, where
+      # `[]` cannot be told apart from a template nobody filled in.
+      NO_DEPENDENCIES = "none"
 
       # Where `how-to-verify:` lives now (decision M10): a section of the
       # spec's body, written by its author like every other, rather than a
@@ -220,7 +238,7 @@ module OpenLanes
         # @return [OpenLanes::Plans::Spec]
         def from(meta)
           problems = []
-          new(lane:     choice(meta, "lane", LANES, :full, problems),
+          new(starts:     choice(meta, "starts", STARTS, :research, problems),
             frontend: switch(meta, "frontend", problems),
             depth:    choice(meta, "depth", DEPTHS, nil, problems),
             phases:   phases(meta["phases"], problems),
@@ -229,6 +247,7 @@ module OpenLanes
             completed_when: notes(meta, COMPLETED_WHEN_KEY, problems),
             how_to_verify: notes(meta, HOW_TO_VERIFY_KEY, problems),
             depends_on: depends_on(meta, problems),
+            linked: linked?(meta),
             how_to_test: notes(meta, HOW_TO_VERIFY_KEY, []),
             problems:)
         end
@@ -403,12 +422,19 @@ module OpenLanes
         # by the time it reaches here. `"034"` is normalised to `"034.00"`, so
         # every caller compares one form.
         #
+        # {NO_DEPENDENCIES} on its own reads as `[]`: no edges, and no
+        # problem. Beside a plan number it contradicts that number, so it is
+        # named and dropped, and the numbers stand.
+        #
         # @return [Array<String>, nil] nil when the key is absent
         def depends_on(meta, problems)
           return nil unless meta.key?(DEPENDS_ON_KEY)
 
-          value = meta[DEPENDS_ON_KEY]
-          items = value.nil? ? [] : Array(value)
+          items = dependency_items(meta)
+          if items.include?(NO_DEPENDENCIES)
+            items -= [NO_DEPENDENCIES]
+            problems << "#{DEPENDS_ON_KEY}: #{NO_DEPENDENCIES} cannot stand beside a plan number" if items.any?
+          end
           items.filter_map do |item|
             ordinal = item.is_a?(String) && Ordinal.parse(item)
             next ordinal.to_s if ordinal
@@ -416,6 +442,18 @@ module OpenLanes
             problems << "#{DEPENDS_ON_KEY}: #{item.inspect} is not a quoted plan number like \"034.00\""
             nil
           end.uniq.sort
+        end
+
+        # @return [Array<Object>] the key's entries, a scalar as one entry
+        def dependency_items(meta)
+          value = meta[DEPENDS_ON_KEY]
+          value.nil? ? [] : Array(value)
+        end
+
+        # @return [Boolean] true for `[none]` or a list of quoted plan numbers
+        def linked?(meta)
+          items = dependency_items(meta)
+          items.any? && items.all? { it == NO_DEPENDENCIES || (it.is_a?(String) && Ordinal.parse(it)) }
         end
 
         # @return [Hash]

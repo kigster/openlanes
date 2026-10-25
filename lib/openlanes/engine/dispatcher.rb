@@ -42,7 +42,8 @@ module OpenLanes
         :recorded_session,
         :journal,
         :journaled,
-        :journal_round) do
+        :journal_round,
+        :sweep) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -185,6 +186,7 @@ module OpenLanes
         @asked_how_to_test = Set.new
         @preferred = {}
         @started_at = UI.monotonic
+        @invocations = {}
         @mutex = Mutex.new
         @before_tick = []
         @requeued = []
@@ -264,8 +266,10 @@ module OpenLanes
           ask_for_time
           drain_mail
           watch_pull_requests
+          arbitrate
           settle_verifications
           settle_merges
+          upkeep_pull_requests
           # On threads: a kill waits out TERM before KILL, and the board must not.
           @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
           dispatch unless Execution::Control.quit? || resting?
@@ -290,7 +294,7 @@ module OpenLanes
         return false if @stay
         # Nor does an ending run return in the middle of one: what it finds
         # is acted on, on the next tick, before the run reports.
-        return false if @runner.verification&.busy?
+        return false if @runner.verification&.busy? || @runner.arbitration&.busy?
 
         next_dispatchable.nil?
       end
@@ -589,7 +593,7 @@ module OpenLanes
       #
       # @return [Array<String>]
       def untouchable
-        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now
+        busy = @running.map { plan_of(it) } + @discarding.keys + @unblocking.map(&:ordinal) + verifying_now + arbitrating_now
         busy + @runner.tree.subjects.select { @runner.foreign?(it) || locked_elsewhere?(it) || held_outside?(it) }
                       .map { it.feature.ordinal.to_s }
       end
@@ -602,6 +606,12 @@ module OpenLanes
       #
       # @return [Array<String>]
       def verifying_now = @runner.verification&.looking || []
+
+      # Plans the arbitrator is being asked about off the loop's thread,
+      # untouchable for the same reason until its ruling is applied.
+      #
+      # @return [Array<String>]
+      def arbitrating_now = @runner.arbitration&.asking || []
 
       # The Redis claim covers machines that share one; the lock file covers
       # a second run on this machine, or one that never reached Redis.
@@ -665,7 +675,9 @@ module OpenLanes
         # Every agent defined, not this run's roster: the mail waits in the
         # plan folder for whichever run next starts the builders, and a run
         # typed with `--agent hansolo-reviewer` must not lose it.
-        effects = PrOutcomes.new(tree_dir: @runner.tree.dir, agents: Agents::Registry.new(dir: @runner.agents.dir))
+        effects = PrOutcomes.new(tree_dir: @runner.tree.dir,
+          agents: Agents::Registry.new(dir: @runner.agents.dir),
+          events: @runner.events)
         outcomes.each do |outcome|
           next if outcome.kind == :waiting || untouchable.include?(outcome.plan)
 
@@ -813,7 +825,8 @@ module OpenLanes
         unblocker = Lifecycle::Unblocker.new(tree: Plans::Tree.new(dir: @runner.tree.dir),
           agent:,
           executor: @runner.executor,
-          commit: true)
+          commit: true,
+          events: @runner.events)
         UI.log("unblocking: every question answered", plan: subject.feature.ordinal.to_s, agent: agent.name)
         unblock = Unblock.new(ordinal: subject.feature.ordinal.to_s,
           agent: agent.name,
@@ -1083,8 +1096,19 @@ module OpenLanes
       def idle_reason(subjects)
         # Finished plans move into archive/ (N3), so an empty top level after
         # a run that shipped everything is "finished", not "no plans yet".
-        if subjects.empty? && @runner.tree.everything.reload.subjects.empty?
-          return "idle: no plans yet; create one from the page or with openlanes create"
+        # `[].all?` is true, which is the finished case when every plan has
+        # left the top level; an empty *scope* with work still sitting
+        # elsewhere is not that, and under R4 it is the quality gate.
+        if subjects.empty?
+          all = @runner.tree.everything.reload.subjects
+          return "idle: no plans yet; create one from the page or with openlanes create" if all.empty?
+          if all.all? { FINISHED.include?(it.status.key) }
+            return "idle: every plan is finished; create the next one from the page"
+          end
+          if @runner.awaiting_quality?
+            return "idle: desired_codebase_quality is not set in #{Config::FILE}; " \
+                   "no plan in scope to ask #{QualityQuestion::NAME} on"
+          end
         end
         if subjects.all? { FINISHED.include?(it.status.key) }
           return "idle: every plan is finished; create the next one from the page"
@@ -1130,6 +1154,7 @@ module OpenLanes
         # Redis lost (W32): the agents under way are paused, and nobody new
         # starts until it answers, since no claim could be checked.
         return nil if Execution::Control.paused?
+        return nil if quality_awaited?
 
         @dependencies = @runner.dependencies(except: untouchable)
         blockers_first(@runner.in_scope).each do |subject|
@@ -1161,6 +1186,33 @@ module OpenLanes
           return [agent, subject] if agent
         end
         nil
+      end
+
+      # No agent starts while `.openlanes.yml` has no `desired_codebase_quality:`
+      # (plan 035): every level changes what the builders and reviewers aim
+      # for, so work done before the answer would be done to the wrong
+      # standard. The question goes on the first plan in scope, where the
+      # page shows it, and is said once in the log. With nobody in scope
+      # there is no folder to hang the question on, and that is said too,
+      # rather than waiting with no line. The answer lifts the gate on the
+      # next tick: {Config.current} rereads a changed file.
+      #
+      # @return [Boolean]
+      def quality_awaited?
+        return false unless @runner.awaiting_quality?
+
+        asker = @runner.in_scope.first
+        unless asker
+          @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                   "no plan in scope to ask #{QualityQuestion::NAME} on") || true
+          return true
+        end
+
+        QualityQuestion.ask!(asker.feature.path)
+        @quality_said ||= UI.log("waiting: desired_codebase_quality is not set in #{Config::FILE}; " \
+                                 "answer #{QualityQuestion::NAME} (#{Config::QUALITIES.join(", ")}) before any agent starts",
+          plan: asker.feature.ordinal.to_s) || true
+        true
       end
 
       # The dependency gate: a plan whose `depends_on:` names anything not yet
@@ -1225,9 +1277,12 @@ module OpenLanes
         @runner.age!(except: busy)
       end
 
-      # Plans whose lane skips research, rewriting or planning are moved past
+      # Plans whose `starts:` skips research, rewriting or planning are moved past
       # those phases before anyone is assigned, so the first agent they meet
-      # is the one their lane starts with.
+      # is the one that value starts with. A plan may take more than one hop
+      # in a tick: a plan already at 📋 with a `building` spec still goes on to ⭐,
+      # since no agent works it in between and a run could otherwise settle
+      # at 📋 with the builder never asked.
       #
       # @param busy [Array<String>] ordinals an agent is working right now
       # @return [void]
@@ -1235,8 +1290,11 @@ module OpenLanes
         @runner.in_scope.each do |subject|
           next if busy.include?(subject.feature.ordinal.to_s)
 
-          moved = Lifecycle::Lanes.advance(subject, commit: true) or next
-          UI.log("lane: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+          Plans::StateMachine::SPINE.size.times do
+            moved = Lifecycle::Lanes.advance(subject, commit: true) or break
+            UI.log("starts: #{moved.first} -> #{moved.last}", plan: subject.feature.ordinal.to_s)
+            subject = Plans::Tree.new(dir: @runner.tree.dir).find(subject.feature.ordinal) or break
+          end
         end
       end
 
@@ -1245,6 +1303,9 @@ module OpenLanes
       # @return [Boolean]
       def eligible?(agent, subject)
         ordinal = subject.feature.ordinal.to_s
+        # A capped plan is the arbitrator's; one it is being asked about
+        # waits for the ruling, which may move it.
+        return false if @runner.arbitration&.holds?(subject) || arbitrating_now.include?(ordinal)
         return false if @running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
 
         past = @history[[ordinal, agent.name]].select { |h| h[:state] == subject.status.key }
@@ -1332,6 +1393,8 @@ module OpenLanes
           started_at: @clock.now.iso8601)
         journal!(:plan_assigned, plan: ordinal, agent: agent.name, round:)
         UI.log("started", **task.log_fields)
+        @invocations[job.key] = @clock.now
+        @runner.events.record(:agent_started, **event_fields(job))
         job.thread = Thread.new do
           Thread.current.report_on_exception = false
           job.result = begin
@@ -1592,6 +1655,7 @@ module OpenLanes
           record_journal(job)
           journal_progress(job)
           attempt = settle(job)
+          announce(job, attempt)
           journal_end(job, attempt)
           # A requeue, or a compaction that stopped the agent and then could
           # not happen, hands the round back: the stop was a person's choice.
@@ -1626,6 +1690,7 @@ module OpenLanes
         base = attempt_for(job)
         # Before anything reads the ledger: a resolution signs nothing, so
         # whatever the ledger holds is the plan's previous round, not this one.
+        return swept(job, base, result) if job.sweep
         return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
         return base if job.rebase
         return crashed(job, base, result) if result.is_a?(Exception)
@@ -1741,7 +1806,7 @@ module OpenLanes
         # otherwise be the "last ledger line" the resume record quotes.
         last = last_line(subject, agent)
         write_interrupted(subject, agent, task.round, reason)
-        target = agent.advances_to
+        target = agent.advances_to&.then { subject.machine.onward(it) }
         if target && subject.machine.may?(target)
           successor = @runner.agents.for_status(Plans::STATUS_BY_KEY.fetch(target)).first&.name
           Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name,
@@ -1819,7 +1884,7 @@ module OpenLanes
         partner_running = @running.any? { |j| j.task.subject.feature.ordinal.to_s == ordinal }
         target = target_for(agent, verdict, partner_running)
 
-        return approved(base, subject, ordinal) if verdict == :approved
+        return approved(job, base, subject, ordinal) if verdict == :approved
         return built_locally(base.with(status: "Completed"), ordinal) if verdict == :verified
 
         attempt = base.with(status: "Completed")
@@ -1833,6 +1898,7 @@ module OpenLanes
 
           attempt = published.attempt
           subject = published.subject
+          target = subject.machine.onward(target)
           return unjustified(job, attempt, subject, target) unless subject.machine.may?(target)
 
           subject.machine.promote!(target)
@@ -1941,6 +2007,100 @@ module OpenLanes
         merging.rebase_queued(busy: untouchable).each { UI.log(it) }
       end
 
+      # ---- pull requests nobody is working on (U1 to U4) --------------------
+
+      # At most once per {MERGE_POLL}, as {#settle_merges}: GitHub is asked
+      # about every rejected pull request, and about every waiting one each
+      # time `main` moves.
+      #
+      # @return [void]
+      def upkeep_pull_requests
+        upkeep = @runner.upkeep or return
+        return if @runner.dry_run?
+
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        return if @upkept && now - @upkept < MERGE_POLL
+
+        @upkept = now
+        upkeep.address.each { UI.log(it) }
+        sweep = upkeep.sweep(@runner.in_scope, busy: untouchable)
+        sweep.notes.each { UI.log(it) }
+        sweep.conflicts.each { resolve_conflict(upkeep, it) }
+      rescue OpenLanes::Error => e
+        UI.log("pull requests not kept up this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
+      # Rebase a waiting pull request's branch onto `main` in its plan's
+      # checkout (U3). Only the scheduling is the dispatcher's: a stop on
+      # conflicts becomes a bb8-resolver job, as a pre-run rebase's does
+      # (D10), and what follows either way is the keeper's. A plan that
+      # cannot be started now, with every slot taken or somebody in it, is
+      # asked about on the next sweep.
+      #
+      # @param upkeep [OpenLanes::Engine::Upkeep::Keeper]
+      # @param conflict [OpenLanes::Engine::Upkeep::Conflict]
+      # @return [void]
+      def resolve_conflict(upkeep, conflict)
+        ordinal = conflict.ordinal
+        resolver = @runner.agents.find(Rebase::RESOLVER)
+        return UI.log("conflicts left on PR ##{conflict.number}: no #{Rebase::RESOLVER} is defined", level: :warn, plan: ordinal) unless resolver
+
+        subject = @runner.tree.find(ordinal)
+        if subject.nil? || @running.size >= @runner.jobs || untouchable.include?(ordinal) || !@runner.claim(subject)
+          return upkeep.later(conflict)
+        end
+        return upkeep.later(conflict) unless reserve(ordinal, subject, resolver)
+
+        unless lock(ordinal, subject)
+          @locks.unreserve(ordinal)
+          return upkeep.later(conflict)
+        end
+
+        begin
+          task = @runner.prepare(resolver, subject, 1, hold: rebases.hold(ordinal))
+        rescue StandardError
+          @locks.release(ordinal)
+          raise
+        end
+        return conflict_job(task, conflict) if task.refresh&.conflicted?
+
+        begin
+          said(upkeep.rebased(conflict, task.checkout, task.refresh), ordinal)
+        ensure
+          @locks.release(ordinal)
+        end
+      end
+
+      # @return [void]
+      def conflict_job(task, conflict)
+        job = Job.new(key: "#{conflict.ordinal}/#{task.agent.name}",
+          task:,
+          handle:     Execution::Executor::Handle.new,
+          started_at: UI.monotonic,
+          from:       task.subject.status.key,
+          state:      task.subject.status.key,
+          up:         0,
+          down:       0,
+          subagents:  0,
+          frame:      0,
+          sweep:      conflict)
+        start_rebase(job, conflict.ordinal)
+      end
+
+      # @param report [OpenLanes::Engine::Upkeep::Report]
+      # @param ordinal [String]
+      # @return [void]
+      def said(report, ordinal) = UI.log(report.note, level: report.ok == false ? :warn : :info, plan: ordinal)
+
+      # A sweep's resolution ended (U3); the keeper says what follows.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def swept(job, base, result)
+        conflict = job.sweep
+        report = @runner.upkeep.finished(conflict, job.task.checkout, result, held: rebases.hold(conflict.ordinal))
+        base.with(**report.to_h.compact)
+      end
+
       # ---- verification (plan 014) -----------------------------------------
 
       # @param agent [OpenLanes::Agents::Agent]
@@ -1949,17 +2109,43 @@ module OpenLanes
 
       # hansolo approved. Into 🧪 when the run verifies and the pull request
       # carries a verdict that goes on to verification; otherwise the plan is
-      # finished at 👀, as it was before chewie existed.
+      # finished at 👀, as it was before chewie existed. A 🔴 or, under
+      # `standard`, a 🟡 after the hand-off is the hand-off's own send-back,
+      # signed as one so the ledger does not call a return to 🟡 "approved".
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
-      def approved(base, subject, ordinal)
+      def approved(job, base, subject, ordinal)
+        record_approval(job, subject)
         said = @runner.verification&.hand_off(subject)
         now = fresh_by(ordinal)&.status&.key
-        return base.with(status: "Completed", to: now, note: "#{base.note}; approved, #{said}") if %i[verifying rejected].include?(now)
+        if %i[verifying rejected building].include?(now)
+          word = now == :verifying ? "approved" : "sent back"
+          return base.with(status: "Completed", to: now, note: "#{base.note}; #{word}, #{said}")
+        end
 
         @finished_plans << ordinal
         finish(subject, "approved")
         base.with(status: "Completed", note: "#{base.note}; approved, awaiting merge#{"; #{said}" if said}")
+      end
+
+      # The approval goes into the event log as the `pr_reviewed` a person's
+      # rejection is recorded as, or the report would count reviews from
+      # rejections alone. The watch never sees an approval (only the merge
+      # after it), so the reviewer's verdict is where it is known. Keyed by
+      # the round, so a PR approved again after a fix cycle is a second
+      # review, and a restarted round noticing the same signing is not.
+      # A plan with no open pull request has nothing to count it against.
+      #
+      # @return [void]
+      def record_approval(job, subject)
+        pull = subject.pull_requests.find(&:open?) or return
+        number = pull.number.to_s.delete("#").to_i
+        @runner.events.record(:pr_reviewed,
+          plan:    subject.feature.ordinal.to_s,
+          seq:     [number, "approved", job.task.round],
+          once:    true,
+          number:,
+          verdict: "approved")
       end
 
       # chewie signed. The engine commits, comments and labels from its
@@ -1991,6 +2177,28 @@ module OpenLanes
         rejected = @runner.verification.reject(task, subject, why: result.to_markdown)
         note = rejected&.note || "no open pull request to reject"
         base.with(ok: !rejected.nil?, status: "Completed", to: rejected&.to || job.state, note: "#{result.headline}; #{note}")
+      end
+
+      # The arbitrator's step (plan 015): every plan nothing is running on is
+      # asked for a trigger, and a ruling that came back is applied before
+      # anything is assigned, so a capped plan never reaches its builders.
+      # The agent itself runs off this thread; see {Arbitration#tick}.
+      #
+      # @return [void]
+      def arbitrate
+        arbitration = @runner.arbitration or return
+        return if @runner.dry_run?
+
+        # The plans being asked about are untouchable to everything but the
+        # ruling, which is about to be applied.
+        busy = untouchable - arbitration.asking
+        arbitration.tick(@runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }).each do |outcome|
+          note = outcome.error || outcome.effects.ruling.values_at("kind", "outcome").join(": ")
+          UI.log("⚖️ #{outcome.trigger}: #{note}", level: outcome.error ? :warn : :info, plan: outcome.plan)
+          # A ruling moved the plan or freed it for its builders; a refused
+          # one waits out its back-off, so nothing is worth a rescan for it.
+          wake! unless outcome.error
+        end
       end
 
       # What the last look at CI found for the verified plans, logged, and
@@ -2038,7 +2246,7 @@ module OpenLanes
       def target_for(agent, verdict, partner_running)
         case verdict
         when :rejected then :rejected
-        when :slop then :shit
+        when :slop then :rewrite
         else partner_running ? agent.holds_at : agent.advances_to
         end
       end
@@ -2078,7 +2286,10 @@ module OpenLanes
           @mutex.synchronize { @asked_how_to_test.delete(task.subject.feature.ordinal.to_s) }
           verb = publication.updated ? "pushed to" : "opened"
           note = "#{attempt.note}; #{verb} #{publication.url}"
-          note += "; #{Plans::ReviewLabel::INITIAL} not applied: #{publication.label_error}" if publication.label_error
+          if publication.label_error
+            label = publication.updated ? Plans::ReviewLabel::ADDRESSED : Plans::ReviewLabel::INITIAL
+            note += "; #{label} not applied: #{publication.label_error}"
+          end
           Published.new(attempt: attempt.with(note:), subject: fresh(task) || subject, refused: false)
         else
           unchanged
@@ -2158,6 +2369,56 @@ module OpenLanes
         fresh(job.task)&.then { harness_resume(it, job.task.agent, base.round, error.message.lines.first.to_s.strip, phrase: job.message) }
         remember(base.ordinal, base.agent, job.state, "Interrupted", base.round)
         base.with(ok: false, note: error.message.lines.first.to_s.strip)
+      end
+
+      # The durable record of one settled attempt: `agent_finished` always,
+      # `block_raised` when the agent signed Blocked, `failure` when the
+      # attempt failed. Fire and forget: the sink never raises.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @return [void]
+      def announce(job, attempt)
+        events = @runner.events
+        fields = event_fields(job)
+        @invocations.delete(job.key)
+        return unless events.enabled?
+
+        status = attempt.status || (attempt.ok ? "Completed" : "Interrupted")
+        usage = Events::Usage.from(adapter: fields[:adapter],
+          model: fields[:model],
+          totals: { up: attempt.up, down: attempt.down },
+          subagents_spawned: attempt.subagents.to_i)
+        events.record(:agent_finished, **fields, status:, duration_s: attempt.seconds, **usage.to_h.transform_keys(&:to_sym))
+        events.record(:block_raised, **fields, blocks: blocked_count(job)) if status.start_with?("Blocked")
+        return if attempt.ok
+
+        error = job.result.is_a?(Exception) ? job.result.class.name : "AttemptFailed"
+        events.record(:failure, **fields, error_class: error)
+      rescue StandardError => e
+        UI.log("event not recorded", plan: job.task.subject.feature.ordinal.to_s, error: e.class.name)
+      end
+
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [Hash{Symbol => Object}] what every agent event of this job carries
+      def event_fields(job)
+        task = job.task
+        { plan: task.subject.feature.ordinal.to_s, round: task.round, agent: task.agent.name,
+          invocation_start: @invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject) }
+      end
+
+      # @return [String, nil]
+      def adapter_name(job)
+        adapter_for(job).name.to_s
+      rescue StandardError
+        nil
+      end
+
+      # @return [Integer] the open `## B<n>` questions the plan now carries
+      def blocked_count(job)
+        subject = fresh(job.task) or return 0
+        path = File.join(subject.feature.path, "blocked.md")
+        File.file?(path) ? File.read(path).scan(Plans::OPEN_BLOCK).size : 0
       end
 
       # @param job [OpenLanes::Engine::Dispatcher::Job]

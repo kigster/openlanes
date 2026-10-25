@@ -2,9 +2,10 @@ id: research-deep
 agent: leah-researcher
 depth: deep
 description: >
-  A spec that touches a regulated rule. At deep depth leah must survey the
-  code and several primary sources, list contradictions and what it could
-  not settle. A two-paragraph chapter with one link is too shallow here.
+  A spec that touches a regulated rule. Even at deep depth leah only scans and
+  searches: she names the reusable file, a package or two, and lists the
+  regulatory questions for yoda without answering them. The old chapter, with
+  contradictions and settled answers after a long run, fails here.
 fixture:
   state: new
   slug: filing-deadlines
@@ -30,22 +31,22 @@ expect:
   signed: true
   files_absent: [plan.md]
   sections:
-    spec.md: [Research, Contradictions, Could not settle]
+    spec.md: [Research, Reuse in this repo, Existing components, Open questions for yoda]
   contains:
     spec.md: [lib/calendar.rb]
   depth:
     fast:
-      words: { file: spec.md, section: Research, min: 40, max: 180 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 3 }
-      max_seconds: 300
-      max_tokens: 80000
+      words: { file: spec.md, section: Research, min: 30, max: 250 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 4 }
+      max_seconds: 180
+      max_tokens: 60000
     medium:
-      words: { file: spec.md, section: Research, min: 120, max: 1200 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 2, max: 8 }
-      max_seconds: 600
-      max_tokens: 150000
+      words: { file: spec.md, section: Research, min: 60, max: 450 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 100000
     deep:
-      words: { file: spec.md, section: Research, min: 250, max: 3000 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 5 }
-      max_seconds: 1200
-      max_tokens: 300000
+      words: { file: spec.md, section: Research, min: 80, max: 700 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 2, max: 8 }
+      max_seconds: 300
+      max_tokens: 150000

@@ -26,6 +26,7 @@ require_relative "cli/unblock/unblock"
 require_relative "cli/version/version"
 require_relative "cli/web/web"
 require_relative "cli/states/states"
+require_relative "cli/uml/uml"
 require_relative "cli/agents/subcommands/list"
 require_relative "cli/agents/subcommands/describe"
 require_relative "cli/worktree/worktree"
@@ -34,6 +35,8 @@ require_relative "cli/mail/subcommands/send"
 require_relative "cli/mail/subcommands/read"
 require_relative "cli/mail/subcommands/ack"
 require_relative "cli/mail/subcommands/render"
+require_relative "cli/events/events"
+require_relative "cli/events/subcommands/report"
 require_relative "cli/state/state"
 require_relative "cli/state/subcommands/sign"
 require_relative "cli/state/subcommands/show"
@@ -111,9 +114,10 @@ module OpenLanes
         "agents",
         "describe",
         "mail",
+        "events",
         "state",
         "eval"
-      group "Reference", "docs", "api", "states", "linear", "skills", "completion", "version"
+      group "Reference", "docs", "api", "states", "uml", "linear", "skills", "completion", "version"
     end
 
     register "setup", Setup
@@ -136,6 +140,7 @@ module OpenLanes
     register "coverage", Coverage
     register "docs", Docs
     register "states", States, aliases: %w[diagram]
+    register "uml", Uml
     register "index", Index, aliases: %w[idx]
     register "version", Version, aliases: %w[--version -v]
 
@@ -165,6 +170,11 @@ module OpenLanes
       prefix.register "read", Mail::Read
       prefix.register "ack", Mail::Ack
       prefix.register "render", Mail::Render
+    end
+
+    # The durable run log, read back. See {OpenLanes::Events}.
+    register "events" do |prefix|
+      prefix.register "report", Events::Report
     end
 
     # What every agent shells out to at the start and end of its round. See

@@ -2,9 +2,10 @@ id: research-fast
 agent: leah-researcher
 depth: fast
 description: >
-  A bare spec asking two narrow questions. At fast depth leah should answer
-  both from the repository and one upstream page, and stop: a short Research
-  chapter, few sources, a small bill.
+  A bare spec asking two narrow questions. At fast depth leah names the retry
+  helper the repository already has, one package that could replace it, and
+  the question the scan cannot settle, then stops: three short parts, a small
+  bill.
 fixture:
   state: new
   slug: billing-retries
@@ -34,22 +35,22 @@ expect:
   signed: true
   files_absent: [plan.md]
   sections:
-    spec.md: [Research]
+    spec.md: [Research, Reuse in this repo, Existing components, Open questions for yoda]
   contains:
     spec.md: [lib/retry_policy.rb]
   depth:
     fast:
-      words: { file: spec.md, section: Research, min: 40, max: 180 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 3 }
-      max_seconds: 300
-      max_tokens: 80000
+      words: { file: spec.md, section: Research, min: 30, max: 250 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 4 }
+      max_seconds: 180
+      max_tokens: 60000
     medium:
-      words: { file: spec.md, section: Research, min: 120, max: 1200 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 2, max: 8 }
-      max_seconds: 600
-      max_tokens: 150000
+      words: { file: spec.md, section: Research, min: 60, max: 450 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 100000
     deep:
-      words: { file: spec.md, section: Research, min: 250, max: 3000 }
-      count: { file: spec.md, section: Research, pattern: 'https?://', min: 5 }
-      max_seconds: 1200
-      max_tokens: 300000
+      words: { file: spec.md, section: Research, min: 80, max: 700 }
+      count: { file: spec.md, section: Research, pattern: 'https?://', min: 2, max: 8 }
+      max_seconds: 300
+      max_tokens: 150000

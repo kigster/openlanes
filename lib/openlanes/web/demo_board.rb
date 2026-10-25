@@ -28,6 +28,15 @@ module OpenLanes
         "Waiting on the reviewer's mailbox"
       ].freeze
 
+      # The one car that fans out, so the tile's extra lines can be seen and
+      # tested against a real engine. Every other car keeps the fixture's none.
+      FANNED = "001.00/rey-frontend"
+
+      # Its sub-agents in flight, by name, one entry per four ticks: three,
+      # then one, then none, so the cycle repeats every 12 ticks (12 seconds
+      # of the demo clock).
+      FAN = [%w[Explore general-purpose Plan].freeze, %w[Explore].freeze, [].freeze].freeze
+
       # The status a plan takes once its last question is answered.
       UNBLOCKED = { "key" => "building", "emoji" => "🟡", "label" => "Building" }.freeze
 
@@ -92,6 +101,7 @@ module OpenLanes
         snapshot["at"] = stamp
         snapshot["node"]["heartbeat_at"] = stamp
         snapshot["plans"].each { |plan| advance_plan(plan) }
+        snapshot["plans"].flat_map { it["cars"] }.select { it["key"] == FANNED }.each { fan(it) }
         run = snapshot["run"]
         run["up"] = snapshot["plans"].sum { it["up"] }
         run["down"] = snapshot["plans"].sum { it["down"] }
@@ -112,6 +122,13 @@ module OpenLanes
           chatter(car) if (@ticks % 4).zero?
         end
         plan["elapsed"] += 1 if plan["cars"].any? { it["state"] == "running" }
+      end
+
+      # A car that stopped has nothing in flight.
+      #
+      # @return [void]
+      def fan(car)
+        car["subagents"] = car["state"] == "running" ? FAN[(@ticks / 4) % FAN.size].dup : []
       end
 
       # @return [void]
@@ -303,7 +320,7 @@ module OpenLanes
         @me["plans"] << plan_from({ "ordinal" => ordinal,
                                     "title" => title,
                                     "status" => { "key" => "new", "emoji" => "⚪", "label" => "New" },
-                                    "lane" => "full" })
+                                    "starts" => "research" })
         "created #{ordinal} #{slug(title)}"
       end
 

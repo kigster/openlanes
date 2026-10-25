@@ -16,7 +16,8 @@ module OpenLanes
 
         example [
           "--plan 003",
-          "--plan 003 | jq '.stages[] | {agent, round, status, model, seconds}'"
+          "--plan 003 | jq '.stages[] | {agent, round, status, model, seconds}'",
+          "--plan 015 | jq '.rulings[]? | {at, kind, outcome, reason}'"
         ]
 
         # @param options [Hash]

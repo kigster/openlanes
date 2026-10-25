@@ -48,6 +48,9 @@ module OpenLanes
     #   @return [Symbol, nil] the clock's phase while running
     # @!attribute [r] frame
     #   @return [Integer] spinner frame counter
+    # @!attribute [r] subagents
+    #   @return [Integer] sub-agents spawned so far, which only ever rises;
+    #     {#running} is the list that falls back to empty when they end
     # @!attribute [r] history
     #   @return [Array<String>] what the agent has said, newest first, for
     #     `run --scroll-height` to show more than the latest line of

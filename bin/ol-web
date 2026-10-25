@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# vim: ft=bash
+
+cd web && { test node_modules/.package-lock.json -nt package-lock.json || npm ci; } && ../bin/ol-tee vite npm run dev -- --open

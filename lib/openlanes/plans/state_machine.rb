@@ -49,16 +49,17 @@ module OpenLanes
         approved:           :deployed,
         rejected:           :building_ui,
         rolled_back:        :ready_for_review,
-        shit:               :planned
+        rewrite:            :planned
       }.freeze
 
       # One step back along the spine, for the one move that goes backwards: a
       # person discarding an interrupted round (W9) sends the plan back to the
       # state the work started from. Derived from {SPINE}, walking it from ⚪:
       # each state on that path steps back to the one before it, as far as 🏁,
-      # the last state an agent works in. States off the path (🔴 💩 ⏪ and
+      # the last state an agent works in. States off the path (🔴 🚫 ⏪ and
       # the birth state) have no single state behind them and step back
       # nowhere.
+      #
       RETREAT = Enumerator.produce(:new) { SPINE.fetch(it) { raise StopIteration } }
                           .take_while { it != :approved }
                           .each_cons(2).to_h { |before, after| [after, before] }
@@ -69,7 +70,7 @@ module OpenLanes
       # a block outranks progress, and `retroactive` is last because it is the
       # absence of documents rather than the presence of any.
       PREFERENCE = %i[
-        discarded rolled_back shit deferred blocked product_blocked bomb
+        discarded rolled_back rewrite deferred blocked product_blocked bomb
         deployed approved rejected completed verifying in_review ready_for_review building_ui building planned ready_for_planning
         researched new
         retroactive
@@ -137,11 +138,12 @@ module OpenLanes
         end
 
         # The specification is done and the planner has not started. Entered
-        # by the harness when `yoda-writer` completes; `resync` reaches it on
-        # a blank `plan.md`. Without it ⭐ Planned required a file only the
-        # agent handling ⭐ Planned writes, and nothing could enter it.
+        # by the harness when `yoda-writer` completes; `resync` reaches it on a
+        # blank `plan.md`. Without it ⭐ Planned required a file only the agent
+        # handling ⭐ Planned writes, and nothing could enter it. The planner
+        # answers `depends_on:` here, while it plans (A17).
         event :ready_to_plan, guard: :justified? do
-          transitions from: %i[researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: %i[researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :ready_for_planning
         end
 
@@ -151,12 +153,16 @@ module OpenLanes
         # planned. What research buys is not enforced here; it is enforced by
         # `yoda-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
-          transitions from: %i[ready_for_planning researched new retroactive shit blocked product_blocked bomb deferred],
+          transitions from: %i[ready_for_planning researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :planned
         end
 
+        # From 👀 too (plan 035): under `desired_codebase_quality: standard`
+        # a `review-ok-not-perfect` pull request goes back to the builders
+        # at 🟡, a lighter send-back than `high`'s 🔴.
         event :build, guard: :justified? do
-          transitions from: %i[planned shit approved rolled_back retroactive blocked product_blocked bomb deferred],
+          transitions from: %i[planned rewrite approved rolled_back retroactive blocked product_blocked bomb deferred
+                               in_review],
             to: :building
         end
 
@@ -211,7 +217,7 @@ module OpenLanes
         end
 
         event :slop, guard: :justified? do
-          transitions from: %i[in_review], to: :shit
+          transitions from: %i[in_review], to: :rewrite
         end
 
         event :deploy, guard: :justified? do
@@ -356,6 +362,19 @@ module OpenLanes
       # @param to [Symbol]
       # @return [Boolean] whether that move is permitted right now
       def may?(to) = allowed.include?(to)
+
+      # Where a move toward `to` honestly lands. A family's members differ
+      # only in what their invariants read, so when `to` refuses and the next
+      # spine state is its sibling and fits, that sibling is the landing.
+      #
+      # @param to [Symbol]
+      # @return [Symbol] `to`, or its sibling on the spine
+      def onward(to)
+        return to if may?(to)
+
+        sibling = SPINE[to]
+        sibling && self.class.family_of(to).include?(sibling) && may?(sibling) ? sibling : to
+      end
 
       # The next state along the spine, whether or not its guard passes.
       #

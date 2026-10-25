@@ -12,15 +12,15 @@ import { postInterview, type InterviewQuestion } from "../api/client";
 
 // What each choice means, shown under its control. Depth's efforts are the defaults .openlanes.yml will be able to remap (W25).
 const HELP = {
-  lane: {
-    full: "Complex feature engaging all agents; costs the most in tokens.",
-    plan: "A spec you already trust: skip research and go straight to the plan.",
-    quick: "A small task for a junior engineer, not a feature. Cheapest and fastest.",
+  starts: {
+    research: "Complex feature engaging all agents; costs the most in tokens.",
+    planning: "A spec you already trust: skip research and go straight to the plan.",
+    building: "A small task for a junior engineer, not a feature. Cheapest and fastest.",
   },
   research: {
     true: "Yes adds a research section to the spec. It takes more time, but provides additional context when needed.",
     false: "No sends the spec straight to the copywriter, with no additional research. For when you know what you are doing.",
-    skipped: "The plan and quick lanes skip research, so there is nothing to choose.",
+    skipped: "Planning and building skip research, so there is nothing to choose.",
   },
   frontend: {
     auto: "Plans UI work automatically, when it improves the final result.",
@@ -52,19 +52,19 @@ function Segmented({ name, legend, options, value, onChange, help, disabled = fa
   );
 }
 
-/** Lane, research, front end and depth: segmented controls in one row, each explaining its current choice. */
+/** Starts, research, front end and depth: segmented controls in one row, each explaining its current choice. */
 export function FrontmatterForm({ value, onChange }: { value: IdeaFrontmatter; onChange: (fm: IdeaFrontmatter) => void }) {
-  // Research only happens on the full lane; elsewhere the control shows why it is off.
-  const skipped = value.lane !== "full";
+  // Research only happens when the plan starts at research; elsewhere the control shows why it is off.
+  const skipped = value.starts !== "research";
   const set = (patch: Partial<IdeaFrontmatter>) => onChange({ ...value, ...patch });
   return (
     <div className="fm-form">
       <span className="lbl">Every plan from this idea starts with these settings. You can change them per plan.</span>
       <div className="fm-row">
         <Segmented
-          name="lane" legend="Lane" value={value.lane} help={HELP.lane[value.lane]}
-          onChange={(v) => set({ lane: v as IdeaFrontmatter["lane"] })}
-          options={[["full", "Full", "var(--lane-full)"], ["plan", "Plan", "var(--lane-plan)"], ["quick", "Quick", "var(--lane-quick)"]]}
+          name="starts" legend="Starts" value={value.starts} help={HELP.starts[value.starts]}
+          onChange={(v) => set({ starts: v as IdeaFrontmatter["starts"] })}
+          options={[["research", "Research", "var(--starts-research)"], ["planning", "Planning", "var(--starts-planning)"], ["building", "Building", "var(--starts-building)"]]}
         />
         <Segmented
           name="research" legend="Research?" value={skipped ? "false" : String(value.research)} disabled={skipped}
@@ -129,8 +129,8 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
   };
   /** @returns whether the plan was created, so a failed last answer can be sent again */
   const create = async (text: string, decisions: Decision[]) => {
-    // Research is only meaningful on the full lane, so the payload never says otherwise.
-    const frontmatter = { ...fm, research: fm.lane === "full" && fm.research };
+    // Research is only meaningful when the plan starts at research, so the payload never says otherwise.
+    const frontmatter = { ...fm, research: fm.starts === "research" && fm.research };
     const reply = await command.send(
       { kind: "create_plans", plan: null, agent: null, payload: { idea: text, frontmatter, decisions } },
       "Idea sent. Its plans join this run as they are created.",
@@ -199,7 +199,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
           <div className="start-body interview">
             {current.options.map((label, i) => (
               <button
-                key={i} type="button" className={i === current.recommended ? "btn btn-primary" : "btn"}
+                key={i} type="button" className={i === current.recommended ? "btn btn-recommended" : "btn"}
                 disabled={command.pending} onClick={() => void answer(`${String.fromCharCode(97 + i)}) ${label}`)}
               >
                 {String.fromCharCode(97 + i)}) {label}{i === current.recommended ? " (Recommended)" : ""}

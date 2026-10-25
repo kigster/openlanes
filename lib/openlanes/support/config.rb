@@ -7,7 +7,7 @@ module OpenLanes
   # A project's `.openlanes.yml`, at its root:
   #
   #   project: Equilibris App   # heading for INDEX.md; default: the root's name
-  #   lane: full                # default lane for `openlanes create`
+  #   starts: research          # default for `openlanes create`: one of Spec::STARTS
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
@@ -17,12 +17,18 @@ module OpenLanes
   #     initial: 1              # seconds; the Fibonacci gaps are its multiples
   #     cap: 30                 # seconds, the longest gap between two asks
   #     jitter: true            # full jitter: each gap drawn from [0, gap)
-  #   desired_codebase_quality: high  # or mvp (R4): what a review that is ok but
+  #   desired_codebase_quality: high  # standard or mvp (R4): what a review that is ok but
   #                             # not perfect does, and M5's column of defaults
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
   #                             # the plan stops going back to its builders (M6)
+  #   ci:                       # what checks a pull request (M21); `openlanes init` settles it
+  #     provider: github_actions
+  #     config: .github/workflows/ci.yml
+  #   stack:                    # the project's stack, also written to docs/decisions/stack.md
+  #     language: ruby
+  #     frameworks: [rails]
   #   commands:                 # per-command option defaults
   #     run:
   #       timeout: 1800
@@ -31,6 +37,9 @@ module OpenLanes
   #   review:
   #     max_hmm: 5              # most 🤔 a review may carry and be approved (R3);
   #                             # $OPENLANES_REVIEW_MAX_HMM beats it
+  #   events:                   # the durable run log (plan 020.01), off by default
+  #     enabled: true
+  #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
   #   app:                      # how to run the app a plan builds (M12)
   #     kind: web
   #     processes:
@@ -47,7 +56,7 @@ module OpenLanes
   # spec.md frontmatter, this file, the built-in default. The file supplies
   # defaults and nothing else.
   #
-  # `jobs`, `lane` and `project` are each one command's option said once for
+  # `jobs`, `starts` and `project` are each one command's option said once for
   # the whole project, so each has a second spelling under `commands:`.
   # Writing both is an error rather than a tie-break: two answers to one
   # question is a file somebody will edit in the wrong place.
@@ -60,8 +69,8 @@ module OpenLanes
   #   @return [String, nil] the file, nil when the project has none
   # @!attribute [r] project
   #   @return [String, nil]
-  # @!attribute [r] lane
-  #   @return [Symbol, nil] one of {Plans::Spec::LANES}
+  # @!attribute [r] starts
+  #   @return [Symbol, nil] one of {Plans::Spec::STARTS}
   # @!attribute [r] frontend
   #   @return [Boolean, nil] nil when each plan decides
   # @!attribute [r] jobs
@@ -83,6 +92,11 @@ module OpenLanes
   # @!attribute [r] merge_max_rejections
   #   @return [Integer, nil] `merge.max_rejections` as the file says it; read
   #     {#max_rejections}, which applies the default
+  # @!attribute [r] ci
+  #   @return [Hash{Symbol => Object}, nil] `{provider:, config:}`, provider one of {CI_PROVIDERS}
+  # @!attribute [r] stack
+  #   @return [Hash{Symbol => Object}, nil] only the {STACK_FIELDS} that were answered;
+  #     `frameworks` is an Array, every other field a String
   # @!attribute [r] app
   #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes app
   #     start` runs; nil when the project declares none, and then nothing
@@ -104,9 +118,14 @@ module OpenLanes
   #   @return [OpenLanes::Coverage::Config, nil] the `coverage:` section; nil
   #     when the project declares none, and then the gate sends the pull
   #     request back to its builder to write one
+  # @!attribute [r] events_enabled
+  #   @return [Boolean] `events.enabled`: whether runs append to the event log
+  # @!attribute [r] events_dir
+  #   @return [String, nil] `events.dir`: an absolute path; nil takes
+  #     {Events::Location}'s default
   Config = Data.define(:path,
     :project,
-    :lane,
+    :starts,
     :frontend,
     :jobs,
     :redis_url,
@@ -120,10 +139,14 @@ module OpenLanes
     :review_max_hmm,
     :merge_max_rejections,
     :desired_codebase_quality,
-    :coverage) do
-    def initialize(path: nil, project: nil, lane: nil, frontend: nil, jobs: nil, redis_url: nil,
+    :coverage,
+    :ci,
+    :stack,
+    :events_enabled,
+    :events_dir) do
+    def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, redis_url: nil,
       redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil)
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -195,16 +218,19 @@ module OpenLanes
     #
     # @return [String]
     def to_yaml
-      settings = { "project" => project, "lane" => lane&.to_s, "frontend" => frontend, "jobs" => jobs,
+      settings = { "project" => project, "starts" => starts&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
                    "redis_backoff" => (redis_backoff.transform_keys(&:to_s) unless redis_backoff.empty?),
-                   "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings }
+                   "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings,
+                   "ci" => ci && { "provider" => ci[:provider].to_s, "config" => ci[:config] }.compact,
+                   "stack" => stack&.transform_keys(&:to_s) }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
       settings["coverage"] = coverage.to_h if coverage
+      settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -222,12 +248,12 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project lane frontend jobs redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions review coverage].freeze
+    KEYS = %w[project starts frontend jobs redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
+              questions review coverage events ci stack].freeze
 
-    # What `desired_codebase_quality:` may say (R4), the default first. M5's
+    # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
-    QUALITIES = %i[high mvp].freeze
+    QUALITIES = %i[high standard mvp].freeze
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
@@ -238,8 +264,8 @@ module OpenLanes
     # {#max_rejections} when the file names none (M6).
     DEFAULT_MAX_REJECTIONS = 2
 
-    # M5's `max_rejections` row, for the two columns R4 kept.
-    MAX_REJECTIONS_BY_QUALITY = { high: 2, mvp: 1 }.freeze
+    # M5's `max_rejections` row, one column per quality.
+    MAX_REJECTIONS_BY_QUALITY = { high: 2, standard: 2, mvp: 1 }.freeze
 
     # {#outage_limit} when the file names none (W32).
     DEFAULT_OUTAGE_HOURS = 1
@@ -259,11 +285,24 @@ module OpenLanes
     # The variable that beats `review.max_hmm`.
     MAX_HMM_ENV = "OPENLANES_REVIEW_MAX_HMM"
 
+    # What may check a pull request (M21). `external` is a CI openlanes does
+    # not scaffold; `none` is a decision, not a missing answer.
+    CI_PROVIDERS = %i[github_actions circleci jenkins external none].freeze
+
+    # What `stack:` may hold. `from` and `to` are set when a port is planned.
+    STACK_FIELDS = %i[language frameworks front_end persistence caching logins deployment domain from to].freeze
+
+    # The one stack field that is a list.
+    STACK_LISTS = %i[frameworks].freeze
+
+    # Every key `events:` may hold.
+    EVENT_KEYS = %w[enabled dir].freeze
+
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
 
     # Top-level keys that are one command's option, by the command that takes it.
-    SHORTHANDS = { project: "index", lane: "create", jobs: "run" }.freeze
+    SHORTHANDS = { project: "index", starts: "create", jobs: "run" }.freeze
 
     class << self
       # @param root [String] the project root
@@ -307,7 +346,7 @@ module OpenLanes
 
         config = new(path:,
           project:   project(settings, path),
-          lane:      lane(settings, path),
+          starts:    starts_at(settings, path),
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
           redis_url: redis_url(settings, path),
@@ -315,12 +354,15 @@ module OpenLanes
           redis_backoff: redis_backoff(settings["redis_backoff"], path),
           desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
+          ci:        ci(settings["ci"], path),
+          stack:     stack(settings["stack"], path),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
           **questions(settings["questions"], path),
           **review(settings["review"], path),
-          coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil)
+          coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
+          **events(settings["events"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -342,13 +384,13 @@ module OpenLanes
       end
 
       # @return [Symbol, nil]
-      def lane(settings, path)
-        return nil unless settings.key?("lane")
+      def starts_at(settings, path)
+        return nil unless settings.key?("starts")
 
-        value = settings["lane"].to_s.strip.downcase.to_sym
-        return value if Plans::Spec::LANES.include?(value)
+        value = settings["starts"].to_s.strip.downcase.to_sym
+        return value if Plans::Spec::STARTS.include?(value)
 
-        fail_with(path, "lane: #{settings["lane"].inspect} is not one of #{Plans::Spec::LANES.join(", ")}")
+        fail_with(path, "starts: #{settings["starts"].inspect} is not one of #{Plans::Spec::STARTS.join(", ")}")
       end
 
       # @return [Boolean, nil]
@@ -444,6 +486,62 @@ module OpenLanes
         fail_with(path, "merge.max_rejections: #{max.inspect} is not a whole number above zero")
       end
 
+      # @return [Hash{Symbol => Object}, nil]
+      def ci(value, path)
+        return nil if value.nil?
+
+        fail_with(path, "ci: must be a mapping, e.g. `ci: { provider: none }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        unknown = settings.keys - %w[provider config]
+        fail_with(path, "ci: unknown key #{unknown.join(", ")}; known: provider, config") unless unknown.empty?
+
+        provider = settings["provider"].to_s.strip.downcase.to_sym
+        unless CI_PROVIDERS.include?(provider)
+          fail_with(path, "ci.provider: #{settings["provider"].inspect} is not one of #{CI_PROVIDERS.join(", ")}")
+        end
+
+        config = settings["config"]
+        unless config.nil? || (config.is_a?(String) && !config.strip.empty?)
+          fail_with(path, "ci.config: must be a path, not #{config.inspect}")
+        end
+
+        { provider:, config: config&.strip }
+      end
+
+      # Free text, but never blank: a blank field is one nobody answered,
+      # and it is left out rather than written as a placeholder.
+      #
+      # @return [Hash{Symbol => Object}, nil]
+      def stack(value, path)
+        return nil if value.nil?
+
+        fail_with(path, "stack: must be a mapping of field to value") unless value.is_a?(Hash)
+
+        fields = value.transform_keys { it.to_s.to_sym }
+        unknown = fields.keys - STACK_FIELDS
+        unless unknown.empty?
+          fail_with(path,
+            "stack: unknown field#{"s" unless unknown.size == 1} #{unknown.join(", ")}; " \
+            "known: #{STACK_FIELDS.join(", ")}")
+        end
+
+        fields.compact.to_h { |field, v| [field, stack_value(field, v, path)] }
+      end
+
+      # @return [String, Array<String>]
+      def stack_value(field, value, path)
+        if STACK_LISTS.include?(field)
+          list = Array(value)
+          return list.map(&:strip) if list.all? { it.is_a?(String) && !it.strip.empty? }
+
+          fail_with(path, "stack.#{field}: must be a list of names, not #{value.inspect}")
+        end
+        return value.strip if value.is_a?(String) && !value.strip.empty?
+
+        fail_with(path, "stack.#{field}: must be a non-empty name, not #{value.inspect}")
+      end
+
       # @return [Hash{String => Hash{Symbol => Object}}]
       def commands(value, path)
         return {} if value.nil?
@@ -502,6 +600,33 @@ module OpenLanes
         return { review_max_hmm: max } if max.is_a?(Integer) && !max.negative?
 
         fail_with(path, "review.max_hmm: #{max.inspect} is not a whole number")
+      end
+
+      # @return [Hash{Symbol => Object}] the `events:` settings, as keywords for {Config.new}
+      def events(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "events: must be a mapping, e.g. `events: { enabled: true }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - EVENT_KEYS).each do |key|
+          fail_with(path, "events.#{key}: unknown key; known: #{EVENT_KEYS.join(", ")}")
+        end
+        enabled = settings.fetch("enabled", false)
+        fail_with(path, "events.enabled: #{enabled.inspect} is not true or false") unless [true, false].include?(enabled)
+
+        { events_enabled: enabled, events_dir: events_dir(settings["dir"], path) }
+      end
+
+      # A relative directory would land wherever the command was started,
+      # which is a different log per shell; so only an absolute one is taken.
+      #
+      # @return [String, nil]
+      def events_dir(value, path)
+        return nil if value.nil?
+        return File.expand_path(value.strip) if value.is_a?(String) && value.strip.match?(%r{\A[/~]})
+
+        fail_with(path, "events.dir: #{value.inspect} is not an absolute path")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a

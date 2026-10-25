@@ -182,11 +182,16 @@ class ControlRoomProcess
   # Turn a directory into a git checkout whose repository key is {REMOTE}, so
   # two of them are one repository to Redis. Nothing reaches the network.
   #
+  # It also sets `desired_codebase_quality:`, because an engine with the key
+  # unset and no TTY to ask on holds every plan back until someone answers,
+  # and a spec waiting on a claim would wait out its deadline instead.
+  #
   # @param root [String]
   # @return [String] root
   def self.checkout(root)
     system("git", "init", "-q", root, exception: true)
     system("git", "-C", root, "remote", "add", "origin", REMOTE, exception: true)
+    File.write(File.join(root, ".openlanes.yml"), "desired_codebase_quality: high\n")
     root
   end
 

@@ -8,12 +8,37 @@ Gem::Specification.new do |spec|
   spec.authors = ["Konstantin Gredeskoul"]
   spec.email = ["kigster@gmail.com"]
 
-  spec.summary = "Agentic specification-driven development: spec, plan, build, review"
+  spec.summary = "A command-line software factory: brief, spec, plan, build, review, merge"
   spec.description = <<~TEXT
-    Keeps a project's specifications, plans and pull requests joined up, and
-    drives specialist agents over them in parallel. A feature's state is its
-    folder name under .plans, so a transition renames a directory rather than
-    updating a row, and nothing can claim a phase whose document is missing.
+    OpenLanes turns a short feature brief into reviewed pull requests. Specialist
+    agents research the brief, write the specification, break it into a plan,
+    build the back end and the front end in parallel, review the diff, and run
+    the plan's own verification steps. The harness then pushes the branch and
+    opens the pull request. You merge.
+
+    Each feature is a folder under .plans, and the folder name is its state. A
+    transition renames the directory through git mv. A folder cannot enter a
+    phase whose required document is missing. One plan number ties the folder,
+    the branch, the pull request title and pull-requests.md together.
+
+    Three lanes choose how far that pipeline runs. Full starts from a brief and
+    walks research, specification, planning, implementation, review and
+    verification. Plan starts from a specification you already trust. Quick
+    hands one mechanical change to a single builder and a reviewer.
+
+    Several plans run at once, each in its own git worktree, coordinated through
+    Redis. A second checkout on the same Redis and the same GitHub repository
+    joins the same board. openlanes start opens a local control room that shows
+    every plan, the agent on it, and token use. From that page you answer an
+    agent that has stopped to ask a question, or start another idea.
+
+    Agents write code, tests and plan documents. They do not commit, push or
+    merge. After every run the harness checks that HEAD did not move and nothing
+    was pushed, then publishes the branch itself. Claude Code is the default
+    adapter. Codex and Pi can stand in for a phase. The same plans export one
+    way to Linear, and the agents ship with deterministic evals.
+
+    The gem installs three names for one executable: openlanes, ol and lanes.
   TEXT
   spec.homepage = "https://github.com/kigster/openlanes"
 
@@ -32,8 +57,11 @@ Gem::Specification.new do |spec|
     # web/dist is the built page the API server serves; board.json is what
     # `openlanes web --demo` replays.
     # Source maps stay out: they double the page's size for nobody who installs it.
-    globbed = Dir.glob(["*.gemspec", "lib/**/*.rb", "agents/*.md", "schemas/*.json", "evals/cases/**/*", "skills/**/*",
-                        "exe/*", "web/dist/**/*", "web/src/api/fixtures/board.json", "Brewfile"])
+    globbed = Dir.glob(["*.gemspec", "lib/**/*.rb", "agents/*.md", "schemas/*.json",
+                        "evals/cases/**/*", "skills/**/*",
+                        "exe/*", "web/dist/**/*", "web/src/api/fixtures/board.json",
+                        "Brewfile",
+                        "bin/ol-tee"])
     globbed.select { |f| File.file?(f) && !f.end_with?(".map") }
   end
 
@@ -65,6 +93,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-cli-ui", "~> 0.5"
   spec.add_dependency "dry-inflector"
   spec.add_dependency "dry-monads"
+  # Wires the application (A1): components from lib/ through the Zeitwerk
+  # loader below, collaborators by Deps[...], providers for the outside world.
+  spec.add_dependency "dry-system", "~> 1.2"
   spec.add_dependency "fuzzy-string-match"
   spec.add_dependency "inquirex-llm", "~> 0.12"
   # Opens the control room in the browser when `openlanes run` starts the API server.
@@ -77,9 +108,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rackup", "~> 2.1"
   # The live run (plan 004) lives in Redis: board and command streams, plan claims.
   spec.add_dependency "redis-client", "~> 0.31"
+  spec.add_dependency "agent-lock"
   spec.add_dependency "semantic_logger", "~> 5.1"
   spec.add_dependency "sinatra", "~> 4.2"
-  spec.add_dependency "agent-lock"
   spec.add_dependency "tty-box"
   spec.add_dependency "tty-command"
   spec.add_dependency "tty-cursor"
@@ -87,6 +118,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-screen"
   spec.add_dependency "unicode-display_width"
   spec.add_dependency "zeitwerk"
-  spec.add_dependency "newrelic_rpm"
-  spec.add_dependency "newrelic-infinite_tracing"
 end

@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Board as BoardData, Snapshot, Station } from "../api/types";
 import { PlanRow, type CarHandlers } from "./PlanRow";
 import { lastSeen, who } from "./format";
-import { nodePlanKey } from "./model";
+import { dagBreak, nodePlanKey } from "./model";
 import "./board.css";
 
 /** The station columns: StateMachine::SPINE, each with the agents whose `handles:` names it. */
@@ -74,8 +74,11 @@ export function Board({ board, merged, retiring, gone, theirs = NOTHING, ...cars
     <Inner stations={me.stations}>
       {merged && <MachineHead name={who(me.node)} facts={[me.node.ip, `${ours.length} plans`, "this machine"].filter((f): f is string => f !== null)} />}
       {ours.length === 0 && !merged && <p className="board-empty">No plans in this run yet. Add one from Action.</p>}
-      {ours.map(plan => (
-        <PlanRow key={plan.ordinal} plan={plan} stations={me.stations} models={me.models} retiring={retiring.has(plan.ordinal)} {...cars} />
+      {ours.map((plan, i) => (
+        <PlanRow
+          key={plan.ordinal} plan={plan} stations={me.stations} models={me.models} retiring={retiring.has(plan.ordinal)}
+          dagBreak={dagBreak(ours, i)} {...cars}
+        />
       ))}
       {merged &&
         others.map(their => (
@@ -93,9 +96,10 @@ function MachineRows({ their, me, life }: { their: Snapshot; me: Snapshot; life:
         name={who(their.node)}
         facts={[their.node.ip, `${plans.length} plans`, "read only", `last seen ${lastSeen(their, me)}s ago`].filter((f): f is string => f !== null)}
       />
-      {plans.map(plan => (
+      {plans.map((plan, i) => (
         <PlanRow
           key={plan.ordinal} plan={plan} stations={their.stations} models={their.models} owner={their.node} faded
+          dagBreak={dagBreak(plans, i)}
           retiring={life.retiring.has(nodePlanKey(their.node.id, plan.ordinal))}
         />
       ))}

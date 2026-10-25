@@ -8,7 +8,7 @@ effort: medium
 timeout: 900
 ledger: [spec.md]
 phase: specification
-lanes: [full]
+starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
 ---
@@ -29,7 +29,7 @@ You finish `spec.md` for one plan folder so that `luthen-rael-planner` can split
    1. **In scope.** Statements a reviewer can check. "Handles errors" is not one.
    1. **Out of scope.** Each with its reason.
    1. **Back end / front end.** For each in-scope item, which half builds it. `luke-backend` and `rey-frontend` build them as a pair.
-   1. **Open questions.** Everything you had to assume, including leah's unsettled list.
+   1. **Open questions.** Everything you had to assume, including every item under leah's **Open questions for yoda**. Settle each one you can from the code, and keep the rest open.
    1. **Risks to planning or execution.**
    1. **Conclusion.** What will exist when this ships, in a few sentences.
 1. Anchor every fact to the research, a `file:line`, or a command's output. A sentence you cannot anchor is an assumption: move it to open questions.

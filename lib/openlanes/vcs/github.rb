@@ -284,6 +284,61 @@ module OpenLanes
         raise Error, "could not list pull requests labelled #{name}: #{first_line(e)}"
       end
 
+      # When +name+ was last put on a pull request, read from its issue
+      # events. A rejection is dated by this, not by anything openlanes
+      # stored, so a fix pushed while the engine was down still reads as
+      # after it (U1).
+      #
+      # @param number [Integer]
+      # @param name [String] the label
+      # @param repo [String, nil]
+      # @return [Time, nil] nil when it was never put on
+      # @raise [OpenLanes::Error]
+      def labelled_at(number:, name:, repo: nil)
+        out = @command.run("gh",
+          "api",
+          "--paginate",
+          "repos/#{repo || "{owner}/{repo}"}/issues/#{number}/events",
+          "--jq",
+          %(.[] | select(.event == "labeled" and .label.name == #{name.to_s.to_json}) | .created_at)).out
+        at = out.each_line.map(&:strip).reject(&:empty?).last
+        at && Time.iso8601(at)
+      rescue TTY::Command::ExitError, ArgumentError => e
+        raise Error, "could not read the label history of ##{number}: #{first_line(e)}"
+      end
+
+      # The committer date of a pull request's head commit. A new commit, a
+      # rebase and an amend all renew it, so a date after a rejection means
+      # the fixes were pushed after it (U1).
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [Time, nil] nil when the pull request has no commits
+      # @raise [OpenLanes::Error]
+      def head_committed_at(number:, repo: nil)
+        out = @command.run("gh", "pr", "view", number.to_s, "--json", "commits", *repo_flag(repo)).out
+        at = Array(JSON.parse(out)["commits"]).last.to_h["committedDate"].to_s
+        at.empty? ? nil : Time.iso8601(at)
+      rescue TTY::Command::ExitError, JSON::ParserError, ArgumentError => e
+        raise Error, "could not read the head commit of ##{number}: #{first_line(e)}"
+      end
+
+      # The commit a branch points at on GitHub. The conflict sweep compares it
+      # between polls to learn that `main` moved, whoever moved it (U4).
+      #
+      # @param branch [String]
+      # @param repo [String, nil]
+      # @return [String] the SHA
+      # @raise [OpenLanes::Error]
+      def branch_head(branch:, repo: nil)
+        sha = @command.run("gh", "api", "repos/#{repo || "{owner}/{repo}"}/commits/#{branch}", "--jq", ".sha").out.strip
+        raise Error, "could not read the head of #{branch}: no SHA in the reply" if sha.empty?
+
+        sha
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not read the head of #{branch}: #{first_line(e)}"
+      end
+
       # Give an existing label its colour and description back (R3). Only
       # {LabelSync} calls this, and only for the labels openlanes owns.
       #
@@ -310,16 +365,19 @@ module OpenLanes
       # @param number [Integer]
       # @param repo [String, nil]
       # @param add [Plans::ReviewLabel]
+      # @param also [Array<Plans::ReviewLabel>] labels added beside +add+ that
+      #   are not verdicts, such as {Plans::ReviewLabel::OPENLANES}
       # @param remove [Array<String>] label names to take off
       # @param create_missing [Boolean] create +add+ on the repository first;
       #   false when the caller already has, once, for many pull requests
       # @return [Array<String>] the labels the pull request is left with
       # @raise [OpenLanes::Error]
-      def swap_label(number:, add:, repo: nil, remove: [], create_missing: true)
-        ensure_label(add, repo:) if create_missing
-        removing = remove.map(&:to_s) - [add.name]
+      def swap_label(number:, add:, repo: nil, also: [], remove: [], create_missing: true)
+        adding = [add, *also]
+        adding.each { ensure_label(it, repo:) } if create_missing
+        removing = remove.map(&:to_s) - adding.map(&:name)
         begin
-          edit_labels(number, add, removing, repo)
+          edit_labels(number, adding, removing, repo)
         rescue Error
           raise if removing.empty?
 
@@ -327,7 +385,7 @@ module OpenLanes
           # edit (open question 6). Adding alone would leave any of `removing`
           # it does carry beside the new one, two verdicts at once, so ask what
           # is still there and take exactly that off. A second failure is real.
-          edit_labels(number, add, labels(number:, repo:) & removing, repo)
+          edit_labels(number, adding, labels(number:, repo:) & removing, repo)
         end
         labels(number:, repo:)
       end
@@ -504,13 +562,12 @@ module OpenLanes
         stderr.empty? ? error.message.lines.first.to_s.strip : stderr
       end
 
-      def edit_labels(number, add, removing, repo)
+      def edit_labels(number, adding, removing, repo)
         @command.run("gh",
           "pr",
           "edit",
           number.to_s,
-          "--add-label",
-          add.name,
+          *adding.flat_map { ["--add-label", it.name] },
           *removing.flat_map { |r| ["--remove-label", r] },
           *repo_flag(repo))
       rescue TTY::Command::ExitError => e

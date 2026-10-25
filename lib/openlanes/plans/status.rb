@@ -84,6 +84,18 @@ module OpenLanes
       }
     end
 
+    # 📋 Ready for Planning's invariant: `plan.md` exists and nobody has
+    # planned in it yet.
+    #
+    # @param label [String]
+    # @return [Proc]
+    def self.blank_plan(label)
+      lambda { |subject|
+        body = Ledger.stripped(subject.read("plan.md"))
+        "#{label}, but `plan.md` already holds a plan" if body.match?(PLAN_HEADING)
+      }
+    end
+
     # A question that is still somebody's to answer, written as its own heading:
     # `## B1`, `## B2`. The number is what `blocked.md` gets referenced by in
     # conversation and in pull requests, so it is also the only part of the file
@@ -166,10 +178,7 @@ module OpenLanes
         label:     "Ready for Planning",
         requires:  %w[spec.md plan.md],
         note:      "the specification is finished; `plan.md` exists and is still blank, waiting for the planner",
-        invariant: lambda { |s|
-          body = Ledger.stripped(s.read("plan.md"))
-          "Ready for Planning, but `plan.md` already holds a plan" if body.match?(PLAN_HEADING)
-        }
+        invariant: blank_plan("Ready for Planning")
       ),
       Status.new(
         key:       :planned,
@@ -300,8 +309,8 @@ module OpenLanes
         invariant: nil
       ),
       Status.new(
-        key:       :shit,
-        emoji:     "💩",
+        key:       :rewrite,
+        emoji:     "🚫",
         label:     "Scrapped by Review",
         requires:  %w[rewrite.md],
         note:      "the review scrapped the work; the plan survives, the pull requests do not",

@@ -1,6 +1,6 @@
 ---
 title: Lane note beta
-lane: quick
+starts: building
 ---
 
 # Lane note beta

@@ -95,7 +95,7 @@ mkdir -p "${project}"
   git commit -q -m "Initial commit"
   openlanes init -y -q --project "Lanes" -j 3
   for spec in "${repo}"/web/cypress/lanes/fixtures/*.md; do
-    openlanes create --from "${spec}" --lane quick --no-draft -q
+    openlanes create --from "${spec}" --starts building --no-draft -q
   done
   git add -A
   git commit -q -m "Initialize openlanes and three plans"

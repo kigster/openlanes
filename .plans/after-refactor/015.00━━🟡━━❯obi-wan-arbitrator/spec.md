@@ -151,7 +151,7 @@ Method: read `origin/main` at `b2b5176`, decisions M1–M19, the agent contracts
 - State moves: 🔴 → 🟢 is the `submit` path (`lib/openlanes/plans/state_machine.rb:174`); 👀 → 🔴 is `request_changes` (`:185-187`); 🔴 can block (`BLOCKABLE`, `:119`), 👀 cannot. That is why `passed_check/too_lenient` goes to 🔴, and `cap/no_go` goes to ⭕️ from 🔴.
 - Needs you lists questions from `blocked.md` and interrupted agents only (`web/src/panels/NeedsYou.tsx:1-2`), so a `no_go` reaches the human as a `blocked.md` the engine writes, answered through the existing unblock path.
 - Mail: `Mailbox#append(from:, to:, body:)` (`lib/openlanes/plans/mailbox.rb:104`); #26's `PrOutcomes#mail` already mails 🔴's handlers this way (#26, `lib/openlanes/engine/pr_outcomes.rb:136-142`), a pattern `Effects` can follow.
-- Rejections reach the folder through hansolo's note: `verdict_of` maps `reject` → 🔴, `approv` → stays at 👀 awaiting merge, `slop` → 💩 (`lib/openlanes/engine/dispatcher.rb:1083-1093`, `:1161-1177`). Nothing in the engine counts rejections; hansolo counts its own (`agents/hansolo-reviewer.md:36`).
+- Rejections reach the folder through hansolo's note: `verdict_of` maps `reject` → 🔴, `approv` → stays at 👀 awaiting merge, `slop` → 🚫 (`lib/openlanes/engine/dispatcher.rb:1083-1093`, `:1161-1177`). Nothing in the engine counts rejections; hansolo counts its own (`agents/hansolo-reviewer.md:36`).
 
 ### luke versus rey
 
@@ -160,7 +160,7 @@ Method: read `origin/main` at `b2b5176`, decisions M1–M19, the agent contracts
 
 ### Contradictions
 
-1. **hansolo's cap vs M6.** `main` and #26 hard-code 2 rejections and send "findings after 2 rejections" to 💩 (`agents/hansolo-reviewer.md:40-43`). M6 makes the cap configurable (3/2/2/1), and M8 sends a capped plan to the arbitrator, not to 💩. Production runs the hard-coded 2.
+1. **hansolo's cap vs M6.** `main` and #26 hard-code 2 rejections and send "findings after 2 rejections" to 🚫 (`agents/hansolo-reviewer.md:40-43`). M6 makes the cap configurable (3/2/2/1), and M8 sends a capped plan to the arbitrator, not to 🚫. Production runs the hard-coded 2.
 1. **`review-passed` is never applied.** M3 defines it and M9 depends on it, but #26's hansolo table has no row that sets it (#26, `agents/hansolo-reviewer.md`, verdict table). Until this plan adds one, M9 has nothing to check.
 1. **`review-passed` colour.** M3 says `0b6e2e`; #26 changes both the label and the decision doc to `1d76db` (#26, `lib/openlanes/plans/review_label.rb:22-25`). Not this plan's concern; noted because #26 edits the decision doc.
 1. **`merge.by` values.** #26 parses `human|auto` (#26, `lib/openlanes/support/config.rb`, `MERGERS`); plan 011's spec says `human|agent` (`.plans/011.00-📋 → init-interview/spec.md:39`).

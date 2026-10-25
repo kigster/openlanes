@@ -66,6 +66,10 @@ at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
+# dry/system/stubs reopens Dry::System::Container, so the class has to be
+# loaded first or the reopening becomes an empty class of its own.
+require "dry/system"
+require "dry/system/stubs"
 
 require "stringio"
 
@@ -81,8 +85,15 @@ require_relative "support/origin_repo"
 require_relative "support/fake_gh_env"
 require_relative "support/test_redis"
 require_relative "support/port_window"
+require_relative "support/ruby_project"
 
 TestRedis.scrub!
+
+# Every key registered up front, so any of them can be stubbed; stubs on, so
+# finalizing leaves the container unfrozen. Providers only register lazy
+# blocks when they start, so this opens no connection.
+OpenLanes::Container.enable_stubs!
+OpenLanes::Container.finalize!
 
 RSpec.configure do |config|
   # The choice judge asks TypeSafe over the network. A developer's shell may
@@ -120,6 +131,9 @@ RSpec.configure do |config|
   # Pastel memoizes `enabled:` at construction, so an example that stubs
   # `tty?` or `color?` would otherwise poison every example that ran after it.
   config.before { OpenLanes::UI.reset! }
+
+  # A stub lasts one example, whether or not it was taken with a block.
+  config.after { OpenLanes::Container.unstub }
 
   # A run sets logging up for its whole process, and the suite is one
   # process: without this, the file one example opened would take every

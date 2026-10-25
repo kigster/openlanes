@@ -31,39 +31,48 @@ module OpenLanes
       # @param tree_dir [String] the `.plans` directory, reread after each rename
       # @param agents [Agents::Registry] who handles 🔴, and so gets the comments
       # @param clock [#call] the time a merge is recorded at
-      def initialize(tree_dir:, agents:, clock: -> { Clock::System.now })
+      # @param events [Events::Sink, Events::NullSink] where an applied outcome is recorded
+      def initialize(tree_dir:, agents:, clock: -> { Clock::System.now }, events: Events::NullSink.new)
         @tree_dir = tree_dir
         @agents = agents
         @clock = clock
+        @events = events
       end
+
+      # The event each outcome kind is recorded as.
+      EVENT_KINDS = { rejected: "pr_reviewed", merged: "pr_merged", closed: "pr_closed" }.freeze
 
       # @param outcome [PrWatch::Outcome]
       # @return [Applied, nil] nil when the folder already said so
       def apply(outcome)
-        case outcome.kind
-        when :rejected then reject(outcome)
-        when :merged then merged(outcome)
-        when :closed then closed(outcome)
-        end
+        before = row_state(outcome)
+        applied = case outcome.kind
+                  when :rejected then reject(outcome)
+                  when :merged then merged(outcome)
+                  when :closed then closed(outcome)
+                  end
+        announce(outcome, applied, before)
+        applied
       end
 
       private
 
       # `review-rejected` with comments: 🔴, and the comments to the builders.
       # A plan already at 🔴 has been told; one at 🟢 passes through 👀, the
-      # only state the machine rejects from.
+      # only state the machine rejects from. A send-back under `standard`
+      # names 🟡 instead (plan 035), and is mailed to whoever builds there.
       def reject(outcome)
         subject = find(outcome.plan) or return nil
-        return nil if subject.status.key == :rejected
+        return nil if subject.status.key == outcome.to
 
-        moved = walk(subject, :rejected) or return nil
+        moved = walk(subject, outcome.to) or return nil
         # A person overruled the approval: the board must stop showing it
         # as finished.
         Plans::PlanState.for(moved.feature.path).unfinish!
         mailed = mail(moved, outcome)
         Applied.new(plan: outcome.plan,
           pr: outcome.pr,
-          to: :rejected,
+          to: outcome.to,
           note: "PR ##{outcome.pr} labelled #{Plans::ReviewLabel::REJECTED.name}; mailed #{mailed.join(", ")}")
       end
 
@@ -107,6 +116,41 @@ module OpenLanes
         applied(outcome, to, "closed unmerged")
       end
 
+      # Recorded only when something changed: the watch asks every 15
+      # seconds, and a row already saying merged is not a second merge.
+      #
+      # @return [void]
+      def announce(outcome, applied, before)
+        kind = EVENT_KINDS[outcome.kind]
+        return if applied.nil? || kind.nil?
+        return if applied.to.nil? && kind != "pr_reviewed" && before == row_state(outcome)
+
+        verdict = kind == "pr_reviewed" ? { verdict: "rejected" } : {}
+        seq = kind == "pr_reviewed" ? [outcome.pr, rejections(outcome)] : outcome.pr
+        @events.record(kind, plan: outcome.plan.to_s, seq:, once: true, number: outcome.pr, **verdict)
+      end
+
+      # Which rejection of this PR it is: the mail {#reject} leaves in the
+      # plan folder, counted per recipient. A PR rejected again after a fix
+      # round is a second review, not the first one seen twice, so it needs
+      # its own event id; two runs noticing the same rejection still agree.
+      # The watch sees an approval only as the merge that follows it, so
+      # approvals are recorded by the dispatcher, from the reviewer's verdict.
+      #
+      # @return [Integer]
+      def rejections(outcome)
+        subject = find(outcome.plan) or return 0
+        prefix = "PR ##{outcome.pr} was labelled "
+        Plans::Mailbox.new(dir: subject.feature.path).messages
+                      .select { it.from == SENDER && it.body.start_with?(prefix) }
+                      .group_by(&:to).values.map(&:size).max || 0
+      end
+
+      # @return [String, nil] the outcome's row state in `pull-requests.md`
+      def row_state(outcome)
+        find(outcome.plan)&.pull_requests&.find { it.number.to_s.delete("#").to_i == outcome.pr }&.state
+      end
+
       # @return [Applied]
       def applied(outcome, to, what) = Applied.new(plan: outcome.plan, pr: outcome.pr, to:, note: "PR ##{outcome.pr} #{what}")
 
@@ -143,7 +187,7 @@ module OpenLanes
       # @return [Array<String>] who was mailed
       def mail(subject, outcome)
         body = ["PR ##{outcome.pr} was labelled #{Plans::ReviewLabel::REJECTED.name} on GitHub.", *comments(outcome)].join("\n\n")
-        status = Plans::STATUS_BY_KEY.fetch(:rejected)
+        status = Plans::STATUS_BY_KEY.fetch(outcome.to)
         @agents.all.select { it.handles?(status) }.map(&:name).each do |name|
           Plans::Mailbox.new(dir: subject.feature.path).append(from: SENDER, to: name, body:)
         end

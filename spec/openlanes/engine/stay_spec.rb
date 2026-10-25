@@ -74,6 +74,8 @@ RSpec.describe "A staying run", :tree do
   describe "luthen-rael blocks on a question, the answer comes from the page" do
     let(:agents) { OpenLanes::Agents::Registry.new.only("luthen-rael-planner", "lando-broker") }
     let(:seen) { {} }
+    # depends_on is answered, as luthen-rael leaves it once he has planned.
+    let(:linked_spec) { "---\ndepends_on: [none]\n---\n#{spec_body}" }
 
     # Round one asks how big the board is; once lando-broker has drained
     # the answer, luthen-rael plans.
@@ -114,7 +116,7 @@ RSpec.describe "A staying run", :tree do
     end
 
     before do
-      plans { |t| t.plan "020.00", :ready_for_planning, "minesweeper", files: { "spec.md" => spec_body, "plan.md" => "" } }
+      plans { |t| t.plan "020.00", :ready_for_planning, "minesweeper", files: { "spec.md" => linked_spec, "plan.md" => "" } }
       run_until_stopped
     end
 

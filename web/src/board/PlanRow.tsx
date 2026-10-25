@@ -4,7 +4,7 @@ import type { Car as CarData, ModelChoice, Node, Plan, Station, UnackedMail } fr
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, statusTip, unackedTip, who } from "./format";
-import { LANES, keepsRow, rowColors, rowDomId, routeOf } from "./model";
+import { STARTS, keepsRow, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
 export interface CarHandlers {
@@ -25,6 +25,8 @@ interface PlanRowProps extends CarHandlers {
   faded?: boolean;
   /** A merged row on its way out: it fades, then folds away. */
   retiring?: boolean;
+  /** The row above belongs to another dependency group: the groove between them runs deeper. */
+  dagBreak?: boolean;
 }
 
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
@@ -44,9 +46,29 @@ export function UnackedBadge({ count, mail = [] }: { count: number; mail?: Unack
   );
 }
 
+/**
+ * "rejected 2 of 3": how close the plan is to the rejection cap, where the arbitrator takes over. Nothing at zero, so a
+ * plan nobody has rejected keeps its meta line.
+ */
+export function RejectionsBadge({ rejections }: { rejections?: { count: number; max: number } }) {
+  if (!rejections || rejections.count <= 0) return null;
+  return <span className="rejections" title="Reviewer rejections so far, against the cap after which the arbitrator rules">rejected {rejections.count} of {rejections.max}</span>;
+}
+
+/** ⚖️ while the arbitrator is working on the plan, and only then. */
+export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
+  if (!arbitrating) return null;
+  return (
+    <span className="arbitrating" title="The arbitrator is ruling on this plan">
+      <span aria-hidden="true">⚖️</span>
+      <span className="sr-only">arbitrating</span>
+    </span>
+  );
+}
+
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
-  const lane = LANES[plan.lane];
+export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
+  const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
   const readOnly = Boolean(owner);
@@ -94,7 +116,7 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
   }
 
   // A plan finished this run keeps its row at half height, the narrow lanes' look, whatever the lanes toggle says.
-  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring"].filter(Boolean).join(" ");
+  const cls = ["plan", keepsRow(plan) && "is-half", faded && "is-theirs", retiring && "is-retiring", dagBreak && "is-dag-break"].filter(Boolean).join(" ");
   return (
     <article
       ref={scope}
@@ -112,6 +134,8 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
         <h3 className="plan-title" title={plan.summary || plan.title}>{plan.title}</h3>
         <div className="plan-meta">
           <span className="lane">{lane.label}</span>
+          <RejectionsBadge rejections={plan.rejections} />
+          <ArbitratingMarker arbitrating={plan.arbitrating} />
           <UnackedBadge count={plan.unacked} mail={plan.mail} />
           {owner ? (
             <span>on {who(owner)}</span>

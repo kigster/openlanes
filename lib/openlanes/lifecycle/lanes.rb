@@ -2,49 +2,48 @@
 
 module OpenLanes
   module Lifecycle
-    # Moves a plan past the phases its lane skips.
+    # Moves a plan past the phases before where it starts.
     #
-    # A plan in the `plan` lane has a specification its author already
-    # trusts, so research and rewriting are skipped: the harness writes the
-    # blank `plan.md` yoda-writer would have left and moves the folder to 📋.
-    # A plan in the `quick` lane is a short mechanical task: the harness
-    # writes a one-unit `plan.md` and moves the folder to ⭐, where
-    # r2d2-mechanic is the only builder that serves the lane.
+    # `planning` has a specification its author already trusts, so research
+    # and rewriting are skipped: the harness writes the blank `plan.md`
+    # yoda-writer would have left and moves the folder to 📋, where the
+    # planner answers `depends_on:` while it plans. `building` is a short
+    # mechanical task: the harness writes a one-unit `plan.md` in the
+    # planner's place and moves it straight to ⭐, where r2d2-mechanic is the
+    # only builder. It never rests at 📋, where the planner would be assigned
+    # before the next hop. Nobody answers `depends_on:` for it unless its
+    # author did, and an absent key waits for nothing.
     #
-    # Both moves are ordinary transitions through the state machine, so the
+    # Every move is an ordinary transition through the state machine, so the
     # invariants still decide; the harness only supplies the file the
     # skipped agent would have written.
     module Lanes
-      # The state each lane jumps to.
-      TARGET = { plan: :ready_for_planning, quick: :planned }.freeze
-
-      # The states a lane jumps from. Anything later has already been worked.
-      FROM = %i[new researched].freeze
-
-      # What the harness writes into `plan.md` for each lane.
-      STUB = {
-        plan:  "",
-        quick: <<~MARKDOWN
-          # Plan
-
-          ## Task
-
-          Quick lane: the task is the whole of `spec.md`, done in one pass by `r2d2-mechanic`.
-        MARKDOWN
+      # Where each starts value jumps, from each state it jumps from.
+      # `research` does not jump. Anything later has already been worked.
+      HOPS = {
+        planning: { new: :ready_for_planning, researched: :ready_for_planning },
+        building: { new: :planned, researched: :planned, ready_for_planning: :planned }
       }.freeze
+
+      # What the harness writes into `plan.md` for a `building` plan's ⭐.
+      QUICK_PLAN = <<~MARKDOWN
+        # Plan
+
+        ## Task
+
+        Starts at building: the task is the whole of `spec.md`, done in one pass by `r2d2-mechanic`.
+      MARKDOWN
 
       module_function
 
-      # Where this plan's lane says it should be, when that is somewhere other
+      # Where this plan's `starts:` says it should be, when that is somewhere other
       # than where it is.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @param spec [OpenLanes::Plans::Spec]
       # @return [OpenLanes::Plans::Status, nil]
       def target(subject, spec = Plans::Spec.for(subject))
-        key = TARGET[spec.lane] or return nil
-        return nil unless FROM.include?(subject.status.key)
-
+        key = HOPS.dig(spec.starts, subject.status.key) or return nil
         Plans.status(key)
       end
 
@@ -59,15 +58,31 @@ module OpenLanes
         from = subject.status.key
         return [from, to.key] unless commit
 
-        path = File.join(subject.feature.path, "plan.md")
-        unless File.exist?(path)
-          File.write(path, [STUB.fetch(spec.lane).rstrip, Completion.markdown(spec)].reject(&:empty?).join("\n\n"))
-        end
-        machine = subject.machine
-        return nil unless machine.may?(to.key)
+        write_plan(subject, spec, to.key)
+        machine = subject.reread!.machine
+        landing = machine.onward(to.key)
+        return nil unless machine.may?(landing)
 
-        machine.promote!(to.key)
-        [from, to.key]
+        machine.promote!(landing)
+        [from, landing]
+      end
+
+      # 📋 gets the blank `plan.md` yoda-writer leaves; a `building` plan's ⭐
+      # gets {QUICK_PLAN} and the spec's completion criteria, over a blank
+      # one. A `plan.md` the author wrote is never replaced.
+      #
+      # @return [void]
+      def write_plan(subject, spec, to)
+        path = File.join(subject.feature.path, "plan.md")
+        return if authored?(subject)
+
+        body = to == :planned ? [QUICK_PLAN.rstrip, Completion.markdown(spec)].reject(&:empty?).join("\n\n") : ""
+        File.write(path, body) if to == :planned || !File.exist?(path)
+      end
+
+      # @return [Boolean] whether `plan.md` holds a plan someone wrote
+      def authored?(subject)
+        subject.file?("plan.md") && Plans::PLAN_HEADING.match?(Plans::Ledger.stripped(subject.read("plan.md")))
       end
     end
   end

@@ -42,8 +42,14 @@ module OpenLanes
           transitions from: %i[unlabelled review_rejected review_vulnerability], to: :ready_for_review
         end
 
+        # Fixes reached a rejected pull request (U1). The harness fires it,
+        # whoever pushed them.
+        event :address do
+          transitions from: %i[review_rejected review_vulnerability], to: :review_addressed
+        end
+
         event :start_review do
-          transitions from: %i[unlabelled ready_for_review], to: :review_in_progress
+          transitions from: %i[unlabelled ready_for_review review_addressed], to: :review_in_progress
         end
 
         # The reviewers' verdicts, and chewie's rejection after them. A

@@ -6,7 +6,8 @@ describe("the board", () => {
 
   it("loads this machine's plans with their agents", () => {
     cy.contains("Clean agent boundaries and transitions");
-    cy.get('[data-car="005.00/hansolo-reviewer"]').should("be.visible");
+    // The review cars may sit past the viewport edge, so scroll to them before asserting.
+    cy.get('[data-car="005.00/hansolo-reviewer"]').scrollIntoView().should("be.visible");
     cy.get(".tab-machine").should("contain", "sam@ci-runner-2");
   });
 

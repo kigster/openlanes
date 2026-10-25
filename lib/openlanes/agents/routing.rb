@@ -30,7 +30,7 @@ module OpenLanes
       # @param spec [OpenLanes::Plans::Spec]
       # @return [Boolean]
       def allows?(agent, subject, spec = Plans::Spec.for(subject))
-        return false unless agent.serves?(spec.lane)
+        return false unless agent.serves?(spec.starts)
         return false unless reviewable?(agent, subject)
 
         switch = toggled(agent, spec)
@@ -52,7 +52,7 @@ module OpenLanes
       def filter(agents, subject)
         spec = Plans::Spec.for(subject)
         routed = agents.select do |agent|
-          agent.serves?(spec.lane) && toggled(agent, spec) != false && reviewable?(agent, subject)
+          agent.serves?(spec.starts) && toggled(agent, spec) != false && reviewable?(agent, subject)
         end
         return routed if routed.size <= 1
 

@@ -31,6 +31,9 @@ module OpenLanes
         # @param dir [String] the repository afterwards
         # @return [OpenLanes::Evals::Changes]
         def between(before, dir)
+          # The fixture may seed other plans for the agent to read; dropping
+          # them only from the after side would count each one as deleted.
+          before = before.reject { |path, _| ignored?(path) }
           after = snapshot(dir)
           paths = (before.keys | after.keys).reject { |p| before[p] == after[p] }.sort
           lines = paths.sum { |p| line_delta(before[p].to_s, after[p].to_s) }
@@ -48,12 +51,15 @@ module OpenLanes
         def snapshot(dir)
           root = File.expand_path(dir)
           Dir.glob("**/*", File::FNM_DOTMATCH, base: root).each_with_object({}) do |rel, out|
-            next if IGNORED.include?(rel.split("/").first)
+            next if ignored?(rel)
 
             full = File.join(root, rel)
             out[rel] = File.read(full, encoding: "UTF-8") if File.file?(full)
           end
         end
+
+        # @return [Boolean]
+        def ignored?(path) = IGNORED.include?(path.split("/").first)
 
         # @return [Integer]
         def line_delta(old, new)

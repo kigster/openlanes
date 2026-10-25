@@ -211,6 +211,71 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#labelled_at" do
+    it "reads the last time the label was put on, from every page of the pull request's events" do
+      allow(command).to receive(:run)
+        .and_return(instance_double(TTY::Command::Result, out: "2026-10-19T09:59:08Z\n2026-10-19T10:09:11Z\n"))
+
+      aggregate_failures do
+        expect(github.labelled_at(number: 93, name: "review-rejected", repo: "o/r")).to eq(Time.utc(2026, 10, 19, 10, 9, 11))
+        expect(command).to have_received(:run).with("gh",
+          "api",
+          "--paginate",
+          "repos/o/r/issues/93/events",
+          "--jq",
+          '.[] | select(.event == "labeled" and .label.name == "review-rejected") | .created_at')
+      end
+    end
+
+    it "answers nil for a label never put on" do
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: ""))
+
+      expect(github.labelled_at(number: 93, name: "review-rejected")).to be_nil
+    end
+
+    it "says the history could not be read" do
+      allow(command).to receive(:run)
+        .and_raise(TTY::Command::ExitError.new("gh api", instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "HTTP 404")))
+
+      expect { github.labelled_at(number: 93, name: "x") }.to raise_error(OpenLanes::Error, /could not read the label history of #93/)
+    end
+  end
+
+  describe "#head_committed_at" do
+    it "reads the committer date of the last commit" do
+      commits = [{ "oid" => "a", "committedDate" => "2026-10-19T10:07:03Z" }, { "oid" => "b", "committedDate" => "2026-10-19T15:45:48Z" }]
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: JSON.generate("commits" => commits)))
+
+      aggregate_failures do
+        expect(github.head_committed_at(number: 93, repo: "o/r")).to eq(Time.utc(2026, 10, 19, 15, 45, 48))
+        expect(command).to have_received(:run).with("gh", "pr", "view", "93", "--json", "commits", "-R", "o/r")
+      end
+    end
+
+    it "answers nil for a pull request with no commits" do
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: JSON.generate("commits" => [])))
+
+      expect(github.head_committed_at(number: 93)).to be_nil
+    end
+  end
+
+  describe "#branch_head" do
+    it "reads the SHA a branch points at" do
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: "abc123\n"))
+
+      aggregate_failures do
+        expect(github.branch_head(branch: "main", repo: "o/r")).to eq("abc123")
+        expect(command).to have_received(:run).with("gh", "api", "repos/o/r/commits/main", "--jq", ".sha")
+      end
+    end
+
+    it "refuses an empty answer rather than reading it as a move of main" do
+      allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result, out: "\n"))
+
+      expect { github.branch_head(branch: "main") }.to raise_error(OpenLanes::Error, /no SHA/)
+    end
+  end
+
   describe "#available?" do
     it "reports whether gh is installed and authenticated" do
       allow(command).to receive(:run!).with("gh", "auth", "status")
@@ -420,6 +485,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
         expect(left).to eq(["review-in-progress"])
         expect(argvs.flatten).not_to include("--force")
       end
+    end
+
+    it "adds the labels in also: beside the verdict, one --add-label each, and never removes them" do
+      openlanes = OpenLanes::Plans::ReviewLabel::OPENLANES
+      github.swap_label(number: 12, add: label, also: [openlanes], remove: %w[review-rejected openlanes], create_missing: false)
+
+      expect(argvs.first).to eq(%w[gh pr edit 12 --add-label ready-for-review --add-label openlanes --remove-label review-rejected])
     end
 
     it "creates no label when the caller already has" do

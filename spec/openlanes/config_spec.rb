@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Config do
       before do
         openlanes_yml(<<~YAML)
           project: Equilibris App
-          lane: plan
+          starts: planning
           frontend: false
           jobs: 4
           commands:
@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "reads the top-level settings" do
-        expect(config).to have_attributes(path:, project: "Equilibris App", lane: :plan, frontend: false, jobs: 4)
+        expect(config).to have_attributes(path:, project: "Equilibris App", starts: :planning, frontend: false, jobs: 4)
       end
 
       it "folds jobs into run's defaults" do
@@ -44,7 +44,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "folds lane into create's defaults, as the string a flag would be" do
-        expect(config.for(:create)).to eq(lane: "plan")
+        expect(config.for(:create)).to eq(starts: "planning")
       end
 
       it "folds project into index's defaults" do
@@ -74,6 +74,40 @@ RSpec.describe OpenLanes::Config do
 
       it "writes itself back out under plans:" do
         expect(described_class.new(aging_since: Date.new(2026, 10, 1)).to_yaml).to eq("plans:\n  aging_since: '2026-10-01'\n")
+      end
+    end
+
+    describe "events:" do
+      it "reads enabled and an absolute dir" do
+        openlanes_yml("events:\n  enabled: true\n  dir: /var/log/openlanes\n")
+        expect(config).to have_attributes(events_enabled: true, events_dir: "/var/log/openlanes")
+        expect(config.to_yaml).to include("events:\n  enabled: true\n  dir: \"/var/log/openlanes\"")
+      end
+
+      it "is off with no directory when absent" do
+        openlanes_yml("jobs: 2\n")
+        expect(config).to have_attributes(events_enabled: false, events_dir: nil)
+        expect(config.to_yaml).not_to include("events")
+      end
+
+      it "refuses a value that is not a mapping" do
+        openlanes_yml("events: true\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events: must be a mapping/)
+      end
+
+      it "refuses a key it does not know" do
+        openlanes_yml("events:\n  sink: postgres\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events\.sink: unknown key; known: enabled, dir/)
+      end
+
+      it "refuses an enabled that is not a boolean" do
+        openlanes_yml("events:\n  enabled: sometimes\n")
+        expect { config }.to raise_error(OpenLanes::Error, /events\.enabled: "sometimes" is not true or false/)
+      end
+
+      it "refuses a relative dir" do
+        openlanes_yml("events:\n  dir: log/events\n")
+        expect { config }.to raise_error(OpenLanes::Error, %r{events\.dir: "log/events" is not an absolute path})
       end
     end
 
@@ -203,7 +237,7 @@ RSpec.describe OpenLanes::Config do
     # signal, so every one of these names the file.
     {
       "an unknown key"                 => ["jobz: 4\n", /unknown key jobz/],
-      "a lane that is not one"         => ["lane: fast\n", /lane: "fast" is not one of full, plan, quick/],
+      "a lane that is not one"         => ["starts: fast\n", /starts: "fast" is not one of research, planning, building/],
       "a frontend that is not boolean" => ["frontend: maybe\n", /frontend: "maybe" is not true or false/],
       "jobs that are not a count"      => ["jobs: 0\n", /jobs: 0 is not a whole number/],
       "a blank project"                => ["project: ' '\n", /project: must be a non-empty name/],
@@ -264,6 +298,70 @@ RSpec.describe OpenLanes::Config do
     end
   end
 
+  describe "ci: and stack:" do
+    subject(:config) { described_class.load(root) }
+
+    let(:full) do
+      <<~YAML
+        ci:
+          provider: github_actions
+          config: .github/workflows/ci.yml
+        stack:
+          language: ruby
+          frameworks: [rails, sinatra]
+          persistence: postgres
+          from: sinatra
+          to: rails
+      YAML
+    end
+
+    it "reads each of them" do
+      openlanes_yml(full)
+      expect(config).to have_attributes(
+        ci:    { provider: :github_actions, config: ".github/workflows/ci.yml" },
+        stack: { language: "ruby", frameworks: %w[rails sinatra], persistence: "postgres",
+                         from: "sinatra", to: "rails" }
+      )
+    end
+
+    it "round-trips them through to_yaml" do
+      openlanes_yml(full)
+      expect(described_class.parse(config.to_yaml, path:)).to have_attributes(
+        ci: config.ci, stack: config.stack
+      )
+    end
+
+    it "takes a CI provider without a config file" do
+      openlanes_yml("ci: { provider: none }\n")
+      expect(config.ci).to eq(provider: :none, config: nil)
+    end
+
+    it "loads an older file that has none of them" do
+      openlanes_yml("starts: planning\n")
+      expect(config).to have_attributes(ci: nil, stack: nil)
+    end
+
+    it "leaves them out of the file when unset" do
+      expect(described_class.new(starts: :planning).to_yaml).to eq("starts: planning\n")
+    end
+
+    {
+      "ci: { provider: travis }"           => /ci.provider: "travis" is not one of/,
+      "ci: { provider: none, runner: x }"  => /ci: unknown key runner/,
+      "ci: github_actions"                 => /ci: must be a mapping/,
+      "ci: { provider: none, config: 3 }"  => /ci.config: must be a path/,
+      "stack: ruby"                        => /stack: must be a mapping/,
+      "stack: { language: ruby, os: mac }" => /stack: unknown field os/,
+      "stack: { language: '  ' }"          => /stack.language: must be a non-empty name/,
+      "stack: { frameworks: [rails, 3] }"  => /stack.frameworks: must be a list of names/
+    }.each do |text, message|
+      it "refuses #{text}" do
+        openlanes_yml("#{text}\n")
+        expect { config }.to raise_error(OpenLanes::Error, message)
+      end
+    end
+  end
+
   describe ".current" do
     before { Dir.chdir(root) }
 
@@ -291,8 +389,8 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "gives create its lane" do
-      openlanes_yml("lane: quick\n")
-      expect(OpenLanes::CLI::Create.default_params[:lane]).to eq("quick")
+      openlanes_yml("starts: building\n")
+      expect(OpenLanes::CLI::Create.default_params[:starts]).to eq("building")
     end
 
     it "gives index its heading" do
@@ -301,14 +399,14 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "loses to a flag typed on the command line" do
-      openlanes_yml("lane: quick\n")
-      parsed = Dry::CLI::Parser.call(OpenLanes::CLI::Create, %w[--lane plan some words], "openlanes create")
-      expect(parsed.arguments[:lane]).to eq("plan")
+      openlanes_yml("starts: building\n")
+      parsed = Dry::CLI::Parser.call(OpenLanes::CLI::Create, %w[--starts planning some words], "openlanes create")
+      expect(parsed.arguments[:starts]).to eq("planning")
     end
 
     it "adds nothing from a file that cannot be read" do
-      openlanes_yml("lane: [\n")
-      expect(OpenLanes::CLI::Create.default_params).not_to have_key(:lane)
+      openlanes_yml("starts: [\n")
+      expect(OpenLanes::CLI::Create.default_params).not_to have_key(:starts)
     end
   end
 

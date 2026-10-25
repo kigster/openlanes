@@ -26,7 +26,9 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
   before do
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-      original.call(**keywords, sleeper: ->(_) {})
+      # The temp project has no desired_codebase_quality:, whose gate
+      # (plan 035, dispatcher_quality_gate_spec) would hold every plan.
+      original.call(**keywords, sleeper: ->(_) {}, quality_gate: nil)
     end
     allow(OpenLanes::Live).to receive(:connect).and_return(live_store)
     allow(web).to receive(:start).and_return(web)
@@ -224,10 +226,10 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       it("puts every round in the same column") { expect(columns.uniq.size).to eq(1) }
     end
 
-    # Unparseable frontmatter routes as lane: full with every override
+    # Unparseable frontmatter routes as starts: research with every override
     # dropped; the run has to say so before it assigns anyone.
     it "names a plan whose spec.md frontmatter does not parse" do
-      plans { |t| t.plan("002.00", :new, "bad-yaml", files: { "spec.md" => "---\nlane: quick\nhow-to-verify:\n  - `rg x`\n---\n# Bad\n" }) }
+      plans { |t| t.plan("002.00", :new, "bad-yaml", files: { "spec.md" => "---\nstarts: building\nhow-to-verify:\n  - `rg x`\n---\n# Bad\n" }) }
       _out, err, = run
 
       expect(unwrapped(err)).to include("frontmatter ignored", "002.00", "not valid YAML")
@@ -498,6 +500,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     # luke `starts_as` 🟡, so a ⭐ folder moves the moment he is dispatched.
     # The stub signs Almost completed rather than Completed: the attempt is
     # then ok without claiming 🟢, and the plan sits at 🟡 where it landed.
+    # Narrowed to luke: the stub's ledger line replaces plan.md, which then
+    # reads as blank, and luthen-rael would take it from there.
     it "shows a plan that actually moved as from -> to" do
       plans { |t| t.plan("002.00", :planned, "moves", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       with_executor { |subject, agent|
@@ -505,7 +509,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
           "> [2026-09-04 11:29:20 AM PDT] [ agent: #{agent.name}   status: Almost completed, round 1 ]\n")
         [true, "paused"]
       }
-      out, err, = run(dry_run: false)
+      out, err, = run(dry_run: false, agent: "luke-backend")
 
       expect(out).to include("planned -> building")
       expect(unwrapped(err)).to include("1 advanced")

@@ -8,7 +8,7 @@ effort: medium
 timeout: 1200
 ledger: [plan.md, pull-requests.md, plan-frontend.md]
 phase: frontend
-lanes: [full, plan]
+starts: [research, planning]
 needs: ["plan.md#frontend"]
 toggle: frontend
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]
@@ -51,6 +51,10 @@ You build the front-end half of one plan: everything a user sees or touches. `lu
    1. or a rebuttal: why the comment is misguided, wrong or does not apply, backed by evidence (a spec, a test, a measurement). A rebuttal needs no code change.
 
    List each comment you answered, with its id and `fix` or `rebuttal`, under `## Answers, round N` in `pull-requests.md`.
+
+1. To appeal one of hansolo's findings (`### F<n> …`) you believe is wrong or out of scope, sign `Completed` with `--note "appeal: F<n> because <reason>"`, giving the evidence in the reason. The engine runs `obi-wan-kenobi-arbitrator` on it; a struck finding is not raised again. Appeal one finding per signature, and fix the rest.
+
+1. When you and luke amend the same `contract.md` entry back and forth, stop arguing in the mailbox: `openlanes mail send --to obi-wan-kenobi-arbitrator` with a body starting `dispute: <the contract.md entry>`, and keep building on your own assumption until the ruling arrives by mail.
 
 ## Done when
 

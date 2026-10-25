@@ -9,7 +9,6 @@ gemspec
 
 gem "rake"
 gem "yard"
-gem "debug_inspector", "~>1.2"
 
 group :test do
   gem "coverage-badge"
@@ -22,9 +21,11 @@ group :test do
 end
 
 group :development, :test do
+  # Already installed at run time through dry-cli-ui -> binding_of_caller; this only pins it for development.
+  gem "debug_inspector", "~> 1.2"
   gem "rubocop"
-  gem "rubocop-rspec"
   gem "rubocop-rake"
-  gem "rubocop-rubycw"
+  gem "rubocop-rspec"
   gem "rubocop-on-rbs"
+  gem "rubocop-rubycw"
 end

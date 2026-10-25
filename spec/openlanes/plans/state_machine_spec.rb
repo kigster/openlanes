@@ -209,7 +209,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(machine.allowed).to include(:planned)
     end
 
-    it "offers only 📋 while plan.md is still blank" do
+    it "offers 📋 while plan.md is still blank, and not ⭐" do
       machine = machine_for(:new, files: { "spec.md" => "x", "plan.md" => "" })
 
       expect(machine.allowed).to include(:ready_for_planning)
@@ -280,10 +280,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(described_class.new(subject).promote!.key).to eq(:building_ui)
     end
 
-    it "sends a review that found slop to 💩, keeping the plan and dropping the work" do
+    it "sends a review that found slop to 🚫, keeping the plan and dropping the work" do
       subject = built(:in_review, files: { "rewrite.md" => "start over" }, prs: ["Open 🟡"])
 
-      expect(described_class.new(subject).promote!(:shit).key).to eq(:shit)
+      expect(described_class.new(subject).promote!(:rewrite).key).to eq(:rewrite)
     end
   end
 
@@ -331,10 +331,11 @@ RSpec.describe OpenLanes::Plans::StateMachine do
   describe "#spine_next" do
     it "walks spec → plan → build → review → verify → complete → merge → ship" do
       expected = {
-        retroactive: :planned, new: :researched, researched: :ready_for_planning, ready_for_planning: :planned,
+        retroactive: :planned, new: :researched, researched: :ready_for_planning,
+        ready_for_planning: :planned,
         planned: :building, building: :building_ui, building_ui: :ready_for_review,
         ready_for_review: :in_review, in_review: :verifying, verifying: :completed, completed: :approved, approved: :deployed,
-        rejected: :building_ui, rolled_back: :ready_for_review, shit: :planned,
+        rejected: :building_ui, rolled_back: :ready_for_review, rewrite: :planned,
         discarded: nil, blocked: nil, deployed: nil
       }
 
@@ -444,16 +445,52 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     end
   end
 
+  # 🔗 Ready for Linking was retired with ewoki-linker (A17): the planner
+  # answers `depends_on:` while it plans. A folder still named 🔗 holds what
+  # 📋 holds, a finished spec and a blank plan.md, so that is where it goes.
+  describe "a folder still named 🔗 Ready for Linking" do
+    let(:researched_spec) { "#{spec_body}\n## Research\n\nFound.\n" }
+
+    def legacy_folder(root, files)
+      folder = File.join(root, "020.00━━🔗━━❯q")
+      FileUtils.mkdir_p(folder)
+      files.each { |name, body| File.write(File.join(folder, name), body) }
+    end
+
+    it "is no state any more, and nothing on the spine points at it" do
+      expect([OpenLanes::Plans.status_for_emoji("🔗"), described_class::SPINE[:researched]]).to eq([nil, :ready_for_planning])
+    end
+
+    it "is renamed to 📋 by resync dirs", :tree do
+      path = plans { |t| t.plan "001.00", :new, "other", files: { "spec.md" => spec_body } }
+      legacy_folder(path, "spec.md" => researched_spec, "plan.md" => "")
+      tree = OpenLanes::Plans::Tree.new(dir: path)
+      OpenLanes::Lifecycle::Resync::Dirs.new(tree:).call(commit: true)
+
+      expect(tree.reload.subjects.find { it.feature.slug == "q" }.status.key).to eq(:ready_for_planning)
+    end
+  end
+
   describe "📋 Ready for Planning" do
     it "sits on the spine between researched and planned" do
       expect(described_class::SPINE[:researched]).to eq(:ready_for_planning)
       expect(described_class::SPINE[:ready_for_planning]).to eq(:planned)
     end
 
-    it "is justified by a spec and a plan.md that holds no plan yet", :tree do
+    it "is where a researched folder with a blank plan.md lands", :tree do
+      path = plans { |t| t.plan "020.00", :researched, "q", files: { "spec.md" => "#{spec_body}\n## Research\n\nFound.\n", "plan.md" => "" } }
+
+      expect(OpenLanes::Plans::Tree.new(dir: path).subjects.first.best_fit.key).to eq(:ready_for_planning)
+    end
+
+    it "is blockable, so a planner that finds a dependency cycle can stop the plan" do
+      expect(described_class::BLOCKABLE).to include(:ready_for_planning)
+    end
+
+    it "is justified by a spec and a plan.md that holds no plan yet, and keeps its name", :tree do
       path = plans { |t|
         t.plan "020.00",
-          :researched,
+          :ready_for_planning,
           "qualified",
           files: {
             "spec.md" => "#{spec_body}\n## Research\n\nFound.\n", "plan.md" => ""

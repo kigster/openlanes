@@ -28,15 +28,23 @@ module OpenLanes
     end
 
     class Check
+      # Written by the harness, never by the agent being scored.
+      SPEC_ONLY_IGNORED = %w[state.json].freeze
+
+      # `depends_on: [none]` or `depends_on: ["034.00", "041.01"]`, nothing
+      # looser: an unquoted 34 reads back as an Integer and names no plan, and
+      # `[]` reads as a key nobody answered, so the planner would be asked again.
+      DEPENDS_ON_LINE = /\Adepends_on:\s*\[\s*(none|"\d{3}\.\d{2}"(\s*,\s*"\d{3}\.\d{2}")*)\s*\]\z/
+
       class << self
         # @param kase [OpenLanes::Evals::Case]
         # @return [Array<OpenLanes::Evals::Check>]
-        def for(kase) = outcome(kase.expect) + depth(kase.bounds, kase.depth)
+        def for(kase) = outcome(kase.expect, kase.fixture) + depth(kase.bounds, kase.depth)
 
         private
 
         # @return [Array<OpenLanes::Evals::Check>]
-        def outcome(expect)
+        def outcome(expect, fixture)
           list = []
           list << new(kind: :state, name: "state #{expect["state"]}", args: { expected: expect["state"].to_sym }) if expect["state"]
           if expect["signed"]
@@ -55,6 +63,9 @@ module OpenLanes
           end
           Array(expect["changed_paths"]).each { |g| list << new(kind: :changed, name: "changed #{g}", args: { glob: g }) }
           Array(expect["untouched"]).each { |g| list << new(kind: :untouched, name: "untouched #{g}", args: { glob: g }) }
+          if expect["spec_only"]
+            list << new(kind: :spec_only, name: "only depends_on and the ledger changed", args: { before: fixture.files })
+          end
           list
         end
 
@@ -164,6 +175,29 @@ module OpenLanes
           hits.empty? ? [true, "untouched"] : [false, "changed #{hits.join(", ")}"]
         end
 
+        # An agent allowed to write one frontmatter key and sign for it: in the
+        # plan folder only spec.md changed (state.json is the harness's), and
+        # spec.md differs from the fixture only in its `depends_on:` line and
+        # its ledger blocks. An agent that "tidies" the spec body while it is
+        # there has rewritten the author's words, which is the failure this
+        # check exists for.
+        #
+        # @param before [Hash{String => String}] the fixture's plan folder
+        # @return [Array(Boolean, String)]
+        def spec_only(evidence, before:)
+          after = folder_files(evidence.folder)
+          touched = ((before.keys | after.keys) - SPEC_ONLY_IGNORED).reject { |f| before[f] == after[f] }
+          others = touched - [Plans::Spec::FILENAME]
+          return [false, "changed #{others.sort.join(", ")}"] unless others.empty?
+
+          spec = after[Plans::Spec::FILENAME].to_s
+          line = spec.lines.find { |l| l.start_with?("depends_on:") } or return [false, "spec.md has no depends_on: line"]
+          return [false, "depends_on is not [none] or quoted NNN.MM strings: #{line.strip}"] unless line.strip.match?(DEPENDS_ON_LINE)
+          return [false, "spec.md changed outside depends_on and the ledger"] unless bare(before[Plans::Spec::FILENAME]) == bare(spec)
+
+          [true, line.strip]
+        end
+
         # @return [Array(Boolean, String)]
         def words(evidence, file:, section: nil, min: nil, max: nil)
           body = evidence.text(file, section) or return [false, missing(file, section)]
@@ -214,6 +248,23 @@ module OpenLanes
         def found?(body, text)
           text = text.to_s
           text.length > 2 && text.start_with?("/") && text.end_with?("/") ? body.match?(Regexp.new(text[1..-2])) : body.include?(text)
+        end
+
+        # @return [Hash{String => String}] every file under +dir+, by relative path
+        def folder_files(dir)
+          Dir.glob("**/*", File::FNM_DOTMATCH, base: dir).each_with_object({}) do |rel, out|
+            full = File.join(dir, rel)
+            out[rel] = File.read(full, encoding: "UTF-8") if File.file?(full)
+          end
+        end
+
+        # A spec with its ledger and its depends_on line taken out, and blank
+        # runs collapsed, since removing a block leaves its blank lines behind.
+        #
+        # @return [String]
+        def bare(text)
+          Plans::Ledger.stripped(text.to_s).lines.reject { |l| l.start_with?("depends_on:") }
+                       .join.gsub(/\n[ \t]*(\n[ \t]*)+/, "\n\n").strip
         end
 
         # @return [String]
