@@ -77,12 +77,8 @@ module OpenLanes
         def initialize(untestable: false, **rest) = super
       end
 
-      # A blocked plan whose every question has an answer, being drained by
-      # the agent that handles its state, on a thread of its own.
-      Unblock = Struct.new(:ordinal, :thread, :outcome, :agent, :rounds)
-
       # Who the harness signs its own mail as.
-      HARNESS = "openlanes"
+      HARNESS = Recovery::HARNESS
 
       # What a builder is told when its finished work has no way to be tested.
       HOW_TO_TEST_MAIL = <<~MAIL.freeze
@@ -136,7 +132,7 @@ module OpenLanes
       REVIEW_PHASE = "review"
 
       # Seconds between passes over the 🏁 plans' pull requests.
-      MERGE_POLL = 30
+      MERGE_POLL = Steps::POLL
 
       # @param runner [OpenLanes::Engine::Runner]
       # @param state [OpenLanes::Engine::StateFile, nil] nil under a dry run
@@ -160,12 +156,8 @@ module OpenLanes
       def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
         stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil)
         @runner = runner
-        @journal = journal
-        @journaled = {}
+        @feed = EventJournal::Feed.new(journal)
         @extensions = extensions || Extensions.new(stay:)
-        @watch = watch
-        @watching = nil
-        @waiting_on = {}
         @stay = stay
         @rescan = rescan
         @idle = false
@@ -192,9 +184,6 @@ module OpenLanes
         @requeued = []
         @discarding = {}
         @fenced = []
-        @unblocking = []
-        @unblock_tried = {}
-        @unblock_failed = {}
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         # Agents outside openlanes (W31). A dry run claims nothing, so it
         # asks nothing either.
@@ -204,9 +193,10 @@ module OpenLanes
         @locks = PlanLocks.new(agent_locks: @agent_locks)
         @verifying = {}
         @said_verifying = {}
-        @said_merging = {}
-        @merges_polled = nil
-        @finished = carried_over
+        @finishes = Finishes.new(runner:, clock:)
+        @records = Recovery::Records.new(dry_run: runner.dry_run?)
+        @stranded = Recovery::Stranded.new(runner:, state:, records: @records, clock:)
+        build_steps(watch)
       end
 
       # @return [Array<OpenLanes::Engine::Dispatcher::Job>]
@@ -235,7 +225,7 @@ module OpenLanes
 
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def run
-        journal!(:run_started, jobs: @runner.jobs)
+        @feed.append(:run_started, jobs: @runner.jobs)
         resume_stranded
         loop do
           tick
@@ -243,7 +233,7 @@ module OpenLanes
 
           @sleeper.call(TICK)
         end
-        journal!(:run_ended, reason: Execution::Control.quit? ? "quit" : "fixed point")
+        @feed.append(:run_ended, reason: Execution::Control.quit? ? "quit" : "fixed point")
         @attempts
       end
 
@@ -260,16 +250,16 @@ module OpenLanes
           @before_tick.each { |hook| hook.call(self) }
           reap
           finish_discards
-          unblock_answered
+          @unblocking.call
           convert_questions
           poll
           ask_for_time
           drain_mail
-          watch_pull_requests
+          @watching&.call
           arbitrate
           settle_verifications
-          settle_merges
-          upkeep_pull_requests
+          @merges.call
+          @sweeps.call
           # On threads: a kill waits out TERM before KILL, and the board must not.
           @running.each { |job| Thread.new { job.handle.kill!(grace: 0, reason: :quit) } } if Execution::Control.overdue?
           dispatch unless Execution::Control.quit? || resting?
@@ -326,7 +316,7 @@ module OpenLanes
       def extend(key, seconds)
         job = @running.find { |j| j.key == key } or return
         job.handle&.extend!(seconds)
-        journal!(:extension, plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name, seconds:)
+        @feed.append(:extension, plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name, seconds:)
       end
 
       # A person's answer to an `X<n>` request (E1). A time choice reaches
@@ -546,7 +536,7 @@ module OpenLanes
         Board.new(started_at: @started_at,
           status: run_status,
           plans: (@running.map { |j| j.task.subject.feature.ordinal.to_s } + @recent.map { |r| r[:row].ordinal } +
-                  waiting + @mutex.synchronize { @finished.keys }).uniq,
+                  waiting + @finishes.ordinals).uniq,
           up:,
           down:,
           rows: rows,
@@ -554,11 +544,27 @@ module OpenLanes
           running: @running.size,
           live_up: @running.sum { |j| j.up.to_i },
           live_down: @running.sum { |j| j.down.to_i },
-          waiting_on: @waiting_on.dup,
+          waiting_on: (@watching&.waiting_on || {}).dup,
           jobs: @runner.jobs)
       end
 
       private
+
+      # The tick's polls and drains, each a class of its own (045), handed
+      # what they need of this loop as callables.
+      #
+      # @param watch [PrWatch, nil]
+      # @return [void]
+      def build_steps(watch)
+        context = Steps::Context.new(runner: @runner,
+          busy:   method(:untouchable),
+          wake:   method(:wake!),
+          reopen: ->(ordinal) { @finished_plans.delete(ordinal) })
+        @merges = Steps::Merges.new(context)
+        @sweeps = Steps::Sweeps.new(context, resolve: method(:resolve_conflict))
+        @watching = watch && Steps::Watch.new(context, watch:, finishes: @finishes, state: @state)
+        @unblocking = Unblocking.drainer(context, history: method(:clear_blocked))
+      end
 
       # @return [Symbol]
       def run_status
@@ -638,106 +644,16 @@ module OpenLanes
         !held.nil?
       end
 
-      # ---- pull requests a person owes (M4) ---------------------------------
-
-      # The `gh` call runs on a thread of its own, so a slow GitHub never
-      # stretches the one-second tick; its outcomes are applied on the first
-      # tick after it returns, here, where every other rename happens.
-      #
-      # @return [void]
-      def watch_pull_requests
-        return unless @watch
-
-        if @watching && !@watching.alive?
-          settle_watch(@watching.value)
-          @watching = nil
-        end
-        return if @watching || !@watch.due?
-
-        subjects = @runner.in_scope.reject { untouchable.include?(it.feature.ordinal.to_s) }
-        @watching = Thread.new do
-          @watch.poll(subjects)
-        # StandardError, not only OpenLanes::Error: `#value` re-raises whatever
-        # ended the thread, so a stray JSON::ParserError or Errno from `gh`
-        # would otherwise end the whole run on the next tick.
-        rescue StandardError => e
-          UI.log("pull requests unwatched this time: #{e.message.lines.first.to_s.strip}", level: :warn)
-          nil
-        end
-      end
-
-      # @param outcomes [Array<OpenLanes::Engine::PrWatch::Outcome>, nil] nil when the poll failed
-      # @return [void]
-      def settle_watch(outcomes)
-        return if outcomes.nil?
-
-        @waiting_on = outcomes.select { it.kind == :waiting }.group_by(&:plan).transform_values { it.map(&:pr) }
-        # Every agent defined, not this run's roster: the mail waits in the
-        # plan folder for whichever run next starts the builders, and a run
-        # typed with `--agent hansolo-reviewer` must not lose it.
-        effects = PrOutcomes.new(tree_dir: @runner.tree.dir,
-          agents: Agents::Registry.new(dir: @runner.agents.dir),
-          events: @runner.events)
-        outcomes.each do |outcome|
-          next if outcome.kind == :waiting || untouchable.include?(outcome.plan)
-
-          applied = effects.apply(outcome) or next
-          @finished_plans.delete(applied.plan) if applied.to
-          keep_finished(applied.plan)
-          UI.log("#{applied.plan}: #{applied.note}#{" → #{Plans::STATUS_BY_KEY.fetch(applied.to)}" if applied.to}")
-          wake!
-        end
-        @state&.waiting_on = @waiting_on
-      end
-
       # ---- finished plans ---------------------------------------------------
 
-      # The one plan that finished last before this engine started, so a
-      # restarted board is not empty of what it just did, and not crowded
-      # with everything it ever did either.
-      #
-      # @return [Hash{String => OpenLanes::Plans::PlanState::Finished}]
-      def carried_over
-        latest = @runner.tree.subjects.reject { @runner.foreign?(it) }.filter_map { |subject|
-          finished = Plans::PlanState.for(subject.feature.path).finished
-          [subject.feature.ordinal.to_s, finished] if finished
-        }.max_by { |_, finished| finished.at }
-        latest ? [latest].to_h : {}
-      end
-
-      # Record an approval or a merge, and keep the plan on the board for the
-      # rest of the run. A dry run writes nothing, but still shows it.
-      #
       # @param subject [OpenLanes::Plans::Subject]
-      # @param kind [String] one of {Plans::PlanState::FINISH_KINDS}
+      # @param kind [String] see {Finishes#finish}
       # @return [void]
-      def finish(subject, kind)
-        at = @clock.now
-        kept = @runner.dry_run? ? Plans::PlanState::Finished.new(kind:, at:) : Plans::PlanState.for(subject.feature.path).finish!(kind, at:)
-        @mutex.synchronize { @finished[subject.feature.ordinal.to_s] = kept }
-      end
+      def finish(subject, kind) = @finishes.finish(subject, kind)
 
-      # Read back what {PrOutcomes} wrote: a merge joins the board's finished
-      # plans, a rejection leaves them. Read rather than told, so the watch's
-      # one record of it is the only one.
-      #
-      # @param ordinal [String]
-      # @return [void]
-      def keep_finished(ordinal)
-        subject = fresh_by(Plans::Ordinal.parse(ordinal)) or return
-        finished = Plans::PlanState.for(subject.feature.path).finished
-        @mutex.synchronize { finished ? @finished[ordinal] = finished : @finished.delete(ordinal) }
-      end
-
-      # An agent is starting on the plan, so it is not finished any more: the
-      # board would otherwise show an approved row over a rebuild.
-      #
       # @param subject [OpenLanes::Plans::Subject]
       # @return [void]
-      def unfinish(subject)
-        @mutex.synchronize { @finished.delete(subject.feature.ordinal.to_s) }
-        Plans::PlanState.for(subject.feature.path).unfinish! unless @runner.dry_run?
-      end
+      def unfinish(subject) = @finishes.unfinish(subject)
 
       # ---- discarding -------------------------------------------------------
 
@@ -769,43 +685,16 @@ module OpenLanes
         ["refused", "#{ordinal}'s agents were stopped, but: #{e.message}"]
       end
 
-      # ---- unblocking -------------------------------------------------------
+      # ---- unblocking ------------------------------------------------------
 
-      # A blocked plan whose questions are all answered goes to the agent
-      # that handles its state, the way `openlanes unblock` hands it over
-      # (W10): the page's answer is what a person typing that command used
-      # to be. Each answer set is tried once; a failed drain waits for
-      # `blocked.md` to change. An answer the broker would not take goes back
-      # to the page ({#reopen}). Drains finished since the last tick are
-      # settled first, so the plan is picked up again in this run.
+      # A drained plan's agents get their rounds back: a block is a question,
+      # not the agent running out of turns.
       #
+      # @param ordinal [String]
       # @return [void]
-      def unblock_answered
-        @unblocking.reject { it.thread.alive? }.each { settle_unblock(it) }
-        return if @runner.dry_run? || Execution::Control.quit? || Execution::Control.paused?
-
-        blocked = @runner.in_scope.select { BLOCKED.include?(it.status.key) }
-        return if blocked.empty?
-
-        busy = untouchable
-        blocked.each do |subject|
-          ordinal = subject.feature.ordinal.to_s
-          next if busy.include?(ordinal)
-
-          questions = Lifecycle::Unblocker.questions(subject)
-          next if questions.empty? || !questions.all?(&:answered)
-
-          answers = subject.read("blocked.md")
-          next if @unblock_tried[ordinal] == answers
-
-          # The drainer advances nothing itself, so {Registry#for_status},
-          # which offers only agents that move a plan on, never names it.
-          agent = @runner.agents.all.find { it.handles?(subject.status) } or next
-          next unless @runner.claim(subject)
-
-          @unblock_tried[ordinal] = answers
-          @unblock_failed.delete(ordinal)
-          start_unblock(agent, subject)
+      def clear_blocked(ordinal)
+        @mutex.synchronize do
+          @history.each { |(plan, _), entries| entries.reject! { it[:status] == "Blocked" } if plan == ordinal }
         end
       end
 
@@ -816,95 +705,6 @@ module OpenLanes
       # @return [void]
       def convert_questions
         @conversions.call(busy: untouchable, start: !(@runner.dry_run? || Execution::Control.quit?))
-      end
-
-      # @param agent [OpenLanes::Agents::Agent]
-      # @param subject [OpenLanes::Plans::Subject]
-      # @return [void]
-      def start_unblock(agent, subject)
-        unblocker = Lifecycle::Unblocker.new(tree: Plans::Tree.new(dir: @runner.tree.dir),
-          agent:,
-          executor: @runner.executor,
-          commit: true,
-          events: @runner.events)
-        UI.log("unblocking: every question answered", plan: subject.feature.ordinal.to_s, agent: agent.name)
-        unblock = Unblock.new(ordinal: subject.feature.ordinal.to_s,
-          agent: agent.name,
-          rounds: Plans::PlanState.for(subject.feature.path).journal(agent.name).size)
-        unblock.thread = Thread.new do
-          Thread.current.report_on_exception = false
-          unblock.outcome = begin
-            unblocker.drain(subject)
-          rescue StandardError => e
-            e
-          end
-        end
-        @unblocking << unblock
-      end
-
-      # A drained plan's agents get their rounds back: a block is a question,
-      # not the agent running out of turns.
-      #
-      # @param unblock [OpenLanes::Engine::Dispatcher::Unblock]
-      # @return [void]
-      def settle_unblock(unblock)
-        @unblocking.delete(unblock)
-        outcome = unblock.outcome
-        if outcome.is_a?(Exception) || !outcome.ok
-          note = outcome.is_a?(Exception) ? outcome.message : outcome.note
-          @unblock_failed[unblock.ordinal] = note
-          return UI.log("unblock failed: #{note}", level: :warn, plan: unblock.ordinal)
-        end
-
-        @unblock_failed.delete(unblock.ordinal)
-        reopen(unblock, outcome) unless outcome.waiting.empty?
-        @mutex.synchronize do
-          @history.each { |(ordinal, _), entries| entries.reject! { it[:status] == "Blocked" } if ordinal == unblock.ordinal }
-        end
-        @finished_plans.delete(unblock.ordinal)
-        wake!
-        UI.log(outcome.cleared? ? "unblocked: blocked.md retired" : "unblock folded #{outcome.folded.size}",
-          plan: unblock.ordinal)
-      end
-
-      # A broker that ran cleanly and left an answer under its question did
-      # not accept it: it asks for a), b) or c) and was told something else.
-      # Left there, the page counts the question answered and hides it, and
-      # the dispatcher never retries an answer set it already tried, so the
-      # plan waits on a person who is never asked. The answer comes out and
-      # the question goes back on the page, with what was said and why the
-      # broker would not take it.
-      #
-      # @param unblock [OpenLanes::Engine::Dispatcher::Unblock]
-      # @param outcome [OpenLanes::Lifecycle::Unblocker::Outcome]
-      # @return [void]
-      def reopen(unblock, outcome)
-        path = File.join(outcome.subject.feature.path, "blocked.md")
-        text = File.read(path)
-        answers = Plans::BlockedFile.answers(text)
-        why = refusal(unblock, outcome.subject)
-        outcome.waiting.each do |question|
-          said = Plans::Journal.clip(answers[question.number].to_s.gsub(/<!--.*?-->|^Answered by .*$/, "").split.join(" "))
-          text = Plans::BlockedFile.reject(text, question.number, "> **Answer not accepted:** #{said}\n>\n> #{why}") || text
-          UI.log("answer to B#{question.number} not accepted: #{why}", level: :warn, plan: unblock.ordinal)
-        end
-        File.write(path, text)
-      rescue SystemCallError => e
-        UI.log("could not reopen the unaccepted answers: #{e.message}", level: :warn, plan: unblock.ordinal)
-      end
-
-      # What the broker wrote in its journal during this drain, last line
-      # first, since that is where it says what it did with the answers.
-      #
-      # @param unblock [OpenLanes::Engine::Dispatcher::Unblock]
-      # @param subject [OpenLanes::Plans::Subject]
-      # @return [String]
-      def refusal(unblock, subject)
-        rounds = Plans::PlanState.for(subject.feature.path).journal(unblock.agent).drop(unblock.rounds.to_i)
-        said = rounds.flat_map(&:entries).last&.text
-        said ? "#{unblock.agent}: #{Plans::Journal.clip(said)}" : "#{unblock.agent} left it unfolded and said nothing"
-      rescue OpenLanes::Error, JSON::ParserError
-        "#{unblock.agent} left it unfolded"
       end
 
       # @param job [OpenLanes::Engine::Dispatcher::Job]
@@ -969,59 +769,8 @@ module OpenLanes
 
       # ---- starting ---------------------------------------------------------
 
-      # Started stages a dead run left behind get the harness's own line, and
-      # the agent starts again from its resume note without spending a round:
-      # the harness died, not the agent. Asking a person to keep or discard
-      # the work got the same answer every time, so nobody is asked.
-      #
-      # Two records can say a stage was stranded: the run's own state file,
-      # which holds the pid and host of every stage it started, and the
-      # plan's `state.json`, whose stages carry a `run` only when an older
-      # release wrote them. The pid and host are about one machine, so new
-      # stages no longer put them in a committed file; the second check stays
-      # so a crash under the old layout still resumes. A stage either names is
-      # resumed once.
-      #
-      # @return [void]
-      def resume_stranded
-        resumed = []
-        if @state
-          @state.load
-          @state.stranded.each do |ordinal, stage|
-            subject = @runner.tree.reload.find(Plans::Ordinal.parse(ordinal)) or next
-            next if @runner.foreign?(subject)
-
-            resumed << interrupt_stranded(subject, stage["agent"], stage["round"])
-          end
-        end
-        unless @runner.dry_run?
-          @runner.in_scope.reject { @runner.foreign?(it) }.each do |subject|
-            Plans::PlanState.for(subject.feature.path).stranded.each do |stage|
-              next if resumed.include?([subject.feature.ordinal.to_s, stage["agent"], stage["round"]])
-
-              resumed << interrupt_stranded(subject, stage["agent"], stage["round"])
-            end
-          end
-        end
-        @state&.begin_run!(root: @runner.root)
-      end
-
-      # @param subject [OpenLanes::Plans::Subject]
-      # @param name [String] the agent
-      # @param round [Integer]
-      # @return [Array(String, String, Integer), nil] what was resumed
-      def interrupt_stranded(subject, name, round)
-        agent = @runner.agents.find(name) or return nil
-        ordinal = subject.feature.ordinal.to_s
-        harness_resume(subject, agent, round, "harness died")
-        write_interrupted(subject, agent, round, "harness died")
-        Plans::Mailbox.new(dir: subject.feature.path).append(from: "openlanes",
-          to: agent.name,
-          body: "RESUME: the harness died during your round #{round}; carry on from your last resume note")
-        @state&.record(ordinal, agent: agent.name, round:, status: "Interrupted", exit: "harness died")
-        stage!(subject, agent, round, status: "Interrupted", note: "harness died", finished_at: @clock.now.iso8601)
-        [ordinal, agent.name, round]
-      end
+      # @return [void] see {Recovery::Stranded}
+      def resume_stranded = @stranded.call
 
       # @return [void]
       def dispatch
@@ -1120,11 +869,12 @@ module OpenLanes
         # Every reason, not the first: a run idle on answers and on a held
         # plan named only the answers, and the held plan looked forgotten.
         reasons = []
-        failed = waiting.select { @unblock_failed.key?(it) }
+        failures = @unblocking.failures
+        failed = waiting.select { failures.key?(it) }
         blocked = waiting - failed
         reasons << "waiting for answers on #{blocked.join(", ")}" unless blocked.empty?
         unless failed.empty?
-          reasons << "unblock failed on #{failed.map { "#{it} (#{@unblock_failed[it]})" }.join(", ")}; " \
+          reasons << "unblock failed on #{failed.map { "#{it} (#{failures[it]})" }.join(", ")}; " \
                      "edit blocked.md to try again"
         end
         reasons.concat(@verifying.map { |plan, note| "#{plan} #{note}" })
@@ -1391,7 +1141,7 @@ module OpenLanes
           model:      model_for(agent, subject),
           file:       agent.ledger.first,
           started_at: @clock.now.iso8601)
-        journal!(:plan_assigned, plan: ordinal, agent: agent.name, round:)
+        @feed.append(:plan_assigned, plan: ordinal, agent: agent.name, round:)
         UI.log("started", **task.log_fields)
         @invocations[job.key] = @clock.now
         @runner.events.record(:agent_started, **event_fields(job))
@@ -1581,7 +1331,7 @@ module OpenLanes
           job.status = entry&.status
           record_session(job)
           record_journal(job)
-          journal_progress(job)
+          @feed.progress(job)
           @state&.record(job.task.subject.feature.ordinal.to_s,
             agent:  job.task.agent.name,
             round:  job.task.round,
@@ -1653,10 +1403,10 @@ module OpenLanes
           # What it printed since the last tick, before anything is made of
           # its outcome: a killed round keeps every line it got out.
           record_journal(job)
-          journal_progress(job)
+          @feed.progress(job)
           attempt = settle(job)
           announce(job, attempt)
-          journal_end(job, attempt)
+          @feed.ended(job, attempt)
           # A requeue, or a compaction that stopped the agent and then could
           # not happen, hands the round back: the stop was a person's choice.
           requeued = @requeued.delete(job.key)
@@ -1823,43 +1573,17 @@ module OpenLanes
         end
       end
 
-      # The resume record the agent did not leave: killed when its grace ran
-      # out, dead, or stopped by the harness. Only what the harness saw, its
-      # last ledger line and its last transcript phrase, because that is all
-      # it knows; an agent's own record of this round or a later one stays,
-      # which {Plans::LastKnownState#supersedes?} decides under the plan lock.
-      # Pids, tokens and exit codes stay in `openlanes-state.json`.
-      #
-      # @param subject [OpenLanes::Plans::Subject]
-      # @param agent [OpenLanes::Agents::Agent]
-      # @param round [Integer]
-      # @param reason [String] why the agent stopped
-      # @param last [OpenLanes::Plans::Ledger::Entry, nil] read before the
-      #   harness wrote its own Interrupted line
-      # @param phrase [String, nil] the transcript's last phrase
-      # @return [void]
+      # @return [void] see {Recovery::Records#resume}
       def harness_resume(subject, agent, round, reason, last: last_line(subject, agent), phrase: nil)
-        return if @runner.dry_run?
-
-        seen = "last ledger line: #{last.status}, round #{last.round}#{": #{last.note}" if last.note}" if last
-        note = [reason, seen, ("last seen: #{phrase}" if phrase && !phrase.empty?)].compact.join("; ")
-        entry = Plans::LastKnownState.new(source: "harness", round:, status: "Interrupted", note:)
-        Plans::PlanState.for(subject.feature.path).record_last_known(agent.name, entry)
-      rescue SystemCallError, OpenLanes::Error => e
-        UI.log("resume record not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+        @records.resume(Recovery::Round.new(subject:, agent:, round:), reason, last:, phrase:)
       end
 
-      # @param subject [OpenLanes::Plans::Subject]
-      # @param agent [OpenLanes::Agents::Agent]
-      # @return [OpenLanes::Plans::Ledger::Entry, nil]
-      def last_line(subject, agent) = Plans::Ledger.last_for(Plans::Ledger.read(subject.feature.path, agent.ledger), agent.name)
+      # @return [OpenLanes::Plans::Ledger::Entry, nil] see {Recovery::Records#last_line}
+      def last_line(subject, agent) = @records.last_line(Recovery::Round.new(subject:, agent:, round: nil))
 
-      # The harness signs in `state.json`, as the agents do through
-      # `openlanes state sign`; nothing it writes lands in the plan's documents.
-      #
-      # @return [void]
+      # @return [void] see {Recovery::Records#interrupted}
       def write_interrupted(subject, agent, round, reason)
-        Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name, round:, status: "Interrupted", note: reason)
+        @records.interrupted(Recovery::Round.new(subject:, agent:, round:), reason)
       end
 
       # A Completed entry: publish if the move is to 🟢, then move the folder,
@@ -1975,60 +1699,7 @@ module OpenLanes
         base.with(ok: false, status: "Completed", note: "#{base.note}; merge not settled: #{e.message}")
       end
 
-      # One pass over every assessed 🏁 plan, at most once per
-      # {MERGE_POLL} seconds: GitHub is asked three times per pull request.
-      #
-      # @return [void]
-      def settle_merges
-        merging = @runner.merging or return
-        return if @runner.dry_run?
-
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        return if @merges_polled && now - @merges_polled < MERGE_POLL
-
-        @merges_polled = now
-        busy = untouchable
-        @runner.in_scope.each do |subject|
-          ordinal = subject.feature.ordinal.to_s
-          next if busy.include?(ordinal) || !merging.assessed?(subject)
-
-          result = merging.advance(subject)
-          next if @said_merging[ordinal] == result.note && !result.to
-
-          @said_merging[ordinal] = result.note
-          @finished_plans.delete(ordinal) if result.to
-          UI.log(result.note, plan: ordinal)
-          wake! if result.to || result.merged
-        rescue OpenLanes::Error => e
-          UI.log("merge not settled: #{e.message.lines.first.to_s.strip}", level: :warn, plan: ordinal)
-        end
-        # Read again: a merge above may have queued checkouts, and an agent
-        # started since the first read must keep its HEAD (R5).
-        merging.rebase_queued(busy: untouchable).each { UI.log(it) }
-      end
-
       # ---- pull requests nobody is working on (U1 to U4) --------------------
-
-      # At most once per {MERGE_POLL}, as {#settle_merges}: GitHub is asked
-      # about every rejected pull request, and about every waiting one each
-      # time `main` moves.
-      #
-      # @return [void]
-      def upkeep_pull_requests
-        upkeep = @runner.upkeep or return
-        return if @runner.dry_run?
-
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        return if @upkept && now - @upkept < MERGE_POLL
-
-        @upkept = now
-        upkeep.address.each { UI.log(it) }
-        sweep = upkeep.sweep(@runner.in_scope, busy: untouchable)
-        sweep.notes.each { UI.log(it) }
-        sweep.conflicts.each { resolve_conflict(upkeep, it) }
-      rescue OpenLanes::Error => e
-        UI.log("pull requests not kept up this time: #{e.message.lines.first.to_s.strip}", level: :warn)
-      end
 
       # Rebase a waiting pull request's branch onto `main` in its plan's
       # checkout (U3). Only the scheduling is the dispatcher's: a stop on
@@ -2355,7 +2026,7 @@ module OpenLanes
         subject = fresh(task) or return base.with(ok: false, note: "plan folder vanished")
         remember(subject.feature.ordinal.to_s, task.agent.name, job.state, "Blocked", task.round)
         target = verdict_of(entry) == :product ? :product_blocked : :blocked
-        journal!(:question, plan: subject.feature.ordinal.to_s, agent: task.agent.name, note: target.to_s)
+        @feed.append(:question, plan: subject.feature.ordinal.to_s, agent: task.agent.name, note: target.to_s)
         if subject.machine.may?(target)
           subject.machine.promote!(target)
           base.with(to: target, status: "Blocked", note: "blocked; see blocked.md")
@@ -2444,20 +2115,9 @@ module OpenLanes
           status: job.status)
       end
 
-      # One round in the plan's own `state.json`. A dry run writes nothing, and
-      # a harness that cannot write the file reports it and carries on: the
-      # folder name and the ledger still say what happened.
-      #
-      # @param subject [OpenLanes::Plans::Subject]
-      # @param agent [OpenLanes::Agents::Agent]
-      # @param round [Integer]
-      # @return [void]
-      def stage!(subject, agent, round, **fields)
-        return if @runner.dry_run?
-
-        Plans::PlanState.for(subject.feature.path).stage!(agent: agent.name, round:, **fields)
-      rescue SystemCallError, OpenLanes::Error => e
-        UI.log("state.json not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+      # @return [void] see {Recovery::Records#stage!}
+      def stage!(subject, agent, round, **)
+        @records.stage!(Recovery::Round.new(subject:, agent:, round:), **)
       end
 
       # The session this round carries on (M1): the previous round's, when
@@ -2584,79 +2244,6 @@ module OpenLanes
           @history[[ordinal, job.task.agent.name]].reject! { |h| h[:state] == job.state && h[:round] == job.task.round }
         end
         @finished_plans.delete(ordinal)
-      end
-
-      # One event in the progress journal, when the run keeps one. A disk
-      # that refuses the write is reported, not raised: the agents already
-      # running are worth more than the record of them.
-      #
-      # @return [void]
-      def journal!(kind, **fields)
-        @journal&.append(kind, **fields)
-      rescue SystemCallError, IOError => e
-        UI.log("journal write failed: #{e.class}: #{e.message}", level: :warn)
-      end
-
-      # The agent's pid and start time the first time it is seen, its
-      # session id once its stream names it, and the trace's size whenever
-      # it grew: the in-flight picture a replay rebuilds.
-      #
-      # @param job [OpenLanes::Engine::Dispatcher::Job]
-      # @return [void]
-      def journal_progress(job)
-        return unless @journal
-
-        handle = job.handle
-        pid = handle&.pid or return
-        seen = (@journaled[job.key] ||= {})
-        who = { plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name }
-        unless seen[:pid] == pid
-          seen.replace(pid:, session: handle.session, offset: 0)
-          journal!(:agent_started,
-            **who,
-            round:       job.task.round,
-            pid:,
-            started_at:  Execution::ProcessStart.of(pid)&.utc&.iso8601,
-            session_id:  handle.session,
-            output_file: handle.trace)
-        end
-        if handle.session && seen[:session] != handle.session
-          seen[:session] = handle.session
-          journal!(:agent_session, **who, session_id: handle.session)
-        end
-        offset = handle.trace && File.exist?(handle.trace) ? File.size(handle.trace) : 0
-        return unless offset > seen[:offset]
-
-        seen[:offset] = offset
-        journal!(:agent_offset, **who, offset:)
-      end
-
-      # @param job [OpenLanes::Engine::Dispatcher::Job]
-      # @param attempt [OpenLanes::Engine::Runner::Attempt]
-      # @return [void]
-      def journal_end(job, attempt)
-        return unless @journal
-
-        who = { plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name }
-        journal!(:agent_ended, **who, exit: attempt.ok ? 0 : 1, note: attempt.note.to_s) if @journaled.delete(job.key)
-        return unless attempt.advanced?
-
-        journal!(:transition, plan: who[:plan], from: attempt.from.to_s, to: attempt.to.to_s, event: event_between(attempt.from, attempt.to))
-      end
-
-      # The aasm event that moved +from+ to +to+. A destination names one
-      # forward event, but a retreat lands on the same states by `step_back`,
-      # so the edge, not the destination alone, says which fired.
-      #
-      # @param from [Symbol, #to_sym]
-      # @param to [Symbol, #to_sym]
-      # @return [String]
-      def event_between(from, to)
-        from = from.to_sym
-        to = to.to_sym
-        return "step_back" unless Plans::StateMachine.inbound.fetch(to, []).include?(from)
-
-        Plans::StateMachine.event_for.fetch(to).to_s
       end
 
       # @return [void]

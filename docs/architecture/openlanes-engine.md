@@ -21,9 +21,11 @@ classDiagram
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Dispatcher["Dispatcher"]
   class OpenLanes__Engine__EventJournal["EventJournal"]
+  class OpenLanes__Engine__EventJournal__Feed["EventJournal::Feed"]
   class OpenLanes__Engine__EventJournal__Replay__Agent["EventJournal::Replay::Agent"]
   class OpenLanes__Engine__EventJournal__Replay__InFlight["EventJournal::Replay::InFlight"]
   class OpenLanes__Engine__Extensions["Extensions"]
+  class OpenLanes__Engine__Finishes["Finishes"]
   class OpenLanes__Engine__Merging["Merging"]
   class OpenLanes__Engine__Narrator["Narrator"]
   class OpenLanes__Engine__PlanLocks["PlanLocks"]
@@ -32,11 +34,23 @@ classDiagram
   class OpenLanes__Engine__PrWatch["PrWatch"]
   class OpenLanes__Engine__QualityQuestion__Choice["QualityQuestion::Choice"]
   class OpenLanes__Engine__Rebase["Rebase"]
+  class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
+  class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
+  class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
   class OpenLanes__Engine__StartWorkflow["StartWorkflow"]
   class OpenLanes__Engine__StateFile["StateFile"]
+  class OpenLanes__Engine__Steps__Context["Steps::Context"]
+  class OpenLanes__Engine__Steps__Interval["Steps::Interval"]
+  class OpenLanes__Engine__Steps__Merges["Steps::Merges"]
+  class OpenLanes__Engine__Steps__Sweeps["Steps::Sweeps"]
+  class OpenLanes__Engine__Steps__Watch["Steps::Watch"]
   class OpenLanes__Engine__Tally["Tally"]
+  class OpenLanes__Engine__Unblocking__Drain["Unblocking::Drain"]
+  class OpenLanes__Engine__Unblocking__Drainer["Unblocking::Drainer"]
+  class OpenLanes__Engine__Unblocking__Reopener["Unblocking::Reopener"]
+  class OpenLanes__Engine__Unblocking__Settler["Unblocking::Settler"]
   class OpenLanes__Engine__Upkeep__Actions["Upkeep::Actions"]
   class OpenLanes__Engine__Upkeep__Addressing["Upkeep::Addressing"]
   class OpenLanes__Engine__Upkeep__Conflict["Upkeep::Conflict"]
@@ -118,17 +132,24 @@ classDiagram
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Report : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Execution__Child : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Plans__ReviewLabel : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Board : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Conversions : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__EventJournal__Feed : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Extensions : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Finishes : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Merging : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__PlanLocks : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__PlanLocks__Refused : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__PrOutcomes : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Rebase : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Records : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Round : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Stranded : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Runner : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Context : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Merges : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Sweeps : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Watch : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Verification__AppSession : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Verification__Outcome : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Error : uses
@@ -136,11 +157,9 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Execution__Clock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Lifecycle__Resync__Dirs : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Live__Snapshot : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Journal__Entry : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__LastKnownState : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ledger__Entry : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ledger__Reading : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Lock : uses
@@ -153,8 +172,13 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__UI : uses
   OpenLanes__Engine__EventJournal ..> OpenLanes__UI : uses
+  OpenLanes__Engine__EventJournal__Feed ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Engine__EventJournal__Feed ..> OpenLanes__UI : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__Finishes ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__PrWatch : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__Verification__Outcome : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Error : uses
@@ -184,6 +208,14 @@ classDiagram
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Vcs__Refresh : uses
+  OpenLanes__Engine__Recovery__Records ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__LastKnownState : uses
+  OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Recovery__Records ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Engine__Recovery__Round : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
@@ -219,7 +251,25 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__UI : uses
   OpenLanes__Engine__StartWorkflow ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__StartWorkflow --|> OpenLanes__Engine__RunWorkflow : inherits
+  OpenLanes__Engine__Steps__Merges ..> OpenLanes__Engine__Steps__Interval : uses
+  OpenLanes__Engine__Steps__Merges ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Steps__Merges ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__Engine__Steps__Interval : uses
+  OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Steps__Watch ..> OpenLanes__Agents__Registry : uses
+  OpenLanes__Engine__Steps__Watch ..> OpenLanes__Engine__PrOutcomes : uses
+  OpenLanes__Engine__Steps__Watch ..> OpenLanes__UI : uses
   OpenLanes__Engine__Tally ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Engine__Unblocking__Drain : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Lifecycle__Unblocker : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Unblocking__Reopener ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Unblocking__Reopener ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Unblocking__Reopener ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Unblocking__Settler ..> OpenLanes__UI : uses
   OpenLanes__Engine__Upkeep__Actions ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Upkeep__Actions ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Upkeep__Addressing ..> OpenLanes__Error : uses
