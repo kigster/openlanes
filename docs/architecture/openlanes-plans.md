@@ -61,7 +61,6 @@ classDiagram
   OpenLanes__Plans__ReviewLabel ..> OpenLanes__Error : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
-  OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses
   OpenLanes__Plans__StateMachine__Refused --|> OpenLanes__Error : inherits
   OpenLanes__Plans__Subject ..> OpenLanes__Error : uses

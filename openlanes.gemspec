@@ -93,6 +93,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-cli-ui", "~> 0.5"
   spec.add_dependency "dry-inflector"
   spec.add_dependency "dry-monads"
+  # Wires the application (A1): components from lib/ through the Zeitwerk
+  # loader below, collaborators by Deps[...], providers for the outside world.
+  spec.add_dependency "dry-system", "~> 1.2"
   spec.add_dependency "fuzzy-string-match"
   spec.add_dependency "inquirex-llm", "~> 0.12"
   # Opens the control room in the browser when `openlanes run` starts the API server.

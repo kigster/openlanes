@@ -567,7 +567,7 @@ module OpenLanes
       def upkeep_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Upkeep.keeper(github: Vcs.github, push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
+        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
       end
 
       # What the runner is told about idling past its fixed points. With its

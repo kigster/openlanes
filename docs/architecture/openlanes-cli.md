@@ -25,7 +25,6 @@ classDiagram
   class OpenLanes__CLI__Linear__Import["Linear::Import"]
   class OpenLanes__CLI__Linear__Projects["Linear::Projects"]
   class OpenLanes__CLI__Linear__Team["Linear::Team"]
-  class OpenLanes__CLI__Link["Link"]
   class OpenLanes__CLI__ListPlans["ListPlans"]
   class OpenLanes__CLI__Mail__Ack["Mail::Ack"]
   class OpenLanes__CLI__Mail__Locating["Mail::Locating"]
@@ -160,8 +159,6 @@ classDiagram
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__API : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__Survey : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__UI : uses
-  OpenLanes__CLI__Link --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__Link ..> OpenLanes__Error : uses
   OpenLanes__CLI__ListPlans --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Ack --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Ack ..|> OpenLanes__CLI__Mail__Locating : includes

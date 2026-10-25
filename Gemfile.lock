@@ -11,6 +11,7 @@ PATH
       dry-cli-ui (~> 0.5)
       dry-inflector
       dry-monads
+      dry-system (~> 1.2)
       fuzzy-string-match
       inquirex-llm (~> 0.12)
       launchy (~> 3.1)
@@ -59,6 +60,9 @@ GEM
     coverage-badge (0.1.1)
     debug_inspector (1.2.0)
     diff-lcs (1.6.2)
+    dry-auto_inject (1.2.1)
+      dry-core (~> 1.1)
+      zeitwerk (~> 2.6)
     dry-cli (1.4.1)
     dry-cli-autocomplete (0.6.0)
       dry-cli (>= 1.0)
@@ -81,6 +85,9 @@ GEM
       tty-screen (~> 0.8)
       tty-spinner (~> 0.9)
       tty-table (~> 0.12)
+    dry-configurable (1.4.0)
+      dry-core (~> 1.0)
+      zeitwerk (~> 2.6)
     dry-core (1.2.0)
       concurrent-ruby (~> 1.0)
       logger
@@ -90,6 +97,11 @@ GEM
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.1)
       zeitwerk (~> 2.6)
+    dry-system (1.2.5)
+      dry-auto_inject (~> 1.1)
+      dry-configurable (~> 1.3)
+      dry-core (~> 1.1)
+      dry-inflector (~> 1.1)
     fuzzy-string-match (1.0.1)
       RubyInline (>= 3.8.6)
     hana (1.3.7)
@@ -286,13 +298,16 @@ CHECKSUMS
   coverage-badge (0.1.1) sha256=f4ada4edadfa98cd99a50ab49f04ffc1af926e9f00513a063b774bd683eda131
   debug_inspector (1.2.0) sha256=9bdfa02eebc3da163833e6a89b154084232f5766087e59573b70521c77ea68a2
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
+  dry-auto_inject (1.2.1) sha256=dedddc8a13fcdf320def7d6741ce7d6da48d749c6d43175ef0072c0be2ba47c8
   dry-cli (1.4.1) sha256=b8015bb76c708aa8705a36faf694973e75eeeffca39b89c8e172dc6f66a7d874
   dry-cli-autocomplete (0.6.0) sha256=4a8b904cc802168ad1657a941cdf8dbec1915b4c825a35eb049fb0ac037947ca
   dry-cli-help (0.5.1) sha256=b08a09bed8c36d9ab4c60f20bd17aeefc5615c4cca41e64e1bcc5845a55e83b5
   dry-cli-ui (0.7.0) sha256=2efc8570a0dbe8c0c6e31f2767ce18ca14d7ca639301206ef100adc69282c51d
+  dry-configurable (1.4.0) sha256=e35d1b5f3c081753ef361f564919db79000f32cfa6f20ee3a3ba5921b41b73ce
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
   dry-monads (1.11.0) sha256=ffc188512bf90c8ace135a1171a6791e561d5e3a1de6195ce5f9bc190c81e31b
+  dry-system (1.2.5) sha256=a02f57c18cbcc6c9c4ea99a7eed0afc830263d2051c855a46a7229ea3708d143
   fuzzy-string-match (1.0.1) sha256=0740e515b3d1f7a40bd7f058a67a63682a9f4d98e4a95a9eb670aa562a047549
   hana (1.3.7) sha256=5425db42d651fea08859811c29d20446f16af196308162894db208cac5ce9b0d
   inquirex (0.12.1) sha256=ec9bda0f2de064935144c4ec258c81b939c6883dfbe3a58ef6a6568c909b075e
