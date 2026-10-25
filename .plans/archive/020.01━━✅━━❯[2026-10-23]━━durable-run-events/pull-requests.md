@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 105 | [\[020.01\](A) Durable Run Events](https://github.com/kigster/openlanes/pull/105) | Open 🟡 |
+| 105 | [\[020.01\](A) Durable Run Events](https://github.com/kigster/openlanes/pull/105) | Merged 🟣 |
 
 ## Integration proof (rey-frontend, round 1)
 

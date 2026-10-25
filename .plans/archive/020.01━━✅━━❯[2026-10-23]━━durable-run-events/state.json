@@ -5,8 +5,8 @@
     "ordinal": "020.01",
     "slug": "durable-run-events"
   },
-  "state": "building",
-  "updated_at": "2026-10-23T19:01:39-07:00",
+  "state": "approved",
+  "updated_at": "2026-10-23T22:31:42-07:00",
   "stages": [
     {
       "agent": "leah-researcher",
@@ -391,7 +391,7 @@
       "read": "yes"
     }
   ],
-  "moves": 7,
+  "moves": 8,
   "extensions": [
     {
       "number": 1,
@@ -611,5 +611,9 @@
         "spec/openlanes/config_spec.rb"
       ]
     }
+  },
+  "finished": {
+    "kind": "merged",
+    "at": "2026-10-24T05:31:42Z"
   }
 }
