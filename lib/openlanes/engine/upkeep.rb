@@ -42,12 +42,17 @@ module OpenLanes
 
       module_function
 
-      # @param github [Vcs::GitHub]
+      # The GitHub client and the clock come from {Container} unless given,
+      # so a spec stubs `github` or `clock` there instead of threading a
+      # double through every caller. +push+ is bound to the run's publisher,
+      # which is not a component, so it is always passed.
+      #
       # @param push [#call] pushes a checkout's HEAD to its branch, raising
       #   {OpenLanes::Error} when refused
+      # @param github [Vcs::GitHub]
       # @param clock [#call]
       # @return [Keeper]
-      def keeper(github:, push:, clock: -> { Clock::System.now })
+      def keeper(push:, github: Container["github"], clock: -> { Container["clock"].now })
         owed = Owed.new
         Keeper.new(addressing: Addressing.new(github:),
           sweep: Sweep.new(github:, owed:, actions: Actions.new(github:, clock:)),

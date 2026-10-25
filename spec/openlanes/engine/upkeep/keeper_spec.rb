@@ -23,4 +23,13 @@ RSpec.describe OpenLanes::Engine::Upkeep::Keeper do
 
     expect(pushes).to eq([:checkout])
   end
+
+  it "reaches GitHub through the container when no client is passed" do
+    OpenLanes::Container.stub("github", github)
+    allow(github).to receive(:open_pulls_labelled).and_return({})
+
+    OpenLanes::Engine::Upkeep.keeper(push: ->(_checkout) {}).address
+
+    expect(github).to have_received(:open_pulls_labelled)
+  end
 end
