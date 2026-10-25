@@ -115,6 +115,10 @@ format:
 update-workflow:
     bundle exec openlanes docs -o docs/WORKFLOW.md
 
+# Regenerate the class diagrams of OpenLanes itself in docs/architecture
+update-architecture:
+    bundle exec openlanes uml self --directory docs/architecture
+
 # Run all the tests
 test *args: web-build
     export ENVIRONMENT=test; {{ rbenv }} rspec {{ args }}

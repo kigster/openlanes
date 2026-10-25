@@ -11,7 +11,7 @@ Every command that reads or writes plans first finds the project root and works 
 1. a directory holding `.openlanes.yml` or `.plans/`;
 1. failing that, a directory holding `.git`.
 
-Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
+Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `uml`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
 
 ### `openlanes init`
 

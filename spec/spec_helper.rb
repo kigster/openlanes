@@ -81,6 +81,7 @@ require_relative "support/origin_repo"
 require_relative "support/fake_gh_env"
 require_relative "support/test_redis"
 require_relative "support/port_window"
+require_relative "support/ruby_project"
 
 TestRedis.scrub!
 

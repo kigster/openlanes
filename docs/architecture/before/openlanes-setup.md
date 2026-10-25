@@ -1,0 +1,34 @@
+<!-- Generated once by `openlanes uml` from main at a80651d, before the 4.0 refactor. Frozen: do not regenerate or edit. -->
+
+# OpenLanes::Setup
+
+```mermaid
+classDiagram
+  class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Setup__Check["Check"]
+  class OpenLanes__Setup__CiDetector["CiDetector"]
+  class OpenLanes__Setup__CiScaffold["CiScaffold"]
+  class OpenLanes__Setup__Extractor["Extractor"]
+  class OpenLanes__Setup__Interview["Interview"]
+  class OpenLanes__Setup__Machine["Machine"]
+  class OpenLanes__Setup__Stack["Stack"]
+  class OpenLanes__Setup__StackDetector["StackDetector"]
+  class OpenLanes__Setup__StackDocument["StackDocument"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Setup__Extractor ..> OpenLanes__Config : uses
+  OpenLanes__Setup__Extractor ..> OpenLanes__UI : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Config : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Error : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__CiScaffold : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__Stack : uses
+  OpenLanes__Setup__Machine ..> OpenLanes__Config : uses
+  OpenLanes__Setup__Machine ..> OpenLanes__Error : uses
+  OpenLanes__Setup__Machine ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Setup__Machine ..> OpenLanes__Setup__Check : uses
+  OpenLanes__Setup__StackDetector ..> OpenLanes__Setup__Stack : uses
+```
