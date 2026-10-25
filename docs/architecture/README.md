@@ -11,6 +11,7 @@ classDiagram
   class OpenLanes__Arbitration["OpenLanes::Arbitration"]
   class OpenLanes__CLI["OpenLanes::CLI"]
   class OpenLanes__Clock["OpenLanes::Clock"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Coverage["OpenLanes::Coverage"]
   class OpenLanes__Engine["OpenLanes::Engine"]
   class OpenLanes__Evals["OpenLanes::Evals"]
@@ -31,6 +32,7 @@ classDiagram
   class OpenLanes__Web["OpenLanes::Web"]
   OpenLanes ..> OpenLanes__Apps : 1
   OpenLanes ..> OpenLanes__CLI : 1
+  OpenLanes ..> OpenLanes__Container : 1
   OpenLanes ..> OpenLanes__Coverage : 1
   OpenLanes ..> OpenLanes__Live : 1
   OpenLanes ..> OpenLanes__Plans : 4
@@ -77,7 +79,8 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Agents : 6
   OpenLanes__Engine ..> OpenLanes__Apps : 4
   OpenLanes__Engine ..> OpenLanes__Arbitration : 5
-  OpenLanes__Engine ..> OpenLanes__Clock : 11
+  OpenLanes__Engine ..> OpenLanes__Clock : 10
+  OpenLanes__Engine ..> OpenLanes__Container : 1
   OpenLanes__Engine ..> OpenLanes__Coverage : 4
   OpenLanes__Engine ..> OpenLanes__Events : 5
   OpenLanes__Engine ..> OpenLanes__Execution : 10
@@ -162,6 +165,7 @@ classDiagram
 - [openlanes-arbitration](openlanes-arbitration.md)
 - [openlanes-cli](openlanes-cli.md)
 - [openlanes-clock](openlanes-clock.md)
+- [openlanes-container](openlanes-container.md)
 - [openlanes-coverage](openlanes-coverage.md)
 - [openlanes-engine](openlanes-engine.md)
 - [openlanes-evals](openlanes-evals.md)
