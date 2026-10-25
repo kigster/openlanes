@@ -2,13 +2,13 @@
   "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
   "version": 1,
   "plan": {
-    "ordinal": "050.00",
-    "slug": "remove-new-relic"
+    "ordinal": "052.00",
+    "slug": "uml-class-diagrams"
   },
-  "state": "new",
-  "updated_at": "2026-10-24T19:33:07-07:00",
+  "state": "approved",
+  "updated_at": "2026-10-24T22:51:19-07:00",
   "stages": [],
   "signatures": [],
   "messages": [],
-  "moves": 1
+  "moves": 2
 }
