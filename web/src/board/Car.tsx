@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan } from "../api/types";
-import { clock, fmt, shortAgent } from "./format";
+import { clock, fmt } from "./format";
 import { Gear } from "./Gear";
 import { carLook, lockMark, modelLabel } from "./model";
 
@@ -40,16 +40,13 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
       ))}
       <div className="car-top">
         {spinning && <Gear />}
-        {/* The tile shows the role (luke-backend reads "backend"); the full name stays the accessible name and the
-            tooltip, and still contains the visible text, so voice control can say either. */}
         {readOnly ? (
           <span className="car-agent" title={car.agent}>
-            <span aria-hidden="true">{shortAgent(car.agent)}</span>
-            <span className="sr-only">{car.agent}</span>
+            {car.agent}
           </span>
         ) : (
           <button type="button" className="car-open" aria-expanded={open} aria-label={car.agent} title={car.agent} onClick={() => onOpen(plan, car)}>
-            {shortAgent(car.agent)}
+            {car.agent}
           </button>
         )}
         {lock && (
@@ -97,7 +94,7 @@ export function SubagentTiles({ car }: { car: CarData }) {
       </span>
       {names.map((name, i) => (
         <div key={`${name}-${i}`} className="car is-subagent" aria-hidden="true" title={`${name}, a sub-agent of ${car.agent}`}>
-          <span className="car-agent">{shortAgent(name)}</span>
+          <span className="car-agent">{name}</span>
           <span className="car-model">sub-agent</span>
         </div>
       ))}
