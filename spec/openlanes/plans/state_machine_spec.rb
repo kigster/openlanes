@@ -345,6 +345,41 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     end
   end
 
+  describe ".reached?" do
+    subject { described_class.reached?(state, :ready_for_review) }
+
+    context "when at the state" do
+      let(:state) { :ready_for_review }
+
+      it { is_expected.to be(true) }
+    end
+
+    context "when past it on the spine" do
+      let(:state) { :verifying }
+
+      it { is_expected.to be(true) }
+    end
+
+    context "when short of it" do
+      let(:state) { :building }
+
+      it { is_expected.to be(false) }
+    end
+
+    # 🔴 rejoins the spine at 🎨, short of 🟢: it is not past review.
+    context "when off the forward path" do
+      let(:state) { :rejected }
+
+      it { is_expected.to be(false) }
+    end
+  end
+
+  describe ".onward" do
+    it "ends at deployed from every state on the spine" do
+      expect(described_class::SPINE.keys.map { described_class.onward(it).last }.uniq).to eq([:deployed])
+    end
+  end
+
   describe "#best_fit" do
     it "picks the furthest state along the spine that the contents justify" do
       machine = described_class.new(built(:retroactive, prs: ["Merged 🟣"]))
