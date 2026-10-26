@@ -45,6 +45,51 @@ RSpec.describe OpenLanes::Supervision::Registration do
       it("refuses, naming it") { expect(registration.claim.failure).to have_attributes(status: 75, message: include("pid 200", "http://127.0.0.1:11000")) }
       it("names that holder") { expect(registration.holder).to eq(other) }
     end
+
+    # C1: the lock, not the file, decides. Two claims that both find no
+    # file still cannot both win.
+    context "when another process holds the lock but has not written its file yet" do
+      let(:rival) { dir.lock("engine") }
+
+      before { rival }
+
+      after { rival.close }
+
+      it("refuses as already starting") { expect(registration.claim.failure).to have_attributes(status: 75, message: include("is already starting")) }
+
+      it "writes nothing" do
+        registration.claim
+        expect(dir.read("engine")).to be_nil
+      end
+    end
+
+    context "with a second process claiming the same role" do
+      let(:second) do
+        pid = fork { exit!(registration.claim.success? ? 0 : 1) }
+        Process.wait2(pid).last.exitstatus
+      end
+
+      before { registration.claim }
+
+      it("refuses it") { expect(second).to eq(1) }
+    end
+
+    context "when the holder has released" do
+      before { registration.claim.value!.release }
+
+      it("can be claimed again") { expect(registration.claim).to be_success }
+    end
+
+    context "when ps cannot give its start time" do
+      let(:probe) { instance_double(OpenLanes::Supervision::Probe, started: nil) }
+
+      it("refuses rather than write a file stop could never verify") { expect(registration.claim.failure).to have_attributes(status: 70, message: include("start time")) }
+
+      it "lets go of the lock" do
+        registration.claim
+        expect(dir.lock("engine")).to be_a(File).and(have_attributes(close: nil))
+      end
+    end
   end
 
   describe "#hold" do

@@ -30,17 +30,21 @@ module OpenLanes
       # @return [OpenLanes::Supervision::PidDir]
       attr_reader :dir
 
-      # Names this process and writes its file, unless the file already names
-      # another process that passes {Probe#verified?}. A file that fails the
+      # Takes the role's lock, names this process and writes its file. While
+      # another process holds the lock, or a file naming another process that
+      # passes {Probe#verified?}, this one is refused. A file that fails the
       # check is a crash's leftover, and is written over.
       #
-      # @return [Dry::Monads::Result] Success(self), or Failure({Refusal}) naming the holder
+      # @return [Dry::Monads::Result] Success(self), or Failure({Refusal}):
+      #   75 naming the holder, 70 when `ps` cannot give this process's start time
       def claim
+        @lock = @dir.lock(@draft.role, pid: @draft.pid)
         held = holder
-        return Failure(Refusal.new(message: taken(held), status: 75)) if held
+        return refuse(taken(held), 75) if held || !@lock
 
+        started = @probe.started(@draft.pid) or return refuse(unstarted, 70)
         @title.set
-        @file = @draft.with(started: @probe.started(@draft.pid))
+        @file = @draft.with(started:)
         @dir.write(@file)
         Success(self)
       end
@@ -54,7 +58,8 @@ module OpenLanes
 
       # Runs the block and removes the file when it ends on purpose: by
       # returning, or by `exit`, which is how every refusal ends. Any other
-      # exception is a crash, and the file stays to say so.
+      # exception is a crash, and the file stays to say so, so a graceful
+      # stop must end in one of those two and never in another exception.
       #
       # @yieldreturn [Object]
       # @return [Object] what the block returned
@@ -86,16 +91,35 @@ module OpenLanes
       def release
         @dir.remove(@file) if @file
         @file = nil
+        @lock&.close
+        @lock = nil
       end
 
       private
 
-      # @param held [OpenLanes::Supervision::PidFile]
+      # @param message [String]
+      # @param status [Integer]
+      # @return [Dry::Monads::Result::Failure]
+      def refuse(message, status)
+        release
+        Failure(Refusal.new(message:, status:))
+      end
+
+      # A file whose start time is unknown could never be verified, so `stop`
+      # would take it for a crash's and leave its process running.
+      #
+      # @return [String]
+      def unstarted
+        "#{Title.prefix(@draft.role, @draft.root)} could not read its own start time from `ps`, " \
+          "which `openlanes stop` needs to tell it from a reused pid."
+      end
+
+      # @param held [OpenLanes::Supervision::PidFile, nil] nil while the
+      #   holder of the lock has not yet written its file
       # @return [String]
       def taken(held)
-        where = held.url ? " at #{held.url}" : ""
-        "#{Title.prefix(@draft.role, @draft.root)} is already running (pid #{held.pid})#{where}. " \
-          "`openlanes stop` stops it; `openlanes status` shows it."
+        who = held ? "is already running (pid #{held.pid})#{" at #{held.url}" if held.url}" : "is already starting"
+        "#{Title.prefix(@draft.role, @draft.root)} #{who}. `openlanes stop` stops it; `openlanes status` shows it."
       end
     end
   end

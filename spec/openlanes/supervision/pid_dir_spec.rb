@@ -54,6 +54,26 @@ RSpec.describe OpenLanes::Supervision::PidDir do
     end
   end
 
+  describe "#lock" do
+    let(:held) { dir.lock("engine") }
+
+    after { held&.close }
+
+    it("is taken by the first to ask") { expect(held).to be_a(File) }
+    it("is refused to the next while held") { expect(held && dir.lock("engine")).to be_nil }
+    it("is a lock per role") { expect(held && dir.lock("web")).to be_a(File) }
+
+    it "is free again once closed" do
+      held.close
+      expect(dir.lock("engine")).to be_a(File)
+    end
+
+    it "is not listed among the PID files" do
+      held
+      expect(dir.entries).to be_empty
+    end
+  end
+
   describe "#entries" do
     before do
       FileUtils.mkdir_p(dir.path)

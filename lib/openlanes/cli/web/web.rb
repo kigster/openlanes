@@ -43,7 +43,7 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
-        Supervision::Lifeline.watch
+        Supervision.watch_lifeline
         tree = tree_for(options)
         root = File.dirname(tree.dir)
         logging(options, root:)
@@ -180,12 +180,12 @@ module OpenLanes
         return if options[:demo]
 
         registration = Supervision.registration(Supervision::WEB, root: Dir.pwd, url: server.url)
-        if (holder = registration.holder)
-          Log.logger.warn("another server holds the PID file", pid: holder.pid, url: holder.url)
+        claimed = registration.claim
+        if claimed.failure?
+          Log.logger.warn("another server holds the PID file", reason: claimed.failure.message)
           return
         end
 
-        unwrap(registration.claim)
         registration.title(server.urls.join(" "))
         registration
       end

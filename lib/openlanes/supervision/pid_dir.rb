@@ -41,6 +41,26 @@ module OpenLanes
         File.rename("#{target}.tmp", target)
       end
 
+      # An exclusive `flock` on the role's lock file, beside its PID file (C1).
+      # Checking the PID file and then writing it leaves a window in which two
+      # `openlanes start` both find it free; the lock has none. The kernel
+      # drops it when its process dies, however it dies, so a crash never
+      # leaves it held. The lock file itself is never removed: a process that
+      # removed it could lock a new one beside a holder of the old.
+      #
+      # @param role [String]
+      # @param pid [Integer, nil] for a run, whose file name carries its pid
+      # @return [File, nil] the open lock, held until closed; nil while another process holds it
+      def lock(role, pid: nil)
+        FileUtils.mkdir_p(@path)
+        # The descriptor is the lock, so it stays open for as long as it is held.
+        io = File.open(File.join(@path, "#{PidFile.name_for(role, pid)}.lock"), File::RDWR | File::CREAT, 0o644) # rubocop:disable Style/FileOpen
+        return io if io.flock(File::LOCK_EX | File::LOCK_NB)
+
+        io.close
+        nil
+      end
+
       # @param role [String]
       # @param pid [Integer, nil] for a run, whose file name carries its pid
       # @return [OpenLanes::Supervision::PidFile, nil]
