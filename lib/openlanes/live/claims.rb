@@ -60,7 +60,10 @@ module OpenLanes
           key = @keys.claim(ordinal)
           @store.compare_and_expire(key, @keys.node, @ttl) || @store.set(key, @keys.node, ex: @ttl, nx: true)
         end
-        @mutex.synchronize { @held -= lost }
+        @mutex.synchronize do
+          @held -= lost
+          @pinned -= lost
+        end
         lost
       end
 

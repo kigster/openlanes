@@ -24,6 +24,8 @@ module OpenLanes
         mine = machine == from.id
         where = mine ? "this machine" : "another machine"
         return "openlanes run (pid #{run_pid}) on #{where}" if run_pid
+        # A role this code does not know yet is named, never mistaken for the factory.
+        return "a #{role} node on #{where}" if role
         return "this checkout's factory (openlanes start)" if mine && checkout_id == from.checkout_id
 
         "the factory on #{where}"

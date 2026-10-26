@@ -85,6 +85,20 @@ RSpec.describe OpenLanes::Live::Claims do
       end
     end
 
+    # A pinned claim stolen after a lapse is the thief's: renew lets go of
+    # the pin with it, so a plain release no longer pretends to hold it.
+    context "when a pinned claim passes to another node" do
+      before do
+        claims.hold(%w[004.00])
+        store.set(keys.claim("004.00"), "them:2")
+        claims.renew
+      end
+
+      it { expect(claims.held).to eq([]) }
+      it { expect(claims.release("004.00")).to be(false) }
+      it { expect(claims.held_by("004.00")).to eq("them:2") }
+    end
+
     context "when another node holds one of them" do
       before { theirs.claim("005.00") }
 

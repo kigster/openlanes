@@ -35,5 +35,6 @@ RSpec.describe OpenLanes::Live::Holder do
     let(:name) { "m1:c1:run-x" }
 
     it { expect(holder.run_pid).to be_nil }
+    it { expect(holder.describe(from: me)).to eq("a run-x node on this machine") }
   end
 end
