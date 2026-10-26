@@ -87,8 +87,6 @@ classDiagram
   class OpenLanes__Setup__CiScaffold["OpenLanes::Setup::CiScaffold"]
   class OpenLanes__Setup__Stack["OpenLanes::Setup::Stack"]
   class OpenLanes__Setup__StackDocument["OpenLanes::Setup::StackDocument"]
-  class OpenLanes__Supervision__Detached["OpenLanes::Supervision::Detached"]
-  class OpenLanes__Supervision__Lifeline["OpenLanes::Supervision::Lifeline"]
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
   class OpenLanes__Supervision__Title["OpenLanes::Supervision::Title"]
   class OpenLanes__UI["OpenLanes::UI"]
@@ -201,14 +199,12 @@ classDiagram
   OpenLanes__CLI__Review ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__CLI__Run --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
-  OpenLanes__CLI__Run ..> OpenLanes__Supervision__Lifeline : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Skills__Install --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Start --|> OpenLanes__CLI__EngineCommand : inherits
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Programs : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
-  OpenLanes__CLI__Start ..> OpenLanes__Supervision__Detached : uses
   OpenLanes__CLI__Start ..> OpenLanes__UI : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__Launcher : uses
@@ -245,7 +241,6 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Settings : uses
-  OpenLanes__CLI__Web ..> OpenLanes__Supervision__Lifeline : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses

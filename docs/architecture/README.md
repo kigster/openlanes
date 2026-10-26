@@ -71,7 +71,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 5
   OpenLanes__CLI ..> OpenLanes__Skills : 1
-  OpenLanes__CLI ..> OpenLanes__Supervision : 12
+  OpenLanes__CLI ..> OpenLanes__Supervision : 9
   OpenLanes__CLI ..> OpenLanes__UI : 19
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
@@ -147,7 +147,7 @@ classDiagram
   OpenLanes__Skills ..> OpenLanes : 1
   OpenLanes__Supervision ..> OpenLanes : 2
   OpenLanes__Supervision ..> OpenLanes__Clock : 2
-  OpenLanes__Supervision ..> OpenLanes__Execution : 1
+  OpenLanes__Supervision ..> OpenLanes__Execution : 4
   OpenLanes__Supervision ..> OpenLanes__Log : 1
   OpenLanes__Supervision ..> OpenLanes__Spawner : 1
   OpenLanes__Supervision ..> OpenLanes__Web : 1

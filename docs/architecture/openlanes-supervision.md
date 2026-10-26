@@ -4,6 +4,7 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__Supervision__Crashes["Crashes"]
   class OpenLanes__Supervision__Detached["Detached"]
@@ -29,6 +30,8 @@ classDiagram
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__PidDir : uses
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Title : uses
+  OpenLanes__Supervision__Shutdown ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__Child : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Supervisor : uses
