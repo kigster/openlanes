@@ -108,7 +108,7 @@ Each process sets its title (`Process.setproctitle`; Puma through its `tag` opti
 ```
 openlanes-supervisor [myproj] up 2h, 1 restart
 ├── openlanes-engine [myproj] 3 of 8 agents busy
-│   └── openlanes-agent [005 backend-coder] 4m12s 38k tokens   (S6)
+│   └── openlanes-agent [myproj] 005.00 backend-coder          (S6)
 └── puma 8.0.2 (tcp://127.0.0.1:11000) [openlanes-web myproj]
 openlanes-run [myproj] 005,006
 ```
@@ -117,7 +117,7 @@ openlanes-run [myproj] 005,006
 
 ### S6. An agent supervisor between the engine and each agent
 
-Built as a plan of its own, right after S1.
+Built as plan 041 in three pull requests: the agent supervisor (PR 1, below), a restarted engine reattaching to it (PR 2), and S7 (PR 3).
 
 Today the engine spawns each agent CLI as its own child (`Execution::Child`) and reads it through a pipe, so an engine that dies or is restarted takes every running agent with it. A small `openlanes-agent` process per agent owns the CLI instead, so an agent outlives a restart of the engine:
 
@@ -125,6 +125,13 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
 - It writes `tmp/pids/agent-<plan>-<agent>.pid`. A restarted engine finds those files and reattaches to the runs still going.
 - Stops reach it as signals (S7). The timeout clock, the controls and the transcript reader move from the pipe to the file.
 - It is lean Ruby: the standard library only, no Bundler, no Zeitwerk, nothing from the gem, about 15 MB and 50 ms to start.
+- As built in PR 1:
+  - The script is `libexec/openlanes-agent`, run as `ruby --disable-gems`; it loads `execution/agent_supervisor.rb` alone. The engine's side is `Execution::AgentProcess`, which answers `Child`'s interface, so the executor, the clock and the controls read an agent as before.
+  - argv: `--root --plan --agent --output --status --pid-file -- <cli argv>`. The engine names the PID file, so `$OPENLANES_PID_DIR` is resolved in one place and the agent supervisor, started with the unbundled environment, needs no copy of it.
+  - The output (stdout and stderr together) is `agent-<plan>-<agent>-<pid>-<hex>.out` in the trace directory, the status `.status` beside it (`{"exitstatus": 3}` or `{"termsig": 9}`), both written atomically and removed once the engine has read them.
+  - The PID file is the same JSON as every other one, with `role: "agent"`, the plan, the agent, and the CLI's pid as `child`. Its title, `openlanes-agent [<project>] 005.00 backend-coder`, starts with the project, so `Probe` verifies it like the others.
+  - `openlanes status` lists agents; `openlanes stop` leaves them to their engine, and `stop --all` stops them too.
+  - Until reattach (PR 2), an engine that exits still stops its agents: its `at_exit` TERMs every agent supervisor, and each finishes the stop by itself. An agent supervisor that outlives its own grace by 5 s is KILLed from the engine, with the CLI's group.
 - The engine knows it only through its protocol (argv in; transcript, exit status and PID files out; signals for control), so a native build can replace it without the engine noticing. Should one ever be needed, C compiled at install through the gem's `ext/` is preferred over Rust: it needs no prebuilt binaries per platform and no cargo. Neither is worth it today. The saving is about 14 MB per agent, beside an agent CLI's 200 to 400 MB, and the cost is fork, exec and signal code in a language this repository does not otherwise use.
 
 ### S7. Shutdown gives agents 60 seconds to wrap up
@@ -134,7 +141,7 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
 | TERM, to the supervisor   | Graceful shutdown: stop dispatching, USR1 to every agent supervisor, wait out the grace, TERM what is left, then the engine and the web |
 | USR1, to an agent supervisor | Write `INTERRUPT` into its agent's control file                                                         |
 | TERM, to an agent supervisor | Stop now: TERM to the agent's process group, KILL after `Child::TERM_GRACE`                             |
-| TERM, to the engine       | Exit at once and leave the agents running; the supervisor restarts it and it reattaches (S6). Until S6 is built, the same as a graceful shutdown |
+| TERM, to the engine       | Exit at once and leave the agents running; the supervisor restarts it and it reattaches (S6). Until reattach is built (plan 041, PR 2), the agents are TERMed as the engine exits |
 | A second TERM, or Ctrl-C twice | Skip the grace and stop everything now                                                                |
 
 - The grace is 60 seconds, the same as `Execution::Control::GRACE`. `$OPENLANES_SHUTDOWN_GRACE` is its only override, as with S3. Agents that finish sooner end the wait sooner.

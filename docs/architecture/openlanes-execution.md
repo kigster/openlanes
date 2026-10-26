@@ -8,6 +8,8 @@ classDiagram
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Execution__AgentProcess["AgentProcess"]
+  class OpenLanes__Execution__AgentSupervisor["AgentSupervisor"]
   class OpenLanes__Execution__Boundary__Snapshot["Boundary::Snapshot"]
   class OpenLanes__Execution__Child["Child"]
   class OpenLanes__Execution__Clock["Clock"]
@@ -20,11 +22,13 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
+  OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
   OpenLanes__Execution__Child ..> OpenLanes__UI : uses
   OpenLanes__Execution__Clock ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Clock : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses

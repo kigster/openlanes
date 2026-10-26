@@ -19,12 +19,12 @@ Three pull requests, in order. Each lands on `main` before the next starts.
 
 ### Work units
 
-- [ ] `libexec/openlanes-agent` and its spec, run as a real process.
-- [ ] `Execution::AgentProcess`: spawns it, tails the output, reads the status, and answers `Child`'s interface (`pid`, `each_chunk`, `wait`, `terminate`, `kill`, `alive?`, `finished?`).
-- [ ] `Executor` spawns through `AgentProcess`.
-- [ ] `Supervision`: an `AGENT` role in the PID dir's order, `status` rows, and `stop --all`.
-- [ ] Docs: decisions S6 (as built), `docs/USAGE.md`, the architecture docs.
-- [ ] Lint, the full suite, and every changed file above 95% coverage.
+- [x] `libexec/openlanes-agent` and its spec, run as a real process.
+- [x] `Execution::AgentProcess`: spawns it, tails the output, reads the status, and answers `Child`'s interface (`pid`, `each_chunk`, `wait`, `terminate`, `kill`, `alive?`, `finished?`).
+- [x] `Executor` spawns through `AgentProcess`.
+- [x] `Supervision`: an `AGENT` role in the PID dir's order, `status` rows, and `stop --all`.
+- [x] Docs: decisions S6 (as built), `docs/USAGE.md`, the architecture docs.
+- [x] Lint, the full suite, and every changed file above 95% coverage.
 
 ## PR 2: reattach
 
