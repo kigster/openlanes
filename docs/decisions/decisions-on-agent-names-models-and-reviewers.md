@@ -95,7 +95,11 @@ When `arbitrator` rules, the control room shows its ruling before it takes effec
 - the options it weighed, with its own choice preselected in green;
 - a countdown from 60 seconds, and a `+` button that adds another minute each time it is pressed.
 
-Untouched when the countdown ends, the arbitrator's choice stands. Picking another option and confirming overrides it. With no control room running, the ruling takes effect at once.
+Untouched when the countdown ends, the arbitrator's choice stands. Picking another option and confirming overrides it.
+
+The ruling takes effect at once when nobody can see it: under `openlanes run`, which serves no page, and under `openlanes start` while no page is connected to the live stream. A page that connects during a countdown shows the time left. (Settled 2026-10-25, with [decisions-on-factory-start-stop.md](decisions-on-factory-start-stop.md).)
+
+The override covers every trigger the arbitrator rules on: a builder's appeal of a reviewer's finding, a plan at its rejection cap, the check of a `review-passed` verdict at `mvp`, and a contract dispute between the two builders.
 
 ## Reviewers
 
