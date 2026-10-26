@@ -78,13 +78,15 @@ If any listed plan is already held, `run` claims nothing, releases what it took,
 - It restarts whichever child dies, with backoff. After about three crashes in five minutes it stops restarting that child, keeps the rest up, and reports the failure on the page and in `status`.
 - `stop` signals the supervisor, which stops both children. Nothing is left that could restart them.
 - Each child watches a pipe from the supervisor and exits when it closes, so a SIGKILLed supervisor never leaves a web without its engine.
-- `start` refuses while a live supervisor's PID file exists, and prints that factory's URL.
+- `start` refuses while a supervisor's PID file names a live process that is that supervisor (S2), and prints that factory's URL. A PID file whose number now belongs to some other process is stale: `start` removes it and goes on.
 
 The engine and web restarting each other was considered and rejected: `stop` becomes a race, a slow restart seen from both sides can start two pairs, and the web would have to learn how to start an engine.
 
 ### S2. Every process writes its own PID file and removes it on a clean exit
 
 `supervisor.pid`, `engine.pid`, `web.pid`, and `run-<pid>.pid` for each `run`, which also records that run's plans. A PID file whose process is gone means a crash: `status` reports it, and the supervisor restarts the child.
+
+A PID alone is not proof: the operating system reuses numbers, and a PID file left by a crash can name an unrelated process by the time anyone reads it. So a PID file records the PID, the process's start time and the project root, and a process counts as the one the file names only when all three match: its start time (`ps -o lstart=`) equals the recorded one, and its title (S5) names the expected role and project. Every reader checks this, `start`, `stop`, `status` and the supervisor alike, and a file that fails it is a crash, never a target. `stop` signals nothing it has not checked this way.
 
 `stop` sends TERM, waits about ten seconds, then KILL. It also stops a lone engine or web whose supervisor is already gone.
 
