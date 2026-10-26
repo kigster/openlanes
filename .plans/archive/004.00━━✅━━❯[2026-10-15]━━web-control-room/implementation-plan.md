@@ -1,6 +1,6 @@
-# Implementation plan 004.00 (contract between luke-backend and rey-frontend)
+# Implementation plan 004.00 (contract between backend-coder and frontend-coder)
 
-Owner: `luke-backend`. No routes, payloads or SSE shapes change in this plan: the API is `contract.md` plus `web/src/api/types.ts`, as they stand.
+Owner: `backend-coder`. No routes, payloads or SSE shapes change in this plan: the API is `contract.md` plus `web/src/api/types.ts`, as they stand.
 
 ## Baseline
 
@@ -8,7 +8,7 @@ Owner: `luke-backend`. No routes, payloads or SSE shapes change in this plan: th
 
 - Baseline: 2214 examples, 0 failures (`bundle exec rspec`, 2026-10-13). rubocop: 0 offenses.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 None new. The units add evidence and packaging only:
 
@@ -16,20 +16,20 @@ None new. The units add evidence and packaging only:
 | --- | --- | --- | --- |
 | `GET /api/events` | as `contract.md` § HTTP | as `contract.md` | no |
 | `POST /api/commands` | as `contract.md` § HTTP | `422` refused, `403` bad CSRF | no |
-| `npm run coverage:changed` (F3 → B5) | CLI in `web/`, exit 0 when every changed `web/src` file has statements ≥ 95%, or none changed; exit 1 naming each file below | non-zero exit | new, rey owns it; B5 calls it in the CircleCI `web` job after `npm run coverage` |
+| `npm run coverage:changed` (F3 → B5) | CLI in `web/`, exit 0 when every changed `web/src` file has statements ≥ 95%, or none changed; exit 1 naming each file below | non-zero exit | new, frontend-coder owns it; B5 calls it in the CircleCI `web` job after `npm run coverage` |
 | `npm run build` output | `web/dist/index.html` plus assets | build failure | no; B1 relies on the path |
 
 ## File ownership
 
 | Files | Owner | Note |
 | --- | --- | --- |
-| `.gitignore`, `justfile`, `openlanes.gemspec`, `README.md`, `spec/openlanes/packaging_spec.rb` | luke (B1) | |
-| `contract.md` (plan folder) | luke (B1) | |
-| `spec/support/control_room_process.rb`, `spec/integration/**` | luke (B2–B4) | |
-| `.circleci/config.yml`, `bin/coverage-changed`, `spec/openlanes/coverage_changed_spec.rb` | luke (B5) | shared with rey only through the `coverage:changed` npm script name |
-| `web/**` | rey (F1–F3) | luke never writes under `web/` |
+| `.gitignore`, `justfile`, `openlanes.gemspec`, `README.md`, `spec/openlanes/packaging_spec.rb` | backend-coder (B1) | |
+| `contract.md` (plan folder) | backend-coder (B1) | |
+| `spec/support/control_room_process.rb`, `spec/integration/**` | backend-coder (B2–B4) | |
+| `.circleci/config.yml`, `bin/coverage-changed`, `spec/openlanes/coverage_changed_spec.rb` | backend-coder (B5) | shared with frontend-coder only through the `coverage:changed` npm script name |
+| `web/**` | frontend-coder (F1–F3) | backend-coder never writes under `web/` |
 
-Shared files: none written by both. `.circleci/config.yml` is luke's alone; rey mails the npm script name if it differs from `coverage:changed`.
+Shared files: none written by both. `.circleci/config.yml` is backend-coder's alone; frontend-coder mails the npm script name if it differs from `coverage:changed`.
 
 ## Build order
 
@@ -53,7 +53,7 @@ Run with: `OPENLANES_TEST_REDIS_URL=redis://localhost:6379/13 bundle exec rspec 
 
 ## Status
 
-## Round 1 (luke-backend)
+## Round 1 (backend-coder)
 
 - [x] B1: `contract.md` renamed to `openlanes`, `11000`, `.openlanes.yml`, `openlanes:`; `.gitignore` has `/web/dist`; README names the `openlanes:<repo>` Redis prefix. `justfile` already routes `publish` through `build` → `web-build`; gemspec abort kept. `spec/openlanes/packaging_spec.rb` green.
 - [x] B2: `spec/support/control_room_process.rb`, `spec/integration/control_room_spec.rb`, 4 examples green against a real Redis (db 12), real `exe/openlanes run` + its server.
@@ -79,7 +79,7 @@ Run with: `OPENLANES_TEST_REDIS_URL=redis://localhost:6379/13 bundle exec rspec 
 ### Decisions
 
 - **B2 item 3 bound (owner to decide, round 1):** kept at 1.5 s from the rename, the plan's own recommendation. The spec's "within a second" reads as "within one engine tick": meeting 1.0 s means shortening the tick in `lib/`, a cost paid on every run for a test's sake.
-- **The harness's fake `claude` was bypassed (found in round 2).** The executor starts agents in `Bundler.unbundled_env`, whose `PATH` is `BUNDLER_ORIG_PATH`, so with only `PATH` set the engines in B4 ran the real `claude` (leah-researcher on the fixture plans). Fixed in the harness by setting both; the fake logs each call and the B4 spec asserts it was called, so a regression fails instead of spending tokens. Stray processes from the bad runs were killed.
+- **The harness's fake `claude` was bypassed (found in round 2).** The executor starts agents in `Bundler.unbundled_env`, whose `PATH` is `BUNDLER_ORIG_PATH`, so with only `PATH` set the engines in B4 ran the real `claude` (researcher on the fixture plans). Fixed in the harness by setting both; the fake logs each call and the B4 spec asserts it was called, so a regression fails instead of spending tokens. Stray processes from the bad runs were killed.
 - **Redis from the harness through `redis-client`, not `redis-cli`:** CI's Ruby images have the Redis service but no `redis-cli`, and a `redis?` check that cannot run skips every example silently.
 - **README:** PR #25 rewrites `README.md`, so this plan commits no README change. The packaging spec asserts only what #25's README already says (`openlanes run`, `127.0.0.1:11000`, `.openlanes.yml`, no retired name); the sentence naming the `openlanes:<repo>` Redis prefix is left for #25 to absorb.
 

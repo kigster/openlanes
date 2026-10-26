@@ -16,7 +16,7 @@ Several real issues should not cost several blocked rounds, but a person should 
 
 ## What already exists
 
-Agents are already told to write `## B1`, `## B2`; `lando-broker` drains answered ones and deletes the file when empty; `Snapshot#questions` returns every open question.
+Agents are already told to write `## B1`, `## B2`; `unblocker` drains answered ones and deletes the file when empty; `Snapshot#questions` returns every open question.
 
 ## How to tell it's working?
 

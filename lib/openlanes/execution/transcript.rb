@@ -430,7 +430,7 @@ module OpenLanes
       # A sub-agent is running from the `Task` call that starts it until the
       # `tool_result` that answers that call. Its name is the `subagent_type`
       # the call asked for, which is what a person would recognise
-      # ("leah-researcher"), and its `description` only when it named none.
+      # ("researcher"), and its `description` only when it named none.
       # A sub-agent's own calls carry a `parent_tool_use_id` and are read the
       # same way, so one it starts in turn is a sub-agent too.
       #

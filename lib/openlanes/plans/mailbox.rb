@@ -4,7 +4,7 @@ module OpenLanes
   module Plans
     # The one channel two agents on the same plan have to each other.
     #
-    # `luke-backend` and `rey-frontend` build one plan in one worktree at the
+    # `backend-coder` and `frontend-coder` build one plan in one worktree at the
     # same time, but each is its own `claude -p` process. Claude Code can
     # message between local sessions, and the prompts used to say so, but a
     # session is named after its directory plus a random suffix, so a pair had
@@ -29,7 +29,7 @@ module OpenLanes
       # contains it, which is what makes the heading parseable.
       SEPARATOR = " · "
 
-      # `## 3 · 2026-09-06 10:30:53 -0700 · rey-frontend → luke-backend`
+      # `## 3 · 2026-09-06 10:30:53 -0700 · frontend-coder → backend-coder`
       HEADING = /\A\#\# (\d+) · (.+?) · (\S+) → (\S+)\s*\z/
 
       TIME_FORMAT = "%Y-%m-%d %H:%M:%S %z"

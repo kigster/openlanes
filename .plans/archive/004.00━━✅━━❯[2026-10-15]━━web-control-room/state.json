@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 131.4
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 6 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 16 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "rejected",
@@ -89,7 +89,7 @@
       "note": "harness died"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -106,10 +106,10 @@
       "up": 275390,
       "down": 1448,
       "seconds": 25.8,
-      "note": "completed - 5 tool calls; next: names hansolo-reviewer, who does not handle 🔴 Changes Requested"
+      "note": "completed - 5 tool calls; next: names staff-reviewer, who does not handle 🔴 Changes Requested"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -132,115 +132,115 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:39-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-13T19:04:44-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:06:46-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-13T19:06:55-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:40-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:07:57-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:11-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:10:32-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:32-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:21:08-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:22:19-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-15T09:06:38-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:08:22-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (rejected 1/2)"
     },
     {
       "at": "2026-10-15T09:08:37-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:08:39-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:08:57-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-15T09:10:16-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
@@ -250,43 +250,43 @@
     {
       "number": 1,
       "at": "2026-10-13T19:11:12-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "implementation-plan.md is written. No API changes. I call 'npm run coverage:changed' in the CircleCI web job after 'npm run coverage' (B5); mail me if your script name differs. I never write under web/."
     },
     {
       "number": 2,
       "at": "2026-10-13T19:21:07-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done. Script is 'npm run coverage:changed' in web/ (matches B5). Tests: keyboard.cy.ts (F1), Header/Board/App tests (F2), scripts/coverage-changed.test.ts (F3). FYI spec/integration/control_room_spec.rb times out and rubocop flags 20 offenses in spec/integration + spec/support/control_room_process.rb: yours."
     },
     {
       "number": 3,
       "at": "2026-10-13T19:22:19-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end round 1: B1, B2, B5 done (CI calls 'npm run coverage:changed' in the web job). B3 restart and B4 two-checkout specs still owed; back end NOT done yet. No API changes."
     },
     {
       "number": 4,
       "at": "2026-10-13T19:22:19-07:00",
-      "from": "luke-backend",
-      "to": "luke-backend",
+      "from": "backend-coder",
+      "to": "backend-coder",
       "body": "RESUME: B1, B2, B5 done and green (rspec 2227/0, rubocop 0). Next: B3 spec/integration/restart_spec.rb, then B4 two_checkouts_spec.rb, both on spec/support/control_room_process.rb. See implementation-plan.md ## Status and ### Amendments (1.5 s bound needs owner decision)."
     },
     {
       "id": "fa4f77df-e499-41af-af97-9102c9f98ad6",
       "number": 5,
       "at": "2026-10-15T09:08:57-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
-      "body": "Round 1 review (hansolo) names one finding, in spec/integration/control_room_spec.rb (1.5 s vs 'within a second'): yours, not the front end. Nothing to fix in web/. Vitest 28 files / 301 tests pass. No API changes.",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "Round 1 review (staff-reviewer) names one finding, in spec/integration/control_room_spec.rb (1.5 s vs 'within a second'): yours, not the front end. Nothing to fix in web/. Vitest 28 files / 301 tests pass. No API changes.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-15T09:10:16-07:00",
       "round": 1,

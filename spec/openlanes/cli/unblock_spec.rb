@@ -134,7 +134,7 @@ RSpec.describe OpenLanes::CLI::Unblock, :tree do
     it "puts the machine-readable line on STDOUT and nothing else there" do
       out, = run("001")
 
-      expect(out.lines.map(&:chomp)).to eq(["001.00\tblocked\t2 open\tnot attempted\tdry run - would invoke lando-broker"])
+      expect(out.lines.map(&:chomp)).to eq(["001.00\tblocked\t2 open\tnot attempted\tdry run - would invoke unblocker"])
     end
 
     it "exits zero, because a preview is not a failure" do
@@ -231,7 +231,7 @@ RSpec.describe OpenLanes::CLI::Unblock, :tree do
     end
   end
 
-  # What `lando-broker` does to `blocked.md` when it folds a question in.
+  # What `unblocker` does to `blocked.md` when it folds a question in.
   def fold(subject, *numbers)
     path = File.join(subject.feature.path, "blocked.md")
     kept = File.read(path).split(/^(?=\#\# )/).reject { |s| numbers.any? { |n| s.start_with?("## B#{n}") } }

@@ -1,7 +1,7 @@
 
 # 012.00 App Runner and Preview, front end
 
-`rey-frontend` builds these, against the `apps` / `app` event shape fixed in `plan-backend.md` B1 and the `POST /api/apps/commands` route in B6. F1 needs only B1's shape to start.
+`frontend-coder` builds these, against the `apps` / `app` event shape fixed in `plan-backend.md` B1 and the `POST /api/apps/commands` route in B6. F1 needs only B1's shape to start.
 
 ## F1 Preview tab
 

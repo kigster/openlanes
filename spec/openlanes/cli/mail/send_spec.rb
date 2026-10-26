@@ -17,7 +17,7 @@ RSpec.describe OpenLanes::CLI::Mail::Send, :tree do
     original_out, original_err = $stdout, $stderr
     $stdout, $stderr = out, err
     begin
-      described_class.new.call(dir: plans_root, body: "contract is up", plan: "003", from: "luke-backend", to: "rey-frontend")
+      described_class.new.call(dir: plans_root, body: "contract is up", plan: "003", from: "backend-coder", to: "frontend-coder")
     ensure
       $stdout, $stderr = original_out, original_err
     end
@@ -37,7 +37,7 @@ RSpec.describe OpenLanes::CLI::Mail::Send, :tree do
       aggregate_failures do
         expect(bodies).to eq(["contract is up"])
         expect(OpenLanes::Live::Mail.new(store:, keys:).drain(plan: "003.00", consumer: "harness"))
-          .to contain_exactly(include("number" => 1, "from" => "luke-backend", "body" => "contract is up"))
+          .to contain_exactly(include("number" => 1, "from" => "backend-coder", "body" => "contract is up"))
       end
     end
   end
@@ -53,7 +53,7 @@ RSpec.describe OpenLanes::CLI::Mail::Send, :tree do
       aggregate_failures do
         expect(bodies).to eq(["contract is up"])
         expect(out).to eq("")
-        expect(err).to include("#1 → rey-frontend")
+        expect(err).to include("#1 → frontend-coder")
         expect(err).not_to include("Redis")
       end
     end

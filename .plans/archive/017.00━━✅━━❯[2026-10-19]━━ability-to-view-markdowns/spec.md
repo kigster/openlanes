@@ -174,19 +174,19 @@ Each item has its check.
 
 ## Back end / front end
 
-`luke-backend` and `rey-frontend` build these as a pair.
+`backend-coder` and `frontend-coder` build these as a pair.
 
 | Item | Half | Notes |
 | :--- | :--- | :---- |
-| Listing route | luke-backend | `lib/openlanes/web/app.rb`, beside the route at `:270-279` |
-| Content hash on GET | luke-backend | Response header or JSON wrapper: see open question 2 |
-| Save route, whitelist, CSRF, hash check, live-car refusal, frontmatter check | luke-backend | CSRF as at `app.rb:167-168` |
-| Plan-level drawer opened by the red pill | rey-frontend | `web/src/shell/StatusBar.tsx:17`, `web/src/App.tsx:158` |
-| Dropdown, single popup, close | rey-frontend | Radix dialog from `web/src/panels/dialogs.tsx:3` |
-| Edit toggle, locked frontmatter, hash round-trip, conflict message | rey-frontend | Reuse `MarkdownEditor` (`web/src/panels/MarkdownEditor.tsx:1-3`) |
+| Listing route | backend-coder | `lib/openlanes/web/app.rb`, beside the route at `:270-279` |
+| Content hash on GET | backend-coder | Response header or JSON wrapper: see open question 2 |
+| Save route, whitelist, CSRF, hash check, live-car refusal, frontmatter check | backend-coder | CSRF as at `app.rb:167-168` |
+| Plan-level drawer opened by the red pill | frontend-coder | `web/src/shell/StatusBar.tsx:17`, `web/src/App.tsx:158` |
+| Dropdown, single popup, close | frontend-coder | Radix dialog from `web/src/panels/dialogs.tsx:3` |
+| Edit toggle, locked frontmatter, hash round-trip, conflict message | frontend-coder | Reuse `MarkdownEditor` (`web/src/panels/MarkdownEditor.tsx:1-3`) |
 | Edit disabled with a live car | both | UI disables; server refuses |
 
-The contract between them is the three routes and the hash. luke-backend defines it first.
+The contract between them is the three routes and the hash. backend-coder defines it first.
 
 ## Open questions
 
@@ -206,7 +206,7 @@ Everything below was assumed or left open; none blocks the split.
 
 - **Agent and human write the same file.** An agent may rewrite `spec.md` or `plan.md` while the popup is open. The hash guard and the live-car refusal cover it, but a plan with no live car and a harness round about to start is a window the hash alone covers.
 - **Uncommitted edits.** A web save leaves a dirty tree. The harness's HEAD-unmoved check is unaffected, but a following `git mv` rename of the folder carries the edit; this was not tested.
-- **Unrun web suite.** Without an install of `web/node_modules`, rey-frontend's work has no known green baseline.
+- **Unrun web suite.** Without an install of `web/node_modules`, frontend-coder's work has no known green baseline.
 - **Frontmatter locking is client plus server.** If only the client enforces it, a crafted PUT edits `lane` or other fields that route agents (`plans/spec.rb`). The server check is required, not optional.
 - **Scope drift into a general file editor.** The whitelist is the boundary; widening it is a separate plan.
 

@@ -70,7 +70,7 @@ module OpenLanes
       # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
       #   the durable run log (plan 020.01); {#call} scopes it to this run
       # @param merging [OpenLanes::Engine::Merging, nil] what a 🏁 plan's
-      #   pull requests go through once palpatine has ruled; nil when the
+      #   pull requests go through once deploy-assessor has ruled; nil when the
       #   run publishes nothing
       # @param arbitration [OpenLanes::Engine::Arbitration, nil] the
       #   arbitrator's engine step (plan 015); nil when the run publishes

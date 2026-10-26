@@ -1,6 +1,6 @@
-# Plan 001.00, front-end half (rey-frontend)
+# Plan 001.00, front-end half (frontend-coder)
 
-Split from `plan.md` by luke-backend on 2026-09-06. This gem has no browser; the "front end" is the terminal screen, the keyboard and the `run` command. The code is already written in `plan.md`; each unit is done when it is on disk verbatim and its spec is green. Line numbers refer to `plan.md`.
+Split from `plan.md` by backend-coder on 2026-09-06. This gem has no browser; the "front end" is the terminal screen, the keyboard and the `run` command. The code is already written in `plan.md`; each unit is done when it is on disk verbatim and its spec is green. Line numbers refer to `plan.md`.
 
 ## Units
 
@@ -13,10 +13,10 @@ Split from `plan.md` by luke-backend on 2026-09-06. This gem has no browser; the
 
 ## Shared files, and who goes first
 
-- `lib/agentilda.rb`: luke already added `screen` and `console` to the component list (guarded by `File.exist?`, so harmless until the files land). Rey adds only `require "tty/cursor"` near the other `tty/` requires.
-- `lib/agentilda/runner.rb`: luke writes it whole in B8. Rey applies Task 11's `Runner#call` yield afterwards, as a small edit, not a rewrite.
-- `agents/*.md`: luke's, entirely.
+- `lib/agentilda.rb`: backend-coder already added `screen` and `console` to the component list (guarded by `File.exist?`, so harmless until the files land). frontend-coder adds only `require "tty/cursor"` near the other `tty/` requires.
+- `lib/agentilda/runner.rb`: backend-coder writes it whole in B8. frontend-coder applies Task 11's `Runner#call` yield afterwards, as a small edit, not a rewrite.
+- `agents/*.md`: backend-coder's, entirely.
 
 ## Done when
 
-`spec/agentilda/screen_spec.rb`, `console_spec.rb`, `keyboard_spec.rb`, `cli/run_spec.rb`, `tally_spec.rb` green; `./exe/agentilda run` from the repo root lists 001.00 under `luke-backend` and `rey-frontend` (amended 2026-09-16: the tracked folder now holds `plan.md` and both half-plans, so its contents justify ⭐️ Planned and the pair starts at once; it was `leah-researcher` while the folder held only `spec.md`), renames nothing, and does not create `.plans/tmp`.
+`spec/agentilda/screen_spec.rb`, `console_spec.rb`, `keyboard_spec.rb`, `cli/run_spec.rb`, `tally_spec.rb` green; `./exe/agentilda run` from the repo root lists 001.00 under `backend-coder` and `frontend-coder` (amended 2026-09-16: the tracked folder now holds `plan.md` and both half-plans, so its contents justify ⭐️ Planned and the pair starts at once; it was `researcher` while the folder held only `spec.md`), renames nothing, and does not create `.plans/tmp`.

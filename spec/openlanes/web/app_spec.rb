@@ -351,7 +351,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
       expect(body).to include("chat" => include("participants" => [include("name" => "Pat")]), "invites" => [])
     end
 
-    # The verb table in plan 006's contract.md, which rey-frontend's page is
+    # The verb table in plan 006's contract.md, which frontend-coder's page is
     # written against. An unknown verb is the route's own 404; every other
     # status means the verb reached the hub.
     it "accepts exactly the verbs in the contract's verb table" do
@@ -631,7 +631,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
 
     context "when the plan has a live car" do
       before do
-        plan = { ordinal: "004.00", cars: [{ agent: "luke-backend" }] }
+        plan = { ordinal: "004.00", cars: [{ agent: "backend-coder" }] }
         store.set(keys.snapshot, JSON.generate(snapshot.merge(plans: [plan])))
       end
 

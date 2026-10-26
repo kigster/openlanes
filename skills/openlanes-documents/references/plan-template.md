@@ -1,6 +1,6 @@
 # plan.md template
 
-`luthen-rael-planner` writes `plan.md` from a finished `spec.md`, with each builder's units under `## Backend` and `## Frontend`. Write it by hand only when you are taking the planner's place (lane `plan` skips research, not planning).
+`planner` writes `plan.md` from a finished `spec.md`, with each builder's units under `## Backend` and `## Frontend`. Write it by hand only when you are taking the planner's place (lane `plan` skips research, not planning).
 
 `plan.md` stays **blank** until it is a plan: any `#`, `##` or `###` heading outside a ledger block tells openlanes the plan is written, and moves the folder from 📋 Ready for Planning to ⭐ Planned. The whole plan lands as one pull request; more than eight units means the spec is several plans.
 
@@ -64,6 +64,6 @@ U1 → U2 → U3. Units that write the same file are sequential; say which can r
 
 Notes:
 
-- Every unit appears in exactly one of `## Backend` and `## Frontend`, under its own `###` heading. `rey-frontend` starts only when `## Frontend` has a unit heading, so a plan with no front end writes one plain line there and no heading. Folders planned before plan 003 keep `plan-backend.md` and `plan-frontend.md`, which are still read.
+- Every unit appears in exactly one of `## Backend` and `## Frontend`, under its own `###` heading. `frontend-coder` starts only when `## Frontend` has a unit heading, so a plan with no front end writes one plain line there and no heading. Folders planned before plan 003 keep `plan-backend.md` and `plan-frontend.md`, which are still read.
 - `## Task completed when` and `## How to verify` are appended by the harness when missing; a section you wrote is left alone.
 - A plan stays one level above the code: signatures, routes and response shapes, not method bodies.

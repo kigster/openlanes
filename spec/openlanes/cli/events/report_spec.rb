@@ -31,7 +31,7 @@ RSpec.describe OpenLanes::CLI::Events::Report, :tree do
       kind: "agent_finished",
       at: "2026-10-16T10:00:00Z",
       plan: "001.00",
-      agent: "rey",
+      agent: "frontend-coder",
       adapter: "claude",
       model: "opus",
       payload: { "round" => 1, "status" => "Completed", "cost_usd" => 2.0, "estimated" => true })

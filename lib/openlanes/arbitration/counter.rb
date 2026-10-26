@@ -3,7 +3,7 @@
 module OpenLanes
   module Arbitration
     # How many times a plan has been rejected toward `merge.max_rejections`
-    # (M6): hansolo's and chewie's `rejected` signatures, plus every
+    # (M6): staff-reviewer's and verifier's `rejected` signatures, plus every
     # `passed_check/too_lenient` ruling (a pass the arbitrator turned into a
     # rejection), counted since the last `cap` ruling, so a plan sent back
     # after `go` starts a fresh count.
@@ -14,7 +14,7 @@ module OpenLanes
     # ledger is a second answer to one question.
     class Counter
       # A judge's note that means a rejection: `rejected`, `rejected 1/2`
-      # (hansolo) or `rejected: …` (the harness signing for chewie). Anchored:
+      # (staff-reviewer) or `rejected: …` (the harness signing for verifier). Anchored:
       # an approving note that says "nothing to reject" is not a rejection.
       REJECTION = %r{\Arejected(?=\z|[\s:/])}i
 

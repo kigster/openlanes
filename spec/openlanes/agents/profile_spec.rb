@@ -2,7 +2,7 @@
 
 RSpec.describe OpenLanes::Agents::Profile do
   let(:agent) do
-    OpenLanes::Agents::Agent.new(name: "luke-backend",
+    OpenLanes::Agents::Agent.new(name: "backend-coder",
       description: "",
       handles: [:planned],
       advances_to: :ready_for_review,

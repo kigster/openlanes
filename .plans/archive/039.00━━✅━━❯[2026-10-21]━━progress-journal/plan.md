@@ -113,9 +113,9 @@ No. The plan adds no HTTP API and changes none, so there is no `openapi.yaml`.
 - The JSON schema lives in `schemas/` and is validated in specs.
 - Runtime files no longer live under `.plans/`.
 
-## Build notes (luke-backend, round 1)
+## Build notes (backend-coder, round 1)
 
-- Baseline before any change: `bundle exec rspec` at 4075 examples, 0 failures in leah's run; my own baseline run loaded `event_journal.rb` mid-run and failed `thread_safety_inventory_spec.rb:18` on it, fixed by its row in `docs/thread-safety.md`.
-- Frontend: none, so no `contract.md` and no rey; luke owns the plan.
+- Baseline before any change: `bundle exec rspec` at 4075 examples, 0 failures in researcher's run; my own baseline run loaded `event_journal.rb` mid-run and failed `thread_safety_inventory_spec.rb:18` on it, fixed by its row in `docs/thread-safety.md`.
+- Frontend: none, so no `contract.md` and no frontend-coder; backend-coder owns the plan.
 - B5 also adds `Executor::Handle#trace` (one attribute, set where the trace path is chosen) because `trace_path` is private and random-named; the journal needs the file to name it and read its offset.
 - B6 forks a process that appends through `EventJournal` and SIGKILLs it; the full-Runner round with the journal is covered by `spec/openlanes/engine/dispatcher_event_journal_spec.rb` instead of a forked Runner.

@@ -77,7 +77,7 @@ RSpec.describe OpenLanes::Engine::Verification::AppSession do
   end
 
   describe ".note" do
-    it "tells chewie each process's port and URL" do
+    it "tells verifier each process's port and URL" do
       definition = app(process("api", "x"), process("web", "y", preview: true))
       statuses = [
         OpenLanes::Apps::Status.new(plan: "014.00", branch: "b", process: "api", state: "ready", port: 11_200),

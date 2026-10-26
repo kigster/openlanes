@@ -40,7 +40,7 @@ RSpec.describe OpenLanes::Lifecycle::UnblockWorkflow, :tree do
     $stdout, $stderr = original_out, original_err
   end
 
-  # The agent "folds" A1 by retiring blocked.md, the way lando-broker does.
+  # The agent "folds" A1 by retiring blocked.md, the way unblocker does.
   def with_executor
     executor = instance_double(OpenLanes::Execution::Executor)
     allow(executor).to receive(:call) do |_agent, subject, **|
@@ -53,7 +53,7 @@ RSpec.describe OpenLanes::Lifecycle::UnblockWorkflow, :tree do
   it "fails with a status-65 refusal naming the known agents for an unknown agent" do
     result, = drain("001", agent: "nobody")
 
-    expect([result.failure.status, result.failure.message]).to match([65, a_string_including("No agent called nobody", "lando-broker")])
+    expect([result.failure.status, result.failure.message]).to match([65, a_string_including("No agent called nobody", "unblocker")])
   end
 
   it "answers 66 for a number with no folder, and names it on STDOUT" do

@@ -49,11 +49,11 @@ RSpec.describe "module facades", :tree do
 
   describe OpenLanes::Agents do
     it "loads the shipped definitions" do
-      expect(described_class.registry.find("luke-backend")).to be_a(OpenLanes::Agents::Agent)
+      expect(described_class.registry.find("backend-coder")).to be_a(OpenLanes::Agents::Agent)
     end
 
     it "finds one agent by name" do
-      expect(described_class.find("hansolo-reviewer").name).to eq("hansolo-reviewer")
+      expect(described_class.find("staff-reviewer").name).to eq("staff-reviewer")
     end
   end
 

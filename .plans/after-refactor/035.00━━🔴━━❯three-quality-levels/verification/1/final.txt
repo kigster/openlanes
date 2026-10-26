@@ -1,1 +1,1 @@
-step 3: agents/luke-backend.md:54 and rey-frontend.md:48 require a reply in-thread for every non-check comment on send-back at either quality.
+step 3: agents/backend-coder.md:54 and frontend-coder.md:48 require a reply in-thread for every non-check comment on send-back at either quality.

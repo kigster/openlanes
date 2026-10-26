@@ -5,7 +5,7 @@
 # job of its own, and plan work follows on the next tick.
 RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:agents) { OpenLanes::Agents::Registry.new.only("r2d2-mechanic", "bb8-resolver") }
+  let(:agents) { OpenLanes::Agents::Registry.new.only("chores-coder", "rebaser") }
   let(:stamp) { "2026-10-16 09:00:00 AM PDT" }
   let(:calls) { [] }
   let(:resolution) { nil }
@@ -66,7 +66,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
     it "fast-forwards it before the agent runs, and no agent resolves anything" do
       attempts
 
-      expect(calls).to eq([["r2d2-mechanic", :work, true]])
+      expect(calls).to eq([["chores-coder", :work, true]])
     end
   end
 
@@ -82,8 +82,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
 
       it "spends one job on the rebase, then the plan's work on the rebased branch" do
         aggregate_failures do
-          expect(attempts.first.note).to include("rebased onto origin/main; r2d2-mechanic resolved")
-          expect(calls.map { it.first(2) }).to eq([["r2d2-mechanic", :rebase], ["r2d2-mechanic", :work]])
+          expect(attempts.first.note).to include("rebased onto origin/main; chores-coder resolved")
+          expect(calls.map { it.first(2) }).to eq([["chores-coder", :rebase], ["chores-coder", :work]])
           expect(calls.last.last).to be(true)
           expect(git!(checkout.path, "log", "-1", "--format=%s")).to eq("edit app.rb")
         end
@@ -91,12 +91,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
     end
 
     context "when nobody can resolve it" do
-      it "climbs bb8-resolver's ladder, then lets the plan work on its old base, never blocking it" do
+      it "climbs rebaser's ladder, then lets the plan work on its old base, never blocking it" do
         attempts
 
         aggregate_failures do
-          expect(calls.map { it.first(2) }).to eq([["r2d2-mechanic", :rebase], ["bb8-resolver", :rebase],
-                                                   ["bb8-resolver", :rebase], ["bb8-resolver", :rebase], ["r2d2-mechanic", :work]])
+          expect(calls.map { it.first(2) }).to eq([["chores-coder", :rebase], ["rebaser", :rebase],
+                                                   ["rebaser", :rebase], ["rebaser", :rebase], ["chores-coder", :work]])
           expect(calls.last.last).to be(false)
           expect(attempts.map(&:note).join).to include("REBASE PENDING")
           expect(plan.status.key).to eq(:building)

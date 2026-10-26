@@ -62,7 +62,7 @@ RSpec.describe "Ending an agent that will not end" do
     subject(:executor) { described_class.new(root:, spawn:, timeout: 0, trace_dir: File.join(dir, "traces")) }
 
     let(:root) { File.dirname(plans_root) }
-    let(:agent) { OpenLanes::Agents.find("luke-backend") }
+    let(:agent) { OpenLanes::Agents.find("backend-coder") }
     # The argv is built before the lambda exists: a let read from the call's
     # thread would wait on the memoization lock the main thread holds. The
     # child is handed back only once the grandchild is up, so the clock,

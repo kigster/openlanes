@@ -113,8 +113,8 @@ module OpenLanes
       end
 
       # A reviewer's cap and the findings the arbitrator struck (M6, M8):
-      # hansolo once hard-coded "2", and a struck finding raised again would
-      # count a rejection the arbitrator already voided. hansolo numbers from
+      # staff-reviewer once hard-coded "2", and a struck finding raised again would
+      # count a rejection the arbitrator already voided. staff-reviewer numbers from
       # F1 in every review, so a bare id would ban a different finding next
       # round: each is named with the review it came from and its heading.
       #
@@ -683,8 +683,8 @@ module OpenLanes
 
       # Spelled out in the prompt as well as withheld at the tool layer, because
       # an agent that does not know it has been granted something does not use
-      # it — and `hansolo-reviewer` silently never approving anything looks
-      # exactly like `hansolo-reviewer` approving nothing worth approving.
+      # it — and `staff-reviewer` silently never approving anything looks
+      # exactly like `staff-reviewer` approving nothing worth approving.
       #
       # @return [String]
       def granted_section

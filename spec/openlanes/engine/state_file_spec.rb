@@ -22,7 +22,7 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
   it "records the host, and never calls a run on another host dead" do
     dead = described_class.new(path:, pid: 999_999_999)
     dead.begin_run!(root: "/repo")
-    dead.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
+    dead.record("001.00", agent: "spec-writer", round: 1, status: "Started")
     dead.save
     allow(Socket).to receive(:gethostname).and_return("elsewhere.invalid")
 
@@ -36,32 +36,32 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
 
   it "starts empty, saves atomically, and loads what it saved" do
     state.begin_run!(root: "/repo")
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Started", model: "haiku")
+    state.record("001.00", agent: "researcher", round: 1, status: "Started", model: "haiku")
     state.save
     loaded = described_class.new(path:, pid: 4242).load
     aggregate_failures do
-      expect(loaded.stages("001.00").first).to include("agent" => "leah-researcher", "status" => "Started", "model" => "haiku")
+      expect(loaded.stages("001.00").first).to include("agent" => "researcher", "status" => "Started", "model" => "haiku")
       expect(JSON.parse(File.read(path)).dig("run", "pid")).to eq(4242)
       expect(Dir.children(plans_root).grep(/\.tmp\z/)).to be_empty
     end
   end
 
   it "keeps the live run's record beside the stages, and loads it back" do
-    state.live = { "seq" => 3, "held_cars" => ["001.00/luke-backend"] }
+    state.live = { "seq" => 3, "held_cars" => ["001.00/backend-coder"] }
     state.save
-    expect(described_class.new(path:, pid: 4242).load.live).to eq("seq" => 3, "held_cars" => ["001.00/luke-backend"])
+    expect(described_class.new(path:, pid: 4242).load.live).to eq("seq" => 3, "held_cars" => ["001.00/backend-coder"])
   end
 
   it "merges later fields into the same stage rather than adding a second one" do
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Started")
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Completed", up: 12)
+    state.record("001.00", agent: "researcher", round: 1, status: "Started")
+    state.record("001.00", agent: "researcher", round: 1, status: "Completed", up: 12)
     expect(state.stages("001.00").size).to eq(1)
     expect(state.stages("001.00").first).to include("status" => "Completed", "up" => 12)
   end
 
   it "keeps a second round as its own stage" do
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Interrupted")
-    state.record("001.00", agent: "leah-researcher", round: 2, status: "Started")
+    state.record("001.00", agent: "researcher", round: 1, status: "Interrupted")
+    state.record("001.00", agent: "researcher", round: 2, status: "Started")
     expect(state.stages("001.00").map { |s| s["round"] }).to eq([1, 2])
   end
 
@@ -70,20 +70,20 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
   it "reports stages a dead run left Started as stranded" do
     dead = described_class.new(path:, pid: 999_999_999)
     dead.begin_run!(root: "/repo")
-    dead.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
-    dead.record("002.00", agent: "leah-researcher", round: 1, status: "Completed")
+    dead.record("001.00", agent: "spec-writer", round: 1, status: "Started")
+    dead.record("002.00", agent: "researcher", round: 1, status: "Completed")
     dead.save
 
     fresh = described_class.new(path:, pid: 4242).load
     aggregate_failures do
       expect(fresh).to be_previous_run_dead
-      expect(fresh.stranded.map { |ordinal, stage| [ordinal, stage["agent"]] }).to eq([["001.00", "yoda-writer"]])
+      expect(fresh.stranded.map { |ordinal, stage| [ordinal, stage["agent"]] }).to eq([["001.00", "spec-writer"]])
     end
   end
 
   it "does not call a live run's Started stages stranded" do
     state.begin_run!(root: "/repo")
-    state.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
+    state.record("001.00", agent: "spec-writer", round: 1, status: "Started")
     state.save
     fresh = described_class.new(path:, pid: 4242).load
     expect(fresh.stranded).to be_empty
@@ -97,7 +97,7 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
 
     let(:path) { described_class.for(tree) }
     let(:legacy) { described_class.legacy_for(tree).last }
-    let(:stage) { { "agent" => "yoda-writer", "round" => 1, "status" => "Started" } }
+    let(:stage) { { "agent" => "spec-writer", "round" => 1, "status" => "Started" } }
     let(:written) { { "run" => { "pid" => 999_999_999 }, "plans" => { "001.00" => { "stages" => [stage] } } } }
 
     before do
@@ -106,7 +106,7 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
     end
 
     it "is read when the current path holds nothing" do
-      expect(loaded.stages("001.00").first).to include("agent" => "yoda-writer")
+      expect(loaded.stages("001.00").first).to include("agent" => "spec-writer")
     end
 
     it "is still reported as stranded, so the next run knows to re-run it" do

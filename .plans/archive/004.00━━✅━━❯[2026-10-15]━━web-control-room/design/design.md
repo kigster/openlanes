@@ -14,7 +14,7 @@ The state machine already has the shape of a transit line. The spine is the trun
 
 - The station columns come from `StateMachine::SPINE`, and the agent under each station from `Agents::Registry` (`handles:`). Neither is hard-coded in the front end (decision W4).
 - A **filled line** marks travelled stations. A **hollow ring** is a station the plan's lane skips. A **dotted line** is the road ahead.
-- The **agents at work** hang under the plan's current station as cars. A pair (luke and rey) is two cars side by side. Each car shows the agent, its model, elapsed time, tokens in (↑) and out (↓), and its latest activity line. The model is a small borderless dropdown in the car's top-right corner (decision W24): the adapter's models, most capable first, with the current one selected. A change is queued for the agent's next round, so the car shows it in bold and the drawer reads "Sonnet 5.5, Fable 5.1 from its next round". The agent's name is the button that opens the drawer, and its hit area covers the whole car, so the dropdown sits on a layer above it rather than inside a button.
+- The **agents at work** hang under the plan's current station as cars. A pair (backend-coder and frontend-coder) is two cars side by side. Each car shows the agent, its model, elapsed time, tokens in (↑) and out (↓), and its latest activity line. The model is a small borderless dropdown in the car's top-right corner (decision W24): the adapter's models, most capable first, with the current one selected. A change is queued for the agent's next round, so the car shows it in bold and the drawer reads "Sonnet 5.5, Fable 5.1 from its next round". The agent's name is the button that opens the drawer, and its hit area covers the whole car, so the dropdown sits on a layer above it rather than inside a button.
 - The **PR terminus** shows the PR number, the CI result and the review label from plan 005 (L1).
 
 ## Tokens
@@ -46,9 +46,9 @@ The review labels keep the colours of plan 005 (L1).
 ├─────────────────────────────────────────────────────────────────┬───────────────────┤
 │           New  Researched  Planning  Building  UI  Review  PR   │ Needs you  2      │
 │ 001.00    ●━━━━━━●━━━━━━━━━━●━━━━━━━━◉┄┄┄┄┄┄┄○┄┄┄┄┄○┄┄┄┄┄┄○     │ ┌ question ──────┐ │
-│ Clean…                               [luke-backend][rey-frontend]│ │ answer box     │ │
+│ Clean…                               [backend-coder][frontend-coder]│ │ answer box     │ │
 │ 005.00                ○      ○       ●━━━━━━━━━━━━━━━━◉┄┄┄┄○     │ └────────────────┘ │
-│ Review…                                         [hansolo]        │ ┌ interrupted ───┐ │
+│ Review…                                         [staff-reviewer]        │ ┌ interrupted ───┐ │
 └─────────────────────────────────────────────────────────────────┴───────────────────┘
 ```
 
@@ -106,7 +106,7 @@ The review labels keep the colours of plan 005 (L1).
 - The meta strings in the top bar were going to be joined with middle dots. **Changed** to separate, spaced segments.
 - A monospace face for labels is the common tell. **Kept** only for real terminal output.
 
-## For the build (rey-frontend)
+## For the build (frontend-coder)
 
 - React with shadcn/ui primitives: `Sheet` for the drawer, `Tooltip`, `Textarea`, `Button`, `Badge`. They are restyled with the tokens above, not left with the default shadcn look.
 - Motion `layout` and `layoutId` move a car between stations; the line fill is a CSS transition on the segment. Under `prefers-reduced-motion`, both jump instead.
@@ -153,7 +153,7 @@ What it has to say:
 
 - An agent that asks a yes/no question ("The PR has a merge conflict in lib/agentilda/cli.rb. Should I rebase onto main?") marks it so (W30), and every place the question shows, the drawer, Needs you and the unblock widget, offers **Yes** and **No** buttons instead of a text box, beside Hold blocked.
 - **Answer in words** swaps the buttons for the usual text box, for the times the honest answer is "yes, but". The choice sticks to that question everywhere it shows.
-- The answer goes back to the agent as the word itself, and the card says "Answered yes to luke-backend."
+- The answer goes back to the agent as the word itself, and the card says "Answered yes to backend-coder."
 
 ## Before going live
 

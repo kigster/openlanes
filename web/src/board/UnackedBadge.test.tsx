@@ -19,15 +19,15 @@ describe("UnackedBadge", () => {
 
   it("explains in its tooltip who is waiting on whom, and that nothing waits on it", () => {
     const mail = [
-      { from: "luke-backend", to: "rey-frontend", count: 4, since: "2026-10-18 09:41:07 AM PDT" },
-      { from: "rey-frontend", to: "luke-backend", count: 3, since: "2026-10-18 10:02:11 AM PDT" },
+      { from: "backend-coder", to: "frontend-coder", count: 4, since: "2026-10-18 09:41:07 AM PDT" },
+      { from: "frontend-coder", to: "backend-coder", count: 3, since: "2026-10-18 10:02:11 AM PDT" },
     ];
     const { container } = render(<UnackedBadge count={7} mail={mail} />);
     expect(container.querySelector(".unacked")!.getAttribute("title")).toBe(
       [
         "7 messages between this plan's agents that the recipient has not acked yet:",
-        "luke-backend → rey-frontend: 4, oldest 2026-10-18 09:41:07 AM PDT",
-        "rey-frontend → luke-backend: 3, oldest 2026-10-18 10:02:11 AM PDT",
+        "backend-coder → frontend-coder: 4, oldest 2026-10-18 09:41:07 AM PDT",
+        "frontend-coder → backend-coder: 3, oldest 2026-10-18 10:02:11 AM PDT",
         "",
         "A warning only: no round waits on it. It clears when the recipient acks the mail, usually on its next round.",
       ].join("\n"),

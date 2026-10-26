@@ -394,7 +394,7 @@ module OpenLanes
       # unattended loop doing either has no way to be wrong quietly. Reviewing
       # does not: an approval is reversible, visible, and attributable to the
       # identity that made it. That difference is the whole line between
-      # `hansolo-reviewer` approving and `hansolo-reviewer` merging.
+      # `staff-reviewer` approving and `staff-reviewer` merging.
       #
       # A rebase is the harness's alone for the same reason a merge is: it
       # rewrites the branch a pull request is built from, and the harness

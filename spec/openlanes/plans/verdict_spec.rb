@@ -4,11 +4,11 @@
 # the emoji each comment opens with, counted across every reviewer, decide
 # the label.
 RSpec.describe OpenLanes::Plans::Verdict do
-  def comment(body, agent: "hansolo-reviewer") = { agent:, body: }
+  def comment(body, agent: "staff-reviewer") = { agent:, body: }
   def hmm(count, agent: "darth-reviewer") = Array.new(count) { comment("🤔 Hmmm... consider a guard #{it}", agent:) }
 
-  let(:header) { comment("Reviewed by Hans Solo, reviewing agent, using Opus 5.5 by Anthropic at 2026/10/16 @ 12:34pm.") }
-  let(:vader) { "vader-security-reviewer" }
+  let(:header) { comment("Reviewed by staff-reviewer, reviewing agent, using Opus 5.5 by Anthropic at 2026/10/16 @ 12:34pm.") }
+  let(:security_reviewer) { "security-reviewer" }
 
   it "approves a clean pull request that earned no ✅ at all" do
     expect(described_class.call([header]).names).to eq(%w[review-approved])
@@ -25,7 +25,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
   end
 
   it "is ok-not-perfect past max_hmm, counting every reviewer together" do
-    comments = hmm(3, agent: "hansolo-reviewer") + hmm(3, agent: "darth-reviewer")
+    comments = hmm(3, agent: "staff-reviewer") + hmm(3, agent: "darth-reviewer")
 
     expect(described_class.call(comments).names).to eq(%w[review-ok-not-perfect])
   end
@@ -52,14 +52,14 @@ RSpec.describe OpenLanes::Plans::Verdict do
     expect(described_class.call(hmm(9) + [comment("⛔️ Must Fix")]).names).to eq(%w[review-rejected])
   end
 
-  it "adds review-vulnerability beside review-rejected for vader's 💣" do
-    verdict = described_class.call([comment("💣 Security Flaw: SQL built from params", agent: vader)])
+  it "adds review-vulnerability beside review-rejected for security-reviewer's 💣" do
+    verdict = described_class.call([comment("💣 Security Flaw: SQL built from params", agent: security_reviewer)])
 
     expect(verdict.names).to eq(%w[review-rejected review-vulnerability])
   end
 
-  it "counts vader's 🔓 without blocking anything" do
-    verdict = described_class.call([comment("🔓 Security Concern: token logged at debug", agent: vader)])
+  it "counts security-reviewer's 🔓 without blocking anything" do
+    verdict = described_class.call([comment("🔓 Security Concern: token logged at debug", agent: security_reviewer)])
 
     aggregate_failures do
       expect(verdict.names).to eq(%w[review-approved])
@@ -67,7 +67,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
     end
   end
 
-  it "ignores 💣 and 🔓 from anyone but vader, and says which" do
+  it "ignores 💣 and 🔓 from anyone but security-reviewer, and says which" do
     stray = [comment("💣 Security Flaw: eval", agent: "darth-reviewer"), comment("🔓 Security Concern", agent: nil)]
     verdict = described_class.call(stray)
 
@@ -91,7 +91,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
   end
 
   it "takes Comment values and string-keyed hashes alike" do
-    comments = [described_class::Comment.new(agent: vader, body: "💣 x"), { "agent" => "hansolo-reviewer", "body" => "⛔️ y" }]
+    comments = [described_class::Comment.new(agent: security_reviewer, body: "💣 x"), { "agent" => "staff-reviewer", "body" => "⛔️ y" }]
 
     expect(described_class.call(comments).tally).to include(flaw: 1, must_fix: 1)
   end
@@ -116,7 +116,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
       OpenLanes::Plans.verdict([comment("💣 eval", agent: "darth-reviewer")], max_hmm: 5)
 
       expect(OpenLanes::UI).to have_received(:log)
-        .with(a_string_including("ignored 💣 from darth-reviewer", "only vader-security-reviewer"), level: :warn)
+        .with(a_string_including("ignored 💣 from darth-reviewer", "only security-reviewer"), level: :warn)
     end
   end
 end

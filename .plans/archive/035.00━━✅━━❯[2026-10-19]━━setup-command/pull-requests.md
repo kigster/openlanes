@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 82 | [\[035.00\](A) Setup Command](https://github.com/kigster/openlanes/pull/82) | Merged 🟣 |
 
-## luke-backend, round 1 — verification
+## backend-coder, round 1 — verification
 
 - `bundle exec rubocop` → 490 files inspected, no offenses detected
 - `bundle exec rspec` → 3581 examples, 0 failures, 9 pending; coverage 98.8%

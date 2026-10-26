@@ -22,7 +22,7 @@ The shapes are in `web/src/api/types.ts`, the single source of truth. `web/src/a
 | `P:<node>:<checkout>:replies` | stream | engine | `{json}` one `Reply`, `MAXLEN ~ 1000` |
 | `P:<node>:<checkout>:done` | hash | engine | command id → `Reply` JSON, for redelivery (W13); trimmed after a day, unreadable entries dropped |
 | `P:<node>:<checkout>:copilot` | stream | API server | `{json}` one `CopilotTurn`, the person's and the copilot's in the order said, `MAXLEN ~ 500` (W17) |
-| `P:<node>:<checkout>:copilot-session` | hash | API server | `session` (c3po-operator's `claude` session id), `model`, `up`, `down`: the conversation to resume and what it has spent (W17) |
+| `P:<node>:<checkout>:copilot-session` | hash | API server | `session` (copilot's `claude` session id), `model`, `up`, `down`: the conversation to resume and what it has spent (W17) |
 | `P:<node>:<checkout>:run` | hash | engine | `seq` and `json`: the run state a person set (held questions, held cars, queued models), written in the same `MULTI` as the reply that changed it; mirrored into `.plans/openlanes-state.json` under `live`, and on start the copy with the higher `seq` wins (W6) |
 | `P:claim:<ordinal>` | string | engine | `<node>:<checkout>`, `SET NX EX 90`, renewed by heartbeat, released by compare-and-delete |
 
@@ -48,7 +48,7 @@ The page reconnects with `@microsoft/fetch-event-source`, and on reconnect fetch
 
 ## Copilot (W17)
 
-The conversation with c3po-operator travels like everything else: messages go in by POST, answers come out on the one event stream. A `CopilotTurn` is `{id, from: "you" | "copilot", kind, text, at, usage}`; a reply's id is the message's id, a dot and its place (`01J….1`), so it names what it answers. `kind` is one of:
+The conversation with copilot travels like everything else: messages go in by POST, answers come out on the one event stream. A `CopilotTurn` is `{id, from: "you" | "copilot", kind, text, at, usage}`; a reply's id is the message's id, a dot and its place (`01J….1`), so it names what it answers. `kind` is one of:
 
 | kind | extra fields | the page draws |
 | --- | --- | --- |
@@ -58,26 +58,26 @@ The conversation with c3po-operator travels like everything else: messages go in
 
 The server refuses to store a card missing its fields, or a confirm card whose command `POST /api/commands` would refuse.
 
-### Where c3po-operator runs
+### Where copilot runs
 
 In the API server, not the engine. The conversation already arrives there and is stored there, and W17 asks for nothing the engine alone has: the agent reads the board, the plan folders, the mailboxes and the transcripts, all of which the server can reach. Running there also means it answers under `openlanes web` with no run going, and after a run has ended. `openlanes web --demo` answers with one canned line instead (`Web::Demo::COPILOT`); a server with no responder answers `POST /api/copilot` with `503`.
 
 - **One message at a time.** `POST /api/copilot` stores the person's turn and returns `202` at once; the server then calls `Copilot#answer` on its background path (`Context#background`, a thread with its own Redis connection), whose responder is `Live::Copilot::Operator`. The operator answers one message after another, so two `claude` processes never resume one session; a failure is written as a `text` turn by `Copilot#answer`.
 - **One session, resumed.** Each message is one `claude -p`, with `--resume <session>` from `copilot-session` when there is one, so a reloaded page or a restarted server carries on the same conversation. A session `claude` no longer has fails before spending anything; the operator then starts a fresh one and keeps its id. A message still queued when the server stops is not answered.
-- **What it is told.** Its definition (`agents/c3po-operator.md`) goes as `--append-system-prompt` on every call, so compaction cannot lose it. Each message carries the board as the server read it from Redis (this node's plans, cars, questions and recent log, other machines in one line each), where to read further, and the person's words.
+- **What it is told.** Its definition (`agents/copilot.md`) goes as `--append-system-prompt` on every call, so compaction cannot lose it. Each message carries the board as the server read it from Redis (this node's plans, cars, questions and recent log, other machines in one line each), where to read further, and the person's words.
 - **Its boundary.** `--restricted --tools Read,Grep,Glob,Bash --permission-mode dontAsk`: no other built-in tool exists for it, no settings file can widen what is allowed, and anything not allowed is refused rather than prompted for. Bash runs only the read-only `openlanes` queries its definition lists. `Executor#denied_for` adds the network tools and every command that leaves the machine, and `Edit`, `Write`, `MultiEdit`, `NotebookEdit`, `Task` and `Agent` are denied on top. It reads the checkout and the trace directory (`--add-dir`), on its definition's model (`haiku`), with a 180 s limit per answer.
 - **Usage.** Every turn it writes carries `usage`: the model's full id and the session's running `up` and `down`, which the header shows.
-- **Failures** come back as a `text` turn saying why ("c3po-operator could not answer: …"), never as silence.
+- **Failures** come back as a `text` turn saying why ("copilot could not answer: …"), never as silence.
 
-### Cards c3po-operator writes
+### Cards copilot writes
 
-The agent answers in prose. Where it wants a card it writes a fenced block whose info string is exactly `c3po`, holding one JSON object:
+The agent answers in prose. Where it wants a card it writes a fenced block whose info string is exactly `copilot`, holding one JSON object:
 
 ````text
-```c3po
-{"card": "confirm", "text": "…", "command": {"kind": "stop", "plan": "002", "agent": "luke-backend"}, "confirm": "Stop luke-backend", "done": "…"}
+```copilot
+{"card": "confirm", "text": "…", "command": {"kind": "stop", "plan": "002", "agent": "backend-coder"}, "confirm": "Stop backend-coder", "done": "…"}
 ```
-```c3po
+```copilot
 {"card": "draft", "question": "002/B1", "text": "…", "draft": "…"}
 ```
 ````
@@ -107,7 +107,7 @@ Pages on machines sharing one Redis chat through Redis pub/sub; nothing said is 
 
 | kind | effect |
 | --- | --- |
-| `answer` | append `## A<n>` with the text, "Answered by <user> on <date>" and `<!-- cmd:<id> -->`, to blocked.md; once every `B<n>` has an answer the dispatcher hands the plan to the agent that handles its state (lando-broker) through `Lifecycle::Unblocker`, on a thread, and picks the plan up again in the same run. Each answer set is tried once; a failed drain waits for blocked.md to change |
+| `answer` | append `## A<n>` with the text, "Answered by <user> on <date>" and `<!-- cmd:<id> -->`, to blocked.md; once every `B<n>` has an answer the dispatcher hands the plan to the agent that handles its state (unblocker) through `Lifecycle::Unblocker`, on a thread, and picks the plan up again in the same run. Each answer set is tried once; a failed drain waits for blocked.md to change |
 | `hold_blocked` / `release_hold` | mark the question held in the run state; the page shows the pill solid red ⏸ |
 | `resume` | resume the interrupted agent from its last-known-state with the note in its mailbox |
 | `discard` | plan-wide (W9): stop every agent on the plan (STOP, then SIGKILL after 15 s), `git reset --hard` and `git clean -fd` in the plan's own worktree (its branch's last commit; agents never commit), then move the folder back one state through `StateMachine#retreat!`. The reply waits until all of it is done. Refused up front under `--isolation shared` or a dry run, and for a state with nothing behind it on the spine (🔴 🚫 ⏪) or whose earlier state the folder does not fit |

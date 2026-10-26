@@ -1,7 +1,7 @@
 # Plan 020.00: Lanes with No Active Agents
 
 Three slash commands typed into the copilot (`/stop NNN`, `/restart NNN`, `/concurrency N`) become engine
-commands on the existing command stream (W13). They never reach c3po-operator: the copilot agent stays read-only, and
+commands on the existing command stream (W13). They never reach copilot: the copilot agent stays read-only, and
 the only write path is the gate the page's buttons already use, so idempotency, replies and logging come for free.
 
 ## Shape of the change
@@ -90,7 +90,7 @@ dispatches on the next tick; lowering 3 → 1 with three running keeps all three
 
 - **Discipline:** back end
 - **Owns:** `lib/openlanes/live/copilot/slash.rb` (new), `lib/openlanes/live/copilot.rb`, `lib/openlanes/web/app.rb`,
-  `agents/c3po-operator.md`, `spec/openlanes/live/copilot/slash_spec.rb` (new), `spec/openlanes/live/copilot_spec.rb`,
+  `agents/copilot.md`, `spec/openlanes/live/copilot/slash_spec.rb` (new), `spec/openlanes/live/copilot_spec.rb`,
   `spec/openlanes/web/app_spec.rb`
 - **Must not touch:** `commands.rb`, `command.rb`, `lib/openlanes/engine/*`
 - **Depends on:** B1
@@ -104,7 +104,7 @@ dispatches on the next tick; lowering 3 → 1 with three running keeps all three
   once with turn `"<id>.1"`. Neither calls the responder, so `Unanswered` is raised only for plain text.
 - `POST /api/copilot`: `answer_later` skipped for slash messages. When no engine node has a live heartbeat
   (`@keys.nodes`), a slash command is refused 503 "no engine is running to apply /stop".
-- `agents/c3po-operator.md`: one paragraph saying these commands exist and that it may suggest them, never run them.
+- `agents/copilot.md`: one paragraph saying these commands exist and that it may suggest them, never run them.
 
 ### B5 Concurrency on the board
 
@@ -174,14 +174,14 @@ stubbed. Through the page only, it must show:
 
 Yes, changed; no new route. `POST /api/copilot` behaves differently for messages starting with `/` (and may answer 503
 for a slash command with no live engine); `Command` gains three kinds; `GET /api/board`'s `run` gains `jobs`.
-`luke-backend` updates `contract.md` and writes `openapi.yaml` beside it covering those three endpoints.
+`backend-coder` updates `contract.md` and writes `openapi.yaml` beside it covering those three endpoints.
 
 ## Rebase decisions
 
-Replaying 253ce3d onto `origin/main` 0b10d65, 2026-10-17, bb8-resolver.
+Replaying 253ce3d onto `origin/main` 0b10d65, 2026-10-17, rebaser.
 
 - `plan.md`: kept the branch's copy. It is main's copy plus the `## How to test` section, and nothing in it was removed.
-- `pull-requests.md`: kept the branch's copy. It is main's copy plus the 2026-10-17 rey-frontend and luke-backend round-1 proofs, and nothing in it was removed.
+- `pull-requests.md`: kept the branch's copy. It is main's copy plus the 2026-10-17 frontend-coder and backend-coder round-1 proofs, and nothing in it was removed.
 - `state.json`: kept the branch's copy. Every stage, signature and message on main is in it unchanged. It adds 3 stages, 6 signatures, mail #8 to #11, the time extension and a later `updated_at`, and marks mail #4 read.
 - `lib/openlanes/apps/probe.rb`: kept main's `listening?(port, timeout:)` (block form of `Socket.tcp`, main's Little Snitch comment) and dropped the branch's `&:remote_address` version and its Darwin 27 comment. Both are the same `remote_address` fix; main's takes a timeout so `Ports` and the spec helpers share it. The branch's finding stays recorded in `pull-requests.md`.
 - `lib/openlanes/apps/ports.rb`: kept main's `answering?(port) = Probe.listening?(port, timeout: 0.2)` and dropped the branch's own copy of the same fix.

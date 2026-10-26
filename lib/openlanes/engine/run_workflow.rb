@@ -239,7 +239,7 @@ module OpenLanes
       end
 
       # M3's review labels moved onto R3's (R3), before anything else of the
-      # run: chewie's verification reads `ready-to-merge` as verified and
+      # run: verifier's verification reads `ready-to-merge` as verified and
       # skips CI and coverage, so a run that started with the migration still
       # owed would trust an M3 approval as a verification, and could put a
       # real `ready-to-merge` on that the next start's migration takes back
@@ -258,7 +258,7 @@ module OpenLanes
         end
 
         refusal("Review labels not migrated: #{e.message}\n\n" \
-                "Until they are, an M3 ready-to-merge on an open pull request would read as chewie's " \
+                "Until they are, an M3 ready-to-merge on an open pull request would read as #{Agents::Names::VERIFIER}'s " \
                 "verification. Start again once gh can reach the repository, or run with --no-git-push.",
           69)
       end
@@ -483,7 +483,7 @@ module OpenLanes
           unless @quiet
             warn("No pull request will be opened (#{isolation == :worktree ? "--no-git-push" : "--isolation shared"}), " \
                  "so a finished build stays at 🟡 Building:\n🟢 Ready for Review needs an open pull request, " \
-                 "and hansolo-reviewer reviews one.")
+                 "and #{Agents::Names::STAFF_REVIEWER} reviews one.")
           end
           return nil
         end

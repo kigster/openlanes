@@ -72,7 +72,7 @@ The integration check belongs to **B3**.
 
 ### B3 Web call sites onto the bus, plus the integration check
 
-- **Discipline:** back end. `rey-frontend` writes no page code.
+- **Discipline:** back end. `frontend-coder` writes no page code.
 - **Owns:**
   - `lib/openlanes/web/demo.rb`, `web/app.rb`, `web/server.rb`, `web/stores.rb`, `web/events.rb`, `web/context.rb`.
   - Their existing specs.

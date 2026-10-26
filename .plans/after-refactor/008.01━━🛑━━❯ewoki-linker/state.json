@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:46:13-07:00",
   "stages": [
     {
-      "agent": "palpatine-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Blocked",
       "from": "new",
@@ -32,7 +32,7 @@
       "moves": 1
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -55,7 +55,7 @@
       "moves": 2
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "planned",
@@ -78,7 +78,7 @@
       "moves": 4
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "blocked",
@@ -96,7 +96,7 @@
       "finished_at": "2026-10-21T01:20:02-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -115,7 +115,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -134,7 +134,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Interrupted",
       "from": "building",
@@ -153,7 +153,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 3,
       "status": "Interrupted",
       "from": "building",
@@ -172,7 +172,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 4,
       "status": "Interrupted",
       "from": "building",
@@ -191,7 +191,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 5,
       "status": "Interrupted",
       "from": "building",
@@ -210,7 +210,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 6,
       "status": "Interrupted",
       "from": "building",
@@ -229,7 +229,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "building",
@@ -248,7 +248,7 @@
       "moves": 6
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "blocked",
@@ -267,7 +267,7 @@
       "moves": 8
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -286,7 +286,7 @@
       "moves": 10
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "rejected",
@@ -308,176 +308,176 @@
   "signatures": [
     {
       "at": "2026-10-20T03:28:20-07:00",
-      "agent": "palpatine-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T03:29:28-07:00",
-      "agent": "palpatine-planner",
+      "agent": "planner",
       "status": "Blocked",
       "round": 1,
       "note": "product"
     },
     {
       "at": "2026-10-20T03:33:15-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T03:33:40-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-20T17:06:46-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:09:13-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-20T17:09:45-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:20:54-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-20T18:55:19-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T18:55:31-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T18:55:41-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:20:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-21T01:20:20-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:26:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:32:21-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:37:32-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:42:56-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T21:48:05-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-23T14:28:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:29:18-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-23T14:37:19-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:37:45-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:37:55-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:38:48-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:39:08-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:44:42-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-23T14:44:55-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:45:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "product"
@@ -488,8 +488,8 @@
       "id": "69c97626-f0ae-4a30-bff8-f9908bdd3e9f",
       "number": 1,
       "at": "2026-10-20T03:29:27-07:00",
-      "from": "palpatine-planner",
-      "to": "luke-backend",
+      "from": "planner",
+      "to": "backend-coder",
       "body": "No plan this round. Blocked (product): spec's new 'link'/tsort chapters contradict items 6-9; see blocked.md B1-B6. Don't start building.",
       "read": "no"
     },
@@ -498,7 +498,7 @@
       "number": 2,
       "at": "2026-10-21T01:20:02-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     },
@@ -506,8 +506,8 @@
       "id": "29cc4b3f-b5c0-481d-bca1-e71461f1cd99",
       "number": 3,
       "at": "2026-10-23T14:29:17-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Blocked round 1 (technical): this worktree's 0398136d is superseded by PR #114 (kig/ewoki-linker), as kig noted in 6d04fb82. Nothing built or published. See blocked.md B1.",
       "read": "no"
     },
@@ -515,8 +515,8 @@
       "id": "361a9fcf-c8b9-44f8-ad42-e92f80d2175f",
       "number": 4,
       "at": "2026-10-23T14:38:47-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "B1 answered (a): PR #114 is this plan's PR, recorded in pull-requests.md. No code changed this round; back end done.",
       "read": "no"
     },
@@ -524,14 +524,14 @@
       "id": "8eff4e3a-4e09-4076-8e29-a3df90046c7e",
       "number": 5,
       "at": "2026-10-23T14:45:57-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "🔴 round: blocked before fixing. See blocked.md B2 (spec's precedes model or #114's 🔗 state) and B3 (this worktree is on #122's branch, so fixes would land on the wrong PR). I changed no code.",
       "read": "no"
     }
   ],
   "memory": {
-    "palpatine-planner": {
+    "planner": {
       "rounds": {
         "1": {
           "round": 1,
@@ -551,7 +551,7 @@
             },
             {
               "kind": "note",
-              "text": "Folder lock .plans/008.01…/** is held by harness pid 36356 with intent naming palpatine-planner; alock acquire refused, wrote blocked.md under it as the harness's own invocation."
+              "text": "Folder lock .plans/008.01…/** is held by harness pid 36356 with intent naming planner; alock acquire refused, wrote blocked.md under it as the harness's own invocation."
             },
             {
               "kind": "todo",
@@ -589,7 +589,7 @@
             },
             {
               "kind": "question",
-              "text": "B6 System lane in the UI The spec says the UI \"can add\" a dedicated lane for system tasks, where the linking PR would sit until it merges. a) Out of scope here. Note it as a follow-up for 008.02 or the web plans. (Recommended) b) In scope: a front-end unit for `rey-frontend` that adds a \"System\" lane to the board.",
+              "text": "B6 System lane in the UI The spec says the UI \"can add\" a dedicated lane for system tasks, where the linking PR would sit until it merges. a) Out of scope here. Note it as a follow-up for 008.02 or the web plans. (Recommended) b) In scope: a front-end unit for `frontend-coder` that adds a \"System\" lane to the board.",
               "ref": "B6",
               "answer": "Decided 2026-10-20 by the product owner: (a) out of scope. Note the System lane as a follow-up for 008.02 or the web plans."
             }
@@ -597,7 +597,7 @@
         }
       }
     },
-    "lando-broker": {
+    "unblocker": {
       "rounds": {
         "1": {
           "state": "🛑 Product Block",
@@ -622,7 +622,7 @@
         }
       }
     },
-    "luthen-rael-planner": {
+    "planner": {
       "rounds": {
         "1": {
           "round": 1,
@@ -654,13 +654,13 @@
             },
             {
               "kind": "done",
-              "text": "Wrote plan.md with 8 back-end units, no frontend and no HTTP surface; signed Completed with --next luke-backend"
+              "text": "Wrote plan.md with 8 back-end units, no frontend and no HTTP surface; signed Completed with --next backend-coder"
             }
           ]
         }
       }
     },
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -770,17 +770,17 @@
             },
             {
               "kind": "done",
-              "text": "Round 1 after OAuth interrupt: built nothing, changed no branch, appended a note to pull-requests.md, mailed rey, signed Blocked round 1 (technical)"
+              "text": "Round 1 after OAuth interrupt: built nothing, changed no branch, appended a note to pull-requests.md, mailed frontend-coder, signed Blocked round 1 (technical)"
             },
             {
               "kind": "note",
-              "text": "Other plans' agents are also named luke-backend, so alock release-all also dropped their dispatcher.rb and runner.rb locks. Re-acquired both right away. Release by path, not release-all"
+              "text": "Other plans' agents are also named backend-coder, so alock release-all also dropped their dispatcher.rb and runner.rb locks. Re-acquired both right away. Release by path, not release-all"
             },
             {
               "kind": "question",
               "text": "B1 This worktree's build was superseded by PR #114 On 2026-10-23 kig switched this plan's worktree (`openlanes.worktrees/008.01-ewoki-linker`) from `kig/008.01-ewoki-linker` to `kig/eval-agent-positional`. They salvaged one piece of `0398136d Ewoki Linker` into PR #122 (open) and wrote in that commit that \"the rest of that commit is superseded by PR #114\". PR #114 (`kig/ewoki-linker`, open, from the `openlanes.worktrees/ewoki-linker` worktree) is titled \"008.01 🔗 ewoki-linker\" and implements th…",
               "ref": "B1",
-              "answer": "a) Adopt PR #114 as this plan's pull request: record it in `pull-requests.md`, so the plan moves to 🟢 and hansolo reviews #114. Leave `kig/008.01-ewoki-linker` unpublished. Answered by kig on 2026-10-23"
+              "answer": "a) Adopt PR #114 as this plan's pull request: record it in `pull-requests.md`, so the plan moves to 🟢 and staff-reviewer reviews #114. Leave `kig/008.01-ewoki-linker` unpublished. Answered by kig on 2026-10-23"
             }
           ]
         },
@@ -794,11 +794,11 @@
             },
             {
               "kind": "done",
-              "text": "Checked #114 read-only: CircleCI linter/test/web/e2e green; eval --agent ewoki-linker 3/3 PASS; mailed rey; signed Completed round 1"
+              "text": "Checked #114 read-only: CircleCI linter/test/web/e2e green; eval --agent ewoki-linker 3/3 PASS; mailed frontend-coder; signed Completed round 1"
             },
             {
               "kind": "note",
-              "text": "#114 models linking as its own state (Ready for Linking -> Ready for Planning), not the spec's 'precedes ready_for_planning, planned'; flagged for hansolo in pull-requests.md"
+              "text": "#114 models linking as its own state (Ready for Linking -> Ready for Planning), not the spec's 'precedes ready_for_planning, planned'; flagged for staff-reviewer in pull-requests.md"
             },
             {
               "kind": "note",
@@ -812,7 +812,7 @@
           "entries": [
             {
               "kind": "note",
-              "text": "🔴 round: hansolo rejected #114 (1 of 2) over a spec mismatch: the PR adds a 🔗 state where the spec asks for precedes:, plus missing tsort/plan-linking and scope creep. Grok also rejected (newrelic require, rg --pre/git --output confinement escape, 🔗→📋 guard)"
+              "text": "🔴 round: staff-reviewer rejected #114 (1 of 2) over a spec mismatch: the PR adds a 🔗 state where the spec asks for precedes:, plus missing tsort/plan-linking and scope creep. Grok also rejected (newrelic require, rg --pre/git --output confinement escape, 🔗→📋 guard)"
             },
             {
               "kind": "note",
@@ -828,7 +828,7 @@
             },
             {
               "kind": "done",
-              "text": "Changed no code and replied to no review thread; appended a note to pull-requests.md, mailed rey (#5), signed Blocked round 1 (product)"
+              "text": "Changed no code and replied to no review thread; appended a note to pull-requests.md, mailed frontend-coder (#5), signed Blocked round 1 (product)"
             }
           ]
         }
@@ -837,7 +837,7 @@
   },
   "moves": 11,
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-22T08:10:24-07:00",
       "round": 6,
@@ -848,7 +848,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -861,7 +861,7 @@
     },
     {
       "number": 2,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 2,
       "limit": "rounds",
@@ -874,7 +874,7 @@
     },
     {
       "number": 3,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 3,
       "limit": "rounds",
@@ -887,7 +887,7 @@
     },
     {
       "number": 4,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 4,
       "limit": "rounds",
@@ -900,7 +900,7 @@
     },
     {
       "number": 5,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 5,
       "limit": "rounds",
@@ -913,7 +913,7 @@
     },
     {
       "number": 6,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 6,
       "limit": "rounds",
@@ -923,7 +923,7 @@
     },
     {
       "number": 7,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",

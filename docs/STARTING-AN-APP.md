@@ -33,7 +33,7 @@ ol init       # writes .openlanes.yml and creates .plans/
 
 Copy [`application-template.md`](application-template.md) to `.plans/APPLICATION.md` (`ol init` will write it for you, _planned, plan 048.00_). Fill in its five headings: what it is, goals, non-goals, stack and constraints, and what done looks like.
 
-The non-goals do the most work: they are what a plan gets sent back for drifting into. Agents read the file _(planned, plan 048.00: leah, yoda and palpatine get it in their prompts)_.
+The non-goals do the most work: they are what a plan gets sent back for drifting into. Agents read the file _(planned, plan 048.00: researcher, spec-writer and deploy-assessor get it in their prompts)_.
 
 ## 4. Grill it into `.plans/BACKLOG.md` _(planned, plan 048.00)_
 

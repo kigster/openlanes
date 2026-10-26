@@ -1,4 +1,4 @@
-# Plan: back end (`luke-backend`)
+# Plan: back end (`backend-coder`)
 
 Order and the dependency graph are in `plan.md`. Names follow the code (`openlanes`, `Live::Keys`), not the spec's older `agentilda` text. Where the spec's decisions and its "Tightening from the research" table disagree, the table wins.
 
@@ -57,13 +57,13 @@ Order and the dependency graph are in `plan.md`. Names follow the code (`openlan
 ## B5. Units fold into `plan.md`, `implementation-plan.md` becomes `contract.md`, prompts ask for ack and resume
 
 - **Discipline:** back end (prompts are text the harness ships, not interface; the coupled-rename risk in the spec says one unit)
-- **Owns:** `agents/luthen-rael-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `lib/openlanes/execution/prompt.rb`, `lib/openlanes/execution/executor.rb` (the contract reference only), `lib/openlanes/presentation/documentation.rb`, `lib/openlanes/agents/routing.rb`, `lib/openlanes/plans/status.rb`, `lib/openlanes/linear/unit.rb`, `docs/WORKFLOW.md`, and the specs that name the old files: `spec/openlanes/agents/routing_spec.rb`, `spec/openlanes/agents/registry_spec.rb`, `spec/openlanes/execution/prompt_spec.rb`, `spec/openlanes/plans/ledger_spec.rb`, `spec/openlanes/engine/stay_spec.rb`, `spec/openlanes/engine/runner_spec.rb`, `spec/openlanes/cli/run_spec.rb`, `spec/openlanes/live/live_context.rb`, `spec/openlanes/linear/mapping_spec.rb` if it needs it
+- **Owns:** `agents/planner.md`, `agents/backend-coder.md`, `agents/frontend-coder.md`, `agents/staff-reviewer.md`, `lib/openlanes/execution/prompt.rb`, `lib/openlanes/execution/executor.rb` (the contract reference only), `lib/openlanes/presentation/documentation.rb`, `lib/openlanes/agents/routing.rb`, `lib/openlanes/plans/status.rb`, `lib/openlanes/linear/unit.rb`, `docs/WORKFLOW.md`, and the specs that name the old files: `spec/openlanes/agents/routing_spec.rb`, `spec/openlanes/agents/registry_spec.rb`, `spec/openlanes/execution/prompt_spec.rb`, `spec/openlanes/plans/ledger_spec.rb`, `spec/openlanes/engine/stay_spec.rb`, `spec/openlanes/engine/runner_spec.rb`, `spec/openlanes/cli/run_spec.rb`, `spec/openlanes/live/live_context.rb`, `spec/openlanes/linear/mapping_spec.rb` if it needs it
 - **Must not touch:** `lib/openlanes/engine/dispatcher.rb` and `spec/openlanes/engine/dispatcher_spec.rb` (B4 owns them; if a dispatcher reference to `plan-backend.md` must change, hand it to B4 through `contract.md`), `lib/openlanes/web*`, `lib/openlanes/plans/mailbox.rb`, `lib/openlanes/plans/plan_state.rb`
 - **Depends on:** B1 (the ack command it tells agents to run), B2 (the `state resume` command it tells agents to run on INTERRUPT)
 - **Shape:**
-  - `luthen-rael-planner` writes `## Backend` and `## Frontend` inside `plan.md`; it also states whether the plan has an HTTP surface.
-  - `Routing` starts `rey-frontend` only when `plan.md`'s `## Frontend` section holds a unit heading, replacing the `plan-frontend.md` test. Existing folders that still hold `plan-frontend.md` keep working: the old file is read when present (open question 7 assumption: no migration).
-  - `luke-backend` writes `contract.md`, plus `openapi.yaml` linked from it when `plan.md` says HTTP. All nine `implementation-plan.md` references renamed.
+  - `planner` writes `## Backend` and `## Frontend` inside `plan.md`; it also states whether the plan has an HTTP surface.
+  - `Routing` starts `frontend-coder` only when `plan.md`'s `## Frontend` section holds a unit heading, replacing the `plan-frontend.md` test. Existing folders that still hold `plan-frontend.md` keep working: the old file is read when present (open question 7 assumption: no migration).
+  - `backend-coder` writes `contract.md`, plus `openapi.yaml` linked from it when `plan.md` says HTTP. All nine `implementation-plan.md` references renamed.
   - Prompts: `mail ack` right after reading; on INTERRUPT, `openlanes state resume ...` instead of a `RESUME:` mail.
   - D8 option (c), signing already on `state sign`. Unit checkboxes in `plan.md` stay hand edits; record that as the known gap in `contract.md`.
 - **Done when:** `spec/openlanes/execution/prompt_spec.rb` asserts the ack and resume instructions appear; `spec/openlanes/agents/routing_spec.rb` covers the `## Frontend` test and the legacy file; `spec/openlanes/presentation/documentation_spec.rb` asserts `openlanes docs` output names neither `plan-backend.md` nor `implementation-plan.md`; `rg implementation-plan lib agents docs` is empty except `lib/openlanes/web.rb` (F1's) and dated decision records; the `linear/mapping.rb` spec passes.

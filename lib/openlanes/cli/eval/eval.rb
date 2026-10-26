@@ -33,7 +33,7 @@ module OpenLanes
       example [
         "                              # score every pass/ recording",
         "--recording fail              # the fail/ ones, which should all FAIL",
-        "-a leah-researcher --depth deep",
+        "-a #{OpenLanes::Agents::Names::RESEARCHER} --depth deep",
         "--live -c research-fast --max-tokens 100000"
       ]
 

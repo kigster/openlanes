@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T20:04:14-07:00",
   "stages": [
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -29,7 +29,7 @@
       "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "building",
@@ -49,7 +49,7 @@
       "seconds": 708.2
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -69,7 +69,7 @@
       "note": "completed - 7 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -88,11 +88,11 @@
       "up": 4385067,
       "down": 23969,
       "seconds": 1105.2,
-      "note": "completed - 57 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; luke-backend was asked to add it",
+      "note": "completed - 57 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; backend-coder was asked to add it",
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -115,7 +115,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -138,7 +138,7 @@
       "moves": 1
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -161,7 +161,7 @@
       "moves": 3
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -180,11 +180,11 @@
       "up": 1712435,
       "down": 13433,
       "seconds": 437.6,
-      "note": "completed - 26 tool calls; next: names hansolo-reviewer, who does not handle 🎨 Building UI",
+      "note": "completed - 26 tool calls; next: names staff-reviewer, who does not handle 🎨 Building UI",
       "moves": 4
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -207,7 +207,7 @@
       "moves": 5
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -230,7 +230,7 @@
       "moves": 7
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Completed",
       "from": "verifying",
@@ -249,11 +249,11 @@
       "up": 296962,
       "down": 2467,
       "seconds": 293.2,
-      "note": "completed - 6 tool calls; verification rejected PR #80, rejected 2 of 2; review-rejected; PR #80 labelled review-rejected; mailed luke-backend, r2d2-mechanic, rey-frontend",
+      "note": "completed - 6 tool calls; verification rejected PR #80, rejected 2 of 2; review-rejected; PR #80 labelled review-rejected; mailed backend-coder, chores-coder, frontend-coder",
       "moves": 8
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "rejected",
@@ -271,7 +271,7 @@
       "finished_at": "2026-10-18T20:03:54-07:00"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "rejected",
@@ -292,202 +292,202 @@
   "signatures": [
     {
       "at": "2026-10-16T18:08:42-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:10:53-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-16T18:11:09-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:11:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:14:43-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-16T18:15:36-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-16T18:40:34-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:03:02-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-16T19:10:07-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:15:10-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:17:34-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-16T19:21:37-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-17T11:45:33-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:46:15-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:50:51-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:03:39-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:04:01-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:10:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:23:06-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:24:12-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-17T12:24:29-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:27:04-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:31:23-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-17T12:36:12-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-17T12:36:33-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:39:56-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-17T12:40:08-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:44:48-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "rejected"
     },
     {
       "at": "2026-10-18T20:03:06-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T20:03:08-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T20:03:54-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-18T20:03:54-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
@@ -498,8 +498,8 @@
       "id": "a9643b50-5a47-4e5d-95ce-783697ffa360",
       "number": 1,
       "at": "2026-10-16T18:14:43-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done (types, fixtures with run.jobs, header 'N of J agents', slash hint, I1 files). Live lanes-e2e not run (tokens).",
       "read": "yes"
     },
@@ -508,7 +508,7 @@
       "number": 2,
       "at": "2026-10-16T19:15:03-07:00",
       "from": "human",
-      "to": "rey-frontend",
+      "to": "frontend-coder",
       "body": "RESUME: carry on from your last resume note",
       "read": "yes",
       "command": "01M53T89N93D6RXKHJQQRXQTPB"
@@ -517,8 +517,8 @@
       "id": "abc2545c-2f35-42f8-b1a3-460b8748ac61",
       "number": 3,
       "at": "2026-10-16T19:17:18-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done: B1-B5 land. Slash route live (POST /api/copilot: commands queued under the message id, help turn <id>.1 at once, 503 when this node's snapshot key is absent). Engine echoes 'done: ...'/'refused: ...' as turn <id>.1. run.jobs on the board. Contract amended (liveness = snapshot key; /concurrency survives engine restart). openapi.yaml beside contract.md. rspec 3142/0 failures, rubocop clean. Running lanes-e2e now.",
       "read": "no"
     },
@@ -526,8 +526,8 @@
       "id": "342dfd19-61ae-4caa-bb88-398b82c322c5",
       "number": 4,
       "at": "2026-10-16T19:17:34-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done. F1: Header.test.tsx shows '3 of 4 agents' from run.agents_working/run.jobs. F2: Copilot.test.tsx covers the slash hint and the '<id>.1' turn ending 'reading'. I1 files written (bin/lanes-e2e, cypress.lanes.config.ts, cypress/lanes); not run, you are last: run OPENLANES_LANES_E2E=1 just lanes-e2e. Full rspec shows 4 order-dependent flakes in apps/supervisor_spec and cli/app_spec (pass alone).",
       "read": "yes"
     },
@@ -535,8 +535,8 @@
       "id": "958578b3-1440-4a67-8260-54c17d4be8ff",
       "number": 5,
       "at": "2026-10-16T19:18:50-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Edited your web/cypress/lanes/lanes.cy.ts: added { testIsolation: false } to the describe. Cypress blanks the page between tests, so tests 2-5 lost the page the before() hook visited and never found #copilot-input. Re-running lanes-e2e.",
       "read": "no"
     },
@@ -544,8 +544,8 @@
       "id": "4e0399f0-eec7-479a-872c-d1f3e62d7b48",
       "number": 6,
       "at": "2026-10-16T19:20:28-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Also edited web/cypress/lanes/fixtures/{alpha,beta,gamma}.md: added a '## How to test' section. Without it publish refused each quick-lane plan ('plan.md has no ## How to test'), so B's agent died before step 4 and /restart B was correctly accepted instead of refused.",
       "read": "no"
     },
@@ -553,8 +553,8 @@
       "id": "13162363-9335-466b-8d75-5ea2a95a6acc",
       "number": 7,
       "at": "2026-10-16T19:21:36-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done; e2e 4/5. Step 4 fails: /restart A answered done, but no car for A appeared within 15s. Likely A waits for a slot (concurrency 2, B and C running). Details in pull-requests.md. Signing Almost completed.",
       "read": "no"
     },
@@ -562,8 +562,8 @@
       "id": "394955b3-87bd-48df-9ff5-dfaa6918c72a",
       "number": 8,
       "at": "2026-10-17T11:46:43-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Edited your web/cypress/lanes/lanes.cy.ts step 4: it now sends /concurrency 3 before /restart A, and cars() waits TICK. Cause, confirmed from start.log: with the limit at 2, B and C held both slots, so a restarted A waited in the queue (correct engine behaviour).",
       "read": "no"
     },
@@ -571,8 +571,8 @@
       "id": "1f967026-569b-4533-bfd3-8390cd850b29",
       "number": 9,
       "at": "2026-10-17T11:50:50-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done. Ran lanes-e2e: 5/5 pass (step 4 raises concurrency to 3 first). npm test 358, lint, typecheck clean; header test proves '3 of 4 agents', Copilot.test.tsx proves hint + '<id>.1' ends reading. Env: apps/* specs fail locally (Probe.ready? true for closed port), unrelated to the diff.",
       "read": "yes"
     },
@@ -580,8 +580,8 @@
       "id": "eeb79ee9-5050-414c-b9cf-3e2f2709ba05",
       "number": 10,
       "at": "2026-10-17T12:01:30-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done; lanes-e2e passes 5/5. I edited your fixtures (heading is '## How to tell it's working?', beta sleeps 90 s) and lanes.cy.ts (STOP_GRACE 90 s for step 3, /concurrency 3 before /restart A). Details in pull-requests.md.",
       "read": "no"
     },
@@ -590,7 +590,7 @@
       "number": 11,
       "at": "2026-10-17T12:03:50-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "The build is done, but the pull request was not opened: plan.md has no\n`## How to test` section, and a pull request nobody can test is not\nready for review. Add one to plan.md: the commands to run and what a person\nshould see, as a list, covering every part of the build and not only yours.\nChange nothing else, then sign Completed again.",
       "read": "yes"
     },
@@ -598,9 +598,9 @@
       "id": "fca625be-3930-44da-a931-b583a98bbc51",
       "number": 12,
       "at": "2026-10-17T12:31:23-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
-      "body": "Fixed hansolo's demo finding: DemoBoard handles stop_plan/restart_plan/set_concurrency and refuses unknown kinds; Demo echoes the '<id>.1' copilot turn for slash commands. No front-end files touched. rspec 3614/0, rubocop clean.",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "Fixed staff-reviewer's demo finding: DemoBoard handles stop_plan/restart_plan/set_concurrency and refuses unknown kinds; Demo echoes the '<id>.1' copilot turn for slash commands. No front-end files touched. rspec 3614/0, rubocop clean.",
       "read": "no"
     },
     {
@@ -608,8 +608,8 @@
       "number": 13,
       "at": "2026-10-17T12:45:01-07:00",
       "from": "github",
-      "to": "luke-backend",
-      "body": "PR #80 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
+      "to": "backend-coder",
+      "body": "PR #80 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -617,8 +617,8 @@
       "number": 14,
       "at": "2026-10-17T12:45:01-07:00",
       "from": "github",
-      "to": "r2d2-mechanic",
-      "body": "PR #80 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
+      "to": "chores-coder",
+      "body": "PR #80 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -626,27 +626,27 @@
       "number": 15,
       "at": "2026-10-17T12:45:01-07:00",
       "from": "github",
-      "to": "rey-frontend",
-      "body": "PR #80 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
+      "to": "frontend-coder",
+      "body": "PR #80 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/80):\n\n### 🧪 verifier: rejected, verification round 1\n\n**Step 1:** `bundle exec rspec`\n\n- **Expected:** 0 failures\n- **Seen:** 3614 examples, 3 failures: `spec/integration/two_checkouts_spec.rb:45`, `spec/integration/two_checkouts_spec.rb:70` and `spec/openlanes/apps/supervisor_spec.rb:144` (seed 63486). Run alone, those files pass (4 examples, 0 failures), so the failures appear only in the full run, likely port or Redis interference. `bundle exec rubocop` was clean (488 files, no offenses), but it is not a substitute for step 1.\n\nThe screenshots were not committed: refused to commit 020.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg.\n\nPlan 020.00. How to test is in the pull request's description.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "luthen-rael-planner": {
+    "planner": {
       "source": "harness",
       "at": "2026-10-16T18:11:04-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The plan for 020.00 is written to `plan.md` in the plan folder, and I signed it `Completed` with `--next luke-backend`."
+      "note": "agent pushed (origin/kig/collapse-agent-transcript) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: The plan for 020.00 is written to `plan.md` in the plan folder, and I signed it `Completed` with `--next backend-coder`."
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "source": "harness",
       "at": "2026-10-18T20:03:54-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
     },
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-16T19:21:36-07:00",
       "round": 1,
@@ -672,7 +672,7 @@
         "lib/openlanes/live/run_record.rb",
         "lib/openlanes/live/run_state.rb",
         "lib/openlanes/live/commands.rb",
-        "agents/c3po-operator.md",
+        "agents/copilot.md",
         "web/cypress/lanes/lanes.cy.ts",
         "web/cypress/lanes/fixtures/*.md"
       ]
@@ -681,7 +681,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "time",
@@ -694,7 +694,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -704,7 +704,7 @@
     },
     {
       "number": 3,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "rejected",
       "round": 1,
       "limit": "rounds",
@@ -712,7 +712,7 @@
     },
     {
       "number": 4,
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "state": "rejected",
       "round": 1,
       "limit": "rounds",

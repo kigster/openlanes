@@ -20,7 +20,7 @@
 
 The round-1 note below (integration specs timing out, 20 rubocop offenses) no longer reproduced on the salvaged files.
 
-## Front end (rey-frontend, round 1)
+## Front end (frontend-coder, round 1)
 
 | Command (in `web/`) | Result |
 | --- | --- |
@@ -30,7 +30,7 @@ The round-1 note below (integration specs timing out, 20 rubocop offenses) no lo
 | `npm run typecheck` | exit 0 |
 | `npx cypress run` against `openlanes web --demo --port 11055` | all 5 specs pass: actions 5, board 6, chat 2, keyboard 5, needs-you 3 |
 
-Not run by me: the Ruby `bundle exec rspec spec/integration` and `rubocop` offenses sit in luke's files (`spec/integration/control_room_spec.rb`, `spec/support/control_room_process.rb`): integration specs time out waiting for the process, 20 rubocop offenses in those two files.
+Not run by me: the Ruby `bundle exec rspec spec/integration` and `rubocop` offenses sit in backend-coder's files (`spec/integration/control_room_spec.rb`, `spec/support/control_room_process.rb`): integration specs time out waiting for the process, 20 rubocop offenses in those two files.
 
 ### Findings fixed
 

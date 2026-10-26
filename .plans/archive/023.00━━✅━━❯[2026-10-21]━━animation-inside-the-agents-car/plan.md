@@ -80,13 +80,13 @@ Answered:
 * 2026-10-17
 * By kig
 
-Rebase the branch onto `origin/main` before the next run, then rerun `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
+Rebase the branch onto `origin/main` before the next run, then rerun `backend-coder` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
 
 ---
 
 ### B2 (answered) — Commit and rebase before the rspec rerun
 
-`D1` was not carried out: `HEAD` is still `7186635`, 156 commits behind `origin/main` (`0b10d65`), and the plan's work is uncommitted in the worktree. `bundle exec rspec` shows 30 port and process failures in `spec/openlanes/apps/**` and `spec/openlanes/cli/app_spec.rb`, and the same specs pass on a clean checkout of `origin/main`. A rebase cannot carry uncommitted work, and `luke-backend` may not commit or rebase, so the run could not meet "rspec exits 0" on its own. Options: commit and rebase, accept the 30 failures as baseline, or allow the port specs through the network filter.
+`D1` was not carried out: `HEAD` is still `7186635`, 156 commits behind `origin/main` (`0b10d65`), and the plan's work is uncommitted in the worktree. `bundle exec rspec` shows 30 port and process failures in `spec/openlanes/apps/**` and `spec/openlanes/cli/app_spec.rb`, and the same specs pass on a clean checkout of `origin/main`. A rebase cannot carry uncommitted work, and `backend-coder` may not commit or rebase, so the run could not meet "rspec exits 0" on its own. Options: commit and rebase, accept the 30 failures as baseline, or allow the port specs through the network filter.
 
 ### D2 (decision) — Commit the plan's work, rebase onto origin/main, then rerun
 
@@ -95,13 +95,13 @@ Answered:
 * 2026-10-18
 * By kig
 
-Commit the plan's work on `kig/023.00-animation-inside-the-agents-car`, rebase it onto `origin/main`, and rerun `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
+Commit the plan's work on `kig/023.00-animation-inside-the-agents-car`, rebase it onto `origin/main`, and rerun `backend-coder` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
 
 ---
 
 ### B3 (answered) — Commit and rebase were never carried out
 
-`D2` was not carried out: `HEAD` is still `7186635`, 237 commits behind `origin/main` (`ca171ed`), and the plan's work is uncommitted (`Car.tsx`, `Gear.tsx`, `board.css`, `Board.test.tsx`, `boardCss.test.ts`). `bundle exec rspec` still shows 30 port and process failures in `spec/openlanes/apps/**` and `spec/openlanes/cli/app_spec.rb`. `luke-backend` may not commit or rebase, so the run cannot meet "rspec exits 0" by itself. `origin/main` has also changed `Car.tsx`, `Board.test.tsx` and `board.css`, so the rebase will likely conflict in those three files.
+`D2` was not carried out: `HEAD` is still `7186635`, 237 commits behind `origin/main` (`ca171ed`), and the plan's work is uncommitted (`Car.tsx`, `Gear.tsx`, `board.css`, `Board.test.tsx`, `boardCss.test.ts`). `bundle exec rspec` still shows 30 port and process failures in `spec/openlanes/apps/**` and `spec/openlanes/cli/app_spec.rb`. `backend-coder` may not commit or rebase, so the run cannot meet "rspec exits 0" by itself. `origin/main` has also changed `Car.tsx`, `Board.test.tsx` and `board.css`, so the rebase will likely conflict in those three files.
 
 ### D3 (decision) — A person commits, rebases and resolves, then rerun
 
@@ -110,7 +110,7 @@ Answered:
 * 2026-10-19
 * By kig
 
-A person commits the plan's work on `kig/023.00-animation-inside-the-agents-car`, runs `git rebase origin/main`, resolves the conflicts in `Car.tsx`, `Board.test.tsx` and `board.css`, then reruns `luke-backend` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
+A person commits the plan's work on `kig/023.00-animation-inside-the-agents-car`, runs `git rebase origin/main`, resolves the conflicts in `Car.tsx`, `Board.test.tsx` and `board.css`, then reruns `backend-coder` to confirm `bundle exec rspec` exits 0 before signing `Completed`.
 
 ---
 

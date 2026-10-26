@@ -52,7 +52,7 @@ module OpenLanes
           transitions from: %i[unlabelled ready_for_review review_addressed], to: :review_in_progress
         end
 
-        # The reviewers' verdicts, and chewie's rejection after them. A
+        # The reviewers' verdicts, and verifier's rejection after them. A
         # rejection also reaches back from `ready-to-merge` and
         # `merge-manually`: a pull request that no longer rebases onto
         # `main` after its sibling merged goes back to the builders (P5), and
@@ -74,12 +74,12 @@ module OpenLanes
           transitions from: %i[review_in_progress], to: :review_approved
         end
 
-        # chewie verified it, CI is green and the coverage gate holds.
+        # verifier verified it, CI is green and the coverage gate holds.
         event :ready do
           transitions from: %i[review_ok_not_perfect review_approved], to: :ready_to_merge
         end
 
-        # palpatine's two verdicts, as the engine acted on them. Only a
+        # deploy-assessor's two verdicts, as the engine acted on them. Only a
         # `ready-to-merge` pull request is ruled on.
         event :merge_automatically do
           transitions from: %i[ready_to_merge], to: :auto_merged
@@ -145,7 +145,7 @@ module OpenLanes
         true
       end
 
-      # @return [Boolean] whether palpatine's verdict has been acted on (P2)
+      # @return [Boolean] whether deploy-assessor's verdict has been acted on (P2)
       def complete? = %i[auto_merged merge_manually].include?(key)
 
       # @param event [Symbol]

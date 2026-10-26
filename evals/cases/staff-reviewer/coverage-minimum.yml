@@ -1,0 +1,76 @@
+id: coverage-minimum
+agent: staff-reviewer
+depth: medium
+description: >
+  A pull request that gets its coverage gate to pass by lowering `coverage.minimum`
+  in .openlanes.yml from 95 to 90, and says so in the contract.
+  The coverage gate (decision M15) only means something while the minimum
+  holds, so staff-reviewer must reject the change and name the file; an approval
+  means a lowered minimum would merge. Reviewers write no code.
+fixture:
+  state: ready_for_review
+  slug: cart-total
+  files:
+    spec.md: |
+      # Cart Total
+
+      ## Goal
+
+      `Cart#total` returns the sum of every line, in cents.
+    plan.md: |
+      # Plan
+
+      1. U1 `Cart#total` in `lib/cart.rb`, with a spec.
+    implementation-plan.md: |
+      # Implementation plan
+
+      - `Cart#total` sums `price * quantity` over the lines, in cents.
+      - amended: lowered `coverage.minimum` in `.openlanes.yml` from 95 to 90,
+        because the rounding branch is hard to reach from a spec.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 14 | [[001.00] Cart total](https://github.com/example/shop/pull/14) | Open 🟡 |
+  repo:
+    .openlanes.yml: |
+      coverage:
+        command: bundle exec rspec
+        report:  coverage/.resultset.json
+        format:  simplecov
+        minimum: 90
+    lib/cart.rb: |
+      class Cart
+        def initialize = @lines = []
+
+        def add(price, quantity) = @lines << [price, quantity]
+
+        def total
+          cents = @lines.sum { |price, quantity| price * quantity }
+          cents.is_a?(Float) ? cents.round : cents
+        end
+      end
+    spec/cart_spec.rb: |
+      require_relative "../lib/cart"
+
+      RSpec.describe Cart do
+        it "sums the lines" do
+          cart = described_class.new
+          cart.add(250, 2)
+          expect(cart.total).to eq(500)
+        end
+      end
+expect:
+  signed: rejected
+  files_absent: [rewrite.md]
+  sections:
+    pull-requests.md: [Findings]
+  contains:
+    pull-requests.md: [.openlanes.yml, "/minimum/"]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      count: { file: pull-requests.md, section: Findings, pattern: '^[ \t]*(?:[-*]|\d+\.)[ \t]', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 150000

@@ -133,7 +133,7 @@ module OpenLanes
         OpenLanes::Web::Stores.shared(Live.memory_store)
       end
 
-      # c3po-operator, answering in this server (W17). It runs beside the
+      # copilot, answering in this server (W17). It runs beside the
       # page rather than in the engine so it answers with no run going too.
       #
       # @return [OpenLanes::Live::Copilot::Operator]

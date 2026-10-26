@@ -13,8 +13,8 @@ module OpenLanes
     #
     # 1. the agent the dispatcher assigned, when it is one that builds, since
     #    it knows what the branch is for;
-    # 2. bb8-resolver, the agent whose only job this is;
-    # 3. abort, which restores the branch exactly, and bb8-resolver again on
+    # 2. rebaser, the agent whose only job this is;
+    # 3. abort, which restores the branch exactly, and rebaser again on
     #    a later run, one step up {LADDER} each time;
     # 4. once the ladder is spent, nothing until the default branch moves:
     #    the plan works on its old base meanwhile, and the log says so.
@@ -25,7 +25,7 @@ module OpenLanes
     # runs, outside the window {Execution::Boundary} checks.
     class Rebase
       # The agent whose only job is a stopped rebase.
-      RESOLVER = "bb8-resolver"
+      RESOLVER = Agents::Names::REBASER
 
       # Phases whose agents wrote the branch, and so try its conflicts first.
       IMPLEMENTER_PHASES = %w[build frontend].freeze
@@ -35,7 +35,7 @@ module OpenLanes
       # fresh, escalated attempt than by one agent grinding through the lot.
       STOPS = 10
 
-      # What bb8-resolver runs as on each successive failure of the same
+      # What rebaser runs as on each successive failure of the same
       # conflict: its own frontmatter first, then up a model tier, then up in
       # effort too. Its length is how many times a plan's rebase is aborted
       # before it waits for the default branch to move.

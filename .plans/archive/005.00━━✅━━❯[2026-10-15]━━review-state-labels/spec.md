@@ -11,15 +11,15 @@ Every pull request a plan opens carries exactly one review-state label, which sh
 | Label | Colour | Meaning | Applied by |
 | --- | --- | --- | --- |
 | `ready-for-review` | `c2e0c6` | PR open, review not started | the harness, when it opens the PR |
-| `review-in-progress` | `fff3b0` light yellow | hansolo is reviewing | hansolo, when it starts |
-| `review-passed` | `0b6e2e` deep green | passed with non-critical findings still open | hansolo |
-| `ready-to-merge` | `2ea043` bright green | passed with nothing open | hansolo |
-| `review-rejected` | `b60205` deep red | changes needed | hansolo, or chewie-verifier (plan 014) |
-| `ok-to-merge` | `1a7f37` | verified by running the app | chewie-verifier (plan 014) |
+| `review-in-progress` | `fff3b0` light yellow | staff-reviewer is reviewing | staff-reviewer, when it starts |
+| `review-passed` | `0b6e2e` deep green | passed with non-critical findings still open | staff-reviewer |
+| `ready-to-merge` | `2ea043` bright green | passed with nothing open | staff-reviewer |
+| `review-rejected` | `b60205` deep red | changes needed | staff-reviewer, or verifier (plan 014) |
+| `ok-to-merge` | `1a7f37` | verified by running the app | verifier (plan 014) |
 
 Missing labels are created before first use. A new label replaces the previous one. No passing verdict is given while CI is red (a rejection is); there is no label for approving over red CI. Labels are set through `openlanes review`, not raw `gh pr edit`.
 
-In human merge mode the engine polls every PR it opened, every 15 seconds, until it is merged or closed: `review-rejected` with comments sends the plan to 🔴 and the comments to luke and rey; a merged PR makes the plan ✅; a PR closed unmerged makes it ❌. Needs you shows "waiting on you: PR #N".
+In human merge mode the engine polls every PR it opened, every 15 seconds, until it is merged or closed: `review-rejected` with comments sends the plan to 🔴 and the comments to backend-coder and frontend-coder; a merged PR makes the plan ✅; a PR closed unmerged makes it ❌. Needs you shows "waiting on you: PR #N".
 
 Every spec says how to tell the work is done: `spec.md` gains `## How to tell it's working?`, which becomes `## How to test` in `plan.md` and in the PR body, replacing the `how-to-verify:` frontmatter key. The publisher refuses a PR without it.
 
@@ -30,7 +30,7 @@ Today a reviewed PR looks the same on GitHub whether it is waiting, being review
 ## What already exists
 
 - Decisions M3, M4 and M10 in `docs/decisions/decisions-on-merge-modes-and-verification.md`. They replace L1 and L4 in `docs/decisions/decisions-on-web-ui-and-review-labels.md`; L3 (the `openlanes review` command) still stands.
-- `agents/hansolo-reviewer.md`: currently `may: [gh pr review, gh pr comment]`.
+- `agents/staff-reviewer.md`: currently `may: [gh pr review, gh pr comment]`.
 - `lib/openlanes/execution/executor.rb`: `FORBIDDEN_COMMANDS` (includes `gh pr edit`, through which labels are set) and `UNGRANTABLE`.
 - `lib/openlanes/vcs/publisher.rb`: opens the PR, the place to apply `ready-for-review` and to require `## How to test`.
 - `lib/openlanes/vcs/github.rb`: the `gh` seam, which specs replace with a double.
@@ -95,10 +95,10 @@ Production runs the code column in each row.
 | # | Draft or decision says | Code and config say |
 | --- | --- | --- |
 | C1 | `pull_requests.rb` holds the review vocabulary (spec, "What already exists") | It holds the PR lifecycle, `pull_requests.rb:13` |
-| C2 | Hansolo sets labels through `openlanes review`; L3 removes `gh pr review` from its `may:` | `agents/hansolo-reviewer.md:13` still has `may: [gh pr review, gh pr comment]`. Neither is in `UNGRANTABLE` (`executor.rb:338`), so hansolo can call both today |
+| C2 | staff-reviewer sets labels through `openlanes review`; L3 removes `gh pr review` from its `may:` | `agents/staff-reviewer.md:13` still has `may: [gh pr review, gh pr comment]`. Neither is in `UNGRANTABLE` (`executor.rb:338`), so staff-reviewer can call both today |
 | C3 | `openlanes review` is the label path (M3, L3) | No `review` command is registered (`lib/openlanes/cli.rb:105-150`). It is to be built |
 | C4 | M10: `## How to tell it's working?` replaces the `how-to-verify:` key, and becomes `## How to test` | Code still reads the key (`lib/openlanes/plans/spec.rb:107`) and the heading `## How to verify` (`lib/openlanes/lifecycle/completion.rb:15`). Plan 007 migrates this, per `decisions-on-merge-modes-and-verification.md:104` |
-| C5 | Spec table names `chewie-verifier` as the applier of `ok-to-merge` | No `chewie-verifier` in `agents/` (nine files). It belongs to plan 014 |
+| C5 | Spec table names `verifier` as the applier of `ok-to-merge` | No `verifier` in `agents/` (nine files). It belongs to plan 014 |
 | C6 | M4: engine polls every PR in human mode | No such poll exists (question 4). Not built, so no code conflict |
 | C7 | L1 colours (`b7ebc6`, `d73a4a`, …) | Superseded by M3 (`c2e0c6`, `b60205`, …). This spec uses M3, which is right per M3's header |
 
@@ -118,11 +118,11 @@ Conclusion:
 - Label writes go through `Vcs::GitHub` and `openlanes review`, never through an agent. `gh pr edit` stays forbidden to agents.
 - Red CI = `fail` or `cancel` in the `bucket` field. Pending waits. Parse JSON, not exit codes.
 - Nothing polls GitHub today. A 15-second poll fits in the dispatcher tick under `openlanes start`. Under plain `run` it is a product choice.
-- Before this plan is built, C2 (`gh pr review` in hansolo's `may:`) and C4 (the old `how-to-verify` key) must change in scope, since both contradict the decisions this plan implements.
+- Before this plan is built, C2 (`gh pr review` in staff-reviewer's `may:`) and C4 (the old `how-to-verify` key) must change in scope, since both contradict the decisions this plan implements.
 
 References:
 
-- Repository, read in this checkout: `lib/openlanes/plans/pull_requests.rb:13`, `lib/openlanes/vcs/github.rb:28,143,159`, `lib/openlanes/vcs/publisher.rb:84,240`, `lib/openlanes/execution/executor.rb:324-338`, `lib/openlanes/engine/dispatcher.rb:86,164,185,879,1195-1210`, `lib/openlanes/cli/start/start.rb:53`, `lib/openlanes/cli/run/run.rb:186-204`, `lib/openlanes/cli.rb:105-150`, `lib/openlanes/plans/spec.rb:107`, `lib/openlanes/lifecycle/completion.rb:15`, `agents/hansolo-reviewer.md:13`.
+- Repository, read in this checkout: `lib/openlanes/plans/pull_requests.rb:13`, `lib/openlanes/vcs/github.rb:28,143,159`, `lib/openlanes/vcs/publisher.rb:84,240`, `lib/openlanes/execution/executor.rb:324-338`, `lib/openlanes/engine/dispatcher.rb:86,164,185,879,1195-1210`, `lib/openlanes/cli/start/start.rb:53`, `lib/openlanes/cli/run/run.rb:186-204`, `lib/openlanes/cli.rb:105-150`, `lib/openlanes/plans/spec.rb:107`, `lib/openlanes/lifecycle/completion.rb:15`, `agents/staff-reviewer.md:13`.
 - Decisions: `docs/decisions/decisions-on-merge-modes-and-verification.md` (M3, M4, M10); `docs/decisions/decisions-on-web-ui-and-review-labels.md` (L1, L3, L4, L5).
 - Local tools: `gh` 2.102.0: `gh pr checks --help`, `gh label create --help`, `gh pr edit --help`, `gh help exit-codes`.
 - Web, retrieved 2026-10-13, from search snippets and not fetched in full: [gh pr edit manual](https://manpages.opensuse.org/Leap-16.0/gh/gh-pr-edit.1.en.html); [GitHub labels reference](https://git.cynarski.dev/Awesome/awesome-copilot/raw/commit/16b290efdfe99744c52ca8b5960e5bfb309cdbec/skills/github-issues/references/labels.md).
@@ -142,7 +142,7 @@ Every PR a plan opens carries exactly one of six review-state labels, written on
 
 ## Non-Goals
 
-- Verifying the app by running it, and applying `ok-to-merge`. That is `chewie-verifier`, plan 014 (research C5). This plan only defines the label.
+- Verifying the app by running it, and applying `ok-to-merge`. That is `verifier`, plan 014 (research C5). This plan only defines the label.
 - Merging. Merging stays ungrantable to agents (`UNGRANTABLE`, `executor.rb:338`).
 - Changing `PullRequests::STATES` or the `pull-requests.md` format (research, question 3).
 - Labelling PRs not opened by the harness, or PRs opened before this ships.
@@ -156,8 +156,8 @@ Every PR a plan opens carries exactly one of six review-state labels, written on
 1. A new `openlanes review` command, registered in `cli.rb`, sets a verdict label on a PR with replace-not-add semantics, supports `-n`/`--dry-run`. Check: spec shows one label left after each transition, and dry-run changes nothing.
 1. CI gate: red = any check with bucket `fail` or `cancel` from `gh pr checks <n> --json name,state,bucket`; `skipping` is neutral; `pending` waits (L5). Only `review-rejected` is accepted while red. Check: spec with check fixtures for pass, fail, cancel, pending, skipping.
 1. `Vcs::Publisher` applies `ready-for-review` when it opens a PR; a label failure is recorded in the attempt note and does not stop the PR (open question 4). Check: spec with a failing label double still yields an open PR and a note.
-1. hansolo applies `review-in-progress` at start and its verdict at end, through `openlanes review`. `agents/hansolo-reviewer.md` `may:` drops `gh pr review` (research C2). Check: the frontmatter spec asserts the new `may:`; `gh pr edit` stays in `FORBIDDEN_COMMANDS`.
-1. Human-mode poll: a 15-second timer, checked from the dispatcher tick (not a tick count), makes one `Vcs::GitHub#pulls` call. `review-rejected` with comments → 🔴 and the comments go to luke and rey; merged → ✅; closed unmerged → ❌. Under `openlanes start` only (open question 1). Check: dispatcher spec with an injected clock and `GitHub` double for each of the three outcomes.
+1. staff-reviewer applies `review-in-progress` at start and its verdict at end, through `openlanes review`. `agents/staff-reviewer.md` `may:` drops `gh pr review` (research C2). Check: the frontmatter spec asserts the new `may:`; `gh pr edit` stays in `FORBIDDEN_COMMANDS`.
+1. Human-mode poll: a 15-second timer, checked from the dispatcher tick (not a tick count), makes one `Vcs::GitHub#pulls` call. `review-rejected` with comments → 🔴 and the comments go to backend-coder and frontend-coder; merged → ✅; closed unmerged → ❌. Under `openlanes start` only (open question 1). Check: dispatcher spec with an injected clock and `GitHub` double for each of the three outcomes.
 1. "Needs you" shows `waiting on you: PR #N` for open PRs in human mode. Check: reporter spec.
 1. `## How to tell it's working?` in `spec.md` becomes `## How to test` in `plan.md` and the PR body, replacing the `how-to-verify:` key; the publisher refuses a PR without it. Check: specs on `completion.rb` and `publisher.rb`.
 1. `openlanes docs` regenerates the label table from the constant. Check: docs spec compares output to the constant.
@@ -173,10 +173,10 @@ Every PR a plan opens carries exactly one of six review-state labels, written on
 
 | Item | Half | Builder |
 | --- | --- | --- |
-| 1 constant, 2 `GitHub` ops, 3 `review` command logic, 4 CI gate, 5 publisher, 6 hansolo definition, 7 poll, 9 how-to-test, 10 docs | back end | `luke-backend` |
-| 8 Needs-you line; `review` command output and help text | front end (terminal presentation) | `rey-frontend` |
+| 1 constant, 2 `GitHub` ops, 3 `review` command logic, 4 CI gate, 5 publisher, 6 staff-reviewer definition, 7 poll, 9 how-to-test, 10 docs | back end | `backend-coder` |
+| 8 Needs-you line; `review` command output and help text | front end (terminal presentation) | `frontend-coder` |
 
-There is no web front end in this plan. `rey-frontend` owns terminal output only; `luke-backend` exposes the data it renders.
+There is no web front end in this plan. `frontend-coder` owns terminal output only; `backend-coder` exposes the data it renders.
 
 ## Open questions
 
@@ -186,7 +186,7 @@ There is no web front end in this plan. `rey-frontend` owns terminal output only
 1. If `ready-for-review` fails to apply, the PR still opens (research, could-not-settle 5). Assumed, as recommended.
 1. How GitHub maps `action_required`, `startup_failure`, `timed_out` into `bucket` (research, could-not-settle 2). Unverified; the gate treats unknown buckets as red.
 1. `--remove-label` for a label the PR lacks, and `--add-label` on a missing label or fork PR: failure mode unverified (research, could-not-settle 1). The swap ensures the label first and tolerates a failed remove.
-1. Stale `review-in-progress` when hansolo is killed mid-review: not covered by the draft; assumed the next round's swap replaces it.
+1. Stale `review-in-progress` when staff-reviewer is killed mid-review: not covered by the draft; assumed the next round's swap replaces it.
 
 ## Risks to planning or execution
 

@@ -14,7 +14,7 @@
 
 CI on both resolves inquirex 0.12.0 from RubyGems, so it fails until the owner publishes inquirex, then inquirex-llm, then inquirex-tty.
 
-## Review round 1 (hansolo-reviewer, 2026-10-15)
+## Review round 1 (staff-reviewer, 2026-10-15)
 
 Not reviewed: all three pull requests were already merged by `kigster` before this round started, so there is nothing left to approve or reject. No label was applied.
 

@@ -18,22 +18,22 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "#journal!" do
     before do
-      number, = state.journal!(agent: "luke-backend", entries: [entry.new(kind: "todo", text: "U1")], round: 1, state: :building)
-      state.journal!(agent: "luke-backend", entries: [entry.new(kind: "done", text: "U1")], number:)
-      state.journal!(agent: "luke-backend", entries: [entry.new(kind: "override", text: "U1 again", overrides: 1)], round: 1)
+      number, = state.journal!(agent: "backend-coder", entries: [entry.new(kind: "todo", text: "U1")], round: 1, state: :building)
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "done", text: "U1")], number:)
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "override", text: "U1 again", overrides: 1)], round: 1)
     end
 
     it "keeps each dispatch in a journal round of its own, numbered 1 up" do
-      expect(written.dig("memory", "luke-backend", "rounds").transform_values { it["entries"].map { |e| e["kind"] } })
+      expect(written.dig("memory", "backend-coder", "rounds").transform_values { it["entries"].map { |e| e["kind"] } })
         .to eq("1" => %w[todo done], "2" => ["override"])
     end
 
     it "numbers entries across rounds" do
-      expect(state.journal("luke-backend").map { [it.number, it.first, it.entries.size] }).to eq([[1, 1, 2], [2, 3, 1]])
+      expect(state.journal("backend-coder").map { [it.number, it.first, it.entries.size] }).to eq([[1, 1, 2], [2, 3, 1]])
     end
 
     it "keeps the dispatcher's round and state beside the entries" do
-      expect(written.dig("memory", "luke-backend", "rounds", "1").slice("round", "state")).to eq("round" => 1, "state" => "building")
+      expect(written.dig("memory", "backend-coder", "rounds", "1").slice("round", "state")).to eq("round" => 1, "state" => "building")
     end
 
     it "writes a document the schema accepts" do
@@ -41,43 +41,43 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "refuses an override of an entry not before it, and writes the rest" do
-      _, refused = state.journal!(agent: "luke-backend",
+      _, refused = state.journal!(agent: "backend-coder",
         entries: [entry.new(kind: "override", text: "ahead", overrides: 9), entry.new(kind: "note", text: "kept")])
-      expect([refused.map(&:reason), state.journal("luke-backend").last.entries.map(&:text)])
+      expect([refused.map(&:reason), state.journal("backend-coder").last.entries.map(&:text)])
         .to eq([["entry 4 overrides 9, which is not before it"], ["kept"]])
     end
 
     it "reads nothing for an agent that never journaled" do
-      expect(state.journal("rey-frontend")).to eq([])
+      expect(state.journal("frontend-coder")).to eq([])
     end
   end
 
   describe "#answer!" do
-    before { state.journal!(agent: "yoda-writer", entries: [entry.new(kind: "question", text: "Which DB?")]) }
+    before { state.journal!(agent: "spec-writer", entries: [entry.new(kind: "question", text: "Which DB?")]) }
 
     it "adds the question and its answer to the asker's latest round, once" do
-      2.times { state.answer!(agent: "yoda-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres") }
-      expect(state.journal("yoda-writer").map { it.entries.map(&:to_json_h) }).to eq([[
+      2.times { state.answer!(agent: "spec-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres") }
+      expect(state.journal("spec-writer").map { it.entries.map(&:to_json_h) }).to eq([[
                                                                                        { "kind" => "question", "text" => "Which DB?" },
                                                                                        { "kind" => "question", "text" => "B1 Which DB?", "ref" => "B1", "answer" => "Postgres" }
                                                                                      ]])
     end
 
     it "is accepted by the schema" do
-      state.answer!(agent: "yoda-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres")
+      state.answer!(agent: "spec-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres")
       expect(schema.validate(written).map { it["error"] }).to eq([])
     end
 
     it "writes it once when several drains answer at the same moment" do
       answered = Array.new(6) do
-        Thread.new { described_class.for(state.dir).answer!(agent: "yoda-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres") }
+        Thread.new { described_class.for(state.dir).answer!(agent: "spec-writer", ref: "B1", question: "B1 Which DB?", answer: "Postgres") }
       end.map(&:value)
-      expect([answered.compact.size, state.journal("yoda-writer").flat_map(&:entries).count { it.ref == "B1" }]).to eq([1, 1])
+      expect([answered.compact.size, state.journal("spec-writer").flat_map(&:entries).count { it.ref == "B1" }]).to eq([1, 1])
     end
 
     it "starts round 1 for an asker with no journal yet" do
-      state.answer!(agent: "luke-backend", ref: "B2", question: "B2 Rebase?", answer: "Yes")
-      expect(state.journal("luke-backend").map(&:number)).to eq([1])
+      state.answer!(agent: "backend-coder", ref: "B2", question: "B2 Rebase?", answer: "Yes")
+      expect(state.journal("backend-coder").map(&:number)).to eq([1])
     end
 
     it "refuses an agent name that is not one token" do
@@ -87,14 +87,14 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "#blocked_by" do
     it "names the agent whose round last settled Blocked" do
-      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
-      state.stage!(agent: "rey-frontend", round: 1, status: "Completed", started_at: "2026-10-16T11:00:00Z")
-      expect(state.blocked_by).to eq("luke-backend")
+      state.stage!(agent: "backend-coder", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
+      state.stage!(agent: "frontend-coder", round: 1, status: "Completed", started_at: "2026-10-16T11:00:00Z")
+      expect(state.blocked_by).to eq("backend-coder")
     end
 
     it "falls back to a Blocked signature" do
-      state.sign!(agent: "yoda-writer", round: 1, status: "Blocked")
-      expect(state.blocked_by).to eq("yoda-writer")
+      state.sign!(agent: "spec-writer", round: 1, status: "Blocked")
+      expect(state.blocked_by).to eq("spec-writer")
     end
 
     it "is nil when nothing ever blocked" do
@@ -102,15 +102,15 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "names a hand-run agent that signed Blocked after a harness round blocked" do
-      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
-      state.sign!(agent: "yoda-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 11))
-      expect(state.blocked_by).to eq("yoda-writer")
+      state.stage!(agent: "backend-coder", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
+      state.sign!(agent: "spec-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 11))
+      expect(state.blocked_by).to eq("spec-writer")
     end
 
     it "names a harness round that blocked after an older Blocked signature" do
-      state.sign!(agent: "yoda-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 9))
-      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
-      expect(state.blocked_by).to eq("luke-backend")
+      state.sign!(agent: "spec-writer", round: 1, status: "Blocked", at: Time.utc(2026, 10, 16, 9))
+      state.stage!(agent: "backend-coder", round: 1, status: "Blocked", started_at: "2026-10-16T10:00:00Z")
+      expect(state.blocked_by).to eq("backend-coder")
     end
   end
 

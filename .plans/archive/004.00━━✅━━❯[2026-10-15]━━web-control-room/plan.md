@@ -2,7 +2,7 @@
 
 The control room is built. This plan repairs naming drift, makes the `web/dist` build order impossible to get wrong, and adds the automated evidence the spec says is owed: restart, two checkouts on one Redis, keyboard-only use, and coverage of changed code. One pull request, eight units.
 
-Details per unit: `plan-backend.md` (`luke-backend`), `plan-frontend.md` (`rey-frontend`).
+Details per unit: `plan-backend.md` (`backend-coder`), `plan-frontend.md` (`frontend-coder`).
 
 ## Units
 

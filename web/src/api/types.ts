@@ -136,7 +136,7 @@ export interface Ruling {
   winner: string | null;
   reason: string;
   trigger: string;
-  review?: number; // the round of hansolo's review the ids belong to
+  review?: number; // the round of staff-reviewer's review the ids belong to
 }
 
 export interface Plan {

@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   def backdate_block(days)
     OpenLanes::Plans::PlanState.for(path_of("001.00")).update do |data|
-      data["signatures"] << { "at" => (Time.now - (days * 86_400)).iso8601, "agent" => "luke-backend",
+      data["signatures"] << { "at" => (Time.now - (days * 86_400)).iso8601, "agent" => "backend-coder",
                               "status" => "Blocked", "round" => 1 }
     end
   end

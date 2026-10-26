@@ -5,10 +5,10 @@ require "fileutils"
 module OpenLanes
   module Live
     class Copilot
-      # c3po-operator itself (W17): the responder the API server hands
+      # copilot itself (W17): the responder the API server hands
       # {Copilot}. Each message the person sends becomes one `claude -p`,
       # resumed from the conversation's session, so the agent remembers what
-      # was said before; it answers in prose and `c3po` cards, which {Cards}
+      # was said before; it answers in prose and `copilot` cards, which {Cards}
       # turns into the turns the page draws.
       #
       # It runs in the API server because that is where the conversation
@@ -29,7 +29,7 @@ module OpenLanes
       # proposal, sent only when the person presses its button.
       class Operator
         # The agent's definition, in `agents/`.
-        NAME = "c3po-operator"
+        NAME = Agents::Names::COPILOT
 
         # The only built-in tools it has: reading files, and Bash for the
         # `openlanes` queries its definition allows.
@@ -246,7 +246,7 @@ module OpenLanes
             from: "copilot",
             kind: "text",
             usage:,
-            text: "c3po-operator could not answer: #{run.note}. Ask again, or look at the trace.")
+            text: "#{Agents::Names::COPILOT} could not answer: #{run.note}. Ask again, or look at the trace.")
         end
 
         # For its boundary only: who may run what, as plan agents are told.

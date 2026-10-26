@@ -41,36 +41,36 @@ RSpec.describe "openlanes mail", :tree do
   def render(**) = run(OpenLanes::CLI::Mail::Render.new, **)
 
   it "delivers a message from one half to the other" do
-    _out, err, status = send(body: "GET /returns/:id is up", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-    out, = read(plan: "001.00", for: "rey-frontend")
+    _out, err, status = send(body: "GET /returns/:id is up", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+    out, = read(plan: "001.00", for: "frontend-coder")
 
     aggregate_failures do
       expect(status).to eq(0)
-      expect(err).to include("#1 → rey-frontend")
-      expect(out).to include("luke-backend → rey-frontend", "GET /returns/:id is up")
+      expect(err).to include("#1 → frontend-coder")
+      expect(out).to include("backend-coder → frontend-coder", "GET /returns/:id is up")
     end
   end
 
   it "writes into the plan's own folder, where a person can read it after the round" do
-    send(body: "hello", plan: "001", from: "luke-backend", to: "rey-frontend")
+    send(body: "hello", plan: "001", from: "backend-coder", to: "frontend-coder")
 
     expect(OpenLanes::Plans::PlanState.for(folder).messages.map { |m| m["body"] }).to eq(["hello"])
   end
 
   it "shows a reader nothing that was addressed to somebody else" do
-    send(body: "for rey", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-    out, err, status = read(plan: "001.00", for: "luke-backend")
+    send(body: "for frontend-coder", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+    out, err, status = read(plan: "001.00", for: "backend-coder")
 
     aggregate_failures do
       expect(out).to be_empty
-      expect(err).to include("Nothing for luke-backend")
+      expect(err).to include("Nothing for backend-coder")
       expect(status).to eq(0)
     end
   end
 
   it "shows only what arrived after the number the reader last saw" do
-    3.times { |i| send(body: "message #{i + 1}", plan: "001.00", from: "luke-backend", to: "rey-frontend") }
-    out, = read(plan: "001.00", for: "rey-frontend", after: "2")
+    3.times { |i| send(body: "message #{i + 1}", plan: "001.00", from: "backend-coder", to: "frontend-coder") }
+    out, = read(plan: "001.00", for: "frontend-coder", after: "2")
 
     aggregate_failures do
       expect(out).to include("message 3")
@@ -81,7 +81,7 @@ RSpec.describe "openlanes mail", :tree do
   # A poll that finds nothing is the ordinary case, not a failure: the
   # command is run before every significant step.
   it "prints nothing and exits zero before anybody has written" do
-    out, _err, status = read(plan: "001.00", for: "rey-frontend")
+    out, _err, status = read(plan: "001.00", for: "frontend-coder")
 
     aggregate_failures do
       expect(out).to be_empty
@@ -90,7 +90,7 @@ RSpec.describe "openlanes mail", :tree do
   end
 
   it "refuses a plan the tree does not hold, naming the ones it does" do
-    _out, err, status = send(body: "hello", plan: "009", from: "luke-backend", to: "rey-frontend")
+    _out, err, status = send(body: "hello", plan: "009", from: "backend-coder", to: "frontend-coder")
 
     aggregate_failures do
       expect(err).to include("No plan 009", "001.00")
@@ -99,7 +99,7 @@ RSpec.describe "openlanes mail", :tree do
   end
 
   it "refuses a send with no recipient, rather than writing an entry nobody can read" do
-    _out, err, status = send(body: "hello", plan: "001.00", from: "luke-backend")
+    _out, err, status = send(body: "hello", plan: "001.00", from: "backend-coder")
 
     aggregate_failures do
       expect(err).to include("--to")
@@ -109,7 +109,7 @@ RSpec.describe "openlanes mail", :tree do
   end
 
   it "refuses an empty message" do
-    _out, err, status = send(body: "  ", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+    _out, err, status = send(body: "  ", plan: "001.00", from: "backend-coder", to: "frontend-coder")
 
     aggregate_failures do
       expect(err).to include("body")
@@ -119,20 +119,20 @@ RSpec.describe "openlanes mail", :tree do
 
   describe "ack" do
     it "marks the reader's message read, and only that one" do
-      send(body: "one", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-      send(body: "two", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-      _out, err, status = ack(number: "2", plan: "001.00", for: "rey-frontend")
+      send(body: "one", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+      send(body: "two", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+      _out, err, status = ack(number: "2", plan: "001.00", for: "frontend-coder")
 
       aggregate_failures do
         expect(status).to eq(0)
-        expect(err).to include("#2 read by rey-frontend")
+        expect(err).to include("#2 read by frontend-coder")
         expect(OpenLanes::Plans::PlanState.for(folder).messages.map { |m| m["read"] }).to eq(%w[no yes])
       end
     end
 
     it "says an ack on a mailbox.md message wrote nothing, rather than that it was recorded" do
-      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
-      _out, err, status = ack(number: "1", plan: "001.00", for: "rey-frontend")
+      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · backend-coder → frontend-coder\n\nold\n")
+      _out, err, status = ack(number: "1", plan: "001.00", for: "frontend-coder")
 
       aggregate_failures do
         expect(status).to eq(0)
@@ -143,7 +143,7 @@ RSpec.describe "openlanes mail", :tree do
     end
 
     it "exits non-zero on a number with no message" do
-      _out, err, status = ack(number: "7", plan: "001.00", for: "rey-frontend")
+      _out, err, status = ack(number: "7", plan: "001.00", for: "frontend-coder")
 
       aggregate_failures do
         expect(status).to eq(65)
@@ -152,10 +152,10 @@ RSpec.describe "openlanes mail", :tree do
     end
 
     it "keeps both acks when two readers ack at the same moment" do
-      send(body: "for rey", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-      send(body: "for luke", plan: "001.00", from: "rey-frontend", to: "luke-backend")
+      send(body: "for frontend-coder", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+      send(body: "for backend-coder", plan: "001.00", from: "frontend-coder", to: "backend-coder")
 
-      [[1, "rey-frontend"], [2, "luke-backend"]].map do |number, reader|
+      [[1, "frontend-coder"], [2, "backend-coder"]].map do |number, reader|
         Thread.new { OpenLanes::Plans.mailbox(folder).ack(number, by: reader) }
       end.each(&:join)
 
@@ -163,8 +163,8 @@ RSpec.describe "openlanes mail", :tree do
     end
 
     it "prints nothing under --quiet" do
-      send(body: "one", plan: "001.00", from: "luke-backend", to: "rey-frontend")
-      _out, err, status = ack(number: "1", plan: "001.00", for: "rey-frontend", quiet: true)
+      send(body: "one", plan: "001.00", from: "backend-coder", to: "frontend-coder")
+      _out, err, status = ack(number: "1", plan: "001.00", for: "frontend-coder", quiet: true)
 
       expect([err, status]).to eq(["", 0])
     end
@@ -172,13 +172,13 @@ RSpec.describe "openlanes mail", :tree do
 
   describe "render" do
     it "prints the whole exchange to STDOUT and writes nothing in the plan folder" do
-      send(body: "GET /returns/:id is up", plan: "001.00", from: "luke-backend", to: "rey-frontend")
+      send(body: "GET /returns/:id is up", plan: "001.00", from: "backend-coder", to: "frontend-coder")
       before = Dir.children(folder).sort.to_h { |f| [f, File.mtime(File.join(folder, f))] }
       out, _err, status = render(plan: "001.00")
 
       aggregate_failures do
         expect(status).to eq(0)
-        expect(out).to include("luke-backend → rey-frontend · unread", "GET /returns/:id is up")
+        expect(out).to include("backend-coder → frontend-coder · unread", "GET /returns/:id is up")
         expect(Dir.children(folder).sort.to_h { |f| [f, File.mtime(File.join(folder, f))] }).to eq(before)
       end
     end

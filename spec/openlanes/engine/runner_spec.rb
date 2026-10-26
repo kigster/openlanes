@@ -35,29 +35,29 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       end
 
       # 001.00 already has spec.md and plan.md when the round starts, so
-      # ⭐️ Planned now goes straight to the pair that handles it — luke-backend
-      # and rey-frontend — rather than to luthen-rael-planner first, now that
+      # ⭐️ Planned now goes straight to the pair that handles it — backend-coder
+      # and frontend-coder — rather than to planner first, now that
       # Building has split in two.
       it "offers each plan to the agent that handles its state" do
         runner.call
 
-        expect(calls.uniq).to contain_exactly(["leah-researcher", "000.00"],
-          ["yoda-writer", "000.01"],
-          ["luke-backend", "001.00"],
-          ["rey-frontend", "001.00"])
+        expect(calls.uniq).to contain_exactly(["researcher", "000.00"],
+          ["spec-writer", "000.01"],
+          ["backend-coder", "001.00"],
+          ["frontend-coder", "001.00"])
       end
 
       # The relay's whole point. Both used to declare `handles: [new]`, agents
       # are offered work in definition order and the runner takes the first,
-      # so yoda-writer won on alphabetical order alone — and wrote goals and
+      # so spec-writer won on alphabetical order alone — and wrote goals and
       # conclusions over documents nobody had researched. They now hold
       # adjacent states rather than the same one.
       it "researches before it writes, rather than the two contending for ⚪️ New" do
         runner.call
 
         aggregate_failures do
-          expect(calls).to include(["leah-researcher", "000.00"])
-          expect(calls.filter_map { |name, ordinal| ordinal if name == "yoda-writer" }).to all(eq("000.01"))
+          expect(calls).to include(["researcher", "000.00"])
+          expect(calls.filter_map { |name, ordinal| ordinal if name == "spec-writer" }).to all(eq("000.01"))
         end
       end
 
@@ -223,7 +223,7 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
         crashed = attempts.find { |a| a.ordinal == "000.00" }
         aggregate_failures do
           expect(attempts.map(&:ordinal)).to contain_exactly("000.00", "001.00")
-          expect(crashed).to have_attributes(ok: false, agent: "leah-researcher", note: "the harness blew up")
+          expect(crashed).to have_attributes(ok: false, agent: "researcher", note: "the harness blew up")
         end
       end
     end
@@ -344,7 +344,7 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
 
     def blocked_since(days)
       OpenLanes::Plans::PlanState.for(plan_path("001.00"))
-                                 .sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (days * 86_400))
+                                 .sign!(agent: "backend-coder", round: 1, status: "Blocked", at: Time.now - (days * 86_400))
     end
 
     let(:ready) { { "plan.md" => "# P\n\n## U1\n", "plan-frontend.md" => "## F1" } }

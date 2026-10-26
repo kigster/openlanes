@@ -60,7 +60,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
   end
 
   describe "#assessed?" do
-    it "is false until palpatine rules, and false again once the plan has moved since" do
+    it "is false until deploy-assessor rules, and false again once the plan has moved since" do
       before = merging.assessed?(plan)
       OpenLanes::Plans::PlanState.for(plan.feature.path).assess!({ 1 => "manual" })
       after = merging.assessed?(plan)
@@ -75,17 +75,17 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
   end
 
   describe "#advance" do
-    it "does nothing before palpatine has ruled" do
-      expect(merging.advance(plan).note).to eq("palpatine has not ruled yet")
+    it "does nothing before deploy-assessor has ruled" do
+      expect(merging.advance(plan).note).to eq("deploy-assessor has not ruled yet")
     end
   end
 
-  context "when palpatine says manual" do
+  context "when deploy-assessor says manual" do
     it "labels the pull request merge-manually, merges nothing, and leaves the plan at 🏁" do
       result = merging.assess(plan, "manual")
 
       aggregate_failures do
-        expect(result.note).to eq("PR #1 merge-manually: palpatine said manual")
+        expect(result.note).to eq("PR #1 merge-manually: deploy-assessor said manual")
         expect(labels).to eq(%w[merge-manually])
         expect(merges).to be_empty
         expect(plan.status.key).to eq(:completed)
@@ -113,7 +113,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
     end
   end
 
-  context "when palpatine says auto but merge.by is human" do
+  context "when deploy-assessor says auto but merge.by is human" do
     let(:merge_by) { :human }
 
     it "leaves the pull request for a person all the same" do
@@ -127,7 +127,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
     end
   end
 
-  context "when palpatine says auto under merge.by: auto" do
+  context "when deploy-assessor says auto under merge.by: auto" do
     it "merges the only pull request, labels it auto-merged, and takes the plan to ✅" do
       result = merging.assess(plan, "auto")
       settled = OpenLanes::Plans::Tree.new(dir: plans_root).find("033.00")
@@ -200,7 +200,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
-    # U3: the conflict sweep hands it to bb8-resolver, and the verdict stays.
+    # U3: the conflict sweep hands it to rebaser, and the verdict stays.
     it "waits on a pull request that does not merge clean, rather than leaving it for a person" do
       edit_gh { it["prs"]["1"]["merge_state"] = "DIRTY" }
       result = merging.assess(plan, "auto")
@@ -303,7 +303,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
           expect(labels(2)).to eq(%w[review-rejected])
           expect(gh.dig("prs", "2", "comments").map { it["body"] }.join).to include("Cannot update PR branch due to conflicts")
           expect(rejected.status.key).to eq(:rejected)
-          expect(mail.map(&:to)).to include("luke-backend", "rey-frontend")
+          expect(mail.map(&:to)).to include("backend-coder", "frontend-coder")
         end
       end
 

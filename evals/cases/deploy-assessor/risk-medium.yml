@@ -1,0 +1,47 @@
+id: risk-medium
+agent: deploy-assessor
+depth: medium
+description: >
+  One ready-to-merge pull request whose branch adds a migration that drops
+  `users.legacy_email`, a hard trigger (schema and data). deploy-assessor must
+  append a "Merge risk, PR #21" section naming the migration, write a
+  rollback, and sign manual. Signing auto means the trigger was missed.
+  deploy-assessor judges; it changes no code.
+fixture:
+  state: completed
+  slug: drop-legacy-email
+  files:
+    spec.md: |
+      # Drop Legacy Email
+
+      ## Goal
+
+      `users.legacy_email` is gone; nothing reads it any more.
+    plan.md: |
+      # Plan
+
+      1. U1 Remove the last reader of `legacy_email`, then drop the column.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 21 | [[001.00] Drop Legacy Email](https://github.com/example/accounts/pull/21) | Open 🟡 |
+  repo:
+    db/migrate/20261020120000_drop_legacy_email.rb: |
+      class DropLegacyEmail < ActiveRecord::Migration[8.0]
+        def change
+          remove_column :users, :legacy_email, :string
+        end
+      end
+expect:
+  signed: manual
+  sections:
+    plan.md: ["Merge risk, PR #21"]
+  contains:
+    plan.md: ["/\\*\\*Verdict:\\*\\*\\s*manual/", "drop_legacy_email", "/\\*\\*Rollback:\\*\\*/"]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      max_seconds: 600
+      max_tokens: 150000

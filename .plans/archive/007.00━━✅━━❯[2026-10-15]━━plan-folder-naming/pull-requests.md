@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 24 | [\[007.00\] Plan Folder Naming](https://github.com/kigster/openlanes/pull/24) | Merged 🟣 |
 
-## Front end (rey-frontend, round 1)
+## Front end (frontend-coder, round 1)
 
 - `cd web && npx vitest run`: 27 files, 293 tests passed
 - `cd web && npx eslint .`: no output

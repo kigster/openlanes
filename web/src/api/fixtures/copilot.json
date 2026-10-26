@@ -3,13 +3,13 @@
     { "id": "01JCOPILOT0000000000000001", "from": "you", "kind": "text", "text": "Why has 001 not moved?", "at": "2026-10-13T09:00:00Z", "usage": null },
     {
       "id": "01JCOPILOT0000000000000001.1", "from": "copilot", "kind": "text",
-      "text": "001 is not moving because luke-backend is waiting for you: should Redis keys carry the checkout path?",
+      "text": "001 is not moving because backend-coder is waiting for you: should Redis keys carry the checkout path?",
       "at": "2026-10-13T09:00:04Z", "usage": { "model": "claude-haiku-4-5", "up": 4210, "down": 188 }
     },
     { "id": "01JCOPILOT0000000000000002", "from": "you", "kind": "text", "text": "Draft an answer for it.", "at": "2026-10-13T09:01:00Z", "usage": null },
     {
       "id": "01JCOPILOT0000000000000002.1", "from": "copilot", "kind": "draft",
-      "text": "luke-backend on 001 asked whether Redis keys should carry the checkout path. Here is a draft you can edit before sending:",
+      "text": "backend-coder on 001 asked whether Redis keys should carry the checkout path. Here is a draft you can edit before sending:",
       "at": "2026-10-13T09:01:05Z", "usage": { "model": "claude-haiku-4-5", "up": 8930, "down": 402 },
       "question": "001.00/B1",
       "draft": "Use the checkout's absolute path, hashed, and keep the path beside it for display."
@@ -19,9 +19,9 @@
       "id": "01JCOPILOT0000000000000003.1", "from": "copilot", "kind": "confirm",
       "text": "Stopping is not reversible, so I need you to confirm it.",
       "at": "2026-10-13T09:02:03Z", "usage": { "model": "claude-haiku-4-5", "up": 13120, "down": 530 },
-      "command": { "kind": "stop", "plan": "005.00", "agent": "hansolo-reviewer", "payload": {} },
-      "confirm": "Stop hansolo-reviewer",
-      "done": "Asked hansolo-reviewer on 005 to stop. It has 60 seconds to leave a resume note."
+      "command": { "kind": "stop", "plan": "005.00", "agent": "staff-reviewer", "payload": {} },
+      "confirm": "Stop staff-reviewer",
+      "done": "Asked staff-reviewer on 005 to stop. It has 60 seconds to leave a resume note."
     }
   ],
   "usage": { "model": "claude-haiku-4-5", "up": 13120, "down": 530 }

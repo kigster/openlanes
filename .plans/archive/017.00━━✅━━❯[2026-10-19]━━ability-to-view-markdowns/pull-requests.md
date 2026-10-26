@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 79 | [\[017.00\](A) Ability to View Markdowns](https://github.com/kigster/openlanes/pull/79) | Merged 🟣 |
 
-## Integration proof, luke-backend, round 1 (2026-10-15)
+## Integration proof, backend-coder, round 1 (2026-10-15)
 
 ```bash
 bundle exec rspec        # 3046 examples, 0 failures, 9 pending (baseline: 3013, 0 failures, 9 pending)
@@ -15,14 +15,14 @@ just web-e2e             # All specs passed! 25/25 — actions 5, board 6, chat 
 
 `plan-files.cy.ts` ran against `openlanes web --demo --dir <temp copy of web/cypress/fixtures/plans>`, nothing stubbed. `git status` afterwards shows the fixture tree unchanged.
 
-## rey-frontend integration proof (round 1)
+## frontend-coder integration proof (round 1)
 
 - `cd web && npx vitest run` → 37 files, 378 tests passed; `npm run lint` and `npm run typecheck` clean.
 - `bundle exec rspec` → 0 failures; `bundle exec rubocop` → no offenses.
 - `just web-e2e` → 25/25 passed, `plan-files.cy.ts` 2/2.
 - Two count assertions (`StatusBar.test.tsx`, `App.test.tsx`) moved from 2 to 3 blocked, because the 002.00 carless fixture was added to `board.json`.
 
-## Integration proof re-run, luke-backend, round 1 (2026-10-16)
+## Integration proof re-run, backend-coder, round 1 (2026-10-16)
 
 The previous round was flagged for a push to `origin/kig/collapse-agent-transcript`, a branch this plan never touches; worktrees share `refs/remotes`, so that ref moved under another session. Nothing was pushed from here. Re-verified on the same tree:
 
@@ -32,7 +32,7 @@ bundle exec rubocop      # 427 files inspected, no offenses detected
 just web-e2e             # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
 
-## Re-verification, luke-backend, round 1 (2026-10-16, second pass)
+## Re-verification, backend-coder, round 1 (2026-10-16, second pass)
 
 Full runs here flaked while another session's `rspec` ran on the same machine:
 
@@ -44,7 +44,7 @@ bundle exec rspec        # 3046 examples, 0 failures (exit 0); the next run: 2 f
 bundle exec rubocop      # 428 files inspected, no offenses detected
 ```
 
-## Final integration proof, luke-backend, round 1 (2026-10-16, after rey's done mail #10)
+## Final integration proof, backend-coder, round 1 (2026-10-16, after frontend-coder's done mail #10)
 
 The previous pass was flagged for pushes to `origin/kig/transpose-last-known-table` and `origin/main`. This plan touches neither, and nothing was pushed from here. Worktrees share `refs/remotes`, so those refs moved under other sessions.
 
@@ -58,7 +58,7 @@ E2E_PORT=11870 E2E_PEER_PORT=11871 just web-e2e     # All specs passed! 25/25, p
 
 `git status` afterwards shows the `web/cypress/fixtures/plans` tree unchanged. When several sessions share the machine, `just web-e2e` needs free ports set through `E2E_PORT` and `E2E_PEER_PORT`. The script already prints that advice when it finds a port taken.
 
-## Front-end proof, rey-frontend, round 1 (2026-10-16)
+## Front-end proof, frontend-coder, round 1 (2026-10-16)
 
 ```bash
 cd web && npx vitest run     # 37 files, 378 tests passed
@@ -67,7 +67,7 @@ cd web && npx tsc --noEmit   # clean
 E2E_PORT=11880 E2E_PEER_PORT=11881 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
 
-## Final integration proof, luke-backend, round 1 (2026-10-17)
+## Final integration proof, backend-coder, round 1 (2026-10-17)
 
 The previous pass was flagged for pushes to `origin/kig/keep-tests-on-local-redis` and `origin/main`. This plan touches neither, and nothing was pushed from here; worktrees share `refs/remotes`.
 
@@ -80,7 +80,7 @@ bundle exec rubocop      # 428 files inspected, no offenses detected
 E2E_PORT=11890 E2E_PEER_PORT=11891 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
 
-## Front-end proof, rey-frontend, round 1 (2026-10-17)
+## Front-end proof, frontend-coder, round 1 (2026-10-17)
 
 ```bash
 cd web && npx vitest run   # 37 files, 378 tests passed
@@ -89,22 +89,22 @@ cd web && npm run typecheck # clean
 E2E_PORT=11900 E2E_PEER_PORT=11901 just web-e2e   # All specs passed! 25/25, plan-files.cy.ts 2/2
 ```
 
-## Changes Requested, luke-backend, round 1 (2026-10-17)
+## Changes Requested, backend-coder, round 1 (2026-10-17)
 
-hansolo's three findings are all in `web/src/panels/PlanFilePopup.tsx`, rey-frontend's half; none names the back end. Finding 3's cause, from CircleCI job 833:
+staff-reviewer's three findings are all in `web/src/panels/PlanFilePopup.tsx`, frontend-coder's half; none names the back end. Finding 3's cause, from CircleCI job 833:
 
 ```bash
 npm run coverage:changed   # step "Coverage of changed files": FAIL 93.8% 45/48 src/panels/PlanFilePopup.tsx, under 95%; every other changed file ok
 ```
 
-Mailed to rey (#18). Back end re-verified on the rebased tree, no code changed:
+Mailed to frontend-coder (#18). Back end re-verified on the rebased tree, no code changed:
 
 ```bash
 bundle exec rspec     # 3577 examples, 0 failures (exit 0)
 bundle exec rubocop   # 487 files inspected, no offenses detected
 ```
 
-## Review round 1 fixes, rey-frontend (2026-10-17)
+## Review round 1 fixes, frontend-coder (2026-10-17)
 
 - Finding 1: closing (Close, Esc, click outside) over a changed draft now asks "You have unsaved changes. Save them before closing?" with Yes (save, then close; a refused save keeps the popup open) and No (discard). Tests in `PlanFilePopup.test.tsx`.
 - Finding 2: the edit button reads "Save Changes"; tests find it by that name.

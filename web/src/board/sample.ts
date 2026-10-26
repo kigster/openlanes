@@ -5,7 +5,7 @@ import { loadFixtureBoard } from "../api/client";
 export const sampleBoard = (): Board => loadFixtureBoard();
 
 export function sampleCar(over: Partial<Car> = {}): Car {
-  const agent = over.agent ?? "luke-backend";
+  const agent = over.agent ?? "backend-coder";
   return {
     key: `001.00/${agent}`,
     agent,
@@ -41,7 +41,7 @@ export function sampleQuestion(over: Partial<Question> = {}): Question {
     kind: "block",
     heading: "B1 Redis key layout",
     body: "Should Redis keys carry the checkout path?",
-    agent: "luke-backend",
+    agent: "backend-coder",
     owner: "technical",
     options: null,
     held: false,
@@ -52,7 +52,7 @@ export function sampleQuestion(over: Partial<Question> = {}): Question {
 
 export function sampleLastKnown(over: Partial<LastKnown> = {}): LastKnown {
   return {
-    agent: "rey-frontend",
+    agent: "frontend-coder",
     source: "agent",
     at: "2026-10-13T08:58:00Z",
     round: 1,

@@ -3,11 +3,11 @@
 module OpenLanes
   module Engine
     module Verification
-      # chewie's `verification/<round>/report.md`, read back for the comment
-      # the engine posts (M1, M14). chewie cannot post it: the comment links
+      # verifier's `verification/<round>/report.md`, read back for the comment
+      # the engine posts (M1, M14). verifier cannot post it: the comment links
       # the screenshot by the SHA of a commit only the engine makes.
       #
-      # The shape chewie-verifier.md asks for:
+      # The shape verifier.md asks for:
       #
       #   # Verification, round 1
       #

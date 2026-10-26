@@ -65,7 +65,7 @@ RSpec.describe "A Redis outage under a running engine", :tree do
   # published to the real Redis.
   def publish_once
     start_agents
-    session.run_state.choose_model("001.00/luke-backend", "opus")
+    session.run_state.choose_model("001.00/backend-coder", "opus")
     dispatcher.tick
   end
 

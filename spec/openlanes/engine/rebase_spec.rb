@@ -10,7 +10,7 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
   let(:main) { File.join(tmp, "project") }
   let(:upstream) { publish_with_origin(main, tmp) }
   let(:agents) { OpenLanes::Agents::Registry.new }
-  let(:luke) { agents.find("luke-backend") }
+  let(:backend_coder) { agents.find("backend-coder") }
   let(:worktrees) { OpenLanes::Vcs::Worktree.new(root: main, dir: File.join(tmp, "project.worktrees"), user: "tester", seeder: nil) }
   let(:feature) do
     OpenLanes::Plans::Feature.new(ordinal: OpenLanes::Plans::Ordinal.parse("008.01"),
@@ -58,53 +58,53 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
   before { land(upstream, "app.rb", "one\ntwo from main\nthree\n") }
 
   def stopped = worktrees.refresh(checkout)
-  def task(agent = luke) = OpenLanes::Engine::Runner::Task.new(agent:, subject: plan, root: checkout.path, checkout:, round: 1, refresh: stopped)
+  def task(agent = backend_coder) = OpenLanes::Engine::Runner::Task.new(agent:, subject: plan, root: checkout.path, checkout:, round: 1, refresh: stopped)
   def head = git!(checkout.path, "rev-parse", "HEAD")
   def origin_main = git!(main, "rev-parse", "refs/remotes/origin/main")
 
   context "when the plan's builder resolves the conflict" do
-    before { resolve["luke-backend"] = "one\ntwo from main and the plan\nthree\n" }
+    before { resolve["backend-coder"] = "one\ntwo from main and the plan\nthree\n" }
 
     it "continues the rebase itself and reports success" do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
         expect(result).to have_attributes(ok: true, up: 10, down: 2)
-        expect(result.note).to include("rebased onto origin/main; luke-backend resolved 1 conflicted commit")
+        expect(result.note).to include("rebased onto origin/main; backend-coder resolved 1 conflicted commit")
         expect(git!(checkout.path, "rev-parse", "HEAD~1")).to eq(origin_main)
         expect(File.read(File.join(checkout.path, "app.rb"))).to include("two from main and the plan")
-        expect(calls.map(&:first)).to eq(["luke-backend"])
+        expect(calls.map(&:first)).to eq(["backend-coder"])
         expect(rebases.tally("008.01").failures).to eq(0)
       end
     end
   end
 
-  context "when the builder leaves the conflict and bb8-resolver resolves it" do
-    before { resolve["bb8-resolver"] = "one\ntwo, as bb8 resolved it\nthree\n" }
+  context "when the builder leaves the conflict and rebaser resolves it" do
+    before { resolve["rebaser"] = "one\ntwo, as rebaser resolved it\nthree\n" }
 
     it "hands the stopped rebase on, then continues it" do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[luke-backend bb8-resolver])
+        expect(calls.map(&:first)).to eq(%w[backend-coder rebaser])
         expect(result.ok).to be(true)
-        expect(result.note).to include("bb8-resolver resolved")
+        expect(result.note).to include("rebaser resolved")
         expect(result.up).to eq(20)
       end
     end
   end
 
   context "when nobody resolves it" do
-    it "aborts, restoring the branch exactly, and escalates bb8-resolver for the next run" do
+    it "aborts, restoring the branch exactly, and escalates rebaser for the next run" do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
         expect(result.ok).to be(false)
         expect(result.note).to include("aborted, branch restored",
-          "bb8-resolver left app.rb unresolved",
+          "rebaser left app.rb unresolved",
           "retries on a later run as opus/high")
         expect(head).to eq(own)
-        expect(rebases.resolvers(luke, "008.01").map { [it.name, it.model, it.effort] }).to eq([["bb8-resolver", "opus", "high"]])
+        expect(rebases.resolvers(backend_coder, "008.01").map { [it.name, it.model, it.effort] }).to eq([["rebaser", "opus", "high"]])
       end
     end
 
@@ -112,8 +112,8 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
       described_class::LADDER.size.times { rebases.resolve(task, handle:) }
 
       aggregate_failures do
-        expect(calls.map { it.first(3) }).to eq([["luke-backend", "opus", "high"], ["bb8-resolver", "sonnet", "high"],
-                                                 ["bb8-resolver", "opus", "high"], ["bb8-resolver", "opus", "max"]])
+        expect(calls.map { it.first(3) }).to eq([["backend-coder", "opus", "high"], ["rebaser", "sonnet", "high"],
+                                                 ["rebaser", "opus", "high"], ["rebaser", "opus", "max"]])
         expect(rebases.hold("008.01")).to eq(origin_main)
         expect(worktrees.refresh(checkout, hold: rebases.hold("008.01")).kind).to eq(:pending)
         expect(head).to eq(own)
@@ -123,33 +123,33 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
       calls.clear
       rebases.resolve(task, handle:)
 
-      expect(calls.map(&:first)).to eq(%w[luke-backend bb8-resolver])
+      expect(calls.map(&:first)).to eq(%w[backend-coder rebaser])
     end
   end
 
   context "when the assigned agent does not build" do
-    let(:reviewer) { agents.find("hansolo-reviewer") }
+    let(:reviewer) { agents.find("staff-reviewer") }
 
-    before { resolve["bb8-resolver"] = "resolved\n" }
+    before { resolve["rebaser"] = "resolved\n" }
 
-    it "goes straight to bb8-resolver" do
+    it "goes straight to rebaser" do
       rebases.resolve(task(reviewer), handle:)
 
-      expect(calls.map(&:first)).to eq(["bb8-resolver"])
+      expect(calls.map(&:first)).to eq(["rebaser"])
     end
   end
 
   context "when two of the branch's commits conflict" do
     before do
       commit_file(checkout.path, "app.rb", "one\nTWO again\nthree\nfour\n")
-      resolve["luke-backend"] = "one\ntwo from main\nthree\n"
+      resolve["backend-coder"] = "one\ntwo from main\nthree\n"
     end
 
     it "invokes the resolver once per stop" do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[luke-backend luke-backend])
+        expect(calls.map(&:first)).to eq(%w[backend-coder backend-coder])
         expect(result.note).to include("resolved 2 conflicted commits")
       end
     end
@@ -174,8 +174,8 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
-        expect(calls).to eq(["luke-backend"])
-        expect(result.note).to include("luke-backend: agent committed")
+        expect(calls).to eq(["backend-coder"])
+        expect(result.note).to include("backend-coder: agent committed")
       end
     end
   end
@@ -193,7 +193,7 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
-        expect(calls).to eq(["luke-backend"])
+        expect(calls).to eq(["backend-coder"])
         expect(result.note).to include("stopped by request")
         expect(head).to eq(own)
       end
@@ -217,7 +217,7 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
     before do
       stub_const("#{described_class}::STOPS", 1)
       commit_file(checkout.path, "app.rb", "one\nTWO again\nthree\nfour\n")
-      resolve["luke-backend"] = "one\ntwo from main\nthree\n"
+      resolve["backend-coder"] = "one\ntwo from main\nthree\n"
     end
 
     it "aborts rather than grinding on" do
@@ -243,14 +243,14 @@ RSpec.describe OpenLanes::Engine::Rebase, :origin do
     end
   end
 
-  context "when bb8-resolver is not installed" do
-    let(:agents) { OpenLanes::Agents::Registry.new.without("bb8-resolver") }
+  context "when rebaser is not installed" do
+    let(:agents) { OpenLanes::Agents::Registry.new.without("rebaser") }
 
     it "lets the builder try, then aborts" do
       result = rebases.resolve(task, handle:)
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(["luke-backend"])
+        expect(calls.map(&:first)).to eq(["backend-coder"])
         expect(result.ok).to be(false)
       end
     end

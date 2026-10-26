@@ -75,7 +75,7 @@ RSpec.describe "PR and human-answer events", :tree do
   end
 
   describe OpenLanes::Lifecycle::Unblocker do
-    let(:agent) { OpenLanes::Agents::Registry.new.find("lando-broker") }
+    let(:agent) { OpenLanes::Agents::Registry.new.find("unblocker") }
     let(:body) { "# Blocked\n\n## B1. Which vendor\n\n## A1. Ours, the secret vendor list\n\n## B2. Later\n" }
 
     def folding(*numbers)

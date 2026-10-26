@@ -8,8 +8,8 @@ RSpec.describe OpenLanes::Engine::Narrator do
 
   describe "#render" do
     it "keeps only the fields a line has, in the order a person reads them" do
-      expect(narrator.render("started", plan: "003.00", status: "⭐️ Planned", agent: "yoda-writer", round: "01"))
-        .to eq("003.00 ⭐️  Planned  yoda-writer r01  started")
+      expect(narrator.render("started", plan: "003.00", status: "⭐️ Planned", agent: "spec-writer", round: "01"))
+        .to eq("003.00 ⭐️  Planned  spec-writer r01  started")
     end
 
     # The log file's columns, echoed to the terminal, drew this line as a
@@ -27,8 +27,8 @@ RSpec.describe OpenLanes::Engine::Narrator do
     # Many fonts draw a colour emoji wider than its two cells; one space
     # after it let "🟡Building" and "🔴Changes" run together.
     it "fits each emoji to two cells and puts two spaces before its label" do
-      expect(narrator.render("started", plan: "002.00", status: "⚪️ New", agent: "leah-researcher", round: "01", to: "🔴 Changes Requested"))
-        .to eq("002.00 ⚪️  New  leah-researcher r01  started → 🔴  Changes Requested")
+      expect(narrator.render("started", plan: "002.00", status: "⚪️ New", agent: "researcher", round: "01", to: "🔴 Changes Requested"))
+        .to eq("002.00 ⚪️  New  researcher r01  started → 🔴  Changes Requested")
     end
 
     it "passes a status with no label through as it is" do
@@ -47,9 +47,9 @@ RSpec.describe OpenLanes::Engine::Narrator do
 
   describe "#call" do
     it "writes one timestamped line per event" do
-      narrator.call("started", { plan: "003.00", agent: "yoda-writer" })
+      narrator.call("started", { plan: "003.00", agent: "spec-writer" })
 
-      expect(lines).to eq(["13:39:10  003.00  yoda-writer  started"])
+      expect(lines).to eq(["13:39:10  003.00  spec-writer  started"])
     end
 
     it "says a repeated event once, and again once something else was said" do

@@ -11,8 +11,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:adapter) { "claude" }
   let(:agents_dir) { Dir.mktmpdir }
   let(:agents) do
-    File.write(File.join(agents_dir, "leah.md"),
-      "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
+    File.write(File.join(agents_dir, "researcher.md"),
+      "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
       "adapter: #{adapter}\nledger: [spec.md]\n---\nbody")
     OpenLanes::Agents::Registry.new(dir: agents_dir)
   end
@@ -61,7 +61,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   it "says which it chose, and why" do
-    expect(heard).to include("fresh session: no session recorded for leah-researcher",
+    expect(heard).to include("fresh session: no session recorded for researcher",
       "resuming session sess-1: round 1 left it in new")
   end
 

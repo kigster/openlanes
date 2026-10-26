@@ -4,9 +4,9 @@
 | ------------------: | :---------------- | -----: |
 | 112 | [\[039.00\](A) Progress Journal](https://github.com/kigster/openlanes/pull/112) | Merged 🟣 |
 
-## Build, round 1 (luke-backend)
+## Build, round 1 (backend-coder)
 
-No front end in this plan, so luke is last. Integration proof and checks, run in the worktree:
+No front end in this plan, so backend-coder is last. Integration proof and checks, run in the worktree:
 
 - `bundle exec rspec spec/integration/event_journal_kill_spec.rb` (fork, SIGKILL, replay): passed.
 - `bundle exec rspec` → `4117 examples, 0 failures, 9 pending`, exit 0.
@@ -14,7 +14,7 @@ No front end in this plan, so luke is last. Integration proof and checks, run in
 
 ## Answers, round 1
 
-hansolo's round 1 review was a single PR conversation comment with no inline review threads, so there are no thread ids to reply in. Each finding below is a `fix`; the harness commits and pushes them.
+staff-reviewer's round 1 review was a single PR conversation comment with no inline review threads, so there are no thread ids to reply in. Each finding below is a `fix`; the harness commits and pushes them.
 
 1. Torn tail on reopen (fix). `EventJournal#initialize` now calls `seal_torn_tail`, which writes, flushes and fsyncs a newline when a non-empty file does not end in one. Files: `lib/openlanes/engine/event_journal.rb`, `spec/openlanes/engine/event_journal_spec.rb` (new example: torn fragment, reopen, `run_ended`; replay gives `torn=1`, `seq=2`, not running).
 2. Dispatcher spec missing `transition`, `extension`, `question`; `event` copied `to` (fix). The `transition` event now carries the aasm event that fired, via `Dispatcher#event_between` (`StateMachine.event_for`, or `step_back` when the edge is not a forward one). The spec runs two plans: 001.00 advances (`new → researched`, event `research`), 002.00 signs Blocked (`question`), and a `before_tick` hook calls `Dispatcher#extend` on each running job (`extension`). A new example asserts the journal holds every entry in `EventJournal::KINDS`. Files: `lib/openlanes/engine/dispatcher.rb`, `spec/openlanes/engine/dispatcher_event_journal_spec.rb`.

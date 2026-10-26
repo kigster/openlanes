@@ -46,7 +46,7 @@
       "format": "date-time"
     },
     "finished": {
-      "description": "When and how the plan finished: hansolo approved it, or its pull request merged. A merge replaces an approval. Cleared when an agent starts on the plan again, or a person rejects it.",
+      "description": "When and how the plan finished: staff-reviewer approved it, or its pull request merged. A merge replaces an approval. Cleared when an agent starts on the plan again, or a person rejects it.",
       "type": "object",
       "required": ["kind", "at"],
       "additionalProperties": false,
@@ -118,7 +118,7 @@
       }
     },
     "rulings": {
-      "description": "obi-wan-kenobi-arbitrator's rulings, written by the engine from the agent's ruling block, never by the agent (M7). Absent on plans never arbitrated.",
+      "description": "arbitrator's rulings, written by the engine from the agent's ruling block, never by the agent (M7). Absent on plans never arbitrated.",
       "type": "array",
       "items": {
         "type": "object",
@@ -147,7 +147,7 @@
           "winner": { "type": ["string", "null"] },
           "reason": { "type": "string", "minLength": 1 },
           "trigger": { "type": "string", "minLength": 1 },
-          "review": { "type": "integer", "minimum": 1, "description": "The round of hansolo's review the struck and critical ids belong to." }
+          "review": { "type": "integer", "minimum": 1, "description": "The round of staff-reviewer's review the struck and critical ids belong to." }
         }
       }
     },
@@ -158,7 +158,7 @@
       "additionalProperties": { "$ref": "#/$defs/lastKnownState" }
     },
     "merge_risk": {
-      "description": "palpatine-risk-assessor's verdicts for this visit to Completed (P1, P4), by pull request number, and when the engine rebased a sibling onto main (P5). Stands only while moves still equals the count it was written at.",
+      "description": "deploy-assessor's verdicts for this visit to Completed (P1, P4), by pull request number, and when the engine rebased a sibling onto main (P5). Stands only while moves still equals the count it was written at.",
       "type": "object",
       "required": ["moves", "at", "verdicts", "rebased"],
       "additionalProperties": false,

@@ -30,7 +30,7 @@ description: The openlanes software factory (`openlanes` CLI) that drives `.plan
 
 - **The folder name is the state.** `.plans/003.00━━⭐━━❯tax-rule-dsl` is plan `003.00`, state Planned, slug `tax-rule-dsl`. There is no database. Folder names hold emoji but no spaces; finished, deferred and discarded plans live in dated `.plans/archive/`, `deferred/` and `abandoned/` subfolders. Refer to a plan by its ordinal (`003`, `003.01`) wherever a command accepts one.
 - **Numbers are identity.** `NNN.00` is a new feature; `NNN.MM` with `MM > 0` documents work that already shipped (Retroactive). An ordinal is never renumbered.
-- **Lanes route a plan.** `full`: research, spec, plan, build, review. `plan`: the author's spec stands; plan, build, review. `quick`: one agent (`r2d2-mechanic`) does a short mechanical change, then review. The lane lives in `spec.md` frontmatter.
+- **Lanes route a plan.** `full`: research, spec, plan, build, review. `plan`: the author's spec stands; plan, build, review. `quick`: one agent (`chores-coder`) does a short mechanical change, then review. The lane lives in `spec.md` frontmatter.
 - **Blocked means a human decides.** ⭕ is a technical block (engineer), 🛑 a product block (product). The questions sit in the plan's `blocked.md`; agents step around the plan until they are answered.
 
 Live references, never copied here so they cannot go stale:

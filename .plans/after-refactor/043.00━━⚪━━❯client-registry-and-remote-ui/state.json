@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:02:55-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -28,7 +28,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 2,
       "status": "Interrupted",
       "from": "new",
@@ -47,7 +47,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 3,
       "status": "Interrupted",
       "from": "new",
@@ -66,7 +66,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 4,
       "status": "Interrupted",
       "from": "new",
@@ -85,7 +85,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 5,
       "status": "Interrupted",
       "from": "new",
@@ -104,7 +104,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -123,7 +123,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -145,98 +145,98 @@
   "signatures": [
     {
       "at": "2026-10-21T11:16:58-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T11:18:54-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-21T11:24:14-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T11:24:26-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 2
     },
     {
       "at": "2026-10-21T11:39:29-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 3
     },
     {
       "at": "2026-10-21T11:39:34-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 3
     },
     {
       "at": "2026-10-21T12:41:20-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 4
     },
     {
       "at": "2026-10-21T12:41:24-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 4
     },
     {
       "at": "2026-10-21T12:43:25-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 5
     },
     {
       "at": "2026-10-21T12:43:30-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 5
     },
     {
       "at": "2026-10-21T21:18:17-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 6
     },
     {
       "at": "2026-10-21T21:18:18-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 6
     },
     {
       "at": "2026-10-21T21:18:23-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
     },
     {
       "at": "2026-10-23T14:02:46-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 7
     },
     {
       "at": "2026-10-23T14:02:51-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 7
     },
     {
       "at": "2026-10-23T14:02:55-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
@@ -245,7 +245,7 @@
   "messages": [],
   "moves": 1,
   "last-known-state": {
-    "leah-researcher": {
+    "researcher": {
       "source": "agent",
       "at": "2026-10-23T14:02:50-07:00",
       "round": 7,
@@ -266,7 +266,7 @@
     }
   },
   "memory": {
-    "leah-researcher": {
+    "researcher": {
       "rounds": {
         "1": {
           "round": 1,
@@ -286,11 +286,11 @@
             },
             {
               "kind": "note",
-              "text": "spec.md duplicates title and sections and has an empty 'What research needs to settle' list; fix in yoda rewrite"
+              "text": "spec.md duplicates title and sections and has an empty 'What research needs to settle' list; fix in spec-writer rewrite"
             },
             {
               "kind": "question",
-              "text": "Plan folder lock held by openlanes pid 82944 refused leah-researcher acquire of spec.md; release it or confirm it is meant for this agent"
+              "text": "Plan folder lock held by openlanes pid 82944 refused researcher acquire of spec.md; release it or confirm it is meant for this agent"
             }
           ]
         },
@@ -308,7 +308,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the orchestrator's lock on the 043.00 plan folder (or confirm it is meant for leah-researcher) so the Research chapter can be written"
+              "text": "Release the orchestrator's lock on the 043.00 plan folder (or confirm it is meant for researcher) so the Research chapter can be written"
             }
           ]
         },
@@ -322,7 +322,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm researcher may write spec.md; the chapter is ready from round 1 findings"
             }
           ]
         },
@@ -336,7 +336,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm researcher may write spec.md; the chapter is ready from round 1 findings"
             }
           ]
         },
@@ -350,7 +350,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+              "text": "Release the orchestrator's lock on the 043.00 plan folder, or confirm researcher may write spec.md; the chapter is ready from round 1 findings"
             }
           ]
         },
@@ -364,7 +364,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the lock on the 043.00 plan folder held by pid 51493, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+              "text": "Release the lock on the 043.00 plan folder held by pid 51493, or confirm researcher may write spec.md; the chapter is ready from round 1 findings"
             }
           ]
         },
@@ -378,7 +378,7 @@
             },
             {
               "kind": "question",
-              "text": "Release the lock on the 043.00 plan folder held by pid 91087, or confirm leah-researcher may write spec.md; the chapter is ready from round 1 findings"
+              "text": "Release the lock on the 043.00 plan folder held by pid 91087, or confirm researcher may write spec.md; the chapter is ready from round 1 findings"
             }
           ]
         }
@@ -388,7 +388,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 1,
       "limit": "rounds",
@@ -401,7 +401,7 @@
     },
     {
       "number": 2,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 2,
       "limit": "rounds",
@@ -414,7 +414,7 @@
     },
     {
       "number": 3,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 3,
       "limit": "rounds",
@@ -427,7 +427,7 @@
     },
     {
       "number": 4,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 4,
       "limit": "rounds",

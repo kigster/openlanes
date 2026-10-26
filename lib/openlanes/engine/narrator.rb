@@ -23,8 +23,8 @@ module OpenLanes
     # @example
     #   narrator = Narrator.new
     #   UI.tap_log(narrator)
-    #   UI.log("started", plan: "003.00", status: "⭐ Planned", agent: "yoda-writer", round: "01")
-    #   # 13:39:10  003.00 ⭐  Planned  yoda-writer r01  started
+    #   UI.log("started", plan: "003.00", status: "⭐ Planned", agent: "spec-writer", round: "01")
+    #   # 13:39:10  003.00 ⭐  Planned  spec-writer r01  started
     class Narrator
       # Between the parts of a line. Two spaces read as columns without
       # holding open the ones a line does not have.
@@ -79,7 +79,7 @@ module OpenLanes
       # @param agent [String, nil]
       # @param round [String, nil] e.g. "01"
       # @param to [String, nil] the state the plan moved to, emoji and label
-      # @return [String] e.g. `003.00 ⭐  Planned  yoda-writer r01  finished → 🟡  Building`
+      # @return [String] e.g. `003.00 ⭐  Planned  spec-writer r01  finished → 🟡  Building`
       def render(message, plan: nil, status: nil, agent: nil, round: nil, to: nil, **)
         # Every field, not just the message: a page command's plan and agent
         # are logged before anything checks that they name real ones.

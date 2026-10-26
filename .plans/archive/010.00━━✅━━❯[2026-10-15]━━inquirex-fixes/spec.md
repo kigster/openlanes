@@ -123,9 +123,9 @@ Repository for all items: `/Users/kig/github/inquirex`.
 
 ## Back end / front end
 
-`luke-backend` and `rey-frontend` build these as a pair. Here the "back end" is the `inquirex` engine and library surface; the "front end" is the terminal UI of `inquirex-tty`.
+`backend-coder` and `frontend-coder` build these as a pair. Here the "back end" is the `inquirex` engine and library surface; the "front end" is the terminal UI of `inquirex-tty`.
 
-| Item                         | luke-backend (engine, libs)                        | rey-frontend (inquirex-tty UI) |
+| Item                         | backend-coder (engine, libs)                        | frontend-coder (inquirex-tty UI) |
 | :--------------------------- | :------------------------------------------------- | :----------------------------- |
 | Version alignment            | gemspec and lock in all three                      | gemspec of inquirex-tty        |
 | Model ids                    | `inquirex-llm` constant, aliases, spec             | none                           |

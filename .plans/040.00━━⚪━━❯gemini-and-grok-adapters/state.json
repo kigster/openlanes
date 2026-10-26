@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:04:09-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Almost completed",
       "from": "new",
@@ -28,7 +28,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 2,
       "status": "Almost completed",
       "from": "new",
@@ -47,7 +47,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 3,
       "status": "Almost completed",
       "from": "new",
@@ -66,7 +66,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 4,
       "status": "Almost completed",
       "from": "new",
@@ -85,7 +85,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 5,
       "status": "Almost completed",
       "from": "new",
@@ -104,7 +104,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 6,
       "status": "Almost completed",
       "from": "new",
@@ -123,7 +123,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Started",
       "from": "new",
@@ -135,7 +135,7 @@
       "session": "24d0f91b-35cd-4e6c-b793-88a66923d18e"
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Almost completed",
       "from": "new",
@@ -157,104 +157,104 @@
   "signatures": [
     {
       "at": "2026-10-21T01:27:47-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:28:53-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 1,
       "note": "research done, spec.md write refused by lock held by openlanes@macbook-m3-kig.re1.re:82944"
     },
     {
       "at": "2026-10-21T01:34:20-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T01:34:26-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 2,
       "note": "spec.md chapter not written: lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 08:34:13Z)"
     },
     {
       "at": "2026-10-21T11:39:09-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 3
     },
     {
       "at": "2026-10-21T11:39:13-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 3,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 18:39:01Z)"
     },
     {
       "at": "2026-10-21T12:40:15-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 4
     },
     {
       "at": "2026-10-21T12:40:18-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 4,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 19:40:08Z)"
     },
     {
       "at": "2026-10-21T12:41:04-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 5
     },
     {
       "at": "2026-10-21T12:41:07-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 5,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944 (re-taken 19:40:56Z)"
     },
     {
       "at": "2026-10-21T12:43:11-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 6
     },
     {
       "at": "2026-10-21T12:43:11-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 6,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:82944"
     },
     {
       "at": "2026-10-21T21:19:11-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:19:15-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 1,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:51493 (since 04:19:02Z)"
     },
     {
       "at": "2026-10-23T14:03:06-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:03:59-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Almost completed",
       "round": 1,
       "note": "spec.md chapter not written: plan folder lock held by parent run openlanes@macbook-m3-kig.re1.re:91087 (since 2026-10-23T21:02:56Z); findings in reply"
@@ -263,7 +263,7 @@
   "messages": [],
   "moves": 1,
   "memory": {
-    "leah-researcher": {
+    "researcher": {
       "rounds": {
         "1": {
           "round": 1,
@@ -297,7 +297,7 @@
             },
             {
               "kind": "todo",
-              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next spec-writer."
             },
             {
               "kind": "question",
@@ -315,7 +315,7 @@
             },
             {
               "kind": "todo",
-              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next spec-writer."
             }
           ]
         },
@@ -329,7 +329,7 @@
             },
             {
               "kind": "todo",
-              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next yoda-writer."
+              "text": "Write ## Research to spec.md once the parent releases the plan-folder lock, then sign Completed --next spec-writer."
             }
           ]
         },
@@ -381,7 +381,7 @@
           "entries": [
             {
               "kind": "note",
-              "text": "Round 1 rerun: plan-folder lock still held by parent 91087 (intent leah-researcher on 040.00, since 21:02:56Z); spec.md not written; chapter in reply"
+              "text": "Round 1 rerun: plan-folder lock still held by parent 91087 (intent researcher on 040.00, since 21:02:56Z); spec.md not written; chapter in reply"
             },
             {
               "kind": "question",
@@ -389,7 +389,7 @@
             },
             {
               "kind": "todo",
-              "text": "Write ## Research to spec.md once lock is free; then sign Completed --next yoda-writer"
+              "text": "Write ## Research to spec.md once lock is free; then sign Completed --next spec-writer"
             },
             {
               "kind": "done",
@@ -407,7 +407,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 1,
       "limit": "rounds",
@@ -420,7 +420,7 @@
     },
     {
       "number": 2,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 2,
       "limit": "rounds",
@@ -434,7 +434,7 @@
     },
     {
       "number": 3,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 3,
       "limit": "rounds",
@@ -447,7 +447,7 @@
     },
     {
       "number": 4,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 4,
       "limit": "rounds",
@@ -460,7 +460,7 @@
     },
     {
       "number": 5,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 5,
       "limit": "rounds",
@@ -474,7 +474,7 @@
     },
     {
       "number": 6,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 6,
       "limit": "rounds",
@@ -484,7 +484,7 @@
     }
   ],
   "last-known-state": {
-    "leah-researcher": {
+    "researcher": {
       "source": "harness",
       "at": "2026-10-21T21:19:23-07:00",
       "round": 1,

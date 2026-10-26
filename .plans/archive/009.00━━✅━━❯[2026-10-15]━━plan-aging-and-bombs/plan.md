@@ -79,7 +79,7 @@ A real `.plans` tree, a real web server, nothing stubbed but the agent process a
 
 The spec's open questions, settled by its recommended or assumed option. Reopen any of them only through a human.
 
-1. **Leaving 💣 (spec Q2).** Amended: the unblocker is unchanged. It gates on `blocked.md`, not the emoji, so a 💣 drains exactly like ⭕️. A fully drained 💣 leaves straight to the state its documents justify (every event a block leaves by also leaves 💣); a partly drained one stays 💣. `block` and `block_on_product` also accept 💣, so a human can step it back to ⭕️ or 🅱️ by hand. In the run loop the dispatcher drains an answered 💣 the way it drains an answered ⭕️, and `lando-broker` handles 💣 for that.
+1. **Leaving 💣 (spec Q2).** Amended: the unblocker is unchanged. It gates on `blocked.md`, not the emoji, so a 💣 drains exactly like ⭕️. A fully drained 💣 leaves straight to the state its documents justify (every event a block leaves by also leaves 💣); a partly drained one stays 💣. `block` and `block_on_product` also accept 💣, so a human can step it back to ⭕️ or 🅱️ by hand. In the run loop the dispatcher drains an answered 💣 the way it drains an answered ⭕️, and `unblocker` handles 💣 for that.
 1. **Clock restart (Q3).** The clock starts at the latest `Blocked` signature in `state.json`, so a re-block restarts it. No signature: `blocked.md`'s mtime, as the snapshot already does. `plans.aging_since` is a floor at local midnight of that date.
 1. **Pause and Discuss (Q4).** Holds every agent running on this machine (N10), with the existing `HOLD` word, and changes no file.
 1. **Auto-defer marker (Q5).** The sweep's `delayed.md` names the trigger ("revisit after the block is answered") and says it was deferred by aging, with the age.

@@ -15,8 +15,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:agents_dir) { Dir.mktmpdir }
   let(:trace) { File.join(Dir.mktmpdir, "trace.ndjson") }
   let(:agents) do
-    File.write(File.join(agents_dir, "leah.md"),
-      "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\n" \
+    File.write(File.join(agents_dir, "researcher.md"),
+      "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\n" \
       "adapter: claude\nledger: [spec.md]\n---\nbody")
     OpenLanes::Agents::Registry.new(dir: agents_dir)
   end
@@ -95,13 +95,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   it "records a blocked agent's question and a console's extension" do
-    expect(events.find { it["kind"] == "question" }).to include("plan" => "002.00", "agent" => "leah-researcher", "note" => "blocked")
+    expect(events.find { it["kind"] == "question" }).to include("plan" => "002.00", "agent" => "researcher", "note" => "blocked")
     expect(events.select { it["kind"] == "extension" }.map { it["seconds"] }).to all(eq(60))
   end
 
   it "names the agent's pid, trace, session and last offset" do
     started = events.find { it["kind"] == "agent_started" }
-    expect(started).to include("plan" => "001.00", "agent" => "leah-researcher", "pid" => Process.pid, "output_file" => trace)
+    expect(started).to include("plan" => "001.00", "agent" => "researcher", "pid" => Process.pid, "output_file" => trace)
     expect(events.select { it["kind"] == "agent_offset" }.map { it["offset"] }.last).to eq(File.size(trace))
   end
 

@@ -27,7 +27,7 @@ module OpenLanes
       # folder by what its files justify.
       BY_CONTENTS = "by contents"
 
-      # What bb8-resolver is offered: no plan state, but the stopped rebases
+      # What rebaser is offered: no plan state, but the stopped rebases
       # the harness hands it (D10). An empty cell read as "does nothing".
       REBASES = "stopped rebases, from the harness"
 

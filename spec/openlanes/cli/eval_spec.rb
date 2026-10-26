@@ -31,19 +31,19 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
     end
 
     it "prints the table on STDOUT" do
-      expect(result[:out]).to include("Case", "Agent", "Depth", "Checks", "research-fast", "leah-researcher")
+      expect(result[:out]).to include("Case", "Agent", "Depth", "Checks", "research-fast", "researcher")
     end
 
     context "with --recording fail" do
       let(:options) { { recording: "fail" } }
 
       it "fails every case, explains each, and exits 1" do
-        expect([result[:status], result[:out]]).to match([1, %r{r2d2-mechanic/task-fast FAIL\n  - changed files 1..2 @fast: 3 files changed}])
+        expect([result[:status], result[:out]]).to match([1, %r{chores-coder/task-fast FAIL\n  - changed files 1..2 @fast: 3 files changed}])
       end
     end
 
     context "with --agent" do
-      let(:options) { { agent: "r2d2-mechanic" } }
+      let(:options) { { agent: "chores-coder" } }
 
       it "scores only that agent's cases" do
         expect(result[:out].scan(/^│ \S+/).map { it.delete_prefix("│ ") }).to eq(%w[Case task-fast task-medium])
@@ -51,7 +51,7 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
     end
 
     context "with the agent named as an argument" do
-      let(:options) { { name: "r2d2-mechanic" } }
+      let(:options) { { name: "chores-coder" } }
 
       it "scores only that agent's cases, as --agent does" do
         expect(result[:out].scan(/^│ \S+/).map { it.delete_prefix("│ ") }).to eq(%w[Case task-fast task-medium])
@@ -59,10 +59,10 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
     end
 
     context "with both an argument and --agent" do
-      let(:options) { { name: "leah-researcher", agent: "r2d2-mechanic" } }
+      let(:options) { { name: "researcher", agent: "chores-coder" } }
 
       it "lets --agent win" do
-        expect(result[:out]).not_to include("leah-researcher")
+        expect(result[:out]).not_to include("researcher")
       end
     end
 
@@ -96,12 +96,12 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
     let(:options) { { cases: cases_dir } }
 
     before do
-      FileUtils.mkdir_p(File.join(cases_dir, "leah-researcher"))
-      File.write(File.join(cases_dir, "leah-researcher", "bare.yml"), case_yaml)
+      FileUtils.mkdir_p(File.join(cases_dir, "researcher"))
+      File.write(File.join(cases_dir, "researcher", "bare.yml"), case_yaml)
     end
 
     context "when a case is invalid" do
-      let(:case_yaml) { "id: bare\nagent: leah-researcher\ndepth: bottomless\n" }
+      let(:case_yaml) { "id: bare\nagent: researcher\ndepth: bottomless\n" }
 
       it "refuses with 65, naming the problem" do
         expect([result[:status], result[:err]]).to match([65, /depth "bottomless"/])
@@ -110,11 +110,11 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
 
     context "when a case has no recording" do
       let(:case_yaml) do
-        "id: bare\nagent: leah-researcher\ndepth: fast\nfixture: {state: new, files: {spec.md: x}}\nexpect: {signed: true}\n"
+        "id: bare\nagent: researcher\ndepth: fast\nfixture: {state: new, files: {spec.md: x}}\nexpect: {signed: true}\n"
       end
 
       it "skips it and says so" do
-        expect([result[:status], result[:err]]).to match([0, %r{leah-researcher/bare has no pass/ recording, skipped}])
+        expect([result[:status], result[:err]]).to match([0, %r{researcher/bare has no pass/ recording, skipped}])
       end
     end
   end

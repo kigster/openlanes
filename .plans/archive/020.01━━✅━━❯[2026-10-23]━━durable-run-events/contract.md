@@ -4,13 +4,13 @@
 >
 > amended (2026-10-23): the JSONL log and `openlanes events report` are the whole build. A database-backed store is deferred to a later plan.
 
-Owner: `luke-backend`. HTTP surface: none.
+Owner: `backend-coder`. HTTP surface: none.
 
 ## Baseline
 
 `bundle exec rspec` before any change, 2026-10-16: 1 failure, `spec/openlanes/apps/supervisor_spec.rb:133` (port-mismatch example, unrelated to events). No file under `## Backend` touches it.
 
-## Interfaces rey calls (F1)
+## Interfaces frontend-coder calls (F1)
 
 ### `OpenLanes::Events` facade (`lib/openlanes/events.rb`)
 
@@ -49,8 +49,8 @@ One JSON object per line, `<dir>/<node id>.jsonl`. Keys: `event_id kind at proje
 
 ## File ownership
 
-- luke: `lib/openlanes/events.rb`, `lib/openlanes/events/*`, `lib/openlanes/support/config.rb` (`events:` key), `lib/openlanes/engine/{runner,dispatcher,pr_outcomes}.rb`, `lib/openlanes/vcs/publisher.rb`, `lib/openlanes/lifecycle/unblocker.rb`, `spec/openlanes/events/*`, `spec/openlanes/config_spec.rb` (events examples), `spec/fixtures/events/*`.
-- rey: `lib/openlanes/cli/events/*`, `lib/openlanes/cli.rb` (registration), `lib/openlanes/presentation/events_report.rb`, `README.md` (`## Configuration`), `docs/events.md`, their specs, `spec/integration/events_report_spec.rb`.
+- backend-coder: `lib/openlanes/events.rb`, `lib/openlanes/events/*`, `lib/openlanes/support/config.rb` (`events:` key), `lib/openlanes/engine/{runner,dispatcher,pr_outcomes}.rb`, `lib/openlanes/vcs/publisher.rb`, `lib/openlanes/lifecycle/unblocker.rb`, `spec/openlanes/events/*`, `spec/openlanes/config_spec.rb` (events examples), `spec/fixtures/events/*`.
+- frontend-coder: `lib/openlanes/cli/events/*`, `lib/openlanes/cli.rb` (registration), `lib/openlanes/presentation/events_report.rb`, `README.md` (`## Configuration`), `docs/events.md`, their specs, `spec/integration/events_report_spec.rb`.
 - Shared: none.
 
 ## Build order
@@ -59,7 +59,7 @@ B1, B2 → B3, B5 → B6 → B4 → F1. F2 after B3.
 
 ## Integration proof
 
-`spec/integration/events_report_spec.rb` (rey, F1): real `Runner` round with an injected executor, real `Unblocker`, `PrOutcomes` with the `GitHub` double, then `exe/openlanes events report --format json` as a subprocess. Nothing else stubbed.
+`spec/integration/events_report_spec.rb` (frontend-coder, F1): real `Runner` round with an injected executor, real `Unblocker`, `PrOutcomes` with the `GitHub` double, then `exe/openlanes events report --format json` as a subprocess. Nothing else stubbed.
 
 ## Amendments
 
@@ -74,6 +74,6 @@ B1, B2 → B3, B5 → B6 → B4 → F1. F2 after B3.
 
 - Done: B1, B2, B3, B4, B5, B6, with specs: `spec/openlanes/events/*`, `spec/openlanes/engine/events_emit_spec.rb`, `spec/openlanes/config_spec.rb` (events).
 - After the last unit: `bundle exec rspec` 3222 examples, 0 failures, 9 pending; `bundle exec rubocop` 459 files, no offenses. The baseline failure (`supervisor_spec.rb:133`) did not recur.
-- Not done by luke: F1, F2 (rey). The integration proof is F1's.
+- Not done by backend-coder: F1, F2 (frontend-coder). The integration proof is F1's.
 - 2026-10-17 rerun: `bundle exec rspec` 3224 examples, 31 failures, all port-dependent (`spec/openlanes/apps/*`, `spec/openlanes/cli/app_spec.rb`). Cause is the machine: loopback connects to unused ports succeed, so `Apps::Ports` sees every port taken. Reproduces on pristine `HEAD`; no events file involved. Rubocop clean. Blocked (technical) on the "rspec exits 0" requirement: `blocked.md` B1.
 - 2026-10-20: B1 answered (rebase onto main). Applied main's `ff03ca48` port-detection fix verbatim, since agents cannot rebase. `bundle exec rspec` → 3225 examples, 0 failures, 9 pending (web/dist missing). `bundle exec rubocop` → 460 files, no offenses. Integration proof green, see `pull-requests.md`.

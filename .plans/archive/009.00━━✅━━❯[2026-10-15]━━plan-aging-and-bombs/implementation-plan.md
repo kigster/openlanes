@@ -1,6 +1,6 @@
 # Plan 009.00 — implementation plan (contract)
 
-Owner: `luke-backend`. Partner: `rey-frontend`.
+Owner: `backend-coder`. Partner: `frontend-coder`.
 
 ## Baseline
 
@@ -19,9 +19,9 @@ Rebased onto #23 (2026-10-15), B1 + B2 included: 2269 examples, 0 failures.
 | B5 `run` exit 1, `--ignore-bombs`, `start` idles | done |
 | B6 three command kinds, `snapshot.bombs` | done |
 | B7 integration check | done: `spec/openlanes/integration/plan_aging_spec.rb` |
-| F1 bomb notice (rey) | done: `web/src/panels/BombNotice.tsx` |
+| F1 bomb notice (frontend-coder) | done: `web/src/panels/BombNotice.tsx` |
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 Sent through the existing command channel (`live/commands.rb`):
 
@@ -53,8 +53,8 @@ Snapshot field (`live/snapshot.rb`), top level of `Snapshot`, always present, `[
 
 ## File ownership
 
-- luke: `lib/**`, `spec/**`, `schemas/**`, `docs/WORKFLOW.md` (regenerated).
-- rey: `web/src/**` per `plan-frontend.md`. Shared: the snapshot type in `web/src` — rey writes it, against the field above.
+- backend-coder: `lib/**`, `spec/**`, `schemas/**`, `docs/WORKFLOW.md` (regenerated).
+- frontend-coder: `web/src/**` per `plan-frontend.md`. Shared: the snapshot type in `web/src` — frontend-coder writes it, against the field above.
 
 ## Build order
 

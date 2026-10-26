@@ -67,7 +67,7 @@ module OpenLanes
 
         # Every agent defined, not this run's roster: the mail waits in the
         # plan folder for whichever run next starts the builders, and a run
-        # typed with `--agent hansolo-reviewer` must not lose it.
+        # typed with `--agent staff-reviewer` must not lose it.
         #
         # @return [PrOutcomes]
         def effects_for(runner)

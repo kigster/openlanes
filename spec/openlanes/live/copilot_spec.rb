@@ -127,7 +127,7 @@ RSpec.describe OpenLanes::Live::Copilot do
 
     it "answers for a responder that fails, under the id the page waits for" do
       described_class.new(store:, keys:, responder: ->(_) { raise "claude exited 1" }).answer(turn)
-      expect(stored.last.values_at("id", "text")).to eq(["01JMSG.1", "c3po-operator could not answer: claude exited 1"])
+      expect(stored.last.values_at("id", "text")).to eq(["01JMSG.1", "copilot could not answer: claude exited 1"])
     end
   end
 

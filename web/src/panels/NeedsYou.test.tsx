@@ -17,7 +17,7 @@ const lettered = () => {
 const interrupted = () => {
   const plan = planAt("001.00");
   plan.questions = [];
-  plan.interrupted = { agent: "rey-frontend", at: new Date(Date.now() - 4 * 60000).toISOString(), note: "4 of 7 sources are read." };
+  plan.interrupted = { agent: "frontend-coder", at: new Date(Date.now() - 4 * 60000).toISOString(), note: "4 of 7 sources are read." };
   return plan;
 };
 
@@ -27,7 +27,7 @@ describe("NeedsYou", () => {
     const { container } = renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("005.00"), planAt("006.00")]} onCommand={onCommand} />);
     expect(screen.getByRole("heading", { name: "Needs you (2)" })).toBeInTheDocument();
     expect(screen.getByText("Questions wait here until you answer them.")).toBeInTheDocument();
-    expect(screen.getByText("001.00 — luke-backend")).toBeInTheDocument();
+    expect(screen.getByText("001.00 — backend-coder")).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -49,9 +49,9 @@ describe("NeedsYou", () => {
     await user.type(box, "The checkout path.");
     expect(box).not.toHaveAttribute("aria-invalid");
     await user.click(screen.getByRole("button", { name: "Send answer" }));
-    expect(sent).toEqual([{ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "B1", text: "The checkout path." } }]);
-    expect(await findInline("Answer sent to luke-backend.")).toBeInTheDocument();
-    expect(screen.getByTestId("announcer")).toHaveTextContent("Answer sent to luke-backend.");
+    expect(sent).toEqual([{ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "B1", text: "The checkout path." } }]);
+    expect(await findInline("Answer sent to backend-coder.")).toBeInTheDocument();
+    expect(screen.getByTestId("announcer")).toHaveTextContent("Answer sent to backend-coder.");
   });
 
   it("sends with Ctrl Enter from the answer box", async () => {
@@ -97,7 +97,7 @@ describe("NeedsYou", () => {
     const { sent, onCommand } = recorder();
     const plan = planAt("001.00");
     plan.questions = [question({
-      id: "001.00/X2", number: 2, kind: "extension", heading: "luke-backend is running out of time",
+      id: "001.00/X2", number: 2, kind: "extension", heading: "backend-coder is running out of time",
       body: "Round 1 on Building has under 5 minutes left on its clock.",
       options: [
         { letter: "a", label: "Extend Rounds by 1", recommended: false, answer: "a) Extend Rounds by 1" },
@@ -110,10 +110,10 @@ describe("NeedsYou", () => {
     expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual([
       "a)Extend Rounds by 1", "b)Extend Time by 10 minutesRecommended", "c)Extend Time by 20 minutes",
     ]);
-    expect(screen.getByText("luke-backend is running out of time")).toBeInTheDocument();
+    expect(screen.getByText("backend-coder is running out of time")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hold blocked" })).toBeNull();
     await user.click(screen.getByRole("button", { name: /Extend Time by 20 minutes/ }));
-    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "X2", text: "c) Extend Time by 20 minutes" } });
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "X2", text: "c) Extend Time by 20 minutes" } });
   });
 
   it("stacks a lettered question's options in order, the recommended one tagged, and Type something instead last", async () => {
@@ -134,8 +134,8 @@ describe("NeedsYou", () => {
     const { sent, onCommand } = recorder();
     renderPanel(<NeedsYou plans={[lettered()]} onCommand={onCommand} />);
     await user.click(screen.getByRole("button", { name: /Carry the checkout path/ }));
-    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "B1", text: "b) Carry the checkout path" } });
-    expect(await findInline("Answered b) to luke-backend.")).toBeInTheDocument();
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "B1", text: "b) Carry the checkout path" } });
+    expect(await findInline("Answered b) to backend-coder.")).toBeInTheDocument();
   });
 
   it("sends typed words for a lettered question, the options still above the box", async () => {
@@ -154,8 +154,8 @@ describe("NeedsYou", () => {
     const { sent, onCommand } = recorder();
     renderPanel(<NeedsYou plans={[planAt("006.00")]} onCommand={onCommand} />);
     await user.click(screen.getByRole("button", { name: "No" }));
-    expect(sent[0]).toEqual({ kind: "answer", plan: "006.00", agent: "r2d2-mechanic", payload: { question: "B1", text: "no" } });
-    expect(await findInline("Answered no to r2d2-mechanic.")).toBeInTheDocument();
+    expect(sent[0]).toEqual({ kind: "answer", plan: "006.00", agent: "chores-coder", payload: { question: "B1", text: "no" } });
+    expect(await findInline("Answered no to chores-coder.")).toBeInTheDocument();
   });
 
   it("holds a question blocked: says so, then fades the card out over half a second", async () => {
@@ -165,7 +165,7 @@ describe("NeedsYou", () => {
     const hold = screen.getByRole("button", { name: "Hold blocked" });
     expect(hold).toHaveAttribute("aria-pressed", "false");
     await act(async () => { fireEvent.click(hold); });
-    expect(sent[0]).toEqual({ kind: "hold_blocked", plan: "001.00", agent: "luke-backend", payload: { question: "B1" } });
+    expect(sent[0]).toEqual({ kind: "hold_blocked", plan: "001.00", agent: "backend-coder", payload: { question: "B1" } });
     const note = screen.getByText("Held blocked. 001.00 stays red in the status bar; click it to answer.");
     expect(note.closest(".ask")).toHaveClass("is-leaving");
     expect(screen.getByTestId("announcer")).toHaveTextContent("001.00 held blocked. Its red pill in the status bar brings it back.");
@@ -193,8 +193,8 @@ describe("NeedsYou", () => {
     const plan = planAt("006.00");
     const { rerender } = renderPanel(<NeedsYou plans={[plan]} onCommand={onCommand} />);
     await user.click(screen.getByRole("button", { name: "Yes" }));
-    await findInline("Answered yes to r2d2-mechanic.");
+    await findInline("Answered yes to chores-coder.");
     rerender(<NeedsYou plans={[{ ...plan, questions: [] }]} onCommand={onCommand} />);
-    expect(getInline("Answered yes to r2d2-mechanic.")).toBeInTheDocument();
+    expect(getInline("Answered yes to chores-coder.")).toBeInTheDocument();
   });
 });

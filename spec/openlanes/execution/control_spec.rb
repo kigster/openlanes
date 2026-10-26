@@ -13,10 +13,10 @@ RSpec.describe OpenLanes::Execution::Control do
   end
 
   it "hands each invocation an empty file of its own" do
-    path = described_class.register(@dir, "000.00-yoda-writer")
+    path = described_class.register(@dir, "000.00-spec-writer")
 
     expect(File.read(path)).to eq("")
-    expect(File.basename(path)).to include("control-000.00-yoda-writer")
+    expect(File.basename(path)).to include("control-000.00-spec-writer")
   end
 
   it "wrap_up! reaches every registered file" do
@@ -151,7 +151,7 @@ RSpec.describe OpenLanes::Execution::Control do
   # W32
   describe "pause! and resume!" do
     it "asks every agent to wait, then to carry on" do
-      path = described_class.register(@dir, "001.00-luke-backend")
+      path = described_class.register(@dir, "001.00-backend-coder-backend")
       described_class.pause!
       paused = [File.read(path), described_class.paused?]
       described_class.resume!

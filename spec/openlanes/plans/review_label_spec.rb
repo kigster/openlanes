@@ -3,7 +3,7 @@
 # R3 in docs/decisions/decisions-on-three-reviewers-and-auto-merge.md is the
 # source; these examples hold the code to it, colour for colour.
 RSpec.describe OpenLanes::Plans::ReviewLabel do
-  it "carries the R3 labels, the harness's review-addressed (U1) and palpatine's two verdicts (P2), with their colours, in order" do
+  it "carries the R3 labels, the harness's review-addressed (U1) and deploy-assessor's two verdicts (P2), with their colours, in order" do
     expect(described_class::ALL.to_h { |l| [l.name, l.colour] }).to eq(
       "ready-for-review"      => "c2e0c6",
       "review-in-progress"    => "FFBE20",

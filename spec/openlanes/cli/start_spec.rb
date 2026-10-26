@@ -162,7 +162,7 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
           "scoreboard",
           files: { "spec.md" => "---\ndepends_on: [\"002.00\"]\n---\n#{spec_body}", "plan.md" => "# P\n\n## U1\n" }
       end
-      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
     end
 
     let!(:result) { start(open: false) }

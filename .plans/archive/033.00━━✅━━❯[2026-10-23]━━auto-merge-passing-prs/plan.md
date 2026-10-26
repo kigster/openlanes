@@ -4,7 +4,7 @@
 
 ### U1 Merge gates (R5)
 
-`Engine::Merging#merge` merges only a `ready-to-merge` PR (chewie's label, which displaces the passing review label) whose CI is green on its head, which GitHub reports neither `BEHIND`, `DIRTY` nor `UNKNOWN`, and whose `main` CI is green (`Vcs::GitHub#branch_checks`, read through `CiGate`). `DIRTY` leaves it `merge-manually` with a comment; `UNKNOWN` and non-green `main` wait.
+`Engine::Merging#merge` merges only a `ready-to-merge` PR (verifier's label, which displaces the passing review label) whose CI is green on its head, which GitHub reports neither `BEHIND`, `DIRTY` nor `UNKNOWN`, and whose `main` CI is green (`Vcs::GitHub#branch_checks`, read through `CiGate`). `DIRTY` leaves it `merge-manually` with a comment; `UNKNOWN` and non-green `main` wait.
 
 ### U2 Rebase other plan branches, queued per checkout
 
@@ -39,7 +39,7 @@ None.
 
 - Hard-to-test behavior: the rebase queue depends on concurrency (busy checkouts, `untouchable`, boundary snapshots) and on GitHub `mergeStateStatus` timing (`UNKNOWN`, `merging.rb:320`). The specs use `fake_gh` (`spec/support/fake_gh/fake_gh.rb:105`), not real GitHub.
 - No off switch for the rebase: once `merge.by: auto` merges anything, every other non-terminal plan with a checkout is queued for rebase and push. No flag exists for the rebase on its own.
-- Thin review: `gh pr view 113` lists no reviews. The only sign-off is chewie's `ready-to-merge` label (commit `760e6118`).
+- Thin review: `gh pr view 113` lists no reviews. The only sign-off is verifier's `ready-to-merge` label (commit `760e6118`).
 - Shared code: `Vcs::GitHub#branch_checks` (`lib/openlanes/vcs/github.rb:362`) now gates every merge on `main` CI. If it misreads CircleCI statuses, every merge is held, or a red `main` passes.
 
 **Unplanned files:** none. `github.rb` (`branch_checks`) and `fake_gh.rb` serve U1. `dispatcher.rb`, `dispatcher_merging_spec.rb:46` (a stub added for `rebase_queued`, not a loosened assertion) and `merging*.rb` serve U2. `state.json` is the harness's own.

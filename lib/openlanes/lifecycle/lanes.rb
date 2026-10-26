@@ -6,10 +6,10 @@ module OpenLanes
     #
     # `planning` has a specification its author already trusts, so research
     # and rewriting are skipped: the harness writes the blank `plan.md`
-    # yoda-writer would have left and moves the folder to 📋, where the
+    # spec-writer would have left and moves the folder to 📋, where the
     # planner answers `depends_on:` while it plans. `building` is a short
     # mechanical task: the harness writes a one-unit `plan.md` in the
-    # planner's place and moves it straight to ⭐, where r2d2-mechanic is the
+    # planner's place and moves it straight to ⭐, where chores-coder is the
     # only builder. It never rests at 📋, where the planner would be assigned
     # before the next hop. Nobody answers `depends_on:` for it unless its
     # author did, and an absent key waits for nothing.
@@ -26,12 +26,12 @@ module OpenLanes
       }.freeze
 
       # What the harness writes into `plan.md` for a `building` plan's ⭐.
-      QUICK_PLAN = <<~MARKDOWN
+      QUICK_PLAN = <<~MARKDOWN.freeze
         # Plan
 
         ## Task
 
-        Starts at building: the task is the whole of `spec.md`, done in one pass by `r2d2-mechanic`.
+        Starts at building: the task is the whole of `spec.md`, done in one pass by `#{Agents::Names::CHORES_CODER}`.
       MARKDOWN
 
       module_function
@@ -67,7 +67,7 @@ module OpenLanes
         [from, landing]
       end
 
-      # 📋 gets the blank `plan.md` yoda-writer leaves; a `building` plan's ⭐
+      # 📋 gets the blank `plan.md` spec-writer leaves; a `building` plan's ⭐
       # gets {QUICK_PLAN} and the spec's completion criteria, over a blank
       # one. A `plan.md` the author wrote is never replaced.
       #

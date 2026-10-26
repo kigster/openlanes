@@ -95,7 +95,7 @@ export interface IdeaDialogProps {
 
 type Decision = { question: string; answer: string };
 
-const SUB = "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to luthen-rael-planner, who breaks it into plans for you to check.";
+const SUB = "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to planner, who breaks it into plans for you to check.";
 
 export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
   const [idea, setIdea] = useState("");

@@ -1,6 +1,6 @@
 # Plan 006.00, front end
 
-`rey-frontend` builds from this file. The page side already exists on this branch: `web/src/chat/` (`useChat.ts`, `bus.ts`, `ChatRoom.tsx`, `MachineMenu.tsx`, `ChatPanel.tsx`, `dialogs.tsx`, `linkify.tsx`, `page.ts`), `web/src/floating/` (`FloatingPanel.tsx`, `useFloatingPanel.ts`), and `web/cypress/e2e/chat.cy.ts`. `just web-test` has never been run against it (spec, Research finding 6). Every unit starts by running its named test against what is there, and writes code only for what fails or is missing.
+`frontend-coder` builds from this file. The page side already exists on this branch: `web/src/chat/` (`useChat.ts`, `bus.ts`, `ChatRoom.tsx`, `MachineMenu.tsx`, `ChatPanel.tsx`, `dialogs.tsx`, `linkify.tsx`, `page.ts`), `web/src/floating/` (`FloatingPanel.tsx`, `useFloatingPanel.ts`), and `web/cypress/e2e/chat.cy.ts`. `just web-test` has never been run against it (spec, Research finding 6). Every unit starts by running its named test against what is there, and writes code only for what fails or is missing.
 
 ## F1. Run the web suite and hold the chat to the spec
 
@@ -32,7 +32,7 @@
 
 - **Discipline:** front end.
 - **Owns:** `web/cypress/e2e/chat.cy.ts`.
-- **Must not touch:** `lib/openlanes/web/demo_board.rb` and everything else under `lib/` and `spec/`; `web/src/**` (F1, F2). If the demo server cannot host the scenario below, mail `luke-backend` with what it lacks rather than editing it.
+- **Must not touch:** `lib/openlanes/web/demo_board.rb` and everything else under `lib/` and `spec/`; `web/src/**` (F1, F2). If the demo server cannot host the scenario below, mail `backend-coder` with what it lacks rather than editing it.
 - **Depends on:** B1, B2, B3, B4, F1, F2.
 - **What:** the one test with nothing stubbed. Cypress drives a page on the demo server (`just web-build`, then `just web-e2e`): real `Web::App`, real `Live::Chat`, real SSE. No `cy.intercept` on `/api/chat` or `/api/events`. The second participant is a page on the second demo process B4 adds (its own declared `username@hostname`, its own port), acting through `cy.request` on `POST /api/chat/:action` with that server's CSRF token. Decided 2026-10-14 by the owner. It must show, in order:
   1. ▾ on another machine's tab opens the menu, Start Chat opens the Name dialog, Enter starts the chat, and the orange panel opens docked bottom left;

@@ -120,10 +120,10 @@ describe("the keyboard flow", () => {
   });
 
   it("switches an agent's model from its drawer with the arrow keys", () => {
-    const car = '[data-car="005.00/hansolo-reviewer"] .car-open';
+    const car = '[data-car="005.00/staff-reviewer"] .car-open';
     tabTo(matching(car));
     key(ENTER);
-    cy.get(".drawer").should("contain", "hansolo-reviewer");
+    cy.get(".drawer").should("contain", "staff-reviewer");
     tabTo(matching(".drawer .model-trigger"));
     key(ENTER);
     cy.get('[role="listbox"]').should("be.visible");
@@ -139,7 +139,7 @@ describe("the keyboard flow", () => {
     key(HOME); // the list opens on the current model, so start from the top
     choose();
     key(ENTER);
-    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/hansolo-reviewer")?.model === "claude-opus-5-5");
+    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.model === "claude-opus-5-5");
     cy.get(".drawer .drawer-meta").should("contain", "Model Opus 5.5");
     axe();
   });

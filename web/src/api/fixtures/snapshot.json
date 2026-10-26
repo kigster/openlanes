@@ -28,44 +28,44 @@
       "key": "new",
       "label": "New",
       "agents": [
-        "leah-researcher"
+        "researcher"
       ]
     },
     {
       "key": "researched",
       "label": "Researched",
       "agents": [
-        "yoda-writer"
+        "spec-writer"
       ]
     },
     {
       "key": "ready_for_planning",
       "label": "Planning",
       "agents": [
-        "luthen-rael-planner"
+        "planner"
       ]
     },
     {
       "key": "building",
       "label": "Building",
       "agents": [
-        "luke-backend",
-        "rey-frontend",
-        "r2d2-mechanic"
+        "backend-coder",
+        "frontend-coder",
+        "chores-coder"
       ]
     },
     {
       "key": "building_ui",
       "label": "Building UI",
       "agents": [
-        "rey-frontend"
+        "frontend-coder"
       ]
     },
     {
       "key": "in_review",
       "label": "Review",
       "agents": [
-        "hansolo-reviewer"
+        "staff-reviewer"
       ]
     },
     {
@@ -96,8 +96,8 @@
       "elapsed": 8040,
       "cars": [
         {
-          "key": "001.00/luke-backend",
-          "agent": "luke-backend",
+          "key": "001.00/backend-coder",
+          "agent": "backend-coder",
           "role": "builder",
           "round": 1,
           "rounds": 2,
@@ -120,8 +120,8 @@
           "subagents": []
         },
         {
-          "key": "001.00/rey-frontend",
-          "agent": "rey-frontend",
+          "key": "001.00/frontend-coder",
+          "agent": "frontend-coder",
           "role": "builder",
           "round": 1,
           "rounds": 2,
@@ -155,7 +155,7 @@
           "kind": "block",
           "heading": "B1 Redis key layout",
           "body": "Should Redis keys carry the checkout path, or the remote URL plus the worktree name?",
-          "agent": "luke-backend",
+          "agent": "backend-coder",
           "owner": "technical",
           "options": null,
           "held": false,
@@ -167,15 +167,15 @@
       "unacked": 1,
       "mail": [
         {
-          "from": "luke-backend",
-          "to": "rey-frontend",
+          "from": "backend-coder",
+          "to": "frontend-coder",
           "count": 1,
           "since": "2026-10-12 09:41:07 AM PDT"
         }
       ],
       "last_known": [
         {
-          "agent": "rey-frontend",
+          "agent": "frontend-coder",
           "source": "harness",
           "at": "2026-10-13T08:58:00Z",
           "round": 1,
@@ -213,8 +213,8 @@
       "elapsed": 5880,
       "cars": [
         {
-          "key": "005.00/hansolo-reviewer",
-          "agent": "hansolo-reviewer",
+          "key": "005.00/staff-reviewer",
+          "agent": "staff-reviewer",
           "role": "builder",
           "round": 1,
           "rounds": 2,
@@ -280,8 +280,8 @@
       "elapsed": 365,
       "cars": [
         {
-          "key": "006.00/r2d2-mechanic",
-          "agent": "r2d2-mechanic",
+          "key": "006.00/chores-coder",
+          "agent": "chores-coder",
           "role": "builder",
           "round": 1,
           "rounds": 2,
@@ -313,7 +313,7 @@
           "kind": "block",
           "heading": "B1 Rebase",
           "body": "The PR has a merge conflict in lib/openlanes/cli.rb. Should I rebase onto main?",
-          "agent": "r2d2-mechanic",
+          "agent": "chores-coder",
           "owner": "technical",
           "options": [
             {
@@ -457,7 +457,7 @@
       "at": "2026-10-13T09:00:00Z",
       "source": "engine",
       "level": "info",
-      "text": "started luke-backend on 001.00",
+      "text": "started backend-coder on 001.00",
       "plan": "001.00"
     }
   ],

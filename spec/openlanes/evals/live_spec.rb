@@ -45,13 +45,13 @@ RSpec.describe OpenLanes::Evals::Live do
 
         - [retriable](https://github.com/kamui/retriable): block retries with backoff; the policy already covers it.
 
-        ### Open questions for yoda
+        ### Open questions for spec-writer
 
         1. What backoff does the billing API ask for, and does it send `Retry-After`?
 
         > [!NOTE]
         >
-        > [2026-09-04 11:31:42 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
+        > [2026-09-04 11:31:42 AM PDT] [ agent: researcher   status: Completed, round 1 ]
       MD
     }
   end
@@ -137,7 +137,7 @@ RSpec.describe OpenLanes::Evals::Live do
         File.write(File.join(folder, "pull-requests.md"), <<~MD)
           # Pull Requests
 
-          > [2026-09-04 04:02:40 PM PDT] [ agent: r2d2-mechanic   status: Completed, round 1 ]
+          > [2026-09-04 04:02:40 PM PDT] [ agent: chores-coder   status: Completed, round 1 ]
         MD
       }
     end

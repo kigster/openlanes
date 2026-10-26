@@ -46,7 +46,7 @@ Every key is optional:
 ```yaml
 ---
 starts: building     # research (default) | planning | building
-frontend: false      # true forces rey-frontend; false keeps it out
+frontend: false      # true forces frontend-coder; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
   build:             # build, frontend, review, unblock
@@ -66,7 +66,7 @@ how-to-verify:                # the commands or checks that show it
 ```
 
 - **`implementation_suggestions`** is advice. Every agent is shown it as "suggestions from the spec's author", prefers it when it fits, and may take a better route as long as it writes why in the document it owns.
-- **`implementation_requirements`** is binding. An agent that cannot meet one signs `Blocked` instead of substituting its own, and `hansolo-reviewer` rejects work that does not meet them. Agents start without your personal skills (`run --user-config` restores them), so write the rule itself, not the name of a skill that holds it.
+- **`implementation_requirements`** is binding. An agent that cannot meet one signs `Blocked` instead of substituting its own, and `staff-reviewer` rejects work that does not meet them. Agents start without your personal skills (`run --user-config` restores them), so write the rule itself, not the name of a skill that holds it.
 - **`task-completed-when`** and **`how-to-verify`** are copied into `plan.md` under `## Task completed when` and `## How to verify`. After a planner signs, the harness appends whichever section is missing and never touches one that is there. No agent signs `Completed` until the first holds, every agent runs each check in the second, and the reviewer rejects work that fails one.
 
 Model and effort precedence, highest first: `run --model` (model only), `phases.<phase>`, `depth` (effort only), the agent's own frontmatter. The adapter has the last word: a Claude agent asked for anything above Opus runs on Opus.
@@ -75,9 +75,9 @@ Model and effort precedence, highest first: `run --model` (model only), `phases.
 
 | Lane    | Route                                            | For                                                                                       |
 | :------ | :----------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `full`  | leah → yoda → luthen-rael → luke (+ rey) → hansolo | features you want researched and specified                                                |
-| `plan`  | luthen-rael → luke (+ rey) → hansolo               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
-| `quick` | r2d2-mechanic → hansolo                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
+| `full`  | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer | features you want researched and specified                                                |
+| `plan`  | planner → backend-coder (+ frontend-coder) → staff-reviewer               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
+| `quick` | chores-coder → staff-reviewer                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
 
 `openlanes create --starts building split big migration` writes the frontmatter for you.
 
@@ -94,7 +94,7 @@ openlanes start --plan 005                     # only plan 005, until stopped
 
 `openlanes start` is `openlanes run` that does not stop at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `openlanes create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s by default, or at once after anything you do on the page).
 
-Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All Local** stops this machine's agents, then its engine and the page. The page also hosts `c3po-operator`, a read-only copilot that talks about the run, drafts answers to blocked agents and proposes stops for you to confirm.
+Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All Local** stops this machine's agents, then its engine and the page. The page also hosts `copilot`, a read-only copilot that talks about the run, drafts answers to blocked agents and proposes stops for you to confirm.
 
 It never ends on its own, not even once every plan is finished, since the page can create the next one. Stop All Local, Ctrl-C or `SIGTERM` ends it. It takes `run`'s flags except `-n`, `--no-web`, `--stay` and `--until-settled`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
 
@@ -111,8 +111,8 @@ openlanes run -n                               # dry run: who would take what
 openlanes run                                  # the whole tree, one worktree per plan, in parallel
 openlanes run -j 4                             # at most four agents at once
 openlanes run --plan 003,005.01                # only these plans
-openlanes run --agent yoda-writer --prompt "Rework the risks section first"
-openlanes run --skip hansolo-reviewer          # everyone but the reviewer; its plans wait
+openlanes run --agent spec-writer --prompt "Rework the risks section first"
+openlanes run --skip staff-reviewer          # everyone but the reviewer; its plans wait
 openlanes run --model opus                     # one model for every agent
 openlanes run --user-config                    # agents load your personal plugins and skills too
 openlanes run --timeout 600                    # at most ten minutes per agent
@@ -125,9 +125,9 @@ openlanes run --isolation shared               # one checkout, one agent at a ti
 - The loop stops when a full round changes no plan's state, or when every plan in scope is done, blocked, or out of rounds.
 - Agents start without your personal plugins, skills, hooks and MCP servers, which saves context and start-up time on every turn. `--user-config` lets them back in.
 
-![A terminal view of a run: luke-backend and rey-frontend building plan 001.00 together while leah-researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)
+![A terminal view of a run: backend-coder and frontend-coder building plan 001.00 together while researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)
 
-![Two plans in different phases in a terminal view: luke-backend self-checking plan 000.00 while luthen-rael-planner, luke-backend and rey-frontend work on plan 001.00](img/openlanes-two-plan-work.png)
+![Two plans in different phases in a terminal view: backend-coder self-checking plan 000.00 while planner, backend-coder and frontend-coder work on plan 001.00](img/openlanes-two-plan-work.png)
 
 ### Limits
 
@@ -191,7 +191,7 @@ Partial answers are fine. The plan stays blocked until the last question is answ
 
 ### Running the app a plan builds: `openlanes app`
 
-A project declares how to run its app under `app:` in `.openlanes.yml` (luke writes it on a plan's first build):
+A project declares how to run its app under `app:` in `.openlanes.yml` (backend-coder writes it on a plan's first build):
 
 ```yaml
 app:
@@ -223,8 +223,8 @@ openlanes app stop 012           # stop it from another terminal
 An agent never renames its plan folder. It signs the plan's `state.json`, and the harness moves the folder based on the signature:
 
 ```bash
-openlanes state sign --plan 003 --agent leah-researcher --round 1 --status Started
-openlanes state sign --plan 003 --agent leah-researcher --round 1 --status Completed --next yoda-writer
+openlanes state sign --plan 003 --agent researcher --round 1 --status Started
+openlanes state sign --plan 003 --agent researcher --round 1 --status Completed --next spec-writer
 openlanes state show --plan 003 | jq '.stages[] | {agent, round, status, model, seconds}'
 ```
 
@@ -238,7 +238,7 @@ openlanes state show --plan 003 | jq '.stages[] | {agent, round, status, model, 
 
 An agent that stops without signing (crashed, timed out, killed) is signed `Interrupted` by the harness, and also `Completed` if the work is on disk anyway. A round left `Started` by a harness that has since died is marked `Interrupted` and picked up by the next run.
 
-`luke-backend` and `rey-frontend` work at the same time, in the same worktree, toward one pull request, and talk through `openlanes mail`. Rey only starts when `plan-frontend.md` has work units, so a back-end-only plan costs one builder.
+`backend-coder` and `frontend-coder` work at the same time, in the same worktree, toward one pull request, and talk through `openlanes mail`. frontend-coder only starts when `plan-frontend.md` has work units, so a back-end-only plan costs one builder.
 
 ## Safety rails
 
@@ -266,7 +266,7 @@ The `/plan-create`, `/plan-run`, `/plan-status` and other `/plan-*` slash comman
 
 1. types a tic-tac-toe idea into the New idea dialog, in the quick lane at depth fast, with no front end;
 1. watches the board, answering any question under Needs You from a canned list;
-1. waits for `r2d2-mechanic` to finish the build. With no remote there is no pull request, so the plan stays at 🟡 Building;
+1. waits for `chores-coder` to finish the build. With no remote there is no pull request, so the plan stays at 🟡 Building;
 1. serves the `index.html` the agent wrote, plays a game X wins, checks the win is announced, and checks Restart clears the board.
 
 It runs real `claude` agents, so it costs tokens (one Haiku build). It refuses to run without `OPENLANES_FACTORY_E2E=1`, and nothing in `just test`, `just web-e2e` or CI runs it:

@@ -17,7 +17,7 @@ module OpenLanes
     class Dispatcher
       # One running invocation. `from` is the state the plan showed when the
       # agent was picked; `state` is the one it ran under, after any
-      # `starts_as` rename. History is keyed by `state`: luke picked at ⭐
+      # `starts_as` rename. History is keyed by `state`: backend-coder picked at ⭐
       # works at 🟡, and keying by ⭐ would offer him 🟡 afterwards as though
       # he had never been there (the 020.00 regression, run twice over).
       Job = Struct.new(:key,
@@ -916,9 +916,9 @@ module OpenLanes
           state = working.empty? ? @runner.effective_status(subject) : subject.status
           next if Plans::StateMachine::SETTLED.include?(state.key)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
-          # Verified and waiting on CI: the engine's to settle, not chewie's.
+          # Verified and waiting on CI: the engine's to settle, not verifier's.
           next if @runner.verification&.awaiting_ci?(subject)
-          # palpatine ruled on this visit to 🏁: the merges are the engine's.
+          # deploy-assessor ruled on this visit to 🏁: the merges are the engine's.
           next if @runner.merging&.assessed?(subject)
           next if @runner.foreign?(subject) || @discarding.key?(subject.feature.ordinal.to_s)
           next if held?(subject)
@@ -988,11 +988,11 @@ module OpenLanes
       #
       # A plan with an agent in it is judged by its folder's name, never by
       # what its contents would justify. Asking the contents is how the
-      # minesweeper trial ran its whole chain inside ⚪ New: leah wrote her
+      # minesweeper trial ran its whole chain inside ⚪ New: researcher wrote her
       # `## Research` chapter, the next tick saw a Researched plan and started
-      # yoda beside her, and leah's own Completed then found a partner running
+      # spec-writer beside her, and researcher's own Completed then found a partner running
       # and held the folder where it was. Every later agent repeated it, so
-      # the folder never moved and luke and rey were building on a plan whose
+      # the folder never moved and backend-coder and frontend-coder were building on a plan whose
       # name still said nobody had researched it.
       #
       # @param candidates [Array<OpenLanes::Agents::Agent>]
@@ -1012,7 +1012,7 @@ module OpenLanes
       # a plan.md written by hand, a resync nobody ran. So the names are
       # reconciled before every dispatch, the way `resync dirs` would, and a
       # ⚪ folder that already holds a plan goes to the pair under its honest
-      # name rather than to leah-researcher under its stale one. Plans an
+      # name rather than to researcher under its stale one. Plans an
       # agent is working in right now are left alone: the prompt names the
       # folder by path, and moving it under a running agent would strand
       # every write it makes afterwards. Nor is a plan another machine holds
@@ -1244,7 +1244,7 @@ module OpenLanes
       end
 
       # `starts_as`: the folder moves the moment the agent is dispatched, where
-      # the topology allows, so luke's start is what makes a plan 🟡.
+      # the topology allows, so backend-coder's start is what makes a plan 🟡.
       #
       # @return [OpenLanes::Plans::Subject] fresh, under whichever name it now has
       def rename_on_start(subject, agent)
@@ -1683,7 +1683,7 @@ module OpenLanes
       # @return [Boolean] whether this agent's note carries merge verdicts
       def assessor?(agent) = agent.phase.to_s == Merging::PHASE && !@runner.merging.nil?
 
-      # palpatine finished, or stopped without a verdict. The engine labels,
+      # deploy-assessor finished, or stopped without a verdict. The engine labels,
       # merges and rebases from here; the folder moves only to ✅ or 🔴.
       #
       # @param note [String, nil] the Completed note; nil reads as `manual`
@@ -1703,7 +1703,7 @@ module OpenLanes
 
       # Rebase a waiting pull request's branch onto `main` in its plan's
       # checkout (U3). Only the scheduling is the dispatcher's: a stop on
-      # conflicts becomes a bb8-resolver job, as a pre-run rebase's does
+      # conflicts becomes a rebaser job, as a pre-run rebase's does
       # (D10), and what follows either way is the keeper's. A plan that
       # cannot be started now, with every slot taken or somebody in it, is
       # asked about on the next sweep.
@@ -1778,9 +1778,9 @@ module OpenLanes
       # @return [Boolean] whether this agent's run is wrapped in the plan's app
       def verifier?(agent) = agent.phase.to_s == Verification::PHASE && !@runner.verification.nil? && !@runner.dry_run?
 
-      # hansolo approved. Into 🧪 when the run verifies and the pull request
+      # staff-reviewer approved. Into 🧪 when the run verifies and the pull request
       # carries a verdict that goes on to verification; otherwise the plan is
-      # finished at 👀, as it was before chewie existed. A 🔴 or, under
+      # finished at 👀, as it was before verifier existed. A 🔴 or, under
       # `standard`, a 🟡 after the hand-off is the hand-off's own send-back,
       # signed as one so the ledger does not call a return to 🟡 "approved".
       #
@@ -1819,7 +1819,7 @@ module OpenLanes
           verdict: "approved")
       end
 
-      # chewie signed. The engine commits, comments and labels from its
+      # verifier signed. The engine commits, comments and labels from its
       # report; the folder moves only on a rejection.
       #
       # @return [OpenLanes::Engine::Runner::Attempt]
@@ -1836,7 +1836,7 @@ module OpenLanes
         base.with(status: "Completed", to: result.to || job.state, note: "#{base.note}; #{result.note}")
       end
 
-      # The app did not come up, so chewie never ran: rejected all the same
+      # The app did not come up, so verifier never ran: rejected all the same
       # (M1), with the failing process's last lines.
       #
       # @param result [OpenLanes::Engine::Verification::AppSession::Failed]

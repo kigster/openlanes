@@ -81,13 +81,13 @@ Each item has its check.
 
 | Item | Built by |
 | :--- | :--- |
-| 1 In-flight count in `Transcript` | `luke-backend` |
-| 2 Resume handling | `luke-backend` |
-| 3 Board row | `luke-backend` |
-| 4 Snapshot key | `luke-backend` |
-| 5 Wire type and sample | `rey-frontend` (shape agreed with luke: integer, never null) |
-| 6 Tile lines and CSS | `rey-frontend` |
-| 7 Accessible text | `rey-frontend` |
+| 1 In-flight count in `Transcript` | `backend-coder` |
+| 2 Resume handling | `backend-coder` |
+| 3 Board row | `backend-coder` |
+| 4 Snapshot key | `backend-coder` |
+| 5 Wire type and sample | `frontend-coder` (shape agreed with backend-coder: integer, never null) |
+| 6 Tile lines and CSS | `frontend-coder` |
+| 7 Accessible text | `frontend-coder` |
 
 ## Open questions
 

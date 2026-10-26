@@ -59,7 +59,7 @@ module OpenLanes
       SECURITY_MARKS = %i[flaw concern].freeze
 
       # The one agent whose 💣 and 🔓 count.
-      SECURITY_REVIEWER = "vader-security-reviewer"
+      SECURITY_REVIEWER = Agents::Names::SECURITY_REVIEWER
 
       # How many 🤔 a review may carry and still be approved.
       DEFAULT_MAX_HMM = 5

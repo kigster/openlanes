@@ -4,7 +4,7 @@ One pull request, seven units: three back end, four front end. The contract is t
 
 ## Settled here
 
-The spec left these open and said none blocks the split. The plan fixes them so both halves build against one contract; luke-backend writes them into `contract.md` first.
+The spec left these open and said none blocks the split. The plan fixes them so both halves build against one contract; backend-coder writes them into `contract.md` first.
 
 1. **Hash transport.** `GET /api/plans/:ordinal/files/:name` answers with `ETag: "<sha256 hex of the raw bytes>"`. `PUT` sends it back as `If-Match`. Strong ETag, quoted.
 1. **Whole file on save.** The client sends the whole file as `text/markdown`. The server compares the frontmatter block byte for byte against the file on disk; a difference is refused. A file with no frontmatter on disk refuses a body that adds one.
@@ -102,16 +102,16 @@ flowchart LR
 
 ## HTTP surface
 
-Yes. One new route (`GET /api/plans/:ordinal/files`), one new header on an existing route (`ETag` on `GET /api/plans/:ordinal/files/:name`), and one new write route (`PUT /api/plans/:ordinal/files/:name`). luke-backend writes `openapi.yaml` beside `contract.md`, and `openlanes api docs` lists it.
+Yes. One new route (`GET /api/plans/:ordinal/files`), one new header on an existing route (`ETag` on `GET /api/plans/:ordinal/files/:name`), and one new write route (`PUT /api/plans/:ordinal/files/:name`). backend-coder writes `openapi.yaml` beside `contract.md`, and `openlanes api docs` lists it.
 
 ## Notes for the builders
 
-- `web/node_modules` was absent during research, so the web suite has no known baseline. rey-frontend runs `just web-install` and `just web-test` before F1 and records the result in the ledger.
+- `web/node_modules` was absent during research, so the web suite has no known baseline. frontend-coder runs `just web-install` and `just web-test` before F1 and records the result in the ledger.
 - A web save leaves the tree dirty. That is intended: the harness owns commits (spec, Out of scope).
 
 ## Rebase decisions
 
-Replaying 547d0a2 onto `origin/main` 0b10d65, 2026-10-17, bb8-resolver.
+Replaying 547d0a2 onto `origin/main` 0b10d65, 2026-10-17, rebaser.
 
 - `plan.md`: kept the branch's copy. It is main's copy plus the `## How to test` section added this round, and nothing in it was removed.
 - `pull-requests.md`: kept the branch's copy. It is main's copy plus the 2026-10-17 backend and frontend proofs, and nothing in it was removed.

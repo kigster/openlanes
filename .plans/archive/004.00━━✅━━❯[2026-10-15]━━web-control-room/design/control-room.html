@@ -718,7 +718,7 @@
         <button class="toggle" type="button" aria-pressed="true" data-lvl="error">error</button>
       </fieldset>
       <label class="sr-only" for="log-search">Filter log lines</label>
-      <input class="log-search" id="log-search" type="search" placeholder="Filter, e.g. 001 or luke">
+      <input class="log-search" id="log-search" type="search" placeholder="Filter, e.g. 001 or backend-coder">
       <button class="toggle log-follow" id="log-follow" type="button" aria-pressed="true">Follow</button>
     </div>
     <ol class="log" id="log" aria-label="Log lines, newest last"></ol>
@@ -780,12 +780,12 @@
 <section class="copilot" id="copilot" role="dialog" aria-modal="false" aria-labelledby="copilot-title" hidden>
   <div class="copilot-head" id="copilot-head" title="Drag to move. Double-click to put it back in the corner.">
     <span class="copilot-grip" id="copilot-grip" tabindex="0" role="button" aria-label="Move the copilot. Arrow keys move it, Home puts it back in the corner." aria-hidden="false">⋮⋮</span>
-    <div><h2 id="copilot-title">c3po-operator</h2><p>Copilot for this run. haiku, ↑ <span id="cp-in">0</span> ↓ <span id="cp-out">0</span></p></div>
+    <div><h2 id="copilot-title">copilot</h2><p>Copilot for this run. haiku, ↑ <span id="cp-in">0</span> ↓ <span id="cp-out">0</span></p></div>
     <button class="btn btn-quiet" id="copilot-close" type="button">Minimise</button>
   </div>
   <div class="chat" id="chat" aria-live="polite"></div>
   <form id="copilot-form">
-    <label class="sr-only" for="copilot-input">Message c3po-operator</label>
+    <label class="sr-only" for="copilot-input">Message copilot</label>
     <textarea id="copilot-input"></textarea>
     <div class="composer-actions"><button class="btn btn-primary" type="submit">Send</button></div>
   </form>
@@ -837,18 +837,18 @@
 <script>
   // Stations come from StateMachine::SPINE and agents/*.md `handles:` in the real build.
   const STATIONS = [
-    { key: "new", name: "New", agents: ["leah-researcher"] },
-    { key: "researched", name: "Researched", agents: ["yoda-writer"] },
-    { key: "ready_for_planning", name: "Planning", agents: ["luthen-rael-planner"] },
-    { key: "building", name: "Building", agents: ["luke-backend", "rey-frontend"] },
-    { key: "building_ui", name: "Building UI", agents: ["rey-frontend"] },
-    { key: "in_review", name: "Review", agents: ["hansolo-reviewer"] },
+    { key: "new", name: "New", agents: ["researcher"] },
+    { key: "researched", name: "Researched", agents: ["spec-writer"] },
+    { key: "ready_for_planning", name: "Planning", agents: ["planner"] },
+    { key: "building", name: "Building", agents: ["backend-coder", "frontend-coder"] },
+    { key: "building_ui", name: "Building UI", agents: ["frontend-coder"] },
+    { key: "in_review", name: "Review", agents: ["staff-reviewer"] },
     { key: "pr", name: "Pull request", agents: [] },
   ];
   const LANES = {
     full: { label: "Full lane", color: "var(--lane-full)", bg: "var(--lane-full-bg)", from: 0, skip: [] },
     plan: { label: "Plan lane", color: "var(--lane-plan)", bg: "var(--lane-plan-bg)", from: 2, skip: [] },
-    quick: { label: "Quick lane", color: "var(--lane-quick)", bg: "var(--lane-quick-bg)", from: 3, skip: [4], agents: { 3: ["r2d2-mechanic"] } },
+    quick: { label: "Quick lane", color: "var(--lane-quick)", bg: "var(--lane-quick-bg)", from: 3, skip: [4], agents: { 3: ["chores-coder"] } },
   };
   // The models an agent can be moved to, most capable first. Sample list: the real one is the adapter's catalog (W24).
   const CLAUDE_MODELS = [
@@ -857,19 +857,19 @@
   ];
   const ALIAS = { opus: "claude-opus-5-5", sonnet: "claude-sonnet-5-5", haiku: "claude-haiku-5-5" };
   const modelName = id => (CLAUDE_MODELS.find(([m]) => m === (ALIAS[id] || id)) || [, id])[1];
-  const MODELS = { "leah-researcher": "haiku", "yoda-writer": "sonnet", "luthen-rael-planner": "opus", "luke-backend": "opus",
-                   "rey-frontend": "sonnet", "hansolo-reviewer": "sonnet", "r2d2-mechanic": "sonnet" };
+  const MODELS = { "researcher": "haiku", "spec-writer": "sonnet", "planner": "opus", "backend-coder": "opus",
+                   "frontend-coder": "sonnet", "staff-reviewer": "sonnet", "chores-coder": "sonnet" };
   // Sample prices per million tokens in and out, keyed like CLAUDE_MODELS; the real ones come with the adapter's catalog.
   const RATES = { "claude-fable-5-1": [15, 75], "claude-fable-5": [12, 60], "claude-opus-5-5": [5, 25], "claude-opus-5": [5, 25],
                   "claude-sonnet-5-5": [3, 15], "claude-haiku-5-5": [1, 5], "claude-haiku-5": [0.8, 4] };
   const CHATTER = {
-    "leah-researcher": ["Reading docs/decisions/…", "Searching for Redis Streams consumer groups", "Comparing redis-client and redis"],
-    "yoda-writer": ["Rewriting spec.md: Why it matters", "Folding research.md into the spec", "Checking every claim has a source"],
-    "luthen-rael-planner": ["Splitting the work into units", "Writing plan.md: Backend", "Naming the integration test"],
-    "luke-backend": ["bundle exec rspec spec/agentilda/engine", "Editing lib/agentilda/engine/dispatcher.rb", "Writing contract.md"],
-    "rey-frontend": ["npm run build", "Editing web/src/board/Track.tsx", "Running axe on the board"],
-    "hansolo-reviewer": ["gh pr diff 44", "Trying to break Store#claim", "Checking CI: 3 of 4 passing"],
-    "r2d2-mechanic": ["Renaming TRACE_DIR callers", "bundle exec rubocop", "Updating CHANGELOG.md"],
+    "researcher": ["Reading docs/decisions/…", "Searching for Redis Streams consumer groups", "Comparing redis-client and redis"],
+    "spec-writer": ["Rewriting spec.md: Why it matters", "Folding research.md into the spec", "Checking every claim has a source"],
+    "planner": ["Splitting the work into units", "Writing plan.md: Backend", "Naming the integration test"],
+    "backend-coder": ["bundle exec rspec spec/agentilda/engine", "Editing lib/agentilda/engine/dispatcher.rb", "Writing contract.md"],
+    "frontend-coder": ["npm run build", "Editing web/src/board/Track.tsx", "Running axe on the board"],
+    "staff-reviewer": ["gh pr diff 44", "Trying to break Store#claim", "Checking CI: 3 of 4 passing"],
+    "chores-coder": ["Renaming TRACE_DIR callers", "bundle exec rubocop", "Updating CHANGELOG.md"],
   };
 
   const plans = [
@@ -882,10 +882,10 @@
   ];
 
   const asks = [
-    { id: "q1", kind: "question", plan: "001", agent: "luke-backend",
+    { id: "q1", kind: "question", plan: "001", agent: "backend-coder",
       text: "Should Redis keys carry the checkout path, or the remote URL plus the worktree name?" },
-    { id: "i1", kind: "interrupt", plan: "003", agent: "leah-researcher",
-      text: "You interrupted leah-researcher 4 minutes ago. Its resume note says 4 of 7 sources are read." },
+    { id: "i1", kind: "interrupt", plan: "003", agent: "researcher",
+      text: "You interrupted researcher 4 minutes ago. Its resume note says 4 of 7 sources are read." },
   ];
 
   // The real board carries each PR's URL (Board::Row#pr); the mockup builds it from this repository.
@@ -1004,7 +1004,7 @@
       return;
     }
     if (plan.interrupted) {
-      box.innerHTML = `<div class="car is-queued is-blocked"><div class="car-top"><span class="car-agent">leah-researcher</span>
+      box.innerHTML = `<div class="car is-queued is-blocked"><div class="car-top"><span class="car-agent">researcher</span>
         <span class="car-model">interrupted</span></div><div class="car-activity">You interrupted it. Keep its work or discard it in Needs you.</div></div>`;
       return;
     }
@@ -1132,8 +1132,8 @@
         el.innerHTML = `${who}<p class="ask-text">${ask.text}</p>
           <div class="ask-actions"><button class="btn btn-primary" type="button" data-keep>Keep work and resume</button>
           <button class="btn btn-alarm" type="button">Discard work</button></div>`;
-        el.querySelector("[data-keep]").addEventListener("click", () => resume(ask, `Kept leah-researcher's work. It resumes from its note.`));
-        el.querySelectorAll("button")[1].addEventListener("click", () => resume(ask, `Discarded leah-researcher's work. It starts again.`));
+        el.querySelector("[data-keep]").addEventListener("click", () => resume(ask, `Kept researcher's work. It resumes from its note.`));
+        el.querySelectorAll("button")[1].addEventListener("click", () => resume(ask, `Discarded researcher's work. It starts again.`));
       }
       return el;
   }
@@ -1459,8 +1459,8 @@
   // because stream-json only reports a Bash call's output once the call has finished.
   const runs = [];
   let runSeq = 0;
-  const TEST_CMDS = { "luke-backend": "bundle exec rspec", "rey-frontend": "npm test", "r2d2-mechanic": "just test",
-                      "hansolo-reviewer": "bundle exec rspec spec/agentilda/vcs" };
+  const TEST_CMDS = { "backend-coder": "bundle exec rspec", "frontend-coder": "npm test", "chores-coder": "just test",
+                      "staff-reviewer": "bundle exec rspec spec/agentilda/vcs" };
   const SUBJECTS = [["Agentilda::Engine::Dispatcher", "spec/agentilda/engine/dispatcher_spec.rb"],
                     ["Agentilda::Plans::StateMachine", "spec/agentilda/plans/state_machine_spec.rb"],
                     ["Agentilda::Plans::Mailbox", "spec/agentilda/plans/mailbox_spec.rb"],
@@ -1665,8 +1665,8 @@
       const names = plan.cars.map(c => c.agent).join(" and ") || "nothing";
       return ["Stopping is not reversible, so I need you to confirm it.",
         proposal(`Stop ${names} on ${plan.id}? They get 60 seconds to leave a resume note.`, "Stop agents", false, () => {
-          for (const c of plan.cars) c.log.unshift("you, via c3po-operator: Asked to stop.");
-          log("api", "warn", `POST /api/commands stop ${plan.id} from c3po-operator, confirmed by a person`);
+          for (const c of plan.cars) c.log.unshift("you, via copilot: Asked to stop.");
+          log("api", "warn", `POST /api/commands stop ${plan.id} from copilot, confirmed by a person`);
           return `Asked ${names} on ${plan.id} to stop.`;
         })];
     }
@@ -1706,17 +1706,17 @@
     if (!text) { $("copilot-input").focus(); return; }
     $("copilot-input").value = "";
     say("You", text);
-    const thinking = say("c3po-operator", "Reading the board…");
+    const thinking = say("copilot", "Reading the board…");
     thinking.classList.add("is-thinking");
     setTimeout(() => {
       thinking.remove();
       const [reply, extra] = answerFor(text);
-      say("c3po-operator", reply, extra);
+      say("copilot", reply, extra);
       cp.in += 3800 + Math.floor(Math.random() * 2400); cp.out += 120 + Math.floor(Math.random() * 300);
       $("cp-in").textContent = fmt(cp.in); $("cp-out").textContent = fmt(cp.out);
     }, reduced ? 200 : 900);
   });
-  say("c3po-operator", "I watch this run with you. Ask me why a plan is stuck, what it costs, to draft an answer for an agent, or to stop one. I never change code or plans, and I ask before anything that cannot be undone.");
+  say("copilot", "I watch this run with you. Ask me why a plan is stuck, what it costs, to draft an answer for an agent, or to stop one. I never change code or plans, and I ask before anything that cannot be undone.");
   $("copilot-dot").hidden = true;
   setCopilot((() => { try { return localStorage.getItem(COPILOT_KEY) === "1"; } catch { return false; } })(), false);
 
@@ -1891,13 +1891,13 @@
     plan.at = 6; plan.doneAt = ++finishedSeq; plan.cars = []; plan.mergeAt = tick + 20 + Math.floor(Math.random() * 20);
     paintRoute(plan); paintCars(plan); paintPills();
     $("announcer").textContent = `${plan.id} was approved and is ready to merge.`;
-    log("engine", "info", `${plan.id} approved by hansolo-reviewer, PR #${plan.pr} labelled approved`);
+    log("engine", "info", `${plan.id} approved by staff-reviewer, PR #${plan.pr} labelled approved`);
   }
   paintPills();
 
 
-  // Start dialog (decision W19). The mockup fakes luthen-rael's split from the headings and lists in the idea;
-  // the real one is luthen-rael-planner returning plans as JSON, checked against a schema before it is shown.
+  // Start dialog (decision W19). The mockup fakes planner's split from the headings and lists in the idea;
+  // the real one is planner returning plans as JSON, checked against a schema before it is shown.
   const IDEA_KEY = "agentilda-mockup-idea";
   let drafted = null;     // [{ num, title, body, parent, accepted, edited }]
   let editing = null;      // the plan open in the editor, and its text when it was opened
@@ -2083,7 +2083,7 @@
   function showIdea() {
     editing = null;
     head("What is the product or feature you'd like to build?",
-      "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to luthen-rael-planner, who breaks it into plans for you to check.");
+      "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to planner, who breaks it into plans for you to check.");
     let draft = "";
     try { draft = localStorage.getItem(IDEA_KEY) || ""; } catch { /* fine */ }
     const { box, ta } = editor(draft, `# A household budget app\n\nFamilies track shared spending...\n\n## Accounts\n- Import bank statements\n\n${SEND_KEYS} sends it.`, "Your idea, in Markdown");
@@ -2101,7 +2101,7 @@
     ta.focus();
   }
 
-  // The fake luthen-rael: ## headings become plans, list items under them become sub-plans.
+  // The fake planner: ## headings become plans, list items under them become sub-plans.
   function draftPlans(text) {
     const words = text.trim().split(/\s+/).length;
     const sections = text.split(/^## /m).slice(1);
@@ -2124,15 +2124,15 @@
     return out;
   }
 
-  // View 2: waiting on luthen-rael, then the proposed plans.
+  // View 2: waiting on planner, then the proposed plans.
   function split(text) {
     const big = text.trim().split(/\s+/).length >= 120 || text.split(/^## /m).length > 2;
     if (!big) { drafted = draftPlans(text); showDrafted(); return; }
-    head("luthen-rael-planner is breaking up your idea", "It reads the idea, finds the pieces that can be built and reviewed on their own, and orders them. This usually takes under a minute.");
+    head("planner is breaking up your idea", "It reads the idea, finds the pieces that can be built and reviewed on their own, and orders them. This usually takes under a minute.");
     $("start-body").innerHTML = `<div class="split-wait" role="status"><span class="spin" aria-hidden="true"></span>Splitting the idea into plans…</div>`;
     $("start-foot").replaceChildren(Object.assign(document.createElement("span"), { className: "grow" }), button("Back to the idea", "btn-quiet", showIdea));
-    log("engine", "info", "luthen-rael-planner started: split idea into plans, model opus");
-    setTimeout(() => { if (!$("start").open) return; drafted = draftPlans(text); log("engine", "info", `luthen-rael-planner proposed ${drafted.length} plans`); showDrafted(); }, reduced ? 300 : 2200);
+    log("engine", "info", "planner started: split idea into plans, model opus");
+    setTimeout(() => { if (!$("start").open) return; drafted = draftPlans(text); log("engine", "info", `planner proposed ${drafted.length} plans`); showDrafted(); }, reduced ? 300 : 2200);
   }
   function showDrafted() {
     editing = null;
@@ -2363,13 +2363,13 @@
   const NODES = [
     { user: "alex", host: "build-01", ip: "10.0.4.21", node: "3f9a0c7be21d44a8f6031c5e", path: "~/src/agentilda", seen: 3, plans: [
       { id: "008", title: "Export the ledger to Linear", lane: "full", at: 2, secs: 52 * 60 + 9,
-        cars: [{ agent: "luthen-rael-planner", model: "claude-opus-5-5", up: 702000, down: 48100, secs: 611, act: "Splitting the export into four work units" }] },
+        cars: [{ agent: "planner", model: "claude-opus-5-5", up: 702000, down: 48100, secs: 611, act: "Splitting the export into four work units" }] },
       { id: "009", title: "Trim stale worktrees on start", lane: "quick", at: 3, secs: 14 * 60 + 2,
-        cars: [{ agent: "r2d2-mechanic", model: "claude-sonnet-5-5", up: 188000, down: 12900, secs: 402, act: "bundle exec rspec spec/agentilda/vcs" }] },
+        cars: [{ agent: "chores-coder", model: "claude-sonnet-5-5", up: 188000, down: 12900, secs: 402, act: "bundle exec rspec spec/agentilda/vcs" }] },
     ] },
     { user: "sam", host: "ci-runner-2", ip: "10.0.4.37", node: "c07d5e1a99b2f3046e8a1d7b", path: "/srv/checkouts/agentilda", seen: 11, plans: [
       { id: "010", title: "Cache agent registry lookups", lane: "plan", at: 5, secs: 1 * 3600 + 7 * 60, pr: 47,
-        cars: [{ agent: "hansolo-reviewer", model: "claude-opus-5-5", up: 233000, down: 15400, secs: 288, act: "gh pr diff 47" }] },
+        cars: [{ agent: "staff-reviewer", model: "claude-opus-5-5", up: 233000, down: 15400, secs: 288, act: "gh pr diff 47" }] },
       { id: "011", title: "Document the lanes in the README", lane: "quick", at: 6, secs: 19 * 60 + 44, pr: 46, mergedAt: -1, cars: [] },
     ] },
   ];
@@ -2550,11 +2550,11 @@
     }
   }, 1000);
 
-  // luke-backend opens the page blocked on the question already in the rail.
+  // backend-coder opens the page blocked on the question already in the rail.
   if (!asks[0].done) {
-    const luke = carOf("001", "luke-backend");
-    luke.blocked = asks[0].text;
-    luke.log.unshift(`Asked you: ${asks[0].text}`);
+    const backend-coder = carOf("001", "backend-coder");
+    backend-coder.blocked = asks[0].text;
+    backend-coder.log.unshift(`Asked you: ${asks[0].text}`);
   }
   paintNumbers(plans[0]);
   paintAsks();

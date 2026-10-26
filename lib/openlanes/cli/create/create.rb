@@ -61,7 +61,7 @@ module OpenLanes
         "--after 018 --pr https://…/pull/12 verify # verify the pull request by number or URL",
         "--status ready billing sync         # opens at ⭐ instead of ⚪",
         "--from notes/tax-dsl.md             # title and opening prose from the file's frontmatter and body",
-        "--starts building split big migration    # r2d2-mechanic does it and opens the PR; no research, spec or plan"
+        "--starts building split big migration    # #{OpenLanes::Agents::Names::CHORES_CODER} does it and opens the PR; no research, spec or plan"
       ]
 
       # @param words [Array<String>]

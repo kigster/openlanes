@@ -78,7 +78,7 @@ No. The plan adds and changes no HTTP API, so there is no `openapi.yaml`.
 - A plan that moved to another state, or a session that cannot be found, starts fresh, and the log says why.
 - An adapter that cannot resume starts fresh as today.
 
-## Build notes (luke-backend, round 1)
+## Build notes (backend-coder, round 1)
 
 - Baseline before any change: `bundle exec rspec` 3544 examples, 0 failures, 9 pending (Redis-gated integration specs that skip without a Redis).
 - B1: `spec/integration/resume_across_rounds_spec.rb`, 6 examples, green on first run. Real `Runner` and `Executor`, real `Child`; the fake `claude`/`codex` reach it through the executor's `spawn:` seam with `PATH` set to the temp bin plus `/usr/bin:/bin`, because `Child` spawns in Bundler's unbundled environment, whose `PATH` is fixed when Bundler loads. The fake reports a little usage in its failing `result`: one that spent nothing would read as a lost session and be retried fresh. Mutation check: forcing `resume = nil` in `Executor#call` fails 3 of the 6.

@@ -58,7 +58,7 @@ Finally, two or more plans with the same `depends_on` plan(s) can run in paralle
 1. The Building invariant and grandfathering (008.02, item 10).
 1. The choice card for more than three dependencies (008.02, item 11).
 1. Docs regeneration beyond what the new agent file needs (008.02, item 13).
-1. Running ewoki through the web server as `c3po-operator` does.
+1. Running ewoki through the web server as `copilot` does.
 1. Changing any folder name or adding a state beyond the one 🔗 `ready_for_linking` state ewoki handles (amended 2026-10-23).
 1. The `$USER/plan-linking-NNN.MM` branch, its pull request and the harness merge of D3 (amended 2026-10-23: a follow-up plan).
 
@@ -67,7 +67,7 @@ Finally, two or more plans with the same `depends_on` plan(s) can run in paralle
 Each item names its check. Numbers follow the 008.00 spec.
 
 6. **`agents/ewoki-linker.md`** with frontmatter `handles: [ready_for_linking]`, `advances_to: ready_for_planning`, `confined_to: [spec.md]` (amended 2026-10-23; was `precedes:`). The harness leaves 🔗 only when `spec.md` answers `depends_on:`. Check: `Registry` loads it, `Roster` lists it as `Ready for Linking → Ready for Planning`, and its tool grants are those of an agent that may edit `spec.md` only.
-1. **Dispatcher ewoki gate** (dropped by D1): before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
+1. **Dispatcher ewoki gate** (dropped by D1): before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly rather than through `for_status` (008.00 Research §3: `read_only?` agents are excluded from `for_status`). Applies to the `full`, `plan` and `quick` lanes alike. Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to planner (or chores-coder in `quick`).
 1. **Ewoki output contract**: writes only two things, both in `spec.md`: the `depends_on:` frontmatter key (quoted canonical `"NNN.MM"` strings, `[]` when none), and its ledger entries in the `> [!NOTE]` block that `Plans::Ledger` reads (Started, then Completed), with one reason per dependency on the lines below its Completed entry, each naming the thing the plan needs (N7: shared files are a merge risk, not a dependency). Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that the diff to `spec.md` touches only the frontmatter key and the NOTE block, and that no other file in the folder changed except the harness's own `state.json` signature.
 1. **Hand-written key wins**: a plan whose key holds `[none]` or plan numbers is skipped; a missing key and `[]` are re-checked (D2). Check: runner spec.
 

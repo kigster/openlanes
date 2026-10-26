@@ -3,7 +3,7 @@
 require "rbconfig"
 require "socket"
 
-# Plan 014 inside the loop: hansolo's approval hands the plan to 🧪, chewie
+# Plan 014 inside the loop: staff-reviewer's approval hands the plan to 🧪, verifier
 # runs with the app up around it, and its verdict goes to the verification
 # outcome. The outcome itself (commit, comment, label) is its own spec's;
 # here it is a double, and what is asserted is what the loop hands it.
@@ -54,11 +54,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   def alive_children = (OpenLanes::Execution::Child.live - children_before).select(&:alive?)
 
-  describe "hansolo's approval" do
-    before { plans { |t| t.plan "014.00", :in_review, "chewie", files:, prs: [t.open(7, "Chewie")] } }
+  describe "staff-reviewer's approval" do
+    before { plans { |t| t.plan "014.00", :in_review, "verifier", files:, prs: [t.open(7, "verifier")] } }
 
     it "moves the plan to 🧪 instead of finishing it" do
-      attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+      attempts, dispatcher = run(executor("approved"), %w[staff-reviewer])
 
       aggregate_failures do
         expect(plan.status.key).to eq(:verifying)
@@ -71,7 +71,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     it "leaves a verdict that goes nowhere at 👀, finished, saying why" do
       allow(outcome).to receive(:labels).and_return(%w[review-in-progress])
 
-      attempts, = run(executor("approved"), %w[hansolo-reviewer])
+      attempts, = run(executor("approved"), %w[staff-reviewer])
 
       aggregate_failures do
         expect(plan.status.key).to eq(:in_review)
@@ -88,7 +88,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         let(:quality) { nil }
 
         it "stays 👀 and says the key is to be set" do
-          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+          attempts, = run(executor("approved"), %w[staff-reviewer])
 
           aggregate_failures do
             expect(plan.status.key).to eq(:in_review)
@@ -103,7 +103,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         let(:quality) { -> { answers.first } }
 
         it "reads the quality afresh at every hand-off" do
-          run(executor("approved"), %w[hansolo-reviewer])
+          run(executor("approved"), %w[staff-reviewer])
           expect(plan.status.key).to eq(:in_review)
 
           answers.shift
@@ -124,8 +124,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           end
         end
 
-        it "goes back to 🔴 for luke and rey, counted as a rejection by the outcome" do
-          attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+        it "goes back to 🔴 for backend-coder and frontend-coder, counted as a rejection by the outcome" do
+          attempts, dispatcher = run(executor("approved"), %w[staff-reviewer])
 
           aggregate_failures do
             expect(outcome).to have_received(:send_back_for_quality).once
@@ -150,8 +150,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           end
         end
 
-        it "goes back to 🟡 for luke and rey, counted as a rejection by the outcome (plan 035)" do
-          attempts, dispatcher = run(executor("approved"), %w[hansolo-reviewer])
+        it "goes back to 🟡 for backend-coder and frontend-coder, counted as a rejection by the outcome (plan 035)" do
+          attempts, dispatcher = run(executor("approved"), %w[staff-reviewer])
 
           aggregate_failures do
             expect(outcome).to have_received(:send_back_for_quality).with(plan: anything, pull: anything, quality: :standard)
@@ -171,7 +171,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           let(:quality) { level }
 
           it "never sends the plan to 🔴" do
-            attempts, = run(executor("approved"), %w[hansolo-reviewer])
+            attempts, = run(executor("approved"), %w[staff-reviewer])
 
             aggregate_failures do
               expect(plan.status.key).not_to eq(:rejected)
@@ -185,7 +185,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         let(:quality) { :mvp }
 
         it "goes on to 🧪 as an approval does" do
-          attempts, = run(executor("approved"), %w[hansolo-reviewer])
+          attempts, = run(executor("approved"), %w[staff-reviewer])
 
           aggregate_failures do
             expect(plan.status.key).to eq(:verifying)
@@ -195,22 +195,22 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "hands the plan straight on to chewie in the same run" do
+    it "hands the plan straight on to verifier in the same run" do
       allow(outcome).to receive(:pass).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :committed, note: "verified PR #7; waiting on CI"))
 
-      run(executor("approved") { |s| report("verified").call(s) if s.status.key == :verifying }, %w[hansolo-reviewer chewie-verifier])
+      run(executor("approved") { |s| report("verified").call(s) if s.status.key == :verifying }, %w[staff-reviewer verifier])
 
-      expect(calls).to eq([["hansolo-reviewer", :in_review], ["chewie-verifier", :verifying]])
+      expect(calls).to eq([["staff-reviewer", :in_review], ["verifier", :verifying]])
     end
   end
 
-  describe "chewie's verdict" do
-    before { plans { |t| t.plan "014.00", :verifying, "chewie", files:, prs: [t.open(7, "Chewie")] } }
+  describe "verifier's verdict" do
+    before { plans { |t| t.plan "014.00", :verifying, "verifier", files:, prs: [t.open(7, "verifier")] } }
 
     it "on verified, has the outcome push final.png, and leaves the plan at 🧪 waiting on CI" do
       allow(outcome).to receive(:pass).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :committed, note: "verified PR #7; waiting on CI"))
 
-      attempts, = run(executor("verified", &report("verified")), %w[chewie-verifier])
+      attempts, = run(executor("verified", &report("verified")), %w[verifier])
 
       aggregate_failures do
         expect(outcome).to have_received(:pass).with(checkout: checkout, plan: anything, pull: anything, round: anything)
@@ -227,7 +227,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "verification rejected PR #7, rejected 1 of 2", to: :rejected)
       end
 
-      attempts, = run(executor("rejected", &report("rejected")), %w[chewie-verifier])
+      attempts, = run(executor("rejected", &report("rejected")), %w[verifier])
 
       aggregate_failures do
         expect(outcome).to have_received(:reject).with(checkout:, plan: anything, pull: anything, round: anything, why: nil)
@@ -236,11 +236,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "tells chewie it verifies through the shell when the project declares no app" do
+    it "tells verifier it verifies through the shell when the project declares no app" do
       allow(outcome).to receive(:pass).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :committed, note: "x"))
       note = nil
 
-      run(executor("verified") { |s| note = File.read(File.join(round_dir, "app.md")).tap { report("verified").call(s) } }, %w[chewie-verifier])
+      run(executor("verified") { |s| note = File.read(File.join(round_dir, "app.md")).tap { report("verified").call(s) } }, %w[verifier])
 
       expect(note).to include("through the shell (M11)")
     end
@@ -252,7 +252,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           processes: [OpenLanes::Apps::ProcessSpec.new(name: "web", start: "#{RbConfig.ruby} #{server} --port-env PORT_WEB", preview: true)])
       end
 
-      it "runs chewie with the app up, and stops it afterwards" do
+      it "runs verifier with the app up, and stops it afterwards" do
         allow(outcome).to receive(:pass).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :committed, note: "x"))
         seen = nil
 
@@ -266,7 +266,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           end
           report("verified").call(s)
         },
-          %w[chewie-verifier])
+          %w[verifier])
 
         expect([seen, alive_children, registry.entries]).to eq([true, [], {}])
       end
@@ -278,10 +278,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           processes: [OpenLanes::Apps::ProcessSpec.new(name: "web", start: "for i in $(seq 1 25); do echo boot $i; done; exit 2")])
       end
 
-      it "rejects without ever starting chewie, quoting the app's last 20 lines" do
+      it "rejects without ever starting verifier, quoting the app's last 20 lines" do
         allow(outcome).to receive(:reject).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "verification rejected PR #7", to: :rejected))
 
-        attempts, = run(executor("verified"), %w[chewie-verifier])
+        attempts, = run(executor("verified"), %w[verifier])
 
         aggregate_failures do
           expect(calls).to be_empty
@@ -296,7 +296,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   describe "a verified plan waiting on CI" do
     before do
-      plans { |t| t.plan "014.00", :verifying, "chewie", files:, prs: [t.open(7, "Chewie")] }
+      plans { |t| t.plan "014.00", :verifying, "verifier", files:, prs: [t.open(7, "verifier")] }
       FileUtils.mkdir_p(File.join(plan.feature.path, "verification", "1"))
       File.write(File.join(plan.feature.path, "verification", "1", "report.md"), "Verdict: verified\n")
       File.write(File.join(plan.feature.path, "verification", "1", "published.txt"), "abc1234\n")
@@ -308,7 +308,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     def runner_for(driver)
       OpenLanes::Engine::Runner.new(tree:,
         executor: executor("verified"),
-        agents: OpenLanes::Agents::Registry.new.only("chewie-verifier"),
+        agents: OpenLanes::Agents::Registry.new.only("verifier"),
         isolation: :shared,
         verification: driver,
         sleeper: ->(_) {})
@@ -334,11 +334,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "is never handed to chewie again, and is settled by the engine instead" do
+    it "is never handed to verifier again, and is settled by the engine instead" do
       allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "PR #7 ready-to-merge"))
       runner = OpenLanes::Engine::Runner.new(tree:,
         executor: executor("verified"),
-        agents: OpenLanes::Agents::Registry.new.only("chewie-verifier"),
+        agents: OpenLanes::Agents::Registry.new.only("verifier"),
         isolation: :shared,
         verification: driver,
         sleeper: ->(_) {})
@@ -359,7 +359,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       allow(OpenLanes::UI).to receive(:log)
       runner = OpenLanes::Engine::Runner.new(tree:,
         executor: executor("verified"),
-        agents: OpenLanes::Agents::Registry.new.only("chewie-verifier"),
+        agents: OpenLanes::Agents::Registry.new.only("verifier"),
         isolation: :shared,
         verification: driver,
         sleeper: ->(_) {})

@@ -15,9 +15,27 @@ RSpec.describe OpenLanes::Agents::Roster do
   around do |example|
     Dir.mktmpdir("agents") do |tmp|
       @dir = tmp
-      write(tmp, "luke-backend", <<~MD)
+      write(tmp, "staff-reviewer", <<~MD)
         ---
-        name: luke-backend
+        name: staff-reviewer
+        description: Reads the diff against the plan.
+        handles: [ready_for_review]
+        model: sonnet
+        ---
+        You are reviewing.
+      MD
+      write(tmp, "unblocker", <<~MD)
+        ---
+        name: unblocker
+        description: Drains blocked.md.
+        handles: [blocked, product_blocked]
+        model: sonnet
+        ---
+        You are draining.
+      MD
+      write(tmp, "backend-coder", <<~MD)
+        ---
+        name: backend-coder
         description: Builds one work unit from a plan.
         handles: [building, rejected]
         advances_to: ready_for_review
@@ -25,24 +43,6 @@ RSpec.describe OpenLanes::Agents::Roster do
         allowed_tools: [Read, Write]
         ---
         You are implementing one work unit.
-      MD
-      write(tmp, "hansolo-reviewer", <<~MD)
-        ---
-        name: hansolo-reviewer
-        description: Reads the diff against the plan.
-        handles: [ready_for_review]
-        model: sonnet
-        ---
-        You are reviewing.
-      MD
-      write(tmp, "lando-broker", <<~MD)
-        ---
-        name: lando-broker
-        description: Drains blocked.md.
-        handles: [blocked, product_blocked]
-        model: sonnet
-        ---
-        You are draining.
       MD
       example.run
     end
@@ -55,10 +55,10 @@ RSpec.describe OpenLanes::Agents::Roster do
   describe "#list" do
     let(:table) { plain(roster.list) }
 
-    # The fixtures are written luke first, so name order is an actual sort,
+    # The fixtures are written backend-coder last, so name order is an actual sort,
     # not the order the files happened to load in.
     it "names every agent, in name order" do
-      expect(table.scan(/^│ (\S+-\S+)\s/).flatten).to eq(%w[hansolo-reviewer lando-broker luke-backend])
+      expect(table.scan(/^│ ([a-z][a-z-]+)\s/).flatten).to eq(%w[backend-coder staff-reviewer unblocker])
     end
 
     # Words only. The widget measures a cell in characters and the terminal
@@ -83,21 +83,21 @@ RSpec.describe OpenLanes::Agents::Roster do
     # An agent with no advances_to is never offered work by the loop. Printing
     # a blank there would read as "advances to nothing in particular".
     it "says read-only rather than leaving the destination blank" do
-      expect(table).to match(/hansolo-reviewer.*read-only/)
+      expect(table).to match(/staff-reviewer.*read-only/)
     end
 
     # Only `unblock` starts an agent that handles nothing but settled states,
     # and the folder's name afterwards comes from what its files justify.
     it "says by contents for an agent only a command starts" do
-      expect(table).to match(/lando-broker.*by contents/)
+      expect(table).to match(/unblocker.*by contents/)
     end
 
-    # bb8-resolver handles no state but writes: blank and "read-only" would
+    # rebaser handles no state but writes: blank and "read-only" would
     # both be wrong about it.
-    it "says what bb8-resolver is offered and what it does" do
+    it "says what rebaser is offered and what it does" do
       shipped = described_class.new(agents: OpenLanes::Agents::Registry.new).list
 
-      expect(shipped).to match(/bb8-resolver.*stopped rebases, from the harness.*stages, never moves a plan/)
+      expect(shipped).to match(/rebaser.*stopped rebases, from the harness.*stages, never moves a plan/)
     end
 
     it "says so plainly when there are no definitions to list" do

@@ -1,6 +1,6 @@
-# Plan 001.00, back-end half (luke-backend)
+# Plan 001.00, back-end half (backend-coder)
 
-Split from `plan.md` by luke-backend on 2026-09-06 because `luthen-rael-planner` left no discipline split. Every unit below is a task in `plan.md`; the code is already written there and the unit is done when it is on disk verbatim and its spec is green. Line numbers refer to `plan.md`.
+Split from `plan.md` by backend-coder on 2026-09-06 because `planner` left no discipline split. Every unit below is a task in `plan.md`; the code is already written there and the unit is done when it is on disk verbatim and its spec is green. Line numbers refer to `plan.md`.
 
 ## Units
 
@@ -25,4 +25,4 @@ Split from `plan.md` by luke-backend on 2026-09-06 because `luthen-rael-planner`
 
 ## Done when
 
-`bundle exec rspec` reports 0 failures outside the front-end specs Rey owns, and `bundle exec standardrb` is clean under the project-local `.standard.yml`.
+`bundle exec rspec` reports 0 failures outside the front-end specs frontend-coder owns, and `bundle exec standardrb` is clean under the project-local `.standard.yml`.

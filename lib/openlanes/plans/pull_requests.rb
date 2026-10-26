@@ -55,7 +55,7 @@ module OpenLanes
       end
 
       # The table alone, for splicing into a file that already says other
-      # things: the ledger blocks luke and rey write before a pull request
+      # things: the ledger blocks backend-coder and frontend-coder write before a pull request
       # exists. Rewriting the whole file deleted their signatures.
       #
       # @param prs [Array<Hash>]

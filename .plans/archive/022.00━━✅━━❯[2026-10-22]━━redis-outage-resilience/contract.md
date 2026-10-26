@@ -1,6 +1,6 @@
 # Contract: 022.00 Redis Outage Resilience
 
-Owner: `luke-backend`. Partner: `rey-frontend`.
+Owner: `backend-coder`. Partner: `frontend-coder`.
 
 ## Baseline
 
@@ -23,7 +23,7 @@ The 30 failures in `spec/openlanes/apps` and `spec/openlanes/cli/app_spec.rb` ar
 
 amended: the B1 answer was "rebase onto main", but this branch's `HEAD` (`7186635`) is still behind `origin/main` and agents may not rebase. The cause was not the host: behind Little Snitch, `Socket.tcp` with `connect_timeout` returns a socket for a refused connect, and only `getpeername` raises `EINVAL`. `origin/main` already fixed that in `ff03ca48`. This branch takes the same fix, so the later rebase applies cleanly: `lib/openlanes/apps/probe.rb` and `lib/openlanes/apps/ports.rb` are copied verbatim from `origin/main`, and the `connectable?` helper in `spec/openlanes/apps/supervisor_spec.rb` and `spec/openlanes/cli/app_spec.rb` is replaced with main's one-line version. Full suite: 3175 examples, 0 failures.
 
-## Interfaces rey reads
+## Interfaces frontend-coder reads
 
 No route is added or changed. `GET /api/board` and the `event: board` stream gain an optional `run.outage`:
 
@@ -58,8 +58,8 @@ Built on this branch:
 
 ## File ownership
 
-- rey: `web/src/api/types.ts`, `web/src/shell/Header.tsx`, `Header.test.tsx`, `shell.css`, `web/src/api/fixtures/snapshot.json`, `snapshot-outage.json`.
-- luke: everything under `lib/` and `spec/`, `README.md`, `.openlanes.coverage.yml`, this file, `openapi.yaml` (beside this file).
+- frontend-coder: `web/src/api/types.ts`, `web/src/shell/Header.tsx`, `Header.test.tsx`, `shell.css`, `web/src/api/fixtures/snapshot.json`, `snapshot-outage.json`.
+- backend-coder: everything under `lib/` and `spec/`, `README.md`, `.openlanes.coverage.yml`, this file, `openapi.yaml` (beside this file).
 - Shared: none.
 
 ## Build order
@@ -82,7 +82,7 @@ amended: the round 2 list claimed `backoff_spec.rb`, `config_backoff_spec.rb`, a
 
 - [x] B1 #59 regression against real Redis (`spec/openlanes/engine/redis_outage_spec.rb`, 1 example; the fix is main's `14a7f439`)
 - [x] B2 `Outage::Window`, `#window`, `#on_resume` (`outage_spec.rb`)
-- [x] B2 configurable backoff: `redis_backoff.{initial,cap,jitter}`, default 1 s, 30 s (`Outage::MAX_GAP`), full jitter (`outage_spec.rb`, `config_spec.rb`). amended (round 5): built after hansolo's 2/2; it was listed as not built
+- [x] B2 configurable backoff: `redis_backoff.{initial,cap,jitter}`, default 1 s, 30 s (`Outage::MAX_GAP`), full jitter (`outage_spec.rb`, `config_spec.rb`). amended (round 5): built after staff-reviewer's 2/2; it was listed as not built
 - [x] B3 `PAUSE`: on main already (`ec5b95eb`), nothing built here
 - [x] B4 report and `run.outage` (`outage_report_spec.rb`, `run_record_spec.rb`, `snapshot_spec.rb`)
 - [x] B5 session wiring (`spec/openlanes/engine/dispatcher_outage_spec.rb`)

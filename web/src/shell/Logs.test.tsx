@@ -6,7 +6,7 @@ import type { LogLine } from "../api/types";
 
 const line = (over: Partial<LogLine>): LogLine => ({ at: "2026-10-13T09:00:00Z", source: "engine", level: "info", text: "tick", plan: null, ...over });
 const lines: LogLine[] = [
-  line({ text: "started luke-backend on 001.00" }),
+  line({ text: "started backend-coder on 001.00" }),
   line({ source: "api", level: "warn", text: "slow POST" }),
   line({ source: "redis", level: "error", text: "XADD timed out" }),
   line({ level: "debug", text: "polling" }),
@@ -29,7 +29,7 @@ it("filters by source, level and text", async () => {
   expect(within(list()).queryByText("slow POST")).toBeNull();
   expect(within(list()).getByText("polling")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "api" }));
-  await userEvent.type(screen.getByLabelText("Filter log lines"), "LUKE");
+  await userEvent.type(screen.getByLabelText("Filter log lines"), "BACKEND");
   expect(within(list()).getAllByRole("listitem")).toHaveLength(1);
   await userEvent.clear(screen.getByLabelText("Filter log lines"));
   await userEvent.type(screen.getByLabelText("Filter log lines"), "nothing like this");

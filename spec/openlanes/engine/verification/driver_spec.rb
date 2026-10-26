@@ -75,10 +75,10 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     end
   end
 
-  # Plan 035: under mvp an approved pull request is not run through chewie.
+  # Plan 035: under mvp an approved pull request is not run through verifier.
   # Its round is written skipped and published by the engine, so the plan
   # waits on CI and the coverage gate at 🧪 as a verified one would, without
-  # a later reader taking the report for chewie's own verdict.
+  # a later reader taking the report for verifier's own verdict.
   describe "#hand_off of an approved pull request under mvp" do
     subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
 
@@ -90,7 +90,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     let(:labels) { %w[review-approved] }
     let(:quality) { :mvp }
 
-    it "skips chewie, writes a skipped verdict, and waits on CI" do
+    it "skips verifier, writes a skipped verdict, and waits on CI" do
       said = driver.hand_off(plan)
       report = File.read(OpenLanes::Engine::Verification.latest(plan.feature.path).report_path)
 
@@ -108,7 +108,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     context "with standard" do
       let(:quality) { :standard }
 
-      it "goes on to chewie" do
+      it "goes on to verifier" do
         expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
         expect(driver.awaiting_ci?(plan)).to be(false)
       end
@@ -117,7 +117,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     context "with an ok-not-perfect verdict" do
       let(:labels) { %w[review-ok-not-perfect] }
 
-      it "goes on to chewie" do
+      it "goes on to verifier" do
         expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
       end
     end
@@ -187,7 +187,7 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
   end
 
   # A skip written under mvp must not keep waiting on CI after the project
-  # raises the bar: chewie has to run.
+  # raises the bar: verifier has to run.
   describe "#awaiting_ci? of a skipped round after quality changes" do
     subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
 

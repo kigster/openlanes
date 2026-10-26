@@ -1,4 +1,4 @@
-# Implementation plan, 008.00 (contract between luke-backend and rey-frontend)
+# Implementation plan, 008.00 (contract between backend-coder and frontend-coder)
 
 ## Baseline
 
@@ -6,7 +6,7 @@
 
 Baseline result (2026-10-13 19:21, seed 6184): `2214 examples, 0 failures`. No baseline failures.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 All ordinals are canonical `"NNN.MM"` strings. Every list is sorted and never nil, except `depends_on`.
 
@@ -28,7 +28,7 @@ All ordinals are canonical `"NNN.MM"` strings. Every list is sorted and never ni
 
 Errors: none raised. Problems surface as data (`Spec#problems`, `unknown`, `closed`).
 
-## Engine (luke only)
+## Engine (backend-coder only)
 
 - `Dispatcher#held?(subject)` (private): true when `deps.reason` is non-nil. `next_dispatchable` skips held plans.
 - Order: `Dispatcher#blockers_first` (private): `next_dispatchable` walks `in_scope` with plans that have a non-empty `blocks_of` first, stable otherwise.
@@ -40,12 +40,12 @@ Errors: none raised. Problems surface as data (`Spec#problems`, `unknown`, `clos
 
 | File | Owner |
 | --- | --- |
-| `lib/openlanes/plans/spec.rb`, `spec/openlanes/plans/spec_spec.rb` | luke (B1) |
-| `lib/openlanes/plans/dependencies.rb`, `lib/openlanes/plans/tree.rb`, `spec/openlanes/plans/dependencies_spec.rb` | luke (B2) |
-| `lib/openlanes/engine/*`, `spec/openlanes/engine/{runner,dispatcher}_spec.rb` | luke (B3) |
-| `lib/openlanes/presentation/reporter.rb`, `lib/openlanes/cli/list_plans/*`, their specs | rey (F1) |
-| `spec/openlanes/integration/plan_dependencies_spec.rb` | luke (B4) |
-| `lib/openlanes/cli/run/run.rb` | luke (amended: `held_report`, not in the plan's tables) |
+| `lib/openlanes/plans/spec.rb`, `spec/openlanes/plans/spec_spec.rb` | backend-coder (B1) |
+| `lib/openlanes/plans/dependencies.rb`, `lib/openlanes/plans/tree.rb`, `spec/openlanes/plans/dependencies_spec.rb` | backend-coder (B2) |
+| `lib/openlanes/engine/*`, `spec/openlanes/engine/{runner,dispatcher}_spec.rb` | backend-coder (B3) |
+| `lib/openlanes/presentation/reporter.rb`, `lib/openlanes/cli/list_plans/*`, their specs | frontend-coder (F1) |
+| `spec/openlanes/integration/plan_dependencies_spec.rb` | backend-coder (B4) |
+| `lib/openlanes/cli/run/run.rb` | backend-coder (amended: `held_report`, not in the plan's tables) |
 
 No shared files.
 

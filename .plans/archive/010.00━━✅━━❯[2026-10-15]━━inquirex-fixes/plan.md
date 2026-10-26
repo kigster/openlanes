@@ -2,7 +2,7 @@
 
 All work is in `/Users/kig/github/inquirex`, which holds three separate git repositories: `inquirex/`, `inquirex-llm/`, `inquirex-tty/`. Each unit works on a branch `kig/010.00-inquirex-fixes` in every repository it touches, and claims its files with `alock` run inside that repository. The branch lives in a git worktree per repository, `<repo>.worktrees/010.00-inquirex-fixes`, branched from that repository's `main`; the existing checkouts hold the owner's unpushed Ruby 4.1 migration and are not touched (blocked.md B1, answered A1 by the owner on 2026-10-14). Nothing in openlanes changes (spec, Non-Goals).
 
-"Back end" is the `inquirex` engine and the `inquirex-llm` library. "Front end" is the terminal UI and CLI of `inquirex-tty`. Units are detailed in `plan-backend.md` (luke-backend) and `plan-frontend.md` (rey-frontend).
+"Back end" is the `inquirex` engine and the `inquirex-llm` library. "Front end" is the terminal UI and CLI of `inquirex-tty`. Units are detailed in `plan-backend.md` (backend-coder) and `plan-frontend.md` (frontend-coder).
 
 ## Assumptions carried from the spec's open questions
 

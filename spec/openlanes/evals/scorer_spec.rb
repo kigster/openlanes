@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Evals::Scorer, :tree do
 
   let(:kase) do
     OpenLanes::Evals::Case.new(id: "x",
-      agent: "leah-researcher",
+      agent: "researcher",
       depth: :fast,
       description: "",
       path: "/x.yml",

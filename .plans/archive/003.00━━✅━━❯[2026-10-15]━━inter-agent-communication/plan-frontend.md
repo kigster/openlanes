@@ -1,4 +1,4 @@
-# Plan: front end (`rey-frontend`)
+# Plan: front end (`frontend-coder`)
 
 Order and the dependency graph are in `plan.md`. The interface here is the terminal board and the web page.
 
@@ -21,7 +21,7 @@ Order and the dependency graph are in `plan.md`. The interface here is the termi
 - **Must not touch:** every file another unit owns; this unit writes one spec and nothing else
 - **Depends on:** B1, B2, B3, B4, B5, F1
 - **What it must show, nothing stubbed** (a real `:tree` plan folder, the real `exe/openlanes` CLI, the real `Board` and web app rendered through `Rack::MockRequest` or the app's own test client):
-  1. `openlanes mail send` from `luke-backend` to `rey-frontend` writes `state.json` with `read: "no"`, both with Redis unavailable and with a `Live::MemoryStore` behind the dispatcher thread, and the message appears exactly once.
+  1. `openlanes mail send` from `backend-coder` to `frontend-coder` writes `state.json` with `read: "no"`, both with Redis unavailable and with a `Live::MemoryStore` behind the dispatcher thread, and the message appears exactly once.
   1. The board and the web page both show one unacked message and the warning.
   1. `openlanes mail ack` flips it; both views show zero and no warning.
   1. `openlanes mail render` prints the exchange and the plan folder is byte-for-byte unchanged.

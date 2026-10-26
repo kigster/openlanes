@@ -207,13 +207,13 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     it "prints which agent would take which plan, and invokes none" do
       out, err, status = run
 
-      expect(out).to include("001.00  luke-backend  [R:1]  no change  dry run - would invoke luke-backend")
+      expect(out).to include("001.00  backend-coder   [R:1]  no change  dry run - would invoke backend-coder")
       expect(unwrapped(err)).to include("Dry run — no agent was invoked", "without --dry-run")
       expect(status).to eq(0)
     end
 
-    # Tabs put each column on the next multiple of eight, so "yoda-writer"
-    # being one character shorter than "luke-backend" moved its round and
+    # Tabs put each column on the next multiple of eight, so "spec-writer"
+    # being one character shorter than "backend-coder" moved its round and
     # mark a whole stop left of the rows above it.
     describe "the attempts list, with agents whose names are different lengths" do
       subject(:columns) { lines.map { |line| line.index("[R:") } }
@@ -263,27 +263,27 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
     it "narrows the round to the one agent named, leaving other states unassigned" do
       plans { |t| t.plan("003.00", :new, "raw-idea", files: { "spec.md" => spec_body }) }
-      out, = run(agent: "luke-backend")
+      out, = run(agent: "backend-coder")
 
-      expect(out).to include("luke-backend")
-      expect(out).not_to include("leah-researcher")
+      expect(out).to include("backend-coder")
+      expect(out).not_to include("researcher")
     end
 
     it "refuses a name nobody answers to, listing who does" do
-      _out, err, status = run(agent: "obi-wan")
+      _out, err, status = run(agent: "ghost-agent")
 
-      expect(unwrapped(err)).to include("No agent called obi-wan", "luke-backend")
+      expect(unwrapped(err)).to include("No agent called ghost-agent", "backend-coder")
       expect(status).to eq(65)
     end
 
-    # The bug this kills: `--agent luthen-rael-planner --plan NNN` on a plan in
-    # a state luthen-rael does not handle produced an empty round, a green box
+    # The bug this kills: `--agent planner --plan NNN` on a plan in
+    # a state planner does not handle produced an empty round, a green box
     # and exit 0 — a silent no-op wearing a success. The pairing that cannot
     # happen is now refused up front, naming who would take the plan.
     it "refuses an agent that handles no in-scope plan's state, naming who does" do
-      _out, err, status = run(agent: "leah-researcher")
+      _out, err, status = run(agent: "researcher")
 
-      expect(unwrapped(err)).to include("leah-researcher handles", "🟡 Building", "luke-backend and rey-frontend take it")
+      expect(unwrapped(err)).to include("researcher handles", "🟡 Building", "backend-coder and frontend-coder take it")
       expect(status).to eq(65)
     end
   end
@@ -319,7 +319,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
     it "hands the extra instructions to the executor, alongside --agent" do
       with_executor
-      run(dry_run: false, agent: "luke-backend", prompt: "Focus on the parser")
+      run(dry_run: false, agent: "backend-coder", prompt: "Focus on the parser")
 
       expect(OpenLanes::Execution::Executor).to have_received(:new)
         .with(hash_including(instructions: "Focus on the parser"))
@@ -329,7 +329,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       before do
         with_executor
         File.write(File.join(plans_root, "steer.txt"), "Focus on the parser, from a file")
-        Dir.chdir(plans_root) { run(dry_run: false, agent: "luke-backend", prompt: "steer.txt") }
+        Dir.chdir(plans_root) { run(dry_run: false, agent: "backend-coder", prompt: "steer.txt") }
       end
 
       it "reads the instructions from the file" do
@@ -344,7 +344,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       before do
         with_executor
         File.write(long_path, "from the file")
-        run(dry_run: false, agent: "luke-backend", prompt: long_path)
+        run(dry_run: false, agent: "backend-coder", prompt: long_path)
       end
 
       it "takes the prompt as the text" do
@@ -377,31 +377,31 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     before { building_plan }
 
     it "never assigns the skipped agent, so its plans simply wait" do
-      out, _err, status = run(skip: "luke-backend")
+      out, _err, status = run(skip: "backend-coder")
 
-      expect(out).not_to include("luke-backend")
+      expect(out).not_to include("backend-coder")
       expect(status).to eq(0)
     end
 
     it "leaves the rest of the round to everyone else" do
       plans { |t| t.plan("003.00", :new, "raw-idea", files: { "spec.md" => spec_body }) }
-      out, = run(skip: "luke-backend")
+      out, = run(skip: "backend-coder")
 
-      expect(out).to include("leah-researcher")
-      expect(out).not_to include("luke-backend")
+      expect(out).to include("researcher")
+      expect(out).not_to include("backend-coder")
     end
 
     # A typo'd skip silently skipping nobody is the same failure --plan
     # refuses for numbers.
     it "refuses a name nobody answers to" do
-      _out, err, status = run(skip: "obi-wan")
+      _out, err, status = run(skip: "ghost-agent")
 
-      expect(unwrapped(err)).to include("No agent called obi-wan", "luke-backend")
+      expect(unwrapped(err)).to include("No agent called ghost-agent", "backend-coder")
       expect(status).to eq(65)
     end
 
     it "refuses --agent and --skip naming the same agent" do
-      _out, err, status = run(agent: "luke-backend", skip: "luke-backend")
+      _out, err, status = run(agent: "backend-coder", skip: "backend-coder")
 
       expect(unwrapped(err)).to include("contradict")
       expect(status).to eq(64)
@@ -443,7 +443,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       with_executor
       out, err, status = run(dry_run: false, rounds: 1)
 
-      expect(out).to include("001.00  luke-backend")
+      expect(out).to include("001.00  backend-coder")
       # A committed run spent something, so the tally belongs with the
       # attempts it bills for, on STDOUT, where a redirected run keeps it.
       expect(out).to include("4 invocations")
@@ -458,7 +458,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       aggregate_failures do
         expect(err.gsub(/[\s│]+/, "")).to include("Log:#{log}") # the box wraps long paths
         written = File.read(log)
-        expect(written).to include("engine -- run starting", "engine -- started", 'agent: "luke-backend"')
+        expect(written).to include("engine -- run starting", "engine -- started", 'agent: "backend-coder"')
         expect(written).to match(/ W \[.*engine -- run finished -- \{attempts: \d+, failed: \d+/)
       end
     end
@@ -479,29 +479,29 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
       expect(lines).to include(a_hash_including("name" => "engine",
         "message" => "started",
-        "payload" => a_hash_including("agent" => "luke-backend")))
+        "payload" => a_hash_including("agent" => "backend-coder")))
     end
 
-    # Narrowed to luke: once he moves the plan to 🟢, hansolo would take it
+    # Narrowed to backend-coder: once he moves the plan to 🟢, staff-reviewer would take it
     # next, sign nothing, and fail the run for a reason this example is not
     # about.
     it "exits zero when the agent signs Completed and the folder moves" do
       with_executor { |subject|
-        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]\n")
-        File.write(File.join(subject.feature.path, "plan-frontend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: rey-frontend   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: backend-coder   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "plan-frontend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: frontend-coder   status: Completed, round 1 ]\n")
         File.write(File.join(subject.feature.path, "pull-requests.md"), "| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 1 | [x](https://github.com/example/repo/pull/1) | Open 🟡 |\n")
         [true, "completed"]
       }
-      out, _err, status = run(dry_run: false, agent: "luke-backend")
+      out, _err, status = run(dry_run: false, agent: "backend-coder")
       expect(out).to include("building -> ready_for_review")
       expect(status).to eq(0)
     end
 
-    # luke `starts_as` 🟡, so a ⭐ folder moves the moment he is dispatched.
+    # backend-coder `starts_as` 🟡, so a ⭐ folder moves the moment he is dispatched.
     # The stub signs Almost completed rather than Completed: the attempt is
     # then ok without claiming 🟢, and the plan sits at 🟡 where it landed.
-    # Narrowed to luke: the stub's ledger line replaces plan.md, which then
-    # reads as blank, and luthen-rael would take it from there.
+    # Narrowed to backend-coder: the stub's ledger line replaces plan.md, which then
+    # reads as blank, and planner would take it from there.
     it "shows a plan that actually moved as from -> to" do
       plans { |t| t.plan("002.00", :planned, "moves", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }) }
       with_executor { |subject, agent|
@@ -509,7 +509,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
           "> [2026-09-04 11:29:20 AM PDT] [ agent: #{agent.name}   status: Almost completed, round 1 ]\n")
         [true, "paused"]
       }
-      out, err, = run(dry_run: false, agent: "luke-backend")
+      out, err, = run(dry_run: false, agent: "backend-coder")
 
       expect(out).to include("planned -> building")
       expect(unwrapped(err)).to include("1 advanced")
@@ -523,8 +523,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       _out, err, = run(dry_run: false, rounds: 1)
 
       aggregate_failures do
-        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  started$/)
-        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  luke-backend r01  failed: /)
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  backend-coder r01  started$/)
+        expect(err).to match(/^\d\d:\d\d:\d\d  001\.00 🟡  Building  backend-coder r01  failed: /)
         expect(raw[:err]).not_to match(/\r|\e\[/)
         expect(err).not_to include("|        |")
       end
@@ -532,13 +532,13 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
     it "names the state a plan moved to on its finished line" do
       with_executor { |subject|
-        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: backend-coder   status: Completed, round 1 ]\n")
         File.write(File.join(subject.feature.path, "pull-requests.md"), "| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 1 | [x](https://github.com/example/repo/pull/1) | Open 🟡 |\n")
         [true, "completed"]
       }
-      _out, err, = run(dry_run: false, agent: "luke-backend")
+      _out, err, = run(dry_run: false, agent: "backend-coder")
 
-      expect(err).to match(/luke-backend r01  finished: .* → 🟢  Ready for Review$/)
+      expect(err).to match(/backend-coder r01  finished: .* → 🟢  Ready for Review$/)
     end
 
     it "keeps the terminal silent about events under --quiet, and the log file in its columns" do
@@ -548,7 +548,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
       aggregate_failures do
         expect(err).not_to include("started")
-        expect(log).to include('agent: "luke-backend", round: "01"')
+        expect(log).to include('agent: "backend-coder", round: "01"')
       end
     end
 
@@ -557,7 +557,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       out, err, status = run(dry_run: false, rounds: 1)
 
       expect(out).to include("FAIL")
-      expect(unwrapped(err)).to include("001.00 luke-backend: claude exited 1: 401 API key is invalid")
+      expect(unwrapped(err)).to include("001.00 backend-coder: claude exited 1: 401 API key is invalid")
       expect(status).to eq(1)
     end
 
@@ -584,7 +584,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
           "consumer",
           files: { "spec.md" => "---\ndepends_on: [\"001.00\"]\n---\n#{spec_body}", "plan.md" => "# Plan", "plan-frontend.md" => "## F1" }
       end
-      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
     end
 
     it "exits 1 and names the plan on STDERR, even when quiet" do
@@ -670,7 +670,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
       out, err, status = run(isolation: "worktree")
 
-      expect(out).to include("001.00  luke-backend")
+      expect(out).to include("001.00  backend-coder")
       expect(unwrapped(err)).to include("one worktree each")
       expect(status).to eq(0)
     end

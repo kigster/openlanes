@@ -736,13 +736,13 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run).and_return(instance_double(TTY::Command::Result,
         out: JSON.generate(
           "comments" => [{ "author" => { "login" => "octo" }, "body" => "Fix the nil", "url" => "u1" }],
-          "reviews"  => [{ "author" => { "login" => "hansolo" }, "body" => "", "url" => "u2" },
-                         { "author" => { "login" => "hansolo" }, "body" => "Rejected", "url" => "u3" }]
+          "reviews"  => [{ "author" => { "login" => "staff-reviewer" }, "body" => "", "url" => "u2" },
+                         { "author" => { "login" => "staff-reviewer" }, "body" => "Rejected", "url" => "u3" }]
         )))
 
       expect(github.review_comments(number: 4)).to eq([
                                                         { author: "octo", body: "Fix the nil", url: "u1" },
-                                                        { author: "hansolo", body: "Rejected", url: "u3" }
+                                                        { author: "staff-reviewer", body: "Rejected", url: "u3" }
                                                       ])
     end
 

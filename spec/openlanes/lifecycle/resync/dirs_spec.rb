@@ -235,7 +235,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
 
     # The other half of that rule. The name wins *between* the two blocked
     # states, but neither survives a `blocked.md` with no question left in it.
-    # This is how a block drains: `lando-broker` deletes each question as its
+    # This is how a block drains: `unblocker` deletes each question as its
     # answer is folded into `spec.md` or `plan.md`, and the pass that empties
     # the file is the pass that moves the folder.
     context "when every question in blocked.md has been answered and folded away" do

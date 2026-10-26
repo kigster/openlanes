@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T14:24:07-07:00",
   "stages": [
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -32,7 +32,7 @@
       "moves": 1
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "planned",
@@ -55,7 +55,7 @@
       "moves": 3
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -78,7 +78,7 @@
       "moves": 5
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Interrupted",
       "from": "verifying",
@@ -96,7 +96,7 @@
       "finished_at": "2026-10-18T06:34:33-07:00"
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "retroactive",
@@ -122,71 +122,71 @@
   "signatures": [
     {
       "at": "2026-10-17T11:27:35-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:29:59-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-17T11:30:17-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:36:53-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T11:39:10-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:40:50-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-17T11:41:03-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:41:27-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
     },
     {
       "at": "2026-10-18T06:34:47-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T06:35:11-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-18T06:34:33-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
@@ -197,8 +197,8 @@
       "id": "49adc3e2-b65e-460f-9b48-ef2807abc192",
       "number": 1,
       "at": "2026-10-17T11:29:58-07:00",
-      "from": "luthen-rael-planner",
-      "to": "luke-backend",
+      "from": "planner",
+      "to": "backend-coder",
       "body": "plan.md ready. M1 code is already on main (95597c2); B1 is an end-to-end spec with a fake claude on PATH, B2 fixes what it finds (no-op if green), B3 is docs. B1 and B3 can run in parallel.",
       "read": "no"
     }
@@ -207,7 +207,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -217,7 +217,7 @@
     }
   ],
   "last-known-state": {
-    "chewie-verifier": {
+    "verifier": {
       "source": "harness",
       "at": "2026-10-18T06:34:33-07:00",
       "round": 1,

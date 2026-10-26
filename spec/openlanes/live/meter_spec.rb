@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Live::Meter do
 
   let(:price) { ->(model) { OpenLanes::Adapters.for("claude").model_entry(model) } }
 
-  def row(round:, up:, down:, agent: "luke-backend", model: "opus", since: nil)
+  def row(round:, up:, down:, agent: "backend-coder", model: "opus", since: nil)
     OpenLanes::Engine::Board::Row.new(key: "001.00/#{agent}",
       at: Time.now,
       ordinal: "001.00",

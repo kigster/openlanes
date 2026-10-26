@@ -17,7 +17,7 @@ describe("LastKnownTable", () => {
       <LastKnownTable
         entries={[
           sampleLastKnown(),
-          sampleLastKnown({ agent: "luke-backend", source: "harness", round: 2, next_step: null, note: "harness died" }),
+          sampleLastKnown({ agent: "backend-coder", source: "harness", round: 2, next_step: null, note: "harness died" }),
         ]}
       />,
     );
@@ -25,7 +25,7 @@ describe("LastKnownTable", () => {
     expect(screen.getByRole("heading", { name: "Last known state" })).toBeInTheDocument();
     const rows = within(table).getAllByRole("row").map((r) => Array.from(r.querySelectorAll("th, td"), (c) => c.textContent));
     expect(rows).toEqual([
-      ["Agent", "rey-frontend", "luke-backend"],
+      ["Agent", "frontend-coder", "backend-coder"],
       ["Source", "agent", "harness"],
       ["Round", "1", "2"],
       ["Status", "Interrupted. Next step: draw the panel", "Interrupted"],
@@ -45,7 +45,7 @@ describe("LastKnownTable", () => {
 
   it("shows in the agent drawer for a plan that has records, and not for one without", () => {
     const plan = planAt("005.00");
-    const car = carOf(plan, "hansolo-reviewer");
+    const car = carOf(plan, "staff-reviewer");
     const props = { car, models: snapshot.models, autocompact: snapshot.autocompact, onCommand: recorder().onCommand, onClose: () => {} };
     const { unmount } = renderPanel(<AgentDrawer plan={{ ...plan, last_known: [] }} {...props} />);
     expect(screen.queryByRole("table")).toBeNull();

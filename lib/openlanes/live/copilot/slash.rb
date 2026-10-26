@@ -6,7 +6,7 @@ module OpenLanes
       # The three things a person may tell the run from the copilot's box
       # (plan 020.00): `/stop NNN`, `/restart NNN` and `/concurrency N`. Each
       # becomes an engine {Command} on the same stream the page's buttons use
-      # (W13), so c3po-operator stays read-only and the commands get the
+      # (W13), so copilot stays read-only and the commands get the
       # gate's idempotency, replies and logging for nothing.
       #
       # The grammar lives here and nowhere else: the page draws a hint but

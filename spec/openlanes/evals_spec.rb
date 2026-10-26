@@ -4,7 +4,7 @@ RSpec.describe OpenLanes::Evals, :tree do
   let(:kase) { described_class.cases.find { it.id == "research-fast" } }
 
   it "loads the shipped cases by default" do
-    expect(described_class.cases.map(&:to_s)).to include("leah-researcher/research-fast")
+    expect(described_class.cases.map(&:to_s)).to include("researcher/research-fast")
   end
 
   it "scores nothing for a recording the case does not ship" do

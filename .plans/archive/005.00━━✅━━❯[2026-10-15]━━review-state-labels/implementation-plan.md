@@ -1,12 +1,12 @@
 # 005.00 Implementation plan (contract)
 
-Owner: `luke-backend`. Partner: `rey-frontend`.
+Owner: `backend-coder`. Partner: `frontend-coder`.
 
 ## Baseline
 
 `bundle exec rspec` before any change: 2214 examples, 0 failures. `bundle exec rubocop`: 0 offenses.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 ### `OpenLanes::Plans::ReviewLabel` (B1)
 
@@ -38,9 +38,9 @@ Owner: `luke-backend`. Partner: `rey-frontend`.
 
 ## File ownership
 
-- luke: everything in `plan-backend.md` (B1–B6, I1).
-- rey: `lib/openlanes/cli/review/review.rb`, the `register "review"` line in `lib/openlanes/cli.rb`, `lib/openlanes/presentation/reporter.rb`, `spec/openlanes/cli/review_spec.rb`, `spec/openlanes/presentation/reporter_spec.rb`, `spec/openlanes/cli/help_spec.rb`.
-- Shared: none. `documentation.rb` is luke's (B1).
+- backend-coder: everything in `plan-backend.md` (B1–B6, I1).
+- frontend-coder: `lib/openlanes/cli/review/review.rb`, the `register "review"` line in `lib/openlanes/cli.rb`, `lib/openlanes/presentation/reporter.rb`, `spec/openlanes/cli/review_spec.rb`, `spec/openlanes/presentation/reporter_spec.rb`, `spec/openlanes/cli/help_spec.rb`.
+- Shared: none. `documentation.rb` is backend-coder's (B1).
 
 ## Build order
 
@@ -54,7 +54,7 @@ B1, B4 → B2 → B3, B5 → B6 → F1 → I1.
 
 - [x] B1 `Plans::ReviewLabel`, docs table.
 - [x] B2 `GitHub#ensure_label`, `#swap_label`, `#labels`, `#checks` (via `run!`: gh exits non-zero on a failing check), `#review_comments`, `.repo_of`; `labels:` on `#pulls`.
-- [x] B3 `Vcs::CiGate`, `Vcs::Review`, `Vcs.review`; hansolo `may: [gh pr comment]`.
+- [x] B3 `Vcs::CiGate`, `Vcs::Review`, `Vcs.review`; staff-reviewer `may: [gh pr comment]`.
 - [x] B4 `Spec#how_to_test`, `Spec::HOW_TO_TELL`, `Completion::HOW_TO_TEST` (`## How to test`).
 - [x] B5 Publisher refuses without `## How to test`, copies it into the PR body, applies `ready-for-review`; `Publication#label_error`.
 - [x] B6 `Engine::PrWatch` (read only: `due?` by elapsed time, `poll(subjects)`, one `gh pr list`), `Engine::PrOutcomes` (the effects), dispatcher wiring, `merge.by` in `support/config.rb`.
@@ -75,18 +75,18 @@ B6 wiring and I1 were finished in round 2, after the round-1 work was committed 
 ### Amendments from round 1
 
 amended: errors are `OpenLanes::Error`; there is no `Vcs::GitHub::Error` (`Error` inside `Vcs` resolves to `OpenLanes::Error`).
-amended: `lib/openlanes.rb` gained `loader.collapse(".../cli/review")`, written by luke for the review command; without it the suite did not load.
-amended: hansolo's executor example (`spec/openlanes/execution/executor_spec.rb`) now asserts `gh pr review` is denied.
+amended: `lib/openlanes.rb` gained `loader.collapse(".../cli/review")`, written by backend-coder for the review command; without it the suite did not load.
+amended: staff-reviewer's executor example (`spec/openlanes/execution/executor_spec.rb`) now asserts `gh pr review` is denied.
 
 ### Decisions made in round 2
 
-1. The rejection mail goes to every agent whose `handles:` includes 🔴, read from the full registry (not the run's roster), rather than to `luke-backend` and `rey-frontend` by name. Today that is luke, rey and r2d2. Naming them would be a second copy of `handles:`, and a run typed with `--agent` must not lose the mail, which waits in the plan folder for the next builder.
+1. The rejection mail goes to every agent whose `handles:` includes 🔴, read from the full registry (not the run's roster), rather than to `backend-coder` and `frontend-coder` by name. Today that is backend-coder, frontend-coder and chores-coder. Naming them would be a second copy of `handles:`, and a run typed with `--agent` must not lose the mail, which waits in the plan folder for the next builder.
 2. The mail is signed `github`, since a person wrote the comments, not an agent.
-3. A person who rejects or merges on GitHub while the plan is still at 🟢 (before hansolo) moves it through 👀 first, the only state the machine rejects or approves from.
+3. A person who rejects or merges on GitHub while the plan is still at 🟢 (before staff-reviewer) moves it through 👀 first, the only state the machine rejects or approves from.
 4. A merged or closed pull request is first recorded in `pull-requests.md` (wording from `PullRequests::STATES`), because ✅ and ❌ are judged by that file. This also stops the watch from asking about it again.
 5. Closing every pull request unmerged discards the plan (❌), with `discarded.md` naming them. A plan with any other pull request merged or still open stays where it is.
 6. `waiting_on` reaches `openlanes list-plans` through the state file, and only while the engine is up. Once the engine stops nobody is watching, and a pull request merged in the meantime would still show as waiting.
-7. I1 drives the engine half through `Dispatcher#tick` with an injected clock and a roster of `leah-researcher`, who handles only ⚪️, so no agent starts. The publisher, `exe/openlanes review` and the watch all run real `gh` argv against the fake.
+7. I1 drives the engine half through `Dispatcher#tick` with an injected clock and a roster of `researcher`, who handles only ⚪️, so no agent starts. The publisher, `exe/openlanes review` and the watch all run real `gh` argv against the fake.
 
 After B1 to B5 and PrWatch: `bundle exec rspec` 2281 examples, 0 failures; `bundle exec rubocop` 0 offenses.
 

@@ -3,7 +3,7 @@ import type { Command } from "./types";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const session = { csrf: "tok-1", node: {}, repo: "github.com/example-org/example-repo" };
-const command: Command = { id: "01J0000000000000000000000", kind: "hold", plan: "001.00", agent: "luke-backend", payload: {} };
+const command: Command = { id: "01J0000000000000000000000", kind: "hold", plan: "001.00", agent: "backend-coder", payload: {} };
 
 let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {

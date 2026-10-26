@@ -239,7 +239,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
 
     # The only fact on disk separating 🔎 Researched from ⚪️ New. Without it
     # the two states are the same folder wearing different names, and the
-    # relay that keeps yoda-writer off unresearched specifications collapses.
+    # relay that keeps spec-writer off unresearched specifications collapses.
     it "refuses to call a specification researched when nobody has researched it" do
       subject = folder(:new, files: { "spec.md" => "# S\n\n## Goal\n\nShip it." })
 
@@ -507,7 +507,7 @@ RSpec.describe OpenLanes::Plans::StateMachine do
     end
 
     it "treats a plan.md holding only a ledger note as still blank", :tree do
-      note = OpenLanes::Plans::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: luthen-rael-planner   status: Started, round 1 ]")
+      note = OpenLanes::Plans::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: planner   status: Started, round 1 ]")
       path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: { "spec.md" => spec_body, "plan.md" => note } }
       subject = OpenLanes::Plans::Tree.new(dir: path).subjects.first
       expect(subject.best_fit.key).to eq(:ready_for_planning)
@@ -519,11 +519,11 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(subject.best_fit.key).to eq(:planned)
     end
 
-    # The 020.00 transcript: yoda finished, the folder was renamed forward,
+    # The 020.00 transcript: spec-writer finished, the folder was renamed forward,
     # and the resync renamed it straight back because nothing could enter
-    # ⭐️ without a plan.md that only luthen-rael writes. With 📋 between them
-    # the resync leaves yoda's work standing.
-    it "keeps a folder yoda finished at 📋 through a resync", :tree do
+    # ⭐️ without a plan.md that only planner writes. With 📋 between them
+    # the resync leaves spec-writer's work standing.
+    it "keeps a folder spec-writer finished at 📋 through a resync", :tree do
       path = plans { |t|
         t.plan "020.00",
           :ready_for_planning,

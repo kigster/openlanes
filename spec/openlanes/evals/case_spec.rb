@@ -7,11 +7,11 @@ RSpec.describe OpenLanes::Evals::Case, :tree do
 
   let(:registry) { OpenLanes::Agents.registry }
   let(:root) { File.join(File.dirname(plans_root), "cases") }
-  let(:folder) { "leah-researcher" }
+  let(:folder) { "researcher" }
   let(:data) do
     {
       "id"          => "sample",
-      "agent"       => "leah-researcher",
+      "agent"       => "researcher",
       "depth"       => "fast",
       "description" => "A sample.",
       "fixture"     => { "state" => "new", "files" => { "spec.md" => "# Sample\n" } },
@@ -35,11 +35,11 @@ RSpec.describe OpenLanes::Evals::Case, :tree do
   describe "a valid case" do
     it "reads the agent, the depth and the fixture" do
       expect([kase.agent, kase.depth, kase.fixture.state, kase.fixture.slug, kase.fixture.repo])
-        .to eq(["leah-researcher", :fast, :new, "sample", {}])
+        .to eq(["researcher", :fast, :new, "sample", {}])
     end
 
     it "is named agent/id" do
-      expect(kase.to_s).to eq("leah-researcher/sample")
+      expect(kase.to_s).to eq("researcher/sample")
     end
 
     it "keeps its recordings in a directory named after itself" do
@@ -92,7 +92,7 @@ RSpec.describe OpenLanes::Evals::Case, :tree do
   # Each of these would otherwise be a check that silently never runs.
   {
     "an agent nobody defined"             => [->(d) { d["agent"] = "nobody" }, /names no agent called "nobody"/],
-    "an agent filed under another"        => [->(d) { d["agent"] = "yoda-writer" }, %r{sits under leah-researcher/}],
+    "an agent filed under another"        => [->(d) { d["agent"] = "spec-writer" }, %r{sits under researcher/}],
     "an id unlike its file"               => [->(d) { d["id"] = "other" }, /must match the file name/],
     "an unknown depth"                    => [->(d) { d["depth"] = "bottomless" }, /depth "bottomless" is not one of/],
     "an unknown top-level key"            => [->(d) { d["expects"] = {} }, /expects: unknown/],

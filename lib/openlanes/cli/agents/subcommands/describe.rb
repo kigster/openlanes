@@ -12,7 +12,7 @@ module OpenLanes
 
         argument :name,
           required: false,
-          desc:     "Which specialist, full name or a fragment, e.g. leah (default: every one)"
+          desc:     "Which specialist, full name or a fragment, e.g. #{OpenLanes::Agents::Names::RESEARCHER} (default: every one)"
 
         option :mdfried,
           type:    :boolean,
@@ -21,8 +21,8 @@ module OpenLanes
           desc:    "Render in the terminal through mdfried instead of the system viewer"
 
         example [
-          "leah               # leah-researcher, in the system Markdown viewer",
-          "luke-backend -m    # the same, rendered in this terminal by mdfried",
+          "#{OpenLanes::Agents::Names::RESEARCHER}               # #{OpenLanes::Agents::Names::RESEARCHER}, in the system Markdown viewer",
+          "#{OpenLanes::Agents::Names::BACKEND_CODER} -m    # the same, rendered in this terminal by mdfried",
           "                       # every agent, one viewer window each"
         ]
 

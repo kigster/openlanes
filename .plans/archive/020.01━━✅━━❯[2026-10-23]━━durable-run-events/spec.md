@@ -132,9 +132,9 @@ Each item has a check.
 
 ## Back end / front end
 
-Every In scope item (1-11) is back end (`luke-backend`): `lib/openlanes/events/*`, `engine/*` emit points, `support/config.rb`, `cli/events/subcommands/report.rb`, `docs/events.md`. The only presentation piece is the terminal renderer `presentation/events_report.rb`, also back end (a string-returning renderer, STDOUT is the deliverable).
+Every In scope item (1-11) is back end (`backend-coder`): `lib/openlanes/events/*`, `engine/*` emit points, `support/config.rb`, `cli/events/subcommands/report.rb`, `docs/events.md`. The only presentation piece is the terminal renderer `presentation/events_report.rb`, also back end (a string-returning renderer, STDOUT is the deliverable).
 
-Front end (`rey-frontend`): nothing in scope beyond the CLI; `rey-frontend`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
+Front end (`frontend-coder`): nothing in scope beyond the CLI; `frontend-coder`'s role here is the integration proof (subprocess run of `events report`, recorded in `pull-requests.md`).
 
 ## Open questions
 
@@ -142,14 +142,14 @@ Front end (`rey-frontend`): nothing in scope beyond the CLI; `rey-frontend`'s ro
 2. **Q2. `total_cost_usd`.** Check real `claude` stream-json output before ever storing it (Research Q4).
 3. **Q3. Codex and pi usage fields** vary by version; read defensively. Which pi fields are reliable is unverified.
 4. **Q4. Event file location and rotation.** Assumed: outside the repo, one file per node (item 4); `events/location.rb` holds the rule and was not re-verified here.
-5. **Q5. Leah's unsettled list** (Research "What research needs to settle"): sink choice (answered, Research Q2), idempotency key (answered, Research Q3), per-adapter usage (Q2/Q3), multi-machine consistency (answered by one-writer-per-file, item 11), retention (out of scope).
+5. **Q5. researcher's unsettled list** (Research "What research needs to settle"): sink choice (answered, Research Q2), idempotency key (answered, Research Q3), per-adapter usage (Q2/Q3), multi-machine consistency (answered by one-writer-per-file, item 11), retention (out of scope).
 
 ## Risks to planning or execution
 
 - Code is already built and verified in three rounds (`verification/`), so a planner may over-plan; units should be limited to gaps against the items above.
 - Codex/pi cost recorded as `0` would read as free; item 8 guards it.
 - `event_id` includes `seq`, which is monotonic only per node (Research Q3); a change to what feeds the digest silently breaks dedupe across nodes.
-- Full suite passed only after applying main's port-detection fix by hand (`pull-requests.md`, luke round 1); a rebase may conflict.
+- Full suite passed only after applying main's port-detection fix by hand (`pull-requests.md`, backend-coder round 1); a rebase may conflict.
 
 ## Conclusion
 

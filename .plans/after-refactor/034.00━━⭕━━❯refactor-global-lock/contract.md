@@ -1,6 +1,6 @@
 # Contract — 034.00 Refactor Global Lock
 
-Back end only: `spec.md` has no front end and `plan.md` has no `## Frontend` units, so `rey-frontend` is not started. No HTTP surface, so no `openapi.yaml`.
+Back end only: `spec.md` has no front end and `plan.md` has no `## Frontend` units, so `frontend-coder` is not started. No HTTP surface, so no `openapi.yaml`.
 
 ## Baseline
 
@@ -21,11 +21,11 @@ Full suite before any change: 0 failures (the repo's CLAUDE.md states the suite 
 - "Holds a branch" is read from the tree only: state past the documents and not ✅/🚀/discarded; a parked or retroactive plan holds one when its folder has `contract.md` or `pull-requests.md`.
 - `Engine::Runner#global_lock(except: [])`, and `#held(deps, lock)` now merges both gates' reasons. `Dispatcher#held?` asks both; the idle line lists both under "held by dependencies".
 - `.openlanes.yml`: `refactor: { threshold: 1..100 }` → `Config#refactor_threshold`, `Config#refactor_percent` (default 50).
-- `agents/luthen-rael-planner.md`: new step writes `execution:` into `plan.md` frontmatter from the estimate.
+- `agents/planner.md`: new step writes `execution:` into `plan.md` frontmatter from the estimate.
 
 ## Ownership
 
-All files are luke-backend's.
+All files are backend-coder's.
 
 ## Build order
 

@@ -31,7 +31,7 @@ RSpec.describe OpenLanes::Live::Outage do
   let(:dir) { Dir.mktmpdir("outage") }
   let(:state_file) { OpenLanes::Engine::StateFile.new(path: File.join(dir, "openlanes-state.json")) }
   let(:dispatcher) { instance_double(OpenLanes::Engine::Dispatcher, state_file:) }
-  let(:control) { OpenLanes::Execution::Control.register(dir, "001.00-luke-backend") }
+  let(:control) { OpenLanes::Execution::Control.register(dir, "001.00-backend-coder-backend") }
 
   before { allow(OpenLanes::UI).to receive(:log) }
 

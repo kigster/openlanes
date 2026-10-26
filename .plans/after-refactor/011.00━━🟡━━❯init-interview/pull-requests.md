@@ -1,8 +1,8 @@
 # Pull Requests
 
-## Build, round 1 (luke-backend)
+## Build, round 1 (backend-coder)
 
-No front end in this plan (`## Frontend` has no units), so luke-backend built every unit, U1 to U8.
+No front end in this plan (`## Frontend` has no units), so backend-coder built every unit, U1 to U8.
 
 Baseline before any change: `bundle exec rspec` → 3013 examples, 0 failures, 9 pending.
 
@@ -86,7 +86,7 @@ $ bundle exec rspec spec/openlanes/cli/init_integration_spec.rb
 2 examples, 0 failures
 ```
 
-## Build, round 2 (luke-backend)
+## Build, round 2 (backend-coder)
 
 No code changed under `lib/` or `spec/`. Added `.openlanes.coverage.yml` (M15). This branch's base predates the `coverage:` section in `.openlanes.yml`: its `Config::KEYS` does not include `coverage`, so adding that section would make `Config.load` refuse the file. The gate on this base reads `.openlanes.coverage.yml`:
 
@@ -117,7 +117,7 @@ $ bundle exec rubocop
 
 The 30 failures come from the host, not this plan. `Socket.tcp("127.0.0.1", <closed port>, connect_timeout: 0.2)` connects on Darwin 27 with Ruby 4.0.6, while plain `Socket.tcp` and `TCPSocket.new` get `ECONNREFUSED`. Blocked (technical): see `blocked.md` B1.
 
-## Build, round 3 (luke-backend)
+## Build, round 3 (backend-coder)
 
 B1 was answered a): the probe fix landed on `origin/main` as `ff03ca48` (PR #72). This branch is still at `ce65c43` and does not have it. No code changed.
 

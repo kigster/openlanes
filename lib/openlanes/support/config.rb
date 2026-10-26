@@ -21,7 +21,7 @@ module OpenLanes
   #                             # not perfect does, and M5's column of defaults
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
-  #     max_rejections: 2       # rejections, hansolo's and chewie's together, before
+  #     max_rejections: 2       # rejections, staff-reviewer's and verifier's together, before
   #                             # the plan stops going back to its builders (M6)
   #   ci:                       # what checks a pull request (M21); `openlanes init` settles it
   #     provider: github_actions
@@ -150,8 +150,8 @@ module OpenLanes
       super
     end
 
-    # How many times a plan's pull request may be rejected, by hansolo and
-    # chewie counted together, before it stops going back to its builders
+    # How many times a plan's pull request may be rejected, by staff-reviewer and
+    # verifier counted together, before it stops going back to its builders
     # (M6). `merge.max_rejections` when the file says it, otherwise M5's
     # column for `desired_codebase_quality:` (R4); two, `high`'s, when neither is set.
     #

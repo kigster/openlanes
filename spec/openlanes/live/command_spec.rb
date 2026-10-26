@@ -17,7 +17,7 @@ RSpec.describe "A live command and its reply" do
     end
 
     it "addresses a car by plan and agent" do
-      expect(parse(kind: "stop", plan: "001.00", agent: "luke-backend").car).to eq("001.00/luke-backend")
+      expect(parse(kind: "stop", plan: "001.00", agent: "backend-coder").car).to eq("001.00/backend-coder")
     end
 
     it "keeps a plan that is not an ordinal as written, for the engine to refuse" do

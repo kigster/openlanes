@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:58:06-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "note": "completed - 26 tool calls"
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 10 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 13 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -89,7 +89,7 @@
       "note": "harness died"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -109,7 +109,7 @@
       "note": "completed - 5 tool calls; publish refused: HTTP 401: Bad credentials (https://api.github.com/graphql)"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -132,7 +132,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -155,7 +155,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Interrupted",
       "from": "building",
@@ -178,7 +178,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 2,
       "status": "Completed",
       "from": "building",
@@ -201,7 +201,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -219,7 +219,7 @@
       "finished_at": "2026-10-19T01:58:48-07:00"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -237,7 +237,7 @@
       "finished_at": "2026-10-19T01:58:48-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -260,7 +260,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -283,7 +283,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -301,7 +301,7 @@
       "finished_at": "2026-10-19T02:45:16-07:00"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -319,7 +319,7 @@
       "finished_at": "2026-10-19T02:45:16-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -342,7 +342,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -365,7 +365,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -388,7 +388,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -411,7 +411,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -430,7 +430,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -449,7 +449,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -468,7 +468,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -487,7 +487,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -506,7 +506,7 @@
       "moves": 1
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -525,7 +525,7 @@
       "moves": 1
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building_ui",
@@ -544,7 +544,7 @@
       "moves": 1
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 2,
       "status": "Interrupted",
       "from": "building_ui",
@@ -566,376 +566,376 @@
   "signatures": [
     {
       "at": "2026-10-16T10:10:17-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:11:52-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-16T10:12:11-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:15:21-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-16T10:15:34-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:17:30-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-16T10:17:46-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:17:46-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:21:23-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-16T10:25:00-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-16T18:33:49-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:39:56-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:40:24-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-16T19:03:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-16T19:09:30-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:09:54-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T11:55:25-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:00:08-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:00:24-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:04:55-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:10:24-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T12:10:25-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T12:14:52-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-17T12:14:56-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-19T01:57:18-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:57:26-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:58:48-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T01:58:48-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T02:06:45-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:06:45-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:11:44-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:13:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:43:00-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:43:01-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:45:15-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T02:45:16-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T02:45:24-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:45:26-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:50:02-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:51:15-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:06:51-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:06:53-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:21:15-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:20:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-21T01:20:30-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:20:31-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:26:07-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:26:33-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:20:50-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:20:52-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:27:41-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:28:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:14:05-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:19:49-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:28:05-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:35:26-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:36:55-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:37:19-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:46:12-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-23T14:51:36-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-23T14:57:56-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 2
     }
@@ -945,26 +945,26 @@
       "id": "ab2c7e10-d957-4b71-a2cf-8e4bb8ecb8b0",
       "number": 1,
       "at": "2026-10-16T10:20:59-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
-      "body": "FYI: I added \"subagents\": 0 to every car in web/src/api/fixtures/snapshot.json (the Ruby shape test in snapshot_spec.rb compares Snapshot#car keys to it). Only that key, nothing else. Snapshot#car now emits subagents (Integer, in flight now). Demo: FANNED = 001.00/rey-frontend (the car you set to 2 in board.json) cycles 3,1,0 every 4 ticks, period 12 ticks; all other cars 0. See contract.md.",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "FYI: I added \"subagents\": 0 to every car in web/src/api/fixtures/snapshot.json (the Ruby shape test in snapshot_spec.rb compares Snapshot#car keys to it). Only that key, nothing else. Snapshot#car now emits subagents (Integer, in flight now). Demo: FANNED = 001.00/frontend-coder (the car you set to 2 in board.json) cycles 3,1,0 every 4 ticks, period 12 ticks; all other cars 0. See contract.md.",
       "read": "yes"
     },
     {
       "id": "599a6cef-dee9-4ffa-916d-8590c2a76869",
       "number": 2,
       "at": "2026-10-16T10:21:23-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
-      "body": "Front end done. types.ts, sample.ts, Car.tsx, board.css, Car.test.tsx (labels/lines/cap/absent field), subagents.cy.ts. I also added subagents to fixtures/board.json (typecheck needs it; 2 on 001.00/rey-frontend). Not run: Cypress e2e. Rubocop: 4 offenses in your dispatcher_spec.rb:331-332 and executor_spec.rb:730; please fix.",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "Front end done. types.ts, sample.ts, Car.tsx, board.css, Car.test.tsx (labels/lines/cap/absent field), subagents.cy.ts. I also added subagents to fixtures/board.json (typecheck needs it; 2 on 001.00/frontend-coder). Not run: Cypress e2e. Rubocop: 4 offenses in your dispatcher_spec.rb:331-332 and executor_spec.rb:730; please fix.",
       "read": "yes"
     },
     {
       "id": "6aa5f826-2356-4597-89b3-6943e482f367",
       "number": 3,
       "at": "2026-10-16T10:24:07-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done: B1-B5. Fixed the 4 rubocop offenses. bundle exec rspec 3095 examples 0 failures; rubocop 0 offenses. Running the Cypress integration proof now (E2E_PORT=11180, 11100 is taken by another openlanes web); results go in pull-requests.md.",
       "read": "yes"
     },
@@ -972,8 +972,8 @@
       "id": "5da97540-9040-456f-a048-015a4564f81e",
       "number": 4,
       "at": "2026-10-16T18:40:24-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done. F1: model.test.ts (sampleCar.subagents). F2: Car.test.tsx (0/1/3/5 lines, class, labels). F3: subagents.cy.ts, passed in your bin/web-e2e run. typecheck, lint, 361 vitest pass.",
       "read": "yes"
     },
@@ -981,8 +981,8 @@
       "id": "d05bc96f-e229-4721-b999-14acb8706c09",
       "number": 5,
       "at": "2026-10-16T19:09:53-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done. F1/F2: Car.test.tsx (0,1,3,5 lines; labels; no label at 0/absent). F3: subagents.cy.ts, 2/2 in your bin/web-e2e run. typecheck, lint, vitest 361 pass.",
       "read": "yes"
     },
@@ -990,8 +990,8 @@
       "id": "65bb5e17-815a-46c3-bd58-b19f3619cc83",
       "number": 6,
       "at": "2026-10-17T11:56:23-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Contract amended after the rebase: car.subagents is string[] (names in flight; count = length; [] when none), matching main's PR #55. Demo FAN is 3 names, 1, [] per 4 ticks. openapi.yaml updated. Your Car.tsx already counts subagents?.length, so nothing to change on your side. Back end done; running the integration proof now.",
       "read": "no"
     },
@@ -999,8 +999,8 @@
       "id": "e692727a-d5df-46ef-8b52-282aabbcddde",
       "number": 7,
       "at": "2026-10-17T12:04:54-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done after rebase. F1-F3 verified: Car.test.tsx covers lines/labels per count, subagents.cy.ts covers the demo cycle. vitest 386 pass, rspec 3559/0 failures, rubocop clean.",
       "read": "yes"
     },
@@ -1008,8 +1008,8 @@
       "id": "87ca8a51-b853-46cc-bc01-144f04de3a9a",
       "number": 8,
       "at": "2026-10-17T12:14:55-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Round 2: back end unchanged and done. rspec 3559/0, rubocop clean, bin/web-e2e 25/25 (subagents.cy.ts 2/2).",
       "read": "no"
     },
@@ -1018,7 +1018,7 @@
       "number": 9,
       "at": "2026-10-19T01:58:48-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "yes"
     },
@@ -1027,7 +1027,7 @@
       "number": 10,
       "at": "2026-10-19T01:58:48-07:00",
       "from": "openlanes",
-      "to": "rey-frontend",
+      "to": "frontend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     },
@@ -1035,8 +1035,8 @@
       "id": "2b90afcd-0bd1-4977-8cf6-75289e24ca85",
       "number": 11,
       "at": "2026-10-19T02:11:43-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done; re-verified after resume: npm 447 tests, rspec 3903/0, rubocop clean. Your bin/web-e2e 25/25 is the integration proof.",
       "read": "yes"
     },
@@ -1044,8 +1044,8 @@
       "id": "dcb10689-3bdd-4c23-b94a-31199c8b82bc",
       "number": 12,
       "at": "2026-10-19T02:13:02-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Resumed round 1: back end unchanged and done. rspec 3903/0, rubocop clean, bin/web-e2e 27/27 (subagents.cy.ts 2/2).",
       "read": "no"
     },
@@ -1054,7 +1054,7 @@
       "number": 13,
       "at": "2026-10-19T02:45:15-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "yes"
     },
@@ -1063,7 +1063,7 @@
       "number": 14,
       "at": "2026-10-19T02:45:16-07:00",
       "from": "openlanes",
-      "to": "rey-frontend",
+      "to": "frontend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     },
@@ -1071,8 +1071,8 @@
       "id": "fcaec2b5-4646-41ad-a2f1-dc700ce6eca4",
       "number": 15,
       "at": "2026-10-19T02:50:02-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done, F1-F3. Car.test.tsx proves the stack-line count, class and labels; subagents.cy.ts (your 2/2 run) proves the demo cycle. npm test 450/0, rspec 3908/0, rubocop clean.",
       "read": "no"
     },
@@ -1080,8 +1080,8 @@
       "id": "db03d0d5-1f26-43e1-8c4b-eb44694c8f81",
       "number": 16,
       "at": "2026-10-19T02:51:14-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done, re-verified on fd58a1f8: rspec 3908/0, rubocop clean, bin/web-e2e 27/27 incl. subagents 2/2. Recorded in pull-requests.md.",
       "read": "no"
     },
@@ -1089,8 +1089,8 @@
       "id": "7725e076-30c5-405d-b2c4-d9dd731e802b",
       "number": 17,
       "at": "2026-10-20T17:21:15-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done on 0c36052d: npm test 450/0, rspec 3999/0 (one unidentified flake on first run), rubocop clean. Car.test.tsx and your subagents.cy.ts cover the criteria.",
       "read": "yes"
     },
@@ -1099,7 +1099,7 @@
       "number": 18,
       "at": "2026-10-21T01:20:02-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "yes"
     },
@@ -1107,8 +1107,8 @@
       "id": "cfad856f-0a5f-403a-8466-deebe82c8099",
       "number": 19,
       "at": "2026-10-21T01:26:06-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done, unchanged on 0c36052d: npm test 450/0, rspec 3999/0, rubocop clean.",
       "read": "no"
     },
@@ -1116,8 +1116,8 @@
       "id": "d9b05e90-a1f7-4b19-9c91-b35f4deec7a9",
       "number": 20,
       "at": "2026-10-21T01:26:32-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done, re-verified on 0c36052d: rspec 3999/0, rubocop clean, bin/web-e2e 27/27 incl. subagents 2/2. The flake you saw is a TOCTOU in Plans::Subject#read (blocked.md drained between file? and File.read); noted in pull-requests.md, out of scope.",
       "read": "no"
     },
@@ -1125,8 +1125,8 @@
       "id": "b73ba5c2-9671-4346-8f9b-620448538848",
       "number": 21,
       "at": "2026-10-21T21:27:40-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done on 7b246298: npm test 484/0, rspec 4174/0, rubocop clean.",
       "read": "no"
     },
@@ -1134,8 +1134,8 @@
       "id": "f2f8a431-67e6-49be-9b9b-06ef46740467",
       "number": 22,
       "at": "2026-10-21T21:28:59-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done, re-verified on 7b246298: rspec 4174/0, rubocop clean, bin/web-e2e 34/34 incl. subagents 2/2. Recorded in pull-requests.md.",
       "read": "no"
     },
@@ -1143,8 +1143,8 @@
       "id": "fb4e17da-8e60-4467-b4d1-d9093de1c335",
       "number": 23,
       "at": "2026-10-23T14:28:05-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done, re-verified on f8f950c3: rspec 4210/0/0 pending (against a temp Redis; 6379 is down), rubocop clean, bin/web-e2e 34/34 incl. subagents 2/2. Recorded in pull-requests.md.",
       "read": "no"
     },
@@ -1152,8 +1152,8 @@
       "id": "79899b38-ec06-48cc-9401-28620533536e",
       "number": 24,
       "at": "2026-10-23T14:35:25-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done on f8f950c3: npm test 487/0, rspec 4210/0 (45 pending), rubocop clean. The pendings are your control-room integration specs self-skipping: Redis does not answer at localhost:6379/11 in my sandbox. just web-build cleared the web/dist reason. Worth a look if you can reach Redis.",
       "read": "no"
     },
@@ -1161,8 +1161,8 @@
       "id": "83b71e67-2215-4d12-8ce6-c019ba9ff9e2",
       "number": 25,
       "at": "2026-10-23T14:36:55-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Ran bin/web-e2e myself on f8f950c3: 33/34. subagents.cy.ts 2/2 passes. One failure in chat.cy.ts, which you had green at 34/34 on 7b246298 — flaky or environment here; I ran out of time to diagnose. Please confirm before review. Recorded in pull-requests.md.",
       "read": "no"
     },
@@ -1170,8 +1170,8 @@
       "id": "cf516bdf-dab8-4f51-80da-a502edc48f12",
       "number": 26,
       "at": "2026-10-23T14:46:11-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Diagnosed the chat.cy.ts failure (reproduced twice, 33/34). The page never lists the live peer: header shows the fixture's sam@ci-runner-2 and no 'Chat with demo@second-machine' button, though /api/session on the peer answers correctly. Our branch touches no presence/session/header code; the rebase onto cdb57836 brought plan 022.00, which changed live/session.rb, publisher.rb, snapshot.rb and Header.tsx. Likely a main-side regression from 022.00, not ours. Full writeup in pull-requests.md. subagents.cy.ts still 2/2.",
       "read": "no"
     },
@@ -1179,21 +1179,21 @@
       "id": "e26217ee-5386-490c-a0f5-b6f0e0849ca7",
       "number": 27,
       "at": "2026-10-23T14:57:56-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Isolated the chat.cy.ts failure: clean origin/main (cdb57836), our branch absent, fails the identical assertion (32 tests, 31 passing, chat 3/4). So it is main's, not ours, and plan 022.00 remains the suspect. Temp worktree removed. Round 2 checks: npm test 487/0, rspec 4210/0 (45 pending), rubocop clean. Writeup in pull-requests.md.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-21T01:20:02-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "harness died; last ledger line: Started, round 1"
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "source": "harness",
       "at": "2026-10-19T02:45:16-07:00",
       "round": 1,
@@ -1204,7 +1204,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -1217,7 +1217,7 @@
     },
     {
       "number": 2,
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -1230,7 +1230,7 @@
     },
     {
       "number": 3,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 2,
       "limit": "rounds",
@@ -1243,7 +1243,7 @@
     },
     {
       "number": 4,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "time",
@@ -1253,7 +1253,7 @@
     },
     {
       "number": 5,
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "state": "building",
       "round": 1,
       "limit": "time",
@@ -1263,7 +1263,7 @@
     },
     {
       "number": 6,
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "state": "building_ui",
       "round": 1,
       "limit": "rounds",
@@ -1276,7 +1276,7 @@
     },
     {
       "number": 7,
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "state": "building_ui",
       "round": 2,
       "limit": "rounds",
@@ -1284,7 +1284,7 @@
     }
   ],
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -1300,11 +1300,11 @@
             },
             {
               "kind": "note",
-              "text": "alock refused plan folder: harness (pid 22972) holds .plans/019.00.../** with intent 'luke-backend on 019.00'; wrote pull-requests.md under that parent claim"
+              "text": "alock refused plan folder: harness (pid 22972) holds .plans/019.00.../** with intent 'backend-coder on 019.00'; wrote pull-requests.md under that parent claim"
             },
             {
               "kind": "done",
-              "text": "Mailed rey (#12) back end done; signed Completed round 1"
+              "text": "Mailed frontend-coder (#12) back end done; signed Completed round 1"
             }
           ]
         },
@@ -1326,7 +1326,7 @@
             },
             {
               "kind": "done",
-              "text": "Mailed rey (#16) back end done; signed Completed round 1"
+              "text": "Mailed frontend-coder (#16) back end done; signed Completed round 1"
             }
           ]
         },
@@ -1344,7 +1344,7 @@
             },
             {
               "kind": "note",
-              "text": "Flaky integration specs (restart_spec, luthen-rael staying run): TOCTOU in Plans::Subject#read subject.rb:31, blocked.md drained between file? and File.read -> ENOENT. Out of scope; documented in pull-requests.md"
+              "text": "Flaky integration specs (restart_spec, planner staying run): TOCTOU in Plans::Subject#read subject.rb:31, blocked.md drained between file? and File.read -> ENOENT. Out of scope; documented in pull-requests.md"
             },
             {
               "kind": "note",
@@ -1352,7 +1352,7 @@
             },
             {
               "kind": "done",
-              "text": "Mailed rey (#20) back end done; signed Completed round 1"
+              "text": "Mailed frontend-coder (#20) back end done; signed Completed round 1"
             }
           ]
         },
@@ -1370,11 +1370,11 @@
             },
             {
               "kind": "decision",
-              "text": "Skipped alock release-all: luke-backend sessions on 008.01/014.00/018.00/020.01 share the AGENT_ID, so release-all strips their locks (round 3 freed lib/openlanes/apps/** that way). Acquired nothing this round, so nothing to release"
+              "text": "Skipped alock release-all: backend-coder sessions on 008.01/014.00/018.00/020.01 share the AGENT_ID, so release-all strips their locks (round 3 freed lib/openlanes/apps/** that way). Acquired nothing this round, so nothing to release"
             },
             {
               "kind": "done",
-              "text": "Mailed rey (#22) back end done; signed Completed round 1"
+              "text": "Mailed frontend-coder (#22) back end done; signed Completed round 1"
             }
           ]
         },
@@ -1396,13 +1396,13 @@
             },
             {
               "kind": "done",
-              "text": "Mailed rey (#23) back end done; signed Completed round 1. Took no locks, skipped release-all per entry 16"
+              "text": "Mailed frontend-coder (#23) back end done; signed Completed round 1. Took no locks, skipped release-all per entry 16"
             }
           ]
         }
       }
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -1458,7 +1458,7 @@
             },
             {
               "kind": "todo",
-              "text": "bin/web-e2e on f8f950c3 gave 33/34: chat.cy.ts has one failure, which luke had green at 34/34 on 7b246298. Not a unit of this plan; needs confirming before review."
+              "text": "bin/web-e2e on f8f950c3 gave 33/34: chat.cy.ts has one failure, which backend-coder had green at 34/34 on 7b246298. Not a unit of this plan; needs confirming before review."
             }
           ]
         },

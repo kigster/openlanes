@@ -406,10 +406,10 @@ RSpec.describe OpenLanes::Vcs::Worktree do
 
     it "keeps a checkout somebody holds a lock in" do
       tip = commit(checkout.path, "household.rb", "class Household; end\n")
-      held = ->(path) { path == checkout.path ? "luke-backend (fixing a spec)" : nil }
+      held = ->(path) { path == checkout.path ? "backend-coder (fixing a spec)" : nil }
 
       expect(worktrees.retire(checkout.path, merge_commit: tip, base: "main", held:).reason)
-        .to eq("luke-backend (fixing a spec) holds a lock in it")
+        .to eq("backend-coder (fixing a spec) holds a lock in it")
     end
 
     it "keeps a checkout when the merge commit cannot be found" do

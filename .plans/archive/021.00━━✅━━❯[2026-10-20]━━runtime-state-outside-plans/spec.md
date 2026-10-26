@@ -201,10 +201,10 @@ Each item is checked by the named spec.
 
 | Item | Half |
 | --- | --- |
-| 1, 2, 3, 4, 5, 8, 9, 10, 11 | Back end (`luke-backend`): `engine/`, `plans/`, `lifecycle/`, schema |
-| 6 | Both: readers in `engine/` and `lifecycle/` are back end; `presentation/reporter.rb` and `live/snapshot.rb` are the displays (`rey-frontend`) |
-| 7 | Front end (`rey-frontend`) renders "held on <host> since <time>"; back end supplies the host and start time |
-| 12 | Back end writes the docs; `rey-frontend` has nothing to build |
+| 1, 2, 3, 4, 5, 8, 9, 10, 11 | Back end (`backend-coder`): `engine/`, `plans/`, `lifecycle/`, schema |
+| 6 | Both: readers in `engine/` and `lifecycle/` are back end; `presentation/reporter.rb` and `live/snapshot.rb` are the displays (`frontend-coder`) |
+| 7 | Front end (`frontend-coder`) renders "held on <host> since <time>"; back end supplies the host and start time |
+| 12 | Back end writes the docs; `frontend-coder` has nothing to build |
 
 The pair's contract: `Plans::Lock.read` returns a value with `host`, `pid`, `started_at` and `foreign?`, and the displays only format it.
 

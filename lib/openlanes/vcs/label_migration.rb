@@ -6,10 +6,10 @@ module OpenLanes
     # R3's, once per repository, before anything reads a label in R3's sense.
     #
     # Under M3 `ready-to-merge` was a review verdict, "passed with nothing
-    # open"; under R3 it is chewie-verifier's, and the merge gate reads it as
+    # open"; under R3 it is verifier's, and the merge gate reads it as
     # "verified". Left on a pull request no verifier ever saw, it would be
     # read as a verification that never happened. So it goes back to
-    # `review-approved`, and a pull request chewie did verify earns it again
+    # `review-approved`, and a pull request verifier did verify earns it again
     # from the coverage gate: an ambiguous label is re-checked, never trusted.
     # M3's two other names map straight across ({Plans::ReviewLabel::RENAMED}).
     #
@@ -32,7 +32,7 @@ module OpenLanes
         def to_s = "#{from} → #{to}"
       end
 
-      # M3's chewie verification, kept beside `ready-to-merge` until the end.
+      # M3's verifier verification, kept beside `ready-to-merge` until the end.
       VERIFIED = "ok-to-merge"
 
       STEPS = [

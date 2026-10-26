@@ -19,7 +19,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "#stage!" do
     before do
-      state.stage!(agent: "luke-backend",
+      state.stage!(agent: "backend-coder",
         round: 1,
         status: "Started",
         adapter: "claude",
@@ -27,7 +27,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
         effort: "high",
         started_at: Time.now.iso8601,
         run: { "pid" => 42, "host" => "box" })
-      state.stage!(agent: "luke-backend",
+      state.stage!(agent: "backend-coder",
         round: 1,
         status: "Completed",
         up: 10,
@@ -38,7 +38,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
     it "keeps one record per agent per round, from dispatch to settlement" do
       expect(state.stages.map { |s| s.values_at("agent", "round", "status", "model") })
-        .to eq([["luke-backend", 1, "Completed", "opus"]])
+        .to eq([["backend-coder", 1, "Completed", "opus"]])
     end
 
     it "names the plan it belongs to" do
@@ -52,15 +52,15 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "#sign!" do
     let(:reading) do
-      state.sign!(agent: "yoda-writer", round: 1, status: "Completed", next_agent: "luthen-rael-planner", note: "done")
+      state.sign!(agent: "spec-writer", round: 1, status: "Completed", next_agent: "planner", note: "done")
       state.ledger
     end
 
     it "records a signature the ledger reads back as an entry with its handoff" do
       expect([reading.entries.first.to_h.slice(:agent, :status, :round, :note, :file),
               OpenLanes::Plans::Ledger.handoff_after(reading, reading.entries.first)&.next])
-        .to eq([{ agent: "yoda-writer", status: "Completed", round: 1, note: "done", file: "state.json" },
-                "luthen-rael-planner"])
+        .to eq([{ agent: "spec-writer", status: "Completed", round: 1, note: "done", file: "state.json" },
+                "planner"])
     end
 
     it "refuses a status outside the ledger's vocabulary" do
@@ -73,19 +73,19 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "refuses an agent name with spaces" do
-      expect { state.sign!(agent: "luke backend", round: 1, status: "Started") }.to raise_error(OpenLanes::Error)
+      expect { state.sign!(agent: "backend-coder backend", round: 1, status: "Started") }.to raise_error(OpenLanes::Error)
     end
 
     it "is read by the ledger with the plan's documents" do
-      state.sign!(agent: "luke-backend", round: 1, status: "Completed")
-      expect(OpenLanes::Plans::Ledger.last_for(OpenLanes::Plans::Ledger.read(folder, %w[plan.md]), "luke-backend").file)
+      state.sign!(agent: "backend-coder", round: 1, status: "Completed")
+      expect(OpenLanes::Plans::Ledger.last_for(OpenLanes::Plans::Ledger.read(folder, %w[plan.md]), "backend-coder").file)
         .to eq("state.json")
     end
   end
 
   describe "#rule!" do
     it "reads as no rulings on a state.json written before rulings existed" do
-      state.sign!(agent: "luke-backend", round: 1, status: "Started")
+      state.sign!(agent: "backend-coder", round: 1, status: "Started")
       expect([written.key?("rulings"), state.rulings]).to eq([false, []])
     end
 
@@ -129,15 +129,15 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     # find its own message rather than say the same thing again.
     context "when one command's message is appended twice" do
       before do
-        state.message!(from: "human", to: "luke-backend", body: "one", command: "01JM")
-        state.message!(from: "human", to: "rey-frontend", body: "one", command: "01JM")
+        state.message!(from: "human", to: "backend-coder", body: "one", command: "01JM")
+        state.message!(from: "human", to: "frontend-coder", body: "one", command: "01JM")
       end
 
-      let!(:again) { state.message!(from: "human", to: "luke-backend", body: "one", command: "01JM") }
+      let!(:again) { state.message!(from: "human", to: "backend-coder", body: "one", command: "01JM") }
 
       it "appends nothing the second time to the same reader, and answers with the first" do
         aggregate_failures do
-          expect(state.messages.map { |m| [m["to"], m["command"]] }).to eq([%w[luke-backend 01JM], %w[rey-frontend 01JM]])
+          expect(state.messages.map { |m| [m["to"], m["command"]] }).to eq([%w[backend-coder 01JM], %w[frontend-coder 01JM]])
           expect(again["number"]).to eq(1)
           expect(schema.validate(written).map { |e| e["error"] }).to eq([])
         end
@@ -262,7 +262,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   describe "a stage written by this release" do
     it "carries no run, and the schema accepts it" do
-      state.stage!(agent: "luke-backend", round: 1, status: "Started", started_at: Time.now.iso8601)
+      state.stage!(agent: "backend-coder", round: 1, status: "Started", started_at: Time.now.iso8601)
       aggregate_failures do
         expect(written["stages"].flat_map(&:keys)).not_to include("run")
         expect(schema.validate(written).map { |e| e["error"] }).to eq([])
@@ -275,13 +275,13 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   # must still resume.
   describe "#stranded" do
     before do
-      state.stage!(agent: "luke-backend", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })
-      state.stage!(agent: "rey-frontend", round: 1, status: "Started", run: { "pid" => Process.pid, "host" => Socket.gethostname })
-      state.stage!(agent: "hansolo-reviewer", round: 1, status: "Completed", run: { "pid" => 999_999, "host" => Socket.gethostname })
+      state.stage!(agent: "backend-coder", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })
+      state.stage!(agent: "frontend-coder", round: 1, status: "Started", run: { "pid" => Process.pid, "host" => Socket.gethostname })
+      state.stage!(agent: "staff-reviewer", round: 1, status: "Completed", run: { "pid" => 999_999, "host" => Socket.gethostname })
     end
 
     it "reports a Started stage whose harness is gone, and not this run's own" do
-      expect(state.stranded(alive: ->(_pid) { false }).map { |s| s["agent"] }).to eq(%w[luke-backend])
+      expect(state.stranded(alive: ->(_pid) { false }).map { |s| s["agent"] }).to eq(%w[backend-coder])
     end
 
     it "leaves a stage whose harness is still alive" do
@@ -289,7 +289,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "asks the operating system by default" do
-      expect(state.stranded.map { |s| s["agent"] }).to eq(%w[luke-backend])
+      expect(state.stranded.map { |s| s["agent"] }).to eq(%w[backend-coder])
     end
   end
 
@@ -315,7 +315,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
 
   context "when the folder is renamed" do
     let(:moved) do
-      state.sign!(agent: "luke-backend", round: 1, status: "Started")
+      state.sign!(agent: "backend-coder", round: 1, status: "Started")
       plan = OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first
       plan.rename_to(OpenLanes::Plans.status(:building_ui))
       described_class.for(plan.feature.path)
@@ -340,34 +340,34 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     def entry(source, round, **) = OpenLanes::Plans::LastKnownState.new(source:, round:, status: "Interrupted", **)
 
     it "is empty when no agent was ever interrupted" do
-      expect([state.last_known_states, state.last_known("luke-backend")]).to eq([{}, nil])
+      expect([state.last_known_states, state.last_known("backend-coder")]).to eq([{}, nil])
     end
 
     it "keeps one entry per agent, the last one written" do
-      state.record_last_known("luke-backend", entry("agent", 1, next_step: "first"))
-      state.record_last_known("luke-backend", entry("agent", 3, next_step: "third"))
+      state.record_last_known("backend-coder", entry("agent", 1, next_step: "first"))
+      state.record_last_known("backend-coder", entry("agent", 3, next_step: "third"))
 
       aggregate_failures do
-        expect(written["last-known-state"].keys).to eq(["luke-backend"])
-        expect(state.last_known("luke-backend").next_step).to eq("third")
+        expect(written["last-known-state"].keys).to eq(["backend-coder"])
+        expect(state.last_known("backend-coder").next_step).to eq("third")
       end
     end
 
     it "keeps the agent entry when the harness writes for the same round" do
-      state.record_last_known("luke-backend", entry("agent", 1, next_step: "run rspec"))
-      kept = state.record_last_known("luke-backend", entry("harness", 1, note: "harness died"))
+      state.record_last_known("backend-coder", entry("agent", 1, next_step: "run rspec"))
+      kept = state.record_last_known("backend-coder", entry("harness", 1, note: "harness died"))
 
       aggregate_failures do
         expect(kept.source).to eq("agent")
-        expect(state.last_known("luke-backend").next_step).to eq("run rspec")
+        expect(state.last_known("backend-coder").next_step).to eq("run rspec")
       end
     end
 
     it "lets an agent entry replace a harness one" do
-      state.record_last_known("rey-frontend", entry("harness", 1, note: "harness died"))
-      state.record_last_known("rey-frontend", entry("agent", 1, done: ["F1"]))
+      state.record_last_known("frontend-coder", entry("harness", 1, note: "harness died"))
+      state.record_last_known("frontend-coder", entry("agent", 1, done: ["F1"]))
 
-      expect(state.last_known("rey-frontend").source).to eq("agent")
+      expect(state.last_known("frontend-coder").source).to eq("agent")
     end
 
     it "refuses an agent name that is not one token" do
@@ -375,25 +375,25 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "writes both shapes in a form the schema accepts" do
-      state.record_last_known("luke-backend",
+      state.record_last_known("backend-coder",
         entry("agent", 1, done: ["B1"], remaining: ["B2"], next_step: "go", files_touched: ["a.rb"]))
-      state.record_last_known("rey-frontend", entry("harness", 1, note: "harness died"))
+      state.record_last_known("frontend-coder", entry("harness", 1, note: "harness died"))
 
       expect(schema.validate(written).map { |e| e["error"] }).to eq([])
     end
 
     %w[pid tokens exit].each do |field|
       it "rejects an entry carrying machine detail: #{field}" do
-        state.record_last_known("luke-backend", entry("agent", 1))
+        state.record_last_known("backend-coder", entry("agent", 1))
         data = written
-        data["last-known-state"]["luke-backend"][field] = 1
+        data["last-known-state"]["backend-coder"][field] = 1
 
         expect(schema.validate(data).to_a).not_to be_empty
       end
     end
 
     it "accepts a document written before the section existed" do
-      state.sign!(agent: "luke-backend", round: 1, status: "Started")
+      state.sign!(agent: "backend-coder", round: 1, status: "Started")
 
       aggregate_failures do
         expect(written).not_to have_key("last-known-state")

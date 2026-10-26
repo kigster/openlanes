@@ -13,7 +13,7 @@
 ## Global constraints
 
 - Every Ruby command runs as `eval "$(rbenv init -)" && bundle exec ...`. There is no `.ruby-version` guard in the shell.
-- Baseline before this work: `867 examples, 9 failures, 3 pending`. The 9 failures are all in `spec/agentilda/runner_spec.rb` "publishing once the agent renames its own folder" and `spec/agentilda/cli/run_spec.rb:196`, caused by nobody handling 🎨 since luke and rey were paired. Task 10 replaces those examples. Any other failure is yours.
+- Baseline before this work: `867 examples, 9 failures, 3 pending`. The 9 failures are all in `spec/agentilda/runner_spec.rb` "publishing once the agent renames its own folder" and `spec/agentilda/cli/run_spec.rb:196`, caused by nobody handling 🎨 since backend-coder and frontend-coder were paired. Task 10 replaces those examples. Any other failure is yours.
 - `standard` style. Endless methods, `Data.define` for values, YARD on public methods, comments that name the failure they prevent.
 - STDOUT carries the deliverable, STDERR carries progress. Nothing new prints to STDOUT except the closing report.
 - No em dashes, no unicode quotes, in code comments, prompts, docs or ledger text. Use a plain hyphen.
@@ -21,7 +21,7 @@
 - The ledger grammar (A1): one `> [!NOTE]` block per agent per document, one entry per line, `[<ts>] [ agent: <name>   status: <Started|Completed|Almost completed|Interrupted|Blocked>, round N (<note>) ]`, and `[<ts>] [ next: <name> ]` only after `Completed`. Timestamp format `%Y-%m-%d %I:%M:%S %p %Z`.
 - The harness is the only thing that renames a plan folder (A4). No agent prompt may say `git mv`.
 - Successors start only after the predecessor's process has exited (A6).
-- Models and efforts (A18): leah haiku/xhigh, yoda sonnet/xhigh, luthen-rael opus/xhigh, luke and rey fable/xhigh, hansolo opus/high, lando sonnet. Timeouts (A13): yoda 300, luthen-rael 600, luke and rey 1200, hansolo 300, leah 1200, lando unset.
+- Models and efforts (A18): researcher haiku/xhigh, spec-writer sonnet/xhigh, planner opus/xhigh, backend-coder and frontend-coder fable/xhigh, staff-reviewer opus/high, unblocker sonnet. Timeouts (A13): spec-writer 300, planner 600, backend-coder and frontend-coder 1200, staff-reviewer 300, researcher 1200, unblocker unset.
 - Kill (A16): `STOP` into the control file, 15 seconds, `SIGKILL`. Timeout (A9): `WARN` at T-10m and T-5m, `WRAP_UP` at T-1m, `STOP` at T-0, `SIGKILL` at T+60s.
 - After a kill or timeout (A17) the harness checks the invariant of the state the agent was advancing to; when it holds the harness signs `Completed` for the agent with a bold `Interrupted` line above it.
 - Commit after every task with a subject of 50 characters or fewer, imperative mood, the body explaining why. Commits end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` and the session line the harness supplies.
@@ -80,12 +80,12 @@ RSpec.describe Agentilda::Ledger do
 
       ## Research
 
-      > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
+      > [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Started, round 1 ]
 
       What was found.
 
-      > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-      > [2026-09-04 11:44:04 AM PDT] [ next: yoda-writer ]
+      > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+      > [2026-09-04 11:44:04 AM PDT] [ next: spec-writer ]
     MARKDOWN
   end
 
@@ -94,12 +94,12 @@ RSpec.describe Agentilda::Ledger do
 
     it "reads every entry in document order, with its file and line" do
       expect(reading.entries.map { |e| [e.agent, e.status, e.round, e.line] })
-        .to eq([["leah-researcher", "Started", 1, 7], ["leah-researcher", "Completed", 1, 13]])
+        .to eq([["researcher", "Started", 1, 7], ["researcher", "Completed", 1, 13]])
       expect(reading.entries.map(&:file).uniq).to eq(["spec.md"])
     end
 
     it "reads the handoff as its own kind of line" do
-      expect(reading.handoffs.map { |h| [h.next, h.line] }).to eq([["yoda-writer", 14]])
+      expect(reading.handoffs.map { |h| [h.next, h.line] }).to eq([["spec-writer", 14]])
     end
 
     it "parses the timestamp into a Time" do
@@ -108,13 +108,13 @@ RSpec.describe Agentilda::Ledger do
     end
 
     it "keeps a parenthesised note" do
-      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: hansolo-reviewer   status: Completed, round 2 (rejected 1/2) ]"
+      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: staff-reviewer   status: Completed, round 2 (rejected 1/2) ]"
       entry = described_class.parse(text, file: "pull-requests.md").entries.first
       expect(entry.note).to eq("rejected 1/2")
     end
 
     it "accepts a bold status, and says the entry was bold" do
-      text = "> [2026-09-04 11:52:07 AM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (killed by harness after 15s grace)** ]"
+      text = "> [2026-09-04 11:52:07 AM PDT] [ agent: researcher   status: **Interrupted, round 1 (killed by harness after 15s grace)** ]"
       entry = described_class.parse(text, file: "spec.md").entries.first
       aggregate_failures do
         expect(entry.status).to eq("Interrupted")
@@ -127,7 +127,7 @@ RSpec.describe Agentilda::Ledger do
     # line to skip: an agent that writes "Done" has said nothing the
     # harness can act on, and silence here would look like a stall.
     it "reports a line that tries to be an entry and fails as a problem, not as nothing" do
-      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Done, round 1 ]"
+      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Done, round 1 ]"
       reading = described_class.parse(text, file: "spec.md")
       aggregate_failures do
         expect(reading.entries).to be_empty
@@ -152,19 +152,19 @@ RSpec.describe Agentilda::Ledger do
 
   describe ".last_for" do
     it "returns the agent's latest entry by timestamp, then by file order, then by line" do
-      early = "> [2026-09-04 11:00:00 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]"
-      late = "> [2026-09-04 11:30:00 AM PDT] [ agent: luke-backend   status: Started, round 1 ]"
+      early = "> [2026-09-04 11:00:00 AM PDT] [ agent: backend-coder   status: Completed, round 1 ]"
+      late = "> [2026-09-04 11:30:00 AM PDT] [ agent: backend-coder   status: Started, round 1 ]"
       reading = described_class::Reading.new(
         entries: described_class.parse(late, file: "pull-requests.md").entries +
           described_class.parse(early, file: "plan-backend.md").entries,
         handoffs: [], problems: []
       )
-      expect(described_class.last_for(reading, "luke-backend").status).to eq("Started")
+      expect(described_class.last_for(reading, "backend-coder").status).to eq("Started")
     end
 
     it "is nil for an agent that never wrote" do
       reading = described_class.parse(document, file: "spec.md")
-      expect(described_class.last_for(reading, "yoda-writer")).to be_nil
+      expect(described_class.last_for(reading, "spec-writer")).to be_nil
     end
   end
 
@@ -172,14 +172,14 @@ RSpec.describe Agentilda::Ledger do
     it "finds the next: line directly after a Completed entry in the same file" do
       reading = described_class.parse(document, file: "spec.md")
       completed = reading.entries.last
-      expect(described_class.handoff_after(reading, completed).next).to eq("yoda-writer")
+      expect(described_class.handoff_after(reading, completed).next).to eq("spec-writer")
     end
 
     it "does not attach a next: line that follows a different entry" do
       text = <<~MD
-        > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-        > [2026-09-04 11:50:00 AM PDT] [ agent: yoda-writer   status: Started, round 1 ]
-        > [2026-09-04 11:50:01 AM PDT] [ next: luthen-rael-planner ]
+        > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+        > [2026-09-04 11:50:00 AM PDT] [ agent: spec-writer   status: Started, round 1 ]
+        > [2026-09-04 11:50:01 AM PDT] [ next: planner ]
       MD
       reading = described_class.parse(text, file: "spec.md")
       expect(described_class.handoff_after(reading, reading.entries.first)).to be_nil
@@ -188,7 +188,7 @@ RSpec.describe Agentilda::Ledger do
 
   describe ".render and .block" do
     it "round-trips an entry through the parser" do
-      entry = described_class::Entry.new(at: Time.new(2026, 9, 4, 11, 29, 20), agent: "leah-researcher",
+      entry = described_class::Entry.new(at: Time.new(2026, 9, 4, 11, 29, 20), agent: "researcher",
         status: "Started", round: 1, note: nil, file: "spec.md", line: 0, bold: false)
       text = described_class.render(entry)
       back = described_class.parse(text, file: "spec.md").entries.first
@@ -241,9 +241,9 @@ module Agentilda
   #
   #   > [!NOTE]
   #   >
-  #   > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
-  #   > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-  #   > [2026-09-04 11:44:04 AM PDT] [ next: yoda-writer ]
+  #   > [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Started, round 1 ]
+  #   > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+  #   > [2026-09-04 11:44:04 AM PDT] [ next: spec-writer ]
   #
   # The verbs are a closed set. A line that looks like an entry but does not
   # parse is reported as a {Problem}, never dropped, because an agent that
@@ -277,7 +277,7 @@ module Agentilda
     # @!attribute [r] at
     #   @return [Time]
     # @!attribute [r] agent
-    #   @return [String] the definition's name, `leah-researcher`
+    #   @return [String] the definition's name, `researcher`
     # @!attribute [r] status
     #   @return [String] one of {STATUSES}
     # @!attribute [r] round
@@ -473,7 +473,7 @@ ______________________________________________________________________
 **Files:**
 
 - Modify: `lib/agentilda/agent.rb`
-- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/luthen-rael-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (frontmatter only in this task)
+- Modify: `agents/researcher.md`, `agents/spec-writer.md`, `agents/planner.md`, `agents/backend-coder.md`, `agents/frontend-coder.md`, `agents/staff-reviewer.md`, `agents/unblocker.md` (frontmatter only in this task)
 - Test: `spec/agentilda/agents_spec.rb`
 
 **Interfaces:**
@@ -490,11 +490,11 @@ Append to `spec/agentilda/agents_spec.rb`, inside the top-level `describe`:
 
     it "lists the documents each agent signs, in order" do
       aggregate_failures do
-        expect(agents.find("leah-researcher").ledger).to eq(%w[spec.md])
-        expect(agents.find("luke-backend").ledger).to eq(%w[plan-backend.md pull-requests.md])
-        expect(agents.find("rey-frontend").ledger).to eq(%w[plan-frontend.md pull-requests.md])
-        expect(agents.find("hansolo-reviewer").ledger).to eq(%w[pull-requests.md])
-        expect(agents.find("lando-broker").ledger).to eq(%w[plan.md])
+        expect(agents.find("researcher").ledger).to eq(%w[spec.md])
+        expect(agents.find("backend-coder").ledger).to eq(%w[plan-backend.md pull-requests.md])
+        expect(agents.find("frontend-coder").ledger).to eq(%w[plan-frontend.md pull-requests.md])
+        expect(agents.find("staff-reviewer").ledger).to eq(%w[pull-requests.md])
+        expect(agents.find("unblocker").ledger).to eq(%w[plan.md])
       end
     end
 
@@ -510,32 +510,32 @@ Append to `spec/agentilda/agents_spec.rb`, inside the top-level `describe`:
 
     it "reads the model and effort the definitions declare" do
       aggregate_failures do
-        expect(agents.find("leah-researcher").model).to eq("haiku")
-        expect(agents.find("leah-researcher").effort).to eq("xhigh")
-        expect(agents.find("hansolo-reviewer").effort).to eq("high")
-        expect(agents.find("lando-broker").effort).to be_nil
+        expect(agents.find("researcher").model).to eq("haiku")
+        expect(agents.find("researcher").effort).to eq("xhigh")
+        expect(agents.find("staff-reviewer").effort).to eq("high")
+        expect(agents.find("unblocker").effort).to be_nil
       end
     end
 
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
-        "yoda-writer" => 300, "luthen-rael-planner" => 600, "luke-backend" => 1200,
-        "rey-frontend" => 1200, "hansolo-reviewer" => 300, "leah-researcher" => 1200
+        "spec-writer" => 300, "planner" => 600, "backend-coder" => 1200,
+        "frontend-coder" => 1200, "staff-reviewer" => 300, "researcher" => 1200
       )
     end
 
-    it "knows the state luke starts a plan into and the one it holds at while rey is still building" do
-      luke = agents.find("luke-backend")
-      expect([luke.starts_as, luke.holds_at]).to eq(%i[building building_ui])
-      expect(agents.find("rey-frontend").starts_as).to be_nil
+    it "knows the state backend-coder starts a plan into and the one it holds at while frontend-coder is still building" do
+      backend-coder = agents.find("backend-coder")
+      expect([backend-coder.starts_as, backend-coder.holds_at]).to eq(%i[building building_ui])
+      expect(agents.find("frontend-coder").starts_as).to be_nil
     end
 
-    it "gives hansolo in_review as the state a review starts in" do
-      expect(agents.find("hansolo-reviewer").starts_as).to eq(:in_review)
+    it "gives staff-reviewer in_review as the state a review starts in" do
+      expect(agents.find("staff-reviewer").starts_as).to eq(:in_review)
     end
 
     it "strips the name to the role for the screen" do
-      expect(agents.find("luthen-rael-planner").role).to eq("planner")
+      expect(agents.find("planner").role).to eq("planner")
     end
   end
 ```
@@ -615,10 +615,10 @@ Note `rounds: meta["rounds"].to_i.clamp(1, 5)` turns an absent key (`nil.to_i ==
 
 Replace each file's frontmatter (the part between the `---` lines) with the following. Bodies stay untouched in this task.
 
-`agents/leah-researcher.md`:
+`agents/researcher.md`:
 
 ```yaml
-name: leah-researcher
+name: researcher
 description: Researches a topic across many sources at once and expands a bare spec.md into something planners can work from.
 handles: [new]
 advances_to: researched
@@ -631,10 +631,10 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Task, WebSearch, WebFetch]
 writes: [spec.md, blocked.md]
 ```
 
-`agents/yoda-writer.md`:
+`agents/spec-writer.md`:
 
 ```yaml
-name: yoda-writer
+name: spec-writer
 description: Turns a researched spec.md into a complete specification and leaves a blank plan.md for the planner.
 handles: [researched, retroactive]
 advances_to: ready_for_planning
@@ -646,10 +646,10 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Task, Skill, WebSearch, Web
 writes: [spec.md, plan.md, blocked.md]
 ```
 
-`agents/luthen-rael-planner.md`:
+`agents/planner.md`:
 
 ```yaml
-name: luthen-rael-planner
+name: planner
 description: Turns a signed-off specification into concurrently executable work units.
 handles: [ready_for_planning]
 advances_to: planned
@@ -661,11 +661,11 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]
 writes: [plan.md, plan-backend.md, plan-frontend.md, blocked.md]
 ```
 
-`agents/luke-backend.md`:
+`agents/backend-coder.md`:
 
 ```yaml
-name: luke-backend
-description: Builds the back-end half of a plan, paired with rey-frontend working the front-end half at the same time, in the same worktree, toward one joint pull request.
+name: backend-coder
+description: Builds the back-end half of a plan, paired with frontend-coder working the front-end half at the same time, in the same worktree, toward one joint pull request.
 handles: [planned, building, rejected]
 advances_to: ready_for_review
 starts_as: building
@@ -678,11 +678,11 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Task, SendMessage, ListAgen
 writes: ["**/*"]
 ```
 
-`agents/rey-frontend.md`:
+`agents/frontend-coder.md`:
 
 ```yaml
-name: rey-frontend
-description: Builds the front-end half of a plan, paired with luke-backend working the back-end half at the same time, in the same worktree, toward one joint pull request.
+name: frontend-coder
+description: Builds the front-end half of a plan, paired with backend-coder working the back-end half at the same time, in the same worktree, toward one joint pull request.
 handles: [planned, building, rejected]
 advances_to: ready_for_review
 model: fable
@@ -693,10 +693,10 @@ allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, Task, SendMessage, L
 writes: ["**/*"]
 ```
 
-`agents/hansolo-reviewer.md`:
+`agents/staff-reviewer.md`:
 
 ```yaml
-name: hansolo-reviewer
+name: staff-reviewer
 description: Adversarially checks a plan's documents and diff against what was asked.
 handles: [ready_for_review, in_review]
 advances_to: approved
@@ -710,10 +710,10 @@ may: [gh pr review, gh pr comment]
 writes: [rewrite.md, pull-requests.md]
 ```
 
-`agents/lando-broker.md`:
+`agents/unblocker.md`:
 
 ```yaml
-name: lando-broker
+name: unblocker
 description: Folds answered blocks into the documents they were stopping, and retires blocked.md once the last question clears.
 handles: [blocked, product_blocked]
 advances_to: planned
@@ -727,7 +727,7 @@ writes: [spec.md, plan.md, blocked.md]
 
 Run: `eval "$(rbenv init -)" && bundle exec rspec spec/agentilda/agents_spec.rb` Expected: green.
 
-Run: `eval "$(rbenv init -)" && bundle exec rspec` Expected: the executor example "runs the model the agent's frontmatter declares" now fails because yoda is `sonnet`; change its expectation to `["--model", "sonnet"]`. Expected count afterwards: baseline failures only (the 9 named above), plus whichever `runner_spec` examples assume luthen-rael handles `planned`. Leave those; Task 10 rewrites `runner_spec.rb` whole.
+Run: `eval "$(rbenv init -)" && bundle exec rspec` Expected: the executor example "runs the model the agent's frontmatter declares" now fails because spec-writer is `sonnet`; change its expectation to `["--model", "sonnet"]`. Expected count afterwards: baseline failures only (the 9 named above), plus whichever `runner_spec` examples assume planner handles `planned`. Leave those; Task 10 rewrites `runner_spec.rb` whole.
 
 - [ ] **Step 6: Commit**
 
@@ -779,7 +779,7 @@ Append inside `RSpec.describe Agentilda::StateMachine`:
     end
 
     it "treats a plan.md holding only a ledger note as still blank", :tree do
-      note = Agentilda::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: luthen-rael-planner   status: Started, round 1 ]")
+      note = Agentilda::Ledger.block("> [2026-09-04 11:29:20 AM PDT] [ agent: planner   status: Started, round 1 ]")
       path = plans { |t| t.plan "020.00", :ready_for_planning, "q", files: {"spec.md" => spec_body, "plan.md" => note} }
       subject = Agentilda::Tree.new(dir: path).subjects.first
       expect(subject.best_fit.key).to eq(:ready_for_planning)
@@ -791,11 +791,11 @@ Append inside `RSpec.describe Agentilda::StateMachine`:
       expect(subject.best_fit.key).to eq(:planned)
     end
 
-    # The 020.00 transcript: yoda finished, the folder was renamed forward,
+    # The 020.00 transcript: spec-writer finished, the folder was renamed forward,
     # and the resync renamed it straight back because nothing could enter
-    # ⭐️ without a plan.md that only luthen-rael writes. With 📋 between them
-    # the resync leaves yoda's work standing.
-    it "keeps a folder yoda finished at 📋 through a resync", :tree do
+    # ⭐️ without a plan.md that only planner writes. With 📋 between them
+    # the resync leaves spec-writer's work standing.
+    it "keeps a folder spec-writer finished at 📋 through a resync", :tree do
       path = plans { |t|
         t.plan "020.00", :ready_for_planning, "qualified-at", files: {
           "spec.md" => "#{spec_body}\n## Research\n\nFound.\n\n## Goal\n\nShip.\n", "plan.md" => ""
@@ -822,7 +822,7 @@ In `lib/agentilda/status.rb`, after `RESEARCH_CHAPTER`, add:
 
 ```ruby
   # What proves `plan.md` holds a plan rather than the blank file
-  # `yoda-writer` leaves for `luthen-rael-planner`: any section heading. The
+  # `spec-writer` leaves for `planner`: any section heading. The
   # ledger notes are stripped first, so an agent's `Started` line does not
   # count as a plan.
   PLAN_HEADING = /^[ \t]{0,3}\#{1,3}[ \t]+\S/
@@ -857,7 +857,7 @@ In `lib/agentilda/state_machine.rb`:
 
 ```ruby
       # The specification is done and the planner has not started. Entered
-      # by the harness when `yoda-writer` completes; `resync` reaches it on
+      # by the harness when `spec-writer` completes; `resync` reaches it on
       # a blank `plan.md`. Without it ⭐️ Planned required a file only the
       # agent handling ⭐️ Planned writes, and nothing could enter it.
       event :ready_to_plan, guard: :justified? do
@@ -917,26 +917,26 @@ Append to `spec/agentilda/pull_requests_render_spec.rb`:
       expect(described_class.new(dir: plans_root).all.map(&:number)).to eq(["9"])
     end
 
-    # luke and rey sign pull-requests.md before any pull request exists. The
+    # backend-coder and frontend-coder sign pull-requests.md before any pull request exists. The
     # harness then records the pull request it opened, and used to rewrite
     # the file whole, which deleted their signatures.
     it "keeps ledger notes that were in the file before the table" do
-      Agentilda::Ledger.append(path, "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Started, round 1 ]")
+      Agentilda::Ledger.append(path, "> [2026-09-04 11:29:20 AM PDT] [ agent: backend-coder   status: Started, round 1 ]")
       described_class.upsert(path, rows)
       text = File.read(path)
       aggregate_failures do
-        expect(text).to include("agent: luke-backend")
+        expect(text).to include("agent: backend-coder")
         expect(described_class.new(dir: plans_root).all.map(&:number)).to eq(["9"])
       end
     end
 
     it "replaces an existing table in place, keeping what is above and below it" do
-      File.write(path, "# Pull Requests\n\n| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 3 | [old](https://github.com/example/repo/pull/3) | Open 🟡 |\n\n> [!NOTE]\n>\n> [2026-09-04 11:29:20 AM PDT] [ agent: rey-frontend   status: Completed, round 1 ]\n")
+      File.write(path, "# Pull Requests\n\n| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 3 | [old](https://github.com/example/repo/pull/3) | Open 🟡 |\n\n> [!NOTE]\n>\n> [2026-09-04 11:29:20 AM PDT] [ agent: frontend-coder   status: Completed, round 1 ]\n")
       described_class.upsert(path, rows + [{number: 3, title: "old", url: "https://github.com/example/repo/pull/3", state: "Open 🟡", body: ""}])
       text = File.read(path)
       aggregate_failures do
         expect(text.scan("Pull Request Number").size).to eq(1)
-        expect(text).to include("agent: rey-frontend")
+        expect(text).to include("agent: frontend-coder")
         expect(described_class.new(dir: plans_root).all.map(&:number)).to contain_exactly("9", "3")
       end
     end
@@ -953,7 +953,7 @@ In `PullRequests`, after `self.render`:
 
 ```ruby
     # The table alone, for splicing into a file that already says other
-    # things: the ledger blocks luke and rey write before a pull request
+    # things: the ledger blocks backend-coder and frontend-coder write before a pull request
     # exists. Rewriting the whole file deleted their signatures.
     #
     # @param prs [Array<Hash>]
@@ -1422,10 +1422,10 @@ Replace every `described_class.new(root:, command:, ...)` with `described_class.
 ```ruby
   describe "the clock" do
     it "takes the tighter of the agent's own budget and --timeout" do
-      leah = agents.find("leah-researcher") # 1200 in frontmatter
+      researcher = agents.find("researcher") # 1200 in frontmatter
       aggregate_failures do
-        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(leah)).to eq(900)
-        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(leah)).to eq(1200)
+        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(researcher)).to eq(900)
+        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(researcher)).to eq(1200)
       end
     end
 
@@ -1445,19 +1445,19 @@ Replace every `described_class.new(root:, command:, ...)` with `described_class.
     end
 
     it "passes no effort for an agent that declares none" do
-      argv = executor.invocation(agents.find("lando-broker"), subject_plan)
+      argv = executor.invocation(agents.find("unblocker"), subject_plan)
       expect(argv).not_to include("--effort")
     end
   end
 
   describe "the ledger section" do
-    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "luthen-rael-planner")[2] }
+    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "planner")[2] }
 
     it "tells the agent the exact lines to write, with its own name, round and successor" do
       aggregate_failures do
-        expect(prompt).to include("agent: yoda-writer   status: Started, round 2 ]")
-        expect(prompt).to include("agent: yoda-writer   status: Completed, round 2 ]")
-        expect(prompt).to include("[ next: luthen-rael-planner ]")
+        expect(prompt).to include("agent: spec-writer   status: Started, round 2 ]")
+        expect(prompt).to include("agent: spec-writer   status: Completed, round 2 ]")
+        expect(prompt).to include("[ next: planner ]")
         expect(prompt).to include("spec.md")
       end
     end
@@ -1853,26 +1853,26 @@ RSpec.describe Agentilda::StateFile, :tree do
 
   it "starts empty, saves atomically, and loads what it saved" do
     state.begin_run!(root: "/repo")
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Started", model: "haiku")
+    state.record("001.00", agent: "researcher", round: 1, status: "Started", model: "haiku")
     state.save
     loaded = described_class.new(path:, pid: 4242).load
     aggregate_failures do
-      expect(loaded.stages("001.00").first).to include("agent" => "leah-researcher", "status" => "Started", "model" => "haiku")
+      expect(loaded.stages("001.00").first).to include("agent" => "researcher", "status" => "Started", "model" => "haiku")
       expect(JSON.parse(File.read(path)).dig("run", "pid")).to eq(4242)
       expect(Dir.children(File.dirname(path))).to eq([described_class::FILENAME])
     end
   end
 
   it "merges later fields into the same stage rather than adding a second one" do
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Started")
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Completed", up: 12)
+    state.record("001.00", agent: "researcher", round: 1, status: "Started")
+    state.record("001.00", agent: "researcher", round: 1, status: "Completed", up: 12)
     expect(state.stages("001.00").size).to eq(1)
     expect(state.stages("001.00").first).to include("status" => "Completed", "up" => 12)
   end
 
   it "keeps a second round as its own stage" do
-    state.record("001.00", agent: "leah-researcher", round: 1, status: "Interrupted")
-    state.record("001.00", agent: "leah-researcher", round: 2, status: "Started")
+    state.record("001.00", agent: "researcher", round: 1, status: "Interrupted")
+    state.record("001.00", agent: "researcher", round: 2, status: "Started")
     expect(state.stages("001.00").map { |s| s["round"] }).to eq([1, 2])
   end
 
@@ -1881,20 +1881,20 @@ RSpec.describe Agentilda::StateFile, :tree do
   it "reports stages a dead run left Started as stranded" do
     dead = described_class.new(path:, pid: 999_999_999)
     dead.begin_run!(root: "/repo")
-    dead.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
-    dead.record("002.00", agent: "leah-researcher", round: 1, status: "Completed")
+    dead.record("001.00", agent: "spec-writer", round: 1, status: "Started")
+    dead.record("002.00", agent: "researcher", round: 1, status: "Completed")
     dead.save
 
     fresh = described_class.new(path:, pid: 4242).load
     aggregate_failures do
       expect(fresh).to be_previous_run_dead
-      expect(fresh.stranded.map { |ordinal, stage| [ordinal, stage["agent"]] }).to eq([["001.00", "yoda-writer"]])
+      expect(fresh.stranded.map { |ordinal, stage| [ordinal, stage["agent"]] }).to eq([["001.00", "spec-writer"]])
     end
   end
 
   it "does not call a live run's Started stages stranded" do
     state.begin_run!(root: "/repo")
-    state.record("001.00", agent: "yoda-writer", round: 1, status: "Started")
+    state.record("001.00", agent: "spec-writer", round: 1, status: "Started")
     state.save
     fresh = described_class.new(path:, pid: 4242).load
     expect(fresh.stranded).to be_empty
@@ -2114,7 +2114,7 @@ module Agentilda
   end
 
   # @!attribute [r] key
-  #   @return [String] `"001.00/leah-researcher"`, what selection and the
+  #   @return [String] `"001.00/researcher"`, what selection and the
   #     keyboard address a row by
   # @!attribute [r] file
   #   @return [String] the document holding the agent's latest ledger line
@@ -2176,18 +2176,18 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       plans { |t| t.plan "020.00", :researched, "qualified-at", files: {"spec.md" => "#{spec_body}\n## Research\n\nFound.\n"} }
     end
 
-    # yoda finishes, leaves a blank plan.md, signs Completed and names
-    # luthen-rael. The harness renames to 📋, starts luthen-rael, luthen-rael
-    # writes a plan and signs, the harness renames to ⭐️, luke and rey
+    # spec-writer finishes, leaves a blank plan.md, signs Completed and names
+    # planner. The harness renames to 📋, starts planner, planner
+    # writes a plan and signs, the harness renames to ⭐️, backend-coder and frontend-coder
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
-    it "moves yoda's finished work to 📋 and starts luthen-rael, then the pair" do
+    it "moves spec-writer's finished work to 📋 and starts planner, then the pair" do
       executor = executor_with do |agent, subject, _round|
         case agent.name
-        when "yoda-writer"
+        when "spec-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
-        when "luthen-rael-planner"
+        when "planner"
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           "Completed"
         else
@@ -2197,20 +2197,20 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       runner_with(executor).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[yoda-writer luthen-rael-planner luke-backend rey-frontend])
-        expect(calls.count { |name, _, _| name == "yoda-writer" }).to eq(1)
+        expect(calls.map(&:first)).to eq(%w[spec-writer planner backend-coder frontend-coder])
+        expect(calls.count { |name, _, _| name == "spec-writer" }).to eq(1)
         expect(tree.reload.find(Agentilda::Ordinal.parse("020.00")).status.key).to eq(:building)
       end
     end
 
     it "records each promotion on the attempt that earned it" do
       executor = executor_with do |agent, subject, _|
-        File.write(File.join(subject.feature.path, "plan.md"), "") if agent.name == "yoda-writer"
-        (agent.name == "yoda-writer") ? "Completed" : nil
+        File.write(File.join(subject.feature.path, "plan.md"), "") if agent.name == "spec-writer"
+        (agent.name == "spec-writer") ? "Completed" : nil
       end
       attempts = runner_with(executor).call
-      yoda = attempts.find { |a| a.agent == "yoda-writer" }
-      expect([yoda.from, yoda.to]).to eq(%i[researched ready_for_planning])
+      spec-writer = attempts.find { |a| a.agent == "spec-writer" }
+      expect([spec-writer.from, spec-writer.to]).to eq(%i[researched ready_for_planning])
     end
   end
 
@@ -2222,28 +2222,28 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       executor = lambda { |agent, subject, round: 1, **|
         order << [:start, agent.name]
         file = File.join(subject.feature.path, "spec.md")
-        if agent.name == "leah-researcher"
+        if agent.name == "researcher"
           File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
-          Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: leah-researcher   status: Completed, round 1 ]",
-            "> [#{stamp}] [ next: yoda-writer ]")
+          Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: researcher   status: Completed, round 1 ]",
+            "> [#{stamp}] [ next: spec-writer ]")
         end
         order << [:end, agent.name]
         Agentilda::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
       runner_with(executor).call
-      expect(order.first(3)).to eq([[:start, "leah-researcher"], [:end, "leah-researcher"], [:start, "yoda-writer"]])
+      expect(order.first(3)).to eq([[:start, "researcher"], [:end, "researcher"], [:start, "spec-writer"]])
     end
 
     it "refuses a next: that names an agent who does not handle the new state, and says so" do
       executor = lambda { |agent, subject, round: 1, **|
         file = File.join(subject.feature.path, "spec.md")
         File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
-        Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: leah-researcher   status: Completed, round 1 ]",
-          "> [#{stamp}] [ next: hansolo-reviewer ]")
+        Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: researcher   status: Completed, round 1 ]",
+          "> [#{stamp}] [ next: staff-reviewer ]")
         Agentilda::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
-      attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
-      expect(attempts.first.note).to include("next: names hansolo-reviewer", "does not handle")
+      attempts = runner_with(executor, agents: agents.only("researcher")).call
+      expect(attempts.first.note).to include("next: names staff-reviewer", "does not handle")
     end
   end
 
@@ -2252,7 +2252,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
 
     it "re-runs an Almost completed agent while it has rounds, then parks the plan" do
       Dir.mktmpdir do |dir|
-        File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
+        File.write(File.join(dir, "researcher.md"), "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = Agentilda::Agents.new(dir:)
         executor = executor_with { |_, _, _| "Almost completed" }
         attempts = Agentilda::Runner.new(tree:, executor:, agents: two, isolation: :shared, jobs: 1, state:, sleeper: ->(_) {}).call
@@ -2265,7 +2265,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
 
     it "never re-runs a Completed agent whose promotion was refused, and reports the refusal" do
       executor = executor_with { |_, _, _| "Completed" } # no Research chapter written
-      attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
+      attempts = runner_with(executor, agents: agents.only("researcher")).call
       aggregate_failures do
         expect(calls.size).to eq(1)
         expect(attempts.first.ok).to be(false)
@@ -2278,7 +2278,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich?\n")
         "Blocked"
       end
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
       expect(tree.reload.find(Agentilda::Ordinal.parse("001.00")).status.key).to eq(:blocked)
     end
 
@@ -2286,10 +2286,10 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       executor = lambda { |agent, subject, round: 1, **|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich colour?\n")
         Agentilda::Ledger.append(File.join(subject.feature.path, "spec.md"),
-          "> [#{stamp}] [ agent: leah-researcher   status: Blocked, round 1 (product) ]")
+          "> [#{stamp}] [ agent: researcher   status: Blocked, round 1 (product) ]")
         Agentilda::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
       expect(tree.reload.find(Agentilda::Ordinal.parse("001.00")).status.key).to eq(:product_blocked)
     end
   end
@@ -2304,10 +2304,10 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       executor = lambda { |agent, subject, round: 1, **|
         file = File.join(subject.feature.path, "spec.md")
         File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
-        Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: leah-researcher   status: Started, round 1 ]")
+        Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: researcher   status: Started, round 1 ]")
         Agentilda::Executor::Result.new(ok: false, note: "killed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0, killed: :key)
       }
-      attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
+      attempts = runner_with(executor, agents: agents.only("researcher")).call
       text = File.read(File.join(path_of("001.00"), "spec.md"))
       aggregate_failures do
         expect(text).to include("status: **Interrupted, round 1 (killed by harness after 15s grace)**")
@@ -2319,7 +2319,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
 
     it "writes only Interrupted, and re-runs, when the work is not there" do
       Dir.mktmpdir do |dir|
-        File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
+        File.write(File.join(dir, "researcher.md"), "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = Agentilda::Agents.new(dir:)
         executor = lambda { |agent, subject, round: 1, **|
           calls << round
@@ -2341,14 +2341,14 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       plans { |t| t.plan "001.00", :planned, "both", files: {"spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n"} }
     end
 
-    it "renames to 🟡 when luke starts, holds at 🎨 when luke finishes first, and goes 🟢 when rey does" do
+    it "renames to 🟡 when backend-coder starts, holds at 🎨 when backend-coder finishes first, and goes 🟢 when frontend-coder does" do
       seen = []
       executor = lambda { |agent, subject, round: 1, **|
         seen << [agent.name, subject.status.key]
         file = File.join(subject.feature.path, "pull-requests.md")
         Agentilda::Ledger.append(file, "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round 1 ]")
-        # rey takes longer, so luke completes while rey is still running
-        sleep(0.2) if agent.name == "rey-frontend"
+        # frontend-coder takes longer, so backend-coder completes while frontend-coder is still running
+        sleep(0.2) if agent.name == "frontend-coder"
         Agentilda::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
       runner = Agentilda::Runner.new(tree:, executor:, agents:, isolation: :shared, jobs: 2, state:, sleeper: ->(s) { sleep(0.05) })
@@ -2369,21 +2369,21 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       }
     end
 
-    def hansolo(note)
+    def staff-reviewer(note)
       lambda { |agent, subject, round: 1, **|
         Agentilda::Ledger.append(File.join(subject.feature.path, "pull-requests.md"),
-          "> [#{stamp}] [ agent: hansolo-reviewer   status: Completed, round #{round} (#{note}) ]")
+          "> [#{stamp}] [ agent: staff-reviewer   status: Completed, round #{round} (#{note}) ]")
         Agentilda::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
     end
 
     it "moves a rejection to 🔴" do
-      runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer")).call
+      runner_with(staff-reviewer("rejected 1/2"), agents: agents.only("staff-reviewer")).call
       expect(tree.reload.find(Agentilda::Ordinal.parse("001.00")).status.key).to eq(:rejected)
     end
 
     it "leaves an approval at 👀 and treats the plan as finished for this run" do
-      attempts = runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")).call
+      attempts = runner_with(staff-reviewer("approved"), agents: agents.only("staff-reviewer")).call
       aggregate_failures do
         expect(tree.reload.find(Agentilda::Ordinal.parse("001.00")).status.key).to eq(:in_review)
         expect(attempts.size).to eq(1)
@@ -2398,11 +2398,11 @@ RSpec.describe Agentilda::Dispatcher, :tree do
     it "writes the harness Interrupted line for a stranded stage and re-runs the agent" do
       dead = Agentilda::StateFile.new(path: Agentilda::StateFile.for(tree), pid: 999_999_999)
       dead.begin_run!(root: File.dirname(plans_root))
-      dead.record("001.00", agent: "leah-researcher", round: 1, status: "Started", state: "new")
+      dead.record("001.00", agent: "researcher", round: 1, status: "Started", state: "new")
       dead.save
 
       executor = executor_with { |_, _, _| nil }
-      runner_with(executor, agents: agents.only("leah-researcher"), state: Agentilda::StateFile.new(path: dead.path)).call
+      runner_with(executor, agents: agents.only("researcher"), state: Agentilda::StateFile.new(path: dead.path)).call
       text = File.read(File.join(path_of("001.00"), "spec.md"))
       aggregate_failures do
         expect(text).to include("Interrupted, round 1 (harness died)")
@@ -2418,7 +2418,7 @@ RSpec.describe Agentilda::Dispatcher, :tree do
       executor = Agentilda::Executor.new(root: File.dirname(plans_root), dry_run: true)
       attempts = runner_with(executor, dry_run: true).call
       aggregate_failures do
-        expect(attempts.map(&:agent)).to eq(%w[leah-researcher])
+        expect(attempts.map(&:agent)).to eq(%w[researcher])
         expect(File.read(File.join(path_of("001.00"), "spec.md"))).not_to include("[ agent:")
         expect(File).not_to exist(state.path)
       end
@@ -2685,7 +2685,7 @@ module Agentilda
     end
 
     # `starts_as`: the folder moves the moment the agent is dispatched, where
-    # the topology allows, so luke's start is what makes a plan 🟡.
+    # the topology allows, so backend-coder's start is what makes a plan 🟡.
     #
     # @return [Agentilda::Subject] fresh, under whichever name it now has
     def rename_on_start(subject, agent)
@@ -3084,7 +3084,7 @@ end
 
 - [ ] **Step 6: Rewrite `runner_spec.rb`**
 
-Delete the "chaining", "termination", "progress is read from disk", and "publishing once the agent renames" blocks; they describe the loop that no longer exists and are covered by `dispatcher_spec.rb`. Keep: "offers each plan to the agent that handles its state" (expectations become `["leah-researcher", "000.00"], ["yoda-writer", "000.01"], ["luke-backend", "001.00"], ["rey-frontend", "001.00"]`, because ⭐️ Planned now goes to the pair), "researches before it writes", "starts nothing once q has quit" (assert `attempts` empty), "never offers a blocked plan", "leaves finished plans alone", "reports blocked plans", "#settled?", "--plan scoping", and "an executor that raises mid-round" (assert the crashed attempt is `ok: false` with the exception's message). Every `described_class.new(...)` gains `sleeper: ->(_) {}` and drops `max_rounds:`/`chain:`. The `record` helper's executor must accept `round:, successor:, handle:` keywords: `->(agent, subject, **) { record(agent, subject) }` already does.
+Delete the "chaining", "termination", "progress is read from disk", and "publishing once the agent renames" blocks; they describe the loop that no longer exists and are covered by `dispatcher_spec.rb`. Keep: "offers each plan to the agent that handles its state" (expectations become `["researcher", "000.00"], ["spec-writer", "000.01"], ["backend-coder", "001.00"], ["frontend-coder", "001.00"]`, because ⭐️ Planned now goes to the pair), "researches before it writes", "starts nothing once q has quit" (assert `attempts` empty), "never offers a blocked plan", "leaves finished plans alone", "reports blocked plans", "#settled?", "--plan scoping", and "an executor that raises mid-round" (assert the crashed attempt is `ok: false` with the exception's message). Every `described_class.new(...)` gains `sleeper: ->(_) {}` and drops `max_rounds:`/`chain:`. The `record` helper's executor must accept `round:, successor:, handle:` keywords: `->(agent, subject, **) { record(agent, subject) }` already does.
 
 - [ ] **Step 7: Run both specs and commit**
 
@@ -3127,8 +3127,8 @@ RSpec.describe Agentilda::Screen do
 
   let(:output) { CapturedStream.new }
   let(:row) do
-    Agentilda::Board::Row.new(key: "001.00/leah-researcher", at: Time.new(2026, 9, 4, 11, 29, 20),
-      ordinal: "001.00", file: "spec.md", agent: "leah-researcher", role: "researcher", round: 1, rounds: 2,
+    Agentilda::Board::Row.new(key: "001.00/researcher", at: Time.new(2026, 9, 4, 11, 29, 20),
+      ordinal: "001.00", file: "spec.md", agent: "researcher", role: "researcher", round: 1, rounds: 2,
       model: "haiku", remaining: 761, phase: :calm, up: 1_500_000, down: 11_000,
       message: "reading plan.md", state: :running, frame: 3)
   end
@@ -3501,7 +3501,7 @@ RSpec.describe Agentilda::Console do
   let(:screen) { instance_double(Agentilda::Screen, draw: nil) }
   let(:dispatcher) { instance_double(Agentilda::Dispatcher, kill: nil, extend: nil) }
   let(:rows) do
-    %w[001.00/leah-researcher 002.00/yoda-writer 003.00/luthen-rael-planner].each_with_index.map do |key, i|
+    %w[001.00/researcher 002.00/spec-writer 003.00/planner].each_with_index.map do |key, i|
       Agentilda::Board::Row.new(key:, at: Time.now, ordinal: key[0, 6], file: "spec.md", agent: key.split("/").last,
         role: "x", round: 1, rounds: 1, model: "opus", up: 0, down: 0, message: nil, state: (i == 2) ? :done : :running)
     end
@@ -3518,17 +3518,17 @@ RSpec.describe Agentilda::Console do
 
   it "s selects the first running row, then cycles, skipping finished rows" do
     console.select_next
-    expect(console.selected).to eq("001.00/leah-researcher")
+    expect(console.selected).to eq("001.00/researcher")
     console.select_next
-    expect(console.selected).to eq("002.00/yoda-writer")
+    expect(console.selected).to eq("002.00/spec-writer")
     console.select_next
-    expect(console.selected).to eq("001.00/leah-researcher")
+    expect(console.selected).to eq("001.00/researcher")
   end
 
   it "arrows move the selection both ways" do
     console.select_next
     console.select_prev
-    expect(console.selected).to eq("002.00/yoda-writer")
+    expect(console.selected).to eq("002.00/spec-writer")
   end
 
   it "k and x open the dialog with pending changes and touch nothing yet" do
@@ -3550,8 +3550,8 @@ RSpec.describe Agentilda::Console do
     console.extend
     console.apply
     aggregate_failures do
-      expect(dispatcher).to have_received(:kill).with("001.00/leah-researcher")
-      expect(dispatcher).to have_received(:extend).with("001.00/leah-researcher", 600)
+      expect(dispatcher).to have_received(:kill).with("001.00/researcher")
+      expect(dispatcher).to have_received(:extend).with("001.00/researcher", 600)
       expect(console).not_to be_dialog
       expect(console.pending).to eq(kill: false, extend: 0)
     end
@@ -3563,7 +3563,7 @@ RSpec.describe Agentilda::Console do
     console.escape
     expect(console).not_to be_dialog
     expect(console.pending).to eq(kill: false, extend: 0)
-    expect(console.selected).to eq("001.00/leah-researcher")
+    expect(console.selected).to eq("001.00/researcher")
     console.escape
     expect(console.selected).to be_nil
     expect { console.escape }.not_to raise_error
@@ -3571,7 +3571,7 @@ RSpec.describe Agentilda::Console do
 
   it "k without a selection selects the first running row first" do
     console.toggle_kill
-    expect(console.selected).to eq("001.00/leah-researcher")
+    expect(console.selected).to eq("001.00/researcher")
     expect(console).to be_dialog
   end
 
@@ -3580,7 +3580,7 @@ RSpec.describe Agentilda::Console do
     console.toggle_kill
     console.toggle_help
     console.paint(board)
-    expect(screen).to have_received(:draw).with(having_attributes(selected: "001.00/leah-researcher",
+    expect(screen).to have_received(:draw).with(having_attributes(selected: "001.00/researcher",
       dialog: a_string_including("kill: yes"), help: a_string_including("kill")))
   end
 end
@@ -3860,13 +3860,13 @@ ______________________________________________________________________
 In `spec/agentilda/cli/run_spec.rb`:
 
 - Delete the "chaining defaults" block.
-- In "--commit": `expect(out).to include("round 1", "001.00\tluke-backend")` becomes `expect(out).to include("attempts", "001.00\tluke-backend")` and `expect(out).to include("1 round")` becomes `expect(out).to include("1 invocation")`. Note the fixture is 🟡 with `plan.md` `# Plan`; the stub executor writes no ledger, so the dispatcher verifies 🟢 (not justified, no pull request) and reports `Interrupted; no rounds left`, `ok: false`. Change that example's expectations: status `1`, `err` includes `1 failed`. Add a new example that stubs the executor to sign `Completed` and expects exit `0`:
+- In "--commit": `expect(out).to include("round 1", "001.00\tbackend-coder")` becomes `expect(out).to include("attempts", "001.00\tbackend-coder")` and `expect(out).to include("1 round")` becomes `expect(out).to include("1 invocation")`. Note the fixture is 🟡 with `plan.md` `# Plan`; the stub executor writes no ledger, so the dispatcher verifies 🟢 (not justified, no pull request) and reports `Interrupted; no rounds left`, `ok: false`. Change that example's expectations: status `1`, `err` includes `1 failed`. Add a new example that stubs the executor to sign `Completed` and expects exit `0`:
 
 ```ruby
     it "exits zero when the agent signs Completed and the folder moves" do
       with_executor { |subject|
-        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]\n")
-        File.write(File.join(subject.feature.path, "plan-frontend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: rey-frontend   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "plan-backend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: backend-coder   status: Completed, round 1 ]\n")
+        File.write(File.join(subject.feature.path, "plan-frontend.md"), "> [2026-09-04 11:29:20 AM PDT] [ agent: frontend-coder   status: Completed, round 1 ]\n")
         File.write(File.join(subject.feature.path, "pull-requests.md"), "| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 1 | [x](https://github.com/example/repo/pull/1) | Open 🟡 |\n")
         [true, "completed"]
       }
@@ -3878,7 +3878,7 @@ In `spec/agentilda/cli/run_spec.rb`:
 
 (`with_executor` must return an `Executor::Result`, not an array; change the helper to wrap: `Agentilda::Executor::Result.new(ok: r[0], note: r[1], up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)`.)
 
-- "shows a plan that actually moved as from -> to": the ⭐️ fixture now moves at dispatch because luke `starts_as` building; expect `"planned -> building"` still, and `err` to include `1 advanced`.
+- "shows a plan that actually moved as from -> to": the ⭐️ fixture now moves at dispatch because backend-coder `starts_as` building; expect `"planned -> building"` still, and `err` to include `1 advanced`.
 
 - "--rounds": add an example that `--rounds 1` reaches the runner as `rounds: 1` (spy on `Agentilda::Runner.new`).
 
@@ -3999,7 +3999,7 @@ ______________________________________________________________________
 
 **Files:**
 
-- Modify: `agents/leah-researcher.md`, `agents/yoda-writer.md`, `agents/luthen-rael-planner.md`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`, `agents/lando-broker.md` (bodies)
+- Modify: `agents/researcher.md`, `agents/spec-writer.md`, `agents/planner.md`, `agents/backend-coder.md`, `agents/frontend-coder.md`, `agents/staff-reviewer.md`, `agents/unblocker.md` (bodies)
 
 - Modify: `lib/agentilda/brief.rb`
 
@@ -4022,19 +4022,19 @@ In `spec/agentilda/agents_spec.rb`:
       end
     end
 
-    it "tells luke and rey to sign pull-requests.md" do
-      %w[luke-backend rey-frontend].each do |name|
+    it "tells backend-coder and frontend-coder to sign pull-requests.md" do
+      %w[backend-coder frontend-coder].each do |name|
         expect(agents.find(name).prompt).to include("pull-requests.md")
       end
     end
 
-    it "tells hansolo the verdict words and the two-rejection rule" do
-      prompt = agents.find("hansolo-reviewer").prompt
+    it "tells staff-reviewer the verdict words and the two-rejection rule" do
+      prompt = agents.find("staff-reviewer").prompt
       expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(approved)", "(slop)", "👍🏼 to deploy")
     end
 
-    it "tells yoda to leave a blank plan.md" do
-      expect(agents.find("yoda-writer").prompt).to include("plan.md")
+    it "tells spec-writer to leave a blank plan.md" do
+      expect(agents.find("spec-writer").prompt).to include("plan.md")
     end
   end
 ```
@@ -4050,7 +4050,7 @@ In `spec/agentilda/brief_spec.rb`:
 
 - [ ] **Step 2: Edit the prompts**
 
-`agents/luke-backend.md` and `agents/rey-frontend.md`: in "Finishing", delete the bullet that begins "Rename the plan folder" (the whole bullet including its fenced `git mv` block and the sentence after it). Replace it with:
+`agents/backend-coder.md` and `agents/frontend-coder.md`: in "Finishing", delete the bullet that begins "Rename the plan folder" (the whole bullet including its fenced `git mv` block and the sentence after it). Replace it with:
 
 ```markdown
 - Sign `pull-requests.md` with your `Completed` ledger line (create the file with a `# Pull Requests` heading if it does not exist yet). Your `Started` line went into `plan-backend.md` (or `plan-frontend.md`) while you planned your half; the moment you write code, add a `Started` line to `pull-requests.md` too. The harness renames the folder and opens the pull request when the last of you signs `Completed`; you never rename anything.
@@ -4058,23 +4058,23 @@ In `spec/agentilda/brief_spec.rb`:
 
 In each "When to stop" section, after "Write `blocked.md` ...": add "and sign your document `Blocked, round N (technical)` or `(product)`".
 
-`agents/yoda-writer.md`: replace "## Done when" with:
+`agents/spec-writer.md`: replace "## Done when" with:
 
 ```markdown
 ## Done when
 
-You stop writing the spec when it is clear as day what we are building and what this spec does not cover. A competent implementer could build this without asking you anything, and `luthen-rael-planner` can write a competent `plan.md` without asking any questions.
+You stop writing the spec when it is clear as day what we are building and what this spec does not cover. A competent implementer could build this without asking you anything, and `planner` can write a competent `plan.md` without asking any questions.
 
-Then create an empty `plan.md` next to `spec.md` (`touch plan.md`). That blank file is what the harness reads as "ready for planning"; the planner fills it. Sign `spec.md` with your `Completed` line and `next: luthen-rael-planner`.
+Then create an empty `plan.md` next to `spec.md` (`touch plan.md`). That blank file is what the harness reads as "ready for planning"; the planner fills it. Sign `spec.md` with your `Completed` line and `next: planner`.
 ```
 
 In "When to stop and block instead", replace the two bullets about the folder becoming ⭕️/🅱️ with: "Sign `spec.md` with `Blocked, round N (technical)` for an engineering decision or `Blocked, round N (product)` for a product one; the harness parks the folder accordingly."
 
-`agents/leah-researcher.md`: in "Stop and block rather than guess", replace "Say which kind each block is: ... makes the folder 🅱️." with "Sign `spec.md` with `Blocked, round N (technical)` or `Blocked, round N (product)`; the harness parks the folder." Leave the closing paragraph about 🔎 but change "the folder moves" to "the harness moves the folder".
+`agents/researcher.md`: in "Stop and block rather than guess", replace "Say which kind each block is: ... makes the folder 🅱️." with "Sign `spec.md` with `Blocked, round N (technical)` or `Blocked, round N (product)`; the harness parks the folder." Leave the closing paragraph about 🔎 but change "the folder moves" to "the harness moves the folder".
 
-`agents/luthen-rael-planner.md`: in "When you cannot decompose without a decision", add the same Blocked sentence. Add under "Write three plans": "`plan.md` already exists and is blank; write into it."
+`agents/planner.md`: in "When you cannot decompose without a decision", add the same Blocked sentence. Add under "Write three plans": "`plan.md` already exists and is blank; write into it."
 
-`agents/hansolo-reviewer.md`: append:
+`agents/staff-reviewer.md`: append:
 
 ```markdown
 ## Verdicts, and how you record them
@@ -4091,7 +4091,7 @@ If `pull-requests.md` lists several pull requests, judge each; the plan is done 
 
 Delete the sentence in the opening paragraph about changing "the status to `rewrite`" and the item 6 instruction to change the status; the verdict word does it.
 
-`agents/lando-broker.md`: replace "Do not rename the plan folder. `resync dirs` reads ..." with "Do not rename the plan folder; the harness does, from your `Completed` line in `plan.md`."
+`agents/unblocker.md`: replace "Do not rename the plan folder. `resync dirs` reads ..." with "Do not rename the plan folder; the harness does, from your `Completed` line in `plan.md`."
 
 - [ ] **Step 3: The briefer**
 
@@ -4112,13 +4112,13 @@ In `README.md`:
 
 | Agent               | Handles    | Advances to                           | Signs                                  | Does                                                         |
 | :------------------ | :--------- | :------------------------------------ | :------------------------------------- | :----------------------------------------------------------- |
-| `leah-researcher`   | ⚪️         | 🔎                                    | `spec.md`                              | fans out parallel research, writes the `## Research` chapter |
-| `yoda-writer`       | 🔎, 🕰️     | 📋                                    | `spec.md`                              | writes Goal/Non-Goals/Conclusion, leaves a blank `plan.md`   |
-| `luthen-rael-planner` | 📋         | ⭐️                                    | `plan.md`                              | decomposes the spec into concurrent work units, three plans  |
-| `luke-backend`      | ⭐️, 🟡, 🔴 | 🟢 (🟡 on start, 🎨 while rey builds) | `plan-backend.md`, `pull-requests.md`  | back end: data, domain, API, tests                           |
-| `rey-frontend`      | ⭐️, 🟡, 🔴 | 🟢                                    | `plan-frontend.md`, `pull-requests.md` | interface against the contract; proves the halves join       |
-| `hansolo-reviewer`  | 🟢, 👀     | 🔴 / 👀 approved / 🚫                 | `pull-requests.md`                     | adversarial review; two rejections at most, never merges     |
-| `lando-broker`      | ⭕️, 🅱️     | ⭐️                                    | `plan.md`                              | folds answered blocks into spec.md/plan.md                   |
+| `researcher`   | ⚪️         | 🔎                                    | `spec.md`                              | fans out parallel research, writes the `## Research` chapter |
+| `spec-writer`       | 🔎, 🕰️     | 📋                                    | `spec.md`                              | writes Goal/Non-Goals/Conclusion, leaves a blank `plan.md`   |
+| `planner` | 📋         | ⭐️                                    | `plan.md`                              | decomposes the spec into concurrent work units, three plans  |
+| `backend-coder`      | ⭐️, 🟡, 🔴 | 🟢 (🟡 on start, 🎨 while frontend-coder builds) | `plan-backend.md`, `pull-requests.md`  | back end: data, domain, API, tests                           |
+| `frontend-coder`      | ⭐️, 🟡, 🔴 | 🟢                                    | `plan-frontend.md`, `pull-requests.md` | interface against the contract; proves the halves join       |
+| `staff-reviewer`  | 🟢, 👀     | 🔴 / 👀 approved / 🚫                 | `pull-requests.md`                     | adversarial review; two rejections at most, never merges     |
+| `unblocker`      | ⭕️, 🅱️     | ⭐️                                    | `plan.md`                              | folds answered blocks into spec.md/plan.md                   |
 
 - Replace "### Chaining: one plan, several agents, one round" with "### The ledger: how an agent hands off" describing the entry grammar, the `next:` line, that the harness renames, and the state file under `.plans/tmp/`.
 - "### The keyboard, while a run is in flight": add `s`, arrows, `k`, `x`, ENTER, ESC.
@@ -4136,14 +4136,14 @@ stateDiagram-v2
     BuildingUI: 🎨 Building UI
     Review: 🟢 Ready for Review
     InReview: 👀 In Review
-    New --> Researched: leah
-    Researched --> Ready: yoda
-    Ready --> Planned: luthen-rael
-    Planned --> Building: luke starts
-    Building --> BuildingUI: luke done, rey building
+    New --> Researched: researcher
+    Researched --> Ready: spec-writer
+    Ready --> Planned: planner
+    Planned --> Building: backend-coder starts
+    Building --> BuildingUI: backend-coder done, frontend-coder building
     Building --> Review: last of the pair
     BuildingUI --> Review: last of the pair
-    Review --> InReview: hansolo starts
+    Review --> InReview: staff-reviewer starts
 ```
 
 Regenerate `docs/WORKFLOW.md`: run `./exe/agentilda docs --help` to confirm the output flag, then `eval "$(rbenv init -)" && ./exe/agentilda docs -o docs/WORKFLOW.md` (or whatever the flag is). Run `mdformat --wrap no README.md docs/WORKFLOW.md .plans/001.00-*/plan.md` if `mdformat` is on the PATH from `~/.venv`; if it is not, say so in the commit body rather than installing it.
@@ -4188,7 +4188,7 @@ Run: `eval "$(rbenv init -)" && bundle exec rspec` Expected: `0 failures`; cover
 
 - [ ] **Step 4: A real dry run against this repository**
 
-Run: `eval "$(rbenv init -)" && ./exe/agentilda run` from the repo root. Expected: the plan of work lists `001.00` under `leah-researcher`, nothing is renamed, `.plans/tmp` is not created.
+Run: `eval "$(rbenv init -)" && ./exe/agentilda run` from the repo root. Expected: the plan of work lists `001.00` under `researcher`, nothing is renamed, `.plans/tmp` is not created.
 
 - [ ] **Step 5: Commit, push, open the pull request, verify**
 
@@ -4225,13 +4225,13 @@ ______________________________________________________________________
 | :-------------------------------------------------------------------------------------------- | :--------------------------------------------- |
 | Dated ledger entries at start and end, naming agent, purpose (round) and outcome              | 1, 6 (the section every prompt gets)           |
 | The four outcomes plus Blocked; `next:` after Completed                                       | 1, 8                                           |
-| Yoda leaves a blank `plan.md`; the state between yoda and luthen-rael                           | 3, 12                                          |
+| spec-writer leaves a blank `plan.md`; the state between spec-writer and planner                           | 3, 12                                          |
 | `--brief` on the agents, the agent's own words on the row                                     | 6, 9                                           |
 | Warn at ten, five and one minute; stop at zero; kill sixty seconds later                      | 5, 6                                           |
 | `--timeout` only tightens                                                                     | 6                                              |
 | Poll every second, row updated each second                                                    | 8 (`tick`, `poll`), 9                          |
 | Briefer told fifty seconds, haiku                                                             | 12                                             |
-| Luke owns the 🟡 transition; the harness performs it                                          | 2 (`starts_as`), 8 (`rename_on_start`)         |
+| backend-coder owns the 🟡 transition; the harness performs it                                          | 2 (`starts_as`), 8 (`rename_on_start`)         |
 | Han Solo may reject, the folder becomes 🔴, at most twice, then approve or scrap              | 8 (`verdict_of`), 12                           |
 | Two white bars, magenta up / cyan down on grey, header, rule, fixed columns, status on yellow | 9                                              |
 | File colours, PR number as a clickable link, red when rejected                                | 9                                              |
@@ -4243,7 +4243,7 @@ ______________________________________________________________________
 | Getting killed and knowing where to restart from                                              | 7, 8                                           |
 | Models and efforts per agent                                                                  | 2, 6                                           |
 | No overlap between predecessor and successor                                                  | 8 (`start` only from `dispatch`, after `reap`) |
-| `pull-requests.md` is where luke and rey sign                                                 | 2, 4, 12                                       |
+| `pull-requests.md` is where backend-coder and frontend-coder sign                                                 | 2, 4, 12                                       |
 
 **Placeholder scan.** No TBDs. Every code step carries the code. The one thing left to look up at execution time is the `docs` command's output flag, and the step says how.
 

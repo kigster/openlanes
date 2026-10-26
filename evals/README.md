@@ -12,7 +12,7 @@ The code lives in `lib/openlanes/evals/` (`OpenLanes::Evals`).
 ```bash
 just eval                                   # score every case's pass/ recording; exit 1 on any FAIL
 exe/openlanes eval --recording fail         # score the fail/ recordings; every one should FAIL
-exe/openlanes eval -a leah-researcher --depth deep   # hold recordings to another depth's bounds
+exe/openlanes eval -a researcher --depth deep   # hold recordings to another depth's bounds
 exe/openlanes eval --live -c research-fast --max-tokens 100000
 ```
 
@@ -25,7 +25,7 @@ exe/openlanes eval --live -c research-fast --max-tokens 100000
 
 ```yaml
 id: research-fast              # must match the file name
-agent: leah-researcher         # must match the directory
+agent: researcher         # must match the directory
 depth: fast                    # fast | medium | deep
 description: What the case targets.
 fixture:
@@ -55,7 +55,7 @@ expect:
 
 `words` and `count` take one mapping or a list. Ledger blocks are stripped before counting, so signing never pads a document. `max_seconds` and `max_tokens` fail when the run measured nothing.
 
-Build agents (luke, rey, r2d2) and hansolo check signatures and diffs, not `state`: their next state depends on a published pull request and a review verdict, which an eval never produces.
+Build agents (backend-coder, frontend-coder, chores-coder) and staff-reviewer check signatures and diffs, not `state`: their next state depends on a published pull request and a review verdict, which an eval never produces.
 
 ## Recordings
 
@@ -74,10 +74,10 @@ Keep recordings small and synthetic. No real names, emails or private source.
 
 Ideas carried over from the earlier `cases.jsonl` draft, which never ran:
 
-- yoda: a brief with an unresolved product choice must list it, not invent a policy.
-- luthen-rael: two units writing one file must be ordered, not parallel.
-- rey: a contract mismatch with the back end must be raised, not patched around.
-- hansolo: a clean patch must be approved (false-finding rate); a missing authorisation check must be found.
-- lando: a partial answer folds one block and leaves the rest; contradictory answers fold nothing.
+- spec-writer: a brief with an unresolved product choice must list it, not invent a policy.
+- planner: two units writing one file must be ordered, not parallel.
+- frontend-coder: a contract mismatch with the back end must be raised, not patched around.
+- staff-reviewer: a clean patch must be approved (false-finding rate); a missing authorisation check must be found.
+- unblocker: a partial answer folds one block and leaves the rest; contradictory answers fold nothing.
 - Routing, scheduler and readiness evals belong to the engine, not to one agent, and need their own harness.
 - Exporting scores and traces to an experiment tracker, and running each live case repeatedly to report variance.

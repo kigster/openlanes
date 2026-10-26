@@ -14,17 +14,17 @@ RSpec.describe "progress journal under SIGKILL" do
     journal.append(:run_started, jobs: 1)
     journal.append(:agent_started,
       plan:        "039.00",
-      agent:       "luke-backend",
+      agent:       "backend-coder",
       round:       1,
       pid:         Process.pid,
       started_at:  nil,
       session_id:  nil,
       output_file: "/t/trace.ndjson")
-    journal.append(:agent_session, plan: "039.00", agent: "luke-backend", session_id: "s-1")
+    journal.append(:agent_session, plan: "039.00", agent: "backend-coder", session_id: "s-1")
     offset = 0
     loop do
       offset += 64
-      event = journal.append(:agent_offset, plan: "039.00", agent: "luke-backend", offset:)
+      event = journal.append(:agent_offset, plan: "039.00", agent: "backend-coder", offset:)
       writer.puts(event["seq"])
       writer.flush
     end
@@ -62,8 +62,8 @@ RSpec.describe "progress journal under SIGKILL" do
 
     def run_engine
       $stderr.reopen(File::NULL)
-      File.write(File.join(agents_dir, "leah.md"),
-        "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\n" \
+      File.write(File.join(agents_dir, "researcher.md"),
+        "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\n" \
         "adapter: claude\nledger: [spec.md]\n---\nbody")
       trace_file = trace
       executor = lambda { |_agent, _subject, handle:, **|
@@ -100,7 +100,7 @@ RSpec.describe "progress journal under SIGKILL" do
       picture = OpenLanes::Engine::EventJournal::Replay.call(path)
       expect(picture).to be_running
       expect(picture.agents.map { [it.plan, it.agent, it.pid, it.session_id, it.output_file, it.offset] })
-        .to eq([["001.00", "leah-researcher", pid, "s-1", trace, File.size(trace)]])
+        .to eq([["001.00", "researcher", pid, "s-1", trace, File.size(trace)]])
       expect(Dir.glob(File.join(plans_root, "**", "{*.ndjson,*.lock,*.tmp,openlanes-state.json}"))).to eq([])
     end
   end

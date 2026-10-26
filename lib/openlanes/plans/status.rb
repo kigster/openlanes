@@ -50,14 +50,14 @@ module OpenLanes
     def self.pull_request_count(count) = "#{count} pull request#{"s" unless count == 1}"
 
     # What proves a specification has been researched rather than merely
-    # written: the chapter `leah-researcher` contributes. It is a section of
+    # written: the chapter `researcher` contributes. It is a section of
     # `spec.md` rather than a file of its own because research is not a separate
     # document — it is the first half of the specification, and splitting it
-    # would leave `yoda-writer` reading two files to write one.
+    # would leave `spec-writer` reading two files to write one.
     RESEARCH_CHAPTER = /^[ \t]{0,3}\#{2,3}[ \t]+Research\b/i
 
     # What proves `plan.md` holds a plan rather than the blank file
-    # `yoda-writer` leaves for `luthen-rael-planner`: any section heading. The
+    # `spec-writer` leaves for `planner`: any section heading. The
     # ledger notes are stripped first, so an agent's `Started` line does not
     # count as a plan.
     PLAN_HEADING = /^[ \t]{0,3}\#{1,3}[ \t]+\S/
@@ -109,7 +109,7 @@ module OpenLanes
 
     # The answer to the question of the same number: `## A1` settles `## B1`.
     #
-    # Answers are an inbox, not a record. `lando-broker` folds each one into the
+    # Answers are an inbox, not a record. `unblocker` folds each one into the
     # document its question was stopping and deletes both, so a `blocked.md`
     # holding nothing but history must not go on stopping the folder. An `A`
     # never matches {OPEN_BLOCK}, which is what lets the two live in one file.
@@ -130,7 +130,7 @@ module OpenLanes
     # two share one invariant rather than two that could drift apart.
     #
     # This is what lets a block drain in pieces. Answers land in `blocked.md`
-    # one at a time, `lando-broker` moves each into `spec.md` or `plan.md` and
+    # one at a time, `unblocker` moves each into `spec.md` or `plan.md` and
     # deletes it here, and the folder leaves ⭕️ on the pass that empties the
     # file, by content rather than by anyone remembering to delete it.
     #
@@ -202,7 +202,7 @@ module OpenLanes
       # written by opening a pull request, which happens once, when the last
       # implementer advances the plan to Ready for Review. Requiring the file to
       # *enter* Building would mean nothing could ever justify entering it, and
-      # `luthen-rael-planner` finishing `plan.md` would loop forever between itself
+      # `planner` finishing `plan.md` would loop forever between itself
       # and a state it can never actually reach. Ready for Review is where the
       # file becomes a real requirement, once something has had the chance to
       # write it.
@@ -254,12 +254,12 @@ module OpenLanes
         emoji:     "🧪",
         label:     "Verifying",
         requires:  %w[spec.md plan.md pull-requests.md],
-        note:      "the review approved it; chewie runs the app through How to test before anything merges",
+        note:      "the review approved it; #{Agents::Names::VERIFIER} runs the app through How to test before anything merges",
         invariant: open_pull_request("Verifying")
       ),
       # Completed is not done. `ready-to-merge` is a pull request's state
       # (P2), and once every pull request of the plan carries it the plan is
-      # 🏁: palpatine rules on each, the engine merges the `auto` ones one at
+      # 🏁: deploy-assessor rules on each, the engine merges the `auto` ones one at
       # a time and rebases the rest onto `main`, and `merge-manually` ones
       # wait for a person. At least one is still open, or the plan would be
       # ✅ (P3).
@@ -268,7 +268,7 @@ module OpenLanes
         emoji:     "🏁",
         label:     "Completed",
         requires:  %w[spec.md plan.md pull-requests.md],
-        note:      "every pull request is `ready-to-merge`; palpatine weighs each, and they merge one at a time",
+        note:      "every pull request is `ready-to-merge`; #{Agents::Names::DEPLOY_ASSESSOR} weighs each, and they merge one at a time",
         invariant: open_pull_request("Completed")
       ),
       Status.new(

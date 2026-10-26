@@ -1,19 +1,19 @@
 # Plan 009.00 — back end
 
-`luke-backend` builds these, in the order B1 → B7. B1 and B2 can run at the same time. See `plan.md` for the graph and the shared contract.
+`backend-coder` builds these, in the order B1 → B7. B1 and B2 can run at the same time. See `plan.md` for the graph and the shared contract.
 
 Prerequisite: stacked on #23 (plan 008, the dependents index). B3 consumes it and is the only unit that does.
 
 ## B1 State, event and Linear mapping
 
 - **Discipline:** back end
-- **Owns:** `lib/openlanes/plans/status.rb`, `lib/openlanes/plans/state_machine.rb`, `lib/openlanes/linear/mapping.rb`, `agents/lando-broker.md` (`handles:`), their specs (`spec/openlanes/plans/status_spec.rb`, `spec/openlanes/plans/state_machine_spec.rb`, `spec/openlanes/linear/mapping_spec.rb`, `spec/openlanes/lifecycle/unblocker_spec.rb`), and whatever `openlanes docs` regenerates.
+- **Owns:** `lib/openlanes/plans/status.rb`, `lib/openlanes/plans/state_machine.rb`, `lib/openlanes/linear/mapping.rb`, `agents/unblocker.md` (`handles:`), their specs (`spec/openlanes/plans/status_spec.rb`, `spec/openlanes/plans/state_machine_spec.rb`, `spec/openlanes/linear/mapping_spec.rb`, `spec/openlanes/lifecycle/unblocker_spec.rb`), and whatever `openlanes docs` regenerates.
 - **Must not touch:** `support/config.rb`, `engine/*`, `live/*`, `cli/run/*`, `web/src/*`.
 - **Depends on:** nothing
 - **Builds:**
   - `:bomb` in `STATUSES`: emoji 💣 (U+1F4A3), `requires: %w[blocked.md]`, invariant "blocked.md present" and nothing time-based.
   - `bomb` event: `blocked` → `bomb`, `product_blocked` → `bomb`. Placed with the blocked family, not `SPINE`. `bomb` is skipped by `next_dispatchable` like the other `SETTLED` blocks.
-  - Exit from `bomb`: amended (plan.md, decision 1): the unblocker is unchanged; it gates on `blocked.md`, so a 💣 drains like ⭕️. 💣 leaves by every event a block leaves by, and `block` / `block_on_product` accept it. `lando-broker` handles 💣 so the run loop can drain it.
+  - Exit from `bomb`: amended (plan.md, decision 1): the unblocker is unchanged; it gates on `blocked.md`, so a 💣 drains like ⭕️. 💣 leaves by every event a block leaves by, and `block` / `block_on_product` accept it. `unblocker` handles 💣 so the run loop can drain it.
   - `defer` event accepts `blocked` and `product_blocked` as sources if it does not already.
   - 💣 placed in `PLACEMENTS` (same Linear state as the other blocks).
 - **Done when:** `state_machine_spec.rb` covers `bomb` in from both blocked states and out via unblock; `status_spec.rb` covers the invariant; `mapping_spec.rb` green; `unblocker_spec.rb` folds an answer out of a 💣 folder; `openlanes states` lists 💣 and `openlanes docs` regenerates cleanly.

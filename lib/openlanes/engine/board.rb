@@ -36,7 +36,7 @@ module OpenLanes
     end
 
     # @!attribute [r] key
-    #   @return [String] `"001.00/leah-researcher"`, what a command addresses a row by
+    #   @return [String] `"001.00/researcher"`, what a command addresses a row by
     # @!attribute [r] file
     #   @return [String] the document holding the agent's latest ledger line
     # @!attribute [r] pr

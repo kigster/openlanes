@@ -70,15 +70,15 @@ function setup({ open = true, store = new AskStore() }: { open?: boolean; store?
   return { ...view, client, sent, onCommand, store, stream };
 }
 
-const reply = (id: string, text = "001 is waiting on you: luke-backend asked B1."): CopilotTurn => ({
+const reply = (id: string, text = "001 is waiting on you: backend-coder asked B1."): CopilotTurn => ({
   id, from: "copilot", kind: "text", text, at: "2026-10-13T09:06:00Z", usage: null,
 });
-const chat = () => screen.getByRole("log", { name: "Conversation with c3po-operator" });
+const chat = () => screen.getByRole("log", { name: "Conversation with copilot" });
 
 it("draws the conversation from GET /api/copilot, with the model and tokens in its header, accessibly", async () => {
   const { container } = setup();
   expect(await within(chat()).findByText("Why has 001 not moved?")).toBeInTheDocument();
-  expect(screen.getByRole("dialog", { name: "c3po-operator" })).toHaveAttribute("data-dock", "right");
+  expect(screen.getByRole("dialog", { name: "copilot" })).toHaveAttribute("data-dock", "right");
   const model = snapshot.models.find(m => m.id === "claude-haiku-4-5")?.label ?? "claude-haiku-4-5";
   expect(screen.getByText(`Copilot for this run. ${model}, ↑ 13.1k ↓ 530`)).toBeInTheDocument();
   expect(within(chat()).getAllByText("You")).toHaveLength(3);
@@ -88,7 +88,7 @@ it("draws the conversation from GET /api/copilot, with the model and tokens in i
 it("says what it is for, and that it is not running, before anything was said", async () => {
   history = { turns: [], usage: { model: null, up: 0, down: 0 } };
   setup();
-  expect(await screen.findByText(/Ask c3po-operator about the run/)).toBeInTheDocument();
+  expect(await screen.findByText(/Ask copilot about the run/)).toBeInTheDocument();
   expect(screen.getByText("Copilot for this run. Not running, ↑ 0 ↓ 0")).toBeInTheDocument();
 });
 
@@ -96,7 +96,7 @@ it("opens on a plan when another panel asks, starting the message without sendin
   setup({ open: false });
   expect(screen.queryByRole("dialog")).toBeNull();
   act(() => openCopilot({ plan: "009.00", text: "About 009.00: " }));
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   expect(box).toHaveValue("About 009.00: ");
   expect(box).toHaveFocus();
   expect(posted).toEqual([]);
@@ -105,7 +105,7 @@ it("opens on a plan when another panel asks, starting the message without sendin
 it("keeps a message already being written when asked to open on a plan", async () => {
   const user = userEvent.setup();
   setup();
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   await user.type(box, "half written");
   act(() => openCopilot({ plan: "009.00", text: "About 009.00: " }));
   expect(box).toHaveValue("half written");
@@ -116,7 +116,7 @@ it("starts minimised to its tab on the right edge, and remembers being opened", 
   setup({ open: false });
   expect(screen.queryByRole("dialog")).toBeNull();
   await user.click(screen.getByRole("button", { name: "Copilot" }));
-  expect(screen.getByRole("textbox", { name: "Message c3po-operator" })).toHaveFocus();
+  expect(screen.getByRole("textbox", { name: "Message copilot" })).toHaveFocus();
   expect(localStorage.getItem("openlanes-copilot-open")).toBe("1");
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("dialog")).toBeNull();
@@ -127,7 +127,7 @@ it("sends a message, shows it at once, reads until the answer arrives, and draws
   const user = userEvent.setup();
   history = { turns: [], usage: { model: null, up: 0, down: 0 } };
   const { stream } = setup();
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   await user.type(box, "  What costs most?  ");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await within(chat()).findByText("What costs most?")).toBeInTheDocument();
@@ -146,7 +146,7 @@ it("sends a message, shows it at once, reads until the answer arrives, and draws
 it("sends with ⌘ Enter or Ctrl Enter, and does nothing for an empty box", async () => {
   const user = userEvent.setup();
   setup();
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(posted).toHaveLength(0);
   expect(box).toHaveFocus();
@@ -160,7 +160,7 @@ it("keeps the message and says why when the server refuses it", async () => {
   const user = userEvent.setup();
   postAnswer = () => json(422, { error: "a message is at most 4000 characters" });
   setup();
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   await user.type(box, "too long");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Not sent: a message is at most 4000 characters");
@@ -171,7 +171,7 @@ it("says the status when a refusal carries no reason", async () => {
   const user = userEvent.setup();
   postAnswer = () => new Response("", { status: 500 });
   setup();
-  await user.type(await screen.findByRole("textbox", { name: "Message c3po-operator" }), "hi");
+  await user.type(await screen.findByRole("textbox", { name: "Message copilot" }), "hi");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Not sent: POST /api/copilot answered 500");
 });
@@ -181,7 +181,7 @@ it("stops reading after a minute without an answer", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   const user = userEvent.setup({ advanceTimers: ms => vi.advanceTimersByTime(ms) });
   setup();
-  await user.type(await screen.findByRole("textbox", { name: "Message c3po-operator" }), "hello");
+  await user.type(await screen.findByRole("textbox", { name: "Message copilot" }), "hello");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await screen.findByText("Reading the board…")).toBeInTheDocument();
   act(() => void vi.advanceTimersByTime(ANSWER_TIMEOUT_MS));
@@ -204,13 +204,13 @@ it("puts a dot on its tab for a reply that arrives while it is minimised, and cl
 it("draws a confirm card in red and sends its command only when pressed", async () => {
   const user = userEvent.setup();
   const { sent } = setup();
-  const button = await screen.findByRole("button", { name: "Stop hansolo-reviewer" });
+  const button = await screen.findByRole("button", { name: "Stop staff-reviewer" });
   expect(button.closest(".cp-card")).toHaveClass("is-confirm");
   expect(sent).toHaveLength(0);
   await user.click(button);
-  expect(sent).toEqual([{ kind: "stop", plan: "005.00", agent: "hansolo-reviewer", payload: {} }]);
-  expect(await within(chat()).findByText(/Asked hansolo-reviewer on 005 to stop/)).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Stop hansolo-reviewer" })).toBeNull();
+  expect(sent).toEqual([{ kind: "stop", plan: "005.00", agent: "staff-reviewer", payload: {} }]);
+  expect(await within(chat()).findByText(/Asked staff-reviewer on 005 to stop/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Stop staff-reviewer" })).toBeNull();
 });
 
 it("leaves things as they are on Not now", async () => {
@@ -225,7 +225,7 @@ it("says so in place when the engine refuses a confirmed command", async () => {
   const user = userEvent.setup();
   const client = createQueryClient();
   client.setQueryData(COPILOT_KEY, log);
-  const { onCommand } = recorder("refused", "hansolo-reviewer is not running");
+  const { onCommand } = recorder("refused", "staff-reviewer is not running");
   render(
     <QueryClientProvider client={client}>
       <AnnouncerProvider>
@@ -234,8 +234,8 @@ it("says so in place when the engine refuses a confirmed command", async () => {
     </QueryClientProvider>,
   );
   await user.click(screen.getByRole("button", { name: "Copilot" }));
-  await user.click(screen.getByRole("button", { name: "Stop hansolo-reviewer" }));
-  const note = await within(chat()).findByText("Refused: hansolo-reviewer is not running.");
+  await user.click(screen.getByRole("button", { name: "Stop staff-reviewer" }));
+  const note = await within(chat()).findByText("Refused: staff-reviewer is not running.");
   expect(note).toHaveClass("is-refused");
   // With no models to name it by, the header shows the model's id.
   expect(screen.getByText(/Copilot for this run\. claude-haiku-4-5,/)).toBeInTheDocument();
@@ -257,8 +257,8 @@ it("answers locally under ?fixture, where nothing is connected", async () => {
   window.history.replaceState(null, "", "/?fixture");
   const user = userEvent.setup();
   setup();
-  expect(await screen.findByText(/Ask c3po-operator about the run/)).toBeInTheDocument();
-  await user.type(screen.getByRole("textbox", { name: "Message c3po-operator" }), "hello");
+  expect(await screen.findByText(/Ask copilot about the run/)).toBeInTheDocument();
+  await user.type(screen.getByRole("textbox", { name: "Message copilot" }), "hello");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await screen.findByText(FIXTURE_REPLY)).toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
@@ -274,14 +274,14 @@ it("survives a private window, where storage throws", async () => {
   });
   setup({ open: false });
   await user.click(screen.getByRole("button", { name: "Copilot" }));
-  expect(screen.getByRole("dialog", { name: "c3po-operator" })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "copilot" })).toBeInTheDocument();
   vi.restoreAllMocks();
 });
 
 it("hints at /stop, /restart and /concurrency while the box starts with a slash, and not otherwise", async () => {
   const user = userEvent.setup();
   setup();
-  const box = await screen.findByRole("textbox", { name: "Message c3po-operator" });
+  const box = await screen.findByRole("textbox", { name: "Message copilot" });
   expect(screen.queryByText(/Run commands/)).toBeNull();
   await user.type(box, "/");
   const hint = screen.getByText(/Run commands/);
@@ -296,7 +296,7 @@ it("draws a slash turn as a command and ends reading on the engine's .1 turn", a
   const user = userEvent.setup();
   history = { turns: [], usage: { model: null, up: 0, down: 0 } };
   const { stream } = setup();
-  await user.type(await screen.findByRole("textbox", { name: "Message c3po-operator" }), "/stop 020.00");
+  await user.type(await screen.findByRole("textbox", { name: "Message copilot" }), "/stop 020.00");
   await user.click(screen.getByRole("button", { name: "Send" }));
   expect(await within(chat()).findByText("/stop 020.00")).toHaveClass("cp-command");
   expect(screen.getByText("Reading the board…")).toBeInTheDocument();

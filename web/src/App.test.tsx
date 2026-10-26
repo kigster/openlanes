@@ -184,14 +184,14 @@ describe("under ?fixture", () => {
     await user.click(await screen.findByRole("tab", { name: /Logs/ }));
     await user.click(pills().getByRole("button", { name: /^005 [^,]*, working/ }));
     expect(screen.getByRole("tab", { name: "Board" })).toHaveAttribute("aria-selected", "true");
-    const hansolo = screen.getByRole("button", { name: "hansolo-reviewer" });
-    expect(hansolo).toHaveFocus();
-    await user.click(hansolo);
-    expect(hansolo).toHaveAttribute("aria-expanded", "true");
+    const staffReviewer = screen.getByRole("button", { name: "staff-reviewer" });
+    expect(staffReviewer).toHaveFocus();
+    await user.click(staffReviewer);
+    expect(staffReviewer).toHaveAttribute("aria-expanded", "true");
     expect(screen.queryByRole("heading", { name: /Needs you/ })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.getByRole("heading", { name: /Needs you/ })).toBeInTheDocument();
-    expect(hansolo).toHaveFocus();
+    expect(staffReviewer).toHaveFocus();
   });
 });
 
@@ -222,7 +222,7 @@ describe("the column divider", () => {
     renderApp();
     await user.click(await screen.findByRole("tab", { name: /Logs/ }));
     await user.click(pills().getByRole("button", { name: /^005 [^,]*, working/ }));
-    await user.click(screen.getByRole("button", { name: "hansolo-reviewer" }));
+    await user.click(screen.getByRole("button", { name: "staff-reviewer" }));
     expect(layout().style.getPropertyValue("--side-width")).toBe("480px");
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(layout().style.getPropertyValue("--side-width")).toBe("480px");
@@ -299,7 +299,7 @@ describe("live", () => {
     next.me.seq += 1;
     act(() => stream.onBoard(structuredClone(next)));
     await userEvent.click(pills().getByRole("button", { name: /^001 / }));
-    expect(screen.getByRole("button", { name: "luke-backend" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "backend-coder" })).toHaveAttribute("aria-expanded", "true");
   });
 
   it("shows a Preview tab only while an app with a preview process runs (plan 012)", async () => {

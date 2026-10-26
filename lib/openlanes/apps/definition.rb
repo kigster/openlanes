@@ -5,7 +5,7 @@ module OpenLanes
     # The `app:` block of `.openlanes.yml`: what kind of app a project builds
     # and the processes that run it, in the order they start.
     #
-    # Written by luke on a plan's first build (M12) and only ever read here.
+    # Written by backend-coder on a plan's first build (M12) and only ever read here.
     # It is new surface that every project will copy, so anything it does not
     # know is refused with the file named, exactly as {Config} refuses an
     # unknown top-level key: a `restart-on:` typo silently ignored is a

@@ -31,7 +31,7 @@ No vendor lock-in: every phase can run on claude, codex, pi, gemini or grok. And
 
 ## Decisions so far (2026-10-25)
 
-- **Q1, precedence:** agent frontmatter beats `.openlanes.yml`. An agent names an adapter only when it depends on it (chewie-verifier needs Claude's browser tools); the project default fills in everywhere else.
+- **Q1, precedence:** agent frontmatter beats `.openlanes.yml`. An agent names an adapter only when it depends on it (verifier needs Claude's browser tools); the project default fills in everywhere else.
 - **Probes are per adapter.** Each adapter class defines its own `probe`, so a new adapter brings its own. A probe is local and fast; an unavailable adapter carries the reason (not installed, not signed in, no models).
 - **Probe commands found on this machine:**
 
@@ -59,6 +59,6 @@ No vendor lock-in: every phase can run on claude, codex, pi, gemini or grok. And
 
 - `adapter: grok` and `adapter: gemini` run a phase end to end against recorded transcripts. No spec reaches the network.
 - `openlanes agents` reports each adapter's capabilities and availability, with the reason when unavailable.
-- `adapter: codex` in `.openlanes.yml` runs every agent without its own `adapter:` on codex; chewie-verifier stays on claude.
+- `adapter: codex` in `.openlanes.yml` runs every agent without its own `adapter:` on codex; verifier stays on claude.
 - The new-plan dialog offers only available adapters, and the choice lands in `spec.md` `phases`.
 - Startup time does not grow: the probes run on their own thread.

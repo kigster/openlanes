@@ -90,7 +90,7 @@ No file is owned by two units, so nothing inside a wave is forced sequential.
 - **Depends on:** U3, U4, U6.
 - **Done when:** both specs pass. Must show, with nothing stubbed but the agent process itself in the runner spec:
   - `run_linker_spec.rb`: a `PlansFixture` tree with two plans at 📋, 050 mentioning 034's parser with no `depends_on:` key and another with `depends_on: []`; `./exe/openlanes run --dry-run --isolation shared` through the real `Runner`, `Dispatcher`, `Registry` and `Executor` reports `would invoke ewoki-linker` for 050 and not for the other.
-  - `runner_linker_spec.rb`: ewoki runs once for a keyless plan, the folder name is unchanged after its round, and the next round hands the plan to `luthen-rael-planner` (`full`, `plan` lanes) or `r2d2-mechanic` (`quick`); a hand-written key, even `[]`, means ewoki never runs.
+  - `runner_linker_spec.rb`: ewoki runs once for a keyless plan, the folder name is unchanged after its round, and the next round hands the plan to `planner` (`full`, `plan` lanes) or `chores-coder` (`quick`); a hand-written key, even `[]`, means ewoki never runs.
 
 ## Frontend
 

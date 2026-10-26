@@ -43,7 +43,7 @@ RSpec.describe "runtime state outside .plans", :tree do
       locks.hold("001.00", folder("001.00"))
       state = OpenLanes::Engine.state_file(tree)
       state.begin_run!(root: repo_root)
-      state.record("001.00", agent: "luke-backend", round: 1, status: "Started")
+      state.record("001.00", agent: "backend-coder", round: 1, status: "Started")
       state.save
     end
 
@@ -90,7 +90,7 @@ RSpec.describe "runtime state outside .plans", :tree do
     legacy = File.join(plans_root, OpenLanes::Engine::StateFile::FILENAME)
     File.write(legacy,
       JSON.generate("run" => { "pid" => dead_pid },
-        "plans" => { "001.00" => { "stages" => [{ "agent" => "luke-backend", "round" => 1, "status" => "Started" }] } }))
+        "plans" => { "001.00" => { "stages" => [{ "agent" => "backend-coder", "round" => 1, "status" => "Started" }] } }))
 
     stranded = OpenLanes::Engine.state_file(tree).load.stranded
 

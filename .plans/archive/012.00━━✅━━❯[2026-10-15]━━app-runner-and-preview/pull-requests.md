@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 38 | [\[012.00\] App Runner and Preview](https://github.com/kigster/openlanes/pull/38) | Merged 🟣 |
 
-## Round 1 rejection fixes (luke-backend, 2026-10-15)
+## Round 1 rejection fixes (backend-coder, 2026-10-15)
 
 Correction to the 2026-10-14 claim below: it quoted only the whole-library figure. CI's changed-file gate failed on that head: `start.rb` 92.16%, `stop.rb` 90.48% (`ci/circleci: test`), `useApps.ts` 75.0% (`ci/circleci: web`). PR #38 was merged into `main` (8165d25) at 2026-10-15T15:56Z with those two jobs red.
 
@@ -13,7 +13,7 @@ What the uncovered lines were, and the specs now in `spec/openlanes/cli/app_spec
 - `start.rb` `definition_in` rescue: a plan worktree whose own `.openlanes.yml` has an unreadable `app:` while the root's is sound, exit 65.
 - `start.rb` `board` with Redis answering, `--demo` filing under `demo/<repo>`, the supervisor's output lambda, and the TERM trap raising the runner's stop flag.
 - `stop.rb` `Errno::ESRCH` (owner gone between registry read and TERM, staged) and `Errno::EPERM` (pid 1, exit 77).
-- `useApps.ts`: rey-frontend, `skipToken` in place of the dead `queryFn`, plus `useApps.test.tsx`.
+- `useApps.ts`: frontend-coder, `skipToken` in place of the dead `queryFn`, plus `useApps.test.tsx`.
 
 ```
 $ bundle exec rspec
@@ -33,7 +33,7 @@ coverage-changed: 21 file(s), all at or above 95%
 
 Not yet published: see `blocked.md` B1.
 
-## Verification (luke-backend and rey-frontend, 2026-10-14)
+## Verification (backend-coder and frontend-coder, 2026-10-14)
 
 ```
 $ just lint

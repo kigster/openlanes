@@ -1,0 +1,58 @@
+id: task-medium
+agent: chores-coder
+depth: medium
+description: >
+  A quick-lane option: --shout upper-cases the greeting. At medium depth a
+  few files may change, with a test. Stopping without a Completed line
+  leaves the harness nothing to act on, however good the diff.
+fixture:
+  state: planned
+  slug: shout-option
+  files:
+    spec.md: |
+      ---
+      starts: building
+      ---
+      # Shout Option
+
+      `Greeter.greet(name, shout: true)` returns the greeting upper-cased. Test it.
+    plan.md: |
+      # Plan
+
+      ## Task
+  repo:
+    Gemfile: |
+      source "https://rubygems.org"
+      gem "rspec"
+    lib/greeter.rb: |
+      module Greeter
+        def self.greet(name) = "Hello, #{name}!"
+      end
+    spec/greeter_spec.rb: |
+      require_relative "../lib/greeter"
+
+      RSpec.describe Greeter do
+        it "greets" do
+          expect(described_class.greet("Ada")).to eq("Hello, Ada!")
+        end
+      end
+expect:
+  signed: true
+  files_exist: [pull-requests.md]
+  sections:
+    plan.md: [Task]
+  changed_paths: [lib/greeter.rb, spec/greeter_spec.rb]
+  untouched: [Gemfile]
+  depth:
+    fast:
+      changed_files: { min: 1, max: 2 }
+      changed_lines: { min: 1, max: 20 }
+      words: { file: plan.md, section: Task, min: 5, max: 80 }
+      max_seconds: 300
+      max_tokens: 60000
+    medium:
+      changed_files: { min: 1, max: 4 }
+      changed_lines: { min: 2, max: 80 }
+      words: { file: plan.md, section: Task, min: 5, max: 150 }
+      max_seconds: 600
+      max_tokens: 120000

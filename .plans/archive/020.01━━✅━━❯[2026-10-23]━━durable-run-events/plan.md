@@ -2,7 +2,7 @@
 
 > [!NOTE]
 >
-> **As built, restored 2026-10-23 by `luke-backend`.** The previous `plan.md` was deleted in `41b53908` and re-created empty, which `hansolo-reviewer` rejected (finding 2): the plan described neither the diff nor the new direction. The units below are that deleted plan, unchanged except for the approval event (B4) and the verdict counts (B5), because they are exactly what #105 ships: an opt-in JSONL event log and `openlanes events report`. A database-backed store is deferred to a later plan (`spec.md`, Out of scope).
+> **As built, restored 2026-10-23 by `backend-coder`.** The previous `plan.md` was deleted in `41b53908` and re-created empty, which `staff-reviewer` rejected (finding 2): the plan described neither the diff nor the new direction. The units below are that deleted plan, unchanged except for the approval event (B4) and the verdict counts (B5), because they are exactly what #105 ships: an opt-in JSONL event log and `openlanes events report`. A database-backed store is deferred to a later plan (`spec.md`, Out of scope).
 
 Builds the opt-in, append-only JSONL event log from `spec.md` (In scope 1 to 11) and the `openlanes events report` command that reads it. One pull request, eight units.
 
@@ -13,7 +13,7 @@ Builds the opt-in, append-only JSONL event log from `spec.md` (In scope 1 to 11)
 - **Run id.** No run id exists today (`engine/state_file.rb:137` keeps only pid, root and `started_at`). `Runner` mints one per `call`: a digest of node name and run start. It is an identifier, not text.
 - **Unique run for block metrics.** `(plan, round, agent)`, per spec open question 6. A re-block after an answer is a new block on the same unique run.
 - **Usage across adapters.** Reported per adapter, never summed across adapters (spec open question 9). Cost: `estimated: true` on every computed figure, `null` for codex and pi.
-- **Front end means the CLI here.** There is no web work. `rey-frontend` owns the command, its renderer and the docs, per the spec's own split.
+- **Front end means the CLI here.** There is no web work. `frontend-coder` owns the command, its renderer and the docs, per the spec's own split.
 
 ## Order and dependencies
 
@@ -31,7 +31,7 @@ flowchart LR
 
 Sequence: B1 and B2 in parallel; then B3 and B5 in parallel; then B6; then B4; then F1. F2 can start once B3 has fixed the config key. B4 and B6 are sequential because B4 constructs the classes B6 changes and passes them the `events:` keyword B6 adds.
 
-Pair contract (spec, "Back end / front end"): `luke-backend` mails `rey-frontend` the field names of `Events::Report::Result` (B5) before F1 starts coding. Neither side renames a field without mail.
+Pair contract (spec, "Back end / front end"): `backend-coder` mails `frontend-coder` the field names of `Events::Report::Result` (B5) before F1 starts coding. Neither side renames a field without mail.
 
 ## Backend
 

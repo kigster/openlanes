@@ -16,10 +16,10 @@ components:
       properties:
         key:
           type: string
-          example: 001.00/rey-frontend
+          example: 001.00/frontend-coder
         agent:
           type: string
-          example: rey-frontend
+          example: frontend-coder
         subagents:
           type: array
           items:

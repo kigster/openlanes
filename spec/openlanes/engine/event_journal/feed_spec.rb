@@ -8,11 +8,11 @@ RSpec.describe OpenLanes::Engine::EventJournal::Feed do
   let(:handle) { instance_double(OpenLanes::Execution::Executor::Handle, pid: 42, session: nil, trace:) }
   let(:task) { instance_double(OpenLanes::Engine::Runner::Task, subject: plan, agent:, round: 1) }
   let(:plan) { instance_double(OpenLanes::Plans::Subject, feature: instance_double(OpenLanes::Plans::Feature, ordinal: "003.00")) }
-  let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "luke-backend") }
-  let(:job) { OpenLanes::Engine::Dispatcher::Job.new(key: "003.00/luke-backend", task:, handle:) }
-  let(:who) { { plan: "003.00", agent: "luke-backend" } }
+  let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "backend-coder") }
+  let(:job) { OpenLanes::Engine::Dispatcher::Job.new(key: "003.00/backend-coder", task:, handle:) }
+  let(:who) { { plan: "003.00", agent: "backend-coder" } }
 
-  let(:spent) { { ordinal: "003.00", agent: "luke-backend", ok: true, up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0 } }
+  let(:spent) { { ordinal: "003.00", agent: "backend-coder", ok: true, up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0 } }
 
   def attempt(from, to, note) = OpenLanes::Engine::Runner::Attempt.new(**spent, from:, to:, note:)
 

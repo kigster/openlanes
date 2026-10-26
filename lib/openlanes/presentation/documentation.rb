@@ -221,15 +221,15 @@ module OpenLanes
           leaves the file for you to open.
 
           **Nothing else belongs in that first pass.** It writes no `## Goals`, no
-          `## Non-Goals`, no conclusions — deciding those before `leah-researcher` and
-          `yoda-writer` have looked is choosing the answer before the research runs.
+          `## Non-Goals`, no conclusions — deciding those before `#{Agents::Names::RESEARCHER}` and
+          `#{Agents::Names::SPEC_WRITER}` have looked is choosing the answer before the research runs.
           Above all, it writes no heading beginning with the word "Research": that
           heading is not decoration, it is the #{status(:researched).emoji} #{status(:researched).label} invariant, so writing
           one — even empty — flips the folder's state out from under whoever reads it
           next, and the research nobody did gets skipped rather than assigned.
 
           This is only for work that does not exist yet. `create --after <plan> --prs
-          <n,...>` is the other path — the work already shipped, so `yoda-writer`
+          <n,...>` is the other path — the work already shipped, so `#{Agents::Names::SPEC_WRITER}`
           reconstructs the specification from the pull requests instead of guessing at
           a feature that has no facts yet to guess from.
 
@@ -306,10 +306,10 @@ module OpenLanes
 
           1. A human writes each answer under `## Answers` as it arrives, dated and
              attributed to whoever decided.
-          1. `openlanes unblock NNN` hands the folder to `lando-broker`.
+          1. `openlanes unblock NNN` hands the folder to `#{Agents::Names::UNBLOCKER}`.
              Nothing else reaches it: answers arriving is not a fact the tool can
              observe, so a human running the command *is* the signal.
-          1. `lando-broker` folds each answered question into the document that question
+          1. `#{Agents::Names::UNBLOCKER}` folds each answered question into the document that question
              was stopping — `spec.md` when the answer changes what we are building or
              why, `plan.md` when it changes how or in what order — and deletes the
              question and its answer from `blocked.md`.
@@ -320,7 +320,7 @@ module OpenLanes
           instead of choosing one is not an answer, and is left exactly where it is.
           So is any question nobody has answered yet: two answers out of five is a
           successful run, and the plan stays stopped on the other three, which is true.
-          `lando-broker` never answers a question itself, and never retires one for
+          `#{Agents::Names::UNBLOCKER}` never answers a question itself, and never retires one for
           being stale — dropping a question is a human's call, and it makes the plan
           #{status(:deferred).emoji} #{status(:deferred).label} or #{status(:discarded).emoji} #{status(:discarded).label}, not quietly shorter.
 
@@ -404,8 +404,8 @@ module OpenLanes
           | `openapi.yaml` | the HTTP surface, when the plan has one |
           #{known.reject { |r| r.start_with?("| `spec.md`", "| `plan.md`") }.join("\n")}
 
-          `contract.md` is the one file no state requires. `luke-backend` writes it
-          before it writes code, and `rey-frontend` builds from it a round later: the
+          `contract.md` is the one file no state requires. `#{Agents::Names::BACKEND_CODER}` writes it
+          before it writes code, and `#{Agents::Names::FRONTEND_CODER}` builds from it a round later: the
           interfaces the back end landed, their shapes and their errors, which files
           each half owns, which units may run concurrently, and the one test that
           proves the halves are joined rather than merely both present. No state
@@ -414,7 +414,7 @@ module OpenLanes
           linked from it, and `openlanes api docs` lists every one in the project.
 
           The units themselves live in `plan.md`, under `## Backend` and
-          `## Frontend`. `rey-frontend` is started only when `## Frontend` holds a
+          `## Frontend`. `#{Agents::Names::FRONTEND_CODER}` is started only when `## Frontend` holds a
           unit heading.
 
           Nothing else belongs there. A folder holding notes, diagrams or scratch files

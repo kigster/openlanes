@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 148.5
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "product_blocked",
@@ -49,7 +49,7 @@
       "note": "completed - 6 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 11 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "planned",
@@ -89,7 +89,7 @@
       "note": "interrupted, killed 60s after q; Interrupted; no rounds left"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "building",
@@ -109,7 +109,7 @@
       "note": "blocked; see blocked.md"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -132,146 +132,146 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:38-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:43-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:04-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-13T19:07:12-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:27-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Blocked",
       "round": 1,
       "note": "product"
     },
     {
       "at": "2026-10-13T19:09:40-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:23-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:28-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:11:19-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:11:28-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:13:35-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:13:53-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:16:21-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:17:10-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-13T19:18:52-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-13T19:24:15-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:24:22-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:25:38-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:25:43-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:27:10-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "STOP after B4; B5, B6 remain"
     },
     {
       "at": "2026-10-13T19:27:18-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "interrupted, killed 60s after q"
     },
     {
       "at": "2026-10-15T09:06:32-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:08:30-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
@@ -281,50 +281,50 @@
     {
       "number": 1,
       "at": "2026-10-13T19:14:28-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Contract is in implementation-plan.md: Mailbox#unacked(for:), Mailbox#ack, Mailbox#render (B1) and PlanState#last_known_states returning Hash{agent => Plans::LastKnownState} (B2). I'll mail when each lands. I own lib/openlanes/plans, cli/mail, cli/state, schemas, live, dispatcher, agents/*.md; you own board and web."
     },
     {
       "number": 2,
       "at": "2026-10-13T19:16:07-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
-      "body": "B1 landed: Plans.mailbox(dir).unacked or .unacked('rey-frontend') -> Integer (amended: positional arg, not for:); Message#read / #read?; Mailbox#render -> String. CLI: mail ack, mail render. Starting B2 (PlanState#last_known_states)."
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "B1 landed: Plans.mailbox(dir).unacked or .unacked('frontend-coder') -> Integer (amended: positional arg, not for:); Message#read / #read?; Mailbox#render -> String. CLI: mail ack, mail render. Starting B2 (PlanState#last_known_states)."
     },
     {
       "number": 3,
       "at": "2026-10-13T19:17:10-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "F1 blocked, see blocked.md B1/B2. Done: contract.md added to Web::App PLAN_FILES (+spec). No terminal board painter or web plan page exists; unacked/last-known-state would have to ride Live::Snapshot#plan (your file) plus web/src types. Prefer you add unacked + last_known_state keys there; say if you would rather I edit snapshot.rb. F2 waits on that."
     },
     {
       "number": 4,
       "at": "2026-10-13T19:17:36-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "B2 landed: Plans::PlanState.for(dir).last_known_states -> Hash{agent => Plans::LastKnownState} (fields source, at, round, status, done, remaining, next_step, files_touched, note); empty Hash when none. You can start F1."
     },
     {
       "number": 5,
       "at": "2026-10-13T19:18:52-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Re your blocked.md B1: I did option 1. Snapshot#plan now has unacked (Integer) and last_known (Array of {agent, source, at, round, status, next_step, note}). I also edited YOUR web/src/api/fixtures/snapshot.json to add both keys to each plan (snapshot_spec pins its shape). types.ts and the panel are yours."
     },
     {
       "number": 6,
       "at": "2026-10-13T19:18:52-07:00",
-      "from": "luke-backend",
-      "to": "luke-backend",
+      "from": "backend-coder",
+      "to": "backend-coder",
       "body": "RESUME: Done B1 (read/ack/render/unacked), B2 (LastKnownState, PlanState#record_last_known, state resume CLI, schema), Snapshot#plan unacked+last_known keys + fixture. Not done: B3 Live::Mail, B4 dispatcher drain + harness fallback, B5 plan.md/contract.md rename + prompts, B6 api docs. Exact next step: run bundle exec rspec && bundle exec rubocop in the worktree, fix anything, then start B3. Details in implementation-plan.md 'Resume' section."
     },
     {
       "number": 7,
       "at": "2026-10-13T19:20:15-07:00",
       "from": "human",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "What is the question?",
       "command": "01M4W3BNA91EWPVHM64PN2S8Z5"
     },
@@ -332,20 +332,20 @@
       "number": 8,
       "at": "2026-10-13T19:26:09-07:00",
       "from": "human",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "A",
       "command": "01M4W3PG9TQCR4Z0N881B7PH93"
     },
     {
       "number": 9,
       "at": "2026-10-13T19:27:09-07:00",
-      "from": "luke-backend",
-      "to": "luke-backend",
+      "from": "backend-coder",
+      "to": "backend-coder",
       "body": "RESUME: Done B1-B4 (B3 Live::Mail streams + send publish; B4 dispatcher drain + harness resume record). Not done: B5, B6. Exact next step: run bundle exec rspec && bundle exec rubocop in the worktree, then start B5. Details in implementation-plan.md 'Resume (round 1, STOP after B4)'."
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-13T19:27:09-07:00",
       "round": 1,

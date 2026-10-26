@@ -1,6 +1,6 @@
 # 007.00 Plan Folder Naming — back end
 
-Built by `luke-backend`. Units run in the order `B1 → B2 → (B3 ∥ B4) → B5 → B6 → B7`. B3 and B4 may run at the same time: their file sets are disjoint. Every other pair is sequential because it shares a file or a dependency.
+Built by `backend-coder`. Units run in the order `B1 → B2 → (B3 ∥ B4) → B5 → B6 → B7`. B3 and B4 may run at the same time: their file sets are disjoint. Every other pair is sequential because it shares a file or a dependency.
 
 Specs build real `.plans` trees through `PlansFixture` and the `:tree` tag; specs that need git history use a temp git repository, never a stubbed `git`.
 

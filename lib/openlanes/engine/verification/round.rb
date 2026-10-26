@@ -6,10 +6,10 @@ module OpenLanes
   module Engine
     module Verification
       # One verification of one plan: `<plan folder>/verification/<number>/`
-      # (M14), where chewie leaves its screenshots and `report.md`.
+      # (M14), where verifier leaves its screenshots and `report.md`.
       #
       # The number is read from disk, never kept anywhere else: a round is
-      # finished once its `report.md` exists, so the next run of chewie gets
+      # finished once its `report.md` exists, so the next run of verifier gets
       # the next number, while a run that died before reporting hands its
       # folder to the one that follows it rather than leaving a gap.
       #
@@ -21,10 +21,10 @@ module OpenLanes
         # @return [String] the round's own folder
         def dir = File.join(plan_dir, Round::FOLDER, number.to_s)
 
-        # @return [String] what chewie writes when it is done
+        # @return [String] what verifier writes when it is done
         def report_path = File.join(dir, Round::REPORT)
 
-        # @return [Boolean] whether chewie, or the engine for it, reported
+        # @return [Boolean] whether verifier, or the engine for it, reported
         def reported? = File.file?(report_path)
 
         # @return [Report, nil]
@@ -36,8 +36,8 @@ module OpenLanes
         # @return [String] where the engine records the verification commit
         def published_path = File.join(dir, Round::PUBLISHED)
 
-        # Whether the engine pushed this round's evidence. chewie's
-        # `Verdict: verified` is only chewie's word: a run that died after
+        # Whether the engine pushed this round's evidence. verifier's
+        # `Verdict: verified` is only verifier's word: a run that died after
         # writing it, before its signature or the push, would otherwise be
         # taken for a round waiting on CI, and the old head labelled ready.
         #
@@ -59,10 +59,10 @@ module OpenLanes
         # Under the plan folder.
         FOLDER = "verification"
 
-        # chewie's own account of the round.
+        # verifier's own account of the round.
         REPORT = "report.md"
 
-        # The engine's note to chewie about the app it started.
+        # The engine's note to verifier about the app it started.
         APP_NOTE = "app.md"
 
         # The engine's record that the round's evidence was pushed: the SHA.
@@ -82,7 +82,7 @@ module OpenLanes
           # @return [Round, nil] the newest round, reported or not
           def latest(plan_dir) = all(plan_dir).last
 
-          # The round a new run of chewie works in: the newest one when it
+          # The round a new run of verifier works in: the newest one when it
           # has no report yet, otherwise the one after it.
           #
           # @param plan_dir [String]

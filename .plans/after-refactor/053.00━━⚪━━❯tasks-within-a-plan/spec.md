@@ -8,7 +8,7 @@ depends_on: ["045.00"]
 
 ## What we are trying to achieve
 
-A plan too big for one pull request is split into tasks, each its own pull request. Several builders work tasks of one plan in parallel once they have agreed the interfaces, then test the integration. This generalises the luke and rey pair, who build one plan through `contract.md`.
+A plan too big for one pull request is split into tasks, each its own pull request. Several builders work tasks of one plan in parallel once they have agreed the interfaces, then test the integration. This generalises the backend-coder and frontend-coder pair, who build one plan through `contract.md`.
 
 ## Why it matters
 
@@ -16,7 +16,7 @@ Large plans today become one oversized pull request built by one agent, which is
 
 ## What already exists
 
-Work units in `plan.md` written by luthen-rael; the luke-backend and rey-frontend pair and `contract.md`; S18 conflict detection over work units.
+Work units in `plan.md` written by planner; the backend-coder and frontend-coder pair and `contract.md`; S18 conflict detection over work units.
 
 ## What research needs to settle
 

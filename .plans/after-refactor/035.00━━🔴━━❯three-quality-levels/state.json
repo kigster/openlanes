@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T15:05:05-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "planned",
@@ -32,7 +32,7 @@
       "moves": 1
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Almost completed",
       "from": "building",
@@ -55,7 +55,7 @@
       "moves": 1
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 3,
       "status": "Interrupted",
       "from": "building",
@@ -73,7 +73,7 @@
       "finished_at": "2026-10-21T01:20:02-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -92,7 +92,7 @@
       "moves": 2
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -111,7 +111,7 @@
       "moves": 4
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -130,7 +130,7 @@
       "moves": 5
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -149,7 +149,7 @@
       "moves": 7
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -168,7 +168,7 @@
       "moves": 7
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Started",
       "from": "rejected",
@@ -180,7 +180,7 @@
       "session": "63408d4d-002c-4895-87d7-3d8e50169c67"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Completed",
       "from": "rejected",
@@ -199,7 +199,7 @@
       "moves": 8
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -218,7 +218,7 @@
       "moves": 10
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Completed",
       "from": "verifying",
@@ -240,154 +240,154 @@
   "signatures": [
     {
       "at": "2026-10-20T17:06:57-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:17:35-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:22:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-20T17:33:37-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 2
     },
     {
       "at": "2026-10-20T18:55:22-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 3
     },
     {
       "at": "2026-10-21T01:20:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 3,
       "note": "harness died"
     },
     {
       "at": "2026-10-21T01:27:19-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:40:55-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:56:03-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:57:02-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-21T01:57:20-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T02:03:38-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T02:04:23-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T02:05:46-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 2/2"
     },
     {
       "at": "2026-10-21T22:00:33-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T22:05:35-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-23T14:02:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:13:22-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-23T14:30:08-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-23T14:40:48-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-23T14:41:12-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:44:13-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-23T14:49:41-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
     },
     {
       "at": "2026-10-23T15:04:57-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "rejected: The coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage; signed by harness"
@@ -399,7 +399,7 @@
       "number": 1,
       "at": "2026-10-21T01:20:02-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 3; carry on from your last resume note",
       "read": "no"
     },
@@ -408,7 +408,7 @@
       "number": 2,
       "at": "2026-10-23T14:40:05-07:00",
       "from": "human",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "Are you able to reproduce the error with number of arguments?",
       "read": "no",
       "command": "01M5NB9VJQWX6X7BNBYWRPERDJ"
@@ -418,8 +418,8 @@
       "number": 3,
       "at": "2026-10-23T15:05:04-07:00",
       "from": "github",
-      "to": "luke-backend",
-      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "to": "backend-coder",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -427,8 +427,8 @@
       "number": 4,
       "at": "2026-10-23T15:05:05-07:00",
       "from": "github",
-      "to": "r2d2-mechanic",
-      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "to": "chores-coder",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -436,14 +436,14 @@
       "number": 5,
       "at": "2026-10-23T15:05:05-07:00",
       "from": "github",
-      "to": "rey-frontend",
-      "body": "PR #111 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 chewie-verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
+      "to": "frontend-coder",
+      "body": "PR #111 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/111):\n\n### 🧪 verifier: rejected, verification round 1\n\nThe coverage gate withheld ready-to-merge: /Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/035.00-three-quality-levels/.openlanes.yml: unknown key starts; known: project, lane, frontend, jobs, redis_url, redis_outage_hours, desired_codebase_quality, merge, commands, app, plans, questions, review, coverage.\n\nPlan 035.00. How to test is in the pull request's description.",
       "read": "no"
     }
   ],
   "moves": 11,
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-23T14:13:35-07:00",
       "round": 1,
@@ -452,7 +452,7 @@
     }
   },
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -484,7 +484,7 @@
             },
             {
               "kind": "done",
-              "text": "U5: Verification.skips_verification? + Driver#skip publish a verified round under mvp so chewie never runs; driver_spec covers it"
+              "text": "U5: Verification.skips_verification? + Driver#skip publish a verified round under mvp so verifier never runs; driver_spec covers it"
             },
             {
               "kind": "note",
@@ -492,7 +492,7 @@
             },
             {
               "kind": "note",
-              "text": "alock release-all freed docs/thread-safety.md signed luke-backend, not mine: locks are shared across worktrees and same-name agents on other plans collide"
+              "text": "alock release-all freed docs/thread-safety.md signed backend-coder, not mine: locks are shared across worktrees and same-name agents on other plans collide"
             }
           ]
         },
@@ -510,11 +510,11 @@
             },
             {
               "kind": "note",
-              "text": "hansolo posts findings as a PR conversation comment, not inline review comments, so there are no threads to reply in; answers go under ## Answers, round N in pull-requests.md"
+              "text": "staff-reviewer posts findings as a PR conversation comment, not inline review comments, so there are no threads to reply in; answers go under ## Answers, round N in pull-requests.md"
             },
             {
               "kind": "note",
-              "text": "The harness holds an alock on the plan folder (.plans/<plan>/**) for luke-backend; alock refuses my own claim there, so I write plan markdown under the harness's lock"
+              "text": "The harness holds an alock on the plan folder (.plans/<plan>/**) for backend-coder; alock refuses my own claim there, so I write plan markdown under the harness's lock"
             }
           ]
         },
@@ -528,7 +528,7 @@
             },
             {
               "kind": "note",
-              "text": "Round 5: rubocop 560 files clean, rspec 4174/0/0 pending with web/dist built; signed Completed --next hansolo-reviewer"
+              "text": "Round 5: rubocop 560 files clean, rspec 4174/0/0 pending with web/dist built; signed Completed --next staff-reviewer"
             }
           ]
         },
@@ -564,7 +564,7 @@
             },
             {
               "kind": "done",
-              "text": "Round 7: re-verified after the rebase: rubocop 565 files clean, rspec 4222/0 with 45 pending (all Redis-unreachable); wrote ## Answers/Verification, round 7; signed Completed --next hansolo-reviewer"
+              "text": "Round 7: re-verified after the rebase: rubocop 565 files clean, rspec 4222/0 with 45 pending (all Redis-unreachable); wrote ## Answers/Verification, round 7; signed Completed --next staff-reviewer"
             },
             {
               "kind": "note",
@@ -574,7 +574,7 @@
         }
       }
     },
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "rounds": {
         "1": {
           "round": 1,
@@ -602,7 +602,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -615,7 +615,7 @@
     },
     {
       "number": 2,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 2,
       "limit": "rounds",
@@ -629,7 +629,7 @@
     },
     {
       "number": 3,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -639,7 +639,7 @@
     },
     {
       "number": 4,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "rejected",
       "round": 1,
       "limit": "time",
@@ -649,7 +649,7 @@
     },
     {
       "number": 5,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "rejected",
       "round": 1,
       "limit": "rounds",
@@ -662,7 +662,7 @@
     },
     {
       "number": 6,
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "state": "verifying",
       "round": 1,
       "limit": "time",

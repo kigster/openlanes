@@ -12,7 +12,7 @@
 | B2 `Coverage::Report` and four parsers | done | `spec/openlanes/coverage/{report,lcov,cobertura,istanbul,simplecov}_spec.rb`, 35 examples |
 | B3 `Engine::CoverageGate` | done | `spec/openlanes/engine/coverage_gate_spec.rb`, 12 examples |
 | B4 `openlanes coverage` | done | `spec/openlanes/cli/coverage_spec.rb`, 8 examples |
-| B5 hansolo text and eval case | done | `evals/cases/hansolo-reviewer/coverage-minimum.yml`, scored by `spec/openlanes/evals/corpus_spec.rb` |
+| B5 staff-reviewer text and eval case | done | `evals/cases/staff-reviewer/coverage-minimum.yml`, scored by `spec/openlanes/evals/corpus_spec.rb` |
 | B6 integration check | done | `spec/openlanes/integration/coverage_gate_spec.rb`, 3 examples |
 
 ## Interfaces (what plan 014 and PR #26 call)
@@ -26,7 +26,7 @@ Order of checks, first match wins:
 | Condition | `passed?` | `percent` | `reason` |
 | --- | --- | --- | --- |
 | `checkout.dirty?` | false | 0.0 | `<path> has uncommitted changes; coverage is measured only in a clean checkout` (nothing runs) |
-| no `.openlanes.coverage.yml` in the checkout | false | 0.0 | `no .openlanes.coverage.yml in <path>; luke declares command, report, format and minimum (M15)` |
+| no `.openlanes.coverage.yml` in the checkout | false | 0.0 | `no .openlanes.coverage.yml in <path>; backend-coder declares command, report, format and minimum (M15)` |
 | invalid declaration | false | 0.0 | the `Coverage::Invalid` message, `<file>: <what>` |
 | command ran past `timeout` | false | 0.0 | ``coverage counts as 0%: `<command>` ran past <n>s and was stopped`` |
 | command exited non-zero | false | 0.0 | ``coverage counts as 0%: `<command>` exited <status>`` |
@@ -51,7 +51,7 @@ The command runs as `sh -c <command>` with `chdir: checkout.path`, through `Exec
 Nothing on `main` sets `ok-to-merge`. Whichever lands after this plan:
 
 - **PR #26 (plan 005)**: `Vcs::Review#refusal(label, ci)` gains a third input. When `label.name == "ok-to-merge"`, it calls `Engine.coverage_gate.call(checkout:)` and returns `verdict.reason` unless `verdict.passed?`. `Review#call` then needs the PR's checkout, which plan 014 supplies.
-- **Plan 014 (`chewie-verifier`)**: after a passing walk-through, the engine, not chewie, runs the gate (as it merges, M2: a label that gates a merge is not an agent's to grant) on the same clean checkout before applying `ok-to-merge`, and on a withheld verdict applies `review-rejected` with `verdict.to_s` and `verdict.output` as the comment.
+- **Plan 014 (`verifier`)**: after a passing walk-through, the engine, not verifier, runs the gate (as it merges, M2: a label that gates a merge is not an agent's to grant) on the same clean checkout before applying `ok-to-merge`, and on a withheld verdict applies `review-rejected` with `verdict.to_s` and `verdict.output` as the comment.
 
 ### `OpenLanes::Coverage` (pure: no processes)
 
@@ -71,6 +71,6 @@ STDOUT: `Verdict#to_s`, one line. STDERR: the command's tail when withheld. Exit
 
 ## File ownership
 
-All files are luke's (B1–B6). No shared files beyond `lib/openlanes/coverage.rb` (B1, then B2).
+All files are backend-coder's (B1–B6). No shared files beyond `lib/openlanes/coverage.rb` (B1, then B2).
 
 Amended: `spec/support/coverage_fixtures.rb` and one `require_relative` line in `spec/spec_helper.rb`, not in the plan's tables: the parser specs share fixture lookup. `lib/openlanes.rb` gained one `loader.collapse` line for `cli/coverage`, as every command directory has.

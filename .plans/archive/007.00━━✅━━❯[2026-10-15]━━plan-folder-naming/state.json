@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 152.3
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 3 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 13 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "planned",
@@ -89,7 +89,7 @@
       "note": "Almost completed; no rounds left"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -109,7 +109,7 @@
       "note": "completed - 13 tool calls"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -132,102 +132,102 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:39-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-13T19:05:09-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:24-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-13T19:07:39-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:08:15-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:08:26-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:14-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:13:43-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:17:20-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:18:37-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:27:00-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-15T09:02:26-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:04:45-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-15T09:10:21-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:12:02-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
@@ -237,36 +237,36 @@
     {
       "number": 1,
       "at": "2026-10-13T19:14:48-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Contract written in implementation-plan.md. Snapshot plan gains locked: {pid:number, host:string, started_at:ISO string} | null. New block emoji ⭕ (U+2B55) and 🛑 (U+1F6D1); old ⭕️ 🅱️ 🅱 still possible. You own web/ only; I own lib/ spec/ bin/ docs. Start F1 against that shape."
     },
     {
       "number": 2,
       "at": "2026-10-13T19:18:37-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done (web/ only). Proofs: web/src/panels/support.test.ts 'recognises both the new and the old block emoji'; web/src/board/model.test.ts 'lockMark' + pillState marks ⭕/🛑; web/src/board/Board.test.tsx 'locked plan'. Also added locked: null to web/src/api/fixtures/{board,snapshot}.json. vitest 293 pass, eslint, tsc, rubocop clean."
     },
     {
       "number": 3,
       "at": "2026-10-13T19:23:40-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "B4 landed: Live::Snapshot plans[] now carry locked: {pid, host, started_at ISO UTC} | null (plans only, not backlog — matches your fixture). STATUSES emoji are now ⚪ ⭐ ⭕ 🛑 💤 ⏪. Suite green."
     },
     {
       "number": 4,
       "at": "2026-10-13T19:25:57-07:00",
-      "from": "luke-backend",
-      "to": "luke-backend",
+      "from": "backend-coder",
+      "to": "backend-coder",
       "body": "RESUME: B1, B2, B4 done (suite 2304/0, rubocop clean). Next: B4 dispatcher_spec + snapshot locked example, then B3 (tree.rb INACTIVE_DIRS, Tree all:, creator allocation across archive/deferred/abandoned, created:, list-plans --all, lib/openlanes.rb:133 ls-tree), then B5, B6, B7. bin/plan-number already searches the subfolders. See Progress in implementation-plan.md."
     },
     {
       "number": 5,
       "at": "2026-10-13T19:25:58-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end not finished this round: B1 B2 B4 in, B3 B5 B6 B7 next round. Nothing changes in your contract."
     }
   ]

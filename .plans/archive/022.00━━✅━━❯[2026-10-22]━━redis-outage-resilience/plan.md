@@ -2,7 +2,7 @@
 
 Spec: `spec.md` (framing 1, gated by 2). One pull request, eight units: seven back end, one front end.
 
-amended (round 4, after hansolo's rejection): this plan was written against `7186635`. Before the branch was rebuilt onto `origin/main`, main landed two commits that already do much of what the units below first described:
+amended (round 4, after staff-reviewer's rejection): this plan was written against `7186635`. Before the branch was rebuilt onto `origin/main`, main landed two commits that already do much of what the units below first described:
 
 - `ec5b95eb` (2026-10-18) "Pause agents while Redis is unreachable": `Live::Outage` with a 10 s grace, `PAUSE` and `RESUME` in `Execution::Control`, Fibonacci probes (1, 1, 2, 3, 5, 8 … s), and the `redis_outage_hours` give-up limit.
 - `14a7f439` (2026-10-18) "Keep the engine up when Redis restarts empty": `Store#xreadgroup` maps `NOGROUP` to `GroupMissing`, and `Commands` makes its group again. This is the #59 crash.
@@ -11,7 +11,7 @@ Each unit below now says what this branch built on top of that, and what it did 
 
 Defaults taken from the spec's open questions:
 
-- Backoff (open question 1): amended (round 5, hansolo 2/2): built in `Live::Outage` itself, not as a second schedule. Main's Fibonacci gaps are scaled by `redis_backoff.initial` (1 s), capped at `redis_backoff.cap` (30 s, `Outage::MAX_GAP`) and drawn with full jitter (`redis_backoff.jitter: true`), all three set in `.openlanes.yml`. In scope 5 is met.
+- Backoff (open question 1): amended (round 5, staff-reviewer 2/2): built in `Live::Outage` itself, not as a second schedule. Main's Fibonacci gaps are scaled by `redis_backoff.initial` (1 s), capped at `redis_backoff.cap` (30 s, `Outage::MAX_GAP`) and drawn with full jitter (`redis_backoff.jitter: true`), all three set in `.openlanes.yml`. In scope 5 is met.
 - Give-up timeout (open question 6): main's `redis_outage_hours`, one hour by default, replaces "pause forever".
 - Outage length: `nodes[].heartbeat_at` when Redis still holds it, else the engine's own monotonic clock (open question 4).
 - The page infers an outage from a stale snapshot; after recovery it reads `run.outage` (open question 5).
@@ -43,7 +43,7 @@ Additive field on the snapshot's `run` object (`Live::Snapshot#run`, `web/src/ap
 }
 ```
 
-Field names are fixed here, so `luke-backend` and `rey-frontend` need not pair on them again. A change goes through mail to both sides.
+Field names are fixed here, so `backend-coder` and `frontend-coder` need not pair on them again. A change goes through mail to both sides.
 
 ## Backend
 
@@ -110,11 +110,11 @@ Field names are fixed here, so `luke-backend` and `rey-frontend` need not pair o
 
 ## HTTP surface
 
-Yes, additively. No route is added or changed; the `GET /api/board` response and the `event: board` stream gain the optional `run.outage` object above. `luke-backend` writes `openapi.yaml` beside `contract.md` describing the snapshot's `run` object with the new field, so `openlanes api docs` lists it.
+Yes, additively. No route is added or changed; the `GET /api/board` response and the `event: board` stream gain the optional `run.outage` object above. `backend-coder` writes `openapi.yaml` beside `contract.md` describing the snapshot's `run` object with the new field, so `openlanes api docs` lists it.
 
 ## Reproduction
 
-_Written by B1 (luke-backend, round 2); amended round 4._
+_Written by B1 (backend-coder, round 2); amended round 4._
 
 - **How.** Not through the `openlanes run` CLI. It ran through a real `Dispatcher`, `Session` and `Live::Store` over a `PlansFixture` tree, against a throwaway `redis-server` on an ephemeral port (`spec/support/redis_server.rb`). Between two ticks the server was stopped, its `dump.rdb` deleted, and started again on the same port.
 - **What raised, on `7186635`.** `RedisClient::CommandError: NOGROUP No such key '…:commands' or consumer group 'engine' in XREADGROUP with GROUP option`, from the commands stream read in the dispatcher's before-tick hooks. The tick raised, so the run ended.

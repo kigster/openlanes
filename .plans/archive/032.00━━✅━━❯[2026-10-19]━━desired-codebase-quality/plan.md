@@ -1,6 +1,6 @@
 # ✅ 032.00 — Codebase Quality
 
-R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interface work: `rey-frontend` is not started, luke owns the plan.
+R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interface work: `frontend-coder` is not started, backend-coder owns the plan.
 
 ## Backend
 
@@ -13,13 +13,13 @@ R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interf
 ### Scope: which rows of M5's column this plan drives
 
 - amended: round 1 review. This plan drives two rows of M5's `high` / `mvp` column: the verdicts that go on to ification (U2) and `max_rejections` (U1).
-- The other rows (default depth: high medium, mvp fast; luke, rey and hansolo models: mvp Sonnet; leah: mvp off) are not wired. They need a project-wide default under `Plans::Spec`'s per-plan `depth` and `Agents::Profile`'s models, which is a plan of its own: a follow-up, "Quality drives depth and models", still to be numbered by a person.
+- The other rows (default depth: high medium, mvp fast; backend-coder, frontend-coder and staff-reviewer models: mvp Sonnet; researcher: mvp off) are not wired. They need a project-wide default under `Plans::Spec`'s per-plan `depth` and `Agents::Profile`'s models, which is a plan of its own: a follow-up, "Quality drives depth and models", still to be numbered by a person.
 
 ### U2 What the quality decides at the 👀 → 🧪 hand-off
 
 - `Verification.from_review?(labels, quality:)`: `review-approved` always goes on; `review-ok-not-perfect` goes on under `mvp` only.
-- Under `high`, an `review-ok-not-perfect` PR goes back to luke and rey: the plan moves to 🔴.
-- amended: round 1 review. That send-back is a counted rejection: `Outcome#send_back_for_quality` signs it for chewie (`rejected: …; signed by harness`), so `merge.max_rejections` and the arbitrator see it, and a PR labelled the same round after round cannot loop. Labels stay as hansolo set them. `Dispatcher#approved` treats 🔴 after a hand-off as the hand-off's result; a spec pins that only `high` reaches it.
+- Under `high`, an `review-ok-not-perfect` PR goes back to backend-coder and frontend-coder: the plan moves to 🔴.
+- amended: round 1 review. That send-back is a counted rejection: `Outcome#send_back_for_quality` signs it for verifier (`rejected: …; signed by harness`), so `merge.max_rejections` and the arbitrator see it, and a PR labelled the same round after round cannot loop. Labels stay as staff-reviewer set them. `Dispatcher#approved` treats 🔴 after a hand-off as the hand-off's result; a spec pins that only `high` reaches it.
 - With the key missing, the plan stays 👀 and the project is asked once (U3).
 
 ### U3 Ask once per project when the key is missing
@@ -30,7 +30,7 @@ R4 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`. No interf
 
 ### U4 Builders answer every non-✅ comment
 
-- `agents/luke-backend.md` and `agents/rey-frontend.md`: sent back, reply in each non-✅ comment's thread with a fix or a backed-up rebuttal (`gh api .../comments/<id>/replies`), listed under `## Answers, round N` in `pull-requests.md`. Built.
+- `agents/backend-coder.md` and `agents/frontend-coder.md`: sent back, reply in each non-✅ comment's thread with a fix or a backed-up rebuttal (`gh api .../comments/<id>/replies`), listed under `## Answers, round N` in `pull-requests.md`. Built.
 
 ### U5 `openlanes init` asks it
 

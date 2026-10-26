@@ -220,7 +220,7 @@ module OpenLanes
         return if ok
 
         error("spec.md was scaffolded, but the drafting attempt did not finish:\n#{note}\n\n" \
-              "The four headings are there, empty. Fill them in by hand, or hand off to leah-researcher.")
+              "The four headings are there, empty. Fill them in by hand, or hand off to #{Agents::Names::RESEARCHER}.")
       end
 
       # @param path [String] a plan folder
@@ -264,7 +264,7 @@ module OpenLanes
           return "Next: read #{spec} — it was written from the pull requests, so check it against what actually shipped"
         end
 
-        "Next: fill in the four headings in #{spec}, then hand off to leah-researcher"
+        "Next: fill in the four headings in #{spec}, then hand off to #{Agents::Names::RESEARCHER}"
       end
     end
   end

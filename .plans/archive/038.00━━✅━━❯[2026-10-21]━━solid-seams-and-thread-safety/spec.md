@@ -76,14 +76,14 @@ Each item has its check.
 
 | Item | Built by |
 | :-- | :-- |
-| 1-3 bus port, implementations, contract spec | `luke-backend` |
-| 2 web server and `Web::Demo` call-site moves | `luke-backend`; `rey-frontend` only confirms the page's event stream still works (no page code changes) |
-| 4-5 `Clock`, `Process` ports | `luke-backend` |
-| 6-7 adapter capabilities | `luke-backend` |
-| 8-9 inventory and fixes | `luke-backend` |
-| 10 stress spec | `luke-backend` |
+| 1-3 bus port, implementations, contract spec | `backend-coder` |
+| 2 web server and `Web::Demo` call-site moves | `backend-coder`; `frontend-coder` only confirms the page's event stream still works (no page code changes) |
+| 4-5 `Clock`, `Process` ports | `backend-coder` |
+| 6-7 adapter capabilities | `backend-coder` |
+| 8-9 inventory and fixes | `backend-coder` |
+| 10 stress spec | `backend-coder` |
 
-`rey-frontend` has no code to write. The browser sees the same SSE nudges; the check for them is the existing web specs and e2e.
+`frontend-coder` has no code to write. The browser sees the same SSE nudges; the check for them is the existing web specs and e2e.
 
 ## Open questions
 
@@ -140,7 +140,7 @@ Production runs the code above: Redis-backed `Store` where configured, `MemorySt
 
 **Conclusion.** The work is buildable. Its scope is the four ports plus the audit. The global-lock dependency on 034 must be settled before the "runs alone" check can pass.
 
-**Unsettled (for yoda to lift into open questions):**
+**Unsettled (for spec-writer to lift into open questions):**
 
 1. Does `EventBus` replace `Live::News` or wrap it? Both are workable; the choice changes which files move.
 2. What is N in the stress spec, and what counts as one "dispatch tick" under concurrency?

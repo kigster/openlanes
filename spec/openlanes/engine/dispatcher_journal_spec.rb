@@ -8,8 +8,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:agents_dir) { Dir.mktmpdir }
   let(:agents) do
-    File.write(File.join(agents_dir, "leah.md"),
-      "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
+    File.write(File.join(agents_dir, "researcher.md"),
+      "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
       "adapter: claude\nledger: [spec.md]\n---\nbody")
     OpenLanes::Agents::Registry.new(dir: agents_dir)
   end
@@ -47,10 +47,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   it "keeps every entry a failed round printed, each round in its own journal round" do
-    expect(state.journal("leah-researcher").map { [it.number, it.round, it.state, it.entries.map(&:to_json_h)] }).to eq([
-                                                                                                                          [1, 1, "new", [{ "kind" => "todo", "text" => "round 1" }, { "kind" => "done", "text" => "round 1" }]],
-                                                                                                                          [2, 2, "new", [{ "kind" => "todo", "text" => "round 2" }, { "kind" => "done", "text" => "round 2" }]]
-                                                                                                                        ])
+    expect(state.journal("researcher").map { [it.number, it.round, it.state, it.entries.map(&:to_json_h)] }).to eq([
+                                                                                                                     [1, 1, "new", [{ "kind" => "todo", "text" => "round 1" }, { "kind" => "done", "text" => "round 1" }]],
+                                                                                                                     [2, 2, "new", [{ "kind" => "todo", "text" => "round 2" }, { "kind" => "done", "text" => "round 2" }]]
+                                                                                                                   ])
   end
 
   it "says which lines it ignored, and why" do

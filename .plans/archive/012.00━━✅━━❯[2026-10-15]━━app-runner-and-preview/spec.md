@@ -42,9 +42,9 @@ A plan's app can be started, kept running and previewed by the engine from a dec
 
 ## Non-Goals
 
-- Writing `app:` for the user. luke or r2d2 writes it on the first build (M12); this plan only reads it.
+- Writing `app:` for the user. backend-coder or chores-coder writes it on the first build (M12); this plan only reads it.
 - The stack questionnaire and `stack:` summary (M16).
-- Driving the app: the headless browser, `## How to test` steps and the verdict belong to `chewie-verifier` (M1, M11), which does not exist in `agents/` yet.
+- Driving the app: the headless browser, `## How to test` steps and the verdict belong to `verifier` (M1, M11), which does not exist in `agents/` yet.
 - Production deployment, containers or remote hosts. Everything runs on 127.0.0.1.
 - Per-plan configuration of port ranges beyond the 11100 floor.
 - Mirroring a headless browser (M13 screenshots), see Out of scope.
@@ -69,7 +69,7 @@ Each item has its check.
 
 ## Out of scope
 
-- **Screenshot mirroring in the tab (M13, last bullet).** Needs the headless browser, which `chewie-verifier` owns and which is not chosen (research, mirroring section). Ship when chewie lands; the tab's image area and SSE event type are left to that plan.
+- **Screenshot mirroring in the tab (M13, last bullet).** Needs the headless browser, which `verifier` owns and which is not chosen (research, mirroring section). Ship when verifier lands; the tab's image area and SSE event type are left to that plan.
 - **CDP screencast.** Its ack protocol is unproven (research); the 2-second screenshot poll comes first.
 - **Starting the app in the factory e2e harness (`bin/factory-e2e`).** It uses its own ports (4848, 4777); migrating it is separate.
 - **Detecting defaults of Vite, Next.js, FastAPI.** Research did not check them; the header check reads the real response, so this plan does not depend on it.
@@ -79,14 +79,14 @@ Each item has its check.
 
 | Item | Built by |
 | :--- | :--- |
-| 1, 2 Config | `luke-backend` (`lib/openlanes/support/config.rb`) |
-| 3, 4 Ports and registry | `luke-backend` |
-| 5, 6, 7 Start, readiness, port check | `luke-backend`, on `Execution::Child` |
-| 8 Restart on change | `luke-backend` |
-| 9 Status events | `luke-backend` emits; `rey-frontend` consumes |
-| 10 Preview tab | `rey-frontend` (`web/src`), against the event shape luke fixes first |
-| 11 Framing refusal | `luke-backend` decides and sends a flag; `rey-frontend` opens the window |
-| 12, 13 Stop, opt-in | `luke-backend`; `rey-frontend` for the hidden tab |
+| 1, 2 Config | `backend-coder` (`lib/openlanes/support/config.rb`) |
+| 3, 4 Ports and registry | `backend-coder` |
+| 5, 6, 7 Start, readiness, port check | `backend-coder`, on `Execution::Child` |
+| 8 Restart on change | `backend-coder` |
+| 9 Status events | `backend-coder` emits; `frontend-coder` consumes |
+| 10 Preview tab | `frontend-coder` (`web/src`), against the event shape backend-coder fixes first |
+| 11 Framing refusal | `backend-coder` decides and sends a flag; `frontend-coder` opens the window |
+| 12, 13 Stop, opt-in | `backend-coder`; `frontend-coder` for the hidden tab |
 
 The pair agrees the event payload (process name, state, port, framing flag) before either builds against it.
 
@@ -99,9 +99,9 @@ Answered here by the recommendation in research; they are assumptions until a hu
 1. **App ignores its port**: the plan fails with a message; the harness does not follow the app's chosen port. Assumed, because the Preview URL and `PORT_<NAME>` must agree. Not sourced.
 1. **Framing check**: once at ready and again after each restart, on the preview path; not on every reload. Assumed.
 1. **File watcher**: no mechanism exists (research searched `lib/`). Library versus polling is unsettled; plan picks the smaller dependency. A restart waits for the old process to exit (TERM, then KILL after `TERM_GRACE`, `child.rb:28`). Assumed.
-1. **Browser and mirroring** (leah's 6): deferred with chewie, see Out of scope.
-1. **Default dev-server headers** (leah's 7): not checked and not needed.
-1. **Vite `--strictPort` flag** (leah's 8): unconfirmed; only matters to what luke writes in `start`, not to this plan.
+1. **Browser and mirroring** (researcher's 6): deferred with verifier, see Out of scope.
+1. **Default dev-server headers** (researcher's 7): not checked and not needed.
+1. **Vite `--strictPort` flag** (researcher's 8): unconfirmed; only matters to what backend-coder writes in `start`, not to this plan.
 1. **Restart backend button**: which process it restarts when several are non-preview. Assumed: every non-preview process, in declared order. Not specified in M13.
 1. **Readiness timeout default** and the glob dialect of `restart_on` are not specified anywhere; the planner picks and documents them.
 
@@ -109,14 +109,14 @@ Answered here by the recommendation in research; they are assumptions until a hu
 
 - **Port race.** Probe-then-spawn leaves a gap (research); the registry must reserve, and retry on `EADDRINUSE`.
 - **Orphaned grandchildren.** Dev servers spawn children that outlive TERM; `Child` already warns of it (`child.rb:80`). The supervisor must lean on the group kill.
-- **Cross-pair coupling.** `rey-frontend` depends on luke's event shape; the planner should sequence the event contract as the first unit.
-- **No production precedent.** M12 and M13 are design only (research), so the `app:` schema is new surface and hard to change once luke starts writing it into projects.
+- **Cross-pair coupling.** `frontend-coder` depends on backend-coder's event shape; the planner should sequence the event contract as the first unit.
+- **No production precedent.** M12 and M13 are design only (research), so the `app:` schema is new surface and hard to change once backend-coder starts writing it into projects.
 - **Watcher flakiness in specs.** File-event timing makes restart specs slow or flaky; prefer an injectable clock/poller, as the suite already injects doubles.
-- **Dependency on `chewie-verifier`.** M1 verification cannot run until both land; this plan must stand alone and must not block on it.
+- **Dependency on `verifier`.** M1 verification cannot run until both land; this plan must stand alone and must not block on it.
 
 ## Conclusion
 
-When this ships, `.openlanes.yml` can declare an `app:` of ordered processes. The engine starts them on ports from 11100 from a machine-wide registry, waits for readiness, restarts only the process whose files changed, and stops them all cleanly. The Preview tab shows the `preview: true` process labelled with plan, branch and port, or opens a separate window when response headers refuse framing. Mirroring chewie's browser and the verification itself are left to the plan that adds `chewie-verifier`.
+When this ships, `.openlanes.yml` can declare an `app:` of ordered processes. The engine starts them on ports from 11100 from a machine-wide registry, waits for readiness, restarts only the process whose files changed, and stops them all cleanly. The Preview tab shows the `preview: true` process labelled with plan, branch and port, or opens a separate window when response headers refuse framing. Mirroring verifier's browser and the verification itself are left to the plan that adds `verifier`.
 
 ## Research
 
@@ -145,7 +145,7 @@ Gathered 2026-10-14. Repository claims cite `file:line`; upstream claims cite a 
 - **Decided so far:** M13 specifies a screenshot about every 2 seconds.
 - **Transport already exists.** The control room streams over SSE through Sinatra's `stream` helper on 127.0.0.1 (`docs/decisions/decisions-on-web-ui-and-review-labels.md:20`). `lib/openlanes/web/events.rb:97` frames each event as JSON, so a base64 image fits inside an existing event.
 - **Screencast is possible but unproven here.** `Page.startScreencast` sends `Page.screencastFrame` events. Unofficial sources report that the client must send `Page.screencastFrameAck` for each frame, or capture stalls on an animating page ([browser-use/browsercode PR 124](https://github.com/browser-use/browsercode/pull/124), read 2026-10-14; [MacMyths](https://macmyths.com/how-to-fix-low-fps-chrome-devtools-protocol-screencasts/), read 2026-10-14). I did not retrieve the official CDP reference, so treat the ack rule as one test run, not a spec.
-- **The browser is not chosen.** `chewie-verifier` does not exist in `agents/` yet. Searches of `lib/`, `web/src`, `agents/` and `docs/` for Playwright, Puppeteer and CDP found nothing.
+- **The browser is not chosen.** `verifier` does not exist in `agents/` yet. Searches of `lib/`, `web/src`, `agents/` and `docs/` for Playwright, Puppeteer and CDP found nothing.
 - **Recommended:** ship the M13 screenshot poll first, since it needs no ack protocol and reuses SSE. Screencast is a later upgrade only if the 2-second poll is too slow to watch.
 
 ### Findings, Conclusion & References
@@ -154,16 +154,16 @@ Gathered 2026-10-14. Repository claims cite `file:line`; upstream claims cite a 
 
 - None between the spec, M12 and M13: both say 11100 and a `preview: true` process.
 - Production runs none of this. No `app:` key, no port code, no watcher, no preview tab. M12 and M13 describe a design only.
-- This spec repeats the empty template headings at its foot ("What we are trying to achieve" and the rest, after "How to tell it's working?"). Yoda should drop the duplicates.
+- This spec repeats the empty template headings at its foot ("What we are trying to achieve" and the rest, after "How to tell it's working?"). spec-writer should drop the duplicates.
 
-**Open questions** (for yoda to lift)
+**Open questions** (for spec-writer to lift)
 
 1. Is readiness a TCP connect, an HTTP status on a path, or both?
 2. Does the port registry live in the engine state, or per machine across runs?
 3. When an app ignores `$PORT_<NAME>`, does the plan fail, or does the harness read the port the app chose?
 4. Is the framing check done once at ready, or on every reload?
 5. What watches `restart_on` files, and does a restart wait for the old process to exit?
-6. Which headless browser does `chewie-verifier` drive, and is the tab fed by screenshot poll or by screencast?
+6. Which headless browser does `verifier` drive, and is the tab fed by screenshot poll or by screencast?
 7. Do the default dev servers (Vite, Next.js, FastAPI) send `X-Frame-Options` or `frame-ancestors`? Not checked.
 8. Confirm whether Vite accepts `--strictPort` as a CLI flag (only a third-party blog says so).
 

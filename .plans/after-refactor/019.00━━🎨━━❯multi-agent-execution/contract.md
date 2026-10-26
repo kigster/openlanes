@@ -1,12 +1,12 @@
 # Contract 019.00 — Multi-Agent Execution
 
-Owner: `luke-backend`. Partner: `rey-frontend`.
+Owner: `backend-coder`. Partner: `frontend-coder`.
 
 ## Baseline
 
 Full suite before any change, 2026-10-16, this worktree: `bundle exec rspec` → 3081 examples, 0 failures, 9 pending. Baseline failures: none.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 ### Board snapshot, `cars[]` entry (`Live::Snapshot#car`)
 
@@ -20,7 +20,7 @@ Full suite before any change, 2026-10-16, this worktree: `bundle exec rspec` →
 ### Demo engine (`openlanes web --demo`)
 
 - Exactly one running car fans out. Its `subagents` cycles deterministically on the demo tick: 3 names for 4 ticks, 1 name for 4 ticks, `[]` for 4 ticks, then repeats (period 12 ticks). Every other demo car keeps the fixture's list throughout. amended: name lists instead of 3, 1, 0, to match the wire type.
-- The fanned-out car is `001.00/rey-frontend`, named in `lib/openlanes/web/demo_board.rb` (`FANNED`, `FAN = [%w[Explore general-purpose Plan], %w[Explore], []]`, one entry per 4 ticks); F3 finds it by its `data-car` attribute. It starts at the fixture's two names until the first tick. A car that is no longer running reports `[]`.
+- The fanned-out car is `001.00/frontend-coder`, named in `lib/openlanes/web/demo_board.rb` (`FANNED`, `FAN = [%w[Explore general-purpose Plan], %w[Explore], []]`, one entry per 4 ticks); F3 finds it by its `data-car` attribute. It starts at the fixture's two names until the first tick. A car that is no longer running reports `[]`.
 
 ### Where the number comes from
 
@@ -33,16 +33,16 @@ Full suite before any change, 2026-10-16, this worktree: `bundle exec rspec` →
 
 | Files | Owner |
 | :--- | :--- |
-| `lib/openlanes/execution/transcript.rb`, `executor.rb` and their specs | luke |
-| `lib/openlanes/engine/dispatcher.rb`, `board.rb`, `dispatcher_spec.rb` | luke |
-| `lib/openlanes/live/snapshot.rb`, `lib/openlanes/web/demo_board.rb` and their specs | luke |
-| `spec/fixtures/streams/subagent-fanout.ndjson` | luke |
-| `contract.md`, `openapi.yaml` | luke |
-| `web/src/api/fixtures/snapshot.json` (the `subagents` key only) | luke |
-| `web/src/api/fixtures/board.json` (demo fixture) | rey |
-| `web/src/api/types.ts`, `web/src/board/sample.ts` | rey |
-| `web/src/board/Car.tsx`, `board.css`, `Car.test.tsx` | rey |
-| `web/cypress/e2e/subagents.cy.ts` | rey |
+| `lib/openlanes/execution/transcript.rb`, `executor.rb` and their specs | backend-coder |
+| `lib/openlanes/engine/dispatcher.rb`, `board.rb`, `dispatcher_spec.rb` | backend-coder |
+| `lib/openlanes/live/snapshot.rb`, `lib/openlanes/web/demo_board.rb` and their specs | backend-coder |
+| `spec/fixtures/streams/subagent-fanout.ndjson` | backend-coder |
+| `contract.md`, `openapi.yaml` | backend-coder |
+| `web/src/api/fixtures/snapshot.json` (the `subagents` key only) | backend-coder |
+| `web/src/api/fixtures/board.json` (demo fixture) | frontend-coder |
+| `web/src/api/types.ts`, `web/src/board/sample.ts` | frontend-coder |
+| `web/src/board/Car.tsx`, `board.css`, `Car.test.tsx` | frontend-coder |
+| `web/cypress/e2e/subagents.cy.ts` | frontend-coder |
 
 Shared files: none.
 
@@ -56,4 +56,4 @@ F3: `just web-build`, then `bin/web-e2e` running `web/cypress/e2e/subagents.cy.t
 
 ## Amendments
 
-- 2026-10-17, after the rebase onto `origin/main`: `subagents` is `string[]` (names) rather than an Integer count, because upstream PR #55 shipped it that way first. Entries above marked `amended:`. Mailed to rey.
+- 2026-10-17, after the rebase onto `origin/main`: `subagents` is `string[]` (names) rather than an Integer count, because upstream PR #55 shipped it that way first. Entries above marked `amended:`. Mailed to frontend-coder.

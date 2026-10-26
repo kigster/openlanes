@@ -1,4 +1,4 @@
-# Plan 010.00, front end (rey-frontend)
+# Plan 010.00, front end (frontend-coder)
 
 Repository root: `/Users/kig/github/inquirex`. Paths below are relative to it. The front end is the terminal UI and CLI of `inquirex-tty`. Branch `kig/010.00-inquirex-fixes` in each repository you touch, and run `alock` inside it. Order and assumptions: see `plan.md`.
 

@@ -8,7 +8,7 @@ import type { CopilotLog, CopilotTurn } from "../api/types";
 
 /**
  * How long the panel shows the copilot as reading before it stops waiting for an answer: a little past the 180 s
- * c3po-operator's definition allows one answer, after which the server writes why it gave up.
+ * copilot's definition allows one answer, after which the server writes why it gave up.
  */
 export const ANSWER_TIMEOUT_MS = 200_000;
 

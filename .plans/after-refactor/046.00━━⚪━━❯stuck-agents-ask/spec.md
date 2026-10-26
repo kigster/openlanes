@@ -29,7 +29,7 @@ S7. **The round is on the car.** A running car shows its round (e.g. `R2/3`) bes
 
 ## Evidence
 
-Plan 020.01 on 2026-10-21: luke-backend and rey-frontend both completed, then "publish refused"; rey's `next:` named hansolo-reviewer, who does not handle 🔴. Earlier, its suite failed for a reason on the machine (loopback ports), not in the plan.
+Plan 020.01 on 2026-10-21: backend-coder and frontend-coder both completed, then "publish refused"; frontend-coder's `next:` named staff-reviewer, who does not handle 🔴. Earlier, its suite failed for a reason on the machine (loopback ports), not in the plan.
 
 ## What we are trying to achieve
 

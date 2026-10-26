@@ -21,7 +21,7 @@ RSpec.describe OpenLanes::Lifecycle::Aging, :tree do
   end
 
   def sign(path, at)
-    OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", note: "technical", at:)
+    OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", note: "technical", at:)
   end
 
   # A plan that waits for +on+, in the given state.

@@ -52,8 +52,8 @@ module OpenLanes
 
       # Every agent the query could mean. An exact name wins outright; failing
       # that the query matches as a prefix, and failing that anywhere in the
-      # name, so `leah` finds leah-researcher and `review` finds
-      # hansolo-reviewer. A directory or a trailing `.md` is stripped first,
+      # name, so `researcher` finds researcher and `review` finds
+      # staff-reviewer. A directory or a trailing `.md` is stripped first,
       # because tab completion hands those in.
       #
       # @param query [String]
@@ -79,7 +79,7 @@ module OpenLanes
 
       # Everyone on a plan in this state: the agents that work it, plus any
       # agent whose `holds_at` parks the plan here after it finished its half.
-      # Rey resuming a plan at 🎨 still needs luke's messages in the mailbox.
+      # frontend-coder resuming a plan at 🎨 still needs backend-coder's messages in the mailbox.
       #
       # @param status [OpenLanes::Plans::Status]
       # @return [Array<OpenLanes::Agents::Agent>]

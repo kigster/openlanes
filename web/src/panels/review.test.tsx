@@ -32,7 +32,7 @@ describe("one command at a time (1)", () => {
     await user.type(screen.getByRole("textbox", { name: "Your answer" }), "Yes{Control>}{Enter}{Enter}{/Control}");
     expect(d.onCommand).toHaveBeenCalledTimes(1);
     await act(async () => { d.release(); });
-    expect(await findInline("Answer sent to luke-backend.")).toBeInTheDocument();
+    expect(await findInline("Answer sent to backend-coder.")).toBeInTheDocument();
   });
 
   it("ignores a second Ctrl Enter in CodeMirror while the first is in flight", async () => {
@@ -51,8 +51,8 @@ describe("one command at a time (1)", () => {
   it("drops drawer actions and messages sent while one is in flight", async () => {
     const d = deferred();
     const plan = planAt("005.00");
-    renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "hansolo-reviewer")} models={snapshot.models} autocompact={0.4} onCommand={d.onCommand} onClose={() => {}} />);
-    const box = screen.getByRole("textbox", { name: "Message hansolo-reviewer" });
+    renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "staff-reviewer")} models={snapshot.models} autocompact={0.4} onCommand={d.onCommand} onClose={() => {}} />);
+    const box = screen.getByRole("textbox", { name: "Message staff-reviewer" });
     fireEvent.change(box, { target: { value: "hi" } });
     await act(async () => {
       fireEvent.keyDown(box, { key: "Enter", ctrlKey: true });
@@ -98,7 +98,7 @@ describe("AgentDrawer (3, 4)", () => {
   it("renders the stuck agent's question as Markdown", () => {
     const plan = planAt("001.00");
     plan.questions = [question({ body: "Carry the **checkout path**?\n\n<script>bad()</script>" })];
-    const { container } = renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "luke-backend")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
+    const { container } = renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
     const block = container.querySelector(".d-block")!;
     expect(block.querySelector("strong + *, .ask-text strong")).toHaveTextContent("checkout path");
     expect(block.textContent).not.toContain("**");
@@ -109,10 +109,10 @@ describe("AgentDrawer (3, 4)", () => {
   it("drops an optimistic line once the history carries it, one for one", async () => {
     const user = userEvent.setup();
     const plan = planAt("005.00");
-    const car = carOf(plan, "hansolo-reviewer");
+    const car = carOf(plan, "staff-reviewer");
     const props = { plan, models: snapshot.models, autocompact: 0.4, onCommand: recorder().onCommand, onClose: () => {} };
     const { rerender } = renderPanel(<AgentDrawer car={car} {...props} />);
-    const box = screen.getByRole("textbox", { name: "Message hansolo-reviewer" });
+    const box = screen.getByRole("textbox", { name: "Message staff-reviewer" });
     for (let i = 0; i < 2; i++) {
       await user.type(box, "again");
       await user.click(screen.getByRole("button", { name: "Send message" }));
@@ -140,7 +140,7 @@ describe("ModelSelect (5)", () => {
   it("clears the queued model once the car runs it, or on another car", async () => {
     const user = userEvent.setup();
     const plan = planAt("005.00");
-    const car = carOf(plan, "hansolo-reviewer");
+    const car = carOf(plan, "staff-reviewer");
     const props = { plan: "005.00", models: snapshot.models, mode: "next" as const, onCommand: recorder().onCommand };
     const { rerender } = renderPanel(<ModelSelect car={car} {...props} />);
     await user.click(screen.getByRole("combobox"));

@@ -16,11 +16,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
   let(:watch) { OpenLanes::Engine::PrWatch.new(github:, clock: -> { clock.first }) }
   let(:boards) { [] }
-  # leah handles only ⚪, so no agent starts on these plans: what moves them is the watch.
+  # researcher handles only ⚪, so no agent starts on these plans: what moves them is the watch.
   let(:runner) do
     OpenLanes::Engine::Runner.new(tree:,
       executor: ->(*) { raise "no agent should start" },
-      agents:   OpenLanes::Agents::Registry.new.only("leah-researcher"),
+      agents:   OpenLanes::Agents::Registry.new.only("researcher"),
       state:,
       sleeper:  ->(_) {})
   end
@@ -63,12 +63,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       tick_until_settled
     end
 
-    it "moves a rejected plan to 🔴 and leaves the comments for luke and rey" do
+    it "moves a rejected plan to 🔴 and leaves the comments for backend-coder and frontend-coder" do
       mail = OpenLanes::Plans::Mailbox.new(dir: tree.reload.find("001.00").feature.path).messages
 
       aggregate_failures do
         expect(status_of("001.00")).to eq(:rejected)
-        expect(mail.map(&:to)).to include("luke-backend", "rey-frontend")
+        expect(mail.map(&:to)).to include("backend-coder", "frontend-coder")
         expect(mail.first.body).to include("Rename the method")
       end
     end

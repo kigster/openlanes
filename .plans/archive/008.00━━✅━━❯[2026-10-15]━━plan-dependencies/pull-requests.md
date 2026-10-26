@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 23 | [\[008.00\](A) Plan Dependencies](https://github.com/kigster/openlanes/pull/23) | Merged 🟣 |
 
-## Integration proof (luke-backend, last of the pair, 2026-10-13)
+## Integration proof (backend-coder, last of the pair, 2026-10-13)
 
 The repo has no separate end-to-end suite. The integration proof spawns the real `exe/openlanes` against a `PlansFixture` tree with nothing stubbed.
 

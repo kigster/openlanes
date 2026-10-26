@@ -1,6 +1,6 @@
 # Implementation plan, 002.00
 
-No front end: `plan-frontend.md` has no units, so rey-frontend is not started and there is no mailbox traffic. This file records the baseline, the interfaces as built, and the progress per unit.
+No front end: `plan-frontend.md` has no units, so frontend-coder is not started and there is no mailbox traffic. This file records the baseline, the interfaces as built, and the progress per unit.
 
 ## Baseline
 

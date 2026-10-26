@@ -2,11 +2,11 @@
 
 # The conflict sweep (U2 to U4) through the whole loop, over a real worktree
 # with a real `origin`: a pull request waiting to merge that no longer merges
-# clean becomes a bb8-resolver job in its plan's checkout, and the result is
+# clean becomes a rebaser job in its plan's checkout, and the result is
 # pushed and asked about again. GitHub and the push are doubles.
 RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:agents) { OpenLanes::Agents::Registry.new.only("r2d2-mechanic", "bb8-resolver") }
+  let(:agents) { OpenLanes::Agents::Registry.new.only("chores-coder", "rebaser") }
   let(:calls) { [] }
   let(:resolution) { nil }
   let(:tmp) { Dir.mktmpdir("openlanes-dispatch-sweep") }
@@ -58,14 +58,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
     land(upstream, "app.rb", "one\ntwo from main\nthree\n")
   end
 
-  context "when bb8-resolver resolves the conflict" do
+  context "when rebaser resolves the conflict" do
     let(:resolution) { "one\ntwo from main and the plan\nthree\n" }
 
     it "labels the pull request, resolves it in the plan's checkout, and pushes the rebased branch" do
       attempts
 
       aggregate_failures do
-        expect(calls).to eq([["bb8-resolver", :rebase]])
+        expect(calls).to eq([["rebaser", :rebase]])
         expect(github).to have_received(:swap_label)
           .with(number: 1, add: OpenLanes::Plans::ReviewLabel::CONFLICTS, remove: ["conflicts-resolved"])
         expect(publisher).to have_received(:pushed!).with(having_attributes(path: checkout.path), "HEAD")
@@ -82,7 +82,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
       upkeep.sweep(tree.reload.subjects)
 
       aggregate_failures do
-        expect(calls).to eq([["bb8-resolver", :rebase]])
+        expect(calls).to eq([["rebaser", :rebase]])
         expect(attempts.map(&:note).join).to include("conflicts on PR #1: rebase onto")
         expect(github).to have_received(:pull_request).twice
         expect(publisher).not_to have_received(:pushed!)

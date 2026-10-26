@@ -1,6 +1,6 @@
 # Pull Requests
 
-## Verification, luke-backend round 1
+## Verification, backend-coder round 1
 
 - `bundle exec rubocop` → 568 files inspected, no offenses detected.
 - `bundle exec rspec spec/openlanes/plans spec/openlanes/config_spec.rb spec/openlanes/engine/dispatcher_spec.rb …` → all in-process examples pass, including the integration proof ("with a refactor that needs the global lock").

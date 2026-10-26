@@ -300,7 +300,7 @@ module OpenLanes
           merged_at: merged_at && iso(merged_at) }
       end
 
-      # hansolo's approval leaves the plan at 👀 with its pull request open,
+      # staff-reviewer's approval leaves the plan at 👀 with its pull request open,
       # which the status key alone reads as "open": `finished` is what says
       # it was approved, so the page's pill turns green.
       #

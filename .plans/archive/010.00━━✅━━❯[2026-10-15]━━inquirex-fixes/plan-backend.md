@@ -1,4 +1,4 @@
-# Plan 010.00, back end (luke-backend)
+# Plan 010.00, back end (backend-coder)
 
 Repository root: `/Users/kig/github/inquirex`. Paths below are relative to it. Each of `inquirex/`, `inquirex-llm/`, `inquirex-tty/` is its own git repository; branch `kig/010.00-inquirex-fixes` in each one you touch, and run `alock` inside it. Order and assumptions: see `plan.md`.
 

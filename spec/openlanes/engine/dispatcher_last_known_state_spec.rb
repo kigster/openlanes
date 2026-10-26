@@ -8,12 +8,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:stamp) { "2026-09-04 11:29:20 AM PDT" }
   let(:agents_dir) { Dir.mktmpdir }
   let(:agents) do
-    File.write(File.join(agents_dir, "leah.md"),
-      "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\nledger: [spec.md]\n---\nbody")
+    File.write(File.join(agents_dir, "researcher.md"),
+      "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 1\nledger: [spec.md]\n---\nbody")
     OpenLanes::Agents::Registry.new(dir: agents_dir)
   end
   let(:folder) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).feature.path }
-  let(:record) { OpenLanes::Plans::PlanState.for(folder).last_known("leah-researcher") }
+  let(:record) { OpenLanes::Plans::PlanState.for(folder).last_known("researcher") }
 
   before { plans { |t| t.plan "001.00", :new, "cut-off", files: { "spec.md" => spec_body } } }
 
@@ -58,7 +58,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   it "keeps the agent's own record when it left one before it was killed" do
     run_with(killed_agent { |subject, round|
-      OpenLanes::Plans::PlanState.for(subject.feature.path).record_last_known("leah-researcher",
+      OpenLanes::Plans::PlanState.for(subject.feature.path).record_last_known("researcher",
         OpenLanes::Plans::LastKnownState.new(source: "agent",
           round:,
           status: "Interrupted",
@@ -72,7 +72,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   it "keeps no pid, token or exit field in the record" do
     run_with(killed_agent)
 
-    expect(OpenLanes::Plans::PlanState.for(folder).read.dig("last-known-state", "leah-researcher").keys)
+    expect(OpenLanes::Plans::PlanState.for(folder).read.dig("last-known-state", "researcher").keys)
       .to contain_exactly("source", "at", "round", "status", "note")
   end
 

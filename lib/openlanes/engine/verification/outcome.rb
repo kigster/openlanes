@@ -7,8 +7,8 @@ require "open3"
 module OpenLanes
   module Engine
     module Verification
-      # What the engine does with a verification once chewie has signed, or
-      # once the app would not start (M1, M14, M15). chewie only writes files
+      # What the engine does with a verification once verifier has signed, or
+      # once the app would not start (M1, M14, M15). verifier only writes files
       # in its round's folder; everything that leaves the machine is done
       # here, because the comment links the screenshot by the SHA of a commit
       # only the engine may make, and `ready-to-merge` waits for a CI run that
@@ -55,11 +55,11 @@ module OpenLanes
         end
 
         # Who the comment and the harness's own signature are from.
-        AGENT = "chewie-verifier"
+        AGENT = Agents::Names::VERIFIER
 
         # A signature that counts as a rejection: its note starts with the
-        # word, as `rejected`, `rejected 1/2` (hansolo) or `rejected: …` (the
-        # harness signing for chewie). Anchored rather than searched for: an
+        # word, as `rejected`, `rejected 1/2` (staff-reviewer) or `rejected: …` (the
+        # harness signing for verifier). Anchored rather than searched for: an
         # approving note that says "nothing to reject" is not a rejection, and
         # counting it would reach the arbitrator a round early. Spelled once,
         # in {OpenLanes::Arbitration::Counter}, which does the counting.
@@ -148,7 +148,7 @@ module OpenLanes
         # @param plan [OpenLanes::Plans::Subject] read fresh, in the main checkout
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
         # @param round [Round]
-        # @param why [String, nil] Markdown saying what failed when chewie's
+        # @param why [String, nil] Markdown saying what failed when verifier's
         #   report cannot: the app that did not start, red CI, the coverage gate
         # @param counted [Boolean] false for a send-back that is a setup gap
         #   rather than a defect ({SETUP}): it goes to the builders like any
@@ -163,7 +163,7 @@ module OpenLanes
             # the round reads as rejected and a later 🧪 gets a new round
             # rather than being taken for one still waiting on CI.
             write_report(round, why) unless report.verdict == :rejected
-            sign_for_chewie(plan, round, why, counted:)
+            sign_for_verifier(plan, round, why, counted:)
           end
           kept = keep(round, failing_step: report.step)
           sha, committed = commit(checkout, plan, round, "rejected")
@@ -175,7 +175,7 @@ module OpenLanes
           send_back(plan, pull, body, labelled, counted:)
         end
 
-        # chewie verified it: keep `final.png`, and push it.
+        # verifier verified it: keep `final.png`, and push it.
         #
         # A commit that failed is sent back rather than reported as
         # committed: {#settle} would otherwise read the old head's CI and
@@ -248,7 +248,7 @@ module OpenLanes
         # A `review-ok-not-perfect` pull request under `high` (to 🔴) or `standard` (to 🟡, plan 035), sent back
         # to the builders without verifying it. Signed and counted as a
         # rejection: the builders may answer every comment with a rebuttal
-        # and no change, hansolo may label it the same again, and an
+        # and no change, staff-reviewer may label it the same again, and an
         # uncounted send-back would then go round for ever, never reaching
         # `merge.max_rejections` or the arbitrator.
         #
@@ -259,7 +259,7 @@ module OpenLanes
         def send_back_for_quality(plan:, pull:, quality: :high)
           to = SEND_BACK.fetch(quality, :rejected)
           why = "PR ##{number_of(pull)} is labelled #{ON_QUALITY.name}, and desired_codebase_quality is #{quality}"
-          sign_for_chewie(plan, Verification.round_for(plan.feature.path), why, counted: true)
+          sign_for_verifier(plan, Verification.round_for(plan.feature.path), why, counted: true)
           body = <<~MARKDOWN
             #{why}: reply in the thread of every review comment that is not ✅, with a fix or a backed-up rebuttal (R4).
           MARKDOWN
@@ -267,7 +267,7 @@ module OpenLanes
         end
 
         # Why this checkout is not the pull request's code, asked before
-        # chewie is started on it ({Driver#hand_off}); {Vcs::Publisher#commit_plan}
+        # verifier is started on it ({Driver#hand_off}); {Vcs::Publisher#commit_plan}
         # asks again before the screenshots are pushed.
         #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
@@ -280,7 +280,7 @@ module OpenLanes
         # @raise [OpenLanes::Error] when GitHub cannot be asked
         def labels(pull) = @github.labels(number: number_of(pull), repo: Vcs::GitHub.repo_of(pull.url))
 
-        # Every rejection of this plan toward the cap, hansolo's and chewie's
+        # Every rejection of this plan toward the cap, staff-reviewer's and verifier's
         # together (M6), as {OpenLanes::Arbitration::Counter} counts them.
         #
         # @param plan [OpenLanes::Plans::Subject]
@@ -297,7 +297,7 @@ module OpenLanes
           result = @review.call(pr: pull.url || number_of(pull), label: Plans::ReviewLabel::READY_TO_MERGE)
           return Result.new(kind: :waiting, note: "🧪 #{Plans::ReviewLabel::READY_TO_MERGE} refused: #{result.reason}") if result.refused?
 
-          # Nothing merges here: the plan goes on to 🏁, where palpatine
+          # Nothing merges here: the plan goes on to 🏁, where deploy-assessor
           # weighs each pull request and {Engine::Merging} acts on it (P1).
           ready(plan, number_of(pull), "#{Plans::ReviewLabel::READY_TO_MERGE}: #{verdict.reason}")
         end
@@ -340,7 +340,7 @@ module OpenLanes
 
         # @return [Result]
         # `ready-to-merge` is on. Once every open pull request of the plan
-        # carries it, the plan is 🏁 Completed (P1), and palpatine is next.
+        # carries it, the plan is 🏁 Completed (P1), and deploy-assessor is next.
         #
         # @return [Result]
         def ready(plan, number, why)
@@ -356,7 +356,7 @@ module OpenLanes
           end
 
           plan.machine.promote!(:completed)
-          Result.new(kind: :ready, to: :completed, note: "PR ##{number} #{why}; on to 🏁, for palpatine to weigh")
+          Result.new(kind: :ready, to: :completed, note: "PR ##{number} #{why}; on to 🏁, for #{Agents::Names::DEPLOY_ASSESSOR} to weigh")
         end
 
         # @param labelled [Integer] the pull request just labelled, not asked again
@@ -426,7 +426,7 @@ module OpenLanes
           result.with(note: "verified PR ##{number_of(pull)} but NOT published (#{failure}); #{result.note}")
         end
 
-        # The engine writes the report chewie never got to write.
+        # The engine writes the report verifier never got to write.
         #
         # @return [void]
         def write_report(round, why)
@@ -435,19 +435,19 @@ module OpenLanes
 
             Verdict: rejected
 
-            Written by the engine: the round failed where chewie-verifier could not say so.
+            Written by the engine: the round failed where #{Agents::Names::VERIFIER} could not say so.
 
             #{why}
           MARKDOWN
         end
 
-        # A rejection chewie did not sign (the app, CI, the coverage gate)
+        # A rejection verifier did not sign (the app, CI, the coverage gate)
         # still counts against the cap. A setup send-back is signed too, so
         # the round has its record, but as "sent back", which {#rejections}
         # does not count.
         #
         # @return [void]
-        def sign_for_chewie(plan, round, why, counted:)
+        def sign_for_verifier(plan, round, why, counted:)
           first = why.lines.first.to_s.strip.delete("()").sub(/[.:]\z/, "")
           Plans::PlanState.for(plan.feature.path)
                           .sign!(agent: AGENT,
@@ -469,7 +469,7 @@ module OpenLanes
             kind: :rejected,
             comments: [{ author: AGENT, url: pull.url.to_s, body: }],
             to:))
-          label = if labelled.nil? then "labels left as hansolo set them"
+          label = if labelled.nil? then "labels left as #{Agents::Names::STAFF_REVIEWER} set them"
                   elsif labelled.refused? then "#{Plans::ReviewLabel::REJECTED} refused: #{labelled.reason}"
                   else Plans::ReviewLabel::REJECTED.name
                   end
@@ -498,7 +498,7 @@ module OpenLanes
 
             ## B1 Verification failed again after the arbitrator ruled go at the cap
 
-            The arbitrator gave this plan one last verification, and it failed. Read chewie's comment on the pull request.
+            The #{Agents::Names::ARBITRATOR} gave this plan one last verification, and it failed. Read #{Agents::Names::VERIFIER}'s comment on the pull request.
 
             a) Send it back to the builders for one more round. (Recommended)
             b) Close the pull request and replan.

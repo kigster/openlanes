@@ -276,7 +276,7 @@ Task 1 ("Stabilize Zeitwerk Boot") is descriptively accurate as written (steps 1
 - A baseline capture of test results for comparison during later refactoring
 - Confirmation that eager-loading works (Task 4, Step 1 already requires this)
 
-### Open Questions for Yoda-Writer
+### Open Questions for spec-writer
 
 1. **Is Zeitwerk the intended loader**, or should the specification be updated to reflect REFACTOR.md's recommendation for explicit require? (Currently both are true, which is inconsistent.)
 2. **Which grouping scheme has been chosen** — layer-based (models, queries, commands, execution, reporting, etc.) or command-centric (cli/{cmd}/command.rb + shared/)?
@@ -360,7 +360,7 @@ Each item is checkable by the command shown.
 
 This is a CLI gem with no web front end. The pair maps to library versus terminal surface.
 
-| Item | `luke-backend` | `rey-frontend` |
+| Item | `backend-coder` | `frontend-coder` |
 | :--- | :--- | :--- |
 | Boot baseline, inflections, requires | all | none |
 | Plans, Runtime, Integrations, Agents, Resync moves | all | none |
@@ -370,7 +370,7 @@ This is a CLI gem with no web front end. The pair maps to library versus termina
 
 ## Open Questions
 
-Resolved by the Global Constraints (decided 2026-10-13 by kig), so none of leah's four remain open: Zeitwerk is the loader; the Task 2 layout is the scheme; no aliases; `--` is excluded.
+Resolved by the Global Constraints (decided 2026-10-13 by kig), so none of researcher's four remain open: Zeitwerk is the loader; the Task 2 layout is the scheme; no aliases; `--` is excluded.
 
 Left unanswered by the spec, all assumptions:
 

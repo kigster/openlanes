@@ -71,7 +71,7 @@ export function Logs({ lines }: { lines: LogLine[] }) {
           className="log-search"
           id="log-search"
           type="search"
-          placeholder="Filter, e.g. 001 or luke"
+          placeholder="Filter, e.g. 001 or an agent's name"
           value={text}
           onChange={e => setText(e.target.value)}
         />

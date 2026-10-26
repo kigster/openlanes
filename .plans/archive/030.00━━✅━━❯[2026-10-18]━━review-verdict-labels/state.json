@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T06:35:38-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "planned",
@@ -32,7 +32,7 @@
       "moves": 3
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Almost completed",
       "from": "ready_for_review",
@@ -55,7 +55,7 @@
       "moves": 4
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 2,
       "status": "Completed",
       "from": "in_review",
@@ -78,7 +78,7 @@
       "moves": 5
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Completed",
       "from": "verifying",
@@ -97,11 +97,11 @@
       "up": 48845,
       "down": 173,
       "seconds": 850.5,
-      "note": "completed - 10 tool calls; verified PR #78 but NOT published (refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg); verification sent back PR #78, sent back for setup, not counted (0 of 2); review-rejected; PR #78 labelled review-rejected; mailed luke-backend, r2d2-mechanic, rey-frontend",
+      "note": "completed - 10 tool calls; verified PR #78 but NOT published (refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg); verification sent back PR #78, sent back for setup, not counted (0 of 2); review-rejected; PR #78 labelled review-rejected; mailed backend-coder, chores-coder, frontend-coder",
       "moves": 6
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -124,7 +124,7 @@
       "moves": 7
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_review",
@@ -147,7 +147,7 @@
       "moves": 8
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Interrupted",
       "from": "in_review",
@@ -173,111 +173,111 @@
   "signatures": [
     {
       "at": "2026-10-17T11:27:36-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:43:25-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T11:43:55-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:45:16-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Almost completed",
       "round": 1,
       "note": "no findings; approval refused while CI pending (e2e, test); re-run review 78 review-approved once green"
     },
     {
       "at": "2026-10-17T11:51:03-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T11:51:20-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 2,
       "note": "approved"
     },
     {
       "at": "2026-10-17T11:51:32-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T11:55:41-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
     },
     {
       "at": "2026-10-17T12:05:36-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "sent back: Verified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg; signed by harness"
     },
     {
       "at": "2026-10-17T12:05:50-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:09:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-17T12:10:12-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:10:53-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 3,
       "note": "approved"
     },
     {
       "at": "2026-10-17T12:10:56-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
     },
     {
       "at": "2026-10-18T06:34:52-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T06:35:04-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 4,
       "note": "approved"
     },
     {
       "at": "2026-10-18T06:35:23-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
@@ -289,8 +289,8 @@
       "number": 1,
       "at": "2026-10-17T12:05:41-07:00",
       "from": "github",
-      "to": "luke-backend",
-      "body": "PR #78 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 chewie-verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
+      "to": "backend-coder",
+      "body": "PR #78 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -298,8 +298,8 @@
       "number": 2,
       "at": "2026-10-17T12:05:41-07:00",
       "from": "github",
-      "to": "r2d2-mechanic",
-      "body": "PR #78 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 chewie-verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
+      "to": "chores-coder",
+      "body": "PR #78 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -307,8 +307,8 @@
       "number": 3,
       "at": "2026-10-17T12:05:41-07:00",
       "from": "github",
-      "to": "rey-frontend",
-      "body": "PR #78 was labelled review-rejected on GitHub.\n\nchewie-verifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 chewie-verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
+      "to": "frontend-coder",
+      "body": "PR #78 was labelled review-rejected on GitHub.\n\nverifier (https://github.com/kigster/openlanes/pull/78):\n\n### 🧪 verifier: sent back for setup, verification round 1\n\nVerified, but final.png never reached the pull request, so it carries no evidence: refused to commit 030.00: changes outside its plan folder: edited docs/badges/coverage_badge.svg\n\nPlan 030.00. How to test is in the pull request's description.",
       "read": "no"
     },
     {
@@ -316,7 +316,7 @@
       "number": 4,
       "at": "2026-10-17T14:03:39-07:00",
       "from": "human",
-      "to": "hansolo-reviewer",
+      "to": "staff-reviewer",
       "body": "RESUME: carry on from your last resume note",
       "read": "no",
       "command": "01M55TTV98MRC1M02N2BGM5DJ5"
@@ -324,7 +324,7 @@
   ],
   "moves": 9,
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-17T11:39:30-07:00",
       "round": 1,
@@ -347,7 +347,7 @@
         "spec/openlanes/cli/run_spec.rb"
       ]
     },
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "source": "harness",
       "at": "2026-10-18T06:35:23-07:00",
       "round": 1,
@@ -358,7 +358,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "time",
@@ -368,7 +368,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -378,7 +378,7 @@
     },
     {
       "number": 3,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "rounds",
@@ -391,7 +391,7 @@
     },
     {
       "number": 4,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 2,
       "limit": "time",
@@ -401,7 +401,7 @@
     },
     {
       "number": 5,
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "state": "verifying",
       "round": 1,
       "limit": "time",
@@ -414,7 +414,7 @@
     }
   ],
   "memory": {
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "rounds": {
         "1": {
           "round": 1,
