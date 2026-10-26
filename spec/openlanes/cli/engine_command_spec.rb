@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# `openlanes start` is `run` that stays: the same options and code, the
+# `openlanes engine`, what `openlanes start` supervises, is `run` that stays: the same options and code, the
 # control room required rather than hoped for, and an end that comes from
 # Stop All Local or a signal, never from a fixed point, and not from every
 # plan being finished either.
@@ -8,7 +8,7 @@
 # Like run_spec, every example runs `--isolation shared` over a bare temp
 # tree, publishes to a store in this process, and never spawns the server,
 # a browser or an agent.
-RSpec.describe OpenLanes::CLI::Start, :tree do
+RSpec.describe OpenLanes::CLI::EngineCommand, :tree do
   subject(:command) { described_class.new }
 
   let(:live_store) { OpenLanes::Live.memory_store }
@@ -69,7 +69,7 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     end
   end
 
-  def parse(*argv) = Dry::CLI::Parser.call(described_class, argv, "openlanes start")
+  def parse(*argv) = Dry::CLI::Parser.call(described_class, argv, "openlanes engine")
 
   describe "its options" do
     it "takes run's, and --rescan" do
@@ -94,9 +94,18 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       expect(parse("--until", "planned").error?).to be(true)
     end
 
-    it "is listed with the agents in help" do
-      expect(OpenLanes::CLI.get(["start"]).command).to eq(described_class)
+    it "is registered as engine" do
+      expect(OpenLanes::CLI.get(["engine"]).command).to eq(described_class)
     end
+  end
+
+  describe "its title (S5)" do
+    before do
+      asked
+      start(open: false)
+    end
+
+    it("says how busy it is") { expect(Process).to have_received(:setproctitle).with(/\Aopenlanes-engine \[.+\] \d+ of \d+ agents busy\z/).at_least(:once) }
   end
 
   describe "a plan blocked on a question" do

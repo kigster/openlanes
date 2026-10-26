@@ -53,6 +53,41 @@ RSpec.describe OpenLanes::CLI::Web, :tree do
     expect(stderr).to include("Control room: http://127.0.0.1:11000", "Redis: memory:// as")
   end
 
+  describe "its PID file (S2)" do
+    let(:pid_dir) { OpenLanes::Supervision.dir(Dir.pwd) }
+    let(:seen) { [] }
+
+    before { allow(server).to receive(:wait) { seen << pid_dir.read("web") } }
+
+    context "when it serves" do
+      before { run }
+
+      it("is written once it listens, with its URL") { expect(seen.first).to have_attributes(role: "web", pid: Process.pid, url: "http://127.0.0.1:11000") }
+      it("is removed when it stops") { expect(pid_dir.read("web")).to be_nil }
+      it("names the process by its URLs") { expect(Process).to have_received(:setproctitle).with(%r{\Aopenlanes-web \[.+\] http://127.0.0.1:11000\z}) }
+    end
+
+    context "when serving the demo" do
+      before { run(demo: true) }
+
+      it("is never written") { expect(seen).to eq([nil]) }
+    end
+
+    context "with a live server beside it" do
+      let(:holder) { OpenLanes::Supervision::PidFile.new(role: "web", pid: 777, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11001") }
+
+      before do
+        allow(OpenLanes::Supervision::Probe).to receive(:new).and_return(instance_double(OpenLanes::Supervision::Probe, verified?: true))
+        pid_dir.write(holder)
+        run
+      end
+
+      after { pid_dir.delete(File.join(pid_dir.path, holder.name)) }
+
+      it("serves anyway, leaving that server's file alone") { expect(seen).to eq([holder]) }
+    end
+  end
+
   describe "logging" do
     let(:default_log) { File.join(File.dirname(plans_root), "log", "development.log") }
 

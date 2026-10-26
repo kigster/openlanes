@@ -381,7 +381,7 @@ Metrics/MethodLength:
     - 'spec/openlanes/cli/run_spec.rb'
     - 'spec/openlanes/cli/setup_spec.rb'
     - 'spec/openlanes/cli/skills/install_spec.rb'
-    - 'spec/openlanes/cli/start_spec.rb'
+    - 'spec/openlanes/cli/engine_command_spec.rb'
     - 'spec/openlanes/cli/state_spec.rb'
     - 'spec/openlanes/cli/uml_spec.rb'
     - 'spec/openlanes/cli/unblock_edges_spec.rb'

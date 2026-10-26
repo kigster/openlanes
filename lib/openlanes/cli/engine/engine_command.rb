@@ -2,8 +2,10 @@
 
 module OpenLanes
   module CLI
-    # `openlanes start` — the factory as a long-lived service: the engine and
-    # the control room together, with or without any plans.
+    # `openlanes engine` — the factory's engine as a long-lived service, with
+    # or without any plans. `openlanes start` runs it under a supervisor
+    # with `--no-web` and serves the page beside it (S1); `just start` runs
+    # it under mprocs the same way. Hidden: nobody types it but those two.
     #
     # It keeps the board published and the commands read, rescans the tree,
     # and starts agents as soon as an answer, a new plan or a hand edit makes
@@ -16,8 +18,17 @@ module OpenLanes
     # (Redis and the control room are required, not hoped for), no dry run,
     # and no `--until`. `--no-web` does not make it headless: the page is
     # served by an `openlanes web` beside it, and the engine stays for it.
-    class Start < Run
-      desc "The factory: the engine and its control room over the whole tree, until Stop All Local"
+    #
+    # Named for what it is rather than `Engine`, which inside `CLI` would
+    # hide {OpenLanes::Engine} from every command here.
+    class EngineCommand < Run
+      desc "The factory's engine over the whole tree, until Stop All Local; `openlanes start` runs it"
+
+      # Reads the `commands.start` section of `.openlanes.yml`: the one a
+      # person writes for the factory, whichever process ends up reading it.
+      #
+      # @return [String]
+      def self.command_name = "start"
 
       # Inherited from `run`, and meaningless here: the factory takes the
       # whole tree, a dry run publishes no board, and a factory that stops
@@ -58,13 +69,32 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
-        @rescan = Integer(options.fetch(:rescan, Engine::Dispatcher::RESCAN_SECONDS), exception: false)
-        refuse("--rescan takes a whole number of seconds, at least 1.", 64) unless @rescan&.positive?
-
+        @rescan = rescan_for(options)
         super
       end
 
       private
+
+      # @param options [Hash]
+      # @return [Integer]
+      def rescan_for(options)
+        rescan = Integer(options.fetch(:rescan, Engine::Dispatcher::RESCAN_SECONDS), exception: false)
+        refuse("--rescan takes a whole number of seconds, at least 1.", 64) unless rescan&.positive?
+        rescan
+      end
+
+      # @return [String]
+      def role = Supervision::ENGINE
+
+      # @param _options [Hash]
+      # @return [Array<String>] none: the engine takes the whole tree, or its --plan
+      def registered_plans(_options) = []
+
+      # The title says how busy the engine is (S5), refreshed each tick.
+      #
+      # @param registration [OpenLanes::Supervision::Registration]
+      # @return [Proc]
+      def on_board(registration) = ->(board) { registration.title("#{board.running} of #{board.jobs} agents busy") }
 
       # `--plan` is already the name the workflow reads; the listen
       # addresses and the login are the control room's.

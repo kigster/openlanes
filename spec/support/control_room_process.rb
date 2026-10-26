@@ -204,7 +204,7 @@ class ControlRoomProcess
   def start_engine(web_port: port)
     @ports |= [web_port]
     @pids[:engine] = spawn("engine",
-      "start",
+      "engine",
       "--no-open",
       "--port",
       web_port.to_s,
@@ -342,8 +342,10 @@ class ControlRoomProcess
   def spawn(name, *)
     FileUtils.mkdir_p(log_dir)
     path = "#{@bin}:#{ENV.fetch("BUNDLER_ORIG_PATH", ENV.fetch("PATH"))}"
+    # No OPENLANES_PID_DIR: each checkout keeps its own PID files, as it
+    # would outside the suite, rather than the one directory the suite shares.
     env = { "PATH" => path, "BUNDLER_ORIG_PATH" => path, "OPENLANES_REDIS_URL" => @redis_url, "NO_COLOR" => "1",
-            "CI" => "1" }
+            "CI" => "1", "OPENLANES_PID_DIR" => nil }
     Process.spawn(env,
       EXE,
       *,

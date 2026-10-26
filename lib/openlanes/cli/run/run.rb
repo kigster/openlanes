@@ -80,10 +80,42 @@ module OpenLanes
       # @return [void]
       def call(**options)
         tree = tree_for(options)
-        exit(unwrap(workflow(tree, prepare(options.merge(quiet: quiet?(options)))).call))
+        prepared = prepare(options.merge(quiet: quiet?(options)))
+        registered(prepared) { |hooks| exit(unwrap(workflow(tree, prepared.merge(hooks)).call)) }
       end
 
       private
+
+      # This process's PID file and title (S2, S5) for as long as the block
+      # runs, and the pipe from a supervisor watched, when there is one. A
+      # dry run starts no agent, so it names nothing.
+      #
+      # @param options [Hash]
+      # @yieldparam hooks [Hash] what the workflow is handed: its `on_board`
+      # @return [void]
+      def registered(options)
+        return yield({}) if dry_run?(options)
+
+        Supervision::Lifeline.watch
+        plans = registered_plans(options)
+        registration = Supervision.registration(role, root: Dir.pwd, plans:)
+        unwrap(registration.claim)
+        registration.title(plans.join(",")) unless plans.empty?
+        registration.hold { yield({ on_board: on_board(registration) }.compact) }
+      end
+
+      # @return [String] the name in this process's title and PID file
+      def role = Supervision::RUN
+
+      # @param options [Hash]
+      # @return [Array<String>] the plans named, for `openlanes status`
+      def registered_plans(options) = options[:plan].to_s.split(",").map(&:strip).reject(&:empty?)
+
+      # A run's title is its plans, set once.
+      #
+      # @param _registration [OpenLanes::Supervision::Registration]
+      # @return [nil]
+      def on_board(_registration) = nil
 
       # The plans argument, under the name the workflow reads.
       #
