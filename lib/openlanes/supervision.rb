@@ -53,6 +53,17 @@ module OpenLanes
     # @return [OpenLanes::Supervision::Detached]
     def detached(root:) = Detached.new(dir: dir(root), host:)
 
+    # In a supervised child: ends this process gracefully once its
+    # supervisor is gone, however it went.
+    #
+    # @return [Thread, nil] nil when this process has no supervisor
+    def watch_lifeline = Lifeline.watch
+
+    # In a `--background` child: leaves the terminal's session.
+    #
+    # @return [void]
+    def leave_session = Detached.leave_session
+
     # The seam every spawn, wait and signal goes through.
     #
     # @return [OpenLanes::Supervision::Host]

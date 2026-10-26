@@ -96,7 +96,7 @@ module OpenLanes
       def registered(options)
         return yield({}) if dry_run?(options)
 
-        Supervision::Lifeline.watch
+        Supervision.watch_lifeline
         plans = registered_plans(options)
         registration = Supervision.registration(role, root: Dir.pwd, plans:)
         unwrap(registration.claim)

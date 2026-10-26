@@ -61,7 +61,7 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def prepare(options)
-        Supervision::Detached.leave_session
+        Supervision.leave_session
         quiet?(options)
         rescan_for(options)
       end
