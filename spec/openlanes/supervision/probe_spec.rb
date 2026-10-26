@@ -28,5 +28,17 @@ RSpec.describe OpenLanes::Supervision::Probe do
     subject(:probe) { described_class.new }
 
     it("sees this process start") { expect(probe.started(Process.pid)).to match(/\A\w{3} \w{3} [ \d]\d \d\d:\d\d:\d\d \d{4}\z/) }
+
+    context "with a pid that is gone" do
+      let(:pid) { Process.spawn("true").tap { Process.wait(it) } }
+
+      it { expect(probe.seen(pid)).to be_nil }
+    end
+
+    context "without a ps to ask" do
+      before { allow(Open3).to receive(:capture2).and_raise(Errno::ENOENT) }
+
+      it { expect(probe.seen(Process.pid)).to be_nil }
+    end
   end
 end
