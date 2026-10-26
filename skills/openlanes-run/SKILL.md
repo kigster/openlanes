@@ -14,12 +14,16 @@ Load the `openlanes` skill first if it is not in context.
 ```bash
 openlanes start              # engine and control room on http://127.0.0.1:11000, browser opened
 openlanes start --no-open    # print the URL only
+openlanes start --background # detached; prints the URL once the page answers, output in log/openlanes-start.log
+openlanes status             # supervisor, engine, web and runs: up or crashed, and the plans by state
+openlanes stop               # stops the factory; --all stops every `openlanes run` too
 ```
 
 - It takes `run`'s flags except `-n` and `--until`, plus `--plan` to narrow it. It needs Redis and refuses without it (exit 69). `--no-web` leaves the page to an `openlanes web` served apart, as `just start` does.
 - Every human decision goes through the page: answers, hold, wrap up, stop, models, new plans. **Stop All Local** stops this machine's agents, then its engine and the page; nothing else on the page ends the run. The terminal is output only.
 - It never ends on its own, not even once every plan is finished: the page can create the next one. A project with no plans waits for the first. Stop All Local, Ctrl-C or `kill -TERM` end it, with exit 0; agents get the graceful stop and the page goes down with it.
-- Start it in the background, give the user the URL, and leave the answering to them on the page. Steps 1 to 5 below are the scripted, headless alternative.
+- It is a supervisor over two children, the engine and the page, and restarts whichever crashes (three crashes in five minutes and it gives that one up; `openlanes status` says why). A second `start` in the same project is refused (exit 75) with the running one's URL.
+- Start it with `openlanes start --background`, give the user the URL it prints, and leave the answering to them on the page. `openlanes stop` ends it. Steps 1 to 5 below are the scripted, headless alternative.
 
 `openlanes run` loops in rounds. Each round hands every movable plan to the agent its state and lane call for and renames the folder when the agent finishes. When a builder lands a plan at 🟢 Ready for Review, `openlanes` pushes its branch and opens the pull request, titled `[NNN.MM]`; `staff-reviewer` then reviews that pull request. It works only the plans named in its argument, serves no page, and stops at a **fixed point**: a round in which none of them changed state. `--until <state>` stops each plan once it reaches that state (key or emoji). It claims every plan before starting and refuses outright (exit 75), naming the holder, when the factory or another run already holds one. Your job is to start it, watch it, and turn what it stops on into questions for the human.
 

@@ -70,7 +70,8 @@ teardown() {
   trap - EXIT INT TERM
   collect || true
   if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
-    # TERM is `openlanes start`'s graceful stop; KILL only if it outlives that.
+    # TERM is `openlanes start`'s graceful stop; KILL only if it outlives that,
+    # and its children then see their lifeline close and stop too.
     kill -TERM "${pid}" 2>/dev/null || true
     for _ in $(seq 1 30); do kill -0 "${pid}" 2>/dev/null || break; sleep 1; done
     kill -KILL "${pid}" 2>/dev/null || true

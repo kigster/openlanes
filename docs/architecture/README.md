@@ -26,6 +26,7 @@ classDiagram
   class OpenLanes__Setup["OpenLanes::Setup"]
   class OpenLanes__Skills["OpenLanes::Skills"]
   class OpenLanes__Spawner["OpenLanes::Spawner"]
+  class OpenLanes__Supervision["OpenLanes::Supervision"]
   class OpenLanes__UI["OpenLanes::UI"]
   class OpenLanes__Uml["OpenLanes::Uml"]
   class OpenLanes__Vcs["OpenLanes::Vcs"]
@@ -54,7 +55,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 10
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 31
+  OpenLanes__CLI ..> OpenLanes : 32
   OpenLanes__CLI ..> OpenLanes__Agents : 10
   OpenLanes__CLI ..> OpenLanes__Apps : 5
   OpenLanes__CLI ..> OpenLanes__Coverage : 3
@@ -64,16 +65,17 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Execution : 1
   OpenLanes__CLI ..> OpenLanes__Lifecycle : 5
   OpenLanes__CLI ..> OpenLanes__Linear : 6
-  OpenLanes__CLI ..> OpenLanes__Live : 12
-  OpenLanes__CLI ..> OpenLanes__Log : 4
-  OpenLanes__CLI ..> OpenLanes__Plans : 24
+  OpenLanes__CLI ..> OpenLanes__Live : 13
+  OpenLanes__CLI ..> OpenLanes__Log : 7
+  OpenLanes__CLI ..> OpenLanes__Plans : 25
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
   OpenLanes__CLI ..> OpenLanes__Setup : 5
   OpenLanes__CLI ..> OpenLanes__Skills : 1
-  OpenLanes__CLI ..> OpenLanes__UI : 16
+  OpenLanes__CLI ..> OpenLanes__Supervision : 12
+  OpenLanes__CLI ..> OpenLanes__UI : 19
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
-  OpenLanes__CLI ..> OpenLanes__Web : 10
+  OpenLanes__CLI ..> OpenLanes__Web : 14
   OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__UI : 1
   OpenLanes__Engine ..> OpenLanes : 33
@@ -143,6 +145,12 @@ classDiagram
   OpenLanes__Setup ..> OpenLanes__Plans : 1
   OpenLanes__Setup ..> OpenLanes__UI : 2
   OpenLanes__Skills ..> OpenLanes : 1
+  OpenLanes__Supervision ..> OpenLanes : 2
+  OpenLanes__Supervision ..> OpenLanes__Clock : 2
+  OpenLanes__Supervision ..> OpenLanes__Execution : 1
+  OpenLanes__Supervision ..> OpenLanes__Log : 1
+  OpenLanes__Supervision ..> OpenLanes__Spawner : 1
+  OpenLanes__Supervision ..> OpenLanes__Web : 1
   OpenLanes__UI ..> OpenLanes__Log : 1
   OpenLanes__Vcs ..> OpenLanes : 5
   OpenLanes__Vcs ..> OpenLanes__Events : 1
@@ -184,6 +192,7 @@ classDiagram
 - [openlanes-setup](openlanes-setup.md)
 - [openlanes-skills](openlanes-skills.md)
 - [openlanes-spawner](openlanes-spawner.md)
+- [openlanes-supervision](openlanes-supervision.md)
 - [openlanes-ui](openlanes-ui.md)
 - [openlanes-uml](openlanes-uml.md)
 - [openlanes-vcs](openlanes-vcs.md)

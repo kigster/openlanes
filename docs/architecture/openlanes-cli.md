@@ -13,6 +13,7 @@ classDiagram
   class OpenLanes__CLI__Coverage["Coverage"]
   class OpenLanes__CLI__Create["Create"]
   class OpenLanes__CLI__Docs["Docs"]
+  class OpenLanes__CLI__EngineCommand["EngineCommand"]
   class OpenLanes__CLI__Eval["Eval"]
   class OpenLanes__CLI__Events__Report["Events::Report"]
   class OpenLanes__CLI__Index["Index"]
@@ -32,6 +33,7 @@ classDiagram
   class OpenLanes__CLI__Preview__Start["Preview::Start"]
   class OpenLanes__CLI__Preview__Status["Preview::Status"]
   class OpenLanes__CLI__Preview__Stop["Preview::Stop"]
+  class OpenLanes__CLI__Programs["Programs"]
   class OpenLanes__CLI__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__CLI__Resync__Prs["Resync::Prs"]
   class OpenLanes__CLI__Review["Review"]
@@ -45,6 +47,8 @@ classDiagram
   class OpenLanes__CLI__State__Show["State::Show"]
   class OpenLanes__CLI__State__Sign["State::Sign"]
   class OpenLanes__CLI__States["States"]
+  class OpenLanes__CLI__Status["Status"]
+  class OpenLanes__CLI__Stop["Stop"]
   class OpenLanes__CLI__Uml["Uml"]
   class OpenLanes__CLI__Unblock["Unblock"]
   class OpenLanes__CLI__Version["Version"]
@@ -83,6 +87,10 @@ classDiagram
   class OpenLanes__Setup__CiScaffold["OpenLanes::Setup::CiScaffold"]
   class OpenLanes__Setup__Stack["OpenLanes::Setup::Stack"]
   class OpenLanes__Setup__StackDocument["OpenLanes::Setup::StackDocument"]
+  class OpenLanes__Supervision__Detached["OpenLanes::Supervision::Detached"]
+  class OpenLanes__Supervision__Lifeline["OpenLanes::Supervision::Lifeline"]
+  class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
+  class OpenLanes__Supervision__Title["OpenLanes::Supervision::Title"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Uml__ClassDiagram["OpenLanes::Uml::ClassDiagram"]
@@ -115,6 +123,8 @@ classDiagram
   OpenLanes__CLI__Create --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Create ..> OpenLanes__Plans__Spec : uses
   OpenLanes__CLI__Docs --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__EngineCommand --|> OpenLanes__CLI__Run : inherits
+  OpenLanes__CLI__EngineCommand ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__CLI__Eval --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Eval ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__CLI__Eval ..> OpenLanes__Evals__Live : uses
@@ -181,6 +191,9 @@ classDiagram
   OpenLanes__CLI__Preview__Stop --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Preview__Stop ..|> OpenLanes__CLI__Preview__Registry : includes
   OpenLanes__CLI__Preview__Stop ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Programs ..> OpenLanes__CLI__EngineCommand : uses
+  OpenLanes__CLI__Programs ..> OpenLanes__Supervision__Program : uses
+  OpenLanes__CLI__Programs ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Review --|> OpenLanes__CLI__Base : inherits
@@ -188,10 +201,17 @@ classDiagram
   OpenLanes__CLI__Review ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__CLI__Run --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Supervision__Lifeline : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Skills__Install --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__Start --|> OpenLanes__CLI__Run : inherits
-  OpenLanes__CLI__Start ..> OpenLanes__Engine__Dispatcher : uses
+  OpenLanes__CLI__Start --|> OpenLanes__CLI__EngineCommand : inherits
+  OpenLanes__CLI__Start ..> OpenLanes__CLI__Programs : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Supervision__Detached : uses
+  OpenLanes__CLI__Start ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Web__AdminAuth : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__State__Resume --|> OpenLanes__CLI__Base : inherits
@@ -207,6 +227,12 @@ classDiagram
   OpenLanes__CLI__State__Sign ..> OpenLanes__Error : uses
   OpenLanes__CLI__State__Sign ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__State__Sign ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Status --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Status ..> OpenLanes__Supervision__Title : uses
+  OpenLanes__CLI__Status ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Stop --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Stop ..> OpenLanes__CLI__Status : uses
+  OpenLanes__CLI__Stop ..> OpenLanes__UI : uses
   OpenLanes__CLI__Uml --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Uml ..> OpenLanes__Uml__ClassDiagram : uses
   OpenLanes__CLI__Unblock --|> OpenLanes__CLI__Base : inherits
@@ -219,6 +245,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Supervision__Lifeline : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
