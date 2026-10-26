@@ -25,7 +25,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | copilot watchdog | `Live::Copilot::Operator` | one copilot child |
 | choice judge | `Live::ChoiceJudge` | its answers cache |
 | app supervisor reader / waiter | `Apps::Supervisor` | statuses and log tails |
-| signal trap | `cli/web`, `cli/app start` | `server.stop`, `runner.stop` |
+| signal trap | `cli/web`, `cli/preview start` | `server.stop`, `runner.stop` |
 
 ## Inventory
 

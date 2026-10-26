@@ -219,7 +219,7 @@ openlanes project stop 012           # stop it from another terminal
 - Each process gets the lowest free port from 11100, and every process sees every port as `PORT_<NAME>`. Ports come from one registry per machine (`~/.local/state/openlanes/ports.json`, or `$OPENLANES_PORTS_FILE`), so two worktrees never collide.
 - A process that exits, or does not answer on its port within 30 s (`--ready-timeout`), fails the start and stops the rest. An app that moves to another port fails with the port it was given.
 - The control room shows a **Preview** tab per running app, labelled with plan, branch and port: the app in a frame, or a button to open it in a window when its `X-Frame-Options` or `frame-ancestors` refuse framing. Its toolbar restarts the backend (every process but the previewed one) or stops the app.
-- Without `app:` nothing changes: `app start` refuses and the page shows no Preview tab.
+- Without `app:` nothing changes: `project start` refuses and the page shows no Preview tab.
 
 ## How agents hand off
 
