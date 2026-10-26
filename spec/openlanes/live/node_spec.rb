@@ -10,6 +10,14 @@ RSpec.describe OpenLanes::Live::Node do
 
   after { FileUtils.rm_rf(home) }
 
+  describe "with a role" do
+    subject(:node) { described_class.current(root:, user: "dana", host: "studio-mini", home:, ip: nil, role: "run-42") }
+
+    # A run is a node of its own beside the factory in the same checkout.
+    it { expect(node.name).to eq("#{node.id}:#{node.checkout_id}:run-42") }
+    it { expect(node.role).to eq("run-42") }
+  end
+
   it "is named by digests of user@host and of the checkout" do
     aggregate_failures do
       expect(node.id).to eq(Digest::SHA256.hexdigest("dana@studio-mini")[0, 24])

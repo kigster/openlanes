@@ -19,8 +19,18 @@ module OpenLanes
         @keys = keys
         @ttl = ttl
         @held = []
+        @pinned = []
         @mutex = Mutex.new
       end
+
+      # A plan another node held when {#hold} asked for it.
+      #
+      # @!attribute [r] ordinal
+      #   @return [String]
+      # @!attribute [r] holder
+      #   @return [String, nil] the holding node's name; nil when the claim
+      #     lapsed between the refusal and the look
+      Taken = Data.define(:ordinal, :holder)
 
       # @return [Array<String>] ordinals this node holds, as far as it knows
       def held = @mutex.synchronize { @held.dup }
@@ -54,15 +64,49 @@ module OpenLanes
         lost
       end
 
+      # Take every plan or none, and keep them until {#release_all}: what
+      # `openlanes run 005,006` does before any agent starts (O1, O2 in
+      # docs/decisions/decisions-on-factory-start-stop.md). An engine claims a
+      # plan only when it starts an agent on it, so a plan the factory had in
+      # its tree but was not working yet was held by nobody; holding them all
+      # up front closes that gap, and the claim itself is the check, since
+      # `SET NX` leaves no moment between "is it free?" and "it is mine".
+      #
+      # @param ordinals [Array<#to_s>]
+      # @return [Array<Taken>] the plans another node held, empty when all
+      #   of them are ours now; on a refusal none of them is
+      def hold(ordinals)
+        taken = ordinals.map(&:to_s).reject { claim(it) }
+        unless taken.empty?
+          (ordinals.map(&:to_s) - taken).each { release(it, pinned: true) }
+          return taken.map { Taken.new(ordinal: it, holder: held_by(it)) }
+        end
+
+        @mutex.synchronize { @pinned |= ordinals.map(&:to_s) }
+        []
+      end
+
+      # Give the plan up, unless {#hold} pinned it: a run that holds its
+      # plans keeps them between one agent and the next, or the factory
+      # would take a plan the moment its first agent finished.
+      #
       # @param ordinal [#to_s]
+      # @param pinned [Boolean] release it even when it is pinned
       # @return [Boolean] whether a claim of ours was removed
-      def release(ordinal)
-        @mutex.synchronize { @held.delete(ordinal.to_s) }
+      def release(ordinal, pinned: false)
+        return false if !pinned && @mutex.synchronize { @pinned.include?(ordinal.to_s) }
+
+        @mutex.synchronize do
+          @held.delete(ordinal.to_s)
+          @pinned.delete(ordinal.to_s)
+        end
         @store.compare_and_delete(@keys.claim(ordinal), @keys.node)
       end
 
+      # Everything this node holds, pinned or not: the run is ending.
+      #
       # @return [void]
-      def release_all = held.each { |ordinal| release(ordinal) }
+      def release_all = held.each { |ordinal| release(ordinal, pinned: true) }
 
       # @param ordinal [#to_s]
       # @return [String, nil] the node name holding the plan

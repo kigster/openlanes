@@ -63,4 +63,41 @@ RSpec.describe OpenLanes::Live::Claims do
       expect(claims.held_by("005.00")).to eq("them:2")
     end
   end
+
+  describe "#hold" do
+    context "when every plan is free" do
+      let!(:taken) { claims.hold(%w[004.00 005.00]) }
+
+      it { expect(taken).to eq([]) }
+      it { expect(claims.held).to eq(%w[004.00 005.00]) }
+
+      # Between one agent and the next the run keeps its plans.
+      it "keeps a pinned plan through a plain release" do
+        aggregate_failures do
+          expect(claims.release("004.00")).to be(false)
+          expect(claims.held_by("004.00")).to eq("me:1")
+        end
+      end
+
+      it "lets go of everything at the end of the run" do
+        claims.release_all
+        expect([claims.held, claims.held_by("004.00"), claims.held_by("005.00")]).to eq([[], nil, nil])
+      end
+    end
+
+    context "when another node holds one of them" do
+      before { theirs.claim("005.00") }
+
+      let!(:taken) { claims.hold(%w[004.00 005.00]) }
+
+      it "names the plan and its holder" do
+        expect(taken).to eq([described_class::Taken.new(ordinal: "005.00", holder: "them:2")])
+      end
+
+      # All or none: the free plan is not left claimed behind a refusal.
+      it "keeps none of them" do
+        expect([claims.held, claims.held_by("004.00")]).to eq([[], nil])
+      end
+    end
+  end
 end
