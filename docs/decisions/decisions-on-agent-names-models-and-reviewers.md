@@ -101,6 +101,15 @@ The ruling takes effect at once when nobody can see it: under `openlanes run`, w
 
 The override covers every trigger the arbitrator rules on: a builder's appeal of a reviewer's finding, a plan at its rejection cap, the check of a `review-passed` verdict at `mvp`, and a contract dispute between the two builders.
 
+### A2. A hidden page is told, then a phone
+
+Whether a page can see a ruling comes from what the web already knows: every open page holds `/api/events`, and reports when it goes idle or hidden (`chat.presence`). The web publishes how many pages are connected and how many are visible, and the engine reads it before a ruling.
+
+Built in two parts:
+
+1. **With plan 5 (the override):** a page that is open but hidden raises a browser notification through the Notification API, "arbitrator ruled on 005: 60 s to override", once permission is granted. No server work.
+2. **A plan of its own, after it: push notifications.** A web app manifest and a service worker make the page installable to the iOS Home Screen, where Safari (16.4 and later) delivers Web Push. HTTPS comes from Tailscale (`tailscale serve` in front of the control room's port, on the machine's `*.ts.net` name). The factory signs pushes with a VAPID key pair (the `web-push` gem), kept in `.env` or credentials, never in a commit, and sends them to the browser's push service: Apple's for Safari. The payload is encrypted end to end; the service still sees when a push was sent, and to which device. Apple's terms for web push are read before it is built. The same push serves Chrome, Firefox and macOS Safari with every tab closed, and also carries "needs you" events, not only rulings.
+
 ## Reviewers
 
 ### V1. Three reviewers, ideally each on a different coding agent
