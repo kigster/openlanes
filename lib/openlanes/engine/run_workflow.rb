@@ -45,6 +45,7 @@ module OpenLanes
         yield prompt_needs_agent
         agents = yield roster
         plans  = yield scope
+        yield stopping
         yield assignable(agents, plans) if @options[:agent]
         yield isolatable
         yield logging
@@ -52,7 +53,8 @@ module OpenLanes
 
         prepare(plans, migrated)
         live = yield live_for(agents)
-        web  = yield web_for(live)
+        yield held(plans, live)
+        web = yield web_for(live)
         runner = runner_for(agents, plans, live, web)
         startup_box
 
@@ -111,12 +113,16 @@ module OpenLanes
       # this exists to prevent, so an unknown one is refused rather than
       # dropped.
       #
+      # `run` works only the plans it is given (C4): a headless engine over
+      # the whole tree is the factory's job, and `start` is that.
+      #
       # @return [Dry::Monads::Result] Success(Array<OpenLanes::Plans::Ordinal>), or Success(nil) for all
       def scope
-        return Success(nil) unless @options[:plan]
+        tokens = @options[:plan].to_s.split(",").map(&:strip).reject(&:empty?)
+        return unscoped if tokens.empty?
 
         known = @tree.subjects.map { |s| s.feature.ordinal }
-        ordinals = @options[:plan].split(",").map(&:strip).reject(&:empty?).map do |token|
+        ordinals = tokens.map do |token|
           ordinal = Plans::Ordinal.parse(token)
           unless ordinal && known.include?(ordinal)
             return refusal("No plan #{token} in #{@tree.dir}.\n\nKnown: #{known.join(", ")}", 66)
@@ -125,6 +131,56 @@ module OpenLanes
           ordinal
         end
         Success(ordinals)
+      end
+
+      # @return [Dry::Monads::Result::Failure] `run` with no plans named
+      def unscoped
+        refusal("openlanes run works the plans it is given: openlanes run 005,006. " \
+                "openlanes start runs the whole tree.",
+          64)
+      end
+
+      # `--until`: the state a run stops its plans at (C6), by key or emoji,
+      # and by nothing else: a status has no synonyms.
+      #
+      # @return [OpenLanes::Plans::Status, nil] nil when not asked, or not a state
+      def stop_at = Plans.status(@options[:until])
+
+      # @return [Dry::Monads::Result] Success(nil), or a refusal naming the states `--until` takes
+      def stopping
+        return Success(nil) if @options[:until].to_s.strip.empty? || stop_at
+
+        refusal("--until #{@options[:until]} names no state. Known: #{Plans::STATUSES.map(&:key).join(", ")}", 64)
+      end
+
+      # Every plan this run was given, claimed before any agent starts and
+      # held until it ends (O1), or none of them (O2): a plan the factory or
+      # another run already holds refuses the whole command, naming who
+      # holds it. Without Redis there is no claim to take, and so nothing
+      # shared to collide over: the per-plan lock still keeps two agents out
+      # of one folder.
+      #
+      # @param plans [Array<OpenLanes::Plans::Ordinal>, nil]
+      # @param live [OpenLanes::Live::Session, nil]
+      # @return [Dry::Monads::Result] Success(nil)
+      def held(plans, live)
+        return Success(nil) if live.nil? || plans.nil?
+
+        taken = live.claims.hold(plans)
+        return Success(startup("Holding", plans.join(", "))) if taken.empty?
+
+        live.close
+        lines = taken.map { "  #{it.ordinal}: held by #{held_by(it.holder, live.node)}" }
+        refusal("These plans are already being worked, so nothing was claimed:\n#{lines.join("\n")}\n\n" \
+                "Stop that run first, or leave these plans out.",
+          75)
+      end
+
+      # @param name [String, nil] the holding node's name, nil once its claim lapsed
+      # @param node [OpenLanes::Live::Node] this run's node
+      # @return [String]
+      def held_by(name, node)
+        name ? Live::Holder.parse(name).describe(from: node) : "nobody any more (its claim lapsed); try again"
       end
 
       # `--agent` narrowing the round to nobody used to exit 0 in silence —
@@ -328,9 +384,10 @@ module OpenLanes
 
         config = Config.current
         store = Live.connect(Live.redis_url(option: @options[:redis_url], config:))
-        Success(Live.session(store:, root: @root, tree: @tree, agents:, project: config.project).tap do |session|
-          startup("Live board", session.described)
-        end)
+        node = Live::Node.current(root: @root, role: node_role)
+        session = Live.session(store:, root: @root, tree: @tree, agents:, project: config.project, node:)
+        startup("Live board", session.described)
+        Success(session)
       rescue Live::Unavailable => e
         without_live(e.message)
       end
@@ -347,49 +404,19 @@ module OpenLanes
         Success(nil)
       end
 
-      # The control room (W1, W7): `openlanes web` as its own process beside
-      # the engine, reading the board this run publishes. Only with a live
-      # board to read, so a dry run, a run without Redis and `--no-web` all
-      # stay headless. A server that does not come up is reported and left
-      # out; the run is the agents' work, and the page is a view of it.
+      # Which node this engine is on the live board (see {Live::Node#role}).
+      # A run is a node of its own, so its claims stay its own beside the
+      # factory's.
       #
-      # @param live [OpenLanes::Live::Session, nil]
-      # @return [Dry::Monads::Result] Success(OpenLanes::Web::Launcher or nil)
-      def web_for(live)
-        return Success(nil) if live.nil? || @options[:web] == false
+      # @return [String, nil]
+      def node_role = "run-#{Process.pid}"
 
-        port = Integer(@options[:port] || OpenLanes::Web::DEFAULT_PORT)
-        listen = @options[:listen] || OpenLanes::Web::Listen.parse(nil)
-        web = OpenLanes::Web.launcher(root: @root,
-          plans_dir:   @tree.dir,
-          port:,
-          redis_url:   live.store.url,
-          listen:,
-          credentials: @options[:credentials]).start
-        unless web.ready?
-          web.stop
-          return without_web(web, live)
-        end
-
-        startup("Control room", web.port == port ? web.url : "#{web.url} (#{port} was taken)")
-        startup("Also on", "#{(listen.urls(web.port) - [web.url]).join(", ")}, behind a login") if listen.public?
-        OpenLanes::Web.open(browser_url(web)) unless @options[:open] == false
-        Success(web)
-      end
-
-      # @param web [OpenLanes::Web::Launcher] one that did not answer
-      # @param _live [OpenLanes::Live::Session]
+      # `run` serves no page (C4): the control room is `start`'s, and
+      # {StartWorkflow} brings it up.
+      #
+      # @param _live [OpenLanes::Live::Session, nil]
       # @return [Dry::Monads::Result] Success(nil)
-      def without_web(web, _live)
-        warn("The control room did not answer on #{web.url}, so the run goes on without it. Its log: #{web.log}") unless @quiet
-        Success(nil)
-      end
-
-      # Where the browser is sent once the control room answers.
-      #
-      # @param web [OpenLanes::Web::Launcher]
-      # @return [String]
-      def browser_url(web) = web.url
+      def web_for(_live) = Success(nil)
 
       # @param agents [OpenLanes::Agents::Registry]
       # @param plans [Array<OpenLanes::Plans::Ordinal>, nil]
@@ -422,6 +449,7 @@ module OpenLanes
           events:       events,
           journal:      (journal_for(live) unless @dry_run),
           quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
+          stop_at:,
           **staying(web, live)
         )
       end
@@ -570,52 +598,22 @@ module OpenLanes
         Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
       end
 
-      # What the runner is told about idling past its fixed points. With its
-      # control room up the engine stays, since the page can answer a blocked
-      # plan or create the next one at any moment, and a run that had ended
-      # would leave the page talking to nobody. `--stay` asks the same of a
-      # headless run whose page `openlanes web` serves apart, as mprocs does:
-      # the commands travel through the live board, not the server. Otherwise
-      # headless, or with `--until-settled`, it ends at the first fixed point.
+      # What the runner is told about idling past its fixed points: nothing,
+      # since `run` always ends at its first (C4). {StartWorkflow} stays.
       #
-      # A staying run is also the one that watches the pull requests a person
-      # merges (M4): it is still up when they do. A run that ends cannot wait
-      # for a merge, so it names the pull requests it leaves unwatched instead.
+      # A run that ends cannot wait for a person's merge (M4), so it names
+      # the pull requests it leaves unwatched instead.
       #
-      # @param web [OpenLanes::Web::Launcher, nil] the control room, when it came up
-      # @param live [OpenLanes::Live::Session, nil] the board a page apart would read
+      # @param _web [OpenLanes::Web::Launcher, nil]
+      # @param _live [OpenLanes::Live::Session, nil]
       # @return [Hash] `stay:`, `rescan:` and `watch:` for {Runner}, or nothing
-      def staying(web, live = nil)
-        stay_unheeded(live)
-        return {} if @options[:until_settled]
-        return {} unless web || (live && @options[:stay])
+      def staying(_web, _live = nil) = {}
 
-        @stays = if web
-                   "The engine stays up with its control room: Stop All Local or Ctrl-C ends it."
-                 else
-                   "The engine stays up for the control room `openlanes web` serves: Stop All Local or Ctrl-C ends it."
-                 end
-        { stay: true, rescan: Dispatcher::RESCAN, watch: watch }
-      end
-
-      # A `--stay` this run cannot keep, said once on STDERR. Dropped in
-      # silence, mprocs showed an engine that had ended at its first fixed
-      # point and nothing said why. A run without Redis goes on headless
-      # rather than refusing (see {#without_live}), so this warns the same
-      # way instead of exiting 69 as `start` does.
+      # The startup box's closing line about how the engine ends, when it
+      # does not end by itself; nil for a run, which does.
       #
-      # @param live [OpenLanes::Live::Session, nil]
-      # @return [void]
-      def stay_unheeded(live)
-        return if @quiet || !@options[:stay]
-
-        if @options[:until_settled]
-          warn("--stay is ignored with --until-settled: the run ends at the first fixed point.")
-        elsif live.nil?
-          warn("--stay needs the live board (Redis) a separate page reads, and this run has none, " \
-               "so it ends at the first fixed point.")
-        end
-      end
+      # @return [String, nil]
+      def stays_note = nil
 
       # The pull request watch a staying run carries, in human mode only: when
       # agents merge, nobody else's merge is worth waiting for. Kept apart from
@@ -632,7 +630,7 @@ module OpenLanes
       # @param runner [OpenLanes::Engine::Runner]
       # @return [void]
       def unwatched(runner)
-        return if @stays || !Config.current.human_merges?
+        return if stays_note || !Config.current.human_merges?
 
         open = runner.in_scope.flat_map { |s| s.pull_requests.select(&:open?).map { "#{s.feature.ordinal} ##{it.number}" } }
         return if open.empty?
@@ -655,7 +653,7 @@ module OpenLanes
       def startup_box
         return if @quiet || @startup.empty?
 
-        info([UI.labelled(@startup), @stays].compact.join("\n\n"))
+        info([UI.labelled(@startup), stays_note].compact.join("\n\n"))
       end
 
       # The terminal hears the run as it happens, one appended line per

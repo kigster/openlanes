@@ -76,11 +76,12 @@ module OpenLanes
         Drives the agentic flow: spec → plan → build → review → tune/fix → approve.
 
         Most days need two commands. `openlanes init` sets a project up, once.
-        `openlanes start` is `web` + `run` in one: the engine and its control room
-        in the browser, where you create plans, answer the agents' questions and
-        watch them work. Both stay up, with or without plans, until Stop All Local
-        in the page or Ctrl-C. The headless commands do the same work from the
-        terminal, for scripts and CI.
+        `openlanes start` is the factory: the engine and its control room in the
+        browser, where you create plans, answer the agents' questions and watch
+        them work. Both stay up, with or without plans, until Stop All Local in
+        the page or Ctrl-C. `openlanes run 005,006` works just the plans named,
+        headless, and ends when they stop changing: for scripts, CI and short
+        dogfood runs with --until.
 
         Keeps the .plans folders in step with GitHub pull requests and Linear issues.
         The final merge and deploy stay manual.

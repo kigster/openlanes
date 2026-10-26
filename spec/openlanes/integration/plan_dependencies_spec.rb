@@ -41,7 +41,7 @@ RSpec.describe "plan dependencies, through the executable", :tree do
     end
 
     it "assigns 034 and not 050, and names 050 as waiting on 034.00" do
-      out, = openlanes("run", "--dry-run", "--isolation", "shared")
+      out, = openlanes("run", "034,050", "--dry-run", "--isolation", "shared")
 
       expect(out).to match(/034\.00\s.*would invoke/)
       expect(out).not_to match(/050\.00\s.*would invoke/)
@@ -58,7 +58,7 @@ RSpec.describe "plan dependencies, through the executable", :tree do
     end
 
     it "assigns neither and gives a cycle as the reason for both" do
-      out, = openlanes("run", "--dry-run", "--isolation", "shared")
+      out, = openlanes("run", "034,050", "--dry-run", "--isolation", "shared")
 
       expect(out).not_to include("would invoke")
       expect(out).to include("034.00 cycle: 034.00 → 050.00 → 034.00",

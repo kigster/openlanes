@@ -21,8 +21,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     described_class.new(tree:,
       isolation: "shared",
       dry_run: true,
-      until_settled: true,
-      web: false,
+      plan: "001",
       log: File.join(plans_root, "..", "progress.log"),
 **)
   end
