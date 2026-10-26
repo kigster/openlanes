@@ -92,37 +92,40 @@ openlanes start --rescan 10                    # look for new or hand-edited pla
 openlanes start --plan 005                     # only plan 005, until stopped
 ```
 
-`openlanes start` is `openlanes run` that does not stop at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `openlanes create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s by default, or at once after anything you do on the page).
+`openlanes start` is the factory: the engine over the whole tree, with its control room, never stopping at a fixed point. When a plan blocks, it idles, puts the questions in **Needs You** on the page, takes your answer from there, folds it in and hands the plan back to its agent, with no restart. Plans created on the page, by `openlanes create` in another terminal, or edited by hand are picked up on the next rescan (every 5 s by default, or at once after anything you do on the page).
 
 Every decision goes through the page: answers, hold, wrap up and stop on an agent, model changes, new plans. **Stop All Local** stops this machine's agents, then its engine and the page. The page also hosts `copilot`, a read-only copilot that talks about the run, drafts answers to blocked agents and proposes stops for you to confirm.
 
-It never ends on its own, not even once every plan is finished, since the page can create the next one. Stop All Local, Ctrl-C or `SIGTERM` ends it. It takes `run`'s flags except `-n`, `--no-web`, `--stay` and `--until-settled`, and needs Redis: without it, it refuses (exit 69) rather than going headless.
+It never ends on its own, not even once every plan is finished, since the page can create the next one. Stop All Local, Ctrl-C or `SIGTERM` ends it. It takes `run`'s flags except `-n` and `--until`, plus `--plan` to narrow it, and needs Redis: without it, it refuses (exit 69) rather than going headless. `--no-web` leaves the page to an `openlanes web` run apart and keeps the engine up for it, as `mprocs.yaml` does under `just start`, with Vite's dev server in front of it so the page reloads as you edit it. Under mprocs the engine does not watch the `api` pane: if that pane dies, the engine waits on with no page until you restart the pane or end the engine with Ctrl-C.
 
 `openlanes web` serves the page on its own; `openlanes web --demo` replays a sample run with no agents.
 
-It listens on `127.0.0.1:11000`. `-p` / `--port` moves the port. `-i` / `--ips` / `--bind 127.0.0.1,192.168.1.20` listens on the addresses given, and `-I` on every interface (the same as `--bind 0.0.0.0`), so other machines can open the page. `web`, `run` and `start` all take these flags. Anyone who reaches the page can stop agents, answer their questions and message them, so listening beyond loopback needs a login: `--admin-credentials USER:PASSWORD` (or `$OPENLANES_ADMIN_CREDENTIALS`), refused without one. Requests from other machines are then asked for it by HTTP Basic auth; requests from this machine are not. `run` and `start` hand the login to their server through its environment, never its command line, and the server warns whenever it listens beyond loopback, even under `--quiet`. Basic auth sends the password with every request, so off a trusted network put the page behind HTTPS. It still answers only Host headers naming loopback, an address it listens on, or this machine's name, which keeps DNS rebinding out.
+It listens on `127.0.0.1:11000`. `-p` / `--port` moves the port. `-i` / `--ips` / `--bind 127.0.0.1,192.168.1.20` listens on the addresses given, and `-I` on every interface (the same as `--bind 0.0.0.0`), so other machines can open the page. `web` and `start` both take these flags. Anyone who reaches the page can stop agents, answer their questions and message them, so listening beyond loopback needs a login: `--admin-credentials USER:PASSWORD` (or `$OPENLANES_ADMIN_CREDENTIALS`), refused without one. Requests from other machines are then asked for it by HTTP Basic auth; requests from this machine are not. `start` hands the login to its server through its environment, never its command line, and the server warns whenever it listens beyond loopback, even under `--quiet`. Basic auth sends the password with every request, so off a trusted network put the page behind HTTPS. It still answers only Host headers naming loopback, an address it listens on, or this machine's name, which keeps DNS rebinding out.
 
-### `openlanes run`: headless, or to a fixed point
+### `openlanes run`: the plans named, headless, to a fixed point
 
-`openlanes run` serves the control room too when Redis answers, and then stays up like `start`. Pass `--until-settled` (CI, scripts, agents) to end at the first fixed point anyway, or `--no-web` to run headless, which ends there too unless `--stay` keeps it up for a control room `openlanes web` serves on its own (as `mprocs.yaml` does, under `just start`, with Vite's dev server in front of it so the page reloads as you edit it). Under mprocs the engine does not watch the `api` pane: if that pane dies, the engine waits on with no page until you restart the pane or end the engine with Ctrl-C.
+`openlanes run` takes the plans to work as its argument, comma separated, and works only those, with no control room, until a round changes none of them. It is for scripts, CI and short dogfood runs; the whole tree is `start`'s.
+
+Before any agent starts it claims every plan it was given, and holds them until it ends. If the factory or another run already holds one, the whole command is refused (exit 75), naming who holds it, and nothing is claimed. The factory, for its part, steps around a plan a run holds. Without Redis there are no claims to share, and the run goes on headless.
+
+`--until STATE` stops each plan once it reaches that state or any later one on the spine, by key or emoji (`--until planned`, `--until 🟢`). Where a plan starts is its spec's `starts:`.
 
 ```bash
-openlanes run -n                               # dry run: who would take what
-openlanes run                                  # the whole tree, one worktree per plan, in parallel
-openlanes run -j 4                             # at most four agents at once
-openlanes run --plan 003,005.01                # only these plans
-openlanes run --agent spec-writer --prompt "Rework the risks section first"
-openlanes run --skip staff-reviewer          # everyone but the reviewer; its plans wait
-openlanes run --model opus                     # one model for every agent
-openlanes run --user-config                    # agents load your personal plugins and skills too
-openlanes run --timeout 600                    # at most ten minutes per agent
-openlanes run --rounds 1                       # at most one round per agent per plan
-openlanes run --max-tokens 200000              # token budget per agent invocation
-openlanes run --isolation shared               # one checkout, one agent at a time, no git needed
+openlanes run 005 -n                           # dry run: who would take plan 005
+openlanes run 005,006                          # both, one worktree per plan, in parallel
+openlanes run 005,006 -j 1                     # one agent at a time
+openlanes run 050 --until planned              # stop plan 050 once it is planned
+openlanes run 005 --agent spec-writer --prompt "Rework the risks section first"
+openlanes run 005 --skip staff-reviewer        # everyone but the reviewer; its plans wait
+openlanes run 005 --model opus                 # one model for every agent
+openlanes run 005 --user-config                # agents load your personal plugins and skills too
+openlanes run 005 --timeout 600                # at most ten minutes per agent
+openlanes run 005 --rounds 1                   # at most one round per agent per plan
+openlanes run 005 --max-tokens 200000          # token budget per agent invocation
+openlanes run 005 --isolation shared           # one checkout, one agent at a time, no git needed
 ```
 
-- If you just created several plans, run them with a single `--plan` list. Separate bare `run` calls each loop over the whole tree, so their worktrees would overlap.
-- The loop stops when a full round changes no plan's state, or when every plan in scope is done, blocked, or out of rounds.
+- The loop stops when a full round changes no plan's state, or when every plan named is done, blocked, stopped by `--until`, or out of rounds.
 - Agents start without your personal plugins, skills, hooks and MCP servers, which saves context and start-up time on every turn. `--user-config` lets them back in.
 
 ![A terminal view of a run: backend-coder and frontend-coder building plan 001.00 together while researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)

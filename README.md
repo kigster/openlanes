@@ -62,7 +62,7 @@ If you want to see how OpenLanes runs and what it logs, you can drop this `mproc
 # and bin/ol-tee adds Vite and what the API server prints itself. The
 # engine is not piped, so its pane keeps its live board.
 procs:
-  engine: ol run -j 4 --no-web --stay --log-format color
+  engine: ol start -j 4 --no-web --log-format color
   api: bin/ol-tee api bundle exec exe/openlanes web --no-open --log-format color
   # npm ci again whenever package-lock.json is newer than what is installed.
   web: bin/ol-web
@@ -194,12 +194,12 @@ ol setup
 ol init                    # .openlanes.yml and .plans/ at the project root; -y asks nothing
 ol create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md, drafted and opened
                                   # finish the brief in spec.md and save it
-openlanes run -n                  # dry run: which agent would take which plan
+openlanes run 001 -n              # dry run: which agent would take plan 001
 openlanes start                   # engine plus control room on http://127.0.0.1:11000
 openlanes plans              # every open plan, its state and its pull requests; --all adds archived ones
 ```
 
-`openlanes start` runs until you press **Stop All Local** on the page or Ctrl-C. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run --until-settled` (or `--no-web`) stops at the first round in which no plan changed state.
+`openlanes start` runs until you press **Stop All Local** on the page or Ctrl-C. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
 
 `init` settles four project-wide decisions before any plan exists, in this order: CI (it names what the folder already runs, or offers to scaffold GitHub Actions, CircleCI or Jenkins), who merges a reviewed pull request (`human` or `auto`), the desired codebase quality (`high` or `mvp`), and the stack, detected from marker files such as `Gemfile` or `package.json`. With `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set it first asks you to describe the app, and skips the questions the description answered. The stack is also written to `docs/decisions/stack.md`.
 
@@ -336,7 +336,7 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 | `web --demo`                                  | replay a sample run in the control room; otherwise `start` serves the page |
 | `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes.yml` `app:` |
 | `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`       |
-| `run`                                         | run the agents over the plans; `-n` to preview, `--until-settled` to stop at a fixed point |
+| `run`                                         | run the agents over the plans named, headless, to a fixed point; `-n` to preview, `--until` to stop early |
 | `plans`                                       | open plans, their states and pull requests (`--all`: archived too) |
 | `index` (`idx`)                               | write `.plans/INDEX.md`                                      |
 | `unblock`                                     | fold answered questions from `blocked.md` back into the plan |

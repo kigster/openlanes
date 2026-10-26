@@ -77,6 +77,8 @@ classDiagram
   class OpenLanes__Lifecycle__Unblocker["OpenLanes::Lifecycle::Unblocker"]
   class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
   class OpenLanes__Live__ChoiceConverter__Invalid["OpenLanes::Live::ChoiceConverter::Invalid"]
+  class OpenLanes__Live__Holder["OpenLanes::Live::Holder"]
+  class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Snapshot["OpenLanes::Live::Snapshot"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
   class OpenLanes__Log__Invalid["OpenLanes::Log::Invalid"]
@@ -219,7 +221,6 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
-  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__EventJournal : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Merging : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Narrator : uses
@@ -229,6 +230,8 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Verification__Driver : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Error : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Holder : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Node : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Invalid : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Settings : uses
@@ -237,7 +240,6 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Engine__RunWorkflow ..|> OpenLanes__UI : includes
-  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Web__Listen : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
@@ -251,6 +253,7 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__UI : uses
   OpenLanes__Engine__StartWorkflow ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__StartWorkflow --|> OpenLanes__Engine__RunWorkflow : inherits
+  OpenLanes__Engine__StartWorkflow ..> OpenLanes__Web__Listen : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Engine__Steps__Interval : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Error : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__UI : uses
