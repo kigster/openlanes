@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     }
   end
 
-  # What luthen-rael does to spec.md while it plans: answer `depends_on:`.
+  # What planner does to spec.md while it plans: answer `depends_on:`.
   def link(subject)
     file = File.join(subject.feature.path, "spec.md")
     text = File.read(file)
@@ -63,7 +63,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       [stamp, live, overlaps, seen]
       runner = OpenLanes::Engine::Runner.new(tree:,
         executor:  slow_executor,
-        agents:    agents.only("leah-researcher", "yoda-writer"),
+        agents:    agents.only("researcher", "spec-writer"),
         isolation: :shared,
         jobs:      2,
         state:,
@@ -92,8 +92,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     def write_work(agent, dir)
       case agent.name
-      when "leah-researcher" then File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n")
-      when "yoda-writer" then File.write(File.join(dir, "plan.md"), "")
+      when "researcher" then File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n")
+      when "spec-writer" then File.write(File.join(dir, "plan.md"), "")
       end
     end
 
@@ -103,9 +103,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it "moves the folder at each Completed, so each agent starts from the state it handles" do
       aggregate_failures do
-        expect(seen).to eq([["leah-researcher", :new], ["yoda-writer", :researched]])
+        expect(seen).to eq([["researcher", :new], ["spec-writer", :researched]])
         expect(attempts.map { [it.agent, it.from, it.to] })
-          .to eq([["leah-researcher", :new, :researched], ["yoda-writer", :researched, :ready_for_planning]])
+          .to eq([["researcher", :new, :researched], ["spec-writer", :researched, :ready_for_planning]])
         expect(plan.status.key).to eq(:ready_for_planning)
       end
     end
@@ -114,7 +114,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       stages = OpenLanes::Plans::PlanState.for(plan.feature.path).stages
       aggregate_failures do
         expect(stages.map { [it["agent"], it["status"], it["from"], it["to"]] })
-          .to eq([%w[leah-researcher Completed new researched], %w[yoda-writer Completed researched ready_for_planning]])
+          .to eq([%w[researcher Completed new researched], %w[spec-writer Completed researched ready_for_planning]])
         expect(state.stages("030.00").map { it["status"] }.uniq).to eq(["Completed"])
       end
     end
@@ -136,8 +136,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       lambda { |agent, subject, root:, round: 1, **|
         order << [agent.name, subject.status.key, File.directory?(root)]
         dir = subject.feature.path
-        File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n") if agent.name == "leah-researcher"
-        File.write(File.join(dir, "plan.md"), "") if agent.name == "yoda-writer"
+        File.write(File.join(dir, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n") if agent.name == "researcher"
+        File.write(File.join(dir, "plan.md"), "") if agent.name == "spec-writer"
         sleep(0.2)
         sign.call(agent, dir, round)
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
@@ -150,7 +150,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       [stamp, order]
       OpenLanes::Engine::Runner.new(tree:,
         executor:,
-        agents:    agents.only("leah-researcher", "yoda-writer"),
+        agents:    agents.only("researcher", "spec-writer"),
         isolation: :worktree,
         jobs:      2,
         worktree:  OpenLanes::Vcs::Worktree.new(root: repo, dir: worktrees, user: "tester", seeder: nil),
@@ -171,11 +171,11 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     after { FileUtils.rm_rf(worktrees) }
 
     shared_examples "a chain that moves the folder" do
-      it "runs leah then yoda, each from the state it handles, and leaves the plan 📋" do
+      it "runs researcher then spec-writer, each from the state it handles, and leaves the plan 📋" do
         attempts = run_in_worktrees
         seen = Array.new(order.size) { order.pop }
         aggregate_failures do
-          expect(seen).to eq([["leah-researcher", :new, true], ["yoda-writer", :researched, true]])
+          expect(seen).to eq([["researcher", :new, true], ["spec-writer", :researched, true]])
           expect(attempts.map { [it.from, it.to] }).to eq([%i[new researched], %i[researched ready_for_planning]])
           expect(tree.reload.subjects.first.status.key).to eq(:ready_for_planning)
         end
@@ -222,10 +222,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     let!(:built) { plans { |t| t.plan "031.00", :new, "unresearched", files: { "spec.md" => spec_body } } }
     let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("031.00")) }
 
-    # leah signs and names yoda, but writes no `## Research` chapter.
+    # researcher signs and names spec-writer, but writes no `## Research` chapter.
     let!(:attempts) do
       [calls, stamp]
-      handoff = OpenLanes::Plans::Ledger.render_handoff(OpenLanes::Plans::Ledger::Handoff.new(at: Time.now, next: "yoda-writer", file: "", line: 0))
+      handoff = OpenLanes::Plans::Ledger.render_handoff(OpenLanes::Plans::Ledger::Handoff.new(at: Time.now, next: "spec-writer", file: "", line: 0))
       executor = lambda { |agent, subject, round: 1, **|
         calls << agent.name
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
@@ -233,14 +233,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           handoff)
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
-      runner_with(executor, agents: agents.only("leah-researcher", "yoda-writer"), rounds: 1).call
+      runner_with(executor, agents: agents.only("researcher", "spec-writer"), rounds: 1).call
     end
 
     it "keeps the folder, hands off to nobody, and records the round as Interrupted" do
       stage = OpenLanes::Plans::PlanState.for(plan.feature.path).stages.last
       aggregate_failures do
         expect(plan.status.key).to eq(:new)
-        expect(calls).to eq(["leah-researcher"])
+        expect(calls).to eq(["researcher"])
         expect(attempts.first).to have_attributes(ok: false, status: "Interrupted")
         expect(attempts.first.note).to include("Researched is not justified")
         expect(stage).to include("status" => "Interrupted", "to" => "new")
@@ -254,18 +254,18 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       plans { |t| t.plan "020.00", :researched, "qualified-at", files: { "spec.md" => "#{spec_body}\n## Research\n\nFound.\n" } }
     end
 
-    # yoda finishes, leaves a blank plan.md, signs Completed and names
-    # luthen-rael. The harness renames to 📋 and starts luthen-rael, who
-    # answers depends_on, writes a plan and signs; the harness renames to ⭐, luke and rey
+    # spec-writer finishes, leaves a blank plan.md, signs Completed and names
+    # planner. The harness renames to 📋 and starts planner, who
+    # answers depends_on, writes a plan and signs; the harness renames to ⭐, backend-coder and frontend-coder
     # start. Nobody is invoked twice and the run does not exit green with
     # the plan unmoved.
-    it "moves yoda's finished work to 📋 and starts luthen-rael, then the pair" do
+    it "moves spec-writer's finished work to 📋 and starts planner, then the pair" do
       executor = executor_with do |agent, subject, _round|
         case agent.name
-        when "yoda-writer"
+        when "spec-writer"
           File.write(File.join(subject.feature.path, "plan.md"), "")
           "Completed"
-        when "luthen-rael-planner"
+        when "planner"
           link(subject)
           File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n")
           File.write(File.join(subject.feature.path, "plan-frontend.md"), "# Front end\n\n## F1\n")
@@ -275,9 +275,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner_with(executor).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to eq(%w[yoda-writer luthen-rael-planner luke-backend rey-frontend])
+        expect(calls.map(&:first)).to eq(%w[spec-writer planner backend-coder frontend-coder])
         expect(OpenLanes::Plans::Spec.load(path_of("020.00")).depends_on).to eq([])
-        expect(calls.count { |name, _, _| name == "yoda-writer" }).to eq(1)
+        expect(calls.count { |name, _, _| name == "spec-writer" }).to eq(1)
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("020.00")).status.key).to eq(:building)
       end
     end
@@ -293,8 +293,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       it "copies both lists into the plan the planner wrote, once" do
         executor = executor_with do |agent, subject, _round|
           case agent.name
-          when "yoda-writer" then File.write(File.join(subject.feature.path, "plan.md"), "") && "Completed"
-          when "luthen-rael-planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
+          when "spec-writer" then File.write(File.join(subject.feature.path, "plan.md"), "") && "Completed"
+          when "planner" then File.write(File.join(subject.feature.path, "plan.md"), "# Plan\n\n## Unit 1\n") && "Completed"
           end
         end
         runner_with(executor).call
@@ -306,12 +306,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it "records each promotion on the attempt that earned it" do
       executor = executor_with do |agent, subject, _|
-        File.write(File.join(subject.feature.path, "plan.md"), "") if agent.name == "yoda-writer"
-        agent.name == "yoda-writer" ? "Completed" : nil
+        File.write(File.join(subject.feature.path, "plan.md"), "") if agent.name == "spec-writer"
+        agent.name == "spec-writer" ? "Completed" : nil
       end
       attempts = runner_with(executor).call
-      yoda = attempts.find { |a| a.agent == "yoda-writer" }
-      expect([yoda.from, yoda.to]).to eq(%i[researched ready_for_planning])
+      spec_writer = attempts.find { |a| a.agent == "spec-writer" }
+      expect([spec_writer.from, spec_writer.to]).to eq(%i[researched ready_for_planning])
     end
 
     context "when a row is running" do
@@ -442,7 +442,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   # The 001.00 transcript, the other way round: a folder still named ⚪
   # whose spec.md carries its research and whose plan.md already holds work
-  # units. The old loop read the name, offered it to leah-researcher, and
+  # units. The old loop read the name, offered it to researcher, and
   # she researched a plan that was ready to build.
   describe "a folder whose name lags its contents" do
     let!(:built) do
@@ -456,12 +456,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    it "renames it first and offers it to the pair, never to leah-researcher" do
+    it "renames it first and offers it to the pair, never to researcher" do
       runner_with(executor_with { |*| nil }).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).not_to include("leah-researcher")
-        expect(calls.map(&:first).first(2)).to contain_exactly("luke-backend", "rey-frontend")
+        expect(calls.map(&:first)).not_to include("researcher")
+        expect(calls.map(&:first).first(2)).to contain_exactly("backend-coder", "frontend-coder")
       end
     end
 
@@ -469,7 +469,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner_with(executor_with { |*| nil }, dry_run: true).call
 
       aggregate_failures do
-        expect(calls.map(&:first)).to contain_exactly("luke-backend", "rey-frontend")
+        expect(calls.map(&:first)).to contain_exactly("backend-coder", "frontend-coder")
         expect(Dir.children(plans_root)).to include("001.00━━⚪━━❯already-planned")
       end
     end
@@ -494,9 +494,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner_with(executor).call
 
       expect(seen).to eq(
-        ["leah-researcher", "000.00"] => [],
-        ["luke-backend", "001.00"]    => ["rey-frontend"],
-        ["rey-frontend", "001.00"]    => ["luke-backend"]
+        ["researcher", "000.00"]     => [],
+        ["backend-coder", "001.00"]  => ["frontend-coder"],
+        ["frontend-coder", "001.00"] => ["backend-coder"]
       )
     end
   end
@@ -520,9 +520,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "starts luke-backend alone" do
+      it "starts backend-coder alone" do
         runner_with(executor).call
-        expect(seen.map(&:first).uniq).to eq(%w[luke-backend])
+        expect(seen.map(&:first).uniq).to eq(%w[backend-coder])
       end
     end
 
@@ -537,9 +537,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "never starts rey-frontend, units or not" do
+      it "never starts frontend-coder, units or not" do
         runner_with(executor).call
-        expect(seen.map(&:first).uniq).to eq(%w[luke-backend])
+        expect(seen.map(&:first).uniq).to eq(%w[backend-coder])
       end
     end
 
@@ -555,7 +555,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       it "starts the pair without a plan-frontend.md" do
         runner_with(executor).call
-        expect(seen.map(&:first).uniq).to contain_exactly("luke-backend", "rey-frontend")
+        expect(seen.map(&:first).uniq).to contain_exactly("backend-coder", "frontend-coder")
       end
     end
 
@@ -566,7 +566,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       it "skips research and rewriting, and goes to the planner" do
         runner_with(executor).call
-        expect(seen.map(&:first).first).to eq("luthen-rael-planner")
+        expect(seen.map(&:first).first).to eq("planner")
       end
 
       it "leaves the blank plan.md the planner expects, under the 📋 name" do
@@ -582,9 +582,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "hands the plan straight to r2d2-mechanic" do
+      it "hands the plan straight to chores-coder" do
         runner_with(executor).call
-        expect(seen.map(&:first).uniq).to eq(%w[r2d2-mechanic])
+        expect(seen.map(&:first).uniq).to eq(%w[chores-coder])
       end
 
       it "writes a one-unit plan.md so the folder may claim ⭐ and then 🟡" do
@@ -600,9 +600,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
-      it "previews r2d2-mechanic, the lane's first agent, and writes nothing" do
+      it "previews chores-coder, the lane's first agent, and writes nothing" do
         runner_with(executor, dry_run: true).call
-        expect([seen.map(&:first).uniq, tree.reload.subjects.first.read("plan.md")]).to eq([%w[r2d2-mechanic], nil])
+        expect([seen.map(&:first).uniq, tree.reload.subjects.first.read("plan.md")]).to eq([%w[chores-coder], nil])
       end
     end
   end
@@ -617,7 +617,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       let(:executor) do
         lambda { |agent, subject, round: 1, **|
           calls << [agent.name, subject.feature.ordinal.to_s, round]
-          if agent.name == "leah-researcher"
+          if agent.name == "researcher"
             File.write(File.join(subject.feature.path, "spec.md"), "#{spec_body}\n## Research\n\nFound it.\n")
             OpenLanes::Plans::PlanState.for(subject.feature.path).sign!(agent: agent.name, round:, status: "Completed")
           end
@@ -625,7 +625,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         }
       end
 
-      before { runner_with(executor, agents: agents.only("leah-researcher")).call }
+      before { runner_with(executor, agents: agents.only("researcher")).call }
 
       it "settles the round from the JSON signature alone" do
         expect(tree.reload.subjects.first.status.key).to eq(:researched)
@@ -633,7 +633,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
       it "records the stage, with its outcome and spend" do
         expect(plan_state.stages.first.values_at("agent", "round", "status", "from", "to", "up"))
-          .to eq(["leah-researcher", 1, "Completed", "new", "researched", 10])
+          .to eq(["researcher", 1, "Completed", "new", "researched", 10])
       end
 
       it "records the state the folder moved to" do
@@ -644,8 +644,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "when a dead harness left a stage Started" do
       before do
         OpenLanes::Plans::PlanState.for(path_of("001.00"))
-                                   .stage!(agent: "leah-researcher", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })
-        runner_with(executor_with { |*| nil }, agents: agents.only("leah-researcher"), state: nil).call
+                                   .stage!(agent: "researcher", round: 1, status: "Started", run: { "pid" => 999_999, "host" => Socket.gethostname })
+        runner_with(executor_with { |*| nil }, agents: agents.only("researcher"), state: nil).call
       end
 
       it "marks it Interrupted, and says the harness died" do
@@ -660,24 +660,24 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
 
       it "starts the agent again on the same round, since the harness died and not the agent" do
-        expect(calls).to eq([["leah-researcher", "001.00", 1]])
+        expect(calls).to eq([["researcher", "001.00", 1]])
       end
 
       it "mails the agent to carry on from its resume note" do
-        mail = OpenLanes::Plans::Mailbox.new(dir: path_of("001.00")).for("leah-researcher")
+        mail = OpenLanes::Plans::Mailbox.new(dir: path_of("001.00")).for("researcher")
         expect(mail.map { [it.from, it.body] }).to match([["openlanes", start_with("RESUME: the harness died during your round 1")]])
       end
     end
   end
 
-  # luke finished and left the plan at 🎨; rey died before signing. Rey
-  # resumes it, and still hears from luke through the mailbox.
+  # backend-coder finished and left the plan at 🎨; frontend-coder died before signing. frontend-coder
+  # resumes it, and still hears from backend-coder through the mailbox.
   describe "a plan held at Building UI" do
     let!(:built) do
       plans { |t| t.plan "001.00", :building_ui, "held", files: { "spec.md" => spec_body, "plan.md" => "# P" } }
     end
 
-    it "goes back to rey, with luke named as the partner" do
+    it "goes back to frontend-coder, with backend-coder named as the partner" do
       seen = {}
       executor = lambda { |agent, _subject, partners: [], **|
         seen[agent.name] = partners.map(&:name)
@@ -685,7 +685,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       }
       runner_with(executor).call
 
-      expect(seen).to eq("rey-frontend" => ["luke-backend"])
+      expect(seen).to eq("frontend-coder" => ["backend-coder"])
     end
   end
 
@@ -697,32 +697,32 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       executor = lambda { |agent, subject, round: 1, **|
         order << [:start, agent.name]
         file = File.join(subject.feature.path, "spec.md")
-        if agent.name == "leah-researcher"
+        if agent.name == "researcher"
           File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
           OpenLanes::Plans::Ledger.append(file,
-            "> [#{stamp}] [ agent: leah-researcher   status: Completed, round 1 ]",
-            "> [#{stamp}] [ next: yoda-writer ]")
+            "> [#{stamp}] [ agent: researcher   status: Completed, round 1 ]",
+            "> [#{stamp}] [ next: spec-writer ]")
         end
         order << [:end, agent.name]
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
       runner_with(executor).call
-      expect(order.first(3)).to eq([[:start, "leah-researcher"], [:end, "leah-researcher"], [:start, "yoda-writer"]])
+      expect(order.first(3)).to eq([[:start, "researcher"], [:end, "researcher"], [:start, "spec-writer"]])
     end
 
-    # hansolo is on the roster, so the refusal is about what he handles and
+    # staff-reviewer is on the roster, so the refusal is about what he handles and
     # not about whether he exists; nobody left handles 🔎, so the run stops.
     it "refuses a next: that names an agent who does not handle the new state, and says so" do
       executor = lambda { |_agent, subject, round: 1, **|
         file = File.join(subject.feature.path, "spec.md")
         File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
         OpenLanes::Plans::Ledger.append(file,
-          "> [#{stamp}] [ agent: leah-researcher   status: Completed, round 1 ]",
-          "> [#{stamp}] [ next: hansolo-reviewer ]")
+          "> [#{stamp}] [ agent: researcher   status: Completed, round 1 ]",
+          "> [#{stamp}] [ next: staff-reviewer ]")
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
-      attempts = runner_with(executor, agents: agents.only("leah-researcher", "hansolo-reviewer")).call
-      expect(attempts.first.note).to include("next: names hansolo-reviewer", "does not handle")
+      attempts = runner_with(executor, agents: agents.only("researcher", "staff-reviewer")).call
+      expect(attempts.first.note).to include("next: names staff-reviewer", "does not handle")
     end
   end
 
@@ -731,7 +731,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it "re-runs an Almost completed agent while it has rounds, then parks the plan" do
       Dir.mktmpdir do |dir|
-        File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
+        File.write(File.join(dir, "researcher.md"), "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = OpenLanes::Agents::Registry.new(dir:)
         executor = executor_with { |_, _, _| "Almost completed" }
         attempts = OpenLanes::Engine::Runner.new(tree:,
@@ -754,7 +754,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     it "gives an agent out of rounds one more on its own when nobody can answer, and then parks the plan" do
       executor = executor_with { |_, _, _| "Almost completed" }
       attempts = runner_with(executor,
-        agents:     agents.only("leah-researcher"),
+        agents:     agents.only("researcher"),
         extensions: OpenLanes::Engine::Extensions.new(stay: false)).call
       requests = OpenLanes::Plans::PlanState.for(path_of("001.00")).extensions
       aggregate_failures do
@@ -774,15 +774,15 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
       plan = OpenLanes::Plans::PlanState.for(path_of("001.00"))
-      plan.ask_extension!(agent: "leah-researcher", state: :new, round: 1, limit: "rounds")
+      plan.ask_extension!(agent: "researcher", state: :new, round: 1, limit: "rounds")
       limits.answer!(path_of("001.00"), 1, "c", by: "dana")
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
       expect(seen.first).to eq(1260)
     end
 
     it "never re-runs a Completed agent whose promotion was refused, and reports the refusal" do
       executor = executor_with { |_, _, _| "Completed" } # no Research chapter written
-      attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
+      attempts = runner_with(executor, agents: agents.only("researcher")).call
       aggregate_failures do
         expect(calls.size).to eq(1)
         expect(attempts.first.ok).to be(false)
@@ -795,7 +795,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich?\n")
         "Blocked"
       end
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:blocked)
     end
 
@@ -803,10 +803,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       executor = lambda { |_agent, subject, round: 1, **|
         File.write(File.join(subject.feature.path, "blocked.md"), "## B1\n\nWhich colour?\n")
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "spec.md"),
-          "> [#{stamp}] [ agent: leah-researcher   status: Blocked, round 1 (product) ]")
+          "> [#{stamp}] [ agent: researcher   status: Blocked, round 1 (product) ]")
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:product_blocked)
     end
   end
@@ -820,7 +820,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         seen << [OpenLanes::Plans::Lock.read(subject.feature.path), File.basename(subject.feature.path)]
         "Almost completed"
       end
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
 
       aggregate_failures do
         expect(seen.first.first).to have_attributes(pid: Process.pid, host: Socket.gethostname)
@@ -834,7 +834,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         seen << OpenLanes::Plans::Lock.read(subject.feature.path)
         raise "the agent fell over"
       }
-      runner_with(executor, agents: agents.only("leah-researcher")).call
+      runner_with(executor, agents: agents.only("researcher")).call
 
       aggregate_failures do
         expect(seen.first).not_to be_nil
@@ -851,7 +851,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       it "neither dispatches nor renames a plan locked by #{holder}" do
         File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
           JSON.generate(data.call.merge("started_at" => "2026-10-13T09:00:00Z")))
-        runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+        runner_with(executor_with { "Almost completed" }, agents: agents.only("researcher")).call
 
         aggregate_failures do
           expect(calls).to be_empty
@@ -873,7 +873,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         lost = true
         raise
       end
-      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call do |dispatcher|
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("researcher")).call do |dispatcher|
         # The check misses the lock until the claim has been refused once.
         allow(dispatcher).to(receive(:locked_elsewhere?).and_wrap_original { |m, subject| lost && m.call(subject) })
       end
@@ -890,9 +890,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       Process.wait(pid)
       File.write(File.join(path_of("001.00"), OpenLanes::Plans::Lock::FILENAME),
         JSON.generate("pid" => pid, "host" => Socket.gethostname, "started_at" => "2026-10-13T09:00:00Z"))
-      runner_with(executor_with { "Almost completed" }, agents: agents.only("leah-researcher")).call
+      runner_with(executor_with { "Almost completed" }, agents: agents.only("researcher")).call
 
-      expect(calls.map(&:first)).to eq(["leah-researcher"])
+      expect(calls.map(&:first)).to eq(["researcher"])
     end
 
     it "writes no lock on a dry run" do
@@ -900,7 +900,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         seen << OpenLanes::Plans::Lock.read(subject.feature.path)
         "Almost completed"
       end
-      runner_with(executor, agents: agents.only("leah-researcher"), dry_run: true).call
+      runner_with(executor, agents: agents.only("researcher"), dry_run: true).call
 
       expect(seen).to eq([nil])
     end
@@ -916,10 +916,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       executor = lambda { |_agent, subject, round: 1, **|
         file = File.join(subject.feature.path, "spec.md")
         File.write(file, "#{spec_body}\n## Research\n\nFound.\n")
-        OpenLanes::Plans::Ledger.append(file, "> [#{stamp}] [ agent: leah-researcher   status: Started, round 1 ]")
+        OpenLanes::Plans::Ledger.append(file, "> [#{stamp}] [ agent: researcher   status: Started, round 1 ]")
         OpenLanes::Execution::Executor::Result.new(ok: false, note: "killed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0, killed: :key)
       }
-      attempts = runner_with(executor, agents: agents.only("leah-researcher")).call
+      attempts = runner_with(executor, agents: agents.only("researcher")).call
       text = File.read(File.join(path_of("001.00"), "spec.md"))
       aggregate_failures do
         expect(signed("001.00")).to include(["Interrupted", 1, "killed by harness after 15s grace"],
@@ -932,7 +932,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it "writes only Interrupted, and re-runs, when the work is not there" do
       Dir.mktmpdir do |dir|
-        File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
+        File.write(File.join(dir, "researcher.md"), "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = OpenLanes::Agents::Registry.new(dir:)
         executor = lambda { |_agent, _subject, round: 1, **|
           calls << round
@@ -972,29 +972,29 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     # Two doubles share one folder here, which a real run never allows
     # (shared isolation is serial), so they keep out of each other's way:
-    # one signs at a time, and luke does not return until rey has signed,
-    # so rey's line is on disk before the fold to 🎨 moves the folder.
-    it "renames to 🟡 when luke starts, holds at 🎨 when luke finishes first, and goes 🟢 when rey does" do
+    # one signs at a time, and backend-coder does not return until frontend-coder has signed,
+    # so frontend-coder's line is on disk before the fold to 🎨 moves the folder.
+    it "renames to 🟡 when backend-coder starts, holds at 🎨 when backend-coder finishes first, and goes 🟢 when frontend-coder does" do
       seen = []
       signing = Mutex.new
-      rey_signed = Queue.new
+      frontend_coder_signed = Queue.new
       executor = lambda { |agent, subject, round: 1, **|
         seen << [agent.name, subject.status.key]
         file = File.join(subject.feature.path, "pull-requests.md")
         signing.synchronize do
           OpenLanes::Plans::Ledger.append(file, "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round 1 ]")
         end
-        if agent.name == "rey-frontend"
-          rey_signed << true
-          sleep(0.2) # rey takes longer, so luke completes while rey is still running
+        if agent.name == "frontend-coder"
+          frontend_coder_signed << true
+          sleep(0.2) # frontend-coder takes longer, so backend-coder completes while frontend-coder is still running
         else
-          rey_signed.pop
+          frontend_coder_signed.pop
         end
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
       runner = OpenLanes::Engine::Runner.new(tree:,
         executor:,
-        agents: agents.only("luke-backend", "rey-frontend"),
+        agents: agents.only("backend-coder", "frontend-coder"),
         isolation: :shared,
         jobs: 2,
         state:,
@@ -1023,7 +1023,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     before { [calls, stamp] }
 
     context "when the builder signs Completed" do
-      let!(:attempts) { runner_with(executor_with { |_, _, _| "Completed" }, agents: agents.only("r2d2-mechanic")).call }
+      let!(:attempts) { runner_with(executor_with { |_, _, _| "Completed" }, agents: agents.only("chores-coder")).call }
 
       it "stays at 🟡, done for this run, and says it waits for a pull request" do
         aggregate_failures do
@@ -1040,7 +1040,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           File.delete(File.join(subject.feature.path, "spec.md"))
           "Completed"
         end
-        runner_with(careless, agents: agents.only("r2d2-mechanic")).call
+        runner_with(careless, agents: agents.only("chores-coder")).call
       end
 
       it "reports the missing file instead of parking the plan as built" do
@@ -1058,7 +1058,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
             "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} (approved) ]")
           nil
         end
-        runner_with(approving, agents: agents.only("r2d2-mechanic")).call
+        runner_with(approving, agents: agents.only("chores-coder")).call
       end
 
       it "is not taken as a review verdict" do
@@ -1093,7 +1093,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       { "spec.md" => "---\nstarts: building\n---\n#{spec_body}", "plan.md" => "# Plan\n\n## U1\n", "pull-requests.md" => "# Pull Requests\n" }
     end
     let!(:built) { plans { |t| t.plan "001.00", :building, "tic-tac-toe", files: } }
-    let(:roster) { agents.only("r2d2-mechanic") }
+    let(:roster) { agents.only("chores-coder") }
     let(:attempts) do
       OpenLanes::Engine::Runner.new(tree:,
         executor:,
@@ -1109,7 +1109,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
     let(:executor) do
       executor_with do |agent, subject, round|
-        next "Completed" unless agent.name == "hansolo-reviewer"
+        next "Completed" unless agent.name == "staff-reviewer"
 
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
           "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} (approved) ]")
@@ -1137,10 +1137,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     context "when the reviewer approves with a note that mentions rejecting" do
-      let(:roster) { agents.only("r2d2-mechanic", "hansolo-reviewer") }
+      let(:roster) { agents.only("chores-coder", "staff-reviewer") }
       let(:executor) do
         executor_with do |agent, subject, round|
-          next "Completed" unless agent.name == "hansolo-reviewer"
+          next "Completed" unless agent.name == "staff-reviewer"
 
           OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
             "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} (approved, nothing to reject) ]")
@@ -1156,13 +1156,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     context "when the reviewer follows in the same run" do
-      let(:roster) { agents.only("r2d2-mechanic", "hansolo-reviewer") }
+      let(:roster) { agents.only("chores-coder", "staff-reviewer") }
 
       before { attempts }
 
-      it "hands the 🟢 plan to hansolo, whose approval leaves it at 👀" do
+      it "hands the 🟢 plan to staff-reviewer, whose approval leaves it at 👀" do
         aggregate_failures do
-          expect(attempts.map(&:agent)).to eq(%w[r2d2-mechanic hansolo-reviewer])
+          expect(attempts.map(&:agent)).to eq(%w[chores-coder staff-reviewer])
           expect(plan.status.key).to eq(:in_review)
         end
       end
@@ -1197,7 +1197,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           url: nil,
           refusal: OpenLanes::Vcs::Publisher::UNTESTABLE)
       end
-      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("r2d2-mechanic") }
+      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("chores-coder") }
 
       before { attempts }
 
@@ -1206,8 +1206,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           expect(plan.status.key).to eq(:building)
           expect(calls.size).to eq(2)
           expect(attempts.map(&:status)).to eq(%w[Interrupted Interrupted])
-          expect(attempts.map(&:note)).to match([include("plan.md has no `## How to test` section", "r2d2-mechanic was asked to add it"),
-                                                 include("still missing after r2d2-mechanic was asked")])
+          expect(attempts.map(&:note)).to match([include("plan.md has no `## How to test` section", "chores-coder was asked to add it"),
+                                                 include("still missing after chores-coder was asked")])
           expect([mail.size, mail.first.from, mail.first.body]).to match([1, "openlanes", include("Add one to plan.md")])
         end
       end
@@ -1233,7 +1233,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           expect(plan.status.key).to eq(:building)
           expect(calls.size).to eq(3)
           expect(attempts.map(&:status)).to eq(%w[Interrupted Interrupted Interrupted])
-          expect(attempts.last.note).to include("still missing after r2d2-mechanic was asked")
+          expect(attempts.last.note).to include("still missing after chores-coder was asked")
         end
       end
     end
@@ -1246,7 +1246,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           url: nil,
           refusal: OpenLanes::Vcs::Publisher::UNTESTABLE)
       end
-      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("r2d2-mechanic") }
+      let(:mail) { OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).for("chores-coder") }
 
       before do
         allow(publisher).to receive(:publish).and_return(refused, publication)
@@ -1320,16 +1320,16 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       }
     end
 
-    def hansolo(note)
+    def staff_reviewer(note)
       lambda { |_agent, subject, round: 1, **|
         OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "pull-requests.md"),
-          "> [#{stamp}] [ agent: hansolo-reviewer   status: Completed, round #{round} (#{note}) ]")
+          "> [#{stamp}] [ agent: staff-reviewer   status: Completed, round #{round} (#{note}) ]")
         OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
       }
     end
 
     it "moves a rejection to 🔴" do
-      runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer")).call
+      runner_with(staff_reviewer("rejected 1/2"), agents: agents.only("staff-reviewer")).call
       expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
     end
 
@@ -1341,27 +1341,27 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       after { FileUtils.rm_rf(log_dir) }
 
       it "records the approval as a review of the open pull request" do
-        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+        runner_with(staff_reviewer("approved"), agents: agents.only("staff-reviewer"), events: sink).call
 
         expect(reviews.map { [it.plan, it.payload] }).to eq([["001.00", { "number" => 7, "verdict" => "approved" }]])
       end
 
       it "counts it in the report's approvals" do
-        runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer"), events: sink).call
+        runner_with(staff_reviewer("approved"), agents: agents.only("staff-reviewer"), events: sink).call
         outcomes = OpenLanes::Events.report(OpenLanes::Events::Log.new(dir: log_dir).events).pr_outcomes
 
         expect(outcomes).to include("reviewed" => 1, "approved" => 1, "rejected" => 0)
       end
 
       it "records nothing for a rejection, which the pull request watch records" do
-        runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer"), events: sink).call
+        runner_with(staff_reviewer("rejected 1/2"), agents: agents.only("staff-reviewer"), events: sink).call
 
         expect(reviews).to be_empty
       end
     end
 
     it "leaves an approval at 👀 and treats the plan as finished for this run" do
-      attempts = runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")).call
+      attempts = runner_with(staff_reviewer("approved"), agents: agents.only("staff-reviewer")).call
       aggregate_failures do
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:in_review)
         expect(attempts.size).to eq(1)
@@ -1370,7 +1370,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     it "records the approval in state.json and keeps the plan on the board, with no cars, past LINGER" do
-      dispatcher = described_class.new(runner: runner_with(hansolo("approved"), agents: agents.only("hansolo-reviewer")),
+      dispatcher = described_class.new(runner: runner_with(staff_reviewer("approved"), agents: agents.only("staff-reviewer")),
         sleeper: ->(_) {})
       dispatcher.run
       later = OpenLanes::UI.monotonic + described_class::LINGER + 1
@@ -1386,7 +1386,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     it "forgets the approval once an agent starts on the plan again" do
       OpenLanes::Plans::PlanState.for(path_of("001.00")).finish!("approved")
-      dispatcher = described_class.new(runner: runner_with(hansolo("rejected 1/2"), agents: agents.only("hansolo-reviewer")),
+      dispatcher = described_class.new(runner: runner_with(staff_reviewer("rejected 1/2"), agents: agents.only("staff-reviewer")),
         sleeper: ->(_) {})
       dispatcher.run
 
@@ -1408,7 +1408,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     it "carries over only the plan that finished last, whichever way it finished" do
-      dispatcher = described_class.new(runner: runner_with(executor_with { |*| nil }, agents: agents.only("hansolo-reviewer")),
+      dispatcher = described_class.new(runner: runner_with(executor_with { |*| nil }, agents: agents.only("staff-reviewer")),
         sleeper: ->(_) {})
 
       expect(dispatcher.board.plans).to eq(["002.00"])
@@ -1418,14 +1418,14 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   describe "restarting after a dead harness" do
     let!(:built) { plans { |t| t.plan "001.00", :new, "resumed", files: { "spec.md" => spec_body } } }
 
-    # The stranded round is handed back, so leah still has both of hers.
+    # The stranded round is handed back, so researcher still has both of hers.
     it "signs the harness's Interrupted for a stranded stage and re-runs the agent" do
       Dir.mktmpdir do |dir|
-        File.write(File.join(dir, "leah.md"), "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
+        File.write(File.join(dir, "researcher.md"), "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\nledger: [spec.md]\n---\nbody")
         two = OpenLanes::Agents::Registry.new(dir:)
         dead = OpenLanes::Engine::StateFile.new(path: OpenLanes::Engine::StateFile.for(tree), pid: 999_999_999)
         dead.begin_run!(root: File.dirname(plans_root))
-        dead.record("001.00", agent: "leah-researcher", round: 1, status: "Started", state: "new")
+        dead.record("001.00", agent: "researcher", round: 1, status: "Started", state: "new")
         dead.save
 
         executor = executor_with { |_, _, _| nil }
@@ -1446,7 +1446,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       executor = OpenLanes::Execution::Executor.new(root: File.dirname(plans_root), dry_run: true)
       attempts = runner_with(executor, dry_run: true).call
       aggregate_failures do
-        expect(attempts.map(&:agent)).to eq(%w[leah-researcher])
+        expect(attempts.map(&:agent)).to eq(%w[researcher])
         expect(File.read(File.join(path_of("001.00"), "spec.md"))).not_to include("[ agent:")
         expect(File).not_to exist(state.path)
       end

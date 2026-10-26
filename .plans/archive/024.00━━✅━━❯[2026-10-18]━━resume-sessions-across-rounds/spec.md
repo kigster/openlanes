@@ -49,13 +49,13 @@ Round 2 of the same agent, on the same state, in the same checkout, continues ro
 
 ## Back end / front end
 
-- Back end (`luke-backend`): all items above, including the docs.
-- Front end (`rey-frontend`): none.
+- Back end (`backend-coder`): all items above, including the docs.
+- Front end (`frontend-coder`): none.
 
 ## Open questions
 
 - PR #76 was still open when this was written; its merge status is assumed, not verified.
-- `chewie-verifier` was interrupted ("harness died") in round 1, so verification output in `pull-requests.md` is luke's, not an independent run.
+- `verifier` was interrupted ("harness died") in round 1, so verification output in `pull-requests.md` is backend-coder's, not an independent run.
 - The folder is numbered `024.00` (MM = 0) yet sits in the Retroactive state; the retroactive note follows the state, not the number.
 - The build notes' test counts (3550 examples) were not re-run here.
 

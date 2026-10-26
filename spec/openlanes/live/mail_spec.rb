@@ -8,8 +8,8 @@ RSpec.describe OpenLanes::Live::Mail do
   let(:message) do
     OpenLanes::Plans::Mailbox::Message.new(number: 7,
       at: "2026-10-13 19:17:10 -0700",
-      from: "luke-backend",
-      to: "rey-frontend",
+      from: "backend-coder",
+      to: "frontend-coder",
       body: "GET /returns/:id is up")
   end
 
@@ -26,18 +26,18 @@ RSpec.describe OpenLanes::Live::Mail do
     mail.publish(plan: "003.00", message:)
 
     aggregate_failures do
-      expect(mail.drain(plan: "003.00", consumer: "rey-frontend"))
-        .to eq([{ "number" => 7, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend",
-                  "to" => "rey-frontend", "body" => "GET /returns/:id is up", "read" => "no" }])
-      expect(mail.drain(plan: "003.00", consumer: "rey-frontend")).to eq([])
+      expect(mail.drain(plan: "003.00", consumer: "frontend-coder"))
+        .to eq([{ "number" => 7, "at" => "2026-10-13T19:17:10-07:00", "from" => "backend-coder",
+                  "to" => "frontend-coder", "body" => "GET /returns/:id is up", "read" => "no" }])
+      expect(mail.drain(plan: "003.00", consumer: "frontend-coder")).to eq([])
     end
   end
 
   it "acks what it delivered, so nothing is left pending" do
     mail.publish(plan: "003.00", message:)
-    mail.drain(plan: "003.00", consumer: "rey-frontend")
+    mail.drain(plan: "003.00", consumer: "frontend-coder")
 
-    expect(store.xreadgroup(keys.mail, keys.mail_group("003.00"), "rey-frontend", id: "0")).to eq([])
+    expect(store.xreadgroup(keys.mail, keys.mail_group("003.00"), "frontend-coder", id: "0")).to eq([])
   end
 
   it "acks only what the block kept, and offers the rest again on the next drain" do
@@ -68,8 +68,8 @@ RSpec.describe OpenLanes::Live::Mail do
     mail.publish(plan: "004.00", message:)
 
     aggregate_failures do
-      expect(mail.drain(plan: "003.00", consumer: "luke-backend")).to eq([])
-      expect(mail.drain(plan: "004.00", consumer: "luke-backend").map { it["number"] }).to eq([7])
+      expect(mail.drain(plan: "003.00", consumer: "backend-coder")).to eq([])
+      expect(mail.drain(plan: "004.00", consumer: "backend-coder").map { it["number"] }).to eq([7])
     end
   end
 

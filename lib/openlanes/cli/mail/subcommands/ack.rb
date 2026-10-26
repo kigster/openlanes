@@ -19,7 +19,7 @@ module OpenLanes
         option :for, required: true, desc: "The agent that read it, who must be its recipient"
 
         example [
-          "--plan 003 --for rey-frontend 4   # rey read #4"
+          "--plan 003 --for #{OpenLanes::Agents::Names::FRONTEND_CODER} 4   # #{OpenLanes::Agents::Names::FRONTEND_CODER} read #4"
         ]
 
         # @param number [String]

@@ -98,26 +98,26 @@ RSpec.describe OpenLanes::Plans::PullRequests do
       expect(described_class.new(dir: plans_root).all.map(&:number)).to eq(["9"])
     end
 
-    # luke and rey sign pull-requests.md before any pull request exists. The
+    # backend-coder and frontend-coder sign pull-requests.md before any pull request exists. The
     # harness then records the pull request it opened, and used to rewrite
     # the file whole, which deleted their signatures.
     it "keeps ledger notes that were in the file before the table" do
-      OpenLanes::Plans::Ledger.append(path, "> [2026-09-04 11:29:20 AM PDT] [ agent: luke-backend   status: Started, round 1 ]")
+      OpenLanes::Plans::Ledger.append(path, "> [2026-09-04 11:29:20 AM PDT] [ agent: backend-coder   status: Started, round 1 ]")
       described_class.upsert(path, rows)
       text = File.read(path)
       aggregate_failures do
-        expect(text).to include("agent: luke-backend")
+        expect(text).to include("agent: backend-coder")
         expect(described_class.new(dir: plans_root).all.map(&:number)).to eq(["9"])
       end
     end
 
     it "replaces an existing table in place, keeping what is above and below it" do
-      File.write(path, "# Pull Requests\n\n| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 3 | [old](https://github.com/example/repo/pull/3) | Open 🟡 |\n\n> [!NOTE]\n>\n> [2026-09-04 11:29:20 AM PDT] [ agent: rey-frontend   status: Completed, round 1 ]\n")
+      File.write(path, "# Pull Requests\n\n| Pull Request Number | Pull Request Name | Status |\n| --: | :-- | --: |\n| 3 | [old](https://github.com/example/repo/pull/3) | Open 🟡 |\n\n> [!NOTE]\n>\n> [2026-09-04 11:29:20 AM PDT] [ agent: frontend-coder   status: Completed, round 1 ]\n")
       described_class.upsert(path, rows + [{ number: 3, title: "old", url: "https://github.com/example/repo/pull/3", state: "Open 🟡", body: "" }])
       text = File.read(path)
       aggregate_failures do
         expect(text.scan("Pull Request Number").size).to eq(1)
-        expect(text).to include("agent: rey-frontend")
+        expect(text).to include("agent: frontend-coder")
         expect(described_class.new(dir: plans_root).all.map(&:number)).to contain_exactly("9", "3")
       end
     end

@@ -1,6 +1,6 @@
 # blocked.md template
 
-A plan with `blocked.md` naming at least one open question is blocked: ⭕ Technical Block (an engineer or the CTO decides) or 🛑 Product Block (a product manager decides). Agents step around it until a human answers and runs `openlanes unblock <NNN>`, which hands the file to `lando-broker`. The broker folds each qualifying answer into `spec.md` (what and why) or `plan.md` (how and in what order), deletes the question with its answer, and deletes the file when nothing is left.
+A plan with `blocked.md` naming at least one open question is blocked: ⭕ Technical Block (an engineer or the CTO decides) or 🛑 Product Block (a product manager decides). Agents step around it until a human answers and runs `openlanes unblock <NNN>`, which hands the file to `unblocker`. The broker folds each qualifying answer into `spec.md` (what and why) or `plan.md` (how and in what order), deletes the question with its answer, and deletes the file when nothing is left.
 
 Two heading kinds, and only these: `## B<n>` for a question, `## A<n>` for its answer. openlanes counts the `B` lines; a question numbered any other way blocks nothing.
 

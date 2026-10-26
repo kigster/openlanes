@@ -4,10 +4,10 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
   subject(:unblocker) { described_class.new(tree:, agent:, executor:, commit: true) }
 
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:agent) { OpenLanes::Agents::Registry.new.find("lando-broker") }
+  let(:agent) { OpenLanes::Agents::Registry.new.find("unblocker") }
 
   # The seam. Nothing in the suite invokes `claude`; this stands in for the
-  # agent and edits `blocked.md` the way `lando-broker` would.
+  # agent and edits `blocked.md` the way `unblocker` would.
   let(:executor) { ->(_agent, _subject, **) { [true, "completed"] } }
 
   let(:blocked_body) do
@@ -29,7 +29,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
     tree.reload.find(ordinal)
   end
 
-  # What `lando-broker` does when it folds one question in: the `## B<n>`
+  # What `unblocker` does when it folds one question in: the `## B<n>`
   # heading goes, and the file goes with the last of them.
   def folding(*numbers)
     lambda do |_agent, subject, **|

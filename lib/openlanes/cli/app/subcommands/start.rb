@@ -73,7 +73,7 @@ module OpenLanes
           File.directory?(path) ? path : Dir.pwd
         end
 
-        # The checkout's own `.openlanes.yml`: on a plan's branch, luke may
+        # The checkout's own `.openlanes.yml`: on a plan's branch, backend-coder may
         # have written `app:` there and nowhere else yet (M12).
         #
         # @return [OpenLanes::Apps::Definition]

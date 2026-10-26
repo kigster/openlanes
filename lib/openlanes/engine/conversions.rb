@@ -8,7 +8,7 @@ module OpenLanes
     # The dispatcher's half of D9: an open question in a blocked plan's
     # `blocked.md` that offers no choices is sent to the {Live::ChoiceConverter}
     # and, once the model has answered, rewritten in place into D3's shape, so
-    # the page, lando-broker and everything else read the same options.
+    # the page, unblocker and everything else read the same options.
     #
     # The call runs on a thread of its own, like a drain, and its result is
     # applied on a later tick, where the folder is looked up afresh. Nothing is

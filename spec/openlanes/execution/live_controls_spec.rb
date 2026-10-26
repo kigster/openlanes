@@ -17,7 +17,7 @@ RSpec.describe "The live controls on one invocation" do
         child
       }
     end
-    let(:agent) { OpenLanes::Agents.find("luke-backend") }
+    let(:agent) { OpenLanes::Agents.find("backend-coder") }
     let(:plan) do
       plans { |t| t.plan "001.00", :building, "task", files: { "spec.md" => spec_body, "plan.md" => "## Task\n" } }
       OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first
@@ -29,14 +29,14 @@ RSpec.describe "The live controls on one invocation" do
     end
 
     context "when a person chose a model for the agent on this plan" do
-      before { executor.prefer_model("001.00", "luke-backend", "claude-haiku-5-5") }
+      before { executor.prefer_model("001.00", "backend-coder", "claude-haiku-5-5") }
 
       it "runs the agent on it" do
         expect(executor.profile_for(agent, plan).model).to eq("claude-haiku-5-5")
       end
 
       it "goes back to the agent's own once the choice is forgotten" do
-        executor.prefer_model("001.00", "luke-backend", nil)
+        executor.prefer_model("001.00", "backend-coder", nil)
         expect(executor.profile_for(agent, plan).model).to eq(agent.model)
       end
 
@@ -78,33 +78,33 @@ RSpec.describe "The live controls on one invocation" do
     end
 
     it "explains HOLD beside the other control words" do
-      expect(prompt_for("luke-backend")).to include("HOLD means a person wants to say something to you", "mail read --dir")
+      expect(prompt_for("backend-coder")).to include("HOLD means a person wants to say something to you", "mail read --dir")
     end
 
     # W32
     it "explains PAUSE and RESUME, and that a paused agent's time stands still" do
-      expect(prompt_for("luke-backend")).to include("PAUSE means the run lost touch",
+      expect(prompt_for("backend-coder")).to include("PAUSE means the run lost touch",
         "Your time does not run while you wait",
         "RESUME means carry on")
     end
 
     # `/compact` is the caller's command; an agent told to run it cannot.
     it "asks no agent to compact itself" do
-      expect(prompt_for("luke-backend")).not_to include("/compact")
+      expect(prompt_for("backend-coder")).not_to include("/compact")
     end
 
     it "tells an agent that writes blocked.md to write context, then lettered options (D3)" do
-      expect(prompt_for("luke-backend")).to include("context, then lettered options", "(Recommended)", "Type something instead")
+      expect(prompt_for("backend-coder")).to include("context, then lettered options", "(Recommended)", "Type something instead")
     end
 
     it "shows an example the page reads as three options, the first recommended" do
-      example = prompt_for("luke-backend")[/^ {4}## B2 Where.*?(?=\n\n\S)/m].gsub(/^ {4}/, "")
+      example = prompt_for("backend-coder")[/^ {4}## B2 Where.*?(?=\n\n\S)/m].gsub(/^ {4}/, "")
       choices = OpenLanes::Plans::Choices.parse(example.sub(/\A.*\n/, ""))
       expect(choices.options.map { [it.letter, it.recommended] }).to eq([["a", true], ["b", false], ["c", false]])
     end
 
     it "leaves that out for the agent that drains blocked.md" do
-      expect(prompt_for("lando-broker")).not_to include("context, then lettered options")
+      expect(prompt_for("unblocker")).not_to include("context, then lettered options")
     end
   end
 

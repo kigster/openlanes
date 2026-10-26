@@ -13,7 +13,7 @@ export function Stations({ stations }: { stations: Station[] }) {
       {stations.map(s => (
         <div className="station-name" key={s.key}>
           {s.label}
-          <span className="station-agent">{s.agents.map(a => a.split("-")[0]).join(" + ") || " "}</span>
+          <span className="station-agent">{s.agents.join(" + ") || " "}</span>
         </div>
       ))}
     </div>

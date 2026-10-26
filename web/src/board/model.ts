@@ -161,10 +161,10 @@ export function testRuns(plans: Plan[]): TestRun[] {
 /** A test tab's key, also its Tabs value. */
 export const testTabValue = (run: TestRun): string => `tests:${run.car.key}`;
 
-/** "001 tests", or "001 tests, luke" when two agents on one plan are testing at once. */
+/** "001 tests", or "001 tests, backend-coder" when two agents on one plan are testing at once. */
 export function testTabLabel(run: TestRun, runs: TestRun[]): string {
   const shared = runs.some(r => r !== run && r.plan.ordinal === run.plan.ordinal);
-  return shared ? `${planId(run.plan.ordinal)} tests, ${run.car.agent.split("-")[0]}` : `${planId(run.plan.ordinal)} tests`;
+  return shared ? `${planId(run.plan.ordinal)} tests, ${run.car.agent}` : `${planId(run.plan.ordinal)} tests`;
 }
 
 /** Another machine's plan, named so plans with one ordinal on two machines never collide. */

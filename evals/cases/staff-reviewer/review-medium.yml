@@ -1,0 +1,60 @@
+id: review-medium
+agent: staff-reviewer
+depth: medium
+description: >
+  A pull request with a seeded defect: the spec asks to reject quantities
+  below 1, the code rejects only negatives, so zero slips through and no
+  test covers it. staff-reviewer must find it, list it, and sign rejected; an
+  approval means the defect was missed. Reviewers write no code.
+fixture:
+  state: ready_for_review
+  slug: quantity-floor
+  files:
+    spec.md: |
+      # Quantity Floor
+
+      ## Goal
+
+      `Cart#add` rejects any quantity below 1, zero included.
+    plan.md: |
+      # Plan
+
+      1. U1 Reject quantities below 1 in `lib/cart.rb`, with a spec.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 12 | [[001.00] Quantity floor](https://github.com/example/shop/pull/12) | Open 🟡 |
+  repo:
+    lib/cart.rb: |
+      class Cart
+        class InvalidQuantity < ArgumentError; end
+
+        def add(sku, quantity)
+          raise InvalidQuantity if quantity.negative?
+
+          quantity
+        end
+      end
+    spec/cart_spec.rb: |
+      require_relative "../lib/cart"
+
+      RSpec.describe Cart do
+        it "rejects a negative quantity" do
+          expect { described_class.new.add("A1", -1) }.to raise_error(Cart::InvalidQuantity)
+        end
+      end
+expect:
+  signed: rejected
+  files_absent: [rewrite.md]
+  sections:
+    pull-requests.md: [Findings]
+  contains:
+    pull-requests.md: [lib/cart.rb, "/[Zz]ero|\\b0\\b/"]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      count: { file: pull-requests.md, section: Findings, pattern: '^[ \t]*(?:[-*]|\d+\.)[ \t]', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 150000

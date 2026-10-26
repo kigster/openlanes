@@ -44,7 +44,7 @@ Line breaks are kept and URLs become links; nothing else is rendered. A message 
 
 ## D11. Two panels, never mixed up
 
-The AI copilot (c3po-operator, W17) and the chat with other machines are two separate panels, and both can be open at once:
+The AI copilot (copilot, W17) and the chat with other machines are two separate panels, and both can be open at once:
 
 - the copilot docks at the bottom right in its blue (`--copilot-head`, `--copilot-body`), minimising to its tab on the right edge;
 - the chat docks at the bottom left in orange (`#D9420B` header, white body, darker orange footer), minimising to its tab on the left edge.

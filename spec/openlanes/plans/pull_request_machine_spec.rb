@@ -98,7 +98,7 @@ RSpec.describe OpenLanes::Plans::PullRequestMachine do
   end
 
   describe "#complete?" do
-    it "is true once palpatine's verdict has been acted on" do
+    it "is true once deploy-assessor's verdict has been acted on" do
       expect(machine("auto-merged")).to be_complete
       expect(machine("merge-manually")).to be_complete
     end

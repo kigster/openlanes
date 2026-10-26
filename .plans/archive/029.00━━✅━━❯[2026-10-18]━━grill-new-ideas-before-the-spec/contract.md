@@ -1,6 +1,6 @@
 # Contract: 029.00 Grill new ideas before the spec
 
-`spec.md` says `starts: planning` and `plan.md` has no `## Frontend` units, so rey-frontend is not started. luke-backend owns both halves.
+`spec.md` says `starts: planning` and `plan.md` has no `## Frontend` units, so frontend-coder is not started. backend-coder owns both halves.
 
 ## Baseline
 
@@ -22,7 +22,7 @@ Full suite before any change: 0 failures (`bundle exec rspec`), per CLAUDE.md. `
 
 ## File ownership
 
-All luke-backend: `lib/openlanes/live/interviewer.rb`, `lib/openlanes/live.rb`, `lib/openlanes/live/commands.rb`, `lib/openlanes/web/app.rb`, `web/src/api/client.ts`, `web/src/panels/IdeaDialog.tsx`, and their specs.
+All backend-coder: `lib/openlanes/live/interviewer.rb`, `lib/openlanes/live.rb`, `lib/openlanes/live/commands.rb`, `lib/openlanes/web/app.rb`, `web/src/api/client.ts`, `web/src/panels/IdeaDialog.tsx`, and their specs.
 
 ## Build order
 

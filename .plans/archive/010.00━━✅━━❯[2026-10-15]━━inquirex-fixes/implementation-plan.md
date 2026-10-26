@@ -1,6 +1,6 @@
 # Implementation plan for 010.00, progress
 
-Written by plan-010 (luke-backend's units) on 2026-10-14, after A1 in `blocked.md` scoped the work to `inquirex` core.
+Written by plan-010 (backend-coder's units) on 2026-10-14, after A1 in `blocked.md` scoped the work to `inquirex` core.
 
 ## Units
 

@@ -27,7 +27,7 @@ After this ships, `openlanes init` records four project-wide decisions in `.open
 
 - The web copilot version of the questionnaire (M16, v2.0).
 - Acting on `merge.by` or `build_quality`: the merge engine, polling, depth and model defaults of M4/M5 are other plans. This plan only stores the values.
-- Executing a port: generating the "Port from X to Y" plan, leah's inventory and chewie's parity check (M18) are later work. This plan records `from`/`to` and asks the question.
+- Executing a port: generating the "Port from X to Y" plan, researcher's inventory and verifier's parity check (M18) are later work. This plan records `from`/`to` and asks the question.
 - Fixing the inquirex gems upstream (M17).
 - Installing toolchains or scaffolding application code for the chosen stack.
 - Changing `-y` semantics for the existing four values.
@@ -62,15 +62,15 @@ Each item is checkable by a spec or a command.
 
 ## Back end / front end
 
-`luke-backend` builds everything in scope. `rey-frontend` has no work here: `init` is a terminal command and the web Settings dialog is v2.0 (M19). The pair's only shared surface is the config keys, which the control room may read later.
+`backend-coder` builds everything in scope. `frontend-coder` has no work here: `init` is a terminal command and the web Settings dialog is v2.0 (M19). The pair's only shared surface is the config keys, which the control room may read later.
 
 | Item | Half |
 | --- | --- |
-| Config keys, validation, yaml round-trip | luke-backend |
-| Stack detector | luke-backend |
-| Interview flow, `-y`, `--reconfigure` | luke-backend |
-| Extraction adapter selection | luke-backend |
-| `stack.md` writer | luke-backend |
+| Config keys, validation, yaml round-trip | backend-coder |
+| Stack detector | backend-coder |
+| Interview flow, `-y`, `--reconfigure` | backend-coder |
+| Extraction adapter selection | backend-coder |
+| `stack.md` writer | backend-coder |
 | Any web surface | none (v2.0) |
 
 ## Decisions
@@ -150,7 +150,7 @@ A folder with two language markers is a mixed stack. The questionnaire asks; it 
 ### The stack summary and `docs/decisions/stack.md`
 
 - Neither exists. `docs/decisions/stack.md` is absent. `Config::KEYS` (`lib/openlanes/support/config.rb:84`) holds no `stack` key, and `Config.parse` rejects unknown keys.
-- Proposed shape, for yoda to confirm. `.openlanes.yml` gets the summary; `docs/decisions/stack.md` gets the same fields in prose:
+- Proposed shape, for spec-writer to confirm. `.openlanes.yml` gets the summary; `docs/decisions/stack.md` gets the same fields in prose:
 
   ```yaml
   stack:
@@ -189,7 +189,7 @@ Findings:
 - By the gemspecs, the inquirex stack cannot install as M16 describes: `inquirex-tty` 0.10.0 pins `inquirex` below 0.10. Bundler has not confirmed this.
 - `init` needs its own `-y` path, since the gem has none.
 
-Conclusion: yoda can write Goal, Non-Goals, scope and open questions from this chapter without asking. The decision to adopt inquirex for `init` and the pin to use are still open, listed above.
+Conclusion: spec-writer can write Goal, Non-Goals, scope and open questions from this chapter without asking. The decision to adopt inquirex for `init` and the pin to use are still open, listed above.
 
 References (local, retrieved 2026-10-13):
 

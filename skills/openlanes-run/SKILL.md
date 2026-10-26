@@ -9,7 +9,7 @@ Load the `openlanes` skill first if it is not in context.
 
 ## `openlanes start`: the factory with its control room
 
-`openlanes start` is the way to run the factory for a person. It is `openlanes run` with the control room on, and it does not stop at a fixed point: when a plan blocks, luthen-rael-planner's questions included, it idles, shows the questions in **Needs You** on the page, takes the answer from there, drains it, and hands the plan back to its agent. It picks up plans created on the page, by `openlanes create` in another terminal, or edited by hand, rescanning `.plans/` every 5 s (`--rescan`).
+`openlanes start` is the way to run the factory for a person. It is `openlanes run` with the control room on, and it does not stop at a fixed point: when a plan blocks, planner's questions included, it idles, shows the questions in **Needs You** on the page, takes the answer from there, drains it, and hands the plan back to its agent. It picks up plans created on the page, by `openlanes create` in another terminal, or edited by hand, rescanning `.plans/` every 5 s (`--rescan`).
 
 ```bash
 openlanes start              # engine and control room on http://127.0.0.1:11000, browser opened
@@ -21,7 +21,7 @@ openlanes start --no-open    # print the URL only
 - It never ends on its own, not even once every plan is finished: the page can create the next one. A project with no plans waits for the first. Stop All Local, Ctrl-C or `kill -TERM` end it, with exit 0; agents get the graceful stop and the page goes down with it.
 - Start it in the background, give the user the URL, and leave the answering to them on the page. Steps 1 to 5 below are the scripted, headless alternative.
 
-`openlanes run` loops in rounds. Each round hands every movable plan to the agent its state and lane call for and renames the folder when the agent finishes. When a builder lands a plan at 🟢 Ready for Review, `openlanes` pushes its branch and opens the pull request, titled `[NNN.MM]`; `hansolo-reviewer` then reviews that pull request. With `--until-settled` it stops at a **fixed point**: a round in which no plan changed state. Without it, a run whose control room came up stays up like `start` and never returns, so a scripted run always passes `--until-settled` (or `--no-web`). Your job is to start it, watch it, and turn what it stops on into questions for the human.
+`openlanes run` loops in rounds. Each round hands every movable plan to the agent its state and lane call for and renames the folder when the agent finishes. When a builder lands a plan at 🟢 Ready for Review, `openlanes` pushes its branch and opens the pull request, titled `[NNN.MM]`; `staff-reviewer` then reviews that pull request. With `--until-settled` it stops at a **fixed point**: a round in which no plan changed state. Without it, a run whose control room came up stays up like `start` and never returns, so a scripted run always passes `--until-settled` (or `--no-web`). Your job is to start it, watch it, and turn what it stops on into questions for the human.
 
 ## 1. Scope and preview
 

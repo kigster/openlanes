@@ -64,9 +64,9 @@ RSpec.describe "Mail round trip", :tree do
   # Every file in the folder with its bytes, so "unchanged" means unchanged.
   def folder_bytes = Dir.glob(File.join(folder, "**", "*")).select { File.file?(it) }.sort.to_h { [it, File.binread(it)] }
 
-  def send_mail(body) = openlanes("mail", "send", "--dir", plans_root, "--plan", "001", *%w[--from luke-backend --to rey-frontend], body)
+  def send_mail(body) = openlanes("mail", "send", "--dir", plans_root, "--plan", "001", *%w[--from backend-coder --to frontend-coder], body)
 
-  def ack(number) = openlanes("mail", "ack", "--dir", plans_root, "--plan", "001", "--for", "rey-frontend", number.to_s)
+  def ack(number) = openlanes("mail", "ack", "--dir", plans_root, "--plan", "001", "--for", "frontend-coder", number.to_s)
 
   def render_mail = openlanes("mail", "render", "--dir", plans_root, "--plan", "001")
 
@@ -124,7 +124,7 @@ RSpec.describe "Mail round trip", :tree do
       2.times { dispatcher.tick }
 
       aggregate_failures do
-        expect(state.messages).to contain_exactly(include("number" => 1, "read" => "no", "to" => "rey-frontend"))
+        expect(state.messages).to contain_exactly(include("number" => 1, "read" => "no", "to" => "frontend-coder"))
         expect(board_unacked).to eq([1])
         expect(page_plan).to include("unacked" => 1)
       end
@@ -148,7 +148,7 @@ RSpec.describe "Mail round trip", :tree do
       before = folder_bytes
 
       aggregate_failures do
-        expect(render_mail).to include("luke-backend → rey-frontend", "read", "contract is up")
+        expect(render_mail).to include("backend-coder → frontend-coder", "read", "contract is up")
         expect(folder_bytes).to eq(before)
       end
     end
@@ -156,7 +156,7 @@ RSpec.describe "Mail round trip", :tree do
     it "keeps a message that only Redis carried, once" do
       mail.publish(plan: "001.00",
         message: { "number" => 1, "at" => "2026-10-14T10:00:00-07:00",
-                                                      "from" => "luke-backend", "to" => "rey-frontend", "body" => "contract is up" })
+                                                      "from" => "backend-coder", "to" => "frontend-coder", "body" => "contract is up" })
       3.times { dispatcher.tick }
 
       expect([state.messages.size, page_plan["unacked"]]).to eq([1, 1])
@@ -167,7 +167,7 @@ RSpec.describe "Mail round trip", :tree do
   # plan with mail waiting gets exactly the agents one without it gets.
   it "assigns the same agents whether or not mail is waiting" do
     building("002.00", "with-mail")
-    OpenLanes::Plans.mailbox(path_of("002.00")).append(from: "luke-backend", to: "rey-frontend", body: "unread")
+    OpenLanes::Plans.mailbox(path_of("002.00")).append(from: "backend-coder", to: "frontend-coder", body: "unread")
     without, with = first_assignments("001.00"), first_assignments("002.00")
 
     aggregate_failures do
@@ -184,7 +184,7 @@ RSpec.describe "Mail round trip", :tree do
     scoped_runner("002.00", ->(*, **) { raise "adapter went away" }).call
 
     expect(page_plan("002.00", board: idle_board("002.00"))["last_known"])
-      .to include(include("agent" => "luke-backend",
+      .to include(include("agent" => "backend-coder",
         "source" => "harness",
         "status" => "Interrupted",
         "note" => start_with("adapter went away")))

@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 81 | [\[029.00\](A) Grill New Ideas Before the Spec](https://github.com/kigster/openlanes/pull/81) | Merged 🟣 |
 
-## luke-backend, round 1: checks run before signing
+## backend-coder, round 1: checks run before signing
 
 - `bundle exec rspec`: 3560 examples, 0 failures, 9 pending (exit 0)
 - `bundle exec rubocop`: 486 files inspected, no offenses detected
@@ -13,7 +13,7 @@
 - `cd web && npx tsc -b --noEmit` and `npx eslint src/panels`: clean
 - No end-to-end (Cypress) run: needs a built page and a live server; not run this round.
 
-## luke-backend, after hansolo's rejection: checks run before signing
+## backend-coder, after staff-reviewer's rejection: checks run before signing
 
 Finding fixed: `postInterview` had no test of its own. `web/src/api/client.test.ts` now covers the ok path (token, path, body), the no-interviewer reason, and the non-ok branch (422, 500).
 

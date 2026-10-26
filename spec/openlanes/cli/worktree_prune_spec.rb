@@ -94,11 +94,11 @@ RSpec.describe OpenLanes::CLI::WorktreePrune, :tree do
     end
 
     it "asks alock about each checkout it would retire" do
-      allow(locks).to receive(:held_in).with("/w/001.00-landed").and_return("luke-backend (fixing)")
+      allow(locks).to receive(:held_in).with("/w/001.00-landed").and_return("backend-coder (fixing)")
       run
 
       expect(worktree).to have_received(:retire).with("/w/001.00-landed", merge_commit: "m1", base: "main", held: anything, dry_run: false) { |*, held:, **|
-        expect(held.call("/w/001.00-landed")).to eq("luke-backend (fixing)")
+        expect(held.call("/w/001.00-landed")).to eq("backend-coder (fixing)")
       }
     end
 

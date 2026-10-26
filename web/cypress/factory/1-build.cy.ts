@@ -76,7 +76,7 @@ describe("the factory builds a tic-tac-toe page", () => {
     cy.contains("button", "Action").click();
     cy.contains('[role="menuitem"]', "New idea").click();
     cy.get(MODAL).within(() => {
-      // One builder (r2d2-mechanic), no research, no planner: the cheapest route that still builds the page.
+      // One builder (chores-coder), no research, no planner: the cheapest route that still builds the page.
       cy.contains("fieldset", "Lane").contains("label", "Quick").click();
       cy.contains("fieldset", "Front end").contains("label", "No").click();
       cy.contains("fieldset", "Depth").contains("label", "Fast").click();

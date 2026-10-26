@@ -82,7 +82,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
     it "says what to do next: the headings are there and still empty" do
       _out, err, = run("tax", "rule", "dsl", draft: false, open: false)
 
-      expect(unwrapped(err)).to include("fill in the four headings", "leah-researcher")
+      expect(unwrapped(err)).to include("fill in the four headings", "researcher")
     end
 
     it "numbers after the plans already there, never over them" do
@@ -300,7 +300,7 @@ RSpec.describe OpenLanes::CLI::Create, :tree do
         expect(File.read(File.join(out.strip, "pull-requests.md"))).to include("Verify things")
       end
 
-      # `--prs` with `--spec` hands the folder to yoda-writer. The executor is
+      # `--prs` with `--spec` hands the folder to spec-writer. The executor is
       # replaced so the suite never invokes `claude`; the double writing
       # spec.md is what the agent would have done.
       def with_executor(result: [true, "completed"], &edit)

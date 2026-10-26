@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Engine::Verification::Report do
-  it "reads the verdict and the failing step, as chewie-verifier.md asks for them" do
+  it "reads the verdict and the failing step, as verifier.md asks for them" do
     report = described_class.parse(<<~MARKDOWN)
       # Verification, round 1
 
@@ -42,9 +42,9 @@ RSpec.describe OpenLanes::Engine::Verification::Report do
     expect(described_class.parse("# nothing here\n")).to have_attributes(verdict: nil, step: nil, screenshot: nil)
   end
 
-  # Plan 035: an mvp skip must not read as chewie having verified the PR.
+  # Plan 035: an mvp skip must not read as verifier having verified the PR.
   it "reads a skipped (mvp) verdict as skipped, never verified" do
-    report = described_class.parse("# Verification, round 1\n\nVerdict: skipped (mvp)\n\nSkipped: chewie did not run.\n")
+    report = described_class.parse("# Verification, round 1\n\nVerdict: skipped (mvp)\n\nSkipped: verifier did not run.\n")
 
     expect(report.verdict).to eq(:skipped)
   end

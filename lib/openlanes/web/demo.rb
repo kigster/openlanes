@@ -21,7 +21,7 @@ module OpenLanes
 
       # What the copilot answers in the demo, where no agent runs and the
       # board is made up: one plain line, so the panel can still be tried.
-      COPILOT_TEXT = "This is the demo run: c3po-operator does not run here, so nothing reads this or acts on it."
+      COPILOT_TEXT = "This is the demo run: #{Agents::Names::COPILOT} does not run here, so nothing reads this or acts on it.".freeze
 
       # The copilot's responder under `--demo` (W17), in place of
       # {Live::Copilot::Operator}.

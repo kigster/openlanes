@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Plans::Choices do
         aggregate_failures do
           expect(choices.recommended.letter).to eq("a")
           expect(choices.options.first.label).to start_with("A second openlanes web --demo process")
-          expect(choices.options.first.label).to end_with("(luke-backend owns both).")
+          expect(choices.options.first.label).to end_with("(backend-coder owns both).")
           expect(choices.options.last.answer).to eq("c) Narrow I1 to steps 1 and 5, and cover steps 2 to 4 in the Ruby suite with two hubs.")
         end
       end

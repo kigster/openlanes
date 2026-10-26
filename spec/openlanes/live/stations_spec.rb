@@ -20,7 +20,7 @@ RSpec.describe OpenLanes::Live::Stations do
     expect(%i[rewrite rolled_back].map { described_class.key_for(it) }).to eq(%i[building in_review])
   end
 
-  it "shows a rejected plan at Building, where luke and rey rework it" do
+  it "shows a rejected plan at Building, where backend-coder and frontend-coder rework it" do
     expect(described_class.key_for(:rejected, before: :in_review)).to eq(:building)
   end
 
@@ -33,7 +33,7 @@ RSpec.describe OpenLanes::Live::Stations do
 
     it "reads its agents from their handles" do
       aggregate_failures do
-        expect(building.agents).to contain_exactly("luke-backend", "r2d2-mechanic", "rey-frontend")
+        expect(building.agents).to contain_exactly("backend-coder", "chores-coder", "frontend-coder")
         expect(building.wire).to eq(key: "building", label: "Building", agents: building.agents)
       end
     end

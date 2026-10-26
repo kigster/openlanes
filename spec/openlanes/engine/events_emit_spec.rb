@@ -46,7 +46,7 @@ RSpec.describe "Engine events", :tree do
     expect(kinds).to include("agent_started", "agent_finished")
     expect(events.map(&:run).uniq.size).to eq(1)
     finished = events.find { it.kind == "agent_finished" }
-    expect(finished).to have_attributes(plan: "000.00", agent: "leah-researcher", adapter: "claude")
+    expect(finished).to have_attributes(plan: "000.00", agent: "researcher", adapter: "claude")
     expect(finished.payload).to include("round" => 1,
       "input_tokens" => 1_000,
       "output_tokens" => 100,

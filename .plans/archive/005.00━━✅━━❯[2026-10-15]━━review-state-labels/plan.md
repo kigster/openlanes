@@ -8,7 +8,7 @@ One pull request, eight units: seven back end (`plan-backend.md`), one front end
 | --- | --- | --- | --- |
 | B1 | Review label vocabulary (`Plans::ReviewLabel`) and its `openlanes docs` table | back end | nothing |
 | B2 | `Vcs::GitHub`: `ensure_label`, `swap_label`, `checks`, `review_comments`, `labels:` on `pulls` | back end | B1 |
-| B3 | `Vcs::Review` and `CiGate`; hansolo's `may:` and instructions | back end | B1, B2 |
+| B3 | `Vcs::Review` and `CiGate`; staff-reviewer's `may:` and instructions | back end | B1, B2 |
 | B4 | `## How to tell it's working?` → `## How to test` in `plan.md` | back end | nothing |
 | B5 | Publisher applies `ready-for-review`, refuses a PR without `## How to test` | back end | B1, B2, B4 |
 | B6 | Human-mode PR watch in the engine (15 s, `start` only) | back end | B2, B5 |
@@ -30,7 +30,7 @@ One pull request, eight units: seven back end (`plan-backend.md`), one front end
 flowchart LR
   B1[B1 ReviewLabel + docs] --> B2[B2 GitHub seam]
   B1 --> B3
-  B2 --> B3[B3 Review + CiGate + hansolo]
+  B2 --> B3[B3 Review + CiGate + staff-reviewer]
   B2 --> B5
   B1 --> B5
   B4[B4 How to test] --> B5[B5 Publisher]
@@ -55,7 +55,7 @@ flowchart LR
 
 ## Integration check
 
-I1 owns it: `spec/integration/review_labels_spec.rb`, a real `.plans` tree, the real `exe/openlanes`, and a fake `gh` first on `PATH` (the only stand-in, since nothing may reach GitHub). It must show a PR going `ready-for-review` → `review-in-progress` → a refused `ready-to-merge` over a failing check → `review-rejected`, the engine moving that plan to 🔴 with mail for luke and rey, a merged PR moving a plan to ✅, and `waiting on you: PR #N` for one still open.
+I1 owns it: `spec/integration/review_labels_spec.rb`, a real `.plans` tree, the real `exe/openlanes`, and a fake `gh` first on `PATH` (the only stand-in, since nothing may reach GitHub). It must show a PR going `ready-for-review` → `review-in-progress` → a refused `ready-to-merge` over a failing check → `review-rejected`, the engine moving that plan to 🔴 with mail for backend-coder and frontend-coder, a merged PR moving a plan to ✅, and `waiting on you: PR #N` for one still open.
 
 ## Assumptions taken from the spec's open questions
 
@@ -79,5 +79,5 @@ I1 owns it: `spec/integration/review_labels_spec.rb`, a real `.plans` tree, the 
 
 - Open a PR through the harness: it carries `ready-for-review`. Run `openlanes review <n> review-in-progress`, then a verdict: exactly one review label remains on GitHub.
 - With a failing check, `openlanes review <n> ready-to-merge` is refused and `review-rejected` is accepted.
-- Under `openlanes start`, add `review-rejected` and a comment on GitHub: within about 15 s the plan folder shows 🔴 and luke and rey have mail. Merge another PR: its plan shows ✅.
+- Under `openlanes start`, add `review-rejected` and a comment on GitHub: within about 15 s the plan folder shows 🔴 and backend-coder and frontend-coder have mail. Merge another PR: its plan shows ✅.
 - Remove `## How to test` from a `plan.md`: the publisher refuses to open its PR.

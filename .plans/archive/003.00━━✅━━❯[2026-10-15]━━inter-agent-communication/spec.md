@@ -6,7 +6,7 @@ Replace `mailbox.md` with a structured, machine-readable channel between the age
 
 ## Why it matters
 
-`luke-backend` and `rey-frontend` build one plan in one worktree at the same time as two separate `claude -p` processes. Today their only channel is `mailbox.md`: append-only Markdown, parsed by a regex (`lib/agentilda/mailbox.rb:29`), polled only when an agent remembers to. Three things follow from that:
+`backend-coder` and `frontend-coder` build one plan in one worktree at the same time as two separate `claude -p` processes. Today their only channel is `mailbox.md`: append-only Markdown, parsed by a regex (`lib/agentilda/mailbox.rb:29`), polled only when an agent remembers to. Three things follow from that:
 
 - Nothing knows whether a message was read. An agent that stopped reading its mail looks exactly like an agent with no mail.
 - Delivery latency is whatever the agent's own judgement of "each significant step" turns out to be (`lib/agentilda/executor.rb:586`).
@@ -28,7 +28,7 @@ Replace `mailbox.md` with a structured, machine-readable channel between the age
 
 These are properties of the runtime, not preferences. Each one killed an option that looked reasonable first.
 
-1. **An agent cannot catch a signal or spawn a thread.** `luke-backend` is a `claude -p` process running a model's turn loop. It acts only between tool calls, one at a time, and a long `Bash` or a `Task` wave is minutes during which nothing is checked. This is why `control.rb` exists and why `Control::GRACE` (60s) backs it: the prompt asks, the harness guarantees.
+1. **An agent cannot catch a signal or spawn a thread.** `backend-coder` is a `claude -p` process running a model's turn loop. It acts only between tool calls, one at a time, and a long `Bash` or a `Task` wave is minutes during which nothing is checked. This is why `control.rb` exists and why `Control::GRACE` (60s) backs it: the prompt asks, the harness guarantees.
 1. **Nothing can put text into a running turn from outside.** The two crossings inward are the control file (agent polls, cadence is the agent's) and a Claude Code hook (runtime injects, cadence is one per tool call). There is no third.
 1. **`File.rename` defeats `flock`.** The lock lives on the inode. `StateFile#save` writes a temp file and renames it over the target, giving the file a new inode, so a concurrent writer's lock protects a file that is now unlinked and its write is lost. This is why the run's state file and a multi-writer mailbox cannot be one file.
 1. **Redis pub/sub is lossy.** `PUBLISH` to a channel with no subscriber discards the message silently — no error, no queue.
@@ -107,7 +107,7 @@ The agent's own entry always wins when present. Each entry says which wrote it:
 
 ```json
 "last-known-state": {
-  "luke-backend": {
+  "backend-coder": {
     "source": "agent",
     "at": "2026-09-17T13:37:04-07:00",
     "round": 1,
@@ -117,7 +117,7 @@ The agent's own entry always wins when present. Each entry says which wrote it:
     "next_step": "run bundle exec rspec spec/agentilda/ledger_spec.rb",
     "files_touched": ["lib/agentilda/ledger.rb"]
   },
-  "rey-frontend": {
+  "frontend-coder": {
     "source": "harness",
     "at": "2026-09-17T13:37:04-07:00",
     "round": 1,
@@ -133,9 +133,9 @@ A **fixed schema, not freeform**. Freeform JSON is prose with braces, and the ne
 
 ### D8. `plan-backend.md` / `plan-frontend.md` fold into `plan.md`
 
-`luthen-rael-planner` writes `## Backend` and `## Frontend` sections inside `plan.md` instead of two sibling files. Touches `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and three agent prompts.
+`planner` writes `## Backend` and `## Frontend` sections inside `plan.md` instead of two sibling files. Touches `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and three agent prompts.
 
-**Open problem, must be solved as part of this:** those files are also ledgers. `agents/luke-backend.md:11` declares `ledger: [plan-backend.md, pull-requests.md]`, luke signs `Started` and `Completed` into its own plan file, and `dispatcher.rb:467` appends the harness's `Interrupted` line there too. Merge them and two concurrently running agents do read-modify-write on one file through Claude's `Edit` tool, with no lock. Last writer wins, silently.
+**Open problem, must be solved as part of this:** those files are also ledgers. `agents/backend-coder.md:11` declares `ledger: [plan-backend.md, pull-requests.md]`, backend-coder signs `Started` and `Completed` into its own plan file, and `dispatcher.rb:467` appends the harness's `Interrupted` line there too. Merge them and two concurrently running agents do read-modify-write on one file through Claude's `Edit` tool, with no lock. Last writer wins, silently.
 
 Note the race already exists — both agents list `pull-requests.md` as a ledger today. Merging doubles it rather than inventing it.
 
@@ -147,19 +147,19 @@ Options:
 
 ### D9. `implementation-plan.md` → `contract.md`
 
-The name is wrong in the same direction as everything else called "plan". `plan-backend.md` says *what luke will build*; `implementation-plan.md` says *what luke built and how to call it* — the interfaces, their shapes, their errors, which files each half owns, which units may run concurrently, and the one integration test proving the halves are joined. `lib/agentilda/documentation.rb:326` calls it "the one file no state requires". Every comment in the repo already calls it the contract.
+The name is wrong in the same direction as everything else called "plan". `plan-backend.md` says *what backend-coder will build*; `implementation-plan.md` says *what backend-coder built and how to call it* — the interfaces, their shapes, their errors, which files each half owns, which units may run concurrently, and the one integration test proving the halves are joined. `lib/agentilda/documentation.rb:326` calls it "the one file no state requires". Every comment in the repo already calls it the contract.
 
-Nine references: `executor.rb:602`, `documentation.rb:323,326`, `agents/luke-backend.md`, `agents/rey-frontend.md`, `agents/hansolo-reviewer.md`.
+Nine references: `executor.rb:602`, `documentation.rb:323,326`, `agents/backend-coder.md`, `agents/frontend-coder.md`, `agents/staff-reviewer.md`.
 
 ### D10. OpenAPI is an optional companion, never the contract
 
-When a plan exposes HTTP endpoints, `luke-backend` also writes `openapi.yaml` beside `contract.md`, and `contract.md` links to it. `luthen-rael-planner` decides in `plan.md` whether the plan has an HTTP surface. A later `agentilda api docs` collects every `.plans/*/openapi.yaml` for Redoc.
+When a plan exposes HTTP endpoints, `backend-coder` also writes `openapi.yaml` beside `contract.md`, and `contract.md` links to it. `planner` decides in `plan.md` whether the plan has an HTTP surface. A later `agentilda api docs` collects every `.plans/*/openapi.yaml` for Redoc.
 
 OpenAPI is not the contract itself, for three reasons:
 
-- **Most splits are not HTTP.** `luke-backend` is "data, domain, and the API an interface will call" — often a Ruby service object, a GraphQL schema, a TypeScript module, or a CLI. This gem, the thing dogfooded on, has no HTTP surface at all.
+- **Most splits are not HTTP.** `backend-coder` is "data, domain, and the API an interface will call" — often a Ruby service object, a GraphQL schema, a TypeScript module, or a CLI. This gem, the thing dogfooded on, has no HTTP surface at all.
 - **Half the contract has no OpenAPI slot.** File ownership, unit concurrency, and the integration proof are the half that stops the two agents colliding, and OpenAPI cannot express any of it.
-- **It is a harder write target.** A malformed `$ref` breaks the file for rey silently.
+- **It is a harder write target.** A malformed `$ref` breaks the file for frontend-coder silently.
 
 Validation starts cheap — parses as YAML, has `openapi:` and `paths:` keys. A real validator gets added only if agents actually produce broken files.
 
@@ -195,7 +195,7 @@ The decision table above predates the `openlanes` rename and part of the build. 
 | D4, D5 | Optional Redis path for mail, on the existing `Live::Store` seam | `lib/openlanes/live/store.rb:142-198` |
 | D6 | Not in this plan | decided 2026-10-13 |
 | D7 | All of it | none exists |
-| D8 | Units only: merge `plan-backend.md` / `plan-frontend.md` into `plan.md`. Signing already goes through the locked `state sign` | `lib/openlanes/execution/prompt.rb:171-176`, `agents/luthen-rael-planner.md:13,35-36` |
+| D8 | Units only: merge `plan-backend.md` / `plan-frontend.md` into `plan.md`. Signing already goes through the locked `state sign` | `lib/openlanes/execution/prompt.rb:171-176`, `agents/planner.md:13,35-36` |
 | D9 | All of it | `lib/openlanes/presentation/documentation.rb:323,326` |
 | D10 | All of it | none exists |
 
@@ -224,14 +224,14 @@ Each item has its check.
 1. **`mail ack`.** A new subcommand under `lib/openlanes/cli/mail/subcommands/`, writing through `PlanState`'s locked path. Check: spec under a `:tree` fixture; two concurrent acks both land.
 1. **`mail render`.** Prints the plan's whole exchange as Markdown to STDOUT and writes no file. Check: spec asserts STDOUT content and that the plan folder is unchanged.
 1. **Unacked count on the dashboard.** The board shows the count and a warning when it is non-zero. Check: spec on `Engine::Board` / the web view; a spec asserting a round's assignments are identical with and without unacked mail.
-1. **Agent prompts tell agents to ack.** `luke-backend`, `rey-frontend` and the shared prompt instruct `mail ack` right after reading. Check: the prompt spec asserts the instruction appears.
+1. **Agent prompts tell agents to ack.** `backend-coder`, `frontend-coder` and the shared prompt instruct `mail ack` right after reading. Check: the prompt spec asserts the instruction appears.
 1. **Optional Redis delivery for mail.** When Redis is reachable, mail is also carried on a stream through `Live::Store`; when it is not, `mail send` still writes `state.json`. Check: a shared example run against `Live::Store` and `Live::MemoryStore` (`spec/openlanes/live/store_examples.rb`), and a spec with `Live::Unavailable` that still delivers.
 1. **Harness thread as the writer of Redis-borne messages.** The per-agent thread in `Dispatcher` writes drained messages into `state.json` under the plan lock. Check: spec drives a `MemoryStore` message through the thread and finds it in `state.json`.
 1. **`last-known-state`.** A fixed-schema section in `state.json` keyed by agent, last entry wins, with `source: agent | harness`; an agent entry is never overwritten by a harness one. Check: schema file under `schemas/plan-state.schema.json` validates both shapes; spec for precedence; spec that machine detail (pid, tokens, exit) is absent from the committed file.
 1. **Harness fallback writer.** On interrupt or death with no agent entry, the harness writes `source: harness` from the last ledger line, transcript phrase, round. Check: spec kills an agent without a published state and finds the harness entry.
-1. **Units merged into `plan.md`.** `luthen-rael-planner` writes `## Backend` and `## Frontend` in `plan.md`; `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and the three agent prompts follow. Check: `openlanes docs` regenerates with no mention of `plan-backend.md`; the `linear/mapping.rb` spec still passes.
+1. **Units merged into `plan.md`.** `planner` writes `## Backend` and `## Frontend` in `plan.md`; `status.rb` invariants, `linear/units.rb`, `documentation.rb`, and the three agent prompts follow. Check: `openlanes docs` regenerates with no mention of `plan-backend.md`; the `linear/mapping.rb` spec still passes.
 1. **`implementation-plan.md` → `contract.md`.** All nine references renamed. Check: `rg implementation-plan` over `lib agents docs` returns nothing, and the suite is green.
-1. **Optional `openapi.yaml`.** `luke-backend` writes it when `plan.md` says the plan has an HTTP surface; `contract.md` links to it; `openlanes api docs` collects `.plans/*/openapi.yaml`. Check: spec that a fixture with two files yields both, and that a file with no `openapi:` / `paths:` keys is reported.
+1. **Optional `openapi.yaml`.** `backend-coder` writes it when `plan.md` says the plan has an HTTP surface; `contract.md` links to it; `openlanes api docs` collects `.plans/*/openapi.yaml`. Check: spec that a fixture with two files yields both, and that a file with no `openapi:` / `paths:` keys is reported.
 1. **Suite and lint stay green.** `bundle exec rspec` 0 failures, `just lint` zero offenses, coverage not below the baseline of 98.63%.
 
 ## Out of scope
@@ -248,9 +248,9 @@ Each item has its check.
 
 ## Back end / front end
 
-`luke-backend` and `rey-frontend` build these as a pair; the contract goes in `contract.md` once D9 lands, and in `implementation-plan.md` until then.
+`backend-coder` and `frontend-coder` build these as a pair; the contract goes in `contract.md` once D9 lands, and in `implementation-plan.md` until then.
 
-| Item | Back end (`luke-backend`) | Front end (`rey-frontend`) |
+| Item | Back end (`backend-coder`) | Front end (`frontend-coder`) |
 | :-- | :-- | :-- |
 | Read receipt, `mail ack` | `Plans::Mailbox`, `PlanState`, CLI subcommand | none |
 | `mail render` | `Mailbox` Markdown view, CLI subcommand | none |
@@ -268,7 +268,7 @@ Answered by kig on 2026-10-13 and recorded in the decisions above: where message
 1. **Key layout.** D4 gives `agentilda:<repo>:<node>:<checkout>:<plan>:<stream>`; the code and W26 use `openlanes:<repo>:<node>:<checkout>:<stream>` with no plan segment (`lib/openlanes/live/keys.rb:14-40`). Assumed: follow the code, carry the plan in the message. Confirm.
 1. **What "Redis is not required" means for the first cut.** Assumed: Redis is a faster, optional path alongside the always-written `state.json`. If it should be dropped from this plan entirely, phase C shrinks to D7.
 1. **Does a harness thread drain Redis each second?** Not traced by research (`Dispatcher`, `Live::Subscriber`). Unverified.
-1. **Do luke and rey edit the same plan file concurrently today?** Needs a run log, not a read; it decides whether (a) is actually safe.
+1. **Do backend-coder and frontend-coder edit the same plan file concurrently today?** Needs a run log, not a read; it decides whether (a) is actually safe.
 1. **`mail ack` argument.** Assumed: a message number, as `mailbox.rb` numbers messages. A form acking everything for an agent is not specified.
 1. **Existing plan folders.** Assumed: plans with `plan-backend.md` / `implementation-plan.md` keep them; only new plans use the new names. Whether `resync dirs` should migrate old ones is unspecified.
 1. **Schema versioning.** Adding `read` and `last-known-state` changes `plan-state.schema.json`; assumed a field addition, no `version` bump. Confirm.
@@ -292,7 +292,7 @@ When this ships, a message in a plan's `state.json` records whether it was read,
 
 Sources are the repository at `openlanes.worktrees/003.00-inter-agent-communication` (branch `kig/003.00-inter-agent-communication`, clean), read on 2026-10-13. No web sources were needed: every question was answered by code or the repo's own decision log. The spec's paths (`lib/agentilda/...`, `.plans/tmp/agentilda-state.json`, `mailbox.md`) are from the earlier codebase. The tool is now `openlanes`, and several decisions below are already built.
 
-Test baseline: `RBENV_VERSION=4.0.6 bundle exec rspec` → `2214 examples, 0 failures`, coverage 98.63% (`/tmp/leah-rspec.log`).
+Test baseline: `RBENV_VERSION=4.0.6 bundle exec rspec` → `2214 examples, 0 failures`, coverage 98.63% (`/tmp/researcher-rspec.log`).
 
 ### Already built: the spec is partly stale
 
@@ -304,9 +304,9 @@ Test baseline: `RBENV_VERSION=4.0.6 bundle exec rspec` → `2214 examples, 0 fai
 | D4 Redis Streams | Not for mail. Redis is used for the live board, claims and commands, through `redis-client` with Streams and consumer groups | `openlanes.gemspec:78`, `lib/openlanes/live/store.rb:142-198` |
 | D6 PostToolUse hook | Not built. Nothing passes `--settings` or a hook to `claude` | `lib/openlanes/execution/executor.rb`, `lib/openlanes/adapters/claude.rb` |
 | D7 `last-known-state` | Not built | none |
-| D8 fold into `plan.md` | Not built. `luthen-rael-planner` still writes `plan-backend.md` and `plan-frontend.md`; `luke-backend` and `rey-frontend` still list them as ledgers | `agents/luthen-rael-planner.md:13,35-36`, `agents/luke-backend.md:11`, `agents/rey-frontend.md:9` |
+| D8 fold into `plan.md` | Not built. `planner` still writes `plan-backend.md` and `plan-frontend.md`; `backend-coder` and `frontend-coder` still list them as ledgers | `agents/planner.md:13,35-36`, `agents/backend-coder.md:11`, `agents/frontend-coder.md:9` |
 | D8 signing race | Signing already goes through a locked command into `state.json`; the prompt forbids hand edits | `lib/openlanes/execution/prompt.rb:171-176`, `lib/openlanes/plans/plan_state.rb:163,252-257` |
-| D9 `implementation-plan.md` → `contract.md` | Not built. The name `implementation-plan.md` is used in code, prompts and docs; `contract.md` is named only as the contract spec | `lib/openlanes/presentation/documentation.rb:323,326`, `agents/luke-backend.md:26`, `lib/openlanes/web.rb:25` |
+| D9 `implementation-plan.md` → `contract.md` | Not built. The name `implementation-plan.md` is used in code, prompts and docs; `contract.md` is named only as the contract spec | `lib/openlanes/presentation/documentation.rb:323,326`, `agents/backend-coder.md:26`, `lib/openlanes/web.rb:25` |
 | D10 OpenAPI | Not built | none |
 
 Constraint 3 (`File.rename` defeats `flock`) is already handled: the lock is a sibling file in `Dir.tmpdir`, `openlanes-plan-<key>.lock`, not the data file (`plan_state.rb:252-257`).
@@ -332,7 +332,7 @@ Constraint 3 (`File.rename` defeats `flock`) is already handled: the lock is a s
 ### Could not settle
 
 1. Whether `claude --settings <hook file>` still fires PostToolUse under `--restricted` (D6). Needs a live run with a stub hook.
-2. Whether luke and rey edit `plan-backend.md` checkboxes concurrently with each other today. Needs a run log, not a read.
+2. Whether backend-coder and frontend-coder edit `plan-backend.md` checkboxes concurrently with each other today. Needs a run log, not a read.
 3. Whether a harness thread drains Redis every second (D5). Not checked; `Dispatcher` and `Live::Subscriber` were not traced end to end.
 4. Whether D3's unacked count should ever affect a round. A product decision (see answer 3).
 5. Whether D4 requires Redis for mail, or only for the board (see contradictions).

@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:38:25-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Started",
       "from": "planned",
@@ -24,26 +24,26 @@
   "signatures": [
     {
       "at": "2026-10-23T14:04:22-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:13:36-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-23T14:38:15-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:38:23-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
@@ -52,7 +52,7 @@
   "messages": [],
   "moves": 3,
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -76,7 +76,7 @@
         }
       }
     },
-    "lando-broker": {
+    "unblocker": {
       "rounds": {
         "1": {
           "state": "⭕ Technical Block",
@@ -95,7 +95,7 @@
     }
   },
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-23T14:13:52-07:00",
       "round": 1,
@@ -106,7 +106,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",

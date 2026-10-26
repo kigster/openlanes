@@ -75,7 +75,7 @@ RSpec.describe "the slimmed commands, end to end", :tree do
       "--log",
       File.join(project, "progress.log"))
 
-    expect([status, out]).to match([0, a_string_including("001.00  luke-backend")])
+    expect([status, out]).to match([0, a_string_including("001.00  backend-coder")])
   end
 
   it "run refuses an unknown agent with 65" do

@@ -1,4 +1,4 @@
-import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, shortAgent, span, stamp, who } from "./format";
+import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
 import {
   STARTS,
   carLook,
@@ -28,11 +28,6 @@ describe("format", () => {
     expect(dollars(14.2)).toBe("$14.20");
     expect([planId("001.00"), planId("010.01")]).toEqual(["001", "010.01"]);
     expect(who({ user: "dana", host: "studio-mini" })).toBe("dana@studio-mini");
-  });
-
-  it("shortens an agent's name to what follows its first dash, and leaves built-ins and names with nothing to drop whole", () => {
-    expect(["leah-researcher", "luke-backend", "r2d2-mechanic", "general-purpose", "Explore", "odd-", "a-b-c"].map(shortAgent))
-      .toEqual(["researcher", "backend", "mechanic", "general-purpose", "Explore", "odd-", "b-c"]);
   });
 
   it("redacts a URL's userinfo, user name included", () => {
@@ -125,7 +120,7 @@ describe("pillState", () => {
     expect(st({ pr: null }, true).say).toContain("PR #?");
     expect(st({ pr: samplePr({ state: "merged" }) })).toMatchObject({ cls: "is-merged", mark: "✅" });
     expect(st({ pr: samplePr({ state: "approved" }) })).toMatchObject({ cls: "is-done", mark: "✅", say: "reviewed, PR #44 ready to merge" });
-    expect(st({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })).toMatchObject({ blocked: false });
+    expect(st({ interrupted: { agent: "researcher", at: "t", note: "" } })).toMatchObject({ blocked: false });
     expect(st({ questions: [sampleQuestion({ held: true })] })).toMatchObject({ cls: "is-blocked is-held", mark: "⏸" });
     expect(st({ questions: [sampleQuestion({ owner: "product" })] })).toMatchObject({ mark: "🛑", say: expect.stringContaining("product") });
     expect(st({ questions: [sampleQuestion({ body: "" })] })).toMatchObject({ mark: "⭕", say: "needs technical decision: B1 Redis key layout" });
@@ -156,15 +151,15 @@ describe("predicates and labels", () => {
   it("reads test runs from activity lines and labels their tabs", () => {
     const plan = samplePlan({
       cars: [
-        sampleCar({ agent: "luke-backend", key: "001.00/luke-backend", message: "Running bundle exec rspec: 3 of 9" }),
-        sampleCar({ agent: "rey-frontend", key: "001.00/rey-frontend", message: "Running npm test: 1 of 2" }),
-        sampleCar({ agent: "yoda-writer", key: "001.00/yoda-writer", message: "Writing" }),
+        sampleCar({ agent: "backend-coder", key: "001.00/backend-coder", message: "Running bundle exec rspec: 3 of 9" }),
+        sampleCar({ agent: "frontend-coder", key: "001.00/frontend-coder", message: "Running npm test: 1 of 2" }),
+        sampleCar({ agent: "spec-writer", key: "001.00/spec-writer", message: "Writing" }),
       ],
     });
     const runs = testRuns([plan]);
     expect(runs.map(r => [r.cmd, r.done, r.total])).toEqual([["bundle exec rspec", 3, 9], ["npm test", 1, 2]]);
-    expect(testTabValue(runs[0])).toBe("tests:001.00/luke-backend");
-    expect(testTabLabel(runs[0], runs)).toBe("001 tests, luke");
+    expect(testTabValue(runs[0])).toBe("tests:001.00/backend-coder");
+    expect(testTabLabel(runs[0], runs)).toBe("001 tests, backend-coder");
     expect(testTabLabel(runs[0], [runs[0]])).toBe("001 tests");
   });
 });

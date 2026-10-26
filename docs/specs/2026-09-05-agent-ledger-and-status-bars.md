@@ -8,14 +8,14 @@ A real run over plan `020.00` produced this:
 
 ```text
 round 1
-  020.00        yoda-writer     no change       completed - 11 tool calls
+  020.00        spec-writer     no change       completed - 11 tool calls
 round 2
-  020.00        yoda-writer     no change       completed - 20 tool calls
+  020.00        spec-writer     no change       completed - 20 tool calls
 
 1 plan addressed - 2 rounds - 6m02s - 1.0 agents at a time
 ```
 
-`yoda-writer` ran twice, succeeded twice, and the plan never moved. `luthen-rael-planner` was never invoked. The loop then conceded on two dry rounds and stopped, with the work unfinished and nothing in the output saying why.
+`spec-writer` ran twice, succeeded twice, and the plan never moved. `planner` was never invoked. The loop then conceded on two dry rounds and stopped, with the work unfinished and nothing in the output saying why.
 
 Three separate defects meet in that transcript, and this document addresses all three plus the display that would have made them visible.
 
@@ -27,9 +27,9 @@ Three separate defects meet in that transcript, and this document addresses all 
 key: :planned, emoji: "⭐️", label: "Planned", requires: %w[spec.md plan.md]
 ```
 
-`plan.md` is written by `luthen-rael-planner`, and `luthen-rael-planner` has `handles: [planned]`. So a plan must already **be** ⭐️ Planned before the agent that produces the evidence for ⭐️ Planned is ever offered the work. Nothing can enter the state legitimately.
+`plan.md` is written by `planner`, and `planner` has `handles: [planned]`. So a plan must already **be** ⭐️ Planned before the agent that produces the evidence for ⭐️ Planned is ever offered the work. Nothing can enter the state legitimately.
 
-`yoda-writer` declares `advances_to: planned` and renames its folder to ⭐️ on the way out. Then the per-round serial `Resync::Dirs` pass (`runner.rb:212`) computes `best_fit`, finds no `plan.md`, concludes 🔎 Researched, and renames the folder straight back. The chain in `Runner#attempt` then reads `further_of(current)`, gets `researched`, sees `fit.key == from`, and breaks. Every round after that repeats it exactly.
+`spec-writer` declares `advances_to: planned` and renames its folder to ⭐️ on the way out. Then the per-round serial `Resync::Dirs` pass (`runner.rb:212`) computes `best_fit`, finds no `plan.md`, concludes 🔎 Researched, and renames the folder straight back. The chain in `Runner#attempt` then reads `further_of(current)`, gets `researched`, sees `fit.key == from`, and breaks. Every round after that repeats it exactly.
 
 ### Defect 2: chaining infers the handoff instead of being told it
 
@@ -59,14 +59,14 @@ Every agent stamps the section it owns, on the way in and on the way out.
 
 > [!NOTE]
 >
-> [2026-09-04.13:34:33PM PST | agent: leah | purpose: research | action: started]
+> [2026-09-04.13:34:33PM PST | agent: researcher | purpose: research | action: started]
 
 ...the chapter...
 
 > [!NOTE]
 >
-> [2026-09-04.13:44:33PM PST | agent: leah | purpose: research | action: accomplished]
-> [2026-09-04.13:45:21PM PST | agent: yoda | purpose: pre-planning | action: chain]
+> [2026-09-04.13:44:33PM PST | agent: researcher | purpose: research | action: accomplished]
+> [2026-09-04.13:45:21PM PST | agent: spec-writer | purpose: pre-planning | action: chain]
 ```
 
 The last line is the important one. `action: chain` names the agent that runs **next**, so the harness is told the handoff rather than inferring it. Reading the ledger backwards for the most recent `chain` entry answers both "is the previous stage finished" and "who takes it from here" in a single lookup.
@@ -82,7 +82,7 @@ One entry per line, inside a GitHub alert blockquote:
 | Field       | Meaning                                                                                             |
 | ----------- | --------------------------------------------------------------------------------------------------- |
 | `timestamp` | `YYYY-MM-DD.HH:MM:SSAM/PM TZ`, local time with the zone spelled out                                 |
-| `agent`     | The short name (`leah`), resolved against the roster by prefix as `Agents#match` already does       |
+| `agent`     | The short name (`researcher`), resolved against the roster by prefix as `Agents#match` already does       |
 | `purpose`   | Free text naming the phase: `research`, `pre-planning`, `planning`, `backend`, `frontend`, `review` |
 | `action`    | One of the verbs below, and nothing else                                                            |
 
@@ -112,14 +112,14 @@ Before you do any work, append to the document you are about to write:
 
     > [!NOTE]
     >
-    > [<now> | agent: leah | purpose: research | action: started]
+    > [<now> | agent: researcher | purpose: research | action: started]
 
 When you finish, append:
 
     > [!NOTE]
     >
-    > [<now> | agent: leah | purpose: research | action: accomplished]
-    > [<now> | agent: yoda | purpose: pre-planning | action: chain]
+    > [<now> | agent: researcher | purpose: research | action: accomplished]
+    > [<now> | agent: spec-writer | purpose: pre-planning | action: chain]
 
 Write `accomplished` only if your assignment is genuinely complete. If it is
 not, write `almost completed`, `interrupted` or `blocked` instead, and write
@@ -167,22 +167,22 @@ The main thread is the puppet master. It knows which plan folder each running ag
 ```mermaid
 sequenceDiagram
     participant D as Dispatcher (main thread)
-    participant Y as yoda
-    participant P as luthen-rael
+    participant Y as spec-writer
+    participant P as planner
 
     D->>Y: start
     Y->>Y: writes "action: started"
     loop every 10s
         D->>D: read plan folder markdown
     end
-    Y->>Y: writes "accomplished" + "chain: luthen-rael"
+    Y->>Y: writes "accomplished" + "chain: planner"
     D-->>D: poll sees trailing chain
     D->>P: start immediately
     Y-->>D: turn ends (may be seconds later)
 ```
 
 > [!IMPORTANT]
-> The successor starts when the `chain` line **appears**, not when the previous agent's process exits. Those are different moments and the gap between them is exactly what this design is buying back. `yoda` writing its closing block and then spending forty seconds tidying up no longer costs `luthen-rael` forty seconds.
+> The successor starts when the `chain` line **appears**, not when the previous agent's process exits. Those are different moments and the gap between them is exactly what this design is buying back. `spec-writer` writing its closing block and then spending forty seconds tidying up no longer costs `planner` forty seconds.
 
 Consequences to handle explicitly:
 
@@ -225,21 +225,21 @@ stateDiagram-v2
     BuildingUI: 🎨 Building UI
     Ready: 🟢 Ready for Review
 
-    New --> Researched: leah
-    Researched --> SpecReady: yoda
-    SpecReady --> Planned: luthen-rael
-    Planned --> Building: luke starts
-    Building --> BuildingUI: luke lands
-    BuildingUI --> Ready: rey lands
+    New --> Researched: researcher
+    Researched --> SpecReady: spec-writer
+    SpecReady --> Planned: planner
+    Planned --> Building: backend-coder starts
+    Building --> BuildingUI: backend-coder lands
+    BuildingUI --> Ready: frontend-coder lands
 ```
 
 | State         | Means                                       | Justified by                                                  |
 | ------------- | ------------------------------------------- | ------------------------------------------------------------- |
-| 🔎 Researched | The topic has been researched               | `accomplished` by leah, or the existing `## Research` heading |
-| 🏁 Spec Ready | The spec is finished, nobody has planned it | `accomplished` by yoda                                        |
+| 🔎 Researched | The topic has been researched               | `accomplished` by researcher, or the existing `## Research` heading |
+| 🏁 Spec Ready | The spec is finished, nobody has planned it | `accomplished` by spec-writer                                        |
 | ⭐️ Planned    | `plan.md` exists, building has not started  | `spec.md` and `plan.md`, unchanged                            |
 
-⭐️ Planned keeps `requires: %w[spec.md plan.md]` and becomes honest, because `luthen-rael-planner` now writes `plan.md` on the way **in** rather than being the agent that handles the state.
+⭐️ Planned keeps `requires: %w[spec.md plan.md]` and becomes honest, because `planner` now writes `plan.md` on the way **in** rather than being the agent that handles the state.
 
 Accepting the existing `## Research` heading as an alternative proof for 🔎 matters: hand-written and pre-existing plan folders have no ledger, and a change that invalidated every folder already on disk would be a migration disguised as a feature.
 
@@ -249,12 +249,12 @@ Accepting the existing `## Research` heading as an alternative proof for 🔎 ma
 | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `status.rb`                   | `spec_ready` entry in `STATUSES`, between `researched` and `planned`                                   |
 | `state_machine.rb`            | `SPINE`: `researched -> spec_ready -> planned`; `PREFERENCE` gains `spec_ready`; a `finish_spec` event |
-| `agents/yoda-writer.md`       | `advances_to: spec_ready`                                                                              |
-| `agents/luthen-rael-planner.md` | `handles: [spec_ready]`, `advances_to: planned`                                                        |
-| `agents/luke-backend.md`      | `handles: [planned, rejected]`                                                                         |
-| `agents/rey-frontend.md`      | `handles: [planned, rejected]`                                                                         |
+| `agents/spec-writer.md`       | `advances_to: spec_ready`                                                                              |
+| `agents/planner.md` | `handles: [spec_ready]`, `advances_to: planned`                                                        |
+| `agents/backend-coder.md`      | `handles: [planned, rejected]`                                                                         |
+| `agents/frontend-coder.md`      | `handles: [planned, rejected]`                                                                         |
 
-🟡 Building keeps its meaning, "the back end is under way". `luke-backend` renames the folder to 🟡 when it starts rather than inheriting it from `luthen-rael-planner`, so the board distinguishes work in flight from work queued.
+🟡 Building keeps its meaning, "the back end is under way". `backend-coder` renames the folder to 🟡 when it starts rather than inheriting it from `planner`, so the board distinguishes work in flight from work queued.
 
 Adding a state makes `docs/img/plan-spec-build.png` stale. `just docs` regenerates the mermaid source; the hand-drawn image needs redrawing separately, and that is called out rather than quietly skipped.
 
@@ -268,7 +268,7 @@ The clock stops killing. It warns, then asks, and that is all it does.
 gantt
     dateFormat  mm:ss
     axisFormat  %M:%S
-    title       A 20 minute luke-backend budget
+    title       A 20 minute backend-coder budget
     section Control file
     empty (carry on)      :done, a, 00:00, 15m
     WRAP_UP               :active, b, after a, 5m
@@ -288,7 +288,7 @@ gantt
 
 ### Short budgets
 
-An agent with a 5 minute budget would see `WRAP_UP` at t=0, which is not a warning but a starting instruction. So the warning fires at `min(300, timeout / 2)` seconds before the deadline. `hansolo-reviewer` at 300s is warned at 2m30s, which is a warning.
+An agent with a 5 minute budget would see `WRAP_UP` at t=0, which is not a warning but a starting instruction. So the warning fires at `min(300, timeout / 2)` seconds before the deadline. `staff-reviewer` at 300s is warned at 2m30s, which is a warning.
 
 ### `--timeout` becomes a cap
 
@@ -308,19 +308,19 @@ Two frontmatter keys the application reads and states in the prompt, so the numb
 
 | Agent               | `timeout` | `subagents` | Rationale                                        |
 | ------------------- | --------- | ----------- | ------------------------------------------------ |
-| `leah-researcher`   | 600       | `0..2`      | Research fans out, but two helpers is the budget |
-| `yoda-writer`       | 600       | `0..`       | Unbounded; yoda's helpers are cheap and parallel |
-| `luthen-rael-planner` | 600       | `1..9`      | Must fan out at least once; nine is the ceiling  |
-| `luke-backend`      | 1200      | `0..`       | Plans, builds, tests                             |
-| `rey-frontend`      | 1200      | `0..`       | Plans, builds, tests                             |
-| `hansolo-reviewer`  | 300       | `0`         | One review, called immediately                   |
+| `researcher`   | 600       | `0..2`      | Research fans out, but two helpers is the budget |
+| `spec-writer`       | 600       | `0..`       | Unbounded; spec-writer's helpers are cheap and parallel |
+| `planner` | 600       | `1..9`      | Must fan out at least once; nine is the ceiling  |
+| `backend-coder`      | 1200      | `0..`       | Plans, builds, tests                             |
+| `frontend-coder`      | 1200      | `0..`       | Plans, builds, tests                             |
+| `staff-reviewer`  | 300       | `0`         | One review, called immediately                   |
 
 `subagents` parses as a Ruby range literal in the frontmatter (`0..2`, `1..9`, `0..`). `Agent#subagents` returns a `Range`; `Executor#subagent_section` renders it into the prompt beside the existing time and token budgets. A lower bound above zero is stated as a requirement, not a permission.
 
 > [!NOTE]
-> Two figures were given for `hansolo-reviewer`, ten minutes and then five. Five is taken, on the grounds that the later and more specific statement wins. Say so if that is backwards.
+> Two figures were given for `staff-reviewer`, ten minutes and then five. Five is taken, on the grounds that the later and more specific statement wins. Say so if that is backwards.
 
-### luke and rey
+### backend-coder and frontend-coder
 
 Their prompts gain the sequence that was asked for, replacing the current "start building" opening:
 
@@ -364,9 +364,9 @@ Drawn with an ANSI scroll region: `DECSTBM` reserves row 1 and the last row, and
 ```text
 ▓ opus-5 · 3 plans: 020.00 021.00 022.00 · ▓▓▓▓░░░░░░ 12:41 / ~50:00
 ────────────────────────────────────────────────────────────────────
- ⠹ 9:12 ↑1.5M ↓11k  020.00 yoda-writer [99605, round 02]: writing...
- ⠹ 4:03 ↑220k ↓2k   021.00 leah-researcher [99612, round 02]: ...
- ✓ ⏳ 2m14s          022.00 leah-researcher [done]
+ ⠹ 9:12 ↑1.5M ↓11k  020.00 spec-writer [99605, round 02]: writing...
+ ⠹ 4:03 ↑220k ↓2k   021.00 researcher [99612, round 02]: ...
+ ✓ ⏳ 2m14s          022.00 researcher [done]
 ────────────────────────────────────────────────────────────────────
  3 plans · 5 agents busy · ↑ 2.7M ↓ 22k
 ```
@@ -378,7 +378,7 @@ Drawn with an ANSI scroll region: `DECSTBM` reserves row 1 and the last row, and
 **Finished lines** gain `⏳` and the elapsed time beside the agent's name, and read `[done]`:
 
 ```text
- ✓ ⏳ 2m14s  022.00 leah-researcher [done]
+ ✓ ⏳ 2m14s  022.00 researcher [done]
 ```
 
 ### Risks in this piece
@@ -397,7 +397,7 @@ ______________________________________________________________________
 | Area          | How                                                                                                                                                                                                                                                                                                                        |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Provenance`  | Parse and render round-trip; malformed entries; entries spread over several files; an agent that dropped earlier entries                                                                                                                                                                                                   |
-| State machine | 🏁 inserted; a folder with a yoda `accomplished` is 🏁 and stays 🏁 after `Resync::Dirs`; the exact `020.00` transcript as a regression example                                                                                                                                                                            |
+| State machine | 🏁 inserted; a folder with a spec-writer `accomplished` is 🏁 and stays 🏁 after `Resync::Dirs`; the exact `020.00` transcript as a regression example                                                                                                                                                                            |
 | Dispatcher    | A trailing `chain` starts the named successor on the next poll, without waiting for the predecessor to exit; the same entry never starts it twice; `almost completed` and `interrupted` start nobody; an unknown successor is refused and reported; a successor with no free slot starts at the first poll after one frees |
 | Timeouts      | `WRAP_UP` at the warning moment, `STOP` at the deadline, the child never signalled; `min` capping of `--timeout`; the short-budget clamp                                                                                                                                                                                   |
 | `Watch`       | Stages absorbed from a ledger and observed from a runner agree; the JSON timeline round-trips                                                                                                                                                                                                                              |
@@ -424,4 +424,4 @@ flowchart TD
     C --> B
 ```
 
-Sections 1, 2 and 3 are the bug fix and are worth landing on their own: they are what makes a run get past `yoda-writer`. Sections 4, 5 and 6 are the display and the budgets, and depend on the ledger existing.
+Sections 1, 2 and 3 are the bug fix and are worth landing on their own: they are what makes a run get past `spec-writer`. Sections 4, 5 and 6 are the display and the budgets, and depend on the ledger existing.

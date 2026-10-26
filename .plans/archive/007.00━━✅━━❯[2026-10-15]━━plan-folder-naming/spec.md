@@ -88,15 +88,15 @@ Each item names its check.
 
 ## Back end / front end
 
-`luke-backend` builds every item; `rey-frontend` has almost nothing because the web board does not parse folder names.
+`backend-coder` builds every item; `frontend-coder` has almost nothing because the web board does not parse folder names.
 
 | Item | Half |
 | --- | --- |
-| Parser, `plan_dirname`, `Ordinal`, `STATUSES`, `UI.display_width` | back end (`luke-backend`) |
+| Parser, `plan_dirname`, `Ordinal`, `STATUSES`, `UI.display_width` | back end (`backend-coder`) |
 | `Tree` subfolders, number allocation, `bin/plan-number` | back end |
 | Git date, lock file, `resync dirs`, M10 move | back end |
 | `list-plans --all`, 🔑 column, `openlanes docs`, README | back end (CLI output is Ruby; `Reporter`, `Documentation`) |
-| Web board link percent-encoding of the new name (`plans/index.rb:184`) | front end (`rey-frontend`): verify links with `━` and `❯` resolve; fix only if they do not |
+| Web board link percent-encoding of the new name (`plans/index.rb:184`) | front end (`frontend-coder`): verify links with `━` and `❯` resolve; fix only if they do not |
 | Control room 🔑 and any emoji column in `web/src` | front end: render 🔑, accept the new emoji set |
 
 ## Open questions
@@ -188,7 +188,7 @@ So use the `--follow --diff-filter=R` form on a file inside the folder. Not test
 - **Decisions file vs code.** `docs/decisions/decisions-on-plan-folder-naming.md` says "Not built yet". Production runs the old form: `feature.rb:61` emits `NNN.MM-<emoji> → <slug>`. Code wins for everything the decisions file does not yet describe.
 - **N3 vs code on numbering.** N3 says numbers are allocated across all subfolders. Production numbers from the top level only (`creator.rb:58`, `bin/plan-number:115`). Code wins until the plan changes it.
 - **N1 vs parser.** N1 says "the parser keeps reading the old form", and it also has to read the new one. It reads neither correctly for the new form (table above). Code wins; the plan must change the parser first.
-- **This spec.** `spec.md` repeats four empty headings (`What we are trying to achieve` through `What research needs to settle`) after the filled-in copy, and ends with the harness note from an interrupted round. Left in place. Yoda should read the first copy.
+- **This spec.** `spec.md` repeats four empty headings (`What we are trying to achieve` through `What research needs to settle`) after the filled-in copy, and ends with the harness note from an interrupted round. Left in place. spec-writer should read the first copy.
 
 ### What could not be settled
 
@@ -210,7 +210,7 @@ So use the `--follow --diff-filter=R` form on a file inside the folder. Not test
 
 **Conclusion**
 
-Yoda can write Goal, Non-Goals, scope and open questions from this chapter without asking. The first open question for the spec is item 1 above (which date wins for archived plans); the rest are implementation facts the plan can settle.
+spec-writer can write Goal, Non-Goals, scope and open questions from this chapter without asking. The first open question for the spec is item 1 above (which date wins for archived plans); the rest are implementation facts the plan can settle.
 
 **References**
 

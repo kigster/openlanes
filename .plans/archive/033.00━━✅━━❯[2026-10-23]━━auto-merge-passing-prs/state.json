@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:04:11-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "planned",
@@ -28,7 +28,7 @@
       "moves": 3
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_review",
@@ -47,7 +47,7 @@
       "moves": 4
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -66,7 +66,7 @@
       "moves": 6
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -85,7 +85,7 @@
       "moves": 8
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Started",
       "from": "verifying",
@@ -97,7 +97,7 @@
       "session": "b83f8c80-3010-4405-a553-7d8268a770ec"
     },
     {
-      "agent": "palpatine-risk-assessor",
+      "agent": "deploy-assessor",
       "round": 1,
       "status": "Completed",
       "from": "completed",
@@ -119,77 +119,77 @@
   "signatures": [
     {
       "at": "2026-10-21T21:24:28-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:35:39-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:36:24-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:37:08-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (rejected 1/2)"
     },
     {
       "at": "2026-10-21T21:37:51-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:50:24-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T21:51:03-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:54:01-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
     },
     {
       "at": "2026-10-21T21:56:26-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:59:28-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
     },
     {
       "at": "2026-10-23T14:02:59-07:00",
-      "agent": "palpatine-risk-assessor",
+      "agent": "deploy-assessor",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:04:03-07:00",
-      "agent": "palpatine-risk-assessor",
+      "agent": "deploy-assessor",
       "status": "Completed",
       "round": 1,
       "note": "manual"
@@ -201,7 +201,7 @@
       "number": 1,
       "at": "2026-10-21T21:37:35-07:00",
       "from": "github",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "PR #113 was labelled review-rejected on GitHub.\n\nkigster (https://github.com/kigster/openlanes/pull/113#issuecomment-6332819713):\n\nReview round 1: rejected (1/2).\n\n**1. `Vcs::GitHub#branch_checks` reads check runs only, so CI on `main` is never seen on this repo** (`lib/openlanes/vcs/github.rb`, `branch_checks`; used by `Merging#main_ci`)\n- Input: `main` as it is now. CI here is CircleCI, which reports commit statuses (`StatusContext`, e.g. `ci/circleci: test`), not check runs.\n- Expected: `main_ci` is `:green`, since `repos/kigster/openlanes/commits/main/status` shows linter, web, test and e2e all `success`, so a passing, verified PR merges.\n- Actual: `gh api repos/kigster/openlanes/commits/main/check-runs` returns `[]`. `CiGate.verdict([])` is `:none`, so `merge` returns \"waits on CI on main, which is none\" on every poll and nothing ever merges. The reverse also holds: a red CircleCI status on `main` is invisible once any green check run exists, so a broken `main` would not hold a merge.\n- Fix: also read `commits/<branch>/status` (or `commits/<branch>/check-runs` plus `/status`), map `state` success/failure/error/pending to buckets, and combine both lists.\n\n**2. No test for `branch_checks`/`bucket_of`**\n- `github_spec.rb` has no example for it, and the fake `gh` serves only `check-runs`. A status-only `main` (finding 1) therefore cannot fail any test. Add a status-only `main` example that expects `:green`, and a red-status one that expects the merge held.",
       "read": "no"
     },
@@ -210,7 +210,7 @@
       "number": 2,
       "at": "2026-10-21T21:37:35-07:00",
       "from": "github",
-      "to": "r2d2-mechanic",
+      "to": "chores-coder",
       "body": "PR #113 was labelled review-rejected on GitHub.\n\nkigster (https://github.com/kigster/openlanes/pull/113#issuecomment-6332819713):\n\nReview round 1: rejected (1/2).\n\n**1. `Vcs::GitHub#branch_checks` reads check runs only, so CI on `main` is never seen on this repo** (`lib/openlanes/vcs/github.rb`, `branch_checks`; used by `Merging#main_ci`)\n- Input: `main` as it is now. CI here is CircleCI, which reports commit statuses (`StatusContext`, e.g. `ci/circleci: test`), not check runs.\n- Expected: `main_ci` is `:green`, since `repos/kigster/openlanes/commits/main/status` shows linter, web, test and e2e all `success`, so a passing, verified PR merges.\n- Actual: `gh api repos/kigster/openlanes/commits/main/check-runs` returns `[]`. `CiGate.verdict([])` is `:none`, so `merge` returns \"waits on CI on main, which is none\" on every poll and nothing ever merges. The reverse also holds: a red CircleCI status on `main` is invisible once any green check run exists, so a broken `main` would not hold a merge.\n- Fix: also read `commits/<branch>/status` (or `commits/<branch>/check-runs` plus `/status`), map `state` success/failure/error/pending to buckets, and combine both lists.\n\n**2. No test for `branch_checks`/`bucket_of`**\n- `github_spec.rb` has no example for it, and the fake `gh` serves only `check-runs`. A status-only `main` (finding 1) therefore cannot fail any test. Add a status-only `main` example that expects `:green`, and a red-status one that expects the merge held.",
       "read": "no"
     },
@@ -219,14 +219,14 @@
       "number": 3,
       "at": "2026-10-21T21:37:35-07:00",
       "from": "github",
-      "to": "rey-frontend",
+      "to": "frontend-coder",
       "body": "PR #113 was labelled review-rejected on GitHub.\n\nkigster (https://github.com/kigster/openlanes/pull/113#issuecomment-6332819713):\n\nReview round 1: rejected (1/2).\n\n**1. `Vcs::GitHub#branch_checks` reads check runs only, so CI on `main` is never seen on this repo** (`lib/openlanes/vcs/github.rb`, `branch_checks`; used by `Merging#main_ci`)\n- Input: `main` as it is now. CI here is CircleCI, which reports commit statuses (`StatusContext`, e.g. `ci/circleci: test`), not check runs.\n- Expected: `main_ci` is `:green`, since `repos/kigster/openlanes/commits/main/status` shows linter, web, test and e2e all `success`, so a passing, verified PR merges.\n- Actual: `gh api repos/kigster/openlanes/commits/main/check-runs` returns `[]`. `CiGate.verdict([])` is `:none`, so `merge` returns \"waits on CI on main, which is none\" on every poll and nothing ever merges. The reverse also holds: a red CircleCI status on `main` is invisible once any green check run exists, so a broken `main` would not hold a merge.\n- Fix: also read `commits/<branch>/status` (or `commits/<branch>/check-runs` plus `/status`), map `state` success/failure/error/pending to buckets, and combine both lists.\n\n**2. No test for `branch_checks`/`bucket_of`**\n- `github_spec.rb` has no example for it, and the fake `gh` serves only `check-runs`. A status-only `main` (finding 1) therefore cannot fail any test. Add a status-only `main` example that expects `:green`, and a red-status one that expects the merge held.",
       "read": "no"
     }
   ],
   "moves": 10,
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -234,11 +234,11 @@
           "entries": [
             {
               "kind": "note",
-              "text": "Most of R5 already existed in Engine::Merging (palpatine verdicts, ready-to-merge, PR CI, BEHIND, sibling rebase). This round added only what was missing."
+              "text": "Most of R5 already existed in Engine::Merging (deploy-assessor verdicts, ready-to-merge, PR CI, BEHIND, sibling rebase). This round added only what was missing."
             },
             {
               "kind": "decision",
-              "text": "The passing-verdict condition is implicit: ready-to-merge replaces review-approved/ok-not-perfect, and only chewie applies it after a passing review"
+              "text": "The passing-verdict condition is implicit: ready-to-merge replaces review-approved/ok-not-perfect, and only verifier applies it after a passing review"
             },
             {
               "kind": "decision",
@@ -280,7 +280,7 @@
             },
             {
               "kind": "done",
-              "text": "rspec 4174 examples, 0 failures, 9 pending (web/dist missing, pre-existing); rubocop 0 offenses; signed Completed --next hansolo-reviewer"
+              "text": "rspec 4174 examples, 0 failures, 9 pending (web/dist missing, pre-existing); rubocop 0 offenses; signed Completed --next staff-reviewer"
             }
           ]
         }
@@ -290,7 +290,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -300,7 +300,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "rounds",
@@ -313,7 +313,7 @@
     },
     {
       "number": 3,
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "state": "verifying",
       "round": 1,
       "limit": "time",

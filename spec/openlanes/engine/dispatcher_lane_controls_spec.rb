@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
 
     it "tells both agents of a pair to stop" do
-      expect(dispatcher.stop_plan("001.00")).to contain_exactly("001.00/luke-backend", "001.00/rey-frontend")
+      expect(dispatcher.stop_plan("001.00")).to contain_exactly("001.00/backend-coder", "001.00/frontend-coder")
     end
 
     it "writes STOP into each control file" do
@@ -71,7 +71,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       runner.drop_plan("001.00")
       dispatcher.restart_plan("001.00")
       start_agents
-      expect(dispatcher.running.map(&:key)).to include("001.00/luke-backend")
+      expect(dispatcher.running.map(&:key)).to include("001.00/backend-coder")
     end
 
     it "forgets the rounds the plan used up, so an exhausted lane runs again" do
@@ -81,7 +81,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       dispatcher.tick
       dispatcher.restart_plan("001.00")
       start_agents
-      expect(dispatcher.running.map(&:key)).to contain_exactly("001.00/luke-backend", "001.00/rey-frontend")
+      expect(dispatcher.running.map(&:key)).to contain_exactly("001.00/backend-coder", "001.00/frontend-coder")
     end
   end
 

@@ -1,6 +1,6 @@
 # Plan 009.00 — front end
 
-`rey-frontend` builds this against the contract in `plan.md`. It can start as soon as the contract is fixed; it is verified against the real snapshot once B6 lands.
+`frontend-coder` builds this against the contract in `plan.md`. It can start as soon as the contract is fixed; it is verified against the real snapshot once B6 lands.
 
 ## F1 Bomb notice, answer box and buttons
 

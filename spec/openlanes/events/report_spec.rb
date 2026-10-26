@@ -22,7 +22,7 @@ RSpec.describe OpenLanes::Events::Report do
         at: Time.iso8601(at),
         plan: "001.00",
         run: "r1",
-        agent: "luke-backend",
+        agent: "backend-coder",
         payload: { "round" => 1 }.merge(payload))
     end
 

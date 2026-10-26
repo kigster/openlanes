@@ -564,11 +564,11 @@ RSpec.describe Agentilda::Presentation::Screen::Ratatui do
   let(:table_state) { tui.table_state }
 
   let(:row) do
-    Agentilda::Engine::Board::Row.new(key: "001.00/leah-researcher",
+    Agentilda::Engine::Board::Row.new(key: "001.00/researcher",
       at: Time.new(2026, 9, 4, 11, 29, 20),
       ordinal: "001.00",
       file: "spec.md",
-      agent: "leah-researcher",
+      agent: "researcher",
       role: "researcher",
       round: 1,
       rounds: 2,
@@ -607,7 +607,7 @@ RSpec.describe Agentilda::Presentation::Screen::Ratatui do
     table = widgets_of(RatatuiRuby::Widgets::Table).first
     expect(table).not_to be_nil
     agent_cell = table.rows.first.cells[3]
-    expect(agent_cell.content).to eq("leah-researcher")
+    expect(agent_cell.content).to eq("researcher")
     expect(agent_cell.style.fg).to eq(:yellow)
     expect(agent_cell.style.modifiers).to include(:bold)
   end

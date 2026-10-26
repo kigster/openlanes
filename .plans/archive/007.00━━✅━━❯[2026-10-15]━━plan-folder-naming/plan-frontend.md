@@ -1,6 +1,6 @@
 # 007.00 Plan Folder Naming — front end
 
-Built by `rey-frontend`, after B4 lands the `locked` field in `Live::Snapshot`.
+Built by `frontend-coder`, after B4 lands the `locked` field in `Live::Snapshot`.
 
 ## F1. Control room: new emoji set and 🔑
 

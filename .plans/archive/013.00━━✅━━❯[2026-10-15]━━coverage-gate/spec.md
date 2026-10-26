@@ -58,12 +58,12 @@ Each item has its check.
 1. An empty report (zero instrumented lines) counts as 0% (open question 2). Check: a fixture per format.
 1. The gate withholds `ok-to-merge` below `minimum` and reports the figure and the minimum in its message. Check: a spec at 94.99 and 95.0 with `minimum: 95`.
 1. The command runs in a clean checkout of the PR, never in the main tree. Check: a spec with a `Vcs::Worktree` double asserts the working directory.
-1. A decision-level fixture for `hansolo`: a diff that lowers `minimum` is rejected. Check: an eval case under `evals/cases/hansolo/`.
+1. A decision-level fixture for `staff-reviewer`: a diff that lowers `minimum` is rejected. Check: an eval case under `evals/cases/staff-reviewer/`.
 
 ## Out of scope
 
 - Languages' own coverage runners: the project owns `command`.
-- Writing `.openlanes.coverage.yml` for a project: luke writes it per M15. This plan reads it.
+- Writing `.openlanes.coverage.yml` for a project: backend-coder writes it per M15. This plan reads it.
 - Adding `json-summary` to the web project: a web project change, tracked by open question 4.
 - Branch coverage: M15 has one `minimum`.
 
@@ -71,11 +71,11 @@ Each item has its check.
 
 | Item | Half |
 | --- | --- |
-| Config loader, four parsers, empty/missing rules | `luke-backend` |
-| Gate step in the engine, wiring into the `ok-to-merge` decision | `luke-backend` |
-| hansolo eval case, agent text for "never lower `minimum`" | `luke-backend` |
-| Surfacing the figure in `openlanes` output (Reporter) | `luke-backend` |
-| Web dashboard display, if any | `rey-frontend`, only if open question 6 is answered yes |
+| Config loader, four parsers, empty/missing rules | `backend-coder` |
+| Gate step in the engine, wiring into the `ok-to-merge` decision | `backend-coder` |
+| staff-reviewer eval case, agent text for "never lower `minimum`" | `backend-coder` |
+| Surfacing the figure in `openlanes` output (Reporter) | `backend-coder` |
+| Web dashboard display, if any | `frontend-coder`, only if open question 6 is answered yes |
 
 ## Open questions
 
@@ -105,7 +105,7 @@ When this ships, a project with `.openlanes.coverage.yml` has its test command r
 
 ## Research
 
-Researched 2026-10-13 by leah-researcher. Repository facts were read from the worktree and by running `bundle exec rspec spec/openlanes/linear/fuzzy_spec.rb` (8 examples, 0 failures; the full suite was not run). External facts were fetched from the URLs below on 2026-10-13.
+Researched 2026-10-13 by researcher. Repository facts were read from the worktree and by running `bundle exec rspec spec/openlanes/linear/fuzzy_spec.rb` (8 examples, 0 failures; the full suite was not run). External facts were fetched from the URLs below on 2026-10-13.
 
 ### Parsers and the figure each reports
 

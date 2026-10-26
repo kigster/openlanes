@@ -62,13 +62,13 @@ RSpec.describe OpenLanes::Execution::Checks do
 
   describe ".apply_to?" do
     it "holds builders and the reviewer to it" do
-      %w[luke-backend rey-frontend r2d2-mechanic hansolo-reviewer].each do |name|
+      %w[backend-coder frontend-coder chores-coder staff-reviewer].each do |name|
         expect(described_class.apply_to?(OpenLanes::Agents.find(name))).to be(true), name
       end
     end
 
     it "spares the agents that write documents" do
-      %w[leah-researcher yoda-writer luthen-rael-planner lando-broker].each do |name|
+      %w[researcher spec-writer planner unblocker].each do |name|
         expect(described_class.apply_to?(OpenLanes::Agents.find(name))).to be(false), name
       end
     end

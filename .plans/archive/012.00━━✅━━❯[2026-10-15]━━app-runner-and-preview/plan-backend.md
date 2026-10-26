@@ -1,7 +1,7 @@
 
 # 012.00 App Runner and Preview, back end
 
-`luke-backend` builds these. Namespace is `OpenLanes::Apps` (`lib/openlanes/apps.rb` facade, `lib/openlanes/apps/`), plural like `Agents` and `Adapters`, so it never collides with `Web::App`. B1 lands first: `rey-frontend` builds against its event shape.
+`backend-coder` builds these. Namespace is `OpenLanes::Apps` (`lib/openlanes/apps.rb` facade, `lib/openlanes/apps/`), plural like `Agents` and `Adapters`, so it never collides with `Web::App`. B1 lands first: `frontend-coder` builds against its event shape.
 
 ## B1 Contract: `app:` config and the status event
 
@@ -20,7 +20,7 @@
 - **Depends on:** nothing
 - **Done when:** `config_spec.rb` loads a valid `app:` and refuses an unknown key inside it and a process missing `name` or `start`, each with the file named; `definition_spec.rb` refuses two `preview: true` and returns `nil` for zero; `listing_spec.rb` round-trips statuses and prunes a stale heartbeat; `events_spec.rb` sees the `apps` snapshot on open and one `app` event per changed process.
 
-Wire shape, fixed here and copied by `rey-frontend` into `web/src/api/types.ts`:
+Wire shape, fixed here and copied by `frontend-coder` into `web/src/api/types.ts`:
 
 ```
 event: apps   data: { "apps": [ <app>, ... ] }        # on stream open, latest per (plan, process)

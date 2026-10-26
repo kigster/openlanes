@@ -16,7 +16,7 @@ module OpenLanes
         option :to, required: true, desc: "The agent it is for"
 
         example [
-          %(--plan 003 --from luke-backend --to rey-frontend "GET /returns/:id is up; errors come back as {error: {code, message}}")
+          %(--plan 003 --from #{OpenLanes::Agents::Names::BACKEND_CODER} --to #{OpenLanes::Agents::Names::FRONTEND_CODER} "GET /returns/:id is up; errors come back as {error: {code, message}}")
         ]
 
         # @param body [String]
@@ -35,7 +35,7 @@ module OpenLanes
           return if quiet?(options)
 
           # One line, not a box: an agent runs this between steps, and a
-          # four-line frame around "#7 → rey-frontend" is noise it reads.
+          # four-line frame around "#7 → frontend-coder" is noise it reads.
           UI.line("##{message.number} → #{message.to}, in #{File.basename(mailbox.dir)}/#{Plans::PlanState::FILENAME}")
         end
 

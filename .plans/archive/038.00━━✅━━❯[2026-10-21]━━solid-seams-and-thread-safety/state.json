@@ -9,7 +9,7 @@
   "updated_at": "2026-10-21T01:25:21-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -26,7 +26,7 @@
       "finished_at": "2026-10-20T17:06:34-07:00"
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -49,7 +49,7 @@
       "moves": 2
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -72,7 +72,7 @@
       "moves": 3
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -95,7 +95,7 @@
       "moves": 4
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Started",
       "from": "planned",
@@ -118,7 +118,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Completed",
       "from": "building",
@@ -141,7 +141,7 @@
       "moves": 6
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -164,7 +164,7 @@
       "moves": 8
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "rejected",
@@ -187,7 +187,7 @@
       "moves": 9
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_review",
@@ -210,7 +210,7 @@
       "moves": 10
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 2,
       "status": "Completed",
       "from": "in_review",
@@ -233,7 +233,7 @@
       "moves": 11
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Completed",
       "from": "verifying",
@@ -256,7 +256,7 @@
       "moves": 11
     },
     {
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "round": 1,
       "status": "Interrupted",
       "from": "verifying",
@@ -278,163 +278,163 @@
   "signatures": [
     {
       "at": "2026-10-20T17:06:34-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-20T17:06:43-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:12:22-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-20T17:12:37-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:13:18-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-20T17:13:33-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:15:49-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-20T17:16:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:29:42-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-20T17:45:33-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-20T17:46:04-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:52:16-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-20T17:52:39-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T18:01:30-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-20T18:01:56-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T18:02:42-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 2,
       "note": "approved"
     },
     {
       "at": "2026-10-20T18:02:59-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
     },
     {
       "at": "2026-10-20T18:08:07-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-20T18:08:18-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 2,
       "note": "approved"
     },
     {
       "at": "2026-10-20T18:08:32-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T18:12:20-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (verified)"
     },
     {
       "at": "2026-10-21T01:20:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-21T01:20:22-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:24:35-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Completed",
       "round": 2,
       "note": "Completed, round 2 (verified)"
     },
     {
       "at": "2026-10-21T01:24:52-07:00",
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
@@ -446,7 +446,7 @@
       "number": 1,
       "at": "2026-10-20T17:06:34-07:00",
       "from": "openlanes",
-      "to": "leah-researcher",
+      "to": "researcher",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     },
@@ -455,21 +455,21 @@
       "number": 2,
       "at": "2026-10-21T01:20:02-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     }
   ],
   "moves": 12,
   "last-known-state": {
-    "leah-researcher": {
+    "researcher": {
       "source": "harness",
       "at": "2026-10-20T17:06:34-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "harness died"
     },
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-20T17:41:57-07:00",
       "round": 2,
@@ -498,14 +498,14 @@
         "spec/openlanes/live/unblock_spec.rb"
       ]
     },
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "source": "harness",
       "at": "2026-10-20T18:02:59-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "no closing ledger line; last ledger line: Completed, round 2: approved; last seen: Approved PR 107, but the PR label did not change, and I signed `Completed (approved)` anyway."
     },
-    "chewie-verifier": {
+    "verifier": {
       "source": "harness",
       "at": "2026-10-21T01:24:52-07:00",
       "round": 1,
@@ -514,7 +514,7 @@
     }
   },
   "memory": {
-    "leah-researcher": {
+    "researcher": {
       "rounds": {
         "1": {
           "round": 1,
@@ -530,13 +530,13 @@
             },
             {
               "kind": "todo",
-              "text": "Settle with yoda: EventBus replaces or wraps Live::News; stress-spec N; inventory scope; 038 vs 034 ordering"
+              "text": "Settle with spec-writer: EventBus replaces or wraps Live::News; stress-spec N; inventory scope; 038 vs 034 ordering"
             }
           ]
         }
       }
     },
-    "luthen-rael-planner": {
+    "planner": {
       "rounds": {
         "1": {
           "round": 1,
@@ -570,7 +570,7 @@
         }
       }
     },
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 2,
@@ -600,13 +600,13 @@
             },
             {
               "kind": "done",
-              "text": "Changes-requested round closed: rubocop 0 offenses, rspec 4045 examples 0 failures 9 pending, coverage-changed all 36 files >=95% (child.rb 100%); Answers round 1 recorded in pull-requests.md; signed Completed, next hansolo-reviewer"
+              "text": "Changes-requested round closed: rubocop 0 offenses, rspec 4045 examples 0 failures 9 pending, coverage-changed all 36 files >=95% (child.rb 100%); Answers round 1 recorded in pull-requests.md; signed Completed, next staff-reviewer"
             }
           ]
         }
       }
     },
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "rounds": {
         "1": {
           "round": 1,
@@ -638,7 +638,7 @@
         }
       }
     },
-    "chewie-verifier": {
+    "verifier": {
       "rounds": {
         "1": {
           "round": 1,
@@ -670,7 +670,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -683,7 +683,7 @@
     },
     {
       "number": 2,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 2,
       "limit": "time",
@@ -693,7 +693,7 @@
     },
     {
       "number": 3,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -706,7 +706,7 @@
     },
     {
       "number": 4,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -716,7 +716,7 @@
     },
     {
       "number": 5,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "rounds",
@@ -729,7 +729,7 @@
     },
     {
       "number": 6,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 2,
       "limit": "time",
@@ -739,7 +739,7 @@
     },
     {
       "number": 7,
-      "agent": "chewie-verifier",
+      "agent": "verifier",
       "state": "verifying",
       "round": 1,
       "limit": "rounds",

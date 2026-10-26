@@ -11,12 +11,12 @@ module OpenLanes
     #
     # This is for work that does not exist yet. A plan created `--after` a
     # shipped pull request already has its facts — {CLI::Create} hands those to
-    # `yoda-writer`, which reconstructs a specification from a diff, not this.
+    # `spec-writer`, which reconstructs a specification from a diff, not this.
     # Guessing at a diff and guessing at a feature nobody has built are
     # different jobs, and conflating them is how a retroactive spec ends up
     # full of hedges about something that already, provably, happened.
     #
-    # The four headings are the brief `leah-researcher` and `yoda-writer` both
+    # The four headings are the brief `researcher` and `spec-writer` both
     # read *before* their own chapters: what research needs to settle is a
     # question about the gaps in `## What already exists`, so a scaffold
     # missing that heading forces both of them to first reconstruct a boundary
@@ -25,7 +25,7 @@ module OpenLanes
       # The half-agent's name. It has no `agents/*.md` of its own on purpose —
       # a roster entry would put it in `Runner`'s routing, and this pass runs
       # only inside `create`. The name exists so the UI can show it the same
-      # way it shows `leah-researcher` and `yoda-writer` on their spinner lines.
+      # way it shows `researcher` and `spec-writer` on their spinner lines.
       AGENT_NAME = "anakin-briefster"
 
       HEADINGS = [
@@ -55,7 +55,7 @@ module OpenLanes
 
       # Read-only, and no `Bash` — this pass surveys what the repository
       # already says about itself, it does not go looking further. That is
-      # `leah-researcher`'s job, and denying her tools here is what keeps the
+      # `researcher`'s job, and denying her tools here is what keeps the
       # two from quietly doing the same work twice.
       ALLOWED_TOOLS = %w[Read Grep Glob Edit].freeze
       DENIED_TOOLS = %w[WebFetch WebSearch Bash].freeze

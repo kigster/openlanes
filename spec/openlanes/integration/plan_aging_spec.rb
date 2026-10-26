@@ -6,7 +6,7 @@ require "rack/test"
 # Plan 009.00 end to end. A real `.plans` tree, the real executable, the real
 # control-room app taking commands over HTTP, and the engine's own command
 # reader applying them. Nothing is stubbed but the agent process: the drainer
-# is an executor that retires blocked.md the way lando-broker would, and the
+# is an executor that retires blocked.md the way unblocker would, and the
 # `claude`, `codex` and `pi` on PATH are scripts that fail if anything calls
 # them. GitHub is never reached: the run is `--isolation shared`.
 RSpec.describe "plan aging and bombs, end to end", :tree do
@@ -69,7 +69,7 @@ RSpec.describe "plan aging and bombs, end to end", :tree do
         slug,
         files: { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## U1\n", "blocked.md" => question }
     end
-    OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: Time.now - (days * 86_400))
+    OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", at: Time.now - (days * 86_400))
   end
 
   def waiting_on(ordinal, slug, on)

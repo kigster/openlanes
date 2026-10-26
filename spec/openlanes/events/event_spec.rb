@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Events::Event do
   def payload_for(kind) = described_class::PAYLOAD_KEYS.fetch(kind).to_h { [it, it == "error_class" ? "Errno::ENOSPC" : 1] }
 
   def build(kind, **overrides)
-    fields = { event_id: "e-#{kind}", kind:, at:, project: "demo", plan: "020.01", run: "r1", agent: "luke-backend",
+    fields = { event_id: "e-#{kind}", kind:, at:, project: "demo", plan: "020.01", run: "r1", agent: "backend-coder",
                adapter: "claude", model: "claude-opus-5-5", payload: payload_for(kind) }
     described_class.new(**fields, **overrides)
   end
@@ -22,7 +22,7 @@ RSpec.describe OpenLanes::Events::Event do
         project: "demo",
         plan: "020.01",
         run: "r1",
-        agent: "luke-backend",
+        agent: "backend-coder",
         adapter: "claude",
         model: "claude-opus-5-5")
       expect(event.payload.keys).to match_array(described_class::PAYLOAD_KEYS.fetch(kind))

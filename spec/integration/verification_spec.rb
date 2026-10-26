@@ -3,13 +3,13 @@
 require "rbconfig"
 require "socket"
 
-# Plan 014 end to end: hansolo approves, the folder goes 👀 → 🧪, the app
-# runs while chewie verifies, and the engine commits, comments and labels.
+# Plan 014 end to end: staff-reviewer approves, the folder goes 👀 → 🧪, the app
+# runs while verifier verifies, and the engine commits, comments and labels.
 # Real git with a bare origin and worktree isolation, the real `.plans`
 # tree, the real publisher and GitHub seam answered by the fake `gh`, and
 # 012's fixture server as the app. The one stand-in is for the agents: a
-# lambda signs where `claude` would, writing what chewie-verifier.md asks
-# chewie to write.
+# lambda signs where `claude` would, writing what verifier.md asks
+# verifier to write.
 RSpec.describe "Verification, end to end", :fake_gh, :tree do
   let(:repo) { File.dirname(plans_root) }
   let(:origin) { Dir.mktmpdir("openlanes-origin") }
@@ -61,17 +61,17 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
 
   def checks(bucket) = edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => bucket.upcase, "bucket" => bucket }] }
 
-  # What hansolo and chewie would leave, signed as each would sign it.
+  # What staff-reviewer and verifier would leave, signed as each would sign it.
   def agent(verdict: "verified", failing: nil)
     lambda { |agent, subject, round: 1, **|
-      note = agent.name == "hansolo-reviewer" ? "approved" : chewie(subject, verdict, failing)
+      note = agent.name == "staff-reviewer" ? "approved" : verifier(subject, verdict, failing)
       OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, agent.ledger.first),
         "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} (#{note}) ]")
       OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 1, down: 1, subagents: 0, delegated: 0, seconds: 1.0)
     }
   end
 
-  def chewie(subject, verdict, failing)
+  def verifier(subject, verdict, failing)
     dir = OpenLanes::Engine::Verification.latest(subject.feature.path).dir
     port = File.read(File.join(dir, "app.md"))[/PORT_WEB=(\d+)/, 1].to_i
     app_seen << begin
@@ -89,7 +89,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
   def run(executor)
     runner = OpenLanes::Engine::Runner.new(tree:,
       executor:,
-      agents: OpenLanes::Agents::Registry.new.only("hansolo-reviewer", "chewie-verifier"),
+      agents: OpenLanes::Agents::Registry.new.only("staff-reviewer", "verifier"),
       isolation: :worktree,
       worktree:,
       publisher:,
@@ -146,7 +146,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
 
     aggregate_failures do
       expect(attempts.map { [it.agent, it.from, it.to] })
-        .to eq([["hansolo-reviewer", :in_review, :verifying], ["chewie-verifier", :verifying, :verifying]])
+        .to eq([["staff-reviewer", :in_review, :verifying], ["verifier", :verifying, :verifying]])
       expect(app_seen).to eq([true])
       expect(pushed).to contain_exactly("final.png", "report.md")
       expect(waiting).to eq(%w[review-approved])
@@ -169,7 +169,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
       expect(comments.first).to match(%r{\(https://github\.com/acme/widgets/blob/#{sha}/\.plans/[^)]+/verification/1/step-02\.png\?raw=true\)})
       expect(pushed.map { File.basename(it) }).to contain_exactly("step-02.png", "final.png", "report.md")
       expect(plan.status.key).to eq(:rejected)
-      expect(mail_to).to include("luke-backend", "rey-frontend")
+      expect(mail_to).to include("backend-coder", "frontend-coder")
       expect(alive_children).to be_empty
     end
   end
@@ -177,7 +177,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
   context "with an app whose process never becomes ready" do
     let(:app) { web_app("for i in $(seq 1 30); do echo booting $i; done; exit 5") }
 
-    it "rejects without running chewie, quoting the last 20 lines of its output" do
+    it "rejects without running verifier, quoting the last 20 lines of its output" do
       _, attempts = run(agent)
 
       aggregate_failures do
@@ -187,7 +187,7 @@ RSpec.describe "Verification, end to end", :fake_gh, :tree do
         expect(comments.first).to include("the app does not start: web exited with status 5", "booting 11\n", "booting 30\n")
         expect(comments.first).not_to include("booting 10\n")
         expect(plan.status.key).to eq(:rejected)
-        expect(mail_to).to include("luke-backend", "rey-frontend")
+        expect(mail_to).to include("backend-coder", "frontend-coder")
       end
     end
   end

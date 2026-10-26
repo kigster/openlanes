@@ -28,9 +28,9 @@ module OpenLanes
       # Key, label and the states folded into it, in spine order. ⭐ Planned
       # sits with 🟡 Building and 🟢 Ready for Review with 👀 In Review,
       # because on the board each pair is one stop with the same agents.
-      # 🔴 Rejected sits at Building too: luke and rey rework it there, and
+      # 🔴 Rejected sits at Building too: backend-coder and frontend-coder rework it there, and
       # placed by the spine alone it showed them at Building UI, a stop whose
-      # agent list leaves luke out.
+      # agent list leaves backend-coder out.
       GROUPS = [
         [:new, "New", %i[new]],
         [:researched, "Researched", %i[researched retroactive]],

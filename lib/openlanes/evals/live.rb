@@ -102,7 +102,7 @@ module OpenLanes
       end
 
       # The runner moves a folder to the agent's `starts_as` the moment it is
-      # dispatched, so r2d2 works a 🟡 plan and hansolo a 👀 one. Same here.
+      # dispatched, so chores-coder works a 🟡 plan and staff-reviewer a 👀 one. Same here.
       #
       # @return [OpenLanes::Plans::Subject]
       def start(plans)

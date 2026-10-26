@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 113 | [\[033.00\](A) Auto Merge Passing PRS](https://github.com/kigster/openlanes/pull/113) | Merged 🟣 |
 
-## luke-backend, round 1
+## backend-coder, round 1
 
 - Baseline: `bundle exec rspec` green before work.
 - `bundle exec rspec` → 4168 examples, 0 failures, 9 pending (pending pre-existing, none added).

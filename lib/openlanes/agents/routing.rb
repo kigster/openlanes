@@ -7,7 +7,7 @@ module OpenLanes
     # lane may route around the agent, its spec.md may switch it off, or the
     # files it builds from may hold nothing for it to do.
     #
-    # The front end is the case that motivated this. rey-frontend used to be
+    # The front end is the case that motivated this. frontend-coder used to be
     # started on every planned folder, and spent ten minutes and five dollars
     # on a plan whose interface was three lines of terminal output.
     module Routing
@@ -43,8 +43,8 @@ module OpenLanes
       #
       # {Agent#needs} only ever chooses between agents. When lanes and
       # switches leave one candidate, that one runs: a plan parked at 🎨 is
-      # rey-frontend's to finish whatever `plan.md`'s `## Frontend` says, and an
-      # operator who typed `--agent rey-frontend` meant it.
+      # frontend-coder's to finish whatever `plan.md`'s `## Frontend` says, and an
+      # operator who typed `--agent frontend-coder` meant it.
       #
       # @param agents [Array<OpenLanes::Agents::Agent>]
       # @param subject [OpenLanes::Plans::Subject]

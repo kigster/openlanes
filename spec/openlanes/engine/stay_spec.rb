@@ -4,7 +4,7 @@ require_relative "../live/live_context"
 
 # `openlanes start`, and `run` with its control room: the dispatcher idles
 # past every fixed point instead of ending there, and only a quit ends it. The case that asked for it: `openlanes create a web-based
-# minesweeper game`, luthen-rael-planner asks a question, and the run ended
+# minesweeper game`, planner asks a question, and the run ended
 # with the question on a page that died with it.
 RSpec.describe "A staying run", :tree do
   include_context "with a live run"
@@ -71,23 +71,23 @@ RSpec.describe "A staying run", :tree do
 
   after { OpenLanes::Execution::Control.reset! }
 
-  describe "luthen-rael blocks on a question, the answer comes from the page" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("luthen-rael-planner", "lando-broker") }
+  describe "planner blocks on a question, the answer comes from the page" do
+    let(:agents) { OpenLanes::Agents::Registry.new.only("planner", "unblocker") }
     let(:seen) { {} }
-    # depends_on is answered, as luthen-rael leaves it once he has planned.
+    # depends_on is answered, as planner leaves it once he has planned.
     let(:linked_spec) { "---\ndepends_on: [none]\n---\n#{spec_body}" }
 
-    # Round one asks how big the board is; once lando-broker has drained
-    # the answer, luthen-rael plans.
+    # Round one asks how big the board is; once unblocker has drained
+    # the answer, planner plans.
     let(:behaviour) do
       lambda { |agent, subject, _round|
         path = subject.feature.path
         case agent.name
-        when "lando-broker"
+        when "unblocker"
           File.delete(File.join(path, "blocked.md"))
           nil
-        when "luthen-rael-planner"
-          if calls.count("luthen-rael-planner") == 1
+        when "planner"
+          if calls.count("planner") == 1
             File.write(File.join(path, "blocked.md"), "## B1 Board size\n\nHow many cells a side?\n")
             "Blocked"
           else
@@ -100,7 +100,7 @@ RSpec.describe "A staying run", :tree do
     end
 
     # The page: once the question shows in Needs You, with nothing running,
-    # it is answered; once luthen-rael has run again and the run idles, the
+    # it is answered; once planner has run again and the run idles, the
     # person stops it.
     let(:script) do
       lambda { |_|
@@ -109,7 +109,7 @@ RSpec.describe "A staying run", :tree do
           seen[:idle] = snapshot.dig("run", "status")
           answer("01ANSWER", "B1", "Nine.")
         end
-        if calls.count("luthen-rael-planner") == 2 && dispatcher.running.empty? && dispatcher.board.status == :idle
+        if calls.count("planner") == 2 && dispatcher.running.empty? && dispatcher.board.status == :idle
           OpenLanes::Execution::Control.quit!
         end
       }
@@ -120,18 +120,18 @@ RSpec.describe "A staying run", :tree do
       run_until_stopped
     end
 
-    it "keeps running past the block, shows the question, drains the answer, and starts luthen-rael again" do
+    it "keeps running past the block, shows the question, drains the answer, and starts planner again" do
       aggregate_failures do
         expect(seen[:question]).to include("id" => "020.00/B1", "body" => "How many cells a side?")
         expect(seen[:idle]).to eq("idle")
-        expect(calls).to eq(%w[luthen-rael-planner lando-broker luthen-rael-planner])
+        expect(calls).to eq(%w[planner unblocker planner])
         expect(status_of("020.00")).to eq(:planned)
       end
     end
   end
 
   describe "a project with no plans yet" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("leah-researcher") }
+    let(:agents) { OpenLanes::Agents::Registry.new.only("researcher") }
     let(:behaviour) do
       lambda { |_agent, subject, _round|
         File.write(File.join(subject.feature.path, "spec.md"), "#{spec_body}\n## Research\n\nFound.\n")
@@ -152,7 +152,7 @@ RSpec.describe "A staying run", :tree do
     before { run_until_stopped }
 
     it "waits for the first plan instead of calling an empty tree complete, and picks it up on a rescan" do
-      expect([calls, status_of("001.00")]).to eq([%w[leah-researcher], :researched])
+      expect([calls, status_of("001.00")]).to eq([%w[researcher], :researched])
     end
 
     it "says what it is waiting for" do
@@ -161,7 +161,7 @@ RSpec.describe "A staying run", :tree do
   end
 
   describe "a plan created from the page" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("leah-researcher") }
+    let(:agents) { OpenLanes::Agents::Registry.new.only("researcher") }
 
     let(:script) do
       lambda { |tick|
@@ -177,12 +177,12 @@ RSpec.describe "A staying run", :tree do
     before { run_until_stopped }
 
     it "joins the run at once, without waiting for the rescan" do
-      expect([calls, ticks.size < rescan]).to eq([%w[leah-researcher], true])
+      expect([calls, ticks.size < rescan]).to eq([%w[researcher], true])
     end
   end
 
   describe "when every plan is finished" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("leah-researcher") }
+    let(:agents) { OpenLanes::Agents::Registry.new.only("researcher") }
     let(:script) { ->(tick) { OpenLanes::Execution::Control.quit! if tick == 30 } }
 
     before do
@@ -203,7 +203,7 @@ RSpec.describe "A staying run", :tree do
   end
 
   describe "a plan still waiting on review" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("leah-researcher") }
+    let(:agents) { OpenLanes::Agents::Registry.new.only("researcher") }
     let(:asked) { [] }
     let(:script) do
       lambda { |tick|
@@ -234,7 +234,7 @@ RSpec.describe "A staying run", :tree do
   end
 
   describe "resting between rescans" do
-    let(:agents) { OpenLanes::Agents::Registry.new.only("leah-researcher") }
+    let(:agents) { OpenLanes::Agents::Registry.new.only("researcher") }
     let(:rescan) { 5 }
     let(:scans) { [] }
 

@@ -45,7 +45,7 @@ Decided 2026-10-13 by kig: `Tree` detects cycles in 008.00, rather than leaving 
 1. Treating shared files as a dependency; that is a merge risk (N7).
 1. Splitting a plan from the choice card. "Split" is offered, but creating the new plan is a separate piece of work.
 1. Blocked-plan ageing, 💣 promotion and `deferred/` (N8). A different decision.
-1. Running ewoki through the web server as `c3po-operator` does (Research §3).
+1. Running ewoki through the web server as `copilot` does (Research §3).
 1. Changing any folder name or adding a state; ewoki's `advances_to` is nil.
 
 ## In scope
@@ -58,7 +58,7 @@ Each item names its check.
 1. **Blocked-by-dependency gate in the dispatcher**: a plan with any dependency that is not ✅ is not assigned while other plans run. Check: runner spec with two plans, one waiting, asserts only the free one starts.
 1. **Order**: plans with a non-empty `blocks` are assigned before plans nobody waits for, within a round. Check: dispatcher spec on candidate ordering.
 1. **`agents/ewoki-linker.md`** with frontmatter `precedes: [ready_for_planning, planned]`, `handles: []`, Haiku, low effort. Check: `Agents::Registry` loads it and `Roster` lists it.
-1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly, not through `for_status` (Research §3). Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to luthen-rael (or r2d2 in `quick`).
+1. **Dispatcher ewoki gate**: before candidates are built, a plan in `ready_for_planning` or `planned` whose spec has no `depends_on` key gets ewoki first, selected explicitly, not through `for_status` (Research §3). Check: runner spec asserts ewoki runs once, the folder name is unchanged, and the next round hands the plan to planner (or chores-coder in `quick`).
 1. **Ewoki output contract**: writes only `depends_on:` and a dated ledger note with one reason per dependency. Check: eval case under `evals/cases/ewoki-linker/` plus a deterministic check that only the frontmatter key changed.
 1. **Hand-written key wins**: a plan that already has the key is skipped. Check: runner spec.
 1. **Building invariant**: `:building` in `status.rb` requires the `depends_on` key, per N7. Plans already in Building or later are exempt (see Settled decisions). Check: `Status` spec; `resync dirs` spec on a plan lacking it, asserting the folder does not move back.
@@ -80,7 +80,7 @@ Each item names its check.
 
 ## Back end / front end
 
-This is a CLI gem; "front end" means the human-facing surface (CLI output and the choice card), "back end" the model and engine. `luke-backend` and `rey-frontend` build as a pair.
+This is a CLI gem; "front end" means the human-facing surface (CLI output and the choice card), "back end" the model and engine. `backend-coder` and `frontend-coder` build as a pair.
 
 | Item | Half | Builds |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ This is a CLI gem; "front end" means the human-facing surface (CLI output and th
 
 ## Open questions
 
-Unsettled by leah (Research "Could not settle"):
+Unsettled by researcher (Research "Could not settle"):
 
 1. **Missing or closed dependency.** A `depends_on` naming a plan that does not exist or is ✅. Recommendation: unknown ordinal is a `Spec` problem shown in `list-plans`; a ✅ one is ignored with a warning (N6 says only open plans belong).
 1. **Threshold of 3.** N7 states it with no justification in any document. Taken as given; make it a constant in one place.
@@ -106,7 +106,7 @@ Assumed by this spec:
 
 5. A dependency on a plan whose state is 🅱️ or ⭕️ (blocked) counts as not done, so the dependent waits.
 1. A deferred (💤) plan counts as open for this purpose.
-1. The ewoki gate applies to the `plan` and `quick` lanes at the same two states; N7's "after yoda in `full`" is the 📋 Ready for Planning state reached after yoda signs.
+1. The ewoki gate applies to the `plan` and `quick` lanes at the same two states; N7's "after spec-writer in `full`" is the 📋 Ready for Planning state reached after spec-writer signs.
 1. "Needs you" is an existing surface for the choice card; I did not verify its code path.
 
 ## Risks to planning or execution
@@ -153,7 +153,7 @@ Today the loop only starts agents that handle the plan's state:
 - `Agent#read_only?` (`agent.rb:82`) is `advances_to.nil?`.
 - `Dispatcher#next_dispatchable` (`lib/openlanes/engine/dispatcher.rb`, around line 713) builds candidates from `for_status(state)` only.
 
-So an agent with `handles: []` never runs in the loop. `c3po-operator` is the precedent, and it runs through the web server, not the loop. `ewoki-linker` therefore needs a new path in the dispatcher, not just a file in `agents/`.
+So an agent with `handles: []` never runs in the loop. `copilot` is the precedent, and it runs through the web server, not the loop. `ewoki-linker` therefore needs a new path in the dispatcher, not just a file in `agents/`.
 
 Precedent for frontmatter that changes behaviour without changing `handles:`: `starts_as` and `holds_at` (`registry.rb:111-112`, read by `dispatcher.rb:869` and `:1176`).
 
@@ -161,10 +161,10 @@ Precedent for frontmatter that changes behaviour without changing `handles:`: `s
 
 ### 4. Where the gate sits (contradiction in N7)
 
-N7 says "before a plan's first build agent", then lists "before luthen-rael in plan" and "before r2d2 in quick". luthen-rael handles `ready_for_planning`, not a build state. The states in question:
+N7 says "before a plan's first build agent", then lists "before planner in plan" and "before chores-coder in quick". planner handles `ready_for_planning`, not a build state. The states in question:
 
-- `full` and `plan` lanes: luthen-rael runs at 📋 Ready for Planning (`state_machine.rb:37-43` SPINE: `ready_for_planning` → `planned`).
-- `quick` starts: r2d2 handles `planned` (`agents/r2d2-mechanic.md:4`), and the lane jumps there (`lanes.rb`, `TARGET`).
+- `full` and `plan` lanes: planner runs at 📋 Ready for Planning (`state_machine.rb:37-43` SPINE: `ready_for_planning` → `planned`).
+- `quick` starts: chores-coder handles `planned` (`agents/chores-coder.md:4`), and the lane jumps there (`lanes.rb`, `TARGET`).
 
 **Answer:** gate on either state, so ewoki runs before the first agent that moves the plan toward Building in each lane. The spec should name the two states, not "first build agent".
 
@@ -188,7 +188,7 @@ A `depends_on` check on `:building` in `lib/openlanes/plans/status.rb` also runs
 
 ### Contradictions
 
-1. **N7 gate position.** "before the first build agent" vs "before luthen-rael" (luthen-rael is a planner). Resolved in item 4; the spec should name the states.
+1. **N7 gate position.** "before the first build agent" vs "before planner" (planner is a planner). Resolved in item 4; the spec should name the states.
 2. **Ordinal shorthand.** This spec's `depends_on: ["007"]` and N6's `[034, 045]` use bare `NNN`, which means `NNN.00` (item 2). The spec and decisions doc should both say `"NNN.MM"`.
 3. **Existing `status.rb` and N7.** N7 says ewoki writes the key; the Building invariant (item 7) would block every in-flight plan without it. The decision and the code disagree until grandfathering is decided.
 
@@ -210,7 +210,7 @@ Production today runs none of this: no `depends_on` parsing, no ewoki, no dispat
 - `ruby -ryaml` output, Ruby 4.0.6 (item 1).
 - `lib/openlanes/plans/ordinal.rb:27,34-37` (item 2).
 - `lib/openlanes/agents/agent.rb:82,86`, `lib/openlanes/agents/registry.rb:78,111-112`, `lib/openlanes/engine/dispatcher.rb` (`next_dispatchable`, `:869`, `:1176`) (item 3).
-- `agents/c3po-operator.md:4` (`handles: []`), `agents/r2d2-mechanic.md:4` (item 3, 4).
+- `agents/copilot.md:4` (`handles: []`), `agents/chores-coder.md:4` (item 3, 4).
 - `lib/openlanes/plans/state_machine.rb:37-43` (SPINE) (item 4).
 - `lib/openlanes/plans/spec.rb:134-148` (item 5).
 - `lib/openlanes/lifecycle/unblocker.rb`, `lib/openlanes/plans/plan_state.rb` (`message!`) (item 6).

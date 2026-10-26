@@ -14,7 +14,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   def published(number, body = "contract is up")
     mail.publish(plan: "001.00",
-      message: { "number" => number, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => body })
+      message: { "number" => number, "at" => "2026-10-13T19:17:10-07:00", "from" => "backend-coder", "to" => "frontend-coder", "body" => body })
   end
 
   before do
@@ -29,12 +29,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     aggregate_failures do
       expect(numbers).to eq([5])
-      expect(OpenLanes::Plans.mailbox(folder).for("rey-frontend").map(&:body)).to eq(["contract is up"])
+      expect(OpenLanes::Plans.mailbox(folder).for("frontend-coder").map(&:body)).to eq(["contract is up"])
     end
   end
 
   it "writes nothing for a message mail send already put in state.json" do
-    sent = OpenLanes::Plans.mailbox(folder).append(from: "luke-backend", to: "rey-frontend", body: "contract is up")
+    sent = OpenLanes::Plans.mailbox(folder).append(from: "backend-coder", to: "frontend-coder", body: "contract is up")
     mail.publish(plan: "001.00", message: sent)
     before = File.mtime(File.join(folder, "state.json"))
     dispatcher.tick
@@ -59,7 +59,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   it "keeps mail for a plan with nobody running on it" do
     building("002.00", "idle-plan")
     mail.publish(plan: "002.00",
-      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "hi" })
+      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "backend-coder", "to" => "frontend-coder", "body" => "hi" })
     dispatcher.tick
 
     expect(OpenLanes::Plans::PlanState.for(path_of("002.00")).messages.map { it["body"] }).to eq(["hi"])
@@ -67,7 +67,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
   it "leaves a message pending while its plan cannot be found, and keeps it once it can" do
     mail.publish(plan: "002.00",
-      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "hi" })
+      message: { "number" => 1, "at" => "2026-10-13T19:17:10-07:00", "from" => "backend-coder", "to" => "frontend-coder", "body" => "hi" })
     dispatcher.tick
 
     aggregate_failures do

@@ -80,7 +80,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       start_agents
       aggregate_failures do
         expect(reply_to("R2")).to include("status" => "done", "reason" => "001.00 restarts at the next tick")
-        expect(dispatcher.running.map(&:key)).to include("001.00/luke-backend")
+        expect(dispatcher.running.map(&:key)).to include("001.00/backend-coder")
       end
     end
   end

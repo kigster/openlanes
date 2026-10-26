@@ -9,7 +9,7 @@ module OpenLanes
     #
     # A worktree reused round after round never moved: plan 008.01's branch
     # had no commits of its own and sat 211 commits behind origin/main, so
-    # luke-backend went looking for code that had landed weeks earlier and
+    # backend-coder went looking for code that had landed weeks earlier and
     # could not find it. The agent could not catch up on its own either,
     # because the boundary fails every run in which HEAD moved. So the
     # harness moves HEAD, here, before {Execution::Boundary} takes its

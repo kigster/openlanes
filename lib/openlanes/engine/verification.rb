@@ -4,8 +4,8 @@ module OpenLanes
   module Engine
     # Running a reviewed pull request before it may merge (plan 014, M1).
     #
-    # hansolo's approval moves the plan to 🧪 Verifying. The engine starts the
-    # plan's app ({AppSession}), `chewie-verifier` follows the pull request's
+    # staff-reviewer's approval moves the plan to 🧪 Verifying. The engine starts the
+    # plan's app ({AppSession}), `verifier` follows the pull request's
     # `## How to test` against it and leaves screenshots and a report in a
     # {Round}'s folder, and the engine acts on the verdict ({Outcome}):
     # commit, comment, label, and the plan to 🔴, or green CI, the coverage
@@ -19,13 +19,13 @@ module OpenLanes
       FROM_REVIEW = [Plans::ReviewLabel::APPROVED].freeze
 
       # The verdict whose fate `desired_codebase_quality` decides (R4): on
-      # to verification under `mvp`, back to luke and rey under `standard` and `high`.
+      # to verification under `mvp`, back to backend-coder and frontend-coder under `standard` and `high`.
       ON_QUALITY = Plans::ReviewLabel::OK_NOT_PERFECT
 
       module_function
 
       # @param plan_dir [String]
-      # @return [Round] the round a new run of chewie works in
+      # @return [Round] the round a new run of verifier works in
       def round_for(plan_dir) = Round.next(plan_dir)
 
       # @param plan_dir [String]
@@ -49,7 +49,7 @@ module OpenLanes
         quality == :mvp && labels.include?(ON_QUALITY.name)
       end
 
-      # Under `mvp` an approved pull request is not run through chewie (plan
+      # Under `mvp` an approved pull request is not run through verifier (plan
       # 035): CI and the coverage gate still stand between it and a merge.
       #
       # @param labels [Array<String>] a pull request's labels

@@ -9,7 +9,7 @@ RSpec.describe "Unblocking from the run loop", :tree do
   include_context "with a live run"
 
   # Stands in for every agent: the one that drains blocked.md retires the
-  # file, as lando-broker does once the last question folds in; anyone else
+  # file, as unblocker does once the last question folds in; anyone else
   # finishes at once.
   let(:executor) do
     Class.new do
@@ -19,10 +19,10 @@ RSpec.describe "Unblocking from the run loop", :tree do
 
       def call(agent, subject, **)
         @calls << "#{subject.feature.ordinal}/#{agent.name}"
-        if agent.name == "lando-broker" && @refuse
+        if agent.name == "unblocker" && @refuse
           OpenLanes::Plans::PlanState.for(subject.feature.path)
                                      .journal!(agent: agent.name, entries: [OpenLanes::Plans::Journal::Entry.new(kind: "note", text: @refuse)])
-        elsif agent.name == "lando-broker" && !@fail
+        elsif agent.name == "unblocker" && !@fail
           File.delete(File.join(subject.feature.path, "blocked.md"))
         end
         OpenLanes::Execution::Executor::Result.new(ok: !@fail,
@@ -58,9 +58,9 @@ RSpec.describe "Unblocking from the run loop", :tree do
       drain
     end
 
-    it "hands the plan to lando-broker, and the next round renames it and starts it again" do
+    it "hands the plan to unblocker, and the next round renames it and starts it again" do
       aggregate_failures do
-        expect(executor.calls.first).to eq("002.00/lando-broker")
+        expect(executor.calls.first).to eq("002.00/unblocker")
         expect(tree.reload.find("002.00").status.key).not_to eq(:blocked)
         expect(executor.calls.size).to be > 1
       end
@@ -88,7 +88,7 @@ RSpec.describe "Unblocking from the run loop", :tree do
 
     it "tries once, and waits for blocked.md to change before trying again" do
       aggregate_failures do
-        expect(executor.calls).to eq(%w[002.00/lando-broker])
+        expect(executor.calls).to eq(%w[002.00/unblocker])
         expect(OpenLanes::UI).to have_received(:log).with("unblock failed: completed", level: :warn, plan: "002.00")
         expect(dispatcher.send(:idle_reason, runner.in_scope))
           .to eq("idle: unblock failed on 002.00 (completed); edit blocked.md to try again")
@@ -108,14 +108,14 @@ RSpec.describe "Unblocking from the run loop", :tree do
     it "puts the question back on the page, saying what was refused and why" do
       aggregate_failures do
         expect(file).not_to match(/^## A1/)
-        expect(file).to include("> **Answer not accepted:** yes", "lando-broker: 'yes' names none of a/b/c")
+        expect(file).to include("> **Answer not accepted:** yes", "unblocker: 'yes' names none of a/b/c")
         expect(OpenLanes::Lifecycle::Unblocker.questions(tree.find("002.00")).map(&:answered)).to eq([false])
       end
     end
 
     it "logs which answer was refused, and why" do
       expect(OpenLanes::UI).to have_received(:log)
-        .with("answer to B1 not accepted: lando-broker: 'yes' names none of a/b/c; not an answer", level: :warn, plan: "002.00")
+        .with("answer to B1 not accepted: unblocker: 'yes' names none of a/b/c; not an answer", level: :warn, plan: "002.00")
     end
   end
 

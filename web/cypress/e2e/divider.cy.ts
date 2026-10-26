@@ -44,8 +44,8 @@ describe("Column divider", () => {
     cy.get(SEP).should("have.attr", "aria-valuenow", "468");
     cy.reload();
     cy.get(SEP).should("have.attr", "aria-valuenow", "468");
-    cy.get('[data-car="005.00/hansolo-reviewer"] .car-open').click();
-    cy.get(".drawer").should("contain", "hansolo-reviewer");
+    cy.get('[data-car="005.00/staff-reviewer"] .car-open').click();
+    cy.get(".drawer").should("contain", "staff-reviewer");
     cy.get(SEP).should("have.attr", "aria-valuenow", "468");
     cy.get(".drawer").contains("button", "Close").click();
     cy.get(".rail").should("exist");

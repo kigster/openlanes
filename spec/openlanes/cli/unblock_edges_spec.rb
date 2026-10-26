@@ -31,9 +31,9 @@ RSpec.describe OpenLanes::CLI::Unblock, :tree do
   describe "--agent naming nobody" do
     it "refuses before resolving any plan, listing who exists" do
       blocked_plan("001.00")
-      _out, err, status = run("001", agent: "chewbacca")
+      _out, err, status = run("001", agent: "ghost-agent")
 
-      expect(unwrapped(err)).to include("No agent called chewbacca", "lando-broker")
+      expect(unwrapped(err)).to include("No agent called ghost-agent", "unblocker")
       expect(status).to eq(65)
     end
   end

@@ -37,8 +37,8 @@ RSpec.describe OpenLanes::Arbitration::Ruling do
   end
 
   it "takes a dispute's winner as its outcome" do
-    ruling = described_class.parse(answer("kind: dispute\nwinner: rey-frontend\nreason: the code wins\n"))
-    expect([ruling.outcome, ruling.winner]).to eq(%w[rey-frontend rey-frontend])
+    ruling = described_class.parse(answer("kind: dispute\nwinner: frontend-coder\nreason: the code wins\n"))
+    expect([ruling.outcome, ruling.winner]).to eq(%w[frontend-coder frontend-coder])
   end
 
   it "opens the engine's comment with the kind and outcome" do

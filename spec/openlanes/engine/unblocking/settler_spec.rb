@@ -11,7 +11,7 @@ RSpec.describe OpenLanes::Engine::Unblocking::Settler do
     OpenLanes::Engine::Steps::Context.new(runner: nil, busy: -> { [] }, wake: -> { woken << true }, reopen: ->(o) { reopened << o })
   end
   let(:outcome) { instance_double(OpenLanes::Lifecycle::Unblocker::Outcome, ok: true, note: "folded", waiting: [], cleared?: true, folded: [1]) }
-  let(:drain) { OpenLanes::Engine::Unblocking::Drain.new(ordinal: "002.00", outcome:, agent: "lando-broker", rounds: 0) }
+  let(:drain) { OpenLanes::Engine::Unblocking::Drain.new(ordinal: "002.00", outcome:, agent: "unblocker", rounds: 0) }
 
   before { allow(OpenLanes::UI).to receive(:log) }
 

@@ -44,9 +44,9 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],
       "an unknown --agent"              => [{ agent: "nobody" }, 65, "No agent called nobody"],
       "an unknown --skip"               => [{ skip: "nobody" }, 65, "No agent called nobody"],
-      "--agent and --skip the same"     => [{ agent: "luke-backend", skip: "luke-backend" }, 64, "contradict each other"],
+      "--agent and --skip the same"     => [{ agent: "backend-coder", skip: "backend-coder" }, 64, "contradict each other"],
       "an unknown --plan"               => [{ plan: "999" }, 66, "No plan 999"],
-      "an --agent no plan is ready for" => [{ agent: "yoda-writer" }, 65, "luke-backend takes it"],
+      "an --agent no plan is ready for" => [{ agent: "spec-writer" }, 65, "backend-coder takes it"],
       "worktree isolation, no git"      => [{ isolation: "worktree" }, 66, "is not a git repository"]
     }.each do |label, (options, status, phrase)|
       it "fails with #{status} for #{label}" do
@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
 
     aggregate_failures do
       expect(result.value!).to eq(0)
-      expect(out).to include("001.00  luke-backend")
+      expect(out).to include("001.00  backend-coder")
       expect(err).to include("Dry run")
     end
   end
@@ -206,7 +206,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       expect(sync_with(dry_run: false, migrated: moved)).to include("relabel ready-to-merge → review-approved on #7, #9")
     end
 
-    # R3 and Copilot on #78: chewie trusts `ready-to-merge`, so a publishing
+    # R3 and Copilot on #78: verifier trusts `ready-to-merge`, so a publishing
     # run must not start while an M3 one could still be on an open PR.
     describe "the migration of M3's labels" do
       it "runs before the run starts, against --root's repository" do

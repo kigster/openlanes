@@ -24,4 +24,4 @@ A killed or timed-out agent today leaves only a thin resume record, and its succ
 - An `override` names the entry number it overturns.
 - A killed agent's already-printed entries are kept.
 - Round n+1's prompt contains round n's journal, with or without `--resume`.
-- Reviewers (031) and luke and rey answering a review journal the same way.
+- Reviewers (031) and backend-coder and frontend-coder answering a review journal the same way.

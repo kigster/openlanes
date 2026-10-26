@@ -1,13 +1,13 @@
 # Contract: 021.00 Runtime State Outside Plans
 
-Owner: luke-backend. Rey reads; asks through the mailbox.
+Owner: backend-coder. frontend-coder reads; asks through the mailbox.
 
 ## Baseline
 
-- `bundle exec rspec` before any change: 3123 examples, 0 failures attributable to the base branch (CLAUDE.md: suite green). One run that overlapped luke's first `lock.rb` edit failed `spec/integration/plan_folder_migration_spec.rb:109`; that came from the edit in flight, and the same example passes on the final tree.
+- `bundle exec rspec` before any change: 3123 examples, 0 failures attributable to the base branch (CLAUDE.md: suite green). One run that overlapped backend-coder's first `lock.rb` edit failed `spec/integration/plan_folder_migration_spec.rb:109`; that came from the edit in flight, and the same example passes on the final tree.
 - After: 3148 examples, 0 failures, 9 pending (the web/dist-dependent integration specs). `bundle exec rubocop`: 438 files, no offenses.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 ### `OpenLanes::Plans::Lock.read(dir)` (Ruby, F1)
 
@@ -33,14 +33,14 @@ locked: { "pid": Integer, "host": String, "started_at": "ISO8601 UTC", "foreign"
 
 | Files | Owner |
 | --- | --- |
-| `lib/openlanes/support/runtime.rb`, `lib/openlanes/plans/lock.rb`, `lib/openlanes/engine/*`, `lib/openlanes/lifecycle/resync.rb`, `lib/openlanes/live/snapshot.rb`, `lib/openlanes/plans/plan_state.rb`, `schemas/plan-state.schema.json`, `spec/spec_helper.rb`, `.gitignore`, `README.md`, `docs/decisions/decisions-on-runtime-state.md`, matching specs, `spec/integration/runtime_state_spec.rb` | luke |
-| `lib/openlanes/presentation/reporter.rb`, `spec/openlanes/presentation/reporter_spec.rb`, everything under `web/` | rey |
+| `lib/openlanes/support/runtime.rb`, `lib/openlanes/plans/lock.rb`, `lib/openlanes/engine/*`, `lib/openlanes/lifecycle/resync.rb`, `lib/openlanes/live/snapshot.rb`, `lib/openlanes/plans/plan_state.rb`, `schemas/plan-state.schema.json`, `spec/spec_helper.rb`, `.gitignore`, `README.md`, `docs/decisions/decisions-on-runtime-state.md`, matching specs, `spec/integration/runtime_state_spec.rb` | backend-coder |
+| `lib/openlanes/presentation/reporter.rb`, `spec/openlanes/presentation/reporter_spec.rb`, everything under `web/` | frontend-coder |
 
-Shared: none written by both. `spec/spec_helper.rb` is luke's and lands first (B1): it points `XDG_STATE_HOME` at a per-run temp dir, so rey's specs that write a lock through `Lock.write` land there too.
+Shared: none written by both. `spec/spec_helper.rb` is backend-coder's and lands first (B1): it points `XDG_STATE_HOME` at a per-run temp dir, so frontend-coder's specs that write a lock through `Lock.write` land there too.
 
 ## Build order
 
-B1 -> (B2, B3) -> B4 -> B5 -> B6. F1 and F2 start once B3 lands (luke mails rey). B5 reads the reporter's 🔑 line, so it runs after F1.
+B1 -> (B2, B3) -> B4 -> B5 -> B6. F1 and F2 start once B3 lands (backend-coder mails frontend-coder). B5 reads the reporter's 🔑 line, so it runs after F1.
 
 ## Integration proof
 

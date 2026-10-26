@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 22 | [\[006.00\](A) Chat Between Machines](https://github.com/kigster/openlanes/pull/22) | Merged 🟣 |
 
-## luke-backend, round 1
+## backend-coder, round 1
 
 - `bundle exec rspec`: 2223 examples, 0 failures (baseline 2214, 0 failures).
 - `bundle exec rubocop`: 302 files inspected, no offenses detected.

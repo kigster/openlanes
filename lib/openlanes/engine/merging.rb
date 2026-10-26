@@ -2,10 +2,10 @@
 
 module OpenLanes
   module Engine
-    # What the engine does with a 🏁 Completed plan once palpatine has ruled
+    # What the engine does with a 🏁 Completed plan once deploy-assessor has ruled
     # (decisions P1 to P5).
     #
-    # palpatine only writes `plan.md` and signs. Everything that leaves the
+    # deploy-assessor only writes `plan.md` and signs. Everything that leaves the
     # machine happens here: labelling each `ready-to-merge` pull request
     # `auto-merged` or `merge-manually`, merging the `auto` ones one at a
     # time under `merge.by: auto`, and rebasing the siblings left open onto
@@ -25,7 +25,7 @@ module OpenLanes
       # Completed note carries the verdicts.
       PHASE = "completion"
 
-      # The two verdicts palpatine may give.
+      # The two verdicts deploy-assessor may give.
       VERDICTS = %w[auto manual].freeze
 
       # One verdict, with or without the pull request it is for.
@@ -58,7 +58,7 @@ module OpenLanes
       end
 
       class << self
-        # The verdict for each pull request, read off palpatine's note. A
+        # The verdict for each pull request, read off deploy-assessor's note. A
         # bare verdict covers every pull request it does not name; a pull
         # request the note says nothing about, or a note that is missing or
         # not in the {NOTE} shape, is `manual` (P4): a wrong `manual` costs a
@@ -99,16 +99,16 @@ module OpenLanes
         @held = held
       end
 
-      # palpatine signed, or its run ended without a signature: keep the
+      # deploy-assessor signed, or its run ended without a signature: keep the
       # verdicts for this visit to 🏁, then act on them.
       #
       # @param subject [Plans::Subject] at 🏁
-      # @param note [String, nil] palpatine's Completed note; nil reads as `manual` throughout
+      # @param note [String, nil] deploy-assessor's Completed note; nil reads as `manual` throughout
       # @return [Result]
       def assess(subject, note)
         numbers = subject.pull_requests.select(&:open?).map { number_of(it) }
         unless note.nil? || self.class.readable?(note)
-          UI.log("palpatine's note is not a verdict list, so every pull request is manual: #{note.inspect}",
+          UI.log("#{Agents::Names::DEPLOY_ASSESSOR}'s note is not a verdict list, so every pull request is manual: #{note.inspect}",
             level: :warn,
             plan:  subject.feature.ordinal.to_s)
         end
@@ -117,7 +117,7 @@ module OpenLanes
       end
 
       # @param subject [Plans::Subject]
-      # @return [Boolean] whether palpatine has ruled on this visit to 🏁, so
+      # @return [Boolean] whether deploy-assessor has ruled on this visit to 🏁, so
       #   nobody is to start it again
       def assessed?(subject) = subject.status.key == :completed && !record(subject).nil?
 
@@ -128,7 +128,7 @@ module OpenLanes
       # @param subject [Plans::Subject] at 🏁, assessed
       # @return [Result]
       def advance(subject)
-        record = record(subject) or return Result.new(note: "palpatine has not ruled yet")
+        record = record(subject) or return Result.new(note: "#{Agents::Names::DEPLOY_ASSESSOR} has not ruled yet")
 
         notes = []
         subject.pull_requests.select(&:open?).each do |pull|
@@ -150,7 +150,7 @@ module OpenLanes
       # push the ones that moved. A busy checkout stays queued, so its
       # `HEAD` moves only between runs, before its next boundary snapshot.
       # A conflict is aborted and left for that plan's next round, whose own
-      # pre-run rebase hands it to bb8; uncommitted work is refused by
+      # pre-run rebase hands it to rebaser; uncommitted work is refused by
       # {Vcs::Refresh} and never touched.
       #
       # @param busy [Array<String>] ordinals with an agent running
@@ -201,7 +201,7 @@ module OpenLanes
         return nil unless machine.key == :ready_to_merge
 
         verdict = record.dig("verdicts", number.to_s) || "manual"
-        return leave(machine, number, repo, "palpatine said manual") if verdict == "manual"
+        return leave(machine, number, repo, "#{Agents::Names::DEPLOY_ASSESSOR} said manual") if verdict == "manual"
         return leave(machine, number, repo, "merge.by is #{merge_by}") unless merge_by == :auto
 
         merge(subject, machine, number, repo, record, live[:head], merge_state: live[:merge_state])
@@ -278,7 +278,7 @@ module OpenLanes
         return leave(machine, number, repo, "no CI checks ran") if ci == :none
         return leave(machine, number, repo, "its head commit could not be read") if head.to_s.empty?
         # The conflict sweep owns a stale branch (U3, U4): it rebases a
-        # `BEHIND` one on GitHub and hands a `DIRTY` one to bb8-resolver.
+        # `BEHIND` one on GitHub and hands a `DIRTY` one to rebaser.
         # Leaving either for a person, as this once did, stopped an `auto`
         # merge for good over a conflict an agent could resolve.
         return Result.new(note: "PR ##{number} waits on its branch being rebased onto main") if behind?(merge_state)
@@ -422,7 +422,7 @@ module OpenLanes
       end
 
       # A conflict or red CI after a rebase: `review-rejected` on the pull
-      # request, and the plan to 🔴 with the reason mailed to luke and rey,
+      # request, and the plan to 🔴 with the reason mailed to backend-coder and frontend-coder,
       # through {PrOutcomes} exactly as a person's rejection is.
       #
       # @return [Result]

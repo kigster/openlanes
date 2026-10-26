@@ -25,13 +25,13 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
     before do
       record.call(dispatcher)
       run_state.hold_question("001.00/B1")
-      run_state.choose_model("001.00/luke-backend", "claude-haiku-5-5")
+      run_state.choose_model("001.00/backend-coder", "claude-haiku-5-5")
       record.call(dispatcher)
     end
 
     it "keeps them in Redis and in the state file, with the same seq" do
       aggregate_failures do
-        expect(in_redis).to eq(saved(2, models: { "001.00/luke-backend" => "claude-haiku-5-5" }))
+        expect(in_redis).to eq(saved(2, models: { "001.00/backend-coder" => "claude-haiku-5-5" }))
         expect(store.hget(keys.run, "seq")).to eq("2")
         expect(state.live).to eq(in_redis)
       end
@@ -47,14 +47,14 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
     before do
       state.live = saved(1)
       store.hset(keys.run, "seq", "3")
-      store.hset(keys.run, "json", JSON.generate(saved(3, models: { "001.00/luke-backend" => "claude-haiku-5-5" })))
+      store.hset(keys.run, "json", JSON.generate(saved(3, models: { "001.00/backend-coder" => "claude-haiku-5-5" })))
       record.call(dispatcher)
     end
 
     it "takes it, hands its models back to the executor, and brings the file up to it" do
       aggregate_failures do
         expect([run_state.seq, run_state.question_held?("001.00/B1")]).to eq([3, true])
-        expect(executor.preferred).to eq(%w[001.00 luke-backend] => "claude-haiku-5-5")
+        expect(executor.preferred).to eq(%w[001.00 backend-coder] => "claude-haiku-5-5")
         expect(state.live["seq"]).to eq(3)
       end
     end
@@ -79,13 +79,13 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
 
   context "when Redis came back empty" do
     before do
-      state.live = saved(5, cars: ["001.00/luke-backend"])
+      state.live = saved(5, cars: ["001.00/backend-coder"])
       record.call(dispatcher)
     end
 
     it "takes the file's copy and loads it back into Redis" do
       aggregate_failures do
-        expect(run_state.car_held?("001.00/luke-backend")).to be(true)
+        expect(run_state.car_held?("001.00/backend-coder")).to be(true)
         expect(in_redis["seq"]).to eq(5)
       end
     end
@@ -142,7 +142,7 @@ RSpec.describe OpenLanes::Live::RunRecord, :tree do
     allow(store).to receive(:hgetall).and_raise(OpenLanes::Live::Unavailable, "gone")
     allow(store).to receive(:multi).and_raise(OpenLanes::Live::Unavailable, "gone")
     allow(OpenLanes::UI).to receive(:log)
-    run_state.hold_car("001.00/luke-backend")
+    run_state.hold_car("001.00/backend-coder")
     2.times { record.call(dispatcher) }
     expect(OpenLanes::UI).to have_received(:log).with("run state not kept in Redis: gone").once
   end

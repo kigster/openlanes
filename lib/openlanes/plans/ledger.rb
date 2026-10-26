@@ -14,9 +14,9 @@ module OpenLanes
     #
     #   > [!NOTE]
     #   >
-    #   > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
-    #   > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-    #   > [2026-09-04 11:44:04 AM PDT] [ next: yoda-writer ]
+    #   > [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Started, round 1 ]
+    #   > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+    #   > [2026-09-04 11:44:04 AM PDT] [ next: spec-writer ]
     #
     # The verbs are a closed set. A line that looks like an entry but does not
     # parse is reported as a {Problem}, never dropped, because an agent that
@@ -50,7 +50,7 @@ module OpenLanes
       # @!attribute [r] at
       #   @return [Time]
       # @!attribute [r] agent
-      #   @return [String] the definition's name, `leah-researcher`
+      #   @return [String] the definition's name, `researcher`
       # @!attribute [r] status
       #   @return [String] one of {STATUSES}
       # @!attribute [r] round

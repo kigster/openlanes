@@ -1,7 +1,7 @@
 
 # Plan 012.00: App Runner and Preview
 
-Eight units, one pull request: six back end (`plan-backend.md`, B1 to B6), two front end (`plan-frontend.md`, F1 and F2). Every spec item from 1 to 13 has a unit; screenshot mirroring and the browser stay with plan 014 (`chewie-verifier`), as the spec's Out of scope says.
+Eight units, one pull request: six back end (`plan-backend.md`, B1 to B6), two front end (`plan-frontend.md`, F1 and F2). Every spec item from 1 to 13 has a unit; screenshot mirroring and the browser stay with plan 014 (`verifier`), as the spec's Out of scope says.
 
 ## Units
 
@@ -56,14 +56,14 @@ The spec leaves these open and recommends an answer for most; the plan builds th
 1. **Opt-in**: with no `app:` in `.openlanes.yml`, `app start` refuses in one line, nothing is written to Redis, and the page renders no Preview tab.
 1. **Landing the PR #38 coverage fixes on `main`.** PR #38 merged with `ci/circleci: test` and `ci/circleci: web` red, so its branch is not the tip that landed. The fixes are not reapplied to the merged branch: they go into a new branch cut from `origin/main`, carrying `spec/openlanes/cli/app_spec.rb`, `web/src/preview/useApps.ts` and `useApps.test.tsx`, and a new pull request turns `main`'s CI green. Decided 2026-10-15 by kig: rebase onto `main` and push a new pull request.
 
-## Interfaces plan 014 (`chewie-verifier`) builds on
+## Interfaces plan 014 (`verifier`) builds on
 
 Plan 014 starts the app, drives it with a headless browser, and commits PNG screenshots (M14). These are the seams it gets from this plan, and B4 to B6 must keep them stable:
 
 | Seam | Shape | Use in 014 |
 | --- | --- | --- |
 | `OpenLanes::Apps.definition(config)` | `Apps::Definition` or `nil` | Whether there is an app to verify at all; `Definition#kind` is M11's kind. |
-| `OpenLanes::Apps.supervisor(definition:, root:, plan:, branch:, publisher: nil)` | `Apps::Supervisor` | Start the PR's code in chewie's clean checkout. |
+| `OpenLanes::Apps.supervisor(definition:, root:, plan:, branch:, publisher: nil)` | `Apps::Supervisor` | Start the PR's code in verifier's clean checkout. |
 | `Supervisor#start` | `self`; raises `Apps::Supervisor::StartFailed` (message is the reason) after stopping what it started | A failed start is a verification failure with that reason. |
 | `Supervisor#preview` | `Apps::Status` or `nil`: `url`, `port`, `framing` | The URL the browser drives. |
 | `Supervisor#statuses` | `Array<Apps::Status>` | What to report in the PR comment. |

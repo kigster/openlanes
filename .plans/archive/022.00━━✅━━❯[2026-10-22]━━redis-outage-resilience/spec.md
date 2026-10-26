@@ -71,7 +71,7 @@ Anchors are `file:line` in the worktree at `7186635`, or a command with its outp
 
 ### Experiment
 
-Throwaway Redis on port 6390, not the user's Redis on 6379. Script `/tmp/leah-outage.rb`, not in the repo:
+Throwaway Redis on port 6390, not the user's Redis on 6379. Script `/tmp/researcher-outage.rb`, not in the repo:
 
 ```
 up     ping: true
@@ -81,12 +81,12 @@ back   ping (same Store): true
 back   set: true
 ```
 
-`bundle exec rspec spec/openlanes/engine/dispatcher_spec.rb spec/openlanes/engine/stay_spec.rb spec/openlanes/live spec/openlanes/live_spec.rb` exits 0 (`/tmp/leah-rspec.txt`).
+`bundle exec rspec spec/openlanes/engine/dispatcher_spec.rb spec/openlanes/engine/stay_spec.rb spec/openlanes/live spec/openlanes/live_spec.rb` exits 0 (`/tmp/researcher-rspec.txt`).
 
 ### Could not settle
 
 1. Why the engine shut down in #59. Needs `openlanes run` with Redis stopped mid-run, which was not done.
-2. Backoff initial delay, cap and jitter. Recommendation for yoda to put to a human: 1 s initial, 30 s cap, full jitter.
+2. Backoff initial delay, cap and jitter. Recommendation for spec-writer to put to a human: 1 s initial, 30 s cap, full jitter.
 3. Persistence on target installs (AOF or RDB). Not in the repo.
 4. Whether `PAUSE` freezes agents or lets them finish. Recommended: finish, do not freeze.
 5. Loss window. The epoch rolls back with RDB data, so it cannot measure loss by itself. Needs a decision on whether the file's `seq` or the engine's own clock bounds the window.
@@ -131,7 +131,7 @@ Each item has its check.
 1. **`PAUSE` control word.** Added to `Execution::Control` (`execution/control.rb:19-38`) and broadcast to live agents' control files; cleared on resume. Check: control spec reads the word from the file; the agent prompt explains it. It is not `HOLD`.
 1. **Backoff probe loop.** Initial, cap and jitter configurable, default per Open question 1. Check: spec with an injected clock and random source asserts the delay sequence and the cap.
 1. **Resume report.** On recovery, one log line gives outage duration (from `heartbeat_at`, falling back to the engine's own monotonic clock) and which side won the `seq` reconcile. Check: spec asserts the line for both RDB-rollback and no-loss cases.
-1. **A real-Redis outage spec.** Stops and restarts a throwaway Redis on a spare port, as leah's experiment did, and asserts the same `Store` answers again. Check: spec passes; skipped with a stated reason when no `redis-server` binary exists.
+1. **A real-Redis outage spec.** Stops and restarts a throwaway Redis on a spare port, as researcher's experiment did, and asserts the same `Store` answers again. Check: spec passes; skipped with a stated reason when no `redis-server` binary exists.
 1. **Docs.** README states the outage behavior and the knobs. Check: `openlanes docs` still regenerates cleanly; `just lint` and `just test` are green.
 
 ## Out of scope
@@ -145,16 +145,16 @@ Each item has its check.
 
 | Item | Builds it |
 | :-- | :-- |
-| 1 Reproduce #59 | `luke-backend` |
-| 2 Outage state, 3 no assignments, 5 backoff, 6 resume report | `luke-backend` |
-| 4 `PAUSE` word | `luke-backend` for the file and broadcast; `rey-frontend` shows a "paused" banner on the board page and renders the new command word if the page lists control words |
-| 7 Real-Redis spec, 8 Docs | `luke-backend` |
+| 1 Reproduce #59 | `backend-coder` |
+| 2 Outage state, 3 no assignments, 5 backoff, 6 resume report | `backend-coder` |
+| 4 `PAUSE` word | `backend-coder` for the file and broadcast; `frontend-coder` shows a "paused" banner on the board page and renders the new command word if the page lists control words |
+| 7 Real-Redis spec, 8 Docs | `backend-coder` |
 
-`rey-frontend`'s part is small and optional on the board snapshot: a `paused` field added to the snapshot in `live/publisher.rb` that the page shows. Pair them on that field's name. The snapshot cannot be written during an outage, so the page shows the last snapshot's age; this is open question 5.
+`frontend-coder`'s part is small and optional on the board snapshot: a `paused` field added to the snapshot in `live/publisher.rb` that the page shows. Pair them on that field's name. The snapshot cannot be written during an outage, so the page shows the last snapshot's age; this is open question 5.
 
 ## Open questions
 
-1. **Backoff values.** Recommended: 1 s initial, 30 s cap, full jitter (leah). A tuning choice, not verified against any workload.
+1. **Backoff values.** Recommended: 1 s initial, 30 s cap, full jitter (researcher). A tuning choice, not verified against any workload.
 1. **Why #59 shut the engine down.** Unreproduced; the plan may shrink or change shape once item 1 runs. If it cannot be reproduced, is shipping pause and backoff still wanted?
 1. **Persistence on target installs.** Unknown. Local Redis is RDB-only (`aof_enabled:0`, research answer 5). The spec reports the window and does not branch on the mode.
 1. **Loss window bound.** `heartbeat_at` rolls back with an RDB snapshot, so it cannot measure loss alone. Item 6 assumes the engine's own clock backs it up.

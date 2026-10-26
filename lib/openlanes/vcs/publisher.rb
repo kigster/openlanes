@@ -135,7 +135,7 @@ module OpenLanes
       # {#publish} asks before pushing. `pull-requests.md` does not record a
       # head branch, and an adopted or hand-opened pull request can come from
       # any branch, while the checkout's branch is derived from the plan.
-      # Verification asks it too, before chewie runs and before its commit:
+      # Verification asks it too, before verifier runs and before its commit:
       # otherwise it verifies one branch's code, pushes screenshots to it,
       # and labels a pull request built from another.
       #
@@ -149,10 +149,10 @@ module OpenLanes
       STRAY_SHOWN = 10
 
       # Commit the plan's folder, and nothing else, to the checkout's branch and
-      # push it. Verification uses it to land chewie's screenshots on the pull
+      # push it. Verification uses it to land verifier's screenshots on the pull
       # request before the engine links them by SHA.
       #
-      # It refuses a checkout with changes outside the plan folder: chewie
+      # It refuses a checkout with changes outside the plan folder: verifier
       # writes `verification/**` and nothing more, so a stray code edit is
       # something it should not have made, and committing it here would slip
       # unreviewed code into a pull request that already passed review. Nor is

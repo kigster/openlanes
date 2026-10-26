@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# P1 to P5 inside the loop: palpatine runs at 🏁, and what it signed goes
+# P1 to P5 inside the loop: deploy-assessor runs at 🏁, and what it signed goes
 # to {OpenLanes::Engine::Merging}. Merging itself (labels, merges, rebases)
 # is its own spec's; here it is a double, and what is asserted is what the
-# loop hands it and that palpatine is not started twice.
+# loop hands it and that deploy-assessor is not started twice.
 RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:stamp) { "2026-10-20 09:00:00 AM PDT" }
@@ -30,7 +30,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   def run(executor)
     runner = OpenLanes::Engine::Runner.new(tree:,
       executor:,
-      agents:    OpenLanes::Agents::Registry.new.only("palpatine-risk-assessor"),
+      agents:    OpenLanes::Agents::Registry.new.only("deploy-assessor"),
       isolation: :shared,
       merging:,
       sleeper:   ->(_) {})
@@ -47,15 +47,15 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     allow(merging).to receive(:assess) do |_, note|
       notes << note
       assessed = true
-      OpenLanes::Engine::Merging::Result.new(note: "PR #7 merge-manually: palpatine said manual")
+      OpenLanes::Engine::Merging::Result.new(note: "PR #7 merge-manually: deploy-assessor said manual")
     end
   end
 
-  it "hands palpatine's note to merging, once, and leaves the folder where merging left it" do
+  it "hands deploy-assessor's note to merging, once, and leaves the folder where merging left it" do
     attempts = run(executor("auto #7"))
 
     aggregate_failures do
-      expect(calls).to eq([["palpatine-risk-assessor", :completed]])
+      expect(calls).to eq([["deploy-assessor", :completed]])
       expect(notes).to eq(["auto #7"])
       expect(attempts.last).to have_attributes(to: :completed)
       expect(attempts.last.note).to include("PR #7 merge-manually")
@@ -63,7 +63,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
-  it "reads a palpatine killed before it signed as manual, never as a second try at auto (P4)" do
+  it "reads a deploy-assessor killed before it signed as manual, never as a second try at auto (P4)" do
     run(executor(nil, signs: false, succeeded: false, killed: :timeout))
 
     aggregate_failures do

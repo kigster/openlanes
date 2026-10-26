@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T14:07:57-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "planned",
@@ -32,7 +32,7 @@
       "moves": 3
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -55,7 +55,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -78,7 +78,7 @@
       "moves": 6
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Interrupted",
       "from": "ready_for_review",
@@ -101,7 +101,7 @@
       "moves": 7
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 2,
       "status": "Completed",
       "from": "in_review",
@@ -127,64 +127,64 @@
   "signatures": [
     {
       "at": "2026-10-17T12:33:47-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:41:03-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:41:27-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:43:45-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-17T12:44:12-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:56:15-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-17T12:56:36-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T13:02:32-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Interrupted",
       "round": 1,
       "note": "timed out, killed 60s after STOP"
     },
     {
       "at": "2026-10-17T13:07:40-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T13:08:25-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 2,
       "note": "rejected 2/2"
@@ -195,7 +195,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -205,7 +205,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "rounds",
@@ -218,7 +218,7 @@
     },
     {
       "number": 3,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 2,
       "limit": "time",
@@ -228,7 +228,7 @@
     }
   ],
   "last-known-state": {
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "source": "harness",
       "at": "2026-10-17T13:02:32-07:00",
       "round": 1,

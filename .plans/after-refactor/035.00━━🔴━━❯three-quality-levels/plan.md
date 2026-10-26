@@ -30,7 +30,7 @@ With no `desired_codebase_quality:`, `openlanes run` asks on a terminal before a
 
 ### U5 mvp: review-approved skips verification — done (round 3)
 
-Under `mvp` a `review-approved` PR still moves to 🧪, but `Driver#skip` writes the round's report verified and publishes it in chewie's place, so the plan waits on CI and the coverage gate and chewie never starts (`Verification.skips_verification?`).
+Under `mvp` a `review-approved` PR still moves to 🧪, but `Driver#skip` writes the round's report verified and publishes it in verifier's place, so the plan waits on CI and the coverage gate and verifier never starts (`Verification.skips_verification?`).
 
 ## Frontend
 

@@ -120,8 +120,8 @@ module OpenLanes
       # @param winner [String, nil] dispute only
       # @param reason [String]
       # @param trigger [String] what started the arbitration
-      # @param review [Integer, nil] the round of hansolo's review the struck
-      #   ids belong to: hansolo numbers from F1 in every review
+      # @param review [Integer, nil] the round of staff-reviewer's review the struck
+      #   ids belong to: staff-reviewer numbers from F1 in every review
       # @param at [Time]
       # @return [Hash] the ruling as written
       def rule!(kind:, pr:, round:, outcome:, findings:, winner:, reason:, trigger:, review: nil, at: Time.now) # rubocop:disable Naming/MethodParameterName -- `pr` is the ruling block's own key
@@ -163,7 +163,7 @@ module OpenLanes
 
       # ---- finished ---------------------------------------------------------
 
-      # How a plan finished: hansolo approved it, or its pull request merged.
+      # How a plan finished: staff-reviewer approved it, or its pull request merged.
       FINISH_KINDS = %w[approved merged].freeze
 
       # When and how a plan finished, which the control room keeps on the
@@ -606,14 +606,14 @@ module OpenLanes
 
       # ---- merge risk ---------------------------------------------------------
 
-      # palpatine's verdicts for this visit to 🏁 (P1, P4), keyed by pull
+      # deploy-assessor's verdicts for this visit to 🏁 (P1, P4), keyed by pull
       # request number, plus the moments the engine rebased a sibling (P5).
       # A visit is told apart by {#moves}: a plan sent back to 🔴 and
       # brought to 🏁 again has moved since, so its old verdicts no longer
-      # stand and palpatine weighs the new code.
+      # stand and deploy-assessor weighs the new code.
       #
       # @return [Hash, nil] `moves`, `at`, `verdicts` and `rebased`, nil when
-      #   palpatine has not ruled on this visit
+      #   deploy-assessor has not ruled on this visit
       def merge_risk
         record = read["merge_risk"] or return nil
         record["moves"] == moves ? record : nil

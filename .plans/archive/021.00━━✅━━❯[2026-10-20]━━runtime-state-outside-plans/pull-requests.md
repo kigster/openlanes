@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 106 | [\[021.00\](A) Runtime State Outside Plans](https://github.com/kigster/openlanes/pull/106) | Merged 🟣 |
 
-## Verification, luke-backend, round 1
+## Verification, backend-coder, round 1
 
 Integration proof:
 
@@ -29,7 +29,7 @@ $ just web-build && just web-e2e
 All specs passed!  00:21  23 tests, 23 passing, 0 failing
 ```
 
-## Verification, luke-backend, round 1 (resumed 2026-10-17)
+## Verification, backend-coder, round 1 (resumed 2026-10-17)
 
 `web/dist` is built now, so `spec/integration/restart_spec.rb` runs instead of skipping. It read `.plans/openlanes-state.json` and failed. Fixed: it reads `OpenLanes::Runtime.state_file(root:)`.
 
@@ -46,7 +46,7 @@ $ bundle exec rubocop
 
 Those 30 are environmental: a connect to a closed localhost port succeeds on this machine (see blocked.md B1).
 
-## Verification, rey-frontend, round 1
+## Verification, frontend-coder, round 1
 
 F1 (reporter) and F2 (web board) are in the tree. Tests: `reporter_spec.rb` (🔑 for state-dir and legacy lock, "held on" for foreign only), `model.test.ts` and `Board.test.tsx` (no lock, local, foreign).
 
@@ -61,9 +61,9 @@ $ bundle exec rspec
 3148 examples, 30 failures
 ```
 
-The 30 failures are all in `spec/openlanes/apps/*` and `cli/app_spec.rb`, files this plan does not touch. In this sandbox a TCP probe of a closed port reports ready (`probe_spec.rb:42`), which breaks the port-registry specs. Luke's run of the same suite elsewhere was 0 failures.
+The 30 failures are all in `spec/openlanes/apps/*` and `cli/app_spec.rb`, files this plan does not touch. In this sandbox a TCP probe of a closed port reports ready (`probe_spec.rb:42`), which breaks the port-registry specs. backend-coder's run of the same suite elsewhere was 0 failures.
 
-## Verification, luke-backend, round 2
+## Verification, backend-coder, round 2
 
 B1's 30 failures were not a localhost interceptor. Under Ruby 4.0.6 on macOS 27, `Socket.tcp(host, port, connect_timeout:)` returns a socket for a refused connect (its `getpeername` then fails with EINVAL); `TCPSocket.new(host, port, connect_timeout:)` raises `ECONNREFUSED` as it should. Fixed: `lib/openlanes/apps/probe.rb` and `lib/openlanes/apps/ports.rb` use `TCPSocket.new`, as do the probes in `spec/fixtures/apps/servers/server.rb`, `spec/openlanes/apps/supervisor_spec.rb` and `spec/openlanes/cli/app_spec.rb`. The failing tests were `probe_spec.rb:41` and `ports_spec.rb:32`, which already existed.
 

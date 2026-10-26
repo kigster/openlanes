@@ -357,35 +357,35 @@ While an agent works in a plan, its lock (pid, host, start time) sits in the run
 
 `anakin-briefster` — a half-agent: it runs only inside `create` and holds no roster entry — then makes a best-effort attempt at each from what the project already has on disk — its own docs, `.plans/BACKLOG.md` when the project keeps one, anything already downloaded or already built that bears on the topic — and opens the result for a human to finish. `--no-draft` skips the attempt and leaves the headings bare; `--no-open` leaves the file for you to open.
 
-**Nothing else belongs in that first pass.** It writes no `## Goals`, no `## Non-Goals`, no conclusions — deciding those before `leah-researcher` and `yoda-writer` have looked is choosing the answer before the research runs. Above all, it writes no heading beginning with the word "Research": that heading is not decoration, it is the 🔎 Researched invariant, so writing one — even empty — flips the folder's state out from under whoever reads it next, and the research nobody did gets skipped rather than assigned.
+**Nothing else belongs in that first pass.** It writes no `## Goals`, no `## Non-Goals`, no conclusions — deciding those before `researcher` and `spec-writer` have looked is choosing the answer before the research runs. Above all, it writes no heading beginning with the word "Research": that heading is not decoration, it is the 🔎 Researched invariant, so writing one — even empty — flips the folder's state out from under whoever reads it next, and the research nobody did gets skipped rather than assigned.
 
-This is only for work that does not exist yet. `create --after <plan> --prs <n,...>` is the other path — the work already shipped, so `yoda-writer` reconstructs the specification from the pull requests instead of guessing at a feature that has no facts yet to guess from.
+This is only for work that does not exist yet. `create --after <plan> --prs <n,...>` is the other path — the work already shipped, so `spec-writer` reconstructs the specification from the pull requests instead of guessing at a feature that has no facts yet to guess from.
 
 ## The states
 
-| Symbol | Meaning                | Key                  | Files required                           | Description                                                                                 |
-| :----: | :--------------------- | :------------------- | :--------------------------------------- | :------------------------------------------------------------------------------------------ |
-|   ⚪   | **New**                | `new`                | `spec.md`                                | a specification exists; it has not been planned yet                                         |
-|   🔎   | **Researched**         | `researched`         | `spec.md`                                | the topic has been researched; `spec.md` carries a `## Research` chapter                    |
-|   📋   | **Ready for Planning** | `ready_for_planning` | `spec.md`, `plan.md`                     | the specification is finished; `plan.md` exists and is still blank, waiting for the planner |
-|   ⭐   | **Planned**            | `planned`            | `spec.md`, `plan.md`                     | specified and planned; nobody has started building                                          |
-|   🟡   | **Building**           | `building`           | `spec.md`, `plan.md`                     | the back end is under way: data, domain and the API the interface will call                 |
-|   🎨   | **Building UI**        | `building_ui`        | `spec.md`, `plan.md`                     | the back end holds; the interface is being built against it                                 |
-|   🟢   | **Ready for Review**   | `ready_for_review`   | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is green on CI and waiting for a reviewer                                |
-|   👀   | **In Review**          | `in_review`          | `spec.md`, `plan.md`, `pull-requests.md` | a reviewer has picked it up and has not ruled yet                                           |
-|   🧪   | **Verifying**          | `verifying`          | `spec.md`, `plan.md`, `pull-requests.md` | the review approved it; chewie runs the app through How to test before anything merges      |
-|   🏁   | **Completed**          | `completed`          | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is `ready-to-merge`; palpatine weighs each, and they merge one at a time |
-|   🔴   | **Changes Requested**  | `rejected`           | `spec.md`, `plan.md`, `pull-requests.md` | the review asked for fixes; resubmit once they are made                                     |
-|   ✅   | **Approved & Merged**  | `approved`           | `pull-requests.md`                       | reviewed, approved, and every pull request merged                                           |
-|   😎   | **Deployed**           | `deployed`           | `deployed.md`                            | live in production; `deployed.md` names the release, date and SHA                           |
-|   😱   | **Rolled Back**        | `rolled_back`        | `rollback.md`                            | it shipped and was pulled; `rollback.md` names what broke                                   |
-|   🚫   | **Scrapped by Review** | `rewrite`            | `rewrite.md`                             | the review scrapped the work; the plan survives, the pull requests do not                   |
-|   ⭕   | **Technical Block**    | `blocked`            | `blocked.md`                             | cannot proceed; `blocked.md` names what an engineer or the CTO must decide                  |
-|   🛑   | **Product Block**      | `product_blocked`    | `blocked.md`                             | cannot proceed; `blocked.md` names what a product manager must decide                       |
-|   💣   | **Bomb**               | `bomb`               | `blocked.md`                             | blocked too long while other plans depend on it; the run halts until a human answers        |
-|   💤   | **Deferred**           | `deferred`           | `delayed.md`                             | could proceed and chose not to yet; `delayed.md` must name the trigger                      |
-|   ⏪   | **Retroactive**        | `retroactive`        | —                                        | the feature is live, but has neither a specification nor a plan                             |
-|   ❌   | **Discarded**          | `discarded`          | `discarded.md`                           | dropped for good; `discarded.md` says why. A terminal state                                 |
+| Symbol | Meaning                | Key                  | Files required                           | Description                                                                                       |
+| :----: | :--------------------- | :------------------- | :--------------------------------------- | :------------------------------------------------------------------------------------------------ |
+|   ⚪   | **New**                | `new`                | `spec.md`                                | a specification exists; it has not been planned yet                                               |
+|   🔎   | **Researched**         | `researched`         | `spec.md`                                | the topic has been researched; `spec.md` carries a `## Research` chapter                          |
+|   📋   | **Ready for Planning** | `ready_for_planning` | `spec.md`, `plan.md`                     | the specification is finished; `plan.md` exists and is still blank, waiting for the planner       |
+|   ⭐   | **Planned**            | `planned`            | `spec.md`, `plan.md`                     | specified and planned; nobody has started building                                                |
+|   🟡   | **Building**           | `building`           | `spec.md`, `plan.md`                     | the back end is under way: data, domain and the API the interface will call                       |
+|   🎨   | **Building UI**        | `building_ui`        | `spec.md`, `plan.md`                     | the back end holds; the interface is being built against it                                       |
+|   🟢   | **Ready for Review**   | `ready_for_review`   | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is green on CI and waiting for a reviewer                                      |
+|   👀   | **In Review**          | `in_review`          | `spec.md`, `plan.md`, `pull-requests.md` | a reviewer has picked it up and has not ruled yet                                                 |
+|   🧪   | **Verifying**          | `verifying`          | `spec.md`, `plan.md`, `pull-requests.md` | the review approved it; verifier runs the app through How to test before anything merges          |
+|   🏁   | **Completed**          | `completed`          | `spec.md`, `plan.md`, `pull-requests.md` | every pull request is `ready-to-merge`; deploy-assessor weighs each, and they merge one at a time |
+|   🔴   | **Changes Requested**  | `rejected`           | `spec.md`, `plan.md`, `pull-requests.md` | the review asked for fixes; resubmit once they are made                                           |
+|   ✅   | **Approved & Merged**  | `approved`           | `pull-requests.md`                       | reviewed, approved, and every pull request merged                                                 |
+|   😎   | **Deployed**           | `deployed`           | `deployed.md`                            | live in production; `deployed.md` names the release, date and SHA                                 |
+|   😱   | **Rolled Back**        | `rolled_back`        | `rollback.md`                            | it shipped and was pulled; `rollback.md` names what broke                                         |
+|   🚫   | **Scrapped by Review** | `rewrite`            | `rewrite.md`                             | the review scrapped the work; the plan survives, the pull requests do not                         |
+|   ⭕   | **Technical Block**    | `blocked`            | `blocked.md`                             | cannot proceed; `blocked.md` names what an engineer or the CTO must decide                        |
+|   🛑   | **Product Block**      | `product_blocked`    | `blocked.md`                             | cannot proceed; `blocked.md` names what a product manager must decide                             |
+|   💣   | **Bomb**               | `bomb`               | `blocked.md`                             | blocked too long while other plans depend on it; the run halts until a human answers              |
+|   💤   | **Deferred**           | `deferred`           | `delayed.md`                             | could proceed and chose not to yet; `delayed.md` must name the trigger                            |
+|   ⏪   | **Retroactive**        | `retroactive`        | —                                        | the feature is live, but has neither a specification nor a plan                                   |
+|   ❌   | **Discarded**          | `discarded`          | `discarded.md`                           | dropped for good; `discarded.md` says why. A terminal state                                       |
 
 "Files required" is a **minimum**, not an exact match: a ⚪ folder that has grown a `plan.md` still satisfies ⚪, and is ⭐ anyway. That is why `resync dirs` moves a folder to the furthest state its contents justify rather than only fixing outright lies.
 
@@ -404,11 +404,11 @@ Questions are numbered `B1`, `B2`, and that numbering is how the file gets refer
 Which is how a block drains, in pieces:
 
 1. A human writes each answer under `## Answers` as it arrives, dated and attributed to whoever decided.
-1. `openlanes unblock NNN` hands the folder to `lando-broker`. Nothing else reaches it: answers arriving is not a fact the tool can observe, so a human running the command *is* the signal.
-1. `lando-broker` folds each answered question into the document that question was stopping — `spec.md` when the answer changes what we are building or why, `plan.md` when it changes how or in what order — and deletes the question and its answer from `blocked.md`.
+1. `openlanes unblock NNN` hands the folder to `unblocker`. Nothing else reaches it: answers arriving is not a fact the tool can observe, so a human running the command *is* the signal.
+1. `unblocker` folds each answered question into the document that question was stopping — `spec.md` when the answer changes what we are building or why, `plan.md` when it changes how or in what order — and deletes the question and its answer from `blocked.md`.
 1. When the last question goes, the file goes with it, and the folder leaves ⭕ on the resync that follows.
 
-An entry that names no decider, carries no date, or restates the options instead of choosing one is not an answer, and is left exactly where it is. So is any question nobody has answered yet: two answers out of five is a successful run, and the plan stays stopped on the other three, which is true. `lando-broker` never answers a question itself, and never retires one for being stale — dropping a question is a human's call, and it makes the plan 💤 Deferred or ❌ Discarded, not quietly shorter.
+An entry that names no decider, carries no date, or restates the options instead of choosing one is not an answer, and is left exactly where it is. So is any question nobody has answered yet: two answers out of five is a successful run, and the plan stays stopped on the other three, which is true. `unblocker` never answers a question itself, and never retires one for being stale — dropping a question is a human's call, and it makes the plan 💤 Deferred or ❌ Discarded, not quietly shorter.
 
 ## Transitions
 
@@ -598,9 +598,9 @@ stateDiagram-v2
 | `delayed.md`       | 💤 Deferred                                                                                               |
 | `discarded.md`     | ❌ Discarded                                                                                              |
 
-`contract.md` is the one file no state requires. `luke-backend` writes it before it writes code, and `rey-frontend` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
+`contract.md` is the one file no state requires. `backend-coder` writes it before it writes code, and `frontend-coder` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
 
-The units themselves live in `plan.md`, under `## Backend` and `## Frontend`. `rey-frontend` is started only when `## Frontend` holds a unit heading.
+The units themselves live in `plan.md`, under `## Backend` and `## Frontend`. `frontend-coder` is started only when `## Frontend` holds a unit heading.
 
 Nothing else belongs there. A folder holding notes, diagrams or scratch files is a folder nobody can audit at a glance.
 
@@ -636,18 +636,18 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
-| Label                   | Colour   | Passing | Meaning                                                                    |
-| ----------------------- | -------- | ------- | -------------------------------------------------------------------------- |
-| `ready-for-review`      | `c2e0c6` | no      | luke and rey are done; the PR waits for a free review slot                 |
-| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                                 |
-| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                                      |
-| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                               |
-| `review-addressed`      | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review   |
-| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)                |
-| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                                        |
-| `ready-to-merge`        | `5319e7` | yes     | chewie-verifier verified it and its E2E tests pass                         |
-| `auto-merged`           | `953384` | yes     | palpatine-risk-assessor judged it safe and the engine merged it            |
-| `merge-manually`        | `0e8a16` | yes     | palpatine-risk-assessor, or merge.by: human, left it for a person to merge |
+| Label                   | Colour   | Passing | Meaning                                                                        |
+| ----------------------- | -------- | ------- | ------------------------------------------------------------------------------ |
+| `ready-for-review`      | `c2e0c6` | no      | backend-coder and frontend-coder are done; the PR waits for a free review slot |
+| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                                     |
+| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                                          |
+| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                                   |
+| `review-addressed`      | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review       |
+| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)                    |
+| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                                            |
+| `ready-to-merge`        | `5319e7` | yes     | verifier verified it and its E2E tests pass                                    |
+| `auto-merged`           | `953384` | yes     | deploy-assessor judged it safe and the engine merged it                        |
+| `merge-manually`        | `0e8a16` | yes     | deploy-assessor, or merge.by: human, left it for a person to merge             |
 
 ## If a real issue tracker arrives, this scheme retires
 

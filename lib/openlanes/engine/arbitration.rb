@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Engine
-    # The engine step that runs `obi-wan-kenobi-arbitrator` (M7, M8, M9).
+    # The engine step that runs `arbitrator` (M7, M8, M9).
     # It is a side call, not a plan state: the agent is read-only, so the
     # registry never routes a state to it, and every ruling lands the plan
     # in a state that already exists.
@@ -22,7 +22,7 @@ module OpenLanes
     # and would otherwise wait for a ruling that never comes.
     class Arbitration
       # Builders whose signatures may carry an appeal, and who may raise a dispute.
-      BUILDERS = %w[luke-backend rey-frontend].freeze
+      BUILDERS = Agents::Names::BUILDERS.freeze
 
       # A dispute is mail to the arbitrator whose body opens with this word.
       DISPUTE = /\Adispute:/i
@@ -139,7 +139,7 @@ module OpenLanes
       end
 
       # A plan at 🔴 whose rejections reached the cap belongs to the
-      # arbitrator, not to luke and rey.
+      # arbitrator, not to backend-coder and frontend-coder.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Boolean]
@@ -297,7 +297,7 @@ module OpenLanes
       end
 
       # At `mvp` only: a `review-ok-not-perfect` pull request at 👀 with no
-      # `passed_check` ruling since hansolo's latest signature. Keyed by that
+      # `passed_check` ruling since staff-reviewer's latest signature. Keyed by that
       # signature, so a re-poll never re-runs it and a new review, after a
       # new push, does. 👀 only: a `too_lenient` ruling sends the plan to 🔴,
       # and the machine has that edge from 👀 alone.
@@ -307,7 +307,7 @@ module OpenLanes
         return nil unless @quality.call == :mvp && subject.status.key == :in_review
 
         pull = subject.pull_requests.last or return nil
-        reviewed = state.signatures.select { it["agent"] == "hansolo-reviewer" && it["status"] == "Completed" }.map { Time.iso8601(it["at"]) }.max
+        reviewed = state.signatures.select { it["agent"] == Agents::Names::STAFF_REVIEWER && it["status"] == "Completed" }.map { Time.iso8601(it["at"]) }.max
         return nil unless reviewed
         return nil if state.rulings.any? { it["kind"] == "passed_check" && Time.iso8601(it["at"]) > reviewed }
 
@@ -316,8 +316,8 @@ module OpenLanes
         { trigger: "passed_check", key: ["passed_check", reviewed.iso8601], note: "review-ok-not-perfect at mvp" }
       end
 
-      # Asked of GitHub once per review rather than once per tick: hansolo
-      # sets its label before it signs (agents/hansolo-reviewer.md), so the
+      # Asked of GitHub once per review rather than once per tick: staff-reviewer
+      # sets its label before it signs (agents/staff-reviewer.md), so the
       # label a signature went with does not change under it.
       #
       # @return [Boolean]

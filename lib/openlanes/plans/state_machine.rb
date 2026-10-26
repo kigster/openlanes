@@ -138,7 +138,7 @@ module OpenLanes
         end
 
         # The specification is done and the planner has not started. Entered
-        # by the harness when `yoda-writer` completes; `resync` reaches it on a
+        # by the harness when `spec-writer` completes; `resync` reaches it on a
         # blank `plan.md`. Without it ⭐ Planned required a file only the agent
         # handling ⭐ Planned writes, and nothing could enter it. The planner
         # answers `depends_on:` here, while it plans (A17).
@@ -151,7 +151,7 @@ module OpenLanes
         # that is what the agent loop follows — but a specification somebody has
         # already researched by hand should not have to pretend otherwise to get
         # planned. What research buys is not enforced here; it is enforced by
-        # `yoda-writer` handling `researched` and nothing else.
+        # `spec-writer` handling `researched` and nothing else.
         event :plan, guard: :justified? do
           transitions from: %i[ready_for_planning researched new retroactive rewrite blocked product_blocked bomb deferred],
             to: :planned
@@ -167,7 +167,7 @@ module OpenLanes
         end
 
         # Building hands off rather than finishing. A plan with no interface work
-        # still passes through Building UI: `rey-frontend` says there is nothing
+        # still passes through Building UI: `frontend-coder` says there is nothing
         # to build and moves it on, which costs one cheap round and keeps the
         # spine one shape instead of two. `rejected` re-enters here rather than
         # going straight back to review, because a change request reopens the
@@ -186,22 +186,22 @@ module OpenLanes
           transitions from: %i[ready_for_review], to: :in_review
         end
 
-        # hansolo's approval no longer ends the loop (plan 014, M1): the app is
+        # staff-reviewer's approval no longer ends the loop (plan 014, M1): the app is
         # run through the pull request's `## How to test` first, by
-        # chewie-verifier, before anything may merge.
+        # verifier, before anything may merge.
         event :verify, guard: :justified? do
           transitions from: %i[in_review], to: :verifying
         end
 
-        # Every pull request is `ready-to-merge` (P1): palpatine weighs each
+        # Every pull request is `ready-to-merge` (P1): deploy-assessor weighs each
         # one, and the engine merges them one at a time.
         event :complete, guard: :justified? do
           transitions from: %i[verifying], to: :completed
         end
 
         # `in_review` stays a source: a person who merges on GitHub while
-        # hansolo is still reading has approved it all the same (M4). So do
-        # 🧪 and 🏁, for a merge before the engine or palpatine has ruled,
+        # staff-reviewer is still reading has approved it all the same (M4). So do
+        # 🧪 and 🏁, for a merge before the engine or deploy-assessor has ruled,
         # and for the `merge-manually` pull request a person merges (P3).
         event :approve, guard: :justified? do
           transitions from: %i[in_review verifying completed retroactive], to: :approved
@@ -210,7 +210,7 @@ module OpenLanes
         # From 🧪 as well as 👀: a verification that fails sends the plan back
         # to the builders exactly as a review that fails does. From 🏁 too:
         # a pull request that no longer rebases cleanly onto `main` after
-        # its sibling merged goes back to luke and rey (P5), and a person may
+        # its sibling merged goes back to backend-coder and frontend-coder (P5), and a person may
         # still reject one on GitHub while it waits for them.
         event :request_changes, guard: :justified? do
           transitions from: %i[in_review verifying completed], to: :rejected

@@ -35,7 +35,7 @@ RSpec.describe "Review labels, end to end", :tree do
     File.write(gh_state, JSON.generate(data))
   end
 
-  # `exe/openlanes`, as a person or hansolo types it, in the project.
+  # `exe/openlanes`, as a person or staff-reviewer types it, in the project.
   def openlanes(*)
     out, err, status = Open3.capture3(env, RbConfig.ruby, exe, *, chdir: repo)
     [out, err, status.exitstatus]
@@ -88,7 +88,7 @@ RSpec.describe "Review labels, end to end", :tree do
     subject = plan("001.00")
     checkout = runner.worktree.checkout_for(subject.feature)
     File.write(File.join(checkout.path, "go.rb"), "puts :go\n")
-    task = OpenLanes::Engine::Runner::Task.new(agent: OpenLanes::Agents::Registry.new.find("luke-backend"),
+    task = OpenLanes::Engine::Runner::Task.new(agent: OpenLanes::Agents::Registry.new.find("backend-coder"),
       subject:,
       root: checkout.path,
       checkout:,
@@ -97,12 +97,12 @@ RSpec.describe "Review labels, end to end", :tree do
   end
 
   # The engine's half: `openlanes start` in human mode, its clock moved on
-  # 15 s. leah handles only ⚪, so no agent starts: what moves is the watch.
+  # 15 s. researcher handles only ⚪, so no agent starts: what moves is the watch.
   def watch_once
     clock = [0.0]
     runner = OpenLanes::Engine::Runner.new(tree:,
       executor: ->(*) { raise "no agent runs here" },
-      agents:   OpenLanes::Agents::Registry.new.only("leah-researcher"),
+      agents:   OpenLanes::Agents::Registry.new.only("researcher"),
       sleeper:  ->(_) {})
     dispatcher = OpenLanes::Engine::Dispatcher.new(runner:,
       sleeper: ->(_) {},
@@ -130,7 +130,7 @@ RSpec.describe "Review labels, end to end", :tree do
     plan("001.00").machine.promote!(:ready_for_review)
 
     _, _, status = openlanes("review", number, "review-in-progress")
-    aggregate_failures "hansolo starts" do
+    aggregate_failures "staff-reviewer starts" do
       expect(status).to eq(0)
       expect(labels(number)).to contain_exactly("openlanes", "review-in-progress")
     end
@@ -163,7 +163,7 @@ RSpec.describe "Review labels, end to end", :tree do
 
     aggregate_failures "the engine reads the verdicts back" do
       expect(plan("001.00").status.key).to eq(:rejected)
-      expect(mail.map(&:to)).to include("luke-backend", "rey-frontend")
+      expect(mail.map(&:to)).to include("backend-coder", "frontend-coder")
       expect(mail.first.body).to include("Go does nothing")
       expect(plan("002.00").status.key).to eq(:approved)
       expect(dispatcher.board.waiting_on).to eq("003.00" => [42])

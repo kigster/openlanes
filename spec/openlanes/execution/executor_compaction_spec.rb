@@ -11,7 +11,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   let(:executor) { described_class.new(root:, spawn:, trace_dir: traces, model: "sonnet") }
   let(:root) { File.dirname(plans_root) }
   let(:traces) { File.join(root, "traces") }
-  let(:agent) { OpenLanes::Agents.find("luke-backend") }
+  let(:agent) { OpenLanes::Agents.find("backend-coder") }
   let(:spec_md) { spec_body }
   let(:plan) do
     plans { |t| t.plan "001.00", :building, "task", files: { "spec.md" => spec_md, "plan.md" => "## Task\n" } }
@@ -97,7 +97,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "answers the request once the continuation has started" do
-      expect(compaction.to_h).to include(status: "done", reason: "luke-backend compacted from 46599 to 7240 tokens and carries on")
+      expect(compaction.to_h).to include(status: "done", reason: "backend-coder compacted from 46599 to 7240 tokens and carries on")
     end
 
     it "reports one invocation, spending what all three spent" do
@@ -141,7 +141,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       aggregate_failures do
         expect(spawned.size).to eq(1)
         expect(compaction.to_h).to include(status: "refused", restart: true)
-        expect(compaction.reason).to eq("could not compact luke-backend: no session id to resume; " \
+        expect(compaction.reason).to eq("could not compact backend-coder: no session id to resume; " \
                                         "it restarts from its resume note in a fresh session")
       end
     end
@@ -167,7 +167,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     before { result }
 
     it "refuses, saying so" do
-      expect(compaction.reason).to start_with("could not compact luke-backend: /compact exited 1")
+      expect(compaction.reason).to start_with("could not compact backend-coder: /compact exited 1")
     end
   end
 
@@ -177,7 +177,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     before { result }
 
     it "refuses with the error" do
-      expect(compaction.reason).to start_with("could not compact luke-backend: /compact reported: rate limited")
+      expect(compaction.reason).to start_with("could not compact backend-coder: /compact reported: rate limited")
     end
   end
 
@@ -207,18 +207,18 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     it "refuses without restarting it" do
       expect(compaction.to_h).to include(status: "refused",
         restart: false,
-        reason: "luke-backend was stopped first (discard)")
+        reason: "backend-coder was stopped first (discard)")
     end
   end
 
   context "when the agent is on a CLI that cannot resume" do
     let(:spec_md) { "---\nphases:\n  building: { adapter: codex }\n---\n#{spec_body}" }
-    let(:agent) { OpenLanes::Agents.find("luke-backend").with(phase: "building") }
+    let(:agent) { OpenLanes::Agents.find("backend-coder").with(phase: "building") }
 
     before { result }
 
     it "refuses, naming the CLI" do
-      expect(compaction.reason).to start_with("could not compact luke-backend: codex cannot resume a session")
+      expect(compaction.reason).to start_with("could not compact backend-coder: codex cannot resume a session")
     end
   end
 
@@ -245,7 +245,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "refuses the request before the error goes on up" do
-      expect(compaction.to_h).to include(status: "refused", reason: start_with("could not compact luke-backend: No such file"))
+      expect(compaction.to_h).to include(status: "refused", reason: start_with("could not compact backend-coder: No such file"))
     end
 
     it "still releases the control file" do
@@ -301,7 +301,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
       before do
         handle.child = first
-        handle.control = OpenLanes::Execution::Control.register(Dir.mktmpdir, "001.00-luke")
+        handle.control = OpenLanes::Execution::Control.register(Dir.mktmpdir, "001.00-backend-coder")
         allow(OpenLanes::Execution::Control).to receive(:write).and_wrap_original do |original, *args|
           visible << handle.instance_variable_get(:@requested)
           handle.child = replacement

@@ -29,12 +29,12 @@ Cars (`web/src/board/Car.tsx:22`), the demo board, and `motion`. No car keyframe
 
 ## What research needs to settle
 
-Nothing was listed. Leah's unsettled items are under `## Open questions`.
+Nothing was listed. researcher's unsettled items are under `## Open questions`.
 
 
 ## Research
 
-Scope: a small spinning element (gear or similar) inside a running agent's car on the board. Repository only; no web search was needed. The spec lists no questions under `## What research needs to settle`, so there is nothing to answer. The facts below are what yoda needs.
+Scope: a small spinning element (gear or similar) inside a running agent's car on the board. Repository only; no web search was needed. The spec lists no questions under `## What research needs to settle`, so there is nothing to answer. The facts below are what spec-writer needs.
 
 ### What the car is and where it is drawn
 
@@ -118,19 +118,19 @@ A car whose agent is running shows a small gear turning inside the card. A perso
 
 | Item | Built by |
 | :-- | :-- |
-| Items 1 to 7 above | `rey-frontend` (all in `web/`) |
-| Confirm no payload change is needed; run the demo | `luke-backend`: verify only, `lib/openlanes/web/demo_board.rb:17` already yields running cars |
+| Items 1 to 7 above | `frontend-coder` (all in `web/`) |
+| Confirm no payload change is needed; run the demo | `backend-coder`: verify only, `lib/openlanes/web/demo_board.rb:17` already yields running cars |
 
-There is no back end work. Pair `luke-backend` only for the demo check.
+There is no back end work. Pair `backend-coder` only for the demo check.
 
 ## Open questions
 
 Assumptions made here, to be confirmed by a human if they disagree:
 
-1. **Running but blocked** (leah 1). Assumed: no gear while `carLook().blocked`, since the car is red and waiting on a person (`model.ts:78-80`). Recommended. Alternative: spin whenever `state == running`.
-1. **Form** (leah 2). Assumed: gear. Any rotating mark satisfies the spec.
-1. **Cypress** (leah 3). Assumed: no Cypress assertion.
-1. Placement inside `.car-top`: assumed left of the agent name. `rey-frontend` may adjust after seeing it in the demo.
+1. **Running but blocked** (researcher 1). Assumed: no gear while `carLook().blocked`, since the car is red and waiting on a person (`model.ts:78-80`). Recommended. Alternative: spin whenever `state == running`.
+1. **Form** (researcher 2). Assumed: gear. Any rotating mark satisfies the spec.
+1. **Cypress** (researcher 3). Assumed: no Cypress assertion.
+1. Placement inside `.car-top`: assumed left of the agent name. `frontend-coder` may adjust after seeing it in the demo.
 
 ## Risks to planning or execution
 

@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 35 | [\[002.00\] Implement Zeitwerk Loading](https://github.com/kigster/openlanes/pull/35) | Merged 🟣 |
 
-## Verification (luke-backend, 2026-10-14)
+## Verification (backend-coder, 2026-10-14)
 
 ```
 $ bundle exec rspec spec/openlanes/integration/thin_commands_spec.rb
@@ -21,7 +21,7 @@ What the integration spec asserts, under `NO_COLOR=1`, nothing stubbed:
 
 - `create billing sync --no-draft --no-open` prints `003.00-⚪️ → billing-sync` and exits 0; `create --from missing.md` exits 66.
 - `unblock 002 -n` prints `002.00	blocked	1 open	not attempted`, lists `B1. Which vendor`, exits 0; `unblock 999 -n` exits 66.
-- `run -n --isolation shared --no-web` prints `001.00  luke-backend` and exits 0; `run --agent nobody` exits 65.
+- `run -n --isolation shared --no-web` prints `001.00  backend-coder` and exits 0; `run --agent nobody` exits 65.
 
 Command sizes, `wc -l`, before and after:
 

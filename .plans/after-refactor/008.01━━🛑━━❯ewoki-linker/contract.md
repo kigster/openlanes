@@ -1,6 +1,6 @@
 # Contract: 008.01 Ewoki Linker
 
-Back end only (`## Frontend` has no units), so rey-frontend is not started and this file holds no rey interface.
+Back end only (`## Frontend` has no units), so frontend-coder is not started and this file holds no frontend-coder interface.
 
 ## Baseline
 

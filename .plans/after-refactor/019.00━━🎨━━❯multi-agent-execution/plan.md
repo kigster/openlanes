@@ -128,7 +128,7 @@ Sequential because they share a file: none. Every file below has exactly one own
 
 ## HTTP surface
 
-Yes, additively. The board snapshot response gains `subagents` (integer, ≥ 0) on every car. Nothing is removed or renamed. `luke-backend` writes `openapi.yaml` beside `contract.md` (owned by B5) describing the car object with the new field, so `openlanes api docs` lists it.
+Yes, additively. The board snapshot response gains `subagents` (integer, ≥ 0) on every car. Nothing is removed or renamed. `backend-coder` writes `openapi.yaml` beside `contract.md` (owned by B5) describing the car object with the new field, so `openlanes api docs` lists it.
 
 ## Out of this plan
 
@@ -140,7 +140,7 @@ Yes, additively. The board snapshot response gains `subagents` (integer, ≥ 0) 
 From the spec: verify in the browser that an agent that fanned out is visually different from the rest.
 
 1. `just web-build`, then `openlanes web --demo` and open the board it prints.
-1. Find car `001.00/rey-frontend`. Within its 12-tick cycle it shows 3 extra vertical lines on its right edge, then 1, then none; hovering it reads "3 sub-agents running" (then "1 sub-agent running"), and at 0 it has no such title.
+1. Find car `001.00/frontend-coder`. Within its 12-tick cycle it shows 3 extra vertical lines on its right edge, then 1, then none; hovering it reads "3 sub-agents running" (then "1 sub-agent running"), and at 0 it has no such title.
 1. Every other car stays a plain tile throughout.
 1. Automated: `bin/web-e2e` runs `web/cypress/e2e/subagents.cy.ts` against two real demo servers, nothing stubbed; `bundle exec rspec` and `bundle exec rubocop` exit 0.
 
@@ -154,10 +154,10 @@ Upstream PR #55 (`c8e29f4`, `05dacfa`, `74e2231`) landed the same data this plan
 - `lib/openlanes/engine/board.rb`: rewrote the branch's `subagents` doc to main's meaning (cumulative), pointing at `running` for the in-flight list.
 - `lib/openlanes/live/snapshot.rb`: took main's `subagents: Array(row.running)`; dropped the branch's `row.subagents.to_i`, which would have sent the cumulative count under the same key.
 - `lib/openlanes/web/demo_board.rb`: kept the branch's fan-out cycle but as name lists (3 names, 1, none) instead of 3, 1, 0, so the demo matches the wire type.
-- `web/src/api/fixtures/board.json`, `snapshot.json`, `web/src/board/sample.ts`: took main's name lists; the branch's `2` on rey-frontend matches main's two names.
+- `web/src/api/fixtures/board.json`, `snapshot.json`, `web/src/board/sample.ts`: took main's name lists; the branch's `2` on frontend-coder matches main's two names.
 - `web/src/api/types.ts`: dropped the branch's second `subagents: number` (a duplicate property next to main's `string[]`).
 - `web/src/board/Car.tsx`: kept the branch's tile lines and label, counted from `car.subagents?.length`. The tile now shows both the lines and main's ghost tiles beside it; a reviewer may want only one of the two.
-- `state.json`: took main's copy, the newer harness record (rey's attempt finished 19:10:01 vs 18:40:29 on the branch).
+- `state.json`: took main's copy, the newer harness record (frontend-coder's attempt finished 19:10:01 vs 18:40:29 on the branch).
 - Specs (`transcript_spec`, `executor_spec`, `dispatcher_spec`, `demo_board_spec`, `Car.test.tsx`, `model.test.ts`): adapted the branch's examples to lists; gave each `task_started` its own `tool_use_id`, since the shared default would now collapse two tasks into one; dropped the branch's snapshot Integer example, covered by main's "names the sub-agents still running".
 - `lib/openlanes/execution/executor.rb` (rebase onto `9227826d`): `Session#carry` comment only; kept main's journal-ordering sentences and appended the branch's note that `running` is left as the live session reports it. No code contradicted.
 - `lib/openlanes/execution/transcript.rb` (rebase onto `9227826d`): took main's `Progress` with its new `journal` attribute and keyword; kept the branch's longer `running` doc. The branch's `TERMINAL`, `end_task`, `task_name` and `close_tasks` replayed without conflict.

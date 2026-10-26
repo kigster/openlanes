@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Arbitration
-    # A builder's appeal against one of hansolo's findings, written as a
+    # A builder's appeal against one of staff-reviewer's findings, written as a
     # signature note (M8 says "in the ledger"):
     # `--note "appeal: F2 because the spec rules that test out"`.
     Appeal = Data.define(:finding, :reason) do

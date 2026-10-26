@@ -11,7 +11,7 @@ module OpenLanes
     # Each command kind is one method, named as {Live::Commands} names its
     # handlers, raising {Refusal} with the reason the engine would give.
     #
-    # The fixture carries one plan hansolo approved and one whose pull
+    # The fixture carries one plan staff-reviewer approved and one whose pull
     # request merged, each with `finished` set and no cars, so the demo
     # shows the half-height rows a real run keeps until it restarts.
     class DemoBoard
@@ -30,7 +30,7 @@ module OpenLanes
 
       # The one car that fans out, so the tile's extra lines can be seen and
       # tested against a real engine. Every other car keeps the fixture's none.
-      FANNED = "001.00/rey-frontend"
+      FANNED = "001.00/#{Agents::Names::FRONTEND_CODER}".freeze
 
       # Its sub-agents in flight, by name, one entry per four ticks: three,
       # then one, then none, so the cycle repeats every 12 ticks (12 seconds

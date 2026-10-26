@@ -16,7 +16,7 @@ In equilibris-app 9 of 14 open plans were blocked, some for months, and nothing 
 
 - Decisions N8–N10 in `docs/decisions/decisions-on-plan-folder-naming.md`.
 - The `blocks` index from plan 008.
-- `lib/openlanes/lifecycle/unblocker.rb` and `lando-broker`: answering blocks.
+- `lib/openlanes/lifecycle/unblocker.rb` and `unblocker`: answering blocks.
 - The copilot panel (PR #7), which Pause and Discuss opens.
 
 ## What research needs to settle
@@ -82,14 +82,14 @@ Each item is checkable by a spec or a command.
 
 | Item | Half | Builder |
 | --- | --- | --- |
-| State, event, Linear mapping | back end | `luke-backend` |
-| Config key `plans.aging_since` | back end | `luke-backend` |
-| Clock, sweep, auto-defer | back end | `luke-backend` |
-| Halt, exit code, `--ignore-bombs` | back end | `luke-backend` |
-| Resume-anyway expiry in `state.json` | back end | `luke-backend` |
-| Respond and Pause and Discuss command kinds | back end | `luke-backend` |
-| Notice, answer box, buttons, copilot hand-off | front end | `rey-frontend` |
-| Resume-anyway button | front end | `rey-frontend` |
+| State, event, Linear mapping | back end | `backend-coder` |
+| Config key `plans.aging_since` | back end | `backend-coder` |
+| Clock, sweep, auto-defer | back end | `backend-coder` |
+| Halt, exit code, `--ignore-bombs` | back end | `backend-coder` |
+| Resume-anyway expiry in `state.json` | back end | `backend-coder` |
+| Respond and Pause and Discuss command kinds | back end | `backend-coder` |
+| Notice, answer box, buttons, copilot hand-off | front end | `frontend-coder` |
+| Resume-anyway button | front end | `frontend-coder` |
 
 The pair agrees on the two command payloads (`respond`: plan, text; `pause_discuss`: plan) and on the snapshot field that lists bombs.
 
@@ -108,7 +108,7 @@ Settled from the research recommendations. Reopen any of them only through a hum
 
 1. ~~Plan 008 must be merged first~~ Settled: 009 is stacked on #23 (plan 008) and consumes its dependents index; `depends_on` now reads `"008.00"`. Decided 2026-10-15 by the owner (Konstantin): stack it on #23.
 1. How does `resync dirs` treat a 💣 folder whose answer arrives and whose prior path is unknown? Assumed: the unblocker returns it to ⭕️ or 🅱️ by `blocked.md` content, then the normal path resumes. Not anchored; confirm in planning.
-1. Does answering via Respond re-start the 7-day clock if the answer is incomplete and lando re-blocks? Assumed yes, because a new `blocked` signature is written.
+1. Does answering via Respond re-start the 7-day clock if the answer is incomplete and unblocker re-blocks? Assumed yes, because a new `blocked` signature is written.
 1. Which existing `hold` Pause reuses: all agents or only the 💣 plan's (research Q7)? N10 says "every agent"; assumed all.
 1. Should a deferred-by-aging plan carry a marker so it is not mistaken for a human defer? Not in the decision doc.
 1. Does the exit-code on 💣 apply when `--ignore-bombs` lifts the halt but a 💣 still exists? Assumed 0.
@@ -162,7 +162,7 @@ Answers are dated by day only (`live/commands.rb:231-233`), so they cannot be th
 - Pause and Discuss do not exist. Closest: agent `hold` (`lib/openlanes/live/commands.rb:40`, `lib/openlanes/execution/control.rb:31-38`) and per-question `hold_blocked` and `release_hold` (`commands.rb:241-251`).
 - Copilot `web/src/copilot/Copilot.tsx:52-69` drafts into the box and never sends.
 - Command kinds are in `commands.rb:33-44`. None is Respond, Pause or Discuss.
-- Respond writing into `blocked.md` is a new command. Folding is already done by `lifecycle/unblocker.rb` (`:147`, `:177`) through `lando-broker`.
+- Respond writing into `blocked.md` is a new command. Folding is already done by `lifecycle/unblocker.rb` (`:147`, `:177`) through `unblocker`.
 
 ### Contradictions
 
@@ -176,7 +176,7 @@ Production is what the code runs today.
 6. **Exit code.** N9 (`:94`) says `lanes run` exits non-zero. Production: exit 1 only on failed attempts (`run.rb:219`).
 7. **Emoji.** N2 (`:17-22`) replaces ⭕️ 🅱️ ☢️ with ⭕ 🛑 💤. Production uses the old forms (`status.rb:290`, `:298`, `:306`). Production runs the old form, and N2 is not built.
 8. **`depends_on` form.** This plan says `depends_on: ["008"]` (`spec.md:2`). Plan 008 (`008.00-…/spec.md:71`) says entries must be canonical `"008.00"`. Production `Spec` ignores the key (`plans/spec.rb:134-148`, per 008's spec `:99`).
-9. **Spec drift.** This `spec.md` has a second, empty `## What we are trying to achieve` through `## What research needs to settle` block (old lines 34-43), after the real chapter. It should be removed by yoda-writer or a human.
+9. **Spec drift.** This `spec.md` has a second, empty `## What we are trying to achieve` through `## What research needs to settle` block (old lines 34-43), after the real chapter. It should be removed by spec-writer or a human.
 
 ### Open questions
 
@@ -198,7 +198,7 @@ Production is what the code runs today.
 - The dependents index depends on unbuilt plan 008. This is the blocking dependency.
 - Auto-deferral has no defined trigger, and a wall-clock invariant conflicts with the rule that asking never fires.
 
-Conclusion: the feature can be specified, but the spec must settle open questions 1–4 before implementation. Items 4 and 5 may need a human; the others are for yoda-writer to decide and record.
+Conclusion: the feature can be specified, but the spec must settle open questions 1–4 before implementation. Items 4 and 5 may need a human; the others are for spec-writer to decide and record.
 
 References (repository, no external sources):
 

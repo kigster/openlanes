@@ -14,16 +14,16 @@ Success means less time and spend per correct, reviewable PR. Starting more agen
 
 | Evidence | Consequence | Change |
 | --- | --- | --- |
-| `agents/leah-researcher.md`, Do steps 1-2: research fan-out and a project test run; 1,200-second timeout | Every new brief buys research orchestration and testing before scope is known | Bounded repository lookup only when an unanswered question requires it |
-| `agents/yoda-writer.md`: re-read README, other plans and code; mandatory alternative framing and at least three non-goals | Already adequate briefs pay for another discovery and rewriting pass | Invoke only to repair missing acceptance criteria or ambiguity |
-| `agents/luthen-rael-planner.md`: always write backend and frontend plans | Empty frontend work still becomes an agent assignment | Dispatch only tasks actually present |
-| `agents/luke-backend.md`: explicitly uncapped subagents; both builders run full suites | Nested concurrency escapes the visible worker count and repeats validation | Coordinator owns all worker admission and validation |
+| `agents/researcher.md`, Do steps 1-2: research fan-out and a project test run; 1,200-second timeout | Every new brief buys research orchestration and testing before scope is known | Bounded repository lookup only when an unanswered question requires it |
+| `agents/spec-writer.md`: re-read README, other plans and code; mandatory alternative framing and at least three non-goals | Already adequate briefs pay for another discovery and rewriting pass | Invoke only to repair missing acceptance criteria or ambiguity |
+| `agents/planner.md`: always write backend and frontend plans | Empty frontend work still becomes an agent assignment | Dispatch only tasks actually present |
+| `agents/backend-coder.md`: explicitly uncapped subagents; both builders run full suites | Nested concurrency escapes the visible worker count and repeats validation | Coordinator owns all worker admission and validation |
 | `lib/openlanes/cli/run/run.rb`: default jobs are CPU-derived, up to 12; tokens default to unmetered | Hardware capacity substitutes for a spending policy | Finite defaults, independent limits for plans and workers |
 | `Dispatcher#dispatch` and `#next_dispatchable`: running jobs and role eligibility determine admission | No separate repository-wide active-plan budget or declared dependency graph | Persistent scheduler with an active-plan cap and task claims |
 | `Executor#invocation`: hard-coded `claude`; model override applies to every role | A different name does not provide independent review | Provider adapters and a reviewer identity policy |
 | `Dispatcher#verify_and_sign`, `Status::PLAN_HEADING`: interrupted work can advance from a heading | A partial artifact can look complete | Validated task results and acceptance evidence |
 | `Publisher#publish`: commit, push, create; no existing-PR lookup in that method | Fix-and-republish needs idempotent update behavior, especially after a partial failure | Discover by repo and branch, reconcile commit/push/create separately |
-| `agents/hansolo-reviewer.md`: approvals and comments; no readiness label contract | Human cannot rely on a current, deterministic ready queue | Harness-owned readiness calculation and label reconciliation |
+| `agents/staff-reviewer.md`: approvals and comments; no readiness label contract | Human cannot rely on a current, deterministic ready queue | Harness-owned readiness calculation and label reconciliation |
 | `CLAUDE.md`: says no commits, no `.ruby-version`, and missing `bin/setup`; all contradict this checkout | Stale setup guidance causes unnecessary work | Refresh instructions against current commands and CI |
 
 These are source observations, not a performance profile or a current test-suite result. Existing timeouts, token metering, ledgers, state files, and process control are useful foundations; extend them rather than create competing implementations.
@@ -41,7 +41,7 @@ These are source observations, not a performance profile or a current test-suite
 flowchart TB
   A[Brief and repository evidence] --> B[Rules and Jev routing]
   B --> C[Lead prepares task graph]
-  B --> O[Optional Leah or Yoda]
+  B --> O[Optional researcher or spec-writer]
   O --> C
   C --> D[Admit one plan and claim tasks]
   D --> E[One or two engineers]
@@ -53,13 +53,13 @@ flowchart TB
   I --> J[Human merges]
 ```
 
-luthen-rael becomes the lead role, not another permanent running process. It writes one plan with acceptance criteria, task dependencies, interfaces, file ownership and validation commands. Specialists may answer a bounded design question; the lead remains the sole plan owner. Do not ask several agents to independently write competing plans.
+planner becomes the lead role, not another permanent running process. It writes one plan with acceptance criteria, task dependencies, interfaces, file ownership and validation commands. Specialists may answer a bounded design question; the lead remains the sole plan owner. Do not ask several agents to independently write competing plans.
 
-Luke implements backend, CLI and general code tasks. Rey implements actual interface work, including terminal UI where appropriate. A Ruby repository can have UI work; language alone must not decide routing. For a backend-only change, Rey receives no invocation, including no paid invocation just to report that there is nothing to do.
+backend-coder implements backend, CLI and general code tasks. frontend-coder implements actual interface work, including terminal UI where appropriate. A Ruby repository can have UI work; language alone must not decide routing. For a backend-only change, frontend-coder receives no invocation, including no paid invocation just to report that there is nothing to do.
 
-Leah returns a short evidence packet: question, reusable code paths, relevant tests, unresolved facts. Start with at most five questions and a 600-word result. No full test suite as routine research. Permit a targeted reproduction when it answers a question. External research requires a named fact that local evidence cannot settle, such as an upstream compatibility change.
+researcher returns a short evidence packet: question, reusable code paths, relevant tests, unresolved facts. Start with at most five questions and a 600-word result. No full test suite as routine research. Permit a targeted reproduction when it answers a question. External research requires a named fact that local evidence cannot settle, such as an upstream compatibility change.
 
-Yoda repairs an inadequate brief. Its output is an acceptance-criteria patch, not a literary rewrite. Preserve the user's intent; do not invent product decisions. Complete specs bypass Yoda. Lando remains a bounded resolver of explicit answers to blocked questions.
+spec-writer repairs an inadequate brief. Its output is an acceptance-criteria patch, not a literary rewrite. Preserve the user's intent; do not invent product decisions. Complete specs bypass spec-writer. unblocker remains a bounded resolver of explicit answers to blocked questions.
 
 Han reviews the frozen diff, specification, acceptance results and relevant code in a fresh session. Provide implementation evidence, not the builder's entire conversation. Findings need a reproducible scenario and an actionable location. Different providers reduce shared blind spots but do not guarantee review quality.
 
@@ -100,12 +100,12 @@ These are starting experiment settings, not demonstrated optimal values:
 | Work | Wall-clock allowance | Aggregate tokens per invocation | Required output |
 | --- | --- | --- | --- |
 | Jev decision batch | 10 seconds total including one retry | 8,000 input ceiling | Validated typed decisions |
-| Leah repository lookup | 120 seconds | 25,000 | Evidence for named questions |
-| Yoda clarification | 120 seconds | 20,000 | Acceptance-criteria patch or unresolved question |
-| luthen-rael planning | 240 seconds | 50,000 | Valid task graph and interfaces |
-| Luke or Rey task | 600 seconds | 150,000 | Patch plus acceptance evidence |
+| researcher repository lookup | 120 seconds | 25,000 | Evidence for named questions |
+| spec-writer clarification | 120 seconds | 20,000 | Acceptance-criteria patch or unresolved question |
+| planner planning | 240 seconds | 50,000 | Valid task graph and interfaces |
+| backend-coder or frontend-coder task | 600 seconds | 150,000 | Patch plus acceptance evidence |
 | Han review | 300 seconds | 75,000 | Findings bound to current diff |
-| Lando answer resolution | 120 seconds | 20,000 | Applied answers and remaining blockers |
+| unblocker answer resolution | 120 seconds | 20,000 | Applied answers and remaining blockers |
 
 Start with 600,000 total tokens per plan and 1,000,000 per run, including retries and delegated work. Persist spending so restarting cannot replenish it. Reserve each invocation's allowance atomically before admission, debit actual usage, and release unused reservation. Define wall time as a stop deadline, with a separately bounded shutdown grace. Limit each task to one automatic retry and each PR to two repair cycles. A repeated identical failure or no changed evidence stops immediately with a compact handoff. Larger features need explicit increased budgets or smaller plans.
 
@@ -212,7 +212,7 @@ This is a PR-sized delivery plan. Each item has a separate review boundary. Use 
 
 ### PR 4: Add Jev where judgment is useful
 
-- [ ] Add `decisions/client.rb`, `decisions/policy.rb` and versioned rubrics. Modify config and the routing seam from PR 3; update Leah/Yoda prompts for bounded optional work.
+- [ ] Add `decisions/client.rb`, `decisions/policy.rb` and versioned rubrics. Modify config and the routing seam from PR 3; update researcher/spec-writer prompts for bounded optional work.
 - [ ] Implement the documented HTTP request and response validation, total deadline, one transient retry, versioned cache and conservative fallback. Read credentials without exposing them to logs or decision state.
 - [ ] Test malformed JSON, missing answer, out-of-range probability, low confidence, 401, 429, timeout, cache invalidation and unavailable model. Explicit UI criteria must survive an incorrect skip recommendation.
 - [ ] Ship in shadow mode. Enable individual automatic gates only after PR 7 reports held-out performance; deterministic routing remains available without a TypeSafe key.

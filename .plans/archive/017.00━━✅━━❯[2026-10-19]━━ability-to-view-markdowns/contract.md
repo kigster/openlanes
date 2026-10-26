@@ -1,11 +1,11 @@
 # Contract 017.00: plan files, read and write
 
-Owner: luke-backend. Consumer: rey-frontend. The machine-readable form is [`openapi.yaml`](openapi.yaml), beside this file.
+Owner: backend-coder. Consumer: frontend-coder. The machine-readable form is [`openapi.yaml`](openapi.yaml), beside this file.
 
 ## Baseline
 
 - Ruby suite (`bundle exec rspec`) before any change: 3013 examples, 0 failures, 9 pending. No baseline failures.
-- Web suite: rey-frontend records it (plan.md, Notes for the builders).
+- Web suite: frontend-coder records it (plan.md, Notes for the builders).
 
 ## Names
 
@@ -58,12 +58,12 @@ A plan has a live car when `GET /api/board` has, under `me.plans`, an entry whos
 
 | Files | Owner |
 | :--- | :--- |
-| `lib/openlanes/web/plan_files.rb`, `lib/openlanes/web/app.rb`, `spec/openlanes/web/plan_files_spec.rb`, `spec/openlanes/web/app_spec.rb` | luke-backend |
-| `web/cypress/fixtures/plans/`, `bin/web-e2e` | luke-backend (B3) |
-| `contract.md`, `openapi.yaml` | luke-backend |
-| `web/src/**`, `web/cypress/e2e/plan-files.cy.ts` | rey-frontend |
+| `lib/openlanes/web/plan_files.rb`, `lib/openlanes/web/app.rb`, `spec/openlanes/web/plan_files_spec.rb`, `spec/openlanes/web/app_spec.rb` | backend-coder |
+| `web/cypress/fixtures/plans/`, `bin/web-e2e` | backend-coder (B3) |
+| `contract.md`, `openapi.yaml` | backend-coder |
+| `web/src/**`, `web/cypress/e2e/plan-files.cy.ts` | frontend-coder |
 
-No file is shared. `justfile`'s `web-e2e` recipe, if B3 needs to touch it, is luke-backend's and rey is mailed first.
+No file is shared. `justfile`'s `web-e2e` recipe, if B3 needs to touch it, is backend-coder's and frontend-coder is mailed first.
 
 ## Build order
 
@@ -79,10 +79,10 @@ No file is shared. `justfile`'s `web-e2e` recipe, if B3 needs to touch it, is lu
 
 - `web/cypress/fixtures/plans/` holds `001.00━━⭕━━❯clean-agent-boundaries` (blocked in `board.json`, 2 cars) and `002.00━━⭕━━❯fixture-without-a-car`, each with `spec.md` (frontmatter `created`, `lane`), `plan.md` (none) and `blocked.md`.
 - `bin/web-e2e` copies that tree to a temp dir, passes it as `--dir` to both demo servers, and gives Cypress its path as `Cypress.env("plansDir")`, so F4 reads a file back with `cy.readFile` under that path.
-- The demo board (`web/src/api/fixtures/board.json`, rey's file) holds `001.00` blocked with 2 cars (Edit disabled, PUT `409`) and `002.00` blocked with one question and `cars: []` (Edit enabled). F4 drives `002.00`.
+- The demo board (`web/src/api/fixtures/board.json`, frontend-coder's file) holds `001.00` blocked with 2 cars (Edit disabled, PUT `409`) and `002.00` blocked with one question and `cars: []` (Edit enabled). F4 drives `002.00`.
 - Verified against `openlanes web --demo --dir <copy>`: `GET /api/plans/002/files` → `{"files":["spec.md","plan.md","blocked.md"]}`; `GET /api/plans/002/files/spec.md` → `text/markdown;charset=utf-8` with a quoted 64-hex `ETag`.
 
 ## Amendments
 
-- amended: Cypress env is `plansDir`, not `plans`, at rey's request (mail #4).
-- amended: assumption for the F4 gap: rey adds `002.00` (status `blocked`, one question, `cars: []`) to `web/src/api/fixtures/board.json`; its folder is already in the B3 fixture. B3 is barred from `board.json`. Resolved: rey added it; the gap is closed.
+- amended: Cypress env is `plansDir`, not `plans`, at frontend-coder's request (mail #4).
+- amended: assumption for the F4 gap: frontend-coder adds `002.00` (status `blocked`, one question, `cars: []`) to `web/src/api/fixtures/board.json`; its folder is already in the B3 fixture. B3 is barred from `board.json`. Resolved: frontend-coder added it; the gap is closed.

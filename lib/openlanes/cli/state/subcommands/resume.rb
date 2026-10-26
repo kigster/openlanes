@@ -24,7 +24,7 @@ module OpenLanes
         option :files, desc: "Files touched, comma-separated"
 
         example [
-          %(--plan 003 --agent luke-backend --round 1 --done "B1,B2" --remaining "B3" --next-step "run rspec spec/openlanes/live" --files lib/openlanes/live/mail.rb)
+          %(--plan 003 --agent #{OpenLanes::Agents::Names::BACKEND_CODER} --round 1 --done "B1,B2" --remaining "B3" --next-step "run rspec spec/openlanes/live" --files lib/openlanes/live/mail.rb)
         ]
 
         # @param options [Hash]

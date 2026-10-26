@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::Events::Sink do
   it "creates the directory on first write and appends one line per event" do
     run = sink.with(run: "r1")
     run.record(:run_started, jobs: 2)
-    run.record(:agent_started, plan: "020.01", round: 1, agent: "luke-backend", invocation_start: Time.utc(2026, 10, 16))
+    run.record(:agent_started, plan: "020.01", round: 1, agent: "backend-coder", invocation_start: Time.utc(2026, 10, 16))
 
     events = OpenLanes::Events::Log.new(dir:).events
     expect(File.basename(sink.path)).to eq("n1.jsonl")

@@ -41,13 +41,13 @@
 - **Builds:** `openlanes coverage PLAN [-n]`: resolves the plan, gets its checkout through `Vcs.worktree(root:).checkout_for`, runs the gate, prints `Verdict#to_s` on STDOUT, exits 1 when withheld. `-n` prints the declaration and where it would run, runs nothing.
 - **Done when:** `spec/openlanes/cli/coverage_spec.rb` covers pass (exit 0), withheld (exit 1, figure and minimum on STDOUT), an unknown plan (refused), and `-n` running nothing; `spec/openlanes/cli/help_spec.rb` stays green with the command listed.
 
-## B5 hansolo never lets `minimum` drop (spec item 10)
+## B5 staff-reviewer never lets `minimum` drop (spec item 10)
 
 - **Discipline:** back end.
-- **Owns:** `agents/hansolo-reviewer.md` (one line), `evals/cases/hansolo-reviewer/coverage-minimum.yml` and `evals/cases/hansolo-reviewer/coverage-minimum/{pass,fail}/**` (new).
+- **Owns:** `agents/staff-reviewer.md` (one line), `evals/cases/staff-reviewer/coverage-minimum.yml` and `evals/cases/staff-reviewer/coverage-minimum/{pass,fail}/**` (new).
 - **Must not touch:** `lib/`.
 - **Depends on:** nothing.
-- **Builds:** a case whose fixture PR lowers `minimum` in `.openlanes.coverage.yml` from 95 to 90; hansolo must sign rejected and name the file. A pass recording (rejected, finding names `.openlanes.coverage.yml`) and a fail recording (approved).
+- **Builds:** a case whose fixture PR lowers `minimum` in `.openlanes.coverage.yml` from 95 to 90; staff-reviewer must sign rejected and name the file. A pass recording (rejected, finding names `.openlanes.coverage.yml`) and a fail recording (approved).
 - **Done when:** `spec/openlanes/evals/corpus_spec.rb` scores the pass recording as passing and the fail recording as failing.
 
 ## B6 Integration check

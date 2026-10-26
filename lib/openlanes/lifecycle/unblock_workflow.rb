@@ -16,7 +16,7 @@ module OpenLanes
       include Dry::Monads[:result]
 
       # The agent that knows the shape of `blocked.md`.
-      DEFAULT_AGENT = "lando-broker"
+      DEFAULT_AGENT = Agents::Names::UNBLOCKER
 
       # What each token turned out to be, for whoever has to fix it.
       PROBLEMS = {

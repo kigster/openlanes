@@ -21,7 +21,7 @@ module OpenLanes
       ALL = [
         new(name: "ready-for-review",
           colour: "c2e0c6",
-          meaning: "luke and rey are done; the PR waits for a free review slot",
+          meaning: "#{Agents::Names::BACKEND_CODER} and #{Agents::Names::FRONTEND_CODER} are done; the PR waits for a free review slot",
           passing: false),
         new(name: "review-in-progress", colour: "FFBE20", meaning: "the reviewers have started", passing: false),
         new(name: "review-rejected", colour: "F90000", meaning: "at least one ⛔️ or 💣", passing: false),
@@ -39,16 +39,16 @@ module OpenLanes
         new(name: "review-approved", colour: "109a10", meaning: "no ⛔️ or 💣, few 🤔", passing: true),
         new(name: "ready-to-merge",
           colour: "5319e7",
-          meaning: "chewie-verifier verified it and its E2E tests pass",
+          meaning: "#{Agents::Names::VERIFIER} verified it and its E2E tests pass",
           passing: true),
-        # palpatine's two verdicts, as the engine acted on them (P2).
+        # deploy-assessor's two verdicts, as the engine acted on them (P2).
         new(name: "auto-merged",
           colour: "953384",
-          meaning: "palpatine-risk-assessor judged it safe and the engine merged it",
+          meaning: "#{Agents::Names::DEPLOY_ASSESSOR} judged it safe and the engine merged it",
           passing: true),
         new(name: "merge-manually",
           colour: "0e8a16",
-          meaning: "palpatine-risk-assessor, or merge.by: human, left it for a person to merge",
+          meaning: "#{Agents::Names::DEPLOY_ASSESSOR}, or merge.by: human, left it for a person to merge",
           passing: true)
       ].freeze
 
@@ -76,13 +76,13 @@ module OpenLanes
       # The verdict for everything else.
       APPROVED = named("review-approved")
 
-      # chewie-verifier's label, and the one the coverage gate withholds.
+      # verifier's label, and the one the coverage gate withholds.
       READY_TO_MERGE = named("ready-to-merge")
 
-      # The engine merged it on palpatine's `auto`.
+      # The engine merged it on deploy-assessor's `auto`.
       AUTO_MERGED = named("auto-merged")
 
-      # palpatine said `manual`, or `merge.by: human` overrode its `auto`.
+      # deploy-assessor said `manual`, or `merge.by: human` overrode its `auto`.
       MERGE_MANUALLY = named("merge-manually")
 
       # Either verdict: the pull request is complete (P2).
@@ -104,7 +104,7 @@ module OpenLanes
       # the pull request carries, which a resolved conflict keeps (U3).
       CONFLICTS = new(name: "conflicts",
         colour: "B60205",
-        meaning: "no longer merges clean onto main; bb8-resolver rebases it",
+        meaning: "no longer merges clean onto main; #{Agents::Names::REBASER} rebases it",
         passing: false)
 
       # What {CONFLICTS} becomes once the resolution is pushed (U3).
@@ -127,7 +127,7 @@ module OpenLanes
         passing: false)
 
       # M3's names for verdicts R3 kept under another name: `review-passed`
-      # is R3's {OK_NOT_PERFECT}, and chewie's `ok-to-merge` is R3's
+      # is R3's {OK_NOT_PERFECT}, and verifier's `ok-to-merge` is R3's
       # {READY_TO_MERGE}.
       RENAMED = { "review-passed" => OK_NOT_PERFECT, "ok-to-merge" => READY_TO_MERGE }.freeze
 

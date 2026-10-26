@@ -2,27 +2,27 @@
 
 ## D1. The unacked count and last-known state travel on the snapshot wire
 
-Asked by rey-frontend, 2026-10-13. Answered by kig, 2026-10-13: option 1.
+Asked by frontend-coder, 2026-10-13. Answered by kig, 2026-10-13: option 1.
 
-luke-backend adds `unacked: Integer` and `last_known_state: [...]` to `Live::Snapshot#plan` (`lib/openlanes/live/snapshot.rb`). rey-frontend adds the types (`web/src/api/types.ts`), both JSON fixtures, a `PlanRow` badge and a detail table in `web/src`, with vitest tests. One wire, read-only.
+backend-coder adds `unacked: Integer` and `last_known_state: [...]` to `Live::Snapshot#plan` (`lib/openlanes/live/snapshot.rb`). frontend-coder adds the types (`web/src/api/types.ts`), both JSON fixtures, a `PlanRow` badge and a detail table in `web/src`, with vitest tests. One wire, read-only.
 
-Context: F1 and F2 named a web plan page, view templates and a `web.rb:25` file list that do not exist. The page is the React app in `web/src`, fed by `Live::Snapshot#plan`. Already done by rey: `contract.md` is served by `GET /api/plans/:ordinal/files/:name` (`lib/openlanes/web/app.rb`, spec in `app_spec.rb`).
+Context: F1 and F2 named a web plan page, view templates and a `web.rb:25` file list that do not exist. The page is the React app in `web/src`, fed by `Live::Snapshot#plan`. Already done by frontend-coder: `contract.md` is served by `GET /api/plans/:ordinal/files/:name` (`lib/openlanes/web/app.rb`, spec in `app_spec.rb`).
 
 ## D2. The terminal board carries `unacked` as data only
 
-Asked by rey-frontend, 2026-10-13. Answered by kig, 2026-10-13: yes.
+Asked by frontend-coder, 2026-10-13. Answered by kig, 2026-10-13: yes.
 
-No code paints `Engine::Board` to a terminal here. `unacked` is added to `Board` and its `Row` as data only; the dispatcher (luke-backend's) fills it.
+No code paints `Engine::Board` to a terminal here. `unacked` is added to `Board` and its `Row` as data only; the dispatcher (backend-coder's) fills it.
 
 ## D3. Legacy plan files stay readable, and the prompts say so
 
 Decided while finishing, 2026-10-14, taking the plan's assumption 5 (no migration).
 
-Folders planned before this change hold `plan-backend.md`, `plan-frontend.md` and `implementation-plan.md`. Routing falls back to `plan-<section>.md` when `plan.md` has no matching `##` section, the builders' ledgers still list their old file, and the luke, rey and hansolo prompts tell the agent to read the old names as the same documents. So `rg implementation-plan lib agents` is not empty, which the plan's done-when asked for; an empty grep would have stranded every older folder, this one included.
+Folders planned before this change hold `plan-backend.md`, `plan-frontend.md` and `implementation-plan.md`. Routing falls back to `plan-<section>.md` when `plan.md` has no matching `##` section, the builders' ledgers still list their old file, and the backend-coder, frontend-coder and staff-reviewer prompts tell the agent to read the old names as the same documents. So `rg implementation-plan lib agents` is not empty, which the plan's done-when asked for; an empty grep would have stranded every older folder, this one included.
 
 ## D4. The builders sign in `plan.md` first
 
-luke-backend and rey-frontend's `ledger:` became `[plan.md, pull-requests.md, plan-<half>.md]`. The harness writes its own lines to the first file, and `plan.md` is where the units now live (r2d2-mechanic already signs there). The legacy file stays last so its old signatures are still read.
+backend-coder and frontend-coder's `ledger:` became `[plan.md, pull-requests.md, plan-<half>.md]`. The harness writes its own lines to the first file, and `plan.md` is where the units now live (chores-coder already signs there). The legacy file stays last so its old signatures are still read.
 
 ## D5. A need may name a section: `plan.md#frontend`
 

@@ -13,8 +13,8 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
   let(:adapter) { "claude" }
   let(:agents_dir) { Dir.mktmpdir }
   let(:agents) do
-    File.write(File.join(agents_dir, "leah.md"),
-      "---\nname: leah-researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
+    File.write(File.join(agents_dir, "researcher.md"),
+      "---\nname: researcher\nhandles: [new]\nadvances_to: researched\nrounds: 2\n" \
       "adapter: #{adapter}\nledger: [spec.md]\n---\nbody")
     OpenLanes::Agents::Registry.new(dir: agents_dir)
   end
@@ -27,7 +27,7 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
   let(:lost) { false }
   let(:seed) { nil }
   let(:folder) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).feature.path }
-  let(:stages) { OpenLanes::Plans::PlanState.for(folder).stages.select { it["agent"] == "leah-researcher" } }
+  let(:stages) { OpenLanes::Plans::PlanState.for(folder).stages.select { it["agent"] == "researcher" } }
   let(:heard) { [] }
   let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
   # Each invocation's argv, one argument per element.
@@ -112,7 +112,7 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
   end
 
   it "says which it chose, and why" do
-    expect(heard).to include("fresh session: no session recorded for leah-researcher",
+    expect(heard).to include("fresh session: no session recorded for researcher",
       "resuming session sess-1: round 1 left it in new")
   end
 
@@ -122,7 +122,7 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
     it "starts round 2 again fresh, and says why" do
       aggregate_failures do
         expect(resumed).to eq([nil, "sess-1", nil])
-        expect(heard).to include("session sess-1 not found, starting leah-researcher fresh")
+        expect(heard).to include("session sess-1 not found, starting researcher fresh")
         expect(stages.map { it.values_at("round", "session") }).to eq([[1, "sess-1"], [2, "sess-3"]])
       end
     end
@@ -131,7 +131,7 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
   context "when the plan has moved since the agent's last session" do
     # An earlier run's round 1 left the plan in researched; it is back in new.
     let(:seed) do
-      OpenLanes::Plans::PlanState.for(folder).stage!(agent: "leah-researcher",
+      OpenLanes::Plans::PlanState.for(folder).stage!(agent: "researcher",
         round: 1,
         session: "sess-0",
         cwd: root,

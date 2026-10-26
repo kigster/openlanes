@@ -52,7 +52,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     context "when the same id arrives again" do
       before do
         apply
-        send_command("message", plan: "001.00", agent: "rey-frontend", id: "01JA", text: "second time")
+        send_command("message", plan: "001.00", agent: "frontend-coder", id: "01JA", text: "second time")
       end
 
       it "answers it with its first reply, and does not apply it again" do
@@ -181,18 +181,18 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       plan.ask_extension!(agent:, state: :building, round: 1, limit: "time")
       send_command("answer", plan: "001.00", question: "X1", text: "c) Extend Time by 20 minutes")
       aggregate_failures do
-        expect(apply.map { [it.status, it.reason] }).to eq([["done", "luke-backend has 20 more minutes"]])
+        expect(apply.map { [it.status, it.reason] }).to eq([["done", "backend-coder has 20 more minutes"]])
         expect(plan.extensions.first).to include("answer" => "c", "by" => "dana", "grant" => "live", "seconds" => 1200)
       end
     end
 
     it "gives a round to an agent that is not running, and refuses what is not a choice or not open" do
-      plan.ask_extension!(agent: "leah-researcher", state: :building, round: 1, limit: "rounds")
+      plan.ask_extension!(agent: "researcher", state: :building, round: 1, limit: "rounds")
       send_command("answer", plan: "001.00", question: "X1", text: "never")
       send_command("answer", plan: "001.00", question: "X1", text: "a) Extend Rounds by 1")
       send_command("answer", plan: "001.00", question: "X1", text: "b")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(['X1 takes a), b) or c), not "never"', "leah-researcher gets one more round",
+        expect(apply.map(&:reason)).to eq(['X1 takes a), b) or c), not "never"', "researcher gets one more round",
                                            "001.00 has no open request X1"])
         expect(plan.extensions.first).to include("answer" => "a", "grant" => "round")
       end
@@ -331,18 +331,18 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     before { building("001.00", "tax-rule-dsl") }
 
     it "leaves the person's note for the interrupted agent and hands back its round" do
-      OpenLanes::Plans::PlanState.for(path_of("001.00")).stage!(agent: "luke-backend", round: 1, status: "Interrupted")
+      OpenLanes::Plans::PlanState.for(path_of("001.00")).stage!(agent: "backend-coder", round: 1, status: "Interrupted")
       allow(dispatcher).to receive(:resume).and_call_original
       send_command("resume", plan: "001.00", note: "the parser is done")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(["luke-backend resumes on 001.00 at its next turn"])
-        expect(mailbox("001.00").map { [it.from, it.to, it.body] }).to eq([["human", "luke-backend", "RESUME: the parser is done"]])
-        expect(dispatcher).to have_received(:resume).with(OpenLanes::Plans::Ordinal.parse("001.00"), "luke-backend")
+        expect(apply.map(&:reason)).to eq(["backend-coder resumes on 001.00 at its next turn"])
+        expect(mailbox("001.00").map { [it.from, it.to, it.body] }).to eq([["human", "backend-coder", "RESUME: the parser is done"]])
+        expect(dispatcher).to have_received(:resume).with(OpenLanes::Plans::Ordinal.parse("001.00"), "backend-coder")
       end
     end
 
     it "uses a standing note when the person wrote none" do
-      OpenLanes::Plans::PlanState.for(path_of("001.00")).stage!(agent: "rey-frontend", round: 1, status: "Interrupted")
+      OpenLanes::Plans::PlanState.for(path_of("001.00")).stage!(agent: "frontend-coder", round: 1, status: "Interrupted")
       send_command("resume", plan: "001.00")
       apply
       expect(mailbox("001.00").map(&:body)).to eq(["RESUME: carry on from your last resume note"])
@@ -408,8 +408,8 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
 
     it "refuses a word for an agent that is not running" do
-      send_command("stop", plan: "001.00", agent: "leah-researcher")
-      expect(apply.map(&:reason)).to eq(["001.00/leah-researcher is not running"])
+      send_command("stop", plan: "001.00", agent: "researcher")
+      expect(apply.map(&:reason)).to eq(["001.00/researcher is not running"])
     end
 
     it "queues a model for the agent's next round" do
@@ -547,13 +547,13 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
 
       it "refuses an agent that is not running" do
-        send_command("compact", plan: "001.00", agent: "leah-researcher")
-        expect(apply.first.reason).to eq("001.00/leah-researcher is not running")
+        send_command("compact", plan: "001.00", agent: "researcher")
+        expect(apply.first.reason).to eq("001.00/researcher is not running")
       end
     end
 
     it "refuses to switch an agent that is not running" do
-      send_command("switch_model", plan: "001.00", agent: "leah-researcher", model: "haiku")
+      send_command("switch_model", plan: "001.00", agent: "researcher", model: "haiku")
       expect(apply.first.reason).to include("use set_model")
     end
 
@@ -573,7 +573,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     let(:executor) { HeldExecutor.new(traces).tap { |e| e.singleton_class.undef_method(:prefer_model) } }
 
     it "is refused" do
-      send_command("set_model", plan: "001.00", agent: "luke-backend", model: "haiku")
+      send_command("set_model", plan: "001.00", agent: "backend-coder", model: "haiku")
       expect(apply.map(&:reason)).to eq(["this run's executor cannot change an agent's model"])
     end
   end

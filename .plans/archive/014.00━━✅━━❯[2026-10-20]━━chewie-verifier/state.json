@@ -3,13 +3,13 @@
   "version": 1,
   "plan": {
     "ordinal": "014.00",
-    "slug": "chewie-verifier"
+    "slug": "verifier"
   },
   "state": "approved",
   "updated_at": "2026-10-21T21:24:05-07:00",
   "stages": [
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "blocked",
@@ -29,7 +29,7 @@
       "note": "completed - 12 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -49,7 +49,7 @@
       "seconds": 897.0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Blocked",
       "from": "building",
@@ -72,7 +72,7 @@
       "moves": 1
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "planned",
@@ -95,7 +95,7 @@
       "moves": 3
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "building",
@@ -114,7 +114,7 @@
       "moves": 4
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "product_blocked",
@@ -133,7 +133,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Started",
       "from": "building",
@@ -148,363 +148,363 @@
   "signatures": [
     {
       "at": "2026-10-14T11:51:21-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-14T11:53:19-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-14T11:53:27-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-14T11:55:45-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-15T09:39:17-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:39:54-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-15T09:42:04-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:42:35-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-15T09:42:42-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:44:15-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-15T09:44:31-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:47:08-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:50:24-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:59:26-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T10:08:40-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:10:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T13:58:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T19:54:45-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T20:03:12-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T20:14:03-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-16T10:04:30-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T10:10:39-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-16T18:15:44-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:19:46-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-16T19:03:08-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:17:29-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T11:27:20-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-17T11:37:21-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T11:42:27-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 2,
       "note": "technical"
     },
     {
       "at": "2026-10-18T06:34:44-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-18T20:04:00-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T20:04:03-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T01:56:10-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:56:13-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T01:58:55-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:58:58-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T02:06:43-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:06:46-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T02:43:00-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:43:04-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T02:45:22-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:45:27-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-20T17:06:45-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:06:46-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-20T17:07:43-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:07:52-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:11:34-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:21:17-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:20:17-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:25:39-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "product"
     },
     {
       "at": "2026-10-21T01:27:42-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:29:53-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:30:08-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:30:49-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-21T21:18:06-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:23:31-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     }
   ],
   "messages": [],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-17T11:42:25-07:00",
       "round": 2,
@@ -533,7 +533,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -547,13 +547,13 @@
   ],
   "moves": 6,
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "entries": [
             {
               "kind": "question",
-              "text": "B1 Where the suite gets run The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run luke to sign Completed if they are green. (Recommended) b) Run the agent again with localhost networking allowed in its sandbox, so…",
+              "text": "B1 Where the suite gets run The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run backend-coder to sign Completed if they are green. (Recommended) b) Run the agent again with localhost networking allowed in its sandbox, so…",
               "ref": "B1",
               "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
             }
@@ -587,7 +587,7 @@
           "entries": [
             {
               "kind": "note",
-              "text": "014.00 implementation already merged to main as PR #71 (kig/014-chewie-verifier) on 2026-10-17; this branch equals origin/main 1e417939 after the harness rebase dropped merge commit 99c06924"
+              "text": "014.00 implementation already merged to main as PR #71 (kig/014-verifier) on 2026-10-17; this branch equals origin/main 1e417939 after the harness rebase dropped merge commit 99c06924"
             },
             {
               "kind": "done",
@@ -599,7 +599,7 @@
             },
             {
               "kind": "question",
-              "text": "B2 The plan's work is already on main This plan's implementation merged as PR #71 (`kig/014-chewie-verifier`, \"Add the chewie verifier and 🧪 Verifying\") on 2026-10-17, and `main` has since built on it (max_rejections, desired codebase quality, chewie verifying 017, 021, 024, 035 and 038). This round's rebase onto `origin/main` dropped this branch's only implementation commit, the merge 99c06924 \"Chewie Verifier\", because a plain rebase skips merge commits. `kig/014.00-spec-chewie-verifier` now …",
+              "text": "B2 The plan's work is already on main This plan's implementation merged as PR #71 (`kig/014-verifier`, \"Add the verifier verifier and 🧪 Verifying\") on 2026-10-17, and `main` has since built on it (max_rejections, desired codebase quality, verifier verifying 017, 021, 024, 035 and 038). This round's rebase onto `origin/main` dropped this branch's only implementation commit, the merge 99c06924 \"verifier Verifier\", because a plain rebase skips merge commits. `kig/014.00-spec-chewie-verifier` now …",
               "ref": "B2",
               "answer": "a) Close 014.00 as ✅ Merged, recording PR #71 in `pull-requests.md`, and drop the branch `kig/014.00-spec-chewie-verifier`. Answered by kig on 2026-10-21"
             }
@@ -619,7 +619,7 @@
             },
             {
               "kind": "note",
-              "text": "Round 3 re-run was blocked by a lock: alock refused pull-requests.md because the harness (openlanes, pid 82944) holds .plans/014.00━━🟡━━❯chewie-verifier/**. Nothing was written. Signed Almost completed."
+              "text": "Round 3 re-run was blocked by a lock: alock refused pull-requests.md because the harness (openlanes, pid 82944) holds .plans/014.00━━🟡━━❯verifier/**. Nothing was written. Signed Almost completed."
             }
           ]
         },
@@ -637,13 +637,13 @@
             },
             {
               "kind": "note",
-              "text": "Do not run alock release-all here. Every concurrent luke-backend shares AGENT_ID=luke-backend, so it dropped 6 sibling locks (README.md, lib/openlanes/live/*, support/config.rb, their specs). I re-acquired them under the same identity."
+              "text": "Do not run alock release-all here. Every concurrent backend-coder shares AGENT_ID=backend-coder, so it dropped 6 sibling locks (README.md, lib/openlanes/live/*, support/config.rb, their specs). I re-acquired them under the same identity."
             }
           ]
         }
       }
     },
-    "lando-broker": {
+    "unblocker": {
       "rounds": {
         "1": {
           "state": "⭕ Technical Block",
@@ -654,7 +654,7 @@
             },
             {
               "kind": "question",
-              "text": "B1 Where the suite gets run The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run luke to sign Completed if they are green. (Recommended) b) Run the agent again with localhost networking allowed in its sandbox, so…",
+              "text": "B1 Where the suite gets run The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run backend-coder to sign Completed if they are green. (Recommended) b) Run the agent again with localhost networking allowed in its sandbox, so…",
               "ref": "B1",
               "answer": "Rebase onto the main branch first and retry Answered by kig on 2026-10-17"
             }
@@ -751,9 +751,9 @@
             },
             {
               "kind": "question",
-              "text": "B1 Where the suite gets run > **Answer not accepted:** Rebase onto the main branch first and retry > > lando-broker left it unfolded and said nothing The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run luke to s…",
+              "text": "B1 Where the suite gets run > **Answer not accepted:** Rebase onto the main branch first and retry > > unblocker left it unfolded and said nothing The code for B1 to B8 is in the worktree, and rubocop is clean. The only thing left is to show `bundle exec rspec` green and `bin/coverage-changed` passing, and that needs a machine where an unused localhost port refuses connections. a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run backend-coder to s…",
               "ref": "B1",
-              "answer": "a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run luke to sign Completed if they are green. Answered by kig on 2026-10-20"
+              "answer": "a) Run `bundle exec rspec` and `bin/coverage-changed` in the worktree from a normal terminal, then re-run backend-coder to sign Completed if they are green. Answered by kig on 2026-10-20"
             }
           ]
         },
@@ -766,7 +766,7 @@
             },
             {
               "kind": "note",
-              "text": "blocked.md deleted after B1 folded; no questions remain. Plan 014.00 still needs a green human run of rspec and bin/coverage-changed before luke signs Completed"
+              "text": "blocked.md deleted after B1 folded; no questions remain. Plan 014.00 still needs a green human run of rspec and bin/coverage-changed before backend-coder signs Completed"
             }
           ]
         },

@@ -9,7 +9,7 @@
   "updated_at": "2026-10-23T14:02:47-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -28,7 +28,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 2,
       "status": "Interrupted",
       "from": "new",
@@ -47,7 +47,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 3,
       "status": "Interrupted",
       "from": "new",
@@ -66,7 +66,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 4,
       "status": "Interrupted",
       "from": "new",
@@ -85,7 +85,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 5,
       "status": "Interrupted",
       "from": "new",
@@ -104,7 +104,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 6,
       "status": "Interrupted",
       "from": "new",
@@ -123,7 +123,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -142,7 +142,7 @@
       "moves": 1
     },
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Interrupted",
       "from": "new",
@@ -164,98 +164,98 @@
   "signatures": [
     {
       "at": "2026-10-21T11:16:54-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T11:17:30-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "lock refused"
     },
     {
       "at": "2026-10-21T11:22:51-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T11:22:59-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 2
     },
     {
       "at": "2026-10-21T11:39:21-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 3
     },
     {
       "at": "2026-10-21T11:39:28-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 3
     },
     {
       "at": "2026-10-21T12:40:23-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 4
     },
     {
       "at": "2026-10-21T12:40:27-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 4
     },
     {
       "at": "2026-10-21T12:41:11-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 5
     },
     {
       "at": "2026-10-21T12:41:13-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 5
     },
     {
       "at": "2026-10-21T12:43:20-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 6
     },
     {
       "at": "2026-10-21T12:43:22-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 6
     },
     {
       "at": "2026-10-21T21:18:07-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:18:12-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-23T14:02:40-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-23T14:02:43-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1
     }
@@ -263,7 +263,7 @@
   "messages": [],
   "moves": 1,
   "last-known-state": {
-    "leah-researcher": {
+    "researcher": {
       "source": "agent",
       "at": "2026-10-23T14:02:42-07:00",
       "round": 1,
@@ -282,7 +282,7 @@
     }
   },
   "memory": {
-    "leah-researcher": {
+    "researcher": {
       "rounds": {
         "1": {
           "round": 1,
@@ -290,7 +290,7 @@
           "entries": [
             {
               "kind": "note",
-              "text": "spec.md claim refused: held by openlanes pid 82944 (leah-researcher on 041.00); research chapter not written"
+              "text": "spec.md claim refused: held by openlanes pid 82944 (researcher on 041.00); research chapter not written"
             },
             {
               "kind": "decision",
@@ -422,7 +422,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 1,
       "limit": "rounds",
@@ -435,7 +435,7 @@
     },
     {
       "number": 2,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 2,
       "limit": "rounds",
@@ -449,7 +449,7 @@
     },
     {
       "number": 3,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 3,
       "limit": "rounds",
@@ -462,7 +462,7 @@
     },
     {
       "number": 4,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 4,
       "limit": "rounds",
@@ -475,7 +475,7 @@
     },
     {
       "number": 5,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 5,
       "limit": "rounds",
@@ -488,7 +488,7 @@
     },
     {
       "number": 6,
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "state": "new",
       "round": 6,
       "limit": "rounds",

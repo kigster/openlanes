@@ -1,6 +1,6 @@
-# Implementation plan: the contract between luke-backend and rey-frontend
+# Implementation plan: the contract between backend-coder and frontend-coder
 
-Owner: `luke-backend`. Renamed from `implementation-plan.md` by B5 (this folder only; older folders keep their names).
+Owner: `backend-coder`. Renamed from `implementation-plan.md` by B5 (this folder only; older folders keep their names).
 
 ## Baseline
 
@@ -8,7 +8,7 @@ Owner: `luke-backend`. Renamed from `implementation-plan.md` by B5 (this folder 
 
 - Baseline: `2214 examples, 0 failures`, coverage 98.64%. No pre-existing failures.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 All Ruby, no HTTP. Every method below reads; none writes unless it says so.
 
@@ -41,10 +41,10 @@ CLI: `openlanes state resume --plan N --agent A --round R --status S [--done X,Y
 
 | Files | Owner |
 | :-- | :-- |
-| `lib/openlanes/plans/*`, `schemas/*`, `lib/openlanes/cli/mail/*`, `lib/openlanes/cli/state/*`, `lib/openlanes/cli.rb`, `lib/openlanes/live/*`, `lib/openlanes/engine/dispatcher.rb`, `agents/*.md`, `lib/openlanes/execution/*`, `lib/openlanes/presentation/*`, `lib/openlanes/agents/*` | luke |
-| `lib/openlanes/engine/board*`, `lib/openlanes/web*`, web templates, `spec/openlanes/engine/board/*`, `spec/openlanes/web/*`, `spec/integration/mail_round_trip_spec.rb` | rey |
+| `lib/openlanes/plans/*`, `schemas/*`, `lib/openlanes/cli/mail/*`, `lib/openlanes/cli/state/*`, `lib/openlanes/cli.rb`, `lib/openlanes/live/*`, `lib/openlanes/engine/dispatcher.rb`, `agents/*.md`, `lib/openlanes/execution/*`, `lib/openlanes/presentation/*`, `lib/openlanes/agents/*` | backend-coder |
+| `lib/openlanes/engine/board*`, `lib/openlanes/web*`, web templates, `spec/openlanes/engine/board/*`, `spec/openlanes/web/*`, `spec/integration/mail_round_trip_spec.rb` | frontend-coder |
 
-Shared: none written by both. `lib/openlanes/web.rb:25` file list is rey's (F1), including the `contract.md` rename.
+Shared: none written by both. `lib/openlanes/web.rb:25` file list is frontend-coder's (F1), including the `contract.md` rename.
 
 ## Build order
 
@@ -52,7 +52,7 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 
 ## Integration proof
 
-`spec/integration/mail_round_trip_spec.rb` (rey, F2): real `:tree` plan, real CLI commands, real `Board` and web app; send → one unacked → ack → zero → render leaves folder unchanged.
+`spec/integration/mail_round_trip_spec.rb` (frontend-coder, F2): real `:tree` plan, real CLI commands, real `Board` and web app; send → one unacked → ack → zero → render leaves folder unchanged.
 
 ## Known gaps
 
@@ -70,9 +70,9 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 - [x] F1
 - [x] F2
 
-## Snapshot wire (amended: added for rey's blocked.md B1, option 1)
+## Snapshot wire (amended: added for frontend-coder's blocked.md B1, option 1)
 
-`Live::Snapshot#plan` gains `unacked: Integer` and `last_known: [{agent, source, at, round, status, next_step, note}]` (empty array when none). `web/src/api/fixtures/snapshot.json` updated to match (rey's file; mailed as #5). `web/src/api/types.ts` and the panel are rey's, not done.
+`Live::Snapshot#plan` gains `unacked: Integer` and `last_known: [{agent, source, at, round, status, next_step, note}]` (empty array when none). `web/src/api/fixtures/snapshot.json` updated to match (frontend-coder's file; mailed as #5). `web/src/api/types.ts` and the panel are frontend-coder's, not done.
 
 ## Resume (round 1 interrupted)
 
@@ -95,7 +95,7 @@ B1 → B2 → (B3, B5, B6) → B4. F1 may start once B1 and B2 are marked landed
 ## B5, B6, F1, F2 (finishing session, 2026-10-14)
 
 - Salvaged the uncommitted round-1 work as five commits, rebased on `origin/main` (no conflicts).
-- B5 done. `luthen-rael-planner` writes `## Backend`, `## Frontend` and `## HTTP surface` inside `plan.md`. `rey-frontend` declares `needs: ["plan.md#frontend"]`: `Routing.units?` reads `file#section` as the `###` headings under that `##`, and falls back to `plan-<section>.md` when `plan.md` has no such section, so no folder migrates. `luke-backend` and `rey-frontend` ledgers are `[plan.md, pull-requests.md, plan-<half>.md]`. Prompts ask for `mail ack` after each read and for `state resume` on INTERRUPT; the RESUME mail survives only as the human's note from the page (`Live::Commands`). `openlanes docs`, `docs/WORKFLOW.md` and the `openlanes-documents` skill name `contract.md` and `openapi.yaml`.
+- B5 done. `planner` writes `## Backend`, `## Frontend` and `## HTTP surface` inside `plan.md`. `frontend-coder` declares `needs: ["plan.md#frontend"]`: `Routing.units?` reads `file#section` as the `###` headings under that `##`, and falls back to `plan-<section>.md` when `plan.md` has no such section, so no folder migrates. `backend-coder` and `frontend-coder` ledgers are `[plan.md, pull-requests.md, plan-<half>.md]`. Prompts ask for `mail ack` after each read and for `state resume` on INTERRUPT; the RESUME mail survives only as the human's note from the page (`Live::Commands`). `openlanes docs`, `docs/WORKFLOW.md` and the `openlanes-documents` skill name `contract.md` and `openapi.yaml`.
 - B6 done. `Presentation::ApiDocs#call(tree)` and `openlanes api docs`: found files on STDOUT with an `npx @redocly/cli build-docs` line, problems on STDERR as `path: reason`, exit 65 when any file is bad.
 - F1 done (decisions D1, D2). `Board::Row#unacked`, filled in `Dispatcher#row_for` through `Board::Row.unacked_in`; `UnackedBadge` on the plan row; `LastKnownTable` in the agent drawer. Snapshot key is `last_known` (amended: D1 said `last_known_state`; the shorter key shipped with B2 and the page reads it).
 - F2 done: `spec/integration/mail_round_trip_spec.rb`.

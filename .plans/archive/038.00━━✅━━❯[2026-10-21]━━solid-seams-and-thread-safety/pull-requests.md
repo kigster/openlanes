@@ -1,6 +1,6 @@
 # Pull Requests
 
-## Back end, rounds 1 and 2 (luke-backend)
+## Back end, rounds 1 and 2 (backend-coder)
 
 Every unit under `## Backend` is built. There is no front end, so no contract and no mailbox (plan.md, `## Frontend`).
 
@@ -32,7 +32,7 @@ All the `rg` checks print nothing:
 
 ## Answers, round 1
 
-hansolo's review round 1 (PR conversation comment, no inline review comments) had one finding.
+staff-reviewer's review round 1 (PR conversation comment, no inline review comments) had one finding.
 
 | Comment | Answer |
 | :------ | :----- |

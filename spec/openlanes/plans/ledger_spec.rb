@@ -9,14 +9,14 @@ RSpec.describe OpenLanes::Plans::Ledger do
 
       > [!NOTE]
       >
-      > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]
+      > [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Started, round 1 ]
 
       What was found.
 
       > [!NOTE]
       >
-      > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-      > [2026-09-04 11:44:04 AM PDT] [ next: yoda-writer ]
+      > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+      > [2026-09-04 11:44:04 AM PDT] [ next: spec-writer ]
     MARKDOWN
   end
 
@@ -25,12 +25,12 @@ RSpec.describe OpenLanes::Plans::Ledger do
 
     it "reads every entry in document order, with its file and line" do
       expect(reading.entries.map { |e| [e.agent, e.status, e.round, e.line] })
-        .to eq([["leah-researcher", "Started", 1, 7], ["leah-researcher", "Completed", 1, 13]])
+        .to eq([["researcher", "Started", 1, 7], ["researcher", "Completed", 1, 13]])
       expect(reading.entries.map(&:file).uniq).to eq(["spec.md"])
     end
 
     it "reads the handoff as its own kind of line" do
-      expect(reading.handoffs.map { |h| [h.next, h.line] }).to eq([["yoda-writer", 14]])
+      expect(reading.handoffs.map { |h| [h.next, h.line] }).to eq([["spec-writer", 14]])
     end
 
     it "parses the timestamp into a Time" do
@@ -39,13 +39,13 @@ RSpec.describe OpenLanes::Plans::Ledger do
     end
 
     it "keeps a parenthesised note" do
-      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: hansolo-reviewer   status: Completed, round 2 (rejected 1/2) ]"
+      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: staff-reviewer   status: Completed, round 2 (rejected 1/2) ]"
       entry = described_class.parse(text, file: "pull-requests.md").entries.first
       expect(entry.note).to eq("rejected 1/2")
     end
 
     it "accepts a bold status, and says the entry was bold" do
-      text = "> [2026-09-04 11:52:07 AM PDT] [ agent: leah-researcher   status: **Interrupted, round 1 (killed by harness after 15s grace)** ]"
+      text = "> [2026-09-04 11:52:07 AM PDT] [ agent: researcher   status: **Interrupted, round 1 (killed by harness after 15s grace)** ]"
       entry = described_class.parse(text, file: "spec.md").entries.first
       aggregate_failures do
         expect(entry.status).to eq("Interrupted")
@@ -58,7 +58,7 @@ RSpec.describe OpenLanes::Plans::Ledger do
     # line to skip: an agent that writes "Done" has said nothing the
     # harness can act on, and silence here would look like a stall.
     it "reports a line that tries to be an entry and fails as a problem, not as nothing" do
-      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Done, round 1 ]"
+      text = "> [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Done, round 1 ]"
       reading = described_class.parse(text, file: "spec.md")
       aggregate_failures do
         expect(reading.entries).to be_empty
@@ -83,20 +83,20 @@ RSpec.describe OpenLanes::Plans::Ledger do
 
   describe ".last_for" do
     it "returns the agent's latest entry by timestamp, then by file order, then by line" do
-      early = "> [2026-09-04 11:00:00 AM PDT] [ agent: luke-backend   status: Completed, round 1 ]"
-      late = "> [2026-09-04 11:30:00 AM PDT] [ agent: luke-backend   status: Started, round 1 ]"
+      early = "> [2026-09-04 11:00:00 AM PDT] [ agent: backend-coder   status: Completed, round 1 ]"
+      late = "> [2026-09-04 11:30:00 AM PDT] [ agent: backend-coder   status: Started, round 1 ]"
       reading = described_class::Reading.new(
         entries:  described_class.parse(late, file: "pull-requests.md").entries +
           described_class.parse(early, file: "plan-backend.md").entries,
         handoffs: [],
         problems: []
       )
-      expect(described_class.last_for(reading, "luke-backend").status).to eq("Started")
+      expect(described_class.last_for(reading, "backend-coder").status).to eq("Started")
     end
 
     it "is nil for an agent that never wrote" do
       reading = described_class.parse(document, file: "spec.md")
-      expect(described_class.last_for(reading, "yoda-writer")).to be_nil
+      expect(described_class.last_for(reading, "spec-writer")).to be_nil
     end
   end
 
@@ -104,14 +104,14 @@ RSpec.describe OpenLanes::Plans::Ledger do
     it "finds the next: line directly after a Completed entry in the same file" do
       reading = described_class.parse(document, file: "spec.md")
       completed = reading.entries.last
-      expect(described_class.handoff_after(reading, completed).next).to eq("yoda-writer")
+      expect(described_class.handoff_after(reading, completed).next).to eq("spec-writer")
     end
 
     it "does not attach a next: line that follows a different entry" do
       text = <<~MD
-        > [2026-09-04 11:44:03 AM PDT] [ agent: leah-researcher   status: Completed, round 1 ]
-        > [2026-09-04 11:50:00 AM PDT] [ agent: yoda-writer   status: Started, round 1 ]
-        > [2026-09-04 11:50:01 AM PDT] [ next: luthen-rael-planner ]
+        > [2026-09-04 11:44:03 AM PDT] [ agent: researcher   status: Completed, round 1 ]
+        > [2026-09-04 11:50:00 AM PDT] [ agent: spec-writer   status: Started, round 1 ]
+        > [2026-09-04 11:50:01 AM PDT] [ next: planner ]
       MD
       reading = described_class.parse(text, file: "spec.md")
       expect(described_class.handoff_after(reading, reading.entries.first)).to be_nil
@@ -121,7 +121,7 @@ RSpec.describe OpenLanes::Plans::Ledger do
   describe ".render and .block" do
     it "round-trips an entry through the parser" do
       entry = described_class::Entry.new(at: Time.new(2026, 9, 4, 11, 29, 20),
-        agent: "leah-researcher",
+        agent: "researcher",
         status: "Started",
         round: 1,
         note: nil,

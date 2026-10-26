@@ -43,7 +43,7 @@ describe("UnblockWidget", () => {
     let content!: HTMLElement;
     act(() => { content = typeInEditor(container, "Carry the **checkout path**."); });
     await act(async () => { fireEvent.keyDown(content, { key: "Enter", code: "Enter", keyCode: 13, ctrlKey: true }); });
-    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "luke-backend", payload: { question: "B1", text: "Carry the **checkout path**." } });
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "B1", text: "Carry the **checkout path**." } });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
@@ -74,7 +74,7 @@ describe("UnblockWidget", () => {
     const release = screen.getByRole("button", { name: "Release hold" });
     expect(release).toHaveAttribute("aria-pressed", "true");
     await user.click(release);
-    expect(sent[0]).toEqual({ kind: "release_hold", plan: "001.00", agent: "luke-backend", payload: { question: "B1" } });
+    expect(sent[0]).toEqual({ kind: "release_hold", plan: "001.00", agent: "backend-coder", payload: { question: "B1" } });
     expect(await screen.findByRole("button", { name: "Hold blocked" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByTestId("announcer")).toHaveTextContent("001.00 no longer held.");
   });

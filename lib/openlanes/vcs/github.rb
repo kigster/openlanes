@@ -400,7 +400,7 @@ module OpenLanes
         raise Error, "could not read labels of ##{number}: #{first_line(e)}"
       end
 
-      # Post one conversation comment. The engine, not chewie, says why a
+      # Post one conversation comment. The engine, not verifier, says why a
       # verification failed: only the engine has the SHA the screenshot link
       # needs, because only the engine pushes.
       #
@@ -454,7 +454,7 @@ module OpenLanes
         raise Error, "could not read checks of #{branch}: #{first_line(e)}"
       end
 
-      # Merge one pull request, as the engine does on palpatine's `auto`
+      # Merge one pull request, as the engine does on deploy-assessor's `auto`
       # (P4). A merge commit, which is how this repository's history reads;
       # the branch is left alone, since the plan's worktree still has it
       # checked out. Agents never reach this: `gh pr merge` is ungrantable.

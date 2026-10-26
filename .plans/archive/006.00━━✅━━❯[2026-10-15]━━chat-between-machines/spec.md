@@ -80,10 +80,10 @@ The section above names no list, so the questions are the ones `decisions.md` le
 - Footer: white on `#B23507` is 6.17:1 (passes). Black would be 3.41:1 (fails). This confirms the footer ink in `decisions.md` ("Implementation choices"), and the tokens already use white.
 
 **6. Tests.**
-- `bundle exec rspec` (run through `just test`): 2214 examples, 0 failures, exit 0 (`/tmp/leah-rspec.log`).
+- `bundle exec rspec` (run through `just test`): 2214 examples, 0 failures, exit 0 (`/tmp/researcher-rspec.log`).
 - Web: `just web-test` (`lint`, `typecheck`, `coverage`) was not run. Not verified.
 
-**Open questions (for yoda)**
+**Open questions (for spec-writer)**
 
 1. Should chat be scoped to one repository, or to any repository on the same `$REDIS_URL`? (B1, product.)
 2. Does production run a Redis user whose ACL can `PSUBSCRIBE` the `openlanes:<repo>:chat:*` pattern?
@@ -117,7 +117,7 @@ Two ways to frame the problem:
 1. **A new transport feature.** Chat is Redis pub/sub between machines; the UI is a thin skin. The risk sits in delivery, presence and Redis topology.
 1. **A second floating panel with a roster.** Chat is a page-level UX (menu, dialogs, panel, presence) that happens to be fed by a hub on the API server. The risk sits in the page states: invited, naming, in chat, idle.
 
-Picked **1 plus 2 as one unit, split by half**: the hub and routes are the back end, the panel and dialogs are the front end. One line why: `decisions.md` (D2, "Implementation choices") already fixes the transport, so what is left to get wrong is the contract between the two halves, and the split by half is the one `luke-backend` and `rey-frontend` can build as a pair.
+Picked **1 plus 2 as one unit, split by half**: the hub and routes are the back end, the panel and dialogs are the front end. One line why: `decisions.md` (D2, "Implementation choices") already fixes the transport, so what is left to get wrong is the contract between the two halves, and the split by half is the one `backend-coder` and `frontend-coder` can build as a pair.
 
 The problem statement above stands. Research changed one thing: it was written as if the chat were unbuilt, while the branch already holds an implementation (Research, finding 1). This plan therefore specifies the behaviour the existing code must be held to, and the planner's units are completion and verification work, not a greenfield build.
 
@@ -130,7 +130,7 @@ A person looking at one machine's control room can start a chat with another mac
 - **Message history.** Pub/sub is at-most-once and nothing is stored (D2). A late joiner sees nothing from before.
 - **Avatars or profile images.** The Name dialog asks for a name only; an avatar URL is a later plan.
 - **Chat across repositories.** Machines on different repositories sharing a `$REDIS_URL` never meet (decided 2026-10-13 by kig, top of this spec).
-- **Merging with the AI copilot.** The copilot (c3po-operator, W17) stays a separate panel with its own colours (D11).
+- **Merging with the AI copilot.** The copilot (copilot, W17) stays a separate panel with its own colours (D11).
 - **Rich text.** No Markdown, attachments, reactions or typing indicators (D10).
 - **A host role or moderation.** Anyone in a chat may invite; nobody can remove anyone (D5).
 - **Multiple chats per page.** One chat per page at a time (D4).
@@ -168,7 +168,7 @@ Each item has its check.
 
 ## Back end / front end
 
-| Item | `luke-backend` | `rey-frontend` |
+| Item | `backend-coder` | `frontend-coder` |
 | :--- | :--- | :--- |
 | Machine menu, menu states | Menu state rules exposed in `GET /api/chat` (who is in, invite pending) | `MachineMenu.tsx`, tab caret and right-click in `App.tsx` |
 | Name dialog | none | `dialogs.tsx`, prefill from local storage |
@@ -183,7 +183,7 @@ The pair agrees on one contract before either writes: the event names on `event:
 
 ## Open questions
 
-Assumptions I made, and leah's unsettled list. None blocks planning.
+Assumptions I made, and researcher's unsettled list. None blocks planning.
 
 1. **Repository scope** is answered: one repository (decided 2026-10-13 by kig, top of this spec). Research's B1 is settled and needs no `blocked.md`.
 1. **Production Redis ACL.** Does a user exist that cannot `PSUBSCRIBE` `openlanes:<repo>:chat:*`? Unverified (Research, finding 3). Assumed no. If yes, the hub fails at startup; the planner should have it log and degrade, not crash.

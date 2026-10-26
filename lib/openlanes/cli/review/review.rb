@@ -6,7 +6,7 @@ module OpenLanes
     #
     # The one door through which a review label is set. Agents may not run
     # `gh pr edit`, so a verdict reaches GitHub only by passing the CI rule in
-    # {Vcs::Review}, and this command is where a person, or hansolo, asks.
+    # {Vcs::Review}, and this command is where a person, or staff-reviewer, asks.
     class Review < Base
       desc "Replace a pull request's review label, refusing a passing verdict while CI is red"
 

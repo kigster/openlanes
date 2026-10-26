@@ -50,8 +50,8 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
 
   describe "at the cap" do
     before do
-      sign("hansolo-reviewer", "rejected 1/2")
-      sign("chewie-verifier", "rejected: CI is red")
+      sign("staff-reviewer", "rejected 1/2")
+      sign("verifier", "rejected: CI is red")
     end
 
     it "holds the plan from its builders" do
@@ -63,12 +63,12 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
 
       aggregate_failures do
         expect(outcomes.map(&:trigger)).to eq(%w[cap])
-        expect(asked.map(&:first)).to eq(%w[obi-wan-kenobi-arbitrator])
+        expect(asked.map(&:first)).to eq(%w[arbitrator])
         expect(plan.status.key).to eq(:blocked)
         expect(plan.read("blocked.md")).to include("## B1", "> F1 still corrupts the ledger.")
         expect(state.rulings.map { it.values_at("kind", "outcome", "trigger") }).to eq([%w[cap no_go cap]])
         expect(comments.size).to eq(1)
-        expect(state.stages.last.values_at("agent", "status")).to eq(%w[obi-wan-kenobi-arbitrator Completed])
+        expect(state.stages.last.values_at("agent", "status")).to eq(%w[arbitrator Completed])
       end
     end
 
@@ -108,7 +108,7 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
           expect(asked.size).to eq(described_class::ATTEMPTS)
           expect(plan.status.key).to eq(:blocked)
           expect(plan.read("blocked.md")).to include("## B1 The arbitrator could not rule at the rejection cap")
-          expect(state.stages.count { it["agent"] == "obi-wan-kenobi-arbitrator" && it["status"] == "Interrupted" }).to eq(3)
+          expect(state.stages.count { it["agent"] == "arbitrator" && it["status"] == "Interrupted" }).to eq(3)
         end
       end
     end
@@ -165,32 +165,32 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
   end
 
   it "does not hold a plan below the cap" do
-    sign("hansolo-reviewer", "rejected 1/2")
+    sign("staff-reviewer", "rejected 1/2")
     expect([arbitration.holds?(plan), arbitration.tick([plan])]).to eq([false, []])
   end
 
   describe "an appeal" do
     let(:answer) { "```ruling\nkind: appeal\npr: 7\noutcome: struck\nfindings:\n  struck: [F2]\nreason: Out of scope.\n```\n" }
 
-    before { sign("luke-backend", "appeal: F2 because the spec rules that test out") }
+    before { sign("backend-coder", "appeal: F2 because the spec rules that test out") }
 
     it "produces exactly one appeal ruling, however many ticks follow" do
       3.times { rule }
 
       aggregate_failures do
         expect(state.rulings.map { it.values_at("kind", "outcome") }).to eq([%w[appeal struck]])
-        expect(asked.last.last).to include("Raised by: luke-backend", "appeal: F2")
-        expect(state.messages.map { it["to"] }).to include("luke-backend", "hansolo-reviewer")
+        expect(asked.last.last).to include("Raised by: backend-coder", "appeal: F2")
+        expect(state.messages.map { it["to"] }).to include("backend-coder", "staff-reviewer")
       end
     end
 
-    it "lists F2 as struck in hansolo's next prompt" do
+    it "lists F2 as struck in staff-reviewer's next prompt" do
       rule
-      hansolo = agents.find("hansolo-reviewer")
-      prompt = OpenLanes::Execution::Prompt.new(agent: hansolo,
+      staff_reviewer = agents.find("staff-reviewer")
+      prompt = OpenLanes::Execution::Prompt.new(agent: staff_reviewer,
         subject: plan,
         root: "/repo",
-        profile: OpenLanes::Agents::Profile.resolve(hansolo),
+        profile: OpenLanes::Agents::Profile.resolve(staff_reviewer),
         max_rejections: -> { 2 }).to_s
       expect(prompt).to include("never to be raised again", "- F2 of the review struck at")
     end
@@ -198,17 +198,17 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
 
   describe "a dispute" do
     let(:state_key) { :building }
-    let(:answer) { "```ruling\nkind: dispute\npr: 7\nwinner: rey-frontend\nreason: The code wins.\n```\n" }
+    let(:answer) { "```ruling\nkind: dispute\npr: 7\nwinner: frontend-coder\nreason: The code wins.\n```\n" }
 
-    before { state.message!(from: "rey-frontend", to: "obi-wan-kenobi-arbitrator", body: "dispute: contract.md GET /plans shape") }
+    before { state.message!(from: "frontend-coder", to: "arbitrator", body: "dispute: contract.md GET /plans shape") }
 
     it "rules once, mails both builders and acks the dispute" do
       2.times { rule }
 
       aggregate_failures do
-        expect(state.rulings.map { it.values_at("kind", "winner") }).to eq([%w[dispute rey-frontend]])
+        expect(state.rulings.map { it.values_at("kind", "winner") }).to eq([%w[dispute frontend-coder]])
         expect(state.messages.first["read"]).to eq("yes")
-        expect(state.messages.drop(1).map { it["to"] }).to eq(%w[luke-backend rey-frontend])
+        expect(state.messages.drop(1).map { it["to"] }).to eq(%w[backend-coder frontend-coder])
       end
     end
   end
@@ -218,7 +218,7 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
     let(:labels_now) { %w[review-ok-not-perfect] }
     let(:answer) { "```ruling\nkind: passed_check\npr: 7\noutcome: too_lenient\nreason: F1 is critical.\n```\n" }
 
-    before { sign("hansolo-reviewer", "ok, not perfect") }
+    before { sign("staff-reviewer", "ok, not perfect") }
 
     context "with mvp" do
       let(:quality) { :mvp }
@@ -301,19 +301,19 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
     it "returns the final answer from the trace its own run wrote, given the brief" do
       asker = described_class.new(executor: executor)
       aggregate_failures do
-        expect(asker.call(agents.find("obi-wan-kenobi-arbitrator"), plan, "Trigger: cap")).to eq("```ruling\nkind: cap\n```")
+        expect(asker.call(agents.find("arbitrator"), plan, "Trigger: cap")).to eq("```ruling\nkind: cap\n```")
         expect(briefs).to eq(["Trigger: cap"])
       end
     end
 
     it "returns nothing when no trace was written" do
       asker = described_class.new(executor: executor(write: false))
-      expect(asker.call(agents.find("obi-wan-kenobi-arbitrator"), plan, "Trigger: cap")).to eq("")
+      expect(asker.call(agents.find("arbitrator"), plan, "Trigger: cap")).to eq("")
     end
 
     it "says the run failed rather than that the answer had no ruling" do
       asker = described_class.new(executor: executor(result: ok.with(ok: false, note: "claude exited 1: overloaded")))
-      expect { asker.call(agents.find("obi-wan-kenobi-arbitrator"), plan, "Trigger: cap") }
+      expect { asker.call(agents.find("arbitrator"), plan, "Trigger: cap") }
         .to raise_error(OpenLanes::Error, "the arbitrator's run failed: claude exited 1: overloaded")
     end
   end

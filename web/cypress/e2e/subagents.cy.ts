@@ -1,5 +1,5 @@
 // The demo's fanned-out car (a 12-tick cycle: 3, 1, 0 sub-agents) draws one line per sub-agent; every other car stays plain.
-const FANNED = '[data-car="001.00/rey-frontend"]';
+const FANNED = '[data-car="001.00/frontend-coder"]';
 
 describe("sub-agent lines on the tile", () => {
   beforeEach(() => cy.openBoard());

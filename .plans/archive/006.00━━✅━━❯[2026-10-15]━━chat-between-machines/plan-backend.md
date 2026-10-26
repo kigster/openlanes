@@ -1,6 +1,6 @@
 # Plan 006.00, back end
 
-`luke-backend` builds from this file. The chat already exists on this branch (spec, Research finding 1): `lib/openlanes/live/chat.rb`, `lib/openlanes/live/subscriber.rb`, `lib/openlanes/web/app.rb` (`GET /api/chat`, `POST /api/chat/:action`), `lib/openlanes/web/events.rb`. Every unit starts by running its named spec against what is there, and writes code only for what fails or is missing. Do not rewrite what passes.
+`backend-coder` builds from this file. The chat already exists on this branch (spec, Research finding 1): `lib/openlanes/live/chat.rb`, `lib/openlanes/live/subscriber.rb`, `lib/openlanes/web/app.rb` (`GET /api/chat`, `POST /api/chat/:action`), `lib/openlanes/web/events.rb`. Every unit starts by running its named spec against what is there, and writes code only for what fails or is missing. Do not rewrite what passes.
 
 ## B1. The chat contract
 

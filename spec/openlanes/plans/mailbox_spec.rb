@@ -9,47 +9,47 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     path
   end
 
-  def luke_to_rey(body) = mailbox.append(from: "luke-backend", to: "rey-frontend", body:)
+  def backend_to_frontend(body) = mailbox.append(from: "backend-coder", to: "frontend-coder", body:)
 
-  def rey_to_luke(body) = mailbox.append(from: "rey-frontend", to: "luke-backend", body:)
+  def frontend_to_backend(body) = mailbox.append(from: "frontend-coder", to: "backend-coder", body:)
 
   it "is empty before anybody has written" do
     aggregate_failures do
       expect(mailbox).not_to exist
       expect(mailbox.messages).to be_empty
-      expect(mailbox.for("luke-backend")).to be_empty
+      expect(mailbox.for("backend-coder")).to be_empty
     end
   end
 
   it "numbers messages from one, in the order they were written" do
-    luke_to_rey("The endpoint is up.")
-    rey_to_luke("Seen; wiring the screen.")
+    backend_to_frontend("The endpoint is up.")
+    frontend_to_backend("Seen; wiring the screen.")
 
     expect(mailbox.messages.map { |m| [m.number, m.from, m.to] })
-      .to eq([[1, "luke-backend", "rey-frontend"], [2, "rey-frontend", "luke-backend"]])
+      .to eq([[1, "backend-coder", "frontend-coder"], [2, "frontend-coder", "backend-coder"]])
   end
 
   it "keeps messages in the plan's state.json" do
-    luke_to_rey("first")
-    luke_to_rey("second")
+    backend_to_frontend("first")
+    backend_to_frontend("second")
 
     expect(OpenLanes::Plans::PlanState.for(folder).messages.map { |m| [m["number"], m["body"]] })
       .to eq([[1, "first"], [2, "second"]])
   end
 
   it "writes no mailbox.md any more" do
-    luke_to_rey("first")
+    backend_to_frontend("first")
     expect(File.exist?(File.join(folder, "mailbox.md"))).to be(false)
   end
 
   context "with messages from before state.json, in mailbox.md" do
     before do
       File.write(File.join(folder, "mailbox.md"),
-        "# Mailbox\n\n## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold news\n")
+        "# Mailbox\n\n## 1 · 2026-09-06 10:30:53 -0700 · backend-coder → frontend-coder\n\nold news\n")
     end
 
     it "still reads them, and numbers new messages after them" do
-      luke_to_rey("new news")
+      backend_to_frontend("new news")
       expect(mailbox.messages.map { |m| [m.number, m.body] }).to eq([[1, "old news"], [2, "new news"]])
     end
   end
@@ -59,7 +59,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   # half a sentence.
   it "parses back exactly what it wrote, paragraphs and headings included" do
     body = "Two things.\n\n## Not a message heading\n\n    curl -s /returns/1\n\nThat is all."
-    written = luke_to_rey(body)
+    written = backend_to_frontend(body)
 
     read = mailbox.messages.first
     aggregate_failures do
@@ -70,24 +70,24 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   end
 
   it "answers a reader with only the messages addressed to them" do
-    luke_to_rey("for rey")
-    rey_to_luke("for luke")
-    luke_to_rey("for rey again")
+    backend_to_frontend("for frontend-coder")
+    frontend_to_backend("for backend-coder")
+    backend_to_frontend("for frontend-coder again")
 
-    expect(mailbox.for("rey-frontend").map(&:body)).to eq(["for rey", "for rey again"])
+    expect(mailbox.for("frontend-coder").map(&:body)).to eq(["for frontend-coder", "for frontend-coder again"])
   end
 
   it "skips what a reader says they have already seen" do
-    luke_to_rey("one")
-    luke_to_rey("two")
-    luke_to_rey("three")
+    backend_to_frontend("one")
+    backend_to_frontend("two")
+    backend_to_frontend("three")
 
-    expect(mailbox.for("rey-frontend", after: 2).map(&:body)).to eq(["three"])
+    expect(mailbox.for("frontend-coder", after: 2).map(&:body)).to eq(["three"])
   end
 
   describe "a command's message, appended twice" do
-    let!(:first) { mailbox.append(from: "human", to: "luke-backend", body: "hi", command: "01JM") }
-    let!(:again) { mailbox.append(from: "human", to: "luke-backend", body: "hi", command: "01JM") }
+    let!(:first) { mailbox.append(from: "human", to: "backend-coder", body: "hi", command: "01JM") }
+    let!(:again) { mailbox.append(from: "human", to: "backend-coder", body: "hi", command: "01JM") }
 
     it "is there once, and the second append answers with the first" do
       expect([mailbox.messages.size, again]).to eq([1, first])
@@ -95,7 +95,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   end
 
   it "refuses a message with nothing in it" do
-    expect { luke_to_rey("   \n") }.to raise_error(OpenLanes::Error, /body/)
+    expect { backend_to_frontend("   \n") }.to raise_error(OpenLanes::Error, /body/)
   end
 
   # `dry-cli` does not enforce `required:` on an option, so a send typed
@@ -104,9 +104,9 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   # numbered, and invisible to everybody.
   it "refuses a sender or recipient the heading could not carry" do
     aggregate_failures do
-      expect { mailbox.append(from: "luke-backend", to: nil, body: "x") }.to raise_error(OpenLanes::Error, /--to/)
-      expect { mailbox.append(from: "", to: "rey-frontend", body: "x") }.to raise_error(OpenLanes::Error, /--from/)
-      expect { mailbox.append(from: "luke backend", to: "rey-frontend", body: "x") }.to raise_error(OpenLanes::Error)
+      expect { mailbox.append(from: "backend-coder", to: nil, body: "x") }.to raise_error(OpenLanes::Error, /--to/)
+      expect { mailbox.append(from: "", to: "frontend-coder", body: "x") }.to raise_error(OpenLanes::Error, /--from/)
+      expect { mailbox.append(from: "backend-coder backend", to: "frontend-coder", body: "x") }.to raise_error(OpenLanes::Error)
       expect(mailbox).not_to exist
     end
   end
@@ -115,7 +115,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   # appends landing in the same instant used to be able to read the same
   # last number, and one message then carried the other's number.
   it "keeps every message when both halves write at once" do
-    writers = %w[luke-backend rey-frontend].map do |name|
+    writers = %w[backend-coder frontend-coder].map do |name|
       Thread.new do
         20.times { |i| mailbox.append(from: name, to: "other", body: "#{name} #{i}") }
       end
@@ -132,7 +132,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
 
   describe "read receipts" do
     it "writes a new message unread" do
-      luke_to_rey("first")
+      backend_to_frontend("first")
 
       aggregate_failures do
         expect(mailbox.messages.first.read).to eq("no")
@@ -141,23 +141,23 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "flips only the message its reader acks" do
-      luke_to_rey("first")
-      luke_to_rey("second")
-      mailbox.ack(2, by: "rey-frontend")
+      backend_to_frontend("first")
+      backend_to_frontend("second")
+      mailbox.ack(2, by: "frontend-coder")
 
       expect(mailbox.messages.map { |m| [m.number, m.read] }).to eq([[1, "no"], [2, "yes"]])
     end
 
     it "acks an already-read message without complaint" do
-      luke_to_rey("first")
-      mailbox.ack(1, by: "rey-frontend")
+      backend_to_frontend("first")
+      mailbox.ack(1, by: "frontend-coder")
 
-      expect(mailbox.ack("1", by: "rey-frontend")).to be_read
+      expect(mailbox.ack("1", by: "frontend-coder")).to be_read
     end
 
     it "counts a message written before acks existed as unacked" do
       OpenLanes::Plans::PlanState.for(folder).update do |data|
-        data["messages"] << { "number" => 1, "at" => Time.now.iso8601, "from" => "luke-backend", "to" => "rey-frontend", "body" => "old" }
+        data["messages"] << { "number" => 1, "at" => Time.now.iso8601, "from" => "backend-coder", "to" => "frontend-coder", "body" => "old" }
       end
 
       aggregate_failures do
@@ -167,44 +167,44 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "counts unacked mail for everybody or for one reader" do
-      luke_to_rey("one")
-      luke_to_rey("two")
-      rey_to_luke("three")
-      mailbox.ack(1, by: "rey-frontend")
+      backend_to_frontend("one")
+      backend_to_frontend("two")
+      frontend_to_backend("three")
+      mailbox.ack(1, by: "frontend-coder")
 
       aggregate_failures do
         expect(mailbox.unacked).to eq(2)
-        expect(mailbox.unacked("rey-frontend")).to eq(1)
-        expect(mailbox.unacked("luke-backend")).to eq(1)
+        expect(mailbox.unacked("frontend-coder")).to eq(1)
+        expect(mailbox.unacked("backend-coder")).to eq(1)
       end
     end
 
     it "groups unacked mail by sender and recipient, oldest pair first" do
-      luke_to_rey("one")
-      rey_to_luke("two")
-      luke_to_rey("three")
-      mailbox.ack(2, by: "luke-backend")
+      backend_to_frontend("one")
+      frontend_to_backend("two")
+      backend_to_frontend("three")
+      mailbox.ack(2, by: "backend-coder")
 
-      expect(mailbox.unacked_pairs).to match([{ from: "luke-backend", to: "rey-frontend", count: 2, since: mailbox.messages.first.at }])
+      expect(mailbox.unacked_pairs).to match([{ from: "backend-coder", to: "frontend-coder", count: 2, since: mailbox.messages.first.at }])
     end
 
     it "treats mailbox.md history as read, since nobody is left to ack it" do
-      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+      File.write(File.join(folder, "mailbox.md"), "## 1 · 2026-09-06 10:30:53 -0700 · backend-coder → frontend-coder\n\nold\n")
 
       aggregate_failures do
         expect(mailbox.unacked).to eq(0)
-        expect(mailbox.ack(1, by: "rey-frontend")).to be_read
-        expect { mailbox.ack(1, by: "luke-backend") }.to raise_error(OpenLanes::Error, /for rey-frontend/)
+        expect(mailbox.ack(1, by: "frontend-coder")).to be_read
+        expect { mailbox.ack(1, by: "backend-coder") }.to raise_error(OpenLanes::Error, /for frontend-coder/)
       end
     end
 
     it "refuses an unknown number, a non-number, and a reader the message was not for" do
-      luke_to_rey("first")
+      backend_to_frontend("first")
 
       aggregate_failures do
-        expect { mailbox.ack(9, by: "rey-frontend") }.to raise_error(OpenLanes::Error, /no message #9/)
-        expect { mailbox.ack("x", by: "rey-frontend") }.to raise_error(OpenLanes::Error, /positive integer/)
-        expect { mailbox.ack(1, by: "luke-backend") }.to raise_error(OpenLanes::Error, /for rey-frontend, not luke-backend/)
+        expect { mailbox.ack(9, by: "frontend-coder") }.to raise_error(OpenLanes::Error, /no message #9/)
+        expect { mailbox.ack("x", by: "frontend-coder") }.to raise_error(OpenLanes::Error, /positive integer/)
+        expect { mailbox.ack(1, by: "backend-coder") }.to raise_error(OpenLanes::Error, /for frontend-coder, not backend-coder/)
         expect(mailbox.messages.first).not_to be_read
       end
     end
@@ -216,13 +216,13 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "prints every message with whether it was read" do
-      luke_to_rey("The endpoint is up.")
-      rey_to_luke("Seen.")
-      mailbox.ack(1, by: "rey-frontend")
+      backend_to_frontend("The endpoint is up.")
+      frontend_to_backend("Seen.")
+      mailbox.ack(1, by: "frontend-coder")
 
       aggregate_failures do
-        expect(mailbox.render).to match(/## 1 · .+ · luke-backend → rey-frontend · read\n\nThe endpoint is up\./)
-        expect(mailbox.render).to match(/## 2 · .+ · rey-frontend → luke-backend · unread\n\nSeen\./)
+        expect(mailbox.render).to match(/## 1 · .+ · backend-coder → frontend-coder · read\n\nThe endpoint is up\./)
+        expect(mailbox.render).to match(/## 2 · .+ · frontend-coder → backend-coder · unread\n\nSeen\./)
       end
     end
   end
@@ -230,7 +230,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
   # What the harness keeps of a message drained from Redis (plan 003, B4).
   describe "#deliver" do
     let(:drained) do
-      { "number" => 4, "at" => "2026-10-13T19:17:10-07:00", "from" => "luke-backend", "to" => "rey-frontend", "body" => "up",
+      { "number" => 4, "at" => "2026-10-13T19:17:10-07:00", "from" => "backend-coder", "to" => "frontend-coder", "body" => "up",
         "read" => "yes" }
     end
 
@@ -252,7 +252,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "skips a message mailbox.md already holds, recognised by what it says" do
-      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-10-13 19:17:10 -0700 · luke-backend → rey-frontend\n\nup\n")
+      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-10-13 19:17:10 -0700 · backend-coder → frontend-coder\n\nup\n")
 
       aggregate_failures do
         expect(mailbox.deliver(drained)).to be_nil
@@ -261,7 +261,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "renumbers a different message whose number mailbox.md took" do
-      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-09-06 10:30:53 -0700 · luke-backend → rey-frontend\n\nold\n")
+      File.write(File.join(folder, "mailbox.md"), "## 4 · 2026-09-06 10:30:53 -0700 · backend-coder → frontend-coder\n\nold\n")
 
       expect(mailbox.deliver(drained)).to have_attributes(number: 5, body: "up")
     end
@@ -283,7 +283,7 @@ RSpec.describe OpenLanes::Plans::Mailbox, :tree do
     end
 
     it "takes one without an id as a copy of a message that says the same thing" do
-      sent = mailbox.append(from: "luke-backend", to: "rey-frontend", body: "up", at: Time.new(2026, 10, 13, 19, 17, 10, "-07:00"))
+      sent = mailbox.append(from: "backend-coder", to: "frontend-coder", body: "up", at: Time.new(2026, 10, 13, 19, 17, 10, "-07:00"))
 
       aggregate_failures do
         expect(sent.id).to match(/\A\h{8}-/)

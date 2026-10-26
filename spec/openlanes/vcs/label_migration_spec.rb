@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # R3: M3's review labels come off open pull requests, onto R3's, once per
-# repository, before anything reads `ready-to-merge` as chewie's verification.
+# repository, before anything reads `ready-to-merge` as verifier's verification.
 #
 # The double below is a tiny GitHub: open pull requests and their labels, and
 # the repository's labels, which the migration reads and changes the way the
@@ -148,7 +148,7 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
   context "with a repository already marked" do
     before { repository[marker] = labels::MIGRATED.colour }
 
-    # A repeated start, or a ready-to-merge chewie has since put on: either
+    # A repeated start, or a ready-to-merge verifier has since put on: either
     # way it means verified, and is left where it is.
     it "does nothing, and asks GitHub for no pull requests" do
       outcome = migration.call

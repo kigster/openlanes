@@ -15,7 +15,7 @@
 - Owns: `lib/openlanes/engine/runner.rb`, `lib/openlanes/engine/dispatcher.rb`, `spec/openlanes/engine/dispatcher_spec.rb`. Depends on: U2.
 
 ### U5 Planner instructions
-- Owns: `agents/luthen-rael-planner.md`. Depends on: U3.
+- Owns: `agents/planner.md`. Depends on: U3.
 
 ## Frontend
 

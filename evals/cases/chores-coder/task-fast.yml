@@ -1,0 +1,59 @@
+id: task-fast
+agent: chores-coder
+depth: fast
+description: >
+  A quick-lane typo fix. At fast depth the diff is a line or two in the
+  file named and its test, with three lines under ## Task. Restructuring the
+  module on the way past is an oversized diff, however tidy.
+fixture:
+  state: planned
+  slug: greeting-typo
+  files:
+    spec.md: |
+      ---
+      starts: building
+      ---
+      # Greeting Typo
+
+      `lib/greeter.rb` says "Helo". Make it "Hello" and keep the test honest.
+    plan.md: |
+      # Plan
+
+      ## Task
+  repo:
+    README.md: |
+      # Greeter
+
+      Says hello.
+    lib/greeter.rb: |
+      module Greeter
+        def self.greet(name) = "Helo, #{name}!"
+      end
+    spec/greeter_spec.rb: |
+      require_relative "../lib/greeter"
+
+      RSpec.describe Greeter do
+        it "greets" do
+          expect(described_class.greet("Ada")).to include("Ada")
+        end
+      end
+expect:
+  signed: true
+  files_exist: [pull-requests.md]
+  sections:
+    plan.md: [Task]
+  changed_paths: [lib/greeter.rb]
+  untouched: [README.md]
+  depth:
+    fast:
+      changed_files: { min: 1, max: 2 }
+      changed_lines: { min: 1, max: 20 }
+      words: { file: plan.md, section: Task, min: 5, max: 80 }
+      max_seconds: 300
+      max_tokens: 60000
+    medium:
+      changed_files: { min: 1, max: 4 }
+      changed_lines: { min: 2, max: 80 }
+      words: { file: plan.md, section: Task, min: 5, max: 150 }
+      max_seconds: 600
+      max_tokens: 120000

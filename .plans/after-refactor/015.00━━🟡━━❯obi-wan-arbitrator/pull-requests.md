@@ -1,11 +1,11 @@
 # Pull Requests
 
-## Front end proof (rey-frontend, round 1)
+## Front end proof (frontend-coder, round 1)
 
 - `cd web && npx vitest run` — all files pass, including `src/board/Rejections.test.tsx`.
 - `npx tsc --noEmit -p .` and `npx eslint src` — clean.
 
-## Back end and integration proof (luke-backend, last to finish)
+## Back end and integration proof (backend-coder, last to finish)
 
 - `bundle exec rspec spec/openlanes/engine/dispatcher_arbitration_spec.rb`: 3 examples, 0 failures.
 - `cd web && npx vitest run src/board/Rejections.test.tsx`: 1 file, 3 tests passed.

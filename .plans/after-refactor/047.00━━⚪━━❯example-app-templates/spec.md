@@ -22,7 +22,7 @@ It shows the factory working on stacks other than Ruby, gives the init interview
 - `ol start` refuses in a folder carrying `.openlanes-template`; no template has a `.openlanes.yml` until copied.
 - `ol new` warns when the installed gem is older than the template's minimum version.
 - `ol new --example` without a name lists the templates, read from the repository rather than a list in the gem.
-- `astro-blog` plans route to rey-frontend only.
+- `astro-blog` plans route to frontend-coder only.
 
 ## How to verify
 

@@ -67,7 +67,7 @@ RSpec.describe "Events report", :tree do
       [true, "completed"]
     end
     unblocker = OpenLanes::Lifecycle::Unblocker.new(tree: tree.reload,
-      agent: agents.find("lando-broker"),
+      agent: agents.find("unblocker"),
       executor: drain,
       commit: true,
       events: sink)

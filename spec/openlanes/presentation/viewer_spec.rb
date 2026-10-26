@@ -26,7 +26,7 @@ RSpec.describe OpenLanes::Presentation::Viewer do
   end
 
   let(:paths) do
-    %w[leah-researcher luke-backend].map do |name|
+    %w[researcher backend-coder].map do |name|
       File.join(@dir, "#{name}.md").tap { |p| File.write(p, "# #{name}\n") }
     end
   end
@@ -63,8 +63,8 @@ RSpec.describe OpenLanes::Presentation::Viewer do
       it "pipes each file's markdown into mdfried" do
         viewer.mdfried(paths)
 
-        expect(piped).to eq([["mdfried", "# leah-researcher\n"],
-                             ["mdfried", "# luke-backend\n"]])
+        expect(piped).to eq([["mdfried", "# researcher\n"],
+                             ["mdfried", "# backend-coder\n"]])
       end
     end
 

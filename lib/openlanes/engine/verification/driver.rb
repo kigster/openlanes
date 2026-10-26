@@ -5,7 +5,7 @@ module OpenLanes
     module Verification
       # Everything the dispatcher asks about verification, in one object, so
       # the loop gains a few calls rather than a second job: the hand-off
-      # from hansolo, the app around chewie's run, the verdict, and the CI
+      # from staff-reviewer, the app around verifier's run, the verdict, and the CI
       # wait after a pass.
       #
       # The wait is read from disk, not remembered: a 🧪 plan whose newest
@@ -55,9 +55,9 @@ module OpenLanes
         # @return [Outcome]
         attr_reader :outcome
 
-        # hansolo approved: on to 🧪, when the pull request carries a verdict
+        # staff-reviewer approved: on to 🧪, when the pull request carries a verdict
         # that goes on to verification ({Verification.from_review?}) and is
-        # built from the branch chewie would be run in. A
+        # built from the branch verifier would be run in. A
         # `review-ok-not-perfect` one goes back to 🔴 under `high` and `standard` (R4), and
         # stays 👀 while the project has not said which quality it wants. The checkout's branch
         # is derived from the plan, and an adopted pull request may be built
@@ -95,7 +95,7 @@ module OpenLanes
           "stays 👀: #{e.message}"
         end
 
-        # The app up around chewie's run, and chewie told where it is.
+        # The app up around verifier's run, and verifier told where it is.
         #
         # @param task [OpenLanes::Engine::Runner::Task]
         # @param subject [OpenLanes::Plans::Subject]
@@ -139,13 +139,13 @@ module OpenLanes
 
         # @param subject [OpenLanes::Plans::Subject]
         # A verified or skipped round counts only once the engine pushed its
-        # evidence ({Round#published?}); one chewie reported but the engine
-        # never published goes back to chewie, in a new round. Skipped is the
-        # mvp path ({#skip}): chewie never ran, but CI and the coverage gate
+        # evidence ({Round#published?}); one verifier reported but the engine
+        # never published goes back to verifier, in a new round. Skipped is the
+        # mvp path ({#skip}): verifier never ran, but CI and the coverage gate
         # still stand. A skip written under `mvp` is not a wait once the
-        # project has switched to `high` or `standard`: chewie must run.
+        # project has switched to `high` or `standard`: verifier must run.
         #
-        # @return [Boolean] whether the plan waits on CI rather than on chewie
+        # @return [Boolean] whether the plan waits on CI rather than on verifier
         def awaiting_ci?(subject)
           return false unless subject.status.key == :verifying
 
@@ -223,18 +223,18 @@ module OpenLanes
           # Counted, as any rejection is, so a PR labelled the same round
           # after round reaches `merge.max_rejections` and the arbitrator.
           result = @outcome.send_back_for_quality(plan: subject, pull:, quality: now)
-          "back to #{Plans::STATUS_BY_KEY.fetch(to).emoji}: #{result.note}; luke and rey answer every comment that is not ✅"
+          "back to #{Plans::STATUS_BY_KEY.fetch(to).emoji}: #{result.note}; #{Agents::Names::BACKEND_CODER} and #{Agents::Names::FRONTEND_CODER} answer every comment that is not ✅"
         end
 
         # An approved pull request under `mvp` (plan 035): the round is
-        # written skipped and published here, in chewie's place, so the
+        # written skipped and published here, in verifier's place, so the
         # plan waits on CI and the coverage gate ({#awaiting_ci?}) and
-        # chewie is never started on it. The verdict is `skipped`, not
+        # verifier is never started on it. The verdict is `skipped`, not
         # `verified`: a later reader of report.md must not take this for
-        # chewie having run.
+        # verifier having run.
         #
         # @param round [Round] made for this hand-off
-        # @return [String, nil] what happened; nil when chewie verifies it
+        # @return [String, nil] what happened; nil when verifier verifies it
         def skip(round, pull, labels)
           now = quality
           return nil unless Verification.skips_verification?(labels, quality: now)

@@ -10,7 +10,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   let(:executor) { described_class.new(root:, spawn:, trace_dir: traces) }
   let(:root) { File.dirname(plans_root) }
   let(:traces) { File.join(root, "traces") }
-  let(:agent) { OpenLanes::Agents.find("luke-backend") }
+  let(:agent) { OpenLanes::Agents.find("backend-coder") }
   let(:plan) do
     plans { |t| t.plan "001.00", :building, "task", files: { "spec.md" => spec_body, "plan.md" => "## Task\n" } }
     OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first
@@ -61,7 +61,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       aggregate_failures do
         expect(spawned.size).to eq(1)
         expect(pairs(spawned.first)).to include(%w[--resume sess-1])
-        expect(spawned.first[2]).to include("luke-backend")
+        expect(spawned.first[2]).to include("backend-coder")
       end
     end
 
@@ -75,7 +75,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   context "when the previous round left a journal" do
     before do
       OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                 .journal!(agent: "luke-backend",
+                                 .journal!(agent: "backend-coder",
                                    entries: [OpenLanes::Plans::Journal::Entry.new(kind: "decision", text: "Integer cents")])
       result
     end
@@ -105,7 +105,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     after { OpenLanes::UI.untap_log(tap) }
 
     it "says the session was not found" do
-      expect(heard).to include("session sess-1 not found, starting luke-backend fresh")
+      expect(heard).to include("session sess-1 not found, starting backend-coder fresh")
     end
 
     it "starts once more, fresh" do
@@ -136,7 +136,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
     it "logs what the CLI said, so an outage reads as one" do
       expect(heard).to include("session sess-1 failed before spending anything (API Error: 529 overloaded), " \
-                               "starting luke-backend fresh")
+                               "starting backend-coder fresh")
     end
   end
 
@@ -150,7 +150,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     after { OpenLanes::UI.untap_log(tap) }
 
     it "logs the exit status instead" do
-      expect(heard).to include("session sess-1 failed before spending anything (exit 1), starting luke-backend fresh")
+      expect(heard).to include("session sess-1 failed before spending anything (exit 1), starting backend-coder fresh")
     end
   end
 
@@ -176,7 +176,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   context "when the agent runs on a CLI that cannot resume" do
-    let(:agent) { OpenLanes::Agents.find("luke-backend").with(adapter: "codex") }
+    let(:agent) { OpenLanes::Agents.find("backend-coder").with(adapter: "codex") }
     let(:streams) { [[[], ok]] }
 
     before { result }

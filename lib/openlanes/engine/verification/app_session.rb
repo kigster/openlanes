@@ -3,15 +3,15 @@
 module OpenLanes
   module Engine
     module Verification
-      # The plan's app, up for exactly as long as chewie runs (M1, M12):
+      # The plan's app, up for exactly as long as verifier runs (M1, M12):
       # started in the plan's checkout through {Apps.supervisor}, and stopped
       # in `ensure`, whatever the agent did, so no verification leaves a dev
       # server holding a port from the shared registry.
       #
-      # A project with no `app:` starts nothing and chewie verifies through the
+      # A project with no `app:` starts nothing and verifier verifies through the
       # shell (M11), which is how openlanes itself, a CLI gem, is verified.
       class AppSession
-        # The app did not come up, so chewie is never started: a verifier
+        # The app did not come up, so verifier is never started: a verifier
         # pointed at a dead port can only report what the engine already
         # knows. The rejection quotes {#tail} (M1: the last 20 lines).
         #
@@ -70,7 +70,7 @@ module OpenLanes
           supervisor&.stop
         end
 
-        # What chewie is told about the app, written into its round's folder
+        # What verifier is told about the app, written into its round's folder
         # before it starts, so the ports reach it without the prompt (which
         # is the executor's) having to know apps exist.
         #

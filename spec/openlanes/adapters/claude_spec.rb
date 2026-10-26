@@ -45,7 +45,7 @@ RSpec.describe OpenLanes::Adapters::Claude do
 
   describe "the copilot's invocation" do
     let(:copilot) do
-      adapter.argv(invocation.with(brief: false, dirs: ["/tmp/traces"], tools: %w[Read Grep Glob Bash], system: "You are c3po."))
+      adapter.argv(invocation.with(brief: false, dirs: ["/tmp/traces"], tools: %w[Read Grep Glob Bash], system: "You are copilot."))
     end
 
     def flag(name) = copilot[copilot.index(name) + 1]
@@ -60,7 +60,7 @@ RSpec.describe OpenLanes::Adapters::Claude do
     end
 
     it "sends its standing instructions as the system prompt, and leaves the status tool out" do
-      expect([flag("--append-system-prompt"), copilot.include?("--brief")]).to eq(["You are c3po.", false])
+      expect([flag("--append-system-prompt"), copilot.include?("--brief")]).to eq(["You are copilot.", false])
     end
 
     it "resumes, which the adapter says it can" do

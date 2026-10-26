@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
 
   let(:answered) { "## B1 Rebase\n\nShould I?\n\n## A1\n\nyes\n\nAnswered by dana on 2026-10-13\n" }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:broker) { instance_double(OpenLanes::Agents::Agent, name: "lando-broker", handles?: true) }
+  let(:broker) { instance_double(OpenLanes::Agents::Agent, name: "unblocker", handles?: true) }
   let(:agents) { instance_double(OpenLanes::Agents::Registry, all: [broker]) }
   let(:runner) do
     instance_double(OpenLanes::Engine::Runner, dry_run?: false, blocked: tree.reload.subjects, agents:, claim: true, tree:, executor: nil, events: nil)

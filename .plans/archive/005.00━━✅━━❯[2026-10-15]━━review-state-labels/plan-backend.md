@@ -1,6 +1,6 @@
 # 005.00 Back-end units
 
-Builder: `luke-backend`. Order and graph are in `plan.md`. File paths are relative to the repository root.
+Builder: `backend-coder`. Order and graph are in `plan.md`. File paths are relative to the repository root.
 
 ## B1 Review label vocabulary and its docs table
 
@@ -24,15 +24,15 @@ Builder: `luke-backend`. Order and graph are in `plan.md`. File paths are relati
   - `pulls` rows gain `labels:` (array of names) and keep `state:` from `state_label` (merged vs closed distinguishable).
 - **Done when:** `github_spec.rb`, with a `TTY::Command` double, covers create-when-missing, left-alone-when-present (no `--force` in argv), swap argv with `-R`, tolerated failed remove, error surfacing with the first stderr line, `checks` parsing, `review_comments` parsing, and `labels:` on `pulls`.
 
-## B3 Review verdicts: the CI gate, `Vcs::Review`, hansolo
+## B3 Review verdicts: the CI gate, `Vcs::Review`, staff-reviewer
 
 - **Discipline:** back end.
-- **Owns:** `lib/openlanes/vcs/review.rb` (new: `Vcs::Review` with `call(pr:, label:, dry_run:)` returning `Review::Result = Data.define(:pr, :from, :to, :ci, :refused, :reason, :dry_run)`); `Vcs::CiGate` inside the same file or `lib/openlanes/vcs/ci_gate.rb` (new: `CiGate.verdict(checks) -> :green | :red | :pending | :none`); `Vcs.review` facade method in `lib/openlanes/vcs.rb`; `agents/hansolo-reviewer.md`; `spec/openlanes/vcs/review_spec.rb`; `spec/openlanes/vcs/ci_gate_spec.rb`; the hansolo assertion in `spec/openlanes/agents/registry_spec.rb`.
+- **Owns:** `lib/openlanes/vcs/review.rb` (new: `Vcs::Review` with `call(pr:, label:, dry_run:)` returning `Review::Result = Data.define(:pr, :from, :to, :ci, :refused, :reason, :dry_run)`); `Vcs::CiGate` inside the same file or `lib/openlanes/vcs/ci_gate.rb` (new: `CiGate.verdict(checks) -> :green | :red | :pending | :none`); `Vcs.review` facade method in `lib/openlanes/vcs.rb`; `agents/staff-reviewer.md`; `spec/openlanes/vcs/review_spec.rb`; `spec/openlanes/vcs/ci_gate_spec.rb`; the staff-reviewer assertion in `spec/openlanes/agents/registry_spec.rb`.
 - **Must not touch:** `lib/openlanes/cli/**` (F1 owns the command), `lib/openlanes/vcs/github.rb` (B2), `executor.rb`.
 - **Depends on:** B1, B2.
 - **Rules it encodes:** red = any bucket `fail`, `cancel` or an unknown bucket (open question 5); `skipping` neutral; any `pending` → `:pending`, and a passing verdict waits (returns refused with reason "CI pending", L5); zero checks → `:none`, treated as green with a warning in `reason` (open question 2). While `:red` only `review-rejected` is accepted. Replace-not-add: the swap removes every other `ReviewLabel::ALL` name the PR carries. Dry run computes the result and calls nothing that writes.
-- **hansolo:** `may:` drops `gh pr review` and keeps `gh pr comment`; the body tells it to run `openlanes review <pr> review-in-progress` at start and its verdict label at the end.
-- **Done when:** `ci_gate_spec.rb` covers pass, fail, cancel, pending, skipping, unknown bucket and zero checks; `review_spec.rb` (with a `GitHub` double) shows exactly one review label left after each transition, refusal of every passing label while red, acceptance of `review-rejected` while red, and no write calls under dry run; `registry_spec.rb` asserts hansolo's `may:` is `[gh pr comment]` and that `gh pr edit` is still in `Executor::FORBIDDEN_COMMANDS`.
+- **staff-reviewer:** `may:` drops `gh pr review` and keeps `gh pr comment`; the body tells it to run `openlanes review <pr> review-in-progress` at start and its verdict label at the end.
+- **Done when:** `ci_gate_spec.rb` covers pass, fail, cancel, pending, skipping, unknown bucket and zero checks; `review_spec.rb` (with a `GitHub` double) shows exactly one review label left after each transition, refusal of every passing label while red, acceptance of `review-rejected` while red, and no write calls under dry run; `registry_spec.rb` asserts staff-reviewer's `may:` is `[gh pr comment]` and that `gh pr edit` is still in `Executor::FORBIDDEN_COMMANDS`.
 
 ## B4 How to test: spec section to plan.md
 
@@ -55,11 +55,11 @@ Builder: `luke-backend`. Order and graph are in `plan.md`. File paths are relati
 ## B6 Human-mode poll in the engine
 
 - **Discipline:** back end.
-- **Owns:** `lib/openlanes/engine/pr_watch.rb` (new: `Engine::PrWatch.new(github:, clock:, interval: 15)` with `due?`, `poll(subjects) -> [Outcome]`, `Outcome = Data.define(:plan, :pr, :kind, :comments)`, kinds `:rejected`, `:merged`, `:closed`, `:waiting`); `lib/openlanes/engine/dispatcher.rb` (call the watch from `tick` by elapsed time, not tick count; run the `gh` call off the tick thread and apply finished outcomes on a later tick; fire the 🔴 / ✅ / ❌ events through `StateMachine`; mail rejection comments to `luke-backend` and `rey-frontend` through the mailbox; record B5's `label_error` in the attempt note in `publish_for_review`; expose `waiting_on: [pr numbers]` per plan in the board snapshot); `lib/openlanes/support/config.rb` (read `merge.by`, default `human`); `spec/openlanes/engine/pr_watch_spec.rb`; `spec/openlanes/engine/dispatcher_spec.rb`.
+- **Owns:** `lib/openlanes/engine/pr_watch.rb` (new: `Engine::PrWatch.new(github:, clock:, interval: 15)` with `due?`, `poll(subjects) -> [Outcome]`, `Outcome = Data.define(:plan, :pr, :kind, :comments)`, kinds `:rejected`, `:merged`, `:closed`, `:waiting`); `lib/openlanes/engine/dispatcher.rb` (call the watch from `tick` by elapsed time, not tick count; run the `gh` call off the tick thread and apply finished outcomes on a later tick; fire the 🔴 / ✅ / ❌ events through `StateMachine`; mail rejection comments to `backend-coder` and `frontend-coder` through the mailbox; record B5's `label_error` in the attempt note in `publish_for_review`; expose `waiting_on: [pr numbers]` per plan in the board snapshot); `lib/openlanes/support/config.rb` (read `merge.by`, default `human`); `spec/openlanes/engine/pr_watch_spec.rb`; `spec/openlanes/engine/dispatcher_spec.rb`.
 - **Must not touch:** `lib/openlanes/presentation/**` (F1 renders `waiting_on`), `github.rb`, `publisher.rb`.
 - **Depends on:** B2, B5.
 - **Scope rule:** the watch runs only in a staying run (`openlanes start`), and only when `merge.by` is `human`. Plain `openlanes run` exits at its fixed point and logs the unpolled PR numbers (open question 1).
-- **Done when:** `pr_watch_spec.rb`, with an injected clock and `GitHub` double, shows no call before 15 s and one `pulls` call after, and each outcome kind; `dispatcher_spec.rb` shows `review-rejected` plus comments → 🔴 with mail to luke and rey, merged → ✅, closed unmerged → ❌, a label failure in the attempt note, `waiting_on` in the snapshot, and no polling under plain `run`.
+- **Done when:** `pr_watch_spec.rb`, with an injected clock and `GitHub` double, shows no call before 15 s and one `pulls` call after, and each outcome kind; `dispatcher_spec.rb` shows `review-rejected` plus comments → 🔴 with mail to backend-coder and frontend-coder, merged → ✅, closed unmerged → ❌, a label failure in the attempt note, `waiting_on` in the snapshot, and no polling under plain `run`.
 
 ## I1 Integration check: a PR through its labels, end to end
 
@@ -67,4 +67,4 @@ Builder: `luke-backend`. Order and graph are in `plan.md`. File paths are relati
 - **Owns:** `spec/integration/review_labels_spec.rb`; `spec/support/fake_gh` (a fake `gh` executable put first on `PATH`, recording argv to a file and answering from fixtures).
 - **Must not touch:** any `lib/` file. A failure here is fixed in the owning unit.
 - **Depends on:** B3, B5, B6, F1.
-- **Done when:** the spec, on a real `.plans` tree from `PlansFixture` and nothing stubbed inside the process, shows in order: the publisher opens a PR and `ready-for-review` is applied; `exe/openlanes review <n> review-in-progress` replaces it; `exe/openlanes review <n> ready-to-merge` is refused while the fake reports a `fail` check, and `review-rejected` is accepted; a dispatcher tick 15 s later (injected clock) sees `review-rejected` with a comment, moves the folder to 🔴 and leaves mail for luke and rey; a merged fixture moves another plan to ✅; the reporter prints `waiting on you: PR #N` for a still-open one. The recorded argv never contains `--force`.
+- **Done when:** the spec, on a real `.plans` tree from `PlansFixture` and nothing stubbed inside the process, shows in order: the publisher opens a PR and `ready-for-review` is applied; `exe/openlanes review <n> review-in-progress` replaces it; `exe/openlanes review <n> ready-to-merge` is refused while the fake reports a `fail` check, and `review-rejected` is accepted; a dispatcher tick 15 s later (injected clock) sees `review-rejected` with a comment, moves the folder to 🔴 and leaves mail for backend-coder and frontend-coder; a merged fixture moves another plan to ✅; the reporter prints `waiting on you: PR #N` for a still-open one. The recorded argv never contains `--force`.

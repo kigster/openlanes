@@ -30,12 +30,12 @@ RSpec.describe "openlanes state", :tree do
   def resume(**) = run(OpenLanes::CLI::State::Resume.new, **)
 
   it "signs, and says where" do
-    _out, err, status = sign(plan: "001", agent: "luke-backend", round: "1", status: "Completed", next: "hansolo-reviewer")
-    expect([status, err]).to match([0, a_string_including("luke-backend: Completed, round 1", "state.json")])
+    _out, err, status = sign(plan: "001", agent: "backend-coder", round: "1", status: "Completed", next: "staff-reviewer")
+    expect([status, err]).to match([0, a_string_including("backend-coder: Completed, round 1", "state.json")])
   end
 
   it "prints the document as JSON on STDOUT" do
-    sign(plan: "001", agent: "luke-backend", round: "1", status: "Started")
+    sign(plan: "001", agent: "backend-coder", round: "1", status: "Started")
     out, = show(plan: "001")
     expect(JSON.parse(out)["signatures"].map { |s| s["status"] }).to eq(["Started"])
   end
@@ -58,12 +58,12 @@ RSpec.describe "openlanes state", :tree do
   end
 
   it "refuses a round that is not a number" do
-    _out, err, status = sign(plan: "001", agent: "luke-backend", round: "one", status: "Started")
+    _out, err, status = sign(plan: "001", agent: "backend-coder", round: "one", status: "Started")
     expect([status, err]).to match([64, a_string_including("--round must be a number")])
   end
 
   it "refuses a handoff after Blocked" do
-    _out, err, status = sign(plan: "001", agent: "luke-backend", round: "1", status: "Blocked", next: "x")
+    _out, err, status = sign(plan: "001", agent: "backend-coder", round: "1", status: "Blocked", next: "x")
     expect([status, err]).to match([64, a_string_including("only a Completed")])
   end
 
@@ -73,7 +73,7 @@ RSpec.describe "openlanes state", :tree do
   end
 
   it "signs quietly when asked" do
-    _out, err, = sign(plan: "001", agent: "luke-backend", round: "1", status: "Started", quiet: true)
+    _out, err, = sign(plan: "001", agent: "backend-coder", round: "1", status: "Started", quiet: true)
     expect(err).to be_empty
   end
 
@@ -82,17 +82,17 @@ RSpec.describe "openlanes state", :tree do
 
     it "writes an agent resume record into state.json" do
       _out, err, status = resume(plan: "001",
-        agent: "luke-backend",
+        agent: "backend-coder",
         round: "2",
         status: "Interrupted",
         done: "B1, B2",
         remaining: "B3",
         next_step: "run rspec",
         files: "lib/a.rb,lib/b.rb")
-      entry = OpenLanes::Plans::PlanState.for(folder).last_known("luke-backend")
+      entry = OpenLanes::Plans::PlanState.for(folder).last_known("backend-coder")
 
       aggregate_failures do
-        expect([status, err]).to match([0, a_string_including("luke-backend: Interrupted, round 2, resume record")])
+        expect([status, err]).to match([0, a_string_including("backend-coder: Interrupted, round 2, resume record")])
         expect(entry.to_h).to include(source: "agent",
           round: 2,
           done: %w[B1 B2],
@@ -103,7 +103,7 @@ RSpec.describe "openlanes state", :tree do
     end
 
     it "refuses a round that is not a number" do
-      _out, err, status = resume(plan: "001", agent: "luke-backend", round: "x", status: "Interrupted")
+      _out, err, status = resume(plan: "001", agent: "backend-coder", round: "x", status: "Interrupted")
       expect([status, err]).to match([64, a_string_including("--round must be a number")])
     end
 
@@ -113,7 +113,7 @@ RSpec.describe "openlanes state", :tree do
     end
 
     it "records quietly when asked" do
-      _out, err, status = resume(plan: "001", agent: "luke-backend", round: "1", status: "Interrupted", quiet: true)
+      _out, err, status = resume(plan: "001", agent: "backend-coder", round: "1", status: "Interrupted", quiet: true)
       expect([status, err]).to eq([0, ""])
     end
   end

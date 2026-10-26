@@ -36,7 +36,7 @@ Each item names its check. Items marked **exists** are met per the research; the
 1. **All 15 commands**, idempotent by command id (`lib/openlanes/live/commands.rb:34-48`, `:130`). **Exists.** Check: `commands_spec.rb`, `command_spec.rb`.
 1. **The page**, every element of the mockup, built into `web/dist` and shipped in the gem. **Exists.** Check: Vitest at 98.46% statements; Cypress flows `actions.cy.ts`, `needs-you.cy.ts`, `board.cy.ts`.
 1. **Port `11000`** by default (W-note at decisions doc line 50; `lib/openlanes/web/server.rb:12`). Check: README, server and `vite.config.ts` agree; no `4747` outside the demo seed.
-1. **Copilot panel backed by c3po-operator** (W17): `Live::Copilot::Operator` outside demo (`lib/openlanes/web/context.rb:38`), canned reply in demo (`web/demo.rb:24`). **Exists.** Check: its specs stay green. The draft called it a placeholder; the code ships it.
+1. **Copilot panel backed by copilot** (W17): `Live::Copilot::Operator` outside demo (`lib/openlanes/web/context.rb:38`), canned reply in demo (`web/demo.rb:24`). **Exists.** Check: its specs stay green. The draft called it a placeholder; the code ships it.
 1. **Autocompact at 40%** (W28) and yes/no prompts (W30). Check: specs on the executor argv and the agent prompts.
 1. **Draft corrected to the code**: `contract.md` uses `openlanes`, port `11000`, `.openlanes.yml`, prefix `openlanes:`. Check: `rg -n "tilda|4747|agentilda:" .plans/004.00*/contract.md .plans/004.00*/spec.md` finds only historical mentions in `## Research`.
 1. **`web/dist` build order.** Not tracked and not gitignored (`openlanes.gemspec:31-47` aborts without it). Check: add `/web/dist` to `.gitignore`; `just` build target and CI build it before `gem build`; a fresh clone running `gem build` after `just web-build` succeeds.
@@ -57,9 +57,9 @@ Each item names its check. Items marked **exists** are met per the research; the
 
 ## Back end / front end
 
-`luke-backend` and `rey-frontend` build these as a pair; the contract is `web/src/api/types.ts` and `contract.md`.
+`backend-coder` and `frontend-coder` build these as a pair; the contract is `web/src/api/types.ts` and `contract.md`.
 
-| Item | Back end (`luke-backend`) | Front end (`rey-frontend`) |
+| Item | Back end (`backend-coder`) | Front end (`frontend-coder`) |
 | --- | --- | --- |
 | Draft corrected to code | `contract.md`, `README` check | spec wording only |
 | `web/dist` build order | `.gitignore`, `justfile`, CI, gemspec | `npm run build` output path |
@@ -103,7 +103,7 @@ Still assumed, for the owner to confirm; none stops planning:
 1. Restart and two-checkout evidence is automated, not manual. If a real-Redis integration test is too heavy for CI, accept manual verification and say so in Done when.
 1. "Within a second" is measured on the demo engine on a developer machine, not on CI hardware.
 1. Per-new-code coverage means files changed against `main`, not the whole library.
-1. `leah-researcher`'s round was interrupted ("harness died"); the Research chapter is complete but its figures (2214 examples, 98.46%) are from one run on 2026-10-13. Cypress and `npm run build` were not run.
+1. `researcher`'s round was interrupted ("harness died"); the Research chapter is complete but its figures (2214 examples, 98.46%) are from one run on 2026-10-13. Cypress and `npm run build` were not run.
 
 ## Risks to planning or execution
 
@@ -120,7 +120,7 @@ When this ships, `openlanes run` serves a tested control room on `127.0.0.1:1100
 
 ## Research
 
-Input gap: this spec has no `## What research needs to settle` list. I answered the questions the **Done when** list implies. Yoda, confirm they are the right ones.
+Input gap: this spec has no `## What research needs to settle` list. I answered the questions the **Done when** list implies. spec-writer, confirm they are the right ones.
 
 Evidence: repo at `openlanes.worktrees/004.00-web-control-room`, clean, on `kig/004.00-web-control-room`. Runs on 2026-10-13, Ruby 4.0.6, Node from `web/`.
 
@@ -153,9 +153,9 @@ Evidence: repo at `openlanes.worktrees/004.00-web-control-room`, clean, on `kig/
 | Port | `127.0.0.1:4747` (spec, `contract.md`) | `11000` (`lib/openlanes/web/server.rb:12`, `cli/web/web.rb:30`, `vite.config.ts:9`, `README.md:283`). `4747` is only a demo RNG seed (`demo_board.rb:40`) |
 | Config file | `.tilda.yml` `redis_url:` | `.openlanes.yml` (`skills/openlanes/SKILL.md:44`) |
 | Redis keys | `agentilda:<repo>` (`contract.md`) | `openlanes:<repo>` (`lib/openlanes/live/keys.rb:7,18,127`), matching W13 and W26 |
-| Copilot | "wired to nothing but a placeholder" (Scope, Out) | `Live::Copilot::Operator` runs c3po-operator outside demo (`lib/openlanes/web/context.rb:38`, `lib/openlanes/live/copilot/operator.rb:30`); `agents/c3po-operator.md` exists. Demo answers with a canned line (`web/demo.rb:24`) |
+| Copilot | "wired to nothing but a placeholder" (Scope, Out) | `Live::Copilot::Operator` runs copilot outside demo (`lib/openlanes/web/context.rb:38`, `lib/openlanes/live/copilot/operator.rb:30`); `agents/copilot.md` exists. Demo answers with a canned line (`web/demo.rb:24`) |
 
-### Open questions for yoda
+### Open questions for spec-writer
 
 1. Is the copilot in plan 004? The spec says out; the code ships it. Owner decides.
 2. Port: spec says 4747, code says 11000. Recommend 11000, since the code and README agree.
@@ -166,4 +166,4 @@ Evidence: repo at `openlanes.worktrees/004.00-web-control-room`, clean, on `kig/
 
 ### Findings, Conclusion & References
 
-The spec is mostly built: the page, engine, Redis seam, commands and CI exist and pass locally. What is missing is evidence for the restart, keyboard and two-machine criteria, and the contradictions above need fixing before yoda writes the spec. No web sources were used; everything is from this repository, its test output and `docs/decisions/decisions-on-web-ui-and-review-labels.md`.
+The spec is mostly built: the page, engine, Redis seam, commands and CI exist and pass locally. What is missing is evidence for the restart, keyboard and two-machine criteria, and the contradictions above need fixing before spec-writer writes the spec. No web sources were used; everything is from this repository, its test output and `docs/decisions/decisions-on-web-ui-and-review-labels.md`.

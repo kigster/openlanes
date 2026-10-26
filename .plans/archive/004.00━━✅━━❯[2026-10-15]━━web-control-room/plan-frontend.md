@@ -1,4 +1,4 @@
-# Plan 004.00, front end (`rey-frontend`)
+# Plan 004.00, front end (`frontend-coder`)
 
 The page exists and matches `design/control-room.html`. These units add evidence and fix only what that evidence exposes. Units run in the order F3, F2, F1: F1's focus fixes may land in files F2 tests, so F1 goes last.
 

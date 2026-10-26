@@ -5,7 +5,7 @@ require "socket"
 RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
   subject(:stranded) { described_class.new(runner:, state:, records:, clock: OpenLanes::Clock::Fake.new) }
 
-  let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "luke-backend", ledger: %w[plan.md]) }
+  let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "backend-coder", ledger: %w[plan.md]) }
   let(:agents) { instance_double(OpenLanes::Agents::Registry) }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:runner) do
@@ -18,8 +18,8 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
 
   before do
     plans { |t| t.plan "003.00", :building, "work" }
-    allow(agents).to receive(:find).with("luke-backend").and_return(agent)
-    plan_state.stage!(agent: "luke-backend", round: 1, status: "Started", run: { pid: 999_999_999, host: Socket.gethostname })
+    allow(agents).to receive(:find).with("backend-coder").and_return(agent)
+    plan_state.stage!(agent: "backend-coder", round: 1, status: "Started", run: { pid: 999_999_999, host: Socket.gethostname })
   end
 
   it "marks a round a dead run left Started as interrupted, and tells the agent to carry on" do
@@ -27,7 +27,7 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
 
     aggregate_failures do
       expect(plan_state.stages.map { it["status"] }).to eq(%w[Interrupted])
-      expect(plan_state.last_known("luke-backend").note).to start_with("harness died")
+      expect(plan_state.last_known("backend-coder").note).to start_with("harness died")
       expect(OpenLanes::Plans::Mailbox.new(dir: path).messages.last.body).to start_with("RESUME: the harness died during your round 1")
     end
   end
@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
     let(:state) do
       instance_double(OpenLanes::Engine::StateFile,
         load:       nil,
-        stranded:   { "003.00" => { "agent" => "luke-backend", "round" => 1 } },
+        stranded:   { "003.00" => { "agent" => "backend-coder", "round" => 1 } },
         record:     nil,
         begin_run!: nil)
     end
@@ -45,7 +45,7 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
       stranded.call
 
       aggregate_failures do
-        expect(state).to have_received(:record).with("003.00", agent: "luke-backend", round: 1, status: "Interrupted", exit: "harness died").once
+        expect(state).to have_received(:record).with("003.00", agent: "backend-coder", round: 1, status: "Interrupted", exit: "harness died").once
         expect(state).to have_received(:begin_run!).with(root: plans_root)
       end
     end

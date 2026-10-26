@@ -169,7 +169,7 @@ module OpenLanes
       end
 
       # Move to +to+, through 👀 when the plan is still at 🟢: a person who
-      # ruled on GitHub before hansolo did has reviewed it all the same.
+      # ruled on GitHub before staff-reviewer did has reviewed it all the same.
       #
       # @return [Plans::Subject, nil] the plan after the move, nil when the
       #   machine refused it

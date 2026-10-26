@@ -1,15 +1,15 @@
 # Contract: 020.00 Lanes with No Active Agents
 
-Owner: luke-backend. HTTP surface: [`openapi.yaml`](openapi.yaml).
+Owner: backend-coder. HTTP surface: [`openapi.yaml`](openapi.yaml).
 
 ## Baseline
 
 `bundle exec rspec` before any back-end change: 3081 examples, 1 failure, 9 pending.
 
 - `spec/openlanes/live/snapshot_spec.rb:129` ("has the fixture's keys at every level"): the page's fixture already
-  carries `run.jobs` (rey's F1, in flight); the snapshot did not. B5 adds it, so this is not a pre-existing defect.
+  carries `run.jobs` (frontend-coder's F1, in flight); the snapshot did not. B5 adds it, so this is not a pre-existing defect.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 ### `POST /api/copilot` with a slash message
 
@@ -28,7 +28,7 @@ Plain text (no leading `/`) behaves exactly as today. `/concurrency 0` is a help
 
 amended: "no engine heartbeat in `nodes`" is, as built, "this node's `snapshot` key is absent". Commands are queued on
 this node's stream, so only this node's engine counts, and its snapshot (`EX 30`) is the liveness signal `Live.board`
-already uses. A slash message never needs the copilot: a server with no c3po-operator still takes it.
+already uses. A slash message never needs the copilot: a server with no copilot still takes it.
 
 amended: a `/concurrency` is kept in the run state, so a restarted engine takes it back (`RunRecord#restore`). One the
 new run cannot take (shared isolation) is logged and dropped; the engine still starts.
@@ -37,7 +37,7 @@ new run cannot take (shared isolation) is logged and dropped; the engine still s
 
 The engine answers each slash command on `replies` as today (`Reply{id, status, reason}`), and also appends a copilot
 turn to the copilot stream: id `"<id>.1"`, `from: "copilot"`, `kind: "text"`, `text`: `"<status>: <reason>"`, e.g.
-`done: 020.00 restarts at the next tick` or `refused: 020.00 already has an agent: luke-backend`. That turn is what
+`done: 020.00 restarts at the next tick` or `refused: 020.00 already has an agent: backend-coder`. That turn is what
 ends the page's "reading" state. A help turn has the same id and shape, text starting `Slash commands:`.
 
 Reasons, as built:
@@ -58,9 +58,9 @@ Reasons, as built:
 
 ## File ownership
 
-- luke: `lib/**`, `spec/**`, `agents/c3po-operator.md`, `openapi.yaml`, this file.
-- rey: `web/**`, `bin/lanes-e2e`, `justfile` (`lanes-e2e` recipe).
-- Shared: none. `web/src/api/fixtures/*.json` is rey's; `snapshot_spec.rb` reads it.
+- backend-coder: `lib/**`, `spec/**`, `agents/copilot.md`, `openapi.yaml`, this file.
+- frontend-coder: `web/**`, `bin/lanes-e2e`, `justfile` (`lanes-e2e` recipe).
+- Shared: none. `web/src/api/fixtures/*.json` is frontend-coder's; `snapshot_spec.rb` reads it.
 
 ## Build order
 
@@ -68,4 +68,4 @@ B1 → B2 → B3 → B5; B1 → B4. F1 needs B4 and B5; F2 needs F1; I1 last.
 
 ## Integration proof
 
-`OPENLANES_LANES_E2E=1 just lanes-e2e` (rey's I1): real engine at `-j 3`, Cypress through the copilot, nothing stubbed.
+`OPENLANES_LANES_E2E=1 just lanes-e2e` (frontend-coder's I1): real engine at `-j 3`, Cypress through the copilot, nothing stubbed.

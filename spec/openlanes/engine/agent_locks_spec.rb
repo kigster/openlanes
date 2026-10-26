@@ -4,7 +4,7 @@
 # own locks in the same register. `alock` never runs: a command double
 # answers for it, the way it answers on the command line.
 RSpec.describe OpenLanes::Engine::AgentLocks do
-  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[luke-backend], command:, clock: -> { time.first }) }
+  subject(:locks) { described_class.new(root:, id: "openlanes@test", own: %w[backend-coder], command:, clock: -> { time.first }) }
 
   let(:root) { Dir.mktmpdir("agent-locks") }
   let(:plans) { File.join(root, ".plans") }
@@ -33,9 +33,9 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
     before { FileUtils.mkdir_p(checkout) }
 
     it "names whoever holds a lock in the checkout, one of the engine's agents included" do
-      listed << lock("lib/a.rb", agent: "luke-backend", tree: checkout)
+      listed << lock("lib/a.rb", agent: "backend-coder", tree: checkout)
 
-      expect(locks.held_in(checkout).to_s).to eq("luke-backend (refactoring)")
+      expect(locks.held_in(checkout).to_s).to eq("backend-coder (refactoring)")
     end
 
     it "ignores locks taken in any other tree" do
@@ -67,16 +67,16 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
 
     it "ignores the engine's own agents and their sub-agents, in the worktree or on the folder" do
       FileUtils.mkdir_p(checkout)
-      listed.push(lock("lib/a.rb", agent: "luke-backend", tree: checkout),
-        lock("lib/b.rb", agent: "luke-backend-schema", tree: checkout),
-        lock(".plans/003.00━━🟡━━❯tax-rule-dsl/plan.md", agent: "luke-backend"))
+      listed.push(lock("lib/a.rb", agent: "backend-coder", tree: checkout),
+        lock("lib/b.rb", agent: "backend-coder-schema", tree: checkout),
+        lock(".plans/003.00━━🟡━━❯tax-rule-dsl/plan.md", agent: "backend-coder"))
 
       expect(locks.held_elsewhere(folder, checkout:)).to be_nil
     end
 
     it "still counts an agent whose name only starts like one of the engine's" do
       FileUtils.mkdir_p(checkout)
-      listed << lock("lib/a.rb", agent: "luke-backendish", tree: checkout)
+      listed << lock("lib/a.rb", agent: "backend-coderish", tree: checkout)
 
       expect(locks.held_elsewhere(folder, checkout:)).not_to be_nil
     end
@@ -132,9 +132,9 @@ RSpec.describe OpenLanes::Engine::AgentLocks do
       allow(command).to receive(:run!).and_return(result(0))
 
       aggregate_failures do
-        expect(locks.acquire(folder, "openlanes: luke-backend on 003.00")).to be(true)
+        expect(locks.acquire(folder, "openlanes: backend-coder on 003.00")).to be(true)
         expect(command).to have_received(:run!)
-          .with("alock", "acquire", "003.00━━🟡━━❯tax-rule-dsl/**", "openlanes: luke-backend on 003.00", *argv)
+          .with("alock", "acquire", "003.00━━🟡━━❯tax-rule-dsl/**", "openlanes: backend-coder on 003.00", *argv)
       end
     end
 

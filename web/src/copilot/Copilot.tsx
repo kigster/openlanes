@@ -1,4 +1,4 @@
-// The copilot (W17): a conversation with c3po-operator about the run, in a floating panel docked bottom right. The API
+// The copilot (W17): a conversation with copilot about the run, in a floating panel docked bottom right. The API
 // server runs the agent and checks every card it offers before storing it (contract.md, "Copilot"), so a card drawn
 // here is one the command gate takes; nothing is sent until the person presses its button.
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
@@ -80,7 +80,7 @@ function Turn({ turn, onCommand }: { turn: CopilotTurn; onCommand: SendCommand }
   const you = turn.from === "you";
   return (
     <div className={`cp-turn${you ? " is-you" : ""}`} data-turn={turn.id}>
-      <p className="cp-who">{you ? "You" : "c3po-operator"}</p>
+      <p className="cp-who">{you ? "You" : "copilot"}</p>
       <div className="cp-said">
         <p className={you && turn.text.startsWith("/") ? "cp-command" : undefined}>{turn.text}</p>
         {turn.from === "copilot" && turn.kind === "confirm" && <ConfirmCard turn={turn} onCommand={onCommand} />}
@@ -162,7 +162,7 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
       id="copilot"
       className="copilot"
       dock="right"
-      title="c3po-operator"
+      title="copilot"
       subtitle={subtitle}
       tabLabel="Copilot"
       moves="the copilot"
@@ -171,13 +171,13 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
       unread={unread}
       colors={COPILOT_COLORS}
       live
-      bodyLabel="Conversation with c3po-operator"
+      bodyLabel="Conversation with copilot"
       bodyRef={chat}
       initialFocus={input}
       footer={
         <form className="cp-composer" onSubmit={e => void submit(e)}>
           <label className="sr-only" htmlFor="copilot-input">
-            Message c3po-operator
+            Message copilot
           </label>
           <textarea
             id="copilot-input"
@@ -219,7 +219,7 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
     >
       {log.turns.length === 0 && (
         <p className="cp-intro">
-          Ask c3po-operator about the run: why a plan is stuck, what it costs, or for a draft answer to an agent. It asks
+          Ask copilot about the run: why a plan is stuck, what it costs, or for a draft answer to an agent. It asks
           before anything that cannot be undone.
         </p>
       )}
@@ -228,7 +228,7 @@ export function Copilot({ onCommand, models = [] }: CopilotProps) {
       ))}
       {waiting && (
         <div className="cp-turn is-thinking">
-          <p className="cp-who">c3po-operator</p>
+          <p className="cp-who">copilot</p>
           <p className="cp-said">Reading the board…</p>
         </div>
       )}

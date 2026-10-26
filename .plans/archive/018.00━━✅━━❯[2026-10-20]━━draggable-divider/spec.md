@@ -48,11 +48,11 @@ The user can drag a handle on the boundary between the lanes board and the right
 
 ## Back end / front end
 
-| Item | Back end (`luke-backend`) | Front end (`rey-frontend`) |
+| Item | Back end (`backend-coder`) | Front end (`frontend-coder`) |
 | :--- | :--- | :--- |
 | 1 to 8 | Nothing. | Everything: `web/src/shell/shell.css`, `web/src/App.tsx`, a new hook beside `web/src/floating/useFloatingPanel.ts`, tests. |
 
-Luke has no work. If `luthen-rael-planner` needs a pair, luke's unit is to run `bundle exec rspec spec/openlanes/web` and confirm the served bundle is unaffected (167 examples, 0 failures at research time).
+backend-coder has no work. If `planner` needs a pair, backend-coder's unit is to run `bundle exec rspec spec/openlanes/web` and confirm the served bundle is unaffected (167 examples, 0 failures at research time).
 
 ## Open questions
 
@@ -117,7 +117,7 @@ When this ships, a vertical handle between the lanes board and the right-hand co
 ### Findings, Conclusion & References
 
 - The change is a CSS grid edit on `.layout` plus a pointer handler in the same style as `useFloatingPanel`. No backend is involved.
-- Feasible with existing patterns. Open questions 1 to 5 are product choices for yoda to lift into the spec's open questions. None blocks research.
+- Feasible with existing patterns. Open questions 1 to 5 are product choices for spec-writer to lift into the spec's open questions. None blocks research.
 - References (repo, read at `git` HEAD `ce65c43`):
   - `web/src/shell/shell.css:53-54`, `web/src/panels/panels.css:37-38`, `web/src/App.tsx:36-52,307-310`, `web/src/board/board.css:6`, `web/src/shell/shell.css:150`, `web/src/floating/useFloatingPanel.ts:106,116`
   - Command: `bundle exec rspec spec/openlanes/web`, output above.

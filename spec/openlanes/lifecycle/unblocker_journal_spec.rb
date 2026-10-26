@@ -7,13 +7,13 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
 
   let(:commit) { true }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:agent) { OpenLanes::Agents::Registry.new.find("lando-broker") }
+  let(:agent) { OpenLanes::Agents::Registry.new.find("unblocker") }
   let(:seen) { [] }
   # Deletes blocked.md, as the broker does once the last question folds in,
   # after noting what the asker's journal held when it was invoked.
   let(:executor) do
     lambda { |_agent, subject, **|
-      seen << OpenLanes::Plans::PlanState.for(subject.feature.path).journal("yoda-writer").flat_map(&:entries)
+      seen << OpenLanes::Plans::PlanState.for(subject.feature.path).journal("spec-writer").flat_map(&:entries)
       FileUtils.rm_f(File.join(subject.feature.path, "blocked.md"))
       [true, "completed"]
     }
@@ -47,7 +47,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
   end
   let(:state) { OpenLanes::Plans::PlanState.for(subject_plan.feature.path) }
 
-  before { state.stage!(agent: "yoda-writer", round: 1, status: "Blocked", started_at: Time.now.iso8601) }
+  before { state.stage!(agent: "spec-writer", round: 1, status: "Blocked", started_at: Time.now.iso8601) }
 
   it "records each answered question, with its answer, in the asker's journal before the broker runs" do
     unblocker.drain(subject_plan)
@@ -82,7 +82,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
 
     it "records nothing" do
       unblocker.drain(subject_plan)
-      expect(state.journal("yoda-writer")).to eq([])
+      expect(state.journal("spec-writer")).to eq([])
     end
   end
 
@@ -99,7 +99,7 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
       }
     end
 
-    def broker_entries = state.journal("lando-broker").flat_map(&:entries).map(&:text)
+    def broker_entries = state.journal("unblocker").flat_map(&:entries).map(&:text)
 
     it "keeps them, once, when the run loop drains the plan" do
       unblocker.drain(subject_plan)

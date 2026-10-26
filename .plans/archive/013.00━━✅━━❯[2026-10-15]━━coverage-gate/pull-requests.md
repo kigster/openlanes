@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 36 | [\[013.00\] Coverage Gate](https://github.com/kigster/openlanes/pull/36) | Merged 🟣 |
 
-## Verification (luke-backend, 2026-10-14)
+## Verification (backend-coder, 2026-10-14)
 
 The repo has no separate end-to-end suite. The integration proof spawns the real `exe/openlanes coverage` against a real git repository and plan, with a real test command; only the worktree seeder is pointed at `true`.
 
@@ -36,9 +36,9 @@ Dogfood: `Coverage.read(format: :simplecov, path: "coverage/.resultset.json")` o
 Note: running the suite rewrites `docs/badges/coverage_badge.svg`; it is reverted before each commit.
 
 
-## Round 1 fix (luke-backend, 2026-10-15)
+## Round 1 fix (backend-coder, 2026-10-15)
 
-hansolo finding 1, `CoverageGate.figure` misprinting 10.03 as 10.02%: fixed. `.to_r` alone would not have done it, since the Float 10.03 is already 10.0299…; the figure now comes from the counts.
+staff-reviewer finding 1, `CoverageGate.figure` misprinting 10.03 as 10.02%: fixed. `.to_r` alone would not have done it, since the Float 10.03 is already 10.0299…; the figure now comes from the counts.
 
 - `Coverage::Report#ratio` (new) is the exact `Rational` percentage; `percent` is `ratio.to_f`.
 - `CoverageGate#judge` floors and compares `report.ratio`, not the Float.

@@ -84,11 +84,11 @@ module OpenLanes
         [own, "the ruling names PR ##{ruling.pr}, not this plan's #{own ? "##{own}" : "(none open)"}"]
       end
 
-      # @return [Integer, nil] the round of hansolo's latest review, which
+      # @return [Integer, nil] the round of staff-reviewer's latest review, which
       #   the finding ids in this ruling belong to
       def review_round(plan)
         Plans::PlanState.for(plan.feature.path).signatures
-                        .select { it["agent"] == "hansolo-reviewer" && it["status"] == "Completed" }.last&.fetch("round", nil)
+                        .select { it["agent"] == Agents::Names::STAFF_REVIEWER && it["status"] == "Completed" }.last&.fetch("round", nil)
       end
 
       # @return [String, nil] why the plan cannot go where the ruling sends it
@@ -170,9 +170,9 @@ module OpenLanes
       # @return [Array<String>]
       def mail(plan, ruling, appellant)
         to = case ruling.kind
-             when "appeal" then [appellant, ("hansolo-reviewer" if ruling.outcome == "struck")]
-             when "dispute" then %w[luke-backend rey-frontend]
-             when "passed_check" then ruling.outcome == "too_lenient" ? %w[luke-backend rey-frontend] : []
+             when "appeal" then [appellant, (Agents::Names::STAFF_REVIEWER if ruling.outcome == "struck")]
+             when "dispute" then Agents::Names::BUILDERS
+             when "passed_check" then ruling.outcome == "too_lenient" ? Agents::Names::BUILDERS : []
              else []
              end
         to = to.compact.uniq

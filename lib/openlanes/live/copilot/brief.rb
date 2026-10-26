@@ -3,7 +3,7 @@
 module OpenLanes
   module Live
     class Copilot
-      # What c3po-operator is told with each message: the board as it stands,
+      # What copilot is told with each message: the board as it stands,
       # where to read further, and the person's words.
       #
       # The board lives in Redis, which the agent cannot read: its Bash runs

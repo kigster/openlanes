@@ -14,7 +14,7 @@ describe("Board", () => {
     const board = sampleBoard();
     const { container } = render(<Board board={board} merged={false} retiring={noRetire} gone={none} />);
     expect(screen.getByText("Building UI")).toBeInTheDocument();
-    expect(screen.getByText("luke + rey + r2d2")).toBeInTheDocument();
+    expect(screen.getByText("backend-coder + frontend-coder + chores-coder")).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(board.me.plans.length);
     const row = container.querySelector<HTMLElement>('[data-plan="001.00"]')!;
     expect(row.id).toBe("row-001.00");
@@ -31,13 +31,13 @@ describe("Board", () => {
     const board = sampleBoard();
     const onOpenCar = vi.fn();
     render(
-      <Board board={board} merged={false} retiring={noRetire} gone={none} openCar="001.00/rey-frontend" onOpenCar={onOpenCar}
+      <Board board={board} merged={false} retiring={noRetire} gone={none} openCar="001.00/frontend-coder" onOpenCar={onOpenCar}
         renderModel={(_p, car) => <span data-testid="pick">{car.model}</span>} />,
     );
-    const rey = screen.getByRole("button", { name: "rey-frontend" });
-    expect(rey).toHaveAttribute("aria-expanded", "true");
-    await userEvent.click(screen.getByRole("button", { name: "luke-backend" }));
-    expect(onOpenCar).toHaveBeenCalledWith(expect.objectContaining({ ordinal: "001.00" }), expect.objectContaining({ agent: "luke-backend" }));
+    const frontendCoder = screen.getByRole("button", { name: "frontend-coder" });
+    expect(frontendCoder).toHaveAttribute("aria-expanded", "true");
+    await userEvent.click(screen.getByRole("button", { name: "backend-coder" }));
+    expect(onOpenCar).toHaveBeenCalledWith(expect.objectContaining({ ordinal: "001.00" }), expect.objectContaining({ agent: "backend-coder" }));
     // Blocked cars show "needs you" in place of the dropdown.
     expect(screen.getAllByTestId("pick").map(e => e.textContent)).toEqual(["claude-sonnet-5-5", "claude-sonnet-5-5"]);
   });
@@ -156,14 +156,14 @@ describe("PlanRow", () => {
     render(<PlanRow plan={samplePlan({ station: "in_review", pr: samplePr() })} stations={stations} models={models} onOpenCar={vi.fn()} />);
     expect(screen.getByText("CI running")).toBeInTheDocument();
     expect(screen.getByText("review-in-progress")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "luke-backend" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "backend-coder" })).toBeInTheDocument();
     // Without a model slot the model shows as text.
     expect(screen.getByText("Opus 5.5")).toBeInTheDocument();
   });
 
   it("shows an interrupted plan's agents as they are, with nothing to decide", () => {
     render(
-      <PlanRow plan={samplePlan({ interrupted: { agent: "leah-researcher", at: "t", note: "" } })} stations={stations} models={models} />,
+      <PlanRow plan={samplePlan({ interrupted: { agent: "researcher", at: "t", note: "" } })} stations={stations} models={models} />,
     );
     expect(screen.queryByText("interrupted")).not.toBeInTheDocument();
   });
@@ -182,29 +182,29 @@ describe("agent tiles", () => {
   const stations = sampleBoard().me.stations;
   const models = sampleBoard().me.models;
 
-  it("shows the role, keeping the full name as the button's name and tooltip", () => {
-    render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "leah-researcher" })] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
-    const button = screen.getByRole("button", { name: "leah-researcher" });
+  it("shows the agent's name, as the button's name and tooltip too", () => {
+    render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "researcher" })] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    const button = screen.getByRole("button", { name: "researcher" });
     expect(button).toHaveTextContent(/^researcher$/);
-    expect(button).toHaveAttribute("title", "leah-researcher");
+    expect(button).toHaveAttribute("title", "researcher");
   });
 
-  it("shows the role on a read-only car as well", () => {
+  it("shows the agent's name on a read-only car as well", () => {
     const { container } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} owner={sampleBoard().others[0].node} />);
-    expect(container.querySelector(".car-agent")).toHaveAttribute("title", "luke-backend");
-    expect(container.querySelector(".car-agent [aria-hidden]")).toHaveTextContent(/^backend$/);
+    expect(container.querySelector(".car-agent")).toHaveAttribute("title", "backend-coder");
+    expect(container.querySelector(".car-agent")).toHaveTextContent(/^backend-coder$/);
   });
 
   it("draws each running sub-agent as a faded tile beside its parent, and says so once to a screen reader", async () => {
-    const car = sampleCar({ agent: "rey-frontend", subagents: ["Explore", "luke-backend"] });
+    const car = sampleCar({ agent: "frontend-coder", subagents: ["Explore", "backend-coder"] });
     const { container } = render(<PlanRow plan={samplePlan({ cars: [car, sampleCar()] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
     const groups = container.querySelectorAll(".car-group");
     expect(groups).toHaveLength(2);
     const tiles = groups[0].querySelectorAll<HTMLElement>(".car.is-subagent");
-    expect(Array.from(tiles, t => t.querySelector(".car-agent")?.textContent)).toEqual(["Explore", "backend"]);
-    expect(tiles[1]).toHaveAttribute("title", "luke-backend, a sub-agent of rey-frontend");
+    expect(Array.from(tiles, t => t.querySelector(".car-agent")?.textContent)).toEqual(["Explore", "backend-coder"]);
+    expect(tiles[1]).toHaveAttribute("title", "backend-coder, a sub-agent of frontend-coder");
     for (const tile of tiles) expect(tile).toHaveAttribute("aria-hidden", "true");
-    expect(within(groups[0] as HTMLElement).getByText("rey-frontend has 2 sub-agents running: Explore, luke-backend")).toHaveClass("sr-only");
+    expect(within(groups[0] as HTMLElement).getByText("frontend-coder has 2 sub-agents running: Explore, backend-coder")).toHaveClass("sr-only");
     expect(groups[1].querySelector(".subagents")).toBeNull();
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -218,7 +218,7 @@ describe("agent tiles", () => {
         stations={stations} models={models}
       />,
     );
-    expect(screen.getByText("luke-backend has 1 sub-agent running: Plan")).toBeInTheDocument();
+    expect(screen.getByText("backend-coder has 1 sub-agent running: Plan")).toBeInTheDocument();
   });
 });
 

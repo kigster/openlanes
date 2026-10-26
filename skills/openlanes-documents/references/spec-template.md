@@ -41,5 +41,5 @@ Notes:
 
 - Quote a list item that holds `: `, ` #`, a backtick, `{`, or starts with `?`; YAML otherwise reads it as something other than text.
 - Leave out "tests and linters pass": openlanes tells every builder and the reviewer that already.
-- `leah-researcher` appends `## Research` (that chapter is what makes the folder 🔎 Researched); `yoda-writer` then rewrites the body into the full specification. Neither needs a heading from you beyond these four.
+- `researcher` appends `## Research` (that chapter is what makes the folder 🔎 Researched); `spec-writer` then rewrites the body into the full specification. Neither needs a heading from you beyond these four.
 - A retroactive plan (`NNN.MM`, `MM > 0`) opens with the provenance line in `retroactive-spec.md` instead of the four headings.

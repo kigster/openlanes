@@ -22,7 +22,7 @@ module OpenLanes
           @github.swap_label(number:, add: Plans::ReviewLabel::CONFLICTS, remove: [Plans::ReviewLabel::CONFLICTS_RESOLVED.name])
           @github.comment(number:,
             body: "No longer merges clean onto `#{MAIN}`. Labelled `#{Plans::ReviewLabel::CONFLICTS}`; " \
-                  "bb8-resolver rebases it, and the review verdict stays.")
+                  "#{Agents::Names::REBASER} rebases it, and the review verdict stays.")
         end
 
         # Behind `main` without a conflict: GitHub rebases it, and the merge

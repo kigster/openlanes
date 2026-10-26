@@ -18,8 +18,8 @@ module OpenLanes
         option :after, default: "0", desc: "Only messages numbered above this, so a poll shows what is new"
 
         example [
-          "--plan 003 --for rey-frontend            # everything addressed to rey",
-          "--plan 003 --for rey-frontend --after 4  # only what arrived since #4"
+          "--plan 003 --for #{OpenLanes::Agents::Names::FRONTEND_CODER}            # everything addressed to #{OpenLanes::Agents::Names::FRONTEND_CODER}",
+          "--plan 003 --for #{OpenLanes::Agents::Names::FRONTEND_CODER} --after 4  # only what arrived since #4"
         ]
 
         # @param options [Hash]

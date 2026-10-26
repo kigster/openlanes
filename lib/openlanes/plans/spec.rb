@@ -6,7 +6,7 @@ module OpenLanes
     #
     #   ---
     #   starts: building         # research (default) | planning | building
-    #   frontend: false          # true forces rey-frontend, false forbids it
+    #   frontend: false          # true forces frontend-coder, false forbids it
     #   depth: fast              # fast | medium | deep
     #   phases:
     #     build:  { adapter: codex, model: gpt-5-codex, effort: medium }

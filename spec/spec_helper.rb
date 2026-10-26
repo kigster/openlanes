@@ -14,7 +14,7 @@ require "coverage/badge"
 #
 # The badge is a tracked file, so only a run that asks for it (`just
 # test-coverage` sets COVERAGE_BADGE) moves it there. Every other run left
-# docs/badges dirty, and chewie-verifier, which runs the suite as a How to test
+# docs/badges dirty, and verifier, which runs the suite as a How to test
 # step, was then refused its commit for "changes outside its plan folder".
 REPO_ROOT = File.expand_path("..", __dir__)
 BADGE_DIR = File.join(REPO_ROOT, "docs", "badges")

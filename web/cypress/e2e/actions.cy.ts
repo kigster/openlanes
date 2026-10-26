@@ -28,11 +28,11 @@ describe("the controls", () => {
   });
 
   it("switches an agent's model from its drawer", () => {
-    cy.get('[data-car="005.00/hansolo-reviewer"] .car-open').click();
-    cy.get(".drawer").should("contain", "hansolo-reviewer");
+    cy.get('[data-car="005.00/staff-reviewer"] .car-open').click();
+    cy.get(".drawer").should("contain", "staff-reviewer");
     cy.get(".drawer .model-trigger").click();
     cy.contains('[role="option"]', "Opus 5.5").click();
-    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/hansolo-reviewer")?.model === "claude-opus-5-5");
+    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.model === "claude-opus-5-5");
     cy.get(".drawer .drawer-meta").should("contain", "Model Opus 5.5");
   });
 

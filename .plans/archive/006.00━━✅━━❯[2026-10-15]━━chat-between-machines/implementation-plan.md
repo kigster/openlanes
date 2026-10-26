@@ -1,6 +1,6 @@
 # Plan 006.00: implementation plan
 
-Owner: `luke-backend`. The interfaces are in `contract.md` in this folder; this file holds the rest.
+Owner: `backend-coder`. The interfaces are in `contract.md` in this folder; this file holds the rest.
 
 ## Baseline
 
@@ -8,16 +8,16 @@ Owner: `luke-backend`. The interfaces are in `contract.md` in this folder; this 
 
 ## Interfaces
 
-Every route, payload, verb and error rey's half calls is in `contract.md`. One amendment, in place there: `GET /api/chat` gained `unavailable` (B3).
+Every route, payload, verb and error frontend-coder's half calls is in `contract.md`. One amendment, in place there: `GET /api/chat` gained `unavailable` (B3).
 
 ## File ownership
 
 | Who | Files |
 | :-- | :-- |
-| luke-backend | `lib/openlanes/live/chat.rb`, `lib/openlanes/live/subscriber.rb`, `spec/openlanes/live/chat_spec.rb`, `spec/openlanes/live/subscriber_spec.rb` (new), `spec/openlanes/web/app_spec.rb`, `contract.md`, this file |
-| rey-frontend | `web/src/chat/**`, `web/src/floating/**`, `web/src/copilot/Copilot.tsx`, `web/cypress/e2e/chat.cy.ts` |
-| luke-backend (B4) | `lib/openlanes/live/node.rb`, `lib/openlanes/cli/web/web.rb`, `lib/openlanes/web/demo.rb`, `lib/openlanes/web/demo_board.rb`, `justfile`, `spec/openlanes/live/node_spec.rb`, `spec/openlanes/web/demo_spec.rb`, `spec/openlanes/cli/web_spec.rb` |
-| rey-frontend (I1) | `web/cypress/peer.ts` (new), `web/cypress.config.ts` |
+| backend-coder | `lib/openlanes/live/chat.rb`, `lib/openlanes/live/subscriber.rb`, `spec/openlanes/live/chat_spec.rb`, `spec/openlanes/live/subscriber_spec.rb` (new), `spec/openlanes/web/app_spec.rb`, `contract.md`, this file |
+| frontend-coder | `web/src/chat/**`, `web/src/floating/**`, `web/src/copilot/Copilot.tsx`, `web/cypress/e2e/chat.cy.ts` |
+| backend-coder (B4) | `lib/openlanes/live/node.rb`, `lib/openlanes/cli/web/web.rb`, `lib/openlanes/web/demo.rb`, `lib/openlanes/web/demo_board.rb`, `justfile`, `spec/openlanes/live/node_spec.rb`, `spec/openlanes/web/demo_spec.rb`, `spec/openlanes/cli/web_spec.rb` |
+| frontend-coder (I1) | `web/cypress/peer.ts` (new), `web/cypress.config.ts` |
 
 ## Build order
 

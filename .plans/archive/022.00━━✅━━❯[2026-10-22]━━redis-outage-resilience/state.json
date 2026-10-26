@@ -9,7 +9,7 @@
   "updated_at": "2026-10-22T08:08:39-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "note": "completed - 20 tool calls"
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 3 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 14 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "planned",
@@ -89,7 +89,7 @@
       "note": "harness died"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -109,7 +109,7 @@
       "note": "completed - 3 tool calls; publish refused: publish refused — plan.md has no `## How to test` section"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "building",
@@ -132,7 +132,7 @@
       "moves": 0
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -155,7 +155,7 @@
       "moves": 0
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Blocked",
       "from": "building",
@@ -178,7 +178,7 @@
       "moves": 1
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "planned",
@@ -201,7 +201,7 @@
       "moves": 3
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -224,7 +224,7 @@
       "moves": 3
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -239,11 +239,11 @@
       "up": 925374,
       "down": 6696,
       "seconds": 279.7,
-      "note": "completed - 14 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; luke-backend was asked to add it",
+      "note": "completed - 14 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; backend-coder was asked to add it",
       "moves": 3
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -262,7 +262,7 @@
       "moves": 3
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -281,7 +281,7 @@
       "moves": 4
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -300,7 +300,7 @@
       "moves": 6
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -319,7 +319,7 @@
       "moves": 7
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -334,11 +334,11 @@
       "up": 267037,
       "down": 1841,
       "seconds": 36.0,
-      "note": "no closing ledger line; signed by harness; next: names hansolo-reviewer, who does not handle 🔴 Changes Requested",
+      "note": "no closing ledger line; signed by harness; next: names staff-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 6
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -357,7 +357,7 @@
       "moves": 9
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Started",
       "from": "rejected",
@@ -369,7 +369,7 @@
       "session": "ec8dbda4-7658-4a7c-9d0a-26f3d5d8399c"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -384,11 +384,11 @@
       "up": 215821,
       "down": 1265,
       "seconds": 26.5,
-      "note": "no closing ledger line; signed by harness; next: names hansolo-reviewer, who does not handle 🔴 Changes Requested",
+      "note": "no closing ledger line; signed by harness; next: names staff-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 9
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 2,
       "status": "Completed",
       "from": "rejected",
@@ -410,385 +410,385 @@
   "signatures": [
     {
       "at": "2026-10-16T18:41:01-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:42:46-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-16T18:42:56-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:43:24-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-16T18:43:37-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:46:08-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-16T18:46:32-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:47:43-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T18:48:35-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-16T19:03:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-16T19:19:49-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-16T19:20:04-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:30:27-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:31:44-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-17T12:32:05-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:37:46-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-17T12:43:58-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-17T12:50:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 2,
       "note": "technical"
     },
     {
       "at": "2026-10-19T01:56:44-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:56:47-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T01:58:55-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:59:00-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:06:42-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:06:45-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T02:43:00-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:43:04-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-19T02:45:22-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:45:25-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:06:43-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:06:45-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:07:58-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:08:19-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-20T17:21:29-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:21:37-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-20T17:21:55-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:20:02-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-21T01:26:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:26:36-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:26:50-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:30:29-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:31:16-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:32:03-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-21T01:48:55-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:51:41-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-21T01:52:10-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T01:52:12-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T01:52:37-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 2,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T01:52:42-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
     },
     {
       "at": "2026-10-21T01:52:42-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
       "note": "signed by harness: work verified on disk",
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T01:58:33-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T01:59:02-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T02:01:20-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 2/2"
     },
     {
       "at": "2026-10-21T21:18:37-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T21:18:38-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-21T21:18:54-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 2,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T21:19:00-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "no closing ledger line"
     },
     {
       "at": "2026-10-21T21:19:00-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
       "note": "signed by harness: work verified on disk",
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T21:27:41-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-21T21:33:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-21T21:38:37-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     }
   ],
   "messages": [
@@ -796,8 +796,8 @@
       "id": "9fcc7797-5716-4ce4-8d06-780d469ecec4",
       "number": 1,
       "at": "2026-10-16T18:48:35-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "F1 done: Header shows stale alert (>15s) and run.outage line; Run.outage is optional in types.ts. Tests in web/src/shell/Header.test.tsx 'Redis outage notice' prove both states and the silent case. Web suite 358 passed, eslint clean. Wire shape unchanged; no back-end files touched.",
       "read": "yes"
     },
@@ -805,8 +805,8 @@
       "id": "7cf98b37-3a7c-41dd-9582-e34a0ebcea17",
       "number": 2,
       "at": "2026-10-16T19:20:03-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done (F1). Header.test.tsx 'Redis outage notice' covers fresh/null silent, stale alert, recovered status. Web vitest 358 pass, tsc clean.",
       "read": "yes"
     },
@@ -814,8 +814,8 @@
       "id": "73ee5e67-498c-43ae-aa05-9748152a2ce9",
       "number": 3,
       "at": "2026-10-17T12:32:05-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "F1 front end done: Header.test.tsx 'Redis outage notice' covers stale, recovered, and fresh/null. vitest 358 pass, eslint and tsc clean. No back-end files touched.",
       "read": "yes"
     },
@@ -823,8 +823,8 @@
       "id": "6ca166a7-2166-4342-a333-0375d66e5be5",
       "number": 4,
       "at": "2026-10-17T12:37:45-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end round 1: B2-B5 built. run.outage is published as fixed in plan.md (Session#recover -> Publisher#outage), no shape change. B1, B6, B7 and openapi.yaml still open; I am not done yet. See contract.md.",
       "read": "no"
     },
@@ -832,8 +832,8 @@
       "id": "475e20c0-e58f-4934-9339-58c16b542568",
       "number": 5,
       "at": "2026-10-17T12:50:58-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done: B1-B7 built. #59 was NOGROUP on the commands stream after Redis restarted empty, now fixed. run.outage is unchanged from the contract and proven against a real redis-server; openapi.yaml sits beside contract.md. web-e2e 23/23 pass. Plan is blocked (technical) only on 30 baseline apps/ spec failures caused by this host; see blocked.md B1.",
       "read": "no"
     },
@@ -841,8 +841,8 @@
       "id": "47ee982e-1f88-4ec6-8bd5-3da2b476e824",
       "number": 6,
       "at": "2026-10-20T17:21:54-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done: F1 verified, vitest 358/358, tsc clean. Header.test.tsx 'Redis outage notice' covers stale alert, recovered status, silent when fresh/null.",
       "read": "yes"
     },
@@ -851,7 +851,7 @@
       "number": 7,
       "at": "2026-10-21T01:20:02-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "yes"
     },
@@ -859,8 +859,8 @@
       "id": "75b15cc4-effe-4ee0-a23d-b1e66d95d657",
       "number": 8,
       "at": "2026-10-21T01:30:28-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done. Full suite 3175/0 failures (took origin/main's probe fix for the apps baseline), rubocop clean, integration proof 5/0, web-e2e 23/23. Wire shape unchanged.",
       "read": "no"
     },
@@ -869,7 +869,7 @@
       "number": 9,
       "at": "2026-10-21T01:31:03-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "The build is done, but the pull request was not opened: plan.md has no\n`## How to test` section, and a pull request nobody can test is not\nready for review. Add one to plan.md: the commands to run and what a person\nshould see, as a list, covering every part of the build and not only yours.\nChange nothing else, then sign Completed again.",
       "read": "yes"
     },
@@ -877,8 +877,8 @@
       "id": "632782a0-6f8f-45b9-8c80-dcb06501eed9",
       "number": 10,
       "at": "2026-10-21T01:52:36-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end round 2: no findings in my half; vitest 450/450. Findings 1-5 (Reproduction/contract prose, nonexistent Backoff claims, example counts, README duplication, stale PR head) are yours; web/ has no Redis Backoff, only the SSE reconnect backoff.",
       "read": "yes"
     },
@@ -886,8 +886,8 @@
       "id": "2254e595-75ad-44ad-ab61-518f3bcf4852",
       "number": 11,
       "at": "2026-10-21T01:58:33-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end round 4 done: docs only. plan.md/contract.md now describe what is built (main had Outage+PAUSE ec5b95eb and the #59 fix 14a7f439), README sections folded. No wire change; run.outage shape unchanged. rspec 4094/0, rubocop clean.",
       "read": "no"
     },
@@ -895,8 +895,8 @@
       "id": "2d558d8e-4acc-40dc-b57c-310042b3c50e",
       "number": 12,
       "at": "2026-10-21T21:18:53-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end: no change for the MAX_GAP finding; vitest 450/450. Wire shape unchanged.",
       "read": "no"
     },
@@ -904,8 +904,8 @@
       "id": "5ec7f913-f3d2-4797-afc8-8299e404619e",
       "number": 13,
       "at": "2026-10-21T21:25:24-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Round 5 back end done: Live::Outage probe gap now capped (30 s) with full jitter, configurable via .openlanes.yml redis_backoff.{initial,cap,jitter}. No wire change; run.outage shape unchanged. No front-end files touched.",
       "read": "no"
     },
@@ -913,21 +913,21 @@
       "id": "26490c99-55d5-419d-bca0-a2bedc9761e3",
       "number": 14,
       "at": "2026-10-21T21:38:36-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end round 6 done: no new findings; round 5 cap/jitter fix verified, rspec 4106/0, rubocop clean. Wire shape unchanged.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "rey-frontend": {
+    "frontend-coder": {
       "source": "harness",
       "at": "2026-10-16T18:48:42-07:00",
       "round": 1,
       "status": "Interrupted",
       "note": "agent pushed (origin/kig/rebase-worktrees-onto-main) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: F1, the outage notice in the board header, is built and I signed `Completed`."
     },
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-17T12:37:45-07:00",
       "round": 1,
@@ -962,7 +962,7 @@
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -975,7 +975,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -985,7 +985,7 @@
     },
     {
       "number": 3,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "rejected",
       "round": 1,
       "limit": "rounds",
@@ -999,7 +999,7 @@
   ],
   "moves": 10,
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "entries": [
@@ -1026,7 +1026,7 @@
             },
             {
               "kind": "done",
-              "text": "Round 3: rspec 3175/0, rubocop 446 files clean, integration proof 5/0, web-e2e 23/23. contract.md and pull-requests.md updated, rey mailed, signed Completed"
+              "text": "Round 3: rspec 3175/0, rubocop 446 files clean, integration proof 5/0, web-e2e 23/23. contract.md and pull-requests.md updated, frontend-coder mailed, signed Completed"
             }
           ]
         },
@@ -1040,7 +1040,7 @@
             },
             {
               "kind": "note",
-              "text": "AGENT_ID=luke-backend is shared with luke-backend sessions on other plans: release-all here released 'web/src/board/**', which this plan never claimed. Release by path instead of release-all"
+              "text": "AGENT_ID=backend-coder is shared with backend-coder sessions on other plans: release-all here released 'web/src/board/**', which this plan never claimed. Release by path instead of release-all"
             }
           ]
         },
@@ -1050,11 +1050,11 @@
           "entries": [
             {
               "kind": "done",
-              "text": "Round 5 signed Completed: rspec 4106/0 exit 0, rubocop 552 clean, outage_spec 14/0. plan.md How to test, contract.md, README, pull-requests.md 'Answers, round 2' updated; rey mailed (#13)"
+              "text": "Round 5 signed Completed: rspec 4106/0 exit 0, rubocop 552 clean, outage_spec 14/0. plan.md How to test, contract.md, README, pull-requests.md 'Answers, round 2' updated; frontend-coder mailed (#13)"
             },
             {
               "kind": "note",
-              "text": "alock release by path reported NOT LOCKED for all six files at end of round 5: another luke-backend session with the same AGENT_ID likely released them (see entry 6)"
+              "text": "alock release by path reported NOT LOCKED for all six files at end of round 5: another backend-coder session with the same AGENT_ID likely released them (see entry 6)"
             }
           ]
         },
@@ -1064,17 +1064,17 @@
           "entries": [
             {
               "kind": "done",
-              "text": "Round 6: no new review findings since Answers round 2; round 5 cap/jitter fix verified in the working tree. rspec 4106/0 exit 0, rubocop 552 clean. Reflowed one comment in outage.rb, mailed rey (#14), signed Completed"
+              "text": "Round 6: no new review findings since Answers round 2; round 5 cap/jitter fix verified in the working tree. rspec 4106/0 exit 0, rubocop 552 clean. Reflowed one comment in outage.rb, mailed frontend-coder (#14), signed Completed"
             },
             {
               "kind": "note",
-              "text": "Round 6 release-all freed 4 locks I never took, which entry 6 warned about. Next round, release by path only and never run release-all while AGENT_ID=luke-backend is shared"
+              "text": "Round 6 release-all freed 4 locks I never took, which entry 6 warned about. Next round, release by path only and never run release-all while AGENT_ID=backend-coder is shared"
             }
           ]
         }
       }
     },
-    "lando-broker": {
+    "unblocker": {
       "rounds": {
         "1": {
           "state": "⭕ Technical Block",
@@ -1139,15 +1139,15 @@
             },
             {
               "kind": "question",
-              "text": "B1 The suite cannot exit 0 on this machine, and none of the failures are this plan's > **Answer not accepted:** Rebase from onto main > > lando-broker: Signed Completed with zero folds again: no qualifying answer, so the open question keeps the folder ⭕. Every back-end unit (B1 to B7) is built and tested, and `bundle exec rubocop` is clean. The implementation requirement says `bundle exec rspec` must exit 0. It exits 1 with 30 failures, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_…",
+              "text": "B1 The suite cannot exit 0 on this machine, and none of the failures are this plan's > **Answer not accepted:** Rebase from onto main > > unblocker: Signed Completed with zero folds again: no qualifying answer, so the open question keeps the folder ⭕. Every back-end unit (B1 to B7) is built and tested, and `bundle exec rubocop` is clean. The implementation requirement says `bundle exec rspec` must exit 0. It exits 1 with 30 failures, all in `spec/openlanes/apps/` and `spec/openlanes/cli/app_…",
               "ref": "B1",
-              "answer": "b) Accept the 30 as an environmental baseline for this plan, and let luke-backend sign Completed. Answered by kig on 2026-10-20"
+              "answer": "b) Accept the 30 as an environmental baseline for this plan, and let backend-coder sign Completed. Answered by kig on 2026-10-20"
             }
           ]
         }
       }
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -1155,7 +1155,7 @@
           "entries": [
             {
               "kind": "note",
-              "text": "Round 1 re-verified: F1 done, vitest 358/358, tsc clean, signed Completed; plan still blocked on luke's B1 (30 baseline apps/ spec failures)"
+              "text": "Round 1 re-verified: F1 done, vitest 358/358, tsc clean, signed Completed; plan still blocked on backend-coder's B1 (30 baseline apps/ spec failures)"
             }
           ]
         },

@@ -42,7 +42,7 @@ RSpec.describe OpenLanes::Engine::Board::Row do
 
   describe "#unacked" do
     let(:fields) do
-      { key: "001.00/luke-backend", at: Time.now, ordinal: "001.00", file: "plan.md", agent: "luke-backend",
+      { key: "001.00/backend-coder", at: Time.now, ordinal: "001.00", file: "plan.md", agent: "backend-coder",
         role: "builder", round: 1, rounds: 2, model: "opus", up: 0, down: 0, state: :running }
     end
 
@@ -68,9 +68,9 @@ RSpec.describe OpenLanes::Engine::Board::Row do
 
     it "counts the messages nobody has acked" do
       mailbox = OpenLanes::Plans.mailbox(dir)
-      first = mailbox.append(from: "luke-backend", to: "rey-frontend", body: "B1 landed")
-      mailbox.append(from: "rey-frontend", to: "luke-backend", body: "Which field?")
-      mailbox.ack(first.number, by: "rey-frontend")
+      first = mailbox.append(from: "backend-coder", to: "frontend-coder", body: "B1 landed")
+      mailbox.append(from: "frontend-coder", to: "backend-coder", body: "Which field?")
+      mailbox.ack(first.number, by: "frontend-coder")
 
       expect(described_class.unacked_in(dir)).to eq(1)
     end

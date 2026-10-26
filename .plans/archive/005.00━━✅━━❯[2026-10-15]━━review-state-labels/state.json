@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 145.5
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 5 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 16 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -89,7 +89,7 @@
       "note": "agent pushed (origin/kig/salvage-post-merge-commits) — the boundary is docs plus code, nothing leaves the machine"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -109,7 +109,7 @@
       "note": "agent pushed (origin/kig/salvage-post-merge-commits) — the boundary is docs plus code, nothing leaves the machine"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -132,252 +132,252 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:38-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-13T19:04:44-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:06:57-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-13T19:07:09-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:56-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:08:07-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:15-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:11:04-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:11:31-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:16:09-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:22:12-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-15T09:02:26-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:02:53-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Blocked",
       "round": 1,
       "note": "technical - PR #26 already MERGED into main (e998e0d) by a human; branch HEAD is an ancestor of origin/main, so no verdict can act on it"
     },
     {
       "at": "2026-10-15T09:10:21-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:13:47-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-15T09:13:59-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:13:59-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:25:10-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:25:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:27:29-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:27:29-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:29:55-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:29:56-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:34:10-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:34:10-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:35:23-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:35:23-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:38:07-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-15T09:38:15-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1
     },
     {
       "at": "2026-10-15T09:38:56-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     }
   ],
   "messages": [
     {
       "number": 1,
       "at": "2026-10-13T19:12:13-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Contract written: implementation-plan.md. ReviewLabel (B1) and Vcs.review/Review::Result (B3) shapes are fixed there; building B1-B3 now."
     },
     {
       "number": 2,
       "at": "2026-10-13T19:15:02-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "B1-B3 landed: Plans::ReviewLabel (ALL, names, fetch, passing, INITIAL, REJECTED), Vcs.review(github:) -> Review#call(pr:, label:, dry_run:) -> Result as in implementation-plan.md (refused?/dry_run? predicates exist). Rubocop flags Naming/MethodParameterName on pr: in your cli/review/review.rb:30; I used an inline disable with a reason in vcs/review.rb. waiting_on (B6) not landed yet: assume [] default."
     },
     {
       "number": 3,
       "at": "2026-10-13T19:15:21-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "FYI: whole suite failed to load (CLI::Review resolved to a Module): lib/openlanes/cli/review was not collapsed in Zeitwerk. I added loader.collapse for openlanes/cli/review in lib/openlanes.rb; don't add it twice."
     },
     {
       "number": 4,
       "at": "2026-10-13T19:16:09-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
-      "body": "Front end done. Tests: spec/openlanes/cli/review_spec.rb (transition, CI-red refusal exit 1, dry-run footer, unknown label exit 64, gh error exit 69, help lists labels); reporter_spec.rb 'waiting on a human'; help_spec.rb review row. Notes: (1) I touched lib/openlanes.rb to collapse cli/review (Zeitwerk needs it). (2) Reporter.new(tree:, waiting_on: {'018.01' => [12]}) takes a plan-number => PR-numbers hash; please pass the board snapshot's waiting_on into Presentation.reporter where you wire it. (3) Full suite: 2267 examples, 1 failure, yours: spec/openlanes/execution/executor_spec.rb:380 (hansolo may-review, after the hansolo-reviewer.md change). Rubocop 0 offenses."
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "Front end done. Tests: spec/openlanes/cli/review_spec.rb (transition, CI-red refusal exit 1, dry-run footer, unknown label exit 64, gh error exit 69, help lists labels); reporter_spec.rb 'waiting on a human'; help_spec.rb review row. Notes: (1) I touched lib/openlanes.rb to collapse cli/review (Zeitwerk needs it). (2) Reporter.new(tree:, waiting_on: {'018.01' => [12]}) takes a plan-number => PR-numbers hash; please pass the board snapshot's waiting_on into Presentation.reporter where you wire it. (3) Full suite: 2267 examples, 1 failure, yours: spec/openlanes/execution/executor_spec.rb:380 (staff-reviewer may-review, after the staff-reviewer.md change). Rubocop 0 offenses."
     },
     {
       "number": 5,
       "at": "2026-10-13T19:22:11-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end partly done: B1-B5 and Engine::PrWatch landed; suite 2281/0, rubocop 0. Dispatcher wiring for B6 (waiting_on into Reporter) and I1 are NOT done; carried to next round. Thanks for the collapse line, we both added it, only one copy is in lib/openlanes.rb."
     },
     {
       "number": 6,
       "at": "2026-10-13T19:22:12-07:00",
-      "from": "luke-backend",
-      "to": "luke-backend",
-      "body": "RESUME: B1-B5 done and green. B6: lib/openlanes/engine/pr_watch.rb + spec done. Remaining: wire PrWatch into Dispatcher#tick (start only, merge.by human via support/config.rb), fire rejected/approved->deployed/discarded events, mail luke+rey with comments, record Publication#label_error in publish_for_review note, waiting_on in board snapshot -> Reporter(waiting_on:). Then I1 spec/integration/review_labels_spec.rb + spec/support/fake_gh. See implementation-plan.md Status."
+      "from": "backend-coder",
+      "to": "backend-coder",
+      "body": "RESUME: B1-B5 done and green. B6: lib/openlanes/engine/pr_watch.rb + spec done. Remaining: wire PrWatch into Dispatcher#tick (start only, merge.by human via support/config.rb), fire rejected/approved->deployed/discarded events, mail backend-coder+frontend-coder with comments, record Publication#label_error in publish_for_review note, waiting_on in board snapshot -> Reporter(waiting_on:). Then I1 spec/integration/review_labels_spec.rb + spec/support/fake_gh. See implementation-plan.md Status."
     },
     {
       "id": "e4668114-5ca6-4236-940c-931730c806c6",
       "number": 7,
       "at": "2026-10-15T09:37:48-07:00",
       "from": "human",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "Continue",
       "read": "no",
       "command": "01M506TMPJ8HBDMR073SYY40PT"
@@ -386,8 +386,8 @@
       "id": "c16f4160-5298-4d84-a390-d4381520c123",
       "number": 8,
       "at": "2026-10-15T09:38:07-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "Front end done: F1 verified present. rspec 2722/0 (9 env skips: web/dist, redis), rubocop 0 offenses. Proofs: spec/openlanes/cli/review_spec.rb (transition, CI-red refusal, dry-run, unknown label), presentation/reporter_spec.rb (waiting on you: PR #12), cli/help_spec.rb (review listed), integration/review_labels_spec.rb (end to end).",
       "read": "no"
     },
@@ -395,14 +395,14 @@
       "id": "8752bcbb-c08e-48f0-85d0-cc04060b47ba",
       "number": 9,
       "at": "2026-10-15T09:38:56-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done: B1-B6 and I1 committed. Verified 2026-10-15: rspec 2722 examples, 0 failures (9 pending are web/dist skips, not this plan); rubocop 0 offenses. Contract in implementation-plan.md is current.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-15T09:38:15-07:00",
       "round": 1,
@@ -420,12 +420,12 @@
       "remaining": [
         "sign Completed"
       ],
-      "next_step": "All backend units are committed (see implementation-plan.md Status). Verified 2026-10-15: bundle exec rspec 2722 examples, 0 failures, 9 pending (web/dist missing, not this plan); rubocop 358 files, 0 offenses; worktree clean. Next: mail rey that backend is done and sign Completed --next hansolo-reviewer.",
+      "next_step": "All backend units are committed (see implementation-plan.md Status). Verified 2026-10-15: bundle exec rspec 2722 examples, 0 failures, 9 pending (web/dist missing, not this plan); rubocop 358 files, 0 offenses; worktree clean. Next: mail frontend-coder that backend is done and sign Completed --next staff-reviewer.",
       "files_touched": [
         "none"
       ]
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "source": "harness",
       "at": "2026-10-15T09:38:11-07:00",
       "round": 1,

@@ -20,7 +20,7 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
       aggregate_failures do
         expect(plan("001.00").status.key).to eq(:rejected)
         expect(applied).to have_attributes(plan: "001.00", pr: 11, to: :rejected)
-        expect(mail.map(&:to)).to include("luke-backend", "rey-frontend")
+        expect(mail.map(&:to)).to include("backend-coder", "frontend-coder")
         expect(mail.map(&:from).uniq).to eq(["github"])
         expect(mail.first.body).to include("PR #11 was labelled review-rejected", "octo", "Fix the nil check")
       end
@@ -39,7 +39,7 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
     end
   end
 
-  it "takes a 🟢 plan a person rejected before hansolo did through 👀 to 🔴" do
+  it "takes a 🟢 plan a person rejected before staff-reviewer did through 👀 to 🔴" do
     plans { |t| t.plan "002.00", :ready_for_review, "early", files:, prs: [t.open(12, "b")] }
     effects.apply(outcome("002.00", 12, :rejected))
 

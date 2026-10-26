@@ -182,7 +182,7 @@ module OpenLanes
   # The agent that writes a specification for work that already shipped.
   # Named here rather than in the CLI so the definition file stays the single
   # source of truth about who does what.
-  RETROACTIVE_WRITER = "yoda-writer"
+  RETROACTIVE_WRITER = Agents::Names::SPEC_WRITER
 
   class Error < StandardError; end
 end

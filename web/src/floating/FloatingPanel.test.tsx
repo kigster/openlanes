@@ -34,7 +34,7 @@ function Harness({ startOpen = true, ...over }: Props) {
       <FloatingPanel
         id="panel"
         dock="right"
-        title="c3po-operator"
+        title="copilot"
         subtitle="Copilot for this run."
         tabLabel="Copilot"
         moves="the copilot"
@@ -63,7 +63,7 @@ const drag = (from: { x: number; y: number }, to: { x: number; y: number }, targ
 
 it("draws a docked, labelled, non-modal dialog with its header, body and footer, accessibly", async () => {
   const { container } = render(<Harness />);
-  const dialog = screen.getByRole("dialog", { name: "c3po-operator" });
+  const dialog = screen.getByRole("dialog", { name: "copilot" });
   expect(dialog).toHaveAttribute("aria-modal", "false");
   expect(dialog).toHaveAttribute("data-dock", "right");
   expect(dialog).not.toHaveClass("is-placed");
@@ -154,7 +154,7 @@ it("goes back to its corner on a double-click on the header, but not on its butt
   // The double-click minimised it twice over, but did not send it home.
   await user.click(screen.getByRole("button", { name: "Copilot" }));
   expect(panel()).toHaveClass("is-placed");
-  await user.dblClick(screen.getByRole("heading", { name: "c3po-operator" }));
+  await user.dblClick(screen.getByRole("heading", { name: "copilot" }));
   expect(panel()).not.toHaveClass("is-placed");
 });
 
@@ -184,7 +184,7 @@ it("minimises with Esc to a tab on its edge, focusing the tab, and reopens with 
   expect(tab).toHaveAttribute("aria-controls", "panel");
   await user.keyboard("a{Escape}"); // other keys inside the panel are its own business
   await user.click(tab);
-  expect(screen.getByRole("heading", { name: "c3po-operator" })).toHaveFocus();
+  expect(screen.getByRole("heading", { name: "copilot" })).toHaveFocus();
   await user.keyboard("x");
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   document.removeEventListener("keydown", outer);

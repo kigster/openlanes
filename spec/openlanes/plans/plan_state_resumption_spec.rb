@@ -6,7 +6,7 @@ require "json_schemer"
 # only when the plan has stayed where that round left it and the round runs
 # in the same checkout. Each context below is one branch of that decision.
 RSpec.describe OpenLanes::Plans::PlanState, :tree do
-  subject(:decision) { state.resumption(agent: "luke-backend", state: "building", root:) }
+  subject(:decision) { state.resumption(agent: "backend-coder", state: "building", root:) }
 
   let(:state) { described_class.for(folder) }
   let(:root) { "/work/checkout" }
@@ -17,13 +17,13 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   end
   let(:schema) { JSONSchemer.schema(Pathname.new(described_class::SCHEMA_PATH)) }
 
-  def round(number, at:, agent: "luke-backend", **fields)
+  def round(number, at:, agent: "backend-coder", **fields)
     state.stage!(agent:, round: number, status: "Interrupted", started_at: at, **fields)
   end
 
   context "when the agent has never run" do
     it "starts fresh, saying no session was recorded" do
-      expect(decision).to have_attributes(session: nil, reason: "no session recorded for luke-backend")
+      expect(decision).to have_attributes(session: nil, reason: "no session recorded for backend-coder")
     end
   end
 
@@ -43,7 +43,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     before do
       round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root)
       round(2, at: "2026-10-16T11:00:00Z", to: "building", session: "sess-2", cwd: root)
-      round(1, at: "2026-10-16T09:00:00Z", agent: "rey-frontend", to: "building", session: "other", cwd: root)
+      round(1, at: "2026-10-16T09:00:00Z", agent: "frontend-coder", to: "building", session: "other", cwd: root)
     end
 
     it "resumes the latest one of its own" do
@@ -62,7 +62,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   context "when another agent moved the plan away and back since" do
     before do
       round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root)
-      round(1, at: "2026-10-16T11:00:00Z", agent: "hansolo-reviewer", from: "building", to: "reviewing")
+      round(1, at: "2026-10-16T11:00:00Z", agent: "staff-reviewer", from: "building", to: "reviewing")
     end
 
     it "starts fresh" do
@@ -127,7 +127,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   describe "#stage! with reset" do
     before do
       round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root)
-      state.stage!(agent: "luke-backend", round: 1, reset: true, status: "Started", started_at: "2026-10-17T10:00:00Z")
+      state.stage!(agent: "backend-coder", round: 1, reset: true, status: "Started", started_at: "2026-10-17T10:00:00Z")
     end
 
     it "starts a record that carries nothing from an earlier run's round of the same number" do
@@ -139,7 +139,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
 
     it "updates the new record, not the earlier one, when the round settles" do
-      state.stage!(agent: "luke-backend", round: 1, status: "Completed", to: "building")
+      state.stage!(agent: "backend-coder", round: 1, status: "Completed", to: "building")
       expect(state.stages.map { it["status"] }).to eq(%w[Interrupted Completed])
     end
   end
@@ -147,7 +147,7 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   context "when two rounds started in the same second" do
     before do
       round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "obsolete", cwd: root)
-      state.stage!(agent: "luke-backend",
+      state.stage!(agent: "backend-coder",
         round: 1,
         reset: true,
         status: "Interrupted",

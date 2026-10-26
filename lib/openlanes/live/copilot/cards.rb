@@ -5,19 +5,19 @@ require "json"
 module OpenLanes
   module Live
     class Copilot
-      # How what c3po-operator wrote becomes the turns the page draws.
+      # How what copilot wrote becomes the turns the page draws.
       #
       # The agent writes prose, and wherever it wants the page to draw a card
-      # it writes one fenced block whose info string is `c3po`, holding one
+      # it writes one fenced block whose info string is `copilot`, holding one
       # JSON object:
       #
-      #   ```c3po
-      #   {"card": "confirm", "text": "luke has not moved in 20 minutes.",
-      #    "command": {"kind": "stop", "plan": "002", "agent": "luke-backend"},
-      #    "confirm": "Stop luke-backend", "done": "luke-backend was asked to stop"}
+      #   ```copilot
+      #   {"card": "confirm", "text": "backend-coder has not moved in 20 minutes.",
+      #    "command": {"kind": "stop", "plan": "002", "agent": "backend-coder"},
+      #    "confirm": "Stop backend-coder", "done": "backend-coder was asked to stop"}
       #   ```
       #
-      #   ```c3po
+      #   ```copilot
       #   {"card": "draft", "question": "002/B1", "draft": "Ninety days.", "text": "A draft:"}
       #   ```
       #
@@ -30,9 +30,9 @@ module OpenLanes
       # never something the page can send. Nothing here sends anything: even a
       # good card only reaches the engine when the person presses its button.
       module Cards
-        # A card: a fence opened with exactly `c3po` and closed on a line of its
+        # A card: a fence opened with exactly `copilot` and closed on a line of its
         # own. An unclosed one does not match, and so stays prose.
-        FENCE = /^```c3po[ \t]*\r?\n(.*?)^```[ \t]*$/m
+        FENCE = /^```#{Agents::Names::COPILOT}[ \t]*\r?\n(.*?)^```[ \t]*$/m
 
         # The commands a confirm card may carry: W17's "stop, discard and stop
         # run", the ones that cannot be undone and so wait for a person.
@@ -60,7 +60,7 @@ module OpenLanes
         QUESTION = %r{\A[0-9]{3}(?:\.[0-9]{2})?/B[1-9][0-9]*\z}
 
         # What an answer with nothing in it reads as.
-        SILENT = "c3po-operator finished without saying anything."
+        SILENT = "#{Agents::Names::COPILOT} finished without saying anything.".freeze
 
         module_function
 
@@ -136,7 +136,7 @@ module OpenLanes
 
           raw = raw.transform_keys(&:to_s)
           kind = raw["kind"].to_s
-          raise Invalid, "#{kind.inspect} is not a command c3po-operator may offer; it offers #{CONFIRMABLE.join(", ")}" unless CONFIRMABLE.include?(kind)
+          raise Invalid, "#{kind.inspect} is not a command #{Agents::Names::COPILOT} may offer; it offers #{CONFIRMABLE.join(", ")}" unless CONFIRMABLE.include?(kind)
 
           # The payload is dropped: none of these kinds reads one, and a card
           # carries exactly what its button says and nothing the person cannot see.

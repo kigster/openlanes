@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# c3po-operator answering, with `claude` replaced at the spawn seam by a fake
+# copilot answering, with `claude` replaced at the spawn seam by a fake
 # that plays back a stream-json transcript. Nothing here starts a process.
 RSpec.describe OpenLanes::Live::Copilot::Operator do
   subject(:operator) { described_class.new(root:, plans_dir:, stores:, keys:, spawn:, trace_dir:, agent:) }
 
-  let(:agent) { OpenLanes::Agents.find("c3po-operator") }
+  let(:agent) { OpenLanes::Agents.find("copilot") }
   let(:root) { Dir.mktmpdir("copilot") }
   let(:plans_dir) { File.join(root, ".plans") }
   let(:trace_dir) { File.join(root, "traces") }
@@ -36,10 +36,10 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       run: { status: "running", up: 5000, down: 300, cost: 0.42, agents_working: 1 },
       plans: [{ ordinal: "002.00", title: "Cart retention", status: { emoji: "🔨", label: "Building" }, starts: "research",
                 elapsed: 600, cost: 0.4, pr: nil, interrupted: nil,
-                cars: [{ key: "002.00/luke-backend", agent: "luke-backend", state: "running", phase: "calm", round: 1, rounds: 2,
+                cars: [{ key: "002.00/backend-coder", agent: "backend-coder", state: "running", phase: "calm", round: 1, rounds: 2,
                          model: "claude-opus-5-5", up: 5000, down: 300, elapsed: 600, remaining: 300, held: false,
                          message: "Running rspec" }],
-                questions: [{ id: "002.00/B1", owner: "product", agent: "luke-backend", held: false,
+                questions: [{ id: "002.00/B1", owner: "product", agent: "backend-coder", held: false,
                               heading: "B1 Retention", body: "How long are carts kept?" }] }],
       backlog: [], log: [{ at: "2026-10-13T19:59:00Z", source: "engine", level: "info", text: "round 2 started" }] }
   end
@@ -118,7 +118,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
     it "tells the agent the board and the person's words" do
       say("Why has 002 not moved?")
       expect(spawned.first[:argv][2]).to include("002.00 Cart retention: 🔨 Building",
-        "car 002.00/luke-backend: running",
+        "car 002.00/backend-coder: running",
         "question 002.00/B1",
         "round 2 started",
         "## The person says\n\nWhy has 002 not moved?")
@@ -222,7 +222,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
 
       it "says why in the conversation, with what it spent" do
         expect(stored.last).to include("kind" => "text",
-          "text" => start_with("c3po-operator could not answer: claude reported: API Error"),
+          "text" => start_with("copilot could not answer: claude reported: API Error"),
           "usage" => { "model" => "claude-haiku-5-5", "up" => 300, "down" => 0 })
       end
 
@@ -233,24 +233,24 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
 
     context "when the answer proposes a stop" do
       let(:stop) do
-        { card: "confirm", text: "luke is stuck.", command: { kind: "stop", plan: "002", agent: "luke-backend" },
-          confirm: "Stop luke-backend", done: "Asked to stop." }
+        { card: "confirm", text: "backend-coder is stuck.", command: { kind: "stop", plan: "002", agent: "backend-coder" },
+          confirm: "Stop backend-coder", done: "Asked to stop." }
       end
-      let(:runs) { [run(session: "s", sent: 10, said: 5, result: "Look:\n```c3po\n#{JSON.generate(stop)}\n```")] }
+      let(:runs) { [run(session: "s", sent: 10, said: 5, result: "Look:\n```copilot\n#{JSON.generate(stop)}\n```")] }
 
       it "stores a confirm card the page can draw, and sends nothing" do
-        say("stop luke")
+        say("stop backend-coder")
         expect([stored.map { it["kind"] }, store.xlen(keys.commands)]).to eq([%w[text text confirm], 0])
       end
     end
 
     context "when the answer proposes a message to an agent" do
       let(:message) { { card: "confirm", command: { kind: "message", plan: "002", payload: { text: "push now" } }, confirm: "Send", done: "ok" } }
-      let(:runs) { [run(session: "s", sent: 10, said: 5, result: "```c3po\n#{JSON.generate(message)}\n```")] }
+      let(:runs) { [run(session: "s", sent: 10, said: 5, result: "```copilot\n#{JSON.generate(message)}\n```")] }
 
       it "turns it into text and sends nothing" do
-        say("tell luke to push")
-        expect([stored.last["kind"], stored.last["text"], store.xlen(keys.commands)]).to match(["text", /not a command c3po-operator may offer/, 0])
+        say("tell backend-coder to push")
+        expect([stored.last["kind"], stored.last["text"], store.xlen(keys.commands)]).to match(["text", /not a command copilot may offer/, 0])
       end
     end
 
@@ -268,7 +268,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
     it "cuts the answer under way short and answers the next with why" do
       operator.stop
       say("hi")
-      expect([spawned, stored.last["text"]]).to eq([[], "c3po-operator could not answer: the server is stopping"])
+      expect([spawned, stored.last["text"]]).to eq([[], "copilot could not answer: the server is stopping"])
     end
   end
 
@@ -330,7 +330,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
   end
 
   context "when an answer takes too long" do
-    let(:agent) { OpenLanes::Agents.find("c3po-operator").with(timeout: 0.1) }
+    let(:agent) { OpenLanes::Agents.find("copilot").with(timeout: 0.1) }
     let(:spawn) do
       lambda do |argv, chdir:, env:|
         spawned << { argv:, chdir:, env: }
@@ -350,6 +350,6 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
 
   it "refuses to start without its definition" do
     expect { described_class.new(root: "/", plans_dir: "/", stores:, keys:, agent: nil) }
-      .to raise_error(OpenLanes::Error, /no agent definition named c3po-operator/)
+      .to raise_error(OpenLanes::Error, /no agent definition named copilot/)
   end
 end

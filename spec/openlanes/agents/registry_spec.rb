@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Agents::Registry do
   around do |example|
     Dir.mktmpdir("agents") do |tmp|
       @dir = tmp
-      %w[leah-researcher luke-backend lando-broker hansolo-reviewer].each do |name|
+      %w[researcher backend-coder unblocker staff-reviewer].each do |name|
         File.write(File.join(tmp, "#{name}.md"), <<~MD)
           ---
           name: #{name}
@@ -29,65 +29,65 @@ RSpec.describe OpenLanes::Agents::Registry do
   # so the narrowing has to live here rather than in the command.
   describe "#only and #without" do
     it "keeps exactly the agents named" do
-      expect(names(agents.only("luke-backend").all)).to eq(["luke-backend"])
+      expect(names(agents.only("backend-coder").all)).to eq(["backend-coder"])
     end
 
     it "drops exactly the agents named, preserving order" do
-      expect(names(agents.without("luke-backend", "lando-broker").all))
-        .to eq(%w[hansolo-reviewer leah-researcher])
+      expect(names(agents.without("backend-coder", "unblocker").all))
+        .to eq(%w[researcher staff-reviewer])
     end
 
     it "derives a roster the original does not share state with" do
-      agents.only("luke-backend")
+      agents.only("backend-coder")
 
       expect(names(agents.all).size).to eq(4)
     end
   end
 
-  # `agents describe leah` should not make anyone type the whole hyphenated
+  # `agents describe researcher` should not make anyone type the whole hyphenated
   # name, let alone the file name with its extension.
   describe "#match" do
     it "finds an agent by its exact name" do
-      expect(names(agents.match("luke-backend"))).to eq(%w[luke-backend])
+      expect(names(agents.match("backend-coder"))).to eq(%w[backend-coder])
     end
 
     it "accepts the file name tab completion produces" do
-      expect(names(agents.match("leah-researcher.md"))).to eq(%w[leah-researcher])
+      expect(names(agents.match("researcher.md"))).to eq(%w[researcher])
     end
 
     it "accepts a whole path, since completion in agents/ yields one" do
-      expect(names(agents.match("agents/lando-broker.md"))).to eq(%w[lando-broker])
+      expect(names(agents.match("agents/unblocker.md"))).to eq(%w[unblocker])
     end
 
     it "finds an agent by the first word of its name" do
-      expect(names(agents.match("leah"))).to eq(%w[leah-researcher])
+      expect(names(agents.match("researcher"))).to eq(%w[researcher])
     end
 
     it "finds an agent by a fragment from the middle" do
-      expect(names(agents.match("review"))).to eq(%w[hansolo-reviewer])
+      expect(names(agents.match("review"))).to eq(%w[staff-reviewer])
     end
 
     it "returns every candidate when the fragment fits several" do
-      expect(names(agents.match("l"))).to contain_exactly("lando-broker", "leah-researcher", "luke-backend")
+      expect(names(agents.match("c"))).to contain_exactly("unblocker", "researcher", "backend-coder")
     end
 
-    # An exact hit must never be widened: an agent named `luke` alongside
-    # `luke-backend` would otherwise make `luke` permanently ambiguous.
+    # An exact hit must never be widened: an agent named `backend-coder` alongside
+    # `backend-coder` would otherwise make `backend-coder` permanently ambiguous.
     it "prefers an exact name over the prefixes it also fits" do
-      File.write(File.join(@dir, "luke.md"), <<~MD)
+      File.write(File.join(@dir, "backend-coder.md"), <<~MD)
         ---
-        name: luke
+        name: backend-coder
         description: The short-named one.
         handles: [building]
         ---
         Prompt.
       MD
 
-      expect(names(agents.match("luke"))).to eq(%w[luke])
+      expect(names(agents.match("backend-coder"))).to eq(%w[backend-coder])
     end
 
     it "returns nothing for a fragment no name contains" do
-      expect(agents.match("chewbacca")).to be_empty
+      expect(agents.match("ghost-agent")).to be_empty
     end
   end
 
@@ -107,7 +107,7 @@ RSpec.describe OpenLanes::Agents::Registry do
     end
 
     it "leaves the timeout nil when the definition says nothing, deferring to the run" do
-      expect(agents.find("luke-backend").timeout).to be_nil
+      expect(agents.find("backend-coder").timeout).to be_nil
     end
 
     # A zero or negative timeout would abandon the agent before it starts;
@@ -132,13 +132,13 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "lists the documents each agent signs, in order" do
       aggregate_failures do
-        expect(agents.find("leah-researcher").ledger).to eq(%w[spec.md])
-        expect(agents.find("luke-backend").ledger).to eq(%w[plan.md pull-requests.md plan-backend.md])
-        expect(agents.find("rey-frontend").ledger).to eq(%w[plan.md pull-requests.md plan-frontend.md])
-        expect(agents.find("hansolo-reviewer").ledger).to eq(%w[pull-requests.md])
+        expect(agents.find("researcher").ledger).to eq(%w[spec.md])
+        expect(agents.find("backend-coder").ledger).to eq(%w[plan.md pull-requests.md plan-backend.md])
+        expect(agents.find("frontend-coder").ledger).to eq(%w[plan.md pull-requests.md plan-frontend.md])
+        expect(agents.find("staff-reviewer").ledger).to eq(%w[pull-requests.md])
         # Not plan.md: signing a spec-stage block into a new plan.md would
         # justify 📋 and skip research and specification.
-        expect(agents.find("lando-broker").ledger).to eq(%w[spec.md])
+        expect(agents.find("unblocker").ledger).to eq(%w[spec.md])
       end
     end
 
@@ -154,10 +154,10 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "reads the model and effort the definitions declare" do
       aggregate_failures do
-        expect(agents.find("leah-researcher").model).to eq("haiku")
-        expect(agents.find("leah-researcher").effort).to eq("medium")
-        expect(agents.find("hansolo-reviewer").model).to eq("sonnet")
-        expect(agents.find("lando-broker").effort).to eq("low")
+        expect(agents.find("researcher").model).to eq("haiku")
+        expect(agents.find("researcher").effort).to eq("medium")
+        expect(agents.find("staff-reviewer").model).to eq("sonnet")
+        expect(agents.find("unblocker").effort).to eq("low")
       end
     end
 
@@ -168,8 +168,8 @@ RSpec.describe OpenLanes::Agents::Registry do
     end
 
     it "reads the adapter, phase, lanes, needs and toggle" do
-      rey = agents.find("rey-frontend")
-      expect([rey.adapter, rey.phase, rey.starts, rey.needs, rey.toggle])
+      frontend_coder = agents.find("frontend-coder")
+      expect([frontend_coder.adapter, frontend_coder.phase, frontend_coder.starts, frontend_coder.needs, frontend_coder.toggle])
         .to eq(["claude", "frontend", %i[research planning], ["plan.md#frontend"], "frontend"])
     end
 
@@ -207,27 +207,27 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
-        "yoda-writer"         => 900,
-        "luthen-rael-planner" => 600,
-        "luke-backend"        => 1200,
-        "rey-frontend"        => 1200,
-        "hansolo-reviewer"    => 300,
-        "leah-researcher"     => 300
+        "spec-writer"    => 900,
+        "planner"        => 600,
+        "backend-coder"  => 1200,
+        "frontend-coder" => 1200,
+        "staff-reviewer" => 300,
+        "researcher"     => 300
       )
     end
 
-    it "knows the state luke starts a plan into and the one it holds at while rey is still building" do
-      luke = agents.find("luke-backend")
-      expect([luke.starts_as, luke.holds_at]).to eq(%i[building building_ui])
-      expect(agents.find("rey-frontend").starts_as).to be_nil
+    it "knows the state backend-coder starts a plan into and the one it holds at while frontend-coder is still building" do
+      backend_coder = agents.find("backend-coder")
+      expect([backend_coder.starts_as, backend_coder.holds_at]).to eq(%i[building building_ui])
+      expect(agents.find("frontend-coder").starts_as).to be_nil
     end
 
-    it "gives hansolo in_review as the state a review starts in" do
-      expect(agents.find("hansolo-reviewer").starts_as).to eq(:in_review)
+    it "gives staff-reviewer in_review as the state a review starts in" do
+      expect(agents.find("staff-reviewer").starts_as).to eq(:in_review)
     end
 
     it "strips the name to the role for the screen" do
-      expect(agents.find("luthen-rael-planner").role).to eq("planner")
+      expect(agents.find("planner").role).to eq("planner")
     end
   end
 
@@ -241,54 +241,54 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "tells luke and rey to sign pull-requests.md" do
-      %w[luke-backend rey-frontend].each do |name|
+    it "tells backend-coder and frontend-coder to sign pull-requests.md" do
+      %w[backend-coder frontend-coder].each do |name|
         expect(agents.find(name).prompt).to include("pull-requests.md")
       end
     end
 
-    it "tells hansolo the verdict words, the finding headings and the configured cap" do
-      prompt = agents.find("hansolo-reviewer").prompt
+    it "tells staff-reviewer the verdict words, the finding headings and the configured cap" do
+      prompt = agents.find("staff-reviewer").prompt
       expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(approved)", "(slop)", "👍🏼 to deploy")
     end
 
-    it "lets hansolo comment, but neither review nor edit a pull request" do
+    it "lets staff-reviewer comment, but neither review nor edit a pull request" do
       aggregate_failures do
-        expect(agents.find("hansolo-reviewer").may).to eq(["gh pr comment"])
+        expect(agents.find("staff-reviewer").may).to eq(["gh pr comment"])
         expect(OpenLanes::Execution::Executor::FORBIDDEN_COMMANDS).to include("gh pr edit")
       end
     end
 
-    it "tells hansolo to label through openlanes review" do
-      expect(agents.find("hansolo-reviewer").prompt).to include("openlanes review <n> review-in-progress")
+    it "tells staff-reviewer to label through openlanes review" do
+      expect(agents.find("staff-reviewer").prompt).to include("openlanes review <n> review-in-progress")
     end
 
-    it "gives chewie 🧪 Verifying, the verification phase, and nothing that leaves the machine" do
-      chewie = agents.find("chewie-verifier")
+    it "gives verifier 🧪 Verifying, the verification phase, and nothing that leaves the machine" do
+      verifier = agents.find("verifier")
 
       aggregate_failures do
-        expect(chewie).to have_attributes(handles: [:verifying],
+        expect(verifier).to have_attributes(handles: [:verifying],
           advances_to: :approved,
           phase: "verification",
           adapter: "claude",
           may: [],
           ledger: %w[pull-requests.md])
-        expect(chewie.allowed_tools).to match_array(%w[Read Grep Glob Bash Write])
-        expect(agents.for_status(OpenLanes::Plans::STATUS_BY_KEY.fetch(:verifying)).map(&:name)).to eq(%w[chewie-verifier])
+        expect(verifier.allowed_tools).to match_array(%w[Read Grep Glob Bash Write])
+        expect(agents.for_status(OpenLanes::Plans::STATUS_BY_KEY.fetch(:verifying)).map(&:name)).to eq(%w[verifier])
       end
     end
 
-    it "tells chewie both verdict words, the report it writes, and where its screenshots go" do
-      expect(agents.find("chewie-verifier").prompt)
+    it "tells verifier both verdict words, the report it writes, and where its screenshots go" do
+      expect(agents.find("verifier").prompt)
         .to include("(verified)", "(rejected)", "## Failing step", "step-NN.png", "final.png", "report.md", "app.md")
     end
 
-    it "tells hansolo an approval goes on to chewie" do
-      expect(agents.find("hansolo-reviewer").prompt).to include("🧪 Verifying", "chewie-verifier")
+    it "tells staff-reviewer an approval goes on to verifier" do
+      expect(agents.find("staff-reviewer").prompt).to include("🧪 Verifying", "verifier")
     end
 
-    it "tells yoda to leave a blank plan.md" do
-      expect(agents.find("yoda-writer").prompt).to include("plan.md")
+    it "tells spec-writer to leave a blank plan.md" do
+      expect(agents.find("spec-writer").prompt).to include("plan.md")
     end
   end
 
@@ -326,40 +326,40 @@ RSpec.describe OpenLanes::Agents::Registry do
     end
 
     it "counts the partner who finished and holds the plan as part of its team" do
-      expect(names(agents.team_for(status(:building_ui)))).to contain_exactly("luke-backend", "rey-frontend")
-      expect(names(agents.team_for(status(:building)))).to contain_exactly("luke-backend", "r2d2-mechanic", "rey-frontend")
-      expect(names(agents.team_for(status(:new)))).to eq(%w[leah-researcher])
+      expect(names(agents.team_for(status(:building_ui)))).to contain_exactly("backend-coder", "frontend-coder")
+      expect(names(agents.team_for(status(:building)))).to contain_exactly("backend-coder", "chores-coder", "frontend-coder")
+      expect(names(agents.team_for(status(:new)))).to eq(%w[researcher])
     end
   end
 
   # Invoked only by the harness for a stopped rebase (D10), never routed to
-  # a plan state, so `handles` is empty, as c3po-operator's is.
-  describe "bb8-resolver, as the repository defines it" do
+  # a plan state, so `handles` is empty, as copilot's is.
+  describe "rebaser, as the repository defines it" do
     let(:shipped) { described_class.new }
-    let(:bb8) { shipped.find("bb8-resolver") }
+    let(:rebaser) { shipped.find("rebaser") }
 
     it "handles no plan state and is never offered one" do
       offered = OpenLanes::Plans::STATUSES.flat_map { |status| shipped.for_status(status).map(&:name) }
 
       aggregate_failures do
-        expect(bb8).to have_attributes(handles: [], phase: "rebase", model: "sonnet", effort: "high")
-        expect(offered).not_to include("bb8-resolver")
+        expect(rebaser).to have_attributes(handles: [], phase: "rebase", model: "sonnet", effort: "high")
+        expect(offered).not_to include("rebaser")
       end
     end
 
     it "is withheld git rebase and git commit like every agent, and granted nothing" do
-      expect(bb8.may).to eq([])
+      expect(rebaser.may).to eq([])
     end
   end
 
   # M7: the arbitrator reads and answers; the engine records and acts.
-  describe "obi-wan-kenobi-arbitrator, as the repository defines it" do
+  describe "arbitrator, as the repository defines it" do
     let(:shipped) { described_class.new }
-    let(:obi) { shipped.find("obi-wan-kenobi-arbitrator") }
+    let(:obi) { shipped.find("arbitrator") }
 
     it "is reached by the builders' appeals and disputes" do
-      expect(%w[luke-backend rey-frontend].map { shipped.find(it).prompt })
-        .to all(include("--note \"appeal: F<n> because <reason>\"", "--to obi-wan-kenobi-arbitrator", "dispute:"))
+      expect(%w[backend-coder frontend-coder].map { shipped.find(it).prompt })
+        .to all(include("--note \"appeal: F<n> because <reason>\"", "--to arbitrator", "dispute:"))
     end
 
     it "is read-only and is never offered a plan state" do
@@ -369,7 +369,7 @@ RSpec.describe OpenLanes::Agents::Registry do
         expect(obi).to have_attributes(handles: [], advances_to: nil, phase: "arbitration", model: "opus", may: [])
         expect(obi.allowed_tools).to eq(["Read", "Grep", "Glob", "Bash(gh pr view:*)", "Bash(gh pr diff:*)",
                                          "Bash(openlanes state show:*)", "Bash(openlanes mail read:*)"])
-        expect(offered).not_to include("obi-wan-kenobi-arbitrator")
+        expect(offered).not_to include("arbitrator")
       end
     end
   end

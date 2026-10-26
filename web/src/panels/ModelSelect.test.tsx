@@ -5,12 +5,12 @@ import { ModelSelect } from "./ModelSelect";
 import { carOf, planAt, recorder, renderPanel, snapshot } from "./testing";
 
 const plan = planAt("005.00");
-const car = carOf(plan, "hansolo-reviewer"); // on Sonnet 5.5
+const car = carOf(plan, "staff-reviewer"); // on Sonnet 5.5
 
 describe("ModelSelect on a car", () => {
   it("names itself and passes axe", async () => {
     const { container } = render(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={recorder().onCommand} />);
-    expect(screen.getByRole("combobox", { name: "Model for hansolo-reviewer" })).toHaveTextContent("Sonnet 5.5");
+    expect(screen.getByRole("combobox", { name: "Model for staff-reviewer" })).toHaveTextContent("Sonnet 5.5");
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -21,8 +21,8 @@ describe("ModelSelect on a car", () => {
     renderPanel(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={onCommand} onOutcome={onOutcome} />);
     await user.click(screen.getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
-    await waitFor(() => expect(sent).toEqual([{ kind: "set_model", plan: "005.00", agent: "hansolo-reviewer", payload: { model: "claude-opus-5-5" } }]));
-    const trigger = screen.getByRole("combobox", { name: "Model for hansolo-reviewer, Opus 5.5 from its next round" });
+    await waitFor(() => expect(sent).toEqual([{ kind: "set_model", plan: "005.00", agent: "staff-reviewer", payload: { model: "claude-opus-5-5" } }]));
+    const trigger = screen.getByRole("combobox", { name: "Model for staff-reviewer, Opus 5.5 from its next round" });
     expect(trigger).toHaveClass("is-changed");
     expect(onOutcome).toHaveBeenCalledWith("Upgrade to Opus 5.5 queued; it applies from the next round.", false);
     expect(screen.getByTestId("announcer")).toHaveTextContent("Upgrade to Opus 5.5 queued");

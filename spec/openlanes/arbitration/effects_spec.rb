@@ -34,7 +34,7 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
       reason:)
   end
 
-  def apply(kind, outcome, **) = effects.apply(plan:, ruling: ruling(kind, outcome, **), trigger: kind, round: 2, appellant: "luke-backend")
+  def apply(kind, outcome, **) = effects.apply(plan:, ruling: ruling(kind, outcome, **), trigger: kind, round: 2, appellant: "backend-coder")
 
   describe "cap / go" do
     it "sets ready-to-merge, sends the plan to 🟢, records one ruling and posts one comment" do
@@ -79,15 +79,15 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
   describe "appeal" do
     it "upheld: changes nothing but mails the appellant" do
       apply("appeal", "upheld")
-      expect([plan.status.key, labels, mail_to]).to eq([:rejected, %w[review-rejected], %w[luke-backend]])
+      expect([plan.status.key, labels, mail_to]).to eq([:rejected, %w[review-rejected], %w[backend-coder]])
     end
 
-    it "struck with nothing open: ready-to-merge, mails the appellant and hansolo, and names the struck finding" do
+    it "struck with nothing open: ready-to-merge, mails the appellant and staff-reviewer, and names the struck finding" do
       apply("appeal", "struck", struck: %w[F2])
 
       aggregate_failures do
         expect(labels).to include("ready-to-merge")
-        expect(mail_to).to eq(%w[luke-backend hansolo-reviewer])
+        expect(mail_to).to eq(%w[backend-coder staff-reviewer])
         expect(comments.last).to include("Struck: F2.")
         expect(plan.status.key).to eq(:rejected)
       end
@@ -101,9 +101,9 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
 
   describe "dispute" do
     it "mails both builders and moves nothing" do
-      apply("dispute", "rey-frontend")
+      apply("dispute", "frontend-coder")
       expect([plan.status.key, labels, mail_to, rulings.last["winner"]])
-        .to eq([:rejected, %w[review-rejected], %w[luke-backend rey-frontend], "rey-frontend"])
+        .to eq([:rejected, %w[review-rejected], %w[backend-coder frontend-coder], "frontend-coder"])
     end
   end
 
@@ -129,7 +129,7 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
         expect(labels).to include("review-rejected")
         expect(plan.status.key).to eq(:rejected)
         expect(OpenLanes::Arbitration.counter(agents:).call(plan)).to eq(before + 1)
-        expect(mail_to).to eq(%w[luke-backend rey-frontend])
+        expect(mail_to).to eq(%w[backend-coder frontend-coder])
       end
     end
 
@@ -169,8 +169,8 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
     end
   end
 
-  it "records the round of hansolo's latest review beside the struck ids" do
-    OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "hansolo-reviewer", round: 3, status: "Completed", note: "rejected 1/2")
+  it "records the round of staff-reviewer's latest review beside the struck ids" do
+    OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "staff-reviewer", round: 3, status: "Completed", note: "rejected 1/2")
     apply("appeal", "upheld")
     expect(rulings.last["review"]).to eq(3)
   end

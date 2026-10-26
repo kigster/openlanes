@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Execution::Executor::Handle do
   subject(:handle) { described_class.new }
 
   let(:dir) { Dir.mktmpdir }
-  let(:control) { OpenLanes::Execution::Control.register(dir, "001.00-luke") }
+  let(:control) { OpenLanes::Execution::Control.register(dir, "001.00-backend-coder") }
 
   after do
     OpenLanes::Execution::Control.reset!

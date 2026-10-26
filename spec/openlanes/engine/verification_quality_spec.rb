@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Engine::Verification do
     end
   end
 
-  # Plan 035: under mvp an approved pull request skips chewie.
+  # Plan 035: under mvp an approved pull request skips verifier.
   describe ".skips_verification?" do
     it "is true for review-approved under mvp only" do
       aggregate_failures do

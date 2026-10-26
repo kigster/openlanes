@@ -281,12 +281,12 @@ RSpec.describe OpenLanes::UI do
       described_class.log("editing spec.md",
         plan:    "003.00",
         status:  "⭐️ Planned",
-        agent:   "yoda-writer",
+        agent:   "spec-writer",
         seconds: 41.96,
         round:   "01")
 
       expect(File.read(@log_path)).to match(
-        /\A\S+ \S+ I \[#{Process.pid}:[^\]]+\] engine -- editing spec\.md -- \{plan: "003\.00", status: "⭐️ Planned", agent: "yoda-writer", seconds: 42\.0, round: "01"\}\n\z/
+        /\A\S+ \S+ I \[#{Process.pid}:[^\]]+\] engine -- editing spec\.md -- \{plan: "003\.00", status: "⭐️ Planned", agent: "spec-writer", seconds: 42\.0, round: "01"\}\n\z/
       )
     end
 
@@ -412,11 +412,11 @@ RSpec.describe OpenLanes::UI do
             "round 1",
             jobs:   1,
             label:  ->(_) { "000.00" },
-            fields: ->(_) { { plan: "000.00", agent: "yoda-writer" } }) { |_| :done }
+            fields: ->(_) { { plan: "000.00", agent: "spec-writer" } }) { |_| :done }
 
           log = File.read(described_class.log_path)
           aggregate_failures do
-            expect(log).to match(/-- started -- \{plan: "000\.00", agent: "yoda-writer", seconds: [\d.]+\}$/)
+            expect(log).to match(/-- started -- \{plan: "000\.00", agent: "spec-writer", seconds: [\d.]+\}$/)
             expect(log).to match(/-- finished after \d+s -- \{plan: "000\.00"/)
           end
         end
@@ -608,7 +608,7 @@ RSpec.describe OpenLanes::UI do
       subject(:run) { -> { described_class.concurrently([:a], "round", jobs: 1) { |_, _| raise "boom" } } }
 
       it "lets the exception propagate" do
-        expect(run).to raise_error("boom")
+        expect { run.call }.to raise_error("boom")
       end
     end
 

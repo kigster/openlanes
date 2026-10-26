@@ -9,7 +9,7 @@
   "updated_at": "2026-10-19T14:59:25-07:00",
   "stages": [
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "planned",
@@ -27,7 +27,7 @@
       "finished_at": "2026-10-18T20:03:54-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -45,7 +45,7 @@
       "finished_at": "2026-10-19T01:58:48-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "building",
@@ -68,7 +68,7 @@
       "moves": 2
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "building",
@@ -86,7 +86,7 @@
       "finished_at": "2026-10-19T02:45:16-07:00"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "building",
@@ -109,7 +109,7 @@
       "moves": 3
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -132,7 +132,7 @@
       "moves": 5
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -155,7 +155,7 @@
       "moves": 6
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -181,102 +181,102 @@
   "signatures": [
     {
       "at": "2026-10-18T20:03:11-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-18T20:03:54-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T01:56:16-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T01:58:48-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T02:07:13-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:14:48-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:43:40-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:45:16-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-19T02:45:54-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:57:00-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-19T02:57:46-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T02:59:16-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-19T02:59:34-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T03:06:52-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-19T03:07:19-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-19T03:09:12-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 2/2"
@@ -288,7 +288,7 @@
       "number": 1,
       "at": "2026-10-19T01:58:48-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     },
@@ -297,14 +297,14 @@
       "number": 2,
       "at": "2026-10-19T02:45:16-07:00",
       "from": "openlanes",
-      "to": "luke-backend",
+      "to": "backend-coder",
       "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
       "read": "no"
     }
   ],
   "moves": 9,
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "agent",
       "at": "2026-10-19T02:14:47-07:00",
       "round": 1,
@@ -326,15 +326,15 @@
         "lib/openlanes/engine/dispatcher.rb",
         "lib/openlanes/engine/run_workflow.rb",
         "lib/openlanes/cli/init/init.rb",
-        "agents/luke-backend.md",
-        "agents/rey-frontend.md"
+        "agents/backend-coder.md",
+        "agents/frontend-coder.md"
       ]
     }
   },
   "extensions": [
     {
       "number": 1,
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "state": "building",
       "round": 1,
       "limit": "rounds",
@@ -347,7 +347,7 @@
     },
     {
       "number": 2,
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "state": "in_review",
       "round": 1,
       "limit": "time",
@@ -357,7 +357,7 @@
     }
   ],
   "memory": {
-    "luke-backend": {
+    "backend-coder": {
       "rounds": {
         "1": {
           "round": 1,
@@ -405,17 +405,17 @@
           "entries": [
             {
               "kind": "done",
-              "text": "Review round closed: rspec 3921 examples, 0 failures, 9 pending; rubocop 522 files, no offenses; answers in pull-requests.md; signed Completed, next hansolo-reviewer"
+              "text": "Review round closed: rspec 3921 examples, 0 failures, 9 pending; rubocop 522 files, no offenses; answers in pull-requests.md; signed Completed, next staff-reviewer"
             },
             {
               "kind": "todo",
-              "text": "A person needs to number and create the follow-up plan 'Quality drives depth and models' (M5 depth, models, leah rows)"
+              "text": "A person needs to number and create the follow-up plan 'Quality drives depth and models' (M5 depth, models, researcher rows)"
             }
           ]
         }
       }
     },
-    "hansolo-reviewer": {
+    "staff-reviewer": {
       "rounds": {
         "1": {
           "round": 1,
@@ -423,11 +423,11 @@
           "entries": [
             {
               "kind": "done",
-              "text": "Round 1 review of PR 93: rejected 1/2. Findings posted as a PR comment: M5 column only partly driven (depth, models, leah unwired; Config#quality dead); the high send-back is uncounted so it can loop; the Dispatcher#approved edit is untested for scope."
+              "text": "Round 1 review of PR 93: rejected 1/2. Findings posted as a PR comment: M5 column only partly driven (depth, models, researcher unwired; Config#quality dead); the high send-back is uncounted so it can loop; the Dispatcher#approved edit is untested for scope."
             },
             {
               "kind": "todo",
-              "text": "Round 2: check that luke wires the rest of M5's column or narrows the spec, and that the high send-back counts against max_rejections."
+              "text": "Round 2: check that backend-coder wires the rest of M5's column or narrows the spec, and that the high send-back counts against max_rejections."
             }
           ]
         },
@@ -441,7 +441,7 @@
             },
             {
               "kind": "todo",
-              "text": "Next round: luke makes max_rejections follow Config.current, with a spec that answers Q1 mvp and then rejects. If this PR is reviewed again with findings, the verdict is slop."
+              "text": "Next round: backend-coder makes max_rejections follow Config.current, with a spec that answers Q1 mvp and then rejects. If this PR is reviewed again with findings, the verdict is slop."
             }
           ]
         }

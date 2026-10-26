@@ -11,14 +11,14 @@ module OpenLanes
     #
     # `headings` maps a struck id to the rest of its entry, when the
     # arbitrator wrote one (`F2 lib/a.rb:10 asks for an out-of-scope test`):
-    # hansolo numbers its findings afresh in every review, so an id alone
+    # staff-reviewer numbers its findings afresh in every review, so an id alone
     # names a different finding a round later.
     class Ruling < Data.define(:kind, :pr, :outcome, :struck, :critical, :winner, :reason, :headings)
       # The outcomes each kind may give.
       OUTCOMES = {
         "cap"          => %w[go no_go],
         "appeal"       => %w[upheld struck],
-        "dispute"      => %w[luke-backend rey-frontend],
+        "dispute"      => Agents::Names::BUILDERS,
         "passed_check" => %w[fair too_harsh too_lenient]
       }.freeze
 

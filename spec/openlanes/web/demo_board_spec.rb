@@ -16,7 +16,7 @@ RSpec.describe OpenLanes::Web::DemoBoard do
   def car(key) = me["plans"].flat_map { it["cars"] }.find { it["key"] == key }
 
   describe "#advance" do
-    let(:running) { car("005.00/hansolo-reviewer") }
+    let(:running) { car("005.00/staff-reviewer") }
     let!(:before_up) { running["up"] }
 
     before { 4.times { board.advance(Time.utc(2026, 10, 13, 9, 0, it)) } }
@@ -26,7 +26,7 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
 
     it "leaves a stuck car's alone" do
-      expect(car("001.00/luke-backend")["up"]).to eq(374_000)
+      expect(car("001.00/backend-coder")["up"]).to eq(374_000)
     end
 
     it "turns the running car's message" do
@@ -75,7 +75,7 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
 
     it "unblocks the plan and its stuck car" do
-      expect([plan.dig("status", "key"), car("001.00/luke-backend")["state"]]).to eq(%w[building running])
+      expect([plan.dig("status", "key"), car("001.00/backend-coder")["state"]]).to eq(%w[building running])
     end
 
     context "when the plan is not blocked" do
@@ -121,15 +121,15 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
 
     it "clears the interruption" do
-      plan["interrupted"] = { "agent" => "luke-backend", "at" => "2026-10-13T09:00:00Z", "note" => "n" }
+      plan["interrupted"] = { "agent" => "backend-coder", "at" => "2026-10-13T09:00:00Z", "note" => "n" }
       expect([board.apply(command("resume", plan: ordinal)), plan["interrupted"]])
-        .to eq(["luke-backend resumes on 001.00 at its next turn", nil])
+        .to eq(["backend-coder resumes on 001.00 at its next turn", nil])
     end
   end
 
   describe "discard" do
     before do
-      plan["interrupted"] = { "agent" => "luke-backend", "at" => "2026-10-13T09:00:00Z", "note" => "n" }
+      plan["interrupted"] = { "agent" => "backend-coder", "at" => "2026-10-13T09:00:00Z", "note" => "n" }
       board.apply(command("discard", plan: ordinal))
     end
 
@@ -140,8 +140,8 @@ RSpec.describe OpenLanes::Web::DemoBoard do
 
   describe "message" do
     it "reaches the agent named" do
-      board.apply(command("message", plan: ordinal, agent: "rey-frontend", text: "use the grid"))
-      expect(car("001.00/rey-frontend")["history"].first).to eq("human: use the grid")
+      board.apply(command("message", plan: ordinal, agent: "frontend-coder", text: "use the grid"))
+      expect(car("001.00/frontend-coder")["history"].first).to eq("human: use the grid")
     end
 
     it "reaches every agent on the plan when none is named" do
@@ -157,23 +157,23 @@ RSpec.describe OpenLanes::Web::DemoBoard do
 
   describe "the car signals" do
     it "holds" do
-      board.apply(command("hold", plan: ordinal, agent: "rey-frontend"))
-      expect(car("001.00/rey-frontend")["held"]).to be(true)
+      board.apply(command("hold", plan: ordinal, agent: "frontend-coder"))
+      expect(car("001.00/frontend-coder")["held"]).to be(true)
     end
 
     it "wraps up" do
-      board.apply(command("wrap_up", plan: ordinal, agent: "rey-frontend"))
-      expect(car("001.00/rey-frontend").values_at("phase", "held")).to eq(["wrap_up", false])
+      board.apply(command("wrap_up", plan: ordinal, agent: "frontend-coder"))
+      expect(car("001.00/frontend-coder").values_at("phase", "held")).to eq(["wrap_up", false])
     end
 
     it "stops" do
-      board.apply(command("stop", plan: ordinal, agent: "rey-frontend"))
-      expect(car("001.00/rey-frontend").values_at("phase", "state")).to eq(%w[stopped done])
+      board.apply(command("stop", plan: ordinal, agent: "frontend-coder"))
+      expect(car("001.00/frontend-coder").values_at("phase", "state")).to eq(%w[stopped done])
     end
 
     it "compacts" do
-      board.apply(command("compact", plan: ordinal, agent: "rey-frontend"))
-      expect(car("001.00/rey-frontend")["phase"]).to eq("calm")
+      board.apply(command("compact", plan: ordinal, agent: "frontend-coder"))
+      expect(car("001.00/frontend-coder")["phase"]).to eq("calm")
     end
   end
 
@@ -185,49 +185,49 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
 
     it "says one agent in the singular" do
-      car("001.00/luke-backend")["state"] = "running"
+      car("001.00/backend-coder")["state"] = "running"
       expect(board.apply(command("stop_all"))).to eq("stopping 1 agent on dana@studio-mini")
     end
   end
 
   describe "set_model and switch_model" do
     it "sets the next round's model by label" do
-      expect(board.apply(command("set_model", plan: ordinal, agent: "rey-frontend", model: "Haiku 5.5")))
-        .to eq("rey-frontend runs on claude-haiku-5-5 from its next round")
+      expect(board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "Haiku 5.5")))
+        .to eq("frontend-coder runs on claude-haiku-5-5 from its next round")
     end
 
     context "when a model is queued for the next round" do
-      before { board.apply(command("set_model", plan: ordinal, agent: "rey-frontend", model: "Haiku 5.5")) }
+      before { board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "Haiku 5.5")) }
 
       it "leaves the running model alone and queues the new one as next_model" do
-        expect(car("001.00/rey-frontend").slice("model", "next_model"))
+        expect(car("001.00/frontend-coder").slice("model", "next_model"))
           .to eq("model" => "claude-sonnet-5-5", "next_model" => "claude-haiku-5-5")
       end
 
       it "queues nothing when the model asked for is the one already running" do
-        board.apply(command("set_model", plan: ordinal, agent: "rey-frontend", model: "claude-sonnet-5-5"))
-        expect(car("001.00/rey-frontend")["next_model"]).to be_nil
+        board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "claude-sonnet-5-5"))
+        expect(car("001.00/frontend-coder")["next_model"]).to be_nil
       end
 
       it "clears the queue when the agent is switched now" do
-        board.apply(command("switch_model", plan: ordinal, agent: "rey-frontend", model: "claude-opus-5-5"))
-        expect(car("001.00/rey-frontend").slice("model", "next_model"))
+        board.apply(command("switch_model", plan: ordinal, agent: "frontend-coder", model: "claude-opus-5-5"))
+        expect(car("001.00/frontend-coder").slice("model", "next_model"))
           .to eq("model" => "claude-opus-5-5", "next_model" => nil)
       end
     end
 
     it "switches a running agent now" do
-      board.apply(command("switch_model", plan: ordinal, agent: "rey-frontend", model: "claude-opus-5-5"))
-      expect(car("001.00/rey-frontend")["model"]).to eq("claude-opus-5-5")
+      board.apply(command("switch_model", plan: ordinal, agent: "frontend-coder", model: "claude-opus-5-5"))
+      expect(car("001.00/frontend-coder")["model"]).to eq("claude-opus-5-5")
     end
 
     it "refuses to switch an agent that is not running" do
-      expect { board.apply(command("switch_model", plan: ordinal, agent: "luke-backend", model: "claude-opus-5-5")) }
+      expect { board.apply(command("switch_model", plan: ordinal, agent: "backend-coder", model: "claude-opus-5-5")) }
         .to raise_error(described_class::Refusal, /not running; use set_model/)
     end
 
     it "refuses a model that is not offered" do
-      expect { board.apply(command("set_model", plan: ordinal, agent: "rey-frontend", model: "gpt-9")) }
+      expect { board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "gpt-9")) }
         .to raise_error(described_class::Refusal, "claude offers no model gpt-9")
     end
   end
@@ -242,7 +242,7 @@ RSpec.describe OpenLanes::Web::DemoBoard do
 
     it "refuses to restart a plan that still has an agent" do
       expect { board.apply(command("restart_plan", plan: ordinal)) }
-        .to raise_error(described_class::Refusal, "001.00 already has an agent: rey-frontend")
+        .to raise_error(described_class::Refusal, "001.00 already has an agent: frontend-coder")
     end
 
     it "restarts a stopped plan's cars and leaves its stuck one waiting" do

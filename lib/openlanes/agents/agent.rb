@@ -99,7 +99,7 @@ module OpenLanes
       def serves?(value) = starts.empty? || starts.include?(value.to_sym)
 
       # The word after the last hyphen: `researcher`, `backend`, and `planner`
-      # for `luthen-rael-planner`, whose name has two words before its role.
+      # for `planner`, whose name has two words before its role.
       # What the screen's agent column shows, the name being too long for it.
       #
       # @return [String]

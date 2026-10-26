@@ -2,7 +2,7 @@
 
 RSpec.describe OpenLanes::Events::Identity do
   let(:inputs) do
-    { node: "n1", checkout: "c1", plan: "020.01", round: 1, agent: "luke-backend",
+    { node: "n1", checkout: "c1", plan: "020.01", round: 1, agent: "backend-coder",
       invocation_start: Time.utc(2026, 10, 16, 12), kind: "agent_started", seq: 0 }
   end
 

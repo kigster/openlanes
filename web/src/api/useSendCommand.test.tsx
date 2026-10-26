@@ -8,7 +8,7 @@ import { resetSession } from "./client";
 import type { Command } from "./types";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
-const input: Omit<Command, "id"> = { kind: "hold", plan: "001.00", agent: "luke-backend", payload: {} };
+const input: Omit<Command, "id"> = { kind: "hold", plan: "001.00", agent: "backend-coder", payload: {} };
 
 let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {

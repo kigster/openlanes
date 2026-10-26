@@ -57,7 +57,7 @@ RSpec.describe "Plans another machine holds", :tree do
 
     before do
       building("003.00", "theirs")
-      OpenLanes::Plans::PlanState.for(path_of("003.00")).stage!(agent: "luke-backend",
+      OpenLanes::Plans::PlanState.for(path_of("003.00")).stage!(agent: "backend-coder",
         round: 1,
         status: "Started",
         run: { pid: 999_999_999, host: Socket.gethostname })

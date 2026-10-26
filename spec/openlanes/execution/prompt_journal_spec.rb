@@ -5,7 +5,7 @@
 RSpec.describe OpenLanes::Execution::Prompt, :tree do
   subject(:text) { described_class.new(agent:, subject: plan, root: File.dirname(plans_root), profile:).to_s }
 
-  let(:agent) { OpenLanes::Agents.find("luke-backend") }
+  let(:agent) { OpenLanes::Agents.find("backend-coder") }
   let(:profile) { OpenLanes::Agents::Profile.resolve(agent) }
   let(:plan) do
     plans { |t| t.plan "001.00", :building, "task", files: { "spec.md" => spec_body, "plan.md" => "## Task\n" } }
@@ -34,13 +34,13 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
 
   context "when earlier rounds left a journal" do
     before do
-      state.journal!(agent: "luke-backend",
+      state.journal!(agent: "backend-coder",
         entries: [entry.new(kind: "decision", text: "Integer cents"),
                   entry.new(kind: "done", text: "U1")],
         state: :building)
-      state.journal!(agent: "luke-backend", entries: [entry.new(kind: "override", text: "BigDecimal", overrides: 1)])
-      state.answer!(agent: "luke-backend", ref: "B1", question: "B1 Which DB?", answer: "Postgres")
-      state.journal!(agent: "rey-frontend", entries: [entry.new(kind: "note", text: "not luke's")])
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "override", text: "BigDecimal", overrides: 1)])
+      state.answer!(agent: "backend-coder", ref: "B1", question: "B1 Which DB?", answer: "Postgres")
+      state.journal!(agent: "frontend-coder", entries: [entry.new(kind: "note", text: "not backend-coder's")])
     end
 
     it "lists every round's entries, numbered across rounds" do
@@ -49,21 +49,21 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     end
 
     it "leaves out another agent's journal" do
-      expect(text).not_to include("not luke's")
+      expect(text).not_to include("not backend-coder's")
     end
   end
 
   context "when the journal is longer than the prompt carries" do
     before do
       entries = (1..(described_class::JOURNAL_LIMIT + 2)).map { entry.new(kind: "note", text: "note #{it}") }
-      state.journal!(agent: "luke-backend", entries:)
+      state.journal!(agent: "backend-coder", entries:)
     end
 
     it "keeps the newest, and says how to read the rest" do
       aggregate_failures do
         expect(text).not_to include("[note] note 2\n")
         expect(text).to include("[note] note 3\n", "[note] note #{described_class::JOURNAL_LIMIT + 2}")
-        expect(text).to include("2 earlier entries are not shown", "jq '.memory.\"luke-backend\"'")
+        expect(text).to include("2 earlier entries are not shown", "jq '.memory.\"backend-coder\"'")
       end
     end
   end

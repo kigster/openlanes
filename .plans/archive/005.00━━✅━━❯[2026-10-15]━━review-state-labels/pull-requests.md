@@ -19,13 +19,13 @@ What the end-to-end spec shows, with real git, a real `.plans` tree, the real `e
 - The publisher opens the PR with `ready-for-review` and records it in `pull-requests.md`.
 - `openlanes review <n> review-in-progress` replaces it; exactly one review label remains.
 - With a failing check, `openlanes review <n> ready-to-merge` exits non-zero saying "CI is red"; `review-rejected` is accepted.
-- One watch poll 15 s later (injected clock) moves that plan to 🔴 with the comment mailed to luke and rey, moves a merged plan to ✅, and reports `waiting on you: PR #42` for one still open.
+- One watch poll 15 s later (injected clock) moves that plan to 🔴 with the comment mailed to backend-coder and frontend-coder, moves a merged plan to ✅, and reports `waiting on you: PR #42` for one still open.
 - No `gh` call carries `--force`.
 - A `plan.md` without `## How to test` makes the publisher refuse, and no PR is opened.
 
 Not verified: any call against real GitHub (forks, tokens without label rights, how `action_required` maps to a bucket). The first live run is the real test (spec, Risks).
 
-## Fix for hansolo's finding 1 (round 1, 2026-10-15)
+## Fix for staff-reviewer's finding 1 (round 1, 2026-10-15)
 
 Cause: CircleCI job 335 (`ci/circleci: test`) ran rspec green, then failed its `Coverage of changed files` step: `coverage-changed: below 95%: lib/openlanes/engine/board.rb` (93.75%). The one line never run was the rescue in `Board::Row.unacked_in` (`board.rb:104`), so this was a real gate failure, not an environment problem.
 

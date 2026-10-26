@@ -8,11 +8,11 @@ depends_on: ["014.00", "030.00"]
 
 ## What we are trying to achieve
 
-With `merge.by: auto`, the engine merges a PR whose verdict passes, which chewie-verifier labelled `ready-to-merge`, whose CI is green on the PR and on `main`, and which merges clean; then it rebases the other open plan branches onto `main`. Decided as R5 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
+With `merge.by: auto`, the engine merges a PR whose verdict passes, which verifier labelled `ready-to-merge`, whose CI is green on the PR and on `main`, and which merges clean; then it rebases the other open plan branches onto `main`. Decided as R5 in `docs/decisions/decisions-on-three-reviewers-and-auto-merge.md`.
 
 ## Why it matters
 
-Merging without a person is the point of the factory (M0); chewie's verification makes it safe.
+Merging without a person is the point of the factory (M0); verifier's verification makes it safe.
 
 ## What already exists
 

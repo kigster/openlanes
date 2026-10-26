@@ -20,7 +20,7 @@ paths:
         "202":
           description: >
             The person's turn, stored. Plain text is answered later by
-            c3po-operator. /stop, /restart and /concurrency are queued on the
+            copilot. /stop, /restart and /concurrency are queued on the
             engine's command stream under the message id; the engine's answer
             arrives as copilot turn "<id>.1" ("done: ..." or "refused: ...").
             Any other slash message is answered at once with turn "<id>.1",

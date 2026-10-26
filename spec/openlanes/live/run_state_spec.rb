@@ -6,27 +6,27 @@ RSpec.describe OpenLanes::Live::RunState do
   it "holds and releases questions and cars, once each" do
     state.hold_question("001.00/B1")
     state.hold_question("001.00/B1")
-    state.hold_car("001.00/luke-backend")
-    state.hold_car("001.00/luke-backend", held: false)
-    expect([state.question_held?("001.00/B1"), state.car_held?("001.00/luke-backend")]).to eq([true, false])
+    state.hold_car("001.00/backend-coder")
+    state.hold_car("001.00/backend-coder", held: false)
+    expect([state.question_held?("001.00/B1"), state.car_held?("001.00/backend-coder")]).to eq([true, false])
   end
 
   it "counts each real change, and no repeat of one" do
     state.hold_question("001.00/B1")
     state.hold_question("001.00/B1")
-    state.choose_model("001.00/luke-backend", "claude-haiku-5-5")
-    state.choose_model("001.00/luke-backend", "claude-haiku-5-5")
-    state.hold_car("001.00/luke-backend", held: false)
+    state.choose_model("001.00/backend-coder", "claude-haiku-5-5")
+    state.choose_model("001.00/backend-coder", "claude-haiku-5-5")
+    state.hold_car("001.00/backend-coder", held: false)
     expect(state.seq).to eq(2)
   end
 
   describe "its written record" do
     subject(:copy) { described_class.new.restore(state.to_h) }
 
-    before { state.hold_car("001.00/rey-frontend") }
+    before { state.hold_car("001.00/frontend-coder") }
 
     it "is taken back whole, sequence number included" do
-      expect([copy.seq, copy.car_held?("001.00/rey-frontend"), copy.models]).to eq([1, true, {}])
+      expect([copy.seq, copy.car_held?("001.00/frontend-coder"), copy.models]).to eq([1, true, {}])
     end
   end
 
@@ -35,15 +35,15 @@ RSpec.describe OpenLanes::Live::RunState do
   end
 
   context "with a model chosen" do
-    before { state.choose_model("001.00/luke-backend", "claude-haiku-5-5") }
+    before { state.choose_model("001.00/backend-coder", "claude-haiku-5-5") }
 
     it "remembers it" do
-      expect(state.model_for("001.00/luke-backend")).to eq("claude-haiku-5-5")
+      expect(state.model_for("001.00/backend-coder")).to eq("claude-haiku-5-5")
     end
 
     it "forgets it when told nil" do
-      state.choose_model("001.00/luke-backend", nil)
-      expect(state.model_for("001.00/luke-backend")).to be_nil
+      state.choose_model("001.00/backend-coder", nil)
+      expect(state.model_for("001.00/backend-coder")).to be_nil
     end
   end
 

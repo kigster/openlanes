@@ -36,7 +36,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
   def run(dry_run: false, with: arbitration)
     runner = OpenLanes::Engine::Runner.new(tree:,
       executor:,
-      agents:      OpenLanes::Agents::Registry.new.only("luke-backend", "rey-frontend"),
+      agents:      OpenLanes::Agents::Registry.new.only("backend-coder", "frontend-coder"),
       isolation:   :shared,
       dry_run:,
       arbitration: with,
@@ -59,8 +59,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
 
   describe "a plan at the cap" do
     before do
-      sign("hansolo-reviewer", "rejected 1/2")
-      sign("chewie-verifier", "rejected: CI is red")
+      sign("staff-reviewer", "rejected 1/2")
+      sign("verifier", "rejected: CI is red")
     end
 
     it "is kept from its builders, ruled on, and a no_go blocks it" do
@@ -68,7 +68,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
 
       aggregate_failures do
         expect(calls).to eq([])
-        expect(asked.map(&:first)).to eq(%w[obi-wan-kenobi-arbitrator])
+        expect(asked.map(&:first)).to eq(%w[arbitrator])
         expect(plan.status.key).to eq(:blocked)
         expect(state.rulings.map { it.values_at("kind", "outcome") }).to eq([%w[cap no_go]])
       end
@@ -83,7 +83,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
         aggregate_failures do
           expect(plan.status.key).to eq(:ready_for_review)
           expect(gh.dig("prs", "7", "labels")).to include("ready-to-merge")
-          expect(calls).not_to include(["luke-backend", :rejected], ["rey-frontend", :rejected])
+          expect(calls).not_to include(["backend-coder", :rejected], ["frontend-coder", :rejected])
         end
       end
     end
@@ -99,7 +99,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
     # Long enough for a builder the loop wrongly started to have been called.
     let(:thinking) { 0.3 }
 
-    before { sign("luke-backend", "appeal: F2 because the spec rules that test out") }
+    before { sign("backend-coder", "appeal: F2 because the spec rules that test out") }
 
     it "keeps the builders off the plan while the arbitrator is asked, then lets them on" do
       run
@@ -107,16 +107,16 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :fake_gh, :tree do
       aggregate_failures do
         expect(asked.map(&:last)).to eq([[]])
         expect(state.rulings.map { it.values_at("kind", "outcome") }).to eq([%w[appeal upheld]])
-        expect(calls.map(&:first)).to include("luke-backend")
+        expect(calls.map(&:first)).to include("backend-coder")
       end
     end
   end
 
   it "leaves a run without an arbitrator alone" do
-    sign("hansolo-reviewer", "rejected 1/2")
-    sign("chewie-verifier", "rejected: CI is red")
+    sign("staff-reviewer", "rejected 1/2")
+    sign("verifier", "rejected: CI is red")
     run(with: nil)
-    expect(calls.map(&:first)).to include("luke-backend")
+    expect(calls.map(&:first)).to include("backend-coder")
   end
 
   describe OpenLanes::Engine::RunWorkflow do

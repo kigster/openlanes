@@ -85,7 +85,7 @@ module OpenLanes
       #
       # Waiting, not folded. An `## A<n>` heading is not the same as a settled
       # question: one may say in its own body that it is a draft pending a
-      # conversation. `lando-broker` makes that call; this only counts headings.
+      # conversation. `unblocker` makes that call; this only counts headings.
       #
       # @return [Array<Integer>]
       def block_answers = OpenLanes::Plans.block_numbers(read("blocked.md"), ANSWER_BLOCK)

@@ -71,14 +71,14 @@ RSpec.describe OpenLanes::Engine::PlanLocks do
     after { FileUtils.rm_rf(renamed) }
 
     it "reserves the folder, keeps it while a pair works, and gives it back with the last" do
-      locks.reserve("001.00", dir, "openlanes: luke-backend on 001.00")
+      locks.reserve("001.00", dir, "openlanes: backend-coder on 001.00")
       locks.hold("001.00", dir)
-      locks.reserve("001.00", dir, "openlanes: rey-frontend on 001.00")
+      locks.reserve("001.00", dir, "openlanes: frontend-coder on 001.00")
       locks.hold("001.00", dir)
       locks.release("001.00")
 
       aggregate_failures do
-        expect(agent_locks).to have_received(:acquire).with(dir, "openlanes: luke-backend on 001.00").once
+        expect(agent_locks).to have_received(:acquire).with(dir, "openlanes: backend-coder on 001.00").once
         expect(agent_locks).not_to have_received(:release)
       end
 

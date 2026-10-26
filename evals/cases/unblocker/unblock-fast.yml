@@ -1,0 +1,44 @@
+id: unblock-fast
+agent: unblocker
+depth: fast
+description: >
+  One answered product question. unblocker must fold the answer into spec.md as
+  settled fact with a provenance line, delete blocked.md because nothing is
+  left open, and not create plan.md. The folder then resyncs out of 🅱️.
+fixture:
+  state: product_blocked
+  slug: cart-retention
+  files:
+    spec.md: |
+      # Cart Retention
+
+      Delete abandoned carts automatically.
+
+      ## Research
+
+      1. Carts are never deleted today (`lib/cart_store.rb:9`).
+
+      ## Constraints
+
+      - Deletion runs nightly.
+    blocked.md: |
+      # Blocked
+
+      ## B1 Retention period
+
+      How long is an abandoned cart kept before it is deleted?
+
+      ## A1
+
+      Ninety days, counted from the last change to the cart. Decided by the product owner on 2026-09-01.
+expect:
+  state: researched
+  signed: true
+  files_absent: [blocked.md, plan.md]
+  contains:
+    spec.md: ["/[Nn]inety days|90 days/", "Decided "]
+  depth:
+    fast:
+      count: { file: spec.md, pattern: "Decided ", min: 1, max: 1 }
+      max_seconds: 120
+      max_tokens: 40000

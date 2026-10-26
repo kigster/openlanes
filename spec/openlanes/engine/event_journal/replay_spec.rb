@@ -4,8 +4,8 @@
 RSpec.describe OpenLanes::Engine::EventJournal::Replay do
   let(:root) { Dir.mktmpdir("openlanes-replay-root") }
   let(:journal) { OpenLanes::Engine::EventJournal.new(root:, run_id: "r1", node: "n") }
-  let(:a) { { plan: "039.00", agent: "luke-backend" } }
-  let(:b) { { plan: "040.00", agent: "rey-frontend" } }
+  let(:a) { { plan: "039.00", agent: "backend-coder" } }
+  let(:b) { { plan: "040.00", agent: "frontend-coder" } }
 
   before do
     journal.append(:run_started, jobs: 2)
@@ -23,7 +23,7 @@ RSpec.describe OpenLanes::Engine::EventJournal::Replay do
   it "rebuilds the agents still running, with pid, session, output file and offset" do
     picture = described_class.call(journal.path)
     expect(picture.agents).to eq([described_class::Agent.new(plan: "039.00",
-      agent: "luke-backend",
+      agent: "backend-coder",
       round: 1,
       pid: 11,
       started_at: nil,

@@ -115,9 +115,9 @@ The swim lanes is the core of the "what's going on" feature of OpenLanes. Each r
 
 Depending on how you setup your project with `lanes init` command, the `new` and `researhed` stages may or may  not be part of the flow.  OpenLanes offers three levels of feature investigation:
 
-1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, luthen-rael. luthen-rael's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (Luke) and a frontend-engineer (Rey). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "hansolo". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "obi-wan-kenobi", makes a final call if this PR is good to go.
-2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes luthen-rael → luke (+ rey) → hansolo, for a spec you already trust.
-3. Quick — is a short mechanical tasks executed by a faster/simpler `r2d2-mechanic` → `hansolo`.
+1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, planner. planner's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (backend-coder) and a frontend-engineer (frontend-coder). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "staff-reviewer". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "arbitrator", makes a final call if this PR is good to go.
+2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes planner → backend-coder (+ frontend-coder) → staff-reviewer, for a spec you already trust.
+3. Quick — is a short mechanical tasks executed by a faster/simpler `chores-coder` → `staff-reviewer`.
 
 While the project select the default, each plan can override this on a case by case basis.
 
@@ -129,7 +129,7 @@ This is where you can communicate with the agents if they get stuck. You can als
 
 **OpenLanes®** is an open source software factory written in Ruby. Its agents run on Claude Code by default, through `claude -p`, which skips loading your own configuration, skills and plugins; `codex` and `pi` can stand in per phase.
 
-For each feature it creates a folder under `.plans`, and a series of specialized AI agents turn it into a finished feature. The harness opens the pull request, hansolo-reviewer reviews it, and chewie-verifier runs the app through the plan's How to test before you merge.
+For each feature it creates a folder under `.plans`, and a series of specialized AI agents turn it into a finished feature. The harness opens the pull request, staff-reviewer reviews it, and verifier runs the app through the plan's How to test before you merge.
 
 The state diagram looks something like this:
 
@@ -143,20 +143,20 @@ config:
   look: handDrawn
 ---
 flowchart TB
-  B[You: brief in spec.md<br/>⚪ New] --> L[leah-researcher<br/>🔎 research]
-  L --> Y[yoda-writer<br/>📋 full spec]
-  Y --> P[luthen-rael-planner<br/>⭐ plan.md]
-  P --> BE[luke-backend 🟡<br/>+ rey-frontend 🎨<br/>build]
-  Q[You: --starts building] --> R2[r2d2-mechanic<br/>🟡 one mechanical task]
-  BE & R2 -->|the harness pushes<br/>and opens the PR| H[hansolo-reviewer<br/>🟢 👀 review]
+  B[You: brief in spec.md<br/>⚪ New] --> L[researcher<br/>🔎 research]
+  L --> Y[spec-writer<br/>📋 full spec]
+  Y --> P[planner<br/>⭐ plan.md]
+  P --> BE[backend-coder 🟡<br/>+ frontend-coder 🎨<br/>build]
+  Q[You: --starts building] --> R2[chores-coder<br/>🟡 one mechanical task]
+  BE & R2 -->|the harness pushes<br/>and opens the PR| H[staff-reviewer<br/>🟢 👀 review]
   H -->|🔴 changes requested| BE & R2
-  H -->|approved| C[chewie-verifier<br/>🧪 runs the app through How to test]
+  H -->|approved| C[verifier<br/>🧪 runs the app through How to test]
   C -->|🔴 a step failed| BE & R2
   C -->|ready-to-merge, CI green| M[You: merge<br/>✅ Approved & Merged]
-  L & Y & P & BE -.->|a human must decide| X[⭕ 🛑 blocked.md<br/>lando-broker folds answers back]
+  L & Y & P & BE -.->|a human must decide| X[⭕ 🛑 blocked.md<br/>unblocker folds answers back]
   X -.->|by its contents| P
   X -.->|blocked too long<br/>while others wait| BOMB[💣 the run halts]
-  RB[bb8-resolver] -.->|resolves a rebase<br/>onto main that stopped| BE
+  RB[rebaser] -.->|resolves a rebase<br/>onto main that stopped| BE
 ```
 
 Agents may write code, tests and plan documents, but never commit, push or merge. The harness checks that, then publishes the branch and opens the pull request itself.
@@ -282,7 +282,7 @@ Generated by `openlanes docs`; `openlanes states` draws every transition.
 | ⏪ | Retroactive | none |
 | ❌ | Discarded | `discarded.md` |
 
-🧪 sits between review and merge: chewie-verifier starts the app the way `.openlanes.yml` says and walks the plan's How to test. 💣 is a ⭕ or 🛑 left too long while other plans depend on it; the run halts until someone answers.
+🧪 sits between review and merge: verifier starts the app the way `.openlanes.yml` says and walks the plan's How to test. 💣 is a ⭕ or 🛑 left too long while other plans depend on it; the run halts until someone answers.
 
 Besides those, each plan folder holds `state.json` (each round's agent, model, tokens and time, the agents' signatures, their journals, and the messages between them) and, while building, `implementation-plan.md`, `plan-backend.md` and `plan-frontend.md`.
 
@@ -292,17 +292,17 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 
 | Agent               | Handles                                           | Advances to                     | Runs on       | Lanes      |
 | :------------------ | :------------------------------------------------ | :------------------------------ | :------------ | :--------- |
-| `leah-researcher`   | New                                               | Researched                      | haiku/medium  | full       |
-| `yoda-writer`       | Researched, Retroactive                           | Ready for Planning              | sonnet/medium | full       |
-| `luthen-rael-planner` | Ready for Planning                                | Planned                         | opus/high     | full, plan |
-| `luke-backend`      | Planned, Building, Changes Requested              | Ready for Review                | opus/high     | full, plan |
-| `rey-frontend`      | Planned, Building, Building UI, Changes Requested | Ready for Review                | sonnet/medium | full, plan |
-| `r2d2-mechanic`     | Planned, Building, Changes Requested              | Ready for Review                | haiku/medium  | quick      |
-| `hansolo-reviewer`  | Ready for Review, In Review                       | Verifying, or Approved & Merged | sonnet/high   | all        |
-| `chewie-verifier`   | Verifying                                         | Approved & Merged               | sonnet/medium | all        |
-| `lando-broker`      | Technical Block, Product Block, Bomb              | by contents                     | haiku/low     | all        |
-| `bb8-resolver`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
-| `c3po-operator`     | none: the control room's read-only copilot        | read-only                       | haiku/low     | all        |
+| `researcher`   | New                                               | Researched                      | haiku/medium  | full       |
+| `spec-writer`       | Researched, Retroactive                           | Ready for Planning              | sonnet/medium | full       |
+| `planner` | Ready for Planning                                | Planned                         | opus/high     | full, plan |
+| `backend-coder`      | Planned, Building, Changes Requested              | Ready for Review                | opus/high     | full, plan |
+| `frontend-coder`      | Planned, Building, Building UI, Changes Requested | Ready for Review                | sonnet/medium | full, plan |
+| `chores-coder`     | Planned, Building, Changes Requested              | Ready for Review                | haiku/medium  | quick      |
+| `staff-reviewer`  | Ready for Review, In Review                       | Verifying, or Approved & Merged | sonnet/high   | all        |
+| `verifier`   | Verifying                                         | Approved & Merged               | sonnet/medium | all        |
+| `unblocker`      | Technical Block, Product Block, Bomb              | by contents                     | haiku/low     | all        |
+| `rebaser`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
+| `copilot`     | none: the control room's read-only copilot        | read-only                       | haiku/low     | all        |
 
 Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A plan's `spec.md` frontmatter can change the adapter, model and effort per phase.
 
@@ -310,9 +310,9 @@ Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A
 
 | Lane             | Route                                                            |
 | :--------------- | :--------------------------------------------------------------- |
-| `full` (default) | leah → yoda → luthen-rael → luke (+ rey) → hansolo → chewie                 |
-| `plan`           | luthen-rael → luke (+ rey) → hansolo → chewie, for a spec you already trust |
-| `quick`          | r2d2-mechanic → hansolo → chewie, for one short mechanical task           |
+| `full` (default) | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer → verifier                 |
+| `plan`           | planner → backend-coder (+ frontend-coder) → staff-reviewer → verifier, for a spec you already trust |
+| `quick`          | chores-coder → staff-reviewer → verifier, for one short mechanical task           |
 
 ### Blocks
 
@@ -323,7 +323,7 @@ When an agent hits a question that is not its to answer, it writes numbered ques
 - Agents never run `git commit`, `git push`, `gh pr create`, `gh pr merge` and friends; web access is off unless an agent declares `network: true`.
 - After every agent, the harness verifies `HEAD` did not move and no remote-tracking ref was moved by a push.
 - The harness, not the agent, commits, pushes and opens the pull request. `--no-git-push` turns that off.
-- Nothing merges automatically. chewie-verifier labels a pull request `ready-to-merge` once the app passes its How to test and CI is green; merging and deploying stay manual.
+- Nothing merges automatically. verifier labels a pull request `ready-to-merge` once the app passes its How to test and CI is green; merging and deploying stay manual.
 
 ## Commands
 

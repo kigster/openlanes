@@ -47,4 +47,4 @@ Done when each of the four `call` methods does only option handling, one workflo
 
 ## Back End / Front End
 
-A CLI gem; there is no front end in this plan. All units belong to `luke-backend`.
+A CLI gem; there is no front end in this plan. All units belong to `backend-coder`.

@@ -23,37 +23,37 @@ RSpec.describe OpenLanes::Arbitration::Counter, :tree do
       at: start + (minute * 60))
   end
 
-  it "counts hansolo's and chewie's rejections, and nothing else" do
-    sign("hansolo-reviewer", "rejected 1/2", 1)
-    sign("chewie-verifier", "rejected: CI is red; signed by harness", 2)
-    sign("hansolo-reviewer", "approved, nothing to reject", 3)
-    sign("luke-backend", "rejected the idea", 4)
+  it "counts staff-reviewer's and verifier's rejections, and nothing else" do
+    sign("staff-reviewer", "rejected 1/2", 1)
+    sign("verifier", "rejected: CI is red; signed by harness", 2)
+    sign("staff-reviewer", "approved, nothing to reject", 3)
+    sign("backend-coder", "rejected the idea", 4)
     expect(counter.call(plan)).to eq(2)
   end
 
   it "starts again after a cap ruling" do
-    sign("hansolo-reviewer", "rejected 1/2", 1)
-    sign("hansolo-reviewer", "rejected 2/2", 2)
+    sign("staff-reviewer", "rejected 1/2", 1)
+    sign("staff-reviewer", "rejected 2/2", 2)
     rule("cap", "go", 3)
-    sign("chewie-verifier", "rejected: still red", 4)
+    sign("verifier", "rejected: still red", 4)
     expect(counter.call(plan)).to eq(1)
   end
 
   it "skips a rejection whose findings were all struck" do
-    sign("hansolo-reviewer", "rejected 1/2", 1)
-    sign("hansolo-reviewer", "rejected 2/2", 2)
+    sign("staff-reviewer", "rejected 1/2", 1)
+    sign("staff-reviewer", "rejected 2/2", 2)
     rule("appeal", "struck", 3)
     expect(counter.call(plan)).to eq(1)
   end
 
   it "still counts a rejection a struck appeal left a critical finding in" do
-    sign("hansolo-reviewer", "rejected 1/2", 1)
+    sign("staff-reviewer", "rejected 1/2", 1)
     rule("appeal", "struck", 2, critical: %w[F1])
     expect(counter.call(plan)).to eq(1)
   end
 
   it "counts a too_lenient ruling as one rejection more" do
-    sign("hansolo-reviewer", "rejected 1/2", 1)
+    sign("staff-reviewer", "rejected 1/2", 1)
     rule("passed_check", "too_lenient", 2)
     expect(counter.call(plan)).to eq(2)
   end

@@ -2,6 +2,6 @@
 
 Verdict: rejected
 
-Written by the engine: the round failed where chewie-verifier could not say so.
+Written by the engine: the round failed where verifier could not say so.
 
 CI is red on PR #105 after verification.

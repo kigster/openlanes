@@ -8,7 +8,7 @@ depends_on: [none]
 
 ## What we are trying to achieve
 
-luthen-rael writes `depends_on:` while planning and may write that one key in `spec.md` (A6, A17). `ewoki-linker`, the `ready_for_linking` state and the dispatcher gate that sends unlinked plans to it are removed. Any number of dependencies is ordered topologically; only a cycle goes to a person.
+planner writes `depends_on:` while planning and may write that one key in `spec.md` (A6, A17). `ewoki-linker`, the `ready_for_linking` state and the dispatcher gate that sends unlinked plans to it are removed. Any number of dependencies is ordered topologically; only a cycle goes to a person.
 
 ## Why it matters
 
@@ -16,7 +16,7 @@ The planner is the first agent to see the implementation, where dependencies sho
 
 ## What already exists
 
-`agents/ewoki-linker.md`, `agents/luthen-rael-planner.md`, the `ready_for_linking` status and event in `plans/status.rb` and `plans/state_machine.rb`, the ewoki gate in `engine/dispatcher.rb`, `linear/mapping.rb` placements, and plans 008.00 and 008.01.
+`agents/ewoki-linker.md`, `agents/planner.md`, the `ready_for_linking` status and event in `plans/status.rb` and `plans/state_machine.rb`, the ewoki gate in `engine/dispatcher.rb`, `linear/mapping.rb` placements, and plans 008.00 and 008.01.
 
 ## What research needs to settle
 

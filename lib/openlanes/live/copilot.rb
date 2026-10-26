@@ -5,14 +5,14 @@ require "time"
 
 module OpenLanes
   module Live
-    # The conversation with the run's copilot, c3po-operator (W17): one Redis
+    # The conversation with the run's copilot, copilot (W17): one Redis
     # stream per node ({Keys#copilot}) holding every turn, the person's and
     # the copilot's, in the order they were said. The page reads it once with
     # {#history} and then follows it on the event stream it already has
     # (`event: copilot`), so the copilot needs no transport of its own.
     #
     # Who answers is the responder's business, not this class's: the API
-    # server hands it {Operator}, which runs c3po-operator, and `--demo` a
+    # server hands it {Operator}, which runs copilot, and `--demo` a
     # canned line. Whatever answers writes {Turn}s, and {Turn.check} refuses
     # a card that lacks what the page needs to draw it, whoever wrote it.
     class Copilot
@@ -101,7 +101,7 @@ module OpenLanes
         replies = begin
           @responder.call(turn)
         rescue StandardError => e
-          [Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: "c3po-operator could not answer: #{e.message}")]
+          [Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: "#{Agents::Names::COPILOT} could not answer: #{e.message}")]
         end
         replies.each { append(it) }
       end

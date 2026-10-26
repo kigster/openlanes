@@ -61,17 +61,17 @@ RSpec.describe "The engine's live hooks" do
     end
 
     context "with an interrupted round in its history" do
-      before { dispatcher.send(:remember, "001.00", "luke-backend", :building, "Interrupted", 1) }
+      before { dispatcher.send(:remember, "001.00", "backend-coder", :building, "Interrupted", 1) }
 
       it "hands it back once" do
-        expect([dispatcher.resume("001.00", "luke-backend"), dispatcher.resume("001.00", "luke-backend")]).to eq([true, false])
+        expect([dispatcher.resume("001.00", "backend-coder"), dispatcher.resume("001.00", "backend-coder")]).to eq([true, false])
       end
     end
 
     it "passes a model choice to an executor that can take it" do
       aggregate_failures do
-        expect(dispatcher.prefer_model("001.00", "luke-backend", "claude-haiku-5-5")).to be(true)
-        expect(executor.preferred).to eq(%w[001.00 luke-backend] => "claude-haiku-5-5")
+        expect(dispatcher.prefer_model("001.00", "backend-coder", "claude-haiku-5-5")).to be(true)
+        expect(executor.preferred).to eq(%w[001.00 backend-coder] => "claude-haiku-5-5")
       end
     end
 
@@ -79,7 +79,7 @@ RSpec.describe "The engine's live hooks" do
       let(:executor) { ->(*, **) {} }
 
       it "says so" do
-        expect(dispatcher.prefer_model("001.00", "luke-backend", "haiku")).to be(false)
+        expect(dispatcher.prefer_model("001.00", "backend-coder", "haiku")).to be(false)
       end
     end
 

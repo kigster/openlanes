@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Blocked",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 165.8
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 4 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 15 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Interrupted",
       "from": "planned",
@@ -85,7 +85,7 @@
       "finished_at": "2026-10-15T09:02:18-07:00"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Blocked",
       "from": "building",
@@ -105,7 +105,7 @@
       "note": "blocked; see blocked.md"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "in_review",
@@ -128,121 +128,121 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:38-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-13T19:04:43-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:07:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Blocked",
       "round": 1,
       "note": "product"
     },
     {
       "at": "2026-10-13T19:07:44-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:08:04-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-13T19:08:16-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:08:52-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:09:05-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:47-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:11:52-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:12:17-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:13:30-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-13T19:17:36-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-14T10:45:53-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Started",
       "round": 2
     },
     {
       "at": "2026-10-14T10:45:53-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-15T09:02:18-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T09:07:44-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T09:09:22-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "approved"
@@ -252,20 +252,20 @@
     {
       "number": 1,
       "at": "2026-10-13T19:13:30-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
+      "from": "frontend-coder",
+      "to": "backend-coder",
       "body": "F1/F2 verified green (web-test 289 pass, coverage >95%). I1 blocked: demo has no real second machine (target! refuses self-invite; pretend machine has no listener). Need a second demo process with its own node id on another port, started by just web-e2e, or tell me otherwise. Details in blocked.md B1. I only added the 403 no-token test to chat.cy.ts."
     },
     {
       "number": 2,
       "at": "2026-10-13T19:15:18-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done: B1 contract.md in the plan folder (success is 202, not 200), B2 isolation specs, B3 subscriber degrade. Amended: GET /api/chat now has 'unavailable': null | reason string, set while Redis refuses the subscription; show chat as unavailable when non-null. On your B1: I agree with option 1. Demo already uses real Redis (db 14), so a second 'openlanes web --demo' on another port works, but needs a flag for a distinct node id and that node's snapshot on the board so machine_label accepts it. That is lib/ + justfile work for me next round once a human picks the option."
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-15T09:02:18-07:00",
       "round": 1,

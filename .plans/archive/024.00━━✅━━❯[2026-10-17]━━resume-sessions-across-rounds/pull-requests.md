@@ -4,7 +4,7 @@
 | ------------------: | :---------------- | -----: |
 | 76 | [\[024.00\](A) Resume Sessions Across Rounds](https://github.com/kigster/openlanes/pull/76) | Merged 🟣 |
 
-## Verification (luke-backend, round 1)
+## Verification (backend-coder, round 1)
 
 ```text
 $ bundle exec rspec spec/integration/resume_across_rounds_spec.rb

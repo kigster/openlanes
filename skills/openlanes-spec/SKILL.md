@@ -12,7 +12,7 @@ The spec is the only thing a human is sure to write. Every agent downstream read
 ## 1. Pick the branch
 
 - **New work**: continue at step 2.
-- **Work that already shipped** (the user names merged PRs): `openlanes create --after <NNN> --prs <n,n> <words>`. It records the pull requests in a retroactive `NNN.MM` plan and has `yoda-writer` write its spec from the diff; the provenance line it must open with is in `openlanes-documents`. Skip to step 6.
+- **Work that already shipped** (the user names merged PRs): `openlanes create --after <NNN> --prs <n,n> <words>`. It records the pull requests in a retroactive `NNN.MM` plan and has `spec-writer` write its spec from the diff; the provenance line it must open with is in `openlanes-documents`. Skip to step 6.
 - **An existing plan needs more detail**: open its `spec.md` (`fd spec.md .plans | rg '^.plans/<NNN>'`) and go to step 4.
 
 ## 2. Propose the lane and depth
@@ -85,6 +85,6 @@ Keep the four headings `create` scaffolded (the shape is in `openlanes-documents
 openlanes run -n --plan <NNN>
 ```
 
-Done when the preview names the expected first agent: `leah-researcher` for full, `luthen-rael-planner` for plan, `r2d2-mechanic` for quick. A retroactive plan has already been through `yoda-writer`, so the preview names whoever handles the state it settled in. A wrong agent means the frontmatter did not parse as intended; re-read it.
+Done when the preview names the expected first agent: `researcher` for full, `planner` for plan, `chores-coder` for quick. A retroactive plan has already been through `spec-writer`, so the preview names whoever handles the state it settled in. A wrong agent means the frontmatter did not parse as intended; re-read it.
 
 Report the folder, lane and depth in two lines, and offer to start the agents (`openlanes-run`).

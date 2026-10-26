@@ -1,6 +1,6 @@
 # Plan 006.00: the chat contract
 
-Owner: `luke-backend`. Written from the code as it stands (`lib/openlanes/live/chat.rb`, `lib/openlanes/web/app.rb`, `lib/openlanes/web/events.rb`). `spec/openlanes/web/app_spec.rb`, "accepts exactly the verbs in the contract's verb table", holds the verb table below to the route.
+Owner: `backend-coder`. Written from the code as it stands (`lib/openlanes/live/chat.rb`, `lib/openlanes/web/app.rb`, `lib/openlanes/web/events.rb`). `spec/openlanes/web/app_spec.rb`, "accepts exactly the verbs in the contract's verb table", holds the verb table below to the route.
 
 ## Keys and transport
 

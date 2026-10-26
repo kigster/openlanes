@@ -15,7 +15,7 @@ RSpec.describe OpenLanes::CLI::Agents::Describe do
   around do |example|
     Dir.mktmpdir("agents") do |tmp|
       @dir = tmp
-      %w[leah-researcher luke-backend lando-broker].each do |name|
+      %w[researcher backend-coder unblocker].each do |name|
         File.write(File.join(tmp, "#{name}.md"), <<~MD)
           ---
           name: #{name}
@@ -49,23 +49,23 @@ RSpec.describe OpenLanes::CLI::Agents::Describe do
   end
 
   it "opens the one agent a fragment singles out" do
-    _, status = run(name: "leah")
+    _, status = run(name: "researcher")
 
     expect(status).to eq(0)
-    expect(viewer).to have_received(:open).with([path("leah-researcher")])
+    expect(viewer).to have_received(:open).with([path("researcher")])
   end
 
   it "opens every definition when given no name" do
     run
 
     expect(viewer).to have_received(:open)
-      .with([path("lando-broker"), path("leah-researcher"), path("luke-backend")])
+      .with([path("backend-coder"), path("researcher"), path("unblocker")])
   end
 
   it "routes through mdfried when asked to stay in the terminal" do
-    run(name: "luke", mdfried: true)
+    run(name: "backend-coder", mdfried: true)
 
-    expect(viewer).to have_received(:mdfried).with([path("luke-backend")])
+    expect(viewer).to have_received(:mdfried).with([path("backend-coder")])
     expect(viewer).not_to have_received(:open)
   end
 
@@ -73,22 +73,22 @@ RSpec.describe OpenLanes::CLI::Agents::Describe do
     run(mdfried: true)
 
     expect(viewer).to have_received(:mdfried)
-      .with([path("lando-broker"), path("leah-researcher"), path("luke-backend")])
+      .with([path("backend-coder"), path("researcher"), path("unblocker")])
   end
 
   # A fragment that fits several agents is a question, not an order.
   it "refuses an ambiguous fragment and names the candidates" do
-    err, status = run(name: "l")
+    err, status = run(name: "e")
 
     expect(status).to eq(65)
-    expect(err).to include("lando-broker", "leah-researcher", "luke-backend")
+    expect(err).to include("unblocker", "researcher", "backend-coder")
     expect(viewer).not_to have_received(:open)
   end
 
   it "refuses an unknown name and lists what it does know" do
-    err, status = run(name: "chewbacca")
+    err, status = run(name: "ghost-agent")
 
     expect(status).to eq(65)
-    expect(err).to include("chewbacca").and include("luke-backend")
+    expect(err).to include("ghost-agent").and include("backend-coder")
   end
 end

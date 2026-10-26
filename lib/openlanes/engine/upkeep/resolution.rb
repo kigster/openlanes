@@ -34,7 +34,7 @@ module OpenLanes
           pushed(conflict, checkout, "PR ##{number} rebased onto main and pushed")
         end
 
-        # bb8-resolver's job ended. Resolved, it is pushed. Aborted,
+        # rebaser's job ended. Resolved, it is pushed. Aborted,
         # `conflicts` stays, and the next sweep tries one step up the ladder
         # until it is spent (+held+); then the next move of `main` starts it
         # again (D10).

@@ -1,6 +1,6 @@
 # 005.00 Front-end units
 
-Builder: `rey-frontend`. Terminal output only; there is no web work in this plan (spec, "Back end / front end"). Order and graph are in `plan.md`.
+Builder: `frontend-coder`. Terminal output only; there is no web work in this plan (spec, "Back end / front end"). Order and graph are in `plan.md`.
 
 ## F1 `openlanes review` command and the Needs-you line
 

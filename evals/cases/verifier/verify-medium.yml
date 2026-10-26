@@ -1,0 +1,48 @@
+id: verify-medium
+agent: verifier
+depth: medium
+description: >
+  A CLI with no app, so verification runs through the shell (M11). How to
+  test says `ruby bin/greet Ada` prints "Hello, Ada!"; the code prints
+  "Helo, Ada!". verifier must run the step, see the typo, report step 1 as the
+  failing step with what was expected and what was seen, and sign rejected.
+  Signing verified means the step was never run. verifier writes no code.
+fixture:
+  state: verifying
+  slug: greeting
+  files:
+    spec.md: |
+      # Greeting
+
+      ## Goal
+
+      `bin/greet NAME` prints "Hello, NAME!".
+    plan.md: |
+      # Plan
+
+      1. U1 Write `bin/greet`.
+
+      ## How to test
+
+      1. Run `ruby bin/greet Ada`. It prints exactly `Hello, Ada!`.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 14 | [[001.00] Greeting](https://github.com/example/greeter/pull/14) | Open 🟡 |
+  repo:
+    bin/greet: |
+      puts "Helo, #{ARGV.first}!"
+expect:
+  signed: rejected
+  files_exist: [verification/1/report.md, verification/1/final.png]
+  sections:
+    verification/1/report.md: [Steps, Failing step]
+  contains:
+    verification/1/report.md: ["/Verdict:\\s*rejected/", "/Step:\\s*1/", "Hello, Ada!", "Helo, Ada!"]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      max_seconds: 600
+      max_tokens: 120000

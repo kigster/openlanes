@@ -16,7 +16,7 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
 
   # The dispatcher's job, as much of it as this class reads.
   let(:job) do
-    agent = Struct.new(:name).new("luke-backend")
+    agent = Struct.new(:name).new("backend-coder")
     task = Struct.new(:agent, :round).new(agent, 1)
     Struct.new(:task, :state, :handle).new(task, :building, handle)
   end
@@ -39,7 +39,7 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       it "asks once for the round, and keeps asking the same request" do
         2.times { extensions.watch(job, path) }
         expect(plan.extensions).to contain_exactly(include("number" => 1,
-          "agent" => "luke-backend",
+          "agent" => "backend-coder",
           "state" => "building",
           "round" => 1,
           "limit" => "time",
@@ -89,14 +89,14 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
 
   describe "#exhausted, an agent with no rounds left" do
     it "waits five minutes for a person on a run with a control room, then gives a round on its own" do
-      extensions.exhausted(path, "luke-backend", :building, 1)
-      expect(extensions.rounds(path, "luke-backend", :building)).to eq(0)
+      extensions.exhausted(path, "backend-coder", :building, 1)
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
 
       later = described_class.new(stay:, now: -> { now + described_class::AUTO_AFTER })
-      later.exhausted(path, "luke-backend", :building, 1)
+      later.exhausted(path, "backend-coder", :building, 1)
       aggregate_failures do
         expect(plan.extensions.first).to include("limit" => "rounds", "answer" => "a", "by" => "auto", "grant" => "round")
-        expect(later.rounds(path, "luke-backend", :building)).to eq(1)
+        expect(later.rounds(path, "backend-coder", :building)).to eq(1)
       end
     end
 
@@ -104,10 +104,10 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       let(:stay) { false }
 
       it "gives the round at once, and only once" do
-        extensions.exhausted(path, "luke-backend", :building, 1)
-        extensions.exhausted(path, "luke-backend", :building, 2)
+        extensions.exhausted(path, "backend-coder", :building, 1)
+        extensions.exhausted(path, "backend-coder", :building, 2)
         aggregate_failures do
-          expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
+          expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
           expect(plan.extensions.map { it["round"] }).to eq([1, 2])
           expect(plan.extensions.last).not_to have_key("settled_at")
         end
@@ -116,15 +116,15 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
   end
 
   describe "#answer!" do
-    before { extensions.exhausted(path, "luke-backend", :building, 1) }
+    before { extensions.exhausted(path, "backend-coder", :building, 1) }
 
     it "gives a round and twenty minutes for it, handed to that round once" do
       extensions.answer!(path, 1, "c", by: "dana")
       aggregate_failures do
         expect(plan.extensions.first).to include("answer" => "c", "by" => "dana", "grant" => "round", "seconds" => 1200)
-        expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
-        expect(extensions.take_seconds(path, "luke-backend", :building)).to eq(1200)
-        expect(extensions.take_seconds(path, "luke-backend", :building)).to eq(0)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
+        expect(extensions.take_seconds(path, "backend-coder", :building)).to eq(1200)
+        expect(extensions.take_seconds(path, "backend-coder", :building)).to eq(0)
       end
     end
 
@@ -134,14 +134,14 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       extensions.answer!(path, 1, "b", by: "dana", live: handle)
       aggregate_failures do
         expect(handle.remaining).to eq(600)
-        expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
       end
     end
 
     it "counts no round granted before this run started, since a restart counts used rounds afresh" do
       extensions.answer!(path, 1, "a", by: "dana")
       later = described_class.new(stay:, now: -> { now + 60 })
-      expect(later.rounds(path, "luke-backend", :building)).to eq(0)
+      expect(later.rounds(path, "backend-coder", :building)).to eq(0)
     end
 
     it "answers once: a second answer changes nothing" do
@@ -156,13 +156,13 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
   end
 
   describe "#answer! on a time request" do
-    before { plan.ask_extension!(agent: "luke-backend", state: :building, round: 1, limit: "time", at: now) }
+    before { plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now) }
 
     it "moves a live clock for a time choice, and gives no round" do
       extensions.answer!(path, 1, "b", by: "dana", live: handle)
       aggregate_failures do
         expect(handle.remaining).to eq(1200)
-        expect(extensions.rounds(path, "luke-backend", :building)).to eq(0)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
       end
     end
 
@@ -172,15 +172,15 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       extensions.answer!(path, 1, "c", by: "dana", live: handle)
       aggregate_failures do
         expect(plan.extensions.first).to include("grant" => "round", "seconds" => 1200)
-        expect(extensions.rounds(path, "luke-backend", :building)).to eq(1)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
       end
     end
   end
 
   describe "#close!" do
     it "closes the open request of an agent that finished, so the page stops asking" do
-      extensions.exhausted(path, "luke-backend", :building, 1)
-      extensions.close!(path, "luke-backend", :building)
+      extensions.exhausted(path, "backend-coder", :building, 1)
+      extensions.close!(path, "backend-coder", :building)
       expect(plan.extensions.first).to include("closed" => "finished")
     end
   end
@@ -189,10 +189,10 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     let(:subject_of) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
 
     it "shows each open request as an X<n> question with the three choices, the default recommended" do
-      extensions.exhausted(path, "luke-backend", :building, 1)
+      extensions.exhausted(path, "backend-coder", :building, 1)
       question = described_class.questions(subject_of, plan).first
       aggregate_failures do
-        expect(question).to include(id: "001.00/X1", kind: "extension", heading: "luke-backend is out of rounds", owner: "technical")
+        expect(question).to include(id: "001.00/X1", kind: "extension", heading: "backend-coder is out of rounds", owner: "technical")
         expect(question[:options].map { it[:answer] })
           .to eq(["a) Extend Rounds by 1", "b) Extend Time by 10 minutes", "c) Extend Time by 20 minutes"])
         expect(question[:options].map { it[:recommended] }).to eq([true, false, false])
@@ -200,17 +200,17 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     end
 
     it "shows nothing settled, and nothing asked on another state" do
-      extensions.exhausted(path, "luke-backend", :building, 1)
+      extensions.exhausted(path, "backend-coder", :building, 1)
       extensions.answer!(path, 1, "a", by: "dana")
-      plan.ask_extension!(agent: "leah-researcher", state: :new, round: 1, limit: "rounds")
+      plan.ask_extension!(agent: "researcher", state: :new, round: 1, limit: "rounds")
       expect(described_class.questions(subject_of, plan)).to eq([])
     end
   end
 
   it "validates against the state.json schema" do
-    extensions.exhausted(path, "luke-backend", :building, 1)
+    extensions.exhausted(path, "backend-coder", :building, 1)
     extensions.answer!(path, 1, "c", by: "dana")
-    extensions.take_seconds(path, "luke-backend", :building)
+    extensions.take_seconds(path, "backend-coder", :building)
     schema = JSONSchemer.schema(Pathname.new(OpenLanes::Plans::PlanState::SCHEMA_PATH))
     expect(schema.validate(JSON.parse(File.read(plan.path))).map { it["error"] }).to eq([])
   end

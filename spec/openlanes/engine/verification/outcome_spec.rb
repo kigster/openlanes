@@ -40,7 +40,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
   def comments = gh.dig("prs", "1", "comments").map { it["body"] }
   def mail_to = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.map(&:to)
 
-  def chewie_left(verdict, step: nil)
+  def verifier_left(verdict, step: nil)
     dir = round.make!.dir
     %w[step-01.png step-02.png final.png].each { FileUtils.cp(fixture_png, File.join(dir, it)) }
     File.write(File.join(dir, "app.md"), "# The app\n\nport 11100\n")
@@ -52,9 +52,9 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     plans do |t|
       t.plan "014.00",
         :verifying,
-        "chewie-verifier",
+        "verifier",
         files: { "spec.md" => spec_body, "plan.md" => plan_md },
-        prs:   [t.open(1, "Chewie verifier")]
+        prs:   [t.open(1, "Verifier")]
     end
     init_repo
     repo_git("config", "user.name", "Test Author")
@@ -67,14 +67,14 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     allow(OpenLanes::Execution::Boundary).to receive(:sanction)
     edit_gh do |state|
       state["labels"] = %w[review-approved]
-      state["prs"] = { "1" => gh_pr(title: "Chewie verifier", url: "https://github.com/example/repo/pull/1", labels: %w[review-approved]) }
+      state["prs"] = { "1" => gh_pr(title: "Verifier", url: "https://github.com/example/repo/pull/1", labels: %w[review-approved]) }
     end
   end
 
   after { FileUtils.rm_rf(origin) }
 
   describe "#reject" do
-    before { chewie_left("rejected", step: 2) }
+    before { verifier_left("rejected", step: 2) }
 
     it "pushes the failing step, comments with it, then labels, then sends the plan to 🔴" do
       result = outcome.reject(checkout:, plan:, pull: pr, round:)
@@ -85,7 +85,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         expect(verbs.index(%w[pr comment])).to be < verbs.index(%w[pr edit])
         expect(labels).to eq(%w[review-rejected])
         expect(plan.status.key).to eq(:rejected)
-        expect(mail_to).to include("luke-backend", "rey-frontend")
+        expect(mail_to).to include("backend-coder", "frontend-coder")
       end
     end
 
@@ -101,7 +101,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
                                    reason: "minor only",
                                    trigger: "cap",
                                    at: now - 60)
-      OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+      OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected")
       result = outcome.reject(checkout:, plan:, pull: pr, round:)
 
       aggregate_failures do
@@ -147,15 +147,15 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     it "mails the comment itself to the builders" do
       outcome.reject(checkout:, plan:, pull: pr, round:)
 
-      body = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.find { it.to == "luke-backend" }.body
+      body = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.find { it.to == "backend-coder" }.body
       expect(body).to include("**Seen:** a 500 page")
     end
 
-    it "counts the rejection against the cap, hansolo's included, and calls the arbitrator at it" do
+    it "counts the rejection against the cap, staff-reviewer's included, and calls the arbitrator at it" do
       OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                 .sign!(agent: "hansolo-reviewer", round: 1, status: "Completed", note: "rejected 1/2")
+                                 .sign!(agent: "staff-reviewer", round: 1, status: "Completed", note: "rejected 1/2")
       OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                 .sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+                                 .sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected")
 
       result = outcome.reject(checkout:, plan:, pull: pr, round:)
 
@@ -182,9 +182,9 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
 
     before do
-      chewie_left("rejected", step: 2)
+      verifier_left("rejected", step: 2)
       OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                 .sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+                                 .sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected")
       outcome
       # Q1 answered mvp after the run started, with no merge.max_rejections.
       File.write(File.join(repo_root, OpenLanes::Config::FILE), "desired_codebase_quality: mvp\n")
@@ -199,21 +199,21 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     end
   end
 
-  describe "#reject with a reason chewie could not give" do
+  describe "#reject with a reason verifier could not give" do
     let(:failed) do
       OpenLanes::Engine::Verification::AppSession::Failed.new(process: "web",
         reason: "web exited with status 3 before it was ready",
         tail: (1..20).map { "line #{it}" })
     end
 
-    it "writes the report for it, signs for chewie, and comments with the app's last lines" do
+    it "writes the report for it, signs for verifier, and comments with the app's last lines" do
       result = outcome.reject(checkout:, plan:, pull: pr, round:, why: failed.to_markdown)
       report = File.read(File.join(OpenLanes::Plans::Tree.new(dir: plans_root).find("014.00").feature.path, "verification/1/report.md"))
 
       aggregate_failures do
         expect(result.kind).to eq(:rejected)
         expect(comments.first).to include("the app does not start: web exited with status 3", "line 1\n", "line 20\n")
-        expect(report).to include("Verdict: rejected", "chewie-verifier could not say so")
+        expect(report).to include("Verdict: rejected", "verifier could not say so")
         expect(outcome.rejections(plan)).to eq(1)
         expect(origin_files.grep(%r{verification/1/report\.md})).not_to be_empty
       end
@@ -224,11 +224,11 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
     def sign(agent, note) = OpenLanes::Plans::PlanState.for(plan.feature.path).sign!(agent:, round: 1, status: "Completed", note:)
 
     it "counts only notes that start with the word, never one that merely mentions it" do
-      sign("hansolo-reviewer", "rejected 1/2")
-      sign("chewie-verifier", "rejected: CI is red on PR #1; signed by harness")
-      sign("hansolo-reviewer", "approved, nothing to reject")
-      sign("chewie-verifier", "verified; the rejected alternative is gone")
-      sign("chewie-verifier", "sent back: Coverage is not declared yet; signed by harness")
+      sign("staff-reviewer", "rejected 1/2")
+      sign("verifier", "rejected: CI is red on PR #1; signed by harness")
+      sign("staff-reviewer", "approved, nothing to reject")
+      sign("verifier", "verified; the rejected alternative is gone")
+      sign("verifier", "sent back: Coverage is not declared yet; signed by harness")
 
       expect(outcome.rejections(plan)).to eq(2)
     end
@@ -240,10 +240,10 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
       aggregate_failures do
         expect(result).to have_attributes(kind: :rejected, to: :rejected)
-        expect(result.note).to include("rejected 1 of 2", "labels left as hansolo set them")
+        expect(result.note).to include("rejected 1 of 2", "labels left as staff-reviewer set them")
         expect(outcome.rejections(plan)).to eq(1)
         expect(plan.status.key).to eq(:rejected)
-        expect(mail_to).to include("luke-backend", "rey-frontend")
+        expect(mail_to).to include("backend-coder", "frontend-coder")
         expect(labels).to eq(%w[review-approved])
         expect(arbitration).not_to have_received(:call)
       end
@@ -260,13 +260,13 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         expect(result.note).to include("rejected 1 of 2")
         expect(outcome.rejections(plan)).to eq(1)
         expect(plan.status.key).to eq(:building)
-        expect(mail_to).to include("luke-backend")
+        expect(mail_to).to include("backend-coder")
       end
     end
 
     it "reaches the arbitrator at the cap, so a PR labelled ok-not-perfect round after round cannot loop for ever" do
       OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                 .sign!(agent: "chewie-verifier",
+                                 .sign!(agent: "verifier",
                                    round: 1,
                                    status: "Completed",
                                    note: "rejected: PR #1 is labelled review-ok-not-perfect, an earlier round; signed by harness")
@@ -281,7 +281,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
   end
 
   describe "#pass and #settle" do
-    before { chewie_left("verified") }
+    before { verifier_left("verified") }
 
     it "pushes final.png alone, and leaves the plan at 🧪" do
       result = outcome.pass(checkout:, plan:, pull: pr, round:)
@@ -346,7 +346,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           | Pull Request Number | Pull Request Name | Status |
           | ------------------: | :---------------- | -----: |
           | 2 | [Sibling](https://github.com/example/repo/pull/2) | Open 🟡 |
-          | 1 | [Chewie verifier](https://github.com/example/repo/pull/1) | Open 🟡 |
+          | 1 | [Verifier](https://github.com/example/repo/pull/1) | Open 🟡 |
         MARKDOWN
         edit_gh do |state|
           state["prs"]["2"] = gh_pr(title: "Sibling", url: "https://github.com/example/repo/pull/2", labels: %w[review-in-progress])
@@ -464,14 +464,14 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }] }
       end
 
-      it "sends the pull request back to luke with the section to write, in both shapes" do
+      it "sends the pull request back to backend-coder with the section to write, in both shapes" do
         result = outcome.settle(checkout:, plan:, pull: pr, round:)
-        mail = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.find { it.to == "luke-backend" }
+        mail = OpenLanes::Plans::Mailbox.new(dir: plan.feature.path).messages.find { it.to == "backend-coder" }
 
         aggregate_failures do
           expect(result).to have_attributes(kind: :rejected, to: :rejected)
           expect(result.note).to include("sent back PR #1, sent back for setup, not counted (0 of 2)")
-          expect(comments.first).to include("chewie-verifier: sent back for setup",
+          expect(comments.first).to include("verifier: sent back for setup",
             "Add a `coverage:` section to `.openlanes.yml`",
             "report_command:",
             "format: lcov",
@@ -484,9 +484,9 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
       it "does not count against merge.max_rejections, nor call the arbitrator at the cap" do
         OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                   .sign!(agent: "hansolo-reviewer", round: 1, status: "Completed", note: "rejected 1/2")
+                                   .sign!(agent: "staff-reviewer", round: 1, status: "Completed", note: "rejected 1/2")
         OpenLanes::Plans::PlanState.for(plan.feature.path)
-                                   .sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected")
+                                   .sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected")
 
         result = outcome.settle(checkout:, plan:, pull: pr, round:)
 

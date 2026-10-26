@@ -20,9 +20,9 @@ Ask the tool, never a copy of its table:
 
 | File | For | Written by |
 | --- | --- | --- |
-| `spec.md` | what and why; its frontmatter says how to route and judge the work | `openlanes create`, the human, `leah-researcher` (`## Research`), `yoda-writer` |
-| `plan.md` | units under `## Backend` and `## Frontend`, order, the integration check; blank means "waiting for the planner"; a `## Frontend` with no unit heading starts nobody | `yoda-writer` creates it empty, `luthen-rael-planner` fills it |
-| `contract.md`, `openapi.yaml` | the interfaces between the halves; the HTTP surface when there is one | `luke-backend` |
+| `spec.md` | what and why; its frontmatter says how to route and judge the work | `openlanes create`, the human, `researcher` (`## Research`), `spec-writer` |
+| `plan.md` | units under `## Backend` and `## Frontend`, order, the integration check; blank means "waiting for the planner"; a `## Frontend` with no unit heading starts nobody | `spec-writer` creates it empty, `planner` fills it |
+| `contract.md`, `openapi.yaml` | the interfaces between the halves; the HTTP surface when there is one | `backend-coder` |
 | `blocked.md` | open questions a human must decide | any agent, or a human |
 | `pull-requests.md` | the pull request table the review states are judged by | `openlanes run` when it opens the PR, `openlanes create --prs`, `openlanes resync prs` |
 | `rewrite.md`, `delayed.md`, `discarded.md`, `deployed.md`, `rollback.md` | why the plan left the main path | the reviewer (`rewrite.md`), otherwise a human |
@@ -46,7 +46,7 @@ Which human a block waits on lives only in the emoji. `resync dirs` files a new 
 | 41 | [\[018.01\] Verify against filed returns](https://github.com/acme/app/pull/41) | Merged 🟣 |
 ```
 
-**Retroactive provenance line.** A plan `NNN.MM` with `MM > 0` documents work that already shipped. Its `spec.md` opens, right after the H1, with a dated note naming the pull requests it describes. `openlanes create --after <NNN> --prs <n,n>` records the PRs and has `yoda-writer` write the spec; the line and how to pick `--after` are in [`references/retroactive-spec.md`](references/retroactive-spec.md).
+**Retroactive provenance line.** A plan `NNN.MM` with `MM > 0` documents work that already shipped. Its `spec.md` opens, right after the H1, with a dated note naming the pull requests it describes. `openlanes create --after <NNN> --prs <n,n>` records the PRs and has `spec-writer` write the spec; the line and how to pick `--after` are in [`references/retroactive-spec.md`](references/retroactive-spec.md).
 
 ## Templates
 

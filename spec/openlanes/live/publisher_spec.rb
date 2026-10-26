@@ -112,10 +112,10 @@ RSpec.describe OpenLanes::Live::Publisher, :tree do
     before { publisher.listen }
 
     it "keeps what UI.log says, marking problems as warnings" do
-      OpenLanes::UI.log("started", plan: "001.00", agent: "luke-backend")
+      OpenLanes::UI.log("started", plan: "001.00", agent: "backend-coder")
       OpenLanes::UI.log("failed: no ledger line", plan: "001.00")
       expect(publisher.log).to eq([
-                                    { at: "2026-10-13T09:00:00Z", source: "luke-backend", level: "info", text: "started", plan: "001.00" },
+                                    { at: "2026-10-13T09:00:00Z", source: "backend-coder", level: "info", text: "started", plan: "001.00" },
                                     { at: "2026-10-13T09:00:00Z", source: "engine", level: "warn", text: "failed: no ledger line", plan: "001.00" }
                                   ])
     end

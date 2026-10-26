@@ -1,10 +1,10 @@
-# Implementation plan, 012.00 (contract between luke-backend and rey-frontend)
+# Implementation plan, 012.00 (contract between backend-coder and frontend-coder)
 
 ## Baseline
 
 `bundle exec rspec` before any change (2026-10-14 11:47): `2214 examples, 0 failures`, coverage 98.63%. No baseline failures. `web/`: `npx vitest run` green before F1.
 
-## Interfaces rey calls
+## Interfaces frontend-coder calls
 
 ### Event stream (`GET /api/events`)
 
@@ -41,10 +41,10 @@ A `restart` with no target restarts every process; `backend` every process but t
 
 | Files | Owner |
 | --- | --- |
-| `lib/openlanes/apps.rb`, `lib/openlanes/apps/*`, `lib/openlanes/support/config.rb`, `lib/openlanes/live/keys.rb`, `lib/openlanes/web/events.rb`, `lib/openlanes/web/app.rb` (the route), `lib/openlanes/cli/app/**`, `lib/openlanes/cli.rb`, `lib/openlanes.rb` (loader lines), their specs, `spec/fixtures/apps/servers/` | luke |
-| `web/src/**` (preview, api types, events, client, useBoard, App) | rey |
-| `web/cypress/preview/`, `web/cypress.preview.config.ts`, `web/cypress/tsconfig.json`, `spec/fixtures/apps/preview_project/`, `justfile` (`preview-e2e`) | rey (F2) |
-| `docs/USAGE.md` (the `openlanes app` section) | luke |
+| `lib/openlanes/apps.rb`, `lib/openlanes/apps/*`, `lib/openlanes/support/config.rb`, `lib/openlanes/live/keys.rb`, `lib/openlanes/web/events.rb`, `lib/openlanes/web/app.rb` (the route), `lib/openlanes/cli/app/**`, `lib/openlanes/cli.rb`, `lib/openlanes.rb` (loader lines), their specs, `spec/fixtures/apps/servers/` | backend-coder |
+| `web/src/**` (preview, api types, events, client, useBoard, App) | frontend-coder |
+| `web/cypress/preview/`, `web/cypress.preview.config.ts`, `web/cypress/tsconfig.json`, `spec/fixtures/apps/preview_project/`, `justfile` (`preview-e2e`) | frontend-coder (F2) |
+| `docs/USAGE.md` (the `openlanes app` section) | backend-coder |
 
 Shared: none written by both.
 
@@ -65,5 +65,5 @@ B1 ‖ B2 ‖ B3 → B4 → B5 → B6; F1 after B1; F2 last.
 
 ## Assumptions
 
-- `openlanes app start` reads `app:` from the checkout it runs in (the plan's worktree when one exists), since luke writes it on the plan's branch first (M12).
+- `openlanes app start` reads `app:` from the checkout it runs in (the plan's worktree when one exists), since backend-coder writes it on the plan's branch first (M12).
 - A runner killed with KILL leaves its processes running; its ports are reclaimed by the registry (dead owner) and its board entry expires after 30 s. TERM and INT stop everything.

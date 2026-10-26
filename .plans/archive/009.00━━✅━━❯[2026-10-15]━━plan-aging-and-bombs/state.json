@@ -9,7 +9,7 @@
   "updated_at": "2026-10-18T04:44:22-07:00",
   "stages": [
     {
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "round": 1,
       "status": "Completed",
       "from": "new",
@@ -29,7 +29,7 @@
       "seconds": 120.0
     },
     {
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "round": 1,
       "status": "Completed",
       "from": "researched",
@@ -49,7 +49,7 @@
       "note": "completed - 6 tool calls"
     },
     {
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_planning",
@@ -69,7 +69,7 @@
       "note": "completed - 12 tool calls"
     },
     {
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "round": 1,
       "status": "Completed",
       "from": "rejected",
@@ -89,7 +89,7 @@
       "note": "agent pushed (origin/kig/convert-questions-to-choices) — the boundary is docs plus code, nothing leaves the machine"
     },
     {
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "round": 1,
       "status": "Completed",
       "from": "ready_for_review",
@@ -109,7 +109,7 @@
       "note": "completed - 17 tool calls (rejected 1/2)"
     },
     {
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "round": 1,
       "status": "Almost completed",
       "from": "rejected",
@@ -132,187 +132,187 @@
   "signatures": [
     {
       "at": "2026-10-13T18:59:39-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:04:16-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-13T19:07:30-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:09:21-07:00",
-      "agent": "leah-researcher",
+      "agent": "researcher",
       "status": "Completed",
       "round": 1,
-      "next": "yoda-writer"
+      "next": "spec-writer"
     },
     {
       "at": "2026-10-13T19:09:41-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:10:13-07:00",
-      "agent": "yoda-writer",
+      "agent": "spec-writer",
       "status": "Completed",
       "round": 1,
-      "next": "luthen-rael-planner"
+      "next": "planner"
     },
     {
       "at": "2026-10-13T19:10:22-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:12:01-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 1,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-13T19:17:57-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-13T19:22:10-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Blocked",
       "round": 1,
       "note": "technical"
     },
     {
       "at": "2026-10-15T01:39:55-07:00",
-      "agent": "lando-broker",
+      "agent": "unblocker",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-15T01:39:55-07:00",
-      "agent": "luthen-rael-planner",
+      "agent": "planner",
       "status": "Completed",
       "round": 2,
-      "next": "luke-backend"
+      "next": "backend-coder"
     },
     {
       "at": "2026-10-15T01:59:57-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 2
     },
     {
       "at": "2026-10-15T01:59:57-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1
     },
     {
       "at": "2026-10-15T09:59:32-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:02:45-07:00",
-      "agent": "hansolo-reviewer",
+      "agent": "staff-reviewer",
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
     },
     {
       "at": "2026-10-15T10:02:55-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:02:56-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:04:14-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     },
     {
       "at": "2026-10-15T10:08:34-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T10:08:40-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:10:58-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Interrupted",
       "round": 1,
       "note": "harness died"
     },
     {
       "at": "2026-10-15T10:11:06-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:11:16-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Started",
       "round": 1
     },
     {
       "at": "2026-10-15T10:12:15-07:00",
-      "agent": "rey-frontend",
+      "agent": "frontend-coder",
       "status": "Almost completed",
       "round": 1
     },
     {
       "at": "2026-10-15T10:12:42-07:00",
-      "agent": "luke-backend",
+      "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
-      "next": "hansolo-reviewer"
+      "next": "staff-reviewer"
     }
   ],
   "messages": [
     {
       "number": 1,
       "at": "2026-10-13T19:22:07-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Contract is in implementation-plan.md (payloads + snapshot 'bombs' field, unchanged from plan.md; bombs is always present, [] when none). B1 (💣 state) and B2 (aging_since) are built and green. B3-B7 are blocked on plan 008 (no dependents index); I signed Blocked (technical), see blocked.md B1. The snapshot 'bombs' field and the three command kinds do not exist server-side yet, so build F1 against the contract only."
     },
     {
       "id": "6d3b7e2d-6223-4623-8f1d-4d313c6451e8",
       "number": 2,
       "at": "2026-10-15T10:04:13-07:00",
-      "from": "rey-frontend",
-      "to": "luke-backend",
-      "body": "hansolo's only finding is CI 'test' red on #44 head a6e0c27 (Ruby suite). Front end unchanged: web lint/typecheck/300 tests green, rspec 2310/0 here. Does not reproduce locally; needs the CircleCI job 409 log. Not a front-end failure.",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "staff-reviewer's only finding is CI 'test' red on #44 head a6e0c27 (Ruby suite). Front end unchanged: web lint/typecheck/300 tests green, rspec 2310/0 here. Does not reproduce locally; needs the CircleCI job 409 log. Not a front-end failure.",
       "read": "yes"
     },
     {
@@ -320,7 +320,7 @@
       "number": 3,
       "at": "2026-10-15T10:11:10-07:00",
       "from": "human",
-      "to": "rey-frontend",
+      "to": "frontend-coder",
       "body": "RESUME: carry on from your last resume note",
       "read": "no",
       "command": "01M508QPHXN74NPCS7YXJFKXDV"
@@ -329,21 +329,21 @@
       "id": "e0eaba1e-5b5c-4fb9-a4ff-711fa8586dd3",
       "number": 4,
       "at": "2026-10-15T10:12:41-07:00",
-      "from": "luke-backend",
-      "to": "rey-frontend",
+      "from": "backend-coder",
+      "to": "frontend-coder",
       "body": "Back end done. CI job 409 failed on 'Coverage of changed files': aging.rb at 90.91% < 95%. Added 3 aging_spec examples (unparseable signature time, refused 💣, refused deferral); aging.rb now 100%, rspec 2314/0, rubocop clean. No front-end change needed. Note #44 is already merged; this needs a fresh PR on main.",
       "read": "no"
     }
   ],
   "last-known-state": {
-    "luke-backend": {
+    "backend-coder": {
       "source": "harness",
       "at": "2026-10-15T10:12:59-07:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "agent pushed (origin/kig/convert-questions-to-choices) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I fixed the red CI that hansolo flagged on #44, and signed `Completed` with `--next hansolo-reviewer`."
+      "note": "agent pushed (origin/kig/convert-questions-to-choices) — the boundary is docs plus code, nothing leaves the machine; last ledger line: Completed, round 1; last seen: I fixed the red CI that staff-reviewer flagged on #44, and signed `Completed` with `--next staff-reviewer`."
     },
-    "rey-frontend": {
+    "frontend-coder": {
       "source": "harness",
       "at": "2026-10-15T10:10:58-07:00",
       "round": 1,

@@ -84,9 +84,9 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         "# Blocked\n\n## B1 Redis key layout\n\nShould keys carry the path?\n\n" \
         "## B2 Rebase\nanswers: yes, no\n\nShould I rebase onto main?\n")
       state = OpenLanes::Plans::PlanState.for(path_of("001.00"))
-      state.stage!(agent: "luke-backend", round: 1, status: "Blocked", from: "building", effort: "high")
-      state.sign!(agent: "luke-backend", round: 1, status: "Blocked", note: "technical", at: at)
-      state.record_last_known("rey-frontend",
+      state.stage!(agent: "backend-coder", round: 1, status: "Blocked", from: "building", effort: "high")
+      state.sign!(agent: "backend-coder", round: 1, status: "Blocked", note: "technical", at: at)
+      state.record_last_known("frontend-coder",
         OpenLanes::Plans::LastKnownState.new(source: "harness",
           round: 1,
           status: "Interrupted",
@@ -113,9 +113,9 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     let(:rows) do
-      [row("001.00", "luke-backend", model: "opus", up: 374_000, down: 26_400),
-       row("001.00", "rey-frontend"),
-       row("005.00", "hansolo-reviewer")]
+      [row("001.00", "backend-coder", model: "opus", up: 374_000, down: 26_400),
+       row("001.00", "frontend-coder"),
+       row("005.00", "staff-reviewer")]
     end
 
     let(:blocked_plan) { snapshot[:plans].find { it[:ordinal] == "001.00" } }
@@ -131,18 +131,18 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "has the fixture's keys at every level" do
       # Unacked mail fills `mail`, whose entries the fixture's keys describe.
-      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "luke-backend", to: "rey-frontend", body: "B1 landed")
+      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "backend-coder", to: "frontend-coder", body: "B1 landed")
       expect(shape(JSON.parse(JSON.generate(snapshot)))).to eq(shape(fixture))
     end
 
     it "counts unacked mail and carries each agent's resume record, and nothing for a plan without them" do
-      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "luke-backend", to: "rey-frontend", body: "B1 landed")
+      OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "backend-coder", to: "frontend-coder", body: "B1 landed")
 
       aggregate_failures do
         expect(blocked_plan[:unacked]).to eq(1)
         expect(blocked_plan[:status]).to include(key: "blocked", note: a_string_matching(/\S/))
-        expect(blocked_plan[:mail]).to match([{ from: "luke-backend", to: "rey-frontend", count: 1, since: anything }])
-        expect(blocked_plan[:last_known]).to match([{ agent: "rey-frontend", source: "harness", at: anything, round: 1,
+        expect(blocked_plan[:mail]).to match([{ from: "backend-coder", to: "frontend-coder", count: 1, since: anything }])
+        expect(blocked_plan[:last_known]).to match([{ agent: "frontend-coder", source: "harness", at: anything, round: 1,
           status: "Interrupted", next_step: "draw the panel", note: "harness died" }])
         expect(by_ordinal["005.00"].values_at(:unacked, :mail, :last_known)).to eq([0, [], []])
       end
@@ -154,10 +154,10 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
     it "lists the agents at each station from their definitions" do
       expect(snapshot[:stations].to_h { [it[:key], it[:agents]] }).to include(
-        "new"                => %w[leah-researcher],
-        "ready_for_planning" => %w[luthen-rael-planner],
-        "pr"                 => %w[palpatine-risk-assessor],
-        "in_review"          => %w[chewie-verifier hansolo-reviewer]
+        "new"                => %w[researcher],
+        "ready_for_planning" => %w[planner],
+        "pr"                 => %w[deploy-assessor],
+        "in_review"          => %w[staff-reviewer verifier]
       )
     end
 
@@ -176,7 +176,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         expect(blocked_plan[:questions].map { it[:heading] }).to eq(["B1 Redis key layout", "B2 Rebase"])
         expect(blocked_plan[:questions].map { it[:body] }).to eq(["Should keys carry the path?", "Should I rebase onto main?"])
         expect(blocked_plan[:questions].first).to include(id: "001.00/B1",
-          agent: "luke-backend",
+          agent: "backend-coder",
           owner: "technical",
           asked_at: "2026-10-13T09:00:00Z")
       end
@@ -243,7 +243,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     context "when a person has held a question and an agent" do
       before do
         run_state.hold_question("001.00/B1")
-        run_state.hold_car("001.00/rey-frontend")
+        run_state.hold_car("001.00/frontend-coder")
       end
 
       it "says so" do
@@ -300,7 +300,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     before do
-      OpenLanes::Plans::PlanState.for(path).sign!(agent: "luke-backend", round: 1, status: "Blocked", at: at - 86_400)
+      OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", at: at - 86_400)
     end
 
     it "lists every 💣, on the board or not, with its blocked.md and when it was blocked" do
@@ -353,8 +353,8 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     context "with two rejections, one ruling and the arbitrator running" do
       before do
         state = OpenLanes::Plans::PlanState.for(path_of("001.00"))
-        state.sign!(agent: "hansolo-reviewer", round: 1, status: "Completed", note: "rejected 1/3", at: at - 300)
-        state.sign!(agent: "chewie-verifier", round: 1, status: "Completed", note: "rejected: CI is red", at: at - 200)
+        state.sign!(agent: "staff-reviewer", round: 1, status: "Completed", note: "rejected 1/3", at: at - 300)
+        state.sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected: CI is red", at: at - 200)
         state.rule!(kind: "appeal",
           pr: 4,
           round: 1,
@@ -364,7 +364,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
           reason: "F1 stands",
           trigger: "appeal",
           at: at - 100)
-        state.stage!(agent: "obi-wan-kenobi-arbitrator", round: 1, status: "Started", started_at: at.iso8601)
+        state.stage!(agent: "arbitrator", round: 1, status: "Started", started_at: at.iso8601)
       end
 
       it "carries the count, the latest ruling and the marker" do
@@ -395,7 +395,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     before do
       building("001.00", "tax-rule-dsl")
       OpenLanes::Plans::PlanState.for(path_of("001.00"))
-                                 .stage!(agent: "luke-backend",
+                                 .stage!(agent: "backend-coder",
                                    round: 1,
                                    status: "Interrupted",
                                    note: "harness died",
@@ -404,11 +404,11 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     it "carries who, when and why, until the agent runs again" do
-      expect(snapshot[:plans].first[:interrupted]).to eq(agent: "luke-backend", at: "2026-10-13T08:00:00Z", note: "harness died")
+      expect(snapshot[:plans].first[:interrupted]).to eq(agent: "backend-coder", at: "2026-10-13T08:00:00Z", note: "harness died")
     end
 
     context "when the agent is running again" do
-      let(:rows) { [row("001.00", "luke-backend")] }
+      let(:rows) { [row("001.00", "backend-coder")] }
 
       it "carries nothing" do
         expect(snapshot[:plans].first[:interrupted]).to be_nil
@@ -419,7 +419,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
   describe "a car's context and next model" do
     before { building("001.00", "tax-rule-dsl") }
 
-    let(:rows) { [row("001.00", "luke-backend", model: "opus", context: 54_100)] }
+    let(:rows) { [row("001.00", "backend-coder", model: "opus", context: 54_100)] }
     let(:car) { snapshot[:plans].first[:cars].first }
 
     it "carries the context the stream reported, against the model's window" do
@@ -427,23 +427,23 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
 
     it "has no window for a model the catalogue does not know" do
-      rows.replace([row("001.00", "luke-backend", model: "codex:gpt-5-codex")])
+      rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
       expect(car.slice(:context, :context_limit)).to eq(context: nil, context_limit: nil)
     end
 
     it "names the model queued for the next round" do
-      run_state.choose_model("001.00/luke-backend", "claude-haiku-5-5")
+      run_state.choose_model("001.00/backend-coder", "claude-haiku-5-5")
       expect(car[:next_model]).to eq("claude-haiku-5-5")
     end
 
     it "names none once a round runs on it" do
-      run_state.choose_model("001.00/luke-backend", "claude-opus-5-5")
+      run_state.choose_model("001.00/backend-coder", "claude-opus-5-5")
       expect(car[:next_model]).to be_nil
     end
 
     it "names the sub-agents still running, and none for a row that has none" do
-      rows.replace([row("001.00", "luke-backend", running: %w[Explore leah-researcher]), row("001.00", "rey-frontend")])
-      expect(snapshot[:plans].first[:cars].map { it[:subagents] }).to eq([%w[Explore leah-researcher], []])
+      rows.replace([row("001.00", "backend-coder", running: %w[Explore researcher]), row("001.00", "frontend-coder")])
+      expect(snapshot[:plans].first[:cars].map { it[:subagents] }).to eq([%w[Explore researcher], []])
     end
   end
 
@@ -467,7 +467,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
   describe "an unclaimed plan" do
     before { building("001.00", "tax-rule-dsl") }
 
-    let(:rows) { [row("001.00", "luke-backend")] }
+    let(:rows) { [row("001.00", "backend-coder")] }
 
     it "is claimed by nobody, not by an empty name" do
       expect(snapshot[:plans].first[:claimed_by]).to be_nil
@@ -513,7 +513,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
           "003.00" => nil)
     end
 
-    it "calls hansolo's approval of an open pull request approved, though the plan is still at 👀" do
+    it "calls staff-reviewer's approval of an open pull request approved, though the plan is still at 👀" do
       expect(by_ordinal["001.00"][:pr]).to include(state: "approved", merged_at: nil)
     end
 
@@ -532,7 +532,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       meter.record(rows)
     end
 
-    let(:rows) { [row("001.00", "luke-backend", model: "codex:gpt-5-codex"), row("001.00", "rey-frontend", model: "zz:odd")] }
+    let(:rows) { [row("001.00", "backend-coder", model: "codex:gpt-5-codex"), row("001.00", "frontend-coder", model: "zz:odd")] }
 
     it "keeps each model's own name, and costs nothing on the meter" do
       expect([snapshot[:plans].first[:cars].map { it[:model] }, snapshot[:plans].first[:cost]]).to eq([%w[gpt-5-codex odd], 0.0])

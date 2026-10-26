@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   let(:root) { File.dirname(plans_root) }
   let(:agents) { OpenLanes::Agents::Registry.new }
-  let(:agent) { agents.find("yoda-writer") }
+  let(:agent) { agents.find("spec-writer") }
 
   # The seam. Nothing here starts a process; the fake plays back a stream.
   let(:stream) { [] }
@@ -136,33 +136,33 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     # exact commands is what replaced guessing the partner's session from
     # every Claude session on the machine.
     it "names the partner and the mailbox commands for an agent that has one" do
-      luke = agents.find("luke-backend")
-      rey = agents.find("rey-frontend")
-      paired = executor.invocation(luke, subject_plan, partners: [rey])[2]
+      backend_coder = agents.find("backend-coder")
+      frontend_coder = agents.find("frontend-coder")
+      paired = executor.invocation(backend_coder, subject_plan, partners: [frontend_coder])[2]
 
       expect(paired).to include(
         "## Mailbox",
-        "Your partner on this plan is `rey-frontend`",
+        "Your partner on this plan is `frontend-coder`",
         "kept in the\nplan's `state.json`",
-        "openlanes mail read --dir \"#{plans_root}\" --plan 000.00 --for luke-backend",
-        "openlanes mail send --dir \"#{plans_root}\" --plan 000.00 --from luke-backend --to rey-frontend"
+        "openlanes mail read --dir \"#{plans_root}\" --plan 000.00 --for backend-coder",
+        "openlanes mail send --dir \"#{plans_root}\" --plan 000.00 --from backend-coder --to frontend-coder"
       )
     end
 
     # Delivery says nothing about reading; only the reader can, so the
     # prompt asks for the ack right after the read (plan 003, B5).
     it "asks the reader to ack each message it reads" do
-      paired = executor.invocation(agents.find("luke-backend"), subject_plan, partners: [agents.find("rey-frontend")])[2]
+      paired = executor.invocation(agents.find("backend-coder"), subject_plan, partners: [agents.find("frontend-coder")])[2]
 
-      expect(paired).to include("openlanes mail ack --dir \"#{plans_root}\" --plan 000.00 --for luke-backend N")
+      expect(paired).to include("openlanes mail ack --dir \"#{plans_root}\" --plan 000.00 --for backend-coder N")
     end
 
     # `alock` signs a lock with the process fingerprint, which every sub-agent
     # of one `claude` shares, so the prompt names the holder explicitly.
     it "tells the agent to claim files with alock, under its own name" do
-      prompt = executor.invocation(agents.find("luke-backend"), subject_plan)[2]
+      prompt = executor.invocation(agents.find("backend-coder"), subject_plan)[2]
 
-      expect(prompt).to include("AGENT_ID=luke-backend alock acquire", "AGENT_ID=luke-backend alock release-all")
+      expect(prompt).to include("AGENT_ID=backend-coder alock acquire", "AGENT_ID=backend-coder alock release-all")
       expect(prompt).not_to include("agent-lock.sh")
     end
 
@@ -180,16 +180,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   describe "the clock" do
     it "takes the tighter of the agent's own budget and --timeout" do
-      luke = agents.find("luke-backend") # 1200 in frontmatter
+      backend_coder = agents.find("backend-coder") # 1200 in frontmatter
       aggregate_failures do
-        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(luke)).to eq(900)
-        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(luke)).to eq(1200)
+        expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(backend_coder)).to eq(900)
+        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(backend_coder)).to eq(1200)
       end
     end
 
     it "lets an agent's own clock stand when nobody passed --timeout" do
-      luke = agents.find("luke-backend") # 1200 in frontmatter
-      expect(described_class.new(root:, spawn:).timeout_for(luke)).to eq(1200)
+      backend_coder = agents.find("backend-coder") # 1200 in frontmatter
+      expect(described_class.new(root:, spawn:).timeout_for(backend_coder)).to eq(1200)
     end
 
     it "falls back to the default only for an agent that declares no clock of its own" do
@@ -219,16 +219,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   describe "the ledger section" do
-    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "luthen-rael-planner")[2] }
+    let(:prompt) { executor.invocation(agent, subject_plan, round: 2, successor: "planner")[2] }
 
     let(:sign) do
-      "openlanes state sign --dir \"#{plans_root}\" --plan 000.00 --agent yoda-writer --round 2"
+      "openlanes state sign --dir \"#{plans_root}\" --plan 000.00 --agent spec-writer --round 2"
     end
 
     it "tells the agent the exact commands to sign with, under its own name, round and successor" do
       aggregate_failures do
         expect(prompt).to include("#{sign} --status Started")
-        expect(prompt).to include("#{sign} --status Completed --next luthen-rael-planner")
+        expect(prompt).to include("#{sign} --status Completed --next planner")
       end
     end
 
@@ -247,18 +247,18 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     # What makes a restart after ctrl-c idempotent: a resume record on the
     # way out, and every agent reading it on the way in.
     context "with a control file" do
-      let(:controlled) { executor.invocation(agent, subject_plan, control: "/tmp/control-000.00-yoda-writer")[2] }
+      let(:controlled) { executor.invocation(agent, subject_plan, control: "/tmp/control-000.00-spec-writer")[2] }
 
       it "asks an interrupted agent for a resume record, and every agent to read one first" do
         expect(controlled).to include("INTERRUPT",
           "Interrupted",
-          "openlanes state resume --dir \"#{plans_root}\" --plan 000.00 --agent yoda-writer --round 1",
-          "\"last-known-state\".\"yoda-writer\"",
+          "openlanes state resume --dir \"#{plans_root}\" --plan 000.00 --agent spec-writer --round 1",
+          "\"last-known-state\".\"spec-writer\"",
           "mail read")
       end
 
       it "no longer asks for a RESUME mail to itself" do
-        expect(controlled).not_to include("--from yoda-writer --to yoda-writer")
+        expect(controlled).not_to include("--from spec-writer --to spec-writer")
       end
     end
   end
@@ -459,21 +459,21 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
-  describe "hansolo-reviewer, as the repository actually defines him" do
-    let(:hansolo) { OpenLanes::Agents::Registry.new(dir: "agents").all.find { |a| a.name == "hansolo-reviewer" } }
+  describe "staff-reviewer, as the repository actually defines him" do
+    let(:staff_reviewer) { OpenLanes::Agents::Registry.new(dir: "agents").all.find { |a| a.name == "staff-reviewer" } }
 
     # A verdict is a review label now (plan 005), set through `openlanes
     # review`, which refuses a passing one while CI is red. `gh pr review`
     # would be a second door around that rule.
     it "may comment, but not review: his verdict is a label" do
       aggregate_failures do
-        expect(denied(hansolo)).not_to include("Bash(gh pr comment:*)")
-        expect(denied(hansolo)).to include("Bash(gh pr review:*)", "Bash(gh pr edit:*)")
+        expect(denied(staff_reviewer)).not_to include("Bash(gh pr comment:*)")
+        expect(denied(staff_reviewer)).to include("Bash(gh pr review:*)", "Bash(gh pr edit:*)")
       end
     end
 
     it "may not merge, which is the line" do
-      expect(denied(hansolo)).to include("Bash(gh pr merge:*)", "Bash(git push:*)")
+      expect(denied(staff_reviewer)).to include("Bash(gh pr merge:*)", "Bash(git push:*)")
     end
   end
 
@@ -581,7 +581,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       it "registers one per invocation, names it in the prompt, and releases it after" do
         streaming.call(agent, subject_plan)
 
-        expect(prompts.first).to include("Control file", "control-000.00-yoda-writer")
+        expect(prompts.first).to include("Control file", "control-000.00-spec-writer")
         expect(Dir.children(@traces).grep(/^control-/)).to be_empty
       end
 
@@ -764,14 +764,14 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "tells an agent that can fan out to spend its budget concurrently" do
-      # No shipped agent dispatches sub-agents since leah stopped (A7), so
+      # No shipped agent dispatches sub-agents since researcher stopped (A7), so
       # the fan-out is granted here rather than read off a definition.
       fanning = agent.with(allowed_tools: [*agent.allowed_tools, "Task"])
       expect(prompt_for(fanning)).to include("one wave of concurrent sub-agents")
     end
 
     it "says nothing about concurrency to an agent without Task" do
-      planner = agents.find("luthen-rael-planner")
+      planner = agents.find("planner")
 
       expect(planner.allowed_tools).not_to include("Task")
       expect(prompt_for(planner)).not_to include("concurrent sub-agents")

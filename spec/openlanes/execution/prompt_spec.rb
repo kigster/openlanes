@@ -10,14 +10,14 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
       root: "/repo",
       profile:,
       round: 3,
-      successor: "hansolo-reviewer",
+      successor: "staff-reviewer",
       max_tokens: 1000,
       seconds: 120,
       denied: ["git push"],
       granted: ["gh pr review"]).to_s
   end
 
-  let(:agent) { OpenLanes::Agents.find("r2d2-mechanic") }
+  let(:agent) { OpenLanes::Agents.find("chores-coder") }
   let(:profile) { OpenLanes::Agents::Profile.resolve(agent) }
   let(:plan) do
     plans { |t| t.plan "001.00", :building, "task", files: { "spec.md" => spec_body, "plan.md" => "## Task\n" } }
@@ -34,11 +34,11 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
   end
 
   describe "a reviewer's rejection cap and struck findings (plan 015)" do
-    let(:agent) { OpenLanes::Agents.find("hansolo-reviewer") }
+    let(:agent) { OpenLanes::Agents.find("staff-reviewer") }
 
     def prompt = described_class.new(agent:, subject: plan, root: "/repo", profile:, max_rejections: -> { 3 }).to_s
 
-    it "gives hansolo the configured cap" do
+    it "gives staff-reviewer the configured cap" do
       expect(prompt).to include("`merge.max_rejections` is 3: sign `rejected N/3`", "No finding has been struck.")
     end
 
@@ -60,7 +60,7 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
       expect(prompt).to include("never to be raised again", "- F2 of review round 1: lib/a.rb:10 asks for an out-of-scope test")
     end
 
-    # hansolo numbers from F1 in every review: round 2's F2 is another finding.
+    # staff-reviewer numbers from F1 in every review: round 2's F2 is another finding.
     it "keeps the same id from two reviews apart" do
       strike("F2", review: 1)
       strike("F2", review: 2)
@@ -68,7 +68,7 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     end
 
     it "tells a builder nothing about the cap" do
-      builder = OpenLanes::Agents.find("luke-backend")
+      builder = OpenLanes::Agents.find("backend-coder")
       expect(described_class.new(agent: builder, subject: plan, root: "/repo", profile: OpenLanes::Agents::Profile.resolve(builder)).to_s)
         .not_to include("## Rejection cap")
     end
@@ -83,7 +83,7 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
   end
 
   it "names the round and the successor in the signing command" do
-    expect(text).to include("--round 3 --status Completed --next hansolo-reviewer")
+    expect(text).to include("--round 3 --status Completed --next staff-reviewer")
   end
 
   # The agent's PATH can hold an older release that has no `state sign`.
@@ -134,14 +134,14 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     expect(text).not_to include("Completion criteria")
   end
 
-  # r2d2-mechanic builds, so it carries the standing requirement even when
+  # chores-coder builds, so it carries the standing requirement even when
   # the spec states none; /repo names no justfile or Gemfile.
   it "requires the project's tests and linters to pass, though the spec says nothing" do
     expect(text).to include("Implementation requirements", "every test suite and linter the project defines passes")
   end
 
   context "when the agent writes documents, not code" do
-    let(:agent) { OpenLanes::Agents.find("leah-researcher") }
+    let(:agent) { OpenLanes::Agents.find("researcher") }
     let(:plan) do
       plans { |t| t.plan "001.00", :new, "task", files: { "spec.md" => spec_body } }
       OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first

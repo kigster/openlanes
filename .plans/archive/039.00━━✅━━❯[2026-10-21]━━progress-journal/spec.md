@@ -32,7 +32,7 @@ The draft's list is empty. The questions below are the ones its sections imply; 
 
 ## Research
 
-Round 1, `leah-researcher`. Anchors are `file:line` in this checkout unless marked otherwise.
+Round 1, `researcher`. Anchors are `file:line` in this checkout unless marked otherwise.
 
 ### Questions and answers
 
@@ -55,14 +55,14 @@ Round 1, `leah-researcher`. Anchors are `file:line` in this checkout unless mark
 **Findings**
 
 - The requirement is new code. Existing pieces are a per-tick snapshot, an untried Redis stream of 100 entries, and a log file. None is an event record.
-- Runtime relocation (plan 021) is done. The draft's "What already exists" still lists `StateFile` as if it were the place to build on, so yoda should describe it as a snapshot.
-- Plan 020.01 ("durable run events") covers overlapping ground. `decisions-on-distributed-engine-and-solid-refactor.md:22` says it "stays a separate plan". The draft does not mention it, so yoda should name it in Non-Goals.
+- Runtime relocation (plan 021) is done. The draft's "What already exists" still lists `StateFile` as if it were the place to build on, so spec-writer should describe it as a snapshot.
+- Plan 020.01 ("durable run events") covers overlapping ground. `decisions-on-distributed-engine-and-solid-refactor.md:22` says it "stays a separate plan". The draft does not mention it, so spec-writer should name it in Non-Goals.
 
 **Conclusion**
 
 Build the journal new, under the XDG state directory (`Runtime.dir`), with the schema in `schemas/` validated in specs. Reuse `Runtime`, `StateFile`'s stranded-run logic (`state_file.rb:245`) and the existing `JSONSchemer` spec pattern. Mirror to `EventBus` as the draft says. Do not reuse the agent `Journal`.
 
-**Could not settle** (for yoda's open questions)
+**Could not settle** (for spec-writer's open questions)
 
 1. Whether `fsync` runs per event or per tick. The engine ticks about once a second (`dispatcher.rb` comments), so per event is probably affordable, but no benchmark exists in the repo.
 2. Retention and rotation of the journal. Nothing in the repo answers this.
@@ -77,7 +77,7 @@ Build the journal new, under the XDG state directory (`Runtime.dir`), with the s
 
 **Test run**
 
-- `bundle exec rspec` at this checkout: 4075 examples, 0 failures, 9 pending, coverage 98.86%. Output in `/tmp/leah-rspec-039.txt`, outside the repository.
+- `bundle exec rspec` at this checkout: 4075 examples, 0 failures, 9 pending, coverage 98.86%. Output in `/tmp/researcher-rspec-039.txt`, outside the repository.
 
 **Sources**
 
@@ -128,18 +128,18 @@ Each item states its check.
 
 | Item | Builds it |
 | :--- | :--- |
-| 1 to 9 | `luke-backend` |
-| Front end | `rey-frontend`: nothing in this plan. No UI or API surface changes; the pair's contract is that the journal and `EventBus` payloads are the interface later UI plans consume. |
+| 1 to 9 | `backend-coder` |
+| Front end | `frontend-coder`: nothing in this plan. No UI or API surface changes; the pair's contract is that the journal and `EventBus` payloads are the interface later UI plans consume. |
 
 ## Open questions
 
 Defaults below are what the planner should assume unless a human says otherwise.
 
-1. **fsync cadence** (leah 1). Default: per event; ticks are about 1 s and events few. No benchmark exists.
-1. **Rotation and retention** (leah 2). Default: none in this plan; one file per run, named by run id and date, never truncated.
-1. **Replay vs snapshot** (leah 3). Default: journal sits beside `openlanes-state.json`; replacing it is a later plan.
-1. **Process start time source** (leah 4). Default: Linux `/proc/<pid>/stat`, macOS `ps -o lstart=` through an injectable seam, `nil` where unavailable; the engine process, not an agent, runs it. Unverified that the boundary allows it.
-1. **Persist `session_id`** (leah 5). Default: yes, in the journal only.
+1. **fsync cadence** (researcher 1). Default: per event; ticks are about 1 s and events few. No benchmark exists.
+1. **Rotation and retention** (researcher 2). Default: none in this plan; one file per run, named by run id and date, never truncated.
+1. **Replay vs snapshot** (researcher 3). Default: journal sits beside `openlanes-state.json`; replacing it is a later plan.
+1. **Process start time source** (researcher 4). Default: Linux `/proc/<pid>/stat`, macOS `ps -o lstart=` through an injectable seam, `nil` where unavailable; the engine process, not an agent, runs it. Unverified that the boundary allows it.
+1. **Persist `session_id`** (researcher 5). Default: yes, in the journal only.
 1. **Location.** The draft says `.openlanes/journal/`; production says XDG `Runtime.dir` (`runtime.rb:51`, plan 021 decision). Default: XDG. This overrides the issue text, so the "git-ignored" wording becomes moot.
 1. **Offset meaning.** Assumed to be a byte offset into the agent's trace file in `TRACE_DIR`; no reader exists today.
 

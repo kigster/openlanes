@@ -9,7 +9,7 @@ starts: planning
 
 An `openlanes setup` command that gets a machine ready to run the factory, from any directory:
 
-- Runs `brew bundle --no-upgrade --file <gem root>/Brewfile`, where the gem ships a `Brewfile` of the tools openlanes needs at runtime: at least `git`, `gh`, `redis`, `just` and `imagemagick` (chewie renders screenshots with `magick`), plus whatever else the engine and agents shell out to. The list is derived by checking the code, not guessed.
+- Runs `brew bundle --no-upgrade --file <gem root>/Brewfile`, where the gem ships a `Brewfile` of the tools openlanes needs at runtime: at least `git`, `gh`, `redis`, `just` and `imagemagick` (verifier renders screenshots with `magick`), plus whatever else the engine and agents shell out to. The list is derived by checking the code, not guessed.
 - Then checks what brew cannot install: the `claude` CLI is on `PATH`, `gh auth status` passes, and Redis answers on the URL openlanes would use.
 - Prints one line per check, ✓ or ✗, and for a ✗ the command that fixes it. It exits non-zero when any check fails.
 - `-n` / `--dry-run` prints what it would install and check and changes nothing.

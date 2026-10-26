@@ -28,10 +28,10 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
 
       > [!NOTE]
       >
-      > [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Completed, round 1 (approved) ]
+      > [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Completed, round 1 (approved) ]
     MD
   end
-  let(:agent) { OpenLanes::Agents.find("leah-researcher") }
+  let(:agent) { OpenLanes::Agents.find("researcher") }
   let(:state) { :researched }
   let(:run) { OpenLanes::Evals::Run.new(seconds: 61.6, tokens: 500) }
   let(:changes) { OpenLanes::Evals::Changes.new(paths: %w[lib/a.rb spec/a_spec.rb], lines: 12) }
@@ -86,7 +86,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
     "Completed with another note" => [{ note: "rejected" }, false, "signed Completed (approved), expected rejected"]
 
   context "when the agent stopped short" do
-    let(:files) { { "spec.md" => "> [2026-09-04 11:29:20 AM PDT] [ agent: leah-researcher   status: Started, round 1 ]\n" } }
+    let(:files) { { "spec.md" => "> [2026-09-04 11:29:20 AM PDT] [ agent: researcher   status: Started, round 1 ]\n" } }
     let(:kind) { :signed }
     let(:args) { { note: nil } }
 
@@ -101,7 +101,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
     let(:args) { { note: nil } }
 
     it "names the documents it should have signed" do
-      expect(verdict.detail).to eq("leah-researcher signed none of spec.md")
+      expect(verdict.detail).to eq("researcher signed none of spec.md")
     end
   end
 
@@ -198,7 +198,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
 
     let(:kase) do
       OpenLanes::Evals::Case.new(id: "x",
-        agent: "leah-researcher",
+        agent: "researcher",
         depth: :fast,
         description: "",
         path: "/x.yml",
