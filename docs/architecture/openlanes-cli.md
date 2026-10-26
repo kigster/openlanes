@@ -9,11 +9,6 @@ classDiagram
   class OpenLanes__CLI__API__Docs["API::Docs"]
   class OpenLanes__CLI__Agents__Describe["Agents::Describe"]
   class OpenLanes__CLI__Agents__List["Agents::List"]
-  class OpenLanes__CLI__App__Registry["App::Registry"]
-  <<module>> OpenLanes__CLI__App__Registry
-  class OpenLanes__CLI__App__Start["App::Start"]
-  class OpenLanes__CLI__App__Status["App::Status"]
-  class OpenLanes__CLI__App__Stop["App::Stop"]
   class OpenLanes__CLI__Base["Base"]
   class OpenLanes__CLI__Coverage["Coverage"]
   class OpenLanes__CLI__Create["Create"]
@@ -32,6 +27,11 @@ classDiagram
   class OpenLanes__CLI__Mail__Read["Mail::Read"]
   class OpenLanes__CLI__Mail__Render["Mail::Render"]
   class OpenLanes__CLI__Mail__Send["Mail::Send"]
+  class OpenLanes__CLI__Preview__Registry["Preview::Registry"]
+  <<module>> OpenLanes__CLI__Preview__Registry
+  class OpenLanes__CLI__Preview__Start["Preview::Start"]
+  class OpenLanes__CLI__Preview__Status["Preview::Status"]
+  class OpenLanes__CLI__Preview__Stop["Preview::Stop"]
   class OpenLanes__CLI__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__CLI__Resync__Prs["Resync::Prs"]
   class OpenLanes__CLI__Review["Review"]
@@ -100,22 +100,6 @@ classDiagram
   OpenLanes__CLI__Agents__Describe ..> OpenLanes__Error : uses
   OpenLanes__CLI__Agents__Describe ..|> OpenLanes__UI : includes
   OpenLanes__CLI__Agents__List ..|> OpenLanes__UI : includes
-  OpenLanes__CLI__App__Registry ..> OpenLanes__Plans__Ordinal : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__Apps__Supervisor : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__Apps__Supervisor__StartFailed : uses
-  OpenLanes__CLI__App__Start ..|> OpenLanes__CLI__App__Registry : includes
-  OpenLanes__CLI__App__Start --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__App__Start ..> OpenLanes__Config : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__Error : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__Live__Unavailable : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__Plans__Ordinal : uses
-  OpenLanes__CLI__App__Start ..> OpenLanes__UI : uses
-  OpenLanes__CLI__App__Status ..|> OpenLanes__CLI__App__Registry : includes
-  OpenLanes__CLI__App__Status --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__App__Status ..> OpenLanes__UI : uses
-  OpenLanes__CLI__App__Stop ..|> OpenLanes__CLI__App__Registry : includes
-  OpenLanes__CLI__App__Stop --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__App__Stop ..> OpenLanes__UI : uses
   OpenLanes__CLI__Base ..> OpenLanes__Config : uses
   OpenLanes__CLI__Base ..> OpenLanes__Error : uses
   OpenLanes__CLI__Base ..|> OpenLanes__UI : includes
@@ -181,6 +165,22 @@ classDiagram
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__Feature : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Preview__Registry ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor__StartFailed : uses
+  OpenLanes__CLI__Preview__Start --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Preview__Start ..|> OpenLanes__CLI__Preview__Registry : includes
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Config : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Preview__Status --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Preview__Status ..|> OpenLanes__CLI__Preview__Registry : includes
+  OpenLanes__CLI__Preview__Status ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Preview__Stop --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Preview__Stop ..|> OpenLanes__CLI__Preview__Registry : includes
+  OpenLanes__CLI__Preview__Stop ..> OpenLanes__UI : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Review --|> OpenLanes__CLI__Base : inherits
