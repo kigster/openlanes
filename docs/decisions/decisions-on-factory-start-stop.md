@@ -38,6 +38,19 @@ Separately, the web server outlived the engine more than once. `Web::Launcher` s
 - It never serves the control room and always ends at the fixed point. `--web`, `--open`, `--port`, the listen and admin-credential flags, `--stay` and `--until-settled` are removed.
 - `-n`, `-j` and the per-agent flags stay.
 
+### C6. `run --until <state>` ends a run early, for dogfooding
+
+`openlanes run 050 --until <state>` ends as soon as every listed plan has reached that state (a status key or its emoji), or has passed it on its lane. Together with `starts:` in `spec.md` it runs one slice of the pipeline at a time, so openlanes can be tried on its own plans in short bursts:
+
+| `starts:`  | `--until`          | Exercises                                     |
+| :--------- | :----------------- | :-------------------------------------------- |
+| `planning` | `building`         | the planner                                   |
+| `building` | `ready-for-review` | the builders                                  |
+| `building` | (none)             | building, review and verification, to the end |
+
+- Where a plan starts stays in `starts:`, and in the folder's name for a folder made by hand. There is no `--from`: it would say a second time what `starts:` says, and the two could disagree.
+- A run that reaches review opens a real pull request on this repository. That is wanted: the pull request is reviewed like any other, by a person or by the session that started the run, and merged or closed on its merits. `--no-git-push` keeps one local.
+
 ### C5. `web` is internal
 
 `openlanes web` stays only as the hidden entry point the supervisor spawns. Running it on its own is how a page came to outlive its engine.
