@@ -53,15 +53,21 @@ module OpenLanes
     # one variable switches all three off together.
     #
     # @return [void] never returns; exits with the command's status
+    #
+    # A command that raises fails, whatever it raised. `code` starts at 1 and
+    # becomes 0 only once the command returns, because the `ensure` below
+    # exits in place of any exception still in flight: a LoadError, which is
+    # a ScriptError and so no StandardError, once left `openlanes --help`
+    # printing nothing and exiting 0.
     def execute!
       ENV["NO_COLOR"] = "1" if NO_COLOR_FLAGS.intersect?(argv)
-      code = 0
+      code = 1
       Dry::CLI.new(::OpenLanes::CLI).call(arguments: argv - NO_COLOR_FLAGS)
+      code = 0
     rescue SystemExit => e
       code = e.status
-    rescue StandardError => e
+    rescue StandardError, ScriptError => e
       stderr.puts UI.paint("Error: #{e.message}", :red)
-      code = 1
     ensure
       kernel.exit(code)
     end
