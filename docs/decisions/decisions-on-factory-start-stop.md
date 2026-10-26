@@ -84,6 +84,45 @@ The engine and web restarting each other was considered and rejected: `stop` bec
 
 `--background` sends what would have gone to the terminal to `log/openlanes-start.log`.
 
+### S5. Every process names itself
+
+Each process sets its title (`Process.setproctitle`; Puma through its `tag` option), lower case and hyphenated, with live status in brackets the way Sidekiq does:
+
+```
+openlanes-supervisor [myproj] up 2h, 1 restart
+├── openlanes-engine [myproj] 3 of 8 agents busy
+│   └── openlanes-agent [005 backend-coder] 4m12s 38k tokens   (S6)
+└── puma 8.0.2 (tcp://127.0.0.1:11000) [openlanes-web myproj]
+openlanes-run [myproj] 005,006
+```
+
+`pgrep -f openlanes-` finds every one, and the project name tells two factories apart. On macOS, `ps aux` and `pgrep -f` show the title; Activity Monitor and `ps -c` still say `ruby`.
+
+### S6. An agent supervisor between the engine and each agent
+
+Built as a plan of its own, right after S1.
+
+Today the engine spawns each agent CLI as its own child (`Execution::Child`) and reads it through a pipe, so an engine that dies or is restarted takes every running agent with it. A small `openlanes-agent` process per agent owns the CLI instead, so an agent outlives a restart of the engine:
+
+- It writes the transcript to a file in the trace directory and, when the agent ends, its exit status beside it. The engine follows the file. A pipe to the engine (`popen3`) was rejected: the engine's death would close it and end the run.
+- It writes `tmp/pids/agent-<plan>-<agent>.pid`. A restarted engine finds those files and reattaches to the runs still going.
+- Stops reach it as signals (S7). The timeout clock, the controls and the transcript reader move from the pipe to the file.
+- Cost: one more Ruby process per agent, roughly 30 to 50 MB each.
+
+### S7. Shutdown gives agents 60 seconds to wrap up
+
+| Signal, to                | Means                                                                                                      |
+| :------------------------ | :--------------------------------------------------------------------------------------------------------- |
+| TERM, to the supervisor   | Graceful shutdown: stop dispatching, USR1 to every agent supervisor, wait out the grace, TERM what is left, then the engine and the web |
+| USR1, to an agent supervisor | Write `INTERRUPT` into its agent's control file                                                         |
+| TERM, to an agent supervisor | Stop now: TERM to the agent's process group, KILL after `Child::TERM_GRACE`                             |
+| TERM, to the engine       | Exit at once and leave the agents running; the supervisor restarts it and it reattaches (S6). Until S6 is built, the same as a graceful shutdown |
+| A second TERM, or Ctrl-C twice | Skip the grace and stop everything now                                                                |
+
+- The grace is 60 seconds, the same as `Execution::Control::GRACE`. `$OPENLANES_SHUTDOWN_GRACE` is its only override, as with S3. Agents that finish sooner end the wait sooner.
+- An agent is told through its control file (`execution/control.rb`), not a signal and not stream-json. The model never sees a signal: the CLI receives it, and SIGUSR1's default action is to terminate. The control file is named in every agent's prompt and read at each step, so it works for claude, codex, pi, grok and gemini alike, and `INTERRUPT` already means "the run will be started again: leave a resume note".
+- Little is lost even at the deadline: the CLI keeps the session on disk as it goes (M1 in [decisions-on-agent-memory-and-sessions.md](decisions-on-agent-memory-and-sessions.md)), the journal reaches `state.json` line by line (M2), and the files stay in the plan's worktree. The next start resumes each interrupted session with its journal.
+
 ## Not adopted
 
 ### X1. Sidekiq
