@@ -25,27 +25,6 @@ module OpenLanes
       # Bare `openlanes` prints its help. It used to print the plan table, which
       # meant the one command that reads a tree was also the one you got by accident.
       @argv = argv.empty? ? %w(-h) : argv
-
-      # `run --push-pr` takes an OPTIONAL part letter: bare means "continue this
-      # plan"s sequence", `--push-pr C` means "use C". dry-cli has no optional-value
-      # option, so the bare form is filled in here rather than made to look like a
-      # mistake.
-      #
-      # Scoped to `run`, and to the long spelling when it is not. This rewrote every
-      # `-p` in every command for a while, which quietly turned
-      # `linear import TAX -p "Some Project"` into `-p auto "Some Project"` — the
-      # option took "auto" and the project name became a stray argument. A global
-      # rewrite of a one-letter flag will collide with the next command that wants
-      # it; this one collided within the week.
-      return unless argv.first == "run"
-
-      @argv = argv.each_with_object([]) do |token, out|
-        out << token
-        next unless ["--push-pr", "-p"].include?(token)
-
-        following = argv[argv.index(token) + 1]
-        out << "auto" unless following&.match?(/\A[A-Z]\z/)
-      end
     end
 
     # `--no-color` becomes NO_COLOR rather than a setting of its own: the help
