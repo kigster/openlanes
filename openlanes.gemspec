@@ -59,7 +59,7 @@ Gem::Specification.new do |spec|
     # Source maps stay out: they double the page's size for nobody who installs it.
     globbed = Dir.glob(["*.gemspec", "lib/**/*.rb", "agents/*.md", "schemas/*.json",
                         "evals/cases/**/*", "skills/**/*",
-                        "exe/*", "web/dist/**/*", "web/src/api/fixtures/board.json",
+                        "exe/*", "libexec/*", "web/dist/**/*", "web/src/api/fixtures/board.json",
                         "Brewfile",
                         "bin/ol-tee"])
     globbed.select { |f| File.file?(f) && !f.end_with?(".map") }
