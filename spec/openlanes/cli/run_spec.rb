@@ -15,12 +15,6 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   # Redis a developer's machine happens to run.
   let(:live_store) { OpenLanes::Live.memory_store }
 
-  # The control room is a process of its own; the suite never spawns it, and
-  # never opens a browser.
-  let(:web) do
-    instance_double(OpenLanes::Web::Launcher, ready?: true, port: 11_000, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
-  end
-
   # STDERR as it was written, before strip_ansi: what a terminal received.
   let(:raw) { {} }
 
@@ -31,9 +25,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       original.call(**keywords, sleeper: ->(_) {}, quality_gate: nil)
     end
     allow(OpenLanes::Live).to receive(:connect).and_return(live_store)
-    allow(web).to receive(:start).and_return(web)
-    allow(OpenLanes::Web).to receive(:launcher).and_return(web)
-    allow(OpenLanes::Web).to receive(:open)
+    allow(OpenLanes::Web).to receive(:launcher)
   end
 
   # The loop sleeps a second between ticks. Every example hands the runner
@@ -51,11 +43,14 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
   # What dry-cli hands the command for +argv+: typed flags over `.openlanes.yml`
   # over the built-in defaults, as a real run sees them.
   def typed(*argv)
-    Dry::CLI::Parser.call(described_class, argv, "openlanes run").arguments
-                    .except(:dir, :isolation).merge(dry_run: false, until_settled: true)
+    Dry::CLI::Parser.call(described_class, ["001", *argv], "openlanes run").arguments
+                    .except(:dir, :isolation, :plans).merge(dry_run: false)
   end
 
-  def run(**)
+  # Every plan the example's tree holds, as the plans argument names them.
+  def every_plan = OpenLanes::Plans.tree(plans_root).subjects.map { it.feature.ordinal.to_s }.join(",")
+
+  def run(plans: every_plan, **)
     out = CapturedStream.new
     err = CapturedStream.new
     status = 0
@@ -65,13 +60,11 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     begin
       # The log always lands in the example's own temp dir, never in the
       # shared system one where parallel suites would interleave into it.
-      # --until-settled, because a run with its control room up otherwise
-      # stays until it is stopped; "the control room" says what it does.
-      command.call(dir: plans_root,
+      command.call(plans:,
+        dir: plans_root,
         isolation: "shared",
         log: File.join(plans_root, "..", "progress.log"),
         dry_run: true,
-        until_settled: true,
 **)
     rescue SystemExit => e
       status = e.status
@@ -116,7 +109,7 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       original_out, original_err = $stdout, $stderr
       $stdout, $stderr = out, err
       begin
-        command.call(dir: plans_root, dry_run: true)
+        command.call(plans: "001", dir: plans_root, dry_run: true)
       rescue SystemExit => e
         status = e.status
       ensure
@@ -408,14 +401,14 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
-  describe "--plan" do
+  describe "the plans argument" do
     before do
       building_plan
       building_plan("002.00", "schedule-k1")
     end
 
     it "runs exactly the plans named and no others" do
-      out, = run(plan: "002")
+      out, = run(plans: "002")
 
       expect(out).to include("002.00")
       expect(out).not_to include("001.00\t")
@@ -424,10 +417,19 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     # A typo'd number silently running the whole tree is the failure scoping
     # exists to prevent, so an unknown one stops the run outright.
     it "refuses a number the tree does not hold" do
-      _out, err, status = run(plan: "002,009")
+      _out, err, status = run(plans: "002,009")
 
       expect(unwrapped(err)).to include("No plan 009", "001.00, 002.00")
       expect(status).to eq(66)
+    end
+
+    # The whole tree is the factory's: `openlanes start`.
+    it "refuses an empty list, pointing at start" do
+      expect(run(plans: " , ")).to match([anything, include("openlanes start runs the whole tree"), 64])
+    end
+
+    it "is required" do
+      expect(described_class.required_arguments.map(&:name)).to eq([:plans])
     end
   end
 
@@ -768,20 +770,13 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
     def boxes = err.scan("─ Info ─").size
 
-    it "holds the log, the board and the control room in one box, labels aligned" do
+    it "holds the log, the board and the plans it holds in one box, labels aligned" do
       aggregate_failures do
         expect(boxes).to eq(1)
         expect(err).to match(%r{│  Log: +/\S+}).and include("progress.log")
-        expect(err).to match(%r{│  Live board:   memory:// as \S+})
-        expect(err).to include('│  Control room: http://127.0.0.1:11000')
-      end
-    end
-
-    context "with --no-web" do
-      let(:result) { run(dry_run: false, rounds: 1, web: false) }
-
-      it "leaves the control room out" do
-        expect([boxes, err]).to match([1, satisfy { !it.include?("Control room") && it.include?("Live board:") }])
+        expect(err).to match(%r{│  Live board: memory:// as \S+})
+        expect(err).to include("│  Holding:    001.00")
+        expect(err).not_to include("Control room")
       end
     end
 
@@ -790,22 +785,6 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
 
       it "says only where the log is" do
         expect([boxes, err]).to match([1, satisfy { !it.include?("Live board") && it.include?("Log:") }])
-      end
-    end
-
-    context "when the engine stays up with its page" do
-      before do
-        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! })
-        end
-      end
-
-      after { OpenLanes::Execution::Control.reset! }
-
-      let(:result) { run(dry_run: false, rounds: 1, until_settled: false) }
-
-      it "says so in the same box" do
-        expect([boxes, unwrapped(err)]).to match([1, include("Control room:", "The engine stays up with its control room")])
       end
     end
 
@@ -818,198 +797,84 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
-  describe "the control room" do
-    subject(:stderr) { unwrapped(result[1]) }
-
-    let(:result) { run(dry_run: false, rounds: 1, port: "4848") }
-
+  describe "headless" do
     before do
+      building_plan
+      with_executor
+      allow(OpenLanes::Live).to receive(:session).and_call_original
+      run(dry_run: false, rounds: 1)
+    end
+
+    it "starts no control room" do
+      expect(OpenLanes::Web).not_to have_received(:launcher)
+    end
+
+    # A person's merge is the factory's to wait for.
+    it "ends at the fixed point, watching no pull request" do
+      expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay, :watch))
+    end
+
+    it "is a node of its own on the board, so its claims are not the factory's" do
+      expect(OpenLanes::Live).to have_received(:session).with(hash_including(node: having_attributes(role: "run-#{Process.pid}")))
+    end
+  end
+
+  describe "--until" do
+    let!(:executor) do
       building_plan
       with_executor
     end
 
-    it "starts beside the run on the store the board is published to, and prints its URL" do
+    it "hands the runner the state it names, by key" do
+      run(dry_run: false, rounds: 1, until: "ready_for_review")
+      expect(OpenLanes::Engine::Runner).to have_received(:new)
+        .with(hash_including(stop_at: OpenLanes::Plans.status(:ready_for_review)))
+    end
+
+    it "takes an emoji" do
+      run(dry_run: false, rounds: 1, until: OpenLanes::Plans.status(:planned).emoji)
+      expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stop_at: OpenLanes::Plans.status(:planned)))
+    end
+
+    # A plan already at the state asked for gets no agent at all.
+    it "starts no agent on a plan already there" do
+      run(dry_run: false, rounds: 1, until: "building")
+      expect(executor).not_to have_received(:call)
+    end
+
+    # A status answers to its key and its emoji, and to nothing else.
+    it "refuses a word that names no state, listing the keys" do
+      expect(run(dry_run: false, until: "ready-for-review")).to match([anything, include("names no state", "ready_for_review"), 64])
+    end
+  end
+
+  describe "a plan another engine holds" do
+    let!(:executor) do
+      building_plan
+      building_plan("002.00", "schedule-k1")
+      with_executor
+    end
+    let(:root) { File.dirname(plans_root) }
+    let(:factory) { OpenLanes::Live::Node.current(root:).name }
+    let(:keys) { OpenLanes::Live::Keys.new(repo: OpenLanes::Live::Repo.for(root), node: factory) }
+    let(:result) { run(dry_run: false, rounds: 1) }
+
+    before do
+      OpenLanes::Live::Claims.new(store: live_store, keys:).claim(OpenLanes::Plans::Ordinal.parse("002"))
+    end
+
+    it "refuses the whole command, naming the holder" do
+      expect(result).to match([anything, include("002.00: held by this checkout's factory (openlanes start)"), 75])
+    end
+
+    it "starts no agent, not even on the plan nobody holds" do
       result
-      aggregate_failures do
-        expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root),
-          plans_dir: plans_root,
-          port: 4848,
-          redis_url: "memory://",
-          listen: OpenLanes::Web::Listen.parse(nil),
-          credentials: nil)
-        expect(stderr).to include("Control room: http://127.0.0.1:11000")
-      end
+      expect(executor).not_to have_received(:call)
     end
 
-    context "with -I and a login" do
-      let(:result) { run(dry_run: false, rounds: 1, port: "4848", all_interfaces: true, admin_credentials: "admin:s3cret") }
-
-      it "hands the server the addresses and the login, and says it answers elsewhere behind it" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Web).to have_received(:launcher)
-            .with(hash_including(listen: OpenLanes::Web::Listen.parse("0.0.0.0"),
-              credentials: OpenLanes::Web::AdminAuth.parse("admin:s3cret")))
-          expect(stderr).to include("behind a login")
-        end
-      end
-    end
-
-    it "refuses -I without a login, before any agent starts" do
-      expect(run(dry_run: false, all_interfaces: true)).to match([anything, include("needs a login"), 64])
-    end
-
-    it "names the port it asked for when the server had to move off it" do
+    it "leaves no claim of its own behind" do
       result
-      expect(stderr).to include("Control room: http://127.0.0.1:11000 (4848 was taken)")
-    end
-
-    it "opens the browser" do
-      result
-      expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000")
-    end
-
-    it "stops it when the run ends" do
-      result
-      expect(web).to have_received(:stop)
-    end
-
-    context "without --until-settled" do
-      # Stops the run the way Stop All Local does, once it has idled a while.
-      before do
-        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-          ticks = 0
-          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! if (ticks += 1) > 3 })
-        end
-      end
-
-      after { OpenLanes::Execution::Control.reset! }
-
-      let(:result) { run(dry_run: false, rounds: 1, until_settled: false) }
-
-      it "keeps the engine up past the fixed point, until it is stopped" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
-          expect(OpenLanes::Engine::Runner).to have_received(:new)
-            .with(hash_including(watch: an_instance_of(OpenLanes::Engine::PrWatch)))
-          expect(stderr).to include("The engine stays up with its control room: Stop All Local or Ctrl-C ends it.")
-          expect(web).to have_received(:stop)
-        end
-      end
-    end
-
-    context "with --no-web --stay, the page served apart" do
-      before do
-        allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-          ticks = 0
-          original.call(**keywords, sleeper: ->(_) { OpenLanes::Execution::Control.quit! if (ticks += 1) > 3 })
-        end
-      end
-
-      after { OpenLanes::Execution::Control.reset! }
-
-      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false, stay: true) }
-
-      it "starts no server, and stays up for the page all the same" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Web).not_to have_received(:launcher)
-          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
-          expect(stderr).to include("The engine stays up for the control room `openlanes web` serves")
-        end
-      end
-
-      it "warns about nothing it cannot keep" do
-        expect(stderr).not_to include("--stay")
-      end
-    end
-
-    context "with --no-web --stay but no Redis" do
-      before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
-
-      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false, stay: true) }
-
-      it "says the run ends at the fixed point, and ends there" do
-        result
-        aggregate_failures do
-          expect(stderr).to include("--stay needs the live board (Redis) a separate page reads, and this run has none, " \
-                                    "so it ends at the first fixed point.")
-          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
-        end
-      end
-    end
-
-    context "with --stay and --until-settled" do
-      let(:result) { run(dry_run: false, rounds: 1, web: false, stay: true) }
-
-      it "says --stay is ignored, once, and ends at the fixed point" do
-        result
-        aggregate_failures do
-          expect(stderr.scan("--stay is ignored with --until-settled").size).to eq(1)
-          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
-        end
-      end
-    end
-
-    context "with --no-web alone" do
-      let(:result) { run(dry_run: false, rounds: 1, until_settled: false, web: false) }
-
-      it "ends at the fixed point" do
-        result
-        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay, :watch))
-      end
-    end
-
-    context "with --until-settled" do
-      it "ends at the fixed point, as CI wants, watching no pull request" do
-        result
-        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay, :watch))
-      end
-    end
-
-    context "with --no-open" do
-      let(:result) { run(dry_run: false, rounds: 1, open: false) }
-
-      it "only prints the URL" do
-        aggregate_failures do
-          expect(stderr).to include("Control room: http://127.0.0.1:11000")
-          expect(OpenLanes::Web).not_to have_received(:open)
-        end
-      end
-    end
-
-    context "with --no-web" do
-      let(:result) { run(dry_run: false, rounds: 1, web: false) }
-
-      it "runs headless, and ends at the fixed point" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Web).not_to have_received(:launcher)
-          expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_excluding(:stay))
-        end
-      end
-    end
-
-    context "without Redis" do
-      before { allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable") }
-
-      it "runs headless, since there is no board to show" do
-        result
-        expect(OpenLanes::Web).not_to have_received(:launcher)
-      end
-    end
-
-    context "when the server does not come up" do
-      before { allow(web).to receive(:ready?).and_return(false) }
-
-      it "says so, points at its log, and goes on without it" do
-        aggregate_failures do
-          expect(stderr).to include("The control room did not answer on http://127.0.0.1:11000", "/tmp/web.log")
-          expect(OpenLanes::Web).not_to have_received(:open)
-          expect(web).to have_received(:stop)
-        end
-      end
+      expect(OpenLanes::Live::Claims.new(store: live_store, keys:).held_by(OpenLanes::Plans::Ordinal.parse("001"))).to be_nil
     end
   end
 end

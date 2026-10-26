@@ -81,12 +81,17 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
       expect(parse("--dry-run").error?).to be(true)
     end
 
-    it "leaves out --no-web, since the page is the only way in" do
-      expect(parse("--no-web").error?).to be(true)
+    it "takes --plan, since it has no plans argument" do
+      expect(parse("--plan", "005").arguments).to include(plan: "005")
     end
 
-    it "leaves out --until-settled, since it never ends on its own" do
-      expect(parse("--until-settled").error?).to be(true)
+    it "takes no plans argument" do
+      expect(described_class.arguments).to be_empty
+    end
+
+    # A factory that stops its plans part way is a run.
+    it "leaves out --until" do
+      expect(parse("--until", "planned").error?).to be(true)
     end
 
     it "is listed with the agents in help" do
@@ -246,6 +251,95 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
 
     it "stops the server it started" do
       expect(web).to have_received(:stop)
+    end
+  end
+
+  describe "the control room" do
+    subject(:stderr) { unwrapped(result[1]) }
+
+    before { asked }
+
+    let(:result) { start(port: "4848") }
+
+    it "starts on the store the board is published to, at the port asked for" do
+      result
+      expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root),
+        plans_dir: plans_root,
+        port: 4848,
+        redis_url: "memory://",
+        listen: OpenLanes::Web::Listen.parse(nil),
+        credentials: nil)
+    end
+
+    it "names the port it asked for when the server had to move off it" do
+      expect(stderr).to include("Control room: http://127.0.0.1:11000 (4848 was taken)")
+    end
+
+    context "with -I and a login" do
+      let(:result) { start(open: false, all_interfaces: true, admin_credentials: "admin:s3cret") }
+
+      it "hands the server the addresses and the login, and says it answers elsewhere behind it" do
+        result
+        aggregate_failures do
+          expect(OpenLanes::Web).to have_received(:launcher)
+            .with(hash_including(listen: OpenLanes::Web::Listen.parse("0.0.0.0"),
+              credentials: OpenLanes::Web::AdminAuth.parse("admin:s3cret")))
+          expect(stderr).to include("behind a login")
+        end
+      end
+    end
+
+    it "refuses -I without a login, before any agent starts" do
+      expect(start(all_interfaces: true)).to match([anything, include("needs a login"), 64])
+    end
+
+    context "with --no-open" do
+      let(:result) { start(open: false) }
+
+      it "only prints the URL" do
+        aggregate_failures do
+          expect(stderr).to include("Control room: http://127.0.0.1:11000")
+          expect(OpenLanes::Web).not_to have_received(:open)
+        end
+      end
+    end
+  end
+
+  describe "--no-web, the page served apart" do
+    before { asked }
+
+    let!(:result) { start(web: false) }
+
+    it "starts no server, and stays up for the page all the same" do
+      aggregate_failures do
+        expect(OpenLanes::Web).not_to have_received(:launcher)
+        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
+        expect(unwrapped(result[1])).to include("The engine stays up for the control room `openlanes web` serves")
+      end
+    end
+  end
+
+  # O1 from the factory's side: a plan `openlanes run` holds is another
+  # node's, stepped around rather than refused.
+  describe "a plan a run holds" do
+    before do
+      asked
+      plans { |t| t.plan "003.00", :building, "dice", files: { "spec.md" => spec_body, "plan.md" => "# Plan" } }
+      OpenLanes::Live::Claims.new(store: live_store, keys: run_keys).claim(OpenLanes::Plans::Ordinal.parse("003"))
+    end
+
+    let(:root) { File.dirname(plans_root) }
+    let(:run_keys) do
+      OpenLanes::Live::Keys.new(repo: OpenLanes::Live::Repo.for(root), node: OpenLanes::Live::Node.current(root:, role: "run-1").name)
+    end
+
+    let!(:result) { start(open: false) }
+
+    it "starts no agent on it, and stays up" do
+      aggregate_failures do
+        expect(executor).not_to have_received(:call)
+        expect(result.last).to eq(0)
+      end
     end
   end
 

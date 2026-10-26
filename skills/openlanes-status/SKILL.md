@@ -14,8 +14,8 @@ Load the `openlanes` skill first if it is not in context. Every command here onl
 | which agents ran on a plan, how long, what model | `openlanes state show --plan <NNN> \| jq '.stages[] \| {agent, round, status, model, seconds}'` |
 | what one agent told another                      | `openlanes mail read --plan <NNN> --for <agent>`                |
 | what a blocked plan is waiting on                | `openlanes unblock <NNN> -n`                                    |
-| which agent picks a plan up next                 | `openlanes run -n --plan <NNN>`                                 |
-| watch a run live                                 | the control room URL `openlanes run` printed; for a `--no-web` run, `openlanes web` |
+| which agent picks a plan up next                 | `openlanes run <NNN> -n`                                 |
+| watch a run live                                 | the control room URL `openlanes start` printed; for an `openlanes run`, `openlanes web` |
 | see the control room with no run, or no Redis    | `openlanes web --demo` (a sample run)                           |
 
 ## Reporting

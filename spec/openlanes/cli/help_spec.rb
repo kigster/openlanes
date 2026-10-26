@@ -32,8 +32,8 @@ RSpec.describe "openlanes --help" do
     expect(screen).to match(/^  plans /).and match(/^  project, preview /).and(not_match(/^  (list-plans|app)\b/))
   end
 
-  it "says that start is web and run in one" do
-    expect(screen).to include("web + run in one")
+  it "says that start is the factory, and run works the plans named" do
+    expect(screen).to include("The factory: the engine and its control room", "openlanes run 005,006")
   end
 
   it "lists review under headless operation" do

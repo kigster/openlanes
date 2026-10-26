@@ -87,7 +87,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Events : 5
   OpenLanes__Engine ..> OpenLanes__Execution : 11
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 8
-  OpenLanes__Engine ..> OpenLanes__Live : 9
+  OpenLanes__Engine ..> OpenLanes__Live : 11
   OpenLanes__Engine ..> OpenLanes__Log : 3
   OpenLanes__Engine ..> OpenLanes__Plans : 73
   OpenLanes__Engine ..> OpenLanes__UI : 24

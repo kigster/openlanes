@@ -38,6 +38,7 @@ classDiagram
   class OpenLanes__Live__EventBus__RedisBus["EventBus::RedisBus"]
   class OpenLanes__Live__EventBus__Transaction["EventBus::Transaction"]
   class OpenLanes__Live__GroupMissing["GroupMissing"]
+  class OpenLanes__Live__Holder["Holder"]
   class OpenLanes__Live__Interviewer["Interviewer"]
   class OpenLanes__Live__Keys["Keys"]
   class OpenLanes__Live__Mail["Mail"]

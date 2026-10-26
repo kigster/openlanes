@@ -51,7 +51,7 @@ After a gem upgrade, `--overwrite` replaces the copies already there.
 Hand off to `openlanes-spec` to create and write the first plan. A new project's first plan is `000.00`. Then:
 
 ```bash
-openlanes run -n --plan 000
+openlanes run 000 -n
 ```
 
 and offer `openlanes-run` to start the agents.
@@ -59,6 +59,6 @@ and offer `openlanes-run` to start the agents.
 ## Done when
 
 - [ ] `openlanes plans` lists the plan.
-- [ ] `openlanes run -n --plan 000` names its first agent.
+- [ ] `openlanes run 000 -n` names its first agent.
 - [ ] With Redis up, `openlanes web --demo` opens the control room on a sample run (Ctrl-C to stop).
 - [ ] `openlanes start` is running: the factory and its control room, up until Stop All Local or Ctrl-C. From here the user works on the page (see `openlanes-run`).

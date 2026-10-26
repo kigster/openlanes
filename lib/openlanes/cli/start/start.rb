@@ -14,13 +14,33 @@ module OpenLanes
     # The page is the only way in: every decision a person makes goes through
     # it, and the terminal is output only. So there is no headless fallback
     # (Redis and the control room are required, not hoped for), no dry run,
-    # no `--no-web` and no `--until-settled`.
+    # and no `--until`. `--no-web` does not make it headless: the page is
+    # served by an `openlanes web` beside it, and the engine stays for it.
     class Start < Run
-      desc "web + run in one: the engine and its control room, with or without plans, until Stop All Local"
+      desc "The factory: the engine and its control room over the whole tree, until Stop All Local"
 
-      # Inherited from `run`, and meaningless here: a dry run publishes no
-      # board, and a run without its page cannot be answered.
-      @options = options.reject { %i[dry_run web stay until_settled].include?(it.name) }
+      # Inherited from `run`, and meaningless here: the factory takes the
+      # whole tree, a dry run publishes no board, and a factory that stops
+      # its plans part way is a run.
+      @arguments = []
+      @options = options.reject { %i[dry_run until].include?(it.name) }
+
+      option :plan,
+        aliases: ["--plans"],
+        desc:    "Only these plans, comma separated: NNN or NNN.MM, e.g. --plan 003,005.01. Default: the whole tree"
+      option :web,
+        type:    :boolean,
+        default: true,
+        desc:    "Serve the control room from this process; --no-web leaves it to an `openlanes web` " \
+                 "run apart, as `just start` does, and the engine waits for that page"
+      option :open,
+        type:    :boolean,
+        default: true,
+        desc:    "Open the control room in the browser; --no-open only prints its URL"
+      option :port,
+        default: OpenLanes::Web::DEFAULT_PORT.to_s,
+        desc:    "Port the control room listens on"
+      listen_options
 
       option :rescan,
         default: Engine::Dispatcher::RESCAN_SECONDS.to_s,
@@ -30,7 +50,9 @@ module OpenLanes
         "                       # engine and control room, until Stop All Local or Ctrl-C",
         "--no-open              # print the control room's URL, open no browser",
         "--port 4848 -j 4       # somewhere other than 11000, four agents at a time",
-        "--plan 005             # only plan 005, until stopped"
+        "--plan 005             # only plan 005, until stopped",
+        "--no-web               # the engine alone, for a page `openlanes web` serves apart",
+        "-I --admin-credentials admin:s3cret # the control room on every interface, behind a login"
       ]
 
       # @param options [Hash]
@@ -43,6 +65,16 @@ module OpenLanes
       end
 
       private
+
+      # `--plan` is already the name the workflow reads; the listen
+      # addresses and the login are the control room's.
+      #
+      # @param options [Hash]
+      # @return [Hash]
+      def prepare(options)
+        listen = listen_for(options)
+        options.merge(listen:, credentials: credentials_for(options, listen))
+      end
 
       # @param tree [OpenLanes::Plans::Tree]
       # @param options [Hash]

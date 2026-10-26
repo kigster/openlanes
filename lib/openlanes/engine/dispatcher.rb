@@ -914,7 +914,7 @@ module OpenLanes
           # agent is in right now is never reconciled, so its contents are
           # not asked: see {#partners_only}.
           state = working.empty? ? @runner.effective_status(subject) : subject.status
-          next if Plans::StateMachine::SETTLED.include?(state.key)
+          next if Plans::StateMachine::SETTLED.include?(state.key) || @runner.stopped?(state)
           next if @finished_plans.include?(subject.feature.ordinal.to_s)
           # Verified and waiting on CI: the engine's to settle, not verifier's.
           next if @runner.verification&.awaiting_ci?(subject)

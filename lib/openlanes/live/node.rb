@@ -24,9 +24,19 @@ module OpenLanes
     #   @return [String] the checkout's path, `$HOME` written as `~`
     # @!attribute [r] checkout_id
     #   @return [String] 12 hex digits of SHA-256 of the checkout's realpath
-    Node = Data.define(:id, :user, :host, :ip, :checkout, :checkout_id) do
-      # @return [String] `<id>:<checkout_id>`, what keys and claims carry
-      def name = "#{id}:#{checkout_id}"
+    # @!attribute [r] role
+    #   @return [String, nil] nil for the checkout's factory; `run-<pid>` for
+    #     an `openlanes run` beside it, which must be a node of its own: with
+    #     the factory's name its claims would be the factory's too, and the
+    #     factory would take the plans the run was started to hold (O1)
+    Node = Data.define(:id, :user, :host, :ip, :checkout, :checkout_id, :role) do
+      # @param role [String, nil]
+      def initialize(role: nil, **) = super
+
+      # @return [String] `<id>:<checkout_id>`, or `<id>:<checkout_id>:<role>`,
+      #   what keys and claims carry. The machine stays the first part, which
+      #   is all {Keys#apps} and the board read of it.
+      def name = [id, checkout_id, role].compact.join(":")
 
       # @return [String] `user@host`, what the page shows
       def label = "#{user}@#{host}"
@@ -71,15 +81,18 @@ module OpenLanes
         # @param user [String]
         # @param host [String]
         # @param home [String]
+        # @param ip [String, nil]
+        # @param role [String, nil] see {Node#role}
         # @return [OpenLanes::Live::Node]
-        def current(root:, user: login, host: Socket.gethostname, home: Dir.home, ip: address)
+        def current(root:, user: login, host: Socket.gethostname, home: Dir.home, ip: address, role: nil)
           real = File.realpath(root)
           new(id: digest("#{user}@#{host}", ID_LENGTH),
             user:,
             host:,
             ip:,
             checkout: tilde(real, home),
-            checkout_id: digest(real, CHECKOUT_LENGTH))
+            checkout_id: digest(real, CHECKOUT_LENGTH),
+            role:)
         end
 
         # @param text [String]

@@ -446,4 +446,19 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
       expect { runner.jobs = 2 }.to raise_error(OpenLanes::Error, /--isolation shared/)
     end
   end
+
+  describe "#stopped?" do
+    subject(:runner) { described_class.new(tree:, executor:, agents:, sleeper: ->(_) {}, stop_at:) }
+
+    let(:stop_at) { OpenLanes::Plans.status(:planned) }
+
+    it { expect(runner.stopped?(OpenLanes::Plans.status(:building))).to be(true) }
+    it { expect(runner.stopped?(OpenLanes::Plans.status(:researched))).to be(false) }
+
+    context "without --until" do
+      let(:stop_at) { nil }
+
+      it { expect(runner.stopped?(OpenLanes::Plans.status(:deployed))).to be(false) }
+    end
+  end
 end

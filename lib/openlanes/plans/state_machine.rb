@@ -52,6 +52,21 @@ module OpenLanes
         rewrite:            :planned
       }.freeze
 
+      # The states from `from` onward along {SPINE}, `from` first. The forward
+      # walk ends at 🚢, which nothing follows.
+      #
+      # @param from [Symbol] a status key
+      # @return [Array<Symbol>]
+      def self.onward(from) = Enumerator.produce(from) { SPINE.fetch(it) { raise StopIteration } }.to_a
+
+      # Whether a plan in `state` has reached `target`: it is there, or
+      # further along the spine. `run --until` stops a plan on this (C6).
+      #
+      # @param state [Symbol] a status key
+      # @param target [Symbol] a status key
+      # @return [Boolean]
+      def self.reached?(state, target) = onward(target).include?(state)
+
       # One step back along the spine, for the one move that goes backwards: a
       # person discarding an interrupted round (W9) sends the plan back to the
       # state the work started from. Derived from {SPINE}, walking it from ⚪:

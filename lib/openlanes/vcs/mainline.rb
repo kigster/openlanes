@@ -16,7 +16,7 @@ module OpenLanes
       attr_reader :root, :branch
 
       # A pull that wants a password must fail, not wait on a prompt: under
-      # `--stay` or mprocs nobody is at the terminal to answer it.
+      # `start` or mprocs nobody is at the terminal to answer it.
       PULL_ENV = { "GIT_TERMINAL_PROMPT" => "0" }.freeze
 
       # What git says when a pull would clobber local edits, most often the

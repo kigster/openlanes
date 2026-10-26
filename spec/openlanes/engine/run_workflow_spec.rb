@@ -21,8 +21,7 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     described_class.new(tree:,
       isolation: "shared",
       dry_run: true,
-      until_settled: true,
-      web: false,
+      plan: "001",
       log: File.join(plans_root, "..", "progress.log"),
 **)
   end
@@ -115,6 +114,49 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
       let(:options) { { dry_run: false, git_push: false } }
 
       it { is_expected.to be_nil }
+    end
+  end
+
+  # Verification, the arbitrator, merging and upkeep all act on GitHub, so
+  # they come up only where the run publishes: a worktree and a publisher.
+  describe "what a published run brings up" do
+    subject(:built) { %i[verification_for arbitration_for merging_for upkeep_for].map { flow.send(it, publisher, worktree) } }
+
+    let(:flow) { workflow(dry_run: false) }
+    let(:publisher) { instance_double(OpenLanes::Vcs::Publisher) }
+    let(:worktree) { instance_double(OpenLanes::Vcs::Worktree) }
+
+    before { allow(OpenLanes::Vcs).to receive(:github).and_return(instance_double(OpenLanes::Vcs::GitHub)) }
+
+    it "builds all four" do
+      expect(built).to match([an_instance_of(OpenLanes::Engine::Verification::Driver), an_instance_of(OpenLanes::Engine::Arbitration),
+                              an_instance_of(OpenLanes::Engine::Merging), be_truthy])
+    end
+
+    context "without a worktree" do
+      let(:worktree) { nil }
+
+      it { is_expected.to eq([nil, nil, nil, nil]) }
+    end
+  end
+
+  # R4 on the terminal (plan 035): a person there is asked, and the answer
+  # is written to .openlanes.yml before any agent starts.
+  describe "asking the quality on a terminal" do
+    subject(:asked) { workflow(dry_run: false).send(:ask_quality) }
+
+    let(:prompt) { instance_double(TTY::Prompt, select: :high) }
+
+    before do
+      allow($stdin).to receive(:tty?).and_return(true)
+      allow($stderr).to receive(:tty?).and_return(true)
+      allow(TTY::Prompt).to receive(:new).and_return(prompt)
+      allow(OpenLanes::Engine::QualityQuestion).to receive(:settle!)
+      asked
+    end
+
+    it "settles the answer as openlanes run" do
+      expect(OpenLanes::Engine::QualityQuestion).to have_received(:settle!).with(hash_including(quality: :high, by: "openlanes run"))
     end
   end
 

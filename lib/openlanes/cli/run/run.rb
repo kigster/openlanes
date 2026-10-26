@@ -2,9 +2,18 @@
 
 module OpenLanes
   module CLI
-    # `openlanes run` — drive the specialist agents until the tree settles.
+    # `openlanes run 005,006` — drive the specialist agents over the plans
+    # named, headless, until nothing changes (C4). Every plan is claimed
+    # before any agent starts and held until the run ends (O1), and a plan
+    # the factory or another run holds refuses the whole command (O2).
+    # `openlanes start` is the factory, with its control room, over the
+    # whole tree.
     class Run < Base
-      desc "Run specialist agents over the plans; with the control room up it stays, else it ends when nothing changes"
+      desc "Run specialist agents over the plans named, headless, until nothing changes"
+
+      argument :plans,
+        required: true,
+        desc:     "The plans to work, comma separated: NNN or NNN.MM, e.g. 003,005.01"
 
       dry_run_option "Invoke no agent; print which agent would take which plan"
       option :rounds,
@@ -32,9 +41,6 @@ module OpenLanes
         desc: "Token budget per agent invocation, input plus output, sub-agents " \
               "included. The agent is told the number so it can finish inside it; the meter aborts it past " \
               "the number so the telling is true. (default: unmetered)"
-      option :plan,
-        aliases: ["--plans"],
-        desc:    "Only these plans, comma separated: NNN or NNN.MM, e.g. --plan 003,005.01. Default: the whole tree"
       option :root, desc: "Repository root the agents work in (default: the .plans parent)"
       option :isolation,
         default: "worktree",
@@ -52,56 +58,38 @@ module OpenLanes
       option :redis_url,
         desc: "Redis for the live board, its commands and plan claims shared with other machines " \
               "(default: .openlanes.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
-      option :web,
-        type:    :boolean,
-        default: true,
-        desc:    "Serve the control room beside the run, when Redis answers; --no-web runs headless"
-      option :open,
-        type:    :boolean,
-        default: true,
-        desc:    "Open the control room in the browser; --no-open only prints its URL"
-      option :port,
-        default: OpenLanes::Web::DEFAULT_PORT.to_s,
-        desc:    "Port the control room listens on"
-      listen_options
       option :ignore_bombs,
         type:    :boolean,
         default: false,
         desc:    "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run"
-      option :stay,
-        type:    :boolean,
-        default: false,
-        desc:    "Stay up past fixed points with --no-web, for a control room served apart by `openlanes web`"
-      option :until_settled,
-        type:    :boolean,
-        default: false,
-        desc:    "End at the first fixed point even with the control room up, as CI wants; " \
-                 "without it the engine and the page stay up until Stop All Local or Ctrl-C"
+      option :until,
+        desc: "Stop each plan once it reaches this state, by key or emoji (e.g. planned, 🔨): " \
+              "short dogfood runs. Default: as far as the agents take it"
 
       example [
-        "-n                     # show which agent would take which plan",
-        "                       # run them, one worktree per plan, in parallel",
-        "-j 4                   # …with four at a time",
-        "--isolation shared     # one tree, serial — no git required",
-        "--rounds 3             # …capping every agent at three rounds per plan",
-        "--plan 005,006,007     # only the plans a batch step just created",
-        "--no-web               # headless: no control room, no browser; ends when the tree settles",
-        "--no-web --stay        # headless, but up for a page `openlanes web` serves on its own",
-        "--until-settled        # with the control room, but ending when the tree settles",
-        "--ignore-bombs         # keep working while a 💣 stands",
-        "-I --admin-credentials admin:s3cret # the control room on every interface, behind a login"
+        "005 -n                 # show which agent would take plan 005",
+        "005,006,007            # run them, one worktree per plan, in parallel",
+        "005,006 -j 1           # …one at a time",
+        "005 --isolation shared # one tree, serial — no git required",
+        "005 --rounds 3         # …capping every agent at three rounds",
+        "050 --until planned    # stop plan 050 once it is planned",
+        "005 --ignore-bombs     # keep working while a 💣 stands"
       ]
 
       # @param options [Hash]
       # @return [void]
       def call(**options)
         tree = tree_for(options)
-        listen = listen_for(options)
-        options = options.merge(quiet: quiet?(options), listen:, credentials: credentials_for(options, listen))
-        exit(unwrap(workflow(tree, options).call))
+        exit(unwrap(workflow(tree, prepare(options.merge(quiet: quiet?(options)))).call))
       end
 
       private
+
+      # The plans argument, under the name the workflow reads.
+      #
+      # @param options [Hash]
+      # @return [Hash]
+      def prepare(options) = options.except(:plans).merge(plan: options[:plans])
 
       # @param tree [OpenLanes::Plans::Tree]
       # @param options [Hash]

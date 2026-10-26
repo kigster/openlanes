@@ -129,7 +129,7 @@ RSpec.describe "plan aging and bombs, end to end", :tree do
 
   # 1. The run bombs both plans, starts nobody, exits 1 and names them.
   def expect_halted_run
-    out, status = openlanes("run", "--isolation", "shared", "--no-web")
+    out, status = openlanes("run", "001,002,003,004", "--isolation", "shared")
     expect(status).to eq(1)
     expect(out).to include("Halted", "001.00 Feed", "003.00 Ports")
     expect(out).not_to include("must not run")

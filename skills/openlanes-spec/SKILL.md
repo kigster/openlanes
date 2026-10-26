@@ -82,7 +82,7 @@ Keep the four headings `create` scaffolded (the shape is in `openlanes-documents
 ## 6. Check it routes
 
 ```bash
-openlanes run -n --plan <NNN>
+openlanes run <NNN> -n
 ```
 
 Done when the preview names the expected first agent: `researcher` for full, `planner` for plan, `chores-coder` for quick. A retroactive plan has already been through `spec-writer`, so the preview names whoever handles the state it settled in. A wrong agent means the frontmatter did not parse as intended; re-read it.

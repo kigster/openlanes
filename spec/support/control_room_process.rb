@@ -195,16 +195,16 @@ class ControlRoomProcess
     root
   end
 
-  # `openlanes run`, which starts its own API server beside it.
+  # `openlanes start`, the factory, which starts its own API server beside it.
   #
   # @param web_port [Integer] where that server listens: {#port} by default,
   #   another one when a server started by {#start_server} already holds it,
-  #   since an engine whose own page did not come up ends when the tree settles
+  #   since a factory whose own page did not come up refuses to start
   # @return [Integer] the engine's pid
   def start_engine(web_port: port)
     @ports |= [web_port]
     @pids[:engine] = spawn("engine",
-      "run",
+      "start",
       "--no-open",
       "--port",
       web_port.to_s,

@@ -68,10 +68,10 @@ RSpec.describe "the slimmed commands, end to end", :tree do
 
   it "run previews the assignment and exits 0" do
     out, _err, status = openlanes("run",
+      "001",
       "-n",
       "--isolation",
       "shared",
-      "--no-web",
       "--log",
       File.join(project, "progress.log"))
 
@@ -79,7 +79,7 @@ RSpec.describe "the slimmed commands, end to end", :tree do
   end
 
   it "run refuses an unknown agent with 65" do
-    _out, err, status = openlanes("run", "-n", "--isolation", "shared", "--no-web", "--agent", "nobody")
+    _out, err, status = openlanes("run", "001", "-n", "--isolation", "shared", "--agent", "nobody")
 
     expect([status, err]).to match([65, a_string_including("No agent called nobody")])
   end
