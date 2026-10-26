@@ -187,6 +187,25 @@ RSpec.describe OpenLanes::Web::Launcher do
     end
   end
 
+  describe "#settle_port" do
+    let(:squatter) { TCPServer.new(OpenLanes::Web::HOST, 0) }
+    let(:port) { squatter.addr[1] }
+
+    after { squatter.close }
+
+    it("moves past a taken port and spawns nothing") { expect([launcher.settle_port, launcher.pid]).to eq([port + 1, nil]) }
+
+    context "when every port tried is taken" do
+      before { stub_const("#{described_class}::PORTS_TRIED", 1) }
+
+      it("answers nil and keeps the port asked for") { expect([launcher.settle_port, launcher.port]).to eq([nil, port]) }
+    end
+  end
+
+  describe ".answering?, against nothing listening" do
+    it { expect(described_class.answering?(1)).to be(false) }
+  end
+
   describe "#healthy?, against nothing listening" do
     subject(:probe) { described_class.new(root: dir, plans_dir: dir, port: 1, redis_url: "x") }
 

@@ -64,6 +64,11 @@ ENV["GIT_CONFIG_VALUE_0"] = "false"
 ENV["XDG_STATE_HOME"] = Dir.mktmpdir("openlanes-state")
 at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 
+# PID files too (S3): a command run in an example writes its own, and a
+# checkout's `tmp/pids` is the developer's running factory.
+ENV["OPENLANES_PID_DIR"] = Dir.mktmpdir("openlanes-pids")
+at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_PID_DIR")) }
+
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
 # dry/system/stubs reopens Dry::System::Container, so the class has to be
@@ -144,6 +149,10 @@ RSpec.configure do |config|
     OpenLanes::Log::Settings.members.each { ENV.delete("OPENLANES_LOG#{"_#{it.upcase}" unless it == :file}") }
   end
   config.after { OpenLanes::Log.reset! }
+
+  # A command run in an example names its process (S5); the suite's own
+  # title stays `rspec`.
+  config.before { allow(Process).to receive(:setproctitle) }
 
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.
