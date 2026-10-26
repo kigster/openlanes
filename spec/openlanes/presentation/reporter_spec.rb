@@ -118,7 +118,7 @@ RSpec.describe OpenLanes::Presentation::Reporter, :tree do
     end
 
     # The violation must reach the rendered table itself — a reader of
-    # `list-plans` never calls #inconsistent, so a table without the arrow
+    # `plans` never calls #inconsistent, so a table without the arrow
     # line simply looks fine.
     it "prints the violation under the plan's own row" do
       expect(table).to match(/↳ .*1 pull request still open/)

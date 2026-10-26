@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# `openlanes list-plans` backs /plan-status and is read by scripts, so the
+# `openlanes plans` backs /plan-status and is read by scripts, so the
 # table goes to STDOUT whole — and the exit status is the one machine-readable
 # fact about tree health, so a folder whose name lies must turn it non-zero.
 RSpec.describe OpenLanes::CLI::ListPlans, :tree do

@@ -56,7 +56,7 @@ module OpenLanes
       def self.standalone? = @standalone == true
 
       # The name this command is typed as, and the key its section takes
-      # under `commands:` in `.openlanes.yml`: "run", "resync dirs", "list-plans".
+      # under `commands:` in `.openlanes.yml`: "run", "resync dirs", "plans".
       #
       # @return [String, nil] nil for a class with no name, as in a spec
       def self.command_name

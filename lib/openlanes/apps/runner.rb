@@ -5,14 +5,14 @@ require "json"
 
 module OpenLanes
   module Apps
-    # `openlanes app start` in the foreground (plan 012, B6): one plan's app
+    # `openlanes project start` in the foreground (plan 012, B6): one plan's app
     # started, kept, and stopped.
     #
     # Each tick it heartbeats the app's statuses into Redis for the Preview
     # tab ({Listing}), restarts the processes whose `restart_on` files
     # changed ({Watcher}), and applies what the tab's toolbar asked for
     # (`Live::Keys#app_commands`). It ends on INT or TERM, which is what
-    # `openlanes app stop` sends, or on the toolbar's Stop, and either way
+    # `openlanes project stop` sends, or on the toolbar's Stop, and either way
     # stops every process and takes the app off the board.
     #
     # Redis is optional. Without a store the app runs just the same and the

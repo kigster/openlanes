@@ -4,7 +4,7 @@ require "open3"
 
 # Plan 008.00 end to end: a real `.plans` tree, the real executable, nothing
 # stubbed. `depends_on:` is read from spec.md, the reverse edge reaches
-# `list-plans`, and `run --dry-run` holds the waiting plan and says why.
+# `plans`, and `run --dry-run` holds the waiting plan and says why.
 RSpec.describe "plan dependencies, through the executable", :tree do
   let(:exe) { File.expand_path("../../../exe/openlanes", __dir__) }
   let(:project) { File.dirname(plans_root) }
@@ -33,7 +33,7 @@ RSpec.describe "plan dependencies, through the executable", :tree do
 
     it "lists 034 as blocking 050 and leaves 034's spec.md untouched" do
       before = File.binread(spec_of("034.00"))
-      out, status = openlanes("list-plans")
+      out, status = openlanes("plans")
 
       expect(status).to eq(0)
       expect(out.lines.grep(/034\.00/).first).to include("blocks 050.00")

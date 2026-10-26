@@ -62,7 +62,7 @@ RSpec.describe "runtime state outside .plans", :tree do
     it "still sees the lock after the folder is renamed, in Lock.read, the reporter and the snapshot" do
       renamed = folder("001.00").sub("⚪", "⭐")
       File.rename(folder("001.00"), renamed)
-      listed, = openlanes("list-plans")
+      listed, = openlanes("plans")
 
       aggregate_failures do
         expect(OpenLanes::Plans::Lock.read(renamed)&.pid).to eq(Process.pid)
@@ -76,7 +76,7 @@ RSpec.describe "runtime state outside .plans", :tree do
     legacy_lock("002.00", pid: dead_pid)
     legacy_lock("003.00", pid: 1, host: "elsewhere.invalid")
     openlanes("resync", "dirs")
-    listed, = openlanes("list-plans")
+    listed, = openlanes("plans")
 
     aggregate_failures do
       expect(File).not_to exist(File.join(folder("002.00"), OpenLanes::Plans::Lock::FILENAME))

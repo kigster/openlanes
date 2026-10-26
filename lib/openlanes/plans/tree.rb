@@ -19,7 +19,7 @@ module OpenLanes
         discarded: "abandoned"
       }.freeze
 
-      # The subfolders themselves, in the order `list-plans --all` shows them.
+      # The subfolders themselves, in the order `plans --all` shows them.
       SUBFOLDERS = INACTIVE_DIRS.values.uniq.freeze
 
       # @param status [OpenLanes::Plans::Status]

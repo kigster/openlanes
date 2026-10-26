@@ -196,7 +196,7 @@ ol create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md
                                   # finish the brief in spec.md and save it
 openlanes run -n                  # dry run: which agent would take which plan
 openlanes start                   # engine plus control room on http://127.0.0.1:11000
-openlanes list-plans              # every open plan, its state and its pull requests; --all adds archived ones
+openlanes plans              # every open plan, its state and its pull requests; --all adds archived ones
 ```
 
 `openlanes start` runs until you press **Stop All Local** on the page or Ctrl-C. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run --until-settled` (or `--no-web`) stops at the first round in which no plan changed state.
@@ -249,7 +249,7 @@ A plan that is no longer active moves into a subfolder, with the date it moved i
 
 `.plans/` itself then lists only the work still open. Plan numbers count every folder, so a number is never reused. Reviving a plan moves it back into `.plans/` and drops the date.
 
-While an agent works on a plan, its lock (process id, host and start time) sits in the runtime state directory, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<hash>/locks/<ordinal>.lock`, beside the run's `openlanes-state.json`. Nothing runtime is written under `.plans/`, and the folder name never changes for a lock. `list-plans` and the control room show the plan with 🔑, adding the host for a lock taken on another machine, which is never cleared automatically. `resync dirs` removes a lock whose process is gone on this host. A legacy `locked-by.pid` or `.plans/openlanes-state.json` from an older release is still read, for one release. See `docs/decisions/decisions-on-runtime-state.md`.
+While an agent works on a plan, its lock (process id, host and start time) sits in the runtime state directory, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<hash>/locks/<ordinal>.lock`, beside the run's `openlanes-state.json`. Nothing runtime is written under `.plans/`, and the folder name never changes for a lock. `plans` and the control room show the plan with 🔑, adding the host for a lock taken on another machine, which is never cleared automatically. `resync dirs` removes a lock whose process is gone on this host. A legacy `locked-by.pid` or `.plans/openlanes-state.json` from an older release is still read, for one release. See `docs/decisions/decisions-on-runtime-state.md`.
 
 Each run also appends a progress journal beside it, `${XDG_STATE_HOME:-~/.local/state}/openlanes/<project>-<hash>/journal/<run id>.ndjson`: one fsync'd, schema-versioned JSON line per engine event (run, assignment, agent pid, start time, session id, trace file and offset, transitions, extensions, questions), validated by `schemas/journal-event.schema.json` and mirrored to Redis on `openlanes:<repo>:<node>:journal`. The file, not Redis, is the record that survives a killed engine. Read the agents still in flight with `jq -c 'select(.kind | startswith("agent_"))' <file>`, or in Ruby with `OpenLanes::Engine::EventJournal::Replay.call(path)`. See `docs/decisions/decisions-on-progress-journal.md`.
 
@@ -333,10 +333,11 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 | :-------------------------------------------- | :----------------------------------------------------------- |
 | `init`                                        | write `.openlanes.yml` at the project root and create `.plans/` |
 | `start`                                       | the engine plus its control room, until Stop All Local or Ctrl-C |
-| `web`                                         | serve the control room alone; `--demo` replays a sample run  |
+| `web --demo`                                  | replay a sample run in the control room; otherwise `start` serves the page |
+| `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes.yml` `app:` |
 | `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`       |
 | `run`                                         | run the agents over the plans; `-n` to preview, `--until-settled` to stop at a fixed point |
-| `list-plans` (`status`, `st`)                 | open plans, their states and pull requests (`--all`: archived too) |
+| `plans`                                       | open plans, their states and pull requests (`--all`: archived too) |
 | `index` (`idx`)                               | write `.plans/INDEX.md`                                      |
 | `unblock`                                     | fold answered questions from `blocked.md` back into the plan |
 | `worktree`                                    | create and seed a worktree for one plan                      |

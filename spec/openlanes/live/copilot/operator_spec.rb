@@ -71,7 +71,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
 
     it "lets Bash run only the read-only openlanes queries" do
       bash = flag("--allowedTools").split(",").grep(/\ABash/)
-      expect(bash).to all(start_with("Bash(openlanes ")).and include("Bash(openlanes list-plans:*)", "Bash(openlanes state show:*)")
+      expect(bash).to all(start_with("Bash(openlanes ")).and include("Bash(openlanes plans:*)", "Bash(openlanes state show:*)")
     end
 
     it "denies writing, sub-agents, the network and what the plan agents may never run" do

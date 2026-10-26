@@ -9,7 +9,7 @@ Load the `openlanes` skill first if it is not in context. Every command here onl
 
 | Question                                         | Command                                                     |
 | ------------------------------------------------ | ----------------------------------------------------------- |
-| every plan, its state, its pull requests         | `openlanes status` (also `list-plans`, `st`)                    |
+| every plan, its state, its pull requests         | `openlanes plans`                                          |
 | a shareable page of every plan                   | `openlanes index` writes `.plans/INDEX.md`; `-o -` prints it    |
 | which agents ran on a plan, how long, what model | `openlanes state show --plan <NNN> \| jq '.stages[] \| {agent, round, status, model, seconds}'` |
 | what one agent told another                      | `openlanes mail read --plan <NNN> --for <agent>`                |

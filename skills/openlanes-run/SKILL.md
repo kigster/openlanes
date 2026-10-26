@@ -60,7 +60,7 @@ A warning about `ANTHROPIC_API_KEY` (or a similar variable) at the start means e
 
 ## 3. Read where it stopped
 
-When it exits, `openlanes status` shows where each plan stands. Sort them into three groups:
+When it exits, `openlanes plans` shows where each plan stands. Sort them into three groups:
 
 - **Advanced to a human gate**: at ✅ Approved & Merged the reviewer has approved, and merging and deploying are the human's. Report the PR links (`gh pr list`).
 - **Blocked** ⭕ / 🛑: go to step 4.

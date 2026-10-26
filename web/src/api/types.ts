@@ -375,7 +375,7 @@ export interface ChatSaid {
   who: ChatParticipant;
 }
 
-// The app a plan builds, run by `openlanes app start` (plan 012). Ruby's OpenLanes::Apps::Status#to_h builds exactly
+// The app a plan builds, run by `openlanes project start` (plan 012). Ruby's OpenLanes::Apps::Status#to_h builds exactly
 // this shape, and spec/openlanes/apps/status_spec.rb pins it.
 
 export type AppState = "starting" | "ready" | "restarting" | "stopped" | "failed";

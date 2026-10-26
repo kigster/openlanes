@@ -21,7 +21,7 @@ module OpenLanes
     def registry(**) = Ports.new(**)
 
     # One plan's app, started by {Supervisor#start}. Plan 014 drives this
-    # directly in its clean checkout; `openlanes app start` drives it
+    # directly in its clean checkout; `openlanes project start` drives it
     # through {.runner}.
     #
     # @param definition [OpenLanes::Apps::Definition]

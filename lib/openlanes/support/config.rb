@@ -98,7 +98,7 @@ module OpenLanes
   #   @return [Hash{Symbol => Object}, nil] only the {STACK_FIELDS} that were answered;
   #     `frameworks` is an Array, every other field a String
   # @!attribute [r] app
-  #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes app
+  #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes project
   #     start` runs; nil when the project declares none, and then nothing
   #     about apps happens anywhere
   # @!attribute [r] aging_since

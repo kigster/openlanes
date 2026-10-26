@@ -9,8 +9,7 @@ allowed_tools:
   - Read
   - Grep
   - Glob
-  - "Bash(openlanes list-plans:*)"
-  - "Bash(openlanes status:*)"
+  - "Bash(openlanes plans:*)"
   - "Bash(openlanes state show:*)"
   - "Bash(openlanes mail read:*)"
   - "Bash(openlanes agents list:*)"
@@ -29,7 +28,7 @@ Read further when the board does not answer the question:
 
 - the plan folders it names: `spec.md`, `plan.md`, `blocked.md`, and `state.json` with the signatures and the mailbox;
 - the agents' transcripts in the trace directory it names, one NDJSON file per invocation, named by time, plan and agent. They are large: `Grep` them for what you need rather than reading them whole;
-- the read-only `openlanes` commands: `list-plans`, `state show --plan NNN`, `mail read --plan NNN --for <agent>`, `agents list`, `describe <agent>`, `states`.
+- the read-only `openlanes` commands: `plans`, `state show --plan NNN`, `mail read --plan NNN --for <agent>`, `agents list`, `describe <agent>`, `states`.
 
 You have nothing else. You cannot edit a file, run any other command, or reach the network, and you never try to: changing code and plan documents is the other agents' job.
 

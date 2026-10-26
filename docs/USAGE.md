@@ -189,7 +189,7 @@ openlanes unblock 003            # fold the answered questions into spec.md and 
 
 Partial answers are fine. The plan stays blocked until the last question is answered. Under `openlanes start`, answer in **Needs You** on the page instead.
 
-### Running the app a plan builds: `openlanes app`
+### Running the app a plan builds: `openlanes project`
 
 A project declares how to run its app under `app:` in `.openlanes.yml` (backend-coder writes it on a plan's first build):
 
@@ -208,9 +208,9 @@ app:
 ```
 
 ```bash
-openlanes app start 012          # plan 012's app, in its worktree when it has one; Ctrl-C stops it
-openlanes app status             # every port an app holds on this machine
-openlanes app stop 012           # stop it from another terminal
+openlanes project start 012          # plan 012's app, in its worktree when it has one; Ctrl-C stops it
+openlanes project status             # every port an app holds on this machine
+openlanes project stop 012           # stop it from another terminal
 ```
 
 - Each process gets the lowest free port from 11100, and every process sees every port as `PORT_<NAME>`. Ports come from one registry per machine (`~/.local/state/openlanes/ports.json`, or `$OPENLANES_PORTS_FILE`), so two worktrees never collide.

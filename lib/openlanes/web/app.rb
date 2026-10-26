@@ -207,7 +207,7 @@ module OpenLanes
       end
 
       # The Preview tab's toolbar (plan 012): Restart backend, a named
-      # restart, or Stop, for the `openlanes app start` running that plan's
+      # restart, or Stop, for the `openlanes project start` running that plan's
       # app. Queued on the app runner's stream, not the engine's: the engine
       # never runs an app, so it would never read them.
       post "/api/apps/commands" do

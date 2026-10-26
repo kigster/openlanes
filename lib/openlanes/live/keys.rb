@@ -161,7 +161,7 @@ module OpenLanes
       def apps(machine = node.split(":").first) = "#{base}:apps:#{machine}"
 
       # Stream: `{json}`, one request from the Preview tab's toolbar
-      # (restart, stop), read by `openlanes app start`. Not {#commands}: the
+      # (restart, stop), read by `openlanes project start`. Not {#commands}: the
       # engine never runs an app, so it would never read them.
       #
       # @param machine [String]
