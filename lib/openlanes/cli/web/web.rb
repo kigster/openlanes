@@ -43,6 +43,7 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
+        Supervision.watch_lifeline
         tree = tree_for(options)
         root = File.dirname(tree.dir)
         logging(options, root:)
@@ -155,6 +156,7 @@ module OpenLanes
           refuse("--ips #{server.listen.ips.join(",")}: an address is not one of this machine's.", 69)
         end
         %w[INT TERM].each { |name| Signal.trap(name) { Thread.new { server.stop } } }
+        registration = registered(server, options)
         unless quiet?(options)
           info("Control room: #{server.url}#{" (demo)" if options[:demo]}\n" \
                "#{"Also on: #{(server.urls - [server.url]).join(", ")}\n" if server.listen.public?}" \
@@ -163,7 +165,29 @@ module OpenLanes
         exposed(server, credentials)
         Log.logger.info("listening", url: server.url, urls: server.urls, demo: options[:demo], repo: keys.repo)
         OpenLanes::Web.open(server.url) if options[:open]
-        server.wait
+        registration ? registration.hold { server.wait } : server.wait
+      end
+
+      # Its PID file and title (S2, S5), written once it listens. A demo
+      # names nothing: it is no project's control room. Nor does a second
+      # server beside a live one, on another port: it is a page, not a
+      # second factory, and refusing it would only lose the page.
+      #
+      # @param server [OpenLanes::Web::Server]
+      # @param options [Hash]
+      # @return [OpenLanes::Supervision::Registration, nil]
+      def registered(server, options)
+        return if options[:demo]
+
+        registration = Supervision.registration(Supervision::WEB, root: Dir.pwd, url: server.url)
+        claimed = registration.claim
+        if claimed.failure?
+          Log.logger.warn("another server holds the PID file", reason: claimed.failure.message)
+          return
+        end
+
+        registration.title(server.urls.join(" "))
+        registration
       end
 
       # Said even under --quiet, and logged: listening beyond this machine

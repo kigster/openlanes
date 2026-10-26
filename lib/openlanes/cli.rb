@@ -20,8 +20,11 @@ require_relative "cli/linear/subcommands/import"
 require_relative "cli/docs/docs"
 require_relative "cli/eval/eval"
 require_relative "cli/run/run"
+require_relative "cli/engine/engine_command"
 require_relative "cli/setup/setup"
 require_relative "cli/start/start"
+require_relative "cli/stop/stop"
+require_relative "cli/status/status"
 require_relative "cli/unblock/unblock"
 require_relative "cli/version/version"
 require_relative "cli/web/web"
@@ -78,10 +81,10 @@ module OpenLanes
         Most days need two commands. `openlanes init` sets a project up, once.
         `openlanes start` is the factory: the engine and its control room in the
         browser, where you create plans, answer the agents' questions and watch
-        them work. Both stay up, with or without plans, until Stop All Local in
-        the page or Ctrl-C. `openlanes run 005,006` works just the plans named,
-        headless, and ends when they stop changing: for scripts, CI and short
-        dogfood runs with --until.
+        them work. It stays up, with or without plans, until Stop All Local in
+        the page, Ctrl-C or `openlanes stop`. `openlanes run 005,006` works just
+        the plans named, headless, and ends when they stop changing: for
+        scripts, CI and short dogfood runs with --until.
 
         Keeps the .plans folders in step with GitHub pull requests and Linear issues.
         The final merge and deploy stay manual.
@@ -100,7 +103,7 @@ module OpenLanes
       width [90, TTY::Screen.width - 2].min
 
       # Most used first: what a person types every day, then what scripts do.
-      group "OpenLanes Default Web Operation", "setup", "init", "start"
+      group "OpenLanes Default Web Operation", "setup", "init", "start", "stop", "status"
       group "Headless Operation",
         "create",
         "run",
@@ -130,6 +133,11 @@ module OpenLanes
     register "plans", ListPlans
     register "run", Run
     register "start", Start
+    register "stop", Stop
+    register "status", Status
+    # Spawned by `start` under its supervisor (S1), and by `just start`
+    # under mprocs; nobody else types it.
+    register "engine", EngineCommand, hidden: true
     # Spawned by `start`, not run by hand (C5): a page served on its own is
     # how a control room came to outlive its engine.
     register "web", Web, hidden: true

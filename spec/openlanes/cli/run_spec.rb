@@ -819,6 +819,33 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
+  describe "its PID file and title (S2, S5)" do
+    let(:pid_dir) { OpenLanes::Supervision.dir(Dir.pwd) }
+    let(:seen) { [] }
+
+    before do
+      building_plan
+      with_executor do
+        seen << pid_dir.read("run", pid: Process.pid)
+        [true, "completed"]
+      end
+      run(dry_run: false, rounds: 1, plans: "001")
+    end
+
+    it("holds a PID file naming its plans while it works") { expect(seen.first).to have_attributes(role: "run", pid: Process.pid, plans: ["001"]) }
+    it("removes it when it ends") { expect(pid_dir.read("run", pid: Process.pid)).to be_nil }
+    it("names itself by its plans") { expect(Process).to have_received(:setproctitle).with(/\Aopenlanes-run \[.+\] 001\z/) }
+  end
+
+  describe "a dry run's PID file" do
+    before do
+      building_plan
+      run(plans: "001")
+    end
+
+    it("is never written") { expect(Process).not_to have_received(:setproctitle) }
+  end
+
   describe "--until" do
     let!(:executor) do
       building_plan

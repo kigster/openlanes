@@ -1,350 +1,195 @@
 # frozen_string_literal: true
 
-# `openlanes start` is `run` that stays: the same options and code, the
-# control room required rather than hoped for, and an end that comes from
-# Stop All Local or a signal, never from a fixed point, and not from every
-# plan being finished either.
-#
-# Like run_spec, every example runs `--isolation shared` over a bare temp
-# tree, publishes to a store in this process, and never spawns the server,
-# a browser or an agent.
+# `openlanes start` is the supervisor (S1): it builds the engine and the web
+# as programs and hands them to {OpenLanes::Supervision::Supervisor}, which
+# every example here replaces, so nothing is spawned. The engine it starts
+# is `openlanes engine`, whose own behavior engine_command_spec covers.
 RSpec.describe OpenLanes::CLI::Start, :tree do
   subject(:command) { described_class.new }
 
-  let(:live_store) { OpenLanes::Live.memory_store }
+  let(:pid_dir) { Dir.mktmpdir("pids") }
+  let(:dir) { OpenLanes::Supervision::PidDir.new(pid_dir) }
+  let(:handed) { {} }
+  let(:seen) { [] }
+  let(:supervisor) { instance_double(OpenLanes::Supervision::Supervisor, stop!: nil) }
+  let(:exit_with) { 0 }
+  let(:settled) { 11_000 }
   let(:web) do
-    instance_double(OpenLanes::Web::Launcher, ready?: true, port: 11_000, url: "http://127.0.0.1:11000", log: "/tmp/web.log", stop: nil)
+    instance_double(OpenLanes::Web::Launcher,
+      settle_port: settled,
+      port:        11_000,
+      url:         "http://127.0.0.1:11000",
+      argv:        %w[openlanes web --port 11000],
+      env:         { "OPENLANES_REDIS_URL" => "redis://x" },
+      log:         "/tmp/web.log")
   end
-  let(:executor) { instance_double(OpenLanes::Execution::Executor) }
+  let(:spawner) { OpenLanes::Spawner::Fake.new(pids: [4242]) }
+  let(:alive) { true }
+  let(:host) { OpenLanes::Supervision::Host.new(spawner:, waiter: ->(_pid) { alive ? nil : :gone }, clock: OpenLanes::Clock::Fake.new) }
+  let(:log) { File.join(Dir.pwd, "log", "openlanes-start.log") }
 
-  # Between ticks, instead of sleeping a second. The default stops the run
-  # the way a service manager does, with SIGTERM, once it has idled a while.
-  let(:sleeper) do
-    ticks = 0
-    lambda { |_|
-      ticks += 1
-      Process.kill("TERM", Process.pid) if ticks == 3
-      OpenLanes::Execution::Control.quit! if ticks > 5_000
-      Thread.pass
-    }
-  end
-
-  # STDERR as it was written, before strip_ansi: what a terminal received.
-  let(:raw) { {} }
-
-  before do
-    allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
-      original.call(**keywords, sleeper:)
-    end
-    allow(OpenLanes::Live).to receive(:connect).and_return(live_store)
-    allow(web).to receive(:start).and_return(web)
-    allow(OpenLanes::Web).to receive(:launcher).and_return(web)
-    allow(OpenLanes::Web).to receive(:open)
-    allow(OpenLanes::Execution::Executor).to receive(:new).and_return(executor)
-    allow(executor).to receive(:call)
-  end
-
-  after { OpenLanes::Execution::Control.reset! }
+  let(:typed) { { dir: plans_root, isolation: "shared", web: true, open: true, background: false, quiet: false, port: "11000", rescan: "5" } }
 
   def start(**)
-    out = CapturedStream.new
-    err = CapturedStream.new
-    status = nil
-    original_out, original_err = $stdout, $stderr
-    $stdout, $stderr = out, err
-    begin
-      command.call(dir: plans_root, isolation: "shared", log: File.join(plans_root, "..", "progress.log"), **)
-    rescue SystemExit => e
-      status = e.status
-    ensure
-      $stdout, $stderr = original_out, original_err
-    end
-    raw[:err] = err.string
-    [strip_ansi(out.string), strip_ansi(err.string), status]
+    out, err, status = CapturedStream.capture { command.call(**typed, **) }
+    [strip_ansi(out), unwrapped(strip_ansi(err)), status || 0]
   end
 
-  def asked
-    plans do |t|
-      t.plan "002.00", :blocked, "minesweeper", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Board size\n\nHow big?\n" }
-    end
+  def engine_argv = handed.fetch(:programs).first.argv
+
+  around do |example|
+    saved = ENV.fetch("OPENLANES_PID_DIR")
+    ENV["OPENLANES_PID_DIR"] = pid_dir
+    example.run
+  ensure
+    ENV["OPENLANES_PID_DIR"] = saved
+    FileUtils.rm_rf(pid_dir)
   end
 
-  def parse(*argv) = Dry::CLI::Parser.call(described_class, argv, "openlanes start")
-
-  describe "its options" do
-    it "takes run's, and --rescan" do
-      expect(parse("-j", "4", "--port", "4848", "--no-open", "--rescan", "2").arguments)
-        .to include(jobs: "4", port: "4848", open: false, rescan: "2")
+  before do
+    allow(OpenLanes::Supervision).to receive(:supervisor) do |**keywords|
+      handed.merge!(keywords)
+      supervisor
     end
-
-    it "leaves out --dry-run, which would publish no board" do
-      expect(parse("--dry-run").error?).to be(true)
+    allow(supervisor).to receive(:call) do |&on_tick|
+      handed[:on_tick] = on_tick
+      seen << dir.read("supervisor")
+      exit_with
     end
-
-    it "takes --plan, since it has no plans argument" do
-      expect(parse("--plan", "005").arguments).to include(plan: "005")
-    end
-
-    it "takes no plans argument" do
-      expect(described_class.arguments).to be_empty
-    end
-
-    # A factory that stops its plans part way is a run.
-    it "leaves out --until" do
-      expect(parse("--until", "planned").error?).to be(true)
-    end
-
-    it "is listed with the agents in help" do
-      expect(OpenLanes::CLI.get(["start"]).command).to eq(described_class)
-    end
+    allow(OpenLanes::Web).to receive(:launcher).and_return(web)
+    allow(OpenLanes::Web).to receive(:open)
+    allow(Signal).to receive(:trap)
+    allow(OpenLanes::Supervision).to receive(:host).and_return(host)
   end
 
-  describe "a plan blocked on a question" do
-    before { asked }
+  describe "what it supervises" do
+    let!(:result) { start(jobs: "3") }
 
-    let!(:result) { start(open: false) }
-
-    it "stays up past the fixed point until SIGTERM, then exits 0" do
-      expect([result.last, result[1]]).to match([0, include("Stopped.", "Still waiting for answers: 002.00")])
+    it("the engine, without its own page") do
+      expect(engine_argv.first(3)).to eq([OpenLanes::Web::Launcher::EXE, "engine", "--no-web"])
     end
 
-    it "idles rather than ends, and says on the terminal why" do
-      expect(result[1]).to include("idle: waiting for answers on 002.00")
+    it("hands the engine the flags typed") { expect(engine_argv).to include("--jobs=3", "--isolation=shared") }
+    it("hands the engine none of the page's") { expect(engine_argv.drop(2).grep(/\A--(no-)?(port|open|web|ips|all-interfaces|admin-credentials)/)).to eq(["--no-web"]) }
+    it("ends the factory with the engine") { expect(handed.fetch(:programs).first.essential).to be(true) }
+
+    it("the page, as the launcher would start it") do
+      expect(handed.fetch(:programs).last).to have_attributes(role: "web",
+        argv: web.argv,
+        env: web.env,
+        options: include(%i[out err] => ["/tmp/web.log", "a"]))
     end
 
-    # The page is the board. The terminal gets each idle reason once per
-    # change, as a plain line, however many ticks it idles for, and nothing
-    # that moves the cursor or redraws a line.
-    it "says the idle reason once, as a plain line, and never redraws" do
-      aggregate_failures do
-        expect(result[1].scan(/^\d\d:\d\d:\d\d  idle: waiting for answers on 002\.00$/).size).to eq(1)
-        expect(raw[:err]).not_to match(/\r|\e\[/)
-        expect(result[1]).not_to include("|        |")
-      end
-    end
-
-    it "opens with one Info box: the log, the board and the control room" do
-      aggregate_failures do
-        expect(result[1].scan("─ Info ─").size).to eq(1)
-        expect(result[1]).to include("Log:", "Live board:", "Control room: http://127.0.0.1:11000")
-      end
-    end
-
-    it "opens its report with one blank line, not three, when no agent ran" do
-      expect(result.first).to start_with("\n0 plans addressed")
-    end
-
-    it "runs the engine in stay mode, rescanning every five seconds" do
-      expect(OpenLanes::Engine::Runner).to have_received(:new)
-        .with(hash_including(stay: true, rescan: OpenLanes::Engine::Dispatcher::RESCAN))
-    end
-
-    # start is the command `run` points people at to watch their pull
-    # requests, so its own staying must not drop the watch run builds.
-    it "watches the pull requests a person merges" do
-      expect(OpenLanes::Engine::Runner).to have_received(:new)
-        .with(hash_including(watch: an_instance_of(OpenLanes::Engine::PrWatch)))
-    end
-
-    it "stops the control room" do
-      expect(web).to have_received(:stop)
-    end
-
-    it "puts SIGTERM back the way it found it" do
-      expect(Signal.trap("TERM", "DEFAULT")).to eq("DEFAULT")
-    end
+    it("writes its PID file with the page's URL while it supervises") { expect(seen.first).to have_attributes(pid: Process.pid, url: "http://127.0.0.1:11000") }
+    it("removes it once it ends") { expect(dir.read("supervisor")).to be_nil }
+    it("says where the page is") { expect(result[1]).to include("Factory supervisor: pid #{Process.pid}, control room at http://127.0.0.1:11000") }
+    it("exits 0") { expect(result.last).to eq(0) }
   end
 
-  # Plan 009: a 💣 halts the engine, and the service idles on it rather
-  # than ending, so the page stays up to answer it.
-  describe "a 💣 others wait on" do
+  context "when the engine ended the factory with a refusal" do
+    let(:exit_with) { 69 }
+
+    it("exits with its status") { expect(start.last).to eq(69) }
+  end
+
+  context "with --no-web" do
+    before { start(web: false) }
+
+    it("supervises the engine alone") { expect(handed.fetch(:programs).map(&:role)).to eq(["engine"]) }
+    it("opens nothing") { expect(handed.fetch(:on_tick)).to be_nil }
+  end
+
+  context "with --no-open" do
+    before { start(open: false) }
+
+    it { expect(handed.fetch(:on_tick)).to be_nil }
+  end
+
+  describe "the browser" do
     before do
-      path = nil
-      plans do |t|
-        path = t.plan "002.00", :blocked, "minesweeper", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Board size\n" }
-        t.plan "003.00",
-          :building,
-          "scoreboard",
-          files: { "spec.md" => "---\ndepends_on: [\"002.00\"]\n---\n#{spec_body}", "plan.md" => "# P\n\n## U1\n" }
-      end
-      OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder", round: 1, status: "Blocked", at: Time.now - (8 * 86_400))
-    end
-
-    let!(:result) { start(open: false) }
-
-    it "stays up and idle, says why, and exits 0 once stopped" do
-      aggregate_failures do
-        expect(result.last).to eq(0)
-        expect(result[1]).to include("idle: halted by 💣 002.00")
-        expect(executor).not_to have_received(:call)
-      end
-    end
-  end
-
-  describe "every plan finished" do
-    before do
-      plans { |t| t.plan "001.00", :deployed, "shipped", files: { "spec.md" => spec_body, "deployed.md" => "v1\n" } }
-    end
-
-    let!(:result) { start }
-
-    it "stays up, waiting for the next plan, until SIGTERM" do
-      expect([result.last, result[1]])
-        .to match([0, include("idle: every plan is finished; create the next one from the page", "Stopped.")])
-    end
-
-    it "opens the control room on the idea dialog" do
-      expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000#start")
-    end
-  end
-
-  describe "no plans at all" do
-    let!(:result) { start }
-
-    it "starts anyway, and waits for the first plan from the page" do
-      expect([result.last, result[1]])
-        .to match([0, include("idle: no plans yet; create one from the page or with openlanes create", "Stopped.")])
-    end
-
-    it "opens the control room on the idea dialog" do
-      expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000#start")
-    end
-  end
-
-  describe "with work still to do" do
-    before { asked }
-
-    it "opens the board itself" do
       start
-      expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000")
+      allow(OpenLanes::Web::Launcher).to receive(:answering?).and_return(false, true)
+      3.times { handed.fetch(:on_tick).call(supervisor) }
     end
+
+    it("opens once the page first answers, and only once") { expect(OpenLanes::Web).to have_received(:open).with("http://127.0.0.1:11000").once }
   end
 
-  describe "without Redis" do
+  context "when a factory already runs here" do
+    let(:probe) { instance_double(OpenLanes::Supervision::Probe, verified?: true) }
+    let(:result) { start }
+
     before do
-      asked
-      allow(OpenLanes::Live).to receive(:connect).and_raise(OpenLanes::Live::Unavailable, "Redis at redis://h/0 is unavailable")
-    end
-
-    let!(:result) { start }
-
-    it "refuses with exit 69 instead of going headless" do
-      expect([result.last, result[1]]).to match([69, include("Redis at redis://h/0 is unavailable", "openlanes start needs Redis")])
-    end
-
-    it "never starts the engine" do
-      expect(OpenLanes::Engine::Runner).not_to have_received(:new)
-    end
-  end
-
-  describe "when the control room does not answer" do
-    before do
-      asked
-      allow(web).to receive(:ready?).and_return(false)
-    end
-
-    let!(:result) { start }
-
-    it "refuses with exit 69, naming its log" do
-      expect([result.last, result[1]]).to match([69, include("did not answer on http://127.0.0.1:11000", "/tmp/web.log")])
-    end
-
-    it "stops the server it started" do
-      expect(web).to have_received(:stop)
-    end
-  end
-
-  describe "the control room" do
-    subject(:stderr) { unwrapped(result[1]) }
-
-    before { asked }
-
-    let(:result) { start(port: "4848") }
-
-    it "starts on the store the board is published to, at the port asked for" do
+      allow(OpenLanes::Supervision).to receive(:probe).and_return(probe)
+      dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 777, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11001"))
       result
-      expect(OpenLanes::Web).to have_received(:launcher).with(root: File.dirname(plans_root),
-        plans_dir: plans_root,
-        port: 4848,
-        redis_url: "memory://",
-        listen: OpenLanes::Web::Listen.parse(nil),
-        credentials: nil)
     end
 
-    it "names the port it asked for when the server had to move off it" do
-      expect(stderr).to include("Control room: http://127.0.0.1:11000 (4848 was taken)")
-    end
+    it("refuses, with its URL") { expect([result.last, result[1]]).to match([75, include("already running here (pid 777) at http://127.0.0.1:11001")]) }
+    it("starts nothing") { expect(handed).to be_empty }
+  end
 
-    context "with -I and a login" do
-      let(:result) { start(open: false, all_interfaces: true, admin_credentials: "admin:s3cret") }
+  context "when a crash left a supervisor's PID file" do
+    before { dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 777, started: "x", root: Dir.pwd)) }
 
-      it "hands the server the addresses and the login, and says it answers elsewhere behind it" do
-        result
-        aggregate_failures do
-          expect(OpenLanes::Web).to have_received(:launcher)
-            .with(hash_including(listen: OpenLanes::Web::Listen.parse("0.0.0.0"),
-              credentials: OpenLanes::Web::AdminAuth.parse("admin:s3cret")))
-          expect(stderr).to include("behind a login")
-        end
+    it("starts anyway") { expect(start.last).to eq(0) }
+  end
+
+  context "when every port is taken" do
+    let(:settled) { nil }
+
+    it("refuses") { expect(start.values_at(1, 2)).to match([include("are all taken"), 69]) }
+  end
+
+  describe "--background" do
+    context "when the factory comes up" do
+      before do
+        dir.write(OpenLanes::Supervision::PidFile.new(role: "supervisor", pid: 4242, started: "x", root: Dir.pwd, url: "http://127.0.0.1:11000"))
+        allow(OpenLanes::Web::Launcher).to receive(:answering?).with(11_000).and_return(true)
       end
+
+      let!(:result) { start(background: true, all_interfaces: true, admin_credentials: "admin:s3cret") }
+
+      it("prints the URL on STDOUT") { expect(result.first).to eq("http://127.0.0.1:11000\n") }
+      it("says where its output goes") { expect(result[1]).to include("running in the background (pid 4242)", log) }
+      it("starts this command again, detached") { expect(spawner.calls.first.argv.first(2)).to eq([OpenLanes::Web::Launcher::EXE, "start"]) }
+      it("without --background") { expect(spawner.calls.first.argv.grep(/background/)).to be_empty }
+      it("keeps the login out of argv") { expect(spawner.calls.first.argv.join(" ")).not_to include("s3cret") }
+      it("hands it the login in the environment") { expect(spawner.calls.first.env).to include("OPENLANES_ADMIN_CREDENTIALS" => "admin:s3cret", "OPENLANES_DETACHED" => "1") }
+      it("sends its output to the log") { expect(spawner.calls.first.options).to include(%i[out err] => [log, "a"], in: File::NULL) }
+      it("supervises nothing itself") { expect(handed).to be_empty }
     end
 
-    it "refuses -I without a login, before any agent starts" do
-      expect(start(all_interfaces: true)).to match([anything, include("needs a login"), 64])
-    end
+    context "when the factory exits before it is up" do
+      let(:alive) { false }
 
-    context "with --no-open" do
-      let(:result) { start(open: false) }
-
-      it "only prints the URL" do
-        aggregate_failures do
-          expect(stderr).to include("Control room: http://127.0.0.1:11000")
-          expect(OpenLanes::Web).not_to have_received(:open)
-        end
+      before do
+        FileUtils.mkdir_p(File.dirname(log))
+        File.write(log, "Redis did not answer\n")
       end
+
+      it("refuses with the end of its log") { expect(start(background: true).values_at(1, 2)).to match([include("did not start", "Redis did not answer"), 70]) }
+    end
+
+    context "when the factory never comes up" do
+      it("refuses, pointing at status") { expect(start(background: true).values_at(1, 2)).to match([include("did not come up within 60s", "openlanes status"), 75]) }
     end
   end
 
-  describe "--no-web, the page served apart" do
-    before { asked }
-
-    let!(:result) { start(web: false) }
-
-    it "starts no server, and stays up for the page all the same" do
-      aggregate_failures do
-        expect(OpenLanes::Web).not_to have_received(:launcher)
-        expect(OpenLanes::Engine::Runner).to have_received(:new).with(hash_including(stay: true))
-        expect(unwrapped(result[1])).to include("The engine stays up for the control room `openlanes web` serves")
-      end
-    end
-  end
-
-  # O1 from the factory's side: a plan `openlanes run` holds is another
-  # node's, stepped around rather than refused.
-  describe "a plan a run holds" do
+  describe "a --background child" do
     before do
-      asked
-      plans { |t| t.plan "003.00", :building, "dice", files: { "spec.md" => spec_body, "plan.md" => "# Plan" } }
-      OpenLanes::Live::Claims.new(store: live_store, keys: run_keys).claim(OpenLanes::Plans::Ordinal.parse("003"))
+      ENV["OPENLANES_DETACHED"] = "1"
+      allow(Process).to receive(:setsid)
+      start
     end
 
-    let(:root) { File.dirname(plans_root) }
-    let(:run_keys) do
-      OpenLanes::Live::Keys.new(repo: OpenLanes::Live::Repo.for(root), node: OpenLanes::Live::Node.current(root:, role: "run-1").name)
-    end
+    after { ENV.delete("OPENLANES_DETACHED") }
 
-    let!(:result) { start(open: false) }
-
-    it "starts no agent on it, and stays up" do
-      aggregate_failures do
-        expect(executor).not_to have_received(:call)
-        expect(result.last).to eq(0)
-      end
-    end
+    it("leaves the terminal's session") { expect(Process).to have_received(:setsid) }
+    it("hands nothing it starts the variable") { expect(ENV).not_to have_key("OPENLANES_DETACHED") }
   end
 
-  it "refuses a --rescan that is not a positive whole number" do
-    asked
-    expect(start(rescan: "soon").last).to eq(64)
+  it "is registered as start" do
+    expect(OpenLanes::CLI.get(["start"]).command).to eq(described_class)
   end
 end

@@ -196,10 +196,11 @@ ol create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md
                                   # finish the brief in spec.md and save it
 openlanes run 001 -n              # dry run: which agent would take plan 001
 openlanes start                   # engine plus control room on http://127.0.0.1:11000
+openlanes status                  # what is up; `openlanes stop` stops it, `start --background` detaches it
 openlanes plans              # every open plan, its state and its pull requests; --all adds archived ones
 ```
 
-`openlanes start` runs until you press **Stop All Local** on the page or Ctrl-C. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
+`openlanes start` runs until you press **Stop All Local** on the page, Ctrl-C, or run `openlanes stop`; it restarts the engine or the page if either crashes. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
 
 `init` settles four project-wide decisions before any plan exists, in this order: CI (it names what the folder already runs, or offers to scaffold GitHub Actions, CircleCI or Jenkins), who merges a reviewed pull request (`human` or `auto`), the desired codebase quality (`high` or `mvp`), and the stack, detected from marker files such as `Gemfile` or `package.json`. With `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set it first asks you to describe the app, and skips the questions the description answered. The stack is also written to `docs/decisions/stack.md`.
 

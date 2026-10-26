@@ -19,7 +19,7 @@ Separately, the web server outlived the engine more than once. `Web::Launcher` s
 | Command                      | Does                                                                                     |
 | :--------------------------- | :--------------------------------------------------------------------------------------- |
 | `openlanes start`            | The factory: the supervisor, the engine and the web, until `stop`, Stop All Local or Ctrl-C |
-| `openlanes start --background` | The same, detached from the terminal (double fork, `setsid`, parent PID 1)             |
+| `openlanes start --background` | The same, detached from the terminal (one spawn, `setsid` in the child, parent PID 1 once `start` returns) |
 | `openlanes stop`             | Stops the factory                                                                        |
 | `openlanes stop --all`       | Stops the factory and every `openlanes run`                                              |
 | `openlanes status`           | Which processes are up, with PIDs, ports, URL and uptime, any crashed one, every `run`, and plan counts by state |
@@ -88,7 +88,9 @@ The engine and web restarting each other was considered and rejected: `stop` bec
 
 A PID alone is not proof: the operating system reuses numbers, and a PID file left by a crash can name an unrelated process by the time anyone reads it. So a PID file records the PID, the process's start time and the project root, and a process counts as the one the file names only when all three match: its start time (`ps -o lstart=`) equals the recorded one, and its title (S5) names the expected role and project. Every reader checks this, `start`, `stop`, `status` and the supervisor alike, and a file that fails it is a crash, never a target. `stop` signals nothing it has not checked this way.
 
-`stop` sends TERM, waits about ten seconds, then KILL. It also stops a lone engine or web whose supervisor is already gone.
+`stop` sends TERM, waits, sends a second TERM, waits briefly, then KILL. The first wait is about ten seconds for a web, the supervisor's own grace plus ten for a supervisor, and the agents' grace (S7) plus ten for an engine or a run. The second TERM is the engine's second Ctrl-C: it KILLs its agents' process groups and exits, which a KILL to the engine would never do. The supervisor stops its children the same way. It also stops a lone engine or web whose supervisor is already gone.
+
+Two processes of one role cannot both register: each takes an exclusive `flock` on `<role>.lock` beside its PID file before it reads or writes one, and holds it until it exits. The kernel drops the lock when the process dies, so a crash never leaves it held.
 
 ### S3. PID files live in `tmp/pids/` at the project root
 

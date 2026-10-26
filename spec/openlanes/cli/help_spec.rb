@@ -17,15 +17,20 @@ RSpec.describe "openlanes --help" do
     expect([positions.none?(nil), positions.compact == positions.compact.sort]).to eq([true, true])
   end
 
-  it "lists setup, init and start under the web operation, and run under headless" do
+  it "lists setup, init, start, stop and status under the web operation, and run under headless" do
     web = screen[/OPENLANES DEFAULT WEB OPERATION\n(.*?)\n\n/m, 1]
     headless = screen[/HEADLESS OPERATION\n(.*?)\n\n/m, 1]
-    expect([web.scan(/^  (\w[\w-]*)/).flatten, headless]).to match([%w[setup init start], include("  run ")])
+    expect([web.scan(/^  (\w[\w-]*)/).flatten, headless]).to match([%w[setup init start stop status], include("  run ")])
   end
 
   # Spawned by start, never typed (C5), so the screen does not offer it.
   it "does not list web" do
     expect(screen).not_to match(/^  web\b/)
+  end
+
+  # Spawned by start's supervisor and by mprocs (S1).
+  it "does not list engine" do
+    expect(screen).not_to match(/^  engine\b/)
   end
 
   it "lists plans and project, and no longer list-plans or app" do

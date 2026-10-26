@@ -442,7 +442,7 @@ module OpenLanes
           merging:      merging_for(publisher, worktree),
           arbitration:  arbitration_for(publisher, worktree),
           upkeep:       upkeep_for(publisher, worktree),
-          on_board:     live&.on_board,
+          on_board:     on_board_for(live),
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
@@ -452,6 +452,18 @@ module OpenLanes
           stop_at:,
           **staying(web, live)
         )
+      end
+
+      # The board each tick goes to the page, and to whatever the command
+      # asked for as `on_board`: the engine's title (S5).
+      #
+      # @param live [OpenLanes::Live::Session, nil]
+      # @return [Proc, nil]
+      def on_board_for(live)
+        hooks = [live&.on_board, @options[:on_board]].compact
+        return hooks.first if hooks.size < 2
+
+        ->(board) { hooks.each { it.call(board) } }
       end
 
       # The run's progress journal (S9), under the runtime directory and

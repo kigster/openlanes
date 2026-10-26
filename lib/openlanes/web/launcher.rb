@@ -113,6 +113,20 @@ module OpenLanes
       # @return [Boolean] whether `/healthz` answered within the wait
       def ready? = @ready == true
 
+      # Moves to the first free port from the one asked for, and spawns
+      # nothing: for a supervisor that starts the server itself (S1).
+      #
+      # @return [Integer, nil] the port, or nil when every one tried is taken
+      def settle_port = free_port&.then { @port = it }
+
+      # @param port [Integer]
+      # @return [Boolean] whether a server on this machine answers `/healthz` there
+      def self.answering?(port)
+        Net::HTTP.start(HOST, port, open_timeout: 0.5, read_timeout: 1) { it.get("/healthz").code == "200" }
+      rescue SystemCallError, IOError, Net::OpenTimeout, Net::ReadTimeout
+        false
+      end
+
       # TERM to the server's process group, then KILL if it lingers.
       #
       # @return [void]
@@ -163,11 +177,7 @@ module OpenLanes
       end
 
       # @return [Boolean]
-      def healthy?
-        Net::HTTP.start(HOST, @port, open_timeout: 0.5, read_timeout: 1) { it.get("/healthz").code == "200" }
-      rescue SystemCallError, IOError, Net::OpenTimeout, Net::ReadTimeout
-        false
-      end
+      def healthy? = self.class.answering?(@port)
 
       # @return [Boolean]
       def alive?

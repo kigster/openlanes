@@ -16,6 +16,7 @@ Load the `openlanes` skill first if it is not in context. Every command here onl
 | what a blocked plan is waiting on                | `openlanes unblock <NNN> -n`                                    |
 | which agent picks a plan up next                 | `openlanes run <NNN> -n`                                 |
 | watch a run live                                 | the control room URL `openlanes start` printed; for an `openlanes run`, `openlanes web` |
+| which factory processes are up, and since when  | `openlanes status` (PID files and `ps`; no Redis needed)                                |
 | see the control room with no run, or no Redis    | `openlanes web --demo` (a sample run)                           |
 
 ## Reporting
