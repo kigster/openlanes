@@ -5,8 +5,8 @@
     "ordinal": "041.00",
     "slug": "idle-start-and-crash-recovery"
   },
-  "state": "new",
-  "updated_at": "2026-10-23T14:02:47-07:00",
+  "state": "planned",
+  "updated_at": "2026-10-26T15:34:00-07:00",
   "stages": [
     {
       "agent": "researcher",
@@ -261,7 +261,7 @@
     }
   ],
   "messages": [],
-  "moves": 1,
+  "moves": 2,
   "last-known-state": {
     "researcher": {
       "source": "agent",
