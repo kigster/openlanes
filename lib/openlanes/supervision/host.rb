@@ -44,6 +44,21 @@ module OpenLanes
       # This machine.
       SYSTEM = new
 
+      # The exit statuses a command refuses with on purpose (sysexits.h).
+      REFUSALS = (64..78)
+
+      # Whether a process ended of its own accord: exit 0, or a refusal.
+      # A signal, or an exit such as the 1 an unhandled error ends in, is a
+      # crash, even from a process that died before it could write a PID file.
+      #
+      # @param status [Process::Status, Symbol] what {WAITER} returned
+      # @return [Boolean]
+      def self.on_purpose?(status)
+        return false unless status.respond_to?(:exitstatus) && status.exitstatus
+
+        status.exitstatus.zero? || REFUSALS.cover?(status.exitstatus)
+      end
+
       # @param status [Process::Status, Symbol] what {WAITER} returned
       # @return [String] `exit 1`, `signal 9`, or `gone`
       def self.describe(status)

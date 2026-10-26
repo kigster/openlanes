@@ -115,7 +115,7 @@ module OpenLanes
         return unless slot.running?
 
         status = @host.waiter.call(slot.pid) or return
-        crashed = crashed?(slot)
+        crashed = crashed?(slot, status)
         pid = slot.pid
         slot.pid = nil
         return if @stopping
@@ -123,11 +123,15 @@ module OpenLanes
         crashed ? crash(slot, status, pid) : ended(slot, status)
       end
 
-      # Its PID file outlived it.
+      # Its PID file outlived it. A web that died before it wrote one, by a
+      # signal or an error, crashed too; the engine's status is the factory's.
       #
       # @param slot [Slot]
+      # @param status [Process::Status, Symbol]
       # @return [Boolean]
-      def crashed?(slot) = @registration.dir.read(slot.role)&.pid == slot.pid
+      def crashed?(slot, status)
+        @registration.dir.read(slot.role)&.pid == slot.pid || !(slot.program.essential || Host.on_purpose?(status))
+      end
 
       # @param slot [Slot]
       # @param status [Process::Status, Symbol]

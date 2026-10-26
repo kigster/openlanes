@@ -116,6 +116,19 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     it("says why") { expect(registration.file.failed).to eq("web" => "exited 69") }
   end
 
+  context "when the web dies before it writes its PID file" do
+    let(:on_tick) do
+      lambda do |s|
+        ends[102] = [exited(1), false] if spawner.calls.size == 2 && !ends.key?(102) && s.slots.last.running?
+        s.stop! if spawner.calls.size == 3
+      end
+    end
+
+    before { supervisor.call(&on_tick) }
+
+    it("counts it as a crash and starts it again") { expect(spawned).to eq(%w[engine web web]) }
+  end
+
   context "when every child is given up on" do
     let(:programs) { [OpenLanes::Supervision::Program.new(role: "web", argv: %w[web])] }
     let(:on_tick) { ->(_) { ends[101] ||= [exited(69), false] } }

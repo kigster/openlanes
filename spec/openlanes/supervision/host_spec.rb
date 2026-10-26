@@ -39,6 +39,40 @@ RSpec.describe OpenLanes::Supervision::Host do
     end
   end
 
+  describe ".on_purpose?" do
+    subject { described_class.on_purpose?(status) }
+
+    context "with exit 0" do
+      let(:status) { instance_double(Process::Status, exitstatus: 0) }
+
+      it { is_expected.to be(true) }
+    end
+
+    context "with a refusal" do
+      let(:status) { instance_double(Process::Status, exitstatus: 69) }
+
+      it { is_expected.to be(true) }
+    end
+
+    context "with an unhandled error's exit 1" do
+      let(:status) { instance_double(Process::Status, exitstatus: 1) }
+
+      it { is_expected.to be(false) }
+    end
+
+    context "with a signal" do
+      let(:status) { instance_double(Process::Status, exitstatus: nil) }
+
+      it { is_expected.to be(false) }
+    end
+
+    context "with one that was gone" do
+      let(:status) { :gone }
+
+      it { is_expected.to be(false) }
+    end
+  end
+
   describe ".describe" do
     subject { described_class.describe(status) }
 
