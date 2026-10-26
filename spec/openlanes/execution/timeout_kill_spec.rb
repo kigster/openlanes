@@ -71,7 +71,7 @@ RSpec.describe "Ending an agent that will not end" do
     let(:spawn) do
       path = pidfile
       argv = self.argv
-      lambda { |_argv, chdir:, env:|
+      lambda { |_argv, chdir:, env:, **|
         OpenLanes::Execution::Child.spawn(argv, chdir:, env:).tap { sleep(0.01) until File.size?(path) }
       }
     end
