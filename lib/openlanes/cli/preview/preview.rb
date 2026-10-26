@@ -2,9 +2,9 @@
 
 module OpenLanes
   module CLI
-    # `openlanes app` — the app a plan builds, run on this machine for the
+    # `openlanes project` (alias `preview`) — the app a plan builds, run on this machine for the
     # control room's Preview tab (plan 012). See {OpenLanes::Apps}.
-    module App
+    module Preview
       # Branch names carry the plan: `<user>/NNN.MM-slug` (see {Vcs::Worktree}).
       BRANCH_PLAN = %r{\A[^/]+/(\d{3}\.\d{2})-}
 

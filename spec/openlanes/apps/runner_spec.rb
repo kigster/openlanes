@@ -3,7 +3,7 @@
 require "json"
 require "rbconfig"
 
-# The loop behind `openlanes app start`, against real processes and the
+# The loop behind `openlanes project start`, against real processes and the
 # in-memory store; each tick runs the example's block instead of sleeping.
 RSpec.describe OpenLanes::Apps::Runner do
   let(:root) { File.realpath(Dir.mktmpdir("openlanes-runner")) }

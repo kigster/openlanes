@@ -4,10 +4,10 @@ require "open3"
 require "rbconfig"
 require "socket"
 
-# `openlanes app` as a person types it: the real executable, in a temp
+# `openlanes project` as a person types it: the real executable, in a temp
 # project, against the fixture server. Redis points at a closed port, so
 # nothing here reaches a real one; the registry is a temp file.
-RSpec.describe "openlanes app" do
+RSpec.describe "openlanes project" do
   let(:exe) { File.expand_path("../../../exe/openlanes", __dir__) }
   let(:server) { File.expand_path("../../fixtures/apps/servers/server.rb", __dir__) }
   let(:project) { File.realpath(Dir.mktmpdir("openlanes-app-cli")) }
@@ -32,7 +32,7 @@ RSpec.describe "openlanes app" do
     system("git", "-C", project, "init", "-q", "-b", "kig/012.00-app-runner", exception: true)
   end
 
-  # TERM, as `app stop` sends: a KILL would leave the app's processes
+  # TERM, as `project stop` sends: a KILL would leave the app's processes
   # running with nobody to stop them.
   after do
     if pid && alive?(pid)
@@ -42,10 +42,10 @@ RSpec.describe "openlanes app" do
     FileUtils.rm_rf(project)
   end
 
-  # The `app start` an example spawned, if any.
+  # The `project start` an example spawned, if any.
   def pid = started.first
 
-  def openlanes(*) = Open3.capture3(env, exe, "app", *, chdir: project)
+  def openlanes(*) = Open3.capture3(env, exe, "project", *, chdir: project)
 
   def alive?(pid)
     Process.kill(0, pid)
@@ -71,7 +71,7 @@ RSpec.describe "openlanes app" do
     let(:log) { File.join(project, "app.log") }
 
     before do
-      started << Process.spawn(env, exe, "app", "start", chdir: project, out: log, err: log)
+      started << Process.spawn(env, exe, "project", "start", chdir: project, out: log, err: log)
       wait_for { rows(openlanes("status").first).size == 2 && rows(openlanes("status").first).all? { connectable?(it[2].to_i) } }
     end
 
@@ -80,7 +80,7 @@ RSpec.describe "openlanes app" do
       expect(rows(out).map { it.first(2) + [it[3]] }).to eq([["012.00", "api", pid.to_s], ["012.00", "web", pid.to_s]])
     end
 
-    it "stops them on app stop, freeing the ports" do
+    it "stops them on project stop, freeing the ports" do
       ports = rows(openlanes("status").first).map { it[2].to_i }
       _, err, status = openlanes("stop", "12")
       wait_for { !alive?(pid) }
@@ -125,20 +125,20 @@ RSpec.describe "openlanes app" do
 
     it "refuses a project that declares no app, in one line, writing nothing" do
       File.write(File.join(project, ".openlanes.yml"), "jobs: 2\n")
-      _, err, status = command(OpenLanes::CLI::App::Start)
+      _, err, status = command(OpenLanes::CLI::Preview::Start)
       expect([status, err]).to match([65, /declares no app:, so there is nothing to start/])
       expect(File.exist?(ports_file)).to be(false)
     end
 
     it "refuses an app: it cannot read, naming the file" do
       File.write(File.join(project, ".openlanes.yml"), "app:\n  processes: []\n")
-      _, err, status = command(OpenLanes::CLI::App::Start)
+      _, err, status = command(OpenLanes::CLI::Preview::Start)
       expect([status, err]).to match([65, /app.processes: must be a list/])
     end
 
     it "says why an app did not start, filed under the plan its branch names" do
       File.write(File.join(project, ".openlanes.yml"), "app:\n  processes:\n    - name: web\n      start: exit 9\n")
-      _, err, status = command(OpenLanes::CLI::App::Start)
+      _, err, status = command(OpenLanes::CLI::Preview::Start)
       expect([status, err]).to match([70, /012.00's app did not start: web exited with status 9/])
       expect(err).to include("Redis at redis://127.0.0.1:1/0", "the app runs, but the Preview tab will not hear of it")
     end
@@ -146,7 +146,7 @@ RSpec.describe "openlanes app" do
     it "runs a named plan in the project root when it has no worktree" do
       FileUtils.mkdir_p(File.join(project, ".plans", OpenLanes::Plans.plan_dirname("014.00", OpenLanes::Plans.status(:planned), "next")))
       File.write(File.join(project, ".openlanes.yml"), "app:\n  processes:\n    - name: web\n      start: exit 2\n")
-      _, err, = command(OpenLanes::CLI::App::Start, plan: "14")
+      _, err, = command(OpenLanes::CLI::Preview::Start, plan: "14")
       expect(err).to include("014.00's app did not start", "in #{project} (kig/012.00-app-runner)")
     end
 
@@ -158,7 +158,7 @@ RSpec.describe "openlanes app" do
       checkout = OpenLanes::Vcs.worktree(root: project).path_for(OpenLanes::Plans::Feature.parse(dirname))
       FileUtils.mkdir_p(checkout)
       File.write(File.join(checkout, ".openlanes.yml"), "app:\n  processes: []\n")
-      _, err, status = command(OpenLanes::CLI::App::Start, plan: "14")
+      _, err, status = command(OpenLanes::CLI::Preview::Start, plan: "14")
       expect([status, err]).to match([65, /app\.processes: must be a list/])
     ensure
       FileUtils.rm_rf(File.dirname(checkout)) if checkout
@@ -182,7 +182,7 @@ RSpec.describe "openlanes app" do
           end
         end
       end
-      _, err, status = command(OpenLanes::CLI::App::Start, demo: true)
+      _, err, status = command(OpenLanes::CLI::Preview::Start, demo: true)
       expect([status, given[:store], given[:keys].repo, given[:stopped]]).to eq([0, store, "demo/#{OpenLanes::Live.keys(root: project).repo}", true])
       expect(err).to include("Starting 012.00's app in #{project} (kig/012.00-app-runner)", "web: listening")
     end
@@ -194,7 +194,7 @@ RSpec.describe "openlanes app" do
       OpenLanes::Apps::Ports.new(path: ports_file, owner: sleeper, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
       allow(Process).to receive(:kill).and_call_original
       allow(Process).to receive(:kill).with("TERM", sleeper).and_raise(Errno::ESRCH)
-      _, err, status = command(OpenLanes::CLI::App::Stop)
+      _, err, status = command(OpenLanes::CLI::Preview::Stop)
       expect([status, err]).to match([0, /#{sleeper} had already stopped/])
     ensure
       Process.kill("KILL", sleeper) if sleeper
@@ -207,32 +207,32 @@ RSpec.describe "openlanes app" do
       OpenLanes::Apps::Ports.new(path: ports_file, owner: 1, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
       allow(Process).to receive(:kill).and_call_original
       allow(Process).to receive(:kill).with("TERM", 1).and_raise(Errno::EPERM)
-      _, err, status = command(OpenLanes::CLI::App::Stop, plan: "12")
+      _, err, status = command(OpenLanes::CLI::Preview::Stop, plan: "12")
       expect([status, err]).to match([77, /1 is not yours to stop/])
       expect(Process).to have_received(:kill).with("TERM", 1)
     end
 
     it "refuses a plan the project does not have" do
       FileUtils.mkdir_p(File.join(project, ".plans"))
-      _, err, status = command(OpenLanes::CLI::App::Start, plan: "99")
+      _, err, status = command(OpenLanes::CLI::Preview::Start, plan: "99")
       expect([status, err]).to match([66, /No plan 099.00/])
     end
 
     it "says there is nothing to stop, or to list" do
-      _, stop, = command(OpenLanes::CLI::App::Stop, plan: "014")
-      _, status, = command(OpenLanes::CLI::App::Status)
+      _, stop, = command(OpenLanes::CLI::Preview::Stop, plan: "014")
+      _, status, = command(OpenLanes::CLI::Preview::Status)
       expect([stop, status]).to match([/No app is running for 014.00 on this machine/, /No app is running on this machine/])
     end
 
     it "refuses a plan number that is not one" do
-      _, err, status = command(OpenLanes::CLI::App::Stop, plan: "abc")
+      _, err, status = command(OpenLanes::CLI::Preview::Stop, plan: "abc")
       expect([status, err]).to match([64, /abc is not a plan number/])
     end
 
     it "lists every reservation as a table on STDOUT" do
       registry.reserve(root: "/w/main", plan: "012.00", process: "web")
       registry.reserve(root: "/w/main", plan: "012.00", process: "api")
-      out, = command(OpenLanes::CLI::App::Status)
+      out, = command(OpenLanes::CLI::Preview::Status)
       expect(out.lines.map(&:split)).to eq([%w[PLAN PROCESS PORT PID CHECKOUT],
                                             ["012.00", "api", "11101", Process.pid.to_s, "/w/main"],
                                             ["012.00", "web", "11100", Process.pid.to_s, "/w/main"]])
@@ -242,7 +242,7 @@ RSpec.describe "openlanes app" do
       sleeper = Process.spawn("sleep", "30")
       OpenLanes::Apps::Ports.new(path: ports_file, owner: sleeper, free: ->(_) { true }).reserve(root: "/w", plan: "012.00", process: "web")
       registry.reserve(root: "/w", plan: "014.00", process: "web")
-      _, err, = command(OpenLanes::CLI::App::Stop, plan: "12")
+      _, err, = command(OpenLanes::CLI::Preview::Stop, plan: "12")
       Process.wait(sleeper)
       expect([err, $?.termsig]).to match([/Asked #{sleeper} to stop/, Signal.list["TERM"]])
     ensure

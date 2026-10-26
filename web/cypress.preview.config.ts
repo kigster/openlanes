@@ -1,5 +1,5 @@
 // The Preview tab's integration check (plan 012, F2): Cypress drives the built page served by a real
-// `openlanes web --demo` on 127.0.0.1:11050, while its tasks start and stop a real `openlanes app start --demo` on the
+// `openlanes web --demo` on 127.0.0.1:11050, while its tasks start and stop a real `openlanes project start --demo` on the
 // fixture app in spec/fixtures/apps/preview_project. Nothing is intercepted. Its own config and spec folder, so the
 // everyday cypress.config.ts (the demo suite on 11000) never picks it up. Run it as `just preview-e2e`.
 import { defineConfig } from "cypress";
@@ -14,7 +14,7 @@ const PORT = Number(process.env.PREVIEW_E2E_PORT ?? 11050);
 
 let app: ChildProcess | null = null;
 
-/** TERM, as `openlanes app stop` sends, and wait for the runner to have stopped every process. */
+/** TERM, as `openlanes project stop` sends, and wait for the runner to have stopped every process. */
 function stopApp(): Promise<null> {
   const running = app;
   app = null;
@@ -42,7 +42,7 @@ export default defineConfig({
         /** Starts the fixture app; `deny` makes its web process send X-Frame-Options: DENY. */
         async startApp({ deny }: { deny: boolean }) {
           await stopApp();
-          app = spawn(resolve(REPO, "exe/openlanes"), ["app", "start", "--demo", "--control-room", `http://127.0.0.1:${PORT}`,
+          app = spawn(resolve(REPO, "exe/openlanes"), ["project", "start", "--demo", "--control-room", `http://127.0.0.1:${PORT}`,
             "--redis-url", process.env.E2E_REDIS_URL ?? "redis://localhost:6379/13"], {
             cwd: PROJECT,
             env: { ...process.env, FIXTURE_FRAMING: deny ? "--deny" : "", NO_COLOR: "1" },

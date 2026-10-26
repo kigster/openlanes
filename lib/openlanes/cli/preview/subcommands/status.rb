@@ -2,8 +2,8 @@
 
 module OpenLanes
   module CLI
-    module App
-      # `openlanes app status` — every port an app holds on this machine,
+    module Preview
+      # `openlanes project status` — every port an app holds on this machine,
       # read from the registry, so it answers with or without Redis.
       class Status < Base
         include Registry

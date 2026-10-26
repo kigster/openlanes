@@ -44,10 +44,10 @@ require_relative "cli/state/subcommands/resume"
 require_relative "cli/skills/subcommands/install"
 require_relative "cli/api/api"
 require_relative "cli/api/subcommands/docs"
-require_relative "cli/app/app"
-require_relative "cli/app/subcommands/start"
-require_relative "cli/app/subcommands/status"
-require_relative "cli/app/subcommands/stop"
+require_relative "cli/preview/preview"
+require_relative "cli/preview/subcommands/start"
+require_relative "cli/preview/subcommands/status"
+require_relative "cli/preview/subcommands/stop"
 
 module OpenLanes
   # The command line. Every command is a thin shell over one library class:
@@ -99,18 +99,18 @@ module OpenLanes
       width [90, TTY::Screen.width - 2].min
 
       # Most used first: what a person types every day, then what scripts do.
-      group "OpenLanes Default Web Operation", "setup", "init", "start", "web"
+      group "OpenLanes Default Web Operation", "setup", "init", "start"
       group "Headless Operation",
         "create",
         "run",
-        "list-plans",
+        "plans",
         "index",
         "resync",
         "unblock",
         "review",
         "worktree",
         "coverage",
-        "app",
+        "project",
         "agents",
         "describe",
         "mail",
@@ -123,13 +123,15 @@ module OpenLanes
     register "setup", Setup
     register "init", Init
     register "create", Create, aliases: %w[new c]
-    # Renamed from `status`, which read as "is the tool OK?" rather than "what
-    # plans are there?". The old spellings stay registered: other repos, agent
-    # prompts and scripts call this by name.
-    register "list-plans", ListPlans, aliases: %w[status st]
+    # `status` is the factory's (C1 in docs/decisions/decisions-on-factory-start-stop.md);
+    # the plan table is `plans`, with no old spellings kept: nothing outside
+    # this repository calls openlanes.
+    register "plans", ListPlans
     register "run", Run
     register "start", Start
-    register "web", Web
+    # Spawned by `start`, not run by hand (C5): a page served on its own is
+    # how a control room came to outlive its engine.
+    register "web", Web, hidden: true
     register "unblock", Unblock
     register "review", Review
     register "eval", Eval
@@ -195,11 +197,11 @@ module OpenLanes
       prefix.register "docs", API::Docs
     end
 
-    # The app a plan builds, for the Preview tab; see {OpenLanes::Apps}.
-    register "app" do |prefix|
-      prefix.register "start", App::Start
-      prefix.register "status", App::Status
-      prefix.register "stop", App::Stop
+    # The project being built, for the Preview tab (C2); see {OpenLanes::Apps}.
+    register "project", aliases: %w[preview] do |prefix|
+      prefix.register "start", Preview::Start
+      prefix.register "status", Preview::Status
+      prefix.register "stop", Preview::Stop
     end
 
     register "completion", ::Dry::CLI::Autocomplete::Command[::OpenLanes::CLI]

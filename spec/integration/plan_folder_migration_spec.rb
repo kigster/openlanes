@@ -90,9 +90,9 @@ RSpec.describe "migrating a repository's plan folders", :tree do
       end
     end
 
-    it "hides plans moved aside from list-plans, and --all shows them dated" do
-      listed, = openlanes("list-plans")
-      everything, = openlanes("list-plans", "--all")
+    it "hides plans moved aside from plans, and --all shows them dated" do
+      listed, = openlanes("plans")
+      everything, = openlanes("plans", "--all")
 
       aggregate_failures do
         expect(listed).not_to include("Shipped", "Parked", "Dropped")
@@ -110,7 +110,7 @@ RSpec.describe "migrating a repository's plan folders", :tree do
       locked = File.join(plans_root, "001.00━━⚪━━❯dashes")
       OpenLanes::Plans::Lock.write(locked)
       File.write(File.join(locked, "plan.md"), "# Plan\n\n## Units\n") # would justify ⭐
-      listed, = openlanes("list-plans")
+      listed, = openlanes("plans")
       openlanes("resync", "dirs")
 
       aggregate_failures do

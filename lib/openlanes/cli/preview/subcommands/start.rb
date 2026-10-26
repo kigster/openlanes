@@ -5,9 +5,9 @@ require "open3"
 
 module OpenLanes
   module CLI
-    module App
-      # `openlanes app start` — run a plan's app in the foreground, as
-      # `.openlanes.yml` `app:` declares it, until Ctrl-C, `openlanes app
+    module Preview
+      # `openlanes project start` — run a plan's app in the foreground, as
+      # `.openlanes.yml` `app:` declares it, until Ctrl-C, `openlanes project
       # stop`, or Stop in the Preview tab.
       class Start < Base
         include Registry

@@ -197,7 +197,7 @@ module OpenLanes
       end
 
       # Pull requests open and waiting on a person, by plan, as the
-      # human-mode watch last saw them. Here so `openlanes list-plans`, a
+      # human-mode watch last saw them. Here so `openlanes plans`, a
       # process of its own, can say who owes what while the engine runs.
       #
       # @return [Hash{String => Array<Integer>}]

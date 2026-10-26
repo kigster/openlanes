@@ -2,8 +2,8 @@
 
 module OpenLanes
   module CLI
-    module App
-      # `openlanes app stop` — TERM to the `openlanes app start` holding a
+    module Preview
+      # `openlanes project stop` — TERM to the `openlanes project start` holding a
       # plan's ports, which stops its processes and frees them.
       class Stop < Base
         include Registry

@@ -2,7 +2,7 @@
 
 module OpenLanes
   module CLI
-    # `openlanes list-plans` — backs /plan-status.
+    # `openlanes plans` — backs /plan-status.
     class ListPlans < Base
       desc "Print every plan, its state, and its pull requests"
 

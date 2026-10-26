@@ -32,7 +32,7 @@ Before anything else, for each PR: `openlanes review <n> review-in-progress`. Yo
 1. `plan.md` and `contract.md` describe what was built.
 1. The tests can fail. Try to construct an input that breaks the code and no test covers.
 1. The integration proof and end-to-end results pasted in `pull-requests.md` exist and pass.
-1. `openlanes list-plans` shows the folder's state matching its pull requests.
+1. `openlanes plans` shows the folder's state matching its pull requests.
 
 Each finding opens with its own heading, `### F<n> [critical|minor] <file>:<line>`, numbered from F1 in this review, then says what is wrong and gives a failing scenario: input, expected, actual. A finding without a scenario is an opinion; drop it. `critical` blocks the merge; `minor` does not. An untagged finding is read as critical. Never raise again a finding your invocation lists as struck by the arbitrator; it names each by the review round that raised it and its heading, so match on what the finding says, not on its id. If you find nothing after trying, say "no findings".
 

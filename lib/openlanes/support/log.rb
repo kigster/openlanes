@@ -168,7 +168,7 @@ module OpenLanes
       def logger(name = nil) = SemanticLogger[name || @name || DEFAULT_NAME]
 
       # One {UI.log} line, at +level+, with its fields as the payload. A
-      # no-op until {.setup} has run: commands that never log (`list-plans`,
+      # no-op until {.setup} has run: commands that never log (`plans`,
       # `docs`) still call code that reports through {UI.log}.
       #
       # @param message [String]
