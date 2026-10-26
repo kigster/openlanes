@@ -53,15 +53,40 @@ RSpec.describe OpenLanes::Supervision::Stopper do
     it("reports the supervisor's file stale") { expect(outcomes.map(&:result)).to eq(%i[stale stopped stopped]) }
   end
 
-  context "with a process that outlives TERM" do
-    let(:stubborn) { [11] }
-    let(:live) { [11] }
+  context "with a web that outlives TERM" do
+    let(:stubborn) { [12] }
+    let(:live) { [12] }
 
     let!(:outcomes) { stopper.call }
 
-    it("KILLs it") { expect(signals.last).to eq(["KILL", 11]) }
-    it("after about ten seconds") { expect(clock.monotonic).to be_within(0.2).of(10) }
-    it("says so") { expect(outcomes.map(&:result)).to eq(%i[stale killed stale]) }
+    it("TERMs it again, then KILLs it") { expect(signals).to eq([["TERM", 12], ["TERM", 12], ["KILL", 12]]) }
+    it("after about ten seconds and the second TERM's wait") { expect(clock.monotonic).to be_within(0.3).of(described_class::WAIT + described_class::HURRIED_WITHIN) }
+    it("says so") { expect(outcomes.map(&:result)).to eq(%i[stale stale killed]) }
+  end
+
+  context "with an engine that outlives TERM" do
+    let(:stubborn) { [11] }
+    let(:live) { [11] }
+
+    before { stopper.call }
+
+    # Its agents get Control::GRACE to write down where they got to.
+    it("waits out the engine's grace first") { expect(clock.monotonic).to be >= OpenLanes::Execution::Control::GRACE + described_class::WAIT }
+  end
+
+  context "with an engine that gives in to the second TERM" do
+    let(:live) { [11] }
+    let(:signaller) do
+      lambda do |signal, pid|
+        signals << [signal, pid]
+        live.delete(pid) if signals.size > 1
+      end
+    end
+
+    let!(:outcomes) { stopper.call }
+
+    it("never KILLs it") { expect(signals).to eq([["TERM", 11], ["TERM", 11]]) }
+    it("reports it stopped") { expect(outcomes.map(&:result)).to eq(%i[stale stopped stale]) }
   end
 
   context "with a pid now held by some other process" do

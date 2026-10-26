@@ -139,8 +139,24 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
 
     before { supervisor.call(&on_tick) }
 
-    it("KILLs it after the grace") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["KILL", 101]]) }
-    it("waited the grace out") { expect(clock.monotonic).to be >= described_class::GRACE }
+    it("TERMs it again, then KILLs it") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101], ["KILL", 101]]) }
+    it("waited the grace and the second TERM out") { expect(clock.monotonic).to be >= described_class::GRACE + OpenLanes::Supervision::Shutdown::HURRIED_WITHIN }
+  end
+
+  context "when a child gives in to the second TERM" do
+    let(:stubborn) { [101] }
+    let(:on_tick) { lambda(&:stop!) }
+    # The engine's second Ctrl-C: it KILLs its agents and exits.
+    let(:signaller) do
+      lambda do |signal, group|
+        signals << [signal, -group]
+        ends[-group] = [exited(0), false] unless signal == "TERM" && stubborn.delete(-group)
+      end
+    end
+
+    before { supervisor.call(&on_tick) }
+
+    it("never KILLs it") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101]]) }
   end
 
   context "when told to stop twice" do
@@ -149,7 +165,8 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
 
     before { supervisor.call(&on_tick) }
 
-    it("KILLs at once") { expect(clock.monotonic).to be < 1 }
+    it("skips the grace") { expect(clock.monotonic).to be <= OpenLanes::Supervision::Shutdown::HURRIED_WITHIN + 1 }
+    it("still TERMs twice before the KILL") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101], ["TERM", 102], ["KILL", 101]]) }
   end
 
   describe "its title" do

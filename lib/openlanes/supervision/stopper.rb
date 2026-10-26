@@ -20,13 +20,22 @@ module OpenLanes
       # Seconds a process gets after TERM, about ten as S2 has it.
       WAIT = 10
 
+      # Seconds a process gets after the second TERM, which an engine or a
+      # run takes as a second Ctrl-C: it KILLs its agents' groups and exits.
+      HURRIED_WITHIN = Execution::Child::TERM_GRACE + 5
+
+      # Longer waits, per role. A supervisor ends only once its children
+      # have; an engine or a run gives its agents {Execution::Control::GRACE}
+      # to write down where they got to.
+      WAITS = { SUPERVISOR => Supervisor::GRACE + WAIT,
+                ENGINE     => Execution::Control::GRACE + WAIT,
+                RUN        => Execution::Control::GRACE + WAIT }.freeze
+
       # @param dir [OpenLanes::Supervision::PidDir]
       # @param probe [OpenLanes::Supervision::Probe]
       # @param host [OpenLanes::Supervision::Host]
-      # @param waits [Hash{String => Numeric}] seconds per role; {WAIT} for the rest.
-      #   The supervisor's is its own children's grace and a margin, since it
-      #   ends only once they have
-      def initialize(dir:, probe: Probe.new, host: Host::SYSTEM, waits: { SUPERVISOR => Supervisor::GRACE + WAIT })
+      # @param waits [Hash{String => Numeric}] seconds per role; {WAIT} for the rest
+      def initialize(dir:, probe: Probe.new, host: Host::SYSTEM, waits: WAITS)
         @dir = dir
         @probe = probe
         @host = host
@@ -65,19 +74,28 @@ module OpenLanes
       end
 
       # To the one process, never its group: a supervisor stops its own
-      # children, and an engine's agents are its to stop.
+      # children, and an engine's agents are its to stop. TERM, then a
+      # second TERM, then KILL, each only to a process still there.
       #
       # @param file [OpenLanes::Supervision::PidFile]
       # @return [Symbol] :stopped or :killed
       def terminate(file)
-        @host.signaller.call("TERM", file.pid)
-        clock = @host.clock
-        deadline = clock.monotonic + @waits.fetch(file.role, WAIT)
-        clock.sleep(0.1) while @probe.verified?(file) && clock.monotonic < deadline
-        return :stopped unless @probe.verified?(file)
-
+        [["TERM", @waits.fetch(file.role, WAIT)], ["TERM", HURRIED_WITHIN]].each do |signal, seconds|
+          @host.signaller.call(signal, file.pid)
+          return :stopped if gone_within?(file, seconds)
+        end
         @host.signaller.call("KILL", file.pid)
         :killed
+      end
+
+      # @param file [OpenLanes::Supervision::PidFile]
+      # @param seconds [Numeric]
+      # @return [Boolean]
+      def gone_within?(file, seconds)
+        clock = @host.clock
+        deadline = clock.monotonic + seconds
+        clock.sleep(0.1) while @probe.verified?(file) && clock.monotonic < deadline
+        !@probe.verified?(file)
       end
     end
   end
