@@ -12,7 +12,7 @@ RSpec.describe "The live controls on one invocation" do
     let(:status) { instance_double(Process::Status, success?: true, exitstatus: 0) }
     let(:child) { instance_double(OpenLanes::Execution::Child, pid: 7, alive?: false, kill: nil, terminate: nil, wait: status, each_chunk: nil) }
     let(:spawn) do
-      lambda { |argv, chdir:, env:|
+      lambda { |argv, chdir:, env:, **|
         spawned << [argv, chdir, env]
         child
       }

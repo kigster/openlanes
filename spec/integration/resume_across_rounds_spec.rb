@@ -34,12 +34,14 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
   let(:invocations) { File.readlines(argv_log, chomp: true).map { it.split("\x1f") } }
   let(:resumed) { invocations.map { |argv| argv[argv.index("--resume") + 1] if argv.include?("--resume") } }
 
-  # The real Child, through the executor's own seam, with PATH pointed at the
-  # fakes: Child starts agents in Bundler's unbundled environment, whose PATH
-  # was fixed when Bundler loaded, so changing ENV here would not reach it.
+  # The real agent supervisor (S6), through the executor's own seam, with
+  # PATH pointed at the fakes: agents start in Bundler's unbundled
+  # environment, whose PATH was fixed when Bundler loaded, so changing ENV
+  # here would not reach them.
   let(:executor) do
-    spawn = lambda { |argv, chdir:, env:|
-      OpenLanes::Execution::Child.spawn(argv, chdir:, env: env.merge("PATH" => path))
+    starter = OpenLanes::Execution::AgentProcess.spawner(dir: File.join(bin, "traces"), root:)
+    spawn = lambda { |argv, chdir:, env:, label:|
+      starter.call(argv, chdir:, env: env.merge("PATH" => path), label:)
     }
     OpenLanes::Execution::Executor.new(root:, spawn:, trace_dir: File.join(bin, "traces"))
   end

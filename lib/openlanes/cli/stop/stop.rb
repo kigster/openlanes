@@ -5,7 +5,7 @@ module OpenLanes
     # `openlanes stop` — stops the factory (C1, S2): TERM to its supervisor,
     # which stops the engine and the page itself, then to any engine or page
     # left without one. `--all` stops every `openlanes run` in the project
-    # too. Nothing is signalled that is not verified to be the process its
+    # too, and any agent whose engine or run is gone. Nothing is signalled that is not verified to be the process its
     # PID file names; a file that fails the check is removed instead.
     class Stop < Base
       desc "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too"
@@ -14,7 +14,7 @@ module OpenLanes
       option :all,
         type:    :boolean,
         default: false,
-        desc:    "Every `openlanes run` in this project as well"
+        desc:    "Every `openlanes run` in this project as well, and any agent left behind"
 
       example [
         "                # the factory",

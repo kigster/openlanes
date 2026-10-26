@@ -108,7 +108,8 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Agents : 1
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Plans : 5
-  OpenLanes__Execution ..> OpenLanes__Spawner : 1
+  OpenLanes__Execution ..> OpenLanes__Spawner : 2
+  OpenLanes__Execution ..> OpenLanes__Supervision : 1
   OpenLanes__Execution ..> OpenLanes__UI : 4
   OpenLanes__Lifecycle ..> OpenLanes : 20
   OpenLanes__Lifecycle ..> OpenLanes__Adapters : 1
@@ -147,7 +148,7 @@ classDiagram
   OpenLanes__Skills ..> OpenLanes : 1
   OpenLanes__Supervision ..> OpenLanes : 2
   OpenLanes__Supervision ..> OpenLanes__Clock : 2
-  OpenLanes__Supervision ..> OpenLanes__Execution : 4
+  OpenLanes__Supervision ..> OpenLanes__Execution : 5
   OpenLanes__Supervision ..> OpenLanes__Log : 1
   OpenLanes__Supervision ..> OpenLanes__Spawner : 1
   OpenLanes__Supervision ..> OpenLanes__Web : 1

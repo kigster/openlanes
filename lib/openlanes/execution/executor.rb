@@ -118,12 +118,16 @@ module OpenLanes
           @closed = false
         end
 
-        # @return [OpenLanes::Execution::Child, nil] the process running now,
+        # @return [OpenLanes::Execution::AgentProcess, nil] the process running now,
         #   which after a compaction is no longer the first one
         attr_accessor :child
 
         # @return [String, nil] the CLI's session id, once its stream named it
         attr_accessor :session
+
+        # @return [OpenLanes::Execution::AgentProcess::Label, nil] which agent,
+        #   on which plan, for the agent supervisor's files and title
+        attr_accessor :label
 
         # @return [String, nil] the raw NDJSON trace the agent's stream is
         #   copied into, so the engine journal can name it and its offset
@@ -188,7 +192,7 @@ module OpenLanes
         # @return [Symbol, nil]
         def phase = clock&.phase
 
-        # STOP, a grace period, then {Child#terminate}: TERM and KILL to the
+        # STOP, a grace period, then {AgentProcess#terminate}: TERM and KILL to the
         # agent's whole process group, and its pipe closed, so the invocation
         # ends even when a tool the agent started is what hangs. The grace is
         # what lets an agent mid-write finish the line.
@@ -264,7 +268,7 @@ module OpenLanes
         private
 
         # @param grace [Integer]
-        # @param process [OpenLanes::Execution::Child, nil] the one asked to stop
+        # @param process [OpenLanes::Execution::AgentProcess, nil] the one asked to stop
         # @return [void]
         def stop_after(grace, process)
           return unless process
@@ -452,8 +456,9 @@ module OpenLanes
       end
 
       # @param root [String] the repository the agents work in
-      # @param spawn [Proc] `argv, chdir:, env:` → {OpenLanes::Execution::Child}, swappable so the
-      #   suite can play back a fake process without spawning one
+      # @param spawn [#call, nil] `argv, chdir:, env:, label:` → an {AgentProcess}, or
+      #   anything with its interface, so the suite can play back a fake process
+      #   without spawning one; nil runs each agent under `openlanes-agent` (S6)
       # @param timeout [Integer, nil] `--timeout`: a cap on every agent's clock,
       #   or nil to let each agent's own frontmatter clock stand
       # @param dry_run [Boolean] plan the invocation, do not run it
@@ -472,14 +477,14 @@ module OpenLanes
       #   +max_tokens+, leaving out cache reads; what `eval --live` uses
       # @param lean [Boolean] start agents without the operator's personal
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
-      def initialize(root:, spawn: Child.method(:spawn), timeout: nil, dry_run: false,
+      def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
         fresh_budget: false)
         @root = File.expand_path(root)
-        @spawn = spawn
+        @trace_dir = trace_dir
+        @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
         @timeout = timeout
         @dry_run = dry_run
-        @trace_dir = trace_dir
         @instructions = instructions.to_s.strip
         @model = model
         @max_tokens = max_tokens
@@ -577,6 +582,7 @@ module OpenLanes
         end
 
         handle ||= Handle.new
+        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name)
         before = Boundary.snapshot(root)
         trace = trace_path(agent, subject)
         handle.trace = trace
@@ -763,14 +769,14 @@ module OpenLanes
       # session of an invocation shares its trace file, which is opened for
       # appending, so a compacted run reads back as one stream.
       #
-      # @return [OpenLanes::Execution::Child]
+      # @return [OpenLanes::Execution::AgentProcess]
       def launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         transcript = profile.adapter.transcript(trace:) do |progress|
           handle.session ||= progress.session
           on_progress&.call(sessions.carry(progress))
         end
         sessions << transcript
-        child = @spawn.call(argv, chdir: root, env: profile.adapter.environment)
+        child = @spawn.call(argv, chdir: root, env: profile.adapter.environment, label: handle.label)
         handle.child = child
         transcript.pid = child.pid
         child

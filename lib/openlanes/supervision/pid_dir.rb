@@ -79,10 +79,10 @@ module OpenLanes
       # @return [void]
       def delete(path) = FileUtils.rm_f(path)
 
-      # @return [Array<Entry>] every PID file, supervisor first, runs last
+      # @return [Array<Entry>] every PID file, supervisor first, agents last
       def entries
         Dir.glob(File.join(@path, "*.pid")).map { Entry.new(path: it, file: read_path(it)) }
-           .sort_by { [ORDER.index(File.basename(it.path, ".pid").sub(/-\d+\z/, "")) || ORDER.size, it.path] }
+           .sort_by { [ORDER.index(it.file&.role) || ORDER.size, it.path] }
       end
 
       private

@@ -11,7 +11,7 @@ module OpenLanes
     # start time and the title as well before anything trusts or signals it.
     #
     # @!attribute [r] role
-    #   @return [String] supervisor, engine, web or run
+    #   @return [String] supervisor, engine, web, run or agent
     # @!attribute [r] pid
     #   @return [Integer]
     # @!attribute [r] started
@@ -21,30 +21,30 @@ module OpenLanes
     # @!attribute [r] url
     #   @return [String, nil] the control room, for a supervisor or a web
     # @!attribute [r] plans
-    #   @return [Array<String>] what a run works
+    #   @return [Array<String>] what a run works, or the plan an agent works
+    # @!attribute [r] agent
+    #   @return [String, nil] which agent an agent supervisor runs
     # @!attribute [r] failed
     #   @return [Hash{String => String}] children a supervisor stopped restarting, and why
-    PidFile = Data.define(:role, :pid, :started, :root, :url, :plans, :failed) do
-      # Defaults for the optional members; +role+, +pid+, +started+ and +root+
-      # pass through.
+    PidFile = Data.define(:role, :pid, :started, :root, :url, :plans, :failed, :agent) do
+      # Defaults for the optional members, +url+, +plans+, +failed+ and
+      # +agent+; +role+, +pid+, +started+ and +root+ pass through.
       #
-      # @param url [String, nil]
-      # @param plans [Array<String>]
-      # @param failed [Hash{String => String}]
-      def initialize(url: nil, plans: [], failed: {}, **) = super
+      # @param fields [Hash]
+      def initialize(**fields) = super(url: nil, plans: [], failed: {}, agent: nil, **fields)
 
       # @param text [String] what {#to_json} wrote
       # @return [OpenLanes::Supervision::PidFile, nil] nil for anything unreadable,
       #   which every reader treats as a crash
       def self.parse(text)
         data = JSON.parse(text, symbolize_names: true)
-        new(role: data.fetch(:role),
-          pid: Integer(data.fetch(:pid)),
+        new(**data.slice(:url, :agent),
+          role:    data.fetch(:role),
+          pid:     Integer(data.fetch(:pid)),
           started: data[:started],
-          root: data.fetch(:root),
-          url: data[:url],
-          plans: Array(data[:plans]),
-          failed: (data[:failed] || {}).transform_keys(&:to_s))
+          root:    data.fetch(:root),
+          plans:   Array(data[:plans]),
+          failed:  (data[:failed] || {}).transform_keys(&:to_s))
       rescue JSON::ParserError, KeyError, ArgumentError, TypeError
         nil
       end

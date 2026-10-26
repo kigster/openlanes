@@ -10,12 +10,9 @@ module OpenLanes
       desc "Which factory processes are up, with PIDs, URL and uptime, and how many plans are in each state"
 
       # @param file [OpenLanes::Supervision::PidFile]
-      # @return [String] the role, and for a run the plans it works
-      def self.label(file)
-        return file.role unless file.role == Supervision::RUN && !file.plans.empty?
-
-        "#{file.role} #{file.plans.join(",")}"
-      end
+      # @return [String] the role, the plans a run or an agent works, and
+      #   which agent
+      def self.label(file) = [file.role, file.plans.join(",").then { it unless it.empty? }, file.agent].compact.join(" ")
 
       # @param options [Hash]
       # @return [void]
