@@ -107,7 +107,8 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
 - It writes the transcript to a file in the trace directory and, when the agent ends, its exit status beside it. The engine follows the file. A pipe to the engine (`popen3`) was rejected: the engine's death would close it and end the run.
 - It writes `tmp/pids/agent-<plan>-<agent>.pid`. A restarted engine finds those files and reattaches to the runs still going.
 - Stops reach it as signals (S7). The timeout clock, the controls and the transcript reader move from the pipe to the file.
-- Cost: one more Ruby process per agent, roughly 30 to 50 MB each.
+- It is lean Ruby: the standard library only, no Bundler, no Zeitwerk, nothing from the gem, about 15 MB and 50 ms to start.
+- The engine knows it only through its protocol (argv in; transcript, exit status and PID files out; signals for control), so a native build can replace it without the engine noticing. Should one ever be needed, C compiled at install through the gem's `ext/` is preferred over Rust: it needs no prebuilt binaries per platform and no cargo. Neither is worth it today. The saving is about 14 MB per agent, beside an agent CLI's 200 to 400 MB, and the cost is fork, exec and signal code in a language this repository does not otherwise use.
 
 ### S7. Shutdown gives agents 60 seconds to wrap up
 
