@@ -89,6 +89,15 @@ RSpec.describe OpenLanes::Supervision::Stopper do
     it("reports it stopped") { expect(outcomes.map(&:result)).to eq(%i[stale stopped stale]) }
   end
 
+  context "with an agent whose engine is gone" do
+    let(:live) { [30] }
+
+    before { dir.write(file("agent", 30)) }
+
+    it("leaves it to a plain stop") { expect(stopper.call.map(&:result)).not_to include(:stopped) }
+    it("stops it with --all") { expect(stopper.call(runs: true).last.result).to eq(:stopped) }
+  end
+
   context "with a pid now held by some other process" do
     let(:live) { [] }
 

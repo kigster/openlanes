@@ -60,6 +60,14 @@ RSpec.describe OpenLanes::CLI::Status, :tree do
     it("names its plans") { expect(status).to match(/run 005,006\s+│\s+20\s+│\s+up/) }
   end
 
+  context "with an agent" do
+    let(:live) { [30] }
+
+    before { dir.write(file("agent", 30, plans: %w[005.00]).with(agent: "backend-coder")) }
+
+    it("names its plan and itself, last") { expect(status).to match(/agent 005.00 backend-coder\s+│\s+30\s+│\s+up/) }
+  end
+
   context "with an unreadable file" do
     before do
       FileUtils.mkdir_p(pid_dir)

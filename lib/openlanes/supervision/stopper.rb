@@ -24,6 +24,10 @@ module OpenLanes
       # run takes as a second Ctrl-C: it KILLs its agents' groups and exits.
       HURRIED_WITHIN = Execution::Child::TERM_GRACE + 5
 
+      # Roles a plain `stop` leaves alone: a run is its own, and an agent is
+      # its engine's or its run's to stop. `stop --all` stops them too.
+      OWNED = [RUN, AGENT].freeze
+
       # Longer waits, per role. A supervisor ends only once its children
       # have; an engine or a run gives its agents {Execution::Control::GRACE}
       # to write down where they got to.
@@ -54,7 +58,7 @@ module OpenLanes
         done = supervisors.map { stop(it, dry_run:) }
         # A supervisor's children remove their own files as it stops them.
         rest = @dir.entries unless dry_run
-        done + rest.select { runs || it.file&.role != RUN }.map { stop(it, dry_run:) }
+        done + rest.select { runs || !OWNED.include?(it.file&.role) }.map { stop(it, dry_run:) }
       end
 
       private

@@ -22,8 +22,12 @@ module OpenLanes
     # An `openlanes run`, one file per process.
     RUN = "run"
 
+    # An agent supervisor, one file per running agent (S6). It names itself
+    # in a process that loads nothing from the gem, so the word is its.
+    AGENT = Execution::AgentSupervisor::ROLE
+
     # How every listing orders the roles.
-    ORDER = [SUPERVISOR, ENGINE, WEB, RUN].freeze
+    ORDER = [SUPERVISOR, ENGINE, WEB, RUN, AGENT].freeze
 
     module_function
 
