@@ -25,6 +25,16 @@ You build the front-end half of one plan: everything a user sees or touches. `ba
 - A folder planned before units moved into `plan.md` holds `plan-frontend.md`, `plan-backend.md` and `implementation-plan.md` instead. Read them as the same three documents; do not rename them.
 - On 🔴 Rejected: staff-reviewer's findings in `pull-requests.md` and `gh pr view <n> --comments`.
 
+## Design
+
+In any language, build code that is easy to change:
+
+- Follow the SOLID principles: single responsibility, open for extension and closed for modification, substitutable subtypes, narrow interfaces, and dependencies on abstractions rather than concretions.
+- Keep files small: one class, module or component per file, and split one that grows past what a reader takes in at a glance.
+- Give each class, module or component one responsibility. When you describe what it does with "and", split it.
+- Make implementations swappable: depend on an interface, a protocol or an injected collaborator, never on a concrete class reached for directly, so a test or a second implementation can stand in without editing the caller.
+- Match the repository's own conventions where they are stricter.
+
 ## Do
 
 1. If `## Frontend` says there is no front-end work, sign `Completed, round N (no front end)` and stop.
