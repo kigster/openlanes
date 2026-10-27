@@ -31,6 +31,7 @@ RSpec.describe OpenLanes::Supervision::PidFile do
 
     it("reads a file whose process could not read its start time") { expect(described_class.parse('{"role":"agent","pid":1,"root":"/x"}').started).to be_nil }
     it("reads back which agent") { expect(described_class.parse(file.with(role: "agent", agent: "backend-coder").to_json).agent).to eq("backend-coder") }
+    it("reads back the agent's CLI") { expect(described_class.parse(file.with(role: "agent", child: 4343).to_json).child).to eq(4343) }
     it("reads nothing out of half a file") { expect(described_class.parse('{"role":')).to be_nil }
 
     it("reads nothing out of a file with no pid") { expect(described_class.parse('{"role":"web","root":"/x"}')).to be_nil }

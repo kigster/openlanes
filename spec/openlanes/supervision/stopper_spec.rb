@@ -13,7 +13,7 @@ RSpec.describe OpenLanes::Supervision::Stopper do
   let(:signaller) do
     lambda do |signal, pid|
       signals << [signal, pid]
-      live.delete(pid) unless signal == "TERM" && stubborn.include?(pid)
+      live.delete(pid) unless signal != "KILL" && stubborn.include?(pid)
     end
   end
 
@@ -40,7 +40,7 @@ RSpec.describe OpenLanes::Supervision::Stopper do
   context "with --all" do
     before { stopper.call(runs: true) }
 
-    it("stops every run too") { expect(signals).to include(["TERM", 20]) }
+    it("stops every run too, with INT") { expect(signals).to include(["INT", 20]) }
     it("leaves no file behind") { expect(dir.entries).to be_empty }
   end
 
@@ -49,7 +49,9 @@ RSpec.describe OpenLanes::Supervision::Stopper do
 
     let!(:outcomes) { stopper.call }
 
-    it("stops them") { expect(signals).to eq([["TERM", 11], ["TERM", 12]]) }
+    # INT is the engine's deliberate quit, which stops its agents; TERM
+    # would leave them running for an engine to reattach.
+    it("stops them, the engine with INT") { expect(signals).to eq([["INT", 11], ["TERM", 12]]) }
     it("reports the supervisor's file stale") { expect(outcomes.map(&:result)).to eq(%i[stale stopped stopped]) }
   end
 
@@ -64,7 +66,7 @@ RSpec.describe OpenLanes::Supervision::Stopper do
     it("says so") { expect(outcomes.map(&:result)).to eq(%i[stale stale killed]) }
   end
 
-  context "with an engine that outlives TERM" do
+  context "with an engine that outlives INT" do
     let(:stubborn) { [11] }
     let(:live) { [11] }
 
@@ -74,7 +76,7 @@ RSpec.describe OpenLanes::Supervision::Stopper do
     it("waits out the engine's grace first") { expect(clock.monotonic).to be >= OpenLanes::Execution::Control::GRACE + described_class::WAIT }
   end
 
-  context "with an engine that gives in to the second TERM" do
+  context "with an engine that gives in to the second INT" do
     let(:live) { [11] }
     let(:signaller) do
       lambda do |signal, pid|
@@ -85,7 +87,7 @@ RSpec.describe OpenLanes::Supervision::Stopper do
 
     let!(:outcomes) { stopper.call }
 
-    it("never KILLs it") { expect(signals).to eq([["TERM", 11], ["TERM", 11]]) }
+    it("never KILLs it") { expect(signals).to eq([["INT", 11], ["INT", 11]]) }
     it("reports it stopped") { expect(outcomes.map(&:result)).to eq(%i[stale stopped stale]) }
   end
 

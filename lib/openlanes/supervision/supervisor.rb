@@ -13,7 +13,7 @@ module OpenLanes
     # process group of its own, so the Ctrl-C that reaches this process
     # reaches no child, and the order stays this one's to give.
     class Supervisor
-      # Seconds the children get after TERM: the engine's own quit grace,
+      # Seconds the children get after INT: the engine's own quit grace,
       # for agents to write down where they got to, and a margin for it to
       # reap them.
       GRACE = Execution::Control::GRACE + 15
@@ -52,7 +52,7 @@ module OpenLanes
         @started = clock.monotonic
         @slots.each { start(it) }
         watch
-        Shutdown.new(@slots, host: @host).call(grace: GRACE) { @forced }
+        Shutdown.new(@slots, host: @host, sweep: AgentSweep.new(dir: @registration.dir, host: @host)).call(grace: GRACE) { @forced }
         @status || 0
       ensure
         @lifeline.cut

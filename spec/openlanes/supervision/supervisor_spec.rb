@@ -38,7 +38,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     lambda do |signal, group|
       pid = -group
       signals << [signal, pid]
-      ends[pid] = [exited(0), false] unless signal == "TERM" && stubborn.include?(pid)
+      ends[pid] = [exited(0), false] unless signal == "INT" && stubborn.include?(pid)
     end
   end
   let(:stubborn) { [] }
@@ -58,7 +58,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     let!(:status) { supervisor.call(&on_tick) }
 
     it("ends the factory with the engine's status") { expect(status).to eq(3) }
-    it("stops the web") { expect(signals).to eq([["TERM", 102]]) }
+    it("stops the web") { expect(signals).to eq([["INT", 102]]) }
     it("starts each child once") { expect(spawned).to eq(%w[engine web]) }
   end
 
@@ -99,7 +99,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
 
     it("gives up on it") { expect(spawned).to eq(%w[engine web web web]) }
     it("says why in the PID file") { expect(registration.file.failed).to eq("web" => "3 crashes in 5m") }
-    it("keeps the engine up until told to stop") { expect(signals).to eq([["TERM", 101]]) }
+    it("keeps the engine up until told to stop") { expect(signals).to eq([["INT", 101]]) }
   end
 
   context "when the web ends on purpose" do
@@ -141,35 +141,48 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
 
     let!(:status) { supervisor.call(&on_tick) }
 
-    it("TERMs every child") { expect(signals).to eq([["TERM", 101], ["TERM", 102]]) }
+    it("sends every child INT, the engine's deliberate quit") { expect(signals).to eq([["INT", 101], ["INT", 102]]) }
     it("ends with 0") { expect(status).to eq(0) }
     it("cuts the lifeline") { expect(lifeline).to have_received(:cut) }
   end
 
-  context "when a child outlives TERM" do
+  context "when told to stop, with agents the engine left" do
+    let(:on_tick) { lambda(&:stop!) }
+    let(:sweep) { instance_double(OpenLanes::Supervision::AgentSweep) }
+
+    before do
+      allow(OpenLanes::Supervision::AgentSweep).to receive(:new).with(dir:, host: anything).and_return(sweep)
+      allow(sweep).to receive(:call) { signals << [:sweep] }
+      supervisor.call(&on_tick)
+    end
+
+    it("stops them once the children are down") { expect(signals.last).to eq([:sweep]) }
+  end
+
+  context "when a child outlives INT" do
     let(:stubborn) { [101] }
     let(:on_tick) { lambda(&:stop!) }
 
     before { supervisor.call(&on_tick) }
 
-    it("TERMs it again, then KILLs it") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101], ["KILL", 101]]) }
-    it("waited the grace and the second TERM out") { expect(clock.monotonic).to be >= described_class::GRACE + OpenLanes::Supervision::Shutdown::HURRIED_WITHIN }
+    it("sends INT again, then KILLs it") { expect(signals).to eq([["INT", 101], ["INT", 102], ["INT", 101], ["KILL", 101]]) }
+    it("waited the grace and the second INT out") { expect(clock.monotonic).to be >= described_class::GRACE + OpenLanes::Supervision::Shutdown::HURRIED_WITHIN }
   end
 
-  context "when a child gives in to the second TERM" do
+  context "when a child gives in to the second INT" do
     let(:stubborn) { [101] }
     let(:on_tick) { lambda(&:stop!) }
     # The engine's second Ctrl-C: it KILLs its agents and exits.
     let(:signaller) do
       lambda do |signal, group|
         signals << [signal, -group]
-        ends[-group] = [exited(0), false] unless signal == "TERM" && stubborn.delete(-group)
+        ends[-group] = [exited(0), false] unless signal == "INT" && stubborn.delete(-group)
       end
     end
 
     before { supervisor.call(&on_tick) }
 
-    it("never KILLs it") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101]]) }
+    it("never KILLs it") { expect(signals).to eq([["INT", 101], ["INT", 102], ["INT", 101]]) }
   end
 
   context "when told to stop twice" do
@@ -179,7 +192,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     before { supervisor.call(&on_tick) }
 
     it("skips the grace") { expect(clock.monotonic).to be <= OpenLanes::Supervision::Shutdown::HURRIED_WITHIN + 1 }
-    it("still TERMs twice before the KILL") { expect(signals).to eq([["TERM", 101], ["TERM", 102], ["TERM", 101], ["TERM", 102], ["KILL", 101]]) }
+    it("still sends INT twice before the KILL") { expect(signals).to eq([["INT", 101], ["INT", 102], ["INT", 101], ["INT", 102], ["KILL", 101]]) }
   end
 
   describe "its title" do
