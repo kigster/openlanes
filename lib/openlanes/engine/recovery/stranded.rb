@@ -27,21 +27,26 @@ module OpenLanes
           @clock = clock
         end
 
+        # @param skip [Array<Array(String, String, Integer)>] stages taken
+        #   back by {Reattach}, which are not stranded
         # @return [void]
-        def call
-          resumed = from_state_file
+        def call(skip: [])
+          resumed = from_state_file(skip) + skip
           from_plan_states(resumed) unless @runner.dry_run?
           @state&.begin_run!(root: @runner.root)
         end
 
         private
 
+        # @param skip [Array<Array(String, String, Integer)>]
         # @return [Array<Array(String, String, Integer)>] what was resumed
-        def from_state_file
+        def from_state_file(skip)
           return [] unless @state
 
           @state.load
           @state.stranded.filter_map do |ordinal, stage|
+            next if skip.include?([ordinal, stage["agent"], stage["round"]])
+
             subject = @runner.tree.reload.find(Plans::Ordinal.parse(ordinal)) or next
             interrupt(subject, stage["agent"], stage["round"]) unless @runner.foreign?(subject)
           end

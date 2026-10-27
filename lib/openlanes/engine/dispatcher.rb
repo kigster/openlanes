@@ -226,7 +226,7 @@ module OpenLanes
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def run
         @feed.append(:run_started, jobs: @runner.jobs)
-        resume_stranded
+        resume_stranded(reattach)
         loop do
           tick
           break if done?
@@ -769,8 +769,27 @@ module OpenLanes
 
       # ---- starting ---------------------------------------------------------
 
+      # @param reattached [Array<Array(String, String, Integer)>] stages {#reattach} took back
       # @return [void] see {Recovery::Stranded}
-      def resume_stranded = @stranded.call
+      def resume_stranded(reattached = []) = @stranded.call(skip: reattached)
+
+      # The agents a dead engine left, taken back before anything else is
+      # started (B1 in plan 041). A verifier's preview app died with that
+      # engine, so a verifier is stopped instead, and resumed as stranded
+      # (B9). From here on this engine's own agents outlive its crash.
+      #
+      # @return [Array<Array(String, String, Integer)>] the stages taken back
+      def reattach
+        return [] unless @state
+
+        Execution::AgentProcess.reattachable!
+        Recovery::Reattach.new(runner: @runner, state: @state).call.filter_map do |found|
+          next adopt(found) unless verifier?(found.agent)
+
+          Execution::AgentProcess.attach(found.restart["process"]).tap(&:terminate).wait
+          nil
+        end
+      end
 
       # @return [void]
       def dispatch
@@ -1092,6 +1111,7 @@ module OpenLanes
         alone = @running.none? { plan_of(it) == ordinal }
         task = @runner.prepare(agent, subject, round, refresh: alone, hold: rebases.hold(ordinal))
         handle = Execution::Executor::Handle.new
+        handle.on_restart = restart_recorder(ordinal, agent, round)
         # A round a person gave more time to (E1) starts with it.
         bonus = @runner.dry_run? ? 0 : @extensions.take_seconds(subject.feature.path, agent.name, subject.status.key)
         handle.extend!(bonus) if bonus.positive?
@@ -1145,34 +1165,19 @@ module OpenLanes
         UI.log("started", **task.log_fields)
         @invocations[job.key] = @clock.now
         @runner.events.record(:agent_started, **event_fields(job))
-        job.thread = Thread.new do
-          Thread.current.report_on_exception = false
-          job.result = begin
-            invoke = lambda {
-              @runner.executor.call(agent,
-                subject,
-                root:      task.root,
-                round:,
-                successor:,
-                handle:,
-                partners:,
-                resume:) { |progress|
-                job.up = progress.up
-                job.down = progress.down
-                job.subagents = progress.subagents
-                job.running = progress.running
-                job.context = progress.context
-                job.message = progress.message || progress.activity
-                job.history = Board::Row.remember(job.history || [], job.message)
-                job.journal = progress.journal
-              }
-            }
-            verifier?(agent) ? @runner.verification.around(task, subject, &invoke) : invoke.call
-          rescue StandardError => e
-            e
-          ensure
-            @locks.release(ordinal) unless @runner.dry_run?
-          end
+        job.thread = work(job, ordinal) do
+          invoke = lambda {
+            @runner.executor.call(agent,
+              subject,
+              root:      task.root,
+              round:,
+              successor:,
+              handle:,
+              partners:,
+              resume:,
+              &progress_of(job))
+          }
+          verifier?(agent) ? @runner.verification.around(task, subject, &invoke) : invoke.call
         end
         release_owed = false
         @running << job
@@ -1182,6 +1187,86 @@ module OpenLanes
         @locks.release(ordinal) if release_owed && !@runner.dry_run?
         @locks.unreserve(ordinal)
         raise
+      end
+
+      # Take back an agent a dead engine left (B1 in plan 041), as {#start}
+      # would have started it, except that nothing is recorded as started
+      # again and no round is spent: the stage is the dead run's, and it
+      # settles here like any other.
+      #
+      # @param found [OpenLanes::Engine::Recovery::Reattach::Found]
+      # @return [Array(String, String, Integer), nil] the stage, or nil when
+      #   the plan could not be locked, which leaves it stranded
+      def adopt(found)
+        subject = found.subject
+        agent = found.agent
+        ordinal = subject.feature.ordinal.to_s
+        return nil unless reserve(ordinal, subject, agent) && lock(ordinal, subject)
+
+        task = @runner.prepare(agent, subject, found.round, refresh: false)
+        handle = Execution::Executor::Handle.new
+        handle.on_restart = restart_recorder(ordinal, agent, found.round)
+        job = Job.new(key: "#{ordinal}/#{agent.name}",
+          task:,
+          handle:,
+          started_at: UI.monotonic,
+          from: found.from,
+          state: subject.status.key,
+          up: 0,
+          down: 0,
+          subagents: 0,
+          frame: 0)
+        remember(ordinal, agent.name, job.state, "Started", found.round)
+        UI.log("reattached", **task.log_fields)
+        @invocations[job.key] = @clock.now
+        job.thread = work(job, ordinal) { @runner.executor.reattach(agent, subject, restart: found.restart, handle:, &progress_of(job)) }
+        @running << job
+        found.key
+      end
+
+      # The job's thread: its result is what the block returned, or the
+      # error it raised, and the plan's lock goes when it ends.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param ordinal [String]
+      # @return [Thread]
+      def work(job, ordinal)
+        Thread.new do
+          Thread.current.report_on_exception = false
+          job.result = begin
+            yield
+          rescue StandardError => e
+            e
+          ensure
+            @locks.release(ordinal) unless @runner.dry_run?
+          end
+        end
+      end
+
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @return [Proc] what the executor tells of the agent's progress, onto the job
+      def progress_of(job)
+        lambda do |progress|
+          job.up = progress.up
+          job.down = progress.down
+          job.subagents = progress.subagents
+          job.running = progress.running
+          job.context = progress.context
+          job.message = progress.message || progress.activity
+          job.history = Board::Row.remember(job.history || [], job.message)
+          job.journal = progress.journal
+        end
+      end
+
+      # @param ordinal [String]
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param round [Integer]
+      # @return [Proc, nil] writes the restart context into the stage (B5 in
+      #   plan 041); nil without a state file, as under a dry run
+      def restart_recorder(ordinal, agent, round)
+        return nil unless @state
+
+        ->(fields) { @state.restart(ordinal, agent: agent.name, round:, **fields) }
       end
 
       # A job that resolves a stopped rebase rather than working the plan
@@ -1498,7 +1583,9 @@ module OpenLanes
           exit:     attempt.ok ? "ok" : attempt.note,
           ended_at: @clock.now.iso8601,
           up:       attempt.up,
-          down:     attempt.down)
+          down:     attempt.down,
+          # An agent that ends before the first poll is otherwise never named here.
+          **{ session: job.handle&.session }.compact)
         attempt
       end
 
