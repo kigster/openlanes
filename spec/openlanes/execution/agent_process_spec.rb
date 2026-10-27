@@ -60,23 +60,36 @@ RSpec.describe OpenLanes::Execution::AgentProcess do
 
   describe "#terminate on an agent supervisor that will not end" do
     subject(:process) do
-      described_class.new(pid: Process.spawn("sh", "-c", "trap '' TERM; sleep 30", pgroup: true),
+      described_class.new(pid: supervisor,
         files: described_class::Files.new(output:, status: File.join(dir, "s"), pid_file: stub_pid_file),
         stop_within: 0.2)
     end
 
+    # It says when its trap is set: a TERM sent before then ends it, and
+    # the stop from here would never be needed.
+    let(:ready) { File.join(dir, "ready") }
+    let(:supervisor) { Process.spawn("sh", "-c", "trap '' TERM; : > \"$0\"; while :; do sleep 0.05; done", ready, pgroup: true) }
     let(:output) { File.join(dir, "o").tap { File.write(it, "") } }
     let(:cli) { Process.spawn("sleep", "30", pgroup: true) }
     let(:stub_pid_file) { File.join(dir, "agent.pid").tap { File.write(it, JSON.generate(child: cli)) } }
+    let(:cli_status) { Process.wait2(cli).last }
 
     before do
       cli
+      supervisor
+      sleep(0.01) until File.exist?(ready)
       process.terminate
     end
 
-    after { Process.wait(cli) }
+    after do
+      cli_status
+      Process.kill("KILL", -supervisor)
+    rescue Errno::ESRCH
+      nil
+    end
 
-    it("KILLs it and the CLI's group from here") { expect(process.wait).to eq(described_class::LOST) }
+    it("KILLs it from here") { expect(process.wait).to eq(described_class::LOST) }
+    it("KILLs the CLI's group") { expect(cli_status.termsig).to eq(9) }
     it("lets the reader go") { expect { |b| process.each_chunk(&b) }.not_to yield_control }
     it("only once") { expect { process.terminate }.not_to raise_error }
   end
@@ -96,7 +109,8 @@ RSpec.describe OpenLanes::Execution::AgentProcess do
 
     before do
       allow(described_class).to receive(:live).and_return([process])
-      allow(process).to receive(:kill)
+      # Stubbed too, so the suite's own cleanup does not wait out a stop.
+      allow(process).to receive_messages(kill: nil, terminate: nil)
       described_class.terminate_all
     end
 
