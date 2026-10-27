@@ -146,17 +146,25 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     it("cuts the lifeline") { expect(lifeline).to have_received(:cut) }
   end
 
-  context "when told to stop, with agents the engine left" do
+  context "when told to stop, with agents" do
     let(:on_tick) { lambda(&:stop!) }
     let(:sweep) { instance_double(OpenLanes::Supervision::AgentSweep) }
 
     before do
       allow(OpenLanes::Supervision::AgentSweep).to receive(:new).with(dir:, host: anything).and_return(sweep)
-      allow(sweep).to receive(:call) { signals << [:sweep] }
+      allow(sweep).to receive(:interrupt) { signals << [:interrupt] }
+      allow(sweep).to receive(:call) { |grace:| signals << [:sweep, grace] }
       supervisor.call(&on_tick)
     end
 
-    it("stops them once the children are down") { expect(signals.last).to eq([:sweep]) }
+    it("tells them INTERRUPT with the children's INT") { expect(signals.first(3)).to eq([["INT", 101], ["INT", 102], [:interrupt]]) }
+    it("sweeps them last, with what is left of the shared grace") { expect(signals.last).to eq([:sweep, described_class::GRACE]) }
+
+    context "when told twice" do
+      let(:on_tick) { ->(s) { 2.times { s.stop! } } }
+
+      it("sweeps them at once") { expect(signals.last).to eq([:sweep, 0]) }
+    end
   end
 
   context "when a child outlives INT" do

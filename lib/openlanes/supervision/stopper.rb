@@ -54,20 +54,55 @@ module OpenLanes
 
       # The supervisor first, since it stops its children itself; then
       # whatever is still named: an engine or a web whose supervisor is gone,
-      # and with +runs+ every `openlanes run`.
+      # and with +runs+ every `openlanes run` and every agent. The agents are
+      # told `INTERRUPT` before anything else is stopped, and share one
+      # {Execution::Control::GRACE} to leave their resume notes (C5 in plan
+      # 041), as under a supervisor.
       #
       # @param runs [Boolean]
       # @param dry_run [Boolean]
       # @return [Array<Outcome>]
       def call(runs: false, dry_run: false)
+        return stop_all if runs && !dry_run
+
+        stop_named(dry_run:) { runs || !OWNED.include?(it) }
+      end
+
+      private
+
+      # @param dry_run [Boolean]
+      # @yieldparam role [String, nil] nil for an unreadable file
+      # @yieldreturn [Boolean] whether to stop a process of that role
+      # @return [Array<Outcome>]
+      def stop_named(dry_run:)
         supervisors, rest = @dir.entries.partition { it.file&.role == SUPERVISOR }
         done = supervisors.map { stop(it, dry_run:) }
         # A supervisor's children remove their own files as it stops them.
         rest = @dir.entries unless dry_run
-        done + rest.select { runs || !OWNED.include?(it.file&.role) }.map { stop(it, dry_run:) }
+        done + rest.select { yield(it.file&.role) }.map { stop(it, dry_run:) }
       end
 
-      private
+      # `stop --all`: the agents are told first, everything else is stopped,
+      # and then the agents get what is left of the grace, TERM, and KILL.
+      # Their files are removed as each ends; a KILLed one's is removed here.
+      #
+      # @return [Array<Outcome>]
+      def stop_all
+        sweep = AgentSweep.new(dir: @dir, probe: @probe, host: @host)
+        deadline = @host.clock.monotonic + Execution::Control::GRACE
+        sweep.interrupt
+        done = stop_named(dry_run: false) { it != AGENT }
+        done + swept(sweep, deadline) + @dir.entries.select { it.file&.role == AGENT }.map { stop(it, dry_run: false) }
+      end
+
+      # @param sweep [AgentSweep] already told to interrupt
+      # @param deadline [Float] the monotonic time the grace runs out
+      # @return [Array<Outcome>]
+      def swept(sweep, deadline)
+        sweep.call(grace: [deadline - @host.clock.monotonic, 0].max).map do |file, result|
+          Outcome.new(file:, path: File.join(@dir.path, file.name), result:).tap { @dir.remove(file) }
+        end
+      end
 
       # @param entry [OpenLanes::Supervision::PidDir::Entry]
       # @param dry_run [Boolean]

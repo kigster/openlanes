@@ -98,6 +98,18 @@ RSpec.describe OpenLanes::Supervision::Stopper do
 
     it("leaves it to a plain stop") { expect(stopper.call.map(&:result)).not_to include(:stopped) }
     it("stops it with --all") { expect(stopper.call(runs: true).last.result).to eq(:stopped) }
+    it("tells it INTERRUPT before anything else is stopped") { stopper.call(runs: true) && expect(signals.first).to(eq(["USR1", 30])) }
+    it("removes its file") { stopper.call(runs: true) && expect(dir.entries.map { it.file&.role }).not_to(include("agent")) }
+
+    context "when it ignores INTERRUPT and TERM" do
+      let(:stubborn) { [30] }
+      let!(:outcomes) { stopper.call(runs: true) }
+
+      it("is KILLed after the grace and its stop") { expect(signals.last(2)).to eq([["TERM", 30], ["KILL", 30]]) }
+      it("reports it killed") { expect(outcomes.find { it.file&.role == "agent" }.result).to eq(:killed) }
+      it("removes its file") { expect(dir.entries.map { it.file&.role }).not_to include("agent") }
+      it("gave it the agents' grace first") { expect(clock.monotonic).to be >= OpenLanes::Execution::Control::GRACE }
+    end
   end
 
   context "with a pid now held by some other process" do
