@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "json"
-require "open3"
 require "optparse"
+require_relative "agent_supervisor/records"
 
 module OpenLanes
   module Execution
@@ -14,14 +13,16 @@ module OpenLanes
     # file beside it.
     #
     # It runs as `ruby --disable-gems libexec/openlanes-agent`, so this file
-    # uses the standard library only: no Bundler, no Zeitwerk, and nothing
-    # else from the gem. The engine knows it only through its protocol, argv
-    # in, files out and signals in, so a native build could replace it.
+    # and {Records} use the standard library only: no Bundler, no Zeitwerk,
+    # and nothing else from the gem. The engine knows it only through its
+    # protocol, argv in, files out and signals in, so a native build could
+    # replace it.
     #
     # @example
     #   openlanes-agent --root /work/app --plan 005.00 --agent backend-coder \
     #     --output /tmp/t/agent.out --status /tmp/t/agent.status \
-    #     --pid-file /work/app/tmp/pids/agent-005.00-backend-coder.pid -- claude -p ...
+    #     --pid-file /work/app/tmp/pids/agent-005.00-backend-coder.pid \
+    #     --control /tmp/t/control-005.00-backend-coder -- claude -p ...
     class AgentSupervisor
       # The PID file's role, and the first word of the title.
       ROLE = "agent"
@@ -39,8 +40,18 @@ module OpenLanes
       # The flags it takes, each one required.
       FLAGS = %i[root plan agent output status pid_file].freeze
 
+      # The flags it may be given: the control file named in the agent's
+      # prompt, which USR1 tells `INTERRUPT` (C2 in plan 041).
+      OPTIONAL = %i[control].freeze
+
+      # What a system stop asks of the agent, as `Execution::Control` spells
+      # it: leave a resume note and end the turn.
+      INTERRUPT = "INTERRUPT"
+
       # What it was started with.
-      Options = Data.define(*FLAGS, :argv)
+      Options = Data.define(*FLAGS, *OPTIONAL, :argv) do
+        def initialize(control: nil, **rest) = super
+      end
 
       # @param argv [Array<String>] its own arguments
       # @param title [#call] `Process.setproctitle` outside the suite
@@ -58,11 +69,11 @@ module OpenLanes
       def self.parse(argv)
         given = {}
         rest = OptionParser.new do |o|
-          FLAGS.each { |key| o.on("--#{key.to_s.tr("_", "-")} VALUE") { given[key] = it } }
+          (FLAGS + OPTIONAL).each { |key| o.on("--#{key.to_s.tr("_", "-")} VALUE") { given[key] = it } }
         end.parse(argv)
         raise KeyError, "no command after --" if rest.empty?
 
-        Options.new(**FLAGS.to_h { [it, given.fetch(it)] }, argv: rest)
+        Options.new(**FLAGS.to_h { [it, given.fetch(it)] }, **given.slice(*OPTIONAL), argv: rest)
       end
 
       # @param options [Options]
@@ -70,22 +81,25 @@ module OpenLanes
       # @param grace [Numeric] seconds between TERM and KILL
       def initialize(options, title: ::Process.method(:setproctitle), grace: TERM_GRACE)
         @options = options
+        @records = Records.new(options)
         @title = title
         @grace = grace
         @stop_at = nil
         @termed = false
         @killed = false
+        @interrupt = false
+        @interrupted = false
       end
 
       # @return [Integer] the CLI's exit status, or 128 plus its signal
       def call
         @title.call("openlanes-#{ROLE} [#{File.basename(@options.root)}] #{@options.plan} #{@options.agent}")
-        previous = trap_term
+        previous = { "TERM" => trap_term, "USR1" => trap_usr1 }
         pid = start or return finish(nil)
-        write_pid_file(pid)
+        @records.pid_file(pid)
         finish(watch(pid))
       ensure
-        trap("TERM", previous) if previous
+        previous&.each { |signal, handler| trap(signal, handler) if handler }
         FileUtils.rm_f(@options.pid_file)
       end
 
@@ -113,6 +127,15 @@ module OpenLanes
         trap("TERM") { @stop_at = monotonic if @stop_at.nil? }
       end
 
+      # USR1 is a system stop (C2 in plan 041): the agent is asked, through
+      # its control file, to leave a resume note and end its turn. As with
+      # TERM, the trap only notes it and {#watch} writes the file.
+      #
+      # @return [Object] the previous handler
+      def trap_usr1
+        trap("USR1") { @interrupt = true }
+      end
+
       # @param pid [Integer]
       # @return [Process::Status]
       def watch(pid)
@@ -120,9 +143,23 @@ module OpenLanes
           _, status = ::Process.wait2(pid, ::Process::WNOHANG)
           return status.tap { group("KILL", pid) } if status
 
+          interrupt if @interrupt
           stop(pid) if @stop_at
           sleep(POLL)
         end
+      end
+
+      # Once, and only with a control file to write: without one the agent
+      # has nothing to read, and runs on until TERM.
+      #
+      # @return [void]
+      def interrupt
+        return if @interrupted || @options.control.nil?
+
+        @interrupted = true
+        File.write(@options.control, "#{INTERRUPT}\n")
+      rescue SystemCallError
+        nil
       end
 
       # TERM to the group once, KILL once the grace has run out.
@@ -157,36 +194,8 @@ module OpenLanes
                 elsif status.signaled? then { termsig: status.termsig }
                 else { exitstatus: status.exitstatus }
                 end
-        write_atomically(@options.status, JSON.generate(ended))
+        @records.status(ended)
         ended[:exitstatus] || (128 + ended[:termsig])
-      end
-
-      # The same JSON as every other PID file, so `openlanes status` lists it
-      # and {Supervision::Probe} verifies it.
-      #
-      # @param pid [Integer] the CLI's
-      # @return [void]
-      def write_pid_file(pid)
-        file = { role: ROLE, pid: ::Process.pid, started:, root: @options.root, plans: [@options.plan],
-                 agent: @options.agent, child: pid, output: @options.output, status: @options.status }
-        write_atomically(@options.pid_file, JSON.pretty_generate(file.compact))
-      end
-
-      # @return [String, nil] this process's start time, as `ps` gives it
-      def started
-        out, status = Open3.capture2({ "LC_ALL" => "C" }, "ps", "-o", "lstart=", "-p", ::Process.pid.to_s)
-        status.success? ? out.strip : nil
-      rescue SystemCallError
-        nil
-      end
-
-      # @param path [String]
-      # @param text [String]
-      # @return [void]
-      def write_atomically(path, text)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write("#{path}.tmp", text)
-        File.rename("#{path}.tmp", path)
       end
 
       # @return [Float]

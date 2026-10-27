@@ -43,6 +43,13 @@ RSpec.describe OpenLanes::Execution::AgentProcess do
     it("names the plan and the agent") { expect(call.argv.join(" ")).to include("--plan 005.00 --agent backend-coder") }
     it("in a group of its own, from the plan's checkout") { expect(call.options).to include(pgroup: true, chdir: dir, in: File::NULL, unsetenv_others: true) }
     it("with the adapter's environment") { expect(call.env).to include("A" => "1") }
+    it("names no control file the label lacks") { expect(call.argv).not_to include("--control") }
+
+    context "with a control file on the label" do
+      let(:label) { described_class::Label.new(plan: "005.00", agent: "backend-coder", control: "/tmp/c") }
+
+      it("hands it on, before the CLI") { expect(call.argv.join(" ")).to include("--control /tmp/c -- claude") }
+    end
   end
 
   describe "#terminate" do

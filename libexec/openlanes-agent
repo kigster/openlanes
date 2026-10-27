@@ -2,7 +2,8 @@
 # frozen_string_literal: true
 
 # The agent supervisor (S6). Run as `ruby --disable-gems libexec/openlanes-agent`:
-# it loads one file from the gem and nothing else. See
+# it loads `execution/agent_supervisor.rb` and the one file that requires,
+# and nothing else from the gem. See
 # OpenLanes::Execution::AgentSupervisor.
 
 require_relative "../lib/openlanes/execution/agent_supervisor"

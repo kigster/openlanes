@@ -94,6 +94,99 @@ RSpec.describe OpenLanes::Execution::AgentSupervisor do
     it("TERMs the CLI's group, then KILLs it") { expect(code).to eq(137) }
   end
 
+  it("spells INTERRUPT as the engine's control file does") { expect(described_class::INTERRUPT).to eq(OpenLanes::Execution::Control::INTERRUPT) }
+
+  context "when told to pause" do
+    subject(:supervisor) { described_class.new(options.with(control:), title: ->(_) {}, grace: 0.2) }
+
+    let(:control) { File.join(dir, "control") }
+    # A CLI that ends once its control file says INTERRUPT, as an agent
+    # leaving its resume note would.
+    let(:cli) { ["sh", "-c", "until grep -q INTERRUPT '#{control}' 2>/dev/null; do sleep 0.02; done; exit 5"] }
+    let(:previous) { Signal.trap("USR1", "DEFAULT") }
+    let(:code) do
+      previous
+      Thread.new(supervisor, &:call).tap do
+        sleep(0.01) until File.exist?(pid_path)
+        2.times { Process.kill("USR1", Process.pid) }
+      end.value
+    end
+
+    after { Signal.trap("USR1", previous) }
+
+    it("lets the CLI end of its own accord") { expect(code).to eq(5) }
+
+    it "tells the control file INTERRUPT, once" do
+      code
+      expect(File.read(control)).to eq("INTERRUPT\n")
+    end
+
+    it "puts the USR1 handler back" do
+      code
+      expect(Signal.trap("USR1", "DEFAULT")).to eq("DEFAULT")
+    end
+  end
+
+  context "when told to pause without a control file" do
+    subject(:supervisor) { described_class.new(options, title: ->(_) {}, grace: 0.2) }
+
+    let(:cli) { ["sh", "-c", "sleep 0.3; exit 6"] }
+    let(:previous) { Signal.trap("USR1", "DEFAULT") }
+    let(:code) do
+      previous
+      Thread.new(supervisor, &:call).tap do
+        sleep(0.01) until File.exist?(pid_path)
+        Process.kill("USR1", Process.pid)
+      end.value
+    end
+
+    after { Signal.trap("USR1", previous) }
+
+    it("runs the CLI on to its end") { expect(code).to eq(6) }
+
+    it "writes no control file" do
+      code
+      expect(Dir.children(dir).grep(/control/)).to be_empty
+    end
+  end
+
+  context "when its control file cannot be written" do
+    subject(:supervisor) { described_class.new(options.with(control: File.join(dir, "missing", "control")), title: ->(_) {}, grace: 0.2) }
+
+    let(:cli) { ["sh", "-c", "sleep 0.3; exit 7"] }
+    let(:previous) { Signal.trap("USR1", "DEFAULT") }
+    let(:code) do
+      previous
+      Thread.new(supervisor, &:call).tap do
+        sleep(0.01) until File.exist?(pid_path)
+        Process.kill("USR1", Process.pid)
+      end.value
+    end
+
+    after { Signal.trap("USR1", previous) }
+
+    it("runs the CLI on to its end") { expect(code).to eq(7) }
+  end
+
+  describe ".parse" do
+    subject(:parsed) { described_class.parse(argv) }
+
+    let(:required) { ["--root", root, "--plan", "005.00", "--agent", "a", "--output", "o", "--status", "s", "--pid-file", "p"] }
+
+    context "with --control" do
+      let(:argv) { [*required, "--control", "/tmp/c", "--", "true"] }
+
+      it("reads the control file") { expect(parsed.control).to eq("/tmp/c") }
+      it("keeps the CLI after --") { expect(parsed.argv).to eq(["true"]) }
+    end
+
+    context "without --control" do
+      let(:argv) { [*required, "--", "true"] }
+
+      it("has none") { expect(parsed.control).to be_nil }
+    end
+  end
+
   describe ".main" do
     context "with every flag" do
       let(:argv) do

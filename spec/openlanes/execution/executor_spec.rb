@@ -505,6 +505,19 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     # Without it the stream reports a placeholder for what the model
     # generated — 2 for a four-thousand-token answer — and the counter on the
     # spinner line reads zero for the whole run.
+    # C2 in plan 041: the agent supervisor writes INTERRUPT to this file on
+    # a system stop, so the label it is started with has to name it.
+    describe "the label it starts the agent with" do
+      let(:labels) { [] }
+      let(:spawn) { ->(_argv, label: nil, **) { fake_child.tap { labels << label } } }
+      let(:handle) { described_class::Handle.new }
+
+      before { streaming.call(agent, subject_plan, handle:) }
+
+      it("names the control file the agent is told to read") { expect(labels.first.control).to eq(handle.control) }
+      it("names the plan and the agent") { expect(labels.first.to_s).to eq("#{subject_plan.feature.ordinal}-#{agent.name}") }
+    end
+
     it "asks for partial messages, which is the only place a settled token count arrives" do
       expect(streaming.invocation(agent, subject_plan)).to include("--include-partial-messages")
     end
