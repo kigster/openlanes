@@ -4,8 +4,10 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Refusal["OpenLanes::Refusal"]
+  class OpenLanes__Supervision__AgentSweep["AgentSweep"]
   class OpenLanes__Supervision__Crashes["Crashes"]
   class OpenLanes__Supervision__Detached["Detached"]
   class OpenLanes__Supervision__Host["Host"]
@@ -21,6 +23,9 @@ classDiagram
   class OpenLanes__Supervision__Supervisor["Supervisor"]
   class OpenLanes__Supervision__Title["Title"]
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
+  OpenLanes__Supervision__AgentSweep ..> OpenLanes__Execution__AgentProcess : uses
+  OpenLanes__Supervision__AgentSweep ..> OpenLanes__Supervision__Host : uses
+  OpenLanes__Supervision__AgentSweep ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Crashes ..> OpenLanes__Supervision__Title : uses
   OpenLanes__Supervision__Detached ..> OpenLanes__Refusal : uses
   OpenLanes__Supervision__Detached ..> OpenLanes__Supervision__Host : uses
@@ -31,10 +36,12 @@ classDiagram
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Title : uses
   OpenLanes__Supervision__Shutdown ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__Child : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Supervisor : uses
+  OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__AgentSweep : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Crashes : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Lifeline : uses

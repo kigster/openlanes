@@ -25,6 +25,8 @@ Three pull requests, in order. Each lands on `main` before the next starts.
 - [x] `Supervision`: an `AGENT` role in the PID dir's order, `status` rows, and `stop --all`.
 - [x] Docs: decisions S6 (as built), `docs/USAGE.md`, the architecture docs.
 - [x] Lint, the full suite, and every changed file above 95% coverage.
+- [x] The engine's state file names the session of an agent that ends before the first poll.
+- [x] `engine_command_spec` stops the engine with INT, as the supervisor does; a real TERM now ends the process.
 
 ## PR 2: reattach
 
@@ -37,21 +39,23 @@ Settled with the user on 2026-10-27: B1 to B4. The rest follow from them.
 - **B3. TERM to the supervisor stops the whole system.** `Shutdown` sends INT to the engine and the web, so the engine quits deliberately and writes its interrupted records, waits out the grace, then TERMs every agent supervisor of its project still alive, then KILLs what is left. `openlanes stop` with no supervisor sends INT, not TERM, to an engine or a run, for the same reason. S7's USR1 grace is PR 3.
 - **B4. The timeout stays in the engine.** Each agent's deadline is kept as wall-clock time, moved by every extension. A reattaching engine starts the clock with what is left; an overdue agent is stopped at once. An orphan runs until it ends, `stop --all`, or the next engine.
 - **B5. The restart context lives in the state file.** `Engine::StateFile` is already the restart record `Recovery::Stranded` reads, so each Started stage also keeps what reattach needs: the agent supervisor's pid and files, the control file, the trace, the checkout, the boundary snapshot taken before the run, the deadline and the session. The event journal stays the record of what happened; no journaled offset is needed (B7).
-- **B6. Live, finished while away, or dead.** A stage is reattached when its PID file is verified by `Probe` and names the same pid, or when its status file is there (the agent ended while no engine ran). Otherwise it is stranded, and `Recovery::Stranded` resumes it as today. A live agent supervisor with no stage to explain it is TERMed and logged.
+- **B6. Live, finished while away, or dead.** A stage is reattached when its PID file is verified by `Probe` and names the same pid, or when its status file is there (the agent ended while no engine ran). Otherwise it is stranded, and `Recovery::Stranded` resumes it as today. A live agent supervisor with no stage to explain it is left alone: another engine or a `run` may own it. It shows in `status` and `stop --all` stops it.
 - **B7. The transcript is rebuilt from byte 0.** The output file holds everything the CLI wrote, so the filtered trace is truncated and rewritten whole, and token counts come out right.
 - **B8. Same path as a start.** The reattached job runs through the dispatcher's own job thread, plan lock and settle; `Executor#reattach` is `#call` from the drain onwards. `Recovery::Stranded` skips every stage that was reattached.
 - **B9. Verifier agents are not reattached.** Their preview app ran under the dead engine. They are TERMed and resumed by `Recovery::Stranded`.
 
 ### Work units
 
-- [ ] `AgentProcess.attach` from a recorded stage, and `Executor#reattach`.
-- [ ] Restart context in the state file, written at start and on every extension.
-- [ ] `Recovery::Reattach`: find live and finished agents, hand them to the dispatcher before `Stranded` runs; TERM the unexplained.
-- [ ] Dispatcher: start a job from a reattached agent.
-- [ ] Exits (B2): no TERM trap in the engine, `at_exit` only on a deliberate quit.
-- [ ] Supervisor and `stop` (B3): INT to engines and runs, then TERM to leftover agents.
-- [ ] Docs: decisions S6/S7 table, `docs/USAGE.md`, architecture.
-- [ ] Lint, the full suite, and every changed file above 95% coverage.
+- [x] `AgentProcess.attach` from a recorded stage, and `Executor#reattach`.
+- [x] Restart context in the state file, written at start and on every extension.
+- [x] `Recovery::Reattach`: find live and finished agents, hand them to the dispatcher before `Stranded` runs.
+- [x] Dispatcher: start a job from a reattached agent.
+- [x] Exits (B2): no TERM trap in the engine, `at_exit` only on a deliberate quit.
+- [x] Supervisor and `stop` (B3): INT to engines and runs, then TERM to leftover agents.
+- [x] Docs: decisions S6/S7 table, `docs/USAGE.md`, architecture.
+- [x] Lint, the full suite, and every changed file above 95% coverage.
+- [x] The engine's state file names the session of an agent that ends before the first poll.
+- [x] `engine_command_spec` stops the engine with INT, as the supervisor does; a real TERM now ends the process.
 
 ## PR 3: graceful shutdown (S7)
 

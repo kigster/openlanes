@@ -34,6 +34,7 @@ classDiagram
   class OpenLanes__Engine__PrWatch["PrWatch"]
   class OpenLanes__Engine__QualityQuestion__Choice["QualityQuestion::Choice"]
   class OpenLanes__Engine__Rebase["Rebase"]
+  class OpenLanes__Engine__Recovery__Reattach["Recovery::Reattach"]
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
@@ -69,6 +70,7 @@ classDiagram
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
   class OpenLanes__Events__Usage["OpenLanes::Events::Usage"]
+  class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Execution__Clock["OpenLanes::Execution::Clock"]
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
@@ -102,6 +104,8 @@ classDiagram
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Refusal["OpenLanes::Refusal"]
+  class OpenLanes__Supervision__PidFile["OpenLanes::Supervision::PidFile"]
+  class OpenLanes__Supervision__Probe["OpenLanes::Supervision::Probe"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
@@ -144,6 +148,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__PlanLocks : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__PlanLocks__Refused : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Rebase : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Reattach : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Records : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Round : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Recovery__Stranded : uses
@@ -156,6 +161,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Verification__Outcome : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Error : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Events__Usage : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Execution__Clock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Lifecycle__Resync__Dirs : uses
@@ -210,6 +216,9 @@ classDiagram
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Vcs__Refresh : uses
+  OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__PidFile : uses
+  OpenLanes__Engine__Recovery__Reattach ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Error : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__LastKnownState : uses
   OpenLanes__Engine__Recovery__Records ..> OpenLanes__Plans__PlanState : uses

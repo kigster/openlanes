@@ -88,7 +88,7 @@ The engine and web restarting each other was considered and rejected: `stop` bec
 
 A PID alone is not proof: the operating system reuses numbers, and a PID file left by a crash can name an unrelated process by the time anyone reads it. So a PID file records the PID, the process's start time and the project root, and a process counts as the one the file names only when all three match: its start time (`ps -o lstart=`) equals the recorded one, and its title (S5) names the expected role and project. Every reader checks this, `start`, `stop`, `status` and the supervisor alike, and a file that fails it is a crash, never a target. `stop` signals nothing it has not checked this way.
 
-`stop` sends TERM, waits, sends a second TERM, waits briefly, then KILL. The first wait is about ten seconds for a web, the supervisor's own grace plus ten for a supervisor, and the agents' grace (S7) plus ten for an engine or a run. The second TERM is the engine's second Ctrl-C: it KILLs its agents' process groups and exits, which a KILL to the engine would never do. The supervisor stops its children the same way. It also stops a lone engine or web whose supervisor is already gone.
+`stop` sends a signal, waits, sends it again, waits briefly, then KILL. The signal is INT for an engine or a run, the deliberate quit that stops their agents (TERM would leave them, S7), and TERM for a web, a supervisor or an agent supervisor. The first wait is about ten seconds for a web, the supervisor's own grace plus ten for a supervisor, the agents' grace (S7) plus ten for an engine or a run, and an agent supervisor's own stop for an agent. The second INT is the engine's second Ctrl-C: it KILLs its agents' process groups and exits, which a KILL to the engine would never do. The supervisor stops its children the same way, then TERMs every agent supervisor of its project still alive. It also stops a lone engine or web whose supervisor is already gone.
 
 Two processes of one role cannot both register: each takes an exclusive `flock` on `<role>.lock` beside its PID file before it reads or writes one, and holds it until it exits. The kernel drops the lock when the process dies, so a crash never leaves it held.
 
@@ -132,16 +132,22 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
   - The PID file is the same JSON as every other one, with `role: "agent"`, the plan, the agent, and the CLI's pid as `child`. Its title, `openlanes-agent [<project>] 005.00 backend-coder`, starts with the project, so `Probe` verifies it like the others.
   - `openlanes status` lists agents; `openlanes stop` leaves them to their engine, and `stop --all` stops them too.
   - Until reattach (PR 2), an engine that exits still stops its agents: its `at_exit` TERMs every agent supervisor, and each finishes the stop by itself. An agent supervisor that outlives its own grace by 5 s is KILLed from the engine, with the CLI's group.
+- As built in PR 2 (plan 041, B1 to B9):
+  - Each Started stage in the engine's state file keeps a `restart` context: the agent supervisor's pid and files, the checkout, the trace, the control file, the boundary snapshot taken before the run, and the deadline as wall-clock time, moved by every extension.
+  - A starting engine looks for the stages a dead run left: one whose agent supervisor is still running (its PID file names the recorded pid and `Probe` verifies it), or ended with its status written, is taken back as a running job: board row, clock, controls, a transcript rebuilt from the start of the output, and the usual settle. The rest are stranded, as before. A verifier is stopped instead, since its preview app died with the engine.
+  - An engine's `at_exit` stops its agents only after a deliberate quit (`Control.quit?`); a crash, a TERM or `kill -9` leaves them for the next one. Anything else that runs agents, without a state file to find them again, still stops them whenever it exits.
+  - A live agent supervisor no stage explains is left alone: another engine or a `run` may own it. `status` lists it and `stop --all` stops it.
 - The engine knows it only through its protocol (argv in; transcript, exit status and PID files out; signals for control), so a native build can replace it without the engine noticing. Should one ever be needed, C compiled at install through the gem's `ext/` is preferred over Rust: it needs no prebuilt binaries per platform and no cargo. Neither is worth it today. The saving is about 14 MB per agent, beside an agent CLI's 200 to 400 MB, and the cost is fork, exec and signal code in a language this repository does not otherwise use.
 
 ### S7. Shutdown gives agents 60 seconds to wrap up
 
 | Signal, to                | Means                                                                                                      |
 | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
-| TERM, to the supervisor   | Graceful shutdown: stop dispatching, USR1 to every agent supervisor, wait out the grace, TERM what is left, then the engine and the web |
+| TERM, to the supervisor   | Stop the whole system: INT to the engine and the web, so the engine quits deliberately and stops its agents; then TERM to any agent supervisor of the project still alive. Graceful shutdown (USR1 and the grace first) is plan 041, PR 3 |
 | USR1, to an agent supervisor | Write `INTERRUPT` into its agent's control file                                                         |
 | TERM, to an agent supervisor | Stop now: TERM to the agent's process group, KILL after `Child::TERM_GRACE`                             |
-| TERM, to the engine       | Exit at once and leave the agents running; the supervisor restarts it and it reattaches (S6). Until reattach is built (plan 041, PR 2), the agents are TERMed as the engine exits |
+| TERM, to the engine       | Exit at once and leave the agents running; the supervisor counts it a crash, restarts it, and it reattaches (S6) |
+| INT, to the engine        | Quit deliberately: stop dispatching and stop the agents, as Ctrl-C does                                     |
 | A second TERM, or Ctrl-C twice | Skip the grace and stop everything now                                                                |
 
 - The grace is 60 seconds, the same as `Execution::Control::GRACE`. `$OPENLANES_SHUTDOWN_GRACE` is its only override, as with S3. Agents that finish sooner end the wait sooner.
