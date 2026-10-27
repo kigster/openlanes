@@ -49,6 +49,14 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
         expect(state).to have_received(:begin_run!).with(root: plans_root)
       end
     end
+
+    context "when the stage was taken back" do
+      before { stranded.call(skip: [["003.00", "backend-coder", 1]]) }
+
+      it("leaves the state file's record alone") { expect(state).not_to have_received(:record) }
+      it("leaves state.json's round Started") { expect(plan_state.stages.map { it["status"] }).to eq(%w[Started]) }
+      it("still begins the run") { expect(state).to have_received(:begin_run!).with(root: plans_root) }
+    end
   end
 
   it "skips an agent no longer defined" do

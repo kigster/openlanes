@@ -24,21 +24,23 @@ module OpenLanes
     #   @return [Array<String>] what a run works, or the plan an agent works
     # @!attribute [r] agent
     #   @return [String, nil] which agent an agent supervisor runs
+    # @!attribute [r] child
+    #   @return [Integer, nil] the agent CLI an agent supervisor runs, which leads its own group
     # @!attribute [r] failed
     #   @return [Hash{String => String}] children a supervisor stopped restarting, and why
-    PidFile = Data.define(:role, :pid, :started, :root, :url, :plans, :failed, :agent) do
-      # Defaults for the optional members, +url+, +plans+, +failed+ and
-      # +agent+; +role+, +pid+, +started+ and +root+ pass through.
+    PidFile = Data.define(:role, :pid, :started, :root, :url, :plans, :failed, :agent, :child) do
+      # Defaults for the optional members, +url+, +plans+, +failed+, +agent+
+      # and +child+; +role+, +pid+, +started+ and +root+ pass through.
       #
       # @param fields [Hash]
-      def initialize(**fields) = super(url: nil, plans: [], failed: {}, agent: nil, **fields)
+      def initialize(**fields) = super(url: nil, plans: [], failed: {}, agent: nil, child: nil, **fields)
 
       # @param text [String] what {#to_json} wrote
       # @return [OpenLanes::Supervision::PidFile, nil] nil for anything unreadable,
       #   which every reader treats as a crash
       def self.parse(text)
         data = JSON.parse(text, symbolize_names: true)
-        new(**data.slice(:url, :agent),
+        new(**data.slice(:url, :agent, :child),
           role:    data.fetch(:role),
           pid:     Integer(data.fetch(:pid)),
           started: data[:started],

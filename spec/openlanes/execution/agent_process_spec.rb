@@ -103,6 +103,21 @@ RSpec.describe OpenLanes::Execution::AgentProcess do
     it("TERMs every agent supervisor, which finishes the stop itself") { expect(process).to have_received(:kill).with("TERM") }
   end
 
+  # An agent supervisor an earlier engine started (B1 in plan 041).
+  describe ".attach" do
+    subject(:taken) { described_class.attach(JSON.parse(JSON.generate(started.restart))) }
+
+    let(:started) { starter.call(cli, chdir: dir, label:).tap { described_class.forget(it) && Process.detach(it.pid) } }
+    let(:read) { +"" }
+
+    before { taken.each_chunk { read << it } }
+
+    it("reads what the agent wrote, from the start") { expect(read).to eq("onetwo") }
+    it("ends with the status the agent left") { expect(taken.wait).to have_attributes(exitstatus: 3) }
+    it("is tracked like one it started") { expect(described_class.live).to include(taken) }
+    it("records what an engine needs to take it back") { expect(started.restart.keys).to eq(%i[pid output status pid_file]) }
+  end
+
   describe "#kill" do
     subject(:process) { described_class.new(pid: Process.spawn("true").tap { Process.wait(it) }, files: described_class::Files.new(output: "o", status: "s", pid_file: "p")) }
 

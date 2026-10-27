@@ -2,15 +2,20 @@
 
 module OpenLanes
   module Supervision
-    # How the {Supervisor} stops its children (S1): TERM to each one's
-    # process group, a wait of up to +grace+ seconds, a second TERM, then KILL
-    # to whatever is still there. Each child is reaped as it goes, so none is left a
-    # zombie behind a supervisor that is about to exit.
+    # How the {Supervisor} stops the whole system (S1, and B3 in plan 041):
+    # INT to each child's process group, a wait of up to +grace+ seconds, a
+    # second INT, then KILL to whatever is still there; last, every agent of
+    # the project still alive. Each child is reaped as it goes, so none is
+    # left a zombie behind a supervisor that is about to exit.
+    #
+    # INT, not TERM: to the engine INT is a deliberate quit, which stops its
+    # agents, while TERM ends it and leaves them for the engine that
+    # replaces it. The web takes either as a stop.
     class Shutdown
       # Seconds a KILLed child gets to be reaped.
       KILLED_WITHIN = 5
 
-      # Seconds after the second TERM: the engine's own KILL to its agents'
+      # Seconds after the second INT: the engine's own KILL to its agents'
       # groups, and a margin.
       HURRIED_WITHIN = Execution::Child::TERM_GRACE + 5
 
@@ -19,25 +24,28 @@ module OpenLanes
 
       # @param slots [Array<OpenLanes::Supervision::Slot>] the running ones are stopped
       # @param host [OpenLanes::Supervision::Host]
-      def initialize(slots, host:)
+      # @param sweep [#call] stops the agents the engine left; see {AgentSweep}
+      def initialize(slots, host:, sweep: -> {})
         @slots = slots.select(&:running?)
         @host = host
+        @sweep = sweep
       end
 
-      # @param grace [Numeric] seconds after TERM before KILL
+      # @param grace [Numeric] seconds after INT before KILL
       # @yieldreturn [Boolean] true to stop waiting and KILL now: a second stop
       # @return [void]
       def call(grace:, &now)
-        signal("TERM", @slots)
+        signal("INT", @slots)
         wait_out(grace, &now)
         hurry
         signal("KILL", @slots.select(&:running?))
         wait_out(KILLED_WITHIN) { false }
+        @sweep.call
       end
 
       private
 
-      # A second TERM is the engine's second Ctrl-C: it raises, and the
+      # A second INT is the engine's second Ctrl-C: it raises, and the
       # engine's `at_exit` KILLs every agent's process group. A KILL to the
       # engine's own group would reach none of them, and leave them running.
       #
@@ -46,7 +54,7 @@ module OpenLanes
         late = @slots.select(&:running?)
         return if late.empty?
 
-        signal("TERM", late)
+        signal("INT", late)
         wait_out(HURRIED_WITHIN) { false }
       end
 

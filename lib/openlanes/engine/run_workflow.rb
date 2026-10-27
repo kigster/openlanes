@@ -687,11 +687,12 @@ module OpenLanes
       end
 
       # Signals that stop the run gracefully, the way the first Ctrl-C does.
-      # TERM too: a run with its control room stays up like a service, and a
-      # service manager stops a service that way.
+      # Not TERM: TERM ends the engine at once and leaves its agents running
+      # for the engine that replaces it to reattach (B2 in plan 041). A
+      # service manager stops `openlanes start`, whose supervisor sends INT.
       #
       # @return [Array<String>]
-      def signals = %w[INT TERM]
+      def signals = %w[INT]
 
       # The closing report. A halted run that exited 0 would read to a
       # script as a tree with nothing left to do, so a 💣 makes it 1 (N9).

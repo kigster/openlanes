@@ -159,6 +159,24 @@ module OpenLanes
         end
       end
 
+      # What a restarted engine needs to take a running agent back (B5 in
+      # plan 041), merged into the stage's `restart` and saved at once: the
+      # engine this is for may be killed before its next tick writes.
+      #
+      # @param ordinal [String]
+      # @param agent [String]
+      # @param round [Integer]
+      # @param fields [Hash] keys and values as JSON gives them back
+      # @return [void]
+      def restart(ordinal, agent:, round:, **fields)
+        fields = JSON.parse(JSON.generate(fields))
+        @mutex.synchronize do
+          stage = @data["plans"].dig(ordinal.to_s, "stages")&.find { it["agent"] == agent && it["round"] == round }
+          (stage["restart"] ||= {}).merge!(fields) if stage
+        end
+        save
+      end
+
       # The live run's record (W6): what a person said about the run that no
       # plan folder holds, kept here as the copy of Redis that survives Redis
       # losing it. {Live::RunRecord} writes it and reads it back on start;

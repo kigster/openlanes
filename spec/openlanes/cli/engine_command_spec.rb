@@ -18,12 +18,14 @@ RSpec.describe OpenLanes::CLI::EngineCommand, :tree do
   let(:executor) { instance_double(OpenLanes::Execution::Executor) }
 
   # Between ticks, instead of sleeping a second. The default stops the run
-  # the way a service manager does, with SIGTERM, once it has idled a while.
+  # the way its supervisor does, with SIGINT, once it has idled a while.
+  # Not SIGTERM: that one the engine leaves untrapped, so its agents
+  # outlive it (B3 in plan 041).
   let(:sleeper) do
     ticks = 0
     lambda { |_|
       ticks += 1
-      Process.kill("TERM", Process.pid) if ticks == 3
+      Process.kill("INT", Process.pid) if ticks == 3
       OpenLanes::Execution::Control.quit! if ticks > 5_000
       Thread.pass
     }
@@ -113,7 +115,7 @@ RSpec.describe OpenLanes::CLI::EngineCommand, :tree do
 
     let!(:result) { start(open: false) }
 
-    it "stays up past the fixed point until SIGTERM, then exits 0" do
+    it "stays up past the fixed point until SIGINT, then exits 0" do
       expect([result.last, result[1]]).to match([0, include("Stopped.", "Still waiting for answers: 002.00")])
     end
 
@@ -159,9 +161,23 @@ RSpec.describe OpenLanes::CLI::EngineCommand, :tree do
       expect(web).to have_received(:stop)
     end
 
-    it "puts SIGTERM back the way it found it" do
+    it "leaves SIGTERM alone" do
       expect(Signal.trap("TERM", "DEFAULT")).to eq("DEFAULT")
     end
+  end
+
+  describe "its SIGINT handler" do
+    let(:mine) { proc {} }
+    let!(:prior) { Signal.trap("INT", mine) }
+
+    before do
+      asked
+      start(open: false)
+    end
+
+    after { Signal.trap("INT", prior) }
+
+    it("is put back the way it was found") { expect(Signal.trap("INT", prior)).to eq(mine) }
   end
 
   # Plan 009: a 💣 halts the engine, and the service idles on it rather
@@ -197,7 +213,7 @@ RSpec.describe OpenLanes::CLI::EngineCommand, :tree do
 
     let!(:result) { start }
 
-    it "stays up, waiting for the next plan, until SIGTERM" do
+    it "stays up, waiting for the next plan, until SIGINT" do
       expect([result.last, result[1]])
         .to match([0, include("idle: every plan is finished; create the next one from the page", "Stopped.")])
     end
