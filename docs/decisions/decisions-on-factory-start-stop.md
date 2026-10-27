@@ -88,7 +88,7 @@ The engine and web restarting each other was considered and rejected: `stop` bec
 
 A PID alone is not proof: the operating system reuses numbers, and a PID file left by a crash can name an unrelated process by the time anyone reads it. So a PID file records the PID, the process's start time and the project root, and a process counts as the one the file names only when all three match: its start time (`ps -o lstart=`) equals the recorded one, and its title (S5) names the expected role and project. Every reader checks this, `start`, `stop`, `status` and the supervisor alike, and a file that fails it is a crash, never a target. `stop` signals nothing it has not checked this way.
 
-`stop` sends a signal, waits, sends it again, waits briefly, then KILL. The signal is INT for an engine or a run, the deliberate quit that stops their agents (TERM would leave them, S7), and TERM for a web, a supervisor or an agent supervisor. The first wait is about ten seconds for a web, the supervisor's own grace plus ten for a supervisor, the agents' grace (S7) plus ten for an engine or a run, and an agent supervisor's own stop for an agent. The second INT is the engine's second Ctrl-C: it KILLs its agents' process groups and exits, which a KILL to the engine would never do. The supervisor stops its children the same way, then TERMs every agent supervisor of its project still alive. It also stops a lone engine or web whose supervisor is already gone.
+`stop` sends a signal, waits, sends it again, waits briefly, then KILL. The signal is INT for an engine or a run, the deliberate quit that stops their agents (TERM would leave them, S7), and TERM for a web, a supervisor or an agent supervisor. The first wait is about ten seconds for a web, the supervisor's own grace plus ten for a supervisor, the agents' grace (S7) plus ten for an engine or a run, and an agent supervisor's own stop for an agent. The second INT is the engine's second Ctrl-C: it KILLs its agents' process groups and exits, which a KILL to the engine would never do. The supervisor stops its children the same way and gives its project's agents the shutdown grace (S7) before it TERMs any still alive. It also stops a lone engine or web whose supervisor is already gone. `stop --all` with no supervisor running does the supervisor's part itself: USR1 to every agent supervisor first, then the stops above, then whatever agent is left gets the rest of the grace before TERM and KILL.
 
 Two processes of one role cannot both register: each takes an exclusive `flock` on `<role>.lock` beside its PID file before it reads or writes one, and holds it until it exits. The kernel drops the lock when the process dies, so a crash never leaves it held.
 
@@ -126,7 +126,7 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
 - Stops reach it as signals (S7). The timeout clock, the controls and the transcript reader move from the pipe to the file.
 - It is lean Ruby: the standard library only, no Bundler, no Zeitwerk, nothing from the gem, about 15 MB and 50 ms to start.
 - As built in PR 1:
-  - The script is `libexec/openlanes-agent`, run as `ruby --disable-gems`; it loads `execution/agent_supervisor.rb` alone. The engine's side is `Execution::AgentProcess`, which answers `Child`'s interface, so the executor, the clock and the controls read an agent as before.
+  - The script is `libexec/openlanes-agent`, run as `ruby --disable-gems`; it loads `execution/agent_supervisor.rb` and the records it writes (`agent_supervisor/records.rb`), nothing else. The engine's side is `Execution::AgentProcess`, which answers `Child`'s interface, so the executor, the clock and the controls read an agent as before.
   - argv: `--root --plan --agent --output --status --pid-file -- <cli argv>`. The engine names the PID file, so `$OPENLANES_PID_DIR` is resolved in one place and the agent supervisor, started with the unbundled environment, needs no copy of it.
   - The output (stdout and stderr together) is `agent-<plan>-<agent>-<pid>-<hex>.out` in the trace directory, the status `.status` beside it (`{"exitstatus": 3}` or `{"termsig": 9}`), both written atomically and removed once the engine has read them.
   - The PID file is the same JSON as every other one, with `role: "agent"`, the plan, the agent, and the CLI's pid as `child`. Its title, `openlanes-agent [<project>] 005.00 backend-coder`, starts with the project, so `Probe` verifies it like the others.
@@ -143,15 +143,21 @@ Today the engine spawns each agent CLI as its own child (`Execution::Child`) and
 
 | Signal, to                | Means                                                                                                      |
 | :------------------------ | :--------------------------------------------------------------------------------------------------------- |
-| TERM, to the supervisor   | Stop the whole system: INT to the engine and the web, so the engine quits deliberately and stops its agents; then TERM to any agent supervisor of the project still alive. Graceful shutdown (USR1 and the grace first) is plan 041, PR 3 |
+| TERM, to the supervisor   | Stop the whole system, as a pause: INT to the engine and the web, and USR1 to every agent supervisor of the project at once; then one shared grace, and TERM, then KILL with the CLI's group, to any agent supervisor still alive |
 | USR1, to an agent supervisor | Write `INTERRUPT` into its agent's control file                                                         |
 | TERM, to an agent supervisor | Stop now: TERM to the agent's process group, KILL after `Child::TERM_GRACE`                             |
 | TERM, to the engine       | Exit at once and leave the agents running; the supervisor counts it a crash, restarts it, and it reattaches (S6) |
 | INT, to the engine        | Quit deliberately: stop dispatching and stop the agents, as Ctrl-C does                                     |
-| A second TERM, or Ctrl-C twice | Skip the grace and stop everything now                                                                |
+| A second TERM, a second `stop`, or Ctrl-C twice | Skip the grace and stop everything now                                               |
 
 - The grace is 60 seconds, the same as `Execution::Control::GRACE`. `$OPENLANES_SHUTDOWN_GRACE` is its only override, as with S3. Agents that finish sooner end the wait sooner.
 - An agent is told through its control file (`execution/control.rb`), not a signal and not stream-json. The model never sees a signal: the CLI receives it, and SIGUSR1's default action is to terminate. The control file is named in every agent's prompt and read at each step, so it works for claude, codex, pi, grok and gemini alike, and `INTERRUPT` already means "the run will be started again: leave a resume note".
+- As built in PR 3 (plan 041, C1 to C5):
+  - A system stop is a pause: agents are told `INTERRUPT`, never `STOP`, so each leaves a resume note and the next start picks the plan up again.
+  - The agent supervisor takes `--control <file>`, the control file named in its agent's prompt; the executor passes it on the label it starts the agent with, and again when it reattaches. USR1 writes `INTERRUPT` to that file once. Without one, USR1 does nothing and the agent runs on until TERM.
+  - The supervisor sends USR1 to its project's verified agent supervisors alongside INT to its children, so the agents and the engine share one grace rather than waiting in turn. When it runs out, `AgentSweep` TERMs what is left and KILLs it with the CLI's group.
+  - A second TERM to the supervisor, a second `stop` among them, gives the sweep no grace at all.
+  - `$OPENLANES_SHUTDOWN_GRACE` is read once, into `Control::GRACE` (`Execution::ShutdownGrace`). A value that is not a whole number of seconds is refused with a warning and 60 is used: a typo must not turn a pause into a KILL.
 - Little is lost even at the deadline: the CLI keeps the session on disk as it goes (M1 in [decisions-on-agent-memory-and-sessions.md](decisions-on-agent-memory-and-sessions.md)), the journal reaches `state.json` line by line (M2), and the files stay in the plan's worktree. The next start resumes each interrupted session with its journal.
 
 ## Not adopted

@@ -59,4 +59,21 @@ Settled with the user on 2026-10-27: B1 to B4. The rest follow from them.
 
 ## PR 3: graceful shutdown (S7)
 
-To be planned once PR 2 is merged.
+### Decisions
+
+Settled with the user on 2026-10-27: C1 and C2. The rest follow from them.
+
+- **C1. A system stop is a pause.** Every running agent is told `INTERRUPT`: leave a resume note, and the next start resumes the session. This is what INT to the engine already broadcasts (`Control#interrupt!`), with `Control::GRACE` before the executor kills what is left.
+- **C2. Every agent is told at once.** On TERM the supervisor sends USR1 to every verified agent supervisor of its project, alongside INT to the engine and the web, so an agent whose engine is dead or hung is told too. Each agent supervisor writes `INTERRUPT` into its agent's control file, which it now receives as `--control`. One shared grace is waited out; then the sweep TERMs what is left, and KILLs the CLI's group of one that outlives its stop.
+- **C3. One override.** `$OPENLANES_SHUTDOWN_GRACE` (seconds) sets `Control::GRACE` and the supervisor's wait alike, as S7 says. A bad value is refused with a warning and the default used.
+- **C4. A second TERM, or `openlanes stop` twice, skips the grace**, as it already does for the children: USR1 has been sent, so the sweep TERMs at once.
+- **C5. `openlanes stop --all` with no supervisor** does the same for the agents it finds: USR1, the agents' grace, then TERM.
+
+### Work units
+
+- [x] Agent supervisor: `--control PATH`, USR1 writes `INTERRUPT` there; the executor passes the file.
+- [x] Supervisor: USR1 to every agent up front; the sweep after one shared grace.
+- [x] `stop --all`: USR1 to agents first.
+- [x] `$OPENLANES_SHUTDOWN_GRACE` for `Control::GRACE` and the supervisor.
+- [x] Docs: S7 table and notes, `docs/USAGE.md`, architecture.
+- [ ] Lint, the full suite, and every changed file above 95% coverage.

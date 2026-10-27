@@ -38,6 +38,7 @@ classDiagram
   OpenLanes__Supervision__Shutdown ..> OpenLanes__Execution__Child : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__AgentSweep : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Supervision__Supervisor : uses

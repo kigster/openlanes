@@ -54,7 +54,8 @@ module OpenLanes
         # @return [Array<String>]
         def command(argv, label, files)
           [RbConfig.ruby, "--disable-gems", SCRIPT, "--root", root, "--plan", label.plan, "--agent", label.agent,
-           "--output", files.output, "--status", files.status, "--pid-file", files.pid_file, "--", *argv]
+           "--output", files.output, "--status", files.status, "--pid-file", files.pid_file,
+           *(["--control", label.control] if label.control), "--", *argv]
         end
       end
     end

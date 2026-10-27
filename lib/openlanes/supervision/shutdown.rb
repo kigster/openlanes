@@ -2,11 +2,13 @@
 
 module OpenLanes
   module Supervision
-    # How the {Supervisor} stops the whole system (S1, and B3 in plan 041):
-    # INT to each child's process group, a wait of up to +grace+ seconds, a
-    # second INT, then KILL to whatever is still there; last, every agent of
-    # the project still alive. Each child is reaped as it goes, so none is
-    # left a zombie behind a supervisor that is about to exit.
+    # How the {Supervisor} stops the whole system (S1, and B3 and C2 in plan
+    # 041): INT to each child's process group and USR1 to every agent of
+    # the project, a wait of up to +grace+ seconds, a second INT, then KILL
+    # to whatever child is still there; last, the agents still alive get
+    # what is left of the grace, then TERM. Each child is reaped as it
+    # goes, so none is left a zombie behind a supervisor that is about to
+    # exit.
     #
     # INT, not TERM: to the engine INT is a deliberate quit, which stops its
     # agents, while TERM ends it and leaves them for the engine that
@@ -24,23 +26,26 @@ module OpenLanes
 
       # @param slots [Array<OpenLanes::Supervision::Slot>] the running ones are stopped
       # @param host [OpenLanes::Supervision::Host]
-      # @param sweep [#call] stops the agents the engine left; see {AgentSweep}
-      def initialize(slots, host:, sweep: -> {})
+      # @param sweep [AgentSweep, nil] tells and stops the agents; nil leaves them be
+      def initialize(slots, host:, sweep: nil)
         @slots = slots.select(&:running?)
         @host = host
         @sweep = sweep
       end
 
-      # @param grace [Numeric] seconds after INT before KILL
+      # @param grace [Numeric] seconds after INT before KILL, which the
+      #   agents share
       # @yieldreturn [Boolean] true to stop waiting and KILL now: a second stop
       # @return [void]
       def call(grace:, &now)
+        deadline = @host.clock.monotonic + grace
         signal("INT", @slots)
+        @sweep&.interrupt
         wait_out(grace, &now)
         hurry
         signal("KILL", @slots.select(&:running?))
         wait_out(KILLED_WITHIN) { false }
-        @sweep.call
+        @sweep&.call(grace: now&.call ? 0 : [deadline - @host.clock.monotonic, 0].max)
       end
 
       private

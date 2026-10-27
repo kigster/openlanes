@@ -48,6 +48,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     it("reads its session") { result && expect(handle.session).to(eq("sess-1")) }
     it("rebuilds the trace from the start") { result && expect(File.read(trace)).not_to(include("dead engine")) }
     it("names the plan and agent on the handle") { result && expect(handle.label.to_s).to(eq("001.00-backend-coder")) }
+    it("names its control file on the handle's label") { result && expect(handle.label.control).to(eq(handle.control)) }
   end
 
   describe "its clock" do

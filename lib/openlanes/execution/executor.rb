@@ -594,12 +594,12 @@ module OpenLanes
         end
 
         handle ||= Handle.new
-        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name)
         before = Boundary.snapshot(root)
         trace = trace_path(agent, subject)
         handle.trace = trace
         control = Control.register(@trace_dir, "#{subject.feature.ordinal}-#{agent.name}")
         handle.control = control
+        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control:)
         resume = nil unless profile.adapter.resumes?
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
         sessions = Sessions.new
@@ -638,9 +638,9 @@ module OpenLanes
         root = restart.fetch("cwd")
         trace = restart.fetch("trace")
         File.write(trace, "")
-        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name)
         handle.trace = trace
         handle.control = Control.adopt(restart.fetch("control"))
+        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control: handle.control)
         sessions = Sessions.new
         child = follow(AgentProcess.attach(restart.fetch("process")), profile:, trace:, handle:, sessions:, &on_progress)
         clock = start_clock(handle, seconds: [Time.iso8601(restart.fetch("deadline")) - Time.now, 0].max)
