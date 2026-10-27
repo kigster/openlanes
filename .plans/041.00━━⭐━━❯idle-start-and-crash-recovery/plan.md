@@ -71,9 +71,9 @@ Settled with the user on 2026-10-27: C1 and C2. The rest follow from them.
 
 ### Work units
 
-- [ ] Agent supervisor: `--control PATH`, USR1 writes `INTERRUPT` there; the executor passes the file.
-- [ ] Supervisor: USR1 to every agent up front; the sweep after one shared grace.
-- [ ] `stop --all`: USR1 to agents first.
-- [ ] `$OPENLANES_SHUTDOWN_GRACE` for `Control::GRACE` and the supervisor.
-- [ ] Docs: S7 table and notes, `docs/USAGE.md`, architecture.
+- [x] Agent supervisor: `--control PATH`, USR1 writes `INTERRUPT` there; the executor passes the file.
+- [x] Supervisor: USR1 to every agent up front; the sweep after one shared grace.
+- [x] `stop --all`: USR1 to agents first.
+- [x] `$OPENLANES_SHUTDOWN_GRACE` for `Control::GRACE` and the supervisor.
+- [x] Docs: S7 table and notes, `docs/USAGE.md`, architecture.
 - [ ] Lint, the full suite, and every changed file above 95% coverage.
