@@ -149,6 +149,8 @@ RSpec.configure do |config|
     OpenLanes::Log::Settings.members.each { ENV.delete("OPENLANES_LOG#{"_#{it.upcase}" unless it == :file}") }
   end
   config.after { OpenLanes::Log.reset! }
+  # A dispatcher with a state file says its agents outlive it; the suite's own exit still stops them.
+  config.after { OpenLanes::Execution::AgentProcess.reset! }
 
   # A command run in an example names its process (S5); the suite's own
   # title stays `rspec`.

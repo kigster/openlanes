@@ -26,8 +26,7 @@ module OpenLanes
       # Ended without a status: the agent supervisor itself was killed.
       LOST = ExitStatus.new(exitstatus: nil, termsig: 9)
 
-      @live = []
-      @mutex = Mutex.new
+      extend Registry
 
       class << self
         # The executor's spawn seam, for one project.
@@ -37,29 +36,16 @@ module OpenLanes
         # @return [Starter]
         def spawner(dir:, root:) = Starter.new(dir:, root:)
 
-        # @return [Array<AgentProcess>] started and not yet ended
-        def live = @mutex.synchronize { @live.dup }
-
-        # TERM to every agent supervisor still running. Registered with
-        # `at_exit`; each one finishes the stop by itself, so the engine
-        # does not wait for it (until reattach, an engine that exits still
-        # stops its agents).
+        # An agent supervisor an earlier engine started, taken back from what
+        # {#restart} recorded (B1 in plan 041). It is not this process's
+        # child, so its end is read from its status file, or from its pid
+        # being gone.
         #
-        # @return [void]
-        def terminate_all = live.each { it.kill("TERM") }
-
-        # @param process [AgentProcess]
-        # @return [void]
-        def forget(process) = @mutex.synchronize { @live.delete(process) }
-
-        # @param process [AgentProcess]
+        # @param fields [Hash{String => Object}] what {#restart} returned, keys as strings
         # @return [AgentProcess]
-        def track(process)
-          @mutex.synchronize do
-            @at_exit ||= at_exit { terminate_all }
-            @live << process
-          end
-          process
+        def attach(fields)
+          track(new(pid: Integer(fields.fetch("pid")),
+            files: Files.new(output: fields.fetch("output"), status: fields.fetch("status"), pid_file: fields.fetch("pid_file"))))
         end
       end
 
@@ -79,6 +65,11 @@ module OpenLanes
 
       # @return [Integer] the agent supervisor's
       attr_reader :pid
+
+      # What a restarted engine needs to {.attach} to it again.
+      #
+      # @return [Hash{Symbol => Object}]
+      def restart = { pid:, **@files.to_h }
 
       # Read the output as it grows, until the agent has ended and every
       # byte it wrote has been read.
