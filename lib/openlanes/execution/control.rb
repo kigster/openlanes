@@ -48,7 +48,8 @@ module OpenLanes
       # Seconds between {#quit!} and the harness terminating whatever is still
       # running. Long enough to write files and a handoff note; short enough
       # that q means quit rather than "quit eventually".
-      GRACE = 60
+      # `$OPENLANES_SHUTDOWN_GRACE` overrides it; see {ShutdownGrace}.
+      GRACE = ShutdownGrace.from(ENV)
 
       @mutex = Mutex.new
       @files = []
