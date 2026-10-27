@@ -73,6 +73,20 @@ module OpenLanes
           path
         end
 
+        # Take on the file an agent started by an earlier engine was told
+        # about, so a stop or an INTERRUPT broadcast now reaches it too.
+        #
+        # @param path [String] the file named in the agent's prompt
+        # @return [String] +path+
+        def adopt(path)
+          unless File.exist?(path)
+            FileUtils.mkdir_p(File.dirname(path))
+            File.write(path, "")
+          end
+          @mutex.synchronize { @files << path unless @files.include?(path) }
+          path
+        end
+
         # Forget a finished invocation's file. The file itself is removed so a
         # crashed run does not leave stale STOPs for the next one to find.
         #

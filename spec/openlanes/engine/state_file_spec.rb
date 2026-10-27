@@ -89,6 +89,24 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
     expect(fresh.stranded).to be_empty
   end
 
+  # B5 in plan 041: what a restarted engine needs, saved at once.
+  describe "#restart" do
+    let(:stage) { described_class.new(path:, pid: 4242).load.stages("001.00").first }
+
+    before do
+      state.record("001.00", agent: "researcher", round: 1, status: "Started")
+      state.restart("001.00", agent: "researcher", round: 1, process: { pid: 7 }, cwd: "/repo")
+      state.restart("001.00", agent: "researcher", round: 1, deadline: "2026-10-27T00:00:00Z")
+      state.restart("002.00", agent: "researcher", round: 1, cwd: "/nowhere")
+    end
+
+    it("merges each field into the stage, as JSON reads it back") do
+      expect(stage["restart"]).to eq("process" => { "pid" => 7 }, "cwd" => "/repo", "deadline" => "2026-10-27T00:00:00Z")
+    end
+
+    it("records nothing for a stage it does not have") { expect(described_class.new(path:, pid: 4242).load.stages("002.00")).to be_empty }
+  end
+
   # The file moved up out of `tmp/` after runs had already written there.
   # One that died under the old layout still has to be picked up, or its
   # Started stages are invisible and it silently restarts from zero.

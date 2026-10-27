@@ -44,6 +44,18 @@ RSpec.describe OpenLanes::Execution::Control do
     expect(described_class.quit?).to be(true)
   end
 
+  describe ".adopt" do
+    let(:path) { File.join(@dir, "gone", "control-a") }
+
+    before do
+      2.times { described_class.adopt(path) }
+      described_class.wrap_up!
+    end
+
+    it("brings back a file an earlier engine's agent was told about") { expect(File).to exist(path) }
+    it("lets a broadcast reach it") { expect(File.read(path)).to eq("WRAP_UP\n") }
+  end
+
   describe "interrupt!" do
     let!(:path) { described_class.register(@dir, "a") }
 

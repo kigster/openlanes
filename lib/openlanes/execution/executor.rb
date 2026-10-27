@@ -133,6 +133,15 @@ module OpenLanes
         #   copied into, so the engine journal can name it and its offset
         attr_accessor :trace
 
+        # @return [#call, nil] told, as a Hash, each part of what a restarted
+        #   engine needs to take this invocation back (B5 in plan 041),
+        #   whenever that part changes
+        attr_accessor :on_restart
+
+        # @param fields [Hash{Symbol => Object}]
+        # @return [void]
+        def restart!(**fields) = on_restart&.call(fields)
+
         # @return [OpenLanes::Execution::Executor::Compaction, nil] the latest
         #   compaction asked for
         def compaction = @mutex.synchronize { @compaction }
@@ -212,12 +221,15 @@ module OpenLanes
         # @param seconds [Integer]
         # @return [Boolean] false when the clock had already stopped the agent
         def extend!(seconds)
-          @mutex.synchronize do
-            next @clock.extend!(seconds) if @clock
+          clock = nil
+          granted = @mutex.synchronize do
+            next (clock = @clock).extend!(seconds) if @clock
 
             @pending = @pending.to_i + seconds
             true
           end
+          restart!(deadline: Executor.deadline(clock)) if granted && clock
+          granted
         end
 
         # Ask for the session to be compacted (W28): INTERRUPT, so the agent
@@ -592,66 +604,55 @@ module OpenLanes
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
-        clock = Clock.new(seconds: timeout_for(agent),
-          control:,
-          on_expire: -> { handle.kill!(grace: 0, reason: :timeout) })
-        handle.clock = clock
-        clock.start
-
-        begin
-          status = drain(child, sessions, handle)
-          if resume && !handle.killed && (lost = lost_session(status, sessions.current))
-            UI.log("session #{resume} #{lost}, starting #{agent.name} fresh",
-              level: :warn,
-              plan:  subject.feature.ordinal.to_s,
-              agent: agent.name)
-            handle.session = nil
-            argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:)
-            status = drain(launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress), sessions, handle)
-          end
-          while (compaction = handle.take_compaction)
-            resumed = settling(compaction, agent) do
-              carry_on(compaction, agent, subject, root:, profile:, trace:, handle:, sessions:, &on_progress)
-            end
-            status = resumed if resumed
-          end
-        ensure
-          handle.close!
-          clock.stop
-          Control.release(control)
+        clock = start_clock(handle, seconds: timeout_for(agent))
+        handle.restart!(cwd: root, trace:, control:, before: before.to_h, deadline: self.class.deadline(clock))
+        relaunch = lambda do
+          handle.session = nil
+          launch(invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:),
+            root:, profile:, trace:, handle:, sessions:,
+            &on_progress)
         end
-        transcript = sessions.current
-
-        if handle.killed
-          return spent(sessions,
-            started,
-            ok:     false,
-            pid:    handle.pid,
-            killed: handle.killed,
-            note:   "#{killed_note(handle.killed, clock)}, last seen #{transcript.activity || "starting up"} - trace: #{trace}")
-        end
-        unless status.success?
-          return failure(sessions,
-            started,
-            "#{profile.adapter.executable} exited #{status.exitstatus}: #{said(transcript)} - trace: #{trace}",
-            pid: handle.pid)
-        end
-        if transcript.failed?
-          return failure(sessions,
-            started,
-            "#{profile.adapter.executable} reported: #{transcript.error} - trace: #{trace}",
-            pid: handle.pid)
-        end
-
-        violation = before.violation(root)
-        return failure(sessions, started, violation, pid: handle.pid) if violation
-
-        spent(sessions,
-          started,
-          ok:   true,
-          pid:  handle.pid,
-          note: "completed#{" - #{sessions.tools} tool calls" if sessions.tools.positive?}")
+        status = supervise(child,
+          agent,
+          subject,
+          root:, profile:, trace:, handle:, sessions:, clock:, resume:, relaunch:,
+          &on_progress)
+        verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
       end
+
+      # Take back an agent an earlier engine started and did not see end (B1
+      # in plan 041): its transcript is rebuilt from the agent's whole output
+      # (B7), its clock runs out at the deadline it was given, and it is
+      # judged as {#call} judges one, against the snapshot taken before it ran.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param restart [Hash{String => Object}] what {Handle#restart!} was told,
+      #   read back from the state file
+      # @param handle [OpenLanes::Execution::Executor::Handle]
+      # @return [OpenLanes::Execution::Executor::Result]
+      # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
+      def reattach(agent, subject, restart:, handle: Handle.new, &on_progress)
+        started = UI.monotonic
+        profile = profile_for(agent, subject)
+        root = restart.fetch("cwd")
+        trace = restart.fetch("trace")
+        File.write(trace, "")
+        handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name)
+        handle.trace = trace
+        handle.control = Control.adopt(restart.fetch("control"))
+        sessions = Sessions.new
+        child = follow(AgentProcess.attach(restart.fetch("process")), profile:, trace:, handle:, sessions:, &on_progress)
+        clock = start_clock(handle, seconds: [Time.iso8601(restart.fetch("deadline")) - Time.now, 0].max)
+        status = supervise(child, agent, subject, root:, profile:, trace:, handle:, sessions:, clock:, &on_progress)
+        before = Boundary::Snapshot.new(**restart.fetch("before").transform_keys(&:to_sym))
+        verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
+      end
+
+      # @param clock [OpenLanes::Execution::Clock]
+      # @return [String] when the clock runs out, as wall-clock time, which
+      #   outlives the engine where the clock's own monotonic deadline does not
+      def self.deadline(clock) = (Time.now + clock.remaining).utc.iso8601
 
       # A failed invocation still spent what it spent, and a run that burned two
       # hundred thousand tokens before timing out is a different fact from one
@@ -765,20 +766,107 @@ module OpenLanes
 
       private
 
+      # @param handle [OpenLanes::Execution::Executor::Handle]
+      # @param seconds [Numeric]
+      # @return [OpenLanes::Execution::Clock] started, and handed to +handle+
+      def start_clock(handle, seconds:)
+        clock = Clock.new(seconds:,
+          control:   handle.control,
+          on_expire: -> { handle.kill!(grace: 0, reason: :timeout) })
+        handle.clock = clock
+        clock.start
+        clock
+      end
+
+      # The agent until it ends: a lost session started again fresh when
+      # +relaunch+ is given, and every compaction asked for carried on.
+      #
+      # @return [Process::Status]
+      def supervise(child, agent, subject, root:, profile:, trace:, handle:, sessions:, clock:, resume: nil, relaunch: nil,
+        &on_progress)
+        status = drain(child, sessions, handle)
+        if resume && !handle.killed && (lost = lost_session(status, sessions.current))
+          UI.log("session #{resume} #{lost}, starting #{agent.name} fresh",
+            level: :warn,
+            plan:  subject.feature.ordinal.to_s,
+            agent: agent.name)
+          status = drain(relaunch.call, sessions, handle)
+        end
+        while (compaction = handle.take_compaction)
+          resumed = settling(compaction, agent) do
+            carry_on(compaction, agent, subject, root:, profile:, trace:, handle:, sessions:, &on_progress)
+          end
+          status = resumed if resumed
+        end
+        status
+      ensure
+        handle.close!
+        clock.stop
+        Control.release(handle.control)
+      end
+
+      # How the invocation went: killed, failed, refused by its CLI, over the
+      # boundary, or completed.
+      #
+      # @return [OpenLanes::Execution::Executor::Result]
+      def verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
+        transcript = sessions.current
+        if handle.killed
+          return spent(sessions,
+            started,
+            ok:     false,
+            pid:    handle.pid,
+            killed: handle.killed,
+            note:   "#{killed_note(handle.killed, clock)}, last seen #{transcript.activity || "starting up"} - trace: #{trace}")
+        end
+        unless status.success?
+          return failure(sessions,
+            started,
+            "#{profile.adapter.executable} exited #{status.exitstatus}: #{said(transcript)} - trace: #{trace}",
+            pid: handle.pid)
+        end
+        if transcript.failed?
+          return failure(sessions,
+            started,
+            "#{profile.adapter.executable} reported: #{transcript.error} - trace: #{trace}",
+            pid: handle.pid)
+        end
+
+        violation = before.violation(root)
+        return failure(sessions, started, violation, pid: handle.pid) if violation
+
+        spent(sessions,
+          started,
+          ok:   true,
+          pid:  handle.pid,
+          note: "completed#{" - #{sessions.tools} tool calls" if sessions.tools.positive?}")
+      end
+
       # Start one session's process and the transcript that reads it. Every
       # session of an invocation shares its trace file, which is opened for
       # appending, so a compacted run reads back as one stream.
       #
       # @return [OpenLanes::Execution::AgentProcess]
-      def launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
+      def launch(argv, root:, profile:, trace:, handle:, sessions:, &)
+        child = @spawn.call(argv, chdir: root, env: profile.adapter.environment, label: handle.label)
+        follow(child, profile:, trace:, handle:, sessions:, &)
+      end
+
+      # Read +child+ into a new transcript under +handle+. Only an
+      # {AgentProcess} can be taken back by a restarted engine, so only one
+      # is reported to {Handle#restart!}.
+      #
+      # @param child [OpenLanes::Execution::AgentProcess, #each_chunk]
+      # @return [OpenLanes::Execution::AgentProcess, #each_chunk] +child+
+      def follow(child, profile:, trace:, handle:, sessions:, &on_progress)
         transcript = profile.adapter.transcript(trace:) do |progress|
           handle.session ||= progress.session
           on_progress&.call(sessions.carry(progress))
         end
         sessions << transcript
-        child = @spawn.call(argv, chdir: root, env: profile.adapter.environment, label: handle.label)
         handle.child = child
         transcript.pid = child.pid
+        handle.restart!(process: child.restart) if child.respond_to?(:restart)
         child
       end
 
