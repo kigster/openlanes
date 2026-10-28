@@ -293,11 +293,16 @@ module OpenLanes
       # conservative for now; the answer reaches the agent through
       # blocked.md either way.
       #
+      # A session belongs to the CLI that opened it, so one recorded on
+      # another adapter is not resumed: a reviewer replaced on the main
+      # coding agent (D14 in plan 031) would otherwise hand claude a codex id.
+      #
       # @param agent [String]
       # @param state [#to_s] the state key the plan is in now
       # @param root [String] the checkout the new round will run in
+      # @param adapter [#to_s, nil] the adapter the new round runs on
       # @return [OpenLanes::Plans::PlanState::Resumption]
-      def resumption(agent:, state:, root:)
+      def resumption(agent:, state:, root:, adapter: nil)
         data = read
         all = data["stages"]
         # `started_at` has second precision, so two rounds can tie on it; the
@@ -319,6 +324,8 @@ module OpenLanes
                    "the plan moved away and back since round #{last["round"]} (#{session})"
                  elsif File.expand_path(last["cwd"].to_s) != File.expand_path(root) || last["cwd"].to_s.empty?
                    "session #{session} ran in #{last["cwd"] || "an unrecorded checkout"}, not #{root}"
+                 elsif adapter && last["adapter"] && last["adapter"] != adapter.to_s
+                   "session #{session} ran on #{last["adapter"]}, not #{adapter}"
                  end
         Resumption.new(session: reason ? nil : session, reason: reason || "round #{last["round"]} left it in #{state}")
       end

@@ -2265,7 +2265,7 @@ module OpenLanes
         end
 
         decision = Plans::PlanState.for(task.subject.feature.path)
-                                   .resumption(agent: task.agent.name, state:, root: task.root)
+                                   .resumption(agent: task.agent.name, state:, root: task.root, adapter: adapter.name)
         UI.log(decision.resume? ? "resuming session #{decision.session}: #{decision.reason}" : "fresh session: #{decision.reason}",
           **task.log_fields)
         decision.session
