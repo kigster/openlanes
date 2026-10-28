@@ -26,6 +26,7 @@ Plans wait on each other, and today the only view of that is `depends_on:` read 
 - **G4, the filter:** one checkbox per state, in the order `STATUSES` defines them. On first open every state is checked but Done and Abandoned. The choice is remembered per browser (localStorage, per project).
 - **G5, dragging:** positions are not remembered. Every reload, and every filter change, lays the graph out again.
 - **G6, hidden plans in a chain:** when the filter hides a plan between two visible ones (C depends on B depends on A, B hidden), A → C is drawn as a dashed arrow whose tooltip names the hidden plans it passes through.
+- **G7, nice to have (not required):** a dashed outline around each DAG, each connected group of plans, so separate dependency groups read as separate at a glance. Planning decides whether it fits this plan or follows it.
 
 ## What already exists
 
