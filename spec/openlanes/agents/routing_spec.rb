@@ -93,8 +93,20 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
 
     def review_routed = described_class.filter(agents.for_status(ready), subject_plan).map(&:name)
 
-    it "goes to the reviewer once its pull request is open" do
+    it "goes to all three reviewers once its pull request is open" do
       plans { |t| t.plan "001.00", :ready_for_review, "work", files: { "spec.md" => spec_body }, prs: [t.open(7, "[001.00] Work")] }
+      expect(review_routed).to contain_exactly("staff-reviewer", "security-reviewer", "design-reviewer")
+    end
+
+    # Plan 031, V5: a plan that started at building gets one reviewer.
+    it "goes to staff-reviewer alone when the plan started at building" do
+      plans do |t|
+        t.plan "001.00",
+          :ready_for_review,
+          "work",
+          files: { "spec.md" => "---\nstarts: building\n---\n#{spec_body}" },
+          prs:   [t.open(7, "[001.00] Work")]
+      end
       expect(review_routed).to eq(%w[staff-reviewer])
     end
 

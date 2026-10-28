@@ -31,8 +31,10 @@ module OpenLanes
       # The two coders that build a plan as a pair.
       BUILDERS = [BACKEND_CODER, FRONTEND_CODER].freeze
 
-      # Decided, with no `agents/*.md` yet: the reviewers of plan 031.00.
-      PLANNED = [SECURITY_REVIEWER, DESIGN_REVIEWER].freeze
+      # Decided, with no `agents/*.md` yet. Empty since plan 031.00 gave the
+      # last two reviewers their files; kept, so the next name decided ahead
+      # of its file has somewhere to wait.
+      PLANNED = [].freeze
 
       # @return [Array<String>] every name above, in the order written
       def self.all = constants.filter_map { const_get(it) if const_get(it).is_a?(String) }

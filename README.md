@@ -115,8 +115,8 @@ The swim lanes is the core of the "what's going on" feature of OpenLanes. Each r
 
 Depending on how you setup your project with `lanes init` command, the `new` and `researhed` stages may or may  not be part of the flow.  OpenLanes offers three levels of feature investigation:
 
-1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, planner. planner's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (backend-coder) and a frontend-engineer (frontend-coder). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to the reviewer agent "staff-reviewer". Hans can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "arbitrator", makes a final call if this PR is good to go.
-2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes planner → backend-coder (+ frontend-coder) → staff-reviewer, for a spec you already trust.
+1. Full — this engages all of the agents, starts with the spec, performs research, rewrites it using copywriting skills, and when done, hands it off to the planning agent, planner. planner's job is to read the `spec.md` and write `plan.md` breaking it into executable tasks by the backend engineer (backend-coder) and a frontend-engineer (frontend-coder). Once the plan is written, the control is passed to the two implementing engineers who remain in communications by means of a shared state JSON file. They can send messages to each other and divide and conquer the work. Once they are done, the  report back to the dispatcher AI agent (the main thread that watches over everyone), which then creates a PR, and passes control over to three reviewers: "staff-reviewer" for correctness, "security-reviewer" for vulnerabilities and "design-reviewer" for code organisation. Together they can reject the PR twice, after which another agent with the goal of breaking deadlocks and ties, named "arbitrator", makes a final call if this PR is good to go.
+2. Plan – a simplified pipeline that assumes spec.md is already written by you. It invokes planner → backend-coder (+ frontend-coder) → staff-reviewer (+ security-reviewer, design-reviewer), for a spec you already trust.
 3. Quick — is a short mechanical tasks executed by a faster/simpler `chores-coder` → `staff-reviewer`.
 
 While the project select the default, each plan can override this on a case by case basis.
@@ -299,7 +299,9 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | `backend-coder`      | Planned, Building, Changes Requested              | Ready for Review                | opus/high     | full, plan |
 | `frontend-coder`      | Planned, Building, Building UI, Changes Requested | Ready for Review                | sonnet/medium | full, plan |
 | `chores-coder`     | Planned, Building, Changes Requested              | Ready for Review                | haiku/medium  | quick      |
-| `staff-reviewer`  | Ready for Review, In Review                       | Verifying, or Approved & Merged | sonnet/high   | all        |
+| `staff-reviewer`  | Ready for Review, In Review                       | Verifying, or Approved & Merged | opus/high     | all        |
+| `security-reviewer` | Ready for Review, In Review                     | Verifying, or Approved & Merged | sonnet/high   | full, plan |
+| `design-reviewer` | Ready for Review, In Review                       | Verifying, or Approved & Merged | sonnet/high   | full, plan |
 | `verifier`   | Verifying                                         | Approved & Merged               | sonnet/medium | all        |
 | `unblocker`      | Technical Block, Product Block, Bomb              | by contents                     | haiku/low     | all        |
 | `rebaser`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
@@ -311,8 +313,8 @@ Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A
 
 | Lane             | Route                                                            |
 | :--------------- | :--------------------------------------------------------------- |
-| `full` (default) | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer → verifier                 |
-| `plan`           | planner → backend-coder (+ frontend-coder) → staff-reviewer → verifier, for a spec you already trust |
+| `full` (default) | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer (+ security-reviewer, design-reviewer) → verifier                 |
+| `plan`           | planner → backend-coder (+ frontend-coder) → staff-reviewer (+ security-reviewer, design-reviewer) → verifier, for a spec you already trust |
 | `quick`          | chores-coder → staff-reviewer → verifier, for one short mechanical task           |
 
 ### Blocks
