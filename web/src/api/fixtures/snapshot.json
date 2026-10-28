@@ -192,7 +192,8 @@
         "max": 2
       },
       "ruling": null,
-      "arbitrating": false
+      "arbitrating": false,
+      "reviews": []
     },
     {
       "ordinal": "005.00",
@@ -260,7 +261,21 @@
         "max": 2
       },
       "ruling": null,
-      "arbitrating": false
+      "arbitrating": false,
+      "reviews": [
+        {
+          "agent": "staff-reviewer",
+          "adapter": "claude",
+          "verdict": "passed",
+          "vulnerability": false
+        },
+        {
+          "agent": "security-reviewer",
+          "adapter": "codex",
+          "verdict": "rejected",
+          "vulnerability": true
+        }
+      ]
     },
     {
       "ordinal": "006.00",
@@ -348,7 +363,8 @@
         "max": 2
       },
       "ruling": null,
-      "arbitrating": false
+      "arbitrating": false,
+      "reviews": []
     },
     {
       "ordinal": "014.00",
@@ -393,7 +409,8 @@
         "max": 2
       },
       "ruling": null,
-      "arbitrating": false
+      "arbitrating": false,
+      "reviews": []
     }
   ],
   "backlog": [

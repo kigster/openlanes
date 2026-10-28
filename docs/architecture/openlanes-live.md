@@ -69,6 +69,7 @@ classDiagram
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Live__Chat ..> OpenLanes__Error : uses
@@ -183,6 +184,7 @@ classDiagram
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Verdict : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__GroupMissing : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__Store__Transaction : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__Subscriber : uses

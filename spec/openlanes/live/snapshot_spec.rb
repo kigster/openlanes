@@ -104,6 +104,9 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         t.plan "015.00", :new, "theirs", files: { "spec.md" => spec_body }
         t.plan "016.00", :bomb, "stack-ports", files: { "spec.md" => spec_body, "blocked.md" => "## B1 Which port range?\n" }
       end
+      review = OpenLanes::Plans::PlanState.for(path_of("005.00"))
+      review.stage!(agent: "staff-reviewer", round: 1, status: "Completed", adapter: "claude", verdict: "passed", review: 0)
+      review.stage!(agent: "security-reviewer", round: 1, status: "Completed", adapter: "codex", verdict: "rejected 1/2, vulnerability", review: 0)
       store.set(keys.claim("015.00"), "ffffffffffffffffffffffff:000000000000")
       claims.claim("001.00")
       # Merged earlier in the run: on the board with no cars, as the page's 014.00 is.
@@ -127,6 +130,28 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
 
       expect(by_ordinal["001.00"][:locked]).to eq(pid: Process.pid, host: Socket.gethostname, started_at: "2026-10-13T09:00:00Z", foreign: false)
       expect(by_ordinal.except("001.00").values.map { it[:locked] }.uniq).to eq([nil])
+    end
+
+    # Plan 031, D13.
+    describe "the reviewers' verdicts" do
+      def reviews = by_ordinal["005.00"][:reviews]
+      def voted(agent, verdict, review, adapter: "gemini") = OpenLanes::Plans::PlanState.for(path_of("005.00")).stage!(agent:, round: 2, status: "Completed", adapter:, verdict:, review:)
+
+      it "carries each one with the coding agent it ran on, and none for a plan not yet reviewed" do
+        expect(reviews).to eq([{ agent: "staff-reviewer", adapter: "claude", verdict: "passed", vulnerability: false },
+                               { agent: "security-reviewer", adapter: "codex", verdict: "rejected", vulnerability: true }])
+        expect(by_ordinal.except("005.00").values.map { it[:reviews] }.uniq).to eq([[]])
+      end
+
+      it "shows only the latest round, and says slop rather than rejected" do
+        voted("design-reviewer", "slop", 3)
+        expect(reviews).to eq([{ agent: "design-reviewer", adapter: "gemini", verdict: "slop", vulnerability: false }])
+      end
+
+      it "leaves out a note that carries no verdict" do
+        voted("design-reviewer", "looked at it", 3)
+        expect(reviews).to eq([])
+      end
     end
 
     it "has the fixture's keys at every level" do

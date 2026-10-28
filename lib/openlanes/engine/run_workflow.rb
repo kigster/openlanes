@@ -435,7 +435,7 @@ module OpenLanes
           state:        Engine.state_file(@tree),
           worktree:,
           rounds:       @options[:rounds]&.to_i,
-          executor:     executor,
+          executor:     executor(usable: usable_for(live)),
           dry_run:      @dry_run,
           publisher:,
           verification: verification_for(publisher, worktree),
@@ -481,15 +481,29 @@ module OpenLanes
       # @param instructions [String, nil] what the agent hears on top of its
       #   definition; `--prompt` by default, the brief for the arbitrator,
       #   which otherwise runs under the same operator limits as every agent
+      # @param usable [#call] adapter name → whether reviewers may be dealt it
       # @return [OpenLanes::Execution::Executor]
-      def executor(instructions: instructions_from(@options[:prompt]))
+      def executor(instructions: instructions_from(@options[:prompt]), usable: Agents::Dealing::ANY)
         Execution.executor(root:         @root,
+          usable:,
           timeout:      @options[:timeout]&.to_i,
           dry_run:      @dry_run,
           instructions:,
           model:        @options[:model],
           max_tokens:   @options[:max_tokens]&.to_i,
           lean:         !@options[:user_config])
+      end
+
+      # What the live board's probes said of each adapter (plan 031, D12): one
+      # they found down is not dealt a reviewer. Without a board there is no
+      # probe, and every adapter is dealt.
+      #
+      # @param live [OpenLanes::Live::Session, nil]
+      # @return [#call] adapter name → Boolean
+      def usable_for(live)
+        return Agents::Dealing::ANY unless live
+
+        ->(name) { live.probes.current.find { it.name == name }&.available != false }
       end
 
       # `--prompt` takes the instructions themselves or a file holding them.

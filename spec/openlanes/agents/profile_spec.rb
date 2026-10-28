@@ -43,9 +43,38 @@ RSpec.describe OpenLanes::Agents::Profile do
     expect(described_class.resolve(agent, spec: spec("phases:\n  review: { model: haiku }")).model).to eq("opus")
   end
 
+  # Plan 031, D12: below the agent's and the plan's word, above the project's.
+  describe "a reviewer dealt a coding agent" do
+    subject(:profile) { described_class.resolve(agent, spec: plan, dealing:) }
+
+    let(:agent) { super().with(name: "security-reviewer", phase: "review") }
+    let(:dealing) { OpenLanes::Agents::Dealing.new(adapters: %w[claude codex], fallback: "pi") }
+    let(:plan) { nil }
+
+    it("runs on its seat, ahead of the project's adapter") { expect(profile.adapter.name).to eq("codex") }
+
+    context "when the agent names its own" do
+      let(:agent) { super().with(adapter: "claude") }
+
+      it("keeps the agent's") { expect(profile.adapter.name).to eq("claude") }
+    end
+
+    context "when the plan names one for the review phase" do
+      let(:plan) { spec("phases:\n  review: { adapter: gemini }") }
+
+      it("keeps the plan's") { expect(profile.adapter.name).to eq("gemini") }
+    end
+
+    context "when the project lists none" do
+      let(:dealing) { OpenLanes::Agents::Dealing.new(adapters: [], fallback: "pi") }
+
+      it("falls back to the project's adapter") { expect(profile.adapter.name).to eq("pi") }
+    end
+  end
+
   # Plan 040, D2: frontmatter, then `.openlanes.yml`, then claude.
   describe "the project's default adapter" do
-    subject(:profile) { described_class.resolve(agent, spec: plan, project: "codex") }
+    subject(:profile) { described_class.resolve(agent, spec: plan, dealing: OpenLanes::Agents::Dealing.new(fallback: "codex")) }
 
     let(:plan) { nil }
 
@@ -64,7 +93,7 @@ RSpec.describe OpenLanes::Agents::Profile do
     end
 
     context "when the project names claude" do
-      subject(:profile) { described_class.resolve(agent, project: "claude") }
+      subject(:profile) { described_class.resolve(agent, dealing: OpenLanes::Agents::Dealing.new(fallback: "claude")) }
 
       it("keeps the agent's Claude model") { expect(profile.model).to eq("opus") }
     end

@@ -175,7 +175,32 @@ module OpenLanes
           finished:    finished && { kind: finished.kind, at: iso(finished.at) },
           rejections:  { count: counter.call(subject), max: max_rejections },
           ruling:      state.rulings.last,
-          arbitrating: stages.any? { it["agent"] == Arbitration::AGENT && !it["finished_at"] } }
+          arbitrating: stages.any? { it["agent"] == Arbitration::AGENT && !it["finished_at"] },
+          reviews:     reviews(stages) }
+      end
+
+      # The latest review round's verdicts, one per reviewer, each with the
+      # coding agent it ran on (plan 031, D13), so the page can put that
+      # agent's mark beside the word. The latest round, not the plan's
+      # current one: the reviewer that decides a round moves the folder, and
+      # the verdicts it settled stay worth showing until the next round.
+      #
+      # @param stages [Array<Hash>]
+      # @return [Array<Hash>] `ReviewVote`s, in the order they were given
+      def reviews(stages)
+        voted = stages.select { it["verdict"] && it["review"] }
+        latest = voted.map { it["review"] }.max
+        voted.select { it["review"] == latest }.filter_map { review(it) }
+      end
+
+      # @param stage [Hash]
+      # @return [Hash, nil] `ReviewVote`; nil for a note that carries no verdict
+      def review(stage)
+        note = stage["verdict"]
+        vote = Plans::Verdict.vote(agent: stage["agent"], note:) or return nil
+        # Verdict counts slop as a rejection; the page says which it was.
+        word = note[Plans::Verdict::NOTE, 1].casecmp?("slop") ? "slop" : vote.word.to_s
+        { agent: vote.agent, adapter: stage["adapter"], verdict: word, vulnerability: vote.vulnerability? }
       end
 
       # @return [OpenLanes::Arbitration::Counter]

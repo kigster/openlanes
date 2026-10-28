@@ -93,7 +93,7 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
   const atPr = stations[route.at]?.key === "pr";
   let cars: ReactNode;
   if (atPr && plan.pr) {
-    cars = <Terminus pr={plan.pr} />;
+    cars = <Terminus pr={plan.pr} reviews={plan.reviews} />;
   } else {
     cars = (
       <>
@@ -111,7 +111,7 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
             <SubagentTiles car={car} />
           </div>
         ))}
-        {plan.pr && <Terminus pr={plan.pr} />}
+        {plan.pr && <Terminus pr={plan.pr} reviews={plan.reviews} />}
       </>
     );
   }

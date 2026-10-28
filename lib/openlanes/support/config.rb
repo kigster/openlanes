@@ -20,6 +20,9 @@ module OpenLanes
   #     jitter: true            # full jitter: each gap drawn from [0, gap)
   #   desired_codebase_quality: high  # standard or mvp (R4): what a review that is ok but
   #                             # not perfect does, and M5's column of defaults
+  #   review:
+  #     adapters: [claude, codex, gemini]  # the coding agents the reviewers are dealt
+  #                             # across, main one first (plan 031, V7); unset: `adapter:`
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, staff-reviewer's and verifier's together, before
@@ -89,6 +92,10 @@ module OpenLanes
   # @!attribute [r] commands
   #   @return [Hash{String => Hash{Symbol => Object}}] by command name, as
   #     typed: "run", "resync dirs"
+  # @!attribute [r] review_adapters
+  #   @return [Array<String>] `review.adapters`: the coding agents
+  #     {Agents::Dealing} deals the reviewers across, main one first; empty
+  #     when unset, and then every reviewer runs on {#adapter}
   # @!attribute [r] merge_by
   #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
   # @!attribute [r] merge_max_rejections
@@ -142,10 +149,11 @@ module OpenLanes
     :ci,
     :stack,
     :events_enabled,
-    :events_dir) do
+    :events_dir,
+    :review_adapters) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil, review_adapters: []) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -213,6 +221,7 @@ module OpenLanes
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["coverage"] = coverage.to_h if coverage
       settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
+      settings["review"] = { "adapters" => review_adapters } unless review_adapters.empty?
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -231,7 +240,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack].freeze
+              questions coverage events ci stack review].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -239,6 +248,9 @@ module OpenLanes
 
     # Who may merge, the default first.
     MERGERS = %i[human auto].freeze
+
+    # Every key `review:` may hold.
+    REVIEW_KEYS = %w[adapters].freeze
 
     # Every key `merge:` may hold.
     MERGE_KEYS = %w[by max_rejections].freeze
@@ -331,6 +343,7 @@ module OpenLanes
           redis_backoff: redis_backoff(settings["redis_backoff"], path),
           desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
+          **review(settings["review"], path),
           ci:        ci(settings["ci"], path),
           stack:     stack(settings["stack"], path),
           commands:  commands(settings["commands"], path),
@@ -451,6 +464,31 @@ module OpenLanes
         fail_with(path, "merge: unknown key #{unknown.join(", ")}; known: #{MERGE_KEYS.join(", ")}") unless unknown.empty?
 
         { merge_by: merge_by(settings, path), merge_max_rejections: max_rejections(settings, path) }.compact
+      end
+
+      # `review.adapters`: a list of known coding agents, each named once.
+      #
+      # @return [Hash{Symbol => Array<String>}] as keywords for {Config.new}
+      def review(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "review: must be a mapping, e.g. `review: { adapters: [claude, codex] }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        unknown = settings.keys - REVIEW_KEYS
+        fail_with(path, "review: unknown key #{unknown.join(", ")}; known: #{REVIEW_KEYS.join(", ")}") unless unknown.empty?
+
+        { review_adapters: review_adapters(settings["adapters"], path) }
+      end
+
+      # @return [Array<String>]
+      def review_adapters(value, path)
+        names = Array(value).map(&:to_s)
+        unknown = names.reject { Adapters.known?(it) }
+        fail_with(path, "review.adapters: #{unknown.join(", ")} is not one of #{Adapters.names.join(", ")}") unless unknown.empty?
+        fail_with(path, "review.adapters: #{names.tally.select { _2 > 1 }.keys.join(", ")} is named twice") unless names.uniq.size == names.size
+
+        names
       end
 
       # @return [Symbol, nil]

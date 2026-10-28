@@ -5,6 +5,7 @@
 ```mermaid
 classDiagram
   class OpenLanes__Adapters__Invocation["OpenLanes::Adapters::Invocation"]
+  class OpenLanes__Agents__Dealing["OpenLanes::Agents::Dealing"]
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
@@ -31,6 +32,7 @@ classDiagram
   OpenLanes__Execution__Child ..> OpenLanes__UI : uses
   OpenLanes__Execution__Clock ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary__Snapshot : uses

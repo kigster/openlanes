@@ -4,6 +4,7 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Agents__Dealing["OpenLanes::Agents::Dealing"]
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Apps__Supervisor__StartFailed["OpenLanes::Apps::Supervisor::StartFailed"]
@@ -236,6 +237,7 @@ classDiagram
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__Verdict : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__UI : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses

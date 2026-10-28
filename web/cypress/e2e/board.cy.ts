@@ -11,6 +11,16 @@ describe("the board", () => {
     cy.get(".tab-machine").should("contain", "sam@ci-runner-2");
   });
 
+  // Plan 031, V3: each reviewer's verdict sits at the end of the line beside its coding agent's letter.
+  it("shows each reviewer's verdict with its coding agent's mark", () => {
+    cy.get('[data-plan="005.00"] .review-votes').scrollIntoView().within(() => {
+      cy.get(".vote").should("have.length", 2);
+      cy.get(".vote-passed .adapter-mark.mark-claude").should("have.text", "A");
+      cy.get(".vote-rejected .adapter-mark.mark-codex").should("have.text", "O");
+      cy.contains(".sr-only", "security-reviewer on codex: rejected, a vulnerability");
+    });
+  });
+
   it("moves: the demo's tokens grow and the page follows", () => {
     cy.get(".topbar-stat").eq(2).invoke("text").then((before) => {
       cy.get(".topbar-stat", { timeout: 10000 }).eq(2).should(($stat) => {

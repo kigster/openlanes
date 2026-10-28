@@ -38,6 +38,25 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     $stdout, $stderr = original_out, original_err
   end
 
+  # Plan 031, D12: what the live board's probes said decides which adapters are dealt.
+  describe "the adapters reviewers may be dealt" do
+    let(:probed) do
+      [OpenLanes::Adapters::Availability.up("claude", [], Time.now),
+       OpenLanes::Adapters::Availability.down("codex", "not signed in", Time.now)]
+    end
+    let(:live) { instance_double(OpenLanes::Live::Session, probes: instance_double(OpenLanes::Adapters::Probes, current: probed)) }
+
+    def usable(live) = workflow.send(:usable_for, live)
+
+    it "skips one the probe found down, and keeps one it has not probed" do
+      expect(%w[claude codex gemini].map { usable(live).call(it) }).to eq([true, false, true])
+    end
+
+    it "deals every adapter without a live board, which has no probe" do
+      expect(usable(nil)).to be(OpenLanes::Agents::Dealing::ANY)
+    end
+  end
+
   describe "refusals, before anything is set up" do
     {
       "--prompt without --agent"        => [{ prompt: "be brief" }, 64, "--prompt only works with --agent"],

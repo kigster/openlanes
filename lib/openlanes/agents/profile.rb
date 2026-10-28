@@ -12,8 +12,11 @@ module OpenLanes
     #   2. spec.md `phases.<phase>`            (adapter, model, effort)
     #   3. spec.md `depth`                     (effort only)
     #   4. the agent's frontmatter
-    #   5. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
-    #   6. {Adapters::DEFAULT}                 (adapter only)
+    #   5. `.openlanes.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
+    #   6. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
+    #   7. {Adapters::DEFAULT}                 (adapter only)
+    #
+    # {Dealing} answers 5 and 6.
     #
     # The adapter has the last word on the model, because it is the one that
     # knows the ceiling: a Claude agent asked for Fable runs on Opus.
@@ -42,11 +45,12 @@ module OpenLanes
       # @param agent [OpenLanes::Agents::Agent]
       # @param spec [OpenLanes::Plans::Spec, nil]
       # @param model [String, nil] what `run --model` typed
-      # @param project [String, nil] `.openlanes.yml` `adapter:`
+      # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes.yml` gives
+      #   an agent that names no adapter of its own
       # @return [OpenLanes::Agents::Profile]
-      def self.resolve(agent, spec: nil, model: nil, project: Config.current.adapter)
+      def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current)
         override = spec ? spec.override_for(agent.phase) : {}
-        adapter = Adapters.for(override["adapter"] || agent.adapter || project)
+        adapter = Adapters.for(override["adapter"] || agent.adapter || dealing.adapter_for(agent))
         # A model named for one CLI means nothing to another, so the agent's
         # own model is kept only on the CLI its frontmatter wrote it for,
         # which is the default one when it names none.

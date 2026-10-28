@@ -170,7 +170,8 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": []
       },
       {
         "ordinal": "005.00",
@@ -232,7 +233,21 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": [
+          {
+            "agent": "staff-reviewer",
+            "adapter": "claude",
+            "verdict": "passed",
+            "vulnerability": false
+          },
+          {
+            "agent": "security-reviewer",
+            "adapter": "codex",
+            "verdict": "rejected",
+            "vulnerability": true
+          }
+        ]
       },
       {
         "ordinal": "006.00",
@@ -314,7 +329,8 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": []
       },
       {
         "ordinal": "002.00",
@@ -356,7 +372,8 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": []
       },
       {
         "ordinal": "007.00",
@@ -395,7 +412,8 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": []
       },
       {
         "ordinal": "008.00",
@@ -434,7 +452,8 @@
         "unacked": 0,
         "mail": [],
         "last_known": [],
-        "locked": null
+        "locked": null,
+        "reviews": []
       }
     ],
     "backlog": [
@@ -764,7 +783,8 @@
           "unacked": 0,
           "mail": [],
           "last_known": [],
-          "locked": null
+          "locked": null,
+          "reviews": []
         }
       ],
       "backlog": [
