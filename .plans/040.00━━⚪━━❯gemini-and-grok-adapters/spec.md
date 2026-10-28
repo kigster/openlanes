@@ -33,6 +33,11 @@ No vendor lock-in: every phase can run on claude, codex, pi, gemini or grok. And
 
 - **Q1, precedence:** agent frontmatter beats `.openlanes.yml`. An agent names an adapter only when it depends on it (verifier needs Claude's browser tools); the project default fills in everywhere else.
 - **Probes are per adapter.** Each adapter class defines its own `probe`, so a new adapter brings its own. A probe is local and fast; an unavailable adapter carries the reason (not installed, not signed in, no models).
+- **Q2, an unusable adapter in the UI (2026-10-27):** listed but disabled, with the reason ("gemini: account tier refused", "pi: no provider signed in"). Nothing that cannot run can be picked, and the operator sees what to fix.
+- **Q3, a stale probe (2026-10-27):** every adapter is re-probed on a timer, every 15 minutes, on the same background thread. A login made while the factory runs shows up within that. Credential-file mtimes were rejected: token refresh rewrites them, and an env-var key leaves no file.
+- **Q4, gemini on an account it refuses (2026-10-27):** built anyway, as the last pull request, against fixtures built from its source. Its probe reads stderr and reports the refused tier, so the UI shows it disabled; a live run waits for an eligible account.
+- **Q5, where probes run (2026-10-27):** shared through Redis. `start` runs the engine and the web as separate processes, so one result is kept under a project key that every process reads; whichever process finds it due probes, under a short lock so two never probe at once.
+- **Q6, the dialog (2026-10-27):** per-phase selects. The new-plan dialog lists the phases the plan will walk, each with an adapter and a model select; a phase left on its agents' default writes nothing.
 - **Probe commands found on this machine:**
 
   | CLI | Probe | Signed in when | Time |
@@ -46,14 +51,25 @@ No vendor lock-in: every phase can run on claude, codex, pi, gemini or grok. And
 - **Models come from the probe where the CLI lists them** (`pi --list-models`, `grok models`), replacing hard-coded lists in `ModelSelect`.
 - **grok maps closely to claude:** `-p` / `--prompt-file`, `--output-format streaming-json` (NDJSON), `-m`, `--reasoning-effort`, `--deny` / `--disallowed-tools` / `--disable-web-search` (so it enforces tool denial), `--resume` / `--session-id` (so it can compact), `--sandbox`.
 
-## What research needs to settle
+## Research findings (2026-10-27)
 
-- gemini's headless flags, stream format, tool denial, resume and auth probe.
-- Whether `grok models` reaches the network; if it does, whether the probe is still acceptable at startup.
-- grok's `streaming-json` event shapes, for `Adapters::Stream` and the spinner phrase.
-- What exit code `codex login status` returns when signed out.
-- How a stale probe is refreshed: a login after startup should not need a restart.
-- What the UI shows for an adapter that is installed but not signed in (hidden, or disabled with the reason).
+Gathered from `--help`, bundled docs and source, and probes run under a throwaway `HOME`. No prompt was sent to any model.
+
+- **gemini 0.51.0, headless:** `-p <text> -o stream-json`, and `--skip-trust` (or `GEMINI_CLI_TRUST_WORKSPACE=true`), without which it exits 55.
+  - Events: `init` (`session_id`, `model`), `message` (`role`, `content`, `delta`), `tool_use` (`tool_name`, `tool_id`, `parameters`), `tool_result`, `error`, `result` (`status`, `stats` with `input_tokens`, `output_tokens`, `cached`).
+  - `-m` for the model; no effort flag (thinking is a settings key only).
+  - No working deny flag: `--policy <file.toml>` with `decision = "deny"` rules (`toolName`, `commandPrefix`) is the way, and `google_web_search` / `web_fetch` are denied the same way.
+  - `--approval-mode yolo`; `-r <uuid>` resumes, `--session-id <uuid>` names a new session.
+  - Signed out: exit 41, a plain-text message on stderr. Signed in, the check is a network call of about 3.5 s that also refreshes `~/.gemini/oauth_creds.json`.
+  - **This machine's account is refused:** free-tier OAuth answers `IneligibleTierError … migrate to the Antigravity suite`, and the exit code (42, "no input") hides it, so a probe must read stderr.
+- **grok 1.0.46:** `--output-format streaming-json`, NDJSON with `type` on every line: `text`, `thought`, `tool_call` (`toolName`, `rawInput`), `tool_call_update`, `usage` (per response), `end` (always last: `sessionId`, `usage`, `num_turns`, `total_cost_usd`), `error`.
+  - The session id arrives only on `end`, so the adapter passes `-s <uuid>` to know it up front.
+  - `--deny "Bash(git push*)"`, `--disallowed-tools`, `--disable-web-search`, `--reasoning-effort`, `--sandbox`, `--always-approve`, `-r <id>`, `--cwd`.
+  - `grok models` exits 0 signed in or out; its first line says which ("You are logged in…" / "You are not authenticated."). It reaches the network only when `~/.grok/models_cache.json` is stale (about an hour); 0.4 to 1.2 s.
+- **codex:** `codex login status` exits 1 signed out, 0 signed in, 0.05 s. `codex debug models --bundled` lists models offline.
+- **pi:** no provider signed in on this machine (`pi --list-models` lists none). `pi auth check --provider X --json --no-refresh` gives the reason.
+- **claude:** `claude auth status --json`, 0.13 s; no model-listing command.
+- **Credential files** (`~/.codex/auth.json`, `~/.grok/auth.json`, `~/.gemini/oauth_creds.json`, `~/.pi/agent/auth.json`; claude in the keychain) are rewritten on token refresh, and env-var keys leave no file, so watching their mtime cannot say when a probe is stale.
 
 ## How to tell it's working?
 
