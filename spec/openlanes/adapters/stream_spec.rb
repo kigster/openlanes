@@ -36,6 +36,10 @@ RSpec.describe OpenLanes::Adapters::Stream do
     expect(stream.result).to eq("Reading the migration")
   end
 
+  it "names no session, so nothing resumes or compacts one" do
+    expect([stream.session, stream.compacted]).to eq([nil, nil])
+  end
+
   it "keeps lines that are not JSON" do
     expect(stream.plain).to eq(["not json at all"])
   end
