@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module OpenLanes
-  # The coding agents a plan can be handed to: `claude`, `codex`, `pi` and
-  # `grok`.
+  # The coding agents a plan can be handed to: `claude`, `codex`, `pi`,
+  # `grok` and `gemini`.
   #
   # The harness decides who works which plan and checks what they did; an
   # adapter only knows how to start one particular CLI and how to read what
@@ -101,7 +101,7 @@ module OpenLanes
     end
 
     # @return [Hash{String => Class}]
-    def registry = { "claude" => Claude, "codex" => Codex, "pi" => Pi, "grok" => Grok }
+    def registry = { "claude" => Claude, "codex" => Codex, "pi" => Pi, "grok" => Grok, "gemini" => Gemini }
 
     # @return [Array<String>]
     def names = registry.keys

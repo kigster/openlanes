@@ -68,9 +68,9 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - **D16. Its own transcript dialect:** `text`, `tool_call` (`toolName`, `rawInput`), `usage`, `end` (`sessionId`, totals), `error`, read by a `Stream` subclass or by widening `Stream`'s shapes, whichever leaves `Stream` simpler.
 - **D17. Probe:** `grok models`; the first line says signed in or not (its exit code does not), and the rest lists the models.
 - **D15, recorded 2026-10-28:** `grok -p "/compact" -r <id>` compacts headless and prints `auto_compact_completed`, so grok compacts. `--deny "Bash(git status*)"` turned the call into a failed tool result, so it enforces tool denial.
-- **D18. Confinement is its own capability:** refusing named commands is not holding an agent to its files. `Capabilities#confines` (claude only) now gates confined agents, which grok, codex and pi refuse rather than run unconfined.
-- **D19. The session id comes from the argv:** grok names its session only in `end`, which an agent stopped for compaction never prints. The transcript reads the `-s`/`-r` id its command was started with (`Base#transcript(argv:)`).
-- **D20. `--disallowed-tools`:** `ask_user_question`, `enter_plan_mode`, `exit_plan_mode` (wait on a person), `scheduler_create` (outlives the run), `send_feedback` (sends to xAI beyond the conversation).
+- **D22. Confinement is its own capability:** refusing named commands is not holding an agent to its files. `Capabilities#confines` (claude only) now gates confined agents, which grok, codex and pi refuse rather than run unconfined.
+- **D23. The session id comes from the argv:** grok names its session only in `end`, which an agent stopped for compaction never prints. The transcript reads the `-s`/`-r` id its command was started with (`Base#transcript(argv:)`).
+- **D24. `--disallowed-tools`:** `ask_user_question`, `enter_plan_mode`, `exit_plan_mode` (wait on a person), `scheduler_create` (outlives the run), `send_feedback` (sends to xAI beyond the conversation).
 
 ### Work units
 
@@ -88,10 +88,13 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - **D19. Tool denial by policy file.** Each invocation writes a TOML policy beside its trace (`decision = "deny"` for each forbidden command prefix, and for `google_web_search` and `web_fetch` unless `network: true`) and passes `--policy`. Capabilities: resumes, enforces tool denial, does not compact.
 - **D20. Its own transcript dialect:** `init` (`session_id`), `message` (assistant deltas), `tool_use`, `tool_result`, `error`, `result` (`stats`).
 - **D21. Probe reads stderr** (Q4): exit 41 is not signed in; an `IneligibleTierError` is "account tier refused". Built against fixtures from its source; a live run waits for an eligible account.
+- **D25. The policy file is named by its content,** in `Dir.tmpdir/openlanes-gemini-policies/`, not beside the trace: `argv` has no trace path, and two agents with one denylist share one file. Outside the repository, like the traces. It also withholds `ask_user`, which waits on a person nobody under `-p` can answer. Checked against the rule schema in gemini's source and parsed as TOML; a `--policy` rule sits in the user tier, above yolo's default-tier allow-all.
+- **D26. The probe is `gemini -p ""` with stdin closed:** it checks the sign-in, then exits 42 for want of input without calling a model. Exit 41 is signed out; `IneligibleTierError` or `Error authenticating:` on stderr is refused even at exit 42. Confirmed on this machine (refused tier, 1.8 s).
+- **D27. Does not compact:** `/compress` under `-p` starts in the background and sends the words to the model. Models are the names gemini 0.51.0 knows, unpriced: it has no command that lists them.
 
 ### Work units
 
-- [ ] `Adapters::Gemini`, registered; argv, policy file, capabilities.
-- [ ] Transcript dialect and fixture.
-- [ ] Probe with the refused-tier reason.
+- [x] `Adapters::Gemini`, registered; argv, policy file, capabilities.
+- [x] Transcript dialect and fixture.
+- [x] Probe with the refused-tier reason.
 - [x] Docs, lint, the full suite, coverage.

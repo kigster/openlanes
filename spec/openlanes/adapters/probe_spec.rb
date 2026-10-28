@@ -160,6 +160,51 @@ RSpec.describe "Adapter probes" do
     it_behaves_like "a probe that says it timed out", %w[grok models]
   end
 
+  context "with gemini" do
+    let(:name) { "gemini" }
+    let(:argv) { ["gemini", "-p", "", "--skip-trust"] }
+
+    context "when signed in, which ends for want of input" do
+      let(:answers) { { argv => result.call("", status: 42, stderr: "No input provided via stdin.\n") } }
+
+      it { is_expected.to be_available }
+      it { expect(availability.models).to eq(OpenLanes::Adapters::Gemini::MODELS) }
+    end
+
+    context "when signed out" do
+      let(:answers) { { argv => result.call("", status: 41, stderr: "Please set an Auth method\n") } }
+
+      it { expect(availability.reason).to eq("not signed in (run `gemini` and choose a sign-in method)") }
+    end
+
+    context "with an account the client refuses, which still exits 42" do
+      let(:stderr) do
+        "Error authenticating: IneligibleTierError: This client is no longer supported for Gemini Code Assist " \
+          "for individuals. To continue, migrate.\n  ineligibleTiers: [\n"
+      end
+      let(:answers) { { argv => result.call("", status: 42, stderr:) } }
+
+      it do
+        expect(availability.reason)
+          .to eq("account tier refused: This client is no longer supported for Gemini Code Assist for individuals")
+      end
+    end
+
+    context "when signing in failed otherwise" do
+      let(:answers) { { argv => result.call("", status: 42, stderr: "Error authenticating: token expired\n") } }
+
+      it { expect(availability.reason).to eq("sign-in failed: token expired") }
+    end
+
+    context "when it fails some other way" do
+      let(:answers) { { argv => result.call("", status: 52, stderr: "Warning\nYOLO mode is disabled\n") } }
+
+      it { expect(availability.reason).to eq("`gemini` exited 52: YOLO mode is disabled") }
+    end
+
+    it_behaves_like "a probe that says it timed out", ["gemini", "-p", "", "--skip-trust"]
+  end
+
   describe "an adapter that does not probe itself" do
     subject(:probe) { OpenLanes::Adapters::Mute.new.probe(runner: ScriptedProbeRunner.new(installed: ["mute"]), at:) }
 

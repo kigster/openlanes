@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
     Agents write code, tests and plan documents. They do not commit, push or
     merge. After every run the harness checks that HEAD did not move and nothing
     was pushed, then publishes the branch itself. Claude Code is the default
-    adapter. Codex, Pi and Grok can stand in for a phase. The same plans export one
+    adapter. Codex, Pi, Grok and Gemini can stand in for a phase. The same plans export one
     way to Linear, and the agents ship with deterministic evals.
 
     The gem installs three names for one executable: openlanes, ol and lanes.

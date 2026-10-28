@@ -91,6 +91,45 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # Plan 040, PR 5: a phase on gemini, played back from a stream built from
+  # its source (no recorded run: the account is refused, D21).
+  describe "a phase on gemini" do
+    let(:writer) { agent.with(phase: "specification") }
+    let(:spec_md) { "---\nphases:\n  specification: { adapter: gemini, model: gemini-2.5-pro, effort: high }\n---\n#{spec_body}" }
+    let!(:built) do
+      plans { |t| t.plan "000.00", :new, "a-feature", files: { "spec.md" => spec_md } }
+    end
+    let(:stream) { File.readlines(File.expand_path("../../fixtures/streams/gemini-read.ndjson", __dir__)) }
+    let(:started) { [] }
+    let(:spawn) { ->(argv, chdir: nil, **) { (started << argv) && fake_child } }
+    let(:handle) { described_class::Handle.new }
+    let(:policies) { Dir.mktmpdir("gemini-policies") }
+    let(:result) { executor.call(writer, subject_plan, handle:) }
+
+    before do
+      stub_const("OpenLanes::Adapters::Gemini::Policy::DIR", policies)
+      result
+    end
+
+    after { FileUtils.rm_rf(policies) }
+
+    it "starts gemini with the model the spec names, and no effort" do
+      expect([started.first.each_cons(2).include?(["-m", "gemini-2.5-pro"]), started.first.grep(/effort/)]).to eq([true, []])
+    end
+
+    it "hands it a policy denying the forbidden commands" do
+      expect(File.read(started.first[started.first.index("--policy") + 1])).to include(%("git push"))
+    end
+
+    it "meters the run" do
+      expect(result).to have_attributes(ok: true, up: 9800, down: 210, cached: 6000)
+    end
+
+    it "keeps the session gemini named, to resume next round" do
+      expect(handle.session).to eq("5d0c1e2a-6f0b-4a51-9a8e-1c2d3e4f5a6b")
+    end
+  end
+
   describe "starting agents lean" do
     let(:argv) { executor.invocation(agent, subject_plan) }
 
@@ -408,6 +447,11 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     it "is refused on grok too, which refuses denied commands but cannot hold an agent to its files" do
       result = executor.call(linker.with(adapter: "grok"), subject_plan)
       expect(result.note).to eq("spec-keeper is confined to spec.md, and grok cannot enforce that")
+    end
+
+    it "is refused on gemini, whose policy refuses commands but not files" do
+      result = executor.call(linker.with(adapter: "gemini"), subject_plan)
+      expect(result.note).to eq("spec-keeper is confined to spec.md, and gemini cannot enforce that")
     end
 
     it "leaves an unconfined agent's tools alone" do
