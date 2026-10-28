@@ -109,11 +109,11 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
 
   describe "passed_check" do
     let(:state_key) { :in_review }
-    let(:labels_now) { %w[review-ok-not-perfect] }
+    let(:labels_now) { %w[review-passed] }
 
     it "fair: leaves the label and the plan" do
       apply("passed_check", "fair")
-      expect([plan.status.key, labels, mail_to]).to eq([:in_review, %w[review-ok-not-perfect], []])
+      expect([plan.status.key, labels, mail_to]).to eq([:in_review, %w[review-passed], []])
     end
 
     it "too_harsh: ready-to-merge, plan unchanged" do
@@ -141,7 +141,7 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
 
         aggregate_failures do
           expect([result.to, result.label, result.refused]).to eq([nil, nil, "a plan at ready_for_review cannot move to rejected"])
-          expect([plan.status.key, labels]).to eq([:ready_for_review, %w[review-ok-not-perfect]])
+          expect([plan.status.key, labels]).to eq([:ready_for_review, %w[review-passed]])
           expect(comments.last).to include("Label not set: a plan at ready_for_review cannot move to rejected")
         end
       end

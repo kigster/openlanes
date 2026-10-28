@@ -73,7 +73,7 @@ RSpec.describe OpenLanes::Vcs::Review do
 
   it "refuses a reference that names no pull request, before asking GitHub anything" do
     allow(github).to receive(:labels)
-    expect { review.call(pr: "https://github.com/example/repo/issues/1234", label: "review-ok-not-perfect") }
+    expect { review.call(pr: "https://github.com/example/repo/issues/1234", label: "review-passed") }
       .to raise_error(OpenLanes::Error, /not a pull request number or URL/)
     expect(github).not_to have_received(:labels)
   end
@@ -124,7 +124,7 @@ RSpec.describe OpenLanes::Vcs::Review do
   it "treats no checks as green, with a warning" do
     github.buckets = []
 
-    expect(review.call(pr: "12", label: "review-ok-not-perfect"))
+    expect(review.call(pr: "12", label: "review-passed"))
       .to have_attributes(refused?: false, ci: :none, reason: described_class::NO_CHECKS)
   end
 

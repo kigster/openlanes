@@ -58,7 +58,7 @@ module OpenLanes
       #   `--timeout`, `--model`, `--max-tokens` and `--user-config`
       # @param max_rejections [#call] `merge.max_rejections`
       # @param quality [#call] `desired_codebase_quality`; only `mvp` checks a
-      #   `review-ok-not-perfect` verdict (M9: `medium` was dropped with R4)
+      #   `review-passed` verdict (M9: `medium` was dropped with R4)
       # @param effects [OpenLanes::Arbitration::Effects]
       # @param clock [#call] the time now, for {BACKOFF}
       def initialize(tree_dir:, agents:, github:, ask: nil, root: nil, executor: nil,
@@ -296,7 +296,7 @@ module OpenLanes
         { trigger: "cap", key: ["cap", state.rulings.select { it["kind"] == "cap" }.last&.fetch("at", nil)], note: "rejected #{count} of #{max}" }
       end
 
-      # At `mvp` only: a `review-ok-not-perfect` pull request at 👀 with no
+      # At `mvp` only: a `review-passed` pull request at 👀 with no
       # `passed_check` ruling since staff-reviewer's latest signature. Keyed by that
       # signature, so a re-poll never re-runs it and a new review, after a
       # new push, does. 👀 only: a `too_lenient` ruling sends the plan to 🔴,
@@ -311,9 +311,9 @@ module OpenLanes
         return nil unless reviewed
         return nil if state.rulings.any? { it["kind"] == "passed_check" && Time.iso8601(it["at"]) > reviewed }
 
-        return nil unless labelled_ok_not_perfect?(pull, reviewed)
+        return nil unless labelled_passed?(pull, reviewed)
 
-        { trigger: "passed_check", key: ["passed_check", reviewed.iso8601], note: "review-ok-not-perfect at mvp" }
+        { trigger: "passed_check", key: ["passed_check", reviewed.iso8601], note: "review-passed at mvp" }
       end
 
       # Asked of GitHub once per review rather than once per tick: staff-reviewer
@@ -321,10 +321,10 @@ module OpenLanes
       # label a signature went with does not change under it.
       #
       # @return [Boolean]
-      def labelled_ok_not_perfect?(pull, reviewed)
+      def labelled_passed?(pull, reviewed)
         @labels.fetch([pull.url || pull.number, reviewed]) do |cache_key|
           labels = @github.labels(number: Vcs::GitHub.number_of(pull.url || pull.number), repo: Vcs::GitHub.repo_of(pull.url))
-          @labels[cache_key] = labels.include?(Plans::ReviewLabel::OK_NOT_PERFECT.name)
+          @labels[cache_key] = labels.include?(Plans::ReviewLabel::PASSED.name)
         end
       rescue Error
         false

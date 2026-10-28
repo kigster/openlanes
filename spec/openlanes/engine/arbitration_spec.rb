@@ -213,9 +213,9 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
     end
   end
 
-  describe "a review-ok-not-perfect verdict" do
+  describe "a review-passed verdict" do
     let(:state_key) { :in_review }
-    let(:labels_now) { %w[review-ok-not-perfect] }
+    let(:labels_now) { %w[review-passed] }
     let(:answer) { "```ruling\nkind: passed_check\npr: 7\noutcome: too_lenient\nreason: F1 is critical.\n```\n" }
 
     before { sign("staff-reviewer", "ok, not perfect") }
@@ -251,7 +251,7 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
 
         it "runs no passed_check: 🔴 is reachable from 👀 only" do
           3.times { rule }
-          expect([state.rulings, asked, gh.dig("prs", "7", "labels")]).to eq([[], [], %w[review-ok-not-perfect]])
+          expect([state.rulings, asked, gh.dig("prs", "7", "labels")]).to eq([[], [], %w[review-passed]])
         end
       end
     end

@@ -5,7 +5,7 @@
 RSpec.describe OpenLanes::Vcs::LabelSync do
   subject(:sync) { described_class.new(github:) }
 
-  let(:github) { instance_double(OpenLanes::Vcs::GitHub, ensure_label: nil, recolour_label: nil) }
+  let(:github) { instance_double(OpenLanes::Vcs::GitHub, ensure_label: nil, recolour_label: nil, rename_label: nil) }
   let(:labels) { OpenLanes::Plans::ReviewLabel }
   let(:in_r3_colours) { labels::SYNCED.to_h { [it.name, it.colour.downcase] } }
 
@@ -19,19 +19,19 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
 
       aggregate_failures do
         expect(changes.to_h { [it.label.name, it.action] }).to eq(
-          "ready-for-review"      => :keep,
-          "review-in-progress"    => :create,
-          "review-rejected"       => :recolour,
-          "review-vulnerability"  => :create,
-          "review-addressed"      => :create,
-          "review-ok-not-perfect" => :create,
-          "review-approved"       => :create,
-          "ready-to-merge"        => :create,
-          "auto-merged"           => :create,
-          "merge-manually"        => :create,
-          "openlanes"             => :create,
-          "conflicts"             => :create,
-          "conflicts-resolved"    => :create
+          "ready-for-review"     => :keep,
+          "review-in-progress"   => :create,
+          "review-rejected"      => :recolour,
+          "review-vulnerability" => :create,
+          "review-addressed"     => :create,
+          "review-passed"        => :create,
+          "review-approved"      => :create,
+          "ready-to-merge"       => :create,
+          "auto-merged"          => :create,
+          "merge-manually"       => :create,
+          "openlanes"            => :create,
+          "conflicts"            => :create,
+          "conflicts-resolved"   => :create
         )
         expect(github).to have_received(:recolour_label).with(labels::REJECTED, repo: "o/r")
         expect(github).to have_received(:ensure_label).exactly(11).times
@@ -51,6 +51,39 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
         expect(changes.count(&:write?)).to eq(12)
         expect(github).not_to have_received(:ensure_label)
         expect(github).not_to have_received(:recolour_label)
+      end
+    end
+  end
+
+  # V2: review-ok-not-perfect became review-passed. Renamed in place, the
+  # pull requests that carry it keep it; a create would strand them.
+  context "with R3's review-ok-not-perfect on the repository" do
+    let(:have) { in_r3_colours.except("review-passed").merge("review-ok-not-perfect" => "e8e890") }
+
+    it "renames it, and changes nothing else" do
+      changes = sync.call(repo: "o/r")
+
+      aggregate_failures do
+        expect(changes.select(&:write?).map(&:to_s)).to eq(["rename review-ok-not-perfect → review-passed"])
+        expect(github).to have_received(:rename_label).with("review-ok-not-perfect", labels::PASSED, repo: "o/r")
+        expect(github).not_to have_received(:ensure_label)
+      end
+    end
+
+    it "renames nothing under a dry run" do
+      sync.call(dry_run: true)
+
+      expect(github).not_to have_received(:rename_label)
+    end
+  end
+
+  context "with both the old name and the new one on the repository" do
+    let(:have) { in_r3_colours.merge("review-ok-not-perfect" => "e8e890") }
+
+    it "keeps the new one and leaves the old one for a person" do
+      aggregate_failures do
+        expect(sync.call.find { it.label == labels::PASSED }.action).to eq(:keep)
+        expect(github).not_to have_received(:rename_label)
       end
     end
   end

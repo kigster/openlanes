@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Engine::Upkeep::Verdict do
     [%w[merge-manually], "BEHIND"]            => :behind,
     [%w[merge-manually conflicts], "CLEAN"]   => :resolved,
     [%w[merge-manually conflicts], "BLOCKED"] => :resolved,
-    [%w[review-ok-not-perfect], "UNKNOWN"]    => :unknown,
+    [%w[review-passed], "UNKNOWN"]            => :unknown,
     [%w[ready-to-merge], "CLEAN"]             => :none,
     [%w[review-in-progress], "DIRTY"]         => :none
   }.each do |(labels, state), expected|

@@ -58,7 +58,7 @@ module OpenLanes
         # `main` after its sibling merged goes back to the builders (P5), and
         # a person may reject one they were asked to merge.
         event :reject do
-          transitions from: %i[review_in_progress review_ok_not_perfect review_approved ready_to_merge merge_manually],
+          transitions from: %i[review_in_progress review_passed review_approved ready_to_merge merge_manually],
             to: :review_rejected
         end
 
@@ -67,7 +67,7 @@ module OpenLanes
         end
 
         event :pass_with_doubts do
-          transitions from: %i[review_in_progress], to: :review_ok_not_perfect
+          transitions from: %i[review_in_progress], to: :review_passed
         end
 
         event :approve do
@@ -76,7 +76,7 @@ module OpenLanes
 
         # verifier verified it, CI is green and the coverage gate holds.
         event :ready do
-          transitions from: %i[review_ok_not_perfect review_approved], to: :ready_to_merge
+          transitions from: %i[review_passed review_approved], to: :ready_to_merge
         end
 
         # deploy-assessor's two verdicts, as the engine acted on them. Only a

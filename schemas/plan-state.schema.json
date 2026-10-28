@@ -29,7 +29,7 @@
     },
     "updated_at": { "type": ["string", "null"], "format": "date-time" },
     "quality_ask": {
-      "description": "R4's question, desired_codebase_quality, asked once per project on the first review-ok-not-perfect pull request while .openlanes.yml has no key; settled when a person answers.",
+      "description": "R4's question, desired_codebase_quality, asked once per project on the first review-passed pull request while .openlanes.yml has no key; settled when a person answers.",
       "type": "object",
       "required": ["asked_at"],
       "additionalProperties": false,

@@ -79,10 +79,10 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
-    describe "a review-ok-not-perfect verdict (R4)" do
+    describe "a review-passed verdict (R4)" do
       let(:driver) { OpenLanes::Engine::Verification::Driver.new(outcome:, worktree:, app:, supervisor_factory: factory, quality:) }
 
-      before { allow(outcome).to receive(:labels).and_return(%w[review-ok-not-perfect]) }
+      before { allow(outcome).to receive(:labels).and_return(%w[review-passed]) }
 
       context "with desired_codebase_quality unset" do
         let(:quality) { nil }
@@ -92,7 +92,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
           aggregate_failures do
             expect(plan.status.key).to eq(:in_review)
-            expect(attempts.last.note).to include("labelled review-ok-not-perfect", "desired_codebase_quality is not set", "asked in the drawer")
+            expect(attempts.last.note).to include("labelled review-passed", "desired_codebase_quality is not set", "asked in the drawer")
             expect(OpenLanes::Plans::PlanState.for(plan.feature.path).quality_ask).to include("asked_at")
           end
         end

@@ -51,10 +51,11 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
     end
   end
 
-  it "moves review-passed to review-ok-not-perfect" do
+  # V2 gave R3's ok-not-perfect verdict M3's name back, meaning the same.
+  it "leaves M3's review-passed where it is" do
     migration.call
 
-    expect(verdicts(11)).to eq(["review-ok-not-perfect"])
+    expect(verdicts(11)).to eq(["review-passed"])
   end
 
   it "carries M3's verification over to ready-to-merge, whatever else the pull request carried" do
@@ -78,7 +79,6 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
     aggregate_failures do
       expect(repository).to include(marker)
       expect(outcome.to_s).to eq("relabel ready-to-merge → review-approved on #7, #9; " \
-                                 "review-passed → review-ok-not-perfect on #11; " \
                                  "ok-to-merge → ready-to-merge on #12, #13")
     end
   end
@@ -98,7 +98,7 @@ RSpec.describe OpenLanes::Vcs::LabelMigration do
     outcome = migration.call(dry_run: true)
 
     aggregate_failures do
-      expect(outcome.relabelled).to eq([7, 9, 11, 12, 13])
+      expect(outcome.relabelled).to eq([7, 9, 12, 13])
       expect(pulls).to eq(before)
       expect(repository).not_to include(marker)
       expect(github).not_to have_received(:swap_label)

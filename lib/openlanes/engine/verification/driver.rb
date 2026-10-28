@@ -58,7 +58,7 @@ module OpenLanes
         # staff-reviewer approved: on to 🧪, when the pull request carries a verdict
         # that goes on to verification ({Verification.from_review?}) and is
         # built from the branch verifier would be run in. A
-        # `review-ok-not-perfect` one goes back to 🔴 under `high` and `standard` (R4), and
+        # `review-passed` one goes back to 🔴 under `high` and `standard` (R4), and
         # stays 👀 while the project has not said which quality it wants. The checkout's branch
         # is derived from the plan, and an adopted pull request may be built
         # from any other; verifying it there would test the wrong code.
@@ -205,14 +205,14 @@ module OpenLanes
 
         private
 
-        # What R4 does with a `review-ok-not-perfect` pull request, short of
+        # What R4 does with a `review-passed` pull request, short of
         # verifying it.
         #
         # @return [String, nil] what happened; nil when the quality lets it
         #   go on, or the verdict is not the one the quality decides
         def quality_says(subject, pull, labels)
           now = quality
-          return nil unless Verification.ok_not_perfect?(labels) && now != :mvp
+          return nil unless Verification.passed?(labels) && now != :mvp
 
           number = pull.number.to_s.delete("#")
           return unasked(subject, number) if now.nil?

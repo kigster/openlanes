@@ -1,122 +1,122 @@
 # frozen_string_literal: true
 
-# R2 and R3 in docs/decisions/decisions-on-three-reviewers-and-auto-merge.md:
-# the emoji each comment opens with, counted across every reviewer, decide
-# the label.
+# V2 and V4 in docs/decisions/decisions-on-agent-names-models-and-reviewers.md:
+# each reviewer reports one verdict, and the dispatcher's label follows from
+# them, one rejection rejecting and the majority deciding the rest.
 RSpec.describe OpenLanes::Plans::Verdict do
-  def comment(body, agent: "staff-reviewer") = { agent:, body: }
-  def hmm(count, agent: "darth-reviewer") = Array.new(count) { comment("🤔 Hmmm... consider a guard #{it}", agent:) }
+  def vote(word, agent: "staff-reviewer", vulnerability: false) = described_class::Vote.new(agent:, word:, vulnerability:)
 
-  let(:header) { comment("Reviewed by staff-reviewer, reviewing agent, using Opus 5.5 by Anthropic at 2026/10/16 @ 12:34pm.") }
-  let(:security_reviewer) { "security-reviewer" }
+  let(:security) { "security-reviewer" }
 
-  it "approves a clean pull request that earned no ✅ at all" do
-    expect(described_class.call([header]).names).to eq(%w[review-approved])
-  end
+  describe ".call" do
+    subject(:verdict) { described_class.call(votes) }
 
-  it "approves with exactly max_hmm 🤔, and passes" do
-    verdict = described_class.call(hmm(5) + [comment("✅ Great! the cache")])
+    context "with one reviewer that called it great" do
+      let(:votes) { [vote(:great)] }
 
-    aggregate_failures do
-      expect(verdict.names).to eq(%w[review-approved])
-      expect(verdict).to be_passing
-      expect(verdict.tally).to include(hmm: 5, great: 1)
+      it { expect(verdict.names).to eq(%w[review-approved]) }
+      it { is_expected.to be_passing }
+    end
+
+    context "with one reviewer that passed it" do
+      let(:votes) { [vote(:passed)] }
+
+      it { expect(verdict.names).to eq(%w[review-passed]) }
+      it { is_expected.to be_passing }
+    end
+
+    context "with two great of three" do
+      let(:votes) { [vote(:great), vote(:passed, agent: security), vote(:great, agent: "design-reviewer")] }
+
+      it { expect(verdict.names).to eq(%w[review-approved]) }
+    end
+
+    context "with one great of three" do
+      let(:votes) { [vote(:great), vote(:passed, agent: security), vote(:passed, agent: "design-reviewer")] }
+
+      it { expect(verdict.names).to eq(%w[review-passed]) }
+    end
+
+    context "with one rejection among two great" do
+      let(:votes) { [vote(:great), vote(:great, agent: security), vote(:rejected, agent: "design-reviewer")] }
+
+      it { expect(verdict.names).to eq(%w[review-rejected]) }
+      it { is_expected.not_to be_passing }
+    end
+
+    context "when security-reviewer reports a vulnerability" do
+      let(:votes) { [vote(:great), vote(:rejected, agent: security, vulnerability: true)] }
+
+      it { expect(verdict.names).to eq(%w[review-rejected review-vulnerability]) }
+      it { expect(verdict.ignored).to be_empty }
+    end
+
+    context "when another reviewer reports a vulnerability" do
+      let(:votes) { [vote(:rejected, vulnerability: true)] }
+
+      it { expect(verdict.names).to eq(%w[review-rejected]) }
+      it { expect(verdict.ignored).to eq(votes) }
+    end
+
+    context "with no votes" do
+      let(:votes) { [] }
+
+      it { expect { verdict }.to raise_error(ArgumentError, /no reviewer/) }
     end
   end
 
-  it "is ok-not-perfect past max_hmm, counting every reviewer together" do
-    comments = hmm(3, agent: "staff-reviewer") + hmm(3, agent: "darth-reviewer")
+  describe ".vote" do
+    subject(:parsed) { described_class.vote(agent:, note:) }
 
-    expect(described_class.call(comments).names).to eq(%w[review-ok-not-perfect])
-  end
+    let(:agent) { "staff-reviewer" }
 
-  it "takes the threshold it is given" do
-    expect(described_class.call(hmm(2), max_hmm: 1).names).to eq(%w[review-ok-not-perfect])
-  end
+    {
+      "great"                    => :great,
+      "Great, nothing to reject" => :great,
+      "approved"                 => :great,
+      "passed"                   => :passed,
+      "rejected 1/2"             => :rejected,
+      "slop"                     => :rejected
+    }.each do |note, word|
+      context "with the note #{note.inspect}" do
+        let(:note) { note }
 
-  it "rejects on a single ⛔️, however many ✅ surround it" do
-    comments = [comment("✅ Great!"), comment("⛔️ Must Fix: nil call on user"), comment("✅ Great!")]
-    verdict = described_class.call(comments)
+        it { expect(parsed.word).to eq(word) }
+        it { expect(parsed.agent).to eq(agent) }
+        it { is_expected.not_to be_vulnerability }
+      end
+    end
 
-    aggregate_failures do
-      expect(verdict.names).to eq(%w[review-rejected])
-      expect(verdict).not_to be_passing
+    context "with a rejection naming a vulnerability" do
+      let(:agent) { "security-reviewer" }
+      let(:note) { "rejected 1/2 vulnerability" }
+
+      it { is_expected.to be_rejected }
+      it { is_expected.to be_vulnerability }
+    end
+
+    context "with a great note that mentions a vulnerability" do
+      let(:note) { "great, the vulnerability is fixed" }
+
+      it { is_expected.to be_great }
+      it { is_expected.not_to be_vulnerability }
+    end
+
+    ["nothing to reject", "", nil, "verified"].each do |note|
+      context "with the note #{note.inspect}" do
+        let(:note) { note }
+
+        it { is_expected.to be_nil }
+      end
     end
   end
 
-  it "reads ⛔ without its variation selector as the same mark" do
-    expect(described_class.call([comment("⛔ Must Fix: unbounded loop")]).names).to eq(%w[review-rejected])
-  end
-
-  it "rejects before it counts 🤔" do
-    expect(described_class.call(hmm(9) + [comment("⛔️ Must Fix")]).names).to eq(%w[review-rejected])
-  end
-
-  it "adds review-vulnerability beside review-rejected for security-reviewer's 💣" do
-    verdict = described_class.call([comment("💣 Security Flaw: SQL built from params", agent: security_reviewer)])
-
-    expect(verdict.names).to eq(%w[review-rejected review-vulnerability])
-  end
-
-  it "counts security-reviewer's 🔓 without blocking anything" do
-    verdict = described_class.call([comment("🔓 Security Concern: token logged at debug", agent: security_reviewer)])
-
-    aggregate_failures do
-      expect(verdict.names).to eq(%w[review-approved])
-      expect(verdict.tally[:concern]).to eq(1)
-    end
-  end
-
-  it "ignores 💣 and 🔓 from anyone but security-reviewer, and says which" do
-    stray = [comment("💣 Security Flaw: eval", agent: "darth-reviewer"), comment("🔓 Security Concern", agent: nil)]
-    verdict = described_class.call(stray)
-
-    aggregate_failures do
-      expect(verdict.names).to eq(%w[review-approved])
-      expect(verdict.tally.values.sum).to eq(0)
-      expect(verdict.ignored.map(&:agent)).to eq(["darth-reviewer", nil])
-    end
-  end
-
-  it "ignores comments that open with anything else, emoji later in the text included" do
-    comments = [comment("Looks fine ⛔️ maybe"), comment("👍🏼 to deploy"), comment("")]
-
-    expect(described_class.call(comments).tally.values.sum).to eq(0)
-  end
-
-  it "reads through markdown before the emoji: a heading, a quote, bold" do
-    comments = [comment("## ⛔️ Must Fix"), comment("> 🤔 Hmmm..."), comment("**✅ Great!**")]
-
-    expect(described_class.call(comments, max_hmm: 0).tally).to include(must_fix: 1, hmm: 1, great: 1)
-  end
-
-  it "takes Comment values and string-keyed hashes alike" do
-    comments = [described_class::Comment.new(agent: security_reviewer, body: "💣 x"), { "agent" => "staff-reviewer", "body" => "⛔️ y" }]
-
-    expect(described_class.call(comments).tally).to include(flaw: 1, must_fix: 1)
-  end
-
-  describe "through the Plans facade" do
-    around do |example|
-      saved = ENV.fetch("OPENLANES_REVIEW_MAX_HMM", nil)
-      example.run
-    ensure
-      saved ? ENV["OPENLANES_REVIEW_MAX_HMM"] = saved : ENV.delete("OPENLANES_REVIEW_MAX_HMM")
-    end
-
-    it "takes max_hmm from the environment over the file and the default" do
-      ENV["OPENLANES_REVIEW_MAX_HMM"] = "1"
-
-      expect(OpenLanes::Plans.verdict(hmm(2)).names).to eq(%w[review-ok-not-perfect])
-    end
-
-    it "logs a warning for each mark it ignored" do
+  describe "OpenLanes::Plans.verdict" do
+    it "logs a vulnerability from a reviewer outside security" do
       allow(OpenLanes::UI).to receive(:log)
+      OpenLanes::Plans.verdict([vote(:rejected, vulnerability: true)])
 
-      OpenLanes::Plans.verdict([comment("💣 eval", agent: "darth-reviewer")], max_hmm: 5)
-
-      expect(OpenLanes::UI).to have_received(:log)
-        .with(a_string_including("ignored 💣 from darth-reviewer", "only security-reviewer"), level: :warn)
+      expect(OpenLanes::UI).to have_received(:log).with(/ignored vulnerability from staff-reviewer/, level: :warn)
     end
   end
 end

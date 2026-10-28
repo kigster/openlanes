@@ -636,18 +636,18 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
-| Label                   | Colour   | Passing | Meaning                                                                        |
-| ----------------------- | -------- | ------- | ------------------------------------------------------------------------------ |
-| `ready-for-review`      | `c2e0c6` | no      | backend-coder and frontend-coder are done; the PR waits for a free review slot |
-| `review-in-progress`    | `FFBE20` | no      | the reviewers have started                                                     |
-| `review-rejected`       | `F90000` | no      | at least one ⛔️ or 💣                                                          |
-| `review-vulnerability`  | `FF0050` | no      | at least one 💣; sits beside review-rejected                                   |
-| `review-addressed`      | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review       |
-| `review-ok-not-perfect` | `E8E890` | yes     | no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)                    |
-| `review-approved`       | `109a10` | yes     | no ⛔️ or 💣, few 🤔                                                            |
-| `ready-to-merge`        | `5319e7` | yes     | verifier verified it and its E2E tests pass                                    |
-| `auto-merged`           | `953384` | yes     | deploy-assessor judged it safe and the engine merged it                        |
-| `merge-manually`        | `0e8a16` | yes     | deploy-assessor, or merge.by: human, left it for a person to merge             |
+| Label                  | Colour   | Passing | Meaning                                                                        |
+| ---------------------- | -------- | ------- | ------------------------------------------------------------------------------ |
+| `ready-for-review`     | `c2e0c6` | no      | backend-coder and frontend-coder are done; the PR waits for a free review slot |
+| `review-in-progress`   | `FFBE20` | no      | the reviewers have started                                                     |
+| `review-rejected`      | `F90000` | no      | a reviewer rejected it                                                         |
+| `review-vulnerability` | `FF0050` | no      | security-reviewer found an exploitable hole; sits beside review-rejected       |
+| `review-addressed`     | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review       |
+| `review-passed`        | `E8E890` | yes     | no reviewer rejected it, but most did not call it great                        |
+| `review-approved`      | `109a10` | yes     | no reviewer rejected it, and most called it great                              |
+| `ready-to-merge`       | `5319e7` | yes     | verifier verified it and its E2E tests pass                                    |
+| `auto-merged`          | `953384` | yes     | deploy-assessor judged it safe and the engine merged it                        |
+| `merge-manually`       | `0e8a16` | yes     | deploy-assessor, or merge.by: human, left it for a person to merge             |
 
 ## If a real issue tracker arrives, this scheme retires
 

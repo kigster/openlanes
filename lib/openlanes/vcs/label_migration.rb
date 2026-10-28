@@ -11,11 +11,13 @@ module OpenLanes
     # read as a verification that never happened. So it goes back to
     # `review-approved`, and a pull request verifier did verify earns it again
     # from the coverage gate: an ambiguous label is re-checked, never trusted.
-    # M3's two other names map straight across ({Plans::ReviewLabel::RENAMED}).
+    # M3's `ok-to-merge` maps straight across to `ready-to-merge`. M3's
+    # `review-passed` needs no step: V2 gave R3's ok-not-perfect verdict
+    # that name back, with the meaning M3 gave it.
     #
     # The steps run in order, and a pull request that carries `ok-to-merge`
-    # is left out of the first two: the third puts `ready-to-merge` on it and
-    # leaves `ok-to-merge` where it is, so a run interrupted after the third
+    # is left out of the first: the second puts `ready-to-merge` on it and
+    # leaves `ok-to-merge` where it is, so a run interrupted after the second
     # step cannot read the `ready-to-merge` it just put there as M3's and take
     # it off again. `ok-to-merge` comes off once the migration is marked done.
     #
@@ -33,11 +35,11 @@ module OpenLanes
       end
 
       # M3's verifier verification, kept beside `ready-to-merge` until the end.
-      VERIFIED = "ok-to-merge"
+      VERIFIED = Plans::ReviewLabel::OK_TO_MERGE
 
       STEPS = [
         Step.new(from: Plans::ReviewLabel::READY_TO_MERGE.name, to: Plans::ReviewLabel::APPROVED),
-        *Plans::ReviewLabel::RENAMED.map { |from, to| Step.new(from:, to:) }
+        Step.new(from: VERIFIED, to: Plans::ReviewLabel::READY_TO_MERGE)
       ].freeze
 
       # What the migration did, or under a dry run would do.

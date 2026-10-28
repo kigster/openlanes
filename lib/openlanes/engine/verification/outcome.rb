@@ -245,7 +245,7 @@ module OpenLanes
           end
         end
 
-        # A `review-ok-not-perfect` pull request under `high` (to 🔴) or `standard` (to 🟡, plan 035), sent back
+        # A `review-passed` pull request under `high` (to 🔴) or `standard` (to 🟡, plan 035), sent back
         # to the builders without verifying it. Signed and counted as a
         # rejection: the builders may answer every comment with a rebuttal
         # and no change, staff-reviewer may label it the same again, and an

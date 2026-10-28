@@ -35,9 +35,6 @@ module OpenLanes
   #       timeout: 1800
   #   questions:
   #     model: anthropic/claude-haiku-5.5  # rewrites prose questions into choices (D9)
-  #   review:
-  #     max_hmm: 5              # most 🤔 a review may carry and be approved (R3);
-  #                             # $OPENLANES_REVIEW_MAX_HMM beats it
   #   events:                   # the durable run log (plan 020.01), off by default
   #     enabled: true
   #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
@@ -113,9 +110,6 @@ module OpenLanes
   #   @return [String, nil] `questions.model`: the OpenRouter model that
   #     rewrites a prose question into lettered choices; nil takes
   #     {Live::ChoiceConverter::DEFAULT_MODEL}
-  # @!attribute [r] review_max_hmm
-  #   @return [Integer, nil] `review.max_hmm` as the file says it; read
-  #     {#max_hmm}, which applies the environment and the default
   # @!attribute [r] desired_codebase_quality
   #   @return [Symbol, nil] one of {QUALITIES}, as the file says it; nil
   #     while the project is still to be asked (R4)
@@ -142,7 +136,6 @@ module OpenLanes
     :app,
     :aging_since,
     :questions_model,
-    :review_max_hmm,
     :merge_max_rejections,
     :desired_codebase_quality,
     :coverage,
@@ -151,7 +144,7 @@ module OpenLanes
     :events_enabled,
     :events_dir) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
-      redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
+      redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
       desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
@@ -176,22 +169,6 @@ module OpenLanes
     #
     # @return [Float]
     def outage_limit = (redis_outage_hours || Config::DEFAULT_OUTAGE_HOURS) * 3600.0
-
-    # The most 🤔 a review may carry and still be `review-approved` (R3).
-    # Loudest first: `$OPENLANES_REVIEW_MAX_HMM`, then `review.max_hmm`, then
-    # {Plans::Verdict::DEFAULT_MAX_HMM}. The variable is there so one run can
-    # be stricter or looser without editing a file the whole team shares.
-    #
-    # @param env [Hash] the environment, injectable for tests
-    # @return [Integer]
-    # @raise [OpenLanes::Error] when the variable is not a whole number
-    def max_hmm(env: ENV)
-      raw = env[Config::MAX_HMM_ENV].to_s.strip
-      return review_max_hmm || Plans::Verdict::DEFAULT_MAX_HMM if raw.empty?
-      return Integer(raw, 10) if raw.match?(/\A\d+\z/)
-
-      raise Error, "#{Config::MAX_HMM_ENV}=#{raw.inspect} is not a whole number"
-    end
 
     # Who merges a pull request once its review passed (M4). A person, unless
     # the file says otherwise, since merging is the one thing no agent may do.
@@ -234,7 +211,6 @@ module OpenLanes
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
-      settings["review"] = { "max_hmm" => review_max_hmm } if review_max_hmm
       settings["coverage"] = coverage.to_h if coverage
       settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
       YAML.dump(settings.compact).delete_prefix("---\n")
@@ -255,7 +231,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions review coverage events ci stack].freeze
+              questions coverage events ci stack].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -284,12 +260,6 @@ module OpenLanes
 
     # Every key `questions:` may hold.
     QUESTION_KEYS = %w[model].freeze
-
-    # Every key `review:` may hold.
-    REVIEW_KEYS = %w[max_hmm].freeze
-
-    # The variable that beats `review.max_hmm`.
-    MAX_HMM_ENV = "OPENLANES_REVIEW_MAX_HMM"
 
     # What may check a pull request (M21). `external` is a CI openlanes does
     # not scaffold; `none` is a decision, not a missing answer.
@@ -367,7 +337,6 @@ module OpenLanes
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),
           **questions(settings["questions"], path),
-          **review(settings["review"], path),
           coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
           **events(settings["events"], path))
         conflicts!(config, path)
@@ -599,23 +568,6 @@ module OpenLanes
         return { questions_model: model.strip } if model.is_a?(String) && !model.strip.empty?
 
         fail_with(path, "questions.model: #{model.inspect} is not a model id, e.g. #{Live::ChoiceConverter::DEFAULT_MODEL}")
-      end
-
-      # @return [Hash{Symbol => Object}] the `review:` settings, as keywords for {Config.new}
-      def review(value, path)
-        return {} if value.nil?
-
-        fail_with(path, "review: must be a mapping of setting to value") unless value.is_a?(Hash)
-
-        settings = value.transform_keys(&:to_s)
-        (settings.keys - REVIEW_KEYS).each do |key|
-          fail_with(path, "review.#{key}: unknown key; known: #{REVIEW_KEYS.join(", ")}")
-        end
-        max = settings["max_hmm"]
-        return {} if max.nil?
-        return { review_max_hmm: max } if max.is_a?(Integer) && !max.negative?
-
-        fail_with(path, "review.max_hmm: #{max.inspect} is not a whole number")
       end
 
       # @return [Hash{Symbol => Object}] the `events:` settings, as keywords for {Config.new}

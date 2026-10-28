@@ -3,8 +3,10 @@
 module OpenLanes
   module Vcs
     # Makes the repository's labels match {Plans::ReviewLabel::SYNCED}: R3's
-    # review labels and `openlanes`. Creates the missing, recolours the
-    # mismatched, leaves the rest.
+    # review labels and `openlanes`. Renames a label still under its old name
+    # ({Plans::ReviewLabel::RENAMED}), creates the missing, recolours the
+    # mismatched, leaves the rest. A rename rather than a create, because a
+    # renamed label stays on every pull request that carries it.
     #
     # Run once when the engine starts on a project. Labelling a pull request
     # still creates a missing label on first use, but never recolours one, so
@@ -16,9 +18,10 @@ module OpenLanes
       # What was done to one label, or under a dry run what would have been.
       #
       # @!attribute [r] action
-      #   @return [Symbol] :create, :recolour or :keep
+      #   @return [Symbol] :create, :rename, :recolour or :keep
       # @!attribute [r] was
-      #   @return [String, nil] the colour the repository had, for :recolour
+      #   @return [String, nil] the colour the repository had, for :recolour;
+      #     the old name, for :rename
       Change = Data.define(:label, :action, :was) do
         # @return [Boolean] whether this label needs a write
         def write? = action != :keep
@@ -27,6 +30,7 @@ module OpenLanes
         def to_s
           case action
           when :create then "create #{label.name} (##{label.colour})"
+          when :rename then "rename #{was} → #{label.name}"
           when :recolour then "recolour #{label.name} ##{was} → ##{label.colour}"
           else "keep #{label.name}"
           end
@@ -49,16 +53,22 @@ module OpenLanes
         changes = @labels.map { change_for(it, have) }
         return changes if dry_run
 
-        changes.each do |change|
-          case change.action
-          when :create then @github.ensure_label(change.label, repo:)
-          when :recolour then @github.recolour_label(change.label, repo:)
-          end
-        end
+        changes.each { write(it, repo) }
         changes
       end
 
       private
+
+      # @param change [Change]
+      # @param repo [String, nil]
+      # @return [void]
+      def write(change, repo)
+        case change.action
+        when :create then @github.ensure_label(change.label, repo:)
+        when :rename then @github.rename_label(change.was, change.label, repo:)
+        when :recolour then @github.recolour_label(change.label, repo:)
+        end
+      end
 
       # GitHub answers colours in lower case and R3 writes some in upper, so
       # they are compared without case; otherwise every run would "fix" them.
@@ -66,10 +76,20 @@ module OpenLanes
       # @return [Change]
       def change_for(label, have)
         colour = have[label.name]
-        return Change.new(label:, action: :create, was: nil) if colour.nil?
+        return renamed(label, have) if colour.nil?
         return Change.new(label:, action: :keep, was: colour) if colour.casecmp?(label.colour)
 
         Change.new(label:, action: :recolour, was: colour)
+      end
+
+      # A missing label still under its old name is renamed; otherwise created.
+      #
+      # @return [Change]
+      def renamed(label, have)
+        old = Plans::ReviewLabel::RENAMED.key(label)
+        return Change.new(label:, action: :rename, was: old) if have.key?(old)
+
+        Change.new(label:, action: :create, was: nil)
       end
     end
   end

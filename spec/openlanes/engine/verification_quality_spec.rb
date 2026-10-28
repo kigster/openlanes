@@ -9,12 +9,12 @@ RSpec.describe OpenLanes::Engine::Verification do
       end
     end
 
-    it "lets review-ok-not-perfect through under mvp only" do
+    it "lets review-passed through under mvp only" do
       aggregate_failures do
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :mvp)).to be(true)
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :high)).to be(false)
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :standard)).to be(false)
-        expect(described_class.from_review?(%w[review-ok-not-perfect])).to be(false)
+        expect(described_class.from_review?(%w[review-passed], quality: :mvp)).to be(true)
+        expect(described_class.from_review?(%w[review-passed], quality: :high)).to be(false)
+        expect(described_class.from_review?(%w[review-passed], quality: :standard)).to be(false)
+        expect(described_class.from_review?(%w[review-passed])).to be(false)
       end
     end
 
@@ -29,17 +29,17 @@ RSpec.describe OpenLanes::Engine::Verification do
       aggregate_failures do
         expect(described_class.skips_verification?(%w[review-approved], quality: :mvp)).to be(true)
         [nil, :high, :standard].each { expect(described_class.skips_verification?(%w[review-approved], quality: it)).to be(false) }
-        expect(described_class.skips_verification?(%w[review-ok-not-perfect], quality: :mvp)).to be(false)
+        expect(described_class.skips_verification?(%w[review-passed], quality: :mvp)).to be(false)
       end
     end
   end
 
-  describe ".ok_not_perfect?" do
+  describe ".passed?" do
     it "is true for the verdict the quality decides, and not when review-approved sits beside it" do
       aggregate_failures do
-        expect(described_class.ok_not_perfect?(%w[review-ok-not-perfect])).to be(true)
-        expect(described_class.ok_not_perfect?(%w[review-ok-not-perfect review-approved])).to be(false)
-        expect(described_class.ok_not_perfect?(%w[review-rejected])).to be(false)
+        expect(described_class.passed?(%w[review-passed])).to be(true)
+        expect(described_class.passed?(%w[review-passed review-approved])).to be(false)
+        expect(described_class.passed?(%w[review-rejected])).to be(false)
       end
     end
   end
@@ -48,11 +48,11 @@ RSpec.describe OpenLanes::Engine::Verification do
   # `max_rejections` is 2 for both high and standard; depth and models are
   # a later plan. This is the engine difference this one ships.
   describe "the three qualities at the 👀 → 🧪 hand-off" do
-    it "takes a different path at each level for review-ok-not-perfect" do
+    it "takes a different path at each level for review-passed" do
       aggregate_failures do
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :mvp)).to be(true)
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :standard)).to be(false)
-        expect(described_class.from_review?(%w[review-ok-not-perfect], quality: :high)).to be(false)
+        expect(described_class.from_review?(%w[review-passed], quality: :mvp)).to be(true)
+        expect(described_class.from_review?(%w[review-passed], quality: :standard)).to be(false)
+        expect(described_class.from_review?(%w[review-passed], quality: :high)).to be(false)
         expect(OpenLanes::Engine::Verification::Outcome::SEND_BACK).to eq(high: :rejected, standard: :building)
         expect(OpenLanes::Engine::Verification::Outcome::SEND_BACK).not_to have_key(:mvp)
       end

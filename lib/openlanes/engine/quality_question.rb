@@ -3,7 +3,7 @@
 module OpenLanes
   module Engine
     # R4's question, `desired_codebase_quality`, put to a person once per
-    # project: on the first pull request labelled `review-ok-not-perfect`
+    # project: on the first pull request labelled `review-passed`
     # while `.openlanes.yml` has no key. It hangs on the plan whose pull
     # request raised it, kept in that plan's `state.json` so it survives a
     # restart, and every other plan waiting on the same answer stays 👀
@@ -39,18 +39,18 @@ module OpenLanes
           label: "high: the highest quality software design, modularity, low inter-module coupling, high " \
                  "intra-module cohesion, design patterns, events, immutability and functional programming, at the " \
                  "cost of slower delivery, more rounds per plan and high standards for accepting the review. SOLID " \
-                 "classes and maximum reuse in OO code; the most sophisticated UI. A \"review-ok-not-perfect\" PR " \
+                 "classes and maximum reuse in OO code; the most sophisticated UI. A \"review-passed\" PR " \
                  "returns to developers."),
         Choice.new(letter: "b",
           quality: :standard,
           label: "standard: a reasonable middle ground. Similar modularity and full test coverage, but less strict on " \
                  "SOLID, immutability and functional programming; likely fewer rounds and faster delivery. A " \
-                 "\"review-ok-not-perfect\" PR returns to developers."),
+                 "\"review-passed\" PR returns to developers."),
         Choice.new(letter: "c",
           quality: :mvp,
           label: "mvp: the fastest and least designed codebase, for MVPs and prototypes, not for software with paying " \
                  "customers. Cheapest in AI tokens, most likely to have bugs, and a less sophisticated UI. A " \
-                 "\"review-ok-not-perfect\" PR is accepted, as it has no blocking issues.")
+                 "\"review-passed\" PR is accepted, as it has no blocking issues.")
       ].freeze
 
       # Where the answer is written down beside the plans, with every option

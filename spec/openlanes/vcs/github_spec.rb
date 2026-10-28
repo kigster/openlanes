@@ -523,12 +523,12 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       allow(command).to receive(:run) do |*argv|
         argvs << argv
         calls += 1
-        raise exit_error("'review-ok-not-perfect' not found") if calls == 2
+        raise exit_error("'review-passed' not found") if calls == 2
 
         instance_double(TTY::Command::Result, out: JSON.generate("labels" => [{ "name" => "review-rejected" }]))
       end
 
-      github.swap_label(number: 12, add: label, remove: %w[review-rejected review-ok-not-perfect])
+      github.swap_label(number: 12, add: label, remove: %w[review-rejected review-passed])
 
       expect(argvs[3]).to eq(%w[gh pr edit 12 --add-label ready-for-review --remove-label review-rejected])
     end
@@ -624,6 +624,24 @@ RSpec.describe OpenLanes::Vcs::GitHub do
 
         expect { github.open_pulls_labelled("ready-to-merge") }
           .to raise_error(OpenLanes::Error, /could not list pull requests labelled ready-to-merge: HTTP 401/)
+      end
+    end
+
+    describe "#rename_label" do
+      let(:passed) { OpenLanes::Plans::ReviewLabel::PASSED }
+
+      it "renames the label in place, with its colour and description" do
+        github.rename_label("review-ok-not-perfect", passed, repo: "o/r")
+
+        expect(argvs.last).to eq(["gh", "label", "edit", "review-ok-not-perfect", "--name", "review-passed",
+                                  "--color", "E8E890", "--description", passed.meaning, "-R", "o/r"])
+      end
+
+      it "names both labels when gh refuses" do
+        allow(command).to receive(:run).and_raise(exit_error("HTTP 403"))
+
+        expect { github.rename_label("review-ok-not-perfect", passed) }
+          .to raise_error(OpenLanes::Error, /could not rename label review-ok-not-perfect to review-passed: HTTP 403/)
       end
     end
 
