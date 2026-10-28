@@ -171,14 +171,12 @@ RSpec.describe OpenLanes::Setup::Interview do
     it "keeps every key it does not ask about" do
       current = OpenLanes::Config.new(redis_url: "redis://cache.example.test:6379",
         merge_max_rejections: 3,
-        review_max_hmm: 2,
         questions_model: "claude-sonnet-4-5",
         redis_outage_hours: 4,
         commands: { lint: { run: "x" } })
       expect(interview(ask: false, defaults: current).call).to have_attributes(
         redis_url:            "redis://cache.example.test:6379",
         merge_max_rejections: 3,
-        review_max_hmm:       2,
         questions_model:      "claude-sonnet-4-5",
         redis_outage_hours:   4,
         commands:             { lint: { run: "x" } }

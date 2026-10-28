@@ -36,21 +36,17 @@ module OpenLanes
     # @return [OpenLanes::Plans::Index]
     def index(tree:, project: nil) = Index.new(tree:, project:)
 
-    # The review label the reviewers' comments add up to (R3). A 💣 or 🔓
-    # from anyone but the security reviewer is left out, and said in the log,
-    # so a reviewer straying outside its remit is visible rather than silent.
+    # The review label the reviewers' verdicts add up to (V4). A
+    # `vulnerability` from anyone but the security reviewer counts as a plain
+    # rejection, and is said in the log, so a reviewer straying outside its
+    # remit is visible rather than silent.
     #
-    # @param comments [Array<OpenLanes::Plans::Verdict::Comment, Hash>] each
-    #   with `agent:` and `body:`
-    # @param max_hmm [Integer] defaults to `review.max_hmm`, or
-    #   `$OPENLANES_REVIEW_MAX_HMM` over it
+    # @param votes [Array<OpenLanes::Plans::Verdict::Vote>] one per reviewer
     # @return [OpenLanes::Plans::Verdict]
-    def verdict(comments, max_hmm: Config.current.max_hmm)
-      Verdict.call(comments, max_hmm:).tap do |verdict|
-        verdict.ignored.each do |comment|
-          UI.log("ignored #{Verdict::MARKS[Verdict.mark_of(comment.body)]} from #{comment.agent || "an unnamed reviewer"}: " \
-                 "only #{Verdict::SECURITY_REVIEWER} may use it",
-            level: :warn)
+    def verdict(votes)
+      Verdict.call(votes).tap do |verdict|
+        verdict.ignored.each do |vote|
+          UI.log("ignored vulnerability from #{vote.agent}: only #{Verdict::SECURITY_REVIEWER} may report one", level: :warn)
         end
       end
     end
