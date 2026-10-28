@@ -82,8 +82,8 @@ The control room's New idea dialog sets `phases.<phase>.adapter` and `.model` wi
 
 | Lane    | Route                                            | For                                                                                       |
 | :------ | :----------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `full`  | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer | features you want researched and specified                                                |
-| `plan`  | planner → backend-coder (+ frontend-coder) → staff-reviewer               | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
+| `full`  | researcher → spec-writer → planner → backend-coder (+ frontend-coder) → staff-reviewer (+ security-reviewer, design-reviewer) | features you want researched and specified                                                |
+| `plan`  | planner → backend-coder (+ frontend-coder) → staff-reviewer (+ security-reviewer, design-reviewer) | a spec you already trust: the harness writes a blank `plan.md` and moves the plan to 📋   |
 | `quick` | chores-coder → staff-reviewer                          | a short mechanical task: the harness writes a one-unit `plan.md` and moves the plan to ⭐ |
 
 `openlanes create --starts building split big migration` writes the frontmatter for you.

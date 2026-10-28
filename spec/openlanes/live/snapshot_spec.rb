@@ -161,7 +161,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
         "new"                => %w[researcher],
         "ready_for_planning" => %w[planner],
         "pr"                 => %w[deploy-assessor],
-        "in_review"          => %w[staff-reviewer verifier]
+        "in_review"          => %w[design-reviewer security-reviewer staff-reviewer verifier]
       )
     end
 

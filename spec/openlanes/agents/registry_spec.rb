@@ -156,7 +156,7 @@ RSpec.describe OpenLanes::Agents::Registry do
       aggregate_failures do
         expect(agents.find("researcher").model).to eq("haiku")
         expect(agents.find("researcher").effort).to eq("medium")
-        expect(agents.find("staff-reviewer").model).to eq("sonnet")
+        expect(%w[staff-reviewer security-reviewer design-reviewer].map { agents.find(it).model }).to eq(%w[opus sonnet sonnet])
         expect(agents.find("unblocker").effort).to eq("low")
       end
     end
@@ -235,6 +235,8 @@ RSpec.describe OpenLanes::Agents::Registry do
 
   describe "the prompts" do
     let(:agents) { described_class.new }
+    # Plan 031, D8: what every reviewer is told is written once, in the shared brief.
+    let(:brief) { File.read(File.join(described_class::DEFAULT_DIR, "shared", "review.md")) }
 
     # A4: the harness renames. A prompt that still says `git mv` would race it.
     it "never tells an agent to rename its own folder" do
@@ -249,9 +251,21 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "tells staff-reviewer the verdict words, the finding headings and the configured cap" do
-      prompt = agents.find("staff-reviewer").prompt
-      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(great)", "(passed)", "(slop)", "👍🏼 to deploy")
+    it "tells every reviewer the verdict words, the finding headings and the configured cap" do
+      expect(brief).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(great)", "(passed)", "(slop)", "👍🏼 to deploy")
+    end
+
+    it "tells every reviewer how its comment opens, and the emoji only security-reviewer may use" do
+      expect(brief).to include("Reviewed by <your name> using <model> by <provider>", "💣", "🔓", "`security-reviewer` only")
+    end
+
+    it "gives each reviewer its own range of finding ids" do
+      firsts = %w[staff-reviewer security-reviewer design-reviewer].map { agents.find(it).prompt[/number from (F\d+)/, 1] }
+      expect(firsts).to eq(%w[F1 F101 F201])
+    end
+
+    it "serves security-reviewer and design-reviewer only to plans that started at research or planning" do
+      expect(%w[staff-reviewer security-reviewer design-reviewer].map { agents.find(it).starts }).to eq([[], %i[research planning], %i[research planning]])
     end
 
     it "lets staff-reviewer comment, but neither review nor edit a pull request" do
@@ -261,8 +275,8 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "tells staff-reviewer the engine labels, not it" do
-      expect(agents.find("staff-reviewer").prompt).to include("Never run `openlanes review` or `gh pr edit`")
+    it "tells every reviewer the engine labels, not it" do
+      expect(brief).to include("Never run `openlanes review` or `gh pr edit`")
     end
 
     it "gives verifier 🧪 Verifying, the verification phase, and nothing that leaves the machine" do
@@ -285,8 +299,8 @@ RSpec.describe OpenLanes::Agents::Registry do
         .to include("(verified)", "(rejected)", "## Failing step", "step-NN.png", "final.png", "report.md", "app.md")
     end
 
-    it "tells staff-reviewer an approval goes on to verifier" do
-      expect(agents.find("staff-reviewer").prompt).to include("🧪 Verifying", "verifier")
+    it "tells every reviewer an approval goes on to verifier" do
+      expect(brief).to include("🧪 Verifying", "verifier")
     end
 
     it "tells spec-writer to leave a blank plan.md" do

@@ -110,7 +110,7 @@ classDiagram
   OpenLanes__Events ..> OpenLanes__Live : 1
   OpenLanes__Execution ..> OpenLanes : 2
   OpenLanes__Execution ..> OpenLanes__Adapters : 1
-  OpenLanes__Execution ..> OpenLanes__Agents : 1
+  OpenLanes__Execution ..> OpenLanes__Agents : 2
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Plans : 5
   OpenLanes__Execution ..> OpenLanes__Spawner : 2

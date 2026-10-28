@@ -31,6 +31,27 @@ RSpec.describe OpenLanes::Arbitration::Counter, :tree do
     expect(counter.call(plan)).to eq(2)
   end
 
+  context "with three reviewers (plan 031, D10a)" do
+    def voted(agent, note, review) = state.stage!(agent:, round: 1, status: "Completed", verdict: note, review:)
+
+    before do
+      %w[staff-reviewer security-reviewer design-reviewer].each_with_index do |agent, minute|
+        sign(agent, "rejected 1/2", minute)
+        voted(agent, "rejected 1/2", 4)
+      end
+    end
+
+    it "counts the rejections of one review round once" do
+      expect(counter.call(plan)).to eq(1)
+    end
+
+    it "counts the next round's again" do
+      state.stage!(agent: "staff-reviewer", round: 2, status: "Completed", verdict: "rejected 2/2", review: 8)
+      state.sign!(agent: "staff-reviewer", round: 2, status: "Completed", note: "rejected 2/2", at: start + 600)
+      expect(counter.call(plan)).to eq(2)
+    end
+  end
+
   it "starts again after a cap ruling" do
     sign("staff-reviewer", "rejected 1/2", 1)
     sign("staff-reviewer", "rejected 2/2", 2)

@@ -6,6 +6,7 @@
 classDiagram
   class OpenLanes__Adapters__Invocation["OpenLanes::Adapters::Invocation"]
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
+  class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__AgentProcess["AgentProcess"]
@@ -40,6 +41,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses

@@ -25,7 +25,7 @@ You write nothing: no files, no labels, no comments, no mail, no signature. The 
 - `spec.md` and `plan.md`: what was promised, and its `## Task completed when`.
 - `contract.md`, for a dispute: the entry in question and both amendments.
 - `openlanes state show --plan NNN`: signatures, earlier rulings, and the mailbox.
-- `gh pr view <n> --comments` and `gh pr diff <n>`: staff-reviewer's findings (`### F<n> [critical|minor] <file>:<line>`), verifier's verdict, and the code itself.
+- `gh pr view <n> --comments` and `gh pr diff <n>`: each reviewer's findings (`### F<n> [critical|minor] <file>:<line>`, numbered from F1 by staff-reviewer, F101 by security-reviewer and F201 by design-reviewer), verifier's verdict, and the code itself.
 
 Rule on the code and the spec, not on who argued louder. A finding without a file, a line and a failing scenario is weak; a builder's reason without evidence is weaker.
 

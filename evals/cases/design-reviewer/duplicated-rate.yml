@@ -1,0 +1,66 @@
+id: duplicated-rate
+agent: design-reviewer
+depth: medium
+description: >
+  A pull request that writes the sales-tax rate down a second time:
+  `Invoice::TAX_RATE` repeats `Tax::RATE` instead of calling `Tax.on`. The
+  code is correct today, but the next rate change edits one and leaves the
+  other, so design-reviewer must call it critical and sign rejected; a pass
+  means the duplicate would merge. Reviewers write no code.
+fixture:
+  state: ready_for_review
+  slug: invoice-tax
+  files:
+    spec.md: |
+      # Invoice Tax
+
+      ## Goal
+
+      `Invoice#total` adds sales tax to the subtotal, at the rate the shop already charges.
+    plan.md: |
+      # Plan
+
+      1. U1 `Invoice#total` in `lib/invoice.rb`, with a spec.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 22 | [[001.00] Invoice tax](https://github.com/example/shop/pull/22) | Open 🟡 |
+  repo:
+    lib/tax.rb: |
+      # The one sales-tax rate the shop charges.
+      module Tax
+        RATE = 0.0825
+
+        def self.on(cents) = (cents * RATE).round
+      end
+    lib/invoice.rb: |
+      class Invoice
+        TAX_RATE = 0.0825
+
+        def initialize(subtotal) = @subtotal = subtotal
+
+        def total = @subtotal + (@subtotal * TAX_RATE).round
+      end
+    spec/invoice_spec.rb: |
+      require_relative "../lib/invoice"
+
+      RSpec.describe Invoice do
+        it "adds sales tax" do
+          expect(described_class.new(10_000).total).to eq(10_825)
+        end
+      end
+expect:
+  signed: rejected
+  files_absent: [rewrite.md]
+  sections:
+    pull-requests.md: [Findings]
+  contains:
+    pull-requests.md: [lib/invoice.rb, "/Tax(::RATE|\\.on)/"]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      count: { file: pull-requests.md, section: Findings, pattern: '^###[ \t]+F\d+', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 150000

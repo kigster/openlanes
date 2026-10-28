@@ -18,7 +18,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
   def plan = OpenLanes::Plans::Tree.new(dir: plans_root).find("031.00")
   def state = OpenLanes::Plans::PlanState.for(plan.feature.path)
   def labels = gh.dig("prs", "1", "labels")
-  def voted(name, note) = state.stage!(agent: name, round: 1, status: "Completed", to: "in_review", verdict: note)
+  def voted(name, note, round: 1) = reviews.vote!(plan, agents.find(name), round, note)
 
   before do
     FileUtils.mkdir_p(agents_dir)
@@ -53,6 +53,18 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
       let(:starts) { "building" }
 
       it { expect(reviews.reviewers(plan).map(&:name)).to eq(%w[staff-reviewer]) }
+    end
+  end
+
+  # D10a: the counter folds a round's rejections into one by this stage.
+  describe "#vote!" do
+    before do
+      state.update { it["moves"] = 5 }
+      voted("security-reviewer", "rejected 1/2, vulnerability", round: 3)
+    end
+
+    it "records the verdict against the review round, the plan's moves when it was given" do
+      expect(state.stages.last).to include("agent" => "security-reviewer", "round" => 3, "verdict" => "rejected 1/2, vulnerability", "review" => 5)
     end
   end
 
@@ -140,7 +152,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
 
       before do
         voted("staff-reviewer", "rejected 1/2")
-        state.stage!(agent: "staff-reviewer", round: 2, status: "Completed", to: "in_review", verdict: "great")
+        voted("staff-reviewer", "great", round: 2)
         voted("security-reviewer", "great")
       end
 

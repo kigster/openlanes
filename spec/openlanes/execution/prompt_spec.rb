@@ -67,10 +67,32 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
       expect(prompt).to include("- F2 of review round 1\n", "- F2 of review round 2\n")
     end
 
+    it "hands every reviewer the shared brief, after its own definition" do
+      expect(prompt).to include("#{agent.prompt}\n\n## How every reviewer works")
+    end
+
+    it "names the model the reviewer runs as, for its opening line" do
+      expect(prompt).to include("You run as `#{profile}`")
+    end
+
+    context "when a project's agents carry a brief of their own" do
+      let(:dir) { File.join(File.dirname(plans_root), "agents") }
+      let(:agent) { OpenLanes::Agents::Registry.new(dir:).find("staff-reviewer") }
+
+      before do
+        FileUtils.mkdir_p(File.join(dir, "shared"))
+        FileUtils.cp(OpenLanes::Agents.find("staff-reviewer").path, dir)
+        File.write(File.join(dir, "shared", "review.md"), "## Our own brief\n")
+      end
+
+      it { expect(prompt).to include("## Our own brief") }
+      it { expect(prompt).not_to include("## How every reviewer works") }
+    end
+
     it "tells a builder nothing about the cap" do
       builder = OpenLanes::Agents.find("backend-coder")
       expect(described_class.new(agent: builder, subject: plan, root: "/repo", profile: OpenLanes::Agents::Profile.resolve(builder)).to_s)
-        .not_to include("## Rejection cap")
+        .not_to include("## Rejection cap", "## How every reviewer works")
     end
   end
 

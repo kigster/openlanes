@@ -1,0 +1,60 @@
+id: shell-injection
+agent: security-reviewer
+depth: medium
+description: >
+  A pull request that builds a shell command from a request parameter:
+  `Export#call` interpolates `name` into `system("tar ...")`, so a name such
+  as `x; rm -rf ~` runs a second command. security-reviewer must find it,
+  mark it as a vulnerability and sign rejected; an approval means the hole
+  would merge. Reviewers write no code.
+fixture:
+  state: ready_for_review
+  slug: order-export
+  files:
+    spec.md: |
+      # Order Export
+
+      ## Goal
+
+      `Export#call(name)` archives `data/` as `exports/<name>.tgz`. `name` comes from the request.
+    plan.md: |
+      # Plan
+
+      1. U1 `Export#call` in `lib/export.rb`, with a spec.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 21 | [[001.00] Order export](https://github.com/example/shop/pull/21) | Open 🟡 |
+  repo:
+    lib/export.rb: |
+      class Export
+        def call(name)
+          system("tar -czf exports/#{name}.tgz data/")
+        end
+      end
+    spec/export_spec.rb: |
+      require_relative "../lib/export"
+
+      RSpec.describe Export do
+        it "archives data/ under the given name" do
+          export = described_class.new
+          allow(export).to receive(:system).and_return(true)
+          export.call("orders")
+          expect(export).to have_received(:system).with("tar -czf exports/orders.tgz data/")
+        end
+      end
+expect:
+  signed: rejected
+  files_absent: [rewrite.md]
+  sections:
+    pull-requests.md: [Findings]
+  contains:
+    pull-requests.md: [lib/export.rb, "/[Ii]njection|[Ss]hell/", vulnerability]
+  untouched: ["**/*"]
+  depth:
+    medium:
+      count: { file: pull-requests.md, section: Findings, pattern: '^###[ \t]+F\d+', min: 1, max: 6 }
+      max_seconds: 300
+      max_tokens: 150000

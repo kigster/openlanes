@@ -29,6 +29,10 @@ module OpenLanes
       # them.
       JOURNAL_LIMIT = 40
 
+      # Where {#review_brief} lives, under an agents directory. Outside the
+      # registry's `*.md` glob, so it is never read as an agent.
+      REVIEW_BRIEF = %w[shared review.md].freeze
+
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject]
       # @param root [String] the checkout the agent works in
@@ -71,7 +75,7 @@ module OpenLanes
         return resolution if @rebase
 
         <<~PROMPT
-          #{agent.prompt}
+          #{agent.prompt}#{review_brief}
 
           ---
 
@@ -127,9 +131,23 @@ module OpenLanes
           ## Rejection cap
 
           `merge.max_rejections` is #{review_cap}: sign `rejected N/#{review_cap}`, where N counts this rejection.
+          You run as `#{profile}`: name that model, and the company that makes it, in your review's opening line.
           #{struck.empty? ? "No finding has been struck." : "Struck by the arbitrator, never to be raised again, whatever id it would carry now:\n#{struck.map { "- #{it}" }.join("\n")}"}
 
         TEXT
+      end
+
+      # The brief every reviewer shares (plan 031, D8): written once, in
+      # `shared/review.md` beside the agent's own file, or the bundled one
+      # where a project's agents carry none.
+      #
+      # @return [String] empty for any agent outside the review phase
+      def review_brief
+        return "" unless agent.phase.to_s == "review"
+
+        path = [File.join(File.dirname(agent.path.to_s), *REVIEW_BRIEF), File.join(Agents::Registry::DEFAULT_DIR, *REVIEW_BRIEF)]
+               .find { File.file?(it) }
+        path ? "\n\n#{File.read(path, encoding: "UTF-8").strip}" : ""
       end
 
       # @param ruling [Hash] one entry of `state.json`'s `rulings`
