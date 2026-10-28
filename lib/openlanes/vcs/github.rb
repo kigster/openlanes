@@ -360,6 +360,30 @@ module OpenLanes
         raise Error, "could not recolour label #{label.name}: #{first_line(e)}"
       end
 
+      # Give a repository label a new name, colour and description. Every
+      # pull request that carries it keeps it, under the new name.
+      #
+      # @param from [String] the name the repository has
+      # @param label [Plans::ReviewLabel] what it becomes
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error] when `gh` refuses
+      def rename_label(from, label, repo: nil)
+        @command.run("gh",
+          "label",
+          "edit",
+          from,
+          "--name",
+          label.name,
+          "--color",
+          label.colour,
+          "--description",
+          label.meaning,
+          *repo_flag(repo))
+      rescue TTY::Command::ExitError, SystemCallError => e
+        raise Error, "could not rename label #{from} to #{label.name}: #{first_line(e)}"
+      end
+
       # Put one label on a pull request and take others off, in one edit.
       #
       # @param number [Integer]

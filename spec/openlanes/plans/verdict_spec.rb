@@ -27,11 +27,11 @@ RSpec.describe OpenLanes::Plans::Verdict do
   it "is ok-not-perfect past max_hmm, counting every reviewer together" do
     comments = hmm(3, agent: "staff-reviewer") + hmm(3, agent: "darth-reviewer")
 
-    expect(described_class.call(comments).names).to eq(%w[review-ok-not-perfect])
+    expect(described_class.call(comments).names).to eq(%w[review-passed])
   end
 
   it "takes the threshold it is given" do
-    expect(described_class.call(hmm(2), max_hmm: 1).names).to eq(%w[review-ok-not-perfect])
+    expect(described_class.call(hmm(2), max_hmm: 1).names).to eq(%w[review-passed])
   end
 
   it "rejects on a single ⛔️, however many ✅ surround it" do
@@ -107,7 +107,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
     it "takes max_hmm from the environment over the file and the default" do
       ENV["OPENLANES_REVIEW_MAX_HMM"] = "1"
 
-      expect(OpenLanes::Plans.verdict(hmm(2)).names).to eq(%w[review-ok-not-perfect])
+      expect(OpenLanes::Plans.verdict(hmm(2)).names).to eq(%w[review-passed])
     end
 
     it "logs a warning for each mark it ignored" do

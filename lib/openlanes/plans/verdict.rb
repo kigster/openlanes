@@ -8,7 +8,7 @@ module OpenLanes
     # matters. Counted across all the reviewers together, in order: any ⛔️ or
     # 💣 rejects (and a 💣 adds {ReviewLabel::VULNERABILITY} beside the
     # rejection); otherwise more than `max_hmm` 🤔 is
-    # {ReviewLabel::OK_NOT_PERFECT}; otherwise {ReviewLabel::APPROVED}. A clean
+    # {ReviewLabel::PASSED}; otherwise {ReviewLabel::APPROVED}. A clean
     # small pull request is approved even if it earned no ✅.
     #
     # Pure: it reads strings and answers labels. The threshold comes in as an
@@ -113,7 +113,7 @@ module OpenLanes
           if tally[:must_fix].positive? || tally[:flaw].positive?
             [ReviewLabel::REJECTED, *(ReviewLabel::VULNERABILITY if tally[:flaw].positive?)]
           elsif tally[:hmm] > max_hmm
-            [ReviewLabel::OK_NOT_PERFECT]
+            [ReviewLabel::PASSED]
           else
             [ReviewLabel::APPROVED]
           end

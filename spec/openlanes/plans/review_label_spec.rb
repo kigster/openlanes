@@ -1,29 +1,34 @@
 # frozen_string_literal: true
 
 # R3 in docs/decisions/decisions-on-three-reviewers-and-auto-merge.md is the
-# source; these examples hold the code to it, colour for colour.
+# source, with V2's rename in decisions-on-agent-names-models-and-reviewers.md;
+# these examples hold the code to them, colour for colour.
 RSpec.describe OpenLanes::Plans::ReviewLabel do
   it "carries the R3 labels, the harness's review-addressed (U1) and deploy-assessor's two verdicts (P2), with their colours, in order" do
     expect(described_class::ALL.to_h { |l| [l.name, l.colour] }).to eq(
-      "ready-for-review"      => "c2e0c6",
-      "review-in-progress"    => "FFBE20",
-      "review-rejected"       => "F90000",
-      "review-vulnerability"  => "FF0050",
-      "review-addressed"      => "A2FF02",
-      "review-ok-not-perfect" => "E8E890",
-      "review-approved"       => "109a10",
-      "ready-to-merge"        => "5319e7",
-      "auto-merged"           => "953384",
-      "merge-manually"        => "0e8a16"
+      "ready-for-review"     => "c2e0c6",
+      "review-in-progress"   => "FFBE20",
+      "review-rejected"      => "F90000",
+      "review-vulnerability" => "FF0050",
+      "review-addressed"     => "A2FF02",
+      "review-passed"        => "E8E890",
+      "review-approved"      => "109a10",
+      "ready-to-merge"       => "5319e7",
+      "auto-merged"          => "953384",
+      "merge-manually"       => "0e8a16"
     )
   end
 
   it "counts the passing verdicts, and everything after them, as passing" do
-    expect(described_class.passing.map(&:name)).to eq(%w[review-ok-not-perfect review-approved ready-to-merge auto-merged merge-manually])
+    expect(described_class.passing.map(&:name)).to eq(%w[review-passed review-approved ready-to-merge auto-merged merge-manually])
   end
 
-  it "keeps no M3 label that R3 retired or renamed" do
-    expect(described_class.names & %w[review-passed ok-to-merge]).to be_empty
+  it "keeps no label that was retired or renamed" do
+    expect(described_class.names & %w[review-ok-not-perfect ok-to-merge]).to be_empty
+  end
+
+  it "renames R3's review-ok-not-perfect to V2's review-passed" do
+    expect(described_class::RENAMED).to eq("review-ok-not-perfect" => described_class::PASSED)
   end
 
   it "fits every meaning in GitHub's 100-character label description" do
@@ -44,10 +49,10 @@ RSpec.describe OpenLanes::Plans::ReviewLabel do
         .to eq(described_class.names - %w[review-approved] + described_class::RETIRED)
     end
 
-    # Grok on #69: #62 carries M3's review-passed, which R3 no longer names.
-    it "takes M3's retired verdicts off too" do
+    # Grok on #69: #62 carried a verdict R3 no longer named.
+    it "takes the retired verdicts off too" do
       described_class::ALL.each do |label|
-        expect(described_class.displaced_by(label)).to include("review-passed", "ok-to-merge")
+        expect(described_class.displaced_by(label)).to include("review-ok-not-perfect", "ok-to-merge")
       end
     end
 

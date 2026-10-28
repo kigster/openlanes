@@ -114,8 +114,8 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       end
     end
 
-    context "with an ok-not-perfect verdict" do
-      let(:labels) { %w[review-ok-not-perfect] }
+    context "with a review-passed verdict" do
+      let(:labels) { %w[review-passed] }
 
       it "goes on to verifier" do
         expect(driver.hand_off(plan)).to eq("on to 🧪 verification")
@@ -124,14 +124,14 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
   end
 
   # Plan 035: the three qualities take three paths at the 👀 → 🧪 hand-off
-  # of `review-ok-not-perfect`. Depth, models and build rounds are a later
+  # of `review-passed`. Depth, models and build rounds are a later
   # plan; this one only moves the folder.
-  describe "#hand_off of review-ok-not-perfect at each quality" do
+  describe "#hand_off of review-passed at each quality" do
     subject(:driver) { described_class.new(outcome:, worktree:, quality: -> { quality }) }
 
     before do
       plans { |t| t.plan "014.00", :in_review, "x", files:, prs: [t.open(7, "X")] }
-      allow(outcome).to receive_messages(labels: %w[review-ok-not-perfect], mismatch: nil)
+      allow(outcome).to receive_messages(labels: %w[review-passed], mismatch: nil)
       allow(outcome).to receive(:send_back_for_quality) do |plan:, quality:, **|
         to = OpenLanes::Engine::Verification::Outcome::SEND_BACK.fetch(quality)
         plan.machine.promote!(to)

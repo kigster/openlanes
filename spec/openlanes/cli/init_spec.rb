@@ -11,7 +11,7 @@ RSpec.describe OpenLanes::CLI::Init do
   let(:ready) { true }
   let(:machine) { instance_double(OpenLanes::Setup::Machine, ready?: ready) }
   # What every run without a flag for them records for the new keys. Quality
-  # stays unset under -y, to be asked on the first ok-not-perfect review (R4).
+  # stays unset under -y, to be asked on the first review-passed review (R4).
   let(:decided) { { "merge" => { "by" => "human" }, "ci" => { "provider" => "none" } } }
 
   before do

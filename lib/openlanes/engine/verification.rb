@@ -20,7 +20,7 @@ module OpenLanes
 
       # The verdict whose fate `desired_codebase_quality` decides (R4): on
       # to verification under `mvp`, back to backend-coder and frontend-coder under `standard` and `high`.
-      ON_QUALITY = Plans::ReviewLabel::OK_NOT_PERFECT
+      ON_QUALITY = Plans::ReviewLabel::PASSED
 
       module_function
 
@@ -59,7 +59,7 @@ module OpenLanes
 
       # @param labels [Array<String>] a pull request's labels
       # @return [Boolean] whether the verdict is the one the quality decides
-      def ok_not_perfect?(labels) = labels.include?(ON_QUALITY.name) && FROM_REVIEW.none? { labels.include?(it.name) }
+      def passed?(labels) = labels.include?(ON_QUALITY.name) && FROM_REVIEW.none? { labels.include?(it.name) }
     end
   end
 end

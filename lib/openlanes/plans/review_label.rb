@@ -3,7 +3,7 @@
 module OpenLanes
   module Plans
     # A label that says where a pull request stands in review (decision R3,
-    # which replaced M3's set).
+    # which replaced M3's set, and V2, which renamed one of R3's).
     #
     # A pull request carries at most one of these at a time; a new verdict
     # replaces the previous one. The one exception is {VULNERABILITY}, which
@@ -24,10 +24,10 @@ module OpenLanes
           meaning: "#{Agents::Names::BACKEND_CODER} and #{Agents::Names::FRONTEND_CODER} are done; the PR waits for a free review slot",
           passing: false),
         new(name: "review-in-progress", colour: "FFBE20", meaning: "the reviewers have started", passing: false),
-        new(name: "review-rejected", colour: "F90000", meaning: "at least one ⛔️ or 💣", passing: false),
+        new(name: "review-rejected", colour: "F90000", meaning: "a reviewer rejected it", passing: false),
         new(name: "review-vulnerability",
           colour: "FF0050",
-          meaning: "at least one 💣; sits beside review-rejected",
+          meaning: "#{Agents::Names::SECURITY_REVIEWER} found an exploitable hole; sits beside review-rejected",
           passing: false),
         # The harness's, never a reviewer's: a fix reached a rejected pull
         # request, by the publisher or by anyone else's push (decision U1).
@@ -35,8 +35,8 @@ module OpenLanes
           colour: "A2FF02",
           meaning: "fixes were pushed after review-rejected; the PR waits for another review",
           passing: false),
-        new(name: "review-ok-not-perfect", colour: "E8E890", meaning: "no ⛔️ or 💣, but more 🤔 than review.max_hmm (5 by default)", passing: true),
-        new(name: "review-approved", colour: "109a10", meaning: "no ⛔️ or 💣, few 🤔", passing: true),
+        new(name: "review-passed", colour: "E8E890", meaning: "no reviewer rejected it, but most did not call it great", passing: true),
+        new(name: "review-approved", colour: "109a10", meaning: "no reviewer rejected it, and most called it great", passing: true),
         new(name: "ready-to-merge",
           colour: "5319e7",
           meaning: "#{Agents::Names::VERIFIER} verified it and its E2E tests pass",
@@ -70,10 +70,10 @@ module OpenLanes
       # The harness's label for a rejected pull request whose fixes arrived (U1).
       ADDRESSED = named("review-addressed")
 
-      # The verdict for a review with no ⛔️ or 💣 but too many 🤔.
-      OK_NOT_PERFECT = named("review-ok-not-perfect")
+      # The verdict for a review nobody rejected and most did not call great.
+      PASSED = named("review-passed")
 
-      # The verdict for everything else.
+      # The verdict for a review most of the reviewers called great.
       APPROVED = named("review-approved")
 
       # verifier's label, and the one the coverage gate withholds.
@@ -98,7 +98,7 @@ module OpenLanes
 
       # Verdicts after which nobody works on a pull request until it merges,
       # so nothing but the conflict sweep notices it go stale against `main` (U2).
-      WAITING = [OK_NOT_PERFECT, APPROVED, READY_TO_MERGE, MERGE_MANUALLY].freeze
+      WAITING = [PASSED, APPROVED, READY_TO_MERGE, MERGE_MANUALLY].freeze
 
       # Not a verdict, and so not in {ALL}: it sits beside whatever verdict
       # the pull request carries, which a resolved conflict keeps (U3).
@@ -126,17 +126,20 @@ module OpenLanes
         meaning: "openlanes moved this repository's open PRs from M3's review labels to R3's",
         passing: false)
 
-      # M3's names for verdicts R3 kept under another name: `review-passed`
-      # is R3's {OK_NOT_PERFECT}, and verifier's `ok-to-merge` is R3's
-      # {READY_TO_MERGE}.
-      RENAMED = { "review-passed" => OK_NOT_PERFECT, "ok-to-merge" => READY_TO_MERGE }.freeze
+      # R3's name for a verdict V2 renamed: `review-ok-not-perfect` is
+      # {PASSED}. {Vcs::LabelSync} renames it on the repository, so the pull
+      # requests carrying it keep it.
+      RENAMED = { "review-ok-not-perfect" => PASSED }.freeze
 
-      # M3's verdicts that R3 dropped. Nothing sets them any more, but pull
-      # requests labelled before R3 still carry them, so every new verdict
-      # takes them off: otherwise #62's `review-passed` would sit beside its
-      # next verdict, two at once. LabelSync never deletes them from the
-      # repository; that stays a person's call.
-      RETIRED = RENAMED.keys.freeze
+      # M3's verifier label, R3's {READY_TO_MERGE} ({Vcs::LabelMigration}).
+      OK_TO_MERGE = "ok-to-merge"
+
+      # Verdict names no longer set. Pull requests labelled before a rename
+      # may still carry them, so every new verdict takes them off: otherwise
+      # an old `review-ok-not-perfect` would sit beside its next verdict, two
+      # at once. LabelSync never deletes them from the repository; that stays
+      # a person's call.
+      RETIRED = [*RENAMED.keys, OK_TO_MERGE].freeze
 
       class << self
         # @return [Array<String>] every label name, in R3 order

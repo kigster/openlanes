@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # U3: R4's question, put once per project on the first
-# review-ok-not-perfect pull request while the key is missing.
+# review-passed pull request while the key is missing.
 RSpec.describe OpenLanes::Engine::QualityQuestion, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:root) { File.dirname(plans_root) }

@@ -48,7 +48,7 @@ RSpec.describe OpenLanes::Plans::PullRequestMachine do
     end
 
     it "returns the state it moved to" do
-      expect(machine("review-in-progress").fire!(:pass_with_doubts)).to eq(:review_ok_not_perfect)
+      expect(machine("review-in-progress").fire!(:pass_with_doubts)).to eq(:review_passed)
     end
 
     it "sends a rejected pull request back for review once fixed" do

@@ -210,7 +210,7 @@ openlanes init --reconfigure      # ask again with the current answers as defaul
 openlanes init --reconfigure -n   # the diff only, nothing written
 ```
 
-Under `-y` the defaults are `--ci none` (or what the folder already runs), `--merge-by human`, and no `desired_codebase_quality` (the first ok-not-perfect review asks it); a folder with two languages gets no `stack:`.
+Under `-y` the defaults are `--ci none` (or what the folder already runs), `--merge-by human`, and no `desired_codebase_quality` (the first review-passed review asks it); a folder with two languages gets no `stack:`.
 
 > [!NOTE]
 >

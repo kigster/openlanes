@@ -3,7 +3,7 @@
 module OpenLanes
   # `arbitrator` (M7, M8, M9): a read-only agent that rules on
   # the rejection cap, appeals, backend-coder-versus-frontend-coder disputes and
-  # `review-ok-not-perfect` verdicts at `mvp`. The agent only answers with a
+  # `review-passed` verdicts at `mvp`. The agent only answers with a
   # `ruling` block; reading that block, counting rejections and acting on a
   # ruling live here, so the agent never needs a write tool.
   module Arbitration

@@ -264,12 +264,12 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
-    it "reaches the arbitrator at the cap, so a PR labelled ok-not-perfect round after round cannot loop for ever" do
+    it "reaches the arbitrator at the cap, so a PR labelled review-passed round after round cannot loop for ever" do
       OpenLanes::Plans::PlanState.for(plan.feature.path)
                                  .sign!(agent: "verifier",
                                    round: 1,
                                    status: "Completed",
-                                   note: "rejected: PR #1 is labelled review-ok-not-perfect, an earlier round; signed by harness")
+                                   note: "rejected: PR #1 is labelled review-passed, an earlier round; signed by harness")
 
       result = outcome.send_back_for_quality(plan:, pull: pr)
 
