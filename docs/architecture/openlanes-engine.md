@@ -39,6 +39,7 @@ classDiagram
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
+  class OpenLanes__Engine__Reviews["Reviews"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
   class OpenLanes__Engine__StartWorkflow["StartWorkflow"]
@@ -104,6 +105,7 @@ classDiagram
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__Supervision__PidFile["OpenLanes::Supervision::PidFile"]
   class OpenLanes__Supervision__Probe["OpenLanes::Supervision::Probe"]
@@ -229,6 +231,11 @@ classDiagram
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Plans__Verdict : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__UI : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
@@ -237,6 +244,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Narrator : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__PrOutcomes : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__PrWatch : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__StateFile : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Verification__Driver : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Error : uses
@@ -251,8 +259,10 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Engine__RunWorkflow ..|> OpenLanes__UI : includes
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Events__NullSink : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Resync__Dirs : uses

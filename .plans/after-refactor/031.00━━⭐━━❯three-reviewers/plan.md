@@ -26,12 +26,14 @@ Six pull requests, in order. Each lands on `main` before the next starts. V1 to 
 - **D6. When the last one reports, the dispatcher decides** (V2, V4): `Plans::Verdict` over the round's verdicts, the label set through `Vcs::Review` (still refused while CI is red for a passing label), then the folder moves as today: rejected to ⛔, slop to rewrite, passing on toward verification.
 - **D7. Reviewers stop labelling.** `openlanes review` is withdrawn from `staff-reviewer`'s prompt; the dispatcher sets `review-in-progress` when the reviewers start.
 
+As built: `Engine::Reviews` owns D4 to D7, and the dispatcher only asks it. A round is the stages whose `moves` match the plan's, so a verdict from before the last move never counts, and a reviewer rerun after a restart replaces its own. A reviewer that signs `Completed` with no verdict word fails its round instead of moving the plan on.
+
 ### Work units
 
-- [ ] Reviewer count and the hold at `in_review`; the round's verdicts read back from `state.json`.
-- [ ] The decision step and its label; `staff-reviewer.md` reports a verdict instead of labelling.
-- [ ] Dispatcher specs: one and three reviewers, every finishing order, every verdict mix, a crash mid-round.
-- [ ] Docs, lint, the suite, coverage.
+- [x] Reviewer count and the hold at `in_review`; the round's verdicts read back from `state.json`.
+- [x] The decision step and its label; `staff-reviewer.md` reports a verdict instead of labelling.
+- [x] Dispatcher specs: one and three reviewers, every verdict mix, no verdict; finishing order and a restart mid-round in `reviews_spec`.
+- [x] Docs, lint, the suite, coverage.
 
 ## PR 3: security-reviewer and design-reviewer
 
@@ -40,6 +42,7 @@ Six pull requests, in order. Each lands on `main` before the next starts. V1 to 
 - **D8. One shared review brief** (R2, V1): how to review, the "Reviewed by <agent> using <model> by <provider> at <time>." header, the emoji table, D1's closing note, ignore existing comments, review only the diff. It lives once, in `agents/shared/review.md` (outside the registry's `agents/*.md` glob), and `Execution::Prompt` appends it for every agent whose `phase:` is `review`. Each `agents/*-reviewer.md` keeps only its own focus.
 - **D9. Models:** `staff-reviewer` moves to Opus; `security-reviewer` Sonnet; `design-reviewer` Sonnet. 💣 and 🔓 stay `security-reviewer`'s alone.
 - **D10. `Names::PLANNED` empties**, and the registry drift spec holds every name to a file.
+- **D10a. A round's rejections count once** in `Arbitration::Counter`: three reviewers rejecting in one round are one rejection toward `merge.max_rejections`, not three.
 
 ### Work units
 

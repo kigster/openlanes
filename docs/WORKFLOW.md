@@ -634,7 +634,7 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 ## Review labels
 
-A pull request carries one of these at a time, set through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
+A pull request carries one of these at a time, set by the engine once every reviewer has reported, or by a person through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
 | Label                  | Colour   | Passing | Meaning                                                                        |
 | ---------------------- | -------- | ------- | ------------------------------------------------------------------------------ |
