@@ -3,7 +3,7 @@
 import "cypress-axe";
 
 interface Snapshot {
-  plans: Array<{ ordinal: string; questions: Array<{ number: number; held: boolean }>; cars: Array<{ key: string; model: string; state: string }> }>;
+  plans: Array<{ ordinal: string; title: string; questions: Array<{ number: number; held: boolean }>; cars: Array<{ key: string; model: string; state: string }> }>;
   backlog: Array<{ ordinal: string }>;
   run: { status: string };
 }
