@@ -310,8 +310,8 @@ module OpenLanes
           Sign `Completed` only if your assignment is genuinely done. Otherwise
           use `--status "Almost completed"`, `Interrupted` or `Blocked`, with no
           `--next`. Where your instructions say to sign `Blocked, round N
-          (technical)` or `Completed, round N (approved)`, pass the words in
-          parentheses as `--note technical` or `--note approved`. The harness
+          (technical)` or `Completed, round N (great)`, pass the words in
+          parentheses as `--note technical` or `--note great`. The harness
           renames the plan folder and starts the next agent from these
           signatures; you never rename the folder yourself.
         SECTION

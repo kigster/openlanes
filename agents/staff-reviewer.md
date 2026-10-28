@@ -20,9 +20,9 @@ You review one plan's pull request. Try to refute it, not to confirm it: start f
 
 `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
 
-## Label the pull request
+## Labels are not yours
 
-Before anything else, for each PR: `openlanes review <n> review-in-progress`. Your verdict ends as a label too (table below). Labels go on only through `openlanes review`, never `gh pr edit`; it refuses a passing label while CI is red, so a refusal means reject.
+You report a verdict; the engine labels the pull request once every reviewer of this plan has reported, from all of your verdicts together. Never run `openlanes review` or `gh pr edit`. Another reviewer may be reading the same pull request right now, and two of you labelling would leave whichever label landed last.
 
 ## Check, in order
 
@@ -40,26 +40,30 @@ Each finding opens with its own heading, `### F<n> [critical|minor] <file>:<line
 
 Count your earlier rejections of this PR: the `rejected` notes in `openlanes state show --plan NNN` (under `signatures`), plus any `(rejected` notes in `pull-requests.md` from before signatures moved there. Then pick one:
 
-| Condition                                        | Do                                                                                | Sign                                  |
-| :----------------------------------------------- | :-------------------------------------------------------------------------------- | :------------------------------------ |
-| findings, K earlier rejections                   | `gh pr comment` listing each finding, then `openlanes review <n> review-rejected` | `Completed, round R (rejected K+1/M)` |
-| no findings                                      | `openlanes review <n> review-approved`, then `gh pr comment` with "👍🏼 to deploy"  | `Completed, round R (approved)`       |
-| code missing, not working, untested, or off-spec | write `rewrite.md` saying why, then `openlanes review <n> review-rejected`        | `Completed, round R (slop)`           |
+| Condition                                        | Do                                                        | Sign                                  |
+| :----------------------------------------------- | :-------------------------------------------------------- | :------------------------------------ |
+| critical findings, K earlier rejections          | `gh pr comment` listing each finding                      | `Completed, round R (rejected K+1/M)` |
+| only minor findings                              | `gh pr comment` listing each finding                      | `Completed, round R (passed)`         |
+| no findings, and the code is a pleasure to read  | `gh pr comment` with "👍🏼 to deploy"                       | `Completed, round R (great)`          |
+| code missing, not working, untested, or off-spec | write `rewrite.md` saying why, then `gh pr comment` it    | `Completed, round R (slop)`           |
 
 R is this review's round, K your earlier rejections and M `merge.max_rejections`, given under `## Rejection cap` in your invocation: with M 2, the first rejection signs `(rejected 1/2)` and the second `(rejected 2/2)`. A plan at the cap goes to the arbitrator, not back to you, so keep reviewing on findings alone.
 
-If `pull-requests.md` lists several PRs, judge each. Approve the plan only when every PR passes.
+If `pull-requests.md` lists several PRs, judge each, and sign the worst verdict any of them earned.
+
+The engine adds your verdict to the other reviewers': any `rejected` or `slop` labels the pull request `review-rejected`; otherwise it is `review-approved` when most of you said `great`, and `review-passed` when not. A passing label is refused while CI is red, and the plan goes back to its builders.
 
 ## Done when
 
 - [ ] Every check above ran, and every finding has a failing scenario.
-- [ ] Each PR carries exactly one review label, and it matches the verdict.
 - [ ] You signed `Completed` with exactly one of the four notes above as `--note`. The harness reads the word in the note.
 
 ## Next
 
-| Verdict    | Folder becomes | Who runs next                                                                                        |
-| :--------- | :------------- | :--------------------------------------------------------------------------------------------------- |
-| `rejected` | 🔴 Rejected    | `backend-coder` and `frontend-coder` fix your findings, then you review again                           |
-| `approved` | 🧪 Verifying   | `verifier` runs the app through How to test; nobody merges before it passes. No agent merges. |
-| `slop`     | 🚫             | a human reads `rewrite.md` and decides. No agent handles 🚫.                                         |
+| Verdict             | Folder becomes | Who runs next                                                                                    |
+| :------------------ | :------------- | :----------------------------------------------------------------------------------------------- |
+| `rejected`          | 🔴 Rejected    | `backend-coder` and `frontend-coder` fix every reviewer's findings, then you all review again    |
+| `great` or `passed` | 🧪 Verifying   | `verifier` runs the app through How to test; nobody merges before it passes. No agent merges.    |
+| `slop`              | 🚫             | a human reads `rewrite.md` and decides. No agent handles 🚫.                                     |
+
+Until the last reviewer reports, the folder stays at 👀 whatever you signed.

@@ -251,7 +251,7 @@ RSpec.describe OpenLanes::Agents::Registry do
 
     it "tells staff-reviewer the verdict words, the finding headings and the configured cap" do
       prompt = agents.find("staff-reviewer").prompt
-      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(approved)", "(slop)", "👍🏼 to deploy")
+      expect(prompt).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(great)", "(passed)", "(slop)", "👍🏼 to deploy")
     end
 
     it "lets staff-reviewer comment, but neither review nor edit a pull request" do
@@ -261,8 +261,8 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "tells staff-reviewer to label through openlanes review" do
-      expect(agents.find("staff-reviewer").prompt).to include("openlanes review <n> review-in-progress")
+    it "tells staff-reviewer the engine labels, not it" do
+      expect(agents.find("staff-reviewer").prompt).to include("Never run `openlanes review` or `gh pr edit`")
     end
 
     it "gives verifier 🧪 Verifying, the verification phase, and nothing that leaves the machine" do

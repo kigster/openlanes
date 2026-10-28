@@ -443,7 +443,8 @@ module OpenLanes
         <<~MARKDOWN
           ## Review labels
 
-          A pull request carries one of these at a time, set through `openlanes review <pr> <label>`.
+          A pull request carries one of these at a time, set by the engine once every reviewer has
+          reported, or by a person through `openlanes review <pr> <label>`.
           A new label replaces the previous one, except that `#{OpenLanes::Plans::ReviewLabel::VULNERABILITY}`
           sits beside `#{OpenLanes::Plans::ReviewLabel::REJECTED}`. No passing verdict is given while CI is red.
           The engine creates or recolours every one of them on the repository when a run starts.
