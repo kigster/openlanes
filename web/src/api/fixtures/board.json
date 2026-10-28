@@ -99,6 +99,7 @@
             "key": "001.00/backend-coder",
             "agent": "backend-coder",
             "role": "builder",
+            "adapter": "claude",
             "round": 1,
             "rounds": 2,
             "model": "claude-opus-5-5",
@@ -123,6 +124,7 @@
             "key": "001.00/frontend-coder",
             "agent": "frontend-coder",
             "role": "builder",
+            "adapter": "claude",
             "round": 1,
             "rounds": 2,
             "model": "claude-sonnet-5-5",
@@ -194,6 +196,7 @@
             "key": "005.00/staff-reviewer",
             "agent": "staff-reviewer",
             "role": "builder",
+            "adapter": "claude",
             "round": 1,
             "rounds": 2,
             "model": "claude-sonnet-5-5",
@@ -255,6 +258,7 @@
             "key": "006.00/chores-coder",
             "agent": "chores-coder",
             "role": "builder",
+            "adapter": "claude",
             "round": 1,
             "rounds": 2,
             "model": "claude-sonnet-5-5",
@@ -526,6 +530,86 @@
         }
       }
     ],
+    "phases": {
+      "research": [
+        {
+          "phase": "research",
+          "toggle": null
+        },
+        {
+          "phase": "specification",
+          "toggle": null
+        },
+        {
+          "phase": "planning",
+          "toggle": null
+        },
+        {
+          "phase": "build",
+          "toggle": null
+        },
+        {
+          "phase": "frontend",
+          "toggle": "frontend"
+        },
+        {
+          "phase": "review",
+          "toggle": null
+        },
+        {
+          "phase": "verification",
+          "toggle": null
+        },
+        {
+          "phase": "completion",
+          "toggle": null
+        }
+      ],
+      "planning": [
+        {
+          "phase": "planning",
+          "toggle": null
+        },
+        {
+          "phase": "build",
+          "toggle": null
+        },
+        {
+          "phase": "frontend",
+          "toggle": "frontend"
+        },
+        {
+          "phase": "review",
+          "toggle": null
+        },
+        {
+          "phase": "verification",
+          "toggle": null
+        },
+        {
+          "phase": "completion",
+          "toggle": null
+        }
+      ],
+      "building": [
+        {
+          "phase": "build",
+          "toggle": null
+        },
+        {
+          "phase": "review",
+          "toggle": null
+        },
+        {
+          "phase": "verification",
+          "toggle": null
+        },
+        {
+          "phase": "completion",
+          "toggle": null
+        }
+      ]
+    },
     "bombs": [],
     "autocompact": 0.4,
     "log": [
@@ -640,6 +724,7 @@
               "key": "005.00/staff-reviewer",
               "agent": "staff-reviewer",
               "role": "builder",
+              "adapter": "claude",
               "round": 1,
               "rounds": 2,
               "model": "claude-sonnet-5-5",
@@ -771,6 +856,86 @@
           }
         }
       ],
+      "phases": {
+        "research": [
+          {
+            "phase": "research",
+            "toggle": null
+          },
+          {
+            "phase": "specification",
+            "toggle": null
+          },
+          {
+            "phase": "planning",
+            "toggle": null
+          },
+          {
+            "phase": "build",
+            "toggle": null
+          },
+          {
+            "phase": "frontend",
+            "toggle": "frontend"
+          },
+          {
+            "phase": "review",
+            "toggle": null
+          },
+          {
+            "phase": "verification",
+            "toggle": null
+          },
+          {
+            "phase": "completion",
+            "toggle": null
+          }
+        ],
+        "planning": [
+          {
+            "phase": "planning",
+            "toggle": null
+          },
+          {
+            "phase": "build",
+            "toggle": null
+          },
+          {
+            "phase": "frontend",
+            "toggle": "frontend"
+          },
+          {
+            "phase": "review",
+            "toggle": null
+          },
+          {
+            "phase": "verification",
+            "toggle": null
+          },
+          {
+            "phase": "completion",
+            "toggle": null
+          }
+        ],
+        "building": [
+          {
+            "phase": "build",
+            "toggle": null
+          },
+          {
+            "phase": "review",
+            "toggle": null
+          },
+          {
+            "phase": "verification",
+            "toggle": null
+          },
+          {
+            "phase": "completion",
+            "toggle": null
+          }
+        ]
+      },
       "bombs": [],
       "autocompact": 0.4,
       "log": [],

@@ -108,6 +108,7 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Live__Commands ..> OpenLanes__UI : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Error : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Command : uses

@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { PlanRow, UnackedBadge } from "./PlanRow";
 import { sampleBoard, samplePlan } from "./sample";
-import { modelsOf } from "./model";
 
 describe("UnackedBadge", () => {
   it("shows nothing at zero", () => {
@@ -42,10 +41,10 @@ describe("UnackedBadge", () => {
 
   it("rides in the plan row's meta line, accessibly, and only when there is unacked mail", async () => {
     const { stations } = sampleBoard().me;
-const models = modelsOf(sampleBoard().me);
-    const { container, rerender } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} />);
+const adapters = sampleBoard().me.adapters;
+    const { container, rerender } = render(<PlanRow plan={samplePlan()} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-meta .unacked")).toBeNull();
-    rerender(<PlanRow plan={samplePlan({ unacked: 2 })} stations={stations} models={models} />);
+    rerender(<PlanRow plan={samplePlan({ unacked: 2 })} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-meta .unacked.is-warning")).toHaveTextContent("2");
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -55,17 +54,17 @@ describe("PlanRow's head", () => {
   // A whole plan used to read 009 beside a sub-plan's 008.01, so the titles after them started at different places.
   it("is the full NNN.MM for whole plans and sub-plans alike", () => {
     const { stations } = sampleBoard().me;
-const models = modelsOf(sampleBoard().me);
-    const { container, rerender } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} />);
+const adapters = sampleBoard().me.adapters;
+    const { container, rerender } = render(<PlanRow plan={samplePlan()} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-id")!.firstChild!.textContent).toBe("001.00");
-    rerender(<PlanRow plan={samplePlan({ ordinal: "008.01" })} stations={stations} models={models} />);
+    rerender(<PlanRow plan={samplePlan({ ordinal: "008.01" })} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-id")!.firstChild!.textContent).toBe("008.01");
   });
 
   it("says what its status means and, on the title, what the spec is about", () => {
     const { stations } = sampleBoard().me;
-const models = modelsOf(sampleBoard().me);
-    const { container } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} />);
+const adapters = sampleBoard().me.adapters;
+    const { container } = render(<PlanRow plan={samplePlan()} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-status")).toHaveAttribute("title", "Building: an agent is building the plan's work units");
     expect(container.querySelector(".plan-title")).toHaveAttribute("title", "Agents may write docs and code, but nothing leaves the machine.");
   });

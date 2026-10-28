@@ -9,6 +9,7 @@ export function sampleCar(over: Partial<Car> = {}): Car {
   return {
     key: `001.00/${agent}`,
     agent,
+    adapter: "claude",
     role: "builder",
     round: 1,
     rounds: 2,

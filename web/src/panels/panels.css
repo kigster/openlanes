@@ -249,6 +249,14 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .choice-help { margin: 7px 0 0; min-height: calc(2 * 1.4em); font-size: 12.5px; line-height: 1.4; color: var(--ink-soft); }
 .choice label:has(input:disabled) { opacity: .45; cursor: not-allowed; }
 @media (max-width: 760px) { .fm-row { grid-template-columns: 1fr 1fr; } }
+/* Per-phase adapter and model (plan 040, D10): phase name, adapter, model, one row each. */
+.phase-rows { width: 100%; display: grid; grid-template-columns: max-content minmax(0, 1fr) minmax(0, 1fr); gap: 6px 12px; align-items: center; }
+.phase-rows legend { grid-column: 1 / -1; }
+.phase-rows .choice-help { grid-column: 1 / -1; min-height: 0; margin: 2px 0 0; }
+.phase-row { display: contents; }
+.phase-name { font-size: 13px; font-weight: 600; }
+.phase-row select { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--plate); color: var(--ink); min-width: 0; }
+.phase-row select:disabled { opacity: .45; cursor: not-allowed; }
 .fm-form legend, .fm-form .lbl { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 5px; padding: 0; }
 .fm-form .lbl { width: 100%; margin: 0; }
 .choice { display: inline-flex; border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; }

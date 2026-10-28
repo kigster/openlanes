@@ -9,8 +9,11 @@ import { modelName, type SendCommand } from "./support";
 export interface ModelSelectProps {
   plan: string;
   car: Car;
-  /** The adapter's models, most capable first. */
+  /** The models of the adapter the car runs on, most capable first (plan 040, D13). */
   models: ModelChoice[];
+  /** Why that adapter cannot take an agent now ("pi: no model provider signed in"); the picker is disabled and says so
+   * (D11). Null or omitted when it can. */
+  unavailable?: string | null;
   /** "next" queues for the next round (a car); "now" switches it now (the drawer). */
   mode: "next" | "now";
   onCommand: SendCommand;
@@ -20,7 +23,7 @@ export interface ModelSelectProps {
   onOutcome?: (said: string, refused: boolean) => void;
 }
 
-export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, onOutcome }: ModelSelectProps) {
+export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, onOutcome, unavailable = null }: ModelSelectProps) {
   const command = useCommand(onCommand);
   // A queued model shows in bold until the next round picks it up; the snapshot's model is the one running now.
   const [queued, setQueued] = useState<string | null>(null);
@@ -39,9 +42,9 @@ export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, on
     if (mode === "now") {
       if (to === car.model) return;
       const said = `Switching from ${modelName(models, car.model)} to ${modelName(models, to)}; it runs /compact first.`;
+      // No reply means another send was still in flight, and that one reports for both.
       const reply = await command.send({ kind: "switch_model", plan, agent: car.agent, payload: { model: to } }, said);
-      if (!reply) return;
-      onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
+      if (reply) onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
       return;
     }
     const staying = to === car.model;
@@ -50,19 +53,20 @@ export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, on
     const previous = queued;
     setQueued(staying ? null : to);
     const reply = await command.send({ kind: "set_model", plan, agent: car.agent, payload: { model: to } }, said);
-    if (!reply) { setQueued(previous); return; }
-    if (reply.status === "refused") setQueued(previous);
-    onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
+    const refused = reply?.status === "refused";
+    if (!reply || refused) setQueued(previous);
+    if (reply) onOutcome?.(refused ? refusal(reply) : said, refused);
   };
 
   const changed = mode === "next" && queued !== null;
   return (
-    <Select.Root value={value} onValueChange={change} disabled={command.pending}>
+    <Select.Root value={value} onValueChange={change} disabled={command.pending || unavailable !== null}>
       <Select.Trigger
         className={`model-trigger${mode === "now" ? " is-field" : ""}${changed ? " is-changed" : ""}`}
-        aria-label={labelledBy ? undefined : `Model for ${car.agent}${changed ? `, ${modelName(models, value)} from its next round` : ""}`}
+        aria-label={labelledBy ? undefined
+          : `Model for ${car.agent}${changed ? `, ${modelName(models, value)} from its next round` : ""}${unavailable ? `, unavailable: ${unavailable}` : ""}`}
         aria-labelledby={labelledBy}
-        title={mode === "next" ? "Model for its next round" : undefined}
+        title={unavailable ?? (mode === "next" ? "Model for its next round" : undefined)}
       >
         <Select.Value />
         <Select.Icon aria-hidden="true">▾</Select.Icon>

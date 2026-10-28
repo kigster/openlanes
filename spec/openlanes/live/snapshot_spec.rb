@@ -152,6 +152,10 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(snapshot[:stations].map { [it[:key], it[:label]] }).to eq(fixture["stations"].map { [it["key"], it["label"]] })
     end
 
+    it "lists the phases each lane walks, for the idea dialog (D10)" do
+      expect(snapshot[:phases]["building"].map { it[:phase] }).to eq(%w[build review verification completion])
+    end
+
     it "lists the agents at each station from their definitions" do
       expect(snapshot[:stations].to_h { [it[:key], it[:agents]] }).to include(
         "new"                => %w[researcher],
@@ -461,6 +465,15 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     it "has no window for a model the catalogue does not know" do
       rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
       expect(car.slice(:context, :context_limit)).to eq(context: nil, context_limit: nil)
+    end
+
+    it "names the adapter it runs on (D13)" do
+      expect(car[:adapter]).to eq("claude")
+    end
+
+    it "names codex for a car on codex" do
+      rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
+      expect(car[:adapter]).to eq("codex")
     end
 
     it "names the model queued for the next round" do

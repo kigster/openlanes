@@ -1,6 +1,6 @@
 // What a plan looks like on the board, derived from the Snapshot alone. Pure functions, so the rules (which stop is
 // skipped, when a row turns green, what a pill says) are tested without rendering anything.
-import type { Car, ModelChoice, Plan, Question, Snapshot, Starts, Station } from "../api/types";
+import type { AdapterAvailability, Car, ModelChoice, Plan, Question, Snapshot, Starts, Station } from "../api/types";
 import { planId } from "./format";
 
 export interface StartsLook {
@@ -91,10 +91,20 @@ export function carLook(plan: Plan, car: Car): CarLook {
 
 export const modelLabel = (models: ModelChoice[], id: string): string => models.find(m => m.id === id)?.label ?? id;
 
-/** One adapter's models, as the snapshot's probe found them; claude's when no name is given, the CLI every car ran on before
- * plan 040 let a plan choose. [] for an adapter the snapshot does not list, or one that is not available. */
-export const modelsOf = (snapshot: Pick<Snapshot, "adapters">, adapter = "claude"): ModelChoice[] =>
-  snapshot.adapters.find(a => a.name === adapter)?.models ?? NO_MODELS;
+/** An adapter as the snapshot's probe last found it: claude when no name is given, the CLI every car ran on before plan
+ * 040 let a plan choose. Undefined for one the snapshot does not list. */
+export const adapterOf = (snapshot: Pick<Snapshot, "adapters">, adapter: string | null = null): AdapterAvailability | undefined =>
+  snapshot.adapters.find(a => a.name === (adapter ?? "claude"));
+
+/** One adapter's models, as {@link adapterOf} finds it. [] for an adapter the snapshot does not list, or one that is
+ * not available. */
+export const modelsOf = (snapshot: Pick<Snapshot, "adapters">, adapter: string | null = null): ModelChoice[] =>
+  adapterOf(snapshot, adapter)?.models ?? NO_MODELS;
+
+/** Why an adapter cannot take an agent, for a person (D11): "pi: no model provider signed in". Null when it can, and
+ * before its first probe has answered, so nothing is shown disabled on a guess. */
+export const unusable = (adapter: AdapterAvailability | undefined): string | null =>
+  adapter && adapter.available === false ? `${adapter.name}: ${adapter.reason ?? "not available"}` : null;
 
 // One empty list, so a missing adapter does not hand every render a new array to memoise against.
 const NO_MODELS: ModelChoice[] = [];

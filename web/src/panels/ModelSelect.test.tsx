@@ -64,4 +64,59 @@ describe("ModelSelect in the drawer", () => {
     await waitFor(() => expect(onOutcome).toHaveBeenCalledWith("Refused: busy.", true));
     expect(sent).toHaveLength(1);
   });
+
+  const drawer = (onCommand: ReturnType<typeof recorder>["onCommand"], onOutcome = vi.fn()) =>
+    renderPanel(<><span id="lbl">Model</span><ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="now" labelledBy="lbl" onCommand={onCommand} onOutcome={onOutcome} /></>);
+
+  it("switches now with switch_model and says it compacts first", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const onOutcome = vi.fn();
+    drawer(onCommand, onOutcome);
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+    await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
+    await waitFor(() => expect(sent).toEqual([{ kind: "switch_model", plan: "005.00", agent: "staff-reviewer", payload: { model: "claude-opus-5-5" } }]));
+    expect(onOutcome).toHaveBeenCalledWith("Switching from Sonnet 5.5 to Opus 5.5; it runs /compact first.", false);
+  });
+
+  it("sends nothing for the model it already runs", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    drawer(onCommand);
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+    await user.click(await screen.findByRole("option", { name: "Sonnet 5.5" }));
+    expect(sent).toHaveLength(0);
+  });
+
+  it("reports a switch that could not be sent as refused", async () => {
+    const user = userEvent.setup();
+    const onOutcome = vi.fn();
+    drawer(recorder(new Error("offline")).onCommand, onOutcome);
+    await user.click(screen.getByRole("combobox", { name: "Model" }));
+    await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
+    await waitFor(() => expect(onOutcome).toHaveBeenCalledWith("Refused: offline.", true));
+  });
+});
+
+describe("ModelSelect on a car whose command could not be sent", () => {
+  it("puts the old choice back", async () => {
+    const user = userEvent.setup();
+    const onOutcome = vi.fn();
+    renderPanel(<ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="next" onCommand={recorder(new Error("offline")).onCommand} onOutcome={onOutcome} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
+    await waitFor(() => expect(onOutcome).toHaveBeenCalledWith("Refused: offline.", true));
+    expect(screen.getByRole("combobox")).not.toHaveClass("is-changed");
+  });
+});
+
+describe("ModelSelect on an adapter that cannot take an agent (plan 040, D11)", () => {
+  it("is disabled and says why", () => {
+    render(
+      <ModelSelect plan="005.00" car={car} models={[]} unavailable="pi: no model provider signed in" mode="next" onCommand={recorder().onCommand} />,
+    );
+    const trigger = screen.getByRole("combobox", { name: "Model for staff-reviewer, unavailable: pi: no model provider signed in" });
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveAttribute("title", "pi: no model provider signed in");
+  });
 });

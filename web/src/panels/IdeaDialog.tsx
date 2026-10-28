@@ -6,7 +6,8 @@ import { Frame } from "./dialogs";
 import { useCommand } from "./command";
 import { Feedback } from "./feedback";
 import { MarkdownEditor } from "./MarkdownEditor";
-import { IDEA_DEFAULTS, type IdeaFrontmatter } from "./frontmatter";
+import { chosenPhases, IDEA_DEFAULTS, type IdeaFrontmatter, type PhaseCatalog } from "./frontmatter";
+import { PhaseRows } from "./PhaseRows";
 import { sendKeys, type SendCommand } from "./support";
 import { postInterview, type InterviewQuestion } from "../api/client";
 
@@ -91,13 +92,15 @@ export interface IdeaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCommand: SendCommand;
+  /** The probed adapters and the phases each starts walks, for the per-phase rows; none are drawn without it. */
+  catalog?: PhaseCatalog;
 }
 
 type Decision = { question: string; answer: string };
 
 const SUB = "Write it in Markdown, as much or as little as you like. A short idea becomes one plan; a long one goes to planner, who breaks it into plans for you to check.";
 
-export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
+export function IdeaDialog({ open, onOpenChange, onCommand, catalog }: IdeaDialogProps) {
   const [idea, setIdea] = useState("");
   const [fm, setFm] = useState<IdeaFrontmatter>(IDEA_DEFAULTS);
   const [empty, setEmpty] = useState(false);
@@ -129,8 +132,13 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
   };
   /** @returns whether the plan was created, so a failed last answer can be sent again */
   const create = async (text: string, decisions: Decision[]) => {
-    // Research is only meaningful when the plan starts at research, so the payload never says otherwise.
-    const frontmatter = { ...fm, research: fm.starts === "research" && fm.research };
+    // Research is only meaningful when the plan starts at research, so the payload never says otherwise; phases name
+    // only what was chosen, for phases the plan will walk.
+    const phases = catalog ? chosenPhases(catalog, fm) : {};
+    const frontmatter = {
+      starts: fm.starts, research: fm.starts === "research" && fm.research, frontend: fm.frontend, depth: fm.depth,
+      ...(Object.keys(phases).length > 0 && { phases }),
+    };
     const reply = await command.send(
       { kind: "create_plans", plan: null, agent: null, payload: { idea: text, frontmatter, decisions } },
       "Idea sent. Its plans join this run as they are created.",
@@ -227,6 +235,7 @@ export function IdeaDialog({ open, onOpenChange, onCommand }: IdeaDialogProps) {
       >
         <div className="start-body">
           <FrontmatterForm value={fm} onChange={setFm} />
+          {catalog && <PhaseRows catalog={catalog} value={fm} onChange={setFm} />}
           <MarkdownEditor
             value={idea} onChange={(v) => { setEmpty(false); setIdea(v); if (asking) reset(); }} onSubmit={go} label="Your idea, in Markdown"
             previewLabel="Preview of your idea" invalid={empty} autoFocus height="min(52vh, 460px)"

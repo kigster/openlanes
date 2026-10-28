@@ -694,6 +694,43 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
     end
 
+    context "with an adapter and model chosen for a phase (D12)" do
+      before do
+        send_command("create_plans",
+          idea:        "A tic-tac-toe game",
+          frontmatter: { starts: "building",
+                         phases: { build:        { adapter: "codex", model: "gpt-5-codex" },
+                                   review:       { adapter: "", model: " " },
+                                   verification: { adapter: "claude", model: "" } } })
+        apply
+      end
+
+      let(:spec) { OpenLanes::Plans::Spec.for(created) }
+
+      it "writes the phases chosen, and nothing for a phase left on its default" do
+        expect(spec.phases).to eq("build" => { "adapter" => "codex", "model" => "gpt-5-codex" },
+          "verification" => { "adapter" => "claude" })
+      end
+    end
+
+    it "refuses an adapter Plans::Spec does not know, and creates nothing" do
+      send_command("create_plans", idea: "A tic-tac-toe game", frontmatter: { phases: { build: { adapter: "cobol" } } })
+      aggregate_failures do
+        expect(apply.map(&:reason)).to match([a_string_starting_with("the plan's settings: phases.build.adapter: \"cobol\"")])
+        expect(tree.reload.ordinals.map(&:to_s)).to eq(%w[001.00])
+      end
+    end
+
+    it "refuses phases that are not a mapping" do
+      send_command("create_plans", idea: "A tic-tac-toe game", frontmatter: { phases: "codex everywhere" })
+      expect(apply.map(&:reason)).to eq(["the plan's settings: phases: must be a mapping of phase to adapter, model and effort"])
+    end
+
+    it "refuses a phase that is not a mapping" do
+      send_command("create_plans", idea: "A tic-tac-toe game", frontmatter: { phases: { build: "codex" } })
+      expect(apply.map(&:reason)).to eq(["the plan's settings: phases.build: must be a mapping"])
+    end
+
     it "writes only created: when the command carries no form" do
       send_command("create_plans", idea: "A tic-tac-toe game")
       apply

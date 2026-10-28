@@ -1,10 +1,10 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
-import type { Car as CarData, ModelChoice, Node, Plan, Station, UnackedMail } from "../api/types";
+import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { fmt, statusTip, unackedTip, who } from "./format";
-import { STARTS, keepsRow, rowColors, rowDomId, routeOf } from "./model";
+import { STARTS, keepsRow, modelsOf, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
 export interface CarHandlers {
@@ -18,7 +18,8 @@ export interface CarHandlers {
 interface PlanRowProps extends CarHandlers {
   plan: Plan;
   stations: Station[];
-  models: ModelChoice[];
+  /** Every adapter the snapshot probed; each car's models come from the one it runs on (plan 040, D13). */
+  adapters: AdapterAvailability[];
   /** Set on another machine's plan: no controls, and the meta line names the machine. */
   owner?: Node;
   /** Their rows under ours in the merged board, at 85% opacity. */
@@ -67,7 +68,7 @@ export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
 }
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, models, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
+export function PlanRow({ plan, stations, adapters, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
   const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
@@ -102,7 +103,7 @@ export function PlanRow({ plan, stations, models, owner, faded = false, retiring
             <Car
               plan={plan}
               car={car}
-              models={models}
+              models={modelsOf({ adapters }, car.adapter)}
               open={openCar === car.key}
               onOpen={readOnly ? undefined : onOpenCar}
               modelSlot={readOnly ? undefined : renderModel?.(plan, car)}

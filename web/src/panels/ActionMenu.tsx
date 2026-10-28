@@ -7,6 +7,7 @@ import type { Snapshot } from "../api/types";
 import { useCommand } from "./command";
 import { Feedback } from "./feedback";
 import { IdeaDialog } from "./IdeaDialog";
+import type { PhaseCatalog } from "./frontmatter";
 import { BLOCK_EMOJI, type SendCommand } from "./support";
 
 export interface ActionMenuProps {
@@ -18,6 +19,8 @@ export interface ActionMenuProps {
   /** Controls the idea dialog, so the page can open it from the #start hash. Uncontrolled when omitted. */
   ideaOpen?: boolean;
   onIdeaOpenChange?: (open: boolean) => void;
+  /** What the idea dialog offers per phase (plan 040, D10); no per-phase rows without it. */
+  catalog?: PhaseCatalog;
 }
 
 function Item({ title, sub, onSelect, className = "" }: { title: string; sub?: string; onSelect: (e: Event) => void; className?: string }) {
@@ -29,7 +32,7 @@ function Item({ title, sub, onSelect, className = "" }: { title: string; sub?: s
   );
 }
 
-export function ActionMenu({ backlog, onCommand, note, ideaOpen, onIdeaOpenChange }: ActionMenuProps) {
+export function ActionMenu({ backlog, onCommand, note, ideaOpen, onIdeaOpenChange, catalog }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"main" | "plans">("main");
   const [filter, setFilter] = useState("");
@@ -99,7 +102,7 @@ export function ActionMenu({ backlog, onCommand, note, ideaOpen, onIdeaOpenChang
         </Menu.Portal>
       </Menu.Root>
       <Feedback outcome={command.outcome} announced={command.announced} />
-      <IdeaDialog open={idea} onOpenChange={setIdea} onCommand={onCommand} />
+      <IdeaDialog open={idea} onOpenChange={setIdea} onCommand={onCommand} catalog={catalog} />
     </>
   );
 }

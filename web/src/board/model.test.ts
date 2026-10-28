@@ -1,5 +1,5 @@
 import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
-import { carLook, hasRequest, isFinished, isWorking, keepsRow, lockMark, modelLabel, modelsOf, nodePlanKey, pillState, routeOf, rowColors, STARTS, testRuns, testTabLabel, testTabValue } from "./model";
+import { adapterOf, carLook, hasRequest, isFinished, isWorking, keepsRow, lockMark, modelLabel, modelsOf, nodePlanKey, pillState, routeOf, rowColors, STARTS, testRuns, testTabLabel, testTabValue, unusable } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const stations = sampleBoard().me.stations;
@@ -159,5 +159,32 @@ describe("lockMark", () => {
   it("says a foreign lock is held on its host since the start time", () => {
     const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: true };
     expect(lockMark(samplePlan({ locked }))).toEqual({ mark: "🔑", title: "held on studio-mini since 2026-10-13T09:00:00Z" });
+  });
+});
+
+describe("adapterOf, modelsOf and unusable (plan 040)", () => {
+  const me = sampleBoard().me;
+  const down = { ...me.adapters[0], name: "pi", available: false, reason: "no model provider signed in", models: [] };
+  const unchecked = { ...down, available: null, reason: null };
+
+  it("finds claude when the car names no adapter", () => {
+    expect(adapterOf(me)?.name).toBe("claude");
+  });
+
+  it("finds the adapter a car names, and its models", () => {
+    expect([adapterOf(me, "codex")?.name, modelsOf(me, "codex").length > 0]).toEqual(["codex", true]);
+  });
+
+  it("has no models for an adapter the snapshot does not list", () => {
+    expect(modelsOf(me, "cobol")).toEqual([]);
+  });
+
+  it("says why an adapter is down, and nothing for one that is up or not yet probed", () => {
+    expect([unusable(down), unusable(adapterOf(me)), unusable(unchecked), unusable(undefined)])
+      .toEqual(["pi: no model provider signed in", null, null, null]);
+  });
+
+  it("falls back to a generic reason when the probe gave none", () => {
+    expect(unusable({ ...down, reason: null })).toBe("pi: not available");
   });
 });
