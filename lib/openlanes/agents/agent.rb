@@ -41,7 +41,7 @@ module OpenLanes
     #   @return [Symbol, nil] the state the plan takes when this agent completes
     #     while its partner on the same plan is still running
     # @!attribute [r] adapter
-    #   @return [String] which coding agent runs it: `claude`, `codex`, `pi` or `grok`
+    #   @return [String] which coding agent runs it: `claude`, `codex`, `pi`, `grok` or `gemini`
     # @!attribute [r] phase
     #   @return [String, nil] the word a spec's `phases:` map uses to reach it
     # @!attribute [r] starts

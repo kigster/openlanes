@@ -88,10 +88,13 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - **D19. Tool denial by policy file.** Each invocation writes a TOML policy beside its trace (`decision = "deny"` for each forbidden command prefix, and for `google_web_search` and `web_fetch` unless `network: true`) and passes `--policy`. Capabilities: resumes, enforces tool denial, does not compact.
 - **D20. Its own transcript dialect:** `init` (`session_id`), `message` (assistant deltas), `tool_use`, `tool_result`, `error`, `result` (`stats`).
 - **D21. Probe reads stderr** (Q4): exit 41 is not signed in; an `IneligibleTierError` is "account tier refused". Built against fixtures from its source; a live run waits for an eligible account.
+- **D25. The policy file is named by its content,** in `Dir.tmpdir/openlanes-gemini-policies/`, not beside the trace: `argv` has no trace path, and two agents with one denylist share one file. Outside the repository, like the traces. It also withholds `ask_user`, which waits on a person nobody under `-p` can answer. Checked against the rule schema in gemini's source and parsed as TOML; a `--policy` rule sits in the user tier, above yolo's default-tier allow-all.
+- **D26. The probe is `gemini -p ""` with stdin closed:** it checks the sign-in, then exits 42 for want of input without calling a model. Exit 41 is signed out; `IneligibleTierError` or `Error authenticating:` on stderr is refused even at exit 42. Confirmed on this machine (refused tier, 1.8 s).
+- **D27. Does not compact:** `/compress` under `-p` starts in the background and sends the words to the model. Models are the names gemini 0.51.0 knows, unpriced: it has no command that lists them.
 
 ### Work units
 
-- [ ] `Adapters::Gemini`, registered; argv, policy file, capabilities.
-- [ ] Transcript dialect and fixture.
-- [ ] Probe with the refused-tier reason.
-- [ ] Docs, lint, the full suite, coverage.
+- [x] `Adapters::Gemini`, registered; argv, policy file, capabilities.
+- [x] Transcript dialect and fixture.
+- [x] Probe with the refused-tier reason.
+- [x] Docs, lint, the full suite, coverage.

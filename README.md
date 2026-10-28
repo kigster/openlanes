@@ -127,7 +127,7 @@ This is where you can communicate with the agents if they get stuck. You can als
 
 ## What it is
 
-**OpenLanes®** is an open source software factory written in Ruby. Its agents run on Claude Code by default, through `claude -p`, which skips loading your own configuration, skills and plugins; `codex`, `pi` and `grok` can stand in per phase.
+**OpenLanes®** is an open source software factory written in Ruby. Its agents run on Claude Code by default, through `claude -p`, which skips loading your own configuration, skills and plugins; `codex`, `pi`, `grok` and `gemini` can stand in per phase.
 
 For each feature it creates a folder under `.plans`, and a series of specialized AI agents turn it into a finished feature. The harness opens the pull request, staff-reviewer reviews it, and verifier runs the app through the plan's How to test before you merge.
 
@@ -168,7 +168,7 @@ Requirements:
 | Need                                                           | Why                                                                             |
 | :------------------------------------------------------------- | :------------------------------------------------------------------------------ |
 | Ruby 3 or newer                                                | the gem; this repository is developed on Ruby 4                                 |
-| [`claude`](https://docs.anthropic.com/en/docs/claude-code) CLI | the default agent adapter; `codex`, `pi` and `grok` are optional alternatives per phase |
+| [`claude`](https://docs.anthropic.com/en/docs/claude-code) CLI | the default agent adapter; `codex`, `pi`, `grok` and `gemini` are optional alternatives per phase |
 | `git`                                                          | one worktree and branch per plan (`--isolation shared` needs no git)            |
 | [`gh`](https://cli.github.com/), signed in                     | pushing branches, opening pull requests, `resync prs`                           |
 | Redis                                                          | the control room (`start`, `web`); `run` falls back to headless without it      |

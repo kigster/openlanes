@@ -24,7 +24,7 @@ project: Demo App         # heading for INDEX.md; default: the root's directory 
 starts: research          # default for `openlanes create`: research | planning | building
 frontend: false           # a spec's `frontend:` when spec.md says nothing; omit to let each plan decide
 jobs: 4                   # how many plans `openlanes run` works on at once
-adapter: codex            # claude (default) | codex | pi | grok: the coding agent for every agent that names none
+adapter: codex            # claude (default) | codex | pi | grok | gemini: the coding agent for every agent that names none
 redis_url: redis://localhost:6379/0   # the Redis the live run shares
 commands:                 # option defaults for any command, by the name you type it as
   run:
@@ -51,7 +51,7 @@ frontend: false      # true forces frontend-coder; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
   build:             # build, frontend, review, unblock
-    adapter: codex   # claude | codex | pi | grok; default: the agent's own, then .openlanes.yml adapter:, then claude
+    adapter: codex   # claude | codex | pi | grok | gemini; default: the agent's own, then .openlanes.yml adapter:, then claude
     model: gpt-5-codex
     effort: medium   # low | medium | high | xhigh | max
   review: { model: opus }
@@ -72,9 +72,9 @@ how-to-verify:                # the commands or checks that show it
 
 Model and effort precedence, highest first: `run --model` (model only), `phases.<phase>`, `depth` (effort only), the agent's own frontmatter. The adapter has the last word: a Claude agent asked for anything above Opus runs on Opus.
 
-Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). An agent confined to its own files, such as `spec-keeper`, runs only on claude: codex, pi and grok cannot hold it there, so it is refused on them rather than run unconfined. Grok does refuse the forbidden commands itself (`--deny`), and runs without web search unless the agent declares `network: true`. Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
+Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). An agent confined to its own files, such as `spec-keeper`, runs only on claude: codex, pi, grok and gemini cannot hold it there, so it is refused on them rather than run unconfined. Grok and gemini do refuse the forbidden commands themselves (grok through `--deny`, gemini through a policy file passed with `--policy`), and both run without web search or fetch unless the agent declares `network: true`. Gemini has no effort flag, so a phase's `effort:` does not reach it. Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
 
-Whether each adapter can take an agent on this machine is probed, never assumed: installed (on `PATH`), signed in, and with a model to run (`claude auth status`, `codex login status`, `pi --list-models`, `grok models`; local commands, no prompt). The engine and the page each probe at start and every 15 minutes, one at a time per machine, and share the answer through Redis, and every snapshot the page reads carries it, the reason included. `openlanes agents list` probes there and then and prints an Adapters table under the roster: available or why not, what it can do, how many models it offers.
+Whether each adapter can take an agent on this machine is probed, never assumed: installed (on `PATH`), signed in, and with a model to run (`claude auth status`, `codex login status`, `pi --list-models`, `grok models`, `gemini -p ""` with nothing on stdin, which checks the sign-in and exits for want of input; no prompt reaches a model). The engine and the page each probe at start and every 15 minutes, one at a time per machine, and share the answer through Redis, and every snapshot the page reads carries it, the reason included. `openlanes agents list` probes there and then and prints an Adapters table under the roster: available or why not, what it can do, how many models it offers.
 
 The control room's New idea dialog sets `phases.<phase>.adapter` and `.model` without editing YAML: one row per phase the plan will walk from its Starts, each with an adapter and a model select. Agent's default writes nothing. An adapter that cannot take an agent on this machine is listed disabled, with the reason. A car's model picker lists the models of the adapter that car runs on, and is disabled, with the reason, when that adapter is down.
 
@@ -191,7 +191,7 @@ The log is never rotated or capped. For a long-running `start`, rotate it extern
 
 ### Resuming an agent's session
 
-An agent's next round resumes the session its last round ran in (`--resume <session id>`) when all of these hold: it is the same agent, the plan is in the same state that round left it in, and the round runs in the same checkout. Claude and grok resume (`grok -r <session id>`); codex and pi start every round fresh. A plan that moved to another state, or a session the CLI cannot find, also starts fresh. The log says which it chose and why: `resuming session …` or `fresh session: …`.
+An agent's next round resumes the session its last round ran in (`--resume <session id>`) when all of these hold: it is the same agent, the plan is in the same state that round left it in, and the round runs in the same checkout. Claude, grok and gemini resume (`-r <session id>` on both); codex and pi start every round fresh. A plan that moved to another state, or a session the CLI cannot find, also starts fresh. The log says which it chose and why: `resuming session …` or `fresh session: …`.
 
 Every round's session id and checkout are kept in its entry under `stages` in `state.json`, written as soon as the agent's stream names the session. To talk to an agent yourself, in an interactive session that carries on from where it stopped:
 

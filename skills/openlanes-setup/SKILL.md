@@ -16,7 +16,7 @@ Check each, then report every gap at once with its fix. Ask before installing an
 | `command -v openlanes && openlanes version` | `gem install openlanes` |
 | `git rev-parse --show-toplevel` | offer `git init`; without git, `openlanes run` needs `--isolation shared` and opens no pull request |
 | `gh auth status` | `gh auth login`; a "token in GH_TOKEN is invalid" line means `unset GH_TOKEN` and retry |
-| the agents' CLI: `command -v claude`, the default adapter, or `codex` / `pi` / `grok` when the plans' `spec.md` select them per phase | install the CLI the plans use; `openlanes agents list` shows each agent's adapter |
+| the agents' CLI: `command -v claude`, the default adapter, or `codex` / `pi` / `grok` / `gemini` when the plans' `spec.md` select them per phase | install the CLI the plans use; `openlanes agents list` shows each agent's adapter |
 | Redis answers at the URL openlanes will use (order below): `url=$(ruby -ryaml -e 'puts((YAML.safe_load_file(".openlanes.yml") rescue {}).to_h["redis_url"])' 2>/dev/null); redis-cli -u "${url:-${REDIS_URL:-redis://localhost:6379/0}}" ping` | start `redis-server`, or point openlanes at another Redis (below) |
 
 Redis carries the control room, its commands and plan claims. `openlanes start` refuses to run without it (exit 69); `openlanes run` still works, headless, and says so. openlanes looks for it in `--redis-url`, then `redis_url:` in `.openlanes.yml`, then `$REDIS_URL`, then `redis://localhost:6379/0`; `openlanes web` checks `$OPENLANES_REDIS_URL` before all of those but the flag.
