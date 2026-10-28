@@ -142,6 +142,7 @@ classDiagram
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Report : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Execution__Child : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Board : uses

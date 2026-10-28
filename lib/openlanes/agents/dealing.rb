@@ -17,6 +17,10 @@ module OpenLanes
     # Both sit below an agent's own `adapter:` and the plan's `phases.<phase>`
     # in {Profile.resolve}'s precedence.
     #
+    # A reviewer named in +replacing+ failed its round, and runs it again on
+    # the main coding agent (D14 in plan 031). That sits above everything,
+    # because the adapter that failed it may be the one the plan asked for.
+    #
     # @example
     #   dealing = Dealing.new(adapters: %w[claude codex], fallback: "pi")
     #   dealing.adapter_for(registry.find("design-reviewer")) # => "claude"
@@ -32,25 +36,38 @@ module OpenLanes
       # The project's own: `review.adapters` and `adapter:` from `.openlanes.yml`.
       #
       # @param usable [#call]
+      # @param replacing [Array<String>] reviewers running a failed round again
       # @return [OpenLanes::Agents::Dealing]
-      def self.current(usable: ANY)
+      def self.current(usable: ANY, replacing: [])
         config = Config.current
-        new(adapters: config.review_adapters, fallback: config.adapter, usable:)
+        new(adapters: config.review_adapters, fallback: config.adapter, usable:, replacing:)
       end
 
       # @param adapters [Array<String>] `review.adapters`, main one first
       # @param fallback [String, nil] `adapter:`, for everything not dealt
       # @param usable [#call] adapter name → whether the probe left it usable
-      def initialize(adapters: [], fallback: nil, usable: ANY)
+      # @param replacing [Array<String>] reviewers running a failed round again
+      def initialize(adapters: [], fallback: nil, usable: ANY, replacing: [])
         @adapters = adapters
         @fallback = fallback
         @usable = usable
+        @replacing = replacing
       end
 
       # @param agent [OpenLanes::Agents::Agent]
       # @return [String, nil] the adapter dealt to a reviewer, else the
       #   fallback; nil leaves {Adapters::DEFAULT}
       def adapter_for(agent) = dealt(agent) || fallback
+
+      # The main coding agent (I2): `adapter:`, else {Adapters::DEFAULT}.
+      #
+      # @return [String]
+      def main = fallback || Adapters::DEFAULT
+
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [String, nil] {#main} for a reviewer running a failed round
+      #   again, nil for every other agent
+      def replacement_for(agent) = (main if replacing.include?(agent.name))
 
       private
 
@@ -72,6 +89,9 @@ module OpenLanes
 
       # @return [#call]
       attr_reader :usable
+
+      # @return [Array<String>]
+      attr_reader :replacing
     end
   end
 end

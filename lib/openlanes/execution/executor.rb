@@ -506,6 +506,7 @@ module OpenLanes
         @fresh_budget = fresh_budget
         @usable = usable
         @preferred = {}
+        @replacing = Hash.new { |h, k| h[k] = Set.new }
       end
 
       # @return [String]
@@ -521,8 +522,37 @@ module OpenLanes
       # @return [OpenLanes::Agents::Profile]
       def profile_for(agent, subject = nil)
         spec = subject ? Plans::Spec.for(subject) : nil
-        Agents::Profile.resolve(agent, spec:, model: preferred_model(agent, subject) || @model, dealing: Agents::Dealing.current(usable: @usable))
+        replacing = subject ? @replacing.fetch(subject.feature.ordinal.to_s, []).to_a : []
+        Agents::Profile.resolve(agent,
+          spec:,
+          model:   preferred_model(agent, subject) || @model,
+          dealing: Agents::Dealing.current(usable: @usable, replacing:))
       end
+
+      # A reviewer that failed its round runs it again on the main coding
+      # agent (D14 in plan 031), from its next invocation on this plan until
+      # it is let go.
+      #
+      # @param ordinal [#to_s]
+      # @param agent [String] the reviewer's name
+      # @param on [Boolean] false lets it go back to its dealt adapter
+      # @return [void]
+      def replace(ordinal, agent, on: true)
+        names = @replacing[ordinal.to_s]
+        on ? names << agent.to_s : names.delete(agent.to_s)
+      end
+
+      # @param ordinal [#to_s]
+      # @param agent [String]
+      # @return [Boolean] whether the reviewer's run is a replacement
+      def replacing?(ordinal, agent) = @replacing.fetch(ordinal.to_s, []).include?(agent.to_s)
+
+      # A new review round opened, so a replacement owed to the last one is
+      # not owed any more: every reviewer goes back to its dealt adapter.
+      #
+      # @param ordinal [#to_s]
+      # @return [void]
+      def end_replacements(ordinal) = @replacing.delete(ordinal.to_s)
 
       # A model a person chose for one agent on one plan while the run was
       # going (W24), taken from that agent's next invocation. It beats

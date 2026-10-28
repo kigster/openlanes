@@ -1459,6 +1459,75 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         end
       end
 
+      # D14: run again, once, on the main coding agent, whose verdict counts.
+      context "when one of them fails its round" do
+        let(:outcomes) { { "staff-reviewer" => [:silent] } }
+        let(:replacements) { [] }
+        let(:executor) { replaceable(failing) }
+        let(:attempts) { runner_with(executor, agents: three).call }
+
+        # The reviewers' lambda, answering the executor's replacement calls.
+        def replaceable(callable)
+          held = Set.new
+          callable.define_singleton_method(:replace) { |ordinal, name, on: true| on ? held << [ordinal.to_s, name] : held.delete([ordinal.to_s, name]) }
+          callable.define_singleton_method(:replacing?) { |ordinal, name| held.include?([ordinal.to_s, name]) }
+          callable.define_singleton_method(:end_replacements) { |ordinal| held.delete_if { it.first == ordinal.to_s } }
+          callable
+        end
+
+        def failing
+          lambda { |agent, subject, round: 1, **|
+            replacements << agent.name if executor.replacing?(subject.feature.ordinal, agent.name)
+            case outcomes.fetch(agent.name, []).shift
+            when :silent then notes.merge!(agent.name => nil)
+            when :crash then raise "adapter exited 1"
+            when :quit then return OpenLanes::Execution::Executor::Result.new(ok: false, note: "q", killed: :quit, up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+            end
+            reviewers.call(agent, subject, round:).tap { notes.merge!(agent.name => "great") }
+          }
+        end
+
+        def stages_of(name) = OpenLanes::Plans::PlanState.for(path_of("001.00")).stages.select { it["agent"] == name }
+
+        before { [executor, replacements, outcomes] }
+
+        it "runs it again on the main coding agent, and approves on that verdict" do
+          attempts
+          aggregate_failures do
+            expect(replacements).to eq(%w[staff-reviewer])
+            expect(stages_of("staff-reviewer").map { it.values_at("round", "status", "replaced_by") })
+              .to eq([[1, "Interrupted", "claude"], [1, "Completed", nil]])
+            expect(attempts.find { it.agent == "staff-reviewer" && !it.ok }.note).to include("runs again on claude")
+            expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).finished.kind).to eq("approved")
+          end
+        end
+
+        it "runs one that crashed again" do
+          outcomes.replace("security-reviewer" => [:crash])
+          attempts
+          expect(replacements).to eq(%w[security-reviewer])
+        end
+
+        it "does not run it a third time when the replacement fails too, and the plan waits at 👀" do
+          outcomes.replace("staff-reviewer" => %i[silent silent])
+          attempts
+          aggregate_failures do
+            expect(attempts.count { it.agent == "staff-reviewer" }).to eq(2)
+            expect(executor.replacing?("001.00", "staff-reviewer")).to be(false)
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:in_review)
+          end
+        end
+
+        it "does not run one a person stopped again" do
+          outcomes.replace("design-reviewer" => [:quit])
+          attempts
+          aggregate_failures do
+            expect(attempts.count { it.agent == "design-reviewer" }).to eq(1)
+            expect(replacements).to be_empty
+          end
+        end
+      end
+
       context "when the plan starts at building" do
         before do
           spec = File.join(path_of("001.00"), "spec.md")

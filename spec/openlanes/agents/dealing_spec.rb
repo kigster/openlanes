@@ -45,4 +45,20 @@ RSpec.describe OpenLanes::Agents::Dealing do
 
     it("falls back to the project's adapter") { expect(dealt("staff-reviewer")).to eq(%w[pi]) }
   end
+
+  # Plan 031, D14: a failed reviewer runs again on the main coding agent.
+  describe "#replacement_for" do
+    subject(:dealing) { described_class.new(adapters:, fallback:, replacing: %w[security-reviewer]) }
+
+    let(:fallback) { "pi" }
+
+    it("gives a replaced reviewer the project's adapter") { expect(dealing.replacement_for(reviewer("security-reviewer"))).to eq("pi") }
+    it("leaves the others alone") { expect(dealing.replacement_for(reviewer("staff-reviewer"))).to be_nil }
+
+    context "when the project names no adapter" do
+      let(:fallback) { nil }
+
+      it("gives it claude") { expect(dealing.replacement_for(reviewer("security-reviewer"))).to eq("claude") }
+    end
+  end
 end

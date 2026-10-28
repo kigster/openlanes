@@ -83,6 +83,29 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
         expect(executor.profile_for(security, subject_plan).adapter.name).to eq("claude")
       end
     end
+
+    # Plan 031, D14.
+    context "when it is replaced after a failed round" do
+      before { executor.replace(subject_plan.feature.ordinal, "security-reviewer") }
+
+      it "runs it on the main coding agent" do
+        expect(executor.profile_for(security, subject_plan).adapter.name).to eq("claude")
+      end
+
+      it "says so" do
+        expect(executor.replacing?(subject_plan.feature.ordinal, "security-reviewer")).to be(true)
+      end
+
+      it "deals it again once let go" do
+        executor.replace(subject_plan.feature.ordinal, "security-reviewer", on: false)
+        expect(executor.profile_for(security, subject_plan).adapter.name).to eq("codex")
+      end
+
+      it "deals it again once a new review round opens" do
+        executor.end_replacements(subject_plan.feature.ordinal)
+        expect(executor.replacing?(subject_plan.feature.ordinal, "security-reviewer")).to be(false)
+      end
+    end
   end
 
   # Plan 040, PR 4: a phase on grok, played back from a recorded run.

@@ -8,6 +8,7 @@ module OpenLanes
     #
     # Precedence, highest first:
     #
+    #   0. a failed reviewer's replacement     (adapter only, D14 in plan 031)
     #   1. `run --model`                       (model only)
     #   2. spec.md `phases.<phase>`            (adapter, model, effort)
     #   3. spec.md `depth`                     (effort only)
@@ -16,7 +17,7 @@ module OpenLanes
     #   6. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
     #   7. {Adapters::DEFAULT}                 (adapter only)
     #
-    # {Dealing} answers 5 and 6.
+    # {Dealing} answers 0, 5 and 6.
     #
     # The adapter has the last word on the model, because it is the one that
     # knows the ceiling: a Claude agent asked for Fable runs on Opus.
@@ -50,7 +51,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Profile]
       def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current)
         override = spec ? spec.override_for(agent.phase) : {}
-        adapter = Adapters.for(override["adapter"] || agent.adapter || dealing.adapter_for(agent))
+        adapter = Adapters.for(dealing.replacement_for(agent) || override["adapter"] || agent.adapter || dealing.adapter_for(agent))
         # A model named for one CLI means nothing to another, so the agent's
         # own model is kept only on the CLI its frontmatter wrote it for,
         # which is the default one when it names none.
