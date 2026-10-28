@@ -1384,6 +1384,96 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    context "with three reviewers (plan 031)" do
+      let(:reviewers_dir) { File.join(File.dirname(plans_root), "reviewers") }
+      let(:three) { OpenLanes::Agents::Registry.new(dir: reviewers_dir) }
+      let(:notes) { { "staff-reviewer" => "great", "security-reviewer" => "passed", "design-reviewer" => "great" } }
+      let(:attempts) { runner_with(reviewers, agents: three).call }
+
+      def reviewers
+        lambda { |agent, subject, round: 1, **|
+          calls << agent.name
+          note = notes.fetch(agent.name)
+          File.write(File.join(subject.feature.path, "rewrite.md"), "# Rewrite\n\nNothing works.\n") if note == "slop"
+          OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "pull-requests.md"),
+            "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round}#{" (#{note})" if note} ]")
+          OpenLanes::Execution::Executor::Result.new(ok: true, note: "completed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+        }
+      end
+
+      def verdicts = OpenLanes::Plans::PlanState.for(path_of("001.00")).stages.to_h { it.values_at("agent", "verdict") }
+
+      before do
+        # Touched here, on the example's thread: a `let` first read from an
+        # agent's thread waits on the lock `attempts` holds while it runs.
+        [calls, notes, stamp]
+        FileUtils.mkdir_p(reviewers_dir)
+        { "staff-reviewer" => "", "security-reviewer" => "starts: [research, planning]\n",
+          "design-reviewer" => "starts: [research, planning]\n" }.each do |name, starts|
+          File.write(File.join(reviewers_dir, "#{name}.md"),
+            "---\nname: #{name}\nhandles: [ready_for_review, in_review]\nadvances_to: approved\nstarts_as: in_review\n" \
+            "phase: review\nledger: [pull-requests.md]\n#{starts}---\nbody")
+        end
+      end
+
+      it "holds the plan at 👀 until the last reviewer has spoken, then approves it" do
+        aggregate_failures do
+          expect(calls).to be_empty
+          expect(attempts.map(&:agent)).to contain_exactly("staff-reviewer", "security-reviewer", "design-reviewer")
+          expect(attempts.take(2).map(&:note)).to all(include("waiting for"))
+          expect(attempts.last.note).to include("review review-approved", "approved, awaiting merge")
+          expect(verdicts).to eq(notes)
+          expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).finished.kind).to eq("approved")
+        end
+      end
+
+      context "when one of them rejects" do
+        let(:notes) { super().merge("design-reviewer" => "rejected 1/2") }
+
+        it "moves the plan to 🔴 once all three have spoken" do
+          aggregate_failures do
+            expect(attempts.size).to eq(3)
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
+          end
+        end
+      end
+
+      context "when one of them calls it slop" do
+        let(:notes) { super().merge("security-reviewer" => "slop") }
+
+        it "sends the plan to be rewritten" do
+          attempts
+          expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rewrite)
+        end
+      end
+
+      context "when one of them signs no verdict" do
+        let(:notes) { super().merge("staff-reviewer" => nil) }
+
+        it "fails its round, and the plan waits at 👀 for it" do
+          aggregate_failures do
+            expect(attempts.find { it.agent == "staff-reviewer" }).to have_attributes(ok: false, status: "Interrupted")
+            expect(attempts.find { it.agent == "staff-reviewer" }.note).to include("signed no verdict")
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:in_review)
+          end
+        end
+      end
+
+      context "when the plan starts at building" do
+        before do
+          spec = File.join(path_of("001.00"), "spec.md")
+          File.write(spec, "---\nstarts: building\n---\n#{File.read(spec)}")
+        end
+
+        it "is decided by staff-reviewer alone" do
+          aggregate_failures do
+            expect(attempts.map(&:agent)).to eq(%w[staff-reviewer])
+            expect(attempts.first.note).to include("review review-approved")
+          end
+        end
+      end
+    end
+
     it "forgets the approval once an agent starts on the plan again" do
       OpenLanes::Plans::PlanState.for(path_of("001.00")).finish!("approved")
       dispatcher = described_class.new(runner: runner_with(staff_reviewer("rejected 1/2"), agents: agents.only("staff-reviewer")),

@@ -1104,6 +1104,8 @@ module OpenLanes
         # when the last agent in the plan does, however that agent went.
         return false unless lock(ordinal, subject)
 
+        # Once a round, by whichever reviewer opens it: the rest start at 👀.
+        @runner.reviews.started(subject) if from == :ready_for_review && agent.phase.to_s == REVIEW_PHASE && !@runner.dry_run?
         unfinish(subject)
 
         release_owed = true
@@ -1689,7 +1691,14 @@ module OpenLanes
         # finished at 🟡, never reviewed and never published.
         return assessed(job, base, entry.note) if assessor?(agent)
 
-        verdict = verdict_of(entry) if [REVIEW_PHASE, Verification::PHASE].include?(agent.phase.to_s)
+        if agent.phase.to_s == REVIEW_PHASE
+          decision = reviewed(job, subject, entry) or return unvoted(job, base)
+          return base.with(status: "Completed", note: "#{base.note}; #{decision.note}") if decision.pending?
+
+          base = base.with(note: "#{base.note}; #{decision.note}")
+          verdict = decision.target
+        end
+        verdict = verdict_of(entry) if agent.phase.to_s == Verification::PHASE
         return verified(job, base, subject, verdict) if agent.phase.to_s == Verification::PHASE && @runner.verification
 
         partner_running = @running.any? { |j| j.task.subject.feature.ordinal.to_s == ordinal }
@@ -1719,6 +1728,36 @@ module OpenLanes
         handoff = Plans::Ledger.handoff_after(reading, entry)
         attempt = honour(handoff, subject, attempt) if handoff
         attempt
+      end
+
+      # A reviewer's verdict, counted with the rest of its round (plan 031,
+      # D4 to D7). The verdict goes on the reviewer's stage first, so a
+      # restart still counts it; the pull request is labelled only once the
+      # last reviewer has spoken, and only by the engine.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param entry [OpenLanes::Plans::Ledger::Entry]
+      # @return [OpenLanes::Engine::Reviews::Decision, nil] nil when the
+      #   note reports no verdict
+      def reviewed(job, subject, entry)
+        task = job.task
+        reviews = @runner.reviews
+        decision = reviews.decide(subject, task.agent, entry.note.to_s) or return
+
+        stage!(subject, task.agent, task.round, verdict: entry.note.to_s)
+        decision.pending? ? decision : reviews.conclude(subject, decision)
+      end
+
+      # A reviewer signed Completed without a verdict. Moving the plan on
+      # that once took silence for approval; the round fails instead, so the
+      # reviewer runs again while it has rounds left.
+      #
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def unvoted(job, base)
+        task = job.task
+        remember(plan_of(job), task.agent.name, job.state, "Interrupted", task.round)
+        base.with(ok: false, status: "Interrupted", note: "#{base.note}; signed no verdict: great, passed, rejected or slop")
       end
 
       # The agent signed Completed, but what it left does not justify the

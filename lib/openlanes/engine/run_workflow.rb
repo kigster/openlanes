@@ -442,6 +442,7 @@ module OpenLanes
           merging:      merging_for(publisher, worktree),
           arbitration:  arbitration_for(publisher, worktree),
           upkeep:       upkeep_for(publisher, worktree),
+          reviews:      reviews_for(agents, publisher),
           on_board:     on_board_for(live),
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -537,6 +538,17 @@ module OpenLanes
       # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
       def events
         @events ||= @dry_run ? Events::NullSink.new : Events.emitter(root: @root)
+      end
+
+      # A review round's verdicts are counted in every run, and labelled
+      # only where the build was published: a plan never pushed has no pull
+      # request to label, and a dry run changes nothing.
+      #
+      # @param agents [OpenLanes::Agents::Registry]
+      # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @return [OpenLanes::Engine::Reviews]
+      def reviews_for(agents, publisher)
+        Reviews.new(agents:, review: (Vcs::Review.new(github: Vcs.github) unless publisher.nil? || @dry_run))
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs
