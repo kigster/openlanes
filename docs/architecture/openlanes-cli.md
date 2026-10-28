@@ -4,6 +4,8 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters__Probes["OpenLanes::Adapters::Probes"]
+  class OpenLanes__Adapters__Report["OpenLanes::Adapters::Report"]
   class OpenLanes__Apps__Supervisor["OpenLanes::Apps::Supervisor"]
   class OpenLanes__Apps__Supervisor__StartFailed["OpenLanes::Apps::Supervisor::StartFailed"]
   class OpenLanes__CLI__API__Docs["API::Docs"]
@@ -105,6 +107,7 @@ classDiagram
   OpenLanes__CLI__API__Docs ..> OpenLanes__UI : uses
   OpenLanes__CLI__Agents__Describe ..> OpenLanes__Error : uses
   OpenLanes__CLI__Agents__Describe ..|> OpenLanes__UI : includes
+  OpenLanes__CLI__Agents__List ..> OpenLanes__Adapters__Report : uses
   OpenLanes__CLI__Agents__List ..|> OpenLanes__UI : includes
   OpenLanes__CLI__Base ..> OpenLanes__Config : uses
   OpenLanes__CLI__Base ..> OpenLanes__Error : uses
@@ -233,6 +236,7 @@ classDiagram
   OpenLanes__CLI__Uml ..> OpenLanes__Uml__ClassDiagram : uses
   OpenLanes__CLI__Unblock --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Unblock ..> OpenLanes__Lifecycle__UnblockWorkflow : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__CLI__Web --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
