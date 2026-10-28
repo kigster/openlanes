@@ -71,10 +71,11 @@ As built: `Engine::Reviews` owns D4 to D7, and the dispatcher only asks it. A ro
 ### Decisions
 
 - **D14.** A reviewer that crashes, times out or ends without a D1 verdict is run again, once, on the main coding agent with the same prompt; its verdict counts as that reviewer's (V6). The label still waits for every reviewer.
+- **D14a. The replacement beats every other adapter choice**, the plan's `phases.review` included, because the adapter that failed may be the one the plan named. The failed round is handed back, so the replacement runs even with no rounds left; its own failure is an ordinary one. A person's stop (`q`, ctrl-c), a harness kill or discard, and a plan that has left 👀 are not replaced. A replacement owed when a new review round opens is dropped. The failed stage records `replaced_by: <adapter>`; the replacement is a new stage of the same round. A session recorded on another adapter is never resumed.
 
 ### Work units
 
-- [ ] The replacement run, its stage and ledger record; specs; docs, lint, coverage.
+- [x] The replacement run, its stage and ledger record; specs; docs, lint, coverage.
 
 ## PR 6: deploy-assessor beside the reviewers
 
