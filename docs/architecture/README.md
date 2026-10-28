@@ -132,8 +132,8 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Arbitration : 1
   OpenLanes__Live ..> OpenLanes__Engine : 4
   OpenLanes__Live ..> OpenLanes__Execution : 4
-  OpenLanes__Live ..> OpenLanes__Lifecycle : 5
-  OpenLanes__Live ..> OpenLanes__Plans : 18
+  OpenLanes__Live ..> OpenLanes__Lifecycle : 6
+  OpenLanes__Live ..> OpenLanes__Plans : 21
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Plans ..> OpenLanes : 20
   OpenLanes__Plans ..> OpenLanes__Adapters : 1

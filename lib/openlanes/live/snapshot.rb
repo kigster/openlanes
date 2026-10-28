@@ -82,6 +82,7 @@ module OpenLanes
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
           bombs:       bombs(subjects),
           adapters:    adapters,
+          phases:      Phases.wire(@agents),
           autocompact: Adapters::AUTOCOMPACT / 100.0,
           redis_url:   @redis_url && Live.redact(@redis_url),
           log:         @log }
@@ -246,6 +247,7 @@ module OpenLanes
         { key:           row.key,
           agent:         row.agent,
           role:          row.role.to_s,
+          adapter:       adapter_for(row.model)&.name,
           round:         row.round,
           rounds:        row.rounds,
           model:         model_id(row.model),

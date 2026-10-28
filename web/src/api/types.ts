@@ -37,6 +37,7 @@ export type Phase = "calm" | "warned" | "wrap_up" | "stopped" | "expired" | null
 export interface Car {
   key: string; // "<ordinal>/<agent>", the id commands address
   agent: string;
+  adapter: string | null; // the CLI it runs on, "claude", "codex", "pi" (D13); null for one the engine does not know
   role: string;
   round: number;
   rounds: number;
@@ -199,6 +200,12 @@ export interface AdapterAvailability {
   capabilities: AdapterCapabilities;
 }
 
+/** One phase a new plan walks, for the idea dialog's per-phase rows (plan 040, D10). */
+export interface PhaseRow {
+  phase: string; // the word spec.md `phases:` uses: "build", "review", ...
+  toggle: string | null; // the frontmatter key that switches its agent off ("frontend"); null when nothing does
+}
+
 /** Set once the engine has recovered from a Redis outage this run (plan 022); absent or null otherwise. */
 export interface Outage {
   started_at: Iso;
@@ -232,6 +239,7 @@ export interface Snapshot {
   plans: Plan[]; // plans this node is working on
   backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "starts">>; // not complete, not claimed: for "Choose an existing plan"
   adapters: AdapterAvailability[]; // every adapter, in the engine's order (plan 040, D9)
+  phases: Record<"research" | "planning" | "building", PhaseRow[]>; // what a new plan walks from each starts (D10)
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
   redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"
   log: LogLine[]; // the most recent lines, newest last
