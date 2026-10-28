@@ -556,6 +556,10 @@ module OpenLanes
           return created(made.feature, dispatcher)
         end
 
+        settings = idea_frontmatter(command.payload["frontmatter"])
+        problems = Plans::Spec.from(settings).problems
+        raise Refusal, "the plan's settings: #{problems.join("; ")}" unless problems.empty?
+
         path = Lifecycle.create(dir: tree.dir, words: Lifecycle::Creator.topic(idea)).either(
           ->(created) { created },
           ->(problem) { raise Refusal, "could not create the plan: #{problem}" }
@@ -564,7 +568,7 @@ module OpenLanes
         seed = [idea, decisions(command.payload["decisions"]), marker(command)].compact.join("\n\n")
         brief = Lifecycle.brief(path:, title: feature.title, root: File.dirname(tree.dir), seed:)
         brief.write_scaffold!
-        brief.stamp!(idea_frontmatter(command.payload["frontmatter"]))
+        brief.stamp!(settings)
         created(feature, dispatcher)
       end
 
@@ -574,8 +578,8 @@ module OpenLanes
       # on every agent's default model. `auto` means "let the plan decide",
       # which is what leaving the key out already says, and `research` has
       # no key in spec.md to land in, so neither is written. Anything else
-      # is passed through as typed: {Plans::Spec#problems} names a bad
-      # value, the way it does for one typed by hand.
+      # is passed through as typed, and {#create_plans} refuses what
+      # {Plans::Spec#problems} names rather than write it.
       #
       # @param form [Hash, nil] `payload.frontmatter`, as the page sends it
       # @return [Hash{String => Object}] empty when there is nothing to say
@@ -583,11 +587,32 @@ module OpenLanes
         return {} unless form.is_a?(Hash)
 
         form = form.transform_keys(&:to_s)
-        form.slice("starts", "frontend", "depth").each_with_object({}) do |(key, value), out|
+        out = form.slice("starts", "frontend", "depth").each_with_object({}) do |(key, value), kept|
           text = value.to_s.strip
           next if text.empty? || text == "auto"
 
-          out[key] = key == "frontend" && %w[true false].include?(text) ? text == "true" : text
+          kept[key] = key == "frontend" && %w[true false].include?(text) ? text == "true" : text
+        end
+        phases = phase_choices(form["phases"])
+        phases.nil? || phases.empty? ? out : out.merge("phases" => phases)
+      end
+
+      # The dialog's per-phase rows (plan 040, D12): a phase left on its
+      # agents' default sends blanks, which write nothing, so spec.md names
+      # only what a person chose.
+      #
+      # @param rows [Hash, Object, nil] `frontmatter.phases`: phase to
+      #   `adapter` and `model`
+      # @return [Hash{String => Hash}, Object, nil] what is not a mapping,
+      #   as sent, for {Plans::Spec} to name
+      def phase_choices(rows)
+        return rows unless rows.is_a?(Hash)
+
+        rows.each_with_object({}) do |(phase, choice), out|
+          next out[phase.to_s] = choice unless choice.is_a?(Hash)
+
+          kept = choice.transform_keys(&:to_s).transform_values { it.to_s.strip }.reject { |_, v| v.empty? }
+          out[phase.to_s] = kept unless kept.empty?
         end
       end
 
