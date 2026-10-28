@@ -9,7 +9,7 @@ import { Board, MachineBoard } from "./board/Board";
 import { ChatRoom, MachineMenu } from "./chat";
 import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
-import { isWorking, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
+import { isWorking, modelsOf, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
 import { useLifecycle } from "./board/useLifecycle";
 import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
@@ -96,6 +96,8 @@ function Tab({ value, ...rest }: ComponentProps<typeof Tabs.Trigger>) {
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
   const { me, others } = board;
+  // Claude's models: every car on this node is drawn against them until plan 040's PR 3 lets a car name its adapter.
+  const models = modelsOf(me);
   const { announce } = useAnnounce();
   const reduced = useReducedMotion() ?? false;
   const layoutRef = useRef<HTMLElement | null>(null);
@@ -200,8 +202,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   );
 
   const renderModel = useCallback(
-    (plan: Plan, car: Car) => <ModelSelect plan={plan.ordinal} car={car} models={me.models} mode="next" onCommand={onCommand} />,
-    [me.models, onCommand],
+    (plan: Plan, car: Car) => <ModelSelect plan={plan.ordinal} car={car} models={models} mode="next" onCommand={onCommand} />,
+    [models, onCommand],
   );
 
   // Stop All Local counts agents that are still at it: a done or failed car lingers on the board but has nothing to stop.
@@ -317,7 +319,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             </Tabs.Content>
           ))}
           {drawer && drawerCar ? (
-            <AgentDrawer plan={drawer} car={drawerCar} models={me.models} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
+            <AgentDrawer plan={drawer} car={drawerCar} models={models} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
             <NeedsYou plans={me.plans} onCommand={onCommand} />
           )}
@@ -340,7 +342,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onOpenMachine={id => setTab(machineTab(id))}
         onDropGone={life.dropFromBar}
       />
-      <Copilot onCommand={onCommand} models={me.models} />
+      <Copilot onCommand={onCommand} models={models} />
     </ChatRoom>
   );
 }

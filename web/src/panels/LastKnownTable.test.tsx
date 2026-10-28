@@ -5,6 +5,7 @@ import { sampleLastKnown } from "../board/sample";
 import { AgentDrawer } from "./AgentDrawer";
 import { LastKnownTable } from "./LastKnownTable";
 import { carOf, planAt, recorder, renderPanel, snapshot } from "./testing";
+import { modelsOf } from "../board/model";
 
 describe("LastKnownTable", () => {
   it("renders nothing for a plan without resume records", () => {
@@ -46,7 +47,7 @@ describe("LastKnownTable", () => {
   it("shows in the agent drawer for a plan that has records, and not for one without", () => {
     const plan = planAt("005.00");
     const car = carOf(plan, "staff-reviewer");
-    const props = { car, models: snapshot.models, autocompact: snapshot.autocompact, onCommand: recorder().onCommand, onClose: () => {} };
+    const props = { car, models: modelsOf(snapshot), autocompact: snapshot.autocompact, onCommand: recorder().onCommand, onClose: () => {} };
     const { unmount } = renderPanel(<AgentDrawer plan={{ ...plan, last_known: [] }} {...props} />);
     expect(screen.queryByRole("table")).toBeNull();
     unmount();

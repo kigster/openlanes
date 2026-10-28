@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Board, MachineBoard } from "./Board";
 import { PlanRow } from "./PlanRow";
-import { dagBreak, nodePlanKey } from "./model";
+import { dagBreak, modelsOf, nodePlanKey } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const none = new Map<string, unknown>();
@@ -126,7 +126,7 @@ describe("MachineBoard", () => {
 
 describe("PlanRow", () => {
   const stations = sampleBoard().me.stations;
-  const models = sampleBoard().me.models;
+  const models = modelsOf(sampleBoard().me);
 
   it("ends at the PR terminus with approved, merged and other states", () => {
     const { rerender, container } = render(
@@ -180,7 +180,7 @@ describe("PlanRow", () => {
 
 describe("agent tiles", () => {
   const stations = sampleBoard().me.stations;
-  const models = sampleBoard().me.models;
+  const models = modelsOf(sampleBoard().me);
 
   it("shows the agent's name, as the button's name and tooltip too", () => {
     render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "researcher" })] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
@@ -224,7 +224,7 @@ describe("agent tiles", () => {
 
 describe("locked plan", () => {
   const stations = sampleBoard().me.stations;
-  const models = sampleBoard().me.models;
+  const models = modelsOf(sampleBoard().me);
 
   it("shows 🔑 on its car, titled with the holder", () => {
     const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: false };
@@ -251,7 +251,8 @@ describe("locked plan", () => {
 });
 
 describe("running gear", () => {
-  const { stations, models } = sampleBoard().me;
+  const { stations } = sampleBoard().me;
+const models = modelsOf(sampleBoard().me);
   const draw = (plan = samplePlan()) => render(<PlanRow plan={plan} stations={stations} models={models} />).container;
 
   it("spins a gear in a running, unblocked car", () => {

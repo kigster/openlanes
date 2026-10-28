@@ -5,9 +5,10 @@ import type { Car, Plan } from "../api/types";
 import type { AgentAction } from "./AgentActionMenu";
 import { AgentDrawer } from "./AgentDrawer";
 import { carOf, findInline, planAt, question, recorder, renderPanel, snapshot, type Sent } from "./testing";
+import { modelsOf } from "../board/model";
 
 function drawer(plan: Plan, car: Car, onCommand = recorder().onCommand, onClose = vi.fn()) {
-  return renderPanel(<AgentDrawer plan={plan} car={car} models={snapshot.models} autocompact={snapshot.autocompact} onCommand={onCommand} onClose={onClose} />);
+  return renderPanel(<AgentDrawer plan={plan} car={car} models={modelsOf(snapshot)} autocompact={snapshot.autocompact} onCommand={onCommand} onClose={onClose} />);
 }
 // The log starts closed, so reading it means opening it first, the way a person would.
 const transcript = () => {
@@ -263,14 +264,14 @@ describe("AgentDrawer", () => {
     const { rerender } = drawer(plan, carOf(plan, "frontend-coder"));
     await user.click(screen.getByRole("button", { name: /Show log/ }));
     expect(screen.getByRole("button", { name: /Hide log/ })).toBeInTheDocument();
-    rerender(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
+    rerender(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={modelsOf(snapshot)} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
     expect(screen.getByRole("button", { name: /Show log/ })).toHaveAttribute("aria-expanded", "false");
   });
 
   it("starts a fresh transcript for another car", () => {
     const plan = planAt("001.00");
     const { rerender } = drawer(plan, carOf(plan, "frontend-coder"));
-    rerender(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
+    rerender(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={modelsOf(snapshot)} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
     expect(screen.getByRole("heading", { name: "backend-coder" })).toBeInTheDocument();
   });
 });

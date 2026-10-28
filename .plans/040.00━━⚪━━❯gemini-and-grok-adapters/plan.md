@@ -13,11 +13,11 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 
 ### Work units
 
-- [ ] `Config` key `adapter:`: member, parser, `to_yaml`, YARD.
-- [ ] `Registry`/`Agent`: nil when unset; `Profile.resolve` takes the project default.
-- [ ] Callers of `agent.adapter` move to the resolved profile.
-- [ ] Docs: `docs/USAGE.md` (`.openlanes.yml`), `openlanes docs` if it lists config keys, architecture.
-- [ ] Lint, the full suite, and every changed file above 95% coverage.
+- [x] `Config` key `adapter:`: member, parser, `to_yaml`, YARD.
+- [x] `Registry`/`Agent`: nil when unset; `Profile.resolve` takes the project default.
+- [x] Callers of `agent.adapter` move to the resolved profile.
+- [x] Docs: `docs/USAGE.md` (`.openlanes.yml`), `openlanes docs` if it lists config keys, architecture.
+- [x] Lint, the full suite, and every changed file above 95% coverage.
 
 ## PR 2: availability probes
 
@@ -28,19 +28,19 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
   - codex: `codex login status`, exit 0; models from `codex debug models --bundled`.
   - pi: `pi --list-models`; at least one model.
   - Not installed (not on `PATH`) is a reason of its own.
-- **D6. One result per project, in Redis** (Q5). `Live::Keys#adapters` holds the JSON of every adapter's availability, set with an expiry of 20 minutes. Readers only read it.
+- **D6. One result per machine, in Redis** (Q5). Built per machine rather than per project, as `Live::Keys#apps` is: which CLIs are installed and signed in is a fact about the machine, and two machines sharing one Redis would otherwise overwrite each other's answer. `Live::Keys#adapters(machine)` holds the JSON of every adapter's availability, set with an expiry of 20 minutes. Readers only read it.
 - **D7. A probe thread in every process that boots** (`engine`, `web`, `run`). Every 15 minutes (Q3), and at boot, it takes `Live::Keys#adapters_lock` with `SET NX EX 60`; the winner probes every adapter and writes D6. A loser does nothing. With Redis unreachable (its outage mode), the process probes for itself and keeps the result in memory.
 - **D8. `openlanes agents`** adds an Adapters table: name, available or the reason, capabilities (compacts, resumes, enforces tool denial), model count.
 - **D9. The snapshot carries `adapters`** (D5 per adapter, models as `Model#wire`) in place of the claude-only `models`, so the page can draw every adapter's models (Q6).
 
 ### Work units
 
-- [ ] `Adapters::Availability`, `Base#probe` and the three probes, with a `Runner` seam so specs never start a CLI.
-- [ ] `Adapters::Probes`: the thread, the Redis lock and key, the in-memory fallback; a row in `docs/thread-safety.md`.
-- [ ] Booted from `engine`, `web` and `run`, never blocking startup.
-- [ ] `openlanes agents` Adapters table.
-- [ ] Snapshot `adapters`; `web/src/api/types.ts`; the demo board.
-- [ ] Docs, lint, the full suite, coverage.
+- [x] `Adapters::Availability`, `Base#probe` and the three probes, with a `Runner` seam so specs never start a CLI.
+- [x] `Adapters::Probes`: the thread, the Redis lock and key, the in-memory fallback; a row in `docs/thread-safety.md`.
+- [x] Booted from `engine`, `web` and `run`, never blocking startup.
+- [x] `openlanes agents` Adapters table.
+- [x] Snapshot `adapters`; `web/src/api/types.ts`; the demo board.
+- [x] Docs, lint, the full suite, coverage.
 
 ## PR 3: choosing the adapter in the control room
 

@@ -24,6 +24,11 @@ module OpenLanes
 
         super
       end
+
+      # The `AdapterCapabilities` of `web/src/api/types.ts`.
+      #
+      # @return [Hash{Symbol => Boolean}]
+      def wire = { compacts:, resumes:, enforces_tool_denial: }
     end
   end
 end

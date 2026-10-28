@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module OpenLanes
   module Adapters
     # `claude -p`, streaming JSON.
@@ -140,6 +142,30 @@ module OpenLanes
         return MODELS.find { |m| m.id.match?(/\Aclaude-#{text}-/) } if LADDER.include?(text)
 
         MODELS.find { |m| m.id == text }
+      end
+
+      private
+
+      # `claude auth status --json`, of which only `loggedIn` is read: the
+      # rest names the account, which has no business in a probe result.
+      #
+      # @param runner [OpenLanes::Adapters::ProbeRunner]
+      # @param at [Time]
+      # @return [OpenLanes::Adapters::Availability]
+      def check(runner, at)
+        result = runner.call("claude", "auth", "status", "--json")
+        return timed_out(result, at) if result.timed_out?
+        return Availability.up(name, models, at) if signed_in?(result.stdout)
+
+        Availability.down(name, "not signed in (run `claude auth login`)", at)
+      end
+
+      # @param json [String]
+      # @return [Boolean]
+      def signed_in?(json)
+        JSON.parse(json)["loggedIn"] == true
+      rescue JSON::ParserError, NoMethodError
+        false
       end
     end
   end

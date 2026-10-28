@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module OpenLanes
   module Adapters
     # `codex exec --json`, inside codex's own workspace-write sandbox.
@@ -37,6 +39,39 @@ module OpenLanes
       # @param effort [String, nil]
       # @return [String, nil]
       def effort(effort) = effort && EFFORT[effort.to_s]
+
+      private
+
+      # `codex login status` exits 1 signed out and 0 signed in. The models
+      # come from the list bundled with the binary, read offline; one codex
+      # marks `hide` is not offered.
+      #
+      # @param runner [OpenLanes::Adapters::ProbeRunner]
+      # @param at [Time]
+      # @return [OpenLanes::Adapters::Availability]
+      def check(runner, at)
+        login = runner.call("codex", "login", "status")
+        return timed_out(login, at) if login.timed_out?
+        return Availability.down(name, "not signed in (run `codex login`)", at) unless login.ok?
+
+        Availability.up(name, listed(runner.call("codex", "debug", "models", "--bundled")), at)
+      end
+
+      # @param result [OpenLanes::Adapters::ProbeRunner::Result]
+      # @return [Array<OpenLanes::Adapters::Model>] empty when the list cannot be read
+      def listed(result)
+        return [] unless result.ok?
+
+        JSON.parse(result.stdout).fetch("models", []).filter_map do |entry|
+          next if entry["visibility"] == "hide" || entry["slug"].to_s.empty?
+
+          Model.new(id: entry["slug"],
+            label: entry["display_name"] || entry["slug"],
+            context: entry["context_window"] || Model::WINDOW)
+        end
+      rescue JSON::ParserError, NoMethodError, TypeError
+        []
+      end
     end
   end
 end

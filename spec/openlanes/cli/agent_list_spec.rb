@@ -19,7 +19,7 @@ RSpec.describe OpenLanes::CLI::Agents::List do
       $stdout, $stderr = original_out, original_err
     end
 
-    expect(strip_ansi(out.string)).to include("unblocker", "spec-writer")
+    expect(strip_ansi(out.string)).to include("unblocker", "spec-writer", "Adapter", "not installed (no `codex` on PATH)")
     expect(err.string).to eq("")
   end
 end

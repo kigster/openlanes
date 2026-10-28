@@ -1,6 +1,6 @@
 // What a plan looks like on the board, derived from the Snapshot alone. Pure functions, so the rules (which stop is
 // skipped, when a row turns green, what a pill says) are tested without rendering anything.
-import type { Car, ModelChoice, Plan, Question, Starts, Station } from "../api/types";
+import type { Car, ModelChoice, Plan, Question, Snapshot, Starts, Station } from "../api/types";
 import { planId } from "./format";
 
 export interface StartsLook {
@@ -90,6 +90,14 @@ export function carLook(plan: Plan, car: Car): CarLook {
 }
 
 export const modelLabel = (models: ModelChoice[], id: string): string => models.find(m => m.id === id)?.label ?? id;
+
+/** One adapter's models, as the snapshot's probe found them; claude's when no name is given, the CLI every car ran on before
+ * plan 040 let a plan choose. [] for an adapter the snapshot does not list, or one that is not available. */
+export const modelsOf = (snapshot: Pick<Snapshot, "adapters">, adapter = "claude"): ModelChoice[] =>
+  snapshot.adapters.find(a => a.name === adapter)?.models ?? NO_MODELS;
+
+// One empty list, so a missing adapter does not hand every render a new array to memoise against.
+const NO_MODELS: ModelChoice[] = [];
 
 export interface PillState {
   cls: string;

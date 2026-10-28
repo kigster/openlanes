@@ -4,7 +4,9 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters__Availability["OpenLanes::Adapters::Availability"]
   class OpenLanes__Adapters__Invocation["OpenLanes::Adapters::Invocation"]
+  class OpenLanes__Adapters__Probes["OpenLanes::Adapters::Probes"]
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
@@ -153,6 +155,7 @@ classDiagram
   OpenLanes__Live__RunRecord ..> OpenLanes__Error : uses
   OpenLanes__Live__RunRecord ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__RunRecord ..> OpenLanes__UI : uses
+  OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses
@@ -166,6 +169,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Session ..> OpenLanes__UI : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Config : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Board : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Extensions : uses

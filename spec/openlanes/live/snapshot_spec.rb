@@ -219,12 +219,44 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(run[:outage]).to eq(outage)
     end
 
-    it "describes the run, the node and the models" do
+    it "describes the run, the node and the adapters" do
       aggregate_failures do
         expect(snapshot[:run]).to include(status: "running", started_at: "2026-10-13T08:59:00Z", agents_working: 3)
         expect(snapshot[:node]).to include(user: "dana", me: true, heartbeat_at: "2026-10-13T09:00:00Z")
-        expect(snapshot[:models].map { it[:id] }).to eq(%w[claude-opus-5-5 claude-opus-5 claude-sonnet-5-5 claude-sonnet-5 claude-haiku-5-5])
+        expect(snapshot[:adapters].map { it[:name] }).to eq(OpenLanes::Adapters.names)
         expect(snapshot[:autocompact]).to eq(0.4)
+      end
+    end
+
+    describe "adapters before any probe has answered" do
+      subject(:claude) { snapshot[:adapters].first }
+
+      it { is_expected.to include(name: "claude", available: nil, reason: nil, checked_at: nil) }
+      it { expect(claude[:models].map { it[:id] }).to eq(%w[claude-opus-5-5 claude-opus-5 claude-sonnet-5-5 claude-sonnet-5 claude-haiku-5-5]) }
+      it { expect(claude[:capabilities]).to eq(compacts: true, resumes: true, enforces_tool_denial: true) }
+    end
+
+    describe "adapters a probe has answered for" do
+      subject(:adapters) do
+        described_class.new(board:,
+          tree:,
+          agents:,
+          node:,
+          repo: keys.repo,
+          project: "openlanes",
+          seq: 1,
+          at:,
+          availability: -> { [OpenLanes::Adapters::Availability.down("codex", "not signed in", at)] }).to_h[:adapters]
+      end
+
+      let(:codex) { adapters.find { it[:name] == "codex" } }
+
+      it "shows the probe's verdict and reason" do
+        expect(codex).to include(available: false, reason: "not signed in", models: [], checked_at: "2026-10-13T09:00:00Z")
+      end
+
+      it "leaves the adapters it did not probe unchecked" do
+        expect(adapters.find { it[:name] == "pi" }).to include(available: nil)
       end
     end
 

@@ -31,8 +31,10 @@ module OpenLanes
       # @param run_state [OpenLanes::Live::RunState]
       # @param description [String, nil]
       # @param clock [Proc] wall time
+      # @param availability [#call] each adapter's latest probe, read once per
+      #   snapshot ({Adapters::Probes#current})
       def initialize(store:, keys:, node:, tree:, agents:, project:, claims: nil, run_state: RunState.new,
-        description: nil, clock: -> { Time.now })
+        description: nil, clock: -> { Time.now }, availability: -> { [] })
         @store = store
         @keys = keys
         @node = node
@@ -43,6 +45,7 @@ module OpenLanes
         @run_state = run_state
         @description = description
         @clock = clock
+        @availability = availability
         @meter = Meter.new
         @log = []
         @log_mutex = Mutex.new
@@ -165,6 +168,7 @@ module OpenLanes
           # run state really live in, and only the store that wrote them knows.
           redis_url:   @store.url,
           outage:      @outage,
+          availability: @availability,
           log:).to_h
       end
 

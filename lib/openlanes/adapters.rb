@@ -83,6 +83,22 @@ module OpenLanes
 
     module_function
 
+    # What every probe runs its commands through unless handed a runner. A
+    # seam, as {Live.choice_judge} is: the suite sets one that starts no CLI,
+    # so no example probes the developer's own `claude`.
+    #
+    # Not memoised: a {ProbeRunner} holds nothing but its `PATH` and timeout,
+    # and one built per probe leaves no lazy write for two threads to race.
+    #
+    # @return [OpenLanes::Adapters::ProbeRunner]
+    def probe_runner = @probe_runner || ProbeRunner.new
+
+    # @param runner [#which, #call, nil] nil puts the real runner back
+    # @return [void]
+    def probe_runner=(runner)
+      @probe_runner = runner
+    end
+
     # @return [Hash{String => Class}]
     def registry = { "claude" => Claude, "codex" => Codex, "pi" => Pi }
 
@@ -108,6 +124,17 @@ module OpenLanes
     # @param name [String, Symbol, nil]
     # @return [Boolean]
     def known?(name) = registry.key?((name || DEFAULT).to_s)
+
+    # Every adapter, probed side by side (D5): each waits on its own CLI,
+    # and one that hangs to its timeout must not add to the others'.
+    #
+    # @param names [Array<String>]
+    # @param runner [OpenLanes::Adapters::ProbeRunner]
+    # @param at [Time] when the probes ran
+    # @return [Array<OpenLanes::Adapters::Availability>] in +names+ order
+    def availability(names: self.names, runner: Adapters.probe_runner, at: Time.now)
+      names.map { |name| Thread.new { self.for(name).probe(runner:, at:) } }.map(&:value)
+    end
 
     # @param level [String, Symbol, nil]
     # @return [Boolean]

@@ -11,6 +11,11 @@ RSpec.describe OpenLanes::Live::Keys do
                 openlanes:github.com/o/n:claim:004.00])
   end
 
+  it "keeps the adapter probes per machine, not per checkout" do
+    machine = keys.node.split(":").first
+    expect([keys.adapters, keys.adapters_lock]).to eq(["#{keys.base}:adapters:#{machine}", "#{keys.base}:adapters:#{machine}:lock"])
+  end
+
   it "keeps the run state in a hash of its own, per node" do
     expect([keys.run, keys.run("x:y")]).to eq(%w[openlanes:github.com/o/n:abc:def:run openlanes:github.com/o/n:x:y:run])
   end

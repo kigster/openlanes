@@ -27,6 +27,38 @@ module OpenLanes
         argv += ["--thinking", invocation.effort] if THINKING.include?(invocation.effort.to_s)
         argv << invocation.prompt
       end
+
+      private
+
+      # `pi --list-models` exits 0 either way: with no provider signed in it
+      # prints a sentence instead of its table. A model is `provider/id`,
+      # the form `--model` accepts.
+      #
+      # @param runner [OpenLanes::Adapters::ProbeRunner]
+      # @param at [Time]
+      # @return [OpenLanes::Adapters::Availability]
+      def check(runner, at)
+        result = runner.call("pi", "--list-models")
+        return timed_out(result, at) if result.timed_out?
+
+        models = listed(result.stdout)
+        return Availability.down(name, "no model provider signed in (run `pi`, then `/login`)", at) if models.empty?
+
+        Availability.up(name, models, at)
+      end
+
+      # @param table [String] a header row starting `provider`, then one row per model
+      # @return [Array<OpenLanes::Adapters::Model>]
+      def listed(table)
+        lines = table.lines.map(&:split)
+        start = lines.index { it.first == "provider" } or return []
+        lines.drop(start + 1).filter_map do |(provider, model)|
+          next unless provider && model
+
+          id = "#{provider}/#{model}"
+          Model.new(id:, label: id)
+        end
+      end
     end
   end
 end

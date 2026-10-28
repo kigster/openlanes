@@ -68,6 +68,18 @@ module OpenLanes
       # @return [String, nil]
       def compact_prompt = capabilities.compact_prompt
 
+      # Whether this CLI can take an agent here and now (D5): installed,
+      # signed in, with a model to run. Local commands only, never a prompt.
+      #
+      # @param runner [OpenLanes::Adapters::ProbeRunner]
+      # @param at [Time] when the probe ran
+      # @return [OpenLanes::Adapters::Availability]
+      def probe(runner: Adapters.probe_runner, at: Time.now)
+        return Availability.down(name, "not installed (no `#{executable}` on PATH)", at) unless runner.which(executable)
+
+        check(runner, at)
+      end
+
       # @return [Boolean] whether an agent on this CLI can be compacted and
       #   carried on in the same session
       def compacts? = capabilities.compacts
@@ -85,6 +97,23 @@ module OpenLanes
       #
       # @return [Boolean]
       def enforces_tool_denial? = capabilities.enforces_tool_denial
+
+      private
+
+      # The installed CLI's own answer to {#probe}. Abstract, like
+      # {#capabilities}: each CLI says "signed in" differently.
+      #
+      # @param runner [OpenLanes::Adapters::ProbeRunner]
+      # @param at [Time]
+      # @return [OpenLanes::Adapters::Availability]
+      def check(runner, at) = raise NotImplementedError, "#{self.class} must probe itself (#{runner.class}, #{at})"
+
+      # A command that never finished, said once for every adapter.
+      #
+      # @param result [OpenLanes::Adapters::ProbeRunner::Result]
+      # @param at [Time]
+      # @return [OpenLanes::Adapters::Availability]
+      def timed_out(result, at) = Availability.down(name, "`#{executable}` did not answer: #{result.stderr}", at)
     end
   end
 end

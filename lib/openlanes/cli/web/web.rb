@@ -56,6 +56,7 @@ module OpenLanes
         keys = keys.with(repo: "demo/#{keys.repo}") if options[:demo]
         demo = OpenLanes::Web.demo(store: stores.current, keys:, node: declared(node, options)).start if options[:demo]
         copilot = demo ? OpenLanes::Web::Demo::COPILOT : copilot_for(root:, tree:, stores:, keys:)
+        probes = probes_for(url, keys:, node:) unless demo
         context = OpenLanes::Web.context(stores:,
           keys:,
           plans_dir: tree.dir,
@@ -68,6 +69,7 @@ module OpenLanes
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
+        probes&.stop
         demo&.stop
         copilot.stop if copilot.respond_to?(:stop)
       end
@@ -132,6 +134,18 @@ module OpenLanes
         end
         warn("#{e.message}\n\nThe demo keeps its board in memory instead: this page only, no other machine.") unless quiet?(options)
         OpenLanes::Web::Stores.shared(Live.memory_store)
+      end
+
+      # The adapter probes (plan 040, D7), on a connection of their own: the
+      # server probes at boot even with no engine running, so the key is
+      # warm when one starts. The demo has no machine to probe for.
+      #
+      # @param url [String]
+      # @param keys [OpenLanes::Live::Keys]
+      # @param node [OpenLanes::Live::Node]
+      # @return [OpenLanes::Adapters::Probes]
+      def probes_for(url, keys:, node:)
+        Adapters::Probes.new(store: Live.store(url), keys:, owner: node.name).start
       end
 
       # copilot, answering in this server (W17). It runs beside the

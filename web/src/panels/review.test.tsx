@@ -12,6 +12,7 @@ import { NeedsYou } from "./NeedsYou";
 import { UnblockWidget } from "./UnblockWidget";
 import { carOf, findInline, planAt, question, recorder, renderPanel, snapshot, typeInEditor, type Sent } from "./testing";
 import { pend, unconfirmed } from "./transcript";
+import { modelsOf } from "../board/model";
 
 /** A command callback whose replies wait until the test lets them go. */
 function deferred() {
@@ -51,7 +52,7 @@ describe("one command at a time (1)", () => {
   it("drops drawer actions and messages sent while one is in flight", async () => {
     const d = deferred();
     const plan = planAt("005.00");
-    renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "staff-reviewer")} models={snapshot.models} autocompact={0.4} onCommand={d.onCommand} onClose={() => {}} />);
+    renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "staff-reviewer")} models={modelsOf(snapshot)} autocompact={0.4} onCommand={d.onCommand} onClose={() => {}} />);
     const box = screen.getByRole("textbox", { name: "Message staff-reviewer" });
     fireEvent.change(box, { target: { value: "hi" } });
     await act(async () => {
@@ -98,7 +99,7 @@ describe("AgentDrawer (3, 4)", () => {
   it("renders the stuck agent's question as Markdown", () => {
     const plan = planAt("001.00");
     plan.questions = [question({ body: "Carry the **checkout path**?\n\n<script>bad()</script>" })];
-    const { container } = renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={snapshot.models} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
+    const { container } = renderPanel(<AgentDrawer plan={plan} car={carOf(plan, "backend-coder")} models={modelsOf(snapshot)} autocompact={0.4} onCommand={recorder().onCommand} onClose={() => {}} />);
     const block = container.querySelector(".d-block")!;
     expect(block.querySelector("strong + *, .ask-text strong")).toHaveTextContent("checkout path");
     expect(block.textContent).not.toContain("**");
@@ -110,7 +111,7 @@ describe("AgentDrawer (3, 4)", () => {
     const user = userEvent.setup();
     const plan = planAt("005.00");
     const car = carOf(plan, "staff-reviewer");
-    const props = { plan, models: snapshot.models, autocompact: 0.4, onCommand: recorder().onCommand, onClose: () => {} };
+    const props = { plan, models: modelsOf(snapshot), autocompact: 0.4, onCommand: recorder().onCommand, onClose: () => {} };
     const { rerender } = renderPanel(<AgentDrawer car={car} {...props} />);
     const box = screen.getByRole("textbox", { name: "Message staff-reviewer" });
     for (let i = 0; i < 2; i++) {
@@ -141,7 +142,7 @@ describe("ModelSelect (5)", () => {
     const user = userEvent.setup();
     const plan = planAt("005.00");
     const car = carOf(plan, "staff-reviewer");
-    const props = { plan: "005.00", models: snapshot.models, mode: "next" as const, onCommand: recorder().onCommand };
+    const props = { plan: "005.00", models: modelsOf(snapshot), mode: "next" as const, onCommand: recorder().onCommand };
     const { rerender } = renderPanel(<ModelSelect car={car} {...props} />);
     await user.click(screen.getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));

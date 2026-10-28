@@ -14,6 +14,7 @@ import { AnnouncerProvider } from "../panels/feedback";
 import { recorder, snapshot } from "../panels/testing";
 import { Copilot } from "./Copilot";
 import { ANSWER_TIMEOUT_MS, FIXTURE_REPLY, openCopilot } from "./useCopilot";
+import { modelsOf } from "../board/model";
 
 const log = fixtureLog as CopilotLog;
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -60,7 +61,7 @@ function setup({ open = true, store = new AskStore() }: { open?: boolean; store?
       </AsksProvider>
     </QueryClientProvider>
   );
-  const view = render(<Copilot onCommand={onCommand} models={snapshot.models} />, { wrapper });
+  const view = render(<Copilot onCommand={onCommand} models={modelsOf(snapshot)} />, { wrapper });
   // As useBoard applies an `event: copilot`. TanStack notifies on a later tick, so the act waits for it.
   const stream = (turn: CopilotTurn) =>
     act(async () => {
@@ -79,7 +80,7 @@ it("draws the conversation from GET /api/copilot, with the model and tokens in i
   const { container } = setup();
   expect(await within(chat()).findByText("Why has 001 not moved?")).toBeInTheDocument();
   expect(screen.getByRole("dialog", { name: "copilot" })).toHaveAttribute("data-dock", "right");
-  const model = snapshot.models.find(m => m.id === "claude-haiku-4-5")?.label ?? "claude-haiku-4-5";
+  const model = modelsOf(snapshot).find(m => m.id === "claude-haiku-4-5")?.label ?? "claude-haiku-4-5";
   expect(screen.getByText(`Copilot for this run. ${model}, ↑ 13.1k ↓ 530`)).toBeInTheDocument();
   expect(within(chat()).getAllByText("You")).toHaveLength(3);
   expect(await axe(container)).toHaveNoViolations();

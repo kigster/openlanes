@@ -179,7 +179,24 @@ export interface LogLine {
 export interface ModelChoice {
   id: string;
   label: string; // "Sonnet 5.5"
-  rates: { in: number; out: number }; // dollars per million tokens
+  rates: { in: number; out: number } | null; // dollars per million tokens; null for a model nobody has priced
+}
+
+/** What one coding CLI can do, as its adapter declares it. */
+export interface AdapterCapabilities {
+  compacts: boolean;
+  resumes: boolean;
+  enforces_tool_denial: boolean;
+}
+
+/** Whether one coding CLI can take an agent on this node right now, as its probe last found it (plan 040, D5). */
+export interface AdapterAvailability {
+  name: string; // "claude", "codex", "pi"
+  available: boolean | null; // null until the first probe has answered
+  reason: string | null; // why it is not available, for a person; null when it is
+  models: ModelChoice[]; // most capable first; [] when not available
+  checked_at: Iso | null;
+  capabilities: AdapterCapabilities;
 }
 
 /** Set once the engine has recovered from a Redis outage this run (plan 022); absent or null otherwise. */
@@ -214,7 +231,7 @@ export interface Snapshot {
   stations: Station[];
   plans: Plan[]; // plans this node is working on
   backlog: Array<Pick<Plan, "ordinal" | "title" | "status" | "starts">>; // not complete, not claimed: for "Choose an existing plan"
-  models: ModelChoice[];
+  adapters: AdapterAvailability[]; // every adapter, in the engine's order (plan 040, D9)
   autocompact: number; // fraction of the context at which agents compact, 0.4 (W28)
   redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"
   log: LogLine[]; // the most recent lines, newest last

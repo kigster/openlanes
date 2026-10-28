@@ -74,6 +74,8 @@ Model and effort precedence, highest first: `run --model` (model only), `phases.
 
 Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
 
+Whether each adapter can take an agent on this machine is probed, never assumed: installed (on `PATH`), signed in, and with a model to run (`claude auth status`, `codex login status`, `pi --list-models`; local commands, no prompt). The engine and the page each probe at start and every 15 minutes, one at a time per machine, and share the answer through Redis, and every snapshot the page reads carries it, the reason included. `openlanes agents list` probes there and then and prints an Adapters table under the roster: available or why not, what it can do, how many models it offers.
+
 ### Lanes
 
 | Lane    | Route                                            | For                                                                                       |

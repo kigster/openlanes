@@ -23,6 +23,11 @@ RSpec.describe OpenLanes::Live::Session, :tree do
 
     after { session.close }
 
+    it "probes the adapters on attach, and publishes what it found" do
+      Timeout.timeout(5) { sleep 0.01 while session.probes.current.empty? }
+      expect(session.probes.current.map(&:reason)).to all(start_with("not installed"))
+    end
+
     it "publishes each tick's board" do
       expect(OpenLanes::Live.board(store:, keys: session.keys)[:me]["project"]).to eq(File.basename(File.dirname(plans_root)))
     end

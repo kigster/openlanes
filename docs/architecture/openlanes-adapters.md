@@ -4,6 +4,7 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters__Availability["Availability"]
   class OpenLanes__Adapters__Base["Base"]
   class OpenLanes__Adapters__Capabilities["Capabilities"]
   class OpenLanes__Adapters__Claude["Claude"]
@@ -11,16 +12,31 @@ classDiagram
   class OpenLanes__Adapters__Invocation["Invocation"]
   class OpenLanes__Adapters__Model["Model"]
   class OpenLanes__Adapters__Pi["Pi"]
+  class OpenLanes__Adapters__ProbeRunner["ProbeRunner"]
+  class OpenLanes__Adapters__Probes["Probes"]
+  class OpenLanes__Adapters__Report["Report"]
   class OpenLanes__Adapters__Stream["Stream"]
   class OpenLanes__Execution__Transcript["OpenLanes::Execution::Transcript"]
+  class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__UI["OpenLanes::UI"]
+  <<module>> OpenLanes__UI
+  OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Stream : uses
+  OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Claude --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Capabilities : uses
   OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Model : uses
   OpenLanes__Adapters__Claude ..> OpenLanes__Execution__Transcript : uses
+  OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Pi --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Probes ..> OpenLanes__Adapters__Availability : uses
+  OpenLanes__Adapters__Probes ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Adapters__Report ..> OpenLanes__UI : uses
   OpenLanes__Adapters__Stream ..> OpenLanes__Execution__Transcript : uses
 ```
