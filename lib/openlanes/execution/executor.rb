@@ -489,9 +489,11 @@ module OpenLanes
       #   +max_tokens+, leaving out cache reads; what `eval --live` uses
       # @param lean [Boolean] start agents without the operator's personal
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
+      # @param usable [#call] adapter name → whether the startup probe left it
+      #   usable, so a reviewer is never dealt a signed-out CLI (plan 031, D12)
       def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
-        fresh_budget: false)
+        fresh_budget: false, usable: Agents::Dealing::ANY)
         @root = File.expand_path(root)
         @trace_dir = trace_dir
         @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
@@ -502,6 +504,7 @@ module OpenLanes
         @max_tokens = max_tokens
         @lean = lean
         @fresh_budget = fresh_budget
+        @usable = usable
         @preferred = {}
       end
 
@@ -518,7 +521,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Profile]
       def profile_for(agent, subject = nil)
         spec = subject ? Plans::Spec.for(subject) : nil
-        Agents::Profile.resolve(agent, spec:, model: preferred_model(agent, subject) || @model)
+        Agents::Profile.resolve(agent, spec:, model: preferred_model(agent, subject) || @model, dealing: Agents::Dealing.current(usable: @usable))
       end
 
       # A model a person chose for one agent on one plan while the run was

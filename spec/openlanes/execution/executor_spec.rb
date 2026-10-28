@@ -61,6 +61,30 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # Plan 031, D12: review.adapters deals the reviewers, less what the probe found down.
+  describe "dealing the reviewers" do
+    subject(:executor) { described_class.new(root:, spawn:, usable:) }
+
+    let(:usable) { OpenLanes::Agents::Dealing::ANY }
+    let(:security) { agents.find("security-reviewer") }
+
+    around { |example| Dir.chdir(root) { example.run } }
+
+    before { File.write(File.join(root, ".openlanes.yml"), "review:\n  adapters: [claude, codex]\n") }
+
+    it "runs security-reviewer on the second" do
+      expect(executor.profile_for(security, subject_plan).adapter.name).to eq("codex")
+    end
+
+    context "when the probe found the second signed out" do
+      let(:usable) { ->(name) { name != "codex" } }
+
+      it "deals it the first instead" do
+        expect(executor.profile_for(security, subject_plan).adapter.name).to eq("claude")
+      end
+    end
+  end
+
   # Plan 040, PR 4: a phase on grok, played back from a recorded run.
   describe "a phase on grok" do
     let(:writer) { agent.with(phase: "specification") }

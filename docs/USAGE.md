@@ -25,6 +25,8 @@ starts: research          # default for `openlanes create`: research | planning 
 frontend: false           # a spec's `frontend:` when spec.md says nothing; omit to let each plan decide
 jobs: 4                   # how many plans `openlanes run` works on at once
 adapter: codex            # claude (default) | codex | pi | grok | gemini: the coding agent for every agent that names none
+review:
+  adapters: [claude, codex, gemini]  # deal the reviewers across these, main one first; default: adapter:
 redis_url: redis://localhost:6379/0   # the Redis the live run shares
 commands:                 # option defaults for any command, by the name you type it as
   run:
@@ -37,6 +39,7 @@ commands:                 # option defaults for any command, by the name you typ
 - `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
+- `review.adapters` deals `staff-reviewer`, `security-reviewer` and `design-reviewer` to the first, second and third coding agent, wrapping when there are fewer. A coding agent the board's probe found unusable is skipped. A reviewer's own `adapter:` or the plan's `phases.review` still wins.
 
 ## Writing a spec
 
@@ -51,7 +54,7 @@ frontend: false      # true forces frontend-coder; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
   build:             # build, frontend, review, unblock
-    adapter: codex   # claude | codex | pi | grok | gemini; default: the agent's own, then .openlanes.yml adapter:, then claude
+    adapter: codex   # claude | codex | pi | grok | gemini; default: the agent's own, then (reviewers) .openlanes.yml review.adapters, then adapter:, then claude
     model: gpt-5-codex
     effort: medium   # low | medium | high | xhigh | max
   review: { model: opus }
