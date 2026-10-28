@@ -1745,7 +1745,7 @@ module OpenLanes
         reviews = @runner.reviews
         decision = reviews.decide(subject, task.agent, entry.note.to_s) or return
 
-        stage!(subject, task.agent, task.round, verdict: entry.note.to_s)
+        reviews.vote!(subject, task.agent, task.round, entry.note.to_s)
         decision.pending? ? decision : reviews.conclude(subject, decision)
       end
 

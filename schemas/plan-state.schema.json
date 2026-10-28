@@ -82,6 +82,11 @@
             "description": "A reviewer's closing note, counted with the rest of its review round once the last reviewer has spoken.",
             "type": "string"
           },
+          "review": {
+            "description": "The plan's moves when this reviewer gave its verdict: the review round the verdict belongs to.",
+            "type": "integer",
+            "minimum": 0
+          },
           "session": {
             "description": "The CLI's session id for this round, as soon as its stream named it. `claude --resume <id>`, run from `cwd`, carries it on by hand.",
             "type": "string"
