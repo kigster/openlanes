@@ -135,10 +135,13 @@ module OpenLanes
 
       # @param value [Object, nil]
       # @param path [String]
-      # @return [String]
+      # Nil when the definition names none, so the project's default can
+      # still apply ({Profile.resolve}).
+      #
+      # @return [String, nil]
       # @raise [OpenLanes::Error]
       def adapter(value, path)
-        return Adapters::DEFAULT if value.nil?
+        return nil if value.nil?
         return value.to_s if Adapters.known?(value)
 
         raise OpenLanes::Error, "#{File.basename(path)}: adapter #{value.inspect} is not one of #{Adapters.names.join(", ")}"

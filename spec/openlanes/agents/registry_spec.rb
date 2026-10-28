@@ -170,8 +170,10 @@ RSpec.describe OpenLanes::Agents::Registry do
     it "reads the adapter, phase, lanes, needs and toggle" do
       frontend_coder = agents.find("frontend-coder")
       expect([frontend_coder.adapter, frontend_coder.phase, frontend_coder.starts, frontend_coder.needs, frontend_coder.toggle])
-        .to eq(["claude", "frontend", %i[research planning], ["plan.md#frontend"], "frontend"])
+        .to eq([nil, "frontend", %i[research planning], ["plan.md#frontend"], "frontend"])
     end
+
+    it("reads an adapter the definition names") { expect(agents.find("verifier").adapter).to eq("claude") }
 
     it "refuses an effort outside the scale" do
       Dir.mktmpdir do |dir|
