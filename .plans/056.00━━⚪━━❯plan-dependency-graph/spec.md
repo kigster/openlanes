@@ -39,6 +39,17 @@ Plans wait on each other, and today the only view of that is `depends_on:` read 
 
 Grouping, which keys are editable, and how a save lands (validated by `Config.parse`, written with `Config#to_yaml`, committed or not) are settled one question at a time and recorded here as S1, S2, ….
 
+- **S0, where the control room runs:** the server, the engine and the web page run once per project, from its main checkout. Started inside a worktree, `openlanes start` changes the process's directory to the main checkout before it boots anything else.
+- **S1, how a save lands:** Save writes `.openlanes.yml` in the main checkout, commits it and pushes it to `main`, in one step, so every worktree created or rebased afterwards gets the new settings. The button says so: **Save, commit and push to main**, and the page states it beside the button. Nothing changed, nothing written. (Replaces an earlier answer that routed the change through a `starts: building` plan.)
+- **S1, constraints for planning:**
+  - `Config.parse` accepts the new values before anything is written; a refused value is shown on its field.
+  - The push is the harness's, not an agent's, so it is declared through `Boundary.sanction` first; otherwise an agent running at that moment is blamed for a moved `origin/main`.
+  - The save refuses, saying why, when the main checkout is not on `main`, when `.openlanes.yml` has uncommitted edits, or when `main` cannot fast-forward to `origin/main`.
+- **S2, layout:** the page mirrors the file, with no invented groups. The top-level scalar keys (`project`, `starts`, `jobs`, …) share the first pane; every top-level section (`merge`, `coverage`, `ci`, `stack`, `app`, `events`, `redis_backoff`, `commands`, …) gets a pane of its own, in the order `Config::KEYS` lists them. Every pane is open on load, so the whole file is visible at once, as in Cursor's settings; a − in a pane's header collapses it and a + opens it again.
+- **S3, every key, with its value:** the point of the page is to show what settings exist. Every key appears with its value, the built-in default where the file is silent, and Save writes the whole file, every key included. The same holds for generating the file: whatever writes a new `.openlanes.yml` (`openlanes init`, `Config#to_yaml`) writes every key with its default. Accepted cost: a project's file pins today's defaults, so a later change to a built-in default does not reach it until someone edits the value.
+- **S4, one schema:** `schemas/openlanes-config.schema.json`, beside `plan-state.schema.json`, holds every key's type, allowed values, default and one line of help. `Config.parse` validates against it, the page renders its fields from it, and the full-file writer reads the defaults from it. The constants in `config.rb` that repeat those facts (`KEYS`, `MERGERS`, `MERGE_KEYS`, …) are derived from the schema or removed.
+- **S5, the `commands:` pane:** built from the dry-cli registry. One sub-pane per command, listing the options that command really declares, with their types and defaults; the `commands` part of the schema is generated from the registry, so a new flag appears on the page without anyone editing the schema.
+
 ## How to tell it's working?
 
 - The nav switches between the three pages without a reload, the URL says which page is open, and a refresh stays on it.
