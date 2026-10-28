@@ -6,8 +6,8 @@ RSpec.describe "The adapters' models" do
 
     it "offers only what may run, most capable first, priced as the pricing page says" do
       expect(adapter.models.map(&:wire).first(2)).to eq([
-                                                          { id: "claude-opus-5-5", label: "Opus 5.5", rates: { in: 4, out: 20 } },
-                                                          { id: "claude-opus-5", label: "Opus 5", rates: { in: 5, out: 25 } }
+                                                          { id: "claude-opus-5-5", label: "Opus 5.5", rates: { in: 4, out: 20 }, context: 200_000 },
+                                                          { id: "claude-opus-5", label: "Opus 5", rates: { in: 5, out: 25 }, context: 200_000 }
                                                         ])
     end
 
