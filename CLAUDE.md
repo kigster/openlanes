@@ -119,7 +119,7 @@ lib/openlanes/
     completion.rb        copies the spec's task-completed-when and how-to-verify into plan.md
   agents/                OpenLanes::Agents — agents/*.md loaded (Registry), one definition (Agent), the report (Roster),
                          Profile (adapter, model, effort for one plan), Routing (lanes, toggles, needs)
-  adapters/              OpenLanes::Adapters — claude, codex, pi: argv and transcript per CLI; Stream reads generic JSONL
+  adapters/              OpenLanes::Adapters — claude, codex, pi, grok: argv and transcript per CLI; Stream reads generic JSONL, Grok::Stream grok's own
   engine/                OpenLanes::Engine — the round loop
     runner.rb            run configuration, until a fixed point
     dispatcher.rb        the tick loop: assign, poll, settle, rename
