@@ -168,6 +168,23 @@ module OpenLanes
       # @return [String]
       def app_commands(machine = node.split(":").first) = "#{apps(machine)}:commands"
 
+      # String: every adapter's {Adapters::Availability} as one JSON array,
+      # `EX` {Adapters::Probes::EXPIRY} (plan 040, D6). One per machine, as
+      # {#apps} is: which CLIs are installed and signed in is a fact about
+      # the machine, and every process on it reads the same answer.
+      #
+      # @param machine [String] a node id, 24 hex digits of `user@host`
+      # @return [String]
+      def adapters(machine = node.split(":").first) = "#{base}:adapters:#{machine}"
+
+      # String: who is probing {#adapters} right now, `SET NX EX`
+      # {Adapters::Probes::LOCK}, so the engine and the server on one
+      # machine do not both start every CLI at once (D7).
+      #
+      # @param machine [String]
+      # @return [String]
+      def adapters_lock(machine = node.split(":").first) = "#{adapters(machine)}:lock"
+
       # String: the node name holding a plan, `SET NX EX`.
       #
       # @param ordinal [#to_s] e.g. "004.00"

@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Board as BoardData, Snapshot, Station } from "../api/types";
 import { PlanRow, type CarHandlers } from "./PlanRow";
 import { lastSeen, who } from "./format";
-import { dagBreak, nodePlanKey } from "./model";
+import { dagBreak, modelsOf, nodePlanKey } from "./model";
 import "./board.css";
 
 /** The station columns: StateMachine::SPINE, each with the agents whose `handles:` names it. */
@@ -76,7 +76,7 @@ export function Board({ board, merged, retiring, gone, theirs = NOTHING, ...cars
       {ours.length === 0 && !merged && <p className="board-empty">No plans in this run yet. Add one from Action.</p>}
       {ours.map((plan, i) => (
         <PlanRow
-          key={plan.ordinal} plan={plan} stations={me.stations} models={me.models} retiring={retiring.has(plan.ordinal)}
+          key={plan.ordinal} plan={plan} stations={me.stations} models={modelsOf(me)} retiring={retiring.has(plan.ordinal)}
           dagBreak={dagBreak(ours, i)} {...cars}
         />
       ))}
@@ -98,7 +98,7 @@ function MachineRows({ their, me, life }: { their: Snapshot; me: Snapshot; life:
       />
       {plans.map((plan, i) => (
         <PlanRow
-          key={plan.ordinal} plan={plan} stations={their.stations} models={their.models} owner={their.node} faded
+          key={plan.ordinal} plan={plan} stations={their.stations} models={modelsOf(their)} owner={their.node} faded
           dagBreak={dagBreak(plans, i)}
           retiring={life.retiring.has(nodePlanKey(their.node.id, plan.ordinal))}
         />
@@ -119,7 +119,7 @@ export function MachineBoard({ their, me, life = NOTHING }: { their: Snapshot; m
       <Inner stations={their.stations}>
         {showing(their, life).map(plan => (
           <PlanRow
-            key={plan.ordinal} plan={plan} stations={their.stations} models={their.models} owner={their.node}
+            key={plan.ordinal} plan={plan} stations={their.stations} models={modelsOf(their)} owner={their.node}
             retiring={life.retiring.has(nodePlanKey(their.node.id, plan.ordinal))}
           />
         ))}

@@ -255,9 +255,12 @@ module OpenLanes
         "#{command.agent} compacted and carries on on #{car["model"]}"
       end
 
+      # Every demo car runs on claude, so its models are the ones offered.
+      #
       # @return [String] the model's full id
       def model!(name)
-        entry = @me["models"].find { [it["id"], it["label"]].include?(name) } or raise Refusal, "claude offers no model #{name}"
+        claude = @me["adapters"].find { it["name"] == Adapters::DEFAULT } || {}
+        entry = Array(claude["models"]).find { [it["id"], it["label"]].include?(name) } or raise Refusal, "claude offers no model #{name}"
         entry["id"]
       end
 

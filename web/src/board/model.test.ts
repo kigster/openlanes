@@ -1,21 +1,5 @@
 import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
-import {
-  STARTS,
-  carLook,
-  hasRequest,
-  isFinished,
-  isWorking,
-  keepsRow,
-  lockMark,
-  nodePlanKey,
-  modelLabel,
-  pillState,
-  routeOf,
-  rowColors,
-  testRuns,
-  testTabLabel,
-  testTabValue,
-} from "./model";
+import { carLook, hasRequest, isFinished, isWorking, keepsRow, lockMark, modelLabel, modelsOf, nodePlanKey, pillState, routeOf, rowColors, STARTS, testRuns, testTabLabel, testTabValue } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const stations = sampleBoard().me.stations;
@@ -143,7 +127,7 @@ describe("predicates and labels", () => {
     expect(hasRequest(samplePlan())).toBe(false);
     expect(isFinished(samplePlan({ pr: samplePr({ state: "approved" }) }))).toBe(true);
     expect(isFinished(samplePlan())).toBe(false);
-    const models = sampleBoard().me.models;
+    const models = modelsOf(sampleBoard().me);
     expect(modelLabel(models, "claude-opus-5-5")).toBe("Opus 5.5");
     expect(modelLabel(models, "mystery")).toBe("mystery");
   });

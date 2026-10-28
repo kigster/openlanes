@@ -3,13 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { ModelSelect } from "./ModelSelect";
 import { carOf, planAt, recorder, renderPanel, snapshot } from "./testing";
+import { modelsOf } from "../board/model";
 
 const plan = planAt("005.00");
 const car = carOf(plan, "staff-reviewer"); // on Sonnet 5.5
 
 describe("ModelSelect on a car", () => {
   it("names itself and passes axe", async () => {
-    const { container } = render(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={recorder().onCommand} />);
+    const { container } = render(<ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="next" onCommand={recorder().onCommand} />);
     expect(screen.getByRole("combobox", { name: "Model for staff-reviewer" })).toHaveTextContent("Sonnet 5.5");
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -18,7 +19,7 @@ describe("ModelSelect on a car", () => {
     const user = userEvent.setup();
     const { sent, onCommand } = recorder();
     const onOutcome = vi.fn();
-    renderPanel(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={onCommand} onOutcome={onOutcome} />);
+    renderPanel(<ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="next" onCommand={onCommand} onOutcome={onOutcome} />);
     await user.click(screen.getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
     await waitFor(() => expect(sent).toEqual([{ kind: "set_model", plan: "005.00", agent: "staff-reviewer", payload: { model: "claude-opus-5-5" } }]));
@@ -31,7 +32,7 @@ describe("ModelSelect on a car", () => {
   it("says Downgrade, and Staying when it goes back", async () => {
     const user = userEvent.setup();
     const onOutcome = vi.fn();
-    renderPanel(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={recorder().onCommand} onOutcome={onOutcome} />);
+    renderPanel(<ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="next" onCommand={recorder().onCommand} onOutcome={onOutcome} />);
     await user.click(screen.getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Haiku 5.5" }));
     await waitFor(() => expect(onOutcome).toHaveBeenLastCalledWith("Downgrade to Haiku 5.5 queued; it applies from the next round.", false));
@@ -44,7 +45,7 @@ describe("ModelSelect on a car", () => {
   it("puts the old choice back when the engine refuses", async () => {
     const user = userEvent.setup();
     const onOutcome = vi.fn();
-    renderPanel(<ModelSelect plan="005.00" car={car} models={snapshot.models} mode="next" onCommand={recorder("refused", "unknown model").onCommand} onOutcome={onOutcome} />);
+    renderPanel(<ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="next" onCommand={recorder("refused", "unknown model").onCommand} onOutcome={onOutcome} />);
     await user.click(screen.getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Opus 5.5" }));
     await waitFor(() => expect(onOutcome).toHaveBeenCalledWith("Refused: unknown model.", true));
@@ -57,7 +58,7 @@ describe("ModelSelect in the drawer", () => {
     const user = userEvent.setup();
     const { sent, onCommand } = recorder("refused", "busy");
     const onOutcome = vi.fn();
-    renderPanel(<><span id="lbl">Model</span><ModelSelect plan="005.00" car={car} models={snapshot.models} mode="now" labelledBy="lbl" onCommand={onCommand} onOutcome={onOutcome} /></>);
+    renderPanel(<><span id="lbl">Model</span><ModelSelect plan="005.00" car={car} models={modelsOf(snapshot)} mode="now" labelledBy="lbl" onCommand={onCommand} onOutcome={onOutcome} /></>);
     await user.click(screen.getByRole("combobox", { name: "Model" }));
     await user.click(await screen.findByRole("option", { name: "Haiku 5.5" }));
     await waitFor(() => expect(onOutcome).toHaveBeenCalledWith("Refused: busy.", true));

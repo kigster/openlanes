@@ -8,7 +8,7 @@ module OpenLanes
     # Built from what already says it: the dispatcher's {Engine::Board} for
     # who is running and what they spent, the `.plans` tree for each plan's
     # state, questions and pull requests, the registry for the stations, the
-    # adapter for the models and their prices. Nothing here is a second copy
+    # adapters' probes for what each CLI offers. Nothing here is a second copy
     # of any of them. `spec/openlanes/live/snapshot_spec.rb` holds the keys
     # to the page's fixture, level by level, so a field renamed on one side
     # fails the other's suite.
@@ -30,7 +30,9 @@ module OpenLanes
       # @param run_state [OpenLanes::Live::RunState]
       # @param meter [OpenLanes::Live::Meter]
       # @param log [Array<Hash>] `LogLine`s, newest last
-      # @param adapter [OpenLanes::Adapters::Base] whose models the page offers
+      # @param availability [#call] the latest {Adapters::Availability} per
+      #   adapter ({Adapters::Probes#current}); an adapter it omits is shown
+      #   unchecked, with its own priced models
       # @param judge [#call, nil] a second opinion on whether a question asks
       #   to choose ({ChoiceJudge}); nil leaves the parser's verdict alone
       # @param redis_url [String, nil] the store the engine itself is using,
@@ -41,7 +43,7 @@ module OpenLanes
       #   snapshot, so an edited `.openlanes.yml` shows on the next one
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
-        adapter: Adapters.for(Adapters::DEFAULT), judge: Live.choice_judge, redis_url: nil,
+        availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections })
         @board = board
         @tree = tree
@@ -57,7 +59,7 @@ module OpenLanes
         @run_state = run_state
         @meter = meter
         @log = log
-        @adapter = adapter
+        @availability = availability
         @judge = judge
         @redis_url = redis_url
         @outage = outage
@@ -79,13 +81,28 @@ module OpenLanes
           plans:       mine,
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
           bombs:       bombs(subjects),
-          models:      @adapter.models.map(&:wire),
+          adapters:    adapters,
           autocompact: Adapters::AUTOCOMPACT / 100.0,
           redis_url:   @redis_url && Live.redact(@redis_url),
           log:         @log }
       end
 
       private
+
+      # ---- adapters ---------------------------------------------------------
+
+      # Every adapter, in {Adapters.names} order, as its probe last found it,
+      # with what it can do (D9): the page draws each adapter's models, and
+      # one that is not available disabled with its reason (Q2).
+      #
+      # @return [Array<Hash>] `AdapterAvailability`s
+      def adapters
+        probed = @availability.call.to_h { [it.name, it] }
+        Adapters.names.map do |name|
+          adapter = Adapters.for(name)
+          (probed[name] || Adapters::Availability.unchecked(adapter)).wire.merge(capabilities: adapter.capabilities.wire)
+        end
+      end
 
       # ---- run --------------------------------------------------------------
 

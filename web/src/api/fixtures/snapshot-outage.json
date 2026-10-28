@@ -398,29 +398,72 @@
       "starts": "planning"
     }
   ],
-  "models": [
+  "adapters": [
     {
-      "id": "claude-opus-5-5",
-      "label": "Opus 5.5",
-      "rates": {
-        "in": 5,
-        "out": 25
+      "name": "claude",
+      "available": true,
+      "reason": null,
+      "models": [
+        {
+          "id": "claude-opus-5-5",
+          "label": "Opus 5.5",
+          "rates": {
+            "in": 5,
+            "out": 25
+          }
+        },
+        {
+          "id": "claude-sonnet-5-5",
+          "label": "Sonnet 5.5",
+          "rates": {
+            "in": 3,
+            "out": 15
+          }
+        },
+        {
+          "id": "claude-haiku-5-5",
+          "label": "Haiku 5.5",
+          "rates": {
+            "in": 1,
+            "out": 5
+          }
+        }
+      ],
+      "checked_at": "2026-10-13T09:00:00Z",
+      "capabilities": {
+        "compacts": true,
+        "resumes": true,
+        "enforces_tool_denial": true
       }
     },
     {
-      "id": "claude-sonnet-5-5",
-      "label": "Sonnet 5.5",
-      "rates": {
-        "in": 3,
-        "out": 15
+      "name": "codex",
+      "available": true,
+      "reason": null,
+      "models": [
+        {
+          "id": "gpt-5.5",
+          "label": "GPT-5.5",
+          "rates": null
+        }
+      ],
+      "checked_at": "2026-10-13T09:00:00Z",
+      "capabilities": {
+        "compacts": false,
+        "resumes": false,
+        "enforces_tool_denial": false
       }
     },
     {
-      "id": "claude-haiku-5-5",
-      "label": "Haiku 5.5",
-      "rates": {
-        "in": 1,
-        "out": 5
+      "name": "pi",
+      "available": false,
+      "reason": "no model provider signed in (run `pi`, then `/login`)",
+      "models": [],
+      "checked_at": "2026-10-13T09:00:00Z",
+      "capabilities": {
+        "compacts": false,
+        "resumes": false,
+        "enforces_tool_denial": false
       }
     }
   ],

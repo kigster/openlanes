@@ -25,6 +25,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | copilot watchdog | `Live::Copilot::Operator` | one copilot child |
 | choice judge | `Live::ChoiceJudge` | its answers cache |
 | app supervisor reader / waiter | `Apps::Supervisor` | statuses and log tails |
+| adapter probes | `Live::Session#attach`, `cli/web` (`Adapters::Probes`) | its own last probe, the adapters key in Redis, one child per probed CLI |
 | signal trap | `cli/web`, `cli/preview start` | `server.stop`, `runner.stop` |
 
 ## Inventory
@@ -52,6 +53,8 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/execution/control.rb` | `@files`, the control files to sweep | `Execution::Control` | agent jobs, poller | `@mutex` | guarded |
 | `lib/openlanes/execution/executor.rb` | `@compaction`, per-run handle state | the run handle | agent job, tick (`compact`, `kill!`) | `@mutex` | guarded |
 | `lib/openlanes/adapters/capabilities.rb` | each adapter's `CAPABILITIES` | the adapter class | any | frozen `Data` | frozen |
+| `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
+| `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |
 | `lib/openlanes/live/event_bus/base.rb` | a bus | its caller | any | frozen; all state lives in the store behind it | frozen |
 | `lib/openlanes/live/chat.rb` | `@pages`, `@unavailable`, the subscriber | `Live::Chat` | web requests, chat thread | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/choice_converter.rb` | the conversion cache | `Live::ChoiceConverter` | unblock, conversions | `@mutex` | guarded |

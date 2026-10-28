@@ -21,11 +21,15 @@ module OpenLanes
       # @param clock [Proc] wall time
       # @param outage [OpenLanes::Live::Outage] what pauses the run while
       #   Redis is gone; a spec hands in one on its own clock
+      # @param runner [OpenLanes::Adapters::ProbeRunner] what the adapter
+      #   probes run their commands through; a spec hands in a fake
       def initialize(store:, root:, tree:, agents:, project: nil, node: Node.current(root:), repo: Repo.for(root),
-        clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit, **Config.current.redis_backoff))
+        clock: -> { Time.now }, outage: Outage.new(store:, limit: Config.current.outage_limit, **Config.current.redis_backoff),
+        runner: Adapters.probe_runner)
         @store = store
         @node = node
         @keys = Keys.new(repo:, node: node.name)
+        @probes = Adapters::Probes.new(store:, keys: @keys, owner: node.name, prober: -> { Adapters.availability(runner:, at: clock.call) })
         @run_state = RunState.new
         @record = RunRecord.new(store:, keys: @keys, run_state: @run_state)
         @outage = outage
@@ -38,7 +42,8 @@ module OpenLanes
           claims: @claims,
           run_state: @run_state,
           project: project || File.basename(root),
-          clock:)
+          clock:,
+          availability: @probes.method(:current))
         @commands = Commands.new(store:,
           keys: @keys,
           node:,
@@ -75,17 +80,22 @@ module OpenLanes
       # @return [OpenLanes::Live::Outage]
       attr_reader :outage
 
+      # @return [OpenLanes::Adapters::Probes]
+      attr_reader :probes
+
       # @return [Proc] the runner's `on_board:`
       def on_board = @publisher.to_proc
 
       # Wire the run in: the run state a previous engine left is taken back
       # on the first tick, commands are applied at the top of each tick, mail
-      # published to Redis is drained into the plans' `state.json`, and the
-      # log is heard from now on.
+      # published to Redis is drained into the plans' `state.json`, the log
+      # is heard from now on, and the adapters are probed on a thread of
+      # their own (D7).
       #
       # @param dispatcher [OpenLanes::Engine::Dispatcher]
       # @return [void]
       def attach(dispatcher)
+        @probes.start
         @publisher.listen
         @publisher.on_lost { |ordinals| dispatcher.fence(ordinals) }
         # First, so a tick that finds Redis gone pauses before anything else
@@ -113,12 +123,13 @@ module OpenLanes
         report
       end
 
-      # The run is over: the run state is written down, claims go back, and
-      # this node's snapshot goes at once rather than when it expires, so
-      # other pages stop showing it.
+      # The run is over: the probes stop, the run state is written down,
+      # claims go back, and this node's snapshot goes at once rather than
+      # when it expires, so other pages stop showing it.
       #
       # @return [void]
       def close
+        @probes.stop
         @record.close
         @publisher.close
         @claims.release_all
