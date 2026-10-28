@@ -8,6 +8,10 @@ module OpenLanes
     # rejection), counted since the last `cap` ruling, so a plan sent back
     # after `go` starts a fresh count.
     #
+    # Reviewers rejecting in one review round are one rejection (plan 031,
+    # D10a): three reviewers on one pull request would otherwise spend the
+    # whole cap in a single round.
+    #
     # A rejection is skipped when an `appeal` ruling after it struck its
     # findings and left none critical: a rejection with nothing left in it
     # is not one. Derived every time, never stored: a count kept beside the
@@ -43,10 +47,23 @@ module OpenLanes
         judges = @agents.all.select { %w[review verification].include?(it.phase.to_s) }
         files = judges.flat_map(&:ledger).uniq
         names = judges.map(&:name)
+        rounds = review_rounds(plan)
         Plans::Ledger.read(plan.feature.path, files).entries
                      .select { names.include?(it.agent) && it.completed? && it.note.to_s.strip.match?(REJECTION) }
-                     .uniq { [it.agent, it.note, it.at.to_i / 60] }
                      .sort_by(&:at)
+                     .uniq { |entry| rounds.fetch([entry.agent, entry.round, entry.note]) { [entry.agent, entry.note, entry.at.to_i / 60] } }
+      end
+
+      # The review round of each reviewer's verdict, from its stage in
+      # `state.json`. A rejection with no such stage (verifier's, or one
+      # signed before verdicts were recorded) is its own round.
+      #
+      # @param plan [OpenLanes::Plans::Subject]
+      # @return [Hash{Array => Array}] [agent, round, note] to [:review, moves]
+      def review_rounds(plan)
+        Plans::PlanState.for(plan.feature.path).stages
+                        .select { it["verdict"] && it["review"] }
+                        .to_h { [[it["agent"], it["round"], it["verdict"]], [:review, it["review"]]] }
       end
 
       # Each fully struck appeal voids the latest rejection before it that
