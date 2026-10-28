@@ -87,13 +87,15 @@ module OpenLanes
       end
 
       # What the page and `openlanes agents` read: the key, else what this
-      # process probed for itself during an outage, else nothing yet.
+      # process probed for itself during an outage, else nothing yet. A key
+      # that does not parse (a bad `checked_at` raises ArgumentError) is
+      # read as no key, rather than raised into the page.
       #
       # @return [Array<OpenLanes::Adapters::Availability>]
       def current
         stored = store.get(key)
         stored ? JSON.parse(stored).map { Availability.from_wire(it) } : memory
-      rescue Live::Unavailable, JSON::ParserError, KeyError
+      rescue Live::Unavailable, JSON::ParserError, KeyError, ArgumentError, TypeError, NoMethodError
         memory
       end
 
