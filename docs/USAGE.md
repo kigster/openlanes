@@ -24,6 +24,7 @@ project: Demo App         # heading for INDEX.md; default: the root's directory 
 starts: research          # default for `openlanes create`: research | planning | building
 frontend: false           # a spec's `frontend:` when spec.md says nothing; omit to let each plan decide
 jobs: 4                   # how many plans `openlanes run` works on at once
+adapter: codex            # claude (default) | codex | pi: the coding agent for every agent that names none
 redis_url: redis://localhost:6379/0   # the Redis the live run shares
 commands:                 # option defaults for any command, by the name you type it as
   run:
@@ -50,7 +51,7 @@ frontend: false      # true forces frontend-coder; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
   build:             # build, frontend, review, unblock
-    adapter: codex   # claude (default) | codex | pi
+    adapter: codex   # claude | codex | pi; default: the agent's own, then .openlanes.yml adapter:, then claude
     model: gpt-5-codex
     effort: medium   # low | medium | high | xhigh | max
   review: { model: opus }
@@ -70,6 +71,8 @@ how-to-verify:                # the commands or checks that show it
 - **`task-completed-when`** and **`how-to-verify`** are copied into `plan.md` under `## Task completed when` and `## How to verify`. After a planner signs, the harness appends whichever section is missing and never touches one that is there. No agent signs `Completed` until the first holds, every agent runs each check in the second, and the reviewer rejects work that fails one.
 
 Model and effort precedence, highest first: `run --model` (model only), `phases.<phase>`, `depth` (effort only), the agent's own frontmatter. The adapter has the last word: a Claude agent asked for anything above Opus runs on Opus.
+
+Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
 
 ### Lanes
 
