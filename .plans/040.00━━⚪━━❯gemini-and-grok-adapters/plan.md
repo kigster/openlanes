@@ -68,9 +68,9 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - **D16. Its own transcript dialect:** `text`, `tool_call` (`toolName`, `rawInput`), `usage`, `end` (`sessionId`, totals), `error`, read by a `Stream` subclass or by widening `Stream`'s shapes, whichever leaves `Stream` simpler.
 - **D17. Probe:** `grok models`; the first line says signed in or not (its exit code does not), and the rest lists the models.
 - **D15, recorded 2026-10-28:** `grok -p "/compact" -r <id>` compacts headless and prints `auto_compact_completed`, so grok compacts. `--deny "Bash(git status*)"` turned the call into a failed tool result, so it enforces tool denial.
-- **D18. Confinement is its own capability:** refusing named commands is not holding an agent to its files. `Capabilities#confines` (claude only) now gates confined agents, which grok, codex and pi refuse rather than run unconfined.
-- **D19. The session id comes from the argv:** grok names its session only in `end`, which an agent stopped for compaction never prints. The transcript reads the `-s`/`-r` id its command was started with (`Base#transcript(argv:)`).
-- **D20. `--disallowed-tools`:** `ask_user_question`, `enter_plan_mode`, `exit_plan_mode` (wait on a person), `scheduler_create` (outlives the run), `send_feedback` (sends to xAI beyond the conversation).
+- **D22. Confinement is its own capability:** refusing named commands is not holding an agent to its files. `Capabilities#confines` (claude only) now gates confined agents, which grok, codex and pi refuse rather than run unconfined.
+- **D23. The session id comes from the argv:** grok names its session only in `end`, which an agent stopped for compaction never prints. The transcript reads the `-s`/`-r` id its command was started with (`Base#transcript(argv:)`).
+- **D24. `--disallowed-tools`:** `ask_user_question`, `enter_plan_mode`, `exit_plan_mode` (wait on a person), `scheduler_create` (outlives the run), `send_feedback` (sends to xAI beyond the conversation).
 
 ### Work units
 
@@ -94,4 +94,4 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - [ ] `Adapters::Gemini`, registered; argv, policy file, capabilities.
 - [ ] Transcript dialect and fixture.
 - [ ] Probe with the refused-tier reason.
-- [x] Docs, lint, the full suite, coverage.
+- [ ] Docs, lint, the full suite, coverage.
