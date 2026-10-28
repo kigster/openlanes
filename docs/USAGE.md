@@ -40,6 +40,7 @@ commands:                 # option defaults for any command, by the name you typ
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
 - `review.adapters` deals `staff-reviewer`, `security-reviewer` and `design-reviewer` to the first, second and third coding agent, wrapping when there are fewer. A coding agent the board's probe found unusable is skipped. A reviewer's own `adapter:` or the plan's `phases.review` still wins.
+- A reviewer that crashes, times out or ends without a verdict runs its round again, once, on the main coding agent (`adapter:`, else claude), and that verdict counts as its own. Its stage in `state.json` records `replaced_by`. A reviewer a person stopped is not replaced.
 
 ## Writing a spec
 

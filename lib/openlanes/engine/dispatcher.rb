@@ -1105,7 +1105,10 @@ module OpenLanes
         return false unless lock(ordinal, subject)
 
         # Once a round, by whichever reviewer opens it: the rest start at 👀.
-        @runner.reviews.started(subject) if from == :ready_for_review && agent.phase.to_s == REVIEW_PHASE && !@runner.dry_run?
+        if from == :ready_for_review && agent.phase.to_s == REVIEW_PHASE && !@runner.dry_run?
+          @runner.reviews.started(subject)
+          end_replacements(ordinal)
+        end
         unfinish(subject)
 
         release_owed = true
@@ -1530,7 +1533,7 @@ module OpenLanes
         return swept(job, base, result) if job.sweep
         return base.with(ok: false, note: "rebase: #{result.message}") if job.rebase && result.is_a?(Exception)
         return base if job.rebase
-        return crashed(job, base, result) if result.is_a?(Exception)
+        return substitute(job, crashed(job, base, result), result) if result.is_a?(Exception)
         return app_did_not_start(job, base, result) if result.is_a?(Verification::AppSession::Failed)
         return base.with(note: result.note) if @runner.dry_run?
 
@@ -1588,7 +1591,66 @@ module OpenLanes
           down:     attempt.down,
           # An agent that ends before the first poll is otherwise never named here.
           **{ session: job.handle&.session }.compact)
-        attempt
+        substitute(job, attempt, result)
+      end
+
+      # A reviewer that crashed, timed out or ended without a verdict runs
+      # its round again, once, on the main coding agent, and that verdict
+      # counts as its own (D14 in plan 031). The round is handed back, so
+      # the replacement runs even when the reviewer had none left; the
+      # replacement's own failure is an ordinary one. A person's stop, the
+      # harness's, and a plan that has left review are not failures to make
+      # up for.
+      #
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @param result [OpenLanes::Execution::Executor::Result, Exception]
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def substitute(job, attempt, result)
+        task = job.task
+        agent = task.agent
+        ordinal = plan_of(job)
+        executor = @runner.executor
+        return attempt unless agent.phase.to_s == REVIEW_PHASE && executor.respond_to?(:replace)
+
+        if executor.replacing?(ordinal, agent.name)
+          executor.replace(ordinal, agent.name, on: false)
+          @models&.delete([ordinal, agent.name])
+          return attempt
+        end
+        return attempt unless replaceable?(job, attempt, result)
+
+        main = Agents::Dealing.current.main
+        executor.replace(ordinal, agent.name)
+        @models&.delete([ordinal, agent.name])
+        resume(ordinal, agent.name)
+        fresh(task)&.then { stage!(it, agent, task.round, replaced_by: main) }
+        UI.log("runs again on #{main}", **task.log_fields)
+        attempt.with(note: "#{attempt.note}; runs again on #{main}")
+      end
+
+      # A new review round opened: a replacement the last one owed is dropped.
+      #
+      # @param ordinal [String]
+      # @return [void]
+      def end_replacements(ordinal)
+        executor = @runner.executor
+        return unless executor.respond_to?(:end_replacements)
+
+        executor.end_replacements(ordinal)
+        @models&.delete_if { |(plan, _), _| plan == ordinal }
+      end
+
+      # @param job [OpenLanes::Engine::Dispatcher::Job]
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @param result [OpenLanes::Execution::Executor::Result, Exception]
+      # @return [Boolean] whether the attempt failed in a way {#substitute} makes up for
+      def replaceable?(job, attempt, result)
+        return false if attempt.ok || attempt.status.to_s.start_with?("Blocked")
+        return false if stopped_for(plan_of(job)) || Execution::Control.interrupted?
+        return false if result.respond_to?(:killed) && %i[key quit].include?(result.killed)
+
+        %i[ready_for_review in_review].include?(fresh(job.task)&.status&.key)
       end
 
       # @param ordinal [String]
@@ -2265,7 +2327,7 @@ module OpenLanes
         end
 
         decision = Plans::PlanState.for(task.subject.feature.path)
-                                   .resumption(agent: task.agent.name, state:, root: task.root)
+                                   .resumption(agent: task.agent.name, state:, root: task.root, adapter: adapter.name)
         UI.log(decision.resume? ? "resuming session #{decision.session}: #{decision.reason}" : "fresh session: #{decision.reason}",
           **task.log_fields)
         decision.session

@@ -70,6 +70,14 @@ RSpec.describe OpenLanes::Agents::Profile do
 
       it("falls back to the project's adapter") { expect(profile.adapter.name).to eq("pi") }
     end
+
+    # Plan 031, D14: the adapter that failed it may be the plan's own choice.
+    context "when it is replaced after a failed round" do
+      let(:dealing) { OpenLanes::Agents::Dealing.new(adapters: %w[claude codex], fallback: "pi", replacing: %w[security-reviewer]) }
+      let(:plan) { spec("phases:\n  review: { adapter: gemini }") }
+
+      it("runs on the project's adapter, ahead of the plan's") { expect(profile.adapter.name).to eq("pi") }
+    end
   end
 
   # Plan 040, D2: frontmatter, then `.openlanes.yml`, then claude.

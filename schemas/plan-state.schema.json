@@ -95,6 +95,10 @@
             "description": "The checkout the round ran in. A claude session is found only from the directory it ran in.",
             "type": "string"
           },
+          "replaced_by": {
+            "description": "A reviewer's round that crashed, timed out or ended without a verdict: the main coding agent it ran again on, once, in its place (D14 in plan 031).",
+            "enum": ["claude", "codex", "pi", "grok", "gemini"]
+          },
           "run": {
             "description": "Deprecated: written by releases before 021.00, read so their crashes still resume. The harness pid and host now live in the run's state file outside the repository.",
             "deprecated": true,

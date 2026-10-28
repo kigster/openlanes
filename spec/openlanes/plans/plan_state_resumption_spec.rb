@@ -51,6 +51,21 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  # Plan 031, D14: a reviewer replaced on the main coding agent.
+  context "when the last round ran on another adapter" do
+    subject(:decision) { state.resumption(agent: "backend-coder", state: "building", root:, adapter: "claude") }
+
+    before { round(1, at: "2026-10-16T10:00:00Z", to: "building", session: "sess-1", cwd: root, adapter: "codex") }
+
+    it "starts fresh, naming the adapter that holds the session" do
+      expect(decision).to have_attributes(session: nil, reason: "session sess-1 ran on codex, not claude")
+    end
+
+    it "writes a document the schema accepts" do
+      expect(schema.validate(JSON.parse(File.read(state.path))).map { |e| e["error"] }).to eq([])
+    end
+  end
+
   context "when the last round moved the plan to another state" do
     before { round(1, at: "2026-10-16T10:00:00Z", to: "reviewing", session: "sess-1", cwd: root) }
 
