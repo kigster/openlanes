@@ -9,6 +9,9 @@ classDiagram
   class OpenLanes__Adapters__Capabilities["Capabilities"]
   class OpenLanes__Adapters__Claude["Claude"]
   class OpenLanes__Adapters__Codex["Codex"]
+  class OpenLanes__Adapters__Gemini["Gemini"]
+  class OpenLanes__Adapters__Gemini__Policy["Gemini::Policy"]
+  class OpenLanes__Adapters__Gemini__Stream["Gemini::Stream"]
   class OpenLanes__Adapters__Grok["Grok"]
   class OpenLanes__Adapters__Grok__Stream["Grok::Stream"]
   class OpenLanes__Adapters__Invocation["Invocation"]
@@ -33,6 +36,14 @@ classDiagram
   OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Availability : uses
+  OpenLanes__Adapters__Gemini --|> OpenLanes__Adapters__Base : inherits
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Gemini__Policy : uses
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Gemini__Stream : uses
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Gemini ..> OpenLanes__Adapters__Stream : uses
+  OpenLanes__Adapters__Gemini__Stream --|> OpenLanes__Adapters__Stream : inherits
   OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Grok --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Capabilities : uses
