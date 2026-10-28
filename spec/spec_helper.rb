@@ -91,6 +91,7 @@ require_relative "support/fake_gh_env"
 require_relative "support/test_redis"
 require_relative "support/port_window"
 require_relative "support/ruby_project"
+require_relative "support/offline_probes"
 
 TestRedis.scrub!
 
