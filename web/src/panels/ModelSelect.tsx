@@ -42,9 +42,9 @@ export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, on
     if (mode === "now") {
       if (to === car.model) return;
       const said = `Switching from ${modelName(models, car.model)} to ${modelName(models, to)}; it runs /compact first.`;
+      // No reply means another send was still in flight, and that one reports for both.
       const reply = await command.send({ kind: "switch_model", plan, agent: car.agent, payload: { model: to } }, said);
-      if (!reply) return;
-      onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
+      if (reply) onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
       return;
     }
     const staying = to === car.model;
@@ -53,9 +53,9 @@ export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, on
     const previous = queued;
     setQueued(staying ? null : to);
     const reply = await command.send({ kind: "set_model", plan, agent: car.agent, payload: { model: to } }, said);
-    if (!reply) { setQueued(previous); return; }
-    if (reply.status === "refused") setQueued(previous);
-    onOutcome?.(reply.status === "refused" ? refusal(reply) : said, reply.status === "refused");
+    const refused = reply?.status === "refused";
+    if (!reply || refused) setQueued(previous);
+    if (reply) onOutcome?.(refused ? refusal(reply) : said, refused);
   };
 
   const changed = mode === "next" && queued !== null;
