@@ -20,6 +20,8 @@ export interface AgentDrawerProps {
   plan: Plan;
   car: Car;
   models: ModelChoice[];
+  /** Why the car's adapter cannot take an agent now; the model picker is disabled and the drawer says why (D11). */
+  unavailable?: string | null;
   /** Fraction of the context at which every agent autocompacts (W28). */
   autocompact: number;
   onCommand: SendCommand;
@@ -79,7 +81,7 @@ function LogToggle({ count, open, controls, onToggle }: { count: number; open: b
   );
 }
 
-export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose }: AgentDrawerProps) {
+export function AgentDrawer({ plan, car, models, unavailable = null, autocompact, onCommand, onClose }: AgentDrawerProps) {
   const ids = { title: useId(), model: useId(), message: useId(), log: useId() };
   const command = useCommand(onCommand);
   const [mine, setMine] = useState<{ key: string; lines: Pending[] }>({ key: car.key, lines: [] });
@@ -152,7 +154,11 @@ export function AgentDrawer({ plan, car, models, autocompact, onCommand, onClose
       </div>
       <div className="d-model">
         <label id={ids.model}>Model</label>
-        <ModelSelect plan={plan.ordinal} car={car} models={models} mode="now" onCommand={onCommand} labelledBy={ids.model} onOutcome={heard} />
+        <ModelSelect
+          plan={plan.ordinal} car={car} models={models} unavailable={unavailable} mode="now" onCommand={onCommand}
+          labelledBy={ids.model} onOutcome={heard}
+        />
+        {unavailable && <p className="drawer-meta">Unavailable: {unavailable}</p>}
         <p className="d-model-help">Switches this agent now, then runs /compact.</p>
       </div>
       <div className="drawer-stats">

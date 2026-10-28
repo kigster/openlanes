@@ -239,7 +239,7 @@ module OpenLanes
       # @return [String]
       def set_model(command) # rubocop:disable Naming/AccessorMethodName -- named for the command kind, as in Live::Commands
         car = car!(command)
-        model = model!(command["model"])
+        model = model!(command["model"], car)
         car["next_model"] = (model unless model == car["model"])
         "#{command.agent} runs on #{model} from its next round"
       end
@@ -249,18 +249,22 @@ module OpenLanes
         car = car!(command)
         raise Refusal, "#{command.car} is not running; use set_model for its next round" unless car["state"] == "running"
 
-        car["model"] = model!(command["model"])
+        car["model"] = model!(command["model"], car)
         # The switch is the model now, so nothing is queued behind it.
         car["next_model"] = nil
         "#{command.agent} compacted and carries on on #{car["model"]}"
       end
 
-      # Every demo car runs on claude, so its models are the ones offered.
+      # A model the car's own adapter offers, as the engine checks it (D13).
       #
+      # @param name [String] an id or a label
+      # @param car [Hash] a `Car`
       # @return [String] the model's full id
-      def model!(name)
-        claude = @me["adapters"].find { it["name"] == Adapters::DEFAULT } || {}
-        entry = Array(claude["models"]).find { [it["id"], it["label"]].include?(name) } or raise Refusal, "claude offers no model #{name}"
+      def model!(name, car)
+        adapter = car["adapter"] || Adapters::DEFAULT
+        offered = @me["adapters"].find { it["name"] == adapter } || {}
+        entry = Array(offered["models"]).find { [it["id"], it["label"]].include?(name) } or
+          raise Refusal, "#{adapter} offers no model #{name}"
         entry["id"]
       end
 

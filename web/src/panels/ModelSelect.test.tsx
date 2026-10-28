@@ -65,3 +65,14 @@ describe("ModelSelect in the drawer", () => {
     expect(sent).toHaveLength(1);
   });
 });
+
+describe("ModelSelect on an adapter that cannot take an agent (plan 040, D11)", () => {
+  it("is disabled and says why", () => {
+    render(
+      <ModelSelect plan="005.00" car={car} models={[]} unavailable="pi: no model provider signed in" mode="next" onCommand={recorder().onCommand} />,
+    );
+    const trigger = screen.getByRole("combobox", { name: "Model for staff-reviewer, unavailable: pi: no model provider signed in" });
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveAttribute("title", "pi: no model provider signed in");
+  });
+});

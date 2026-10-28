@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Board, MachineBoard } from "./Board";
 import { PlanRow } from "./PlanRow";
-import { dagBreak, modelsOf, nodePlanKey } from "./model";
+import { dagBreak, nodePlanKey } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const none = new Map<string, unknown>();
@@ -126,11 +126,11 @@ describe("MachineBoard", () => {
 
 describe("PlanRow", () => {
   const stations = sampleBoard().me.stations;
-  const models = modelsOf(sampleBoard().me);
+  const adapters = sampleBoard().me.adapters;
 
   it("ends at the PR terminus with approved, merged and other states", () => {
     const { rerender, container } = render(
-      <PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "approved", ci: "passing" }) })} stations={stations} models={models} />,
+      <PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "approved", ci: "passing" }) })} stations={stations} adapters={adapters} />,
     );
     const link = screen.getByRole("link", { name: /PR #44/ });
     expect(link).toHaveAttribute("href", "https://github.com/example-org/example-repo/pull/44");
@@ -139,21 +139,21 @@ describe("PlanRow", () => {
     expect(screen.getByText("approved")).toHaveClass("chip-approved");
     expect(container.querySelector(".cars")).toHaveClass("is-late");
 
-    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "merged", ci: "passing" }) })} stations={stations} models={models} />);
+    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "merged", ci: "passing" }) })} stations={stations} adapters={adapters} />);
     expect(screen.getByRole("link", { name: /PR #44/ })).toHaveClass("is-merged");
     expect(screen.queryByText("CI passing")).toBeNull();
     expect(screen.getByText("merged")).toBeInTheDocument();
 
-    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "rejected", ci: "failing" }) })} stations={stations} models={models} />);
+    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "rejected", ci: "failing" }) })} stations={stations} adapters={adapters} />);
     expect(screen.getByText("CI failing")).toBeInTheDocument();
     expect(screen.getByText("rejected")).toBeInTheDocument();
 
-    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "closed", ci: null }) })} stations={stations} models={models} />);
+    rerender(<PlanRow plan={samplePlan({ station: "pr", pr: samplePr({ state: "closed", ci: null }) })} stations={stations} adapters={adapters} />);
     expect(screen.getByText("closed")).toHaveClass("chip");
   });
 
   it("shows cars and the PR under review side by side", () => {
-    render(<PlanRow plan={samplePlan({ station: "in_review", pr: samplePr() })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    render(<PlanRow plan={samplePlan({ station: "in_review", pr: samplePr() })} stations={stations} adapters={adapters} onOpenCar={vi.fn()} />);
     expect(screen.getByText("CI running")).toBeInTheDocument();
     expect(screen.getByText("review-in-progress")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "backend-coder" })).toBeInTheDocument();
@@ -163,14 +163,14 @@ describe("PlanRow", () => {
 
   it("shows an interrupted plan's agents as they are, with nothing to decide", () => {
     render(
-      <PlanRow plan={samplePlan({ interrupted: { agent: "researcher", at: "t", note: "" } })} stations={stations} models={models} />,
+      <PlanRow plan={samplePlan({ interrupted: { agent: "researcher", at: "t", note: "" } })} stations={stations} adapters={adapters} />,
     );
     expect(screen.queryByText("interrupted")).not.toBeInTheDocument();
   });
 
   it("marks a failed car red and a retiring row as leaving", () => {
     const { container } = render(
-      <PlanRow plan={samplePlan({ cars: [sampleCar({ state: "failed", message: "rspec crashed" })] })} stations={stations} models={models} retiring />,
+      <PlanRow plan={samplePlan({ cars: [sampleCar({ state: "failed", message: "rspec crashed" })] })} stations={stations} adapters={adapters} retiring />,
     );
     expect(container.querySelector(".plan")).toHaveClass("is-retiring");
     expect(screen.getByText("failed")).toBeInTheDocument();
@@ -180,24 +180,24 @@ describe("PlanRow", () => {
 
 describe("agent tiles", () => {
   const stations = sampleBoard().me.stations;
-  const models = modelsOf(sampleBoard().me);
+  const adapters = sampleBoard().me.adapters;
 
   it("shows the agent's name, as the button's name and tooltip too", () => {
-    render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "researcher" })] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    render(<PlanRow plan={samplePlan({ cars: [sampleCar({ agent: "researcher" })] })} stations={stations} adapters={adapters} onOpenCar={vi.fn()} />);
     const button = screen.getByRole("button", { name: "researcher" });
     expect(button).toHaveTextContent(/^researcher$/);
     expect(button).toHaveAttribute("title", "researcher");
   });
 
   it("shows the agent's name on a read-only car as well", () => {
-    const { container } = render(<PlanRow plan={samplePlan()} stations={stations} models={models} owner={sampleBoard().others[0].node} />);
+    const { container } = render(<PlanRow plan={samplePlan()} stations={stations} adapters={adapters} owner={sampleBoard().others[0].node} />);
     expect(container.querySelector(".car-agent")).toHaveAttribute("title", "backend-coder");
     expect(container.querySelector(".car-agent")).toHaveTextContent(/^backend-coder$/);
   });
 
   it("draws each running sub-agent as a faded tile beside its parent, and says so once to a screen reader", async () => {
     const car = sampleCar({ agent: "frontend-coder", subagents: ["Explore", "backend-coder"] });
-    const { container } = render(<PlanRow plan={samplePlan({ cars: [car, sampleCar()] })} stations={stations} models={models} onOpenCar={vi.fn()} />);
+    const { container } = render(<PlanRow plan={samplePlan({ cars: [car, sampleCar()] })} stations={stations} adapters={adapters} onOpenCar={vi.fn()} />);
     const groups = container.querySelectorAll(".car-group");
     expect(groups).toHaveLength(2);
     const tiles = groups[0].querySelectorAll<HTMLElement>(".car.is-subagent");
@@ -215,7 +215,7 @@ describe("agent tiles", () => {
     render(
       <PlanRow
         plan={samplePlan({ cars: [sampleCar({ subagents: ["Plan"] }), old as ReturnType<typeof sampleCar>] })}
-        stations={stations} models={models}
+        stations={stations} adapters={adapters}
       />,
     );
     expect(screen.getByText("backend-coder has 1 sub-agent running: Plan")).toBeInTheDocument();
@@ -224,36 +224,36 @@ describe("agent tiles", () => {
 
 describe("locked plan", () => {
   const stations = sampleBoard().me.stations;
-  const models = modelsOf(sampleBoard().me);
+  const adapters = sampleBoard().me.adapters;
 
   it("shows 🔑 on its car, titled with the holder", () => {
     const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: false };
-    render(<PlanRow plan={samplePlan({ locked })} stations={stations} models={models} />);
+    render(<PlanRow plan={samplePlan({ locked })} stations={stations} adapters={adapters} />);
     expect(screen.getByLabelText(/locked by pid 4242 on studio-mini/)).toHaveTextContent("🔑");
   });
 
   it("shows a foreign lock as held on its host, in text", () => {
     const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: true };
-    render(<PlanRow plan={samplePlan({ locked })} stations={stations} models={models} />);
+    render(<PlanRow plan={samplePlan({ locked })} stations={stations} adapters={adapters} />);
     expect(screen.getByText("held on studio-mini since 2026-10-13T09:00:00Z")).toBeInTheDocument();
   });
 
   it("shows no held-on text for a local lock", () => {
     const locked = { pid: 4242, host: "studio-mini", started_at: "2026-10-13T09:00:00Z", foreign: false };
-    render(<PlanRow plan={samplePlan({ locked })} stations={stations} models={models} />);
+    render(<PlanRow plan={samplePlan({ locked })} stations={stations} adapters={adapters} />);
     expect(screen.queryByText(/^held on/)).toBeNull();
   });
 
   it("shows no 🔑 when the plan is unlocked", () => {
-    render(<PlanRow plan={samplePlan({ locked: null })} stations={stations} models={models} />);
+    render(<PlanRow plan={samplePlan({ locked: null })} stations={stations} adapters={adapters} />);
     expect(screen.queryByText("🔑")).toBeNull();
   });
 });
 
 describe("running gear", () => {
   const { stations } = sampleBoard().me;
-const models = modelsOf(sampleBoard().me);
-  const draw = (plan = samplePlan()) => render(<PlanRow plan={plan} stations={stations} models={models} />).container;
+const adapters = sampleBoard().me.adapters;
+  const draw = (plan = samplePlan()) => render(<PlanRow plan={plan} stations={stations} adapters={adapters} />).container;
 
   it("spins a gear in a running, unblocked car", () => {
     const car = draw().querySelector(".car")!;

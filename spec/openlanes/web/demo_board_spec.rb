@@ -230,6 +230,22 @@ RSpec.describe OpenLanes::Web::DemoBoard do
       expect { board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "gpt-9")) }
         .to raise_error(described_class::Refusal, "claude offers no model gpt-9")
     end
+
+    context "with a car on codex (D13)" do
+      before { car("001.00/frontend-coder")["adapter"] = "codex" }
+
+      let(:codex_model) { me["adapters"].find { it["name"] == "codex" }["models"].first["id"] }
+
+      it "offers codex's models" do
+        board.apply(command("switch_model", plan: ordinal, agent: "frontend-coder", model: codex_model))
+        expect(car("001.00/frontend-coder")["model"]).to eq(codex_model)
+      end
+
+      it "refuses claude's" do
+        expect { board.apply(command("set_model", plan: ordinal, agent: "frontend-coder", model: "claude-opus-5-5")) }
+          .to raise_error(described_class::Refusal, "codex offers no model claude-opus-5-5")
+      end
+    end
   end
 
   describe "the lane commands (plan 020.00)" do

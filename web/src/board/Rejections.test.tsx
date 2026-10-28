@@ -2,11 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { PlanRow } from "./PlanRow";
 import { sampleBoard, samplePlan } from "./sample";
-import { modelsOf } from "./model";
 
 const { stations } = sampleBoard().me;
-const models = modelsOf(sampleBoard().me);
-const row = (over: Parameters<typeof samplePlan>[0]) => render(<PlanRow plan={samplePlan(over)} stations={stations} models={models} />);
+const adapters = sampleBoard().me.adapters;
+const row = (over: Parameters<typeof samplePlan>[0]) => render(<PlanRow plan={samplePlan(over)} stations={stations} adapters={adapters} />);
 
 describe("plan row rejections and arbitration", () => {
   it("says rejected N of M from rejections", async () => {

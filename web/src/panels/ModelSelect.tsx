@@ -9,8 +9,11 @@ import { modelName, type SendCommand } from "./support";
 export interface ModelSelectProps {
   plan: string;
   car: Car;
-  /** The adapter's models, most capable first. */
+  /** The models of the adapter the car runs on, most capable first (plan 040, D13). */
   models: ModelChoice[];
+  /** Why that adapter cannot take an agent now ("pi: no model provider signed in"); the picker is disabled and says so
+   * (D11). Null or omitted when it can. */
+  unavailable?: string | null;
   /** "next" queues for the next round (a car); "now" switches it now (the drawer). */
   mode: "next" | "now";
   onCommand: SendCommand;
@@ -20,7 +23,7 @@ export interface ModelSelectProps {
   onOutcome?: (said: string, refused: boolean) => void;
 }
 
-export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, onOutcome }: ModelSelectProps) {
+export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, onOutcome, unavailable = null }: ModelSelectProps) {
   const command = useCommand(onCommand);
   // A queued model shows in bold until the next round picks it up; the snapshot's model is the one running now.
   const [queued, setQueued] = useState<string | null>(null);
@@ -57,12 +60,13 @@ export function ModelSelect({ plan, car, models, mode, onCommand, labelledBy, on
 
   const changed = mode === "next" && queued !== null;
   return (
-    <Select.Root value={value} onValueChange={change} disabled={command.pending}>
+    <Select.Root value={value} onValueChange={change} disabled={command.pending || unavailable !== null}>
       <Select.Trigger
         className={`model-trigger${mode === "now" ? " is-field" : ""}${changed ? " is-changed" : ""}`}
-        aria-label={labelledBy ? undefined : `Model for ${car.agent}${changed ? `, ${modelName(models, value)} from its next round` : ""}`}
+        aria-label={labelledBy ? undefined
+          : `Model for ${car.agent}${changed ? `, ${modelName(models, value)} from its next round` : ""}${unavailable ? `, unavailable: ${unavailable}` : ""}`}
         aria-labelledby={labelledBy}
-        title={mode === "next" ? "Model for its next round" : undefined}
+        title={unavailable ?? (mode === "next" ? "Model for its next round" : undefined)}
       >
         <Select.Value />
         <Select.Icon aria-hidden="true">▾</Select.Icon>
