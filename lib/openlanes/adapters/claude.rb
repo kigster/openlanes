@@ -115,6 +115,7 @@ module OpenLanes
       CAPABILITIES = Capabilities.new(compacts: true,
         resumes: true,
         enforces_tool_denial: true,
+        confines: true,
         compact_prompt: "/compact")
 
       # @return [OpenLanes::Adapters::Capabilities]

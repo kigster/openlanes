@@ -98,6 +98,12 @@ module OpenLanes
       # @return [Boolean]
       def enforces_tool_denial? = capabilities.enforces_tool_denial
 
+      # Whether a {Agents::Agent#confined? confined} agent can run on this
+      # CLI at all: one that cannot hold it to its files is refused it.
+      #
+      # @return [Boolean]
+      def confines? = capabilities.confines
+
       private
 
       # The installed CLI's own answer to {#probe}. Abstract, like

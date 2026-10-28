@@ -583,7 +583,7 @@ module OpenLanes
         end
 
         profile = profile_for(agent, subject)
-        if agent.confined? && !profile.adapter.enforces_tool_denial?
+        if agent.confined? && !profile.adapter.confines?
           return Result.new(ok: false,
             note: "#{agent.name} is confined to #{agent.confined_to.join(", ")}, and #{profile.adapter.executable} cannot enforce that",
             up: 0,
