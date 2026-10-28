@@ -43,12 +43,14 @@ As built: `Engine::Reviews` owns D4 to D7, and the dispatcher only asks it. A ro
 - **D9. Models:** `staff-reviewer` moves to Opus; `security-reviewer` Sonnet; `design-reviewer` Sonnet. 💣 and 🔓 stay `security-reviewer`'s alone.
 - **D10. `Names::PLANNED` empties**, and the registry drift spec holds every name to a file.
 - **D10a. A round's rejections count once** in `Arbitration::Counter`: three reviewers rejecting in one round are one rejection toward `merge.max_rejections`, not three.
+- **D10b. Each reviewer owns its findings.** It writes under `## Findings: <name>` in `pull-requests.md`, so reviewers sharing a checkout never overwrite each other, and numbers its findings from its own first id: F1 for `staff-reviewer`, F101 for `security-reviewer`, F201 for `design-reviewer`. The arbitrator reads `F\d+` and strikes by id, so ids must not collide across reviewers.
+- **D10c. The round a verdict belongs to is recorded with it**: the stage gains `review`, the plan's moves when the verdict was given. A stage's own `moves` is written at settle, after the deciding reviewer has already moved the folder, so it cannot tell the counter which round the last reviewer belonged to.
 
 ### Work units
 
-- [ ] The brief and the prompt hook; the two agent files; `staff-reviewer.md` trimmed to its focus.
-- [ ] `openlanes agents`, `openlanes docs`, architecture regenerated.
-- [ ] Docs, lint, the suite, coverage.
+- [x] The brief and the prompt hook; the two agent files; `staff-reviewer.md` trimmed to its focus.
+- [x] `openlanes agents`, `openlanes docs`, architecture regenerated.
+- [x] Docs, lint, the suite, coverage.
 
 ## PR 4: reviewers dealt across coding agents, and the mark on the dashboard
 
