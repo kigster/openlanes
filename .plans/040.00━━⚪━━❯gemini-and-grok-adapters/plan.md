@@ -53,11 +53,11 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 
 ### Work units
 
-- [ ] `IdeaDialog` per-phase rows; `frontmatter.ts`; component tests.
-- [ ] `Live::Commands#create_plans` and `idea_frontmatter` accept `phases`.
-- [ ] `ModelSelect` per adapter; `model!`/`switch_model` validated against that adapter.
-- [ ] Cypress: create a plan with a phase on codex; a disabled adapter shows its reason.
-- [ ] Docs, lint, the suites, coverage.
+- [x] `IdeaDialog` per-phase rows; `frontmatter.ts`; component tests.
+- [x] `Live::Commands#create_plans` and `idea_frontmatter` accept `phases`.
+- [x] `ModelSelect` per adapter; `model!`/`switch_model` validated against that adapter.
+- [x] Cypress: create a plan with a phase on codex; a disabled adapter shows its reason.
+- [x] Docs, lint, the suites, coverage.
 
 ## PR 4: grok
 

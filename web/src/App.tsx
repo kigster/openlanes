@@ -9,7 +9,7 @@ import { Board, MachineBoard } from "./board/Board";
 import { ChatRoom, MachineMenu } from "./chat";
 import { Copilot } from "./copilot/Copilot";
 import { planId, who } from "./board/format";
-import { isWorking, modelsOf, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue } from "./board/model";
+import { adapterOf, isWorking, modelsOf, nodePlanKey, rowDomId, testRuns, testTabLabel, testTabValue, unusable } from "./board/model";
 import { useLifecycle } from "./board/useLifecycle";
 import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
@@ -96,7 +96,7 @@ function Tab({ value, ...rest }: ComponentProps<typeof Tabs.Trigger>) {
 
 function ControlRoom({ board, connection, fixture }: { board: BoardData; connection: ConnectionState; fixture: boolean }) {
   const { me, others } = board;
-  // Claude's models: every car on this node is drawn against them until plan 040's PR 3 lets a car name its adapter.
+  // Claude's models, for the copilot, which runs on claude; a car's models are its own adapter's (plan 040, D13).
   const models = modelsOf(me);
   const { announce } = useAnnounce();
   const reduced = useReducedMotion() ?? false;
@@ -202,8 +202,13 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   );
 
   const renderModel = useCallback(
-    (plan: Plan, car: Car) => <ModelSelect plan={plan.ordinal} car={car} models={models} mode="next" onCommand={onCommand} />,
-    [models, onCommand],
+    (plan: Plan, car: Car) => (
+      <ModelSelect
+        plan={plan.ordinal} car={car} models={modelsOf(me, car.adapter)} unavailable={unusable(adapterOf(me, car.adapter))}
+        mode="next" onCommand={onCommand}
+      />
+    ),
+    [me, onCommand],
   );
 
   // Stop All Local counts agents that are still at it: a done or failed car lingers on the board but has nothing to stop.
@@ -219,7 +224,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onToggleMerged={() => setMerged(!merged)}
         narrow={lanes.lanes === "narrow"}
         onToggleNarrow={lanes.toggle}
-        actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} />}
+        actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} catalog={me} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
       />
@@ -319,7 +324,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             </Tabs.Content>
           ))}
           {drawer && drawerCar ? (
-            <AgentDrawer plan={drawer} car={drawerCar} models={models} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
+            <AgentDrawer
+              plan={drawer} car={drawerCar} models={modelsOf(me, drawerCar.adapter)} unavailable={unusable(adapterOf(me, drawerCar.adapter))} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
             <NeedsYou plans={me.plans} onCommand={onCommand} />
           )}

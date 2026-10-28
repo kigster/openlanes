@@ -76,6 +76,8 @@ Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `ad
 
 Whether each adapter can take an agent on this machine is probed, never assumed: installed (on `PATH`), signed in, and with a model to run (`claude auth status`, `codex login status`, `pi --list-models`; local commands, no prompt). The engine and the page each probe at start and every 15 minutes, one at a time per machine, and share the answer through Redis, and every snapshot the page reads carries it, the reason included. `openlanes agents list` probes there and then and prints an Adapters table under the roster: available or why not, what it can do, how many models it offers.
 
+The control room's New idea dialog sets `phases.<phase>.adapter` and `.model` without editing YAML: one row per phase the plan will walk from its Starts, each with an adapter and a model select. Agent's default writes nothing. An adapter that cannot take an agent on this machine is listed disabled, with the reason. A car's model picker lists the models of the adapter that car runs on, and is disabled, with the reason, when that adapter is down.
+
 ### Lanes
 
 | Lane    | Route                                            | For                                                                                       |

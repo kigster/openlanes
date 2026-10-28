@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { HelpDialog, StopAllDialog } from "./dialogs";
 import { IdeaDialog } from "./IdeaDialog";
-import { findInline, recorder, renderPanel, typeInEditor } from "./testing";
+import { findInline, recorder, renderPanel, snapshot, typeInEditor } from "./testing";
 import { postInterview } from "../api/client";
 
 // No interviewer unless an example sets one, so the dialog creates the plan as it did before M6.
@@ -116,6 +116,21 @@ describe("IdeaDialog", () => {
     }]);
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByTestId("announcer")).toHaveTextContent("Idea sent. Its plans join this run as they are created.");
+  });
+
+  it("sends the adapter chosen for a phase in spec.md phases (plan 040, D12), and passes axe", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const { baseElement } = renderPanel(<IdeaDialog open onOpenChange={vi.fn()} onCommand={onCommand} catalog={snapshot} />);
+    await user.click(screen.getByRole("radio", { name: "Building" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Adapter for build" }), "codex");
+    expect(await axe(baseElement)).toHaveNoViolations();
+    let content!: HTMLElement;
+    act(() => { content = typeInEditor(baseElement, "Rename the flag"); });
+    await act(async () => { fireEvent.keyDown(content, { key: "Enter", code: "Enter", keyCode: 13, ctrlKey: true }); });
+    expect(sent[0].payload.frontmatter).toEqual({
+      starts: "building", research: false, frontend: "auto", depth: "auto", phases: { build: { adapter: "codex" } },
+    });
   });
 
   it("interviews the idea one question at a time, the recommended answer marked, and sends the decisions (M6)", async () => {
