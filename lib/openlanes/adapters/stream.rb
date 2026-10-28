@@ -91,6 +91,12 @@ module OpenLanes
       # @return [String, nil] nothing is sent through a side channel
       def message = nil
 
+      # @return [String, nil] these CLIs name no session to resume
+      def session = nil
+
+      # @return [Hash, nil] nor compact one
+      def compacted = nil
+
       # @return [Integer] new input plus output
       def fresh = up - cached + down
 

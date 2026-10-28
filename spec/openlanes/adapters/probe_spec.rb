@@ -129,6 +129,37 @@ RSpec.describe "Adapter probes" do
     it_behaves_like "a probe that says it timed out", %w[pi --list-models]
   end
 
+  context "with grok" do
+    let(:name) { "grok" }
+    let(:argv) { %w[grok models] }
+
+    context "when signed in" do
+      let(:listing) do
+        <<~LISTING
+          You are logged in with grok.com.
+
+          Default model: grok-4.7
+
+          Available models:
+            * grok-4.7 (default)
+            - grok-4.7-build-fast
+        LISTING
+      end
+      let(:answers) { { argv => result.call(listing) } }
+
+      it { is_expected.to be_available }
+      it { expect(availability.models.map(&:id)).to eq(%w[grok-4.7 grok-4.7-build-fast]) }
+    end
+
+    context "when signed out, which still exits 0" do
+      let(:answers) { { argv => result.call("You are not logged in.\n") } }
+
+      it { expect(availability.reason).to eq("not signed in (run `grok login`)") }
+    end
+
+    it_behaves_like "a probe that says it timed out", %w[grok models]
+  end
+
   describe "an adapter that does not probe itself" do
     subject(:probe) { OpenLanes::Adapters::Mute.new.probe(runner: ScriptedProbeRunner.new(installed: ["mute"]), at:) }
 

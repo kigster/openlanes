@@ -162,8 +162,9 @@ module OpenLanes
               NAME,
               Process.pid,
               rand(0x10000)))
-          transcript = profile.adapter.transcript(trace:)
-          child = @spawn.call(argv(prompt, session), chdir: @root, env: profile.adapter.environment)
+          command = argv(prompt, session)
+          transcript = profile.adapter.transcript(trace:, argv: command)
+          child = @spawn.call(command, chdir: @root, env: profile.adapter.environment)
           # {#stop} may have run while this was starting, and seen no child to end.
           stopping = @mutex.synchronize do
             @child = child

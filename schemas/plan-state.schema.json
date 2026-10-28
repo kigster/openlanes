@@ -71,7 +71,7 @@
           "moves": { "description": "The plan's moves when this round settled.", "type": "integer", "minimum": 0 },
           "started_at": { "type": "string", "format": "date-time" },
           "finished_at": { "type": "string", "format": "date-time" },
-          "adapter": { "enum": ["claude", "codex", "pi"] },
+          "adapter": { "enum": ["claude", "codex", "pi", "grok"] },
           "model": { "type": ["string", "null"] },
           "effort": { "$ref": "#/$defs/effort" },
           "up": { "type": "integer", "minimum": 0 },

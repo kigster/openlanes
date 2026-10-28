@@ -15,8 +15,8 @@ RSpec.describe OpenLanes::Adapters::Capabilities do
 
       it "answers each predicate from that one value" do
         caps = adapter.capabilities
-        expect([adapter.compacts?, adapter.resumes?, adapter.enforces_tool_denial?, adapter.compact_prompt])
-          .to eq([caps.compacts, caps.resumes, caps.enforces_tool_denial, caps.compact_prompt])
+        expect([adapter.compacts?, adapter.resumes?, adapter.enforces_tool_denial?, adapter.confines?, adapter.compact_prompt])
+          .to eq([caps.compacts, caps.resumes, caps.enforces_tool_denial, caps.confines, caps.compact_prompt])
       end
 
       it "is frozen" do
@@ -30,12 +30,12 @@ RSpec.describe OpenLanes::Adapters::Capabilities do
   end
 
   it "refuses a compact prompt without compaction" do
-    expect { described_class.new(compacts: false, resumes: true, enforces_tool_denial: true, compact_prompt: "/c") }
+    expect { described_class.new(compacts: false, resumes: true, enforces_tool_denial: true, confines: true, compact_prompt: "/c") }
       .to raise_error(ArgumentError, /exactly when compacts/)
   end
 
   it "refuses compaction without a compact prompt" do
-    expect { described_class.new(compacts: true, resumes: true, enforces_tool_denial: true, compact_prompt: nil) }
+    expect { described_class.new(compacts: true, resumes: true, enforces_tool_denial: true, confines: true, compact_prompt: nil) }
       .to raise_error(ArgumentError, /exactly when compacts/)
   end
 

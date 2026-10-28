@@ -83,7 +83,7 @@ module OpenLanes
       end
 
       # @return [OpenLanes::Execution::Transcript]
-      def transcript(trace: nil, &) = Execution::Transcript.new(trace:, &)
+      def transcript(trace: nil, **, &) = Execution::Transcript.new(trace:, &)
 
       # A fixed tool set. `--tools` takes every other built-in tool away, and
       # `--restricted` stops the project's and the operator's settings files
@@ -115,6 +115,7 @@ module OpenLanes
       CAPABILITIES = Capabilities.new(compacts: true,
         resumes: true,
         enforces_tool_denial: true,
+        confines: true,
         compact_prompt: "/compact")
 
       # @return [OpenLanes::Adapters::Capabilities]

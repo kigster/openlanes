@@ -1,0 +1,51 @@
+{"type":"available_commands","tools":["run_terminal_command","read_file","search_replace"],"commands":[]}
+{"type":"thought","data":"Running `git status "}
+{"type":"thought","data":"--short` and reporting"}
+{"type":"thought","data":" the exact output or"}
+{"type":"thought","data":" refusal."}
+{"type":"usage","usage":{"input_tokens":49439,"output_tokens":192,"cache_read_input_tokens":1152,"cache_creation_input_tokens":0,"reasoning_tokens":167},"signature":"SIGNATURE"}
+{"type":"tool_call","toolCallId":"call-d7014777-c24e-48ff-9531-baabbe10c7d1-0","title":"run_terminal_command","kind":"execute","status":"pending","toolName":"run_terminal_command","rawInput":{"command":"git status --short","description":"Show short git working tree status"},"content":[],"locations":[]}
+{"type":"tool_call_update","toolCallId":"call-d7014777-c24e-48ff-9531-baabbe10c7d1-0","status":null,"content":[{"type":"content","content":{"type":"text","text":"Show short git working tree status"}}],"rawOutput":null,"locations":[]}
+{"type":"tool_call_update","toolCallId":"call-d7014777-c24e-48ff-9531-baabbe10c7d1-0","status":"failed","content":[{"type":"content","content":{"type":"text","text":"Tool `run_terminal_command` was not executed: Denied by permission policy: deny rule on bash matching \"git status*\""}}],"rawOutput":null,"locations":[]}
+{"type":"text","data":"`"}
+{"type":"text","data":"git"}
+{"type":"text","data":" status"}
+{"type":"text","data":" --"}
+{"type":"text","data":"short"}
+{"type":"text","data":"`"}
+{"type":"text","data":" did"}
+{"type":"text","data":" not"}
+{"type":"text","data":" run"}
+{"type":"text","data":".\n\n"}
+{"type":"text","data":"The"}
+{"type":"text","data":" shell"}
+{"type":"text","data":" tool"}
+{"type":"text","data":" refused"}
+{"type":"text","data":" it"}
+{"type":"text","data":" before"}
+{"type":"text","data":" execution"}
+{"type":"text","data":":"}
+{"type":"text","data":" **"}
+{"type":"text","data":"Denied"}
+{"type":"text","data":" by"}
+{"type":"text","data":" permission"}
+{"type":"text","data":" policy"}
+{"type":"text","data":":"}
+{"type":"text","data":" deny"}
+{"type":"text","data":" rule"}
+{"type":"text","data":" on"}
+{"type":"text","data":" bash"}
+{"type":"text","data":" matching"}
+{"type":"text","data":" \""}
+{"type":"text","data":"git"}
+{"type":"text","data":" status"}
+{"type":"text","data":"*\""}
+{"type":"text","data":"**."}
+{"type":"text","data":" There"}
+{"type":"text","data":" is"}
+{"type":"text","data":" no"}
+{"type":"text","data":" status"}
+{"type":"text","data":" output"}
+{"type":"text","data":"."}
+{"type":"usage","usage":{"input_tokens":257,"output_tokens":60,"cache_read_input_tokens":50560,"cache_creation_input_tokens":0,"reasoning_tokens":20},"signature":"SIGNATURE"}
+{"type":"end","stopReason":"end_turn","sessionId":"b1f13b27-9492-42de-bb86-2690938104ac","requestId":"e3e78256-d1c7-48ae-90e4-ee505fa33ca9","usage":{"input_tokens":49696,"cache_read_input_tokens":51712,"cache_creation_input_tokens":0,"output_tokens":252,"reasoning_tokens":187,"total_tokens":101660},"num_turns":2,"total_cost_usd":0.0861968,"total_cost_usd_ticks":861968000,"modelUsage":{"grok-4.7-build-fast":{"inputTokens":49696,"outputTokens":252,"cacheReadInputTokens":51712,"cacheCreationInputTokens":0,"modelCalls":2,"costUSD":0.0861968}}}

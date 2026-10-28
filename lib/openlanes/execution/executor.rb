@@ -583,7 +583,7 @@ module OpenLanes
         end
 
         profile = profile_for(agent, subject)
-        if agent.confined? && !profile.adapter.enforces_tool_denial?
+        if agent.confined? && !profile.adapter.confines?
           return Result.new(ok: false,
             note: "#{agent.name} is confined to #{agent.confined_to.join(", ")}, and #{profile.adapter.executable} cannot enforce that",
             up: 0,
@@ -849,7 +849,7 @@ module OpenLanes
       # @return [OpenLanes::Execution::AgentProcess]
       def launch(argv, root:, profile:, trace:, handle:, sessions:, &)
         child = @spawn.call(argv, chdir: root, env: profile.adapter.environment, label: handle.label)
-        follow(child, profile:, trace:, handle:, sessions:, &)
+        follow(child, profile:, trace:, handle:, sessions:, argv:, &)
       end
 
       # Read +child+ into a new transcript under +handle+. Only an
@@ -857,9 +857,11 @@ module OpenLanes
       # is reported to {Handle#restart!}.
       #
       # @param child [OpenLanes::Execution::AgentProcess, #each_chunk]
+      # @param argv [Array<String>] what +child+ was started with; empty for
+      #   one taken back after a restart
       # @return [OpenLanes::Execution::AgentProcess, #each_chunk] +child+
-      def follow(child, profile:, trace:, handle:, sessions:, &on_progress)
-        transcript = profile.adapter.transcript(trace:) do |progress|
+      def follow(child, profile:, trace:, handle:, sessions:, argv: [], &on_progress)
+        transcript = profile.adapter.transcript(trace:, argv:) do |progress|
           handle.session ||= progress.session
           on_progress&.call(sessions.carry(progress))
         end

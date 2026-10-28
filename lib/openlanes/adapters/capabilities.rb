@@ -13,12 +13,17 @@ module OpenLanes
     #   @return [Boolean] {Base#argv} honours {Invocation#resume}
     # @!attribute [r] enforces_tool_denial
     #   @return [Boolean] the CLI itself refuses the denied tools
+    # @!attribute [r] confines
+    #   @return [Boolean] {Base#argv} honours {Invocation#tools} and the allow
+    #     list, so a confined agent reaches only its own files. Refusing
+    #     named commands is not the same guarantee.
     # @!attribute [r] compact_prompt
     #   @return [String, nil] what, sent into a resumed session, compacts it;
     #     nil exactly when {#compacts} is false
-    Capabilities = Data.define(:compacts, :resumes, :enforces_tool_denial, :compact_prompt) do
-      def initialize(compacts:, resumes:, enforces_tool_denial:, compact_prompt:)
-        if compacts == compact_prompt.nil?
+    Capabilities = Data.define(:compacts, :resumes, :enforces_tool_denial, :confines, :compact_prompt) do
+      # Every field is required: {Data} itself refuses a missing one.
+      def initialize(**fields)
+        if fields[:compacts] == fields[:compact_prompt].nil?
           raise ArgumentError, "compact_prompt must be given exactly when compacts is true"
         end
 

@@ -19,8 +19,10 @@ module OpenLanes
       # {OpenLanes::Execution::Transcript}.
       #
       # @param trace [String, nil] where to keep every line verbatim
+      # @param argv [Array<String>] the command whose output it reads, for a
+      #   CLI that names its session there rather than in its stream
       # @return [#push, #finish, #up, #down, #failed?]
-      def transcript(trace: nil, &) = Stream.new(trace:, &)
+      def transcript(trace: nil, **, &) = Stream.new(trace:, &)
 
       # The model to ask for, after any ceiling this CLI imposes.
       #
@@ -97,6 +99,12 @@ module OpenLanes
       #
       # @return [Boolean]
       def enforces_tool_denial? = capabilities.enforces_tool_denial
+
+      # Whether a {Agents::Agent#confined? confined} agent can run on this
+      # CLI at all: one that cannot hold it to its files is refused it.
+      #
+      # @return [Boolean]
+      def confines? = capabilities.confines
 
       private
 

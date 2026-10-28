@@ -61,6 +61,36 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # Plan 040, PR 4: a phase on grok, played back from a recorded run.
+  describe "a phase on grok" do
+    let(:writer) { agent.with(phase: "specification") }
+    let(:spec_md) { "---\nphases:\n  specification: { adapter: grok, model: grok-4.7, effort: high }\n---\n#{spec_body}" }
+    let!(:built) do
+      plans { |t| t.plan "000.00", :new, "a-feature", files: { "spec.md" => spec_md } }
+    end
+    let(:stream) { File.readlines(File.expand_path("../../fixtures/streams/grok-read.ndjson", __dir__)) }
+    let(:started) { [] }
+    let(:spawn) { ->(argv, chdir: nil, **) { (started << argv) && fake_child } }
+    let(:handle) { described_class::Handle.new }
+    let!(:result) { executor.call(writer, subject_plan, handle:) }
+
+    it "starts grok with the model and effort the spec names" do
+      expect(started.first).to include("-m", "grok-4.7", "--reasoning-effort", "high")
+    end
+
+    it "meters the recorded run" do
+      expect(result).to have_attributes(ok: true, up: 101_337, down: 160, cached: 52_864)
+    end
+
+    it "keeps the session it started, to resume next round" do
+      expect(handle.session).to eq(started.first[started.first.index("-s") + 1])
+    end
+
+    it "tells the agent the denylist is enforced" do
+      expect(started.first[started.first.index("-p") + 1]).to include("not merely discouraged")
+    end
+  end
+
   describe "starting agents lean" do
     let(:argv) { executor.invocation(agent, subject_plan) }
 
@@ -373,6 +403,11 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       codex = linker.with(adapter: "codex")
       result = executor.call(codex, subject_plan)
       expect([result.ok, result.note]).to eq([false, "spec-keeper is confined to spec.md, and codex cannot enforce that"])
+    end
+
+    it "is refused on grok too, which refuses denied commands but cannot hold an agent to its files" do
+      result = executor.call(linker.with(adapter: "grok"), subject_plan)
+      expect(result.note).to eq("spec-keeper is confined to spec.md, and grok cannot enforce that")
     end
 
     it "leaves an unconfined agent's tools alone" do
