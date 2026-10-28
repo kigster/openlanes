@@ -160,6 +160,43 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    # Plan 031, D11.
+    describe "review.adapters" do
+      it "lists the coding agents the reviewers are dealt across, main one first" do
+        openlanes_yml("review:\n  adapters: [codex, claude]\n")
+        expect(config.review_adapters).to eq(%w[codex claude])
+      end
+
+      it "is empty when unset, so every reviewer runs on adapter:" do
+        openlanes_yml("jobs: 2\n")
+        expect(config.review_adapters).to eq([])
+      end
+
+      it "refuses a coding agent nothing answers to" do
+        openlanes_yml("review:\n  adapters: [claude, cursor]\n")
+        expect { config }.to raise_error(OpenLanes::Error, /review\.adapters: cursor is not one of claude/)
+      end
+
+      it "refuses one named twice" do
+        openlanes_yml("review:\n  adapters: [codex, claude, codex]\n")
+        expect { config }.to raise_error(OpenLanes::Error, /review\.adapters: codex is named twice/)
+      end
+
+      it "refuses a key it does not know" do
+        openlanes_yml("review:\n  models: [opus]\n")
+        expect { config }.to raise_error(OpenLanes::Error, /review: unknown key models; known: adapters/)
+      end
+
+      it "refuses review: that is not a mapping" do
+        openlanes_yml("review: codex\n")
+        expect { config }.to raise_error(OpenLanes::Error, /review: must be a mapping/)
+      end
+
+      it "writes itself back out under review:" do
+        expect(described_class.new(review_adapters: %w[claude codex]).to_yaml).to eq("review:\n  adapters:\n  - claude\n  - codex\n")
+      end
+    end
+
     # W32
     describe "redis_outage_hours" do
       it "gives up on a lost Redis after an hour when the file says nothing" do
@@ -213,7 +250,7 @@ RSpec.describe OpenLanes::Config do
     # V4 dropped R3's pooled emoji count, and its threshold with it.
     it "refuses review.max_hmm as an unknown key" do
       openlanes_yml("review:\n  max_hmm: 5\n")
-      expect { config }.to raise_error(OpenLanes::Error, /unknown key review/)
+      expect { config }.to raise_error(OpenLanes::Error, /review: unknown key max_hmm; known: adapters/)
     end
 
     # A config silently ignored is a timeout that stops applying with no
