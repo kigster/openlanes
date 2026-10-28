@@ -78,6 +78,10 @@
           "down": { "type": "integer", "minimum": 0 },
           "seconds": { "type": "number", "minimum": 0 },
           "note": { "type": "string" },
+          "verdict": {
+            "description": "A reviewer's closing note, counted with the rest of its review round once the last reviewer has spoken.",
+            "type": "string"
+          },
           "session": {
             "description": "The CLI's session id for this round, as soon as its stream named it. `claude --resume <id>`, run from `cwd`, carries it on by hand.",
             "type": "string"

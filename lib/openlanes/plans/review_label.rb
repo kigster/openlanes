@@ -59,6 +59,9 @@ module OpenLanes
       # The label the publisher puts on a pull request it has just opened.
       INITIAL = named("ready-for-review")
 
+      # What the engine puts on a pull request when its reviewers start.
+      IN_PROGRESS = named("review-in-progress")
+
       # The verdict accepted even while CI is red.
       REJECTED = named("review-rejected")
 
