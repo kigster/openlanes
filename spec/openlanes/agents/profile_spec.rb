@@ -43,6 +43,38 @@ RSpec.describe OpenLanes::Agents::Profile do
     expect(described_class.resolve(agent, spec: spec("phases:\n  review: { model: haiku }")).model).to eq("opus")
   end
 
+  # Plan 040, D2: frontmatter, then `.openlanes.yml`, then claude.
+  describe "the project's default adapter" do
+    subject(:profile) { described_class.resolve(agent, spec: plan, project: "codex") }
+
+    let(:plan) { nil }
+
+    it("runs an agent that names none on it, without its Claude model") { expect(profile.to_s).to eq("codex:default/high") }
+
+    context "with an agent that names its own" do
+      let(:agent) { super().with(adapter: "claude") }
+
+      it("keeps the agent's") { expect(profile.to_s).to eq("claude:opus/high") }
+    end
+
+    context "with a plan that names one for the phase" do
+      let(:plan) { spec("phases:\n  build: { adapter: pi }") }
+
+      it("takes the plan's") { expect(profile.adapter.name).to eq("pi") }
+    end
+
+    context "when the project names claude" do
+      subject(:profile) { described_class.resolve(agent, project: "claude") }
+
+      it("keeps the agent's Claude model") { expect(profile.model).to eq("opus") }
+    end
+  end
+
+  it "reads the project's default from .openlanes.yml" do
+    allow(OpenLanes::Config).to receive(:current).and_return(OpenLanes::Config.new(adapter: "codex"))
+    expect(described_class.resolve(agent).adapter.name).to eq("codex")
+  end
+
   describe "#label" do
     it "is the bare model for claude" do
       expect(described_class.resolve(agent).label).to eq("opus")

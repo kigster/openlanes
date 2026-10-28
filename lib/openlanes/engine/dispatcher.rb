@@ -394,7 +394,7 @@ module OpenLanes
       # @return [OpenLanes::Adapters::Base]
       def adapter_of(agent, subject)
         executor = @runner.executor
-        return Adapters.for(agent.adapter) unless executor.respond_to?(:profile_for)
+        return Agents::Profile.resolve(agent).adapter unless executor.respond_to?(:profile_for)
 
         executor.profile_for(agent, subject).adapter
       end

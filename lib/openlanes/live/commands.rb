@@ -521,9 +521,9 @@ module OpenLanes
 
       # @return [String] the full model id
       def model!(command, dispatcher)
-        subject!(command, dispatcher)
+        subject = subject!(command, dispatcher)
         agent = dispatcher.runner.agents.find(command.agent) or raise Refusal, "no agent called #{command.agent}"
-        adapter = Adapters.for(agent.adapter)
+        adapter = dispatcher.adapter_of(agent, subject)
         return command["model"] if adapter.models.empty?
 
         entry = adapter.model_entry(command["model"]) or raise Refusal, "#{adapter.name} offers no model #{command["model"]}"

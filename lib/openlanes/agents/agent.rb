@@ -79,7 +79,7 @@ module OpenLanes
       :needs,
       :toggle,
       :confined_to) do
-      def initialize(ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: Adapters::DEFAULT,
+      def initialize(ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
         phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], **rest)
         super
       end

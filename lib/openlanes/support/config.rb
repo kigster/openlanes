@@ -10,6 +10,7 @@ module OpenLanes
   #   starts: research          # default for `openlanes create`: one of Spec::STARTS
   #   frontend: false           # a spec's `frontend:` when spec.md omits it
   #   jobs: 4                   # how many plans `openlanes run` works on at once
+  #   adapter: codex            # the coding agent for every agent that names none (plan 040)
   #   redis_url: redis://10.0.4.2:6379/0  # the Redis the live run shares (W16)
   #   redis_outage_hours: 1     # how long agents stay paused for a lost Redis
   #                             # before the run shuts down (W32); any positive number
@@ -75,6 +76,10 @@ module OpenLanes
   #   @return [Boolean, nil] nil when each plan decides
   # @!attribute [r] jobs
   #   @return [Integer, nil]
+  # @!attribute [r] adapter
+  #   @return [String, nil] one of {Adapters.names}: what an agent runs on when
+  #     neither the plan nor its own frontmatter names one; nil is
+  #     {Adapters::DEFAULT}
   # @!attribute [r] redis_url
   #   @return [String, nil] where the live run keeps its board, its commands
   #     and its plan claims; `--redis-url` beats it, and it beats `$REDIS_URL`
@@ -128,6 +133,7 @@ module OpenLanes
     :starts,
     :frontend,
     :jobs,
+    :adapter,
     :redis_url,
     :redis_outage_hours,
     :redis_backoff,
@@ -144,7 +150,7 @@ module OpenLanes
     :stack,
     :events_enabled,
     :events_dir) do
-    def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, redis_url: nil,
+    def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, review_max_hmm: nil, merge_max_rejections: nil,
       desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil) # rubocop:disable Naming/MethodParameterName
       super
@@ -219,7 +225,7 @@ module OpenLanes
     # @return [String]
     def to_yaml
       settings = { "project" => project, "starts" => starts&.to_s, "frontend" => frontend, "jobs" => jobs,
-                   "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
+                   "adapter" => adapter, "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
                    "redis_backoff" => (redis_backoff.transform_keys(&:to_s) unless redis_backoff.empty?),
                    "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings,
                    "ci" => ci && { "provider" => ci[:provider].to_s, "config" => ci[:config] }.compact,
@@ -248,7 +254,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project starts frontend jobs redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
+    KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
               questions review coverage events ci stack].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
@@ -349,6 +355,7 @@ module OpenLanes
           starts:    starts_at(settings, path),
           frontend:  frontend(settings, path),
           jobs:      jobs(settings, path),
+          adapter:   adapter(settings, path),
           redis_url: redis_url(settings, path),
           redis_outage_hours: redis_outage_hours(settings, path),
           redis_backoff: redis_backoff(settings["redis_backoff"], path),
@@ -407,6 +414,15 @@ module OpenLanes
         return value if value.nil? || (value.is_a?(Integer) && value.positive?)
 
         fail_with(path, "jobs: #{value.inspect} is not a whole number above zero")
+      end
+
+      # @return [String, nil]
+      def adapter(settings, path)
+        value = settings["adapter"]
+        return nil if value.nil?
+        return value.to_s if (value.is_a?(String) || value.is_a?(Symbol)) && Adapters.known?(value)
+
+        fail_with(path, "adapter: #{value.inspect} is not one of #{Adapters.names.join(", ")}")
       end
 
       # @return [String, nil]

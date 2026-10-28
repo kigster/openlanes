@@ -8,12 +8,14 @@ classDiagram
   class OpenLanes__Agents__Profile["Profile"]
   class OpenLanes__Agents__Registry["Registry"]
   class OpenLanes__Agents__Roster["Roster"]
+  class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Agents__Profile ..> OpenLanes__Config : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
