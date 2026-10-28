@@ -68,6 +68,12 @@ RSpec.describe OpenLanes::Adapters::Probes do
       store.set(key, "{not json")
       expect(probes.current).to eq([])
     end
+
+    # Grok on #151: Time.iso8601 raises ArgumentError, outside the old rescue.
+    it "falls back to memory on a checked_at that is not a time" do
+      store.set(key, JSON.generate([OpenLanes::Adapters::Availability.down("pi", "no provider", at).wire.merge(checked_at: "yesterday")]))
+      expect(probes.current).to eq([])
+    end
   end
 
   describe "#refresh, when probing raises" do

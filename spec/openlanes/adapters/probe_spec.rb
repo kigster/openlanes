@@ -76,16 +76,18 @@ RSpec.describe "Adapter probes" do
       it { expect(availability.models).to all(satisfy { !it.priced? }) }
     end
 
+    # Grok on #151: an available adapter with no models offered the page
+    # an empty dropdown. pi already says down when it lists none.
     context "when signed in but the model list cannot be read" do
       let(:answers) { { login => result.call(""), models => result.call("not json") } }
 
-      it { expect([availability.available?, availability.models]).to eq([true, []]) }
+      it { expect([availability.available?, availability.reason]).to eq([false, "signed in, but `codex debug models --bundled` listed no models"]) }
     end
 
     context "when signed in but the model list command fails" do
       let(:answers) { { login => result.call("") } }
 
-      it { expect([availability.available?, availability.models]).to eq([true, []]) }
+      it { expect([availability.available?, availability.reason]).to eq([false, "signed in, but `codex debug models --bundled` listed no models"]) }
     end
 
     context "when signed out" do

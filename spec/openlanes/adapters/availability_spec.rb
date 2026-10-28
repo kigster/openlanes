@@ -29,7 +29,7 @@ RSpec.describe OpenLanes::Adapters::Availability do
   describe "#wire and .from_wire" do
     subject(:wire) { described_class.up("codex", [model], at).wire }
 
-    it { is_expected.to eq(name: "codex", available: true, reason: nil, checked_at: "2026-10-27T09:00:00Z", models: [{ id: "gpt-5.5", label: "GPT-5.5", rates: nil }]) }
+    it { is_expected.to eq(name: "codex", available: true, reason: nil, checked_at: "2026-10-27T09:00:00Z", models: [{ id: "gpt-5.5", label: "GPT-5.5", rates: nil, context: 200_000 }]) }
 
     it "round-trips through JSON" do
       expect(described_class.from_wire(JSON.parse(JSON.generate(wire)))).to eq(described_class.up("codex", [model], at))

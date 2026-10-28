@@ -55,7 +55,10 @@ module OpenLanes
         return timed_out(login, at) if login.timed_out?
         return Availability.down(name, "not signed in (run `codex login`)", at) unless login.ok?
 
-        Availability.up(name, listed(runner.call("codex", "debug", "models", "--bundled")), at)
+        models = listed(runner.call("codex", "debug", "models", "--bundled"))
+        return Availability.down(name, "signed in, but `codex debug models --bundled` listed no models", at) if models.empty?
+
+        Availability.up(name, models, at)
       end
 
       # @param result [OpenLanes::Adapters::ProbeRunner::Result]

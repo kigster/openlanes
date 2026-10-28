@@ -26,7 +26,11 @@ module OpenLanes
       # @return [OpenLanes::Adapters::Model]
       def self.from_wire(hash)
         rates = hash["rates"] || {}
-        new(id: hash.fetch("id"), label: hash.fetch("label"), rate_in: rates["in"], rate_out: rates["out"])
+        new(id: hash.fetch("id"),
+          label: hash.fetch("label"),
+          rate_in: rates["in"],
+          rate_out: rates["out"],
+          context: hash["context"] || Model::WINDOW)
       end
 
       # @return [Boolean] whether a token on this model has a price
@@ -37,10 +41,12 @@ module OpenLanes
       # @return [Float] dollars; 0.0 on a model nobody has priced
       def cost(up, down) = priced? ? ((up.to_i * rate_in) + (down.to_i * rate_out)) / 1_000_000.0 : 0.0
 
-      # The `ModelChoice` of `web/src/api/types.ts`.
+      # The `ModelChoice` of `web/src/api/types.ts`. The context window rides
+      # along: left off, a model read back out of Redis would shrink to
+      # {WINDOW}, and codex's 272k models with it.
       #
       # @return [Hash]
-      def wire = { id:, label:, rates: priced? ? { in: rate_in, out: rate_out } : nil }
+      def wire = { id:, label:, rates: priced? ? { in: rate_in, out: rate_out } : nil, context: }
     end
 
     # The context window a model gets when its entry names none: every

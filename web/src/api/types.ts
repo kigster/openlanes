@@ -181,6 +181,7 @@ export interface ModelChoice {
   id: string;
   label: string; // "Sonnet 5.5"
   rates: { in: number; out: number } | null; // dollars per million tokens; null for a model nobody has priced
+  context: number; // tokens the context window holds
 }
 
 /** What one coding CLI can do, as its adapter declares it. */
