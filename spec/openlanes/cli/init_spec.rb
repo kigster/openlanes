@@ -73,6 +73,12 @@ RSpec.describe OpenLanes::CLI::Init do
       expect(machine).to have_received(:call).with(dry_run: true)
     end
 
+    it "neither checks nor runs setup under --no-setup" do
+      run(setup: false)
+      expect(machine).not_to have_received(:ready?)
+      expect(machine).not_to have_received(:call)
+    end
+
     context "when setup cannot fix it" do
       let(:gh) { OpenLanes::Setup::Check.new(name: "gh", ok: false, detail: "gh is not logged in", fix: "gh auth login") }
 

@@ -13,8 +13,10 @@ RSpec.describe "openlanes init, end to end" do
   before { FileUtils.mkdir_p(File.join(repo, ".git")) }
   after { FileUtils.rm_rf(top) }
 
+  # --no-setup: whether this machine has every tool is not init's to
+  # prove, and a spec must not run `brew bundle` on it.
   def init(*)
-    out, err, status = Open3.capture3(env, exe, "init", *, chdir: repo, stdin_data: "")
+    out, err, status = Open3.capture3(env, exe, "init", "--no-setup", *, chdir: repo, stdin_data: "")
     [out, err, status.exitstatus]
   end
 

@@ -43,6 +43,10 @@ module OpenLanes
         type:    :boolean,
         default: false,
         desc:    "Replace an existing .openlanes.yml, which is otherwise kept"
+      option :setup,
+        type:    :boolean,
+        default: true,
+        desc:    "Run openlanes setup first when the machine is not ready; --no-setup skips the check"
 
       example [
         "                                   # ask for each value on a terminal",
@@ -89,12 +93,14 @@ module OpenLanes
       # `openlanes setup`, but only when the machine is not ready, so a new
       # project goes setup, init, start in one go and a ready machine is
       # not made to wait on brew. A check that still fails is reported and
-      # init carries on: the file it writes needs none of them.
+      # init carries on: the file it writes needs none of them. --no-setup
+      # skips even the check, for a CI box or container that will never
+      # run the factory and should not be made to run brew.
       #
       # @param options [Hash]
       # @return [void]
       def prepare(options)
-        return if machine.ready?
+        return if options[:setup] == false || machine.ready?
 
         UI.line("This machine is missing something openlanes needs; running openlanes setup first.")
         outcome = machine.call(dry_run: dry_run?(options))
