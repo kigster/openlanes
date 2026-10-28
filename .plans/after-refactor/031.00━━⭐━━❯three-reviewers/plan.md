@@ -59,11 +59,12 @@ As built: `Engine::Reviews` owns D4 to D7, and the dispatcher only asks it. A ro
 - **D11. `review.adapters:` in `.openlanes.yml`** (V7, I3): the list of coding agents to review with, main one first; written by the init interview (plan 011) once that exists, by hand until then. Unset means the project's `adapter:`.
 - **D12. Dealing** (V7): staff to the first, security to the second, design to the third, wrapping; adapters the startup probe found unusable are skipped. A reviewer's frontmatter `adapter:` or the plan's `phases.review` still wins (plan 040's precedence).
 - **D13. The verdict carries the coding agent's mark** (V3): a letter in the vendor's colour on our own neutral glyph, never a logo.
+- **D13a. `Agents::Dealing` answers what the project gives an agent**: the dealt seat for a reviewer, `adapter:` for everyone else, so `Profile.resolve` keeps one project-level input. Only the probe's "no" skips an adapter: one not yet probed, or a run without the live board, deals as usual. The marks are A (Anthropic, claude), O (OpenAI, codex), G (Google, gemini), X (xAI, grok) and π (pi); the snapshot carries the latest review round's verdicts as `reviews`, with `slop` kept apart from `rejected`.
 
 ### Work units
 
-- [ ] Config key, dealing in `Agents::Profile`, the snapshot field, the board mark.
-- [ ] Specs (Ruby, vitest, one Cypress case), docs, lint, coverage.
+- [x] Config key, dealing in `Agents::Profile`, the snapshot field, the board mark.
+- [x] Specs (Ruby, vitest, one Cypress case), docs, lint, coverage.
 
 ## PR 5: a reviewer that fails is replaced, not blocking
 
