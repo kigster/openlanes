@@ -9,6 +9,8 @@ classDiagram
   class OpenLanes__Adapters__Capabilities["Capabilities"]
   class OpenLanes__Adapters__Claude["Claude"]
   class OpenLanes__Adapters__Codex["Codex"]
+  class OpenLanes__Adapters__Grok["Grok"]
+  class OpenLanes__Adapters__Grok__Stream["Grok::Stream"]
   class OpenLanes__Adapters__Invocation["Invocation"]
   class OpenLanes__Adapters__Model["Model"]
   class OpenLanes__Adapters__Pi["Pi"]
@@ -31,6 +33,13 @@ classDiagram
   OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Availability : uses
+  OpenLanes__Adapters__Grok --|> OpenLanes__Adapters__Base : inherits
+  OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Capabilities : uses
+  OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Grok__Stream : uses
+  OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Stream : uses
+  OpenLanes__Adapters__Grok__Stream --|> OpenLanes__Adapters__Stream : inherits
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Pi --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Capabilities : uses

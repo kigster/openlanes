@@ -13,6 +13,11 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   let(:schema) { JSONSchemer.schema(Pathname.new(described_class::SCHEMA_PATH)) }
   let(:written) { JSON.parse(File.read(state.path)) }
 
+  it "lets a stage name every adapter the harness knows, and no other" do
+    stage = JSON.parse(File.read(described_class::SCHEMA_PATH)).dig("properties", "stages", "items", "properties", "adapter", "enum")
+    expect(stage).to eq(OpenLanes::Adapters.names)
+  end
+
   it "reads as an empty document before anything is written" do
     expect([state.exist?, state.stages, state.signatures, state.messages]).to eq([false, [], [], []])
   end
