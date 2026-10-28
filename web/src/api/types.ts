@@ -126,6 +126,14 @@ export interface UnackedMail {
   since: string; // the oldest one's timestamp, as the mailbox wrote it
 }
 
+/** One reviewer's verdict in the plan's latest review round, with the coding agent it ran on (plan 031, D13). */
+export interface ReviewVote {
+  agent: string; // "staff-reviewer", "security-reviewer", "design-reviewer"
+  adapter: string | null; // the coding agent it ran on; null when its round recorded none
+  verdict: "great" | "passed" | "rejected" | "slop";
+  vulnerability: boolean; // security-reviewer rejected it for an exploitable hole
+}
+
 /** The latest arbitration ruling on a plan, as the live snapshot carries it (contract.md, `ruling`). */
 export interface Ruling {
   at: Iso;
@@ -164,6 +172,7 @@ export interface Plan {
   rejections?: { count: number; max: number }; // reviewer rejections so far, against merge.max_rejections
   ruling?: Ruling | null; // the arbitrator's latest ruling, null when there is none
   arbitrating?: boolean; // the arbitrator is on this plan now
+  reviews?: ReviewVote[]; // the latest review round's verdicts, in the order they were given; [] before any
   mail: UnackedMail[]; // the unacked messages, one per sender and recipient, oldest first
   last_known: LastKnown[]; // one per agent with a resume record, empty when none
   locked: { pid: number; host: string; started_at: Iso; foreign: boolean } | null; // the plan's lock, alive or not; foreign: held by another machine

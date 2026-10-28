@@ -1,6 +1,6 @@
 // What a plan looks like on the board, derived from the Snapshot alone. Pure functions, so the rules (which stop is
 // skipped, when a row turns green, what a pill says) are tested without rendering anything.
-import type { AdapterAvailability, Car, ModelChoice, Plan, Question, Snapshot, Starts, Station } from "../api/types";
+import type { AdapterAvailability, Car, ModelChoice, Plan, Question, ReviewVote, Snapshot, Starts, Station } from "../api/types";
 import { planId } from "./format";
 
 export interface StartsLook {
@@ -195,3 +195,19 @@ export const isWorking = (car: Car): boolean => car.state === "running" || car.s
 export function dagBreak(plans: Pick<Plan, "group">[], i: number): boolean {
   return i > 0 && plans[i].group !== plans[i - 1].group;
 }
+
+/**
+ * The vendor behind each coding agent, as one letter (plan 031, V3): drawn in the vendor's colour on our own neutral
+ * glyph, never the vendor's logo, whose brand terms are not ours to accept. An adapter missing here gets "?".
+ */
+export const ADAPTER_MARKS: Record<string, { letter: string; vendor: string }> = {
+  claude: { letter: "A", vendor: "Anthropic" },
+  codex: { letter: "O", vendor: "OpenAI" },
+  gemini: { letter: "G", vendor: "Google" },
+  grok: { letter: "X", vendor: "xAI" },
+  pi: { letter: "π", vendor: "pi" },
+};
+
+/** What a vote says in words, for its tooltip and a screen reader: "security-reviewer on codex: rejected, a vulnerability". */
+export const voteLabel = (vote: ReviewVote): string =>
+  `${vote.agent}${vote.adapter ? ` on ${vote.adapter}` : ""}: ${vote.verdict}${vote.vulnerability ? ", a vulnerability" : ""}`;

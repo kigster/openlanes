@@ -1,4 +1,5 @@
-import type { PullRequest } from "../api/types";
+import type { PullRequest, ReviewVote } from "../api/types";
+import { ReviewVotes } from "./ReviewVotes";
 
 const CI: Record<NonNullable<PullRequest["ci"]>, { cls: string; text: string }> = {
   passing: { cls: "ci-pass", text: "CI passing" },
@@ -16,9 +17,10 @@ const CHIP: Record<PullRequest["state"], { cls: string; text: string }> = {
 
 /**
  * The PR at the end of a plan's line: its number as a link to GitHub (the URL comes from the board, never assembled
- * here), the CI result, and the review label. A merged PR drops CI: the plan is complete.
+ * here), the CI result, the review label, and each reviewer's verdict with its coding agent's mark. A merged PR drops
+ * CI: the plan is complete.
  */
-export function Terminus({ pr }: { pr: PullRequest }) {
+export function Terminus({ pr, reviews }: { pr: PullRequest; reviews?: ReviewVote[] }) {
   const merged = pr.state === "merged";
   const ci = !merged && pr.ci ? CI[pr.ci] : null;
   const chip = CHIP[pr.state];
@@ -30,6 +32,7 @@ export function Terminus({ pr }: { pr: PullRequest }) {
       </a>
       {ci && <span className={ci.cls}>{ci.text}</span>}
       <span className={`chip ${chip.cls}`.trim()}>{chip.text}</span>
+      <ReviewVotes reviews={reviews} />
     </div>
   );
 }
