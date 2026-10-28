@@ -11,6 +11,24 @@ RSpec.describe OpenLanes::Config do
   describe ".load" do
     subject(:config) { described_class.load(root) }
 
+    # Plan 040, D1.
+    describe "adapter:" do
+      it "names the coding agent every agent without its own runs on" do
+        openlanes_yml("adapter: codex\n")
+        expect(config.adapter).to eq("codex")
+      end
+
+      it "refuses one nothing answers to" do
+        openlanes_yml("adapter: cursor\n")
+        expect { config }.to raise_error(OpenLanes::Error, /adapter: "cursor" is not one of claude, codex, pi/)
+      end
+
+      it "is written back by to_yaml" do
+        openlanes_yml("adapter: pi\n")
+        expect(config.to_yaml).to eq("adapter: pi\n")
+      end
+    end
+
     it "is empty when the root holds no file" do
       expect([config.file?, config.for(:run)]).to eq([false, {}])
     end
