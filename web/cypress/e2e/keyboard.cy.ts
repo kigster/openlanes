@@ -15,8 +15,8 @@ interface Key {
 const ENTER: Key = { key: "Enter", code: "Enter", keyCode: 13, text: "\r" };
 const SPACE: Key = { key: " ", code: "Space", keyCode: 32, text: " " };
 const ESC: Key = { key: "Escape", code: "Escape", keyCode: 27 };
-const HOME: Key = { key: "Home", code: "Home", keyCode: 36 };
 const DOWN_ARROW: Key = { key: "ArrowDown", code: "ArrowDown", keyCode: 40 };
+const UP_ARROW: Key = { key: "ArrowUp", code: "ArrowUp", keyCode: 38 };
 
 function key({ key: k, code, keyCode, text }: Key) {
   const base = { key: k, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode };
@@ -127,16 +127,18 @@ describe("the keyboard flow", () => {
     tabTo(matching(".drawer .model-trigger"));
     key(ENTER);
     cy.get('[role="listbox"]').should("be.visible");
-    // Arrow to Opus 5.5 and choose it; the listbox opens on the current model.
+    // Arrow up to Opus 5.5, the first option, and choose it; the listbox opens on the current model. Each check can
+    // read focus before the last key has landed and so send one key too many: going up, that extra key stops at the
+    // top, where going down past Opus 5.5 (or a Home that Radix's own opening focus overrides) did not.
     const choose = (left = 12): void => {
       cy.document().then((doc) => {
         if ((doc.activeElement?.textContent ?? "").includes("Opus 5.5")) return;
         if (left <= 0) throw new Error(`the arrow keys never reached Opus 5.5; focus is on ${doc.activeElement?.textContent}`);
-        key(DOWN_ARROW);
+        key(UP_ARROW);
         choose(left - 1);
       });
     };
-    key(HOME); // the list opens on the current model, so start from the top
+    cy.focused().should("have.attr", "aria-selected", "true");
     choose();
     key(ENTER);
     cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.model === "claude-opus-5-5");
