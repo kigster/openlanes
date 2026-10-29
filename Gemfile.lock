@@ -7,7 +7,7 @@ PATH
       concurrent-ruby
       dry-cli
       dry-cli-autocomplete (~> 0.5)
-      dry-cli-help (>= 0.5.1, < 0.6)
+      dry-cli-help (~> 0.6)
       dry-cli-ui (~> 0.5)
       dry-inflector
       dry-monads
@@ -41,11 +41,11 @@ GEM
       concurrent-ruby (~> 1.0)
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
-    agent-lock (2.1.0)
+    agent-lock (3.0.0)
       dry-cli (~> 1.4)
-      dry-cli-autocomplete (~> 0.5)
-      dry-cli-help (~> 0.5)
-      dry-cli-ui (~> 0.5)
+      dry-cli-autocomplete (~> 0.6)
+      dry-cli-help (~> 0.6)
+      dry-cli-ui (~> 0.7)
       pastel (~> 0.8)
       redis (~> 5.0)
     ast (2.4.3)
@@ -67,7 +67,7 @@ GEM
     dry-cli-autocomplete (0.6.0)
       dry-cli (>= 1.0)
       dry-inflector (>= 1.0)
-    dry-cli-help (0.5.1)
+    dry-cli-help (0.6.0)
       dry-cli
       pastel (~> 0.8)
     dry-cli-ui (0.7.0)
@@ -127,7 +127,7 @@ GEM
     nio4r (2.7.5)
     ostruct (0.6.3)
     parallel (2.3.0)
-    parser (3.3.12.0)
+    parser (3.3.13.0)
       ast (~> 2.4.1)
       racc
     pastel (0.8.0)
@@ -286,7 +286,7 @@ CHECKSUMS
   ZenTest (4.12.2) sha256=814e7478a28f631df8f802aee40bd1faa2a53df1fb50e086eb8655f9ee5d60b9
   aasm (6.0.0) sha256=c96ce60ea9574eb194e33f29d801be430b8cade2f31c8a5d137a9870ee39d404
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
-  agent-lock (2.1.0) sha256=f7bd8d6d340c2a77ebc8380db302c0dcc5eebfa13466caca63c2b270d5898665
+  agent-lock (3.0.0) sha256=c02e2c63037001ba2ebb674d5113499afd06e220044649fbe636b82d0eac79d5
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
@@ -301,7 +301,7 @@ CHECKSUMS
   dry-auto_inject (1.2.1) sha256=dedddc8a13fcdf320def7d6741ce7d6da48d749c6d43175ef0072c0be2ba47c8
   dry-cli (1.4.1) sha256=b8015bb76c708aa8705a36faf694973e75eeeffca39b89c8e172dc6f66a7d874
   dry-cli-autocomplete (0.6.0) sha256=4a8b904cc802168ad1657a941cdf8dbec1915b4c825a35eb049fb0ac037947ca
-  dry-cli-help (0.5.1) sha256=b08a09bed8c36d9ab4c60f20bd17aeefc5615c4cca41e64e1bcc5845a55e83b5
+  dry-cli-help (0.6.0) sha256=10def4049bdae8c19e7412f3cefc062829048dbfa3a42155788b333c381766c9
   dry-cli-ui (0.7.0) sha256=2efc8570a0dbe8c0c6e31f2767ce18ca14d7ca639301206ef100adc69282c51d
   dry-configurable (1.4.0) sha256=e35d1b5f3c081753ef361f564919db79000f32cfa6f20ee3a3ba5921b41b73ce
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
@@ -323,7 +323,7 @@ CHECKSUMS
   openlanes (4.0.0)
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
-  parser (3.3.12.0) sha256=21a6d7f755d5a24dfbdc6e6b772e4e879a52e7631a88bc5a3a134606052c9828
+  parser (3.3.13.0) sha256=e02f9b63c2fe05b0c68f692ba4df89b3cb113b663964f75d988fbebfd6c3deca
   pastel (0.8.0) sha256=481da9fb7d2f6e6b1a08faf11fa10363172dc40fd47848f096ae21209f805a75
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623

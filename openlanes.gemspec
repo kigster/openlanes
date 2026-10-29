@@ -87,9 +87,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "concurrent-ruby"
   spec.add_dependency "dry-cli"
   spec.add_dependency "dry-cli-autocomplete", "~> 0.5"
-  # 0.5.1 is the first release whose help screen survives `example [""]`,
+  # 0.5.1 was the first release whose help screen survives `example [""]`,
   # which four commands here declare.
-  spec.add_dependency "dry-cli-help", ">= 0.5.1", "< 0.6"
+  spec.add_dependency "dry-cli-help", "~> 0.6"
   spec.add_dependency "dry-cli-ui", "~> 0.5"
   spec.add_dependency "dry-inflector"
   spec.add_dependency "dry-monads"
