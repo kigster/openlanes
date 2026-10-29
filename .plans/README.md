@@ -16,7 +16,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-Every project keeps its specs and plans in a `.plans/` directory at its root. This directory, like many other configuration parameters, can be set to a different location by an environment variable, for instance `.plans` can be set by `$PLANS_DIR`. However, in the case of OpenLanes, we strongly suggest that you keep your plans folder committed into your version control system, especially if more than one person is working on the project.
+### Every project keeps its specs and plans in a `.plans/` directory at its root. This directory, like many other configuration parameters, can be set to a different location by an environment variable, for instance `.plans` can be set by `$PLANS_DIR`. However, in the case of OpenLanes, we strongly suggest that you keep your plans folder committed into your version control system, especially if more than one person is working on the project.
 
 Each medium-to-large feature gets one folder, and the folder's **name includes its state**: the number identifies it forever, the emoji says what phase it is in, and the slug says what it is, acting as a kebab-case title of the feature.
 
