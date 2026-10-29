@@ -283,11 +283,12 @@ module OpenLanes
       # @return [Boolean]
       def tty? = $stdin.tty? && $stderr.tty?
 
-      # A named seam, so a spec can answer the questions.
+      # A named seam, so a spec can answer the questions. Spaced, so each
+      # question stands apart from the one before it.
       #
-      # @return [TTY::Prompt]
+      # @return [OpenLanes::Setup::SpacedPrompt]
       def prompt
-        @prompt ||= TTY::Prompt.new(output: $stderr)
+        @prompt ||= OpenLanes::Setup::SpacedPrompt.new(TTY::Prompt.new(output: $stderr), out: $stderr)
       end
 
       # @return [void]

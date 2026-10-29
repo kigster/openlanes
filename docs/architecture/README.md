@@ -74,7 +74,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Log : 7
   OpenLanes__CLI ..> OpenLanes__Plans : 25
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
-  OpenLanes__CLI ..> OpenLanes__Setup : 5
+  OpenLanes__CLI ..> OpenLanes__Setup : 6
   OpenLanes__CLI ..> OpenLanes__Skills : 1
   OpenLanes__CLI ..> OpenLanes__Supervision : 9
   OpenLanes__CLI ..> OpenLanes__UI : 19

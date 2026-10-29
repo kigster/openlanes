@@ -14,6 +14,7 @@ classDiagram
   class OpenLanes__Setup__Extractor["Extractor"]
   class OpenLanes__Setup__Interview["Interview"]
   class OpenLanes__Setup__Machine["Machine"]
+  class OpenLanes__Setup__SpacedPrompt["SpacedPrompt"]
   class OpenLanes__Setup__Stack["Stack"]
   class OpenLanes__Setup__StackDetector["StackDetector"]
   class OpenLanes__Setup__StackDocument["StackDocument"]
