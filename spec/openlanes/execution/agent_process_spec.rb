@@ -88,10 +88,18 @@ RSpec.describe OpenLanes::Execution::AgentProcess do
       process.terminate
     end
 
+    # Darwin answers EPERM, not ESRCH, for a group whose only member is an
+    # unreaped zombie, which the supervisor is once its `sleep` has exited:
+    # on a slower machine, always by the time this runs.
     after do
       cli_status
-      Process.kill("KILL", -supervisor)
-    rescue Errno::ESRCH
+      begin
+        Process.kill("KILL", -supervisor)
+      rescue Errno::ESRCH, Errno::EPERM
+        nil
+      end
+      Process.wait(supervisor)
+    rescue Errno::ECHILD
       nil
     end
 

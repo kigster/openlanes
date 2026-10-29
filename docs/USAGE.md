@@ -15,7 +15,7 @@ Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repo
 
 ### `openlanes init`
 
-Writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--starts`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, and an existing file is kept unless `--overwrite`.
+Writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--starts`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, an existing file is kept unless `--overwrite`, and `--no-setup` skips the machine check that otherwise runs `openlanes setup` first.
 
 ### `.openlanes.yml`
 
