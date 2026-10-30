@@ -7,15 +7,16 @@ RSpec.describe OpenLanes::Setup::Interview do
   let(:prompt) { TTY::Prompt::Test.new }
   let(:out) { StringIO.new }
   let(:extractor) { nil }
-  let(:given) { { project: "Acme", starts: "research", frontend: false, jobs: 2 } }
-  # Keys for TTY::Prompt::Test: Enter takes the highlighted choice or the default.
-  let(:enter) { "\r" }
-  let(:down) { "\e[B" }
+  let(:given) { {} }
 
   before { FileUtils.mkdir_p(root) }
   after { FileUtils.rm_rf(File.dirname(root)) }
 
-  def interview(ask: true, **) = described_class.new(root:, prompt:, extractor:, given:, ask:, out:, **)
+  def terminal = OpenLanes::Setup::ProjectForm::Terminal.new(prompt:, extractor:, out:)
+
+  def interview(**) = described_class.new(root:, given:, terminal:, **)
+
+  def unasked(**) = described_class.new(root:, given:, **)
 
   def touch(name, text = "")
     path = File.join(root, name)
@@ -23,148 +24,100 @@ RSpec.describe OpenLanes::Setup::Interview do
     File.write(path, text)
   end
 
-  def answer(*keys) = keys.each { prompt.input << it }.then { prompt.input.rewind }
+  def press(*keys) = keys.each { prompt.input << it }.then { prompt.input.rewind }
 
-  def asked = strip_ansi(prompt.output.string)
+  context "when asking, in a folder with CI and a stack" do
+    subject(:config) { interview.call }
 
-  context "with a CI and a stack already in the folder, no key" do
     before do
       touch(".github/workflows/ci.yml")
+      touch(".circleci/config.yml")
       touch("Gemfile")
       touch("Gemfile.lock", "GEM\n  specs:\n    rails (8.0.1)\n")
-      # merge (Enter: human), quality (Down twice, Enter: mvp), eight stack questions (Enter each),
-      # open to another stack (n)
-      answer(enter, down, down, enter, *Array.new(8, "\n"), "n\n")
+      press(*Array.new(40, "\n"))
     end
 
-    it "names the CI and asks nothing about it" do
-      config = interview.call
-      expect([config.ci, out.string, asked]).to match([
-                                                        { provider: :github_actions, config: ".github/workflows/ci.yml" },
-                                                        include("CI: found GitHub Actions"), satisfy { !it.include?("CI setup") }
-                                                      ])
+    it "preselects both CIs, and records them" do
+      expect(config.architecture_decisions.current.ci).to contain_exactly(:github_actions, :circleci)
     end
 
-    it "says once that no key can read a description, and asks every question" do
-      config = interview.call
-      expect([out.string.scan(described_class::NO_KEY).size, asked.include?("Describe the app")]).to eq([1, false])
-      expect(config).to have_attributes(merge_by: :human,
-        desired_codebase_quality: :mvp,
-        stack: { language: "ruby", frameworks: ["rails"] })
+    it "names the project after its folder" do
+      expect(config.project).to eq("acme")
     end
 
-    it "asks in order: merge, quality, stack, port" do
+    it "records the detail chosen and the quality offered first" do
+      expect([config.architecture_decisions.detail, config.desired_codebase_quality]).to eq(%i[medium high])
+    end
+
+    it "writes neither of the old keys" do
+      expect([config.ci, config.stack]).to eq([nil, nil])
+    end
+
+    it "asks what the folder holds now" do
+      config
+      expect(strip_ansi(out.string + prompt.output.string)).to include("NOW, CI")
+    end
+  end
+
+  context "when asking, with flags" do
+    let(:given) { { project: "Flagged", merge_by: :auto, desired_codebase_quality: :mvp, starts: "building", jobs: 3 } }
+
+    before { press(*Array.new(40, "\n")) }
+
+    it "takes each flag without asking" do
+      expect(interview.call).to have_attributes(project: "Flagged", merge_by: :auto, desired_codebase_quality: :mvp, starts: :building, jobs: 3)
+      expect(strip_ansi(prompt.output.string)).not_to match(/Project name|merges|desired quality|new plan starts|Plans to run/)
+    end
+  end
+
+  context "when asking, in an empty folder" do
+    before { press(*Array.new(40, "\n")) }
+
+    it "does not ask what it holds" do
       interview.call
-      marks = ["Who merges", "desired quality", "Language:", "Domain:", "open to a different stack"]
-      expect(marks.map { asked.index(it) }).to eq(marks.map { asked.index(it) }.sort)
-    end
-  end
-
-  context "with no CI" do
-    it "records an external CI" do
-      answer(enter)
-      expect(interview.send(:settle_ci)).to eq(provider: :external, config: nil)
+      expect(strip_ansi(prompt.output.string)).not_to include("NOW,")
     end
 
-    it "records none" do
-      answer(down, down, enter)
-      expect(interview.send(:settle_ci)).to eq(provider: :none, config: nil)
-    end
+    context "with a front end wanted or ruled out" do
+      def wanted(front_end)
+        preselection = instance_double(OpenLanes::Setup::ProjectForm::Answers,
+          decisions: OpenLanes::Setup::ArchitectureDecisions.new(detail: nil,
+            migration: nil,
+            current: OpenLanes::Setup::Architecture.new,
+            target: OpenLanes::Setup::Architecture.new(front_end:)))
+        allow(OpenLanes::Setup::ProjectForm::Answers).to receive(:new).and_return(preselection)
+        unasked.call.frontend
+      end
 
-    it "offers to set one up, GitHub Actions first" do
-      answer(down, enter, down, enter)
-      expect([interview.send(:settle_ci), asked]).to match([
-                                                             { provider: :circleci, config: ".circleci/config.yml" },
-                                                             include("CI setup", "GitHub Actions", "CircleCI", "Jenkins")
-                                                           ])
-    end
-  end
-
-  context "with an extractor" do
-    let(:extractor) { instance_double(OpenLanes::Setup::Extractor) }
-
-    before do
-      allow(extractor).to receive(:call).with("A payroll app in Go")
-                                        .and_return(merge_by: :auto, desired_codebase_quality: :mvp, language: "go")
-      # CI: No CI for now; description; seven stack questions left
-      answer(down, down, enter, "A payroll app in Go\n", *Array.new(7, "\n"))
-    end
-
-    it "skips every question the description answered" do
-      config = interview.call
-      expect([config.merge_by, config.desired_codebase_quality, config.stack]).to eq([:auto, :mvp, { language: "go" }])
-      expect(["Who merges", "desired quality", "Language:"].map { asked.include?(it) }).to eq([false, false, false])
-    end
-  end
-
-  context "when porting a detected stack" do
-    before do
-      touch("Jenkinsfile")
-      touch("go.mod")
-      answer(enter, enter, *Array.new(8, "\n"), "y\n", enter, "rust\n")
-    end
-
-    it "records from and to" do
-      expect(interview.call.stack).to include(language: "go", from: "go", to: "rust")
-    end
-  end
-
-  context "when starting fresh beside a detected stack" do
-    before do
-      touch("Jenkinsfile")
-      touch("go.mod")
-      answer(enter, enter, *Array.new(8, "\n"), "y\n", down, enter)
-    end
-
-    it "records no port" do
-      expect(interview.call.stack).to eq(language: "go")
-    end
-  end
-
-  context "with a mixed stack" do
-    before do
-      touch("Jenkinsfile")
-      touch("Gemfile")
-      touch("go.mod")
-      answer(enter, enter, "go\n", *Array.new(7, "\n"))
-    end
-
-    it "says so and asks, with no default" do
-      expect([interview.call.stack, out.string]).to match([{ language: "go" }, include("ruby, go")])
-    end
-  end
-
-  context "when the jobs answer is not a count" do
-    let(:given) { { project: "Acme", starts: "research", frontend: false } }
-
-    # CI (Enter), merge (Enter), quality (Enter), eight stack questions, then jobs twice.
-    before { answer(enter, enter, enter, *Array.new(8, "\n"), "many\n", "3\n") }
-
-    it "asks it again at once" do
-      expect([interview.call.jobs, asked]).to match([3, include("whole number above zero")])
+      it "reads it from what is wanted" do
+        expect([wanted(%w[react]), wanted(%w[none])]).to eq([true, false])
+      end
     end
   end
 
   context "without asking" do
-    let(:prompt) { nil }
-
-    it "takes the defaults and the detected stack" do
+    it "records the scan, and leaves quality unset" do
       touch("Cargo.toml")
-      expect(interview(ask: false).call).to have_attributes(
-        ci: { provider: :none, config: nil }, merge_by: :human, desired_codebase_quality: nil, stack: { language: "rust" }
+      expect(unasked.call).to have_attributes(
+        merge_by:                 :human,
+        desired_codebase_quality: nil,
+        starts:                   :research,
+        architecture_decisions:   have_attributes(detail: nil, current: have_attributes(languages: %i[rust]))
       )
     end
 
-    it "keeps the current file's answers" do
-      current = OpenLanes::Config.new(desired_codebase_quality: :mvp,
-        merge_by: :auto,
-        stack: { language: "elixir" },
-        ci: { provider: :external, config: nil })
-      expect(interview(ask: false, defaults: current).call).to have_attributes(
-        ci:                       { provider: :external, config: nil },
+    it "builds no extractor's worth of questions" do
+      expect(unasked.call.architecture_decisions).to be_nil
+    end
+
+    it "moves an older file's ci: and stack: over" do
+      current = OpenLanes::Config.new(desired_codebase_quality: :mvp, merge_by: :auto, stack: { language: "elixir" }, ci: { provider: :external, config: nil })
+      expect(unasked(defaults: current).call).to have_attributes(
+        ci:                       nil,
+        stack:                    nil,
         merge_by:                 :auto,
         desired_codebase_quality: :mvp,
-        stack:                    { language: "elixir" }
+        architecture_decisions:   have_attributes(target: have_attributes(ci: %i[external], languages: %i[elixir]))
       )
     end
 
@@ -173,24 +126,28 @@ RSpec.describe OpenLanes::Setup::Interview do
         merge_max_rejections: 3,
         questions_model: "claude-sonnet-4-5",
         redis_outage_hours: 4,
+        frontend: true,
         commands: { lint: { run: "x" } })
-      expect(interview(ask: false, defaults: current).call).to have_attributes(
+      expect(unasked(defaults: current).call).to have_attributes(
         redis_url:            "redis://cache.example.test:6379",
         merge_max_rejections: 3,
         questions_model:      "claude-sonnet-4-5",
         redis_outage_hours:   4,
+        frontend:             true,
         commands:             { lint: { run: "x" } }
       )
     end
 
-    it "leaves a mixed stack unset" do
-      touch("Gemfile")
-      touch("go.mod")
-      expect(interview(ask: false).call.stack).to be_nil
+    it "keeps the flag for a front end" do
+      expect(described_class.new(root:, given: { frontend: false }).call.frontend).to be(false)
+    end
+
+    it "takes a blank count as none" do
+      expect(described_class.new(root:, given: { jobs: " " }).call.jobs).to be_nil
     end
 
     it "refuses jobs that are not a count" do
-      expect { interview(ask: false, given: { jobs: "many" }).call }.to raise_error(OpenLanes::Error, /jobs/)
+      expect { described_class.new(root:, given: { jobs: "many" }).call }.to raise_error(OpenLanes::Error, /jobs/)
     end
   end
 end

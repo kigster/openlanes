@@ -39,6 +39,7 @@ classDiagram
   OpenLanes ..> OpenLanes__Coverage : 1
   OpenLanes ..> OpenLanes__Live : 1
   OpenLanes ..> OpenLanes__Plans : 3
+  OpenLanes ..> OpenLanes__Setup : 1
   OpenLanes ..> OpenLanes__UI : 1
   OpenLanes__Adapters ..> OpenLanes : 1
   OpenLanes__Adapters ..> OpenLanes__Execution : 2
@@ -74,7 +75,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Log : 7
   OpenLanes__CLI ..> OpenLanes__Plans : 25
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
-  OpenLanes__CLI ..> OpenLanes__Setup : 6
+  OpenLanes__CLI ..> OpenLanes__Setup : 7
   OpenLanes__CLI ..> OpenLanes__Skills : 1
   OpenLanes__CLI ..> OpenLanes__Supervision : 9
   OpenLanes__CLI ..> OpenLanes__UI : 19
@@ -145,10 +146,9 @@ classDiagram
   OpenLanes__Presentation ..> OpenLanes__Lifecycle : 2
   OpenLanes__Presentation ..> OpenLanes__Plans : 12
   OpenLanes__Presentation ..> OpenLanes__UI : 3
-  OpenLanes__Setup ..> OpenLanes : 6
-  OpenLanes__Setup ..> OpenLanes__Engine : 1
+  OpenLanes__Setup ..> OpenLanes : 7
+  OpenLanes__Setup ..> OpenLanes__Adapters : 2
   OpenLanes__Setup ..> OpenLanes__Live : 2
-  OpenLanes__Setup ..> OpenLanes__Plans : 1
   OpenLanes__Setup ..> OpenLanes__UI : 2
   OpenLanes__Skills ..> OpenLanes : 1
   OpenLanes__Supervision ..> OpenLanes : 2

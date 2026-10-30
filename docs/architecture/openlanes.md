@@ -12,6 +12,7 @@ classDiagram
   class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Refusal["Refusal"]
+  class OpenLanes__Setup__ArchitectureDecisions["OpenLanes::Setup::ArchitectureDecisions"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
@@ -19,5 +20,6 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Error : uses
   OpenLanes__Config ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Config ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Config ..> OpenLanes__Setup__ArchitectureDecisions : uses
   OpenLanes__Launcher ..> OpenLanes__UI : uses
 ```

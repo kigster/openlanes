@@ -33,8 +33,8 @@ module OpenLanes
     def detect_ci(root) = CiDetector.new(root).call
 
     # @param env [#[]]
-    # @return [OpenLanes::Setup::Extractor, nil] nil with no API key
-    def extractor(env = ENV) = Extractor.from_env(env)
+    # @return [OpenLanes::Setup::Extractor, nil] nil when nothing can read a description
+    def extractor(env = ENV) = Extractor.on(Extraction.route(env))
 
     # One line per check, ✓ or ✗, and under each ✗ the command that fixes it.
     #

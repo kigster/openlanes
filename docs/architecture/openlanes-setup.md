@@ -4,32 +4,71 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters__ProbeRunner["OpenLanes::Adapters::ProbeRunner"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
-  class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Setup__Architecture["Architecture"]
+  class OpenLanes__Setup__ArchitectureDecisions["ArchitectureDecisions"]
+  class OpenLanes__Setup__ArchitectureScan["ArchitectureScan"]
+  class OpenLanes__Setup__ArchitectureScan__Manifests["ArchitectureScan::Manifests"]
   class OpenLanes__Setup__Check["Check"]
   class OpenLanes__Setup__CiDetector["CiDetector"]
   class OpenLanes__Setup__CiScaffold["CiScaffold"]
+  class OpenLanes__Setup__Extraction__CliAdapter["Extraction::CliAdapter"]
+  class OpenLanes__Setup__Extraction__GeminiAdapter["Extraction::GeminiAdapter"]
+  class OpenLanes__Setup__Extraction__Ollama["Extraction::Ollama"]
+  class OpenLanes__Setup__Extraction__OllamaAdapter["Extraction::OllamaAdapter"]
+  class OpenLanes__Setup__Extraction__Route["Extraction::Route"]
+  class OpenLanes__Setup__Extraction__Routes["Extraction::Routes"]
+  class OpenLanes__Setup__Extraction__XaiAdapter["Extraction::XaiAdapter"]
   class OpenLanes__Setup__Extractor["Extractor"]
   class OpenLanes__Setup__Interview["Interview"]
   class OpenLanes__Setup__Machine["Machine"]
-  class OpenLanes__Setup__SpacedPrompt["SpacedPrompt"]
+  class OpenLanes__Setup__ProjectForm__Answers["ProjectForm::Answers"]
+  class OpenLanes__Setup__ProjectForm__Driver["ProjectForm::Driver"]
+  class OpenLanes__Setup__ProjectForm__Preselection["ProjectForm::Preselection"]
+  class OpenLanes__Setup__ProjectForm__Renderer["ProjectForm::Renderer"]
+  class OpenLanes__Setup__ProjectForm__Terminal["ProjectForm::Terminal"]
+  class OpenLanes__Setup__ProjectForm__Validator["ProjectForm::Validator"]
+  class OpenLanes__Setup__ProjectForm__WrappedNode["ProjectForm::WrappedNode"]
   class OpenLanes__Setup__Stack["Stack"]
   class OpenLanes__Setup__StackDetector["StackDetector"]
   class OpenLanes__Setup__StackDocument["StackDocument"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Setup__ArchitectureDecisions ..> OpenLanes__Error : uses
+  OpenLanes__Setup__ArchitectureDecisions ..> OpenLanes__Setup__Architecture : uses
+  OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__Architecture : uses
+  OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__ArchitectureScan__Manifests : uses
+  OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__CiDetector : uses
+  OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__StackDetector : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Adapters__ProbeRunner : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__CliAdapter : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__GeminiAdapter : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__Ollama : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__OllamaAdapter : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__Route : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__XaiAdapter : uses
   OpenLanes__Setup__Extractor ..> OpenLanes__Config : uses
+  OpenLanes__Setup__Extractor ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__Setup__Extractor ..> OpenLanes__UI : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Config : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Error : uses
-  OpenLanes__Setup__Interview ..> OpenLanes__Plans__Spec : uses
-  OpenLanes__Setup__Interview ..> OpenLanes__Setup__CiScaffold : uses
-  OpenLanes__Setup__Interview ..> OpenLanes__Setup__Stack : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ArchitectureDecisions : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ArchitectureScan : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Answers : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Driver : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Preselection : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Renderer : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Config : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Error : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Setup__Check : uses
+  OpenLanes__Setup__ProjectForm__Answers ..> OpenLanes__Setup__Architecture : uses
+  OpenLanes__Setup__ProjectForm__Answers ..> OpenLanes__Setup__ArchitectureDecisions : uses
+  OpenLanes__Setup__ProjectForm__Preselection ..> OpenLanes__Setup__Architecture : uses
+  OpenLanes__Setup__ProjectForm__Renderer ..> OpenLanes__Setup__ProjectForm__WrappedNode : uses
+  OpenLanes__Setup__ProjectForm__Validator ..> OpenLanes__Setup__ProjectForm__Answers : uses
   OpenLanes__Setup__StackDetector ..> OpenLanes__Setup__Stack : uses
 ```

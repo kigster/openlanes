@@ -86,9 +86,9 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Presentation__ApiDocs["OpenLanes::Presentation::ApiDocs"]
   class OpenLanes__Presentation__EventsReport["OpenLanes::Presentation::EventsReport"]
+  class OpenLanes__Setup__Architecture["OpenLanes::Setup::Architecture"]
   class OpenLanes__Setup__CiScaffold["OpenLanes::Setup::CiScaffold"]
-  class OpenLanes__Setup__SpacedPrompt["OpenLanes::Setup::SpacedPrompt"]
-  class OpenLanes__Setup__Stack["OpenLanes::Setup::Stack"]
+  class OpenLanes__Setup__ProjectForm__Terminal["OpenLanes::Setup::ProjectForm::Terminal"]
   class OpenLanes__Setup__StackDocument["OpenLanes::Setup::StackDocument"]
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
   class OpenLanes__Supervision__Title["OpenLanes::Supervision::Title"]
@@ -141,9 +141,9 @@ classDiagram
   OpenLanes__CLI__Init ..> OpenLanes__Config : uses
   OpenLanes__CLI__Init ..> OpenLanes__Error : uses
   OpenLanes__CLI__Init ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__CiScaffold : uses
-  OpenLanes__CLI__Init ..> OpenLanes__Setup__SpacedPrompt : uses
-  OpenLanes__CLI__Init ..> OpenLanes__Setup__Stack : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Setup__ProjectForm__Terminal : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__StackDocument : uses
   OpenLanes__CLI__Init ..> OpenLanes__UI : uses
   OpenLanes__CLI__Linear__Import --|> OpenLanes__CLI__Linear__Team : inherits

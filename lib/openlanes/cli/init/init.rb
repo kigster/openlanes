@@ -25,9 +25,9 @@ module OpenLanes
         values: Config::QUALITIES.map(&:to_s),
         desc:   "desired_codebase_quality: high, standard or mvp (R4); asked on a terminal when left out"
       option :ci,
-        values: Config::CI_PROVIDERS.map(&:to_s),
-        desc:   "What checks pull requests: github_actions, circleci, jenkins, external or none " \
-                "(-y default: what the folder runs, else none)"
+        values: OpenLanes::Setup::Architecture.values(:ci).map(&:to_s),
+        desc:   "What checks pull requests: github_actions, circleci, jenkins, gitlab, buildkite, external or none " \
+                "(-y default: what the folder runs)"
       option :merge_by, values: Config::MERGERS.map(&:to_s), desc: "Who merges a reviewed pull request (default: human)"
       option :reconfigure,
         type:    :boolean,
@@ -123,13 +123,10 @@ module OpenLanes
       # @param current [OpenLanes::Config]
       # @return [OpenLanes::Config]
       def settings(root, options, current)
-        ask = interactive?(options)
         interview = OpenLanes::Setup.interview(root:,
-          prompt:    ask ? prompt : nil,
-          extractor: ask ? OpenLanes::Setup.extractor : nil,
-          defaults:  current,
-          given:     given(options),
-          ask:)
+          defaults: current,
+          given:    given(options),
+          terminal: terminal(options))
         draft = interview.call
         Config.parse(draft.to_yaml, path: File.join(root, Config::FILE))
       end
@@ -143,7 +140,7 @@ module OpenLanes
         given = options.slice(:project, :starts).compact
         given[:frontend] = options[:frontend] if options.key?(:frontend)
         given[:jobs] = count(options[:jobs]) if options[:jobs]
-        given[:ci] = member(:ci, options[:ci], Config::CI_PROVIDERS) if options[:ci]
+        given[:ci] = member(:ci, options[:ci], OpenLanes::Setup::Architecture.values(:ci)) if options[:ci]
         given[:merge_by] = member(:merge_by, options[:merge_by], Config::MERGERS) if options[:merge_by]
         given[:desired_codebase_quality] = member(:quality, options[:quality], Config::QUALITIES) if options[:quality]
         given
@@ -179,28 +176,28 @@ module OpenLanes
       end
 
       # `.openlanes.yml`, `docs/decisions/stack.md` when the stack is known,
-      # and the CI file when openlanes scaffolds the provider and the folder
-      # does not already run it. One list, so the diff, the confirm prompt
-      # and the write cannot disagree about what is written.
+      # and a CI file for each provider openlanes scaffolds and the folder does
+      # not already run. One list, so the diff, the confirm prompt and the
+      # write cannot disagree about what is written.
       #
       # @return [Array<Array(String, String)>] absolute path, contents
       def outputs(root, path, config)
-        stack = config.stack && OpenLanes::Setup::Stack.from_h(config.stack)
+        stack = config.architecture_decisions&.stack
         files = [[path, config.to_yaml]]
-        files << [File.join(root, OpenLanes::Setup::StackDocument::PATH), OpenLanes::Setup::StackDocument.new(stack).render] if stack
-        scaffold = scaffold(root, config)
-        files << [File.join(root, scaffold.path), scaffold.render] if scaffold&.runnable? && !File.exist?(File.join(root, scaffold.path))
+        files << [File.join(root, OpenLanes::Setup::StackDocument::PATH), OpenLanes::Setup::StackDocument.new(stack).render] if stack && !stack.empty?
+        scaffolds(root, config).select(&:runnable?).reject { File.exist?(File.join(root, it.path)) }
+                               .each { files << [File.join(root, it.path), it.render] }
         files
       end
 
-      # @return [OpenLanes::Setup::CiScaffold, nil] nil when openlanes does not
-      #   scaffold the provider, or the folder already runs it
-      def scaffold(root, config)
-        provider = config.ci&.dig(:provider)
-        return unless OpenLanes::Setup::CiScaffold.providers.include?(provider)
-        return if OpenLanes::Setup.detect_ci(root).any? { it.provider == provider }
-
-        OpenLanes::Setup::CiScaffold.new(root, provider:, stack: OpenLanes::Setup::Stack.from_h(config.stack))
+      # @return [Array<OpenLanes::Setup::CiScaffold>] one per wanted provider that
+      #   openlanes can scaffold and the folder does not already run
+      def scaffolds(root, config)
+        decisions = config.architecture_decisions or return []
+        running = OpenLanes::Setup.detect_ci(root).map(&:provider)
+        (decisions.target.ci & (OpenLanes::Setup::CiScaffold.providers - running)).map do |provider|
+          OpenLanes::Setup::CiScaffold.new(root, provider:, stack: decisions.stack)
+        end
       end
 
       # @return [void]
@@ -209,8 +206,7 @@ module OpenLanes
           FileUtils.mkdir_p(File.dirname(file))
           File.write(file, contents)
         end
-        scaffold = scaffold(root, config)
-        return if quiet?(options) || scaffold.nil? || scaffold.runnable?
+        return if quiet?(options) || scaffolds(root, config).all?(&:runnable?)
 
         warn("CI: #{OpenLanes::Setup::CiScaffold::NOTHING_TO_RUN}. Add lint and test recipes to the justfile, " \
              "or name the stack's language, and run openlanes init --reconfigure.")
@@ -272,7 +268,8 @@ module OpenLanes
         return true unless interactive?(options)
 
         files = outputs(root, path, config).map(&:first)
-        return true if prompt.select("Write #{files.join(", ")}?", %w[YES NO]) == "YES"
+        $stderr.puts
+        return true if prompt.select(OpenLanes::Setup::ProjectForm.wrap("Write #{files.join(", ")}?"), %w[YES NO]) == "YES"
 
         warn("Nothing was written.") unless quiet?(options)
         false
@@ -289,13 +286,18 @@ module OpenLanes
       # @return [Boolean]
       def tty? = $stdin.tty? && $stderr.tty?
 
-      # A named seam, so a spec can answer the questions. Spaced, so each
-      # question stands apart from the one before it.
+      # A named seam, so a spec can answer the questions.
       #
-      # @return [OpenLanes::Setup::SpacedPrompt]
-      def prompt
-        @prompt ||= OpenLanes::Setup::SpacedPrompt.new(TTY::Prompt.new(output: $stderr), out: $stderr)
+      # @param options [Hash]
+      # @return [OpenLanes::Setup::ProjectForm::Terminal, nil] nil when nothing may be asked
+      def terminal(options)
+        return nil unless interactive?(options)
+
+        OpenLanes::Setup::ProjectForm::Terminal.new(prompt:, extractor: OpenLanes::Setup.extractor)
       end
+
+      # @return [TTY::Prompt]
+      def prompt = @prompt ||= TTY::Prompt.new(output: $stderr)
 
       # @return [void]
       def preview(path, plans, config, keep, changes = nil)

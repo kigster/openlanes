@@ -60,6 +60,8 @@ loader.ignore("#{__dir__}/openlanes/cli/preview/preview.rb")
 loader.ignore("#{__dir__}/openlanes/linear/mapping.rb")
 # ERB templates for the CI scaffold, not Ruby constants.
 loader.ignore("#{__dir__}/openlanes/setup/templates")
+# The form itself: a file Inquirex evaluates, which defines no constant.
+loader.ignore("#{__dir__}/openlanes/setup/project_form/dsl.rb")
 # dry-system providers, loaded by the container when a key under them is
 # first resolved; they define no constant.
 loader.ignore("#{__dir__}/openlanes/providers")

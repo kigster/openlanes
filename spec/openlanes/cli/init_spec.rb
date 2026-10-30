@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::CLI::Init do
   let(:machine) { instance_double(OpenLanes::Setup::Machine, ready?: ready) }
   # What every run without a flag for them records for the new keys. Quality
   # stays unset under -y, to be asked on the first review-passed review (R4).
-  let(:decided) { { "merge" => { "by" => "human" }, "ci" => { "provider" => "none" } } }
+  let(:decided) { { "merge" => { "by" => "human" } } }
 
   before do
     FileUtils.mkdir_p(File.join(repo, ".git"))
@@ -188,17 +188,15 @@ RSpec.describe OpenLanes::CLI::Init do
     let(:answer) { "YES" }
 
     before do
+      allow(prompt).to receive(:multi_select).and_return([])
       allow(prompt).to receive(:ask).with("Project name:", default: "acme-app").and_return("Acme")
-      allow(prompt).to receive(:ask).with(/Plans to run at once/, default: nil).and_return("3")
-      allow(prompt).to receive(:select).with(/Where a new plan starts/, %w[research planning building], default: "research").and_return("planning")
-      allow(prompt).to receive(:select).with(/front end/, ["each plan decides", "YES", "NO"], default: "each plan decides")
-                                       .and_return("NO")
-      allow(prompt).to receive(:select).with(/desired quality of the codebase/, hash_including, any_args).and_return("high")
+      allow(prompt).to receive(:ask).with(/Plans to run at once/, convert: :int).and_return(3)
+      allow(prompt).to receive(:select).with(/How much detail/, anything, any_args).and_return("low")
+      allow(prompt).to receive(:select).with(/WANTED, Layout/, anything, any_args).and_return("library")
+      allow(prompt).to receive(:select).with(/Where a new plan starts/, anything, any_args).and_return("planning")
+      allow(prompt).to receive(:select).with(/desired quality of the codebase/, anything, any_args).and_return("high")
       allow(prompt).to receive(:select).with(/\AWrite /, %w[YES NO]).and_return(answer)
-      allow(prompt).to receive(:select).with(/CI setup/, anything).and_return("No CI for now")
-      allow(prompt).to receive(:select).with(/merges/, %w[human auto], default: "human").and_return("auto")
-      allow(prompt).to receive(:ask).with(/\A(Language|Frameworks|Front end|Persistence|Caching|Logins|Deployment|Domain)/,
-        default: nil).and_return("")
+      allow(prompt).to receive(:select).with(/merges/, anything, any_args).and_return("auto")
       allow(OpenLanes::Setup).to receive(:extractor).and_return(nil)
     end
 
@@ -206,11 +204,10 @@ RSpec.describe OpenLanes::CLI::Init do
       run
       expect(written).to eq("project" => "Acme",
         "starts" => "planning",
-        "frontend" => false,
         "jobs" => 3,
         "merge" => { "by" => "auto" },
-        "ci" => { "provider" => "none" },
-        "desired_codebase_quality" => "high")
+        "desired_codebase_quality" => "high",
+        "architecture_decisions" => { "version" => 1, "detail" => "low", "current" => {}, "target" => { "layout" => "library" } })
     end
 
     it "asks only for what no flag gave" do
@@ -221,7 +218,7 @@ RSpec.describe OpenLanes::CLI::Init do
         ci: "none",
         merge_by: "human",
         quality: "mvp")
-      expect(prompt).not_to have_received(:select).with(/CI setup|merges|desired quality|Where a new plan starts/, any_args)
+      expect(prompt).not_to have_received(:select).with(/merges|desired quality|Where a new plan starts/, any_args)
       expect(prompt).not_to have_received(:ask).with(/Project name|Plans to run/, any_args)
     end
 
@@ -246,9 +243,8 @@ RSpec.describe OpenLanes::CLI::Init do
   describe "the new decisions under -y" do
     it "takes each from its flag" do
       run(yes: true, ci: "jenkins", merge_by: "auto", quality: "mvp")
-      expect(written).to include("merge" => { "by" => "auto" },
-        "desired_codebase_quality" => "mvp",
-        "ci" => { "provider" => "jenkins", "config" => "Jenkinsfile" })
+      expect(written).to include("merge" => { "by" => "auto" }, "desired_codebase_quality" => "mvp")
+      expect(written.dig("architecture_decisions", "target", "ci")).to eq(%w[jenkins])
     end
 
     it "scaffolds the CI file it records, installing the stack's dependencies" do
@@ -259,32 +255,31 @@ RSpec.describe OpenLanes::CLI::Init do
 
     it "writes no CI file, and says why, when nothing would be checked" do
       _out, err, = run(yes: true, ci: "circleci")
-      expect([written["ci"], File.exist?(File.join(repo, ".circleci/config.yml")), unwrapped(err)])
-        .to match([{ "provider" => "circleci", "config" => ".circleci/config.yml" }, false, include("no CI file was written")])
+      expect([written.dig("architecture_decisions", "target", "ci"), File.exist?(File.join(repo, ".circleci/config.yml")), unwrapped(err)])
+        .to match([%w[circleci], false, include("no CI file was written")])
     end
 
     it "scaffolds a Rails app with a package.json as Ruby" do
       File.write(File.join(repo, "Gemfile"), "")
       File.write(File.join(repo, "package.json"), "{}")
       run(yes: true, ci: "github_actions")
-      expect([written["stack"], File.read(File.join(repo, ".github/workflows/ci.yml"))])
-        .to match([{ "language" => "ruby" }, include("bundle exec rubocop")])
+      expect([written.dig("architecture_decisions", "target", "languages"), File.read(File.join(repo, ".github/workflows/ci.yml"))])
+        .to match([%w[ruby node], include("bundle exec rubocop")])
     end
 
     it "names the CI the folder already runs, and leaves it alone" do
       FileUtils.mkdir_p(File.join(repo, ".github/workflows"))
       File.write(File.join(repo, ".github/workflows/test.yml"), "mine\n")
-      _out, err, = run(yes: true)
-      expect([written["ci"], err, File.exist?(File.join(repo, ".github/workflows/ci.yml"))])
-        .to match([{ "provider" => "github_actions", "config" => ".github/workflows/test.yml" },
-                   include("GitHub Actions"), false])
+      run(yes: true)
+      expect([written.dig("architecture_decisions", "current", "ci"), File.exist?(File.join(repo, ".github/workflows/ci.yml"))])
+        .to eq([%w[github_actions], false])
     end
 
     it "records the detected stack and writes stack.md" do
       File.write(File.join(repo, "Gemfile"), "")
       run(yes: true)
-      expect([written["stack"], File.read(File.join(repo, "docs/decisions/stack.md"))])
-        .to match([{ "language" => "ruby" }, include("- **Language:** ruby")])
+      expect([written.dig("architecture_decisions", "current", "languages"), File.read(File.join(repo, "docs/decisions/stack.md"))])
+        .to match([%w[ruby], include("- **Language:** ruby")])
     end
 
     it "writes no stack and no stack.md for an unknown stack" do
