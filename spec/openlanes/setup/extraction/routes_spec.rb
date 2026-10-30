@@ -58,27 +58,31 @@ RSpec.describe OpenLanes::Setup::Extraction::Routes do
   end
 
   context "with a signed-in CLI" do
-    let(:signed_in) { OpenLanes::Adapters::Availability.up("codex", [], Time.now) }
-    let(:signed_out) { OpenLanes::Adapters::Availability.down("claude", "no", Time.now) }
+    let(:env) { { "ANTHROPIC_API_KEY" => "not-a-real-key", "OPENLANES_EXTRACTION_MODEL" => "a-model" } }
 
     before do
-      allow(OpenLanes::Adapters.for("claude")).to receive(:probe).and_return(signed_out)
-      allow(OpenLanes::Adapters).to receive(:for).and_wrap_original do |original, name|
-        original.call(name).tap { |adapter| allow(adapter).to receive(:probe).and_return(name == "codex" ? signed_in : signed_out) }
-      end
-    end
-
-    it "takes the first one signed in" do
-      expect([route.label, route.adapter.call]).to match([include("codex"), be_a(OpenLanes::Setup::Extraction::CliAdapter)])
-    end
-  end
-
-  describe "its CLI commands" do
-    it "never let a CLI change anything" do
-      lines = described_class::CLIS.values.map { it.call("say hi") }
-      expect(lines).to contain_exactly(
-        include("--tools", ""), include("--sandbox", "read-only"), include("--permission-mode", "plan"), include("--approval-mode", "plan")
+      allow(OpenLanes::Adapters).to receive(:availability).and_return(
+        [OpenLanes::Adapters::Availability.down("claude", "no", Time.now), OpenLanes::Adapters::Availability.up("pi", [], Time.now)]
       )
+      allow(runner).to receive(:call).and_return(OpenLanes::Adapters::ProbeRunner::Result.new(stdout: "{}", stderr: "", status: 0))
+    end
+
+    it "takes the first one signed in, ahead of a key" do
+      expect([route.label, route.adapter.call]).to match([include("pi"), be_a(OpenLanes::Setup::Extraction::CliAdapter)])
+    end
+
+    it "asks through the adapter's read-only command" do
+      route.adapter.call.send(:call_api, system: "read", user: "a shop")
+      expect(runner).to have_received(:call).with("pi",
+        "--print",
+        "--no-session",
+        "--no-tools",
+        "--no-extensions",
+        "--no-skills",
+        "--no-prompt-templates",
+        "--model",
+        "a-model",
+        "read\n\na shop")
     end
   end
 end

@@ -3,10 +3,12 @@
 module OpenLanes
   module Setup
     module Extraction
-      # Finds the first way to read a description, in this order: an API key the
-      # person set, then their local Ollama, then an agent CLI they signed in to.
-      # A key comes first because setting one is a deliberate choice; Ollama
-      # before a CLI because the description then stays on the machine.
+      # Finds the first way to read a description, in this order: an agent CLI
+      # {Adapters} can already reach, however it is signed in, then an API key,
+      # then a local Ollama. The CLIs come first because the person already
+      # trusts them with this code, while a key in the environment may be the
+      # application's own (see {Execution::Executor::CREDENTIAL_VARS}). The
+      # person is told which one before they type anything.
       class Routes
         # One API key: its variable, what it is called, the adapter, the model
         # used when OPENLANES_EXTRACTION_MODEL names none (nil: the adapter's own).
@@ -20,15 +22,6 @@ module OpenLanes
           Key.new("GEMINI_API_KEY", "Google Gemini", -> { GeminiAdapter }, "gemini-3.5-flash"),
           Key.new("OPENROUTER_API_KEY", "OpenRouter", -> { Inquirex::LLM::OpenRouterAdapter }, nil)
         ].freeze
-
-        # Agent CLI → its one-shot command, in the mode that cannot change
-        # anything: no tools, a read-only sandbox, or plan mode.
-        CLIS = {
-          "claude" => ->(prompt) { ["claude", "-p", prompt, "--output-format", "text", "--tools", ""] },
-          "codex"  => ->(prompt) { ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", prompt] },
-          "grok"   => ->(prompt) { ["grok", "-p", prompt, "--permission-mode", "plan"] },
-          "gemini" => ->(prompt) { ["gemini", "-p", prompt, "--approval-mode", "plan", "--skip-trust", "-o", "text"] }
-        }.freeze
 
         # Seconds a CLI may take over one description.
         CLI_TIMEOUT = 120
@@ -46,7 +39,7 @@ module OpenLanes
         end
 
         # @return [OpenLanes::Setup::Extraction::Route, nil]
-        def first = keyed || local || signed_in
+        def first = signed_in || keyed || local
 
         private
 
@@ -71,11 +64,15 @@ module OpenLanes
 
         # @return [OpenLanes::Setup::Extraction::Route, nil]
         def signed_in
-          name = CLIS.keys.find { Adapters.for(it).probe(runner: @runner).available } or return nil
+          name = Adapters.availability(runner: @runner).find(&:available)&.name or return nil
 
           Route.new(label: "the #{name} CLI you are signed in to",
-            adapter: -> { CliAdapter.new(command: CLIS.fetch(name), runner: @cli_runner, label: name) })
+            adapter: -> { CliAdapter.new(command: question(name), runner: @cli_runner, label: name) })
         end
+
+        # @param name [String] an adapter's name
+        # @return [#call] takes the prompt, answers with argv
+        def question(name) = ->(prompt) { Adapters.for(name).question_argv(prompt, model:) }
       end
     end
   end

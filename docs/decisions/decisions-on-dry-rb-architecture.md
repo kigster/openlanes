@@ -152,7 +152,9 @@ Decided with Konstantin, 2026-10-30. This overrides plan `011.00`'s "inquirex-tt
 
 ## A21. Extraction uses the person's credentials, never ours
 
-- Order: an API key from the environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`), then a local Ollama, then a signed-in CLI (`claude`, `codex`, `grok`, `gemini`, each in a read-only mode), then no extraction, with every question asked.
+- Order: an agent CLI `OpenLanes::Adapters` can already reach (`claude`, `codex`, `pi`, `grok`, `gemini`), however it is signed in, API keys included; then an API key from the environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`); then a local Ollama; then no extraction, with every question asked.
+- The CLIs come first because OpenLanes already runs its agents through them and the person already trusts them with this code. A key in the environment may be the application's own, which is why it comes later.
+- Each adapter owns its read-only command (`question_argv`), so no CLI's flags are written down twice.
 - Ollama is found through `OLLAMA_HOST` or its default port, with a one second timeout, and uses the first model pulled. `OPENLANES_EXTRACTION_MODEL` overrides any route's model.
 - Before asking for the description, the form says where it will go.
 - No OpenLanes key ships in the gem. Anything in a published gem can be read by whoever installs it, and a hosted proxy would be a service to run and defend, which this gem is not.
