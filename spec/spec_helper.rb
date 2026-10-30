@@ -76,6 +76,7 @@ require "openlanes"
 require "dry/system"
 require "dry/system/stubs"
 
+require "rspec/its"
 require "stringio"
 
 $stderr = StringIO.new

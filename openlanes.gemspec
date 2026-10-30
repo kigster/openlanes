@@ -95,9 +95,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-monads"
   # Wires the application (A1): components from lib/ through the Zeitwerk
   # loader below, collaborators by Deps[...], providers for the outside world.
+  spec.add_dependency "dry-struct", "~> 1.8"
   spec.add_dependency "dry-system", "~> 1.2"
+  spec.add_dependency "dry-types", "~> 1.8"
   spec.add_dependency "fuzzy-string-match"
   spec.add_dependency "inquirex-llm", "~> 0.12"
+  spec.add_dependency "inquirex-tty", "~> 0.12"
   # Opens the control room in the browser when `openlanes run` starts the API server.
   spec.add_dependency "launchy", "~> 3.1"
   spec.add_dependency "parallel"
@@ -114,6 +117,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-box"
   spec.add_dependency "tty-command"
   spec.add_dependency "tty-cursor"
+  spec.add_dependency "strings", "~> 0.2"
   spec.add_dependency "tty-prompt"
   spec.add_dependency "tty-screen"
   spec.add_dependency "unicode-display_width"
