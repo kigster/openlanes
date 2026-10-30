@@ -81,7 +81,7 @@ As built: `Engine::Reviews` owns D4 to D7, and the dispatcher only asks it. A ro
 
 ### Decisions
 
-- **D15.** `deploy-assessor` starts with the reviewers on every round, never votes, and only the passing round's ruling counts (V8). Its ruling becomes a label the dispatcher sets. Open: V8's label names against the existing `auto-merged` / `merge-manually`.
+- **D15.** `deploy-assessor` starts with the reviewers on every round, never votes, and only the passing round's ruling counts (V8). Its ruling becomes a label the dispatcher sets. The labels are `low-risk-ai-mergeable` and `human-should-merge-this`, the ones reviewers outside openlanes already set (`docs/REVIEWING.md`), so nothing changes when openlanes takes over; `auto-merged` and `merge-manually` stay as the record of what the engine did.
 
 ### Work units
 
