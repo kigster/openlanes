@@ -91,4 +91,14 @@ RSpec.describe OpenLanes::Adapters::Claude do
   it "reads the stream with the Claude transcript" do
     expect(adapter.transcript).to be_a(OpenLanes::Execution::Transcript)
   end
+
+  describe "#question_argv" do
+    subject(:question) { described_class.new.question_argv("say hi", model: "a-model") }
+
+    it { is_expected.to include("--tools", "", "--restricted", "--permission-mode", "dontAsk", "--strict-mcp-config", "--model", "a-model").and include("say hi") }
+
+    it "leaves the model to the CLI when none is named" do
+      expect(described_class.new.question_argv("say hi")).not_to include("a-model")
+    end
+  end
 end

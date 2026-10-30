@@ -40,4 +40,14 @@ RSpec.describe OpenLanes::Adapters::Codex do
   it "says it cannot resume a session, so the copilot starts each message afresh on it" do
     expect(adapter.resumes?).to be(false)
   end
+
+  describe "#question_argv" do
+    subject(:question) { described_class.new.question_argv("say hi", model: "a-model") }
+
+    it { is_expected.to include("--sandbox", "read-only", "--ignore-user-config", "--model", "a-model").and include("say hi") }
+
+    it "leaves the model to the CLI when none is named" do
+      expect(described_class.new.question_argv("say hi")).not_to include("a-model")
+    end
+  end
 end

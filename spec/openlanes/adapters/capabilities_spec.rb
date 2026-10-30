@@ -48,4 +48,8 @@ RSpec.describe OpenLanes::Adapters::Capabilities do
       expect(OpenLanes::Adapters.lean_flags("codex")).to eq([])
     end
   end
+
+  it "makes every adapter say how it asks a read-only question" do
+    expect { OpenLanes::Adapters::Base.new.question_argv("say hi") }.to raise_error(NotImplementedError, /read-only argv/)
+  end
 end

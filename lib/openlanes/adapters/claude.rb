@@ -82,6 +82,16 @@ module OpenLanes
         argv
       end
 
+      # No tools at all, and none of the operator's plugins, hooks or MCP servers.
+      #
+      # @param prompt [String]
+      # @param model [String, nil]
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil)
+        chosen = model(model)
+        ["claude", "-p", prompt, "--output-format", "text", *LEAN, *restricted([]), *(chosen ? ["--model", chosen] : [])]
+      end
+
       # @return [OpenLanes::Execution::Transcript]
       def transcript(trace: nil, **, &) = Execution::Transcript.new(trace:, &)
 

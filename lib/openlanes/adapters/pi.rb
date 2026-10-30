@@ -29,6 +29,16 @@ module OpenLanes
         argv << invocation.prompt
       end
 
+      # Pi has no sandbox, so it gets no tools to need one.
+      #
+      # @param prompt [String]
+      # @param model [String, nil]
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil)
+        ["pi", "--print", "--no-session", "--no-tools", "--no-extensions", "--no-skills", "--no-prompt-templates",
+         *(model ? ["--model", model] : []), prompt]
+      end
+
       private
 
       # `pi --list-models` exits 0 either way: with no provider signed in it

@@ -37,6 +37,16 @@ module OpenLanes
         argv << invocation.prompt
       end
 
+      # Codex's read-only sandbox, from any folder, without the operator's config.
+      #
+      # @param prompt [String]
+      # @param model [String, nil]
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil)
+        ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", "--ignore-user-config",
+         *(model ? ["--model", model] : []), prompt]
+      end
+
       # @param effort [String, nil]
       # @return [String, nil]
       def effort(effort) = effort && EFFORT[effort.to_s]

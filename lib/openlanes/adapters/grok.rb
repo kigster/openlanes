@@ -63,6 +63,15 @@ module OpenLanes
         argv
       end
 
+      # Plan mode, with nothing fetched from the web.
+      #
+      # @param prompt [String]
+      # @param model [String, nil]
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil)
+        ["grok", "-p", prompt, "--permission-mode", "plan", "--disable-web-search", *(model ? ["-m", model] : [])]
+      end
+
       # @param effort [String, nil]
       # @return [String, nil]
       def effort(effort) = effort && EFFORT[effort.to_s]
