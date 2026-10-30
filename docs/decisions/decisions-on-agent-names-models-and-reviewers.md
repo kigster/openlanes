@@ -175,7 +175,7 @@ It starts with them on the same PR, instead of after `verifier`.
 - `starts: building` plans get it too, beside `staff-reviewer`.
 - Its ruling is a label on the PR, attached by the dispatcher, and nothing on the dashboard:
 
-| Ruling                             | Label                   | Colour   |
-| :--------------------------------- | :---------------------- | :------- |
-| the engine may merge it unattended | `ai-can-merge-this`     | `0e8a16` |
-| a person merges it                 | `human-must-merge-this` | `d93f0b` |
+| Ruling                             | Label                     | Colour   |
+| :--------------------------------- | :------------------------ | :------- |
+| the engine may merge it unattended | `low-risk-ai-mergeable`   | `0e8a16` |
+| a person merges it                 | `human-should-merge-this` | `d93f0b` |
