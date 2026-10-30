@@ -30,6 +30,10 @@ SimpleCov.start do
 
   enable_coverage :branch
 
+  # `openlanes init`'s form is a file Inquirex evals, so that a front end can
+  # validate and load the same file. Without this it reads as 0% covered.
+  enable_eval_coverage
+
   self.formatters = [
     SimpleCov::Formatter::HTMLFormatter,
     Coverage::Badge::Formatter
