@@ -100,6 +100,7 @@ Style/FrozenStringLiteralComment:
 Metrics/BlockLength:
   Exclude:
     - "spec/**/*"
+    - "lib/openlanes/setup/project_form/dsl.rb"
 
 Style/OptionalBooleanParameter:
   Enabled: false

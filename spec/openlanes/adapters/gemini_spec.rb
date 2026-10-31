@@ -67,4 +67,14 @@ RSpec.describe OpenLanes::Adapters::Gemini do
   it "reads gemini's own dialect" do
     expect(adapter.transcript).to be_a(OpenLanes::Adapters::Gemini::Stream)
   end
+
+  describe "#question_argv" do
+    subject(:question) { described_class.new.question_argv("say hi", model: "a-model") }
+
+    it { is_expected.to include("--approval-mode", "plan", "-o", "text", "-m", "a-model").and include("say hi") }
+
+    it "leaves the model to the CLI when none is named" do
+      expect(described_class.new.question_argv("say hi")).not_to include("a-model")
+    end
+  end
 end

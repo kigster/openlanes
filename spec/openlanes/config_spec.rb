@@ -453,4 +453,19 @@ RSpec.describe OpenLanes::Config do
       end
     end
   end
+
+  describe "architecture_decisions:" do
+    let(:path) { "/tmp/.openlanes.yml" }
+    let(:yaml) { "architecture_decisions:\n  version: 1\n  current:\n    ci:\n    - circleci\n  target:\n    ci:\n    - github_actions\n" }
+
+    it "round-trips through the file" do
+      config = described_class.parse(yaml, path:)
+      expect([config.architecture_decisions.target.ci, config.to_yaml]).to match([%i[github_actions], include("architecture_decisions:", "- circleci")])
+    end
+
+    it "refuses what the closed lists do not hold" do
+      expect { described_class.parse("architecture_decisions:\n  target:\n    ci:\n    - travis\n", path:) }
+        .to raise_error(OpenLanes::Error, /architecture_decisions/)
+    end
+  end
 end

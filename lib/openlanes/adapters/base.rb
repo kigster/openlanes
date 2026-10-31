@@ -15,6 +15,16 @@ module OpenLanes
       # @return [Array<String>]
       def argv(invocation) = raise NotImplementedError, "#{self.class} must build an argv for #{invocation.class}"
 
+      # The command that puts one question to this CLI and prints the answer as
+      # plain text, in the mode that can change nothing. For a question that
+      # needs a model and no work done, so it never takes {#argv}'s write access.
+      # Abstract, like {#capabilities}: each CLI locks itself down its own way.
+      #
+      # @param prompt [String]
+      # @param model [String, nil] nil lets the CLI choose
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil) = raise NotImplementedError, "#{self.class} must build a read-only argv for #{prompt.class}, #{model.class}"
+
       # A parser for what this CLI prints, with the same interface as
       # {OpenLanes::Execution::Transcript}.
       #

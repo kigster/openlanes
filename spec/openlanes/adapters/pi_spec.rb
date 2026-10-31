@@ -21,4 +21,14 @@ RSpec.describe OpenLanes::Adapters::Pi do
   it "ends with the prompt" do
     expect(argv.last).to eq("do it")
   end
+
+  describe "#question_argv" do
+    subject(:question) { described_class.new.question_argv("say hi", model: "a-model") }
+
+    it { is_expected.to include("--no-tools", "--no-session", "--model", "a-model").and include("say hi") }
+
+    it "leaves the model to the CLI when none is named" do
+      expect(described_class.new.question_argv("say hi")).not_to include("a-model")
+    end
+  end
 end

@@ -34,6 +34,8 @@ Run it at the repository root. Infer values from the repository, say them in one
 
 Then `openlanes init -y <flags> -n` to show the file, and the same without `-n` to write `.openlanes.yml` and create `.plans/`. An existing `.openlanes.yml` is kept unless `--overwrite`.
 
+A person at a terminal can run plain `openlanes init` instead: it scans the repository and asks what it holds now and what they want it to become, with what it found preselected. Under `-y` it records only the scan, as `architecture_decisions:`; pass `--ci` for the CI wanted. To change an answer later, edit that section or run `openlanes init --reconfigure`.
+
 If the repository has a database and a `CLAUDE.md` or `AGENTS.md`, offer one line there naming its PostgreSQL class (`PG-lax`, `PG-strict` or `PG-analytics`), so every agent assumes the same rules.
 
 ## 3. Skills

@@ -131,6 +131,48 @@ Found by scanning `.plans/` and `docs/decisions/` on 2026-10-24. These stand unl
 - `ewoki-linker`, the `ready_for_linking` state and the dispatcher gate that sends unlinked plans to it are removed.
 - Any number of dependencies is fine: the runner orders them topologically. Only a cycle goes to a person, since no ordering can resolve it. The rule from `008.00` that more than three dependencies go to a person is dropped.
 
+## A18. `ol init` fills one typed architecture structure
+
+Decided with Konstantin, 2026-10-30. This overrides plan `011.00`'s "inquirex-tty is not added".
+
+- `Setup::Architecture` holds closed lists of symbols (`ci`, `languages`, `frameworks` and so on), each list a constant. The form's options, the extraction schema and the file's validation all read those constants. A value outside a list is `:other`, with its name in `notes`.
+- Two snapshots, `current` and `target`, are serialized under `architecture_decisions:` in `.openlanes.yml`, so what the repository holds now stays apart from what the person wants.
+- The form is an Inquirex DSL file, `lib/openlanes/setup/project_form/dsl.rb`, and it must pass the inquirex-tty validator. Its JSON is what the inquirex-webui and inquirex-widget packages would render later.
+- Most questions are multi-select, because a repository usually has several of each: both GitHub Actions and CircleCI, for instance.
+
+## A19. Scan first, then preselect
+
+- `ol init` scans the repository before it asks anything. What it finds is preselected, and the person can change it. Only a flag typed on the command line skips a question.
+- What the description states is also preselected, in the `target` questions, rather than skipping them.
+- An empty folder has no `current` section.
+
+## A20. The person chooses how much detail to give
+
+- The first question is low, medium or high. Each attribute names the lowest detail that asks it: 10, 15 or 21 topics.
+
+## A21. Extraction uses the person's credentials, never ours
+
+- Order: an agent CLI `OpenLanes::Adapters` can already reach (`claude`, `codex`, `pi`, `grok`, `gemini`), however it is signed in, API keys included; then an API key from the environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`); then a local Ollama; then no extraction, with every question asked.
+- The CLIs come first because OpenLanes already runs its agents through them and the person already trusts them with this code. A key in the environment may be the application's own, which is why it comes later.
+- Each adapter owns its read-only command (`question_argv`), so no CLI's flags are written down twice.
+- Ollama is found through `OLLAMA_HOST` or its default port, with a one second timeout, and uses the first model pulled. `OPENLANES_EXTRACTION_MODEL` overrides any route's model.
+- Before asking for the description, the form says where it will go.
+- No OpenLanes key ships in the gem. Anything in a published gem can be read by whoever installs it, and a hosted proxy would be a service to run and defend, which this gem is not.
+- A key is read from the environment only. It is never written to `.openlanes.yml`, logs or telemetry. A failure logs the error's class, because a message can quote a key or the description.
+
+## A22. Layout and task runner come before the stack
+
+- Without the layout nobody knows where anything goes, so the form opens with it: one application or library at the top level, like a Rails or Django app, or a monorepo. A monorepo is also asked which folders hold its projects.
+- The form also asks how people and agents run tasks such as lint, test and build: `just`, `rake`, `make` and others. The maintainer prefers `just`; another person may not, so it is a question and not a default.
+- Agents must read `architecture_decisions:`. An answer that only sits in a file does not tell a builder where to put things.
+
+## A23. How the app starts and where its secrets live
+
+- The first tier also asks how the application starts in development, how development secrets are kept, and how they reach the environment.
+- When neither the description nor the scan answers, WANTED preselects `sopsy` and `direnv`, so secrets stay encrypted in git and load into the environment on `cd` into the project, plus `mprocs` and `just`. A Rails application preselects Rails credentials instead, as the global rules say.
+- A recommendation is only ever preselected. `-y` records what the scan found, never a recommendation.
+- The scan reads only file names for secrets, such as `.env.encrypted`, `.envrc` and `config/credentials/*.yml.enc`, and never their contents.
+
 ## Plan folders
 
 | Plan | Decisions | Depends on |

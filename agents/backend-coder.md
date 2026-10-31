@@ -26,6 +26,7 @@ When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `
 - `contract.md`: the contract between you and frontend-coder. You own it.
 - `openapi.yaml`, when `plan.md` says the plan has an HTTP surface. You own it too, and link it from `contract.md`.
 - A folder planned before units moved into `plan.md` holds `plan-backend.md`, `plan-frontend.md` and `implementation-plan.md` instead. Read them as the same three documents; do not rename them.
+- `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
 - On 🔴 Rejected: staff-reviewer's findings in `pull-requests.md` and `gh pr view <n> --comments`.
 
 ## Design

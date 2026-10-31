@@ -202,7 +202,11 @@ openlanes plans              # every open plan, its state and its pull requests;
 
 `openlanes start` runs until you press **Stop All Local** on the page, Ctrl-C, or run `openlanes stop`; it restarts the engine or the page if either crashes. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
 
-`init` settles four project-wide decisions before any plan exists, in this order: CI (it names what the folder already runs, or offers to scaffold GitHub Actions, CircleCI or Jenkins), who merges a reviewed pull request (`human` or `auto`), the desired codebase quality (`high` or `mvp`), and the stack, detected from marker files such as `Gemfile` or `package.json`. With `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set it first asks you to describe the app, and skips the questions the description answered. The stack is also written to `docs/decisions/stack.md`.
+`init` scans the repository, then asks about what it holds now and what you want it to become, with what it found preselected and yours to change. The first question is how much detail you want to give: low, medium or high ask about 10, 15 or 21 topics, from layout, languages, task runner, how the app starts and how development secrets are kept, down to search and observability. Most questions take several answers. It then asks who merges a reviewed pull request (`human` or `auto`) and the desired codebase quality (`high` or `mvp`). The answers are written under `architecture_decisions:` in `.openlanes.yml`, the agents read them from there, and CI you asked for and the folder lacks is scaffolded. The stack is also written to `docs/decisions/stack.md`.
+
+If something can read it, `init` also asks you to describe the app, and preselects what the description states. It tells you where the description goes before asking. It uses the first of: a `claude`, `codex`, `pi`, `grok` or `gemini` CLI that is signed in, however it authenticates, in a read-only mode; `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `GEMINI_API_KEY` or `OPENROUTER_API_KEY`; a local Ollama. With none of them it asks every question. `OPENLANES_EXTRACTION_MODEL` picks the model.
+
+The form is an [Inquirex](https://github.com/inquirex/inquirex) definition in `lib/openlanes/setup/project_form/dsl.rb`, so the same questions can be generated as JSON for `inquirex-webui` and `inquirex-widget`.
 
 ```bash
 openlanes init -y --ci github_actions --merge-by auto --quality mvp   # ask nothing, no network
@@ -210,11 +214,11 @@ openlanes init --reconfigure      # ask again with the current answers as defaul
 openlanes init --reconfigure -n   # the diff only, nothing written
 ```
 
-Under `-y` the defaults are `--ci none` (or what the folder already runs), `--merge-by human`, and no `desired_codebase_quality` (the first review-passed review asks it); a folder with two languages gets no `stack:`.
+Under `-y` it records what the scan found, never a recommendation; the defaults are `--merge-by human` and no `desired_codebase_quality` (the first review-passed review asks it). A folder with two languages gets no `docs/decisions/stack.md`.
 
 > [!NOTE]
 >
-> `.openlanes.yml` files written by this release can hold `ci:` and `stack:`. An older openlanes refuses those keys as unknown, so upgrade every machine that reads the file.
+> `.openlanes.yml` files written by this release can hold `architecture_decisions:`. An older openlanes refuses that key as unknown, so upgrade every machine that reads the file. A file with `ci:` or `stack:` still reads, and `init --reconfigure` moves them over.
 
 For a small mechanical task, skip research and planning:
 

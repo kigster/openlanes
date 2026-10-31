@@ -106,6 +106,10 @@ module OpenLanes
   # @!attribute [r] stack
   #   @return [Hash{Symbol => Object}, nil] only the {STACK_FIELDS} that were answered;
   #     `frameworks` is an Array, every other field a String
+  # @!attribute [r] architecture_decisions
+  #   @return [OpenLanes::Setup::ArchitectureDecisions, nil] what the repository
+  #     holds now and what is wanted; a file with this has no `ci:` or `stack:`,
+  #     which only an older file holds
   # @!attribute [r] app
   #   @return [OpenLanes::Apps::Definition, nil] the processes `openlanes project
   #     start` runs; nil when the project declares none, and then nothing
@@ -148,12 +152,13 @@ module OpenLanes
     :coverage,
     :ci,
     :stack,
+    :architecture_decisions,
     :events_enabled,
     :events_dir,
     :review_adapters) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, events_enabled: false, events_dir: nil, review_adapters: []) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: []) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -214,7 +219,8 @@ module OpenLanes
                    "redis_backoff" => (redis_backoff.transform_keys(&:to_s) unless redis_backoff.empty?),
                    "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings,
                    "ci" => ci && { "provider" => ci[:provider].to_s, "config" => ci[:config] }.compact,
-                   "stack" => stack&.transform_keys(&:to_s) }
+                   "stack" => stack&.transform_keys(&:to_s),
+                   "architecture_decisions" => architecture_decisions&.to_file }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
@@ -240,7 +246,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack review].freeze
+              questions coverage events ci stack architecture_decisions review].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -346,6 +352,7 @@ module OpenLanes
           **review(settings["review"], path),
           ci:        ci(settings["ci"], path),
           stack:     stack(settings["stack"], path),
+          architecture_decisions: Setup::ArchitectureDecisions.parse(settings["architecture_decisions"], path:),
           commands:  commands(settings["commands"], path),
           app:       settings.key?("app") ? Apps::Definition.parse(settings["app"], path:) : nil,
           **plans(settings["plans"], path),

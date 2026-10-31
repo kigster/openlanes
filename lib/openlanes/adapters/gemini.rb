@@ -56,6 +56,15 @@ module OpenLanes
         argv
       end
 
+      # Plan mode, which cannot edit or run anything.
+      #
+      # @param prompt [String]
+      # @param model [String, nil]
+      # @return [Array<String>]
+      def question_argv(prompt, model: nil)
+        ["gemini", "-p", prompt, "--approval-mode", "plan", "--skip-trust", "-o", "text", *(model ? ["-m", model] : [])]
+      end
+
       # Thinking is a settings key, not a flag.
       #
       # @return [nil]

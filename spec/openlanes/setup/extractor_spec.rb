@@ -1,70 +1,57 @@
 # frozen_string_literal: true
 
-require "inquirex-llm"
-
 RSpec.describe OpenLanes::Setup::Extractor do
-  let(:answer) { {} }
-  let(:adapter) { instance_double(Inquirex::LLM::AnthropicAdapter) }
-  let(:extractor) { described_class.new(adapter:) }
+  subject(:extractor) { described_class.new(label: "a test", adapter: -> { adapter }) }
 
-  before { allow(adapter).to receive(:call).and_return(answer) }
+  let(:node) { :the_form_step }
+  let(:adapter) { instance_double(Inquirex::LLM::Adapter, call: result) }
+  let(:result) { {} }
 
-  describe ".from_env" do
-    it "prefers the Anthropic key" do
-      extractor = described_class.from_env("ANTHROPIC_API_KEY" => "a", "OPENAI_API_KEY" => "o")
-      expect(extractor.provider).to eq(:anthropic)
+  describe ".on" do
+    it "is nil when nothing can read a description" do
+      expect(described_class.on(nil)).to be_nil
     end
 
-    it "takes the OpenAI key alone" do
-      expect(described_class.from_env("OPENAI_API_KEY" => "o").provider).to eq(:openai)
-    end
-
-    it "is nil with neither key, or blank ones" do
-      expect([described_class.from_env({}), described_class.from_env("ANTHROPIC_API_KEY" => " ")]).to eq([nil, nil])
-    end
-
-    it "reads the model from OPENLANES_EXTRACTION_MODEL" do
-      extractor = described_class.from_env("ANTHROPIC_API_KEY" => "a", "OPENLANES_EXTRACTION_MODEL" => "claude-x")
-      expect(extractor.instance_variable_get(:@model)).to eq("claude-x")
-    end
-
-    it "builds the adapter for its key on first use" do
-      extractor = described_class.from_env("OPENAI_API_KEY" => "o")
-      expect(extractor.send(:adapter)).to be_a(Inquirex::LLM::OpenAIAdapter)
+    it "takes a route's label" do
+      route = OpenLanes::Setup::Extraction::Route.new(label: "somewhere", adapter: -> { adapter })
+      expect(described_class.on(route).label).to eq("somewhere")
     end
   end
 
   describe "#call" do
-    let(:answer) do
-      { merge_by: "Auto", desired_codebase_quality: "ultra", language: "ruby", frameworks: ["rails", "", 3],
-        persistence: "  ", caching: nil, domain: "payroll" }
-    end
+    subject(:answers) { extractor.call(node, "a shop") }
 
-    it "keeps only the answered fields, inside their vocabularies" do
-      expect(extractor.call("A payroll app in Rails")).to eq(
-        merge_by: :auto, language: "ruby", frameworks: ["rails"], domain: "payroll"
-      )
+    context "with answers in and out of the closed lists" do
+      let(:result) do
+        { target_ci: %w[circleci travis], target_layout: "Monorepo", target_projects: ["web", " "], target_languages: [],
+          merge_by: "AUTO", desired_codebase_quality: "perfect", target_secrets: nil, ignored: "x" }
+      end
+
+      it "keeps only what the lists hold" do
+        expect(answers).to eq(target_ci: %w[circleci], target_layout: "monorepo", target_projects: "web", merge_by: "auto")
+      end
     end
 
     it "hands the adapter the description" do
-      extractor.call("A payroll app")
-      expect(adapter).to have_received(:call).with(an_object_having_attributes(id: :stack),
-        { description: "A payroll app" })
+      answers
+      expect(adapter).to have_received(:call).with(node, { description: "a shop" })
     end
 
-    it "asks nothing for a blank description" do
-      expect(extractor.call(" ")).to eq({})
+    it "calls nothing for a blank description" do
+      expect(extractor.call(node, "  ")).to eq({})
       expect(adapter).not_to have_received(:call)
     end
 
-    it "answers nothing when the adapter fails" do
-      allow(adapter).to receive(:call).and_raise(StandardError, "timeout")
-      expect(extractor.call("A payroll app")).to eq({})
-    end
+    context "when the adapter fails" do
+      before { allow(adapter).to receive(:call).and_raise(StandardError, "key sk-not-real") }
 
-    it "drops an empty framework list" do
-      allow(adapter).to receive(:call).and_return(frameworks: [], language: :go)
-      expect(extractor.call("Go")).to eq(language: "go")
+      it { is_expected.to eq({}) }
+
+      it "never logs the message, which can quote a key" do
+        allow(OpenLanes::UI).to receive(:log)
+        answers
+        expect(OpenLanes::UI).to have_received(:log).with("extraction: no answers (StandardError)")
+      end
     end
   end
 end

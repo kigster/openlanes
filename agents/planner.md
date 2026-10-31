@@ -17,7 +17,7 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
 
 ## Input
 
-`spec.md` (complete) and a blank `plan.md`. The other unfinished plans' `spec.md` files, under `.plans/`, to read and never change.
+`spec.md` (complete) and a blank `plan.md`. The other unfinished plans' `spec.md` files, under `.plans/`, to read and never change. `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Plan toward `target`, in the layout it names; it outranks a guess from the code.
 
 ## Do
 

@@ -33,10 +33,8 @@ RSpec.describe "openlanes init, end to end" do
       expect([status, err]).to match([0, satisfy { !it.include?("Error") }])
 
       config = OpenLanes::Config.load(repo)
-      expect(config).to have_attributes(ci: { provider: :github_actions, config: ".github/workflows/ci.yml" },
-        merge_by: :auto,
-        desired_codebase_quality: :mvp)
-      expect([config.stack[:language], config.stack[:frameworks]]).to eq(["ruby", ["rails"]])
+      expect(config).to have_attributes(merge_by: :auto, desired_codebase_quality: :mvp, ci: nil, stack: nil)
+      expect(config.architecture_decisions.target).to have_attributes(ci: %i[github_actions], languages: %i[ruby], frameworks: %i[rails])
       expect(read("docs/decisions/stack.md")).to match(/ruby/i).and match(/rails/i)
       ci = read(".github/workflows/ci.yml")
       expect(ci).to include("bundle exec rspec")

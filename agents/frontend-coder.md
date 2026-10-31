@@ -23,6 +23,7 @@ You build the front-end half of one plan: everything a user sees or touches. `ba
 - `plan.md`, `## Backend`: backend-coder's units. Read once, to learn which files are not yours.
 - `contract.md`: the contract backend-coder writes. Read it before writing markup, and again whenever backend-coder mails that it moved.
 - A folder planned before units moved into `plan.md` holds `plan-frontend.md`, `plan-backend.md` and `implementation-plan.md` instead. Read them as the same three documents; do not rename them.
+- `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
 - On 🔴 Rejected: staff-reviewer's findings in `pull-requests.md` and `gh pr view <n> --comments`.
 
 ## Design
