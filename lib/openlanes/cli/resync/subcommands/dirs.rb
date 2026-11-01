@@ -41,6 +41,8 @@ module OpenLanes
             say("  #{paint(change.reason, :yellow)}", bullet: " ")
           end
 
+          resync.edits.each { puts "depends_on\t#{it}" }
+
           return if quiet?(options)
 
           total = changes.size + rewrites.size

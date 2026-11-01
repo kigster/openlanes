@@ -116,13 +116,21 @@ module OpenLanes
         # @param except [Array<String>] ordinals to leave alone however wrong
         #   their names are: the dispatcher passes the plans an agent is
         #   working in right now
-        def initialize(tree:, except: [])
+        # @param only [Array<String>, nil] when given, every other plan is left
+        #   alone: `plans trash 003` is not a licence to tidy the whole tree
+        def initialize(tree:, except: [], only: nil)
           @tree = tree
           @except = except.map(&:to_s)
+          @only = only&.map(&:to_s)
+          @edits = []
         end
 
         # @return [OpenLanes::Plans::Tree]
         attr_reader :tree
+
+        # @return [Array<OpenLanes::Lifecycle::Rewiring::Edit>] what the last
+        #   {#call} rewrote, or on a dry run would have rewritten (X9)
+        attr_reader :edits
 
         # What would change, without changing anything. A folder can appear
         # twice: its spelling migration first, then its status correction.
@@ -163,16 +171,28 @@ module OpenLanes
         # @return [Array<OpenLanes::Lifecycle::Resync::Dirs::Change>] what was proposed
         def call(commit: false)
           changes = plan
+          rewiring = Rewiring.new(tree:)
+          @edits = rewiring.plan(leaving(changes))
           return changes unless commit
 
-          locks.select(&:stale?).each { |held| Plans::Lock.remove(held.path) }
+          locks.select(&:stale?).each { |held| Plans::Lock.remove(held.path) } unless @only
           rewrites.each { |rewrite| rewrite_spec(rewrite.path) }
           UI.stepping(changes, "Renaming") { |change| rename(change) }
+          # After the renames, and from the paths the plan named before them:
+          # dependents are rewired only once the plan has actually gone.
+          @edits = rewiring.apply(rewiring.plan(leaving(changes)))
           tree.reload
           changes
         end
 
         private
+
+        # @param changes [Array<Change>]
+        # @return [Array<String>] ordinals taken out of the active list by these changes
+        def leaving(changes)
+          changes.select { Plans::REMOVED.include?(it.to) && !Plans::REMOVED.include?(it.from) }
+                 .map { Plans::Ordinal.from_dirname(it.dirname).to_s }.uniq
+        end
 
         # @return [Array<String>] plan folders a live or foreign lock holds
         def held_paths = locks.reject(&:stale?).map(&:path)
@@ -181,7 +201,10 @@ module OpenLanes
         # @param held [Array<String>]
         # @return [Boolean] whether an agent may be inside it right now
         def left_alone?(subject, held)
-          @except.include?(subject.feature.ordinal.to_s) || held.include?(subject.feature.path)
+          ordinal = subject.feature.ordinal.to_s
+          return true if @only && !@only.include?(ordinal)
+
+          @except.include?(ordinal) || held.include?(subject.feature.path)
         end
 
         # @param path [String] a spec.md
@@ -257,8 +280,23 @@ module OpenLanes
           return File.join(tree.dir, feature.dirname_as(status, archived_on: nil)) unless subfolder
 
           parent = File.join(tree.dir, subfolder)
-          date = (feature.archived_on if File.dirname(feature.path) == parent) || Vcs::RenameDate.for(feature.path)
-          File.join(parent, feature.dirname_as(status, archived_on: date))
+          File.join(parent, feature.dirname_as(status, archived_on: moved_on(feature, status, parent)))
+        end
+
+        # A date already in the name stays when the plan stays in its state,
+        # even across directories: ❌ plans leaving `abandoned/` for
+        # `discarded/` were not discarded again. A plan being removed right now
+        # has no rename in git to date it by, and its last one would misdate it.
+        #
+        # @param feature [OpenLanes::Plans::Feature]
+        # @param status [OpenLanes::Plans::Status]
+        # @param parent [String]
+        # @return [Date]
+        def moved_on(feature, status, parent)
+          return feature.archived_on if feature.archived_on && (File.dirname(feature.path) == parent || feature.status == status)
+          return Date.today if Plans::REMOVED.include?(status.key) && feature.status != status
+
+          Vcs::RenameDate.for(feature.path)
         end
 
         # @param feature [OpenLanes::Plans::Feature]
@@ -297,6 +335,7 @@ module OpenLanes
             # comes back. A folder with no state.json has no session to lose.
             state = Plans::PlanState.for(change.target)
             state.state!(change.to) if change.from != change.to && state.exist?
+            Plans::RemovedReadme.ensure(File.dirname(change.target)) if Plans::REMOVED.include?(change.to) && File.dirname(change.target) != tree.dir
             return
           end
 
