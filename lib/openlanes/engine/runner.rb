@@ -201,6 +201,15 @@ module OpenLanes
       # @return [Array<OpenLanes::Plans::Subject>]
       def in_scope = tree.subjects.select { |s| in_scope?(s) }
 
+      # Plans a person took out of the active list. No agent goes near them,
+      # but the watch still reads their pull requests, so the rows are true on
+      # the day one is restored (X7).
+      #
+      # @return [Array<OpenLanes::Plans::Subject>]
+      def removed_in_scope
+        tree.everything.subjects.select { Plans::REMOVED.include?(it.status.key) && in_scope?(it) }
+      end
+
       # Widen a run scoped by `--plan` to one more plan, from the page's
       # "Choose an existing plan". An unscoped run already has every plan.
       #

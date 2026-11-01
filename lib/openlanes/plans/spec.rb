@@ -214,7 +214,7 @@ module OpenLanes
           match = Frontmatter::PATTERN.match(text) or return text
           front = match[1]
           written = list.empty? ? "[#{NO_DEPENDENCIES}]" : "[#{list.map { "\"#{it}\"" }.join(", ")}]"
-          updated = front.sub(/^#{DEPENDS_ON_KEY}:[^\n]*(?:\n[ \t]+-[^\n]*)*/) do |found|
+          updated = front.sub(/^#{DEPENDS_ON_KEY}:[^\n]*(?:\n(?:[ \t]*-|[ \t]+\S|[ \t]*\])[^\n]*)*/) do |found|
             "#{DEPENDS_ON_KEY}: #{written}#{found.lines.first.chomp[/\s+#.*\z/]}"
           end
           text.sub(front) { updated }

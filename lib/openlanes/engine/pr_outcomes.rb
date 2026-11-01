@@ -116,14 +116,16 @@ module OpenLanes
         # move takes it back, or the folder would carry a discarded note
         # while claiming some other state.
         File.delete(note) if written && to.nil?
-        rewire(outcome.plan) if to
+        rewire(outcome.plan, note) if to
         applied(outcome, to, "closed unmerged")
       end
 
       # @return [void]
-      def rewire(ordinal)
+      def rewire(ordinal, note)
         rewiring = Lifecycle.rewiring(tree: Plans::Tree.new(dir: @tree_dir))
-        rewiring.apply(rewiring.plan([ordinal.to_s]))
+        edits = rewiring.apply(rewiring.plan([ordinal.to_s]))
+        moved = find(ordinal)
+        rewiring.record(edits, ordinal.to_s, File.join(moved.feature.path, File.basename(note)))
       end
 
       # A person took this plan out of the active list. GitHub's news keeps its

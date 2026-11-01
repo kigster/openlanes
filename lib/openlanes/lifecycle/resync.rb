@@ -172,20 +172,68 @@ module OpenLanes
         def call(commit: false)
           changes = plan
           rewiring = Rewiring.new(tree:)
-          @edits = rewiring.plan(leaving(changes))
+          @edits = rewiring.plan(leaving(changes), leave: untouchable)
           return changes unless commit
 
           locks.select(&:stale?).each { |held| Plans::Lock.remove(held.path) } unless @only
           rewrites.each { |rewrite| rewrite_spec(rewrite.path) }
+          stage_deleted_reasons(changes)
           UI.stepping(changes, "Renaming") { |change| rename(change) }
           # After the renames, and from the paths the plan named before them:
           # dependents are rewired only once the plan has actually gone.
-          @edits = rewiring.apply(rewiring.plan(leaving(changes)))
+          @edits = rewiring.apply(rewiring.plan(leaving(changes), leave: untouchable))
+          record_edits(rewiring, changes)
+          stage_reasons(changes)
           tree.reload
           changes
         end
 
         private
+
+        # @return [Array<String>] ordinals an agent is in, or another machine holds
+        def untouchable
+          held = held_paths
+          @except + tree.everything.subjects.select { held.include?(it.feature.path) }.map { it.feature.ordinal.to_s }
+        end
+
+        # @param rewiring [Rewiring]
+        # @param changes [Array<Change>]
+        # @return [void]
+        def record_edits(rewiring, changes)
+          leaving(changes).each do |ordinal|
+            last = changes.select { Plans::Ordinal.from_dirname(it.dirname).to_s == ordinal }.last
+            name = Plans::REASON_FILES.fetch(last.to).find { File.file?(File.join(last.target, it)) } or next
+            rewiring.record(@edits, ordinal, File.join(last.target, name))
+          end
+        end
+
+        # `git mv` refuses a folder with a tracked file missing, and the fallback
+        # move would leave git seeing a deletion and a stranger. Deleting the
+        # reason file is how a plan is restored, so that deletion goes in first.
+        #
+        # @param changes [Array<Change>]
+        # @return [void]
+        def stage_deleted_reasons(changes)
+          changes.select { Plans::REMOVED.include?(it.from) && File.directory?(it.source) }.each do |change|
+            names = Plans::REASON_FILES.values.flatten
+            OpenLanes.stage(change.source, *names.map { File.join(change.source, it) })
+          end
+        end
+
+        # A removal and its undoing both turn on a reason file `git mv` does
+        # not stage, so without this a plain commit would not carry either.
+        #
+        # @param changes [Array<Change>]
+        # @return [void]
+        def stage_reasons(changes)
+          names = Plans::REASON_FILES.values.flatten
+          changes.select { Plans::REMOVED.include?(it.to) || Plans::REMOVED.include?(it.from) }.each do |change|
+            next unless File.directory?(change.target)
+
+            OpenLanes.stage(change.target, *names.map { File.join(change.target, it) })
+            OpenLanes.stage(change.target, File.join(File.dirname(change.target), Plans::RemovedReadme::FILENAME))
+          end
+        end
 
         # @param changes [Array<Change>]
         # @return [Array<String>] ordinals taken out of the active list by these changes

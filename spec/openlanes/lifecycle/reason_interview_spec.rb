@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tty-prompt"
+
 RSpec.describe OpenLanes::Lifecycle::ReasonInterview, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:prompt) { instance_double(TTY::Prompt) }

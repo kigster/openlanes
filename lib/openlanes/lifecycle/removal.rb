@@ -65,8 +65,9 @@ module OpenLanes
         note(subject, result)
         return if dry_run
 
-        result.edits.concat(@pending)
-        Resync::Dirs.new(tree: @tree, only: [ordinal]).call(commit: true)
+        resync = Resync::Dirs.new(tree: @tree, only: [ordinal])
+        resync.call(commit: true)
+        result.edits.concat(resync.edits)
       end
 
       # @return [void]
@@ -92,25 +93,25 @@ module OpenLanes
       #
       # @return [String, nil] why it cannot go, with the reason file taken back
       def write_and_check(subject, reason)
-        ordinal = subject.feature.ordinal.to_s
-        @pending = Rewiring.new(tree: @tree).plan([ordinal])
         path = File.join(subject.feature.path, Plans.reason_file(@to.key))
-        File.write(path, document(reason, subject.status, @pending))
-        taken = clash(ordinal) or return nil
-        File.delete(path)
+        kept = File.exist?(path) ? File.read(path) : nil
+        File.write(path, stacked(kept, document(reason, subject.status)))
+        taken = clash(subject.feature.ordinal.to_s) or return nil
+        kept ? File.write(path, kept) : File.delete(path)
         "#{File.basename(taken)} already exists"
       end
+
+      # A reason already there may be somebody's only copy, so it stays on top.
+      #
+      # @return [String]
+      def stacked(kept, added) = kept.to_s.strip.empty? ? added : "#{kept.rstrip}\n\n#{added}"
 
       # @return [String, nil] a path the plan's move would land on and cannot
       def clash(ordinal) = Resync::Dirs.new(tree: @tree, only: [ordinal]).plan.map(&:target).find { File.exist?(it) }
 
       # @return [String] the reason file
-      def document(reason, from, edits)
-        lines = ["# #{@to.label}", "", reason.strip, "", "- Date: #{Date.today.strftime("%F")}", "- Previous state: #{from}"]
-        unless edits.empty?
-          lines += ["", "## Dependents rewired", "", *edits.map { "- #{it}" }]
-        end
-        "#{lines.join("\n")}\n"
+      def document(reason, from)
+        "# #{@to.label}\n\n#{reason.strip}\n\n- Date: #{Date.today.strftime("%F")}\n- Previous state: #{from}\n"
       end
     end
   end

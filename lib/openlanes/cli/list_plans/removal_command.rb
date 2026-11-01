@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tty-prompt"
+
 module OpenLanes
   module CLI
     # `plans abandon`, `plans discard` and `plans trash`: the same command three

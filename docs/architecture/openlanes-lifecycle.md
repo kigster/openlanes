@@ -82,6 +82,7 @@ classDiagram
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..|> OpenLanes__UI : includes

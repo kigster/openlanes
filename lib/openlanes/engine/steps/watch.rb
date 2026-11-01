@@ -35,12 +35,19 @@ module OpenLanes
           end
           return if @thread || !@watch.due?
 
-          busy = @context.busy.call
-          subjects = @context.runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }
+          subjects = watched
           @thread = Thread.new { poll(subjects) }
         end
 
         private
+
+        # @return [Array<Plans::Subject>] plans whose pull requests to ask about
+        def watched
+          busy = @context.busy.call
+          runner = @context.runner
+          @removed = runner.removed_in_scope.map { it.feature.ordinal.to_s }
+          (runner.in_scope + runner.removed_in_scope).reject { busy.include?(it.feature.ordinal.to_s) }
+        end
 
         # StandardError, not only OpenLanes::Error: `#value` re-raises
         # whatever ended the thread, so a stray JSON::ParserError or Errno
@@ -59,7 +66,8 @@ module OpenLanes
         def settle(outcomes)
           return if outcomes.nil?
 
-          @waiting_on = outcomes.select { it.kind == :waiting }.group_by(&:plan).transform_values { it.map(&:pr) }
+          # Nothing waits on a plan that left the list.
+          @waiting_on = outcomes.select { it.kind == :waiting && !Array(@removed).include?(it.plan) }.group_by(&:plan).transform_values { it.map(&:pr) }
           effects = effects_for(@context.runner)
           outcomes.each { apply(effects, it) }
           @state&.waiting_on = @waiting_on
