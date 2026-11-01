@@ -44,6 +44,10 @@ module OpenLanes
     # @return [OpenLanes::Lifecycle::Removal]
     def removal(tree:, to:) = Removal.new(tree:, to:)
 
+    # @param tree [OpenLanes::Plans::Tree]
+    # @return [OpenLanes::Lifecycle::Rewiring]
+    def rewiring(tree:) = Rewiring.new(tree:)
+
     # @param options [Hash] passed to {ReasonInterview#initialize}
     # @return [OpenLanes::Lifecycle::ReasonInterview]
     def reason_interview(**) = ReasonInterview.new(**)

@@ -72,16 +72,29 @@ module OpenLanes
       # @param result [OpenLanes::Lifecycle::Removal::Result]
       # @return [void]
       def report(result, options)
-        result.moved.each { puts "#{it.ordinal}\t#{it.from} → #{it.to}\t#{it.title}" }
-        result.edits.each { puts "depends_on\t#{it}" }
-        result.open_prs.each do |ordinal, numbers|
-          puts "open\t#{ordinal}\t#{numbers.join(", ")}"
-          warn("#{ordinal} still has open pull requests: #{numbers.join(", ")}.\n" \
-               "Close them first, or expect a rename conflict or a second folder with this number when one merges.")
-        end
+        report_changes(result)
+        result.open_prs.each { |ordinal, numbers| report_open(ordinal, numbers) }
+        report_unmoved(result)
+        dry_run_footer(result.moved.size, "move#{"s" unless result.moved.size == 1}") if dry_run?(options)
+      end
+
+      # @return [void]
+      def report_unmoved(result)
         result.skipped.each { say("#{it} is already #{Plans.status(target).label}; its reason stays as written.") }
         result.refused.each { |ordinal, why| error("#{ordinal} was not moved: #{why}") }
-        dry_run_footer(result.moved.size, "move#{"s" unless result.moved.size == 1}") if dry_run?(options)
+      end
+
+      # @return [void]
+      def report_changes(result)
+        result.moved.each { puts "#{it.ordinal}\t#{it.from} → #{it.to}\t#{it.title}" }
+        result.edits.each { puts "depends_on\t#{it}" }
+      end
+
+      # @return [void]
+      def report_open(ordinal, numbers)
+        puts "open\t#{ordinal}\t#{numbers.join(", ")}"
+        warn("#{ordinal} still has open pull requests: #{numbers.join(", ")}.\n" \
+             "Close them first, or expect a rename conflict or a second folder with this number when one merges.")
       end
 
       # @return [Boolean]

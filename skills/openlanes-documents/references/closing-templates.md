@@ -2,9 +2,9 @@
 
 Each of these files is what one off-path state requires (`openlanes docs` lists which). Write the file, then `openlanes resync dirs` moves the folder; rename by hand only if resync names a different state than you meant.
 
-## discarded.md — ❌ Discarded
+## discarded-reason.md — ❌ Discarded
 
-Dropped for good; terminal. Say why, so nobody re-proposes it blind.
+Someone decided this should not proceed. Say why, so nobody re-proposes it blind. `openlanes plans discard` writes this file, and an older `discarded.md` still counts. `abandoned-reason.md` (👎) and `trashed-reason.md` (🚮) work the same way; deleting the file brings the plan back on the next `openlanes resync dirs`.
 
 ```markdown
 # Rate Feed Sync — Discarded

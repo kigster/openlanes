@@ -9,7 +9,7 @@ module OpenLanes
       option :all,
         type:    :boolean,
         default: false,
-        desc:    "Also list the plans in archive/, deferred/ and abandoned/"
+        desc:    "Also list the plans in archive/, deferred/, abandoned/, discarded/ and trashed/"
 
       example ["", "--all", "-D .plans", "| less -R"]
 

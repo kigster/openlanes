@@ -9,11 +9,13 @@ classDiagram
   class OpenLanes__Apps__Supervisor["OpenLanes::Apps::Supervisor"]
   class OpenLanes__Apps__Supervisor__StartFailed["OpenLanes::Apps::Supervisor::StartFailed"]
   class OpenLanes__CLI__API__Docs["API::Docs"]
+  class OpenLanes__CLI__Abandon["Abandon"]
   class OpenLanes__CLI__Agents__Describe["Agents::Describe"]
   class OpenLanes__CLI__Agents__List["Agents::List"]
   class OpenLanes__CLI__Base["Base"]
   class OpenLanes__CLI__Coverage["Coverage"]
   class OpenLanes__CLI__Create["Create"]
+  class OpenLanes__CLI__Discard["Discard"]
   class OpenLanes__CLI__Docs["Docs"]
   class OpenLanes__CLI__EngineCommand["EngineCommand"]
   class OpenLanes__CLI__Eval["Eval"]
@@ -36,6 +38,7 @@ classDiagram
   class OpenLanes__CLI__Preview__Status["Preview::Status"]
   class OpenLanes__CLI__Preview__Stop["Preview::Stop"]
   class OpenLanes__CLI__Programs["Programs"]
+  class OpenLanes__CLI__RemovalCommand["RemovalCommand"]
   class OpenLanes__CLI__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__CLI__Resync__Prs["Resync::Prs"]
   class OpenLanes__CLI__Review["Review"]
@@ -51,6 +54,7 @@ classDiagram
   class OpenLanes__CLI__States["States"]
   class OpenLanes__CLI__Status["Status"]
   class OpenLanes__CLI__Stop["Stop"]
+  class OpenLanes__CLI__Trash["Trash"]
   class OpenLanes__CLI__Uml["Uml"]
   class OpenLanes__CLI__Unblock["Unblock"]
   class OpenLanes__CLI__Version["Version"]
@@ -66,6 +70,7 @@ classDiagram
   class OpenLanes__Evals__Invalid["OpenLanes::Evals::Invalid"]
   class OpenLanes__Evals__Live["OpenLanes::Evals::Live"]
   class OpenLanes__Evals__Run["OpenLanes::Evals::Run"]
+  class OpenLanes__Lifecycle__ReasonInterview["OpenLanes::Lifecycle::ReasonInterview"]
   class OpenLanes__Lifecycle__UnblockWorkflow["OpenLanes::Lifecycle::UnblockWorkflow"]
   class OpenLanes__Linear__API["OpenLanes::Linear::API"]
   class OpenLanes__Linear__Import["OpenLanes::Linear::Import"]
@@ -106,6 +111,7 @@ classDiagram
   OpenLanes__CLI__API__Docs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__API__Docs ..> OpenLanes__Presentation__ApiDocs : uses
   OpenLanes__CLI__API__Docs ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Abandon --|> OpenLanes__CLI__RemovalCommand : inherits
   OpenLanes__CLI__Agents__Describe ..> OpenLanes__Error : uses
   OpenLanes__CLI__Agents__Describe ..|> OpenLanes__UI : includes
   OpenLanes__CLI__Agents__List ..> OpenLanes__Adapters__Report : uses
@@ -124,6 +130,7 @@ classDiagram
   OpenLanes__CLI__Coverage ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__Create --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Create ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__CLI__Discard --|> OpenLanes__CLI__RemovalCommand : inherits
   OpenLanes__CLI__Docs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__EngineCommand --|> OpenLanes__CLI__Run : inherits
   OpenLanes__CLI__EngineCommand ..> OpenLanes__Engine__Dispatcher : uses
@@ -197,6 +204,8 @@ classDiagram
   OpenLanes__CLI__Programs ..> OpenLanes__CLI__EngineCommand : uses
   OpenLanes__CLI__Programs ..> OpenLanes__Supervision__Program : uses
   OpenLanes__CLI__Programs ..> OpenLanes__Web__Launcher : uses
+  OpenLanes__CLI__RemovalCommand --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__RemovalCommand ..> OpenLanes__Setup__SpacedPrompt : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Review --|> OpenLanes__CLI__Base : inherits
@@ -234,6 +243,8 @@ classDiagram
   OpenLanes__CLI__Stop --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Stop ..> OpenLanes__CLI__Status : uses
   OpenLanes__CLI__Stop ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Trash --|> OpenLanes__CLI__RemovalCommand : inherits
+  OpenLanes__CLI__Trash ..> OpenLanes__Lifecycle__ReasonInterview : uses
   OpenLanes__CLI__Uml --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Uml ..> OpenLanes__Uml__ClassDiagram : uses
   OpenLanes__CLI__Unblock --|> OpenLanes__CLI__Base : inherits
