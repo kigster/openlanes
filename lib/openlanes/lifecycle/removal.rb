@@ -61,14 +61,21 @@ module OpenLanes
         refusal = refusal_for(subject) || (write_and_check(subject, reason) unless dry_run)
         return result.refused[ordinal] = refusal if refusal
 
-        # Read first: once the folder has moved, this subject's path is gone.
-        open = subject.pull_requests.select(&:open?).map { "##{it.number}" }
-        result.moved << Moved.new(ordinal:, title: subject.feature.title, from: subject.status, to: @to)
-        result.open_prs[ordinal] = open unless open.empty?
+        # Before the move: once the folder has gone, this subject's path has too.
+        note(subject, result)
         return if dry_run
 
         result.edits.concat(@pending)
         Resync::Dirs.new(tree: @tree, only: [ordinal]).call(commit: true)
+      end
+
+      # @return [void]
+      def note(subject, result)
+        feature = subject.feature
+        ordinal = feature.ordinal.to_s
+        result.moved << Moved.new(ordinal:, title: feature.title, from: subject.status, to: @to)
+        open = subject.pull_requests.select(&:open?).map { "##{it.number}" }
+        result.open_prs[ordinal] = open unless open.empty?
       end
 
       # @return [String, nil] why it cannot go
@@ -89,12 +96,13 @@ module OpenLanes
         @pending = Rewiring.new(tree: @tree).plan([ordinal])
         path = File.join(subject.feature.path, Plans.reason_file(@to.key))
         File.write(path, document(reason, subject.status, @pending))
-        taken = Resync::Dirs.new(tree: @tree, only: [ordinal]).plan.map(&:target).find { File.exist?(it) }
-        return nil unless taken
-
+        taken = clash(ordinal) or return nil
         File.delete(path)
         "#{File.basename(taken)} already exists"
       end
+
+      # @return [String, nil] a path the plan's move would land on and cannot
+      def clash(ordinal) = Resync::Dirs.new(tree: @tree, only: [ordinal]).plan.map(&:target).find { File.exist?(it) }
 
       # @return [String] the reason file
       def document(reason, from, edits)
