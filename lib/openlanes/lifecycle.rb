@@ -39,6 +39,11 @@ module OpenLanes
       Dry::Monads::Result::Failure.new(Refusal.new(message: e.message, status: 69))
     end
 
+    # @param tree [OpenLanes::Plans::Tree]
+    # @param to [Symbol] one of {Plans::REMOVED}
+    # @return [OpenLanes::Lifecycle::Removal]
+    def removal(tree:, to:) = Removal.new(tree:, to:)
+
     # @return [OpenLanes::Lifecycle::Brief]
     def brief(**) = Brief.new(**)
 

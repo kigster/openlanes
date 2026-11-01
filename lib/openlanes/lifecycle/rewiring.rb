@@ -32,6 +32,12 @@ module OpenLanes
         end
       end
 
+      # One reading of the graph, so every edit is computed from the same one.
+      Reading = Data.define(:removed, :graph, :states) do
+        # @return [Boolean] whether this ordinal is finished, or out of the list
+        def met?(ordinal) = Plans::Dependencies::MET.include?(states[ordinal])
+      end
+
       # @param tree [OpenLanes::Plans::Tree]
       def initialize(tree:)
         @tree = tree.everything
@@ -41,12 +47,10 @@ module OpenLanes
       # @return [Array<Edit>] one per dependent; nothing is written
       def plan(removed)
         subjects = @tree.reload.subjects
-        graph = subjects.to_h { [it.feature.ordinal.to_s, Plans::Spec.for(it).depends_on] }
-        states = subjects.to_h { [it.feature.ordinal.to_s, it.status.key] }
-
-        subjects.filter_map do |subject|
-          edit_for(subject, removed, graph, states)
-        end
+        reading = Reading.new(removed:,
+          graph:  subjects.to_h { [it.feature.ordinal.to_s, Plans::Spec.for(it).depends_on] },
+          states: subjects.to_h { [it.feature.ordinal.to_s, it.status.key] })
+        subjects.filter_map { edit_for(it, reading) }
       end
 
       # @param edits [Array<Edit>]
@@ -61,16 +65,16 @@ module OpenLanes
       private
 
       # @return [Edit, nil]
-      def edit_for(subject, removed, graph, states)
+      def edit_for(subject, reading)
         ordinal = subject.feature.ordinal.to_s
-        return nil if removed.include?(ordinal) || Plans::Dependencies::MET.include?(states[ordinal])
+        return nil if reading.removed.include?(ordinal) || reading.met?(ordinal)
 
         path = File.join(subject.feature.path, Plans::Spec::FILENAME)
-        before = graph[ordinal]
-        return unreadable(subject, ordinal, path, removed) if before.nil?
-        return nil unless before.intersect?(removed)
+        before = reading.graph[ordinal]
+        return unreadable(subject, ordinal, path, reading.removed) if before.nil?
+        return nil unless before.intersect?(reading.removed)
 
-        Edit.new(ordinal:, path:, before:, after: rewired(ordinal, before, removed, graph, states), problem: nil)
+        Edit.new(ordinal:, path:, before:, after: rewired(ordinal, before, reading), problem: nil)
       end
 
       # A spec whose frontmatter does not parse yields no list, but its text
@@ -86,19 +90,18 @@ module OpenLanes
       end
 
       # @return [Array<String>] sorted, without duplicates or +ordinal+ itself
-      def rewired(ordinal, before, removed, graph, states)
-        kept, gone = before.partition { !removed.include?(it) }
-        inherited = gone.flat_map { expand(it, removed, graph, []) }
-                        .reject { Plans::Dependencies::MET.include?(states[it]) }
+      def rewired(ordinal, before, reading)
+        kept, gone = before.partition { !reading.removed.include?(it) }
+        inherited = gone.flat_map { expand(it, reading, []) }.reject { reading.met?(it) }
         (kept + inherited).uniq.reject { it == ordinal }.sort
       end
 
-      # @return [Array<String>] what +entry+ stands for once +removed+ are gone
-      def expand(entry, removed, graph, seen)
-        return [entry] unless removed.include?(entry)
+      # @return [Array<String>] what +entry+ stands for once the removed are gone
+      def expand(entry, reading, seen)
+        return [entry] unless reading.removed.include?(entry)
         return [] if seen.include?(entry)
 
-        Array(graph[entry]).flat_map { expand(it, removed, graph, seen + [entry]) }
+        Array(reading.graph[entry]).flat_map { expand(it, reading, seen + [entry]) }
       end
     end
   end
