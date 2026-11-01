@@ -41,7 +41,7 @@ openlanes create <two to five words> --lane <lane> --depth <depth> --no-open
 
 - `--from notes.md` instead of words when the user's notes are a file: its frontmatter `title:` names the folder, and its body becomes the spec.
 - `--no-draft` when the user has given you the full content; otherwise `create` drafts the four headings from the project's own docs, which takes up to a minute.
-- `--no-open` because you are about to edit the file; the user can open it after.
+- `--no-open` because you are about to edit the file. An open file invites the user to edit it, so it stays closed until the last write; step 6 opens it.
 
 Note the ordinal and folder `create` prints.
 
@@ -79,7 +79,20 @@ Write each rule out in full. "Follow our postgres-strict skill" means nothing to
 
 Keep the four headings `create` scaffolded (the shape is in `openlanes-documents`, `references/spec-template.md`). Fill them from the conversation and the repository. Where nothing is known, leave the heading with one honest line ("unknown; research should settle") rather than an invented answer, because research reads the gaps as its assignment.
 
-## 6. Check it routes
+## 6. Hand it to the user
+
+The user reviews every `spec.md`, drafted or not, once it is populated. The worst outcome is a file that invites edits and then gets overwritten, so this order is fixed:
+
+1. Finish every write to the file.
+1. Open it: `open <spec.md>`.
+1. Say "Please make your edits, save, and press ENTER when done", and wait for the reply.
+1. Re-read the file. The user's version is now the spec.
+
+1. If something the user wrote looks wrong, contradictory or risky, say so and argue it, with your reasons. A healthy debate is welcome. The user decides the outcome.
+
+After the handoff, change the file only after re-reading it, and keep what the user wrote unless the two of you agreed otherwise.
+
+## 7. Check it routes
 
 ```bash
 openlanes run <NNN> -n
