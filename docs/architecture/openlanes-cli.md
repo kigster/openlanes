@@ -205,7 +205,6 @@ classDiagram
   OpenLanes__CLI__Programs ..> OpenLanes__Supervision__Program : uses
   OpenLanes__CLI__Programs ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__RemovalCommand --|> OpenLanes__CLI__Base : inherits
-  OpenLanes__CLI__RemovalCommand ..> OpenLanes__Setup__SpacedPrompt : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Review --|> OpenLanes__CLI__Base : inherits
