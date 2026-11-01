@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Plans::Tree, :tree do
       t.plan "001.00", :building, "open-one", files: { "plan.md" => "## Units\n" }
       t.plan "002.00", :approved, "shipped", under: "archive", archived_on: Date.new(2026, 9, 1)
       t.plan "003.00", :deferred, "later", under: "deferred", archived_on: Date.new(2026, 9, 2)
-      t.plan "004.00", :discarded, "dropped", under: "abandoned", archived_on: Date.new(2026, 9, 3)
+      t.plan "004.00", :discarded, "dropped", under: "discarded", archived_on: Date.new(2026, 9, 3)
       t.plan "000.00", :new, "first", files: { "spec.md" => spec_body }
     end
   end
@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Plans::Tree, :tree do
     end
   end
 
-  it "reads every subfolder with all: true, open plans first, then archive, deferred, abandoned" do
+  it "reads every subfolder with all: true, open plans first, then archive, deferred, discarded" do
     everything = described_class.new(dir: plans_root, all: true)
 
     aggregate_failures do
@@ -56,7 +56,7 @@ RSpec.describe OpenLanes::Plans::Tree, :tree do
       expect(described_class.subfolder_for(OpenLanes::Plans.status(:approved))).to eq("archive")
       expect(described_class.subfolder_for(OpenLanes::Plans.status(:deployed))).to eq("archive")
       expect(described_class.subfolder_for(OpenLanes::Plans.status(:deferred))).to eq("deferred")
-      expect(described_class.subfolder_for(OpenLanes::Plans.status(:discarded))).to eq("abandoned")
+      expect(described_class.subfolder_for(OpenLanes::Plans.status(:discarded))).to eq("discarded")
       expect(described_class.subfolder_for(OpenLanes::Plans.status(:building))).to be_nil
     end
   end

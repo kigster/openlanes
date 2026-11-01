@@ -21,6 +21,11 @@ module OpenLanes
       # deferred included, keeps the dependent waiting.
       DONE = %i[approved deployed].freeze
 
+      # The states in which nobody waits for a plan any more. Rewiring (X9)
+      # removes these edges when a plan leaves; an edge it never saw, such as
+      # one on a plan restored later, must not hold anything forever.
+      MET = (DONE + REMOVED).freeze
+
       # The states before the build. Work in them is documents only, so a plan
       # here gives up its group's turn to one whose code is already under way.
       BEFORE_BUILD = %i[retroactive new researched ready_for_planning planned].freeze
@@ -186,7 +191,7 @@ module OpenLanes
       def edges(ordinal) = depends_on(ordinal) || []
 
       # @return [Boolean]
-      def done?(ordinal) = DONE.include?(states[ordinal])
+      def done?(ordinal) = MET.include?(states[ordinal])
 
       # @return [Hash{String => Symbol}] ordinal => status key
       def states = @states ||= @tree.subjects.to_h { [it.feature.ordinal.to_s, @status_of.call(it).key] }

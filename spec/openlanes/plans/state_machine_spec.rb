@@ -46,10 +46,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(described_class.inbound).not_to have_key(:retroactive)
     end
 
-    it "makes discarded the only terminal state and strands nothing else" do
+    it "makes trashed the only terminal state and strands nothing else" do
       terminal = OpenLanes::Plans::STATUSES.select(&:terminal?).map(&:key)
 
-      expect(terminal).to eq([:discarded])
+      expect(terminal).to eq([:trashed])
     end
 
     it "lets a release be pulled back out of production" do
@@ -73,10 +73,10 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(described_class.family_of(:in_review)).to include(:verifying)
     end
 
-    it "lets anything be discarded, from anywhere" do
-      others = OpenLanes::Plans::STATUSES.map(&:key) - [:discarded]
+    it "lets anything be trashed, from anywhere" do
+      others = OpenLanes::Plans::STATUSES.map(&:key) - [:trashed]
 
-      expect(described_class.inbound.fetch(:discarded)).to match_array(others)
+      expect(described_class.inbound.fetch(:trashed)).to match_array(others)
     end
   end
 

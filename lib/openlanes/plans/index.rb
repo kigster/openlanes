@@ -24,16 +24,19 @@ module OpenLanes
 
       # Documents that get a proper name rather than their filename.
       ARTIFACT_NAMES = {
-        "spec.md"          => "Spec",
-        "plan.md"          => "Plan",
-        "pull-requests.md" => "Pull Requests",
-        "linear.md"        => "Linear",
-        "blocked.md"       => "Blocked",
-        "delayed.md"       => "Deferred",
-        "rewrite.md"       => "Rewrite",
-        "deployed.md"      => "Deployed",
-        "rollback.md"      => "Rollback",
-        "discarded.md"     => "Discarded"
+        "spec.md"             => "Spec",
+        "plan.md"             => "Plan",
+        "pull-requests.md"    => "Pull Requests",
+        "linear.md"           => "Linear",
+        "blocked.md"          => "Blocked",
+        "delayed.md"          => "Deferred",
+        "rewrite.md"          => "Rewrite",
+        "deployed.md"         => "Deployed",
+        "rollback.md"         => "Rollback",
+        "discarded.md"        => "Discarded",
+        "abandoned-reason.md" => "Abandoned",
+        "discarded-reason.md" => "Discarded",
+        "trashed-reason.md"   => "Trashed"
       }.freeze
 
       # @param tree [OpenLanes::Plans::Tree]

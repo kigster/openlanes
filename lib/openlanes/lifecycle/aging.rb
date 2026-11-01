@@ -32,7 +32,7 @@ module OpenLanes
 
       # Dependents in these states wait for nothing any more: they shipped
       # (008's {Plans::Dependencies::DONE}) or were dropped.
-      CLOSED = (Plans::Dependencies::DONE + %i[discarded]).freeze
+      CLOSED = Plans::Dependencies::MET
 
       # What one sweep did, or on a dry run would have done.
       #

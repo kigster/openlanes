@@ -16,7 +16,9 @@ module OpenLanes
         approved:  "archive",
         deployed:  "archive",
         deferred:  "deferred",
-        discarded: "abandoned"
+        abandoned: "abandoned",
+        discarded: "discarded",
+        trashed:   "trashed"
       }.freeze
 
       # The subfolders themselves, in the order `plans --all` shows them.

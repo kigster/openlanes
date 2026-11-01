@@ -21,7 +21,7 @@ module OpenLanes
     # change, and failing that, today.
     module RenameDate
       # Files tried first; a folder holding none of them (a ❌ plan may hold
-      # only `discarded.md`) is followed through whichever file it does hold.
+      # only its reason file) is followed through whichever file it does hold.
       PROBES = %w[spec.md plan.md pull-requests.md].freeze
 
       class << self
