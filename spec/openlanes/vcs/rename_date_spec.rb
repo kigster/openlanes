@@ -31,4 +31,21 @@ RSpec.describe OpenLanes::Vcs::RenameDate, :tree do
 
     expect(described_class.for(Dir.glob(File.join(dir, "001.00*")).first, today:)).to eq(today)
   end
+
+  describe "when neither source can answer" do
+    let(:folder) { Dir.mktmpdir("rename-date").tap { File.write(File.join(it, "spec.md"), "x\n") } }
+    let(:today) { Date.new(2026, 1, 2) }
+
+    after { FileUtils.rm_rf(folder) }
+
+    it "falls through to today when git cannot be run" do
+      allow(Open3).to receive(:capture2).and_raise(Errno::ENOENT)
+      expect(described_class.for(folder, today:)).to eq(today)
+    end
+
+    it "falls through to today when state.json holds no real date" do
+      File.write(File.join(folder, OpenLanes::Plans::PlanState::FILENAME), %({"updated_at":"not-a-date"}))
+      expect(described_class.for(folder, today:)).to eq(today)
+    end
+  end
 end
