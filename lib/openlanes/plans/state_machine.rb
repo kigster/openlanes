@@ -85,7 +85,7 @@ module OpenLanes
       # a block outranks progress, and `retroactive` is last because it is the
       # absence of documents rather than the presence of any.
       PREFERENCE = %i[
-        discarded rolled_back rewrite deferred blocked product_blocked bomb
+        trashed discarded abandoned rolled_back rewrite deferred blocked product_blocked bomb
         deployed approved rejected completed verifying in_review ready_for_review building_ui building planned ready_for_planning
         researched new
         retroactive
@@ -126,7 +126,7 @@ module OpenLanes
       # Moving `approved` out of this list is therefore a decision about blast
       # radius rather than about topology. If it ever moves, something has to own
       # `approved -> deployed`, and today nothing does.
-      SETTLED = %i[approved deployed discarded blocked product_blocked bomb deferred].freeze
+      SETTLED = %i[approved deployed abandoned discarded trashed blocked product_blocked bomb deferred].freeze
 
       # Every state an agent that may sign `Blocked` works in. A block the
       # machine refuses is reported as a failed attempt and parks nothing, so a
@@ -268,9 +268,20 @@ module OpenLanes
           transitions from: BLOCKABLE + %i[blocked product_blocked], to: :deferred
         end
 
-        # Anything, from anywhere, may be dropped for good.
+        # A person may take a plan out from wherever it stands (X8). The only
+        # moves refused are the ones toward a weaker claim: an abandoned plan may
+        # go on to be discarded or trashed, never the reverse. Reversing one is
+        # deleting its reason file, which `resync dirs` reads.
+        event :abandon, guard: :justified? do
+          transitions from: OpenLanes::Plans::STATUSES.map(&:key) - OpenLanes::Plans::REMOVED, to: :abandoned
+        end
+
         event :discard, guard: :justified? do
-          transitions from: OpenLanes::Plans::STATUSES.map(&:key) - %i[discarded], to: :discarded
+          transitions from: OpenLanes::Plans::STATUSES.map(&:key) - %i[discarded trashed], to: :discarded
+        end
+
+        event :trash, guard: :justified? do
+          transitions from: OpenLanes::Plans::STATUSES.map(&:key) - %i[trashed], to: :trashed
         end
 
         # Back one step, fired only by {#retreat!}. It is the one event with

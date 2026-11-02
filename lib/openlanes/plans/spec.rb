@@ -204,6 +204,22 @@ module OpenLanes
           new(problems: ["spec.md frontmatter is not valid YAML (#{e.message.lines.first.strip})"])
         end
 
+        # Replace a spec's `depends_on:` and nothing else, a comment on the line
+        # included, because the rest of the frontmatter is the author's (X9).
+        #
+        # @param text [String] a whole spec.md
+        # @param list [Array<String>] canonical ordinals; empty writes `[none]`
+        # @return [String]
+        def with_depends_on(text, list)
+          match = Frontmatter::PATTERN.match(text) or return text
+          front = match[1]
+          written = list.empty? ? "[#{NO_DEPENDENCIES}]" : "[#{list.map { "\"#{it}\"" }.join(", ")}]"
+          updated = front.sub(/^#{DEPENDS_ON_KEY}:[^\n]*(?:\n(?:[ \t]*-|[ \t]+\S|[ \t]*\])[^\n]*)*/) do |found|
+            "#{DEPENDS_ON_KEY}: #{written}#{found.lines.first.chomp[/\s+#.*\z/]}"
+          end
+          text.sub(front) { updated }
+        end
+
         # Move a `how-to-verify:` frontmatter key into the body (M10): its
         # items are appended to `## How to tell it's working?`, which is added
         # at the end when the spec has none. The rest of the frontmatter is

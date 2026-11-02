@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Engine::Steps::Watch, :tree do
   let(:merged) { OpenLanes::Engine::PrWatch::Outcome.new(plan: "033.00", pr: 1, kind: :merged) }
   let(:outcomes) { [waiting, merged] }
   let(:agents) { instance_double(OpenLanes::Agents::Registry, dir: "agents") }
-  let(:runner) { instance_double(OpenLanes::Engine::Runner, in_scope: [], tree: OpenLanes::Plans::Tree.new(dir: plans_root), agents:, events: nil) }
+  let(:runner) { instance_double(OpenLanes::Engine::Runner, in_scope: [], removed_in_scope: [], tree: OpenLanes::Plans::Tree.new(dir: plans_root), agents:, events: nil) }
   let(:busy) { [] }
   let(:woken) { [] }
   let(:reopened) { [] }

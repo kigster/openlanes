@@ -63,7 +63,7 @@ module OpenLanes
       # names 🟡 instead (plan 035), and is mailed to whoever builds there.
       def reject(outcome)
         subject = find(outcome.plan) or return nil
-        return nil if subject.status.key == outcome.to
+        return nil if subject.status.key == outcome.to || removed?(subject)
 
         moved = walk(subject, outcome.to) or return nil
         # A person overruled the approval: the board must stop showing it
@@ -83,6 +83,8 @@ module OpenLanes
       def merged(outcome)
         subject = find(outcome.plan) or return nil
         record(subject, outcome.pr, "merged")
+        return applied(outcome, nil, "merged") if removed?(subject)
+
         Plans::PlanState.for(subject.feature.path).finish!("merged", at: @clock.call)
         subject = find(outcome.plan)
         return applied(outcome, nil, "merged") if subject.pull_requests.any?(&:open?)
@@ -92,17 +94,18 @@ module OpenLanes
       end
 
       # Closed unmerged: the row says so, and a plan with nothing merged and
-      # nothing open is ❌, with `discarded.md` saying who closed what.
+      # nothing open is ❌, with `discarded-reason.md` saying who closed what,
+      # and dependents take over what it was waiting for (X9).
       def closed(outcome)
         subject = find(outcome.plan) or return nil
         record(subject, outcome.pr, "closed")
+        return applied(outcome, nil, "closed unmerged") if removed?(subject)
+
         subject = find(outcome.plan)
         prs = subject.pull_requests
         return applied(outcome, nil, "closed unmerged") if prs.any? { it.open? || it.merged? }
 
-        return applied(outcome, nil, "closed unmerged") if subject.status.key == :discarded
-
-        note = File.join(subject.feature.path, "discarded.md")
+        note = File.join(subject.feature.path, Plans.reason_file(:discarded))
         written = !File.exist?(note) && File.write(note, <<~MARKDOWN)
           # Discarded
 
@@ -113,8 +116,24 @@ module OpenLanes
         # move takes it back, or the folder would carry a discarded note
         # while claiming some other state.
         File.delete(note) if written && to.nil?
+        rewire(outcome.plan, note) if to
         applied(outcome, to, "closed unmerged")
       end
+
+      # @return [void]
+      def rewire(ordinal, note)
+        rewiring = Lifecycle.rewiring(tree: Plans::Tree.new(dir: @tree_dir))
+        edits = rewiring.apply(rewiring.plan([ordinal.to_s]))
+        moved = find(ordinal)
+        rewiring.record(edits, ordinal.to_s, File.join(moved.feature.path, File.basename(note)))
+      end
+
+      # A person took this plan out of the active list. GitHub's news keeps its
+      # rows true, for the day it is restored, and moves nothing (X7).
+      #
+      # @param subject [Plans::Subject]
+      # @return [Boolean]
+      def removed?(subject) = Plans::REMOVED.include?(subject.status.key)
 
       # Recorded only when something changed: the watch asks every 15
       # seconds, and a row already saying merged is not a second merge.
@@ -199,7 +218,15 @@ module OpenLanes
         outcome.comments.map { |c| "#{c[:author]} (#{c[:url]}):\n\n#{c[:body].strip}" }
       end
 
-      def find(ordinal) = Plans::Tree.new(dir: @tree_dir).find(ordinal)
+      # An archived plan stays out of reach, as it always was: only the three
+      # removed directories are looked through, so a merge reported again for
+      # a shipped plan cannot restamp it.
+      #
+      # @return [Plans::Subject, nil]
+      def find(ordinal)
+        tree = Plans::Tree.new(dir: @tree_dir)
+        tree.find(ordinal) || tree.everything.find(ordinal)&.then { it if removed?(it) }
+      end
     end
   end
 end

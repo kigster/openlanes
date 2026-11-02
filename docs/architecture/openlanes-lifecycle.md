@@ -13,8 +13,11 @@ classDiagram
   class OpenLanes__Lifecycle__Brief["Brief"]
   class OpenLanes__Lifecycle__CreateWorkflow["CreateWorkflow"]
   class OpenLanes__Lifecycle__Creator["Creator"]
+  class OpenLanes__Lifecycle__ReasonInterview["ReasonInterview"]
+  class OpenLanes__Lifecycle__Removal["Removal"]
   class OpenLanes__Lifecycle__Resync__Dirs["Resync::Dirs"]
   class OpenLanes__Lifecycle__Resync__Prs["Resync::Prs"]
+  class OpenLanes__Lifecycle__Rewiring["Rewiring"]
   class OpenLanes__Lifecycle__UnblockWorkflow["UnblockWorkflow"]
   class OpenLanes__Lifecycle__Unblocker["Unblocker"]
   class OpenLanes__Plans__Dependencies["OpenLanes::Plans::Dependencies"]
@@ -25,6 +28,7 @@ classDiagram
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Refusal["OpenLanes::Refusal"]
@@ -59,8 +63,14 @@ classDiagram
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Lifecycle__Removal ..> OpenLanes__Lifecycle__Resync__Dirs : uses
+  OpenLanes__Lifecycle__Removal ..> OpenLanes__Lifecycle__Rewiring : uses
+  OpenLanes__Lifecycle__Removal ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Lifecycle__Removal ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Error : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Lifecycle__Rewiring : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Tree : uses
@@ -70,6 +80,9 @@ classDiagram
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..|> OpenLanes__UI : includes

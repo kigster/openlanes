@@ -348,7 +348,7 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
           "006.00━━🛑━━❯product",
           "archive/003.00━━✅━━❯[2026-09-20]━━shipped",
           "deferred/004.00━━💤━━❯[2026-09-20]━━parked",
-          "abandoned/005.00━━❌━━❯[2026-09-20]━━dropped"
+          "discarded/005.00━━❌━━❯[2026-09-20]━━dropped"
         )
         expect(top).to include("001-⚪️--old-dashes", "003.00-✅ → shipped")
         expect(repo_git("status", "--porcelain")).to eq("")
@@ -360,10 +360,10 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       commit_all("migrate")
 
       aggregate_failures do
-        expect(top).to eq(%w[001.00━━⚪━━❯old-dashes 002.00━━⭕━━❯arrow-blocked 006.00━━🛑━━❯product abandoned archive deferred])
+        expect(top).to eq(%w[001.00━━⚪━━❯old-dashes 002.00━━⭕━━❯arrow-blocked 006.00━━🛑━━❯product archive deferred discarded])
         expect(under("archive")).to eq(["003.00━━✅━━❯[2026-09-20]━━shipped"])
         expect(under("deferred")).to eq(["004.00━━💤━━❯[2026-09-20]━━parked"])
-        expect(under("abandoned")).to eq(["005.00━━❌━━❯[2026-09-20]━━dropped"])
+        expect(under("discarded")).to eq(["005.00━━❌━━❯[2026-09-20]━━dropped", "README.md"])
         expect(repo_git("log", "--follow", "--format=%s", "--", ".plans/archive/003.00━━✅━━❯[2026-09-20]━━shipped/spec.md").lines.map(&:strip))
           .to eq(["migrate", "states", "old layout"])
       end

@@ -25,7 +25,8 @@ Ask the tool, never a copy of its table:
 | `contract.md`, `openapi.yaml` | the interfaces between the halves; the HTTP surface when there is one | `backend-coder` |
 | `blocked.md` | open questions a human must decide | any agent, or a human |
 | `pull-requests.md` | the pull request table the review states are judged by | `openlanes run` when it opens the PR, `openlanes create --prs`, `openlanes resync prs` |
-| `rewrite.md`, `delayed.md`, `discarded.md`, `deployed.md`, `rollback.md` | why the plan left the main path | the reviewer (`rewrite.md`), otherwise a human |
+| `rewrite.md`, `delayed.md`, `deployed.md`, `rollback.md` | why the plan left the main path | the reviewer (`rewrite.md`), otherwise a human |
+| `abandoned-reason.md`, `discarded-reason.md`, `trashed-reason.md` | why the plan left the active list; a non-empty one moves it, and deleting it restores the plan on the next `resync dirs` | `openlanes plans abandon`, `discard`, `trash`, or a human |
 | `state.json` | stages, signatures, mailbox, read receipts, resume records (`last-known-state`) | the harness only; read it with `openlanes state show --plan <NNN>` |
 
 Agents also sign a ledger inside the document they own: a `> [!NOTE]` block of `[ agent: … status: Started, round 1 ]` lines. Leave those blocks as they are; the harness reads them to decide who finished.
@@ -55,7 +56,7 @@ Copy the shape; replace every placeholder:
 - [`references/spec-template.md`](references/spec-template.md): `spec.md`, frontmatter and the four headings.
 - [`references/plan-template.md`](references/plan-template.md): `plan.md` and its unit shape.
 - [`references/blocked-template.md`](references/blocked-template.md): `blocked.md` with `B<n>` and `A<n>`.
-- [`references/closing-templates.md`](references/closing-templates.md): `rewrite.md`, `delayed.md`, `discarded.md`, `deployed.md`, `rollback.md`.
+- [`references/closing-templates.md`](references/closing-templates.md): `rewrite.md`, `delayed.md`, `discarded-reason.md`, `deployed.md`, `rollback.md`.
 - [`references/retroactive-spec.md`](references/retroactive-spec.md): the provenance line and the anchor.
 
 Done when `openlanes resync dirs -n` names nothing to rename for the folder you edited, or names exactly the state you meant it to reach.

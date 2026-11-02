@@ -57,7 +57,7 @@ RSpec.describe "migrating a repository's plan folders", :tree do
         "004.00━━🛑━━❯product-block",
         "archive/005.00━━✅━━❯[2026-09-20]━━shipped",
         "deferred/006.00━━💤━━❯[2026-09-20]━━parked",
-        "abandoned/007.00━━❌━━❯[2026-09-20]━━dropped",
+        "discarded/007.00━━❌━━❯[2026-09-20]━━dropped",
         "008.00━━⏪━━❯backfill",
         "009.00-⚪️ → verified/spec.md"
       )
@@ -84,7 +84,7 @@ RSpec.describe "migrating a repository's plan folders", :tree do
 
       aggregate_failures do
         expect(open_plans.size).to eq(5) # 008 had a merged pull request and nothing else: ✅, archived
-        expect((open_plans + under("archive") + under("deferred") + under("abandoned")).grep(/\s/)).to be_empty
+        expect((open_plans + under("archive") + under("deferred") + under("discarded")).grep(/\s/)).to be_empty
         expect(File.read(File.join(plans_root, "009.00━━⚪━━❯verified", "spec.md")))
           .to end_with("## How to tell it's working?\n\n- just test\n")
       end

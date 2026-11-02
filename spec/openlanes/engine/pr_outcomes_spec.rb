@@ -98,14 +98,14 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
   end
 
   describe "a pull request closed unmerged" do
-    it "moves the plan to ❌, with discarded.md naming it" do
+    it "moves the plan to ❌, with discarded-reason.md naming it" do
       plans { |t| t.plan "004.00", :in_review, "closed", files:, prs: [t.open(14, "d")] }
       applied = effects.apply(outcome("004.00", 14, :closed))
 
       aggregate_failures do
         expect(applied).to have_attributes(to: :discarded)
         expect(plan("004.00").status.key).to eq(:discarded)
-        expect(plan("004.00").read("discarded.md")).to include("#14")
+        expect(plan("004.00").read("discarded-reason.md")).to include("#14")
         expect(plan("004.00").pull_requests.map(&:state)).to eq(["Closed 🔴"])
       end
     end
@@ -118,7 +118,7 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
     end
   end
 
-  describe "discarded.md" do
+  describe "the discard note" do
     it "leaves a hand-written note on a plan already at ❌ alone" do
       plans do |t|
         t.plan "005.00",
@@ -139,7 +139,7 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
 
       aggregate_failures do
         expect(effects.apply(outcome("006.00", 18, :closed))).to have_attributes(to: nil)
-        expect(plan("006.00").read("discarded.md")).to be_nil
+        expect(plan("006.00").read("discarded-reason.md")).to be_nil
       end
     end
   end

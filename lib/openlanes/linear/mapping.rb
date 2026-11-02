@@ -60,7 +60,9 @@ module OpenLanes
       bomb:               Placement.new(type: "unstarted", name: "Todo", labels: %w[blocked bomb]),
       deferred:           Placement.new(type: "backlog", name: "Backlog", labels: %w[deferred]),
       retroactive:        Placement.new(type: "completed", name: "Done", labels: %w[retroactive]),
-      discarded:          Placement.new(type: "canceled", name: "Canceled", labels: [])
+      abandoned:          Placement.new(type: "canceled", name: "Canceled", labels: %w[abandoned]),
+      discarded:          Placement.new(type: "canceled", name: "Canceled", labels: []),
+      trashed:            Placement.new(type: "canceled", name: "Canceled", labels: %w[trashed])
     }.freeze
 
     # States deliberately left out, and why.

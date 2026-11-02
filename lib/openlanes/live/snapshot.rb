@@ -14,7 +14,7 @@ module OpenLanes
     # fails the other's suite.
     class Snapshot
       # Plan states finished with, kept off "Choose an existing plan".
-      FINISHED = %i[approved deployed discarded].freeze
+      FINISHED = %i[approved deployed abandoned discarded trashed].freeze
 
       # @param board [OpenLanes::Engine::Board]
       # @param tree [OpenLanes::Plans::Tree]

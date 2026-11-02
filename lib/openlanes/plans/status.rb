@@ -142,6 +142,38 @@ module OpenLanes
       }
     end
 
+    # The three ways out of the active list (X1). A person put the plan here,
+    # from whatever state it claimed, and said why in a reason file.
+    REMOVED = %i[abandoned discarded trashed].freeze
+
+    # The files that justify each of {REMOVED}, the one written today first.
+    # `discarded.md` predates the naming and existing plans carry it.
+    REASON_FILES = {
+      abandoned: %w[abandoned-reason.md],
+      discarded: %w[discarded-reason.md discarded.md],
+      trashed:   %w[trashed-reason.md]
+    }.freeze
+
+    # @param key [Symbol] one of {REMOVED}
+    # @return [String] the file a reason for this state is written to
+    def self.reason_file(key) = REASON_FILES.fetch(key).first
+
+    # A file holding only whitespace says nothing, so it justifies nothing (X4).
+    #
+    # @param subject [#read]
+    # @param key [Symbol] one of {REMOVED}
+    # @return [Boolean]
+    def self.reason_given?(subject, key) = REASON_FILES.fetch(key).any? { !subject.read(it).to_s.strip.empty? }
+
+    # @param label [String]
+    # @param key [Symbol] one of {REMOVED}
+    # @return [Proc]
+    def self.reason_required(label, key)
+      lambda { |subject|
+        "#{label} requires a non-empty `#{reason_file(key)}`" unless reason_given?(subject, key)
+      }
+    end
+
     # Every state a plan folder may be in, in lifecycle order. That order drives
     # the legend, the generated documentation and the `--to` help text.
     #
@@ -369,12 +401,29 @@ module OpenLanes
         }
       ),
       Status.new(
+        key:       :abandoned,
+        emoji:     "👎",
+        label:     "Abandoned",
+        requires:  [],
+        note:      "work stopped with no decision to cancel it; it might be resumed. `abandoned-reason.md` says why",
+        invariant: reason_required("Abandoned", :abandoned)
+      ),
+      Status.new(
         key:       :discarded,
         emoji:     "❌",
         label:     "Discarded",
-        requires:  %w[discarded.md],
-        note:      "dropped for good; `discarded.md` says why. A terminal state",
-        invariant: nil
+        requires:  [],
+        note:      "decided against and kept as a record; `discarded-reason.md` says why",
+        invariant: reason_required("Discarded", :discarded)
+      ),
+      Status.new(
+        key:       :trashed,
+        emoji:     "🚮",
+        label:     "Trashed",
+        requires:  [],
+        note:      "removed from the workspace: done elsewhere, never happening, or conflicting. " \
+                   "`trashed-reason.md` says why. A terminal state",
+        invariant: reason_required("Trashed", :trashed)
       )
     ].freeze
 

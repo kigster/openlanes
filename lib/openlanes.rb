@@ -104,6 +104,21 @@ module OpenLanes
   # @return [Dry::Inflector] shared Inflector
   def self.inflector = @inflector ||= ::Dry::Inflector.new
 
+  # Stage files beside a move or a rewrite, when git already tracks +owner+:
+  # `git mv` stages only the rename, and a plain commit after it would carry a
+  # removal without the reason file that justifies it. Each path goes on its
+  # own, because a path neither on disk nor in the index fails the whole `add`.
+  #
+  # @param owner [String] a tracked file or directory; untracked means do nothing
+  # @param paths [Array<String>]
+  # @return [void]
+  def self.stage(owner, *paths)
+    dir = File.directory?(owner) ? owner : File.dirname(owner)
+    return unless system("git", "-C", dir, "ls-files", "--error-unmatch", owner, out: File::NULL, err: File::NULL)
+
+    paths.each { system("git", "-C", dir, "add", "-A", "--", it, out: File::NULL, err: File::NULL) }
+  end
+
   # Move a directory, preferring `git mv` so its history follows it.
   #
   # Both the state machine and `resync dirs` move plan folders, and a folder

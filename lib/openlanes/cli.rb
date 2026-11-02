@@ -131,6 +131,9 @@ module OpenLanes
     # the plan table is `plans`, with no old spellings kept: nothing outside
     # this repository calls openlanes.
     register "plans", ListPlans
+    register "plans abandon", Abandon
+    register "plans discard", Discard
+    register "plans trash", Trash
     register "run", Run
     register "start", Start
     register "stop", Stop
