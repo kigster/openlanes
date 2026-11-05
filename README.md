@@ -4,6 +4,8 @@
 
 > [!IMPORTANT]
 >
+> OpenLanes is under active development and may contain bugs. That said, its being written using itself, and a few other projects are using it too. If you'd like to try it, consider this an early alpha and please create issues for any problems you encounter. Thanks!
+>
 > OpenLanes is one of few factories that can autonomously execute and implement features and merge them autonomously as well. This is configurable, and if turned on a dedicated agent provides risk assessment of whether or not this plan is safe to merge without human oversight. 
 
 **OpenLanes®**  is an open source CLI software factory written in Ruby (but can build products in any language), that runs inside your project repo. It can help create specifications for new features (from CLI or the Web UI), and it manages the various states of development of this feature, passing it from one specialized agent to the next.
