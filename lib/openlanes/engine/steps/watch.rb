@@ -3,7 +3,8 @@
 module OpenLanes
   module Engine
     module Steps
-      # The pull requests a person owes (M4). The `gh` call runs on a thread
+      # The pull requests a person may merge, close or reject, in every merge
+      # mode (M4, #171). The `gh` call runs on a thread
       # of its own, so a slow GitHub never stretches the tick; its outcomes
       # are applied on the first tick after it returns, where every other
       # rename happens.
@@ -84,13 +85,39 @@ module OpenLanes
 
         # @return [void]
         def apply(effects, outcome)
-          return if outcome.kind == :waiting || @context.busy.call.include?(outcome.plan)
+          return if outcome.kind == :waiting || @context.busy.call.include?(outcome.plan) || recorded?(outcome)
 
           applied = effects.apply(outcome) or return
           @context.reopen.call(applied.plan) if applied.to
           @finishes.keep(applied.plan)
           say(applied)
           @context.wake.call
+        end
+
+        # Whether the folder already records this merge or close. {Merging}
+        # applies a 🏁 plan's merge itself, in every mode, and may do so
+        # between the poll that still read the row as open and the tick that
+        # settles it. {PrOutcomes#apply} would change nothing on disk the
+        # second time, but it still answers, so the merge was logged twice
+        # and kept as a finish this watch never saw. A rejection is never
+        # skipped here: its row stays open, and {PrOutcomes} owns that check.
+        #
+        # @param outcome [PrWatch::Outcome]
+        # @return [Boolean]
+        def recorded?(outcome)
+          return false unless %i[merged closed].include?(outcome.kind)
+
+          row = rows(outcome.plan).find { it.number.to_s.delete("#").to_i == outcome.pr }
+          !row.nil? && !row.open?
+        end
+
+        # Read afresh, removed plans included: the folder may have moved
+        # since the poll began.
+        #
+        # @param ordinal [String]
+        # @return [Array<Plans::PullRequest>]
+        def rows(ordinal)
+          Plans::Tree.new(dir: @context.runner.tree.dir).everything.find(ordinal)&.pull_requests || []
         end
 
         # @return [void]

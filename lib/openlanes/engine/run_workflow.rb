@@ -653,13 +653,18 @@ module OpenLanes
       # @return [String, nil]
       def stays_note = nil
 
-      # The pull request watch a staying run carries, in human mode only: when
-      # agents merge, nobody else's merge is worth waiting for. Kept apart from
-      # {#staying} so {StartWorkflow}, which overrides that, cannot leave it behind.
+      # The pull request watch a staying run carries, whoever merges (#171).
+      # Under `merge.by: auto` the engine merges only at 🏁, so a person who
+      # merged or closed a pull request at 🟢, 👀, 🧪, 🔴 or 🟡 went unnoticed:
+      # the row stayed `Open`, staff-reviewer kept reviewing a merged pull
+      # request, and a 👀 plan left for a person never moved. A
+      # `review-rejected` label is acted on in every mode too: `merge.by` says
+      # who merges, not whose review counts. Kept apart from {#staying} so
+      # {StartWorkflow}, which overrides that, cannot leave it behind.
       #
       # @return [OpenLanes::Engine::PrWatch, nil]
       def watch
-        PrWatch.new(github: Vcs.github) if Config.current.human_merges? && !@dry_run
+        PrWatch.new(github: Vcs.github) unless @dry_run
       end
 
       # The open pull requests a run that does not stay leaves for a person,
@@ -668,7 +673,7 @@ module OpenLanes
       # @param runner [OpenLanes::Engine::Runner]
       # @return [void]
       def unwatched(runner)
-        return if stays_note || !Config.current.human_merges?
+        return if stays_note
 
         open = runner.in_scope.flat_map { |s| s.pull_requests.select(&:open?).map { "#{s.feature.ordinal} ##{it.number}" } }
         return if open.empty?

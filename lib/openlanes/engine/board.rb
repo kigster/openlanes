@@ -11,7 +11,7 @@ module OpenLanes
     #     worth showing: running, or finished within the last few seconds
     # @!attribute [r] waiting_on
     #   @return [Hash{String => Array<Integer>}] plan to the pull requests open
-    #     and waiting on a person, as the human-mode watch last saw them (M4)
+    #     and waiting on a person, as the pull request watch last saw them (M4)
     # @!attribute [r] jobs
     #   @return [Integer] how many agents may run at once now, after any
     #     `/concurrency` from the copilot (plan 020.00)

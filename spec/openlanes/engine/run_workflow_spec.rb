@@ -159,6 +159,46 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # #171: under `merge.by: auto` a person may still merge or close a pull
+  # request before 🏁, and with no watch its plan kept an `Open` row for good.
+  describe "the pull request watch" do
+    subject(:watch) { workflow(dry_run:).send(:watch) }
+
+    let(:dry_run) { false }
+
+    before { allow(OpenLanes::Vcs).to receive(:github).and_return(instance_double(OpenLanes::Vcs::GitHub)) }
+
+    %i[human auto].each do |merger|
+      context "with merge.by: #{merger}" do
+        before { allow(OpenLanes::Config).to receive(:current).and_return(OpenLanes::Config.new(merge_by: merger)) }
+
+        it { is_expected.to be_an_instance_of(OpenLanes::Engine::PrWatch) }
+      end
+    end
+
+    context "when the run is dry" do
+      let(:dry_run) { true }
+
+      it { is_expected.to be_nil }
+    end
+  end
+
+  # A run that ends names what it leaves unwatched, whoever merges.
+  describe "the pull requests a run leaves unwatched" do
+    let(:runner) { instance_double(OpenLanes::Engine::Runner, in_scope: OpenLanes::Plans.tree(plans_root).subjects) }
+
+    before do
+      plans { |t| t.plan("002.00", :in_review, "open-pr", files: { "spec.md" => spec_body, "plan.md" => "# Plan" }, prs: [t.open(7, "x")]) }
+      allow(OpenLanes::Config).to receive(:current).and_return(OpenLanes::Config.new(merge_by: :auto))
+      allow(OpenLanes::UI).to receive(:log)
+      workflow.send(:unwatched, runner)
+    end
+
+    it "logs them under merge.by: auto too" do
+      expect(OpenLanes::UI).to have_received(:log).with(/not watching 002\.00 #7/)
+    end
+  end
+
   # R4 on the terminal (plan 035): a person there is asked, and the answer
   # is written to .openlanes.yml before any agent starts.
   describe "asking the quality on a terminal" do

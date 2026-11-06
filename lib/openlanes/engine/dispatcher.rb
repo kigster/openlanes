@@ -146,9 +146,9 @@ module OpenLanes
       #   a person stops the run
       # @param rescan [Integer] idle ticks, {TICK} seconds each, between
       #   rescans of the tree while staying
-      # @param watch [OpenLanes::Engine::PrWatch, nil] the human-mode watch
-      #   over open pull requests (M4); nil when nobody merges by hand or the
-      #   run does not stay
+      # @param watch [OpenLanes::Engine::PrWatch, nil] the watch over open pull
+      #   requests (M4), in every merge mode (#171); nil in a dry run or when
+      #   the run does not stay
       # @param converter [#call, nil] rewrites prose questions into choices
       #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
       # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
