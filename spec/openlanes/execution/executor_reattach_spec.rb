@@ -39,6 +39,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     FileUtils.mkdir_p(traces)
     File.write(trace, "what the dead engine's executor had written\n")
     allow(OpenLanes::Execution::AgentProcess).to receive(:attach).with(process).and_return(child)
+    allow(OpenLanes::Execution::ProcessStart).to receive(:of).and_return(nil)
   end
 
   after { OpenLanes::Execution::Control.reset! }
@@ -63,7 +64,32 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       let(:deadline) { (Time.now - 60).utc.iso8601 }
 
       it("leaves it no time") { expect(OpenLanes::Execution::Clock).to have_received(:new).with(hash_including(seconds: 0)) }
+
+      # An engine down for hours took an agent that had barely begun back
+      # at zero: STOP at once, and a "running out of time" card.
+      context "with an agent that had barely begun" do
+        let(:restart) { super().merge("tokens" => 5_000) }
+
+        it("gives it its whole budget") { expect(OpenLanes::Execution::Clock).to have_received(:new).with(hash_including(seconds: executor.timeout_for(agent))) }
+      end
+
+      context "with the engine down since an hour before the deadline" do
+        let(:restart) { super().merge("seen_at" => (Time.now - 3600).utc.iso8601) }
+
+        it("keeps what it had when its engine was last seen") { expect(OpenLanes::Execution::Clock).to have_received(:new).with(hash_including(seconds: be_within(5).of(3540))) }
+      end
     end
+  end
+
+  describe "the deadline it armed" do
+    let(:recorded) { [] }
+
+    before do
+      handle.on_restart = ->(fields) { recorded << fields }
+      result
+    end
+
+    it("is recorded for the next engine") { expect(Time.iso8601(recorded.find { it.key?(:deadline) }[:deadline])).to be_within(5).of(Time.iso8601(deadline)) }
   end
 
   context "with an agent that committed while no engine watched" do
