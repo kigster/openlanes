@@ -3,7 +3,13 @@
 RSpec.describe OpenLanes::Plans::StateMachine do
   # A stand-in for a folder: which files exist, which pull requests it records,
   # and where it was renamed to. The machine asks nothing else of a subject.
-  let(:pr_class) { Struct.new(:state) { def open? = state.match?(/open|wip|draft/i) } }
+  let(:pr_class) do
+    Struct.new(:state) do
+      def open? = state.match?(/open|wip|draft/i)
+
+      def merged? = state.match?(/\bmerged\b/i) && !state.match?(/\bunmerged\b/i)
+    end
+  end
 
   let(:subject_class) do
     Struct.new(:status, :files, :pull_requests, :renames) do
@@ -101,6 +107,26 @@ RSpec.describe OpenLanes::Plans::StateMachine do
 
     it "accepts Approved once every pull request is merged" do
       expect(OpenLanes::Plans::STATUS_BY_KEY[:approved]).to be_satisfied_by(built(:approved, prs: ["Merged 🟣"]))
+    end
+
+    it "accepts Approved when one pull request merged and a sibling was closed" do
+      expect(OpenLanes::Plans::STATUS_BY_KEY[:approved]).to be_satisfied_by(built(:approved, prs: ["Merged 🟣", "Closed 🔴"]))
+    end
+
+    # #167: a closed pull request is neither open nor merged. Reading "none
+    # open" as "merged" renamed a folder whose only pull request was closed
+    # unmerged to ✅ and archived it, releasing its dependents.
+    it "refuses Approved when nothing merged, however many pull requests were closed" do
+      subject = built(:approved, prs: ["Closed 🔴", "Closed 🔴"])
+
+      expect(OpenLanes::Plans::STATUS_BY_KEY[:approved].violation(subject))
+        .to eq("Approved & Merged, but no pull request merged")
+    end
+
+    it "does not claim closed pull requests merged when a review state no longer holds" do
+      status = OpenLanes::Plans::STATUS_BY_KEY.fetch(:in_review)
+
+      expect(status.violation(built(:in_review, prs: ["Closed 🔴"]))).to eq("In Review, but no pull request is open")
     end
 
     # 🟢 👀 🔴 all mean "open pull requests exist", and share one invariant so
