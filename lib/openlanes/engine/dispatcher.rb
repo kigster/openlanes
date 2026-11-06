@@ -49,8 +49,9 @@ module OpenLanes
       end
 
       # A plan a person is throwing back (W9): its agents stopping, then its
-      # worktree reset and its folder moved back one state. {Live::Commands}
-      # holds on to it and replies once {#finished?}.
+      # worktree reset and its folder moved back to the state their work
+      # started from. {Live::Commands} holds on to it and replies once
+      # {#finished?}.
       #
       # @!attribute [r] ordinal
       #   @return [String]
@@ -58,7 +59,10 @@ module OpenLanes
       #   @return [String, nil] "done" or "refused", once it is over
       # @!attribute [r] reason
       #   @return [String, nil]
-      Discard = Struct.new(:ordinal, :status, :reason) do
+      # @!attribute [r] from
+      #   @return [Symbol, nil] the state the stopped agents started from,
+      #     nil when none was running, which means one step back
+      Discard = Struct.new(:ordinal, :status, :reason, :from) do
         # @return [Boolean]
         def finished? = !status.nil?
       end
@@ -434,9 +438,10 @@ module OpenLanes
       # Throw a plan's work away (W9): every agent on it is stopped, each with
       # {KILL_GRACE} seconds to finish the line it is writing, and once the
       # last is gone the plan's worktree is reset and its folder sent back
-      # one state. Plan-wide, because a pair shares one worktree and a reset
-      # takes both halves. What can be refused is refused here, before any
-      # agent is stopped.
+      # to the state that work started from (see {#started_from}).
+      # Plan-wide, because a pair shares one worktree and a reset takes both
+      # halves. What can be refused is refused here, before any agent is
+      # stopped.
       #
       # @param ordinal [#to_s]
       # @return [OpenLanes::Engine::Dispatcher::Discard] finished on a later tick
@@ -452,12 +457,14 @@ module OpenLanes
             "Use stop on each agent instead."
         end
         subject = fresh_by(Plans::Ordinal.parse(ordinal)) or raise OpenLanes::Error, "there is no plan #{ordinal}"
-        refusal = subject.machine.retreat_refusal and raise OpenLanes::Error, "#{ordinal} cannot go back: #{refusal}"
+        jobs = @running.select { plan_of(it) == ordinal }
+        from = started_from(jobs)
+        refusal = subject.machine.retreat_refusal(from) and raise OpenLanes::Error, "#{ordinal} cannot go back: #{refusal}"
 
-        @running.select { plan_of(it) == ordinal }.each do |job|
+        jobs.each do |job|
           Thread.new { job.handle.kill!(grace: KILL_GRACE, reason: :discard) }
         end
-        @discarding[ordinal] = Discard.new(ordinal:)
+        @discarding[ordinal] = Discard.new(ordinal:, from:)
       end
 
       # Plans whose claim another machine now holds (W26): their agents are
@@ -669,20 +676,34 @@ module OpenLanes
         @discarding.each_value do |discard|
           next if @running.any? { plan_of(it) == discard.ordinal }
 
-          discard.status, discard.reason = throw_back(discard.ordinal)
+          discard.status, discard.reason = throw_back(discard)
         end
       end
 
-      # @param ordinal [String]
+      # The state the discarded work started from: each job's {Job#from},
+      # the state the plan showed when it was picked. Only an agent with
+      # `starts_as` moved the folder on, so stepping back from the folder's
+      # own state sent every other agent's plan one phase too far (issue
+      # #173). A pair can be picked on either side of backend-coder's
+      # `starts_as` rename, so the earliest of its starts wins: the one with
+      # the longest road ahead of it.
+      #
+      # @param jobs [Array<OpenLanes::Engine::Dispatcher::Job>]
+      # @return [Symbol, nil] nil when no agent was running
+      def started_from(jobs) = jobs.map(&:from).compact.uniq.max_by { Plans::StateMachine.onward(it).size }
+
+      # @param discard [OpenLanes::Engine::Dispatcher::Discard]
       # @return [Array(String, String)] status and reason
-      def throw_back(ordinal)
+      def throw_back(discard)
+        ordinal = discard.ordinal
         subject = fresh_by(Plans::Ordinal.parse(ordinal)) or return ["refused", "#{ordinal}'s folder vanished"]
         reset = @runner.worktree.reset(subject.feature)
         from = subject.status
-        to = subject.machine.retreat!
+        to = subject.machine.retreat!(discard.from)
         @finished_plans.delete(ordinal)
         UI.log("discarded: #{from} -> #{to}", plan: ordinal)
-        ["done", "#{ordinal} #{reset ? "reset" : "had no worktree to reset"}, and went back from #{from} to #{to}"]
+        moved = to.key == from.key ? "stays at #{to}, where its work started" : "went back from #{from} to #{to}"
+        ["done", "#{ordinal} #{reset ? "reset" : "had no worktree to reset"}, and #{moved}"]
       rescue OpenLanes::Error => e
         ["refused", "#{ordinal}'s agents were stopped, but: #{e.message}"]
       end
