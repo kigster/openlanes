@@ -5,7 +5,8 @@ require_relative "live_context"
 
 # W9's discard, end to end over a real git repository: the page's command
 # stops every agent on the plan, resets the plan's own worktree, sends the
-# folder back one state, and only then answers.
+# folder back to the state the stopped work started from, and only then
+# answers.
 RSpec.describe "Discarding a plan", :tree do
   subject(:commands) do
     OpenLanes::Live::Commands.new(store:, keys:, node:, run_state:, claims:, clock: -> { Time.utc(2026, 10, 13, 9) })
@@ -26,6 +27,9 @@ RSpec.describe "Discarding a plan", :tree do
       sleeper: ->(_) {})
   end
   let(:checkout) { worktrees.path_for(tree.reload.find("001.00").feature) }
+  # ⭐ Planned: backend-coder's `starts_as` moves the folder to 🟡 as the pair starts.
+  let(:seeded_at) { :planned }
+  let(:seed_files) { { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## Unit 1\n", "plan-frontend.md" => "## F1\n" } }
 
   def git(*) = Open3.capture2e("git", "-C", root, *)
 
@@ -44,7 +48,7 @@ RSpec.describe "Discarding a plan", :tree do
     File.write(File.join(root, "app.rb"), "puts :ok\n")
     git("add", "app.rb")
     git("commit", "-qm", "initial")
-    building("001.00", "tax-rule-dsl")
+    plans { |t| t.plan "001.00", seeded_at, "tax-rule-dsl", files: seed_files }
     start_agents
     File.write(File.join(checkout, "app.rb"), "puts :half_done\n")
     File.write(File.join(checkout, "scratch.rb"), "1\n")
@@ -82,6 +86,47 @@ RSpec.describe "Discarding a plan", :tree do
 
     it "signs nothing for the stopped agents" do
       expect(dispatcher.attempts.map { [it.ok, it.note] }.uniq).to eq([[false, "discarded by a person"]])
+    end
+  end
+
+  # Issue #173: agents without `starts_as` never moved the folder, so the
+  # state it shows is the one their work started from, and stepping back
+  # from it went one phase too far, or was refused after the reset at ⚪.
+  context "when the pair started at 🟡, where the folder still is" do
+    let(:seeded_at) { :building }
+
+    before do
+      executor.release_all
+      dispatcher.running.each { it.thread.join(2) }
+      2.times { dispatcher.tick }
+    end
+
+    it "resets the worktree and leaves the folder at 🟡" do
+      aggregate_failures do
+        expect(reply_to("01JD")).to include("status" => "done",
+          "reason" => "001.00 reset, and stays at 🟡 Building, where its work started")
+        expect(File.read(File.join(checkout, "app.rb"))).to eq("puts :ok\n")
+        expect(tree.reload.find("001.00").status.key).to eq(:building)
+      end
+    end
+  end
+
+  context "when researcher is stopped at ⚪, which has nothing behind it" do
+    let(:seeded_at) { :new }
+    let(:seed_files) { { "spec.md" => spec_body } }
+
+    before do
+      executor.release_all
+      dispatcher.running.each { it.thread.join(2) }
+      2.times { dispatcher.tick }
+    end
+
+    it "is done, not refused, and the folder stays at ⚪" do
+      aggregate_failures do
+        expect(executor.calls.first).to eq("001.00/researcher")
+        expect(reply_to("01JD")).to include("status" => "done",
+          "reason" => "001.00 reset, and stays at ⚪ New, where its work started")
+      end
     end
   end
 

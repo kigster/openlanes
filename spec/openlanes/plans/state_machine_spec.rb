@@ -320,6 +320,28 @@ RSpec.describe OpenLanes::Plans::StateMachine do
       expect(machine_for(:rejected).retreat_refusal).to eq("🔴 Changes Requested has no state behind it to go back to")
     end
 
+    # Issue #173: a discarded agent that never renamed the folder started
+    # in the state it still shows, and stepping back from there went one
+    # phase too far, or was refused at ⚪.
+    context "when given the state the work started from" do
+      it "leaves the folder alone when it is already there, even with nothing behind it" do
+        aggregate_failures do
+          expect(described_class.new(building).retreat!(:building).key).to eq(:building)
+          expect(building.renames).to be_empty
+          expect(machine_for(:new).retreat_refusal(:new)).to be_nil
+        end
+      end
+
+      it "steps back to it when it is one step behind" do
+        expect(described_class.new(building).retreat!(:planned).key).to eq(:planned)
+      end
+
+      it "refuses a state that is not one step behind" do
+        expect { described_class.new(building).retreat!(:ready_for_planning) }
+          .to raise_error(described_class::Refused, "🟡 Building cannot go back to 📋 Ready for Planning, only to ⭐ Planned")
+      end
+    end
+
     it "is not a way forward: may? and the derived topology never see it" do
       aggregate_failures do
         expect(described_class.new(building).may?(:planned)).to be(false)

@@ -972,8 +972,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     # Two doubles share one folder here, which a real run never allows
     # (shared isolation is serial), so they keep out of each other's way:
-    # one signs at a time, and backend-coder does not return until frontend-coder has signed,
-    # so frontend-coder's line is on disk before the fold to 🎨 moves the folder.
+    # one signs at a time, and backend-coder does not return until frontend-coder has signed.
+    # The hold at 🎨 is applied once frontend-coder is reaped, never under it.
     it "renames to 🟡 when backend-coder starts, holds at 🎨 when backend-coder finishes first, and goes 🟢 when frontend-coder does" do
       seen = []
       signing = Mutex.new
@@ -1004,6 +1004,100 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       aggregate_failures do
         expect(seen.map(&:last)).to eq(%i[building building])
         expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:ready_for_review)
+      end
+    end
+
+    # Issue #172: backend-coder's hold at 🎨 renamed the folder while
+    # frontend-coder was still writing to the path its prompt named, so
+    # every later write went to a folder that no longer existed.
+    context "when backend-coder finishes while frontend-coder is still running" do
+      let(:seen) { [] }
+      let(:alive) { [] }
+      let(:backend_done) { Queue.new }
+
+      # backend-coder signs and returns at once; frontend-coder waits until
+      # the dispatcher has had several ticks to settle backend-coder, then
+      # looks for the folder its prompt named, and signs (or fails) there.
+      def pair_executor(frontend_ok:)
+        signing = Mutex.new
+        result = ->(ok) { OpenLanes::Execution::Executor::Result.new(ok:, note: "done", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0) }
+        lambda { |agent, subject, round: 1, **|
+          seen << [agent.name, subject.status.key, round]
+          file = File.join(subject.feature.path, "pull-requests.md")
+          if agent.name == "frontend-coder" && alive.empty?
+            backend_done.pop
+            sleep(0.4)
+            alive << File.directory?(subject.feature.path)
+            file = File.join(path_of("001.00"), "pull-requests.md")
+            next result.call(false) unless frontend_ok
+          end
+          signing.synchronize do
+            OpenLanes::Plans::Ledger.append(file, "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
+          end
+          backend_done << true if agent.name == "backend-coder"
+          result.call(true)
+        }
+      end
+
+      def run_pair(frontend_ok: true)
+        runner = OpenLanes::Engine::Runner.new(tree:,
+          executor: pair_executor(frontend_ok:),
+          agents:   agents.only("backend-coder", "frontend-coder"),
+          isolation: :shared,
+          jobs:     2,
+          state:,
+          sleeper:  ->(_s) { sleep(0.05) })
+        allow(runner).to receive(:jobs).and_return(2)
+        runner.call
+      end
+
+      it "keeps the folder where frontend-coder's prompt put it, then holds and advances to 🟢 once it signs" do
+        attempts = run_pair
+        aggregate_failures do
+          expect(alive).to eq([true])
+          expect(attempts.to_h { [it.agent, it.to] }).to include("backend-coder" => :building, "frontend-coder" => :ready_for_review)
+          expect(Dir.children(plans_root).grep(/\A001\.00/).size).to eq(1)
+          expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:ready_for_review)
+        end
+      end
+
+      # The rename waits for the last partner, so by then the folder may
+      # no longer fit the hold, or a person may have discarded the work.
+      describe "a hold that cannot be applied" do
+        let(:dispatcher) { described_class.new(runner: runner_with(->(*, **) {}), sleeper: ->(_) {}) }
+
+        before { allow(OpenLanes::UI).to receive(:log) }
+
+        def held(ordinal, target) = dispatcher.instance_variable_get(:@holds)[ordinal] = target
+
+        it "is dropped with a warning when the folder does not justify it, and the folder stays" do
+          held("001.00", :building_ui)
+          dispatcher.send(:apply_hold, "001.00")
+          aggregate_failures do
+            expect(OpenLanes::UI).to have_received(:log).with(a_string_starting_with("hold at 🎨"), level: :warn, plan: "001.00")
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:planned)
+            expect(dispatcher.instance_variable_get(:@holds)).to be_empty
+          end
+        end
+
+        it "is dropped without a rename while the plan is being discarded" do
+          held("001.00", :building_ui)
+          dispatcher.instance_variable_get(:@discarding)["001.00"] = described_class::Discard.new(ordinal: "001.00")
+          dispatcher.send(:apply_hold, "001.00")
+          aggregate_failures do
+            expect(OpenLanes::UI).not_to have_received(:log)
+            expect(dispatcher.instance_variable_get(:@holds)).to be_empty
+          end
+        end
+      end
+
+      it "applies the hold when frontend-coder fails, so its next round starts at 🎨" do
+        run_pair(frontend_ok: false)
+        aggregate_failures do
+          expect(alive).to eq([true])
+          expect(seen).to include(["frontend-coder", :building_ui, 1])
+          expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:ready_for_review)
+        end
       end
     end
   end
