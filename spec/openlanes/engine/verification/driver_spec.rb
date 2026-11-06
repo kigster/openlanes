@@ -362,6 +362,58 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
     end
   end
 
+  # Issue #170: every open pull request is looked at, not only the last.
+  describe "#poll on a plan with two open pull requests" do
+    before do
+      plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.open(6, "Sibling"), t.open(7, "X")] }
+      verified!
+      allow(outcome).to receive_messages(mismatch: nil, look: green)
+    end
+
+    let(:green) { OpenLanes::Engine::Verification::Outcome::Look.new(ci: :green) }
+    let(:red) { OpenLanes::Engine::Verification::Outcome::Look.new(ci: :red) }
+    let(:ready) { OpenLanes::Engine::Verification::Outcome::Result.new(kind: :ready, note: "ready") }
+
+    def settled
+      driver.poll([plan])
+      driver.join
+      driver.poll([plan]).first.result
+    end
+
+    it "asks the sibling's branch before measuring it, and never the plan's own" do
+      allow(outcome).to receive(:settle).and_return(waiting)
+      settled
+
+      aggregate_failures do
+        expect(outcome).to have_received(:mismatch).once
+        expect(outcome).to have_received(:look).with(hash_including(measure: true)).twice
+      end
+    end
+
+    it "is ready, and looked at no more, once every pull request is" do
+      allow(outcome).to receive(:settle).and_return(ready)
+
+      aggregate_failures do
+        expect(settled).to have_attributes(kind: :ready, note: "ready; ready")
+        now[0] = 30.0
+        driver.poll([plan])
+        driver.join
+        expect(outcome).to have_received(:look).twice
+      end
+    end
+
+    it "settles a failing pull request alone, before any other is labelled" do
+      allow(outcome).to receive(:look).and_return(green, red)
+      rejected = OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "rejected PR #7", to: :rejected)
+      allow(outcome).to receive(:settle).and_return(rejected)
+
+      aggregate_failures do
+        expect(settled).to eq(rejected)
+        expect(outcome).to have_received(:settle).once.with(hash_including(seen: red))
+      end
+    end
+  end
+
   describe "a plan with no open pull request" do
     before { plans { |t| t.plan "014.00", :verifying, "x", files:, prs: [t.merged(7, "X")] } }
 

@@ -169,7 +169,7 @@ module OpenLanes
         #
         # Each plan is checked again before its look is acted on, since the
         # look may have taken minutes: still 🧪, still waiting on the same
-        # round, still the same open pull request. One that changed is left
+        # round, still the same open pull requests. One that changed is left
         # for the next look.
         #
         # @param subjects [Array<OpenLanes::Plans::Subject>] plans the loop
@@ -260,53 +260,98 @@ module OpenLanes
             "and desired_codebase_quality is not set in #{Config::FILE}; say #{Config::QUALITIES.join(", ")} (#{asked})"
         end
 
-        # One plan's look, as it stood when the look began.
-        Pending = Data.define(:plan, :subject, :round, :pull, :checkout)
+        # One plan's look, as it stood when the look began. Every open pull
+        # request of the plan, not only its own: 🧪 → 🏁 asks that each carry
+        # `ready-to-merge` ({Outcome#ready}), and looking at the last alone
+        # left a sibling (adopted, or opened by a person) unlabelled, with
+        # the plan waiting at 🧪 for ever (issue #170).
+        #
+        # @!attribute [r] pulls
+        #   @return [Array<OpenLanes::Plans::PullRequest>] open, the plan's own last
+        Pending = Data.define(:plan, :subject, :round, :pulls, :checkout)
 
         # @return [Pending, nil]
         def pending_for(subject)
-          pull = open_pull(subject) or return nil
+          pulls = open_pulls(subject)
+          return nil if pulls.empty?
 
           Pending.new(plan: subject.feature.ordinal.to_s,
             subject:,
             round: Round.latest(subject.feature.path),
-            pull:,
+            pulls:,
             checkout: @worktree.checkout_for(subject.feature))
         rescue StandardError => e
           not_settled(subject.feature.ordinal.to_s, e)
         end
 
-        # On the look's thread: reads only.
+        # On the look's thread: reads only. A sibling built from another
+        # branch is not measured in the plan's checkout, which holds other
+        # code ({Outcome#look}); the plan's own pull request always is, as
+        # {#hand_off} already refused one built elsewhere.
         #
-        # @return [Array(Pending, Outcome::Look), nil]
+        # @return [Array(Pending, Array<Outcome::Look>), nil] one look per pull request
         def look_at(pending)
-          [pending, @outcome.look(checkout: pending.checkout, plan: pending.subject, pull: pending.pull, round: pending.round)]
+          own = pending.pulls.last
+          looks = pending.pulls.map do |pull|
+            measure = pull.equal?(own) || @outcome.mismatch(checkout: pending.checkout, pull:).nil?
+            @outcome.look(checkout: pending.checkout, plan: pending.subject, pull:, round: pending.round, measure:)
+          end
+          [pending, looks]
         # StandardError, not only OpenLanes::Error: one plan's surprise from
         # `gh` must not end the look for the others, nor the run.
         rescue StandardError => e
           not_settled(pending.plan, e)
         end
 
-        # On the dispatcher's thread.
+        # On the dispatcher's thread. A failing look is acted on alone, so a
+        # red sibling rejects the plan before any other pull request is
+        # labelled `ready-to-merge`. Otherwise each is settled in turn, and
+        # the last one labelled moves the plan to 🏁; the walk stops at the
+        # first that moves it, since the rename leaves +subject+ stale.
         #
         # @return [Settled, nil]
         def apply(pending, seen, subjects)
           subject = subjects.find { it.feature.ordinal.to_s == pending.plan } or return nil
           return nil unless still?(pending, subject)
 
-          result = @outcome.settle(checkout: pending.checkout, plan: subject, pull: open_pull(subject), round: pending.round, seen:)
+          pairs = pending.pulls.zip(seen)
+          failing = pairs.find { |_, look| look.failing? }
+          results = []
+          (failing ? [failing] : pairs).each do |pull, look|
+            results << @outcome.settle(checkout: pending.checkout, plan: subject, pull:, round: pending.round, seen: look)
+            break if results.last.to || results.last.kind == :rejected
+          end
+          result = combined(results)
           @ready << [pending.plan, pending.round.number] if result.kind == :ready
           Settled.new(plan: pending.plan, result:, round: pending.round.number)
         rescue StandardError => e
           not_settled(pending.plan, e)
         end
 
-        # @return [Boolean] whether the plan is as the look found it
-        def still?(pending, subject)
-          pull = open_pull(subject)
-          awaiting_ci?(subject) && Round.latest(subject.feature.path)&.number == pending.round.number &&
-            !pull.nil? && [pull.number, pull.url] == [pending.pull.number, pending.pull.url]
+        # One plan's results as one: the one that moved the folder or
+        # rejected, when one did; otherwise waiting while any pull request
+        # waits, and ready once all are. One pull request's result is
+        # returned as it is.
+        #
+        # @param results [Array<Outcome::Result>]
+        # @return [Outcome::Result]
+        def combined(results)
+          return results.first if results.one?
+
+          decisive = results.find { it.to || it.kind == :rejected }
+          kind = decisive&.kind || (results.all? { it.kind == :ready } ? :ready : :waiting)
+          Outcome::Result.new(kind:, to: decisive&.to, note: results.map(&:note).join("; "))
         end
+
+        # @return [Boolean] whether the plan is as the look found it: still
+        #   waiting on the same round, with the same open pull requests
+        def still?(pending, subject)
+          awaiting_ci?(subject) && Round.latest(subject.feature.path)&.number == pending.round.number &&
+            identities(open_pulls(subject)) == identities(pending.pulls)
+        end
+
+        # @return [Array<Array>] each pull request's number and URL
+        def identities(pulls) = pulls.map { [it.number, it.url] }
 
         # @return [nil]
         def not_settled(plan, error)
@@ -332,8 +377,11 @@ module OpenLanes
         # @return [Array(String, Integer)]
         def ready_key(subject) = [subject.feature.ordinal.to_s, Round.latest(subject.feature.path)&.number]
 
-        # @return [OpenLanes::Plans::PullRequest, nil]
-        def open_pull(subject) = subject.pull_requests.select(&:open?).last
+        # @return [OpenLanes::Plans::PullRequest, nil] the plan's own: the last open one
+        def open_pull(subject) = open_pulls(subject).last
+
+        # @return [Array<OpenLanes::Plans::PullRequest>]
+        def open_pulls(subject) = subject.pull_requests.select(&:open?)
 
         # @return [Round]
         def latest(subject) = Round.latest(subject.feature.path) || Round.next(subject.feature.path)

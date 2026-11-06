@@ -52,6 +52,11 @@ module OpenLanes
         #   @return [CoverageGate::Verdict, nil] the gate's, once CI is green
         Look = Data.define(:ci, :verdict) do
           def initialize(verdict: nil, **rest) = super
+
+          # @return [Boolean] whether {#settle} rejects on it: red CI, or the
+          #   gate withholding. Asked across a plan's pull requests first, so
+          #   one failing is rejected before any other is labelled.
+          def failing? = ci == :red || verdict&.withheld? || false
         end
 
         # Who the comment and the harness's own signature are from.
@@ -209,8 +214,12 @@ module OpenLanes
         # @param plan [OpenLanes::Plans::Subject]
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
         # @param round [Round] the verified round
+        # @param measure [Boolean] whether the coverage gate runs in +checkout+
+        #   for this pull request: false for a sibling built from another
+        #   branch, whose code the checkout does not hold, so measuring it
+        #   would pass or withhold someone else's code; its CI stands alone
         # @return [Look]
-        def look(checkout:, plan:, pull:, round:)
+        def look(checkout:, plan:, pull:, round:, measure: true)
           number = number_of(pull)
           repo = Vcs::GitHub.repo_of(pull.url)
           return Look.new(ci: :labelled) if labelled_ready?(number, repo)
@@ -219,7 +228,7 @@ module OpenLanes
           ci = :registering if ci == :none && registering?(round)
           return Look.new(ci:) if %i[registering pending red].include?(ci)
 
-          Look.new(ci:, verdict: gate_verdict(checkout, plan, round))
+          Look.new(ci:, verdict: measure ? gate_verdict(checkout, plan, round) : unmeasured(number))
         end
 
         # Act on one look at a verified pull request, asked again until it
@@ -288,6 +297,16 @@ module OpenLanes
         def rejections(plan) = OpenLanes::Arbitration.counter(agents: @agents).call(plan)
 
         private
+
+        # A sibling's stand-in for the gate ({#look}): passed, saying why
+        # nothing was run, so the label's reason does not claim a coverage
+        # figure nobody measured.
+        #
+        # @return [CoverageGate::Verdict]
+        def unmeasured(number)
+          CoverageGate::Verdict.new(passed: true,
+            reason: "coverage not measured here: PR ##{number} is built from another branch than the plan's checkout, so its CI stands for it")
+        end
 
         # @return [Result]
         def gated(checkout:, plan:, pull:, round:, verdict:)
