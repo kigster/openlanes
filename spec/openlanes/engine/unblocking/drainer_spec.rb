@@ -5,8 +5,8 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
 
   let(:answered) { "## B1 Rebase\n\nShould I?\n\n## A1\n\nyes\n\nAnswered by dana on 2026-10-13\n" }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:broker) { instance_double(OpenLanes::Agents::Agent, name: "unblocker", handles?: true) }
-  let(:agents) { instance_double(OpenLanes::Agents::Registry, all: [broker]) }
+  # The run's roster, which a `run --agent` narrows to whoever builds.
+  let(:agents) { OpenLanes::Agents::Registry.new }
   let(:runner) do
     instance_double(OpenLanes::Engine::Runner, dry_run?: false, blocked: tree.reload.subjects, agents:, claim: true, tree:, executor: nil, events: nil)
   end
@@ -32,7 +32,41 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
     aggregate_failures do
       expect(drainer.map(&:ordinal)).to eq(["002.00"])
       expect(drainer.first.outcome).to eq(:drained)
+      expect(drainer.first.agent).to eq("unblocker")
       expect(settler).to have_received(:forget).with("002.00")
+    end
+  end
+
+  # The roster says who builds, not who drains: `run --agent backend-coder`
+  # or `--skip unblocker` left every answered plan undrained, and said nothing.
+  context "when the roster leaves the broker out" do
+    let(:agents) { OpenLanes::Agents::Registry.new.only("backend-coder") }
+
+    it "still drains, through the full registry's broker" do
+      drain
+
+      expect(drainer.map(&:agent)).to eq(["unblocker"])
+    end
+  end
+
+  # Issue 168: unblocker handles ⭕ 🛑 💣, never 💤, so the sweep's 💤 found
+  # no broker even once the run counted it as waiting.
+  context "with a plan the aging sweep deferred" do
+    before do
+      plans do |t|
+        t.plan "003.00",
+          :deferred,
+          "aged",
+          files: { "blocked.md" => answered,
+                   "delayed.md" => "Deferred by aging on 2026-11-01.\n\n" \
+                                   "#{OpenLanes::Lifecycle::AgingNote::TRIGGER}\n" }
+      end
+    end
+
+    it "drains it through the broker for a block" do
+      drain
+
+      expect(drainer.map { [it.ordinal, it.agent] }).to contain_exactly(%w[002.00 unblocker], %w[003.00 unblocker])
     end
   end
 

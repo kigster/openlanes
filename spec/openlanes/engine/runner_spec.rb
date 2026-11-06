@@ -146,6 +146,24 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
         end
       end
 
+      # Issue 168: the sweep's 💤 dropped its questions off the page, and
+      # nothing ever drained them.
+      describe "#blocked, with plans the aging sweep deferred" do
+        let!(:built) do
+          plans do |t|
+            t.plan "000.00", :deferred, "aged", files: { "blocked.md" => "## B1 Which?\n", "delayed.md" => aged_note }
+            t.plan "001.00", :deferred, "by-hand", files: { "blocked.md" => "## B1 Which?\n", "delayed.md" => "Revisit once paid.\n" }
+            t.plan "002.00", :deferred, "aged-answered", files: { "delayed.md" => aged_note }
+          end
+        end
+
+        let(:aged_note) { "Deferred by aging on 2026-11-01: blocked 15 days.\n\n#{OpenLanes::Lifecycle::AgingNote::TRIGGER}\n" }
+
+        it "keeps an aging-deferred plan with its questions among the waiting, and no other 💤" do
+          expect(runner.blocked.map { it.feature.ordinal.to_s }).to eq(["000.00"])
+        end
+      end
+
       describe "#settled? and #blocked, scoped" do
         let!(:built) do
           plans do |t|

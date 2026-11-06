@@ -73,5 +73,12 @@ module OpenLanes
     def age(tree:, subjects: nil, since: nil, now: Time.now, commit: true)
       Aging.new(tree:, since:, now:).call(subjects:, commit:)
     end
+
+    # A 💤 the aging sweep made that still asks its questions, so the run
+    # shows and drains it like a ⭕ (issue 168).
+    #
+    # @param subject [OpenLanes::Plans::Subject]
+    # @return [Boolean]
+    def aged_out?(subject) = AgingNote.waiting?(subject)
   end
 end

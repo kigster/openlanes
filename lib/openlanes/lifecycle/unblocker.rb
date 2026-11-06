@@ -222,12 +222,29 @@ module OpenLanes
         journal_answers(subject)
         forward = progress.to_proc
         kept = { written: 0, number: nil }
-        @executor.call(agent, subject, root:) do |update|
+        result = @executor.call(agent, subject, root:) do |update|
           record_journal(subject, update, kept)
           forward.call(update)
         end
+        retire_aging(subject, result)
+        result
       rescue StandardError => e
         [false, "#{e.class}: #{e.message.lines.first.to_s.strip}"]
+      end
+
+      # A plan the aging sweep deferred named this drain as its trigger, so
+      # the note goes with the block. Left behind, it kept the folder 💤 after
+      # every question was answered (issue 168). A drain that failed, or left
+      # a question open, keeps it: the plan is still waiting.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param result [Object] what the executor returned; ok when it says so
+      # @return [void]
+      def retire_aging(subject, result)
+        ok, = result
+        return unless ok && !subject.file?("blocked.md") && AgingNote.retire(subject.feature.path)
+
+        UI.log("unblocking: aging deferral retired with the block", **log_fields(subject))
       end
 
       # The broker's own journal lines (M2), written as they arrive, the way
