@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
-  subject(:found) { described_class.new(runner:, state: OpenLanes::Engine::StateFile.new(path: state_path), probe:).call }
+  subject(:found) { described_class.new(runner:, state: OpenLanes::Engine::StateFile.new(path: state_path), probe:, now: -> { now }).call }
+
+  let(:now) { Time.now }
 
   let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "backend-coder") }
   let(:agents) { instance_double(OpenLanes::Agents::Registry) }
@@ -41,6 +43,41 @@ RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
   context "with the agent still running" do
     it("finds it") { expect(found.map { [it.key, it.agent, it.from] }).to eq([[["003.00", "backend-coder", 2], agent, :building]]) }
     it("carries what was recorded") { expect(found.first.restart).to include("cwd" => dir, "trace" => "t") }
+  end
+
+  # An engine down for hours took its agents back with clocks already at
+  # zero: STOP at once, and a "running out of time" card on agents that had
+  # barely begun.
+  describe "the deadline" do
+    let(:deadline) { Time.iso8601(found.first.restart["deadline"]) }
+
+    context "with the engine down for three hours" do
+      let(:now) { Time.now + (3 * 3600) }
+
+      it("moves on by the downtime") { expect(deadline).to be_within(5).of(Time.iso8601("2026-10-27T00:00:00Z") + (3 * 3600)) }
+    end
+
+    context "with no heartbeat recorded" do
+      before do
+        data = JSON.parse(File.read(state_path))
+        data["run"].delete("heartbeat_at")
+        File.write(state_path, JSON.generate(data))
+      end
+
+      it("stays as recorded") { expect(deadline).to eq(Time.iso8601("2026-10-27T00:00:00Z")) }
+    end
+
+    context "with a heartbeat later than now" do
+      let(:now) { Time.now - 3600 }
+
+      it("stays as recorded") { expect(deadline).to eq(Time.iso8601("2026-10-27T00:00:00Z")) }
+    end
+
+    context "with a deadline that does not parse" do
+      let(:restart) { super().merge(deadline: "soon") }
+
+      it("is left alone") { expect(found.first.restart["deadline"]).to eq("soon") }
+    end
   end
 
   context "with a pid file that names another process" do

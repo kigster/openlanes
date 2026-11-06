@@ -114,4 +114,21 @@ RSpec.describe OpenLanes::Execution::Clock do
       end
     end
   end
+
+  # macOS's CLOCK_MONOTONIC counts through sleep, so an agent started before
+  # the lid closed woke to STOP for hours it never ran.
+  describe "the clock it reads by default" do
+    it "excludes sleep where the platform can" do
+      expected = defined?(Process::CLOCK_UPTIME_RAW) ? Process::CLOCK_UPTIME_RAW : Process::CLOCK_MONOTONIC
+      expect(described_class::AWAKE).to eq(expected)
+    end
+
+    it("reads it") { expect(described_class.awake).to be_within(1).of(Process.clock_gettime(described_class::AWAKE)) }
+
+    it "arms against it" do
+      allow(described_class).to receive(:awake).and_return(100.0, 400.0)
+      awake = described_class.new(seconds: 1200, control:, on_expire: -> {})
+      expect(awake.remaining).to eq(900)
+    end
+  end
 end

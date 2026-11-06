@@ -141,6 +141,18 @@ module OpenLanes
         @mutex.synchronize { @data["run"]["heartbeat_at"] = Clock::System.now.iso8601 }
       end
 
+      # When the run that wrote this file was last seen alive. Read before
+      # {#begin_run!} overwrites it, it says when a dead engine stopped
+      # watching its agents.
+      #
+      # @return [Time, nil] nil when no run recorded one, or it does not parse
+      def heartbeat_at
+        at = @mutex.synchronize { @data.dig("run", "heartbeat_at") } or return nil
+        Time.iso8601(at)
+      rescue ArgumentError
+        nil
+      end
+
       # @param ordinal [String]
       # @param agent [String]
       # @param round [Integer]

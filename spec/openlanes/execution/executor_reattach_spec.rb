@@ -66,6 +66,17 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  describe "the deadline it armed" do
+    let(:recorded) { [] }
+
+    before do
+      handle.on_restart = ->(fields) { recorded << fields }
+      result
+    end
+
+    it("is recorded for the next engine") { expect(Time.iso8601(recorded.find { it.key?(:deadline) }[:deadline])).to be_within(5).of(Time.iso8601(deadline)) }
+  end
+
   context "with an agent that committed while no engine watched" do
     let(:before_run) { { head: "0" * 40, remotes: {}, reflogs: {} } }
 

@@ -677,6 +677,9 @@ module OpenLanes
         sessions = Sessions.new
         child = follow(AgentProcess.attach(restart.fetch("process")), profile:, trace:, handle:, sessions:, &on_progress)
         clock = start_clock(handle, seconds: [Time.iso8601(restart.fetch("deadline")) - Time.now, 0].max)
+        # The deadline as this engine armed it, so a third engine does not
+        # charge the agent again for the downtime this one forgave.
+        handle.restart!(deadline: self.class.deadline(clock))
         status = supervise(child, agent, subject, root:, profile:, trace:, handle:, sessions:, clock:, &on_progress)
         before = Boundary::Snapshot.new(**restart.fetch("before").transform_keys(&:to_sym))
         verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
