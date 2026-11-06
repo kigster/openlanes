@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
-  subject(:found) { described_class.new(runner:, state: OpenLanes::Engine::StateFile.new(path: state_path), probe:, now: -> { now }).call }
-
-  let(:now) { Time.now }
+  subject(:found) { described_class.new(runner:, state: OpenLanes::Engine::StateFile.new(path: state_path), probe:).call }
 
   let(:agent) { instance_double(OpenLanes::Agents::Agent, name: "backend-coder") }
   let(:agents) { instance_double(OpenLanes::Agents::Registry) }
@@ -45,16 +43,20 @@ RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
     it("carries what was recorded") { expect(found.first.restart).to include("cwd" => dir, "trace" => "t") }
   end
 
-  # An engine down for hours took its agents back with clocks already at
-  # zero: STOP at once, and a "running out of time" card on agents that had
-  # barely begun.
-  describe "the deadline" do
-    let(:deadline) { Time.iso8601(found.first.restart["deadline"]) }
+  # What Execution::Rearm weighs: when the dead engine was last seen, and
+  # the tokens it saw the agent spend.
+  describe "what it carries for the clock" do
+    it("carries the dead engine's last heartbeat") { expect(Time.iso8601(found.first.restart["seen_at"])).to be_within(5).of(Time.now) }
+    it("carries no tokens when none were recorded") { expect(found.first.restart).not_to have_key("tokens") }
 
-    context "with the engine down for three hours" do
-      let(:now) { Time.now + (3 * 3600) }
+    context "with tokens recorded" do
+      before do
+        state = OpenLanes::Engine::StateFile.new(path: state_path, pid: dead_pid).load
+        state.record("003.00", agent: "backend-coder", round: 2, up: 40_000, down: 2_000)
+        state.save
+      end
 
-      it("moves on by the downtime") { expect(deadline).to be_within(5).of(Time.iso8601("2026-10-27T00:00:00Z") + (3 * 3600)) }
+      it("carries up plus down") { expect(found.first.restart["tokens"]).to eq(42_000) }
     end
 
     context "with no heartbeat recorded" do
@@ -64,19 +66,7 @@ RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
         File.write(state_path, JSON.generate(data))
       end
 
-      it("stays as recorded") { expect(deadline).to eq(Time.iso8601("2026-10-27T00:00:00Z")) }
-    end
-
-    context "with a heartbeat later than now" do
-      let(:now) { Time.now - 3600 }
-
-      it("stays as recorded") { expect(deadline).to eq(Time.iso8601("2026-10-27T00:00:00Z")) }
-    end
-
-    context "with a deadline that does not parse" do
-      let(:restart) { super().merge(deadline: "soon") }
-
-      it("is left alone") { expect(found.first.restart["deadline"]).to eq("soon") }
+      it("carries none") { expect(found.first.restart).not_to have_key("seen_at") }
     end
   end
 

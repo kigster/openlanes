@@ -21,6 +21,7 @@ classDiagram
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
   class OpenLanes__Execution__Prompt["Prompt"]
+  class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__Transcript["Transcript"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
@@ -30,7 +31,6 @@ classDiagram
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
   OpenLanes__Execution__Child ..> OpenLanes__UI : uses
-  OpenLanes__Execution__Clock ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
@@ -40,6 +40,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses

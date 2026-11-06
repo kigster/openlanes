@@ -36,12 +36,10 @@ module OpenLanes
         # @param runner [Runner]
         # @param state [StateFile]
         # @param probe [Supervision::Probe]
-        # @param now [Proc] the wall clock
-        def initialize(runner:, state:, probe: Supervision::Probe.new, now: -> { Time.now })
+        def initialize(runner:, state:, probe: Supervision::Probe.new)
           @runner = runner
           @state = state
           @probe = probe
-          @now = now
         end
 
         # @return [Array<Found>]
@@ -63,28 +61,24 @@ module OpenLanes
           agent = @runner.agents.find(stage["agent"]) or return nil
           return nil if @runner.foreign?(subject)
 
-          Found.new(subject:, agent:, round: stage["round"], from: picked_at(stage, subject), restart: rearmed(restart))
+          Found.new(subject:, agent:, round: stage["round"], from: picked_at(stage, subject), restart: rearmed(restart, stage))
         end
 
         # @return [Symbol] the state the plan showed when the agent was picked
         def picked_at(stage, subject) = (stage["state"] || subject.status.key).to_sym
 
-        # The deadline moved on by the time no engine watched. It is wall
-        # clock, so an engine down for hours handed every agent it took back
-        # a clock already at zero: STOP at once, and a "running out of time"
-        # card on an agent that had barely begun. The agent keeps what it had
-        # left when its engine was last seen alive.
+        # What {Execution::Rearm} weighs, beside what the dead engine
+        # recorded: when that engine was last seen alive, and the tokens it
+        # saw the agent spend. The deadline is wall clock, so without them an
+        # engine down for hours took every agent back with a clock at zero.
         #
         # @param restart [Hash{String => Object}]
+        # @param stage [Hash{String => Object}]
         # @return [Hash{String => Object}]
-        def rearmed(restart)
-          seen = @state.heartbeat_at or return restart
-          down = @now.call - seen
-          return restart unless down.positive?
-
-          restart.merge("deadline" => (Time.iso8601(restart["deadline"]) + down).utc.iso8601)
-        rescue ArgumentError, TypeError
-          restart
+        def rearmed(restart, stage)
+          tokens = stage.values_at("up", "down")
+          restart.merge({ "seen_at" => @state.heartbeat_at&.utc&.iso8601,
+                          "tokens"  => tokens.any?(Integer) ? tokens.sum(&:to_i) : nil }.compact)
         end
 
         # @param restart [Hash{String => Object}, nil]
