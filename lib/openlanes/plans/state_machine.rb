@@ -114,8 +114,13 @@ module OpenLanes
       ].freeze
 
       # States the agent loop leaves alone: work that is finished (✅ 😎), work
-      # that was dropped (❌), and work waiting on a human (⭕ 🛑 💣 💤).
+      # that was dropped (❌), and work waiting on a human (⭕ 🛑 💣 💤 🚫 😱).
       # Everything else is fair game for a specialist.
+      #
+      # 🚫 and 😱 have no agent: a person reads `rewrite.md` or `rollback.md`
+      # and decides. Left out of this list, either one won its dependency
+      # group's turn, being past the build, and held every sibling "queued
+      # behind" a plan nobody would ever work (#169).
       #
       # ✅ Approved is here deliberately. A plan reaching it, from 🧪 once its
       # pull request merged, is the end of the loop, not a step in it: no agent
@@ -126,7 +131,9 @@ module OpenLanes
       # Moving `approved` out of this list is therefore a decision about blast
       # radius rather than about topology. If it ever moves, something has to own
       # `approved -> deployed`, and today nothing does.
-      SETTLED = %i[approved deployed abandoned discarded trashed blocked product_blocked bomb deferred].freeze
+      SETTLED = %i[
+        approved deployed abandoned discarded trashed blocked product_blocked bomb deferred rewrite rolled_back
+      ].freeze
 
       # Every state an agent that may sign `Blocked` works in. A block the
       # machine refuses is reported as a failed attempt and parks nothing, so a
