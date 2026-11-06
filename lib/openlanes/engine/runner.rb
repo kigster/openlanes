@@ -291,8 +291,13 @@ module OpenLanes
       # @return [String] 16 hex digits
       def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Clock::System.now.utc.iso8601(6)}")[0, 16]
 
+      # Plans in scope waiting on a person: every ⭕ 🛑 💣, and every 💤 the
+      # aging sweep made that still asks its questions. Leaving that 💤 out
+      # dropped its questions off the page, and nothing drained it once they
+      # were answered (issue 168).
+      #
       # @return [Array<OpenLanes::Plans::Subject>]
-      def blocked = in_scope.select { |s| Dispatcher::BLOCKED.include?(s.status.key) }
+      def blocked = in_scope.select { |s| Dispatcher::BLOCKED.include?(s.status.key) || Lifecycle.aged_out?(s) }
 
       # Age the blocked plans in scope (plan 009): bomb the ones others wait
       # on, defer the ones nobody does. A dry run fires nothing, and

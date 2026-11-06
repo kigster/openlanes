@@ -49,6 +49,27 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
     end
   end
 
+  # Issue 168: unblocker handles ⭕ 🛑 💣, never 💤, so the sweep's 💤 found
+  # no broker even once the run counted it as waiting.
+  context "with a plan the aging sweep deferred" do
+    before do
+      plans do |t|
+        t.plan "003.00",
+          :deferred,
+          "aged",
+          files: { "blocked.md" => answered,
+                   "delayed.md" => "Deferred by aging on 2026-11-01.\n\n" \
+                                   "#{OpenLanes::Lifecycle::AgingNote::TRIGGER}\n" }
+      end
+    end
+
+    it "drains it through the broker for a block" do
+      drain
+
+      expect(drainer.map { [it.ordinal, it.agent] }).to contain_exactly(%w[002.00 unblocker], %w[003.00 unblocker])
+    end
+  end
+
   it "settles a finished drain on the next tick, and tries an answer set once" do
     drain
     drainer.call

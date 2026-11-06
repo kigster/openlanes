@@ -70,10 +70,15 @@ module OpenLanes
         end
 
         # The drainer advances nothing itself, so {Agents::Registry#for_status},
-        # which offers only agents that move a plan on, never names it.
+        # which offers only agents that move a plan on, never names it. A 💤
+        # the aging sweep made is drained as the ⭕ it was: no agent handles
+        # 💤, so asking for its own state found no broker (issue 168).
         #
         # @return [Agents::Agent, nil]
-        def broker_for(subject) = registry.all.find { it.handles?(subject.status) }
+        def broker_for(subject)
+          status = Lifecycle.aged_out?(subject) ? Plans.status(:blocked) : subject.status
+          registry.all.find { it.handles?(status) }
+        end
 
         # Every agent the run's definitions hold, not the run's roster: the
         # roster says who builds, and drawing the broker from it left every

@@ -140,12 +140,7 @@ module OpenLanes
       end
 
       # @return [String]
-      def delayed(subject, age, fresh:)
-        heading = fresh ? "# Deferred: #{subject.feature.ordinal} #{subject.feature.slug}\n\n" : "\n"
-        "#{heading}Deferred by aging on #{@now.strftime("%Y-%m-%d")}: blocked #{days(age)} with no answer, " \
-          "and no open plan depends on it.\n\n" \
-          "Trigger: revisit after the block is answered. The questions are still in `blocked.md`.\n"
-      end
+      def delayed(subject, age, fresh:) = AgingNote.text(subject, on: @now, blocked_for: days(age), fresh:)
 
       # @param seconds [Numeric]
       # @return [String] "8 days"
