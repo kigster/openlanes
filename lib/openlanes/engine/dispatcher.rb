@@ -2076,13 +2076,16 @@ module OpenLanes
         subjects = @runner.in_scope.reject { busy.include?(it.feature.ordinal.to_s) }
         driver.poll(subjects).each do |settled|
           result = settled.result
-          @verifying[settled.plan] = result.note if result.kind == :waiting
-          next if result.kind == :waiting && @said_verifying[settled.plan] == result.note
+          waiting = Verification::Outcome::WAITING.include?(result.kind)
+          @verifying[settled.plan] = result.note if waiting
+          next if waiting && @said_verifying[settled.plan] == result.note
 
           @said_verifying[settled.plan] = result.note
-          @verifying.delete(settled.plan) unless result.kind == :waiting
+          @verifying.delete(settled.plan) unless waiting
           @finished_plans.delete(settled.plan) if result.to
-          UI.log(result.note, level: result.kind == :rejected ? :warn : :info, plan: settled.plan)
+          # Stalled is a warning: CI pending past `ci_pending_hours` waits on
+          # a person, and an info line among the waits would never be seen.
+          UI.log(result.note, level: %i[rejected stalled].include?(result.kind) ? :warn : :info, plan: settled.plan)
           wake!
         end
       end

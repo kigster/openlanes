@@ -354,6 +354,77 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         end
       end
 
+      # Issue #170: only the last open pull request used to be looked at,
+      # so nothing ever labelled the sibling and the plan waited for ever.
+      context "when the driver looks at the plan" do
+        subject(:driver) do
+          OpenLanes::Engine::Verification::Driver.new(outcome:,
+            worktree: instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout),
+            clock:    -> { 0.0 })
+        end
+
+        def settle!
+          outcome.pass(checkout:, plan:, pull: pr, round:)
+          round.publish!("abc1234")
+          driver.poll([plan])
+          driver.join
+          driver.poll([plan]).first&.result
+        end
+
+        def sibling_labels = gh.dig("prs", "2", "labels")
+
+        it "puts every open pull request through CI and the gate, labels each, and moves on to 🏁" do
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }] }
+          result = settle!
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :ready, to: :completed)
+            expect([labels, sibling_labels]).to eq([%w[ready-to-merge], %w[ready-to-merge]])
+            expect(gate).to have_received(:call).once
+            expect(plan.status.key).to eq(:completed)
+          end
+        end
+
+        it "rejects on a sibling whose CI is red, and labels neither ready-to-merge" do
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
+          result = settle!
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :rejected, to: :rejected)
+            expect(result.note).to include("PR #2")
+            expect(sibling_labels).to eq(%w[review-rejected])
+            expect(labels).not_to include("ready-to-merge")
+          end
+        end
+
+        it "leaves a sibling built from another branch to its CI, never measuring the plan's checkout for it" do
+          edit_gh do |state|
+            state["prs"]["2"]["branch"] = "someone-else"
+            state["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }]
+          end
+          result = settle!
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :ready, to: :completed)
+            expect(result.note).to include("not measured here")
+            expect(sibling_labels).to eq(%w[ready-to-merge])
+            expect(gate).to have_received(:call).once
+          end
+        end
+
+        it "waits, labelling the green one, while the sibling's CI is pending" do
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+          result = settle!
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :waiting, to: nil)
+            expect(result.note).to include("waiting on CI for PR #2")
+            expect(labels).to eq(%w[ready-to-merge])
+            expect(plan.status.key).to eq(:verifying)
+          end
+        end
+      end
+
       it "labels this one ready-to-merge and keeps the plan at 🧪 until every one is (P1)" do
         outcome.pass(checkout:, plan:, pull: pr, round:)
         result = outcome.settle(checkout:, plan:, pull: pr, round:)
@@ -363,6 +434,34 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           expect(result.note).to end_with("waiting for the plan's other pull requests")
           expect(labels).to eq(%w[ready-to-merge])
           expect(plan.status.key).to eq(:verifying)
+        end
+      end
+    end
+
+    # Issue #175: pending CI used to be waited on with no ceiling.
+    context "when CI stays pending past ci_pending_hours" do
+      before do
+        outcome.pass(checkout:, plan:, pull: pr, round:)
+        round.publish!("abc1234")
+        edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+      end
+
+      it "still waits within the ceiling" do
+        expect(outcome.settle(checkout:, plan:, pull: pr, round:)).to have_attributes(kind: :waiting, note: "🧪 waiting on CI for PR #1")
+      end
+
+      context "when the ceiling has passed" do
+        let(:now) { Time.now + (OpenLanes::Config::DEFAULT_CI_PENDING_HOURS * 3600) + 1 }
+
+        it "says the plan is stalled and what a person must do, and leaves it at 🧪" do
+          result = outcome.settle(checkout:, plan:, pull: pr, round:)
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :stalled, to: nil)
+            expect(result.note).to include("PR #1", "pending for more than 4h", "ci_pending_hours", "re-run")
+            expect(plan.status.key).to eq(:verifying)
+            expect(labels).to eq(%w[review-approved])
+          end
         end
       end
     end

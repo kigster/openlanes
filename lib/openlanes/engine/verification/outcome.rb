@@ -28,7 +28,9 @@ module OpenLanes
         #
         # @!attribute [r] kind
         #   @return [Symbol] :rejected, :committed (passed and pushed, CI not read yet),
-        #     :waiting (CI pending), or :ready (`ready-to-merge` applied)
+        #     :waiting (CI pending), :stalled (CI pending past `ci_pending_hours`,
+        #     still waited on, but for a person to look at), or :ready
+        #     (`ready-to-merge` applied)
         # @!attribute [r] note
         #   @return [String] for the attempt and the log
         # @!attribute [r] to
@@ -38,6 +40,9 @@ module OpenLanes
         Result = Data.define(:kind, :note, :to, :sha) do
           def initialize(to: nil, sha: nil, **rest) = super
         end
+
+        # The kinds that leave the plan at 🧪 waiting on CI.
+        WAITING = %i[waiting stalled].freeze
 
         # What one look at a verified pull request found, and nothing more:
         # {#look} reads GitHub and runs the coverage gate, which may take
@@ -52,6 +57,11 @@ module OpenLanes
         #   @return [CoverageGate::Verdict, nil] the gate's, once CI is green
         Look = Data.define(:ci, :verdict) do
           def initialize(verdict: nil, **rest) = super
+
+          # @return [Boolean] whether {#settle} rejects on it: red CI, or the
+          #   gate withholding. Asked across a plan's pull requests first, so
+          #   one failing is rejected before any other is labelled.
+          def failing? = ci == :red || verdict&.withheld? || false
         end
 
         # Who the comment and the harness's own signature are from.
@@ -127,9 +137,12 @@ module OpenLanes
         # @param arbitration [#call] given `plan:, count:, max:` at the cap
         # @param screenshots [#call] a round's folder to a {Screenshots}
         # @param clock [#call] the time now, for {NO_CHECKS_GRACE}
+        # @param ci_pending_limit [Numeric, #call] seconds, see {Config#ci_pending_limit};
+        #   a callable is asked at each look, so an edit counts mid-run
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now })
+          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now },
+          ci_pending_limit: Config::DEFAULT_CI_PENDING_HOURS * 3600.0)
           @root = root
           @publisher = publisher
           @github = github
@@ -141,6 +154,7 @@ module OpenLanes
           @arbitration = arbitration
           @screenshots = screenshots
           @clock = clock
+          @pending_limit = ci_pending_limit
           @verdicts = {}
         end
 
@@ -209,8 +223,12 @@ module OpenLanes
         # @param plan [OpenLanes::Plans::Subject]
         # @param pull [OpenLanes::Plans::PullRequest] the plan's open pull request
         # @param round [Round] the verified round
+        # @param measure [Boolean] whether the coverage gate runs in +checkout+
+        #   for this pull request: false for a sibling built from another
+        #   branch, whose code the checkout does not hold, so measuring it
+        #   would pass or withhold someone else's code; its CI stands alone
         # @return [Look]
-        def look(checkout:, plan:, pull:, round:)
+        def look(checkout:, plan:, pull:, round:, measure: true)
           number = number_of(pull)
           repo = Vcs::GitHub.repo_of(pull.url)
           return Look.new(ci: :labelled) if labelled_ready?(number, repo)
@@ -219,13 +237,15 @@ module OpenLanes
           ci = :registering if ci == :none && registering?(round)
           return Look.new(ci:) if %i[registering pending red].include?(ci)
 
-          Look.new(ci:, verdict: gate_verdict(checkout, plan, round))
+          Look.new(ci:, verdict: measure ? gate_verdict(checkout, plan, round) : unmeasured(number))
         end
 
         # Act on one look at a verified pull request, asked again until it
         # is labelled or rejected: CI pending waits, and so do no checks at
         # all within {NO_CHECKS_GRACE} of the verification; CI red or the
         # coverage gate withholding rejects; otherwise `ready-to-merge` goes on.
+        # CI pending past `ci_pending_hours` is :stalled: still waited on, so
+        # a run that finally finishes is acted on, but said to a person.
         #
         # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
         # @param plan [OpenLanes::Plans::Subject]
@@ -239,7 +259,7 @@ module OpenLanes
           case seen.ci
           when :labelled then ready(plan, number, "already #{Plans::ReviewLabel::READY_TO_MERGE}")
           when :registering then Result.new(kind: :waiting, note: "🧪 no checks yet on PR ##{number}; waiting for CI to start")
-          when :pending then Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}")
+          when :pending then pending(number, round)
           when :red then reject(checkout:, plan:, pull:, round:, why: "CI is red on PR ##{number} after verification.")
           else gated(checkout:, plan:, pull:, round:, verdict: seen.verdict)
           end
@@ -289,6 +309,16 @@ module OpenLanes
 
         private
 
+        # A sibling's stand-in for the gate ({#look}): passed, saying why
+        # nothing was run, so the label's reason does not claim a coverage
+        # figure nobody measured.
+        #
+        # @return [CoverageGate::Verdict]
+        def unmeasured(number)
+          CoverageGate::Verdict.new(passed: true,
+            reason: "coverage not measured here: PR ##{number} is built from another branch than the plan's checkout, so its CI stands for it")
+        end
+
         # @return [Result]
         def gated(checkout:, plan:, pull:, round:, verdict:)
           return reject(checkout:, plan:, pull:, round:, why: SETUP, counted: false) if verdict.unconfigured?
@@ -331,12 +361,39 @@ module OpenLanes
         # the same window.
         #
         # @return [Boolean]
-        def registering?(round)
-          path = round && [round.published_path, round.report_path].find { File.exist?(it) }
-          return false unless path
+        def registering?(round) = (age = verified_for(round)) ? age < NO_CHECKS_GRACE : false
 
-          @clock.call - File.mtime(path) < NO_CHECKS_GRACE
+        # @return [Numeric, nil] seconds since the round's publication record,
+        #   or failing that its report, was written; nil when it has neither
+        def verified_for(round)
+          path = round && [round.published_path, round.report_path].find { File.exist?(it) }
+          path && (@clock.call - File.mtime(path))
         end
+
+        # CI still pending. Past the ceiling it is said once, as a warning, and
+        # stays on the run's idle line until CI settles (issue #175). The plan
+        # is not moved to ⭕️: nothing unblocks a plan back to 🧪, so the run
+        # CI is stuck on would be thrown away with a rebuild, when what is
+        # wanted is a person re-running or cancelling a check. The note
+        # carries no elapsed time, so the dispatcher says it only once.
+        #
+        # @return [Result]
+        def pending(number, round)
+          return Result.new(kind: :waiting, note: "🧪 waiting on CI for PR ##{number}") unless stalled?(round)
+
+          hours = (pending_limit / 3600.0).then { it == it.floor ? it.to_i : it.round(2) }
+          Result.new(kind: :stalled,
+            note: "🧪 CI on PR ##{number} has been pending for more than #{hours}h after verification " \
+                  "(ci_pending_hours in #{Config::FILE}); re-run or cancel the stuck checks on GitHub, " \
+                  "and the plan goes on once CI settles")
+        end
+
+        # @return [Boolean] whether CI has been pending past the ceiling, timed
+        #   as {#registering?} is, from the round's publication record
+        def stalled?(round) = (age = verified_for(round)) ? age > pending_limit : false
+
+        # @return [Numeric] seconds
+        def pending_limit = @pending_limit.respond_to?(:call) ? @pending_limit.call : @pending_limit
 
         # @return [Result]
         # `ready-to-merge` is on. Once every open pull request of the plan

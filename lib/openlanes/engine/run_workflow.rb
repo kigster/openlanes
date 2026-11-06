@@ -584,7 +584,8 @@ module OpenLanes
           agents: Agents::Registry.new,
           # Read live, like `quality:` below: U3 asks the quality mid-run, and
           # an answer of mvp lowers the cap to 1 as soon as it is given.
-          max_rejections: -> { Config.current.max_rejections })
+          max_rejections: -> { Config.current.max_rejections },
+          ci_pending_limit: -> { Config.current.ci_pending_limit })
         Verification::Driver.new(outcome:, worktree:, app: Apps.definition(config), quality: -> { Config.current.desired_codebase_quality })
       end
 
