@@ -339,8 +339,16 @@ module OpenLanes
           return results.first if results.one?
 
           decisive = results.find { it.to || it.kind == :rejected }
-          kind = decisive&.kind || (results.all? { it.kind == :ready } ? :ready : :waiting)
+          kind = decisive&.kind || waiting_kind(results)
           Outcome::Result.new(kind:, to: decisive&.to, note: results.map(&:note).join("; "))
+        end
+
+        # @return [Symbol] :ready once every result is; :stalled while any is,
+        #   so CI stuck on a sibling is said to a person as well
+        def waiting_kind(results)
+          return :ready if results.all? { it.kind == :ready }
+
+          results.any? { it.kind == :stalled } ? :stalled : :waiting
         end
 
         # @return [Boolean] whether the plan is as the look found it: still

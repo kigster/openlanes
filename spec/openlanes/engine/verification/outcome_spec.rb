@@ -438,6 +438,34 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       end
     end
 
+    # Issue #175: pending CI used to be waited on with no ceiling.
+    context "when CI stays pending past ci_pending_hours" do
+      before do
+        outcome.pass(checkout:, plan:, pull: pr, round:)
+        round.publish!("abc1234")
+        edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+      end
+
+      it "still waits within the ceiling" do
+        expect(outcome.settle(checkout:, plan:, pull: pr, round:)).to have_attributes(kind: :waiting, note: "🧪 waiting on CI for PR #1")
+      end
+
+      context "when the ceiling has passed" do
+        let(:now) { Time.now + (OpenLanes::Config::DEFAULT_CI_PENDING_HOURS * 3600) + 1 }
+
+        it "says the plan is stalled and what a person must do, and leaves it at 🧪" do
+          result = outcome.settle(checkout:, plan:, pull: pr, round:)
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :stalled, to: nil)
+            expect(result.note).to include("PR #1", "pending for more than 4h", "ci_pending_hours", "re-run")
+            expect(plan.status.key).to eq(:verifying)
+            expect(labels).to eq(%w[review-approved])
+          end
+        end
+      end
+    end
+
     context "when the verification commit has no checks yet" do
       it "waits for CI to register rather than taking none for green" do
         outcome.pass(checkout:, plan:, pull: pr, round:)

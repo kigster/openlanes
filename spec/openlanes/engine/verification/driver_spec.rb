@@ -402,6 +402,13 @@ RSpec.describe OpenLanes::Engine::Verification::Driver, :tree do
       end
     end
 
+    it "is stalled while any pull request is, and waits otherwise" do
+      stalled = OpenLanes::Engine::Verification::Outcome::Result.new(kind: :stalled, note: "stalled")
+      allow(outcome).to receive(:settle).and_return(waiting, stalled)
+
+      expect(settled).to have_attributes(kind: :stalled, note: "🧪 waiting on CI for PR #7; stalled")
+    end
+
     it "settles a failing pull request alone, before any other is labelled" do
       allow(outcome).to receive(:look).and_return(green, red)
       rejected = OpenLanes::Engine::Verification::Outcome::Result.new(kind: :rejected, note: "rejected PR #7", to: :rejected)

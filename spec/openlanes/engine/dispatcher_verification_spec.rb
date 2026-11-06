@@ -354,6 +354,23 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    # Issue #175
+    it "warns once when CI has been pending past the ceiling, and keeps it on the idle line" do
+      stalled = "🧪 CI on PR #7 pending for more than 4h after verification (ci_pending_hours)"
+      allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :stalled, note: stalled))
+      allow(OpenLanes::UI).to receive(:log)
+      dispatcher = described_class.new(runner: runner_for(driver), sleeper: ->(_) {}, stay: true)
+
+      dispatcher.tick
+      driver.join
+      dispatcher.tick
+
+      aggregate_failures do
+        expect(OpenLanes::UI).to have_received(:log).with(stalled, level: :warn, plan: "014.00").once
+        expect(OpenLanes::UI).to have_received(:log).with("idle: 014.00 #{stalled}")
+      end
+    end
+
     it "says on the idle line that it waits on CI" do
       allow(outcome).to receive(:settle).and_return(OpenLanes::Engine::Verification::Outcome::Result.new(kind: :waiting, note: "🧪 waiting on CI for PR #7"))
       allow(OpenLanes::UI).to receive(:log)
