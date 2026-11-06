@@ -46,6 +46,24 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       end
     end
 
+    # #167: a closed-unmerged pull request is no merge. Reading "nothing is
+    # open" as "everything merged" renamed this folder ✅ and archived it.
+    context "when an In Review folder's only pull request was closed unmerged" do
+      let!(:tree) do
+        plans do |t|
+          t.plan "001.00",
+            :in_review,
+            "closed-work",
+            files: { "spec.md" => spec_body, "plan.md" => "# Plan\n\n## Unit\n" },
+            prs:   [t.pr(7, "Closed it", "Closed 🔴")]
+        end
+      end
+
+      it "never proposes Approved & Merged" do
+        expect(changes.map(&:to)).not_to include(:approved)
+      end
+    end
+
     context "when a folder has outgrown its emoji" do
       let!(:tree) do
         plans do |t|
