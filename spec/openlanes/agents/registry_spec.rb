@@ -327,6 +327,15 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
+    # A state nobody handles that is not settled is a dead end the loop
+    # still counts as live: it takes its dependency group's turn and keeps
+    # `run --until-settled` from ever settling (#169).
+    it "settles every state no agent handles" do
+      unhandled = OpenLanes::Plans::STATUSES.select { agents.for_status(it).empty? }.map(&:key)
+
+      expect(unhandled - OpenLanes::Plans::StateMachine::SETTLED).to be_empty
+    end
+
     it "leaves no state an agent holds a plan at without an agent to resume it" do
       agents.all.filter_map(&:holds_at).each do |key|
         expect(agents.for_status(status(key))).not_to be_empty, "nobody resumes a plan held at #{key}"

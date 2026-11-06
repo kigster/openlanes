@@ -110,6 +110,35 @@ RSpec.describe OpenLanes::Engine::PrOutcomes, :tree do
       end
     end
 
+    # 🚫 means the plan survives and its pull requests do not, so closing
+    # the scrapped pull request is the expected next step, not a discard (#169).
+    context "when the plan was scrapped by review" do
+      before do
+        plans do |t|
+          t.plan "004.00",
+            :rewrite,
+            "scrapped",
+            files: files.merge("rewrite.md" => "# Rewrite\n\nOff-spec.\n"),
+            prs:   [t.open(14, "d")]
+        end
+      end
+
+      let!(:applied) { effects.apply(outcome("004.00", 14, :closed)) }
+
+      it "records the row as closed and leaves the plan at 🚫" do
+        aggregate_failures do
+          expect(applied).to have_attributes(to: nil)
+          expect(plan("004.00").status.key).to eq(:rewrite)
+          expect(plan("004.00").read("discarded-reason.md")).to be_nil
+          expect(plan("004.00").pull_requests.map(&:state)).to eq(["Closed 🔴"])
+        end
+      end
+
+      it "lets a person send it back to ⭐ once nothing is open" do
+        expect(plan("004.00").machine.promote!(:planned).key).to eq(:planned)
+      end
+    end
+
     it "keeps a plan whose other pull request merged" do
       plans { |t| t.plan "004.00", :in_review, "mixed", files:, prs: [t.open(14, "d"), t.merged(15, "e")] }
       effects.apply(outcome("004.00", 14, :closed))
