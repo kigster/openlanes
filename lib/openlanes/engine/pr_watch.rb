@@ -2,8 +2,9 @@
 
 module OpenLanes
   module Engine
-    # Human mode (M4): while a person reviews and merges, the engine watches
-    # each plan's open pull request and says what happened to it.
+    # In every merge mode (M4, #171): while a person may review, merge or
+    # close it, the engine watches each plan's open pull request and says
+    # what happened to it.
     #
     # Paced by elapsed time rather than by ticks, so a faster tick loop does
     # not become a faster stream of `gh` calls. It only reads; the dispatcher

@@ -60,6 +60,33 @@ RSpec.describe OpenLanes::Engine::Steps::Watch, :tree do
     expect(effects).not_to have_received(:apply)
   end
 
+  # #171: Merging records a 🏁 plan's merge itself, between the poll that
+  # still saw the row open and the tick that settles it. Applying it again
+  # would change nothing on disk, but would log the merge twice and keep a
+  # finish nobody made.
+  describe "a pull request the folder already records as settled" do
+    let(:outcomes) do
+      [OpenLanes::Engine::PrWatch::Outcome.new(plan: "035.00", pr: 5, kind: :merged),
+       OpenLanes::Engine::PrWatch::Outcome.new(plan: "036.00", pr: 6, kind: :closed)]
+    end
+
+    before do
+      plans do |t|
+        t.plan "035.00", :approved, "merged-by-merging", prs: [t.merged(5, "e")]
+        t.plan "036.00", :discarded, "closed-already", prs: [t.pr(6, "f", "Closed 🔴")]
+      end
+      settle
+    end
+
+    it "is left alone" do
+      aggregate_failures do
+        expect(effects).not_to have_received(:apply)
+        expect(finishes).not_to have_received(:keep)
+        expect(woken).to be_empty
+      end
+    end
+  end
+
   it "carries on when the poll dies, and applies nothing" do
     allow(watch).to receive(:poll).and_raise(JSON::ParserError, "unexpected token")
     settle
