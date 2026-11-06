@@ -689,6 +689,28 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     end
   end
 
+  # Issue 174: the front end switched off after the plan reached 🎨. Nobody
+  # handles 🎨 then but frontend-coder, who is off, so the plan's back-end
+  # builder covers it and its Completed carries the plan on.
+  describe "a plan at Building UI with the front end off" do
+    let!(:built) do
+      plans do |t|
+        t.plan "001.00", :building_ui, "off", files: { "spec.md" => "---\nfrontend: false\n---\n#{spec_body}", "plan.md" => "# P" }
+      end
+    end
+
+    it "goes to backend-coder, with no partner named" do
+      seen = {}
+      executor = lambda { |agent, _subject, partners: [], **|
+        seen[agent.name] = partners.map(&:name)
+        OpenLanes::Execution::Executor::Result.new(ok: true, note: "noop", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      }
+      runner_with(executor).call
+
+      expect(seen).to eq("backend-coder" => [])
+    end
+  end
+
   describe "handoffs" do
     let!(:built) { plans { |t| t.plan "001.00", :new, "relay", files: { "spec.md" => spec_body } } }
 

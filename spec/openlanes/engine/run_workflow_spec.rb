@@ -75,6 +75,15 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
     end
   end
 
+  # Issue 174: backend-coder covers 🎨 once the front end is off, so naming
+  # it for such a plan is not refused as a state it does not take.
+  it "accepts an --agent that covers the plan's state" do
+    plans { |t| t.plan("002.00", :building_ui, "badge", files: { "spec.md" => "---\nfrontend: false\n---\n#{spec_body}", "plan.md" => "# Plan" }) }
+    result, out, = call(agent: "backend-coder", plan: "002")
+
+    expect([result.value!, out]).to match([0, a_string_including("002.00  backend-coder")])
+  end
+
   it "previews a dry run, answering 0 with the agent it would invoke" do
     result, out, err = call
 

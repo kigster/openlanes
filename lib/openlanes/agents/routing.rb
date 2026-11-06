@@ -59,6 +59,33 @@ module OpenLanes
         routed.select { |agent| toggled(agent, spec) || agent.needs.all? { |file| units?(subject, file) } }
       end
 
+      # The agents a plan in +status+ is offered: those that handle the state,
+      # routed by {.filter}; when routing leaves none of them, those that
+      # cover it, routed the same way.
+      #
+      # 🎨 is why (issue 174). frontend-coder alone handles it, so a plan that
+      # reached it and then had its front end switched off, or its lane moved
+      # to building, was offered to nobody and sat at 🎨 for ever. Its back-end
+      # builder covers 🎨 instead: offered only then, never beside a
+      # frontend-coder that routes, and its Completed submits the plan to 🟢
+      # through the same publish every build takes. A harness hop like
+      # {Lifecycle::Lanes} could not do it: 🟢 needs a pull request, and only
+      # a completed build opens one.
+      #
+      # Whether a handler would route is asked of the whole roster, so a
+      # handler the run skipped holds the state rather than ceding it.
+      #
+      # @param registry [OpenLanes::Agents::Registry]
+      # @param status [OpenLanes::Plans::Status]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Array<OpenLanes::Agents::Agent>]
+      def offer(registry, status, subject)
+        routed = filter(registry.for_status(status), subject)
+        return routed unless routed.empty? && filter(registry.whole.for_status(status), subject).empty?
+
+        filter(registry.covering(status), subject)
+      end
+
       # What the spec's switch for this agent says: true forces it, false
       # forbids it, nil leaves the decision to {Agent#needs}. A spec.md that
       # says nothing takes the project's answer from `.openlanes.yml`, so a
