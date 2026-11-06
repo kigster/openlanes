@@ -85,7 +85,7 @@ classDiagram
   OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__UI : 1
   OpenLanes__Engine ..> OpenLanes : 34
-  OpenLanes__Engine ..> OpenLanes__Agents : 17
+  OpenLanes__Engine ..> OpenLanes__Agents : 18
   OpenLanes__Engine ..> OpenLanes__Apps : 4
   OpenLanes__Engine ..> OpenLanes__Arbitration : 5
   OpenLanes__Engine ..> OpenLanes__Clock : 10

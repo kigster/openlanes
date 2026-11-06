@@ -288,6 +288,7 @@ classDiagram
   OpenLanes__Engine__Steps__Watch ..> OpenLanes__Engine__PrOutcomes : uses
   OpenLanes__Engine__Steps__Watch ..> OpenLanes__UI : uses
   OpenLanes__Engine__Tally ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Engine__Unblocking__Drain : uses
   OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Unblocking__Drainer ..> OpenLanes__Plans__PlanState : uses

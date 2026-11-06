@@ -73,7 +73,15 @@ module OpenLanes
         # which offers only agents that move a plan on, never names it.
         #
         # @return [Agents::Agent, nil]
-        def broker_for(subject) = @context.runner.agents.all.find { it.handles?(subject.status) }
+        def broker_for(subject) = registry.all.find { it.handles?(subject.status) }
+
+        # Every agent the run's definitions hold, not the run's roster: the
+        # roster says who builds, and drawing the broker from it left every
+        # answered plan undrained under `run --agent X` or `--skip unblocker`,
+        # with nothing said (issue 176).
+        #
+        # @return [Agents::Registry]
+        def registry = @registry ||= Agents::Registry.new(dir: @context.runner.agents.dir)
 
         # @return [void]
         def start(agent, subject)

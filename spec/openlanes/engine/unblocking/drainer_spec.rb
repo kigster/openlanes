@@ -5,8 +5,8 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
 
   let(:answered) { "## B1 Rebase\n\nShould I?\n\n## A1\n\nyes\n\nAnswered by dana on 2026-10-13\n" }
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
-  let(:broker) { instance_double(OpenLanes::Agents::Agent, name: "unblocker", handles?: true) }
-  let(:agents) { instance_double(OpenLanes::Agents::Registry, all: [broker]) }
+  # The run's roster, which a `run --agent` narrows to whoever builds.
+  let(:agents) { OpenLanes::Agents::Registry.new }
   let(:runner) do
     instance_double(OpenLanes::Engine::Runner, dry_run?: false, blocked: tree.reload.subjects, agents:, claim: true, tree:, executor: nil, events: nil)
   end
@@ -32,7 +32,20 @@ RSpec.describe OpenLanes::Engine::Unblocking::Drainer, :tree do
     aggregate_failures do
       expect(drainer.map(&:ordinal)).to eq(["002.00"])
       expect(drainer.first.outcome).to eq(:drained)
+      expect(drainer.first.agent).to eq("unblocker")
       expect(settler).to have_received(:forget).with("002.00")
+    end
+  end
+
+  # The roster says who builds, not who drains: `run --agent backend-coder`
+  # or `--skip unblocker` left every answered plan undrained, and said nothing.
+  context "when the roster leaves the broker out" do
+    let(:agents) { OpenLanes::Agents::Registry.new.only("backend-coder") }
+
+    it "still drains, through the full registry's broker" do
+      drain
+
+      expect(drainer.map(&:agent)).to eq(["unblocker"])
     end
   end
 
