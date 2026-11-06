@@ -183,6 +183,8 @@ module OpenLanes
         @before_tick = []
         @requeued = []
         @discarding = {}
+        # Pair holds not yet applied, ordinal => state (issue #172).
+        @holds = {}
         @fenced = []
         @conversions = Conversions.new(converter:, runner:, find: method(:fresh_by))
         # Agents outside openlanes (W31). A dry run claims nothing, so it
@@ -1490,6 +1492,9 @@ module OpenLanes
       def reap
         @running.select(&:finished?).each do |job|
           @running.delete(job)
+          # Before its own outcome is settled, so the last partner's advance
+          # starts from the state the pair held at.
+          apply_hold(plan_of(job))
           # What it printed since the last tick, before anything is made of
           # its outcome: a killed round keeps every line it got out.
           record_journal(job)
@@ -1772,7 +1777,9 @@ module OpenLanes
         attempt = base.with(status: "Completed")
         return built_locally(attempt, ordinal) if local_only_review?(target, subject)
 
-        if target
+        if target && partner_running && target == agent.holds_at
+          attempt = hold(ordinal, target, attempt)
+        elsif target
           attempt = attempt.with(note: "#{base.note}#{" (#{entry.note})" if entry.note}")
           published = publish_for_review(task, target, subject, attempt)
           return untestable(job, published.attempt, subject) if published.untestable
@@ -2099,6 +2106,44 @@ module OpenLanes
         return :product if note.include?("product")
 
         nil
+      end
+
+      # The first half of a pair to finish holds the plan at its `holds_at`,
+      # but the folder is not renamed yet: its partner's prompt names the
+      # folder by path, and renaming it under the partner sent every later
+      # write to a folder that no longer existed (issue #172). The hold is
+      # applied by {#apply_hold} once the last agent of the plan is reaped.
+      #
+      # @param ordinal [String]
+      # @param target [Symbol] the state the pair holds at
+      # @param attempt [OpenLanes::Engine::Runner::Attempt]
+      # @return [OpenLanes::Engine::Runner::Attempt]
+      def hold(ordinal, target, attempt)
+        @holds[ordinal] = target
+        attempt.with(note: "#{attempt.note}; holds at #{Plans::STATUS_BY_KEY.fetch(target)} once its partner settles")
+      end
+
+      # Applies a pair's held rename once no agent of the plan is running.
+      # A discard throws the held work away, and a fenced plan is another
+      # machine's to rename, so in both the hold is dropped instead.
+      #
+      # @param ordinal [String]
+      # @return [void]
+      def apply_hold(ordinal)
+        return unless @holds.key?(ordinal)
+        return if @running.any? { plan_of(it) == ordinal }
+
+        target = @holds.delete(ordinal)
+        return if @discarding.key?(ordinal) || @fenced.include?(ordinal)
+
+        subject = fresh_by(Plans::Ordinal.parse(ordinal)) or return
+        if subject.machine.may?(target)
+          subject.machine.promote!(target)
+        else
+          UI.log("hold at #{Plans::STATUS_BY_KEY.fetch(target)} dropped: #{Plans::STATUS_BY_KEY.fetch(target).violation(subject)}",
+            level: :warn,
+            plan:  ordinal)
+        end
       end
 
       # @return [Symbol, nil] where the folder goes
