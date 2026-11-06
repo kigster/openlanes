@@ -14,6 +14,9 @@ module OpenLanes
     #   @return [String]
     # @!attribute [r] handles
     #   @return [Array<Symbol>] plan states this agent is offered work from
+    # @!attribute [r] covers
+    #   @return [Array<Symbol>] plan states it is offered only when no agent
+    #     that handles them would be given the plan
     # @!attribute [r] advances_to
     #   @return [Symbol, nil] the state it is expected to reach; nil = read-only
     # @!attribute [r] model
@@ -60,6 +63,7 @@ module OpenLanes
     Agent = Data.define(:name,
       :description,
       :handles,
+      :covers,
       :advances_to,
       :model,
       :allowed_tools,
@@ -79,7 +83,7 @@ module OpenLanes
       :needs,
       :toggle,
       :confined_to) do
-      def initialize(ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
+      def initialize(covers: [], ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
         phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], **rest)
         super
       end
@@ -93,6 +97,10 @@ module OpenLanes
       # @param status [OpenLanes::Plans::Status]
       # @return [Boolean]
       def handles?(status) = handles.include?(status.key)
+
+      # @param status [OpenLanes::Plans::Status]
+      # @return [Boolean]
+      def covers?(status) = covers.include?(status.key)
 
       # @param value [Symbol] one of {Plans::Spec::STARTS}
       # @return [Boolean]

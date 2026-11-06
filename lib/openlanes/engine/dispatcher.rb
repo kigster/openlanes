@@ -948,7 +948,7 @@ module OpenLanes
           # conflict markers.
           next if @running.any? { plan_of(it) == subject.feature.ordinal.to_s && it.rebase }
 
-          candidates = partners_only(Agents::Routing.filter(@runner.agents.for_status(state), subject), working, state)
+          candidates = partners_only(Agents::Routing.offer(@runner.agents, state, subject), working, state)
           preferred = @preferred[subject.feature.ordinal.to_s]
           candidates = candidates.sort_by { |a| a.name == preferred ? 0 : 1 } if preferred
           agent = candidates.find { |a| eligible?(a, subject) }
@@ -1137,8 +1137,7 @@ module OpenLanes
         end
         job.message = task.refresh.summary if task.refresh&.kind == :pending
         if agent.advances_to && Plans::STATUS_BY_KEY.key?(agent.advances_to)
-          successor = Agents::Routing.filter(@runner.agents.for_status(Plans::STATUS_BY_KEY.fetch(agent.advances_to)),
-            subject).first&.name
+          successor = Agents::Routing.offer(@runner.agents, Plans::STATUS_BY_KEY.fetch(agent.advances_to), subject).first&.name
         end
         # Each member of a pair is told who the others are, so the executor
         # can name them beside the plan's mailbox. A partner routing would
@@ -1380,7 +1379,7 @@ module OpenLanes
         @runner.in_scope.each do |subject|
           next if busy.include?(subject.feature.ordinal.to_s) || Plans::StateMachine::SETTLED.include?(subject.status.key)
 
-          Agents::Routing.filter(@runner.agents.for_status(subject.status), subject).each do |agent|
+          Agents::Routing.offer(@runner.agents, subject.status, subject).each do |agent|
             last = out_of_rounds(agent, subject) or next
             @extensions.exhausted(subject.feature.path, agent.name, subject.status.key, last[:round])
           end

@@ -341,8 +341,19 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "counts the partner who finished and holds the plan as part of its team" do
-      expect(names(agents.team_for(status(:building_ui)))).to contain_exactly("backend-coder", "frontend-coder")
+    # Issue 174: the back-end builders cover 🎨 for a plan whose front end
+    # went off after it got there.
+    it "has each back-end builder cover Building UI, which none of them handles" do
+      expect(names(agents.covering(status(:building_ui)))).to contain_exactly("backend-coder", "chores-coder")
+      expect(agents.covering(status(:building_ui)).none? { it.handles?(status(:building_ui)) }).to be(true)
+    end
+
+    it "remembers the whole roster through only and without" do
+      expect([agents.only("backend-coder").whole, agents.without("frontend-coder").whole, agents.whole]).to all(be(agents))
+    end
+
+    it "counts the partner who finished and holds the plan, and its covers, as part of its team" do
+      expect(names(agents.team_for(status(:building_ui)))).to contain_exactly("backend-coder", "chores-coder", "frontend-coder")
       expect(names(agents.team_for(status(:building)))).to contain_exactly("backend-coder", "chores-coder", "frontend-coder")
       expect(names(agents.team_for(status(:new)))).to eq(%w[researcher])
     end

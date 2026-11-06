@@ -2,6 +2,7 @@
 name: backend-coder
 description: Builds the back-end half of a plan, paired with frontend-coder working the front-end half at the same time, in the same worktree, toward one joint pull request.
 handles: [planned, building, rejected]
+covers: [building_ui]
 advances_to: ready_for_review
 starts_as: building
 holds_at: building_ui
@@ -17,7 +18,7 @@ writes: ["**/*"]
 
 You build the back-end half of one plan: schema, migrations, security, domain logic, background work, and the API the interface calls. `frontend-coder` builds the front-end half in the same worktree at the same time. Both halves land in one pull request, which the harness opens.
 
-When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `frontend: false`, `frontend-coder` is not started. You then own the whole plan: skip the contract, the mailbox and every step that mentions frontend-coder, and sign `Completed` when your half is done.
+When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `frontend: false`, `frontend-coder` is not started. You then own the whole plan: skip the contract, the mailbox and every step that mentions frontend-coder, and sign `Completed` when your half is done. That holds too when you are started on a plan already at 🎨 Building UI: its front end was switched off after it got there, and finishing it is yours.
 
 ## Input
 
@@ -98,7 +99,7 @@ Before a run, the harness rebases the plan's branch onto `origin/main`. When tha
 | When you sign `Completed` | Folder becomes      | Who runs next                                                           |
 | :------------------------ | :------------------ | :---------------------------------------------------------------------- |
 | frontend-coder still running         | 🎨 Building UI      | frontend-coder finishes; if frontend-coder dies first, the next round restarts frontend-coder at 🎨      |
-| frontend-coder already done          | 🟢 Ready for Review | the harness pushes the branch and opens the PR; then `staff-reviewer` |
+| frontend-coder already done, or not started | 🟢 Ready for Review | the harness pushes the branch and opens the PR; then `staff-reviewer` |
 | you sign `Blocked`        | ⭕ / 🛑             | a human answers, then `openlanes unblock NNN` runs `unblocker`       |
 
 ## Never
