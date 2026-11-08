@@ -1,0 +1,269 @@
+# docs/wiki.yml — the information architecture of the OpenLanes wiki.
+#
+# bin/wiki-gen reads this file and nothing else to decide which pages exist,
+# what they are called, how they nest, and where each one's content comes from.
+# The generator holds no page list of its own, so this file is the single
+# source of IA truth; it is also the shape the github-wiki-pub gem is meant to
+# read once the generator moves there.
+#
+# Page kinds:
+#
+#   lift        `from:` is a list of {file, section} pairs. Each named section is
+#               copied verbatim, heading and all, so the wiki follows its source.
+#               `section` is an exact heading title; `preamble: true` takes the
+#               text between a document's H1 and its first H2; `whole: true`
+#               takes everything after the H1; `heading: false` drops the
+#               section's own heading (use it when it repeats the page title).
+#   collection  one child page per file in `glob:` (or `files:`), titled by the
+#               file's H1, plus an index table on this page.
+#   renderer    `renderer: name` calls `render_<name>(cfg)` in bin/wiki_gen/pages.rb,
+#               for pages whose content is scanned out of code rather than prose.
+#               Any other keys on the page are passed through to it.
+#
+# A page may combine `intro:` (short orientation text), `from:` and `renderer:`;
+# they render in that order. `sidebar: false` keeps a page's children out of
+# _Sidebar (they still appear on the page itself).
+
+project:
+  name: OpenLanes
+  tagline: >-
+    An open source CLI software factory, written in Ruby, that runs inside your
+    project repository and drives `.plans/` folders from spec to merged pull
+    request with specialist agents.
+  repo: https://github.com/kigster/openlanes
+  ref: main
+  out: wiki
+
+pages:
+  # ── 1. Overview ────────────────────────────────────────────────────────────
+  - title: Overview
+    purpose: What OpenLanes is, what it is built with, and what a run looks like.
+    from:
+      - { file: README.md, preamble: true, heading: false }
+      - { file: README.md, section: What it is }
+      - { file: README.md, section: The Tech Stack }
+      - { file: README.md, section: "Picture is worth a few words ;)", title: What a run looks like }
+      - { file: README.md, section: Further reading }
+
+  # ── 2. Getting started ─────────────────────────────────────────────────────
+  - title: Getting Started
+    purpose: Install OpenLanes, point it at a project, and start the factory.
+    from:
+      - { file: README.md, section: Quick Start }
+      - { file: README.md, section: Manual Install }
+      - { file: README.md, section: Usage }
+      - { file: README.md, section: Running OpenLanes via mprocs }
+
+  - title: Starting an App
+    parent: Getting Started
+    purpose: From an empty directory to the first plans running.
+    from:
+      - { file: docs/STARTING-AN-APP.md, whole: true }
+      - { file: docs/application-template.md, whole: true, title: The application template }
+
+  - title: Configuration
+    parent: Getting Started
+    purpose: Finding the project root, `openlanes init`, and every key in `.openlanes.yml`.
+    from:
+      - { file: docs/USAGE.md, section: Project settings, heading: false }
+      - { file: README.md, section: Configuration }
+
+  - title: Writing a Spec
+    parent: Getting Started
+    purpose: The `spec.md` frontmatter a plan is driven by, and the template it starts from.
+    from:
+      - { file: docs/USAGE.md, section: Writing a spec, heading: false }
+      - { file: docs/spec-template.md, whole: true, title: The spec template }
+
+  - title: Running the Factory
+    parent: Getting Started
+    purpose: "`openlanes start` and `openlanes run`: limits, logs, resuming sessions, and the safety rails."
+    from:
+      - { file: docs/USAGE.md, section: Running the agents, heading: false }
+      - { file: docs/USAGE.md, section: Safety rails }
+      - { file: docs/USAGE.md, section: GitHub and Linear }
+      - { file: docs/USAGE.md, section: From Claude Code }
+
+  - title: The Control Room
+    parent: Getting Started
+    purpose: A walk through the web page `openlanes start` serves.
+    from:
+      - { file: README.md, section: Quick Walkthrough the UI, heading: false }
+
+  - title: CLI Commands
+    parent: Getting Started
+    purpose: Every `openlanes` command, and the global flags.
+    from:
+      - { file: README.md, section: Commands, heading: false }
+
+  - title: Bundled Skills
+    parent: Getting Started
+    purpose: The agent skills OpenLanes ships and installs with `openlanes skills install`.
+    renderer: skills
+
+  # ── 3. Core concepts ───────────────────────────────────────────────────────
+  - title: Core Concepts
+    purpose: Plan folders, states, agents, lanes, blocks and the autonomy boundary.
+    intro: >-
+      A plan is a folder; its name is its state; an agent moves it from one state
+      to the next and the harness checks what the agent did. The pages below take
+      those ideas one at a time.
+
+  - title: Plan Folders and Numbering
+    parent: Core Concepts
+    purpose: How a plan is named, numbered, where it lives, and which files it may hold.
+    from:
+      - { file: README.md, section: Plan folders }
+      - { conventions: true, section: The number }
+      - { conventions: true, section: Where a plan lives }
+      - { conventions: true, section: Starting a feature that does not exist yet }
+      - { conventions: true, section: Files allowed in a plan folder }
+      - { conventions: true, section: Pull requests carry the number }
+
+  - title: States and Transitions
+    parent: Core Concepts
+    purpose: Every state a plan can be in, the files each one requires, and the legal moves between them.
+    renderer: states
+
+  - title: Agents
+    parent: Core Concepts
+    purpose: The specialist agents, which state each one handles, and the model it runs on.
+    from:
+      - { file: README.md, section: Agents, heading: false }
+      - { file: docs/USAGE.md, section: How agents hand off }
+    renderer: agents
+
+  - title: Lanes
+    parent: Core Concepts
+    purpose: Full, plan and quick lanes, and which phases each one skips.
+    from:
+      - { file: README.md, section: Lanes, heading: false }
+      - { file: docs/USAGE.md, section: Lanes, title: Choosing a lane in spec.md }
+
+  - title: Blocks and Escalation
+    parent: Core Concepts
+    purpose: How a plan stops for a question, and how it starts again.
+    from:
+      - { file: README.md, section: Blocks, heading: false }
+      - { conventions: true, section: "When a plan is stopped, and how it starts again" }
+      - { file: docs/USAGE.md, section: Unblocking a plan }
+
+  - title: Reviewing and Merging
+    parent: Core Concepts
+    purpose: The three reviewers, the review labels, and when a pull request may merge.
+    from:
+      - { file: docs/REVIEWING.md, whole: true }
+      - { conventions: true, section: Review labels, title: "Review labels, as the state machine defines them" }
+
+  - title: The Autonomy Boundary
+    parent: Core Concepts
+    purpose: '"Docs plus code, but nothing leaves the machine": what is withheld before a run and checked after it.'
+    from:
+      - { file: README.md, section: The autonomy boundary, heading: false }
+      - { file: CLAUDE.md, section: The autonomy boundary, title: How the executor enforces it }
+
+  # ── 4. Architecture ────────────────────────────────────────────────────────
+  # The namespace groups below are the only hand-written part of the
+  # architecture section. Every diagram is read from docs/architecture/, which
+  # `just update-architecture` regenerates from lib/. A namespace that appears
+  # there and in no group below is listed on the Documentation Drift page.
+  - title: Architecture
+    purpose: How the gem is put together, from the state machine to the run loop, with a class diagram per namespace.
+    from:
+      - { file: CLAUDE.md, section: The folder name is the state }
+      - { file: CLAUDE.md, section: Nothing is written down twice }
+      - { file: CLAUDE.md, section: The run loop }
+      - { file: CLAUDE.md, section: Layout }
+
+  - title: Namespace Map
+    parent: Architecture
+    purpose: Every OpenLanes namespace and how many references each one makes to the others.
+    renderer: namespace_map
+
+  - title: Plan Model
+    parent: Architecture
+    purpose: The plan as data, and the operations that create, rename and drain plans. No processes, no network.
+    renderer: architecture_group
+    namespaces: [Plans, Lifecycle]
+
+  - title: Agents and Execution
+    parent: Architecture
+    purpose: Agent definitions, the CLI adapters they run through, and one agent invocation from spawn to after-check.
+    renderer: architecture_group
+    namespaces: [Agents, Adapters, Execution, Spawner, Supervision, Arbitration, Clock]
+
+  - title: Engine and Runtime
+    parent: Architecture
+    purpose: The round loop, the dispatcher, and the state, events and logs a run leaves behind.
+    renderer: architecture_group
+    namespaces: [Engine, Events, Live, Log, Container]
+
+  - title: Integrations
+    parent: Architecture
+    purpose: Git, GitHub, Linear, the web control room, the apps a plan builds, and project setup.
+    renderer: architecture_group
+    namespaces: [Vcs, Linear, Web, Apps, Setup, Skills]
+
+  - title: Developer Tooling
+    parent: Architecture
+    purpose: The command line, terminal UI, generated documents and diagrams, evals and coverage.
+    renderer: architecture_group
+    namespaces: [CLI, UI, Presentation, Uml, Evals, Coverage]
+
+  - title: Durable Run Events
+    parent: Architecture
+    purpose: The run events OpenLanes stores in PostgreSQL, and how to read them back.
+    from:
+      - { file: docs/events.md, whole: true }
+
+  - title: Thread Safety
+    parent: Architecture
+    purpose: The threads a run starts, and every piece of shared mutable state they touch.
+    from:
+      - { file: docs/thread-safety.md, whole: true }
+
+  # ── 5. Decisions ───────────────────────────────────────────────────────────
+  - title: Decisions
+    purpose: The design decisions behind OpenLanes, one record per topic, each with its reasoning.
+    sidebar: false
+    collection:
+      glob: docs/decisions/decisions-on-*.md
+
+  - title: Proposals and Research
+    purpose: Proposals not yet built, and the research behind refactors. Check the code before assuming any of it exists.
+    sidebar: false
+    collection:
+      files:
+        - docs/software-factory-proposal.md
+        - docs/REFACTOR.md
+        - docs/decisions/suggestions-from-grok-on-general-improvements.md
+
+  # ── 6. Development ─────────────────────────────────────────────────────────
+  - title: Development
+    purpose: Working on OpenLanes itself — commands, linting, CI, conventions and releases.
+    from:
+      # Linting, Distribution and the rest are H3s inside Commands, so they come with it.
+      - { file: CLAUDE.md, section: Commands }
+
+  - title: Code Conventions
+    parent: Development
+    purpose: The house style of the codebase, and the checklist for adding a state.
+    from:
+      - { file: CLAUDE.md, section: Conventions in the code, heading: false }
+      - { file: CLAUDE.md, section: When adding a state }
+
+  - title: Just Recipes
+    parent: Development
+    purpose: Every `just` recipe in the justfile, with the comment that documents it.
+    renderer: just
+    files: [justfile]
+
+  - title: Continuous Integration
+    parent: Development
+    purpose: The CircleCI jobs, what each runs, and the order the workflow runs them in.
+    renderer: circleci
+    file: .circleci/config.yml
+
+  - title: Documentation Drift
+    purpose: Places where the wiki's IA, the docs and the code disagree. Recorded, not resolved.
+    renderer: drift

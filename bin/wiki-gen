@@ -1,0 +1,653 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+#
+# bin/wiki-gen — generate the project's GitHub Wiki from the repository.
+#
+# The wiki is DERIVED, never hand-written. Two kinds of input feed it:
+#
+#   1. Markdown already in the tree (README.md, CLAUDE.md, docs/**). Named
+#      sections are lifted verbatim, so the wiki cannot drift from its source.
+#   2. The code itself, through renderers in bin/wiki_gen/pages.rb: agent
+#      frontmatter, the state machine, the generated class diagrams, the
+#      justfile, the CI config. A new agent or namespace shows up on the next run.
+#
+# The page hierarchy, titles, groupings and sources come from docs/wiki.yml.
+# This file is the generic engine: it knows how to lift sections, rewrite
+# links, frame and write pages, and nothing about any one project. It is the
+# part meant to move into the github-wiki-pub gem.
+#
+# Usage:
+#   bin/wiki-gen                     # regenerate wiki/
+#   bin/wiki-gen --out DIR           # write somewhere else (e.g. a .wiki clone)
+#   bin/wiki-gen --link-style wiki   # extension-less links (GitHub Wiki)
+#   bin/wiki-gen --link-style repo   # .md links (browsing wiki/ in the repo)
+#   bin/wiki-gen --ref BRANCH        # source links point at BRANCH, not main
+#   bin/wiki-gen --config FILE       # another IA file (default: docs/wiki.yml)
+#   bin/wiki-gen --check             # regenerate into a temp dir and diff
+#
+# `bin/wiki-publish` wraps this and pushes the result to the GitHub Wiki.
+#
+# Idempotent: every emitted file carries a generator marker, and files bearing
+# that marker are removed before the run so deleted pages do not linger. Pages
+# are stamped with the date of the last commit, not today, so `--check` gives
+# the same answer on any day for the same tree.
+#
+
+require "date"
+require "fileutils"
+require "optparse"
+require "set"
+require "shellwords"
+require "tmpdir"
+require "uri"
+require "yaml"
+
+module WikiGen
+  VERSION = "2.0.0"
+  ROOT = File.expand_path("..", __dir__)
+  DEFAULT_CONFIG = "docs/wiki.yml"
+  MARKER = "<!-- generated-by: bin/wiki-gen -->"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Repository access
+  # ──────────────────────────────────────────────────────────────────────────
+
+  # Thin read-only view of the repository. Every path is repo-relative so that
+  # source links and file reads cannot disagree about what was read.
+  class Repo
+    attr_reader :root
+
+    def initialize(root) = @root = root
+
+    def abs(rel) = File.join(@root, rel)
+    def exist?(rel) = File.exist?(abs(rel))
+    def read(rel) = exist?(rel) ? File.read(abs(rel)) : nil
+    def lines(rel) = read(rel).to_s.lines
+
+    # @param pattern [String] glob relative to the repo root
+    # @return [Array<String>] matching repo-relative paths, sorted
+    def glob(pattern)
+      Dir.glob(File.join(@root, pattern)).sort.map { |p| p.delete_prefix("#{@root}/") }
+    end
+
+    # @return [String] the last commit's date, so a regeneration of the same
+    #   tree is byte-identical whatever day it runs
+    def last_commit_date
+      out = `git -C #{Shellwords.escape(@root)} log -1 --format=%cs 2>/dev/null`.strip
+      out.empty? ? Date.today.iso8601 : out
+    end
+  end
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Markdown helpers
+  # ──────────────────────────────────────────────────────────────────────────
+
+  # Section extraction over a markdown document. Lifting a named section keeps
+  # the wiki honest: edit the source heading's body and the wiki follows.
+  class Doc
+    attr_reader :path
+
+    def initialize(text, path)
+      @text = text.to_s
+      @path = path
+    end
+
+    def empty? = @text.strip.empty?
+
+    # Headings, ignoring anything inside a fenced code block: a shell comment
+    # such as `# cd into your project` is not a heading, and treating it as one
+    # silently truncates the lifted section at that line.
+    #
+    # @return [Array<Array(Integer, String, Integer)>] level, title, line index
+    def headings
+      @headings ||= begin
+        fence = nil
+        @text.lines.each_with_index.filter_map do |line, i|
+          if (m = line.match(/\A\s{0,3}(`{3,}|~{3,})/))
+            if fence.nil?
+              fence = m[1][0]
+              next
+            elsif m[1][0] == fence
+              fence = nil
+              next
+            end
+          end
+          next if fence
+          next unless (m2 = line.match(/\A(\#{1,6})\s+(.*?)\s*\z/))
+
+          [m2[1].length, m2[2], i]
+        end
+      end
+    end
+
+    # @return [String, nil] the document's H1
+    def title = headings.find { |(l, _t, _i)| l == 1 }&.at(1)
+
+    # @param title [String] an exact heading title
+    # @return [Array(Integer, String, Integer), nil]
+    def find(title) = headings.find { |(_l, t, _i)| t == title }
+
+    # Body of the heading titled +title+, up to the next heading of the same
+    # or a higher level.
+    #
+    # @return [String, nil]
+    def section(title)
+      found = find(title)
+      return nil unless found
+
+      level, _t, index = found
+      stop = headings.find { |(l, _t2, i)| i > index && l <= level }&.at(2) || all.length
+      all[(index + 1)...stop].join.strip
+    end
+
+    # Everything between the H1 and the first H2: the document's own
+    # introduction, which has no heading to lift it by.
+    def preamble
+      start = (headings.find { |(l, _t, _i)| l == 1 }&.at(2) || -1) + 1
+      stop = headings.find { |(l, _t, i)| i >= start && l <= 2 }&.at(2) || all.length
+      all[start...stop].join.strip
+    end
+
+    # Everything after the H1, minus any leading HTML comment such as a
+    # "generated, do not edit" banner meant for the source file.
+    def body
+      start = (headings.find { |(l, _t, _i)| l == 1 }&.at(2) || -1) + 1
+      all[start..].to_a.join.strip
+    end
+
+    private
+
+    def all = @all ||= @text.lines
+  end
+
+  module Text
+    module_function
+
+    # Shift every ATX heading in +md+ by +by+ levels (negative promotes), so a
+    # lifted section nests correctly under the page's own headings.
+    def demote(md, by: 1)
+      return nil if md.nil?
+      return md if by.zero?
+
+      in_fence = false
+      md.lines.map do |line|
+        in_fence = !in_fence if line.start_with?("```", "~~~")
+        if !in_fence && (m = line.match(/\A(\#{1,6})(\s+.*)\z/m))
+          "#{"#" * (m[1].length + by).clamp(1, 6)}#{m[2]}"
+        else
+          line
+        end
+      end.join
+    end
+
+    # Collapse prose into a table cell: whole sentences up to a readable
+    # length. Sentences shorter than +floor+ are joined with the next one.
+    def first_sentence(text, limit: 240, floor: 60)
+      flat = text.to_s.gsub(/\s+/, " ").strip
+      out = +""
+      flat.scan(/.*?\.(?=\s|\z)|.+\z/) do |s|
+        out << s
+        break if out.length >= floor
+      end
+      out = flat if out.strip.empty?
+      out = "#{out[0, limit].rstrip}…" if out.length > limit
+      out.strip.gsub("|", '\\|')
+    end
+
+    def escape_cell(text) = text.to_s.gsub(/\s+/, " ").strip.gsub("|", '\\|')
+
+    # Strip HTML comments: a source file's own "do not edit" banner would be
+    # wrong on the wiki page that quotes it.
+    def strip_comments(md) = md.to_s.gsub(/<!--.*?-->\s*/m, "")
+  end
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Page model
+  # ──────────────────────────────────────────────────────────────────────────
+
+  # One wiki page. +sidebar+ false keeps the page's children out of _Sidebar.
+  Page = Struct.new(:title, :slug, :parent, :purpose, :sources, :body, :sidebar, keyword_init: true)
+
+  module Slug
+    module_function
+
+    def call(title)
+      title.to_s
+           .gsub("&", " and ")
+           .gsub(/[–—]/, "-")
+           .delete(".'`\"")
+           .gsub(/[^\p{Alnum}\-]+/, "-")
+           .squeeze("-")
+           .sub(/\A-/, "").sub(/-\z/, "")
+    end
+  end
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # The generator
+  # ──────────────────────────────────────────────────────────────────────────
+
+  # Builds every page the IA file declares, then writes them out. Project
+  # specific renderers (`render_<name>`) are mixed in from bin/wiki_gen/pages.rb.
+  class Generator
+    attr_reader :repo, :link_style, :project, :out
+
+    def initialize(root: ROOT, config: DEFAULT_CONFIG, out: nil, link_style: "repo", format: true, ref: nil)
+      @repo = Repo.new(root)
+      raw = @repo.read(config) or abort "wiki-gen: #{config} not found"
+      @config = YAML.safe_load(raw)
+      @config_path = config
+      @project = @config.fetch("project")
+      @out = out || File.join(root, @project.fetch("out", "wiki"))
+      @link_style = link_style
+      @format = format
+      @ref = ref || @project.fetch("ref", "main")
+      @pages = []
+      @used = Set.new
+      @missing = []
+      @problems = []
+    end
+
+    def run
+      build_pages
+      write_pages
+      format!
+      report_missing_sources
+      @pages.size
+    end
+
+    # ── link + block helpers ────────────────────────────────────────────────
+
+    def repo_url = @project.fetch("repo")
+    def blob = "#{repo_url}/blob/#{@ref}"
+    def raw_url = "#{repo_url}/raw/#{@ref}"
+    def stamp = @stamp ||= @repo.last_commit_date
+
+    def encode(path)
+      path.split("/").map { |seg| URI.encode_www_form_component(seg).gsub("+", "%20") }.join("/")
+    end
+
+    # Link to a file in the repository. Absolute, because the wiki is a
+    # separate repository and a relative path cannot resolve from it.
+    def src(path, label: nil)
+      @missing << path unless @repo.exist?(path)
+      "[`#{label || path}`](#{blob}/#{encode(path)})"
+    end
+
+    # Record +path+ as a source of the page being built, and mark it used so
+    # the drift check does not report it as an orphan.
+    def cite(path)
+      @used << path
+      @current_sources << path if @current_sources && !@current_sources.include?(path)
+      path
+    end
+
+    # Link to another wiki page.
+    def link(title, label: nil, anchor: nil)
+      slug = Slug.call(title)
+      target = link_style == "wiki" ? slug : "#{slug}.md"
+      "[#{label || title}](#{target}#{anchor ? "##{anchor}" : ""})"
+    end
+
+    # Pages whose whole content is one file. A link to that file from lifted
+    # markdown becomes a link to the page, so readers stay in the wiki.
+    def file_pages = @file_pages ||= {}
+
+    # Rewrite the links in markdown lifted from +from_path+. Relative paths are
+    # resolved against the source file's own directory, since that is what
+    # they were written against: `../REVIEWING.md` from docs/decisions/ is
+    # docs/REVIEWING.md, not REVIEWING.md.
+    def absolutize_links(md, from_path)
+      fence = nil
+      md.to_s.lines.map do |line|
+        if (m = line.match(/\A\s{0,3}(`{3,}|~{3,})/))
+          fence = fence.nil? ? m[1][0] : (m[1][0] == fence ? nil : fence)
+          next line
+        end
+        next line if fence
+
+        absolutize_line(line, from_path)
+      end.join
+    end
+
+    # A link (whose label may hold code, as in [`x.md`](x.md)) or a bare code
+    # span. The leftmost match wins, so a span such as `[text](A)` is matched
+    # as code first and left alone: it is an example of link syntax, not a link.
+    LINK_OR_CODE = /(!?)\[((?:[^\]`]|`[^`]*`)*)\]\(([^)\s]+)\)|`[^`]*`/
+
+    def absolutize_line(line, from_path)
+      dir = File.dirname(from_path)
+      line.gsub(LINK_OR_CODE) do
+        next Regexp.last_match(0) if Regexp.last_match(0).start_with?("`")
+
+        bang, text, href = Regexp.last_match.captures
+        next "#{bang}[#{text}](#{href})" if href.match?(%r{\A(?:[a-z][a-z0-9+.-]*:|#|//)}i)
+
+        path, anchor = href.split("#", 2)
+        resolved = File.expand_path(path, "/#{dir}").delete_prefix("/")
+        @missing << "#{resolved} (linked from #{from_path})" unless @repo.exist?(resolved)
+        target =if bang.empty? && file_pages[resolved]
+                   wiki = link(file_pages[resolved], anchor:)
+                   wiki[/\]\((.*)\)\z/, 1]
+                 elsif !bang.empty?
+                   "#{raw_url}/#{encode(resolved)}"
+                 else
+                   "#{blob}/#{encode(resolved)}#{anchor ? "##{anchor}" : ""}"
+                 end
+        "#{bang}[#{text}](#{target})"
+      end
+    end
+
+    def doc(path) = Doc.new(@repo.read(path), path)
+
+    # A markdown table.
+    def table(headers, rows, align: nil)
+      return "_None found._\n" if rows.empty?
+
+      sep = align || Array.new(headers.size, "---")
+      out = +"| #{headers.join(" | ")} |\n| #{sep.join(" | ")} |\n"
+      rows.each { |r| out << "| #{r.map { |c| c.to_s.empty? ? "—" : c }.join(" | ")} |\n" }
+      out
+    end
+
+    def quote(md)
+      return "" if md.nil?
+
+      md.lines.map { |l| l.strip.empty? ? ">\n" : "> #{l}" }.join
+    end
+
+    # Lift one `from:` entry. The source's heading is kept and re-levelled to
+    # +level+ unless the entry says `heading: false`, in which case the body is
+    # promoted so its first sub-heading sits at +level+.
+    #
+    # @param entry [Hash] {file|doc, section|preamble|whole, heading, title}
+    # @param source [Doc] the document to lift from
+    # @param label [String] markdown naming the source, for the footnote
+    def lift(entry, source, label:, level: 2)
+      if entry["whole"] || entry["preamble"]
+        text = entry["whole"] ? source.body : source.preamble
+        if text.strip.empty?
+          return missing_section(label, entry["whole"] ? "its body" : "a preamble before the first H2")
+        end
+
+        heading = entry["title"]
+        body = Text.demote(Text.strip_comments(text), by: heading ? level - 1 : level - 2)
+      else
+        found = source.find(entry["section"])
+        return missing_section(label, entry["section"]) unless found
+
+        source_level, title, = found
+        keep = entry.fetch("heading", true)
+        heading = keep ? (entry["title"] || title) : nil
+        shift = keep ? level - source_level : level - (source_level + 1)
+        body = Text.demote(Text.strip_comments(source.section(entry["section"])), by: shift)
+      end
+
+      out = +""
+      out << "#{"#" * level} #{heading}\n\n" if heading
+      out << "#{absolutize_links(body, source.path)}\n\n<sub>Lifted verbatim from #{label}.</sub>\n"
+      out
+    end
+
+    def missing_section(label, what)
+      @problems << "#{label} has no section matching `#{what}`"
+      "> [!WARNING]\n> The generator expected `#{what}` in #{label} and did not find it; the source " \
+        "has been restructured. Fix the entry in #{src(@config_path)}.\n"
+    end
+
+    # ── page assembly ───────────────────────────────────────────────────────
+
+    # @param title [String]
+    # @param sources [Array<String>] repo-relative paths cited by the page
+    # @yieldreturn [String] the page body
+    def page(title, parent: nil, purpose: nil, sources: [], sidebar: true)
+      @current_sources = sources.dup
+      body = yield
+      @pages << Page.new(title:, slug: Slug.call(title), parent:, purpose:, sidebar:,
+                         sources: @current_sources.uniq, body:)
+    ensure
+      @current_sources = nil
+    end
+
+    def config_pages = @config.fetch("pages")
+
+    def build_pages
+      register_file_pages
+      config_pages.each { |cfg| build_page(cfg) }
+      page_home
+      page_sidebar
+      page_footer
+    end
+
+    # Whole-file pages, known before any page is built, so a link written on
+    # page one can already point at page twenty.
+    def register_file_pages
+      config_pages.each do |cfg|
+        Array(cfg["from"]).each do |e|
+          file_pages[e["file"]] ||= cfg["title"] if e["whole"] && !e["title"]
+        end
+        collection_files(cfg).each { |f| file_pages[f] ||= doc(f).title || File.basename(f, ".md") }
+      end
+      register_renderer_pages if respond_to?(:register_renderer_pages, true)
+    end
+
+    def collection_files(cfg)
+      c = cfg["collection"] or return []
+      files = c["files"] || @repo.glob(c.fetch("glob"))
+      excluded = config_pages.flat_map { |p| Array(p.dig("collection", "files")) }
+      c["files"] ? files : files - excluded
+    end
+
+    def build_page(cfg)
+      title = cfg.fetch("title")
+      children = []
+      page(title, parent: cfg["parent"], purpose: cfg["purpose"], sidebar: cfg.fetch("sidebar", true)) do
+        out = +""
+        out << "#{cfg["intro"].strip}\n\n" if cfg["intro"]
+        Array(cfg["from"]).each { |entry| out << lift_entry(entry) << "\n" }
+        out << collection_index(cfg, children) if cfg["collection"]
+        out << send("render_#{cfg["renderer"]}", cfg).to_s if cfg["renderer"]
+        out
+      end
+      children.each { |f| page_for_file(f, parent: title) }
+      (@later || []).shift(@later&.size.to_i).each(&:call)
+    end
+
+    # Queue a block that builds pages once the page now being built is done.
+    # A renderer cannot call {#page} from inside another page's block: the two
+    # would share one list of sources.
+    def later(&block) = (@later ||= []) << block
+
+    def lift_entry(entry)
+      if entry["file"]
+        path = cite(entry["file"])
+        return missing_section(src(path), "the file itself") unless @repo.exist?(path)
+
+        lift(entry, doc(path), label: src(path))
+      else
+        lift_virtual(entry)
+      end
+    end
+
+    # A renderer in pages.rb may supply documents that are not files, such as
+    # the output of a command. It overrides this.
+    def lift_virtual(entry) = raise ArgumentError, "unsupported from: entry #{entry.inspect}"
+
+    def collection_index(cfg, children)
+      files = collection_files(cfg)
+      children.concat(files)
+      rows = files.map do |f|
+        d = doc(f)
+        intro = Text.strip_comments(d.preamble).lines.reject { |l| l.start_with?(">", "|", "#") }.join
+        [link(file_pages[f]), Text.first_sentence(intro, limit: 200)]
+      end
+      table(%w[Page Summary], rows)
+    end
+
+    def page_for_file(path, parent:)
+      page(file_pages[path], parent:, purpose: nil, sources: [cite(path)]) do
+        lift({ "whole" => true }, doc(path), label: src(path))
+      end
+    end
+
+    def page_home
+      tops = @pages.reject(&:parent)
+      body = +"**#{@project["name"]}**: #{@project["tagline"].to_s.strip}\n\n"
+      body << "This wiki is generated from the repository. Every page names the files it was derived " \
+              "from; if a page looks wrong, the fix belongs in the source file, not here.\n\n"
+      body << "## Start here\n\n"
+      body << table(["Section", "What is in it"], tops.map { |p| [link(p.title), Text.escape_cell(p.purpose)] })
+      body << "\n## Regenerating this wiki\n\n"
+      body << "```bash\nbin/wiki-gen           # rewrite #{@project.fetch("out", "wiki")}/\n" \
+              "bin/wiki-gen --check   # fail if it is stale\nbin/wiki-publish       # push it to the GitHub Wiki\n```\n"
+      @pages.unshift(Page.new(title: "Home", slug: "Home", sidebar: true,
+                              sources: [cite(@config_path), cite("README.md")], body:))
+    end
+
+    def page_sidebar
+      lines = +"#{MARKER}\n\n### #{@project["name"]}\n\n- #{link("Home")}\n"
+      @pages.reject(&:parent).each do |p|
+        next if p.slug == "Home"
+
+        lines << "- #{link(p.title)}\n"
+        sidebar_children(p, 1, lines)
+      end
+      @pages << Page.new(title: "_Sidebar", slug: "_Sidebar", body: lines, sources: [])
+    end
+
+    def sidebar_children(parent, depth, lines)
+      return unless parent.sidebar
+
+      @pages.select { |c| c.parent == parent.title }.each do |c|
+        lines << "#{"  " * depth}- #{link(c.title)}\n"
+        sidebar_children(c, depth + 1, lines)
+      end
+    end
+
+    def page_footer
+      body = "#{MARKER}\n\nGenerated from [#{@project["name"]}](#{repo_url}) by `bin/wiki-gen` " \
+             "at the commit of #{stamp}. Do not edit wiki pages by hand.\n"
+      @pages << Page.new(title: "_Footer", slug: "_Footer", body:, sources: [])
+    end
+
+    # ── output ──────────────────────────────────────────────────────────────
+
+    def write_pages
+      FileUtils.mkdir_p(@out)
+      Dir.glob(File.join(@out, "*.md")).each { |f| File.delete(f) if File.read(f).include?(MARKER) }
+      slugs = @pages.map(&:slug)
+      dupes = slugs.select { |s| slugs.count(s) > 1 }.uniq
+      abort "wiki-gen: two pages share a slug: #{dupes.join(", ")}" unless dupes.empty?
+
+      @pages.each { |p| File.write(File.join(@out, "#{p.slug}.md"), render(p)) }
+      write_readme
+    end
+
+    def write_readme
+      path = File.join(@out, "README.md")
+      return if File.exist?(path) && !File.read(path).include?(MARKER)
+
+      File.write(path, <<~MD)
+        #{MARKER}
+
+        # #{@project["name"]} wiki (generated)
+
+        Every `.md` file in this folder is generated by #{src("bin/wiki-gen")} from
+        #{src(@config_path)} and the files it names. **Do not edit them by hand**: the next
+        run overwrites the change. Edit the source the page names, then regenerate.
+
+        Start at #{link("Home")}.
+      MD
+    end
+
+    # `_Sidebar` and `_Footer` are GitHub Wiki chrome, not framed pages.
+    RAW_PAGES = %w[_Sidebar _Footer].freeze
+
+    def render(p)
+      return p.body if RAW_PAGES.include?(p.slug)
+
+      out = +"#{MARKER}\n\n# #{p.title}\n\n"
+      out << "_#{p.purpose}_\n\n" if p.purpose
+      out << "**Up:** #{link(p.parent)}\n\n" if p.parent
+      children = @pages.select { |c| c.parent == p.title }
+      out << "**In this section:** #{children.map { |c| link(c.title) }.join(" · ")}\n\n" unless children.empty?
+      out << "______________________________________________________________________\n\n"
+      out << p.body.to_s.rstrip << "\n"
+      unless p.sources.empty?
+        out << "\n______________________________________________________________________\n\n"
+        out << "## Sources\n\nGenerated by [`bin/wiki-gen`](#{blob}/bin/wiki-gen) v#{VERSION} at the commit " \
+               "of #{stamp}, from:\n\n"
+        p.sources.each { |s| out << "- #{src(s)}\n" }
+      end
+      out
+    end
+
+    # Run mdformat over the output so `--check` is stable. Only when the
+    # tables plugin is present: a bare mdformat escapes every `|` and turns
+    # each table into a paragraph.
+    def format!
+      return unless @format && mdformat_gfm?
+
+      files = Dir.glob(File.join(@out, "*.md")).reject { |f| File.open(f) { |io| io.gets.to_s.chomp == "---" } }
+      system("mdformat", "--wrap", "keep", *files, out: File::NULL, err: File::NULL) unless files.empty?
+    end
+
+    def mdformat_gfm?
+      `mdformat --version 2>/dev/null`.include?("mdformat_gfm")
+    end
+
+    # A page that links to a file no longer in the tree is a broken wiki. Say
+    # so on stderr rather than shipping the dead link quietly.
+    def report_missing_sources
+      (@missing.uniq.map { |p| "linked path does not exist: #{p}" } + @problems.uniq).then do |all|
+        next if all.empty?
+
+        warn "wiki-gen: WARNING, #{all.size} problem(s):"
+        all.sort.each { |p| warn "  #{p}" }
+        warn "Fix the entry in #{@config_path} or bin/wiki_gen/pages.rb, or restore the file."
+      end
+    end
+  end
+end
+
+# Renderers live in a separate file so the engine stays generic.
+require_relative "wiki_gen/pages"
+
+if $PROGRAM_NAME == __FILE__
+  options = { link_style: "repo", check: false, format: true, config: WikiGen::DEFAULT_CONFIG }
+  OptionParser.new do |o|
+    o.banner = "Usage: bin/wiki-gen [options]"
+    o.on("--out DIR", "Output directory (default: project.out in the config)") { |v| options[:out] = File.expand_path(v) }
+    o.on("--config FILE", "IA file, repo-relative (default: #{WikiGen::DEFAULT_CONFIG})") { |v| options[:config] = v }
+    o.on("--link-style STYLE", %w[repo wiki], "repo (.md links) or wiki (extension-less)") { |v| options[:link_style] = v }
+    o.on("--[no-]format", "Run mdformat over the output (default: yes, when mdformat-gfm is installed)") do |v|
+      options[:format] = v
+    end
+    o.on("--ref REF", "Git ref that source links point at (default: project.ref in the config)") { |v| options[:ref] = v }
+    o.on("--check", "Regenerate into a temp dir and diff against the current output") { options[:check] = true }
+    o.on("-h", "--help") do
+      puts o
+      exit 0
+    end
+  end.parse!
+
+  args = options.slice(:config, :link_style, :format, :ref)
+  if options[:check]
+    current = options[:out] || WikiGen::Generator.new(**args).out
+    Dir.mktmpdir("wiki-gen") do |tmp|
+      WikiGen::Generator.new(out: tmp, **args).run
+      diff = `diff -ru #{Shellwords.escape(current)} #{Shellwords.escape(tmp)} 2>&1`
+      if diff.strip.empty?
+        puts "#{current} is up to date."
+        exit 0
+      end
+      puts diff
+      warn "\n#{current} is STALE: run bin/wiki-gen"
+      exit 1
+    end
+  else
+    gen = WikiGen::Generator.new(out: options[:out], **args)
+    count = gen.run
+    puts "Generated #{count} pages"
+  end
+end
