@@ -3,6 +3,12 @@
 # OpenLanes::Agents
 
 ```mermaid
+---
+config:
+  layout: elk
+  theme: forest
+---
+
 classDiagram
   class OpenLanes__Agents__Agent["Agent"]
   class OpenLanes__Agents__Dealing["Dealing"]
