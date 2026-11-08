@@ -243,6 +243,28 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "refactor.threshold" do
+      it "defaults to R6's fifty percent" do
+        expect([config.refactor_threshold, config.refactor_percent]).to eq([nil, 50])
+      end
+
+      it "reads the file and writes it back" do
+        openlanes_yml("refactor:\n  threshold: 30\n")
+        expect([config.refactor_percent, config.to_yaml]).to match([30, /refactor:\n  threshold: 30/])
+      end
+
+      {
+        "an unknown key" => ["refactor:\n  share: 2\n", /refactor\.share: unknown key; known: threshold/],
+        "over a hundred" => ["refactor:\n  threshold: 120\n", /refactor\.threshold: 120 is not a whole percent/],
+        "not a mapping"  => ["refactor: 5\n", /refactor: must be a mapping/]
+      }.each do |label, (text, message)|
+        it "refuses #{label}" do
+          openlanes_yml(text)
+          expect { config }.to raise_error(OpenLanes::Error, message)
+        end
+      end
+    end
+
     describe "redis_backoff" do
       it "is empty when the file says nothing, so Live::Outage applies its defaults" do
         expect(config.redis_backoff).to eq({})
