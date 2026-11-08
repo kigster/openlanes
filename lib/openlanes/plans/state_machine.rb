@@ -434,21 +434,31 @@ module OpenLanes
       # @return [Symbol, nil] the state one step back, nil when there is none
       def previous = RETREAT[key]
 
-      # Move the folder one step back along the spine (W9).
+      # Move the folder back to the state the work started from (W9): one
+      # step back along the spine, or nowhere when it is already there. An
+      # agent without `starts_as` never moved the folder, and stepping back
+      # from where it still stood sent the plan one phase too far (issue
+      # #173), so the caller names the state rather than assuming one step.
       #
+      # @param to [Symbol, nil] this state, or the one {#previous} to it;
+      #   nil means {#previous}
       # @return [OpenLanes::Plans::Status] the state now occupied
-      # @raise [OpenLanes::Plans::StateMachine::Refused] when nothing is
-      #   behind this state, or the folder's contents do not justify it
-      def retreat!
-        refusal = retreat_refusal and raise Refused, refusal
-
-        aasm.fire!(:step_back)
+      # @raise [OpenLanes::Plans::StateMachine::Refused] when `to` is neither,
+      #   or the folder's contents do not justify it
+      def retreat!(to = previous)
+        refusal = retreat_refusal(to) and raise Refused, refusal
+        aasm.fire!(:step_back) unless to == key
         status
       end
 
+      # @param to [Symbol, nil] see {#retreat!}
       # @return [String, nil] why {#retreat!} would be refused, nil when it would not
-      def retreat_refusal
-        to = previous or return "#{describe(key)} has no state behind it to go back to"
+      def retreat_refusal(to = previous)
+        to ||= previous
+        return nil if to == key
+
+        behind = previous or return "#{describe(key)} has no state behind it to go back to"
+        return "#{describe(key)} cannot go back to #{describe(to)}, only to #{describe(behind)}" unless to == behind
         return nil if aasm.may_fire_event?(:step_back)
 
         STATUS_BY_KEY.fetch(to).violation(subject) || "#{describe(key)} cannot go back to #{describe(to)}"
