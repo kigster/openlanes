@@ -60,10 +60,11 @@ module OpenLanes
         root = Dir.mktmpdir("openlanes-eval-")
         begin
           plans = build(root)
-          result = executor(root).call(@agent, start(plans), root:)
+          handle = Execution::Executor::Handle.new
+          result = executor(root).call(@agent, start(plans), root:, handle:)
           Lifecycle.resync_dirs(tree: Plans.tree(plans)).call(commit: true)
           found = Plans.tree(plans).find(ORDINAL)
-          run = Run.new(seconds: result.seconds, tokens: result.fresh)
+          run = Run.new(seconds: result.seconds, tokens: result.fresh, answer: Execution.answer(handle.trace))
           score = Scorer.new(@kase, registry: @registry)
                         .call(folder: found&.feature&.path || File.join(plans, "missing"), run:, repo: root)
           Outcome.new(score:, result:, root: @keep ? root : nil)

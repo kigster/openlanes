@@ -103,7 +103,8 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Web : 2
   OpenLanes__Evals ..> OpenLanes : 6
   OpenLanes__Evals ..> OpenLanes__Agents : 3
-  OpenLanes__Evals ..> OpenLanes__Execution : 1
+  OpenLanes__Evals ..> OpenLanes__Arbitration : 4
+  OpenLanes__Evals ..> OpenLanes__Execution : 2
   OpenLanes__Evals ..> OpenLanes__Lifecycle : 1
   OpenLanes__Evals ..> OpenLanes__Plans : 11
   OpenLanes__Events ..> OpenLanes : 1
