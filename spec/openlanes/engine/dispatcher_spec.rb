@@ -1013,11 +1013,24 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     context "when backend-coder finishes while frontend-coder is still running" do
       let(:seen) { [] }
       let(:alive) { [] }
-      let(:backend_done) { Queue.new }
+      # The run's dispatcher, handed over before it runs.
+      let(:running) { [] }
+
+      # Polls until the dispatcher has settled backend-coder: its attempt is
+      # recorded only after the hold (or, before #172, the rename) was made.
+      # A fixed sleep stood in for this and could lose the race under load.
+      def await_backend_settled(deadline: 5)
+        give_up = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
+        until running.first.attempts.any? { it.agent == "backend-coder" }
+          raise "backend-coder was not settled within #{deadline}s" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > give_up
+
+          sleep(0.01)
+        end
+      end
 
       # backend-coder signs and returns at once; frontend-coder waits until
-      # the dispatcher has had several ticks to settle backend-coder, then
-      # looks for the folder its prompt named, and signs (or fails) there.
+      # the dispatcher has settled backend-coder, then looks for the folder
+      # its prompt named, and signs (or fails) there.
       def pair_executor(frontend_ok:)
         signing = Mutex.new
         result = ->(ok) { OpenLanes::Execution::Executor::Result.new(ok:, note: "done", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0) }
@@ -1025,8 +1038,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           seen << [agent.name, subject.status.key, round]
           file = File.join(subject.feature.path, "pull-requests.md")
           if agent.name == "frontend-coder" && alive.empty?
-            backend_done.pop
-            sleep(0.4)
+            await_backend_settled
             alive << File.directory?(subject.feature.path)
             file = File.join(path_of("001.00"), "pull-requests.md")
             next result.call(false) unless frontend_ok
@@ -1034,7 +1046,6 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           signing.synchronize do
             OpenLanes::Plans::Ledger.append(file, "> [#{stamp}] [ agent: #{agent.name}   status: Completed, round #{round} ]")
           end
-          backend_done << true if agent.name == "backend-coder"
           result.call(true)
         }
       end
@@ -1048,7 +1059,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           state:,
           sleeper:  ->(_s) { sleep(0.05) })
         allow(runner).to receive(:jobs).and_return(2)
-        runner.call
+        runner.call { running << it }
       end
 
       it "keeps the folder where frontend-coder's prompt put it, then holds and advances to 🟢 once it signs" do
