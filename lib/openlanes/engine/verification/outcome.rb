@@ -391,8 +391,15 @@ module OpenLanes
                   "and the plan goes on once CI settles")
         end
 
-        # @return [Boolean] whether CI has been pending past the ceiling, timed
-        #   as {#registering?} is, from the round's publication record
+        # Timed as {#registering?} is, from the round's publication record,
+        # for every pull request of the plan. That is the plan's own push; a
+        # sibling from another branch pushed hours later is said stalled as
+        # soon as its CI is pending, and rewriting the record restarts the
+        # clock. Both are tolerable for a warning that moves nothing. Timing
+        # from the check's own start would need `startedAt` through
+        # {Vcs::GitHub#checks} and {Vcs::CiGate}, which read only buckets today.
+        #
+        # @return [Boolean] whether CI has been pending past the ceiling
         def stalled?(round) = (age = verified_for(round)) ? age > pending_limit : false
 
         # @return [Numeric] seconds
