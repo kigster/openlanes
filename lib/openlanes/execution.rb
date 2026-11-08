@@ -10,6 +10,10 @@ module OpenLanes
     # @return [OpenLanes::Execution::Executor]
     def executor(**) = Executor.new(**)
 
+    # @param trace [String, nil] a trace path, as an executor handle names it
+    # @return [String] the agent's final answer, empty when none was read
+    def answer(trace) = Trace.answer(trace)
+
     # Run the block with Ctrl-C turned into a cooperative interrupt.
     #
     # @param signals [Array<String>] handled as Ctrl-C is
