@@ -197,6 +197,29 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    # Issue #175
+    describe "ci_pending_hours" do
+      it "surfaces CI still pending after four hours when the file says nothing" do
+        expect([config.ci_pending_hours, config.ci_pending_limit]).to eq([nil, 4 * 3600.0])
+      end
+
+      it "reads any positive number of hours" do
+        openlanes_yml("ci_pending_hours: 0.5\n")
+        expect(config.ci_pending_limit).to eq(1800.0)
+      end
+
+      it "writes itself back out" do
+        expect(described_class.new(ci_pending_hours: 2).to_yaml).to eq("ci_pending_hours: 2\n")
+      end
+
+      { "zero" => "0", "a negative" => "-2", "a word" => "soon" }.each do |label, value|
+        it "refuses #{label}" do
+          openlanes_yml("ci_pending_hours: #{value}\n")
+          expect { config }.to raise_error(OpenLanes::Error, /ci_pending_hours: .* is not a number of hours above zero/)
+        end
+      end
+    end
+
     # W32
     describe "redis_outage_hours" do
       it "gives up on a lost Redis after an hour when the file says nothing" do

@@ -18,6 +18,8 @@ module OpenLanes
   #     initial: 1              # seconds; the Fibonacci gaps are its multiples
   #     cap: 30                 # seconds, the longest gap between two asks
   #     jitter: true            # full jitter: each gap drawn from [0, gap)
+  #   ci_pending_hours: 4       # how long CI may stay pending after verification
+  #                             # before the plan is surfaced to a person; any positive number
   #   desired_codebase_quality: high  # standard or mvp (R4): what a review that is ok but
   #                             # not perfect does, and M5's column of defaults
   #   review:
@@ -86,6 +88,9 @@ module OpenLanes
   # @!attribute [r] redis_outage_hours
   #   @return [Numeric, nil] `redis_outage_hours` as the file says it; read
   #     {#outage_limit}, which applies the default
+  # @!attribute [r] ci_pending_hours
+  #   @return [Numeric, nil] `ci_pending_hours` as the file says it; read
+  #     {#ci_pending_limit}, which applies the default
   # @!attribute [r] redis_backoff
   #   @return [Hash{Symbol => Object}] `redis_backoff:` as typed, keyed
   #     :initial, :cap, :jitter; {Live::Outage} applies the defaults
@@ -141,6 +146,7 @@ module OpenLanes
     :adapter,
     :redis_url,
     :redis_outage_hours,
+    :ci_pending_hours,
     :redis_backoff,
     :commands,
     :merge_by,
@@ -157,7 +163,7 @@ module OpenLanes
     :events_dir,
     :review_adapters) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
-      redis_outage_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
+      redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
       desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: []) # rubocop:disable Naming/MethodParameterName
       super
     end
@@ -182,6 +188,13 @@ module OpenLanes
     #
     # @return [Float]
     def outage_limit = (redis_outage_hours || Config::DEFAULT_OUTAGE_HOURS) * 3600.0
+
+    # Seconds CI may stay pending on a verified pull request before the plan
+    # is surfaced to a person rather than waited on in silence (issue #175):
+    # four hours, unless `ci_pending_hours` says otherwise.
+    #
+    # @return [Float]
+    def ci_pending_limit = (ci_pending_hours || Config::DEFAULT_CI_PENDING_HOURS) * 3600.0
 
     # Who merges a pull request once its review passed (M4). A person, unless
     # the file says otherwise, since merging is the one thing no agent may do.
@@ -216,6 +229,7 @@ module OpenLanes
     def to_yaml
       settings = { "project" => project, "starts" => starts&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "adapter" => adapter, "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
+                   "ci_pending_hours" => ci_pending_hours,
                    "redis_backoff" => (redis_backoff.transform_keys(&:to_s) unless redis_backoff.empty?),
                    "desired_codebase_quality" => desired_codebase_quality&.to_s, "merge" => merge_settings,
                    "ci" => ci && { "provider" => ci[:provider].to_s, "config" => ci[:config] }.compact,
@@ -245,7 +259,7 @@ module OpenLanes
     FILE = Project::FILE
 
     # Every key the top level may hold.
-    KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours redis_backoff desired_codebase_quality merge commands app plans
+    KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
               questions coverage events ci stack architecture_decisions review].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
@@ -269,6 +283,10 @@ module OpenLanes
 
     # {#outage_limit} when the file names none (W32).
     DEFAULT_OUTAGE_HOURS = 1
+
+    # {#ci_pending_limit} when the file names none: longer than any healthy
+    # run, short enough that a stuck runner is noticed the same working day.
+    DEFAULT_CI_PENDING_HOURS = 4
 
     # Every key `redis_backoff:` may hold.
     BACKOFF_KEYS = %w[initial cap jitter].freeze
@@ -345,7 +363,8 @@ module OpenLanes
           jobs:      jobs(settings, path),
           adapter:   adapter(settings, path),
           redis_url: redis_url(settings, path),
-          redis_outage_hours: redis_outage_hours(settings, path),
+          redis_outage_hours: hours(settings, "redis_outage_hours", path),
+          ci_pending_hours: hours(settings, "ci_pending_hours", path),
           redis_backoff: redis_backoff(settings["redis_backoff"], path),
           desired_codebase_quality: quality(settings, path),
           **merge(settings["merge"], path),
@@ -425,12 +444,13 @@ module OpenLanes
 
       # Any positive number: half an hour is `0.5`.
       #
+      # @param key [String] `redis_outage_hours` or `ci_pending_hours`
       # @return [Numeric, nil]
-      def redis_outage_hours(settings, path)
-        value = settings["redis_outage_hours"]
+      def hours(settings, key, path)
+        value = settings[key]
         return value if value.nil? || (value.is_a?(Numeric) && value.positive?)
 
-        fail_with(path, "redis_outage_hours: #{value.inspect} is not a number of hours above zero")
+        fail_with(path, "#{key}: #{value.inspect} is not a number of hours above zero")
       end
 
       # @return [Hash{Symbol => Object}] `redis_backoff:`, checked key by key

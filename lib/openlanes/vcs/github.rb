@@ -414,6 +414,18 @@ module OpenLanes
         labels(number:, repo:)
       end
 
+      # Take one label off, adding none: {#swap_label} always puts a verdict
+      # on, which is wrong for a pull request whose own code was not judged.
+      # The caller asks {#labels} first, since removing a label the pull
+      # request does not carry fails the edit.
+      #
+      # @param number [Integer]
+      # @param name [String] the label's name
+      # @param repo [String, nil]
+      # @return [void]
+      # @raise [OpenLanes::Error]
+      def remove_label(number:, name:, repo: nil) = edit_labels(number, [], [name.to_s], repo)
+
       # @param number [Integer]
       # @param repo [String, nil]
       # @return [Array<String>] label names on the pull request

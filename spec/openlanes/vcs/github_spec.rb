@@ -550,6 +550,18 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       expect { github.swap_label(number: 12, add: label) }.to raise_error(OpenLanes::Error, /could not label #12: no such PR/)
     end
 
+    it "takes one label off, adding none, with -R" do
+      github.remove_label(number: 12, name: "ready-to-merge", repo: "o/r")
+
+      expect(argvs).to eq([%w[gh pr edit 12 --remove-label ready-to-merge -R o/r]])
+    end
+
+    it "names the pull request when a label cannot be taken off" do
+      allow(command).to receive(:run).and_raise(exit_error("HTTP 403"))
+
+      expect { github.remove_label(number: 12, name: "ready-to-merge") }.to raise_error(OpenLanes::Error, /could not label #12: HTTP 403/)
+    end
+
     describe "#label_colours" do
       it "lists the repository's labels by name, colours in lower case" do
         allow(command).to receive(:run).and_return(
