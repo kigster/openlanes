@@ -9,7 +9,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
   subject(:outcome) do
     described_class.new(root: repo_root,
       publisher: OpenLanes::Vcs::Publisher.new(root: repo_root, dry_run: false),
-      github: OpenLanes::Vcs::GitHub.new,
+      github:,
       outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents:),
       agents:,
       review:,
@@ -20,6 +20,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       clock: -> { now })
   end
 
+  let(:github) { OpenLanes::Vcs::GitHub.new }
   let(:now) { Time.now }
   let(:review) { OpenLanes::Vcs::Review.new(github: OpenLanes::Vcs::GitHub.new) }
 
@@ -360,12 +361,19 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         subject(:driver) do
           OpenLanes::Engine::Verification::Driver.new(outcome:,
             worktree: instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout),
-            clock:    -> { 0.0 })
+            clock:    -> { 0.0 },
+            interval: 0)
         end
 
         def settle!
           outcome.pass(checkout:, plan:, pull: pr, round:)
           round.publish!("abc1234")
+          look_again!
+        end
+
+        # Across two polls too: PR #1 labelled while #2 is pending, then #2
+        # red, must not leave #1 ready-to-merge on a rejected plan.
+        def look_again!
           driver.poll([plan])
           driver.join
           driver.poll([plan]).first&.result
@@ -421,6 +429,40 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
             expect(result.note).to include("waiting on CI for PR #2")
             expect(labels).to eq(%w[ready-to-merge])
             expect(plan.status.key).to eq(:verifying)
+          end
+        end
+
+        # Across two polls: PR #1 is labelled while #2 is pending, then #2
+        # goes red. #1 must not keep ready-to-merge on a rejected plan, or
+        # the next verification would take it as already labelled.
+        it "rejects a sibling gone red a poll later, and takes ready-to-merge off the one labelled before" do
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+          waiting = settle!
+          labelled = labels.dup
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
+          result = look_again!
+
+          aggregate_failures do
+            expect([waiting.kind, labelled]).to eq([:waiting, %w[ready-to-merge]])
+            expect(result).to have_attributes(kind: :rejected, to: :rejected)
+            expect(result.note).to include("ready-to-merge taken off PR #1")
+            expect(labels).not_to include("ready-to-merge")
+            expect(sibling_labels).to eq(%w[review-rejected])
+            expect(plan.status.key).to eq(:rejected)
+          end
+        end
+
+        it "names a pull request whose ready-to-merge could not be taken off, and still sends the plan back" do
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+          settle!
+          edit_gh { it["prs"]["2"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
+          allow(github).to receive(:remove_label).and_raise(OpenLanes::Error, "could not label #1: offline")
+          result = look_again!
+
+          aggregate_failures do
+            expect(result).to have_attributes(kind: :rejected, to: :rejected)
+            expect(result.note).to include("PR #1 (could not: could not label #1: offline)")
+            expect(labels).to include("ready-to-merge")
           end
         end
       end

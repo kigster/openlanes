@@ -186,7 +186,10 @@ module OpenLanes
           number = number_of(pull)
           @github.comment(number:, body:, repo: Vcs::GitHub.repo_of(pull.url))
           labelled = @review.call(pr: pull.url || number, label: Plans::ReviewLabel::REJECTED)
-          send_back(plan, pull, body, labelled, counted:)
+          # Asked before the move: the rename leaves +plan+'s path behind.
+          unready = unready_siblings(plan, number)
+          result = send_back(plan, pull, body, labelled, counted:)
+          unready ? result.with(note: "#{result.note}; #{unready}") : result
         end
 
         # verifier verified it: keep `final.png`, and push it.
@@ -424,6 +427,34 @@ module OpenLanes
 
             @github.labels(number: number_of(pull), repo: Vcs::GitHub.repo_of(pull.url)).include?(Plans::ReviewLabel::READY_TO_MERGE.name)
           end
+        end
+
+        # A rejected plan's other open pull requests lose `ready-to-merge`.
+        # One labelled in an earlier poll, while a sibling's CI was still
+        # pending, would otherwise keep it after that sibling went red, and
+        # the next verification would take it as already labelled ({#look})
+        # without reading its CI or measuring it again. A pull request whose
+        # label cannot be taken off is named, not fatal: the rejection has
+        # already been commented and labelled, and must still send the plan back.
+        #
+        # @param plan [OpenLanes::Plans::Subject]
+        # @param rejected [Integer] the pull request just labelled rejected
+        # @return [String, nil] what was taken off, or could not be; nil when nothing carried it
+        def unready_siblings(plan, rejected)
+          name = Plans::ReviewLabel::READY_TO_MERGE.name
+          said = plan.pull_requests.select(&:open?).filter_map do |pull|
+            number = number_of(pull)
+            next if number == rejected
+
+            repo = Vcs::GitHub.repo_of(pull.url)
+            next unless @github.labels(number:, repo:).include?(name)
+
+            @github.remove_label(number:, name:, repo:)
+            "##{number}"
+          rescue OpenLanes::Error => e
+            "##{number} (could not: #{e.message.lines.first.to_s.strip})"
+          end
+          "#{name} taken off PR #{said.join(", ")}" unless said.empty?
         end
 
         # @return [Boolean]
