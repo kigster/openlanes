@@ -22,12 +22,13 @@ module OpenLanes
       option :timeout,
         desc: "Seconds before one agent is abandoned; only tightens an agent's own clock " \
               "(default: the agent's own, else 900)"
-      option :agent, desc: "Only run this one agent"
+      option :agent, desc: "Only run this one agent; answered blocked.md questions are still drained"
       option :prompt,
         desc: "Extra instructions appended to the agent's prompt (only with --agent); " \
               "a path to an existing text file under #{Engine::RunWorkflow::PROMPT_PATH_LIMIT} characters is read instead"
       option :skip,
         desc: "Never assign this agent; its plans wait, the rest of the pipeline runs. " \
+              "Answered blocked.md questions are still drained, even with --skip unblocker. " \
               "Comma separated for several"
       option :model,
         desc: "Model for every agent this run, overriding each agent's own frontmatter and spec.md " \

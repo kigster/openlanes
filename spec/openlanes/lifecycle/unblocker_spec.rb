@@ -189,6 +189,41 @@ RSpec.describe OpenLanes::Lifecycle::Unblocker, :tree do
       end
     end
 
+    # Issue 168: the sweep's 💤 named its trigger as this very drain, and the
+    # note outlived it, so the folder never left 💤.
+    context "with a plan the aging sweep deferred" do
+      let(:subject_plan) do
+        path = blocked_plan(body: "## B1. Which vendor\n").feature.path
+        OpenLanes::Plans::PlanState.for(path).sign!(agent: "backend-coder",
+          round: 1,
+          status: "Blocked",
+          note: "x",
+          at: Time.now - (20 * 86_400))
+        OpenLanes::Lifecycle.age(tree: tree.reload)
+        File.write(File.join(tree.reload.find("001.00").feature.path, "blocked.md"),
+          "## B1. Which vendor\n\n## A1. Ours\n\nDecided by the CTO, 2026-10-13.\n")
+        tree.reload.find("001.00")
+      end
+
+      it "retires the aging note with the block, so the next resync takes the folder out of 💤" do
+        expect(subject_plan.status.key).to eq(:deferred)
+        drained
+        OpenLanes::Lifecycle.resync_dirs(tree: tree.reload).call(commit: true)
+
+        aggregate_failures do
+          expect(drained.cleared?).to be(true)
+          expect(tree.reload.find("001.00").status.key).not_to eq(:deferred)
+          expect(tree.find("001.00").file?("delayed.md")).to be(false)
+        end
+      end
+
+      it "keeps the note while a question is still open" do
+        described_class.new(tree:, agent:, executor:, commit: true).drain(subject_plan)
+
+        expect(tree.reload.find("001.00").read("delayed.md")).to include("Deferred by aging")
+      end
+    end
+
     context "with a dry run" do
       let(:applying) { false }
 
