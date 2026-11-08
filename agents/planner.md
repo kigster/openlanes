@@ -43,6 +43,11 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
    - `## Frontend`: the front-end units, each under its own `###` heading. `frontend-coder` builds from it. If there are none, keep the section with one line saying so and no `###` heading: `frontend-coder` is only started when this section holds a unit heading, so an empty front end costs nothing;
    - `## HTTP surface`: whether the plan adds or changes an HTTP API. When it does, `backend-coder` writes an `openapi.yaml` beside `contract.md`, and `openlanes api docs` lists it.
 1. If `spec.md` frontmatter says `frontend: false`, there is no front-end work in this plan. Give every unit to the back end.
+1. Decide how the plan may run beside the others (R6), and write it as `execution:` in `plan.md`'s frontmatter:
+   - A refactor is a spec whose frontmatter says `implementation_requirement: refactor` (or lists `refactor` under `implementation_requirements`), or one that asks to move, rename or restructure code across the codebase.
+   - For a refactor, estimate the share of the codebase it touches: files it changes over `git ls-files | wc -l`, and lines in those files over the lines of every tracked file. Over the threshold by either measure, write `execution: global-lock-required`; otherwise, and for anything that is not a refactor, `execution: concurrent`. The threshold is `refactor.threshold` in `.openlanes.yml`, 50 percent when unset.
+   - State both shares and the threshold in one line under the frontmatter, so a reviewer can check the call.
+   - A `global-lock-required` plan is built alone: the dispatcher hands it to backend-coder only once no other plan holds a branch or pull request, and starts nothing else until it is merged.
 
 ## Size
 

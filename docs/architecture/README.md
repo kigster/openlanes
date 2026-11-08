@@ -38,7 +38,7 @@ classDiagram
   OpenLanes ..> OpenLanes__Container : 1
   OpenLanes ..> OpenLanes__Coverage : 1
   OpenLanes ..> OpenLanes__Live : 1
-  OpenLanes ..> OpenLanes__Plans : 3
+  OpenLanes ..> OpenLanes__Plans : 4
   OpenLanes ..> OpenLanes__Setup : 1
   OpenLanes ..> OpenLanes__UI : 1
   OpenLanes__Adapters ..> OpenLanes : 1
@@ -96,7 +96,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 10
   OpenLanes__Engine ..> OpenLanes__Live : 11
   OpenLanes__Engine ..> OpenLanes__Log : 3
-  OpenLanes__Engine ..> OpenLanes__Plans : 81
+  OpenLanes__Engine ..> OpenLanes__Plans : 82
   OpenLanes__Engine ..> OpenLanes__Supervision : 2
   OpenLanes__Engine ..> OpenLanes__UI : 25
   OpenLanes__Engine ..> OpenLanes__Vcs : 10
@@ -136,7 +136,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Lifecycle : 6
   OpenLanes__Live ..> OpenLanes__Plans : 22
   OpenLanes__Live ..> OpenLanes__UI : 7
-  OpenLanes__Plans ..> OpenLanes : 19
+  OpenLanes__Plans ..> OpenLanes : 20
   OpenLanes__Plans ..> OpenLanes__Adapters : 1
   OpenLanes__Plans ..> OpenLanes__Agents : 3
   OpenLanes__Plans ..> OpenLanes__UI : 2

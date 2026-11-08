@@ -90,6 +90,7 @@ classDiagram
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Dependencies["OpenLanes::Plans::Dependencies"]
+  class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Journal__Entry["OpenLanes::Plans::Journal::Entry"]
   class OpenLanes__Plans__LastKnownState["OpenLanes::Plans::LastKnownState"]
   class OpenLanes__Plans__Ledger__Entry["OpenLanes::Plans::Ledger::Entry"]
@@ -271,6 +272,7 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Resync__Dirs : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Plans__GlobalLock : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__StateMachine : uses
