@@ -62,6 +62,33 @@ RSpec.describe OpenLanes::Lifecycle::Resync::Dirs, :tree do
       it "never proposes Approved & Merged" do
         expect(changes.map(&:to)).not_to include(:approved)
       end
+
+      # In Review's own invariant fails too (no pull request is open), but
+      # what still fits (Planned, Building) is in its family, and inside a
+      # family the current name wins. Pinned so a change to that existing
+      # rule shows up here rather than as a silent rename.
+      it "keeps the In Review name" do
+        resync.call(commit: true)
+
+        expect(changes).to be_empty
+        expect(names).to eq(["001.00━━👀━━❯closed-work"])
+      end
+    end
+
+    context "when a closed-unmerged In Review folder has no plan.md" do
+      let!(:tree) do
+        plans do |t|
+          t.plan "001.00",
+            :in_review,
+            "closed-bare",
+            files: { "spec.md" => spec_body },
+            prs:   [t.pr(7, "Closed it", "Closed 🔴")]
+        end
+      end
+
+      it "walks back to New, the only state that still holds" do
+        expect(changes.map { |c| [c.from, c.to] }).to eq([%i[in_review new]])
+      end
     end
 
     context "when a folder has outgrown its emoji" do
