@@ -48,6 +48,8 @@ Pick flags from the situation, and read `openlanes run --help` for the rest:
 | a short burst, to check one phase                | `--until <state>`, e.g. `--until planned` |
 | Redis elsewhere                                  | `--redis-url <url>`                  |
 
+`--agent` and `--skip` choose who builds, not who drains: answered `blocked.md` questions are still folded back by the unblocker, even under `--skip unblocker`.
+
 Keep the defaults (`--isolation worktree`, pushing on) whenever the user wants plans reviewed. `--isolation shared` and `--no-git-push` open no pull request, so every plan stops at 🟢 and the reviewer never starts; `openlanes run` warns when that is the case. Use them only when the user asks to keep work local, and say that review waits for a PR they open (`openlanes resync prs` then records it).
 
 ## 2. Run it

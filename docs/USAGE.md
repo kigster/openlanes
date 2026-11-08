@@ -152,6 +152,7 @@ openlanes run 005 --isolation shared           # one checkout, one agent at a ti
 
 - The loop stops when a full round changes no plan's state, or when every plan named is done, blocked, stopped by `--until`, or out of rounds.
 - Agents start without your personal plugins, skills, hooks and MCP servers, which saves context and start-up time on every turn. `--user-config` lets them back in.
+- `--agent` and `--skip` choose who builds, not who drains. Answered questions in `blocked.md` are folded back by the unblocker from the full agent registry, so they drain even under `--agent X` or `--skip unblocker`.
 
 ![A terminal view of a run: backend-coder and frontend-coder building plan 001.00 together while researcher reads the spec of plan 002.00, each with its model, tokens, elapsed time and time left](img/openlanes-running.avif)
 
