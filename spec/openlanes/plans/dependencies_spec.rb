@@ -293,6 +293,25 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       end
     end
 
+    # 🚫 and 😱 are past the build, so a plan in either used to win the
+    # group's turn over a ⭐ sibling, and no agent handles either (#169).
+    { rewrite: "rewrite.md", rolled_back: "rollback.md" }.each do |state, note|
+      context "when a plan in the group is #{state}, waiting on a person" do
+        before do
+          plans do |t|
+            t.plan "034.00", state, "parser", files: { "spec.md" => spec_body, note => "# Why\n" }
+            t.plan "040.00", :planned, "lexer", files: { "spec.md" => spec_body }
+            t.plan "050.00", :planned, "printer", files: { "spec.md" => needs("034.00", "040.00") }
+          end
+        end
+
+        it "never holds the group's turn" do
+          expect(deps.head("040.00")).to eq("040.00")
+          expect(deps.reason("040.00")).to be_nil
+        end
+      end
+    end
+
     context "when a later plan in the group is already under way" do
       before do
         plans do |t|

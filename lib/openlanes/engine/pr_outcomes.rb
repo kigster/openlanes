@@ -95,11 +95,14 @@ module OpenLanes
 
       # Closed unmerged: the row says so, and a plan with nothing merged and
       # nothing open is ❌, with `discarded-reason.md` saying who closed what,
-      # and dependents take over what it was waiting for (X9).
+      # and dependents take over what it was waiting for (X9). A 🚫 plan is
+      # the exception: the review scrapped its pull requests and kept the
+      # plan, so closing them is the expected next step, and discarding the
+      # plan for it threw away the work a person was about to replan (#169).
       def closed(outcome)
         subject = find(outcome.plan) or return nil
         record(subject, outcome.pr, "closed")
-        return applied(outcome, nil, "closed unmerged") if removed?(subject)
+        return applied(outcome, nil, "closed unmerged") if removed?(subject) || scrapped?(subject)
 
         subject = find(outcome.plan)
         prs = subject.pull_requests
@@ -134,6 +137,16 @@ module OpenLanes
       # @param subject [Plans::Subject]
       # @return [Boolean]
       def removed?(subject) = Plans::REMOVED.include?(subject.status.key)
+
+      # The review scrapped this plan's pull requests and kept the plan, so a
+      # person closing them on GitHub leaves it at 🚫, for that person to
+      # send back to ⭐ once nothing is open. 😱 needs no such exception: it is
+      # entered only from 🚀, where a pull request already merged, and a merge
+      # on record keeps {#closed} from discarding the plan.
+      #
+      # @param subject [Plans::Subject]
+      # @return [Boolean]
+      def scrapped?(subject) = subject.status.key == :rewrite
 
       # Recorded only when something changed: the watch asks every 15
       # seconds, and a row already saying merged is not a second merge.
