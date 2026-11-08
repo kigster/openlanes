@@ -11,13 +11,24 @@ module OpenLanes
       # @param roster [Array<OpenLanes::Agents::Agent>, nil] a pre-selected list, used
       #   by {#only} and {#without} to derive a narrower roster; nil (the
       #   default) loads every definition in `dir`
-      def initialize(dir: DEFAULT_DIR, roster: nil)
+      # @param whole [OpenLanes::Agents::Registry, nil] the roster this one
+      #   was narrowed from; nil when it is not narrowed
+      def initialize(dir: DEFAULT_DIR, roster: nil, whole: nil)
         @dir = File.expand_path(dir)
         @all = roster
+        @whole = whole
       end
 
       # @return [String]
       attr_reader :dir
+
+      # The roster before {#only} or {#without} narrowed it. A skipped agent
+      # still decides who covers its state: `--skip frontend-coder` must leave
+      # a plan at 🎨 unassigned, not hand it to backend-coder to submit
+      # without its interface.
+      #
+      # @return [OpenLanes::Agents::Registry]
+      def whole = @whole || self
 
       # @return [Array<OpenLanes::Agents::Agent>] in name order
       def all
@@ -36,7 +47,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Registry]
       def only(*names)
         wanted = names.flatten.map(&:to_s)
-        self.class.new(dir:, roster: all.select { |a| wanted.include?(a.name) })
+        self.class.new(dir:, roster: all.select { |a| wanted.include?(a.name) }, whole:)
       end
 
       # A roster without the agents named — what `run --skip` hands the loop.
@@ -47,7 +58,7 @@ module OpenLanes
       # @return [OpenLanes::Agents::Registry]
       def without(*names)
         unwanted = names.flatten.map(&:to_s)
-        self.class.new(dir:, roster: all.reject { |a| unwanted.include?(a.name) })
+        self.class.new(dir:, roster: all.reject { |a| unwanted.include?(a.name) }, whole:)
       end
 
       # Every agent the query could mean. An exact name wins outright; failing
@@ -77,13 +88,22 @@ module OpenLanes
       # @return [Array<OpenLanes::Agents::Agent>]
       def for_status(status) = all.select { |a| a.handles?(status) && !a.read_only? }
 
-      # Everyone on a plan in this state: the agents that work it, plus any
-      # agent whose `holds_at` parks the plan here after it finished its half.
+      # The agents that take a plan in this state when nobody in
+      # {#for_status} would be given it; see {Routing.offer}.
+      #
+      # @param status [OpenLanes::Plans::Status]
+      # @return [Array<OpenLanes::Agents::Agent>]
+      def covering(status) = all.select { |a| a.covers?(status) && !a.read_only? }
+
+      # Everyone on a plan in this state: the agents that work it or cover it,
+      # plus any agent whose `holds_at` parks the plan here after it finished its half.
       # frontend-coder resuming a plan at 🎨 still needs backend-coder's messages in the mailbox.
       #
       # @param status [OpenLanes::Plans::Status]
       # @return [Array<OpenLanes::Agents::Agent>]
-      def team_for(status) = all.select { |a| !a.read_only? && (a.handles?(status) || a.holds_at == status.key) }
+      def team_for(status)
+        all.select { |a| !a.read_only? && (a.handles?(status) || a.covers?(status) || a.holds_at == status.key) }
+      end
 
       private
 
@@ -97,6 +117,7 @@ module OpenLanes
           name:          meta["name"].to_s,
           description:   meta["description"].to_s,
           handles:       Array(meta["handles"]).map { |s| s.to_s.to_sym },
+          covers:        Array(meta["covers"]).map { |s| s.to_s.to_sym },
           advances_to:   meta["advances_to"]&.to_s&.then { |s| s.empty? ? nil : s.to_sym },
           model:         meta["model"],
           allowed_tools: Array(meta["allowed_tools"]).map(&:to_s),

@@ -198,7 +198,7 @@ module OpenLanes
         active = @tree.subjects.select do |s|
           (plans.nil? || plans.include?(s.feature.ordinal)) && !Plans::StateMachine::SETTLED.include?(s.status.key)
         end
-        return Success(nil) if active.empty? || active.any? { |s| agent.handles?(s.status) }
+        return Success(nil) if active.empty? || active.any? { |s| agent.handles?(s.status) || agent.covers?(s.status) }
 
         refusal("#{name} handles #{handled(agent).join(", ")}, and no plan in scope is there:\n\n" \
                 "#{takers(active).join("\n")}\n\nName the agent that takes these states, or drop --agent.",
@@ -216,7 +216,7 @@ module OpenLanes
       def takers(active)
         roster = OpenLanes::Agents.registry
         active.map do |s|
-          names = OpenLanes::Agents::Routing.filter(roster.for_status(s.status), s).map(&:name)
+          names = OpenLanes::Agents::Routing.offer(roster, s.status, s).map(&:name)
           verb  = names.size == 1 ? "takes" : "take"
           "  #{s.feature.ordinal} is #{s.status.emoji} #{s.status.label}" \
             "#{" - #{names.join(" and ")} #{verb} it" unless names.empty?}"

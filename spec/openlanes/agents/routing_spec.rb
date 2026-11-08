@@ -86,6 +86,45 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
     end
   end
 
+  # Issue 174: only frontend-coder handles 🎨, so a plan that reached it and
+  # then had its front end switched off, or its lane changed to building,
+  # was offered to nobody and sat there for ever.
+  describe "a plan at Building UI" do
+    let(:building_ui) { OpenLanes::Plans.status(:building_ui) }
+
+    def offered(spec = spec_body)
+      plans { |t| t.plan "001.00", :building_ui, "work", files: { "spec.md" => spec, "plan.md" => "## Frontend\n\n### F1\n" } }
+      described_class.offer(agents, building_ui, subject_plan).map(&:name)
+    end
+
+    it "stays frontend-coder's while the front end is on" do
+      expect(offered).to eq(%w[frontend-coder])
+    end
+
+    it "goes to backend-coder once spec.md switches the front end off" do
+      expect(offered("---\nfrontend: false\n---\n#{spec_body}")).to eq(%w[backend-coder])
+    end
+
+    it "goes to chores-coder once the plan starts at building" do
+      expect(offered("---\nstarts: building\n---\n#{spec_body}")).to eq(%w[chores-coder])
+    end
+
+    it "goes to nobody when the run skips a frontend-coder that would route" do
+      plans { |t| t.plan "001.00", :building_ui, "work", files: { "spec.md" => spec_body, "plan.md" => "## U1\n" } }
+      expect(described_class.offer(agents.without("frontend-coder"), building_ui, subject_plan)).to be_empty
+    end
+
+    it "goes to a backend-coder named alone when the front end is off" do
+      plans { |t| t.plan "001.00", :building_ui, "work", files: { "spec.md" => "---\nfrontend: false\n---\n#{spec_body}", "plan.md" => "## U1\n" } }
+      expect(described_class.offer(agents.only("backend-coder"), building_ui, subject_plan).map(&:name)).to eq(%w[backend-coder])
+    end
+
+    it "offers a state nobody covers exactly what filter does" do
+      plan_with({})
+      expect(described_class.offer(agents, planned, subject_plan).map(&:name)).to eq(routed)
+    end
+  end
+
   # staff-reviewer reads the pull request; with none open there is
   # nothing to review, so the plan waits at 🟢 for one.
   describe "a plan ready for review" do
