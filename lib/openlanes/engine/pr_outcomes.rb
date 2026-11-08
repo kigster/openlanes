@@ -140,7 +140,9 @@ module OpenLanes
 
       # The review scrapped this plan's pull requests and kept the plan, so a
       # person closing them on GitHub leaves it at 🚫, for that person to
-      # send back to ⭐ once nothing is open.
+      # send back to ⭐ once nothing is open. 😱 needs no such exception: it is
+      # entered only from 🚀, where a pull request already merged, and a merge
+      # on record keeps {#closed} from discarding the plan.
       #
       # @param subject [Plans::Subject]
       # @return [Boolean]
