@@ -32,6 +32,7 @@ classDiagram
   class OpenLanes__CLI__Mail__Read["Mail::Read"]
   class OpenLanes__CLI__Mail__Render["Mail::Render"]
   class OpenLanes__CLI__Mail__Send["Mail::Send"]
+  class OpenLanes__CLI__Memory__List["Memory::List"]
   class OpenLanes__CLI__Preview__Registry["Preview::Registry"]
   <<module>> OpenLanes__CLI__Preview__Registry
   class OpenLanes__CLI__Preview__Start["Preview::Start"]
@@ -185,6 +186,7 @@ classDiagram
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__Feature : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor__StartFailed : uses

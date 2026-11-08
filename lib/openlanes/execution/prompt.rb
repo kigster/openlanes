@@ -49,9 +49,12 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param memory [String] the project's lessons for this agent, from
+      #   {Memory.section}; empty with `--no-memory` or when none is for it
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, memory: "")
+        @memory = memory.to_s
         @rebase = rebase
         @max_rejections = max_rejections
         @agent = agent
@@ -88,7 +91,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{@memory}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
