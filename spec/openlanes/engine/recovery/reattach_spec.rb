@@ -43,6 +43,33 @@ RSpec.describe OpenLanes::Engine::Recovery::Reattach, :tree do
     it("carries what was recorded") { expect(found.first.restart).to include("cwd" => dir, "trace" => "t") }
   end
 
+  # What Execution::Rearm weighs: when the dead engine was last seen, and
+  # the tokens it saw the agent spend.
+  describe "what it carries for the clock" do
+    it("carries the dead engine's last heartbeat") { expect(Time.iso8601(found.first.restart["seen_at"])).to be_within(5).of(Time.now) }
+    it("carries no tokens when none were recorded") { expect(found.first.restart).not_to have_key("tokens") }
+
+    context "with tokens recorded" do
+      before do
+        state = OpenLanes::Engine::StateFile.new(path: state_path, pid: dead_pid).load
+        state.record("003.00", agent: "backend-coder", round: 2, up: 40_000, down: 2_000)
+        state.save
+      end
+
+      it("carries up plus down") { expect(found.first.restart["tokens"]).to eq(42_000) }
+    end
+
+    context "with no heartbeat recorded" do
+      before do
+        data = JSON.parse(File.read(state_path))
+        data["run"].delete("heartbeat_at")
+        File.write(state_path, JSON.generate(data))
+      end
+
+      it("carries none") { expect(found.first.restart).not_to have_key("seen_at") }
+    end
+  end
+
   context "with a pid file that names another process" do
     let(:written_pid) { 4343 }
 

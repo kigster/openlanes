@@ -69,14 +69,18 @@ RSpec.describe "reattaching to an agent a dead engine left", :tree do
       deadline: (Time.now + 600).utc.iso8601 }
   end
 
-  # The dead engine: a Started stage, and its restart context.
+  # The dead engine: a Started stage, and its restart context. It waits for
+  # the supervisor's PID file as well as the CLI's first line: the
+  # supervisor writes that file only after the CLI is running and `ps` has
+  # answered, and an engine that looks before then finds nothing to take
+  # back and starts the agent again. CI's slower runners lost that race.
   def dead_engine
     state = OpenLanes::Engine::StateFile.new(path: state_path, pid: dead_pid)
     state.begin_run!(root:)
     state.record("001.00", agent: "researcher", round: 1, status: "Started", state: "new")
     state.restart("001.00", agent: "researcher", round: 1, **restart)
     OpenLanes::Execution::AgentProcess.forget(agent_process)
-    sleep(0.02) until File.exist?(starts)
+    sleep(0.02) until File.exist?(starts) && File.exist?(agent_process.restart[:pid_file])
   end
 
   def engine

@@ -24,11 +24,21 @@ module OpenLanes
       # Seconds after STOP before {#on_expire} fires.
       GRACE = 60
 
+      # A clock that stands still while the machine sleeps. macOS's
+      # CLOCK_MONOTONIC keeps counting through sleep, so an agent started
+      # before the lid closed woke to STOP and a "running out of time" card
+      # for hours it never ran; CLOCK_UPTIME_RAW does not. Linux has no
+      # UPTIME_RAW, and its CLOCK_MONOTONIC already excludes suspend.
+      AWAKE = defined?(::Process::CLOCK_UPTIME_RAW) ? ::Process::CLOCK_UPTIME_RAW : ::Process::CLOCK_MONOTONIC
+
+      # @return [Float] seconds the machine has been awake, from an arbitrary point
+      def self.awake = ::Process.clock_gettime(AWAKE)
+
       # @param seconds [Integer] the budget
       # @param control [String] the invocation's control file
       # @param on_expire [Proc] called once, GRACE seconds after STOP
-      # @param now [Proc] a monotonic clock reading
-      def initialize(seconds:, control:, on_expire:, now: -> { UI.monotonic })
+      # @param now [Proc] a monotonic reading that excludes sleep ({.awake})
+      def initialize(seconds:, control:, on_expire:, now: -> { Clock.awake })
         @control = control
         @on_expire = on_expire
         @now = now

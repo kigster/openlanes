@@ -61,7 +61,24 @@ module OpenLanes
           agent = @runner.agents.find(stage["agent"]) or return nil
           return nil if @runner.foreign?(subject)
 
-          Found.new(subject:, agent:, round: stage["round"], from: (stage["state"] || subject.status.key).to_sym, restart:)
+          Found.new(subject:, agent:, round: stage["round"], from: picked_at(stage, subject), restart: rearmed(restart, stage))
+        end
+
+        # @return [Symbol] the state the plan showed when the agent was picked
+        def picked_at(stage, subject) = (stage["state"] || subject.status.key).to_sym
+
+        # What {Execution::Rearm} weighs, beside what the dead engine
+        # recorded: when that engine was last seen alive, and the tokens it
+        # saw the agent spend. The deadline is wall clock, so without them an
+        # engine down for hours took every agent back with a clock at zero.
+        #
+        # @param restart [Hash{String => Object}]
+        # @param stage [Hash{String => Object}]
+        # @return [Hash{String => Object}]
+        def rearmed(restart, stage)
+          tokens = stage.values_at("up", "down")
+          restart.merge({ "seen_at" => @state.heartbeat_at&.utc&.iso8601,
+                          "tokens"  => tokens.any?(Integer) ? tokens.sum(&:to_i) : nil }.compact)
         end
 
         # @param restart [Hash{String => Object}, nil]

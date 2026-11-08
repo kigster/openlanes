@@ -90,6 +90,21 @@ RSpec.describe OpenLanes::Engine::StateFile, :tree do
   end
 
   # B5 in plan 041: what a restarted engine needs, saved at once.
+  describe "#heartbeat_at" do
+    it("is nil before any run") { expect(state.heartbeat_at).to be_nil }
+
+    it "reads the last run's heartbeat back" do
+      state.begin_run!(root: plans_root)
+      state.save
+      expect(described_class.new(path:, pid: 1).load.heartbeat_at).to be_within(5).of(Time.now)
+    end
+
+    it "is nil for a heartbeat that does not parse" do
+      File.write(path, JSON.generate(run: { heartbeat_at: "yesterday" }, plans: {}))
+      expect(described_class.new(path:, pid: 1).load.heartbeat_at).to be_nil
+    end
+  end
+
   describe "#restart" do
     let(:stage) { described_class.new(path:, pid: 4242).load.stages("001.00").first }
 

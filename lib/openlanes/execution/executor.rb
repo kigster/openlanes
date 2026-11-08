@@ -676,7 +676,10 @@ module OpenLanes
         handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control: handle.control)
         sessions = Sessions.new
         child = follow(AgentProcess.attach(restart.fetch("process")), profile:, trace:, handle:, sessions:, &on_progress)
-        clock = start_clock(handle, seconds: [Time.iso8601(restart.fetch("deadline")) - Time.now, 0].max)
+        clock = start_clock(handle, seconds: rearm(agent, restart))
+        # The deadline as this engine armed it, so a third engine does not
+        # charge the agent again for time this one forgave.
+        handle.restart!(deadline: self.class.deadline(clock))
         status = supervise(child, agent, subject, root:, profile:, trace:, handle:, sessions:, clock:, &on_progress)
         before = Boundary::Snapshot.new(**restart.fetch("before").transform_keys(&:to_sym))
         verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
@@ -798,6 +801,25 @@ module OpenLanes
       def granted_to(agent) = agent.may - UNGRANTABLE
 
       private
+
+      # The clock a reattached agent runs on: its whole budget when it had
+      # barely begun, what is left of the recorded deadline when it has been
+      # working, and otherwise what it had when its engine was last seen.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param restart [Hash{String => Object}]
+      # @return [Integer] seconds
+      def rearm(agent, restart)
+        rearm = Rearm.new(deadline: Time.iso8601(restart.fetch("deadline")),
+          budget:   timeout_for(agent),
+          seen_at:  restart["seen_at"]&.then { Time.iso8601(it) },
+          started:  ProcessStart.of(restart.dig("process", "pid")),
+          tokens:   restart["tokens"],
+          now:      Time.now)
+        UI.log("reattached clock: #{rearm.verdict.to_s.tr("_", " ")}, #{(rearm.seconds / 60.0).round} minutes",
+          agent: agent.name)
+        rearm.seconds
+      end
 
       # @param handle [OpenLanes::Execution::Executor::Handle]
       # @param seconds [Numeric]
