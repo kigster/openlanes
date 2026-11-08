@@ -78,9 +78,13 @@ module OpenLanes
     # @return [Proc]
     def self.open_pull_request(label)
       lambda { |subject|
-        return "#{label} requires an open pull request; none are recorded" if subject.pull_requests.empty?
+        pulls = subject.pull_requests
+        return "#{label} requires an open pull request; none are recorded" if pulls.empty?
+        return if pulls.any?(&:open?)
 
-        "#{label}, but every pull request is already merged" if subject.pull_requests.none?(&:open?)
+        # Closed unmerged is not merged: saying so sent people looking for a
+        # merge that never happened (#167).
+        pulls.all?(&:merged?) ? "#{label}, but every pull request is already merged" : "#{label}, but no pull request is open"
       }
     end
 
@@ -321,7 +325,13 @@ module OpenLanes
           return "Approved & Merged, but no pull requests are recorded" if s.pull_requests.empty?
 
           open = s.pull_requests.count(&:open?)
-          "Approved & Merged, but #{OpenLanes::Plans.pull_request_count(open)} still open" if open.positive?
+          return "Approved & Merged, but #{OpenLanes::Plans.pull_request_count(open)} still open" if open.positive?
+
+          # A closed-unmerged pull request is neither open nor merged. Taking
+          # "none open" for "merged" renamed a plan whose only pull request
+          # was closed to ✅, archived it, and released its dependents on code
+          # that never landed (#167). A sibling closed beside a merge is fine.
+          "Approved & Merged, but no pull request merged" if s.pull_requests.none?(&:merged?)
         }
       ),
       Status.new(
