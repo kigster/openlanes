@@ -247,6 +247,33 @@ openlanes project stop 012           # stop it from another terminal
 - The control room shows a **Preview** tab per running app, labelled with plan, branch and port: the app in a frame, or a button to open it in a window when its `X-Frame-Options` or `frame-ancestors` refuse framing. Its toolbar restarts the backend (every process but the previewed one) or stops the app.
 - Without `app:` nothing changes: `project start` refuses and the page shows no Preview tab.
 
+### Memory: lessons from earlier plans
+
+A lesson is one markdown file that tells agents what this project has already taught them: a review finding that keeps coming back, a convention, an answer a person gave. Every agent's prompt lists the active lessons meant for it, one line each with the file to read, within about 1,500 tokens, highest severity first. The design, and the phases still to come, are in [continuous-learning.md](continuous-learning.md).
+
+```markdown
+---
+id: L-0001
+title: Specs build real .plans trees, never mock the filesystem
+applies_to: [build]            # agent names or phases; `all` for everyone
+checked_by: [staff-reviewer]   # reviewers who cite the id when a diff breaks it
+kind: practice                 # practice | pitfall | decision | struck
+severity: high                 # high | medium | low (default medium)
+status: active                 # active | candidate | graduated | retired; only active reaches a prompt
+confirmed: 2026-11-07          # optional: when evidence last confirmed it
+---
+
+Specs create plan trees with `PlansFixture` and the `:tree` tag in a temp directory.
+Stubbing `File` or `Dir` makes the spec test the stub.
+```
+
+- Project lessons live in `.openlanes/memory/lessons/` and are committed, so everyone on the project teaches and reads the same memory. One lesson per file means two people adding lessons never conflict.
+- Your own lessons, for every project on this machine, live in `${XDG_CONFIG_HOME:-~/.config}/openlanes/memory/lessons/` (`$OPENLANES_MEMORY_HOME` moves it). A project lesson with the same id wins.
+- Lessons are read again for every agent, so one written while `openlanes start` is up reaches the next agent.
+- A lesson only adds care. It never grants a tool or lifts a check: those come from the agent's frontmatter and the harness, never from a prompt.
+- `openlanes memory list` lists every lesson and warns about files it cannot read; `openlanes memory list --agent staff-reviewer` prints exactly what that agent is told.
+- `run --no-memory` (also on `start`) leaves lessons out. Compare `openlanes events report` across runs with and without them to see whether they help.
+
 ## How agents hand off
 
 An agent never renames its plan folder. It signs the plan's `state.json`, and the harness moves the folder based on the signature:
