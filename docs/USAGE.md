@@ -259,7 +259,7 @@ applies_to: [build]            # agent names or phases; `all` for everyone
 checked_by: [staff-reviewer]   # reviewers who cite the id when a diff breaks it
 kind: practice                 # practice | pitfall | decision | struck
 severity: high                 # high | medium | low (default medium)
-status: active                 # active | candidate | graduated | retired; only active reaches a prompt
+status: active                 # active | candidate (default) | graduated | retired; only active reaches a prompt
 confirmed: 2026-11-07          # optional: when evidence last confirmed it
 ---
 
@@ -268,11 +268,15 @@ Stubbing `File` or `Dir` makes the spec test the stub.
 ```
 
 - Project lessons live in `.openlanes/memory/lessons/` and are committed, so everyone on the project teaches and reads the same memory. One lesson per file means two people adding lessons never conflict.
-- Your own lessons, for every project on this machine, live in `${XDG_CONFIG_HOME:-~/.config}/openlanes/memory/lessons/` (`$OPENLANES_MEMORY_HOME` moves it). A project lesson with the same id wins.
-- Lessons are read again for every agent, so one written while `openlanes start` is up reaches the next agent.
+- A project lesson counts only once it is merged. Agents are told the lessons on `origin/<default branch>`, never the ones in a checkout, so a lesson an agent writes cannot reach the next agent's prompt (least of all the reviewer judging it) without a person merging it. A checkout with no `origin/<default branch>` has no project lessons.
+- A lesson must say `status: active`. One that leaves `status:` out is a candidate and reaches no prompt.
+- `id`, `title` and every name in `applies_to` and `checked_by` must each be one plain line; a file that breaks this, is not UTF-8, is a symlink or cannot be read is skipped and reported, never fatal.
+- Your own lessons, for every project on this machine, live in `${XDG_CONFIG_HOME:-~/.config}/openlanes/memory/lessons/` (`$OPENLANES_MEMORY_HOME` moves it). A project lesson with the same id wins. Symlinks there are refused, not followed.
+- Lessons are read once per run, when the first agent starts, and every agent in that run is told the same ones. A lesson merged while `openlanes start` is up takes effect at the next start.
+- The prompt marks lessons as quoted data that the rest of the prompt overrules. A rebase resolution and a resumed (compacted) session get no lessons section: the first is not plan work, and the second already has them from its first prompt.
 - A lesson only adds care. It never grants a tool or lifts a check: those come from the agent's frontmatter and the harness, never from a prompt.
-- `openlanes memory list` lists every lesson and warns about files it cannot read; `openlanes memory list --agent staff-reviewer` prints exactly what that agent is told.
-- `run --no-memory` (also on `start`) leaves lessons out. Compare `openlanes events report` across runs with and without them to see whether they help.
+- `openlanes memory list` lists every lesson agents are told, names the commit the project ones came from, and warns about files it cannot read; `openlanes memory list --agent staff-reviewer` prints exactly what that agent is told.
+- `run --no-memory` (also on `start`, and `eval --live --no-memory`) leaves lessons out. Compare `openlanes events report` across runs with and without them to see whether they help.
 
 ## How agents hand off
 

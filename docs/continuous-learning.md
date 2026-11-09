@@ -163,7 +163,7 @@ The headline metric: _rounds-to-approval per plan, rolling average over the last
 
 openlanes building openlanes is the hardest case: the agents' memory, their definitions and the harness that enforces their boundary all live in the repository they are changing. The guarantees:
 
-1. **Agents cannot write active memory.** The curator writes only to `inbox/`. Promotion is harness code, and every change to `lessons/` arrives as a human-reviewed PR.
+1. **Agents cannot write active memory.** The curator writes only to `inbox/`. Promotion is harness code, and every change to `lessons/` arrives as a human-reviewed PR. The read path enforces this already: agents are told only the lessons on `origin/<default branch>`, so whatever an agent writes into a checkout stays out of every prompt until a person merges it.
 2. **Memory cannot grant anything.** `Executor` builds tool grants from `agents/*.md` frontmatter and `UNGRANTABLE`, never from memory text. A lesson that mentions permissions, tools, network or pushing is rejected at promotion (a deterministic check, not a model's judgement).
 3. **Memory cannot remove a check.** Reviewer lessons may add checks (`checked_by`) but cannot waive one; only the arbitrator's existing per-plan strike does that, and its cross-plan form (`kind: struck`) still needs human promotion.
 4. **Untrusted text is quarantined.** Findings from PR comments by anyone other than openlanes' own reviewers or the repo's maintainers (third-party bots, drive-by commenters) produce candidates marked `untrusted` that require explicit human approval, closing the memory-poisoning path.
@@ -175,7 +175,8 @@ With those, the factory improving itself is the same as the factory building any
 ## Rollout
 
 - [x] **0. Baseline.** Already there: `openlanes events report` gives completion and intervention rates and PR outcomes (approved, rejected, merged) from the event log. Still missing: rounds-to-approval per plan, and tagging each run with whether memory was on, so the report can compare the two.
-- [x] **1. Read path.** Built: the lesson format, `OpenLanes::Memory` (`Lesson`, `Library`, `Section`), the prompt section with its budget, project and global scopes, `run --no-memory`, `openlanes memory list [--agent]`. Lessons are hand-written; reviewers are asked to cite ids. Deferred: `usage.json` citation counting.
+- [x] **1. Read path.** Built: the lesson format, `OpenLanes::Memory` (`Lesson`, `Library`, `Section`, and the two sources `Committed` and `Folder`), the prompt section with its budget, project and global scopes, `run --no-memory`, `eval --live --no-memory`, `openlanes memory list [--agent]`. Lessons are hand-written; reviewers are asked to cite ids. Deferred: `usage.json` citation counting.
+  - Recursion safety already holds for the read path (PR 196 security review): project lessons are read from the commit `origin/<default branch>` names when a run starts, never from a checkout, and kept for the whole run; a lesson without `status: active` is a candidate; ids, titles and names must be single plain lines; symlinks, unreadable and non-UTF-8 files are skipped and reported; the prompt fences the lessons as quoted data the rest of the prompt overrules.
 - [ ] **2. Curator.** The agent, the inbox, deterministic promotion (2+ plans), the memory PR through `Publisher`, the permission and untrusted-text checks.
 - [ ] **3. Global scope.** XDG directory, `promote --global`, cross-project proposals.
 - [ ] **4. Graduation and evals.** Graduation report, lesson-to-eval-case generation, retire on disuse.
