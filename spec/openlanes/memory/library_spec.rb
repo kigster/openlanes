@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::Memory::Library do
   let(:project) { Dir.mktmpdir("project-lessons") }
   let(:global) { Dir.mktmpdir("global-lessons") }
   let(:scopes) do
-    [OpenLanes::Memory::Scope.new(name: :project, dir: project), OpenLanes::Memory::Scope.new(name: :global, dir: global)]
+    [OpenLanes::Memory::Folder.new(name: :project, dir: project), OpenLanes::Memory::Folder.new(name: :global, dir: global)]
   end
   let(:library) { described_class.load(scopes) }
   let(:coder) { OpenLanes::Agents.find("backend-coder") }
@@ -36,6 +36,12 @@ RSpec.describe OpenLanes::Memory::Library do
 
     expect(library.lessons.map(&:id)).to eq(["L-0001"])
     expect(library.problems).to contain_exactly(a_string_including("bad.md", "`title:` is missing"))
+  end
+
+  it "takes a source's own reasons for skipping a file as problems" do
+    source = Data.define(:name, :entries).new(name: :project, entries: ["x.md: not a plain file"])
+
+    expect(described_class.load([source])).to have_attributes(lessons: [], problems: ["x.md: not a plain file"])
   end
 
   it "is empty when neither directory exists" do

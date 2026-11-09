@@ -11,11 +11,17 @@ module OpenLanes
     #   applies_to: [backend-coder, build]
     #   checked_by: [staff-reviewer]
     #   severity: high
+    #   status: active
     #   ---
     #
     # `applies_to` and `checked_by` take agent names or phases, so one fact
     # learnt by a reviewer reaches every builder that needs it without being
     # copied into each agent's file.
+    #
+    # Everything here reaches a prompt, so nothing here is trusted. A lesson
+    # stays a candidate until it says `status: active`, and the id, the title
+    # and every name must each be one plain line: a title with a newline in it
+    # could otherwise open a `## Boundary` section of its own (PR 196).
     #
     # @!attribute [r] id
     #   @return [String]
@@ -34,10 +40,12 @@ module OpenLanes
     # @!attribute [r] confirmed
     #   @return [Date, nil] when evidence or a person last confirmed it
     # @!attribute [r] path
-    #   @return [String]
+    #   @return [String] where it came from, for problem reports
+    # @!attribute [r] cite
+    #   @return [String] what the prompt tells an agent to read for the full text
     # @!attribute [r] scope
     #   @return [Symbol] `:project` or `:global`
-    Lesson = Data.define(:id, :title, :applies_to, :checked_by, :kind, :severity, :status, :confirmed, :path, :scope) do
+    Lesson = Data.define(:id, :title, :applies_to, :checked_by, :kind, :severity, :status, :confirmed, :path, :cite, :scope) do
       # The ranking order: a lesson whose violation costs a review round
       # comes before one that costs a comment.
       const_set(:SEVERITIES, %i[high medium low].freeze)
@@ -55,26 +63,51 @@ module OpenLanes
       # bad file costs one lesson, not every agent's prompt.
       const_set(:Invalid, Class.new(StandardError))
 
-      # What a choice a person leaves out reads as.
-      const_set(:DEFAULTS, { "kind" => :practice, "severity" => :medium, "status" => :active }.freeze)
+      # What a choice a person leaves out reads as. A lesson that does not
+      # say it is active is not: a file someone dropped in the directory,
+      # rather than promoted, never reaches a prompt.
+      const_set(:DEFAULTS, { "kind" => :practice, "severity" => :medium, "status" => :candidate }.freeze)
+
+      # An id is cited in findings and printed in prompts, so it is a token,
+      # not prose.
+      const_set(:ID, /\A[A-Za-z0-9][A-Za-z0-9._-]{0,63}\z/)
+
+      # An agent name or a phase, as `agents/*.md` spells them.
+      const_set(:NAME, /\A[a-z0-9][a-z0-9_-]{0,63}\z/i)
+
+      # The longest title that still reads as one line of a list.
+      const_set(:TITLE_MAX, 200)
+
+      # Control characters, and the Unicode line and paragraph separators a
+      # model may also read as a line break.
+      const_set(:BREAKS, /[[:cntrl:]\u0085\u2028\u2029]/)
 
       class << self
-        # @param path [String]
+        # @param entry [OpenLanes::Memory::Entry]
         # @param scope [Symbol]
         # @return [OpenLanes::Memory::Lesson]
         # @raise [OpenLanes::Memory::Lesson::Invalid]
-        def read(path, scope:)
-          meta, = Frontmatter.split(File.read(path))
-          new(**audience(meta, path), **choices(meta, path), path:, scope:)
+        def parse(entry, scope:)
+          path = entry.path
+          meta, = Frontmatter.split(utf8(entry.text, path))
+          new(**audience(meta, path), **choices(meta, path), path:, cite: entry.cite, scope:)
         rescue Psych::Exception => e
           raise self::Invalid, "#{path}: frontmatter is not valid YAML (#{e.message.lines.first.strip})"
         end
 
         private
 
+        # @return [String]
+        def utf8(text, path)
+          text = text.dup.force_encoding(Encoding::UTF_8)
+          raise self::Invalid, "#{path}: not valid UTF-8" unless text.valid_encoding?
+
+          text
+        end
+
         def audience(meta, path)
-          { id:         required(meta, "id", path),
-            title:      required(meta, "title", path),
+          { id:         token(meta, "id", path, self::ID),
+            title:      title(meta, path),
             applies_to: names(meta, "applies_to", path, required: true),
             checked_by: names(meta, "checked_by", path) }
         end
@@ -93,9 +126,27 @@ module OpenLanes
           value
         end
 
+        def token(meta, key, path, pattern)
+          value = required(meta, key, path)
+          return value if value.match?(pattern)
+
+          raise self::Invalid, "#{path}: `#{key}:` must be one word of letters, digits, `.`, `_` or `-`"
+        end
+
+        def title(meta, path)
+          value = required(meta, "title", path)
+          raise self::Invalid, "#{path}: `title:` must be one line" if value.match?(self::BREAKS)
+          raise self::Invalid, "#{path}: `title:` is longer than #{self::TITLE_MAX} characters" if value.size > self::TITLE_MAX
+
+          value
+        end
+
         def names(meta, key, path, required: false)
           list = Array(meta[key]).map { it.to_s.strip }.reject(&:empty?)
           raise self::Invalid, "#{path}: `#{key}:` names no agent or phase" if required && list.empty?
+
+          bad = list.grep_v(self::NAME)
+          raise self::Invalid, "#{path}: `#{key}:` holds #{bad.first.inspect}, not an agent or a phase" if bad.any?
 
           list
         end

@@ -4,8 +4,10 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Memory__Committed["Committed"]
+  class OpenLanes__Memory__Entry["Entry"]
+  class OpenLanes__Memory__Folder["Folder"]
   class OpenLanes__Memory__Lesson["Lesson"]
   class OpenLanes__Memory__Library["Library"]
-  class OpenLanes__Memory__Scope["Scope"]
   class OpenLanes__Memory__Section["Section"]
 ```

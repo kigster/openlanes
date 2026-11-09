@@ -32,12 +32,29 @@ RSpec.describe OpenLanes::CLI::Memory::List do
   end
 
   it "says how to start when there are no lessons" do
-    expect(list.first).to include("No lessons yet. Write one per file under .openlanes/memory/lessons/")
+    publish_lessons(root)
+    expect(list.first).to include("No lessons yet. Write one per file under .openlanes/memory/lessons/", "counts once merged")
+  end
+
+  it "lists only what is merged, and says which commit that is" do
+    write_lesson(dir, "L-0001", lesson_meta("L-0001"))
+    sha = publish_lessons(root)
+    write_lesson(dir, "L-0002", lesson_meta("L-0002"))
+
+    out, err, = list
+    expect(out).to include("L-0001")
+    expect(out).not_to include("L-0002")
+    expect(err).to include("project lessons as of origin/main at #{sha[0, 7]}")
+  end
+
+  it "warns that a checkout with no origin has no project lessons" do
+    expect(list[1]).to include("skipped project lessons skipped: no origin/main")
   end
 
   it "tabulates every lesson on STDOUT and warns about a bad file on STDERR" do
     write_lesson(dir, "L-0001", lesson_meta("L-0001", title: "Real trees", checked_by: ["staff-reviewer"]))
     write_lesson(dir, "L-bad", lesson_meta("L-0002").except("id"))
+    publish_lessons(root)
 
     out, err, = list
     expect(out.lines.first.split).to eq(%w[ID SCOPE STATUS SEVERITY FOR CHECKED_BY TITLE])
@@ -48,12 +65,14 @@ RSpec.describe OpenLanes::CLI::Memory::List do
 
   it "prints the section an agent's prompt carries" do
     write_lesson(dir, "L-0001", lesson_meta("L-0001", title: "Real trees"))
+    publish_lessons(root)
 
     expect(list(agent: "backend-coder").first).to include("## Lessons from earlier plans", "L-0001 (medium) Real trees")
   end
 
   it "says so when no lesson is for the agent" do
     write_lesson(dir, "L-0001", lesson_meta("L-0001"))
+    publish_lessons(root)
 
     expect(list(agent: "planner").first).to eq("No active lesson is for planner.\n")
   end

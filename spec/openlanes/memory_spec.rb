@@ -19,19 +19,33 @@ RSpec.describe OpenLanes::Memory do
     end
   end
 
-  describe ".section" do
+  describe ".library" do
     let(:root) { Dir.mktmpdir("project") }
+    let(:global) { ENV.fetch("OPENLANES_MEMORY_HOME") }
+    let(:coder) { OpenLanes::Agents.find("backend-coder") }
 
-    after { FileUtils.rm_rf(root) }
+    after do
+      FileUtils.rm_rf(root)
+      FileUtils.rm_rf(Dir.glob(File.join(global, "*")))
+    end
 
-    it "reads the project's lessons and the global ones for one agent" do
+    it "reads the project's merged lessons and the global ones, and gives one agent its section" do
       write_lesson(File.join(root, described_class::PROJECT_DIR), "L-1", lesson_meta("L-1", title: "Project rule"))
-      write_lesson(ENV.fetch("OPENLANES_MEMORY_HOME"), "G-1", lesson_meta("G-1", title: "Operator rule"))
+      write_lesson(global, "G-1", lesson_meta("G-1", title: "Operator rule"))
+      publish_lessons(root)
 
-      expect(described_class.section(agent: OpenLanes::Agents.find("backend-coder"), root:))
-        .to include("L-1 (medium) Project rule", "G-1 (medium) Operator rule")
-    ensure
-      FileUtils.rm_rf(Dir.glob(File.join(ENV.fetch("OPENLANES_MEMORY_HOME"), "*")))
+      library = described_class.library(root:)
+      expect(described_class.section(agent: coder, library:)).to include("L-1 (medium) Project rule", "G-1 (medium) Operator rule")
+      expect(library.problems).to eq([])
+    end
+
+    it "reads no project lessons from a checkout with no origin, and says why" do
+      write_lesson(File.join(root, described_class::PROJECT_DIR), "L-1", lesson_meta("L-1"))
+      write_lesson(global, "G-1", lesson_meta("G-1"))
+
+      library = described_class.library(root:)
+      expect(library.lessons.map(&:id)).to eq(["G-1"])
+      expect(library.problems).to eq(["project lessons skipped: no origin/main to read reviewed ones from"])
     end
   end
 end

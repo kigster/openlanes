@@ -6,7 +6,9 @@ module OpenLanes
   # (docs/continuous-learning.md, phase 1).
   #
   # Two scopes. The project's lessons are committed beside `.openlanes.yml`,
-  # so everyone working on it teaches and reads the same memory. The global
+  # so everyone working on it teaches and reads the same memory, and they
+  # count only once merged: they are read from the default branch, never
+  # from a checkout an agent can write to. The global
   # ones are the operator's own, under the XDG config directory, and never
   # leave the machine. A project lesson shadows a global one with its id.
   #
@@ -22,37 +24,48 @@ module OpenLanes
     # prompt, the same reason `XDG_STATE_HOME` is redirected there.
     GLOBAL_ENV = "OPENLANES_MEMORY_HOME"
 
-    # One directory lessons are read from, and what to call where they came from.
-    #
-    # @!attribute [r] name
-    #   @return [Symbol] `:project` or `:global`
-    # @!attribute [r] dir
-    #   @return [String]
-    Scope = Data.define(:name, :dir)
-
     class << self
-      # Every lesson both scopes hold, project first.
+      # The lessons one run tells its agents, read once and kept for the run.
+      #
+      # Project lessons come from the commit `origin/<default branch>` points
+      # at when the run starts: what a person merged, not what an agent wrote
+      # into a checkout since. A repository with no such ref has no project
+      # lessons, and says so in +problems+, rather than falling back to the
+      # working tree it was built not to trust.
       #
       # @param root [String] the project root
       # @param env [Hash{String => String}]
       # @return [OpenLanes::Memory::Library]
-      def library(root:, env: ENV) = Library.load(scopes(root:, env:))
+      def library(root:, env: ENV)
+        project = reviewed(root:)
+        library = Library.load([project, global(env:)].compact)
+        return library if project
+
+        library.with(problems: ["project lessons skipped: no #{ref(root)} to read reviewed ones from", *library.problems])
+      end
 
       # The prompt section +agent+ is given, empty when no lesson is for it.
       #
       # @param agent [OpenLanes::Agents::Agent]
-      # @param root [String] the project root
-      # @param env [Hash{String => String}]
+      # @param library [OpenLanes::Memory::Library] as {library} read it
       # @return [String]
-      def section(agent:, root:, env: ENV) = Section.new(library(root:, env:).for(agent), agent:, root:).to_s
+      def section(agent:, library:) = Section.new(library.for(agent), agent:).to_s
+
+      # The project's lessons on the default branch, at the commit it points at now.
+      #
+      # @param root [String]
+      # @return [OpenLanes::Memory::Committed, nil] nil when the ref is unknown
+      def reviewed(root:)
+        Committed.at(name: :project, root: File.expand_path(root), ref: ref(root), dir: PROJECT_DIR)
+      end
 
       # @param root [String]
+      # @return [String] e.g. `origin/main`
+      def ref(root) = "origin/#{Vcs.default_branch(File.expand_path(root))}"
+
       # @param env [Hash{String => String}]
-      # @return [Array<OpenLanes::Memory::Scope>]
-      def scopes(root:, env: ENV)
-        [Scope.new(name: :project, dir: File.join(File.expand_path(root), PROJECT_DIR)),
-         Scope.new(name: :global, dir: global_dir(env:))]
-      end
+      # @return [OpenLanes::Memory::Folder]
+      def global(env: ENV) = Folder.new(name: :global, dir: global_dir(env:))
 
       # `$OPENLANES_MEMORY_HOME`, else `${XDG_CONFIG_HOME:-~/.config}/openlanes/memory/lessons`.
       # A relative `XDG_CONFIG_HOME` is invalid under the XDG spec and is
