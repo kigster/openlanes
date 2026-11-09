@@ -174,7 +174,9 @@ module OpenLanes
       # comes first, for who it is and what it builds, and so its own
       # "a rebase stopped" section is read; everything after says this
       # invocation is not plan work. No ledger section: a signature here would
-      # be read as this round's verdict on the plan, which it is not.
+      # be read as this round's verdict on the plan, which it is not. No
+      # lessons either, on purpose: they are about how to do plan work, and
+      # resolving conflicts asks only that both sides' intent survive.
       #
       # @return [String]
       def resolution
@@ -244,7 +246,9 @@ module OpenLanes
       # What a compacted agent is told when its session is resumed (W28). Its
       # own instructions survive in the compacted summary; what it needs is
       # to know that the INTERRUPT it just obeyed is over, and that the
-      # session it is in is the same one.
+      # session it is in is the same one. No lessons section, on purpose: the
+      # session's first prompt carried them, and the run's snapshot has not
+      # changed since, so repeating them would only spend the budget twice.
       #
       # @return [String]
       def continuation
