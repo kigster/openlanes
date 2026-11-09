@@ -8,6 +8,7 @@ classDiagram
   class OpenLanes__Plans__Choices["Choices"]
   class OpenLanes__Plans__Dependencies["Dependencies"]
   class OpenLanes__Plans__Feature["Feature"]
+  class OpenLanes__Plans__GlobalLock["GlobalLock"]
   class OpenLanes__Plans__Index["Index"]
   class OpenLanes__Plans__Journal__Entry["Journal::Entry"]
   class OpenLanes__Plans__Journal__Rejection["Journal::Rejection"]
@@ -39,6 +40,8 @@ classDiagram
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Lock ..> OpenLanes__Error : uses
   OpenLanes__Plans__Lock__Held --|> OpenLanes__Error : inherits
   OpenLanes__Plans__Mailbox ..> OpenLanes__Error : uses
