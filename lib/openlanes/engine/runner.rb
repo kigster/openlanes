@@ -352,13 +352,27 @@ module OpenLanes
       # @param deps [OpenLanes::Plans::Dependencies] the graph to ask; the
       #   dispatcher passes the one it gated with, so both say the same thing
       # @return [Hash{String => String}] ordinal => "waiting on 034.00" or "cycle: ..."
-      def held(deps = dependencies)
+      # @param lock [OpenLanes::Plans::GlobalLock] the refactor gate (R6),
+      #   whose reasons are listed beside the graph's
+      def held(deps = dependencies, lock = global_lock)
         in_scope.each_with_object({}) do |subject, out|
           next if Plans::StateMachine::SETTLED.include?(subject.status.key)
 
           ordinal = subject.feature.ordinal.to_s
-          reason = deps.reason(ordinal) and out[ordinal] = reason
+          reasons = [deps.reason(ordinal), lock.reason(ordinal)].compact
+          out[ordinal] = reasons.join("; ") unless reasons.empty?
         end
+      end
+
+      # The refactor gate (R6), judged by the same states as {#dependencies},
+      # so a plan the graph lets start is never one the lock reads otherwise.
+      #
+      # @param except [Array<String>] see {#dependencies}
+      # @return [OpenLanes::Plans::GlobalLock]
+      def global_lock(except: [])
+        return Plans::GlobalLock.new(tree) unless dry_run?
+
+        Plans::GlobalLock.new(tree, status_of: judge(except))
       end
 
       # The dependency graph judged by the states this run acts on. A real run
@@ -375,14 +389,22 @@ module OpenLanes
       def dependencies(except: [])
         return tree.dependencies unless dry_run?
 
-        leave = except.map(&:to_s)
         # Every plan, archived ones included, as {Plans::Tree#dependencies}
         # does: a shipped prerequisite sits in `archive/`.
-        Plans::Dependencies.new(tree.everything,
-          status_of: lambda { |subject|
-            untouched = leave.include?(subject.feature.ordinal.to_s) || foreign?(subject)
-            untouched ? subject.status : effective_status(subject)
-          })
+        Plans::Dependencies.new(tree.everything, status_of: judge(except))
+      end
+
+      # A dry run's state for each plan: its folder's name where nothing
+      # reconciles it, otherwise what reconciliation would make it.
+      #
+      # @param except [Array<String>] ordinals left alone
+      # @return [Proc] subject => OpenLanes::Plans::Status
+      def judge(except)
+        leave = except.map(&:to_s)
+        lambda { |subject|
+          untouched = leave.include?(subject.feature.ordinal.to_s) || foreign?(subject)
+          untouched ? subject.status : effective_status(subject)
+        }
       end
 
       # The state a plan's contents justify, which reconciliation would rename

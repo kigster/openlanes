@@ -161,12 +161,19 @@ module OpenLanes
     :architecture_decisions,
     :events_enabled,
     :events_dir,
-    :review_adapters) do
+    :review_adapters,
+    :refactor_threshold) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: []) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
+
+    # The share of the codebase, in percent by files or by lines, above
+    # which a refactor runs alone (R6): `refactor.threshold`, else 50.
+    #
+    # @return [Integer]
+    def refactor_percent = refactor_threshold || Plans::Execution::DEFAULT_THRESHOLD
 
     # How many times a plan's pull request may be rejected, by staff-reviewer and
     # verifier counted together, before it stops going back to its builders
@@ -242,6 +249,7 @@ module OpenLanes
       settings["coverage"] = coverage.to_h if coverage
       settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
       settings["review"] = { "adapters" => review_adapters } unless review_adapters.empty?
+      settings["refactor"] = { "threshold" => refactor_threshold } if refactor_threshold
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -260,7 +268,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review].freeze
+              questions coverage events ci stack architecture_decisions review refactor].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -309,6 +317,9 @@ module OpenLanes
 
     # Every key `events:` may hold.
     EVENT_KEYS = %w[enabled dir].freeze
+
+    # Every key `refactor:` may hold.
+    REFACTOR_KEYS = %w[threshold].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -377,7 +388,8 @@ module OpenLanes
           **plans(settings["plans"], path),
           **questions(settings["questions"], path),
           coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
-          **events(settings["events"], path))
+          **events(settings["events"], path),
+          **refactor(settings["refactor"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -660,6 +672,26 @@ module OpenLanes
         return File.expand_path(value.strip) if value.is_a?(String) && value.strip.match?(%r{\A[/~]})
 
         fail_with(path, "events.dir: #{value.inspect} is not an absolute path")
+      end
+
+      # `refactor.threshold`: the percent of the codebase, by files or by
+      # lines, above which a refactor runs alone (R6).
+      #
+      # @return [Hash{Symbol => Integer}]
+      def refactor(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "refactor: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - REFACTOR_KEYS).each do |key|
+          fail_with(path, "refactor.#{key}: unknown key; known: #{REFACTOR_KEYS.join(", ")}")
+        end
+        threshold = settings["threshold"]
+        return {} if threshold.nil?
+        return { refactor_threshold: threshold } if threshold.is_a?(Integer) && threshold.between?(1, 100)
+
+        fail_with(path, "refactor.threshold: #{threshold.inspect} is not a whole percent from 1 to 100")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a
