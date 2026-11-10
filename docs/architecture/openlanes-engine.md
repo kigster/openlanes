@@ -97,6 +97,7 @@ classDiagram
   class OpenLanes__Plans__Ledger__Reading["OpenLanes::Plans::Ledger::Reading"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Lock__Held["OpenLanes::Plans::Lock::Held"]
+  class OpenLanes__Plans__LockClock["OpenLanes::Plans::LockClock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
@@ -179,6 +180,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ledger__Reading : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Lock__Held : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__PlanState : uses

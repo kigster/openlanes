@@ -64,6 +64,7 @@ classDiagram
   class OpenLanes__Live__Unavailable["Unavailable"]
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
+  class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
@@ -181,6 +182,7 @@ classDiagram
   OpenLanes__Live__Snapshot ..> OpenLanes__Live__Meter : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Choices : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Plans__GlobalLock : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Spec : uses
