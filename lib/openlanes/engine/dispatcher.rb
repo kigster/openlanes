@@ -197,6 +197,8 @@ module OpenLanes
         @said_outside = {}
         @refused = Set.new
         @locks = PlanLocks.new(agent_locks: @agent_locks)
+        # A dry run writes no state.json, so it starts no lock's clock.
+        @lock_clock = runner.dry_run? ? nil : Plans::LockClock.new
         @verifying = {}
         @said_verifying = {}
         @finishes = Finishes.new(runner:, clock:)
@@ -950,6 +952,7 @@ module OpenLanes
 
         @dependencies = @runner.dependencies(except: untouchable)
         @global_lock = @runner.global_lock(except: untouchable)
+        @lock_clock&.call(@global_lock)
         blockers_first(@runner.in_scope).each do |subject|
           working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
           # After {#reconcile} this is the folder's name. On a dry run, which

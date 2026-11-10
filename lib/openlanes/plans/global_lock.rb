@@ -16,7 +16,16 @@ module OpenLanes
     # documents and not yet done holds one, and so does a parked plan whose
     # folder shows a build began (`contract.md`, written before any code) or
     # a pull request was opened (`pull-requests.md`).
+    #
+    # The lock lapses {DEFAULT_HOURS} after it was taken, unless
+    # `refactor.lock_hours` says otherwise: other plans may then start beside
+    # the refactor, which carries on. When it was taken is the one fact the
+    # tree's names cannot say, so {LockClock} writes it into the refactor's
+    # `state.json` and this class only reads it back.
     class GlobalLock
+      # How long the lock holds, in hours, when `.openlanes.yml` is silent.
+      DEFAULT_HOURS = 24
+
       # The states in which a plan is finished: its branch merged or closed.
       # Rolled back still shipped first; discarded and trashed close theirs.
       # Abandoned and rewrite are parked instead, since either may resume.
@@ -31,20 +40,61 @@ module OpenLanes
       # @param tree [OpenLanes::Plans::Tree]
       # @param status_of [#call, nil] the state to judge a plan by, as in
       #   {Dependencies#initialize}
-      def initialize(tree, status_of: nil)
+      # @param ttl [Integer] seconds the lock holds once taken
+      # @param now [Time]
+      def initialize(tree, status_of: nil, ttl: DEFAULT_HOURS * 3600, now: Time.now)
         @tree = tree
         @status_of = status_of || :status.to_proc
+        @ttl = ttl
+        @now = now
       end
 
+      # @return [Integer] seconds the lock holds once taken
+      attr_reader :ttl
+
       # The refactor that holds the lock, or nil when none does: the lowest
-      # unfinished `global-lock-required` plan that is ready for backend-coder or past it.
+      # unfinished `global-lock-required` plan that is ready for backend-coder
+      # or past it, and whose lock has not lapsed.
       #
       # @return [String, nil] its ordinal
       def holder
         return @holder if defined?(@holder)
 
-        @holder = subjects.find { |s| Execution.global_lock?(s) && active?(s) }&.then { ordinal(it) }
+        @holder = claimants.find { !expired?(it) }
       end
+
+      # Every refactor that asks for the lock, the holder and the lapsed ones
+      # alike, lowest first.
+      #
+      # @return [Array<String>] ordinals
+      def claimants = @claimants ||= refactors.select { active?(it) }.map { ordinal(it) }
+
+      # Every plan marked `global-lock-required`, claiming or not, lowest first.
+      #
+      # @return [Array<OpenLanes::Plans::Subject>]
+      def refactors = @refactors ||= subjects.select { Execution.global_lock?(it) }
+
+      # Refactors whose lock lapsed: still under way, but no longer holding
+      # anything else back.
+      #
+      # @return [Array<String>] ordinals
+      def expired = claimants.select { expired?(it) }
+
+      # @param wanted [String] an ordinal
+      # @return [Time, nil] when the refactor took the lock; nil before
+      #   {LockClock} has recorded it
+      def taken_at(wanted)
+        subject = find(wanted.to_s) or return nil
+        PlanState.for(subject.feature.path).global_lock_taken_at
+      end
+
+      # @param wanted [String] an ordinal
+      # @return [Time, nil] when its lock lapses; nil while untaken
+      def expires_at(wanted) = taken_at(wanted)&.then { it + @ttl }
+
+      # @param wanted [String] an ordinal
+      # @return [OpenLanes::Plans::Subject, nil]
+      def subject(wanted) = find(wanted.to_s)
 
       # @return [Boolean] whether the holder's build has not begun yet
       def waiting? = !holder.nil? && state(holder) == :planned
@@ -105,6 +155,10 @@ module OpenLanes
 
         !Dependencies::BEFORE_BUILD.include?(key)
       end
+
+      # @param wanted [String]
+      # @return [Boolean]
+      def expired?(wanted) = expires_at(wanted)&.<=(@now) || false
 
       # @return [Symbol]
       def state(wanted) = @status_of.call(find(wanted)).key
