@@ -20,6 +20,7 @@ classDiagram
   class OpenLanes__Plans__Ledger__Reading["Ledger::Reading"]
   class OpenLanes__Plans__Lock["Lock"]
   class OpenLanes__Plans__Lock__Held["Lock::Held"]
+  class OpenLanes__Plans__LockClock["LockClock"]
   class OpenLanes__Plans__Mailbox["Mailbox"]
   class OpenLanes__Plans__Ordinal["Ordinal"]
   class OpenLanes__Plans__PlanState["PlanState"]
@@ -41,9 +42,11 @@ classDiagram
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Lock ..> OpenLanes__Error : uses
   OpenLanes__Plans__Lock__Held --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__LockClock ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Mailbox ..> OpenLanes__Error : uses
   OpenLanes__Plans__Mailbox ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Ordinal ..> OpenLanes__Error : uses

@@ -161,6 +161,40 @@ module OpenLanes
         till
       end
 
+      # ---- global lock ------------------------------------------------------
+
+      # When this refactor took the global lock (R6), which {GlobalLock}
+      # counts its expiry from. Kept here because the folder's name says
+      # ⭐ but not since when.
+      #
+      # @return [Time, nil]
+      def global_lock_taken_at
+        text = read.dig("global_lock", "taken_at") or return nil
+        parse_time(text)
+      end
+
+      # Record the moment the lock was taken. A second call keeps the first
+      # time, so a restarted engine does not hand the refactor a fresh lock.
+      #
+      # @param at [Time]
+      # @return [Time] the time kept
+      def take_global_lock!(at: Time.now)
+        kept = global_lock_taken_at and return kept
+
+        update { |data| data["global_lock"] = { "taken_at" => at.utc.iso8601 } }
+        at
+      end
+
+      # Forget the lock: the refactor stopped asking for it, so one that comes
+      # back later starts a fresh clock. Writes nothing when there was none.
+      #
+      # @return [void]
+      def release_global_lock!
+        return unless read.key?("global_lock")
+
+        update { |data| data.delete("global_lock") }
+      end
+
       # ---- finished ---------------------------------------------------------
 
       # How a plan finished: staff-reviewer approved it, or its pull request merged.

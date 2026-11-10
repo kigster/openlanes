@@ -55,6 +55,15 @@
         "at": { "type": "string", "format": "date-time" }
       }
     },
+    "global_lock": {
+      "description": "When this execution: global-lock-required refactor took the global lock (R6), which lapses refactor.lock_hours later. Cleared when the refactor stops asking for it.",
+      "type": "object",
+      "required": ["taken_at"],
+      "additionalProperties": false,
+      "properties": {
+        "taken_at": { "type": "string", "format": "date-time" }
+      }
+    },
     "stages": {
       "description": "One record per dispatch of an agent's round, in dispatch order, written by the harness.",
       "type": "array",

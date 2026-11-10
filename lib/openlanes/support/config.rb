@@ -162,10 +162,11 @@ module OpenLanes
     :events_enabled,
     :events_dir,
     :review_adapters,
-    :refactor_threshold) do
+    :refactor_threshold,
+    :refactor_lock_hours) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -174,6 +175,12 @@ module OpenLanes
     #
     # @return [Integer]
     def refactor_percent = refactor_threshold || Plans::Execution::DEFAULT_THRESHOLD
+
+    # How long a refactor's global lock holds before it lapses and other
+    # plans may start beside it (R6): `refactor.lock_hours`, else 24.
+    #
+    # @return [Integer] seconds
+    def refactor_lock_seconds = ((refactor_lock_hours || Plans::GlobalLock::DEFAULT_HOURS) * 3600).round
 
     # How many times a plan's pull request may be rejected, by staff-reviewer and
     # verifier counted together, before it stops going back to its builders
@@ -249,7 +256,8 @@ module OpenLanes
       settings["coverage"] = coverage.to_h if coverage
       settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
       settings["review"] = { "adapters" => review_adapters } unless review_adapters.empty?
-      settings["refactor"] = { "threshold" => refactor_threshold } if refactor_threshold
+      refactor = { "threshold" => refactor_threshold, "lock_hours" => refactor_lock_hours }.compact
+      settings["refactor"] = refactor unless refactor.empty?
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -319,7 +327,7 @@ module OpenLanes
     EVENT_KEYS = %w[enabled dir].freeze
 
     # Every key `refactor:` may hold.
-    REFACTOR_KEYS = %w[threshold].freeze
+    REFACTOR_KEYS = %w[threshold lock_hours].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -675,9 +683,10 @@ module OpenLanes
       end
 
       # `refactor.threshold`: the percent of the codebase, by files or by
-      # lines, above which a refactor runs alone (R6).
+      # lines, above which a refactor runs alone (R6). `refactor.lock_hours`:
+      # how long its global lock holds before other plans may start again.
       #
-      # @return [Hash{Symbol => Integer}]
+      # @return [Hash{Symbol => Numeric}]
       def refactor(value, path)
         return {} if value.nil?
 
@@ -687,11 +696,24 @@ module OpenLanes
         (settings.keys - REFACTOR_KEYS).each do |key|
           fail_with(path, "refactor.#{key}: unknown key; known: #{REFACTOR_KEYS.join(", ")}")
         end
-        threshold = settings["threshold"]
-        return {} if threshold.nil?
-        return { refactor_threshold: threshold } if threshold.is_a?(Integer) && threshold.between?(1, 100)
+        { refactor_threshold:  refactor_threshold(settings["threshold"], path),
+          refactor_lock_hours: refactor_lock_hours(settings["lock_hours"], path) }.compact
+      end
+
+      # @return [Integer, nil]
+      def refactor_threshold(threshold, path)
+        return nil if threshold.nil?
+        return threshold if threshold.is_a?(Integer) && threshold.between?(1, 100)
 
         fail_with(path, "refactor.threshold: #{threshold.inspect} is not a whole percent from 1 to 100")
+      end
+
+      # @return [Numeric, nil]
+      def refactor_lock_hours(hours, path)
+        return nil if hours.nil?
+        return hours if hours.is_a?(Numeric) && hours.positive?
+
+        fail_with(path, "refactor.lock_hours: #{hours.inspect} is not a positive number of hours")
       end
 
       # YAML hands an unquoted `2026-10-01` over as a Date already, and a

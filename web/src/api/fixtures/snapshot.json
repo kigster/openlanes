@@ -599,6 +599,16 @@
       "resume_until": null
     }
   ],
+  "global_lock": {
+    "plan": "031.00",
+    "slug": "rename-everything",
+    "title": "Rename Everything",
+    "taken_at": "2026-10-13T08:00:00Z",
+    "expires_at": "2026-10-14T08:00:00Z",
+    "ttl": 86400,
+    "expired": false,
+    "waits_on": ["005.00"]
+  },
   "autocompact": 0.4,
   "log": [
     {
