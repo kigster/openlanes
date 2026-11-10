@@ -4,15 +4,37 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
+  class OpenLanes__Agents["OpenLanes::Agents"]
+  <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
+  class OpenLanes__Execution["OpenLanes::Execution"]
+  <<module>> OpenLanes__Execution
+  class OpenLanes__Execution__Control["OpenLanes::Execution::Control"]
+  <<module>> OpenLanes__Execution__Control
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
+  class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
+  <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__Adoption["Adoption"]
   class OpenLanes__Lifecycle__Aging["Aging"]
+  class OpenLanes__Lifecycle__AgingNote["AgingNote"]
+  <<module>> OpenLanes__Lifecycle__AgingNote
   class OpenLanes__Lifecycle__Allocator["Allocator"]
   class OpenLanes__Lifecycle__Allocator__Refused["Allocator::Refused"]
   class OpenLanes__Lifecycle__Brief["Brief"]
+  class OpenLanes__Lifecycle__Completion["Completion"]
+  <<module>> OpenLanes__Lifecycle__Completion
   class OpenLanes__Lifecycle__CreateWorkflow["CreateWorkflow"]
   class OpenLanes__Lifecycle__Creator["Creator"]
+  class OpenLanes__Lifecycle__Lanes["Lanes"]
+  <<module>> OpenLanes__Lifecycle__Lanes
   class OpenLanes__Lifecycle__ReasonInterview["ReasonInterview"]
   class OpenLanes__Lifecycle__Removal["Removal"]
   class OpenLanes__Lifecycle__Resync__Dirs["Resync::Dirs"]
@@ -20,13 +42,23 @@ classDiagram
   class OpenLanes__Lifecycle__Rewiring["Rewiring"]
   class OpenLanes__Lifecycle__UnblockWorkflow["UnblockWorkflow"]
   class OpenLanes__Lifecycle__Unblocker["Unblocker"]
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__BlockedFile["OpenLanes::Plans::BlockedFile"]
+  <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Dependencies["OpenLanes::Plans::Dependencies"]
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
+  class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
+  <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__Journal__Entry["OpenLanes::Plans::Journal::Entry"]
+  class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
+  <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
+  class OpenLanes__Plans__RemovedReadme["OpenLanes::Plans::RemovedReadme"]
+  <<module>> OpenLanes__Plans__RemovedReadme
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
@@ -34,61 +66,120 @@ classDiagram
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs["OpenLanes::Vcs"]
+  <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
+  class OpenLanes__Vcs__RenameDate["OpenLanes::Vcs::RenameDate"]
+  <<module>> OpenLanes__Vcs__RenameDate
+  OpenLanes__Lifecycle ..> OpenLanes__Error : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Aging : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__AgingNote : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Allocator__Refused : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Brief : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__CreateWorkflow : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Creator : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__ReasonInterview : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Removal : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Resync__Dirs : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Resync__Prs : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Rewiring : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__UnblockWorkflow : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Unblocker : uses
+  OpenLanes__Lifecycle ..> OpenLanes__Refusal : uses
+  OpenLanes__Lifecycle__Adoption ..> OpenLanes : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Lifecycle__Allocator : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Lifecycle__Creator : uses
+  OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Lifecycle__Aging ..> OpenLanes__Lifecycle__AgingNote : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Plans__StateMachine__Refused : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__UI : uses
+  OpenLanes__Lifecycle__Allocator ..> OpenLanes : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Lifecycle__Allocator__Refused : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Allocator__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Lifecycle__Brief ..> OpenLanes : uses
+  OpenLanes__Lifecycle__Brief ..> OpenLanes__Adapters : uses
+  OpenLanes__Lifecycle__Brief ..> OpenLanes__Frontmatter : uses
   OpenLanes__Lifecycle__Brief ..> OpenLanes__Lifecycle__Allocator : uses
+  OpenLanes__Lifecycle__Completion ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Agents : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Agents__Names : uses
   OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Error : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Execution : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Lifecycle : uses
   OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Lifecycle__Brief : uses
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Plans : uses
   OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Lifecycle__CreateWorkflow ..|> OpenLanes__UI : includes
+  OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Vcs : uses
   OpenLanes__Lifecycle__CreateWorkflow ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Error : uses
+  OpenLanes__Lifecycle__Creator ..> OpenLanes__Frontmatter : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Lifecycle__Allocator : uses
+  OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Creator ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Lifecycle__Lanes ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Lifecycle__Lanes ..> OpenLanes__Lifecycle__Completion : uses
+  OpenLanes__Lifecycle__Lanes ..> OpenLanes__Plans : uses
+  OpenLanes__Lifecycle__Lanes ..> OpenLanes__Plans__Ledger : uses
+  OpenLanes__Lifecycle__Lanes ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Lifecycle__Removal ..> OpenLanes__Lifecycle__Resync__Dirs : uses
   OpenLanes__Lifecycle__Removal ..> OpenLanes__Lifecycle__Rewiring : uses
+  OpenLanes__Lifecycle__Removal ..> OpenLanes__Plans : uses
   OpenLanes__Lifecycle__Removal ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Lifecycle__Removal ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Lifecycle__Rewiring : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__RemovedReadme : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__UI : uses
+  OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Vcs__RenameDate : uses
+  OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Lifecycle__Adoption : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes : uses
+  OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Frontmatter : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__UI : uses
+  OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Agents : uses
+  OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Execution : uses
+  OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Lifecycle : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Lifecycle__UnblockWorkflow ..|> OpenLanes__UI : includes
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Lifecycle__AgingNote : uses
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Lifecycle__Resync__Dirs : uses
+  OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Plans : uses
+  OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Plans__BlockedFile : uses
+  OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Plans__Journal__Entry : uses
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Lifecycle__Unblocker ..> OpenLanes__UI : uses

@@ -4,10 +4,18 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Agents["OpenLanes::Agents"]
+  <<module>> OpenLanes__Agents
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Evals["OpenLanes::Evals"]
+  <<module>> OpenLanes__Evals
   class OpenLanes__Evals__Case["Case"]
   class OpenLanes__Evals__Changes["Changes"]
   class OpenLanes__Evals__Check["Check"]
+  class OpenLanes__Evals__Check__Judges["Check::Judges"]
+  <<module>> OpenLanes__Evals__Check__Judges
   class OpenLanes__Evals__Evidence["Evidence"]
   class OpenLanes__Evals__Invalid["Invalid"]
   class OpenLanes__Evals__Live["Live"]
@@ -16,18 +24,58 @@ classDiagram
   class OpenLanes__Evals__Score["Score"]
   class OpenLanes__Evals__Scorer["Scorer"]
   class OpenLanes__Evals__Verdict["Verdict"]
+  class OpenLanes__Execution["OpenLanes::Execution"]
+  <<module>> OpenLanes__Execution
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
+  class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
+  <<module>> OpenLanes__Lifecycle
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
+  class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
+  <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  OpenLanes__Evals ..> OpenLanes__Agents : uses
+  OpenLanes__Evals ..> OpenLanes__Error : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Case : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Changes : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Check : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Check__Judges : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Evidence : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Live : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Recording : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Run : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Scorer : uses
+  OpenLanes__Evals ..> OpenLanes__Evals__Verdict : uses
+  OpenLanes__Evals ..> OpenLanes__Plans : uses
+  OpenLanes__Evals ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Evals ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Evals__Case ..> OpenLanes__Evals__Invalid : uses
+  OpenLanes__Evals__Case ..> OpenLanes__Plans : uses
   OpenLanes__Evals__Case ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Evals__Changes ..> OpenLanes : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Evals__Evidence : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Plans : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Plans__Ledger : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Evals__Invalid --|> OpenLanes__Error : inherits
+  OpenLanes__Evals__Live ..> OpenLanes : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Agents : uses
   OpenLanes__Evals__Live ..> OpenLanes__Error : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Run : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Scorer : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Execution : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Lifecycle : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Plans : uses
   OpenLanes__Evals__Live ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Agents : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Changes : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Evidence : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Run : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Score : uses
+  OpenLanes__Evals__Scorer ..> OpenLanes__Plans : uses
 ```
