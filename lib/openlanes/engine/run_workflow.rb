@@ -450,6 +450,7 @@ module OpenLanes
           events:       events,
           journal:      (journal_for(live) unless @dry_run),
           quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
+          lock_ttl:     -> { Config.current.refactor_lock_seconds },
           stop_at:,
           **staying(web, live)
         )

@@ -253,10 +253,21 @@ RSpec.describe OpenLanes::Config do
         expect([config.refactor_percent, config.to_yaml]).to match([30, /refactor:\n  threshold: 30/])
       end
 
+      it "holds the global lock for a day unless lock_hours says otherwise" do
+        expect([config.refactor_lock_hours, config.refactor_lock_seconds]).to eq([nil, 86_400])
+      end
+
+      it "reads lock_hours, fractions included, and writes it back" do
+        openlanes_yml("refactor:\n  lock_hours: 1.5\n")
+        expect([config.refactor_lock_seconds, config.to_yaml]).to match([5400, /refactor:\n  lock_hours: 1\.5/])
+      end
+
       {
-        "an unknown key" => ["refactor:\n  share: 2\n", /refactor\.share: unknown key; known: threshold/],
-        "over a hundred" => ["refactor:\n  threshold: 120\n", /refactor\.threshold: 120 is not a whole percent/],
-        "not a mapping"  => ["refactor: 5\n", /refactor: must be a mapping/]
+        "an unknown key"  => ["refactor:\n  share: 2\n", /refactor\.share: unknown key; known: threshold, lock_hours/],
+        "over a hundred"  => ["refactor:\n  threshold: 120\n", /refactor\.threshold: 120 is not a whole percent/],
+        "a zero lock"     => ["refactor:\n  lock_hours: 0\n", /refactor\.lock_hours: 0 is not a positive number/],
+        "a lock in words" => ["refactor:\n  lock_hours: a day\n", /refactor\.lock_hours: "a day" is not a positive/],
+        "not a mapping"   => ["refactor: 5\n", /refactor: must be a mapping/]
       }.each do |label, (text, message)|
         it "refuses #{label}" do
           openlanes_yml(text)

@@ -1774,6 +1774,20 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         expect(calls.map(&:last)).not_to include("031.00", "040.00")
         expect(runner.held).to eq("031.00" => "refactor 031.00 waits on 018.00 ⭕",
           "040.00" => "queued behind refactor 031.00")
+        expect(OpenLanes::Plans::PlanState.for(path_of("031.00")).global_lock_taken_at).to be_within(60).of(Time.now)
+      end
+
+      it "starts the queued plans beside the refactor once its lock has lapsed" do
+        OpenLanes::Plans::PlanState.for(path_of("031.00")).take_global_lock!(at: Time.now - 7200)
+        runner_with(noop, lock_ttl: -> { 3600 }).call
+
+        expect(calls.map(&:last)).to include("031.00", "040.00")
+      end
+
+      it "takes no lock on a dry run" do
+        runner_with(noop, dry_run: true).call
+
+        expect(OpenLanes::Plans::PlanState.for(path_of("031.00")).global_lock_taken_at).to be_nil
       end
     end
 
