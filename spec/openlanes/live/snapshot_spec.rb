@@ -26,6 +26,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
   let(:at) { Time.utc(2026, 10, 13, 9) }
   let(:meter) { OpenLanes::Live::Meter.new }
   let(:log) { [{ at: "2026-10-13T09:00:00Z", source: "engine", level: "info", text: "started", plan: "001.00" }] }
+  let(:refactor_plan) { "---\nexecution: global-lock-required\n---\n# Plan\n" }
   let(:fixture) { JSON.parse(File.read(File.expand_path("../../../web/src/api/fixtures/snapshot.json", __dir__))) }
   let(:rows) { [] }
   let(:board) do
@@ -132,6 +133,36 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(by_ordinal.except("001.00").values.map { it[:locked] }.uniq).to eq([nil])
     end
 
+    describe "the global lock" do
+      def lock = snapshot[:global_lock]
+      def refactor(state = :planned) = plans { |t| t.plan "031.00", state, "rename-everything", files: { "spec.md" => spec_body, "plan.md" => refactor_plan } }
+
+      it "is null while no refactor runs alone" do
+        expect(lock).to be_nil
+      end
+
+      it "names the refactor, what its build waits on, and counts from the time it was taken" do
+        refactor
+        OpenLanes::Plans::PlanState.for(path_of("031.00")).take_global_lock!(at: at - 3600)
+
+        expect(lock).to eq(plan: "031.00",
+          slug: "rename-everything",
+          title: "Rename Everything",
+          taken_at: (at - 3600).utc.iso8601,
+          expires_at: (at + 82_800).utc.iso8601,
+          ttl: 86_400,
+          expired: false,
+          waits_on: ["005.00"])
+      end
+
+      it "says the lock lapsed, and stops naming what it waited on" do
+        refactor(:building)
+        OpenLanes::Plans::PlanState.for(path_of("031.00")).take_global_lock!(at: at - 86_400)
+
+        expect(lock).to include(plan: "031.00", expired: true, waits_on: [], expires_at: at.utc.iso8601)
+      end
+    end
+
     # Plan 031, D13.
     describe "the reviewers' verdicts" do
       def reviews = by_ordinal["005.00"][:reviews]
@@ -157,6 +188,8 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     it "has the fixture's keys at every level" do
       # Unacked mail fills `mail`, whose entries the fixture's keys describe.
       OpenLanes::Plans.mailbox(path_of("001.00")).append(from: "backend-coder", to: "frontend-coder", body: "B1 landed")
+      # A refactor holding the global lock fills `global_lock`.
+      plans { |t| t.plan "031.00", :planned, "rename-everything", files: { "spec.md" => spec_body, "plan.md" => refactor_plan } }
       expect(shape(JSON.parse(JSON.generate(snapshot)))).to eq(shape(fixture))
     end
 

@@ -197,6 +197,33 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "the global lock" do
+    let(:taken) { Time.utc(2026, 11, 8, 9) }
+
+    it "has no time until the lock is taken" do
+      expect(state.global_lock_taken_at).to be_nil
+    end
+
+    it "keeps the first time it was taken, in a document the schema accepts" do
+      state.take_global_lock!(at: taken)
+
+      aggregate_failures do
+        expect(state.take_global_lock!(at: taken + 600)).to eq(taken)
+        expect(state.global_lock_taken_at).to eq(taken)
+        expect(written["global_lock"]).to eq("taken_at" => "2026-11-08T09:00:00Z")
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+      end
+    end
+
+    it "forgets it on release, and writes nothing when there was nothing to forget" do
+      state.take_global_lock!(at: taken)
+      state.release_global_lock!
+      expect([state.global_lock_taken_at, written.key?("global_lock")]).to eq([nil, false])
+
+      expect { state.release_global_lock! }.not_to(change { File.mtime(state.path) })
+    end
+  end
+
   describe "#finish!" do
     let(:approved_at) { Time.utc(2026, 10, 18, 12) }
     let(:merged_at) { approved_at + 600 }

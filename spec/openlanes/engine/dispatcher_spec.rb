@@ -1749,6 +1749,48 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
 
     def frontmatter(**keys) = "---\n#{keys.map { |k, v| "#{k}: #{v}" }.join("\n")}\n---\n#{spec_body}"
 
+    # R6: a `global-lock-required` plan waits for every open branch, and
+    # nothing that never started is started beside it.
+    context "with a refactor that needs the global lock" do
+      before do
+        plans do |t|
+          t.plan "018.00",
+            :blocked,
+            "stuck",
+            files: { "spec.md" => spec_body, "contract.md" => "# Contract\n",
+                                                                    "blocked.md" => "## B1 Which?\n" }
+          t.plan "031.00",
+            :planned,
+            "rename",
+            files: { "spec.md" => spec_body, "plan.md" => "---\nexecution: global-lock-required\n---\n## Backend\n### U1\n" }
+          t.plan "040.00", :new, "fresh", files: { "spec.md" => spec_body }
+        end
+      end
+
+      it "starts no new plan while it waits, and names what it waits on" do
+        runner = runner_with(noop)
+        runner.call
+
+        expect(calls.map(&:last)).not_to include("031.00", "040.00")
+        expect(runner.held).to eq("031.00" => "refactor 031.00 waits on 018.00 ⭕",
+          "040.00" => "queued behind refactor 031.00")
+        expect(OpenLanes::Plans::PlanState.for(path_of("031.00")).global_lock_taken_at).to be_within(60).of(Time.now)
+      end
+
+      it "starts the queued plans beside the refactor once its lock has lapsed" do
+        OpenLanes::Plans::PlanState.for(path_of("031.00")).take_global_lock!(at: Time.now - 7200)
+        runner_with(noop, lock_ttl: -> { 3600 }).call
+
+        expect(calls.map(&:last)).to include("031.00", "040.00")
+      end
+
+      it "takes no lock on a dry run" do
+        runner_with(noop, dry_run: true).call
+
+        expect(OpenLanes::Plans::PlanState.for(path_of("031.00")).global_lock_taken_at).to be_nil
+      end
+    end
+
     describe "#blockers_first" do
       let!(:built) do
         plans do |t|

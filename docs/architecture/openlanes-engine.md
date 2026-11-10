@@ -90,12 +90,14 @@ classDiagram
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Dependencies["OpenLanes::Plans::Dependencies"]
+  class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Journal__Entry["OpenLanes::Plans::Journal::Entry"]
   class OpenLanes__Plans__LastKnownState["OpenLanes::Plans::LastKnownState"]
   class OpenLanes__Plans__Ledger__Entry["OpenLanes::Plans::Ledger::Entry"]
   class OpenLanes__Plans__Ledger__Reading["OpenLanes::Plans::Ledger::Reading"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Lock__Held["OpenLanes::Plans::Lock::Held"]
+  class OpenLanes__Plans__LockClock["OpenLanes::Plans::LockClock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
@@ -178,6 +180,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ledger__Reading : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Lock__Held : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__PlanState : uses
@@ -271,6 +274,7 @@ classDiagram
   OpenLanes__Engine__Runner ..> OpenLanes__Lifecycle__Resync__Dirs : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Plans__GlobalLock : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Plans__StateMachine : uses

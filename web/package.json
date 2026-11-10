@@ -69,7 +69,10 @@
     "vitest-axe": "0.1.0"
   },
   "overrides": {
-    "qs": "^6.15.2"
+    "qs": "^6.15.2",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   },
   "volta": {
     "node": "26.13.0",

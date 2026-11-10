@@ -197,6 +197,8 @@ module OpenLanes
         @said_outside = {}
         @refused = Set.new
         @locks = PlanLocks.new(agent_locks: @agent_locks)
+        # A dry run writes no state.json, so it starts no lock's clock.
+        @lock_clock = runner.dry_run? ? nil : Plans::LockClock.new
         @verifying = {}
         @said_verifying = {}
         @finishes = Finishes.new(runner:, clock:)
@@ -920,7 +922,7 @@ module OpenLanes
                      "edit blocked.md to try again"
         end
         reasons.concat(@verifying.map { |plan, note| "#{plan} #{note}" })
-        held = @runner.held(@runner.dependencies(except: untouchable))
+        held = @runner.held(@runner.dependencies(except: untouchable), @runner.global_lock(except: untouchable))
         reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
         reasons.empty? ? "idle: nothing to do" : "idle: #{reasons.join("; ")}"
       end
@@ -949,6 +951,8 @@ module OpenLanes
         return nil if quality_awaited?
 
         @dependencies = @runner.dependencies(except: untouchable)
+        @global_lock = @runner.global_lock(except: untouchable)
+        @lock_clock&.call(@global_lock)
         blockers_first(@runner.in_scope).each do |subject|
           working = @running.select { plan_of(it) == subject.feature.ordinal.to_s }.map { it.task.agent }
           # After {#reconcile} this is the folder's name. On a dry run, which
@@ -1008,12 +1012,17 @@ module OpenLanes
       end
 
       # The dependency gate: a plan whose `depends_on:` names anything not yet
-      # ✅, or which sits on a cycle, is not started this tick. Kept out of
+      # ✅, or which sits on a cycle, is not started this tick. Nor is one the
+      # refactor gate holds (R6): a `global-lock-required` plan waiting for
+      # every open branch to close, or anything queued behind it. Kept out of
       # {#next_dispatchable} so the rule can be read, and changed, alone.
       #
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Boolean]
-      def held?(subject) = !@dependencies.reason(subject.feature.ordinal).nil?
+      def held?(subject)
+        ordinal = subject.feature.ordinal
+        !@dependencies.reason(ordinal).nil? || !@global_lock.reason(ordinal).nil?
+      end
 
       # Plans that others wait for go first, so the work that unblocks the
       # most is started soonest. Stable: plans nobody waits for keep the
