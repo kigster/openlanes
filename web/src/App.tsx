@@ -27,6 +27,7 @@ import {
   ActionMenu,
   AgentDrawer,
   BombNotice,
+  GlobalLockBanner,
   AnnouncerProvider,
   HelpDialog,
   ModelSelect,
@@ -289,6 +290,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               );
             })}
         </div>
+        <GlobalLockBanner lock={me.global_lock ?? null} />
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <PlanDrawer plan={unblockPlan} />

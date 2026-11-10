@@ -41,10 +41,13 @@ module OpenLanes
       #   last recovered from; nil when there was none
       # @param max_rejections [#call] `merge.max_rejections`, asked once per
       #   snapshot, so an edited `.openlanes.yml` shows on the next one
+      # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
+      #   same way
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
-        outage: nil, max_rejections: -> { Config.current.max_rejections })
+        outage: nil, max_rejections: -> { Config.current.max_rejections },
+        lock_ttl: -> { Config.current.refactor_lock_seconds })
         @board = board
         @tree = tree
         @agents = agents
@@ -64,6 +67,7 @@ module OpenLanes
         @redis_url = redis_url
         @outage = outage
         @max_rejections = max_rejections
+        @lock_ttl = lock_ttl
       end
 
       # @return [Hash]
@@ -81,6 +85,7 @@ module OpenLanes
           plans:       mine,
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
           bombs:       bombs(subjects),
+          global_lock: global_lock,
           adapters:    adapters,
           phases:      Phases.wire(@agents),
           autocompact: Adapters::AUTOCOMPACT / 100.0,
@@ -260,6 +265,28 @@ module OpenLanes
             blocked_since: iso(aging.started_at(s)),
             resume_until:  resume && iso(resume) }
         end
+      end
+
+      # ---- global lock ------------------------------------------------------
+
+      # The refactor holding the global lock (R6), for the banner across the
+      # top of the page; failing that, the lowest one whose lock lapsed, so
+      # the page can say other plans run beside it now. Nil when neither.
+      #
+      # @return [Hash, nil] `GlobalLock`
+      def global_lock
+        lock = Plans::GlobalLock.new(@tree, ttl: @lock_ttl.call, now: @at)
+        ordinal = lock.holder || lock.expired.first or return nil
+
+        subject = lock.subject(ordinal)
+        { plan:       ordinal,
+          slug:       subject.feature.slug,
+          title:      subject.feature.title,
+          taken_at:   lock.taken_at(ordinal)&.then { iso(it) },
+          expires_at: lock.expires_at(ordinal)&.then { iso(it) },
+          ttl:        lock.ttl,
+          expired:    lock.holder.nil?,
+          waits_on:   lock.holder ? lock.waits_on : [] }
       end
 
       # ---- cars -------------------------------------------------------------

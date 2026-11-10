@@ -254,6 +254,19 @@ export interface Snapshot {
   redis_url: string | null; // the Redis the engine keeps claims and run state in, userinfo redacted to ":***"
   log: LogLine[]; // the most recent lines, newest last
   bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
+  global_lock?: GlobalLock | null; // optional: an engine older than R6 never sends it; null when no refactor runs alone
+}
+
+/** The refactor running alone (R6): nothing new starts until it merges or its lock lapses. */
+export interface GlobalLock {
+  plan: string; // ordinal
+  slug: string;
+  title: string;
+  taken_at: Iso | null; // null until the engine's next tick records it
+  expires_at: Iso | null; // taken_at + ttl
+  ttl: number; // seconds, refactor.lock_hours
+  expired: boolean; // the lock lapsed: other plans start beside the refactor again
+  waits_on: string[]; // ordinals still holding a branch before the refactor's build may start; [] once it has
 }
 
 /** A plan that sat blocked past its deadline: halted until someone responds, discusses, or resumes it anyway. */
