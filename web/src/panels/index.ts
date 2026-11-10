@@ -12,6 +12,7 @@ export { AskCard } from "./AskCard";
 export { asksOf, type Ask } from "./question";
 export { NeedsYou, type NeedsYouProps } from "./NeedsYou";
 export { BombNotice, type BombNoticeProps } from "./BombNotice";
+export { GlobalLockBanner, type GlobalLockBannerProps } from "./GlobalLockBanner";
 export { PlanDrawer, type PlanDrawerProps } from "./PlanDrawer";
 export { PlanFilePopup, type PlanFilePopupProps } from "./PlanFilePopup";
 export { UnblockWidget, type UnblockWidgetProps } from "./UnblockWidget";
