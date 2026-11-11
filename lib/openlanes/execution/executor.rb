@@ -333,6 +333,10 @@ module OpenLanes
         # @return [Integer]
         def tools = @all.sum(&:tools)
 
+        # @return [Boolean] whether any session of the invocation was
+        #   compacted, at a person's request or at the CLI's own threshold
+        def compacted? = @all.any? { it.respond_to?(:compacted) && it.compacted }
+
         # What the sessions already over spent, added to the running one's
         # progress so the meter carries on rather than starting again. Their
         # journal lines go first, for the same reason: the dispatcher counts
@@ -635,6 +639,7 @@ module OpenLanes
         handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control:)
         resume = nil unless profile.adapter.resumes?
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
+        forget_journal(agent, subject) if resume
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = start_clock(handle, seconds: timeout_for(agent))
@@ -650,6 +655,7 @@ module OpenLanes
           subject,
           root:, profile:, trace:, handle:, sessions:, clock:, resume:, relaunch:,
           &on_progress)
+        hold_journal(agent, subject, sessions, handle) unless rebase
         verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
       end
 
@@ -749,7 +755,7 @@ module OpenLanes
         profile = profile_for(agent, subject)
         profile.adapter.argv(
           Adapters::Invocation.new(
-            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:),
+            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:, resume:),
             root:,
             model:           profile.model,
             effort:          profile.effort,
@@ -927,6 +933,36 @@ module OpenLanes
         child
       end
 
+      # The record of what the resumed session holds of the journal is dropped
+      # before the session runs again, and written back by {#hold_journal}
+      # only if the round ends with it intact. A round that is killed with the
+      # engine, or compacts, then leaves nothing for the next one to trust,
+      # and that one is sent the whole journal ({JournalWindow}).
+      #
+      # @return [void]
+      def forget_journal(agent, subject)
+        Plans::PlanState.for(subject.feature.path).forget_held!(agent.name)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not cleared: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
+      end
+
+      # Note that the session this invocation ended in holds the journal as it
+      # now stands, so the round that resumes it is sent only what comes
+      # after. Not when any session of the invocation was compacted, by a
+      # person or by the CLI at its threshold: a summary keeps what the model
+      # chose to keep. A folder renamed under the agent is left alone too,
+      # since writing there would mint a state.json in a folder nobody reads.
+      #
+      # @return [void]
+      def hold_journal(agent, subject, sessions, handle)
+        return unless handle.session && File.directory?(subject.feature.path)
+        return if sessions.compacted?
+
+        Plans::PlanState.for(subject.feature.path).hold!(agent: agent.name, session: handle.session)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
+      end
+
       # Whether a resumed invocation failed because its session is gone,
       # rather than at anything it did, and what to say about it. The message
       # is the sure sign; a failure that spent nothing and called no tool is
@@ -1094,9 +1130,10 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [String]
       def prompt_for(agent, subject, root = @root, control: nil, round: 1, successor: nil, partners: [],
-        profile: profile_for(agent, subject), rebase: nil)
+        profile: profile_for(agent, subject), rebase: nil, resume: nil)
         Prompt.new(agent:,
           rebase:,
+          resume:,
           subject:,
           root:,
           profile:,

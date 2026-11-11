@@ -53,6 +53,81 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     end
   end
 
+  # Plan 062.00: a session that is resumed already holds the instructions
+  # and the entries before it, so they are not paid for a second time.
+  context "when the round resumes a session that holds the journal" do
+    subject(:text) do
+      described_class.new(agent:, subject: plan, root: File.dirname(plans_root), profile:, resume: "sess-1").to_s
+    end
+
+    before do
+      state.journal!(agent: "backend-coder",
+        entries: [entry.new(kind: "decision", text: "Integer cents"), entry.new(kind: "done", text: "U1")],
+        state: :building)
+      state.hold!(agent: "backend-coder", session: "sess-1")
+    end
+
+    it "says so in one line, in place of the instructions" do
+      aggregate_failures do
+        expect(text).to include("## Your journal - carry on",
+          "already holds how to keep your journal and its entries 1 to 2",
+          "the next is number 3")
+        expect(text).not_to include("the moment it happens", "Read your journal so far")
+      end
+    end
+
+    it "sends none of the entries the session holds" do
+      expect([text.include?("Nothing has been added to it since."), text.include?("Integer cents")]).to eq([true, false])
+    end
+
+    context "with entries written since" do
+      before do
+        state.journal!(agent: "backend-coder", entries: [entry.new(kind: "override", text: "BigDecimal", overrides: 1)], state: :building)
+      end
+
+      it "sends only those, numbered as the journal numbers them" do
+        aggregate_failures do
+          expect(text).to include("Added since, all of it:", "  Journal round 2 (building):\n    3. [override of 1] BigDecimal", "the next is number 4")
+          expect(text).not_to include("[decision] Integer cents")
+        end
+      end
+    end
+
+    context "with more written since than a prompt carries" do
+      before do
+        entries = (1..(described_class::JOURNAL_LIMIT + 1)).map { entry.new(kind: "note", text: "later #{it}") }
+        state.journal!(agent: "backend-coder", entries:)
+      end
+
+      it "keeps the newest" do
+        aggregate_failures do
+          expect(text).to include("the newest #{described_class::JOURNAL_LIMIT} of it", "[note] later 2\n")
+          expect(text).not_to include("[note] later 1\n")
+        end
+      end
+    end
+
+    context "when the session being resumed is another one" do
+      before { state.hold!(agent: "backend-coder", session: "sess-0") }
+
+      it "sends the whole journal and the instructions" do
+        expect(text).to include("the moment it happens", "1. [decision] Integer cents", "2. [done] U1")
+      end
+    end
+  end
+
+  context "when a resumed session held an empty journal" do
+    subject(:text) do
+      described_class.new(agent:, subject: plan, root: File.dirname(plans_root), profile:, resume: "sess-1").to_s
+    end
+
+    before { state.hold!(agent: "backend-coder", session: "sess-1") }
+
+    it "says the journal is empty so far" do
+      expect(text).to include("how to keep your journal, empty so far", "the next is number 1")
+    end
+  end
+
   context "when the journal is longer than the prompt carries" do
     before do
       entries = (1..(described_class::JOURNAL_LIMIT + 2)).map { entry.new(kind: "note", text: "note #{it}") }
