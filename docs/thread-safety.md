@@ -52,6 +52,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/execution/clock.rb` | the timer thread and deadline | `Execution::Clock` | agent job, timer | `@mutex` | guarded |
 | `lib/openlanes/execution/control.rb` | `@files`, the control files to sweep | `Execution::Control` | agent jobs, poller | `@mutex` | guarded |
 | `lib/openlanes/execution/executor.rb` | `@compaction`, per-run handle state | the run handle | agent job, tick (`compact`, `kill!`) | `@mutex` | guarded |
+| `lib/openlanes/execution/review_packet.rb` | the round's packet file, read or built and written; `@complete` while one is built | the `ReviewPacket` | agent jobs starting reviewers of one round | `@mutex` | guarded |
 | `lib/openlanes/adapters/capabilities.rb` | each adapter's `CAPABILITIES` | the adapter class | any | frozen `Data` | frozen |
 | `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |
