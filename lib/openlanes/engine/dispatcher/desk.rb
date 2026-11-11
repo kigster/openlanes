@@ -381,6 +381,11 @@ module OpenLanes
           end
         end
 
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param kind [String] see {Finishes#finish}
+        # @return [void]
+        def finish(subject, kind) = finishes.finish(subject, kind)
+
         # A requeued agent's round is handed back: the stop was a person's
         # choice, not the agent running out of turns.
         #
