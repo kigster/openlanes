@@ -10,6 +10,14 @@ module OpenLanes
     # @return [OpenLanes::Execution::Executor]
     def executor(**) = Executor.new(**)
 
+    # What an executor is handed as `packets:` so that every reviewer of a
+    # review round opens with the same plan documents and diff.
+    #
+    # @param root [String] the checkout `gh` is asked from
+    # @param github [OpenLanes::Vcs::GitHub]
+    # @return [OpenLanes::Execution::ReviewPacket]
+    def review_packets(root:, github: Vcs::GitHub.new(chdir: root)) = ReviewPacket.new(github:)
+
     # Run the block with Ctrl-C turned into a cooperative interrupt.
     #
     # @param signals [Array<String>] handled as Ctrl-C is
