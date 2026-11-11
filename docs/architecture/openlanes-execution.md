@@ -20,6 +20,7 @@ classDiagram
   class OpenLanes__Execution__Executor["Executor"]
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
+  class OpenLanes__Execution__JournalWindow["JournalWindow"]
   class OpenLanes__Execution__Prompt["Prompt"]
   class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__Transcript["Transcript"]
@@ -34,6 +35,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Error : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary__Snapshot : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Clock : uses
@@ -41,12 +43,14 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Execution__JournalWindow : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Spec : uses
 ```

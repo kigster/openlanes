@@ -109,11 +109,11 @@ classDiagram
   OpenLanes__Events ..> OpenLanes : 1
   OpenLanes__Events ..> OpenLanes__Adapters : 1
   OpenLanes__Events ..> OpenLanes__Live : 1
-  OpenLanes__Execution ..> OpenLanes : 2
+  OpenLanes__Execution ..> OpenLanes : 3
   OpenLanes__Execution ..> OpenLanes__Adapters : 1
   OpenLanes__Execution ..> OpenLanes__Agents : 3
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
-  OpenLanes__Execution ..> OpenLanes__Plans : 5
+  OpenLanes__Execution ..> OpenLanes__Plans : 6
   OpenLanes__Execution ..> OpenLanes__Spawner : 2
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
   OpenLanes__Execution ..> OpenLanes__UI : 3
