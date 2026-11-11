@@ -10,7 +10,13 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Start, :tree do
   let(:rename) { OpenLanes::Engine::Dispatcher::Rename.new(desk) }
   let(:settle) { instance_double(OpenLanes::Engine::Dispatcher::Settle, end_replacements: nil) }
 
-  after { executor.release_all }
+  # The job runs on a thread of its own and writes its control file under the
+  # example's temp directory. Released but not joined, it can still be writing
+  # while the directory is removed, which fails the example with ENOTEMPTY.
+  after do
+    executor.release_all
+    desk.running.each { it.thread&.join(5) }
+  end
 
   it "leaves a plan somebody outside openlanes holds exactly as it was" do
     allow(desk.locks).to receive(:reserve).and_raise(OpenLanes::Engine::PlanLocks::Refused, "001.00 is held in alock")
