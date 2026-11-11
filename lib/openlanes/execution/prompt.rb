@@ -49,10 +49,12 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param packet [String] a reviewer's {ReviewPacket}, already built
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, packet: "")
         @rebase = rebase
+        @packet = packet.to_s
         @max_rejections = max_rejections
         @agent = agent
         @subject = subject
@@ -74,7 +76,10 @@ module OpenLanes
       def to_s
         return resolution if @rebase
 
-        <<~PROMPT
+        # The packet goes first: it is the one part every reviewer of a round
+        # shares byte for byte, so only ahead of each reviewer's own
+        # definition can it be a prompt-cache prefix they have in common.
+        @packet + <<~PROMPT
           #{agent.prompt}#{review_brief}
 
           ---

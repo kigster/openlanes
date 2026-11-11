@@ -492,6 +492,9 @@ module OpenLanes
           instructions:,
           model:        @options[:model],
           max_tokens:   @options[:max_tokens]&.to_i,
+          # Only where the build was published: a plan never pushed has no
+          # pull request whose diff could be fetched.
+          packets:      (Execution.review_packets(root: @root) if publishing? && !@dry_run),
           lean:         !@options[:user_config])
       end
 

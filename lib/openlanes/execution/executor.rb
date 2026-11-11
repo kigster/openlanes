@@ -491,9 +491,14 @@ module OpenLanes
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
       # @param usable [#call] adapter name → whether the startup probe left it
       #   usable, so a reviewer is never dealt a signed-out CLI (plan 031, D12)
+      # @param packets [#call, nil] plan → the review packet its reviewers
+      #   open with ({ReviewPacket}); nil, the default, sends reviewers to the
+      #   documents and `gh pr diff` themselves, so nothing that builds an
+      #   executor without asking for packets reaches GitHub
       def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
-        fresh_budget: false, usable: Agents::Dealing::ANY)
+        fresh_budget: false, usable: Agents::Dealing::ANY, packets: nil)
+        @packets = packets
         @root = File.expand_path(root)
         @trace_dir = trace_dir
         @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
@@ -1109,7 +1114,26 @@ module OpenLanes
           fresh_budget: @fresh_budget,
           seconds:      timeout_for(agent),
           denied:       denied_commands(agent),
-          granted:      granted_to(agent)).to_s
+          granted:      granted_to(agent),
+          packet:       packet_for(agent, subject, rebase)).to_s
+      end
+
+      # A reviewer's packet for this plan's review round. A dry run fetches
+      # nothing, and a reviewer resolving a stopped rebase is not reviewing.
+      # A packet that cannot be built costs the reviewer its own fetches,
+      # as before plan 060.00, never the round.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
+      # @return [String] empty when this invocation gets none
+      def packet_for(agent, subject, rebase)
+        return "" if @packets.nil? || @dry_run || rebase || agent.phase.to_s != "review"
+
+        @packets.call(subject).to_s
+      rescue Error, SystemCallError => e
+        UI.log("no review packet for #{subject.feature.ordinal}: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+        ""
       end
 
       # The token budget crossed, or the grace period after `q` spent. Both go
