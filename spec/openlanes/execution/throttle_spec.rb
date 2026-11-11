@@ -50,6 +50,22 @@ RSpec.describe OpenLanes::Execution::Throttle do
     end
   end
 
+  context "when the wait is in seconds" do
+    let(:error) { "429 Too Many Requests. Please retry in 34.5 seconds." }
+
+    it "takes the number as it stands" do
+      expect(limit.retry_after).to eq(34.5)
+    end
+  end
+
+  context "when the wait is in hours" do
+    let(:error) { "usage limit reached, try again in 2 hours" }
+
+    it "counts an hour as 3600 seconds" do
+      expect(limit.retry_after).to eq(7200.0)
+    end
+  end
+
   context "when the invocation failed at something else" do
     let(:error) { "401 API key is invalid" }
 
