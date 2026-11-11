@@ -112,6 +112,16 @@ describe("AgentDrawer", () => {
     expect(screen.getByRole("status")).toHaveTextContent("On hold. It pauses after its current step. A message from you releases it.");
   });
 
+  it("shows what the agent has cost, and n/a from an engine that does not say", () => {
+    const plan = planAt("005.00");
+    const car = carOf(plan, "staff-reviewer");
+    const { unmount } = drawer(plan, { ...car, cost: 2.1796 });
+    expect(screen.getByText("Cost").querySelector("strong")).toHaveTextContent("$2.18");
+    unmount();
+    drawer(plan, { ...car, cost: undefined });
+    expect(screen.getByText("Cost").querySelector("strong")).toHaveTextContent("n/a");
+  });
+
   it("says Compacted once the reply is done, and a refusal in place", async () => {
     const user = userEvent.setup();
     const plan = planAt("005.00");

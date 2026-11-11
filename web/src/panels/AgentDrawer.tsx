@@ -15,6 +15,7 @@ import { useQuestion } from "./question";
 import { renderMarkdown } from "./markdown";
 import { ModelSelect } from "./ModelSelect";
 import { pend, unconfirmed, type Pending } from "./transcript";
+import { dollars } from "../board/format";
 import { ariaSendKeys, clock, fmt, isSendKey, modelName, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 export interface AgentDrawerProps {
@@ -176,6 +177,9 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
       <div className="drawer-stats">
         <div>Tokens in<strong>{fmt(car.up)}</strong></div>
         <div>Tokens out<strong>{fmt(car.down)}</strong></div>
+        <div title="Dollars this agent has spent so far in this round, at its model's rates">
+          Cost<strong>{car.cost === undefined ? "n/a" : dollars(car.cost)}</strong>
+        </div>
         <div>Elapsed<strong>{clock(car.elapsed)}</strong></div>
       </div>
       <div className="d-context">
