@@ -10,8 +10,11 @@ RSpec.describe "the shipped eval corpus" do
   # Every agent that works plans. An eval case is a plan fixture moved from
   # one state to the next, so an agent that handles no state (copilot,
   # the copilot) has nothing a case could score; its own spec covers it.
-  it "covers every agent that works a plan" do
-    expect(cases.map(&:agent).uniq).to match_array(OpenLanes::Agents.registry.all.reject { it.handles.empty? }.map(&:name))
+  # The arbitrator handles no state either, but the engine calls it and its
+  # answer is scored by a `ruling` check, so it has cases of its own.
+  it "covers every agent that works a plan, and the arbitrator" do
+    working = OpenLanes::Agents.registry.all.reject { it.handles.empty? }.map(&:name)
+    expect(cases.map(&:agent).uniq).to match_array(working + [OpenLanes::Agents::Names::ARBITRATOR])
   end
 
   it "holds researcher, planner and chores-coder to two different depths each" do

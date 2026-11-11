@@ -16,6 +16,7 @@ classDiagram
   class OpenLanes__Evals__Score["Score"]
   class OpenLanes__Evals__Scorer["Scorer"]
   class OpenLanes__Evals__Verdict["Verdict"]
+  class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   OpenLanes__Evals__Case ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__Evals__Case ..> OpenLanes__Plans__Spec : uses
@@ -24,6 +25,7 @@ classDiagram
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Run : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Scorer : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Evals__Live ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Changes : uses
   OpenLanes__Evals__Scorer ..> OpenLanes__Evals__Evidence : uses

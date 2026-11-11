@@ -16,9 +16,12 @@ module OpenLanes
     # @!attribute [r] state
     #   @return [Symbol, nil] the status key the folder ended in, when its
     #     name cannot say so itself
-    Run = Data.define(:seconds, :tokens, :state) do
-      def initialize(seconds: nil, tokens: nil, state: nil)
-        super(seconds: seconds&.to_f, tokens: tokens&.to_i, state: state&.to_sym)
+    # @!attribute [r] answer
+    #   @return [String, nil] the agent's final text, for an agent whose work
+    #     is its answer rather than a file (the arbitrator's ruling block)
+    Run = Data.define(:seconds, :tokens, :state, :answer) do
+      def initialize(seconds: nil, tokens: nil, state: nil, answer: nil)
+        super(seconds: seconds&.to_f, tokens: tokens&.to_i, state: state&.to_sym, answer:)
       end
 
       # @param path [String] a `run.json`
@@ -27,7 +30,7 @@ module OpenLanes
         return new unless File.file?(path)
 
         data = JSON.parse(File.read(path))
-        new(seconds: data["seconds"], tokens: data["tokens"], state: data["state"])
+        new(seconds: data["seconds"], tokens: data["tokens"], state: data["state"], answer: data["answer"])
       end
     end
   end
