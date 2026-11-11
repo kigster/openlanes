@@ -15,6 +15,12 @@ module OpenLanes
     # the state machine says whether the folder may move; the state file says
     # what an earlier run left behind. When the three disagree the row goes
     # red with the reason, and nobody is re-run to paper over it.
+    #
+    # The loop itself only wires the steps and orders them: each part of a
+    # tick is a {Step} under `dispatcher/`, working on the one {Desk} they
+    # share. {Settle} reaps, {Poll} reads, {Assign} picks and {Start} sets
+    # going, {Rename} moves the folder; {Lanes}, {Rulings} and {Rows} are
+    # the commands, the off-thread results and the board.
     class Dispatcher
       extend Forwardable
 
@@ -69,7 +75,7 @@ module OpenLanes
       # What of the {Desk} is also this loop's own public face: what the
       # page's commands, the live session and the run's report read.
       PUBLIC = %i[running runner attempts mail mail= rebases state_file wake! adapter_for adapter_of resume stay?
-        job signal].freeze
+                  job signal].freeze
 
       # @param runner [OpenLanes::Engine::Runner]
       # @param state [OpenLanes::Engine::StateFile, nil] nil under a dry run

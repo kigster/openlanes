@@ -230,7 +230,7 @@ module OpenLanes
         def untouchable
           busy = running.map { plan_of(it) } + discarding.keys + unblocking.map(&:ordinal) + verifying_now + arbitrating_now
           busy + runner.tree.subjects.select { runner.foreign?(it) || locked_elsewhere?(it) || held_outside?(it) }
-                        .map { it.feature.ordinal.to_s }
+                       .map { it.feature.ordinal.to_s }
         end
 
         # Plans whose CI and coverage are being looked at off the loop's

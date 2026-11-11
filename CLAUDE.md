@@ -124,6 +124,7 @@ lib/openlanes/
   engine/                OpenLanes::Engine — the round loop
     runner.rb            run configuration, until a fixed point
     dispatcher.rb        the tick loop: assign, poll, settle, rename
+    dispatcher/          its steps over one shared Desk: assign, start, poll, settle, rename, lanes, rulings, rows
     state_file.rb        restart state; board.rb, tally.rb, progress_log.rb what the run shows and costs
   execution/             OpenLanes::Execution — one agent invocation
     executor.rb          one agent invocation through its adapter, and the autonomy boundary
