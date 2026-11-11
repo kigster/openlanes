@@ -170,6 +170,8 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .drawer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 16px; }
 .drawer-stats div { font-size: 13px; color: var(--ink-soft); }
 .drawer-stats strong { display: block; font-size: 20px; color: var(--ink); font-weight: 800; }
+.d-held { margin: 0 0 12px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink);
+          background: color-mix(in srgb, var(--alarm) 10%, transparent); border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); }
 .d-context { margin: 0 0 16px; font-size: 13px; color: var(--ink-soft); }
 .d-context p { margin: 0 0 6px; }
 .d-context strong { color: var(--ink); }
