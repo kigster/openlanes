@@ -12,6 +12,15 @@ module OpenLanes
       # {Settle} decides that a round ended Completed or Blocked; what that
       # does to the folder is decided here, and nowhere else.
       class Rename < Step
+        # What a builder is told when its finished work has no way to be tested.
+        HOW_TO_TEST_MAIL = <<~MAIL.freeze
+          The build is done, but the pull request was not opened: plan.md has no
+          `#{Lifecycle::Completion::HOW_TO_TEST}` section, and a pull request nobody can test is not
+          ready for review. Add one to plan.md: the commands to run and what a person
+          should see, as a list, covering every part of the build and not only yours.
+          Change nothing else, then sign Completed again.
+        MAIL
+
         # `starts_as`: the folder moves the moment the agent is dispatched, where
         # the topology allows, so backend-coder's start is what makes a plan 🟡.
         #

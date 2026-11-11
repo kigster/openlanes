@@ -398,6 +398,21 @@ module OpenLanes
           end
           finished_plans.delete(ordinal)
         end
+
+        # @param key [String] a row's key, `"<ordinal>/<agent>"`
+        # @return [OpenLanes::Engine::Dispatcher::Job, nil]
+        def job(key) = running.find { |j| j.key == key }
+
+        # One control word into one running agent's control file.
+        #
+        # @param key [String]
+        # @param word [String] one of {Execution::Control}'s words
+        # @return [Boolean] whether there was a running agent to tell
+        def signal(key, word)
+          control = job(key)&.handle&.control or return false
+          Execution::Control.write(control, word)
+          true
+        end
       end
     end
   end
