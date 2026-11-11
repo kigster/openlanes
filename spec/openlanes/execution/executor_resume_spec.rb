@@ -122,7 +122,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   context "when a resumed run fails having spent nothing, without the usual message" do
-    let(:streams) { [[["API Error: 529 overloaded\n"], broken], [fresh_stream, ok]] }
+    let(:streams) { [[["API Error: connection reset\n"], broken], [fresh_stream, ok]] }
     let(:heard) { [] }
     let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
 
@@ -135,7 +135,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "logs what the CLI said, so an outage reads as one" do
-      expect(heard).to include("session sess-1 failed before spending anything (API Error: 529 overloaded), " \
+      expect(heard).to include("session sess-1 failed before spending anything (API Error: connection reset), " \
                                "starting backend-coder fresh")
     end
   end
