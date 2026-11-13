@@ -1141,6 +1141,11 @@
               "description": "Invoke no agent; name the plans that would be read",
               "default": false
             },
+            "memory": {
+              "type": "boolean",
+              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to curate",
+              "default": true
+            },
             "quiet": {
               "type": "boolean",
               "description": "Suppress progress output on STDERR",
@@ -1199,7 +1204,7 @@
         },
         "memory promote": {
           "type": "object",
-          "description": "Turn waiting lessons into active ones: those seen in 2 plans, or approved. Writes files only; agents see a lesson once it is merged",
+          "description": "Turn waiting lessons into active ones: those seen in 2 plans, or approved, as a memory pull request a person merges",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -1215,6 +1220,16 @@
               "type": "boolean",
               "description": "Write nothing; print what would be promoted, confirmed or left waiting",
               "default": false
+            },
+            "local": {
+              "type": "boolean",
+              "description": "Write the lesson files into this checkout and open no pull request",
+              "default": false
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to promote",
+              "default": true
             },
             "quiet": {
               "type": "boolean",
