@@ -421,7 +421,7 @@ module OpenLanes
         raise Error, "a signature needs an agent name" unless agent.to_s.match?(/\A[\w-]+\z/)
 
         signature = { "at" => at.iso8601, "agent" => agent, "status" => status, "round" => Integer(round),
-                      "note" => note, "next" => next_agent }.compact
+                      "note" => Ledger.bare_note(note), "next" => next_agent }.compact
         update { |data| data["signatures"] << signature }
         signature
       end

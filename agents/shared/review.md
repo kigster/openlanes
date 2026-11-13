@@ -49,6 +49,8 @@ Count the earlier review rounds that rejected this PR: the `rejected` notes in `
 | no findings, and the code is a pleasure to read          | the comment above, ending "👍🏼 to deploy"               | `Completed, round R (great)`          |
 | code missing, not working, untested, or off-spec         | write `rewrite.md` saying why, then the comment above  | `Completed, round R (slop)`           |
 
+The engine reads your verdict from the note alone, so pass only the words in parentheses as the note: `--status Completed --note passed`, or `--note "rejected 1/2"`. Never pass the whole line as the note.
+
 R is this review's round and M is `merge.max_rejections`, given under `## Rejection cap` in your invocation: with M 2, the first rejection signs `(rejected 1/2)` and the second `(rejected 2/2)`. A plan at the cap goes to the arbitrator, not back to you, so keep reviewing on findings alone.
 
 If `pull-requests.md` lists several PRs, judge each, and sign the worst verdict any of them earned.

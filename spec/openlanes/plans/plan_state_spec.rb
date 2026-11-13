@@ -61,6 +61,20 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       state.ledger
     end
 
+    # Plan 057: a reviewer signed the whole line its instructions spell, and no verdict was read out of it.
+    it "stores the words in parentheses when the note is the whole signature line, so a verdict is read" do
+      notes = ["Completed, round 1 (passed)", "Completed, round 2 (rejected 1/2, vulnerability)", "Blocked, round N (technical)", "passed", "rejected 1/2"]
+      stored = notes.map { state.sign!(agent: "security-reviewer", round: 1, status: "Completed", note: it)["note"] }
+      votes = stored.first(2).map { OpenLanes::Plans::Verdict.vote(agent: "security-reviewer", note: it).to_h.values_at(:word, :vulnerability) }
+      expect([stored, votes])
+        .to eq([["passed", "rejected 1/2, vulnerability", "technical", "passed", "rejected 1/2"], [[:passed, false], [:rejected, true]]])
+    end
+
+    it "leaves a note that only mentions a round alone, and no note as none" do
+      kept = state.sign!(agent: "planner", round: 1, status: "Completed", note: "see round 2 (later)")["note"]
+      expect([kept, state.sign!(agent: "planner", round: 1, status: "Completed").key?("note")]).to eq(["see round 2 (later)", false])
+    end
+
     it "records a signature the ledger reads back as an entry with its handoff" do
       expect([reading.entries.first.to_h.slice(:agent, :status, :round, :note, :file),
               OpenLanes::Plans::Ledger.handoff_after(reading, reading.entries.first)&.next])
