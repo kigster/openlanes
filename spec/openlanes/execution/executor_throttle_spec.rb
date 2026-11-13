@@ -163,6 +163,95 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
+  # The agent has no process while it waits, so a word sent to it then is
+  # read by the start that follows the wait, or by nobody (PR 204).
+  context "when the agent is told something while it waits" do
+    let(:streams) { [[limited, broken], [working, ok]] }
+    let(:told) { [] }
+    let(:spawn) do
+      lambda do |argv, **|
+        spawned << argv
+        told << File.read(handle.control)
+        chunks, status = streams.fetch(spawned.size - 1)
+        child(chunks, status)
+      end
+    end
+
+    context "with HOLD, sent during the wait" do
+      let(:sleep) do
+        lambda do |seconds|
+          slept << seconds
+          File.write(handle.control, "HOLD\n") if slept.size == 5
+        end
+      end
+
+      before { result }
+
+      it "starts again with the HOLD still in its control file" do
+        expect([spawned.size, told.last]).to eq([2, "HOLD\n"])
+      end
+    end
+
+    context "with WRAP_UP, already there when the limit hit" do
+      let(:spawn) do
+        lambda do |argv, **|
+          spawned << argv
+          told << File.read(handle.control)
+          File.write(handle.control, "WRAP_UP\n") if spawned.size == 1
+          chunks, status = streams.fetch(spawned.size - 1)
+          child(chunks, status)
+        end
+      end
+
+      before { result }
+
+      it "does not let the clock's extension line write over it" do
+        expect(told.last).to eq("WRAP_UP\n")
+      end
+    end
+
+    context "with nothing" do
+      before { result }
+
+      it "starts again with the clock's extension line cleared" do
+        expect(told.last).to eq("")
+      end
+    end
+
+    context "with a pause, because Redis went away" do
+      let(:sleep) do
+        lambda do |seconds|
+          slept << seconds
+          OpenLanes::Execution::Control.pause! if slept.size == 1
+          OpenLanes::Execution::Control.resume! if slept.size == 45
+        end
+      end
+
+      before { result }
+
+      it "starts nobody until the pause is over, however long the provider asked for" do
+        expect([slept.size, spawned.size, result.ok]).to eq([45, 2, true])
+      end
+    end
+
+    context "with a stop, during a pause" do
+      let(:streams) { [[limited, broken]] }
+      let(:sleep) do
+        lambda do |seconds|
+          slept << seconds
+          OpenLanes::Execution::Control.pause! if slept.size == 1
+          handle.request_stop! if slept.size == 30
+        end
+      end
+
+      before { result }
+
+      it "is not started again" do
+        expect([spawned.size, result.note]).to match([1, a_string_starting_with("rate limited: stopped while waiting to retry")])
+      end
+    end
+  end
+
   context "when the invocation fails at something else" do
     let(:streams) { [[[init, failed_with("401 API key is invalid")], broken]] }
 

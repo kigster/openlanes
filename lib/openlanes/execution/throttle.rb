@@ -26,11 +26,17 @@ module OpenLanes
       # What an overloaded provider looks like.
       OVERLOADED = /\b529\b|overloaded|service unavailable/i
 
-      # "retry-after: 30", "retry_after":12.5, "Retry-After 7".
-      RETRY_AFTER = /retry[ _-]?after["':=\s]+(\d+(?:\.\d+)?)/i
+      # A unit of time, as a provider spells one after a number.
+      UNIT = /ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hours?/i
+
+      # "retry-after: 30", "retry_after":12.5, "Retry-After 7", and the same
+      # words as prose with a unit: "retry after 2 minutes". A bare number is
+      # seconds, as the header is; read without its unit, "2 minutes" was a
+      # two second wait (PR 204).
+      RETRY_AFTER = /retry[ _-]?after["':=\s]+(\d+(?:\.\d+)?)(?:[ \t]*(#{UNIT})\b)?/i
 
       # "try again in 20s", "Please retry in 34.2 seconds", "retry in 2 minutes".
-      RETRY_IN = /(?:try again|retry(?:ing)?) in (\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hours?)\b/i
+      RETRY_IN = /(?:try again|retry(?:ing)?) in (\d+(?:\.\d+)?)\s*(#{UNIT})\b/i
 
       # How many of the CLI's plain lines are read when it reported no error
       # of its own: its last words, not the whole run, since an agent working
@@ -62,14 +68,11 @@ module OpenLanes
       # @param text [String]
       # @return [Float, nil] seconds the provider asked for, when it said
       def retry_after(text)
-        if (asked = RETRY_AFTER.match(text))
-          asked[1].to_f
-        elsif (asked = RETRY_IN.match(text))
-          asked[1].to_f * seconds_in(asked[2].downcase)
-        end
+        asked = RETRY_AFTER.match(text) || RETRY_IN.match(text) or return nil
+        asked[1].to_f * (asked[2] ? seconds_in(asked[2].downcase) : 1)
       end
 
-      # @param unit [String] a unit {RETRY_IN} matched, lower case
+      # @param unit [String] a {UNIT}, lower case
       # @return [Numeric] seconds in one of it
       def seconds_in(unit)
         if unit.start_with?("ms", "mil") then 0.001

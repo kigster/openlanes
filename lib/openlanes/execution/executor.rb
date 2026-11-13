@@ -1027,14 +1027,38 @@ module OpenLanes
       # One wait: said, given back to the clock, and sat through unless
       # somebody stops the agent meanwhile.
       #
+      # The agent has no process during the wait, so what is said to it then
+      # has to survive until it has one. The clock's "time was extended" line
+      # is written over the control file, so a HOLD, WRAP_UP or PAUSE already
+      # there is put back. And while agents are paused (W32, Redis is out) the
+      # wait goes on past its own end: a pause that started an agent would not
+      # be one (PR 204).
+      #
       # @return [Boolean] false when the wait was cut short by a stop
       def wait_out(limit, seconds, waits, agent, subject, handle:, sessions:, &on_progress)
         announce_wait(limit, seconds, waits, agent, subject, sessions, &on_progress)
+        standing = standing_order(handle)
         handle.extend!(seconds.ceil)
-        return true if @throttle.pause(seconds) { handle.stopping? || Control.quit? || Control.interrupted? }
+        Control.write(handle.control, standing) if standing
+        stopped = -> { handle.stopping? || Control.quit? || Control.interrupted? }
+        passed = @throttle.pause(seconds, &stopped)
+        passed = @throttle.pause(Throttle::Backoff::SLICE, &stopped) while passed && Control.paused?
+        return true if passed
 
         handle.throttled = "#{limit}: stopped while waiting to retry (#{limit.detail})"
         false
+      end
+
+      # What a person or the engine has told this agent that it has not yet
+      # had a process to read: the control file's word, when it is one the
+      # next start must still find there.
+      #
+      # @return [String, nil]
+      def standing_order(handle)
+        word = handle.control && File.read(handle.control).strip
+        word if word&.start_with?(Control::HOLD, Control::WRAP_UP, Control::PAUSE)
+      rescue SystemCallError
+        nil
       end
 
       # The wait, in the log and over the agent's own line on the board.
@@ -1066,8 +1090,10 @@ module OpenLanes
           return nil
         end
 
-        # The clock's "time was extended" line, written for the wait.
-        Control.write(handle.control, "")
+        # The clock's "time was extended" line, written for the wait, is
+        # cleared. A HOLD or WRAP_UP sent during the wait is not: the start
+        # below is the first process that can read it.
+        Control.write(handle.control, "") unless standing_order(handle)
         return again.call if again && (unspent || !resumable)
 
         argv = resumption(agent, profile, subject:, root:, session: handle.session, prompt: Throttle.carry_on(limit), model: profile.model)

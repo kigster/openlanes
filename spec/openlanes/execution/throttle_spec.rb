@@ -42,6 +42,14 @@ RSpec.describe OpenLanes::Execution::Throttle do
     end
   end
 
+  # "retry after 2 minutes" was read as the header is, a bare number of
+  # seconds, and waited two (PR 204).
+  it "reads a unit after `retry after`, and a bare number as seconds" do
+    asked = ["Rate limited: retry after 2 minutes.", "please retry after 90s", "Retry-After 7", "retry-after: 20\nmore to follow"]
+
+    expect(asked.map { described_class.retry_after(it) }).to eq([120.0, 90.0, 7.0, 20.0])
+  end
+
   context "when the wait is in milliseconds" do
     let(:error) { "rate limit reached, try again in 500ms" }
 
