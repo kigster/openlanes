@@ -276,6 +276,12 @@ Stubbing `File` or `Dir` makes the spec test the stub.
 - The prompt marks lessons as quoted data that the rest of the prompt overrules. A rebase resolution and a resumed (compacted) session get no lessons section: the first is not plan work, and the second already has them from its first prompt.
 - A lesson only adds care. It never grants a tool or lifts a check: those come from the agent's frontmatter and the harness, never from a prompt.
 - `openlanes memory list` lists every lesson agents are told, names the commit the project ones came from, and warns about files it cannot read; `openlanes memory list --agent staff-reviewer` prints exactly what that agent is told.
+- Lessons are written through an inbox, never straight into `lessons/`:
+  - `openlanes memory curate 056` has the `curator` agent read one finished or rejected plan and propose lessons. It writes nothing itself; the harness files what passes its checks into `.openlanes/memory/inbox/`, one file per lesson.
+  - `openlanes memory inbox` lists what waits and the plans each was seen in.
+  - `openlanes memory promote` (preview with `-n`) turns a candidate into an active lesson once it has been seen in two plans, or after `openlanes memory approve SLUG`. A lesson met again on a later plan is confirmed in place, which moves it up what agents are shown.
+  - Promotion writes files in your checkout. Commit them and open a pull request: agents are told a lesson only once it is merged.
+  - `openlanes memory scan` exits 1 if anything under `.openlanes/` looks like a key, token, password, credentialed URL or email address, or is ignored by git. The same scan runs before a candidate is filed and before it is promoted, and reports the kind and the line, never the value.
 - `run --no-memory` (also on `start`, and `eval --live --no-memory`) leaves lessons out. Compare `openlanes events report` across runs with and without them to see whether they help.
 
 ## How agents hand off
