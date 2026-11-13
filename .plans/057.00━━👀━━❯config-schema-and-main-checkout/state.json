@@ -1,0 +1,1493 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "057.00",
+    "slug": "config-schema-and-main-checkout"
+  },
+  "state": "in_review",
+  "updated_at": "2026-11-12T21:54:53-08:00",
+  "stages": [
+    {
+      "agent": "planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-11-12T20:00:52-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "14a7eaed-2d52-485d-b789-5b4cb0aaf411",
+      "to": "planned",
+      "finished_at": "2026-11-12T20:03:03-08:00",
+      "up": 454300,
+      "down": 12525,
+      "seconds": 129.6,
+      "note": "completed - 11 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "planned",
+      "started_at": "2026-11-12T20:25:51-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "836f4dc3-8d55-47f2-a5fc-e5d991f79963",
+      "to": "building",
+      "finished_at": "2026-11-12T20:32:16-08:00",
+      "up": 3297126,
+      "down": 28271,
+      "seconds": 228.8,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T20:32:19-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "5fe4af5d-7206-4e17-bf8f-c33a0f67bd30",
+      "to": "ready_for_review",
+      "finished_at": "2026-11-12T20:32:42-08:00",
+      "up": 129791,
+      "down": 468,
+      "seconds": 11.1,
+      "note": "completed - 2 tool calls (no front end); opened https://github.com/kigster/openlanes/pull/210",
+      "moves": 5
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-11-12T20:32:53-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "1e0a0900-b5af-40bc-8af2-a2eb7bbe1c90",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:33:36-08:00",
+      "up": 345804,
+      "down": 4304,
+      "seconds": 41.8,
+      "note": "completed - 6 tool calls; rejected; waiting for security-reviewer, staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:32:55-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:33:36-08:00",
+      "up": 442528,
+      "down": 4001,
+      "seconds": 41.4,
+      "note": "completed - 8 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:33:36-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "0fdd20d8-b7ac-4e7d-8128-95203956bc9e",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:34:59-08:00",
+      "up": 345966,
+      "down": 6008,
+      "seconds": 82.1,
+      "note": "completed - 6 tool calls; rejected; waiting for security-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:33:37-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:33:52-08:00",
+      "up": 188100,
+      "down": 993,
+      "seconds": 15.7,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:44:18-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:44:41-08:00",
+      "up": 283337,
+      "down": 1580,
+      "seconds": 22.6,
+      "note": "completed - 3 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:44:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:45:00-08:00",
+      "up": 237560,
+      "down": 770,
+      "seconds": 15.5,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:45:15-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:45:34-08:00",
+      "up": 260974,
+      "down": 939,
+      "seconds": 17.0,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:45:36-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:45:51-08:00",
+      "up": 283908,
+      "down": 787,
+      "seconds": 15.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:53:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:54:07-08:00",
+      "up": 410651,
+      "down": 1127,
+      "seconds": 19.0,
+      "note": "completed - 3 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:54:09-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:54:25-08:00",
+      "up": 331662,
+      "down": 777,
+      "seconds": 15.9,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:54:38-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:54:58-08:00",
+      "up": 354777,
+      "down": 1035,
+      "seconds": 18.6,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:55:00-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:55:16-08:00",
+      "up": 377936,
+      "down": 807,
+      "seconds": 15.0,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 6,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:56:43-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:57:02-08:00",
+      "up": 400961,
+      "down": 978,
+      "seconds": 18.5,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 6,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T20:57:04-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T20:57:20-08:00",
+      "up": 423951,
+      "down": 793,
+      "seconds": 15.4,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 7,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:01:24-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:01:45-08:00",
+      "up": 446969,
+      "down": 992,
+      "seconds": 19.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 7,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:01:47-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:02:03-08:00",
+      "up": 470018,
+      "down": 770,
+      "seconds": 15.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 8,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:04:28-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:04:48-08:00",
+      "up": 492756,
+      "down": 868,
+      "seconds": 19.2,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 8,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:04:54-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:05:11-08:00",
+      "up": 515452,
+      "down": 736,
+      "seconds": 15.3,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 9,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:19:24-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:19:42-08:00",
+      "up": 538119,
+      "down": 845,
+      "seconds": 17.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 9,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:19:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:20:00-08:00",
+      "up": 560753,
+      "down": 730,
+      "seconds": 15.3,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 10,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:21:36-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:21:55-08:00",
+      "up": 583371,
+      "down": 792,
+      "seconds": 17.0,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 10,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:21:57-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:22:17-08:00",
+      "up": 605876,
+      "down": 750,
+      "seconds": 15.9,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 11,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:23:40-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:24:00-08:00",
+      "up": 628559,
+      "down": 784,
+      "seconds": 18.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 11,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:24:02-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:24:26-08:00",
+      "up": 651038,
+      "down": 746,
+      "seconds": 16.1,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 12,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:28:39-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:29:00-08:00",
+      "up": 673704,
+      "down": 781,
+      "seconds": 18.6,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 12,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:29:02-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:29:21-08:00",
+      "up": 696186,
+      "down": 748,
+      "seconds": 17.9,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 13,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T21:54:18-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T21:54:53-08:00",
+      "up": 1210294,
+      "down": 1824,
+      "seconds": 33.6,
+      "note": "completed - 4 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-12T20:01:05-08:00",
+      "agent": "planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:02:50-08:00",
+      "agent": "planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "backend-coder"
+    },
+    {
+      "at": "2026-11-12T20:26:04-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:32:01-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:32:25-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:32:28-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T20:33:01-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:33:02-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:33:29-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:33:30-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T20:33:45-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:33:48-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:33:50-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:34:49-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T20:44:26-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-12T20:44:38-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 2,
+      "note": "Completed, round 2 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:44:52-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-12T20:44:57-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 2,
+      "note": "Completed, round 2 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:45:23-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-12T20:45:30-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 3,
+      "note": "Completed, round 3 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:45:44-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-12T20:45:48-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 3,
+      "note": "Completed, round 3 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:53:53-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-11-12T20:54:01-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 4,
+      "note": "Completed, round 4 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:54:18-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-11-12T20:54:22-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 4,
+      "note": "Completed, round 4 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:54:47-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-11-12T20:54:55-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 5,
+      "note": "Completed, round 5 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:55:09-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-11-12T20:55:13-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 5,
+      "note": "Completed, round 5 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:56:52-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-11-12T20:56:59-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 6,
+      "note": "Completed, round 6 (passed)"
+    },
+    {
+      "at": "2026-11-12T20:57:13-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-11-12T20:57:17-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 6,
+      "note": "Completed, round 6 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:01:33-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 7
+    },
+    {
+      "at": "2026-11-12T21:01:41-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 7,
+      "note": "Completed, round 7 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:01:56-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 7
+    },
+    {
+      "at": "2026-11-12T21:02:00-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 7,
+      "note": "Completed, round 7 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:04:39-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 8
+    },
+    {
+      "at": "2026-11-12T21:04:45-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 8,
+      "note": "Completed, round 8 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:05:04-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 8
+    },
+    {
+      "at": "2026-11-12T21:05:07-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 8,
+      "note": "Completed, round 8 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:19:33-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 9
+    },
+    {
+      "at": "2026-11-12T21:19:38-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 9,
+      "note": "Completed, round 9 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:19:53-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 9
+    },
+    {
+      "at": "2026-11-12T21:19:57-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 9,
+      "note": "Completed, round 9 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:21:46-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 10
+    },
+    {
+      "at": "2026-11-12T21:21:51-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 10,
+      "note": "Completed, round 10 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:22:06-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 10
+    },
+    {
+      "at": "2026-11-12T21:22:10-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 10,
+      "note": "Completed, round 10 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:23:51-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 11
+    },
+    {
+      "at": "2026-11-12T21:23:56-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 11,
+      "note": "Completed, round 11 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:24:12-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 11
+    },
+    {
+      "at": "2026-11-12T21:24:16-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 11,
+      "note": "Completed, round 11 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:28:50-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 12
+    },
+    {
+      "at": "2026-11-12T21:28:56-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 12,
+      "note": "Completed, round 12 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:29:14-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 12
+    },
+    {
+      "at": "2026-11-12T21:29:18-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 12,
+      "note": "Completed, round 12 (passed)"
+    },
+    {
+      "at": "2026-11-12T21:54:33-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 13
+    },
+    {
+      "at": "2026-11-12T21:54:48-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 13,
+      "note": "Completed, round 13 (passed)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "d0ca6387-714f-43bc-bf07-f46d0c21ec5e",
+      "number": 1,
+      "at": "2026-11-12T20:34:48-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "staff-reviewer done: rejected 1/2 (F1 critical: parse/writer ignore schema; F2, F3 minor). alock refused pull-requests.md (held by openlanes:43808), so findings are in PR #210 comment 6844083710 only.",
+      "read": "no"
+    }
+  ],
+  "moves": 6,
+  "memory": {
+    "planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "depends_on: [none]. 057 builds nothing it waits for; 058 depends on 057, not the other way round"
+            },
+            {
+              "kind": "decision",
+              "text": "json_schemer moves from the Gemfile's test group to a gemspec runtime dependency, because Config.parse validates at runtime"
+            },
+            {
+              "kind": "decision",
+              "text": "The commands schema is built from the dry-cli registry when the schema loads; the checked-in file is regenerated by just update-config-schema and a spec fails when it is stale"
+            },
+            {
+              "kind": "decision",
+              "text": "execution: concurrent. The spec is not a refactor"
+            },
+            {
+              "kind": "note",
+              "text": "The plan folder was locked by the harness itself (openlanes pid 70038, intent 'planner on 057.00'), so I wrote under that lock and did not take my own"
+            },
+            {
+              "kind": "done",
+              "text": "plan.md written with 6 back-end units (U1-U6), no front end, no HTTP surface; signed Completed with --next backend-coder"
+            }
+          ]
+        }
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U5: Project.main_checkout/enter_main_checkout/primary_of; Start#call enters main checkout first and prints one STDERR line; Allocator primary reuses Project.primary_of. Real git worktree specs in start_spec and project_spec."
+            },
+            {
+              "kind": "done",
+              "text": "U1: schemas/openlanes-config.schema.json (merged, commands included) + Config::Schema (document, keys, keys_for, defaults, errors, write, jsonable for Date/Symbol). schema_spec covers keys == KEYS/*_KEYS, leaves have description+default, freshness."
+            },
+            {
+              "kind": "done",
+              "text": "U2: Config::CommandsSchema.build(registry) walks dry-cli @root nodes; uses option.options[:desc] because #desc appends values. String flags typed [string, number] so commands.run.timeout: 1800 stays valid."
+            },
+            {
+              "kind": "decision",
+              "text": "json_schemer moved from the Gemfile :test group to a gemspec runtime dependency. Rubocop -a on Gemfile/gemspec reorders unrelated gems, so never autocorrect those two files."
+            },
+            {
+              "kind": "todo",
+              "text": "U3: derive KEYS and *_KEYS from Schema without changing the 'known:' order (schema lists commands last, KEYS has it after merge); run Schema.errors after the hand checks and map them to '<path>: <key>: <problem>'; add the just update-config-schema recipe."
+            },
+            {
+              "kind": "todo",
+              "text": "U4: to_yaml writes every key, filling from Schema.defaults, and init writes the whole file. U6: integration spec. Then contract.md baseline, pull-requests.md, a coverage: check, full rspec, and sign Completed."
+            }
+          ]
+        }
+      }
+    },
+    "design-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 1: reviewed PR 210, found 2 critical and 3 minor design findings, posted the comment and signed Completed (rejected 1/2)"
+            },
+            {
+              "kind": "note",
+              "text": "Next round: check that Config.parse validates via Config::Schema, that to_yaml writes every key, and that the just update-config-schema recipe exists"
+            }
+          ]
+        }
+      }
+    },
+    "staff-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 1 verdict rejected 1/2: F1 critical, Config.parse and to_yaml do not use the schema (How-to-test items 2 and 3 unmet)"
+            },
+            {
+              "kind": "done",
+              "text": "Posted PR #210 comment 6844083710 with F1 (critical), F2 (tautological spec) and F3 (start reads worktree config before chdir)"
+            },
+            {
+              "kind": "note",
+              "text": "alock refused pull-requests.md, held by openlanes:43808 (the plan dir/**), so my findings are not in pull-requests.md. Write them there next round if the lock is free"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-12T20:32:00-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "U1",
+        "U2",
+        "U5",
+        "json_schemer runtime dep"
+      ],
+      "remaining": [
+        "U3",
+        "U4",
+        "U6",
+        "contract.md",
+        "pull-requests.md",
+        "coverage check",
+        "full suite run"
+      ],
+      "next_step": "U3: in config.rb derive KEYS/*_KEYS from Config::Schema (keep KEYS order: schema puts commands last, today's KEYS has it after merge, so reorder schema properties or keep message order), run Schema.errors after the hand checks and map data_pointer/type into '<path>: <key>: <problem>' shape; add just update-config-schema recipe (ruby -Ilib -e 'require \"openlanes\"; OpenLanes::Config::Schema.write'); then U4 to_yaml every key from Schema.defaults, then U6 integration spec",
+      "files_touched": [
+        "schemas/openlanes-config.schema.json",
+        "lib/openlanes/support/config/schema.rb",
+        "lib/openlanes/support/config/commands_schema.rb",
+        "lib/openlanes/support/project.rb",
+        "lib/openlanes/cli/start/start.rb",
+        "lib/openlanes/lifecycle/allocator.rb",
+        "openlanes.gemspec",
+        "Gemfile",
+        "Gemfile.lock",
+        "spec/openlanes/config/schema_spec.rb",
+        "spec/openlanes/config/commands_schema_spec.rb",
+        "spec/openlanes/project_spec.rb",
+        "spec/openlanes/cli/start_spec.rb"
+      ]
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:32:17-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "design-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:32:55-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:33:36-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:32:55-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:33:36-08:00"
+    },
+    {
+      "number": 4,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:33:36-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:34:59-08:00"
+    },
+    {
+      "number": 5,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:34:59-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:39:59-08:00"
+    },
+    {
+      "number": 6,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:44:19-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:44:41-08:00"
+    },
+    {
+      "number": 7,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:45:00-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:45:06-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 3,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:45:16-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:45:34-08:00"
+    },
+    {
+      "number": 9,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:45:52-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:53:05-08:00"
+    },
+    {
+      "number": 10,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 4,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:53:45-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T20:53:48-08:00"
+    },
+    {
+      "number": 11,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 4,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:54:10-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:54:25-08:00"
+    },
+    {
+      "number": 12,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:54:26-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:54:36-08:00"
+    },
+    {
+      "number": 13,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 5,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:54:40-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:54:58-08:00"
+    },
+    {
+      "number": 14,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:55:17-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:55:45-08:00"
+    },
+    {
+      "number": 15,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 6,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:56:44-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T20:57:02-08:00"
+    },
+    {
+      "number": 16,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T20:57:21-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T20:58:43-08:00"
+    },
+    {
+      "number": 17,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 7,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:01:25-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T21:01:32-08:00"
+    },
+    {
+      "number": 18,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 7,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:01:48-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:02:03-08:00"
+    },
+    {
+      "number": 19,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 7,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:02:04-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:04:18-08:00"
+    },
+    {
+      "number": 20,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 8,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:04:29-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:04:48-08:00"
+    },
+    {
+      "number": 21,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 8,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:05:11-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:18:44-08:00"
+    },
+    {
+      "number": 22,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 9,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:19:25-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:19:42-08:00"
+    },
+    {
+      "number": 23,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 9,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:20:01-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:21:00-08:00"
+    },
+    {
+      "number": 24,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 10,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:21:37-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:21:55-08:00"
+    },
+    {
+      "number": 25,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 10,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:22:17-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:22:32-08:00"
+    },
+    {
+      "number": 26,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 11,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:23:41-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:24:00-08:00"
+    },
+    {
+      "number": 27,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 11,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:24:27-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:25:15-08:00"
+    },
+    {
+      "number": 28,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 12,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:28:41-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:29:00-08:00"
+    },
+    {
+      "number": 29,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 12,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T21:29:22-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T21:48:46-08:00"
+    },
+    {
+      "number": 30,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 13,
+      "limit": "time",
+      "asked_at": "2026-11-12T21:54:20-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-12T21:54:53-08:00"
+    }
+  ]
+}

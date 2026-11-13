@@ -875,6 +875,25 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
     end
   end
 
+  # The baseline that says whether lessons help at all
+  # (docs/continuous-learning.md): the flag must reach the executor.
+  describe "--memory" do
+    before do
+      building_plan
+      with_executor
+    end
+
+    it "tells agents their lessons by default" do
+      run(dry_run: false, rounds: 1)
+      expect(OpenLanes::Execution::Executor).to have_received(:new).with(hash_including(memory: true))
+    end
+
+    it "leaves them out with --no-memory" do
+      run(dry_run: false, rounds: 1, memory: false)
+      expect(OpenLanes::Execution::Executor).to have_received(:new).with(hash_including(memory: false))
+    end
+  end
+
   describe "a plan another engine holds" do
     let!(:executor) do
       building_plan

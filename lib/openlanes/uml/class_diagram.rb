@@ -2,9 +2,11 @@
 
 module OpenLanes
   module Uml
-    # One namespace's classes and the edges leaving them. A class from another
-    # namespace that one of them inherits, includes or uses is drawn too,
-    # under its full name, so the diagram says where the edge lands.
+    # One namespace's classes and working modules, and the edges leaving them.
+    # A definition from another namespace that one of them inherits, includes
+    # or uses is drawn too, under its full name, so the diagram says where the
+    # edge lands. The namespace's own module, when it is a facade with
+    # methods, keeps its full name as well.
     class ClassDiagram
       # @param model [OpenLanes::Uml::Model]
       # @param namespace [String]
@@ -30,10 +32,10 @@ module OpenLanes
       # @return [Boolean]
       def inside?(name) = @model.namespaces.of(name) == @namespace
 
-      # @return [Array<String>] the class line, and a stereotype for a mixin
+      # @return [Array<String>] the class line, and a stereotype for a module
       def box(name)
         label = inside?(name) ? name.delete_prefix("#{@namespace}::") : name
-        [Mermaid.node(name, label), (@model.mixin?(name) ? "  <<module>> #{Mermaid.id(name)}" : nil)].compact
+        [Mermaid.node(name, label), (@model.module?(name) ? "  <<module>> #{Mermaid.id(name)}" : nil)].compact
       end
 
       # @return [String]

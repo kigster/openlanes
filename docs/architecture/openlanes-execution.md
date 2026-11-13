@@ -10,47 +10,105 @@ classDiagram
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Execution["OpenLanes::Execution"]
+  <<module>> OpenLanes__Execution
   class OpenLanes__Execution__AgentProcess["AgentProcess"]
   class OpenLanes__Execution__AgentProcess__Registry["AgentProcess::Registry"]
   <<module>> OpenLanes__Execution__AgentProcess__Registry
   class OpenLanes__Execution__AgentSupervisor["AgentSupervisor"]
+  class OpenLanes__Execution__Boundary["Boundary"]
+  <<module>> OpenLanes__Execution__Boundary
   class OpenLanes__Execution__Boundary__Snapshot["Boundary::Snapshot"]
+  class OpenLanes__Execution__Checks["Checks"]
+  <<module>> OpenLanes__Execution__Checks
   class OpenLanes__Execution__Child["Child"]
   class OpenLanes__Execution__Clock["Clock"]
+  class OpenLanes__Execution__Control["Control"]
+  <<module>> OpenLanes__Execution__Control
   class OpenLanes__Execution__Executor["Executor"]
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
   class OpenLanes__Execution__JournalWindow["JournalWindow"]
+  class OpenLanes__Execution__ProcessStart["ProcessStart"]
+  <<module>> OpenLanes__Execution__ProcessStart
   class OpenLanes__Execution__Prompt["Prompt"]
   class OpenLanes__Execution__Rearm["Rearm"]
+  class OpenLanes__Execution__ReviewPacket["ReviewPacket"]
+  class OpenLanes__Execution__ReviewPacket__Shelf["ReviewPacket::Shelf"]
+  class OpenLanes__Execution__ShutdownGrace["ShutdownGrace"]
+  <<module>> OpenLanes__Execution__ShutdownGrace
+  class OpenLanes__Execution__Trace["Trace"]
+  <<module>> OpenLanes__Execution__Trace
   class OpenLanes__Execution__Transcript["Transcript"]
+  class OpenLanes__Lifecycle__Completion["OpenLanes::Lifecycle::Completion"]
+  <<module>> OpenLanes__Lifecycle__Completion
+  class OpenLanes__Memory["OpenLanes::Memory"]
+  <<module>> OpenLanes__Memory
+  class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
+  <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Runtime["OpenLanes::Runtime"]
+  <<module>> OpenLanes__Runtime
+  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
+  <<module>> OpenLanes__Spawner__System
+  class OpenLanes__Supervision["OpenLanes::Supervision"]
+  <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
+  OpenLanes__Execution ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution ..> OpenLanes__Execution__ReviewPacket : uses
+  OpenLanes__Execution ..> OpenLanes__Execution__Trace : uses
+  OpenLanes__Execution ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Execution__AgentProcess ..|> OpenLanes__Execution__AgentProcess__Registry : includes
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Execution__AgentProcess ..> OpenLanes__Spawner__System : uses
+  OpenLanes__Execution__AgentProcess ..> OpenLanes__Supervision : uses
+  OpenLanes__Execution__AgentProcess__Registry ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Boundary ..> OpenLanes__Execution__Boundary__Snapshot : uses
+  OpenLanes__Execution__Child ..> OpenLanes__Spawner__System : uses
   OpenLanes__Execution__Child ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Clock ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Control ..> OpenLanes__Execution__ShutdownGrace : uses
+  OpenLanes__Execution__Control ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Error : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary__Snapshot : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Clock : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__ProcessStart : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Execution__Checks : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Execution__JournalWindow : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Lifecycle__Completion : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Error : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Execution__ReviewPacket__Shelf : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__UI : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__Runtime : uses
+  OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Transcript ..> OpenLanes__Plans__Journal : uses
 ```

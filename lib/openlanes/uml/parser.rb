@@ -65,6 +65,16 @@ module OpenLanes
         super
       end
 
+      # A method belongs to the declaration it is written in, which is what
+      # tells a module that works from one that only groups constants.
+      #
+      # @param node [Prism::DefNode]
+      # @return [void]
+      def visit_def_node(node)
+        frame&.defs&.push(node.name)
+        super
+      end
+
       # @param node [Prism::ConstantReadNode]
       # @return [void]
       def visit_constant_read_node(node) = note(node)

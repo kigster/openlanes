@@ -43,6 +43,7 @@ expect:
   excludes: { spec.md: [TODO] }
   changed_paths: [lib/**/*.rb]               # each glob must match a changed path
   untouched: [Gemfile]                       # no changed path may match
+  ruling: { kind: cap, outcome: no_go }      # the final answer's one ```ruling block, as the engine parses it
   depth:                                     # only the case's depth applies
     fast:
       words: { file: spec.md, section: Research, min: 40, max: 180 }
@@ -56,6 +57,8 @@ expect:
 `words` and `count` take one mapping or a list. Ledger blocks are stripped before counting, so signing never pads a document. `max_seconds` and `max_tokens` fail when the run measured nothing.
 
 Build agents (backend-coder, frontend-coder, chores-coder) and staff-reviewer check signatures and diffs, not `state`: their next state depends on a published pull request and a review verdict, which an eval never produces.
+
+The arbitrator writes nothing, so its cases score its answer: `ruling` parses the final text with `Arbitration::Ruling.parse`, as the engine does, and compares each field given. A recording carries that text as `answer` in `run.json`; a live run reads it back from the trace.
 
 ## Recordings
 

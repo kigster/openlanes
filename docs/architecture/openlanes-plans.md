@@ -4,17 +4,39 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
+  class OpenLanes__Markdown["OpenLanes::Markdown"]
+  <<module>> OpenLanes__Markdown
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__BlockedFile["BlockedFile"]
+  <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Choices["Choices"]
   class OpenLanes__Plans__Dependencies["Dependencies"]
+  class OpenLanes__Plans__DevWork["DevWork"]
+  <<module>> OpenLanes__Plans__DevWork
+  class OpenLanes__Plans__Execution["Execution"]
+  <<module>> OpenLanes__Plans__Execution
   class OpenLanes__Plans__Feature["Feature"]
   class OpenLanes__Plans__GlobalLock["GlobalLock"]
   class OpenLanes__Plans__Index["Index"]
+  class OpenLanes__Plans__Journal["Journal"]
+  <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__Journal__Entry["Journal::Entry"]
   class OpenLanes__Plans__Journal__Held["Journal::Held"]
   class OpenLanes__Plans__Journal__Rejection["Journal::Rejection"]
   class OpenLanes__Plans__Journal__Round["Journal::Round"]
   class OpenLanes__Plans__LastKnownState["LastKnownState"]
+  class OpenLanes__Plans__Ledger["Ledger"]
+  <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Ledger__Entry["Ledger::Entry"]
   class OpenLanes__Plans__Ledger__Handoff["Ledger::Handoff"]
   class OpenLanes__Plans__Ledger__Problem["Ledger::Problem"]
@@ -29,6 +51,8 @@ classDiagram
   class OpenLanes__Plans__PullRequestMachine["PullRequestMachine"]
   class OpenLanes__Plans__PullRequestMachine__Refused["PullRequestMachine::Refused"]
   class OpenLanes__Plans__PullRequests["PullRequests"]
+  class OpenLanes__Plans__RemovedReadme["RemovedReadme"]
+  <<module>> OpenLanes__Plans__RemovedReadme
   class OpenLanes__Plans__ReviewLabel["ReviewLabel"]
   class OpenLanes__Plans__Spec["Spec"]
   class OpenLanes__Plans__StateMachine["StateMachine"]
@@ -37,14 +61,45 @@ classDiagram
   class OpenLanes__Plans__Subject["Subject"]
   class OpenLanes__Plans__Tree["Tree"]
   class OpenLanes__Plans__Verdict["Verdict"]
+  class OpenLanes__Runtime["OpenLanes::Runtime"]
+  <<module>> OpenLanes__Runtime
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Plans ..> OpenLanes : uses
+  OpenLanes__Plans ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Plans ..> OpenLanes__Error : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Index : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Ledger : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Lock : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Mailbox : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Status : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Subject : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Verdict : uses
+  OpenLanes__Plans ..> OpenLanes__Runtime : uses
+  OpenLanes__Plans ..> OpenLanes__UI : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__Execution ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Plans__Execution ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Dependencies : uses
+  OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Execution : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Plans__Index ..> OpenLanes__Plans : uses
+  OpenLanes__Plans__Journal ..> OpenLanes__Plans__Journal__Entry : uses
+  OpenLanes__Plans__Journal ..> OpenLanes__Plans__Journal__Rejection : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Plans__Ledger__Entry : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Plans__Ledger__Handoff : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Plans__Ledger__Problem : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Plans__Ledger__Reading : uses
+  OpenLanes__Plans__Ledger ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Lock ..> OpenLanes__Error : uses
   OpenLanes__Plans__Lock__Held --|> OpenLanes__Error : inherits
   OpenLanes__Plans__LockClock ..> OpenLanes__Plans__PlanState : uses
@@ -53,11 +108,13 @@ classDiagram
   OpenLanes__Plans__Ordinal ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Error : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Entry : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Held : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Rejection : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Round : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__LastKnownState : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Entry : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Handoff : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Ledger__Reading : uses
@@ -65,21 +122,30 @@ classDiagram
   OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__PullRequestMachine__Refused : uses
   OpenLanes__Plans__PullRequestMachine ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Plans__PullRequestMachine__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__PullRequests ..> OpenLanes__Markdown : uses
   OpenLanes__Plans__PullRequests ..> OpenLanes__Plans__PullRequest : uses
+  OpenLanes__Plans__ReviewLabel ..> OpenLanes__Agents__Names : uses
   OpenLanes__Plans__ReviewLabel ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Spec ..> OpenLanes__Adapters : uses
+  OpenLanes__Plans__Spec ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
+  OpenLanes__Plans__StateMachine ..> OpenLanes__Plans : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses
   OpenLanes__Plans__StateMachine__Refused --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__Subject ..> OpenLanes : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Subject ..> OpenLanes__UI : uses
+  OpenLanes__Plans__Tree ..> OpenLanes : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Subject : uses
+  OpenLanes__Plans__Verdict ..> OpenLanes__Agents__Names : uses
   OpenLanes__Plans__Verdict ..> OpenLanes__Plans__ReviewLabel : uses
 ```
