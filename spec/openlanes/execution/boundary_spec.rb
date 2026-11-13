@@ -100,6 +100,17 @@ RSpec.describe OpenLanes::Execution::Boundary do
         .to include("origin/same-commit")
     end
 
+    # A worktree the harness stopped in a rebase has no branch, and git lists
+    # it with a bare `detached` line.
+    it "reads a detached sibling, and still passes a push made from it" do
+      sibling = File.join(dir, "sibling")
+      git(work, "worktree", "add", "-q", "--detach", sibling)
+      git(sibling, "commit", "-q", "--allow-empty", "-m", "theirs")
+
+      expect(described_class.other_heads(work)).to eq(Set[git(sibling, "rev-parse", "HEAD")])
+      expect(violation_after { git(sibling, "push", "-q", "origin", "HEAD:refs/heads/kig/other-work") }).to be_nil
+    end
+
     it "still reports a push from this worktree when another one exists" do
       git(work, "worktree", "add", "-q", "-b", "kig/other-work", File.join(dir, "sibling"))
       expect(violation_after { git(work, "push", "-q", "origin", "#{detached_commit(work)}:refs/heads/aside") })
