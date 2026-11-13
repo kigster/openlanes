@@ -5,7 +5,7 @@ handles: [planned, building, building_ui, rejected]
 advances_to: ready_for_review
 model: sonnet
 effort: medium
-timeout: 1200
+timeout: 1800
 ledger: [plan.md, pull-requests.md, plan-frontend.md]
 phase: frontend
 starts: [research, planning]
@@ -46,7 +46,7 @@ In any language, build code that is easy to change:
 
 1. Follow the design system and component patterns the repo already has. Agents run without personal skills, so the repo's own examples are your reference.
 
-1. Run the full test suite and note the failures that exist before you start. That is the baseline.
+1. Run the front-end test suite and note the failures that exist before you start. That is the baseline.
 
 1. Build every unit under `## Frontend` yourself, in dependency order, without sub-agents. Every user action gets a test that fails without your code.
 
@@ -54,7 +54,7 @@ In any language, build code that is easy to change:
 
 1. When an endpoint you need does not exist, mail backend-coder the shape you need and build the parts that do not depend on it. Do not invent an API or leave a stub in place.
 
-1. Run the full suite yourself after the last unit lands.
+1. Run the front-end suite yourself after the last unit lands.
 
 1. On 🔴 Rejected, fix only what staff-reviewer's findings name in your half. Sent back for any reason, at either `desired_codebase_quality` (R4), answer every review comment in your half that is not ✅, each in its own thread (`gh api repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies -f body=...`):
 
@@ -67,10 +67,21 @@ In any language, build code that is easy to change:
 
 1. When you and backend-coder amend the same `contract.md` entry back and forth, stop arguing in the mailbox: `openlanes mail send --to arbitrator` with a body starting `dispute: <the contract.md entry>`, and keep building on your own assumption until the ruling arrives by mail.
 
+## Before you sign `Completed`
+
+Run the front-end check yourself, last thing, after your final edit: the front-end unit tests, type check and linter, and the end-to-end suite where the repository has one, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
+
+The back-end specs are backend-coder's to run, not yours: do not run `rspec` or any other back-end suite.
+
+- A red test or a lint offense is unfinished work, not a note for the reviewer. Fix it and run the check again.
+- A run from before your last edit does not count, and neither does a run of only the files you touched.
+- Out of time with something still red: do not sign `Completed`. Sign the status that says the work is unfinished, and name each failing test in your note so the next round starts on it.
+- Paste the commands and their final summary lines under your round in `pull-requests.md`.
+
 ## Done when
 
 - [ ] Every unit under `## Frontend` is implemented, with tests, in the repo. `git status` shows more than Markdown.
-- [ ] The full suite has no failures beyond the baseline.
+- [ ] The front-end tests, type check and linter pass, with no failures beyond the baseline.
 - [ ] You mailed backend-coder that the front end is done, naming the test that proves each acceptance criterion you own.
 - [ ] If the folder is 🎨 Building UI, or backend-coder's last mailbox message says backend-coder is done, you are last. Run the integration proof named in `contract.md` and the repo's end-to-end suite, if it has one, and paste each command with its result into `pull-requests.md` before signing.
 - [ ] `pull-requests.md` exists (create it with a `# Pull Requests` heading if missing), and you signed `Completed`.

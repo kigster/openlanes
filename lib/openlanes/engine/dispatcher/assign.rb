@@ -113,7 +113,8 @@ module OpenLanes
             candidates = partners_only(Agents::Routing.offer(runner.agents, state, subject), working, state)
             preferred = preferred_agents[subject.feature.ordinal.to_s]
             candidates = candidates.sort_by { |a| a.name == preferred ? 0 : 1 } if preferred
-            agent = candidates.find { |a| eligible?(a, subject) }
+            # A later review pass waits for the earlier one and for CI ({Reviews#due?}).
+            agent = candidates.find { |a| eligible?(a, subject) && runner.reviews.due?(subject, a) }
             return [agent, subject] if agent
           end
           nil

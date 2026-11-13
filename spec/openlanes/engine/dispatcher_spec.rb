@@ -39,6 +39,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       state:,
       sleeper: ->(_) {},
       extensions: limits,
+      # One round each unless an example asks for more: these count calls.
+      rounds: 1,
 **)
   end
 
@@ -1245,6 +1247,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         state:,
         # No round granted on its own (E1), so each example counts only the rounds it asks for.
         extensions: limits,
+        rounds: 1,
         sleeper: ->(_) {}).call
     end
     let(:executor) do
@@ -1731,7 +1734,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         dead.save
 
         executor = executor_with { |_, _, _| nil }
-        runner_with(executor, agents: two, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
+        runner_with(executor, agents: two, rounds: nil, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
         aggregate_failures do
           expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
           expect(calls.map(&:last)).to eq([1, 2])

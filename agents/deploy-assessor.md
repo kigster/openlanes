@@ -6,7 +6,7 @@ advances_to: approved
 model: opus
 effort: high
 small_diff: { under_lines: 300, model: sonnet, effort: medium }
-timeout: 600
+timeout: 1200
 ledger: [plan.md]
 phase: completion
 starts: [research, planning, building]

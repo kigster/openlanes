@@ -317,7 +317,13 @@ module OpenLanes
 
         # @param agent [OpenLanes::Agents::Agent]
         # @return [Integer]
-        def rounds_for(agent) = [agent.rounds, rounds_cap].compact.min
+        def rounds_for(agent)
+          # A preview does nothing a second round could build on, and four
+          # rounds of it listed every agent four times.
+          return 1 if runner.dry_run?
+
+          [agent.rounds, rounds_cap].compact.min
+        end
 
         # Every round the agent may run on the plan's state: its own, plus the
         # ones a person or the harness granted (E1). What the board shows as

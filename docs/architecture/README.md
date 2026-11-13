@@ -103,7 +103,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Plans : 98
   OpenLanes__Engine ..> OpenLanes__Supervision : 2
   OpenLanes__Engine ..> OpenLanes__UI : 33
-  OpenLanes__Engine ..> OpenLanes__Vcs : 10
+  OpenLanes__Engine ..> OpenLanes__Vcs : 11
   OpenLanes__Engine ..> OpenLanes__Web : 2
   OpenLanes__Evals ..> OpenLanes : 6
   OpenLanes__Evals ..> OpenLanes__Agents : 3
@@ -170,13 +170,13 @@ classDiagram
   OpenLanes__Supervision ..> OpenLanes__Spawner : 1
   OpenLanes__Supervision ..> OpenLanes__Web : 1
   OpenLanes__UI ..> OpenLanes__Log : 1
-  OpenLanes__Vcs ..> OpenLanes : 5
+  OpenLanes__Vcs ..> OpenLanes : 6
   OpenLanes__Vcs ..> OpenLanes__Events : 1
   OpenLanes__Vcs ..> OpenLanes__Execution : 1
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__Spawner : 1
-  OpenLanes__Vcs ..> OpenLanes__UI : 5
+  OpenLanes__Vcs ..> OpenLanes__UI : 6
   OpenLanes__Web ..> OpenLanes : 10
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2

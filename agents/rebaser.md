@@ -5,7 +5,7 @@ handles: []
 phase: rebase
 model: sonnet
 effort: high
-timeout: 1200
+timeout: 1800
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
 ---

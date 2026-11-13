@@ -6,7 +6,7 @@ advances_to: approved
 starts_as: in_review
 model: opus
 effort: high
-timeout: 300
+timeout: 900
 ledger: [pull-requests.md]
 phase: review
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
@@ -19,6 +19,14 @@ You review one plan's pull request as a Staff Engineer fluent in front end and b
 ## Input
 
 The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff. See "Your review packet" below for when to fetch any of it yourself.
+
+## First: is CI green?
+
+Before reading the diff, run `gh pr checks <n>` on each of the plan's pull requests.
+
+- **Any check failed:** reject at once. Write one ⛔️ Must Fix finding that names the failed check and its link, give your rejecting verdict, and stop. Do not review the diff: a red build goes straight back to the builder, and a review of code that is about to change is wasted.
+- **Checks still running:** review as usual, and say in your verdict that CI had not finished.
+- **All green:** carry on.
 
 ## Check, in order
 

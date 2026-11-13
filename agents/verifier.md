@@ -5,7 +5,7 @@ handles: [verifying]
 advances_to: approved
 model: sonnet
 effort: medium
-timeout: 900
+timeout: 1500
 ledger: [pull-requests.md]
 phase: verification
 adapter: claude
