@@ -70,15 +70,16 @@ module OpenLanes
       # @param subject [Plans::Subject]
       # @param agent [Agents::Agent]
       # @param note [String] the closing ledger note
+      # @param running [Array<String>] the reviewers at work on the plan now
       # @return [Decision, nil] nil when the note reports no verdict
-      def decide(subject, agent, note)
+      def decide(subject, agent, note, running: [])
         vote = Plans::Verdict.vote(agent: agent.name, note:) or return
 
         notes = round(subject).merge(agent.name => note)
         pending = reviewers(subject).map(&:name) - notes.keys
-        return Decision.new(verdict: nil, pending:, target: nil, note: "#{vote.word}; waiting for #{pending.join(", ")}") unless pending.empty?
+        return decided(notes) if pending.empty? || settled?(notes, pending, running)
 
-        decided(notes)
+        Decision.new(verdict: nil, pending:, target: nil, note: "#{vote.word}; waiting for #{pending.join(", ")}")
       end
 
       # Writes +note+ on +agent+'s stage as its verdict in the plan's
@@ -136,6 +137,18 @@ module OpenLanes
       end
 
       private
+
+      # A rejection decides the round whatever the others would say, so it
+      # waits only for a reviewer that is reading the pull request right now.
+      # One that has not reported and is not running may never report: it ran
+      # out of rounds, or keeps signing a note nobody can read, and a round
+      # that waited for it kept two rejections from the builder (plan 057).
+      #
+      # @return [Boolean]
+      def settled?(notes, pending, running)
+        rejected = notes.any? { |name, said| Plans::Verdict.vote(agent: name, note: said)&.rejected? }
+        rejected && !pending.intersect?(running)
+      end
 
       # Each reviewer's last verdict in this round, by name.
       #

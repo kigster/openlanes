@@ -98,7 +98,9 @@ module OpenLanes
         # @param note [String, nil] the ledger entry's note
         # @return [Vote, nil] nil for a note that reports no verdict
         def vote(agent:, note:)
-          word = NOTE_WORDS[note.to_s[NOTE, 1].to_s.downcase] or return
+          # Signatures written before {Ledger.words} unwrapped them are still on disk.
+          note = Ledger.words(note.to_s)
+          word = NOTE_WORDS[note[NOTE, 1].to_s.downcase] or return
 
           Vote.new(agent:, word:, vulnerability: word == :rejected && note.match?(VULNERABILITY))
         end

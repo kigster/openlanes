@@ -71,12 +71,15 @@ RSpec.describe OpenLanes::Plans::Verdict do
     let(:agent) { "staff-reviewer" }
 
     {
-      "great"                    => :great,
-      "Great, nothing to reject" => :great,
-      "approved"                 => :great,
-      "passed"                   => :passed,
-      "rejected 1/2"             => :rejected,
-      "slop"                     => :rejected
+      "great"                            => :great,
+      "Great, nothing to reject"         => :great,
+      "approved"                         => :great,
+      "passed"                           => :passed,
+      "rejected 1/2"                     => :rejected,
+      "slop"                             => :rejected,
+      # Plan 057: the whole ledger line passed as the note.
+      "Completed, round 1 (passed)"      => :passed,
+      "Blocked, round 13 (rejected 2/2)" => :rejected
     }.each do |note, word|
       context "with the note #{note.inspect}" do
         let(:note) { note }
@@ -90,6 +93,14 @@ RSpec.describe OpenLanes::Plans::Verdict do
     context "with a rejection naming a vulnerability" do
       let(:agent) { "security-reviewer" }
       let(:note) { "rejected 1/2 vulnerability" }
+
+      it { is_expected.to be_rejected }
+      it { is_expected.to be_vulnerability }
+    end
+
+    context "with a vulnerability signed as the whole ledger line" do
+      let(:agent) { "security-reviewer" }
+      let(:note) { "Completed, round 13 (rejected 1/2, vulnerability)" }
 
       it { is_expected.to be_rejected }
       it { is_expected.to be_vulnerability }

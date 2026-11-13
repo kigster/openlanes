@@ -159,7 +159,8 @@ module OpenLanes
         def reviewed(job, subject, entry)
           task = job.task
           reviews = runner.reviews
-          decision = reviews.decide(subject, task.agent, entry.note.to_s) or return
+          others = running.reject { it.equal?(job) }.select { plan_of(it) == plan_of(job) }.map { it.task.agent.name }
+          decision = reviews.decide(subject, task.agent, entry.note.to_s, running: others) or return
 
           reviews.vote!(subject, task.agent, task.round, entry.note.to_s)
           decision.pending? ? decision : reviews.conclude(subject, decision)

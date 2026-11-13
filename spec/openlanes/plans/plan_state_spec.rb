@@ -61,6 +61,13 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       state.ledger
     end
 
+    it "keeps the words of a note written as the whole ledger line" do
+      state.sign!(agent: "security-reviewer", round: 1, status: "Completed", note: "Completed, round 1 (passed)")
+      state.sign!(agent: "backend-coder", round: 2, status: "Blocked", note: "Blocked, round 2 (technical)")
+      state.sign!(agent: "planner", round: 1, status: "Completed", note: "done (with care)")
+      expect(state.read["signatures"].last(3).map { it["note"] }).to eq(["passed", "technical", "done (with care)"])
+    end
+
     it "records a signature the ledger reads back as an entry with its handoff" do
       expect([reading.entries.first.to_h.slice(:agent, :status, :round, :note, :file),
               OpenLanes::Plans::Ledger.handoff_after(reading, reading.entries.first)&.next])

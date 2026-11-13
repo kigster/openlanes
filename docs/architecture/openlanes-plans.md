@@ -147,5 +147,6 @@ classDiagram
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Plans__Tree ..> OpenLanes__Plans__Subject : uses
   OpenLanes__Plans__Verdict ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Plans__Verdict ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Plans__Verdict ..> OpenLanes__Plans__ReviewLabel : uses
 ```
