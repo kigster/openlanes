@@ -12,6 +12,7 @@ classDiagram
   class OpenLanes__Apps__Listing["OpenLanes::Apps::Listing"]
   <<module>> OpenLanes__Apps__Listing
   class OpenLanes__Apps__Runner["OpenLanes::Apps::Runner"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Engine__ProgressLog["OpenLanes::Engine::ProgressLog"]
   <<module>> OpenLanes__Engine__ProgressLog
   class OpenLanes__Error["OpenLanes::Error"]
@@ -41,8 +42,6 @@ classDiagram
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
-  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
-  <<module>> OpenLanes__Spawner__System
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Web["OpenLanes::Web"]
@@ -123,9 +122,9 @@ classDiagram
   OpenLanes__Web__Events ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Web__Events ..> OpenLanes__UI : uses
+  OpenLanes__Web__Launcher ..> OpenLanes__Container : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Engine__ProgressLog : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Log : uses
-  OpenLanes__Web__Launcher ..> OpenLanes__Spawner__System : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__Listen : uses
   OpenLanes__Web__Listen ..> OpenLanes__Error : uses
@@ -143,7 +142,7 @@ classDiagram
   OpenLanes__Web__PlanFiles__NotFound --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__ReadOnly --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__Stale --|> OpenLanes__Error : inherits
-  OpenLanes__Web__RequestLog ..> OpenLanes__Log : uses
+  OpenLanes__Web__RequestLog ..> OpenLanes__Container : uses
   OpenLanes__Web__Server ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Server ..> OpenLanes__Web__Listen : uses
 ```

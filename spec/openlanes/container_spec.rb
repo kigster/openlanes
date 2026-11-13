@@ -119,4 +119,37 @@ RSpec.describe OpenLanes::Container do
       expect(injected.new(clock: :given).clock).to eq(:given)
     end
   end
+
+  describe "the keys this wiring leaves behind" do
+    it "keeps a collapsed cli/<command>/ directory in the key: cli/create/create.rb is cli.create.create" do
+      expect(described_class["cli.create.create"]).to be_a(OpenLanes::CLI::Create)
+    end
+
+    it "has a provider file for exactly the seven provider keys" do
+      providers = Dir[File.expand_path("../../lib/openlanes/providers/*.rb", __dir__)].map { File.basename(it, ".rb") }
+
+      expect(providers).to match_array(%w[clock event_bus github linear logger process redis])
+    end
+
+    it "resolves each provider key" do
+      allow(OpenLanes::Linear::API).to receive(:token_from_env).and_return("lin_api_example")
+      described_class.stub("redis", OpenLanes::Live.memory_store)
+
+      %w[clock event_bus github linear logger process redis].each do |key|
+        expect(described_class[key]).not_to be_nil, "#{key} resolved to nil"
+      end
+    end
+
+    {
+      "claude" => OpenLanes::Adapters::Claude,
+      "codex"  => OpenLanes::Adapters::Codex,
+      "pi"     => OpenLanes::Adapters::Pi,
+      "grok"   => OpenLanes::Adapters::Grok,
+      "gemini" => OpenLanes::Adapters::Gemini
+    }.each do |name, klass|
+      it "resolves adapters.#{name} to its adapter" do
+        expect(described_class["adapters.#{name}"]).to be_a(klass)
+      end
+    end
+  end
 end

@@ -24,8 +24,6 @@ classDiagram
   class OpenLanes__Arbitration__Appeal["OpenLanes::Arbitration::Appeal"]
   class OpenLanes__Arbitration__Counter["OpenLanes::Arbitration::Counter"]
   class OpenLanes__Arbitration__Effects["OpenLanes::Arbitration::Effects"]
-  class OpenLanes__Clock__System["OpenLanes::Clock::System"]
-  <<module>> OpenLanes__Clock__System
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Coverage["OpenLanes::Coverage"]
@@ -245,15 +243,15 @@ classDiagram
   OpenLanes__Engine__Conversions ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__UI : uses
-  OpenLanes__Engine__CoverageGate ..> OpenLanes__Clock__System : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Config : uses
+  OpenLanes__Engine__CoverageGate ..> OpenLanes__Container : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Config : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Invalid : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Report : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Execution__Child : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Plans__ReviewLabel : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Container : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Conversions : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__Assign : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__Desk : uses
@@ -378,14 +376,14 @@ classDiagram
   OpenLanes__Engine__EventJournal__Feed ..> OpenLanes__UI : uses
   OpenLanes__Engine__EventJournal__Replay ..> OpenLanes__Engine__EventJournal__Replay__Agent : uses
   OpenLanes__Engine__EventJournal__Replay ..> OpenLanes__Engine__EventJournal__Replay__InFlight : uses
-  OpenLanes__Engine__Extensions ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__Extensions ..> OpenLanes__Container : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Extensions ..> OpenLanes__UI : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Finishes ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Agents__Names : uses
-  OpenLanes__Engine__Merging ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__Merging ..> OpenLanes__Container : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__PrWatch : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Engine__Verification__Outcome : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Error : uses
@@ -397,7 +395,7 @@ classDiagram
   OpenLanes__Engine__Merging ..> OpenLanes__Vcs__CiGate : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Engine__Merging ..> OpenLanes__Vcs__Refresh : uses
-  OpenLanes__Engine__Narrator ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__Narrator ..> OpenLanes__Container : uses
   OpenLanes__Engine__Narrator ..> OpenLanes__Engine__ProgressLog : uses
   OpenLanes__Engine__PlanLocks ..> OpenLanes__Engine__PlanLocks__Refused : uses
   OpenLanes__Engine__PlanLocks ..> OpenLanes__Error : uses
@@ -405,7 +403,7 @@ classDiagram
   OpenLanes__Engine__PlanLocks ..> OpenLanes__Plans__Lock__Held : uses
   OpenLanes__Engine__PlanLocks ..> OpenLanes__UI : uses
   OpenLanes__Engine__PlanLocks__Refused --|> OpenLanes__Error : inherits
-  OpenLanes__Engine__PrOutcomes ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__PrOutcomes ..> OpenLanes__Container : uses
   OpenLanes__Engine__PrOutcomes ..> OpenLanes__Error : uses
   OpenLanes__Engine__PrOutcomes ..> OpenLanes__Events__NullSink : uses
   OpenLanes__Engine__PrOutcomes ..> OpenLanes__Lifecycle : uses
@@ -419,8 +417,8 @@ classDiagram
   OpenLanes__Engine__PrWatch ..> OpenLanes__Error : uses
   OpenLanes__Engine__PrWatch ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__ProgressLog ..> OpenLanes__UI : uses
-  OpenLanes__Engine__QualityQuestion ..> OpenLanes__Clock__System : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Config : uses
+  OpenLanes__Engine__QualityQuestion ..> OpenLanes__Container : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Engine__QualityQuestion__Choice : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Agents__Names : uses
@@ -490,7 +488,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__CiWatch : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
-  OpenLanes__Engine__Runner ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Container : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
@@ -512,7 +510,7 @@ classDiagram
   OpenLanes__Engine__StartWorkflow ..> OpenLanes__Web : uses
   OpenLanes__Engine__StartWorkflow ..> OpenLanes__Web__Listen : uses
   OpenLanes__Engine__StateFile ..> OpenLanes : uses
-  OpenLanes__Engine__StateFile ..> OpenLanes__Clock__System : uses
+  OpenLanes__Engine__StateFile ..> OpenLanes__Container : uses
   OpenLanes__Engine__StateFile ..> OpenLanes__Runtime : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Engine__Steps : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Engine__Steps__Interval : uses
@@ -591,8 +589,8 @@ classDiagram
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Arbitration : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Arbitration__Counter : uses
-  OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Clock__System : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Config : uses
+  OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Container : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Engine__Arbitration : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Engine__CoverageGate : uses
   OpenLanes__Engine__Verification__Outcome ..> OpenLanes__Engine__PrWatch : uses

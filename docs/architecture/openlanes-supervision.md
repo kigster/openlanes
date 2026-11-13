@@ -4,8 +4,7 @@
 
 ```mermaid
 classDiagram
-  class OpenLanes__Clock__System["OpenLanes::Clock::System"]
-  <<module>> OpenLanes__Clock__System
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
   class OpenLanes__Execution__AgentSupervisor["OpenLanes::Execution::AgentSupervisor"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
@@ -14,8 +13,6 @@ classDiagram
   class OpenLanes__Log["OpenLanes::Log"]
   <<module>> OpenLanes__Log
   class OpenLanes__Refusal["OpenLanes::Refusal"]
-  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
-  <<module>> OpenLanes__Spawner__System
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__Supervision__AgentSweep["AgentSweep"]
@@ -34,9 +31,8 @@ classDiagram
   class OpenLanes__Supervision__Supervisor["Supervisor"]
   class OpenLanes__Supervision__Title["Title"]
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
-  OpenLanes__Supervision ..> OpenLanes__Clock__System : uses
+  OpenLanes__Supervision ..> OpenLanes__Container : uses
   OpenLanes__Supervision ..> OpenLanes__Execution__AgentSupervisor : uses
-  OpenLanes__Supervision ..> OpenLanes__Spawner__System : uses
   OpenLanes__Supervision ..> OpenLanes__Supervision__Detached : uses
   OpenLanes__Supervision ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision ..> OpenLanes__Supervision__Lifeline : uses
@@ -50,7 +46,7 @@ classDiagram
   OpenLanes__Supervision__AgentSweep ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Supervision__AgentSweep ..> OpenLanes__Supervision__Host : uses
   OpenLanes__Supervision__AgentSweep ..> OpenLanes__Supervision__Probe : uses
-  OpenLanes__Supervision__Crashes ..> OpenLanes__Clock__System : uses
+  OpenLanes__Supervision__Crashes ..> OpenLanes__Container : uses
   OpenLanes__Supervision__Crashes ..> OpenLanes__Supervision__Title : uses
   OpenLanes__Supervision__Detached ..> OpenLanes__Refusal : uses
   OpenLanes__Supervision__Detached ..> OpenLanes__Supervision__Host : uses

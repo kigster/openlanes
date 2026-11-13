@@ -63,7 +63,7 @@ module OpenLanes
       # @param github [OpenLanes::Vcs::GitHub] asked which branch an open pull
       #   request is built from
       # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each pull request opened
-      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: GitHub.new,
+      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: Container["github"],
         events: Events::NullSink.new)
         @root = root
         @events = events

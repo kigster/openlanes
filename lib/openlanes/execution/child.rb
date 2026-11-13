@@ -47,7 +47,7 @@ module OpenLanes
         # @param spawner [#spawn] {OpenLanes::Spawner::System} unless a spec
         #   starts nothing
         # @return [OpenLanes::Execution::Child]
-        def spawn(argv, chdir: nil, env: {}, spawner: Spawner::System)
+        def spawn(argv, chdir: nil, env: {}, spawner: Container["process"])
           reader, writer = IO.pipe
           options = { out: writer, err: writer, in: File::NULL, unsetenv_others: true, pgroup: true }
           options[:chdir] = chdir if chdir
