@@ -28,6 +28,7 @@ classDiagram
   class OpenLanes__Vcs__LabelMigration["LabelMigration"]
   class OpenLanes__Vcs__LabelSync["LabelSync"]
   class OpenLanes__Vcs__Mainline["Mainline"]
+  class OpenLanes__Vcs__Prewarm["Prewarm"]
   class OpenLanes__Vcs__Publisher["Publisher"]
   class OpenLanes__Vcs__Refresh["Refresh"]
   class OpenLanes__Vcs__RenameDate["RenameDate"]
@@ -38,6 +39,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelMigration : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelSync : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Mainline : uses
+  OpenLanes__Vcs ..> OpenLanes__Vcs__Prewarm : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Publisher : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Review : uses
@@ -50,6 +52,7 @@ classDiagram
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs__LabelSync ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Vcs__LabelSync ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Vcs__Prewarm ..> OpenLanes__UI : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Error : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Events__NullSink : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Execution__Boundary : uses
@@ -67,5 +70,6 @@ classDiagram
   OpenLanes__Vcs__Worktree ..> OpenLanes : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Error : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__UI : uses
+  OpenLanes__Vcs__Worktree ..> OpenLanes__Vcs__Prewarm : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Vcs__Refresh : uses
 ```

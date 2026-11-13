@@ -170,7 +170,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__Spawner : 1
-  OpenLanes__Vcs ..> OpenLanes__UI : 4
+  OpenLanes__Vcs ..> OpenLanes__UI : 5
   OpenLanes__Web ..> OpenLanes : 10
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2

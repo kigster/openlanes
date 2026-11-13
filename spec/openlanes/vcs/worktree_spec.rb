@@ -62,6 +62,22 @@ RSpec.describe OpenLanes::Vcs::Worktree do
       end
     end
 
+    # What Prewarm does with it has a spec of its own; this is the wiring.
+    it "starts a new checkout with the main checkout's node_modules" do
+      File.write(File.join(repo, ".gitignore"), "node_modules\n")
+      File.write(File.join(repo, "package-lock.json"), "{}\n")
+      system("git", "-C", repo, "add", "-A", out: File::NULL, err: File::NULL)
+      system("git", "-C", repo, "commit", "-qm", "javascript", out: File::NULL, err: File::NULL)
+      FileUtils.mkdir_p(File.join(repo, "node_modules", "left-pad"))
+
+      checkout = worktrees.checkout_for(feature)
+
+      aggregate_failures do
+        expect(File.directory?(File.join(checkout.path, "node_modules", "left-pad"))).to be(true)
+        expect(checkout).not_to be_dirty
+      end
+    end
+
     it "reuses an existing checkout rather than failing on a second round" do
       worktrees.checkout_for(feature)
 
