@@ -26,7 +26,7 @@ export function Field({ path, node, value, fallback, error, onChange }: Props) {
 
   let control;
   if (kind === "boolean") {
-    control = <input {...common} type="checkbox" checked={Boolean(value ?? fallback)} onChange={e => onChange(e.target.checked)} />;
+    control = <input {...common} type="checkbox" checked={Boolean(value ?? fallback)} onChange={e => onChange(e.target.checked === Boolean(fallback) ? null : e.target.checked)} />;
   } else if (kind === "enum") {
     control = (
       <select {...common} value={show(value)} onChange={e => onChange(e.target.value === "" ? null : e.target.value)}>

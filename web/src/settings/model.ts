@@ -43,6 +43,12 @@ export function panesOf(doc: SettingsDocument): PaneModel[] {
   return panes;
 }
 
+/** Every field path the panes show, dotted; an error at any other path has no field to sit on. */
+export const shownPaths = (panes: PaneModel[]): Set<string> => {
+  const collect = (p: PaneModel): string[] => [...p.fields.map(f => f.path.join(".")), ...p.children.flatMap(collect)];
+  return new Set(panes.flatMap(collect));
+};
+
 export const getAt = (obj: unknown, path: Path): unknown => path.reduce<unknown>((acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined), obj);
 
 /** A copy of `obj` with `value` at `path`, creating the objects on the way. */

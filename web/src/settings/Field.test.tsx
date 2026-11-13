@@ -36,6 +36,12 @@ it("renders a boolean as a toggle that falls back to the default", async () => {
   expect(change).toHaveBeenCalledWith(false);
 });
 
+it("returns a toggle to unset when it is set back to the default", async () => {
+  const change = draw({ type: ["boolean", "null"] }, false, { fallback: true });
+  await userEvent.click(screen.getByRole("checkbox"));
+  expect(change).toHaveBeenCalledWith(null);
+});
+
 it("renders an enum as a select, with unset as the empty option", async () => {
   const change = draw({ type: ["string", "null"], enum: ["human", "auto", null] }, "human", { fallback: "auto" });
   const select = screen.getByRole("combobox");

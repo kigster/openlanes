@@ -47,7 +47,7 @@ paths:
                 type: object
                 required: [refusal, reason]
                 properties:
-                  refusal: { type: string, enum: [not_on_main, dirty_config, cannot_fast_forward, stale_etag, push_failed] }
+                  refusal: { type: string, enum: [not_on_main, dirty_config, cannot_fast_forward, stale_etag, push_failed, commit_failed] }
                   reason: { type: string }
         "422":
           description: refused by the schema or Config.parse; nothing written
@@ -66,6 +66,7 @@ paths:
                         path: { type: array, items: { type: string } }
                         message: { type: string }
         "428": { description: If-Match missing, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "500": { description: "a git failure other than a refusal; fixed message, no path", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
 components:
   schemas:
     Error:

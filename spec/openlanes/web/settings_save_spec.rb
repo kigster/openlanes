@@ -116,6 +116,19 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
       expect([head, origin_main, File.read(file)]).to eq(before)
       expect(git!(main, "status", "--porcelain")).to eq("")
     end
+
+    it "restores the file and answers 409 when the commit itself fails" do
+      hook = File.join(main, ".git", "hooks", "pre-commit")
+      File.write(hook, "#!/bin/sh\necho 'secret hook output' >&2\nexit 1\n")
+      File.chmod(0o755, hook)
+      before = [head, origin_main, File.read(file)]
+      outcome = save({ "jobs" => 3 })
+
+      expect_untouched(outcome, "commit_failed")
+      expect(outcome.body[:reason]).not_to include(main, "secret hook output")
+      expect([head, origin_main, File.read(file)]).to eq(before)
+      expect(git!(main, "status", "--porcelain")).to eq("")
+    end
   end
 
   it "refuses an invalid value before any write" do

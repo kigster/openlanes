@@ -557,7 +557,7 @@ export interface SettingsFieldError {
   message: string;
 }
 
-export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed";
+export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed" | "commit_failed";
 
 /** PUT /api/settings, 200. */
 export type SettingsSaveResult = { changed: false } | { changed: true; commit: string; etag: string };

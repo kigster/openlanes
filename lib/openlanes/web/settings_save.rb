@@ -51,17 +51,35 @@ module OpenLanes
         problems = Settings.validate(values)
         return Outcome.new(422, { errors: problems.map(&:to_json_hash) }) unless problems.empty?
 
-        config = Settings.parse(values)
+        save(Settings.parse(values), if_match)
+      rescue Refused => e
+        Outcome.new(409, { refusal: e.refusal, reason: e.message })
+      rescue Error => e
+        failed(e)
+      end
+
+      private
+
+      # @param config [Config] the parsed, valid values
+      # @param if_match [String]
+      # @return [Outcome]
+      def save(config, if_match)
         guard!(if_match)
         return Outcome.new(200, { changed: false }) if unchanged?(config)
 
         fast_forward!
         Outcome.new(200, { changed: true, commit: land(config), etag: Settings.etag(@root) })
-      rescue Refused => e
-        Outcome.new(409, { refusal: e.refusal, reason: e.message })
       end
 
-      private
+      # Any other git failure: the server's log gets git's words, the
+      # response a fixed sentence without the checkout's path (F102).
+      #
+      # @param error [OpenLanes::Error]
+      # @return [Outcome]
+      def failed(error)
+        warn("settings save: #{error.message}")
+        Outcome.new(500, { error: "git failed while saving #{Config::FILE}; see the server log" })
+      end
 
       # The S1 guards, cheapest first. None of them writes.
       #
@@ -112,9 +130,7 @@ module OpenLanes
       # @param config [Config]
       # @return [String] the commit
       def land(config)
-        File.write(path, config.to_yaml)
-        git!("add", "--", Config::FILE)
-        git!("commit", "-q", "-m", MESSAGE, "--", Config::FILE)
+        commit!(config)
         @boundary.sanction(@root, REMOTE, BRANCH)
         _, pushed = git("push", "-q", REMOTE, BRANCH)
         unless pushed
@@ -124,12 +140,38 @@ module OpenLanes
         git!("rev-parse", "HEAD").strip
       end
 
+      # Writes the file and commits it alone. A commit that fails (a hook,
+      # gpg signing, an `index.lock` left by a concurrent save) puts the file
+      # and the index back, so the next save is not refused as dirty_config.
+      # The reason is fixed text: git's output names the checkout's path and
+      # whatever a hook printed, and neither belongs in a response body.
+      #
+      # @param config [Config]
+      # @return [void]
+      def commit!(config)
+        before = git!("rev-parse", "HEAD").strip
+        File.write(path, config.to_yaml)
+        git!("add", "--", Config::FILE)
+        git!("commit", "-q", "-m", MESSAGE, "--", Config::FILE)
+      rescue Error
+        git("reset", "-q", "--soft", before) if before
+        restore!
+        raise Refused.new("commit_failed", "git could not commit #{Config::FILE}; nothing was changed")
+      end
+
       # Takes back the commit {#land} made, and the file with it.
       #
       # @return [void]
       def undo!
         git!("reset", "-q", "--soft", "HEAD~1")
-        git!("reset", "-q", "--", Config::FILE)
+        restore!
+      end
+
+      # Puts the file and its index entry back as HEAD has them.
+      #
+      # @return [void]
+      def restore!
+        git("reset", "-q", "--", Config::FILE)
         _, tracked = git("cat-file", "-e", "HEAD:#{Config::FILE}")
         tracked ? git!("checkout", "-q", "HEAD", "--", Config::FILE) : FileUtils.rm_f(path)
       end

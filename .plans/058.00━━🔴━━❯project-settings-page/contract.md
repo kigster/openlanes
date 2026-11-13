@@ -37,12 +37,14 @@ Body: `{ "values": { ... } }`, the whole file as it should be, same shape as GET
 | 200 | `{ "changed": false }` | parses to the same settings as the file; nothing written, no commit |
 | 200 | `{ "changed": true, "commit": "<sha>", "etag": "<new etag>" }` | written (`Config#to_yaml`), committed (`.openlanes.yml` alone), pushed to `origin/main` |
 | 422 | `{ "errors": [{ "path": ["merge","by"], "message": "..." }] }` | refused by the schema or `Config.parse`; nothing written. `path` is `[]` when the refusal names no key |
-| 409 | `{ "refusal": "not_on_main" \| "dirty_config" \| "cannot_fast_forward" \| "stale_etag" \| "push_failed", "reason": "..." }` | an S1 guard; nothing written, HEAD and `origin/main` unmoved (`push_failed`: the local commit is undone) |
+| 409 | `{ "refusal": "not_on_main" \| "dirty_config" \| "cannot_fast_forward" \| "stale_etag" \| "push_failed" \| "commit_failed", "reason": "..." }` | an S1 guard; nothing written, HEAD and `origin/main` unmoved (`push_failed`: the local commit is undone; `commit_failed`: the file and index are restored) |
 | 428 | `{ "error": "If-Match is required; send the etag from GET" }` | no `If-Match` |
+| 500 | `{ "error": "git failed while saving .openlanes.yml; see the server log" }` | any other git failure; the body never carries the checkout path or git output |
 | 403 | `{ "error": "X-CSRF-Token does not match; fetch /api/session again" }` | CSRF mismatch |
 
 Order of checks: CSRF, If-Match present, validation (422), then guards (409: `not_on_main`, `dirty_config`, `stale_etag`, `cannot_fast_forward`), then the no-change check, then write/commit/push. The push is declared through `Boundary.sanction` before it runs.
 
+amended: `commit_failed` (409) and 500 added (2026-11-13, round 3, staff-reviewer F2 and security F102) — a failing commit (hook, gpg, index.lock) used to answer 500 with git output and leave the file dirty.
 amended: `push_failed` added (2026-11-13) — a push can be refused even after the fast-forward check; the commit is reset so nothing is half-landed.
 
 ## File ownership
