@@ -69,6 +69,7 @@ module OpenLanes
           copilot:,
           listen:,
           credentials:)
+        restart_note(root, stores:, keys:) unless demo
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
@@ -78,6 +79,18 @@ module OpenLanes
       end
 
       private
+
+      # A control room that `/restart-web` started tells the person how the
+      # rebuild of its page went (plan 069.00).
+      #
+      # @param root [String]
+      # @param stores [OpenLanes::Web::Stores]
+      # @param keys [OpenLanes::Live::Keys]
+      # @return [void]
+      def restart_note(root, stores:, keys:)
+        path = File.join(Supervision.dir(root).path, Supervision::WebRestart::NOTE)
+        Live::Copilot::RestartNote.new(path:, copilot: Live.copilot(store: stores.current, keys:)).call
+      end
 
       # Logs as `web`, to the file the engine named in this process's
       # environment when the engine spawned it, else to the same default the

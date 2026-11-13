@@ -121,6 +121,7 @@ classDiagram
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__Copilot__Operator["OpenLanes::Live::Copilot::Operator"]
+  class OpenLanes__Live__Copilot__RestartNote["OpenLanes::Live::Copilot::RestartNote"]
   class OpenLanes__Live__Mail["OpenLanes::Live::Mail"]
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Node__Invalid["OpenLanes::Live::Node::Invalid"]
@@ -163,7 +164,9 @@ classDiagram
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
+  class OpenLanes__Supervision__RestartRequest["OpenLanes::Supervision::RestartRequest"]
   class OpenLanes__Supervision__Title["OpenLanes::Supervision::Title"]
+  class OpenLanes__Supervision__WebRestart["OpenLanes::Supervision::WebRestart"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Uml["OpenLanes::Uml"]
@@ -381,6 +384,7 @@ classDiagram
   OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
   OpenLanes__CLI__Start ..> OpenLanes__Project : uses
   OpenLanes__CLI__Start ..> OpenLanes__Supervision : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Supervision__RestartRequest : uses
   OpenLanes__CLI__Start ..> OpenLanes__UI : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__AdminAuth : uses
@@ -431,6 +435,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__RestartNote : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
@@ -438,6 +443,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Settings : uses
   OpenLanes__CLI__Web ..> OpenLanes__Supervision : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Supervision__WebRestart : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses

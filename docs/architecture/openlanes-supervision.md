@@ -25,11 +25,16 @@ classDiagram
   class OpenLanes__Supervision__Probe["Probe"]
   class OpenLanes__Supervision__Program["Program"]
   class OpenLanes__Supervision__Registration["Registration"]
+  class OpenLanes__Supervision__RestartRequest["RestartRequest"]
   class OpenLanes__Supervision__Shutdown["Shutdown"]
   class OpenLanes__Supervision__Slot["Slot"]
   class OpenLanes__Supervision__Stopper["Stopper"]
   class OpenLanes__Supervision__Supervisor["Supervisor"]
   class OpenLanes__Supervision__Title["Title"]
+  class OpenLanes__Supervision__WebRebuild["WebRebuild"]
+  class OpenLanes__Supervision__WebRestart["WebRestart"]
+  class OpenLanes__Web["OpenLanes::Web"]
+  <<module>> OpenLanes__Web
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
   OpenLanes__Supervision ..> OpenLanes__Container : uses
   OpenLanes__Supervision ..> OpenLanes__Execution__AgentSupervisor : uses
@@ -56,6 +61,8 @@ classDiagram
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__PidDir : uses
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Registration ..> OpenLanes__Supervision__Title : uses
+  OpenLanes__Supervision__RestartRequest ..> OpenLanes__Supervision__Host : uses
+  OpenLanes__Supervision__RestartRequest ..> OpenLanes__Supervision__Probe : uses
   OpenLanes__Supervision__Shutdown ..> OpenLanes__Execution__Child : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Supervision__Stopper ..> OpenLanes__Execution__Child : uses
@@ -73,4 +80,9 @@ classDiagram
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Shutdown : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Slot : uses
   OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__Title : uses
+  OpenLanes__Supervision__Supervisor ..> OpenLanes__Supervision__WebRestart : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Supervision__Host : uses
+  OpenLanes__Supervision__WebRebuild ..> OpenLanes__Web : uses
+  OpenLanes__Supervision__WebRestart ..> OpenLanes__Log : uses
+  OpenLanes__Supervision__WebRestart ..> OpenLanes__Supervision__WebRebuild : uses
 ```

@@ -90,6 +90,47 @@ RSpec.describe OpenLanes::Live::Copilot do
         expect(stored.map { it.values_at("id", "from") }).to eq([%w[01JFROB you], ["01JFROB.1", "copilot"]])
         expect([stored.last["text"], store.xlen(keys.commands)]).to match([start_with("Slash commands:"), 0])
       end
+
+      context "with a read-only question (plan 069.00)" do
+        let(:snapshot) do
+          { run:   { status: "running", up: 1200, down: 300, cost: 1.5, agents_working: 1, jobs: 3 },
+            plans: [{ ordinal: "020.00", title: "Tax rules", cost: 1.5, status: { emoji: "🟡", label: "Building" },
+                      cars: [{ agent: "backend-coder", state: "running", round: 1, model: "sonnet", message: "Running rspec" }] }] }
+        end
+
+        before { store.set(keys.snapshot, JSON.generate(snapshot)) }
+
+        def ask(text)
+          copilot.say({ "id" => "01JQ", "text" => text })
+          stored.last
+        end
+
+        it "answers /stats from the snapshot, under the id the page waits for, and queues nothing" do
+          answer = ask("/stats")
+          aggregate_failures do
+            expect(answer).to include("id" => "01JQ.1", "from" => "copilot")
+            expect(answer["text"]).to include("agents working: 1 of 3", "tokens: 1200 in, 300 out", "cost: $1.50")
+            expect(store.xlen(keys.commands)).to eq(0)
+          end
+        end
+
+        it "answers /status with every plan on the board" do
+          expect(ask("/status")["text"]).to include("1 plan on the board:", "020.00 🟡 Building · Tax rules · backend-coder · $1.50")
+        end
+
+        it "answers /status NNN with the plan's agents and what each is doing" do
+          expect(ask("/status 20")["text"]).to include("backend-coder: running, round 1, sonnet · Running rspec")
+        end
+
+        it "says when a plan is not on the board" do
+          expect(ask("/status 7")["text"]).to eq("007.00 is not on the board.")
+        end
+      end
+
+      it "answers a read-only question with no engine by saying there are no figures yet" do
+        copilot.say({ "id" => "01JQ", "text" => "/stats" })
+        expect([stored.last["text"], store.xlen(keys.commands)]).to eq([OpenLanes::Live::Copilot::Report::NOTHING, 0])
+      end
     end
 
     it "hands plain text to the copilot" do

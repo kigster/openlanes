@@ -83,8 +83,8 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       expect(argv.each_cons(2).select { it.first == "--add-dir" }.map(&:last)).to eq([root, trace_dir])
     end
 
-    it "runs on its definition's cheap model, with its definition as the standing instructions" do
-      expect([flag("--model"), flag("--append-system-prompt")]).to eq(["haiku", agent.prompt])
+    it "runs on its definition's model, with its definition as the standing instructions" do
+      expect([flag("--model"), flag("--append-system-prompt")]).to eq(["sonnet", agent.prompt])
     end
 
     it "does not ask for the board's one-line status tool" do
@@ -127,7 +127,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
     it "gives every answer the model and the running total, which the header shows" do
       say("hi")
       expect([stored.last["usage"], copilot.history[:usage]])
-        .to eq([{ "model" => "claude-haiku-5-5", "up" => 1000, "down" => 50 }] * 2)
+        .to eq([{ "model" => "claude-sonnet-5-5", "up" => 1000, "down" => 50 }] * 2)
     end
 
     context "with a second message" do
@@ -145,7 +145,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       end
 
       it "adds what the second spent to the first" do
-        expect(stored.last["usage"]).to eq("model" => "claude-haiku-5-5", "up" => 1400, "down" => 70)
+        expect(stored.last["usage"]).to eq("model" => "claude-sonnet-5-5", "up" => 1400, "down" => 70)
       end
     end
 
@@ -223,7 +223,7 @@ RSpec.describe OpenLanes::Live::Copilot::Operator do
       it "says why in the conversation, with what it spent" do
         expect(stored.last).to include("kind" => "text",
           "text" => start_with("copilot could not answer: claude reported: API Error"),
-          "usage" => { "model" => "claude-haiku-5-5", "up" => 300, "down" => 0 })
+          "usage" => { "model" => "claude-sonnet-5-5", "up" => 300, "down" => 0 })
       end
 
       it "does not retry a session that did start" do

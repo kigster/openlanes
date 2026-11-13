@@ -31,6 +31,11 @@ module OpenLanes
       # @return [Integer]
       attr_accessor :restarts
 
+      # @return [OpenLanes::Supervision::WebRebuild, nil] while a deliberate
+      #   restart (`/restart-web`) stops, rebuilds and starts it; its exit
+      #   then is no crash
+      attr_accessor :rebuild
+
       # @return [String]
       def role = program.role
 
