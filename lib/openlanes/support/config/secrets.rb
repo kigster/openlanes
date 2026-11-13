@@ -13,8 +13,10 @@ module OpenLanes
       # Linear, AWS access keys.
       TOKEN = /\A(?:gh[pousr]_|github_pat_|sk-|xox[abpr]-|lin_api_|AKIA[0-9A-Z]{12})/
 
-      # Key names that hold a credential whatever their value looks like.
-      KEY = /token|secret|password|passwd|api_?key/i
+      # Key names that hold a credential whatever their value looks like:
+      # the whole name, or its last underscore-separated word. Anchored,
+      # because a substring match refused `max_tokens: "200k"` as a secret.
+      KEY = /(?:\A|_)(?:token|secret|password|passwd|api_?key)\z/i
 
       module_function
 

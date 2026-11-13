@@ -29,6 +29,29 @@ RSpec.describe OpenLanes::Config::Secrets do
       .to raise_error(OpenLanes::Error, /x\.github_token/)
   end
 
+  it "parses a token budget written as a string" do
+    expect { parse("commands:\n  run:\n    max_tokens: 200k\n") }.not_to raise_error
+  end
+
+  it "lets a harmless value through under every string-typed key in the config schema" do
+    schema = JSON.parse(File.read(File.expand_path("../../../schemas/openlanes-config.schema.json", __dir__)))
+    paths = []
+    collect = lambda do |node, keys|
+      (node["properties"] || {}).each do |key, child|
+        types = Array(child["type"])
+        paths << [*keys, key] if types.include?("string")
+        collect.call(child, [*keys, key])
+      end
+    end
+    collect.call(schema, [])
+
+    expect(paths).not_to be_empty
+    paths.each do |keys|
+      settings = keys.reverse.reduce("harmless") { |inner, key| { key => inner } }
+      expect { described_class.refuse!(settings, "f.yml") }.not_to raise_error, keys.join(".")
+    end
+  end
+
   it "lets an empty credential-named key and numeric token counts through" do
     expect { described_class.refuse!({ "api_key" => "", "budget" => { "max_tokens" => 100 } }, "f.yml") }
       .not_to raise_error

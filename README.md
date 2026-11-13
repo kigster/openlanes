@@ -223,10 +223,9 @@ openlanes init --reconfigure -n   # the diff only, nothing written
 Under `-y` it records what the scan found, never a recommendation; the defaults are `--merge-by human` and no `desired_codebase_quality` (the first review-passed review asks it). A folder with two languages gets no `docs/decisions/stack.md`.
 
 > [!NOTE]
->
-> [!NOTE]
 > The project file lives at `.openlanes/config.yml`, and the whole `.openlanes/` folder is committed with the project. A project still on the old top-level `.openlanes.yml` keeps working, with a one-line notice on every command; `openlanes config move` (`-n` to preview) moves it across with `git mv`, so its history follows. A project holding both files is refused. The file never holds a secret: a `redis_url` with a password, or a token-shaped value, is refused when it is read; set `REDIS_URL` in the environment instead.
 
+> [!NOTE]
 > `.openlanes/config.yml` files written by this release can hold `architecture_decisions:`. An older openlanes refuses that key as unknown, so upgrade every machine that reads the file. A file with `ci:` or `stack:` still reads, and `init --reconfigure` moves them over.
 
 For a small mechanical task, skip research and planning:
