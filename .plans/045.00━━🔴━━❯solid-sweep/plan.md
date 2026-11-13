@@ -21,17 +21,19 @@ Ordinals are set once and never renumbered (`ordinal.rb`), so U1 measures before
 | Child  | Slug                     | Scope, from `spec.md`                                                                                                  | Spec items         |
 | :----- | :----------------------- | :--------------------------------------------------------------------------------------------------------------------- | :----------------- |
 | 045.01 | `dry-system-wiring`      | Every component registers through `container.rb`, `Deps[...]` for collaborators, collapsed-dir key prefixes, `adapters.<name>` replacing the registry hash (A1, A2) | 3, 4, 5 (no OTel), 6 |
-| 045.02 | `split-dispatcher`       | `engine/dispatcher.rb` and `dispatcher/` to the A8 limits; its `Thread.new` sites stay as they are until 045.N+1           | 2, 11, 12          |
+| 045.02 | `split-dispatcher`       | `engine/dispatcher.rb` and `dispatcher/` to the A8 limits; its `Thread.new` sites stay as they are until 045.13           | 2, 11, 12          |
 | 045.03 | `split-executor`         | `execution/executor.rb` and its collaborators                                                                          | 2, 11, 12          |
 | 045.04 | `split-plan-state`       | `plans/plan_state.rb`                                                                                                   | 2, 11, 12          |
 | 045.05 | `split-run-workflow`     | RunWorkflow                                                                                                             | 2, 11, 12          |
-| 045.06 … 045.K | `split-seams-batch-N` | The remaining classes over 100 lines, by descending `wc -l` at minting time, cut into batches of about 1,500 changed lines | 2, 11, 12          |
-| 045.K+1 | `concurrent-ruby-threads` | Every `Thread.new` in `lib/` and `web/` server code onto concurrent-ruby; each site's primitive (pool future, `TimerTask`, `ScheduledTask`) named in the PR | 7                  |
-| 045.K+2 | `result-and-judgment`   | dry-monads `Result` for fallible operations; `Judgment` port, Jev when `TYPESAFE_API_KEY` is set, otherwise the local implementation that asks through the configured coding-agent adapter (D2) | 8, 9               |
-| 045.K+3 | `enforce-metrics-limits` | The last `Metrics/*` entries out of `.rubocop_todo.yml`, no `Exclude`/`AllowedMethods` under the four cops, A8 metaprogramming check | 1, 11              |
-| 045.K+4 | `instrumentation-spans` | dry-monitor 1.0.1 events (D3; fallback a small in-process notifier, never `EventBus`), SemanticLogger to `log/openlanes.log`, OpenTelemetry provider and spans | 5 (OTel), 10       |
+| 045.06 to 045.12 | `split-seams-batch-1` to `split-seams-batch-7` | The remaining 53 classes over 100 lines (measured 2026-11-13), by descending class length at minting time, cut into seven batches of about 1,500 class lines; each batch's `spec.md` lists its classes. `Resync::Prs` sits in batch 5 with `Resync::Dirs` so `resync.rb` is rewritten once | 2, 11, 12          |
+| 045.13 | `concurrent-ruby-threads` | Every `Thread.new` in `lib/` and `web/` server code onto concurrent-ruby; each site's primitive (pool future, `TimerTask`, `ScheduledTask`) named in the PR | 7                  |
+| 045.14 | `result-and-judgment`   | dry-monads `Result` for fallible operations; `Judgment` port, Jev when `TYPESAFE_API_KEY` is set, otherwise the local implementation that asks through the configured coding-agent adapter (D2) | 8, 9               |
+| 045.15 | `enforce-metrics-limits` | The last `Metrics/*` entries out of `.rubocop_todo.yml`, no `Exclude`/`AllowedMethods` under the four cops, A8 metaprogramming check | 1, 11              |
+| 045.16 | `instrumentation-spans` | dry-monitor 1.0.1 events (D3; fallback a small in-process notifier, never `EventBus`), SemanticLogger to `log/openlanes.log`, OpenTelemetry provider and spans | 5 (OTel), 10       |
 
 Every child carries item 13 (`just ci` green, coverage not below `main`) and the non-goals and A9 behaviour freeze verbatim.
+
+The umbrella pull request carries 045.02 to 045.16 as minted. It carries nothing for 045.01: that plan was already building on its own branch when the umbrella was reviewed, and a copy of its folder here would land on `main` beside the one its own pull request adds, under a different state emoji, with no conflict to warn anyone (review finding F1). 045.01's folder, `spec.md` included, reaches `main` through 045.01's pull request.
 
 ### Order and graph
 
@@ -52,7 +54,7 @@ flowchart LR
 ### U1: Mint the child plans
 
 - **Discipline:** back end.
-- **Owns:** the new folders `.plans/045.01━━…` through `.plans/045.K+4━━…`, and each one's `spec.md`. Nothing else.
+- **Owns:** the new folders `.plans/045.01━━…` through `.plans/045.16━━…`, and each one's `spec.md`. Nothing else. In the umbrella pull request, 045.01's folder is left to 045.01's own pull request (see "The children").
 - **Must not touch:** `045.00`'s own `spec.md`, `plan.md` and `state.json`; any other plan's folder; `lib/`, `spec/`, `docs/`.
 - **Depends on:** nothing.
 - **What it does:**
@@ -86,7 +88,7 @@ No. Neither this plan nor any child adds or changes an HTTP API (A9 freezes API 
 
 ## How to test
 
-1. `ls .plans | rg '^045\.'` lists 045.00 and 045.01 through 045.16, no gaps.
+1. `ls .plans | rg '^045\.'` lists 045.00 and 045.02 through 045.16; 045.01 is absent from this pull request on purpose and arrives with its own (finding F1).
 1. For each child, `head -6 .plans/045.NN*/spec.md` shows `starts: planning`, `frontend: false` and a `depends_on:` naming the child before it (`[none]` for 045.01).
 1. `openlanes resync dirs --dry-run` reports nothing to rename under `045.*`.
 1. `openlanes run 045.01,045.02,…,045.16 --dry-run` holds 045.02 to 045.16, each "waiting on" its predecessor, with no cycle and nothing waiting on 045.00.
