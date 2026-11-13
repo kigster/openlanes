@@ -67,6 +67,14 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
       state.hold!(agent: "backend-coder", session: "sess-1")
     end
 
+    it "says how to read the new entries it had no room for" do
+      stub_const("#{described_class}::JOURNAL_LIMIT", 1)
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "done", text: "U2"), entry.new(kind: "done", text: "U3")])
+
+      expect(text).to include("Added since, the newest 1 of it:", "4. [done] U3", "1 earlier entry is not shown; read them with", "state show --dir")
+      expect(text).not_to include("3. [done] U2")
+    end
+
     it "says so in one line, in place of the instructions" do
       aggregate_failures do
         expect(text).to include("## Your journal - carry on",

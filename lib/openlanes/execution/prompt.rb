@@ -396,12 +396,13 @@ module OpenLanes
       # @return [String]
       def journal_since(window)
         shown = window.entries.last(JOURNAL_LIMIT)
+        cut = window.entries.size - shown.size
         held = window.since.zero? ? "your journal, empty so far" : "your journal and its entries 1 to #{window.since}"
         added = if shown.empty?
                   "Nothing has been added to it since."
                 else
-                  "Added since, #{shown.size == window.entries.size ? "all" : "the newest #{shown.size}"} of it:\n" \
-                    "#{journal_lines(shown, window.numbered).join("\n")}"
+                  "Added since, #{cut.zero? ? "all" : "the newest #{shown.size}"} of it:\n" \
+                    "#{journal_lines(shown, window.numbered).join("\n")}#{"\n#{journal_omitted(cut)}" if cut.positive?}"
                 end
         <<~SECTION
 
@@ -420,15 +421,22 @@ module OpenLanes
         shown = numbered.last(JOURNAL_LIMIT)
         cut = numbered.size - shown.size
         lines = journal_lines(shown, numbered)
-        omitted = if cut.positive?
-                    "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
-                      "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
-                      "| jq '.memory.\"#{agent.name}\"'\n"
-                  end
         "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
-          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{omitted}"
+          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{journal_omitted(cut) if cut.positive?}"
       rescue OpenLanes::Error
         "\nYour journal could not be read: state.json is not valid JSON.\n"
+      end
+
+      # Said wherever the prompt carries fewer entries than it should, on a
+      # fresh start and on a resume alike: on a resume the entries cut are
+      # ones the session has never been sent, so they need the pointer most.
+      #
+      # @param cut [Integer] entries left out, at least one
+      # @return [String]
+      def journal_omitted(cut)
+        "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
+          "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
+          "| jq '.memory.\"#{agent.name}\"'\n"
       end
 
       # The entries of +shown+ under a heading per journal round, each marked
