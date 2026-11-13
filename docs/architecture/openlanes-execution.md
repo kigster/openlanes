@@ -23,6 +23,7 @@ classDiagram
   class OpenLanes__Execution__Prompt["Prompt"]
   class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__ReviewPacket["ReviewPacket"]
+  class OpenLanes__Execution__ReviewPacket__Shelf["ReviewPacket::Shelf"]
   class OpenLanes__Execution__Transcript["Transcript"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
@@ -53,7 +54,9 @@ classDiagram
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__ReviewPacket ..> OpenLanes__Error : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Execution__ReviewPacket__Shelf : uses
   OpenLanes__Execution__ReviewPacket ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__ReviewPacket ..> OpenLanes__UI : uses
   OpenLanes__Execution__ReviewPacket ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__UI : uses
 ```
