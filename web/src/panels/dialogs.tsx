@@ -73,6 +73,42 @@ export function StopAllDialog({ agents, plans, onCommand, ...openable }: StopAll
   );
 }
 
+export interface StopAgentDialogProps {
+  /** The agent to stop, or null while nobody asked: the dialog is open exactly while this is set. */
+  agent: string | null;
+  plan: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * Stop agent asks first: it is the one drawer action that cannot be taken back, and it sat one arrow key under Wrap
+ * up. It has no trigger of its own, because the Action menu's item opens it; focus starts on Cancel, so Enter on a
+ * dialog nobody read stops nothing.
+ */
+export function StopAgentDialog({ agent, plan, onConfirm, onCancel }: StopAgentDialogProps) {
+  const cancel = useRef<HTMLButtonElement>(null);
+  return (
+    <Dialog.Root open={agent !== null} onOpenChange={(next) => { if (!next) onCancel(); }}>
+      <Frame
+        className="confirm" title={`Stop ${agent ?? "this agent"}?`}
+        onOpenAutoFocus={(e) => { e.preventDefault(); cancel.current?.focus(); }}
+      >
+        <div className="help-body">
+          <Dialog.Description>
+            {agent} stops work on {plan} now and gets 60 seconds to leave a resume note. What it has not written down is lost.
+            To let it finish its current step first, cancel and choose Wrap up.
+          </Dialog.Description>
+        </div>
+        <div className="help-foot">
+          <Dialog.Close className="btn btn-quiet" ref={cancel}>Cancel</Dialog.Close>
+          <button type="button" className="btn btn-alarm" onClick={onConfirm}>Stop agent</button>
+        </div>
+      </Frame>
+    </Dialog.Root>
+  );
+}
+
 /** The round ? pill and the help dialog. The copy is the mockup's draft, word for word, until the author replaces it. */
 export function HelpDialog(openable: Openable) {
   const [open, setOpen] = useOpen(openable);

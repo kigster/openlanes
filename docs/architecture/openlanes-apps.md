@@ -4,31 +4,56 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Apps["OpenLanes::Apps"]
+  <<module>> OpenLanes__Apps
   class OpenLanes__Apps__Definition["Definition"]
+  class OpenLanes__Apps__Framing["Framing"]
+  <<module>> OpenLanes__Apps__Framing
+  class OpenLanes__Apps__Listing["Listing"]
+  <<module>> OpenLanes__Apps__Listing
   class OpenLanes__Apps__Ports["Ports"]
   class OpenLanes__Apps__Ports__Exhausted["Ports::Exhausted"]
+  class OpenLanes__Apps__Probe["Probe"]
+  <<module>> OpenLanes__Apps__Probe
   class OpenLanes__Apps__ProcessSpec["ProcessSpec"]
   class OpenLanes__Apps__Runner["Runner"]
   class OpenLanes__Apps__Status["Status"]
   class OpenLanes__Apps__Supervisor["Supervisor"]
   class OpenLanes__Apps__Supervisor__StartFailed["Supervisor::StartFailed"]
   class OpenLanes__Apps__Watcher["Watcher"]
+  class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
+  class OpenLanes__Live__News["OpenLanes::Live::News"]
+  <<module>> OpenLanes__Live__News
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Apps ..> OpenLanes__Apps__Ports : uses
+  OpenLanes__Apps ..> OpenLanes__Apps__Runner : uses
+  OpenLanes__Apps ..> OpenLanes__Apps__Status : uses
+  OpenLanes__Apps ..> OpenLanes__Apps__Supervisor : uses
+  OpenLanes__Apps ..> OpenLanes__Apps__Watcher : uses
+  OpenLanes__Apps ..> OpenLanes__Config : uses
   OpenLanes__Apps__Definition ..> OpenLanes__Apps__ProcessSpec : uses
   OpenLanes__Apps__Definition ..> OpenLanes__Error : uses
+  OpenLanes__Apps__Framing ..> OpenLanes__Apps__Probe : uses
+  OpenLanes__Apps__Framing ..> OpenLanes__Apps__Status : uses
   OpenLanes__Apps__Ports ..> OpenLanes__Apps__Ports__Exhausted : uses
+  OpenLanes__Apps__Ports ..> OpenLanes__Apps__Probe : uses
   OpenLanes__Apps__Ports ..> OpenLanes__Apps__Status : uses
   OpenLanes__Apps__Ports ..> OpenLanes__Error : uses
   OpenLanes__Apps__Ports__Exhausted --|> OpenLanes__Error : inherits
+  OpenLanes__Apps__Probe ..> OpenLanes__Apps__Status : uses
+  OpenLanes__Apps__Runner ..> OpenLanes__Apps__Listing : uses
   OpenLanes__Apps__Runner ..> OpenLanes__Apps__Supervisor : uses
   OpenLanes__Apps__Runner ..> OpenLanes__Apps__Supervisor__StartFailed : uses
   OpenLanes__Apps__Runner ..> OpenLanes__Apps__Watcher : uses
+  OpenLanes__Apps__Runner ..> OpenLanes__Live__News : uses
   OpenLanes__Apps__Runner ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Apps__Supervisor ..> OpenLanes__Apps__Framing : uses
   OpenLanes__Apps__Supervisor ..> OpenLanes__Apps__Ports : uses
+  OpenLanes__Apps__Supervisor ..> OpenLanes__Apps__Probe : uses
   OpenLanes__Apps__Supervisor ..> OpenLanes__Apps__Status : uses
   OpenLanes__Apps__Supervisor ..> OpenLanes__Apps__Supervisor__StartFailed : uses
   OpenLanes__Apps__Supervisor ..> OpenLanes__Error : uses

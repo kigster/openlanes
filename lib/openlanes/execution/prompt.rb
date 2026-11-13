@@ -20,8 +20,9 @@ module OpenLanes
       EXECUTABLE = File.expand_path("../../../exe/openlanes", __dir__)
 
       # Most journal entries a prompt carries, newest kept. The journal goes
-      # into every round's prompt, resumed or not, so it is paid for in
-      # tokens every round: at {Plans::Journal::TEXT_LIMIT} characters an
+      # into every round that starts a session, and a resumed one carries the
+      # entries its session lacks ({JournalWindow}), so it is paid for in
+      # tokens: at {Plans::Journal::TEXT_LIMIT} characters an
       # entry, 40 is at most about 5k tokens, small beside the agent's own
       # definition. The newest are the ones kept because a later entry wins
       # over an earlier one, so what is cut is what was most likely already
@@ -49,10 +50,18 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param packet [String] a reviewer's {ReviewPacket}, already built
+      # @param memory [String] the project's lessons for this agent, from
+      #   {Memory.section}; empty with `--no-memory` or when none is for it
+      # @param resume [String, nil] the session this round carries on, which
+      #   decides how much of the journal it is sent ({JournalWindow})
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, packet: "", memory: "", resume: nil)
+        @memory = memory.to_s
         @rebase = rebase
+        @resume = resume
+        @packet = packet.to_s
         @max_rejections = max_rejections
         @agent = agent
         @subject = subject
@@ -74,7 +83,10 @@ module OpenLanes
       def to_s
         return resolution if @rebase
 
-        <<~PROMPT
+        # The packet goes first: it is the one part every reviewer of a round
+        # shares byte for byte, so only ahead of each reviewer's own
+        # definition can it be a prompt-cache prefix they have in common.
+        @packet + <<~PROMPT
           #{agent.prompt}#{review_brief}
 
           ---
@@ -88,7 +100,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{@memory}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -171,7 +183,9 @@ module OpenLanes
       # comes first, for who it is and what it builds, and so its own
       # "a rebase stopped" section is read; everything after says this
       # invocation is not plan work. No ledger section: a signature here would
-      # be read as this round's verdict on the plan, which it is not.
+      # be read as this round's verdict on the plan, which it is not. No
+      # lessons either, on purpose: they are about how to do plan work, and
+      # resolving conflicts asks only that both sides' intent survive.
       #
       # @return [String]
       def resolution
@@ -241,7 +255,9 @@ module OpenLanes
       # What a compacted agent is told when its session is resumed (W28). Its
       # own instructions survive in the compacted summary; what it needs is
       # to know that the INTERRUPT it just obeyed is over, and that the
-      # session it is in is the same one.
+      # session it is in is the same one. No lessons section, on purpose: the
+      # session's first prompt carried them, and the run's snapshot has not
+      # changed since, so repeating them would only spend the budget twice.
       #
       # @return [String]
       def continuation
@@ -338,11 +354,15 @@ module OpenLanes
       # The journal (M2): how to keep it, and what it already holds. Said to
       # every agent, identically, for the same reason as the ledger. What it
       # holds is put here by the harness, not left for the agent to look up,
-      # so reading it is enforced rather than requested, and a resumed
-      # session, which may have compacted the round that wrote it, gets it too.
+      # so reading it is enforced rather than requested. A resumed session
+      # known to hold the earlier entries gets {#journal_since} instead; one
+      # that may have compacted the round that wrote them gets all of this.
       #
       # @return [String]
       def journal_section
+        window = journal_window
+        return journal_since(window) if window&.resumed?
+
         <<~SECTION
 
           ## Your journal - record as you go, read before you start
@@ -372,29 +392,78 @@ module OpenLanes
         SECTION
       end
 
+      # @return [OpenLanes::Execution::JournalWindow, nil] nil when
+      #   state.json cannot be read, which {#journal_so_far} then says
+      def journal_window
+        JournalWindow.for(Plans::PlanState.for(subject.feature.path), agent: agent.name, resume: @resume)
+      rescue OpenLanes::Error
+        nil
+      end
+
+      # The journal section of a round that resumes a session already holding
+      # the instructions and the entries up to +window.since+: one line in
+      # place of the instructions, and only the entries written since.
+      #
+      # @param window [OpenLanes::Execution::JournalWindow]
+      # @return [String]
+      def journal_since(window)
+        shown = window.entries.last(JOURNAL_LIMIT)
+        cut = window.entries.size - shown.size
+        held = window.since.zero? ? "your journal, empty so far" : "your journal and its entries 1 to #{window.since}"
+        added = if shown.empty?
+                  "Nothing has been added to it since."
+                else
+                  "Added since, #{cut.zero? ? "all" : "the newest #{shown.size}"} of it:\n" \
+                    "#{journal_lines(shown, window.numbered).join("\n")}#{"\n#{journal_omitted(cut)}" if cut.positive?}"
+                end
+        <<~SECTION
+
+          ## Your journal - carry on
+
+          This session already holds how to keep #{held}: keep printing each entry as one line of JSON, as before; the next is number #{window.total + 1}.
+          #{added}
+        SECTION
+      end
+
       # @return [String]
       def journal_so_far
-        rounds = Plans::PlanState.for(subject.feature.path).journal(agent.name)
-        numbered = rounds.flat_map { |r| r.entries.each_with_index.map { |e, i| [r, r.first + i, e] } }
+        numbered = JournalWindow.for(Plans::PlanState.for(subject.feature.path), agent: agent.name).numbered
         return "\nYour journal on this plan is empty: this is your first round to keep one.\n" if numbered.empty?
 
-        overridden = numbered.each_with_object({}) { |(_, n, e), map| map[e.overrides] = n if e.overrides }
         shown = numbered.last(JOURNAL_LIMIT)
         cut = numbered.size - shown.size
-        lines = shown.chunk_while { |a, b| a.first.equal?(b.first) }.flat_map do |group|
+        lines = journal_lines(shown, numbered)
+        "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
+          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{journal_omitted(cut) if cut.positive?}"
+      rescue OpenLanes::Error
+        "\nYour journal could not be read: state.json is not valid JSON.\n"
+      end
+
+      # Said wherever the prompt carries fewer entries than it should, on a
+      # fresh start and on a resume alike: on a resume the entries cut are
+      # ones the session has never been sent, so they need the pointer most.
+      #
+      # @param cut [Integer] entries left out, at least one
+      # @return [String]
+      def journal_omitted(cut)
+        "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
+          "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
+          "| jq '.memory.\"#{agent.name}\"'\n"
+      end
+
+      # The entries of +shown+ under a heading per journal round, each marked
+      # when a later entry anywhere in the journal overturned it.
+      #
+      # @param shown [Array] of {JournalWindow#numbered}
+      # @param numbered [Array] the whole journal, for the overrides
+      # @return [Array<String>]
+      def journal_lines(shown, numbered)
+        overridden = numbered.each_with_object({}) { |(_, n, e), map| map[e.overrides] = n if e.overrides }
+        shown.chunk_while { |a, b| a.first.equal?(b.first) }.flat_map do |group|
           round = group.first.first
           ["", "  Journal round #{round.number}#{" (#{round.state})" if round.state}:",
            *group.map { |_, n, e| "    #{n}. #{journal_line(e)}#{"  (overridden by #{overridden[n]})" if overridden[n]}" }]
         end
-        omitted = if cut.positive?
-                    "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
-                      "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
-                      "| jq '.memory.\"#{agent.name}\"'\n"
-                  end
-        "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
-          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{omitted}"
-      rescue OpenLanes::Error
-        "\nYour journal could not be read: state.json is not valid JSON.\n"
       end
 
       # @param entry [OpenLanes::Plans::Journal::Entry]
