@@ -232,6 +232,40 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       end
     end
 
+    # Plan 056 on the page: three answers the broker could not fold, each put
+    # back above the last, so the card opened on quotes and offered no buttons.
+    it "sends a reopened question as it was asked, with only the newest follow-up beside it" do
+      File.write(File.join(path_of("001.00"), "blocked.md"), <<~MD)
+        # Blocked
+
+        ## B1 Ship with the flaky outage spec?
+
+        > **You answered:** a) Ship it.
+        >
+        > **unblocker asks:** Ship it now, or after the fix lands?
+
+        > **Answer not accepted:** what is B1?
+        >
+        > unblocker left it unfolded and said nothing
+
+        One outage spec fails now and then, and this plan did not cause it.
+
+        a) Ship it and fix the race separately. (Recommended)
+        b) Fix the race here.
+      MD
+
+      expect(blocked_plan[:questions].first).to include(
+        heading:   "B1 Ship with the flaky outage spec?",
+        body:      "One outage spec fails now and then, and this plan did not cause it.",
+        follow_up: "> **You answered:** a) Ship it.\n>\n> **unblocker asks:** Ship it now, or after the fix lands?",
+        options:   [a_hash_including(letter: "a", recommended: true), a_hash_including(letter: "b")]
+      )
+    end
+
+    it "sends no follow-up with a question nobody has answered yet" do
+      expect(blocked_plan[:questions].map { it[:follow_up] }).to eq([nil, nil])
+    end
+
     it "offers Yes and No only for the question the agent marked, without the mark" do
       aggregate_failures do
         expect(blocked_plan[:questions].map { it[:options]&.map { |o| o[:answer] } }).to eq([nil, %w[yes no]])

@@ -58,6 +58,9 @@
 .ask-who { font-size: 13px; color: var(--ink-soft); margin: 0; }
 .ask-heading { font-weight: 600; margin: 4px 0 0; }
 .ask-text { margin: 4px 0 10px; }
+.ask-follow-up { margin: 0 0 10px; padding: 8px 10px; border-left: 3px solid var(--alarm); border-radius: 6px; background: var(--plate); }
+.ask-follow-up .ask-text { margin: 0; }
+.ask-follow-up blockquote { margin: 0; padding: 0; border: 0; }
 .ask-text > :first-child { margin-top: 0; }
 .ask-text > :last-child { margin-bottom: 0; }
 .ask textarea, .drawer textarea {

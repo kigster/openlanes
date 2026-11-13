@@ -165,6 +165,7 @@
             "owner": "technical",
             "options": null,
             "held": false,
+            "follow_up": null,
             "asked_at": "2026-10-13T09:00:00Z"
           }
         ],
@@ -326,6 +327,7 @@
               }
             ],
             "held": false,
+            "follow_up": null,
             "asked_at": "2026-10-13T09:00:00Z"
           }
         ],

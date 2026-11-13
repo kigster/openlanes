@@ -458,12 +458,16 @@ module OpenLanes
       # @return [Hash]
       def question(subject, open, body, asker, asked_at)
         id = "#{subject.feature.ordinal}/B#{open.number}"
-        choices = choices(open.heading, body)
+        asked, follow_ups = Plans::BlockedFile.follow_ups(body)
+        choices = choices(open.heading, asked)
         { id:,
           number:   open.number,
           kind:     "block",
           heading:  open.heading.sub(Plans::Choices::YES_NO, "").strip,
-          body:     choices ? choices.context : body.strip,
+          body:     choices ? choices.context : asked,
+          # What the broker asked when it could not fold the last answer,
+          # apart from the question, so neither hides the other.
+          follow_up: follow_ups.first,
           agent:    asker&.fetch("agent", nil),
           owner:    subject.status.key == :product_blocked ? "product" : "technical",
           options:  choices&.to_a,
