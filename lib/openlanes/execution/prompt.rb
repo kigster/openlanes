@@ -49,9 +49,12 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param memory [String] the project's lessons for this agent, from
+      #   {Memory.section}; empty with `--no-memory` or when none is for it
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, memory: "")
+        @memory = memory.to_s
         @rebase = rebase
         @max_rejections = max_rejections
         @agent = agent
@@ -88,7 +91,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{@memory}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -171,7 +174,9 @@ module OpenLanes
       # comes first, for who it is and what it builds, and so its own
       # "a rebase stopped" section is read; everything after says this
       # invocation is not plan work. No ledger section: a signature here would
-      # be read as this round's verdict on the plan, which it is not.
+      # be read as this round's verdict on the plan, which it is not. No
+      # lessons either, on purpose: they are about how to do plan work, and
+      # resolving conflicts asks only that both sides' intent survive.
       #
       # @return [String]
       def resolution
@@ -241,7 +246,9 @@ module OpenLanes
       # What a compacted agent is told when its session is resumed (W28). Its
       # own instructions survive in the compacted summary; what it needs is
       # to know that the INTERRUPT it just obeyed is over, and that the
-      # session it is in is the same one.
+      # session it is in is the same one. No lessons section, on purpose: the
+      # session's first prompt carried them, and the run's snapshot has not
+      # changed since, so repeating them would only spend the budget twice.
       #
       # @return [String]
       def continuation

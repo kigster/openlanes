@@ -66,6 +66,10 @@ module OpenLanes
           if expect["spec_only"]
             list << new(kind: :spec_only, name: "only depends_on and the ledger changed", args: { before: fixture.files })
           end
+          if (ruling = expect["ruling"])
+            fields = ruling.to_h.transform_keys(&:to_s).transform_values(&:to_s)
+            list << new(kind: :ruling, name: "ruling #{fields.map { "#{it.first}: #{it.last}" }.join(", ")}", args: { fields: })
+          end
           list
         end
 
@@ -196,6 +200,22 @@ module OpenLanes
           return [false, "spec.md changed outside depends_on and the ledger"] unless bare(before[Plans::Spec::FILENAME]) == bare(spec)
 
           [true, line.strip]
+        end
+
+        # The arbitrator writes nothing, so its answer is its work: the final
+        # text must hold exactly one ruling block the engine would accept,
+        # and each expected field must read as given. Parsed by the engine's
+        # own parser, so the case fails wherever the engine would refuse.
+        #
+        # @param fields [Hash{String => String}] expected ruling fields
+        # @return [Array(Boolean, String)]
+        def ruling(evidence, fields:)
+          answer = evidence.run&.answer or return [false, "the run recorded no answer"]
+          parsed = Arbitration.ruling(answer).to_h.transform_keys(&:to_s)
+          wrong = fields.reject { |key, value| parsed[key].to_s == value }
+          wrong.empty? ? [true, "parsed"] : [false, wrong.map { |key, value| "#{key} is #{parsed[key].inspect}, expected #{value}" }.join("; ")]
+        rescue Arbitration::Ruling::Missing, Arbitration::Ruling::Ambiguous, Arbitration::Ruling::IllegalOutcome => e
+          [false, e.message]
         end
 
         # @return [Array(Boolean, String)]
