@@ -20,11 +20,12 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [key, emoji, name]
+                      required: [key, emoji, name, archived]
                       properties:
                         key: { type: string, example: building }
                         emoji: { type: string, example: "🟡" }
                         name: { type: string, example: Building }
+                        archived: { type: boolean, description: "true when plans in this state live in an inactive subfolder (Plans::Tree::INACTIVE_DIRS); the page hides these by default" }
                   plans:
                     type: array
                     items:

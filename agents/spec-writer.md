@@ -33,6 +33,7 @@ You finish `spec.md` for one plan folder so that `planner` can split it into wor
    1. **Risks to planning or execution.**
    1. **Conclusion.** What will exist when this ships, in a few sentences.
 1. Anchor every fact to the research, a `file:line`, or a command's output. A sentence you cannot anchor is an assumption: move it to open questions.
+1. Write a `summary:` key into `spec.md`'s frontmatter: one paragraph of plain text saying what the feature is, which the Plan dependencies page shows when a person hovers the plan. Keep every other key as written, and leave a `summary:` the author already wrote alone.
 
 ## Retroactive plans
 

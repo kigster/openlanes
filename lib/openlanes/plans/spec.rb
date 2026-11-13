@@ -21,6 +21,7 @@ module OpenLanes
     #   how-to-verify:
     #     - bundle exec rspec spec/openlanes/cli/create_spec.rb
     #   depends_on: ["034.00"]   # plans that must be ✅ before this one starts
+    #   summary: One paragraph on what the feature is, for the dependency graph
     #   ---
     #
     # The body is the specification; this is how it should be worked. A value
@@ -65,6 +66,9 @@ module OpenLanes
     # @!attribute [r] how_to_test
     #   @return [Array<String>] the items under {HOW_TO_TELL} in the body, or
     #     {#how_to_verify} when the spec has no such section (until plan 007).
+    # @!attribute [r] summary
+    #   @return [String, nil] the author's `summary:`, one paragraph; nil when
+    #     absent. {Spec.summary} falls back to the body when it is.
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
     Spec = Data.define(:starts,
@@ -78,9 +82,11 @@ module OpenLanes
       :depends_on,
       :linked,
       :how_to_test,
+      :summary,
       :problems) do
       def initialize(starts: :research, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [])
+        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, summary: nil,
+        problems: [])
         super
       end
 
@@ -152,6 +158,29 @@ module OpenLanes
       # checks without a word.
       HOW_TO_VERIFY_LINE = /^##[ \t]+how to tell it['‘’]s working\??[ \t]*$/i
 
+      # One paragraph saying what the feature is, shown when a person hovers
+      # the plan's box on the dependency graph (plan 056). Optional: a spec
+      # without it is summarised from its body by {Spec.summary}.
+      SUMMARY_KEY = "summary"
+
+      # The section {Spec.summary} reads first when there is no {SUMMARY_KEY}.
+      GOAL_HEADING = /^##[ \t]+what we are trying to achieve[ \t]*$/i
+
+      # Every key a spec's frontmatter may set, with what it is for, in the
+      # order `openlanes docs` lists them. A key read here and missing from
+      # this table is one an author never learns about.
+      KEYS = {
+        "starts"           => "where the plan starts: #{STARTS.join(", ")}",
+        "frontend"         => "true forces frontend-coder, false forbids it",
+        "depth"            => "how much each phase thinks: #{DEPTHS.join(", ")}",
+        "phases"           => "per-phase #{PHASE_KEYS.join(", ")}",
+        SUGGESTIONS_KEY    => "what the author would build it with; offered, never imposed",
+        REQUIREMENTS_KEY   => "constraints the work must meet exactly as written",
+        COMPLETED_WHEN_KEY => "what must be true for the task to count as finished",
+        DEPENDS_ON_KEY     => "quoted plan numbers this one waits for, or [#{NO_DEPENDENCIES}]",
+        SUMMARY_KEY        => "one paragraph of text on what the feature is, shown on the dependency graph"
+      }.freeze
+
       FILENAME = "spec.md"
 
       # A list item under the heading; +marker+ ends at its content column.
@@ -172,19 +201,21 @@ module OpenLanes
           File.file?(path) ? parse(File.read(path, encoding: "UTF-8")) : new
         end
 
-        # The spec's first paragraph of prose, which the dashboard shows when a
-        # person hovers a plan's title: headings, comments, lists, quotes and
-        # code are passed over, so a spec that opens with `## Problem
-        # statement` answers with the problem itself.
+        # What the feature is, in one paragraph, which the dashboard shows when
+        # a person hovers a plan's title and the dependency graph when one
+        # hovers its box. The author's {SUMMARY_KEY} when it is text; else the
+        # first paragraph of prose under "What we are trying to achieve"; else
+        # the spec's first paragraph of prose. Headings, comments, lists,
+        # quotes and code are passed over, so a spec that opens with
+        # `## Problem statement` answers with the problem itself.
         #
         # @param text [String] a whole spec.md
         # @param limit [Integer] characters kept, the rest cut at a word
         # @return [String] "" when the spec has no prose paragraph
         def summary(text, limit: 600)
-          _, body = Frontmatter.split(text)
-          paragraph = body.to_s.gsub(/<!--.*?-->/m, "").split(/\n\s*\n/).map(&:strip).find do |block|
-            !block.empty? && !block.match?(/\A(?:#|>|[-*+] |\d+\. |```|~~~|\||<)/)
-          end.to_s.gsub(/\s*\n\s*/, " ")
+          meta, body = Frontmatter.split(text)
+          written = meta[SUMMARY_KEY]
+          paragraph = written.is_a?(String) && !written.strip.empty? ? one_line(written.strip) : prose(body.to_s)
           paragraph.length > limit ? "#{paragraph[0, limit].sub(/\s+\S*\z/, "")}…" : paragraph
         rescue Psych::Exception
           ""
@@ -263,12 +294,51 @@ module OpenLanes
             completed_when: notes(meta, COMPLETED_WHEN_KEY, problems),
             how_to_verify: notes(meta, HOW_TO_VERIFY_KEY, problems),
             depends_on: depends_on(meta, problems),
+            summary: text(meta, SUMMARY_KEY, problems),
             linked: linked?(meta),
             how_to_test: notes(meta, HOW_TO_VERIFY_KEY, []),
             problems:)
         end
 
         private
+
+        # The first prose paragraph of the goal section, else of the whole body.
+        #
+        # @param body [String]
+        # @return [String] "" when neither holds one
+        def prose(body)
+          body = body.gsub(/<!--.*?-->/m, "")
+          start = body =~ GOAL_HEADING
+          goal = start && body[start..].lines.drop(1).take_while { !it.start_with?("## ") }.join
+          (goal && first_prose(goal)) || first_prose(body).to_s
+        end
+
+        # @param text [String]
+        # @return [String, nil] nil when +text+ holds no paragraph of prose
+        def first_prose(text)
+          block = text.split(/\n\s*\n/).map(&:strip).find do |b|
+            !b.empty? && !b.match?(/\A(?:#|>|[-*+] |\d+\. |```|~~~|\||<)/)
+          end
+          block && one_line(block)
+        end
+
+        # @param text [String]
+        # @return [String] its lines joined by single spaces
+        def one_line(text) = text.gsub(/\s*\n\s*/, " ")
+
+        # One paragraph of free text: a String, or nothing. Anything else is
+        # named and dropped, never stringified, so `summary: [a, b]` does not
+        # reach the graph as `["a", "b"]`.
+        #
+        # @return [String, nil]
+        def text(meta, key, problems)
+          value = meta[key]
+          return nil if value.nil?
+          return (value.strip.empty? ? nil : value.strip) if value.is_a?(String)
+
+          problems << "#{key}: must be one paragraph of text"
+          nil
+        end
 
         # The YAML source of +yaml+ with +key+'s entry cut out, from the
         # key's line to the end of its value as Psych located them. A regex

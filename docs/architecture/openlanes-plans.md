@@ -139,6 +139,7 @@ classDiagram
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Subject ..> OpenLanes__UI : uses
   OpenLanes__Plans__Tree ..> OpenLanes : uses

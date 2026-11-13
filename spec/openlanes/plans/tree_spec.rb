@@ -51,6 +51,14 @@ RSpec.describe OpenLanes::Plans::Tree, :tree do
     expect(tree.duplicates.keys.map(&:to_s)).to eq(%w[002.00])
   end
 
+  it "tells a plan in an inactive subfolder from one at the top level" do
+    everything = described_class.new(dir: plans_root, all: true)
+    by_level = everything.features.group_by { everything.inactive?(it) }.transform_values { |fs| fs.map { it.ordinal.to_s } }
+    expect(by_level[false]).to all(satisfy { File.dirname(everything.find(it).feature.path) == everything.dir })
+    expect(by_level[true]).not_to be_empty
+    expect(by_level[true]).to all(satisfy { File.dirname(everything.find(it).feature.path) != everything.dir })
+  end
+
   it "names the subfolder each inactive state belongs in" do
     aggregate_failures do
       expect(described_class.subfolder_for(OpenLanes::Plans.status(:approved))).to eq("archive")

@@ -41,6 +41,7 @@ classDiagram
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
+  class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
   <<module>> OpenLanes__Spawner__System
   class OpenLanes__UI["OpenLanes::UI"]
@@ -54,6 +55,7 @@ classDiagram
   class OpenLanes__Web__Demo["Demo"]
   class OpenLanes__Web__DemoBoard["DemoBoard"]
   class OpenLanes__Web__DemoBoard__Refusal["DemoBoard::Refusal"]
+  class OpenLanes__Web__DependencyGraph["DependencyGraph"]
   class OpenLanes__Web__Events["Events"]
   class OpenLanes__Web__Launcher["Launcher"]
   class OpenLanes__Web__Listen["Listen"]
@@ -89,8 +91,10 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Reply : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Web__App ..> OpenLanes__Plans : uses
   OpenLanes__Web__App ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Web__App ..> OpenLanes__Web__AdminAuth : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__DependencyGraph : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Events : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
@@ -117,6 +121,8 @@ classDiagram
   OpenLanes__Web__DemoBoard ..> OpenLanes__Live__Commands : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Web__DemoBoard__Refusal : uses
+  OpenLanes__Web__DependencyGraph ..> OpenLanes__Plans : uses
+  OpenLanes__Web__DependencyGraph ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Web__Events ..> OpenLanes__Apps__Listing : uses
   OpenLanes__Web__Events ..> OpenLanes__Live : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Chat : uses

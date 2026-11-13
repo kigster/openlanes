@@ -466,3 +466,31 @@ export interface AppCommand {
   action: "restart" | "stop";
   target?: string | null; // "backend" (every process but the previewed one), a process name, or every process
 }
+
+// GET /api/dependencies (plan 056): every plan, archive included, and one edge per depends_on: entry.
+export interface DependencyState {
+  key: string; // a Plans::STATUSES key, in STATUSES order
+  emoji: string;
+  name: string;
+  archived: boolean; // its plans live in an inactive subfolder (Tree::INACTIVE_DIRS); the graph starts with these off
+}
+
+export interface DependencyPlan {
+  ordinal: string;
+  title: string;
+  state: string; // a DependencyState key
+  summary: string | null;
+  archived: boolean;
+}
+
+/** `from` is the dependency, `to` the dependent, so arrows run left to right. */
+export interface DependencyEdge {
+  from: string;
+  to: string;
+}
+
+export interface DependencyGraph {
+  states: DependencyState[];
+  plans: DependencyPlan[];
+  edges: DependencyEdge[];
+}
