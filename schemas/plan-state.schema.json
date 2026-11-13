@@ -205,6 +205,16 @@
             "type": "object",
             "propertyNames": { "pattern": "^[1-9][0-9]*$" },
             "additionalProperties": { "$ref": "#/$defs/journalRound" }
+          },
+          "held": {
+            "description": "What the session of the agent's last round already holds of this journal. A round that resumes that session is sent only the entries after `through`; absent after a compaction or a round that did not end cleanly, and the whole journal is sent.",
+            "type": "object",
+            "required": ["session", "through"],
+            "additionalProperties": false,
+            "properties": {
+              "session": { "type": "string", "minLength": 1 },
+              "through": { "type": "integer", "minimum": 0 }
+            }
           }
         }
       }

@@ -4,6 +4,10 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Arbitration["OpenLanes::Arbitration"]
+  <<module>> OpenLanes__Arbitration
   class OpenLanes__Arbitration__Appeal["Appeal"]
   class OpenLanes__Arbitration__Counter["Counter"]
   class OpenLanes__Arbitration__Effects["Effects"]
@@ -12,6 +16,8 @@ classDiagram
   class OpenLanes__Arbitration__Ruling__IllegalOutcome["Ruling::IllegalOutcome"]
   class OpenLanes__Arbitration__Ruling__Missing["Ruling::Missing"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
+  <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
@@ -20,7 +26,15 @@ classDiagram
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   class OpenLanes__Vcs__Review["OpenLanes::Vcs::Review"]
+  OpenLanes__Arbitration ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Arbitration ..> OpenLanes__Arbitration__Counter : uses
+  OpenLanes__Arbitration ..> OpenLanes__Arbitration__Ruling : uses
+  OpenLanes__Arbitration ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Arbitration ..> OpenLanes__Plans__StateMachine__Refused : uses
+  OpenLanes__Arbitration__Counter ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Arbitration__Counter ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Arbitration__Effects ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Arbitration__Effects ..> OpenLanes__Arbitration : uses
   OpenLanes__Arbitration__Effects ..> OpenLanes__Error : uses
   OpenLanes__Arbitration__Effects ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Arbitration__Effects ..> OpenLanes__Plans__PlanState : uses
@@ -30,6 +44,7 @@ classDiagram
   OpenLanes__Arbitration__Effects ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Arbitration__Effects ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Arbitration__Effects ..> OpenLanes__Vcs__Review : uses
+  OpenLanes__Arbitration__Ruling ..> OpenLanes__Agents__Names : uses
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Arbitration__Ruling__Ambiguous : uses
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Arbitration__Ruling__IllegalOutcome : uses
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Arbitration__Ruling__Missing : uses

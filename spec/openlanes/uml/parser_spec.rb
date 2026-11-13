@@ -53,6 +53,12 @@ RSpec.describe OpenLanes::Uml::Parser do
     expect(find(parse("class Cart\n  def x = klass::Thing\nend\n"), "Cart").references).to eq([])
   end
 
+  it "records the methods a declaration defines itself, not a nested one's" do
+    definitions = parse("module Shop\n  def self.open = 1\n  class Cart\n    def total = 2\n  end\n  module Limits; end\nend\n")
+
+    expect(definitions.to_h { [it.name, it.defs] }).to eq("Shop" => [:open], "Shop::Cart" => [:total], "Shop::Limits" => [])
+  end
+
   it "declares nothing for a plain constant" do
     expect(parse("module Shop\n  LIMIT = 3\nend\n").map(&:name)).to eq(["Shop"])
   end

@@ -4,12 +4,16 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__Availability["Availability"]
   class OpenLanes__Adapters__Base["Base"]
   class OpenLanes__Adapters__Capabilities["Capabilities"]
   class OpenLanes__Adapters__Claude["Claude"]
   class OpenLanes__Adapters__Claude__Catalogue["Claude::Catalogue"]
   class OpenLanes__Adapters__Claude__ModelCache["Claude::ModelCache"]
+  class OpenLanes__Adapters__Claude__Pricing["Claude::Pricing"]
+  <<module>> OpenLanes__Adapters__Claude__Pricing
   class OpenLanes__Adapters__Codex["Codex"]
   class OpenLanes__Adapters__Gemini["Gemini"]
   class OpenLanes__Adapters__Gemini__Policy["Gemini::Policy"]
@@ -26,8 +30,22 @@ classDiagram
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__Transcript["OpenLanes::Execution::Transcript"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Log["OpenLanes::Log"]
+  <<module>> OpenLanes__Log
+  class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
+  <<module>> OpenLanes__Plans__Journal
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Base : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Claude : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Codex : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Gemini : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Grok : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__Pi : uses
+  OpenLanes__Adapters ..> OpenLanes__Adapters__ProbeRunner : uses
+  OpenLanes__Adapters ..> OpenLanes__Error : uses
+  OpenLanes__Adapters__Base ..> OpenLanes__Adapters : uses
   OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Stream : uses
   OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Availability : uses
@@ -37,9 +55,11 @@ classDiagram
   OpenLanes__Adapters__Claude ..> OpenLanes__Execution__Transcript : uses
   OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude : uses
   OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude__ModelCache : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude__Pricing : uses
   OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Error : uses
   OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__UI : uses
   OpenLanes__Adapters__Claude__ModelCache ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Claude__Pricing ..> OpenLanes__Adapters__Model : uses
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
@@ -59,12 +79,17 @@ classDiagram
   OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Model : uses
   OpenLanes__Adapters__Grok ..> OpenLanes__Adapters__Stream : uses
   OpenLanes__Adapters__Grok__Stream --|> OpenLanes__Adapters__Stream : inherits
+  OpenLanes__Adapters__Pi ..> OpenLanes__Adapters : uses
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Pi --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Capabilities : uses
   OpenLanes__Adapters__Pi ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Probes ..> OpenLanes__Adapters : uses
   OpenLanes__Adapters__Probes ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Probes ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Adapters__Probes ..> OpenLanes__Log : uses
+  OpenLanes__Adapters__Report ..> OpenLanes__Adapters : uses
   OpenLanes__Adapters__Report ..> OpenLanes__UI : uses
   OpenLanes__Adapters__Stream ..> OpenLanes__Execution__Transcript : uses
+  OpenLanes__Adapters__Stream ..> OpenLanes__Plans__Journal : uses
 ```

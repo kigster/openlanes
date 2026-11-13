@@ -5,18 +5,36 @@
 ```mermaid
 classDiagram
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Coverage["OpenLanes::Coverage"]
+  <<module>> OpenLanes__Coverage
+  class OpenLanes__Coverage__Cobertura["Cobertura"]
+  <<module>> OpenLanes__Coverage__Cobertura
   class OpenLanes__Coverage__Config["Config"]
   class OpenLanes__Coverage__Invalid["Invalid"]
+  class OpenLanes__Coverage__Istanbul["Istanbul"]
+  <<module>> OpenLanes__Coverage__Istanbul
+  class OpenLanes__Coverage__Lcov["Lcov"]
+  <<module>> OpenLanes__Coverage__Lcov
   class OpenLanes__Coverage__Malformed["Malformed"]
   class OpenLanes__Coverage__Report["Report"]
+  class OpenLanes__Coverage__Simplecov["Simplecov"]
+  <<module>> OpenLanes__Coverage__Simplecov
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Coverage ..> OpenLanes__Coverage__Config : uses
+  OpenLanes__Coverage ..> OpenLanes__Coverage__Report : uses
+  OpenLanes__Coverage ..> OpenLanes__Error : uses
+  OpenLanes__Coverage__Cobertura ..> OpenLanes__Coverage__Malformed : uses
   OpenLanes__Coverage__Config ..> OpenLanes__Config : uses
   OpenLanes__Coverage__Config ..> OpenLanes__Coverage__Invalid : uses
   OpenLanes__Coverage__Config ..> OpenLanes__Error : uses
   OpenLanes__Coverage__Config ..> OpenLanes__UI : uses
   OpenLanes__Coverage__Invalid --|> OpenLanes__Error : inherits
+  OpenLanes__Coverage__Istanbul ..> OpenLanes__Coverage__Malformed : uses
+  OpenLanes__Coverage__Lcov ..> OpenLanes__Coverage__Malformed : uses
   OpenLanes__Coverage__Malformed --|> OpenLanes__Error : inherits
+  OpenLanes__Coverage__Report ..> OpenLanes__Coverage : uses
   OpenLanes__Coverage__Report ..> OpenLanes__Coverage__Malformed : uses
+  OpenLanes__Coverage__Simplecov ..> OpenLanes__Coverage__Malformed : uses
 ```
