@@ -130,6 +130,7 @@ module OpenLanes
       # @return [void]
       def close
         @probes.stop
+        @probe_store.close unless @probe_store.equal?(@store)
         @record.close
         @publisher.close
         @claims.release_all
@@ -153,11 +154,12 @@ module OpenLanes
       # RedisClient is not thread-safe. On the session's own connection the
       # probe thread's replies reached the engine's HGETALL as strings, so a
       # real Redis gets a second connection; the in-memory store is shared.
+      # {#close} closes the second one, which nothing else holds.
       #
       # @return [OpenLanes::Adapters::Probes]
       def probes_on_own_connection(store, runner, clock)
-        own = store.is_a?(Store) ? Live.store(store.url) : store
-        Adapters::Probes.new(store: own,
+        @probe_store = store.is_a?(Store) ? Live.store(store.url) : store
+        Adapters::Probes.new(store: @probe_store,
           keys: @keys,
           owner: @node.name,
           prober: -> { Adapters.availability(runner:, at: clock.call) })
