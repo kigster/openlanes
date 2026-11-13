@@ -57,6 +57,67 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
   end
 
   # D10a: the counter folds a round's rejections into one by this stage.
+  # Staff first; security and design only once staff has passed it and CI is
+  # green. Started together, all three read a diff staff was about to send back.
+  describe "#due?" do
+    subject(:reviews) { described_class.new(agents:, review:, builds: ->(_) { build }) }
+
+    let(:build) { :green }
+
+    before do
+      %w[security-reviewer design-reviewer].each do |name|
+        path = File.join(agents_dir, "#{name}.md")
+        File.write(path, File.read(path).sub("phase: review\n", "phase: review\nreview_stage: 2\n"))
+      end
+    end
+
+    it "starts the first pass at once, and holds the second until the first has reported" do
+      expect([staff, security, design].map { reviews.due?(plan, it) }).to eq([true, false, false])
+    end
+
+    it "starts the second pass once the first has passed and CI is green" do
+      voted("staff-reviewer", "passed")
+      expect([security, design].map { reviews.due?(plan, it) }).to eq([true, true])
+    end
+
+    it "never starts the second pass on a pull request the first rejected" do
+      voted("staff-reviewer", "rejected 1/2")
+      expect(reviews.due?(plan, security)).to be(false)
+    end
+
+    it "is not held by anything for an agent that is not a reviewer" do
+      expect(reviews.due?(plan, agents.find("backend-coder"))).to be(true)
+    end
+
+    it "ends the round on the first pass's rejection, since the second never starts" do
+      expect(reviews.decide(plan, staff, "rejected 1/2")).to have_attributes(pending?: false, target: :rejected)
+    end
+
+    %i[pending red none].each do |state|
+      context "when CI is #{state}" do
+        let(:build) { state }
+
+        before { voted("staff-reviewer", "passed") }
+
+        it "holds the second pass, and says so once" do
+          allow(OpenLanes::UI).to receive(:log)
+          2.times { expect(reviews.due?(plan, security)).to be(false) }
+          expect(OpenLanes::UI).to have_received(:log)
+            .with("review: the next reviewers wait for green CI, which is #{state}", plan: "031.00", level: state == :red ? :warn : :info).once
+        end
+      end
+    end
+
+    context "with no CI to ask, as in a run that publishes nothing" do
+      subject(:reviews) { described_class.new(agents:, review:) }
+
+      it "starts the second pass on the first one's word alone" do
+        voted("staff-reviewer", "great")
+        expect(reviews.due?(plan, design)).to be(true)
+      end
+    end
+  end
+
   describe "#vote!" do
     before do
       state.update { it["moves"] = 5 }

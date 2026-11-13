@@ -451,7 +451,7 @@ module OpenLanes
       REASON_LIMIT = 300
 
       # Seconds an agent gets when neither its frontmatter nor `--timeout` says.
-      DEFAULT_TIMEOUT = 900
+      DEFAULT_TIMEOUT = 1500
 
       # Where the raw stream of each invocation is kept.
       #

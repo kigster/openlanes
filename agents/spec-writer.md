@@ -5,7 +5,7 @@ handles: [researched, retroactive]
 advances_to: ready_for_planning
 model: sonnet
 effort: medium
-timeout: 900
+timeout: 1500
 ledger: [spec.md]
 phase: specification
 starts: [research]

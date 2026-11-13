@@ -4,7 +4,7 @@ description: Reads one finished or rejected plan and proposes the lessons the ne
 handles: []
 model: sonnet
 effort: medium
-timeout: 600
+timeout: 1200
 rounds: 1
 phase: memory
 allowed_tools:

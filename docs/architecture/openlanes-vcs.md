@@ -24,6 +24,7 @@ classDiagram
   <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__CiGate["CiGate"]
   <<module>> OpenLanes__Vcs__CiGate
+  class OpenLanes__Vcs__CiWatch["CiWatch"]
   class OpenLanes__Vcs__DiffSize["DiffSize"]
   <<module>> OpenLanes__Vcs__DiffSize
   class OpenLanes__Vcs__GitHub["GitHub"]
@@ -46,6 +47,10 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Worktree : uses
+  OpenLanes__Vcs__CiWatch ..> OpenLanes__Error : uses
+  OpenLanes__Vcs__CiWatch ..> OpenLanes__UI : uses
+  OpenLanes__Vcs__CiWatch ..> OpenLanes__Vcs__CiGate : uses
+  OpenLanes__Vcs__CiWatch ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs__DiffSize ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__Error : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__UI : uses

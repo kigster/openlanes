@@ -245,6 +245,8 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
           jobs: 2,
           worktree:,
           sleeper: ->(_) {},
+          # One try each: the crash, not the rounds an agent has by default after it.
+          rounds: 1,
           # One crash, not the crash and the round granted after it (E1).
           extensions: OpenLanes::Engine::Extensions.new(stay: false, auto: false))
       end

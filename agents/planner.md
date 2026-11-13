@@ -5,7 +5,7 @@ handles: [ready_for_planning]
 advances_to: planned
 model: opus
 effort: high
-timeout: 600
+timeout: 1200
 ledger: [plan.md]
 phase: planning
 starts: [research, planning]

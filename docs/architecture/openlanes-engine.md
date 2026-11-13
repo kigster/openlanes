@@ -198,6 +198,7 @@ classDiagram
   <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__CiGate["OpenLanes::Vcs::CiGate"]
   <<module>> OpenLanes__Vcs__CiGate
+  class OpenLanes__Vcs__CiWatch["OpenLanes::Vcs::CiWatch"]
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
   class OpenLanes__Vcs__Review["OpenLanes::Vcs::Review"]
@@ -486,6 +487,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Engine__RunWorkflow ..|> OpenLanes__UI : includes
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__CiWatch : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Clock__System : uses

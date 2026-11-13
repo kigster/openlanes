@@ -335,16 +335,16 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   describe "the clock" do
     it "takes the tighter of the agent's own budget and --timeout" do
-      backend_coder = agents.find("backend-coder") # 1200 in frontmatter
+      backend_coder = agents.find("backend-coder") # 1800 in frontmatter
       aggregate_failures do
         expect(described_class.new(root:, spawn:, timeout: 900).timeout_for(backend_coder)).to eq(900)
-        expect(described_class.new(root:, spawn:, timeout: 1800).timeout_for(backend_coder)).to eq(1200)
+        expect(described_class.new(root:, spawn:, timeout: 2400).timeout_for(backend_coder)).to eq(1800)
       end
     end
 
     it "lets an agent's own clock stand when nobody passed --timeout" do
-      backend_coder = agents.find("backend-coder") # 1200 in frontmatter
-      expect(described_class.new(root:, spawn:).timeout_for(backend_coder)).to eq(1200)
+      backend_coder = agents.find("backend-coder") # 1800 in frontmatter
+      expect(described_class.new(root:, spawn:).timeout_for(backend_coder)).to eq(1800)
     end
 
     it "falls back to the default only for an agent that declares no clock of its own" do

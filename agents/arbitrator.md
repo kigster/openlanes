@@ -4,7 +4,7 @@ description: Rules when reviewers and builders disagree, when a plan reaches its
 handles: []
 model: opus
 effort: high
-timeout: 600
+timeout: 1200
 phase: arbitration
 allowed_tools:
   - Read

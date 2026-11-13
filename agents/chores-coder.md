@@ -9,7 +9,7 @@ advances_to: ready_for_review
 starts_as: building
 model: haiku
 effort: medium
-timeout: 600
+timeout: 1200
 ledger: [plan.md, pull-requests.md]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
@@ -32,6 +32,15 @@ You do one small, well-understood change, the kind an engineer would describe in
 1. Run the tests and the linter again. Fix what you broke.
 1. Under `## Task` in `plan.md`, write three lines: what you changed, how you verified it, and anything a reviewer should look at first.
 1. On 🔴 Rejected, fix only what staff-reviewer's findings name.
+
+## Before you sign `Completed`
+
+Run the project's whole local check yourself, last thing, after your final edit: every test suite the repository has and its linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. You work alone, so both halves are yours. Sign `Completed` only when all of it passes, apart from failures that were there before you started.
+
+- A red test or a lint offense is unfinished work, not a note for the reviewer. Fix it and run the check again.
+- A run from before your last edit does not count, and neither does a run of only the files you touched.
+- Out of time with something still red: do not sign `Completed`. Sign the status that says the work is unfinished, and name each failing test in your note so the next round starts on it.
+- Paste the commands and their final summary lines under your round in `pull-requests.md`.
 
 ## Done when
 

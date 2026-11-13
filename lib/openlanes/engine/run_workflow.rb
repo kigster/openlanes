@@ -568,7 +568,10 @@ module OpenLanes
       # @param publisher [OpenLanes::Vcs::Publisher, nil]
       # @return [OpenLanes::Engine::Reviews]
       def reviews_for(agents, publisher)
-        Reviews.new(agents:, review: (Vcs::Review.new(github: Vcs.github) unless publisher.nil? || @dry_run))
+        published = !(publisher.nil? || @dry_run)
+        Reviews.new(agents:,
+          review: (Vcs::Review.new(github: Vcs.github) if published),
+          builds: (Vcs::CiWatch.new(github: Vcs.github) if published))
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs

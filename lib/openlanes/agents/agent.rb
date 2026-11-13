@@ -35,6 +35,10 @@ module OpenLanes
     # @!attribute [r] rounds
     #   @return [Integer] how many times it may be invoked on one plan in one
     #     state before the plan parks; a Completed never earns another
+    # @!attribute [r] review_stage
+    #   @return [Integer] which pass of a review round a reviewer belongs to:
+    #     1 reads the pull request first, and 2 only once every 1 has passed
+    #     it and CI is green ({Engine::Reviews#due?})
     # @!attribute [r] effort
     #   @return [String, nil] passed to `claude --effort`
     # @!attribute [r] starts_as
@@ -86,9 +90,10 @@ module OpenLanes
       :needs,
       :toggle,
       :confined_to,
-      :small_diff) do
-      def initialize(covers: [], ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
-        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, **rest)
+      :small_diff,
+      :review_stage) do
+      def initialize(covers: [], ledger: [], rounds: Agent::DEFAULT_ROUNDS, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
+        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, review_stage: 1, **rest)
         super
       end
 
@@ -121,5 +126,10 @@ module OpenLanes
     # More rounds than this costs tokens and buys nothing: an agent that has
     # not finished in five tries is not going to on the sixth.
     Agent::MAX_ROUNDS = 5
+
+    # The rounds an agent gets when its definition names none. It was one,
+    # and nearly every agent then stopped at "no rounds left" with the work
+    # half done and waited for a person to grant one more, over and over.
+    Agent::DEFAULT_ROUNDS = 4
   end
 end

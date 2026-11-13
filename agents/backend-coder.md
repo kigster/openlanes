@@ -8,7 +8,7 @@ starts_as: building
 holds_at: building_ui
 model: opus
 effort: high
-timeout: 1200
+timeout: 1800
 ledger: [plan.md, pull-requests.md, plan-backend.md]
 phase: build
 starts: [research, planning]
@@ -44,7 +44,7 @@ In any language, build code that is easy to change:
 
 1. Read the repo's `CLAUDE.md`, `AGENTS.md`, dependency manifest and lint/test config. Use the tools already there.
 
-1. Run the full test suite and record the failures that exist before you start (count and files) in `contract.md`. That is the baseline.
+1. Run the back-end test suite and record the failures that exist before you start (count and files) in `contract.md`. That is the baseline.
 
 1. If `plan.md` has no `## Backend` and `## Frontend` sections, add them yourself, moving each unit under its discipline, and mail frontend-coder that you did.
 
@@ -57,7 +57,7 @@ In any language, build code that is easy to change:
 
 1. Build every unit under `## Backend` yourself, in dependency order. Do not spawn sub-agents: they multiplied the cost of a round without shortening it. Write tests first, and make them able to fail: the input must break without your code.
 
-1. Run the full suite yourself after the last unit lands.
+1. Run the back-end suite yourself after the last unit lands.
 
 1. If `.openlanes.yml` has no `coverage:` section, add one for this stack (M15), without disturbing its other keys. `command` runs the whole suite and `minimum` is the lowest line percentage that merges (95 unless the plan says otherwise). Then give exactly one of: `report_command`, a command whose STDOUT is the line percentage as a bare number (e.g. `cat coverage/coverage.json | jq '.total.lines.percent'`); or `report`, the report file's path, with `format`, one of `lcov`, `cobertura`, `istanbul`, `simplecov`. Run both commands once and check the figure prints. Never lower an existing `minimum`.
 
@@ -74,10 +74,21 @@ In any language, build code that is easy to change:
 
 1. When you and frontend-coder amend the same `contract.md` entry back and forth, stop arguing in the mailbox: `openlanes mail send --to arbitrator` with a body starting `dispute: <the contract.md entry>`, and keep building on your own assumption until the ruling arrives by mail.
 
+## Before you sign `Completed`
+
+Run the back-end check yourself, last thing, after your final edit: the whole back-end test suite (in a Ruby project, all of `bundle exec rspec`) and the back-end linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
+
+The front-end tests are frontend-coder's to run, not yours. Run them too only when frontend-coder was not started and you own the whole plan.
+
+- A red test or a lint offense is unfinished work, not a note for the reviewer. Fix it and run the check again.
+- A run from before your last edit does not count, and neither does a run of only the files you touched.
+- Out of time with something still red: do not sign `Completed`. Sign the status that says the work is unfinished, and name each failing test in your note so the next round starts on it.
+- Paste the commands and their final summary lines under your round in `pull-requests.md`.
+
 ## Done when
 
 - [ ] Every unit under `## Backend` is implemented, with tests, as files under the repo's source and test directories. `git status` shows more than Markdown.
-- [ ] The full suite has no failures beyond the baseline.
+- [ ] The back-end suite and linter pass, with no failures beyond the baseline.
 - [ ] `contract.md` matches what you built: real shapes, real errors, amendments marked.
 - [ ] You mailed frontend-coder that the back end is done.
 - [ ] If frontend-coder's last mailbox message says frontend-coder is done, you are last. Run the integration proof and the repo's end-to-end suite, if it has one, and paste each command with its result into `pull-requests.md` before signing.

@@ -47,9 +47,36 @@ module OpenLanes
       # @param agents [Agents::Registry]
       # @param review [Vcs::Review, nil] labels the pull request; nil in a run
       #   that publishes nothing, which has no pull request to label
-      def initialize(agents:, review: nil)
+      # @param builds [#call, nil] receives a subject and answers
+      #   {Vcs::CiGate.verdict} for its open pull requests; nil in a run
+      #   that publishes nothing, where there is no CI to wait for
+      def initialize(agents:, review: nil, builds: nil)
         @agents = agents
         @review = review
+        @builds = builds
+        @said = {}
+      end
+
+      # Whether +agent+ may start on +subject+ now. A review round runs in
+      # passes: staff-reviewer reads the pull request first, and the
+      # reviewers of a later `review_stage:` start only once every earlier
+      # one has passed it and CI is green. Started together, three reviewers
+      # read a diff the first of them was about to send back, and a red
+      # build was reviewed three times before anybody fixed it.
+      #
+      # @param subject [Plans::Subject]
+      # @param agent [Agents::Agent]
+      # @return [Boolean]
+      def due?(subject, agent)
+        return true unless reviewer?(agent)
+
+        earlier = reviewers(subject).select { it.review_stage < agent.review_stage }
+        return true if earlier.empty?
+
+        notes = round(subject)
+        return false unless earlier.all? { passed?(it.name, notes[it.name]) }
+
+        green?(subject)
       end
 
       # @param agent [Agents::Agent]
@@ -137,6 +164,31 @@ module OpenLanes
       end
 
       private
+
+      # @param name [String]
+      # @param note [String, nil] the reviewer's verdict in this round
+      # @return [Boolean] whether it reported, and did not reject
+      def passed?(name, note)
+        vote = note && Plans::Verdict.vote(agent: name, note:)
+        !vote.nil? && !vote.rejected?
+      end
+
+      # CI on the plan's pull requests, said once per answer while a later
+      # pass waits on it. A run with no CI to ask does not wait.
+      #
+      # @param subject [Plans::Subject]
+      # @return [Boolean]
+      def green?(subject)
+        return true if @builds.nil?
+
+        state = @builds.call(subject)
+        ordinal = subject.feature.ordinal.to_s
+        if state != :green && @said[ordinal] != state
+          UI.log("review: the next reviewers wait for green CI, which is #{state}", plan: ordinal, level: state == :red ? :warn : :info)
+        end
+        @said[ordinal] = state
+        state == :green
+      end
 
       # A rejection decides the round whatever the others would say, so it
       # waits only for a reviewer that is reading the pull request right now.
