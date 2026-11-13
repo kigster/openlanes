@@ -24,6 +24,21 @@ module OpenLanes
     # @return [OpenLanes::Engine::Tally]
     def tally(**) = Tally.new(**)
 
+    # The dollar cap's reading of spend (plan 062.00), for a caller with no
+    # runner: the project's own event log.
+    #
+    # @return [OpenLanes::Engine::Budget]
+    def budget(**) = Budget.local(**)
+
+    # @param runner [OpenLanes::Engine::Runner]
+    # @return [OpenLanes::Engine::Budget] the cap read from the runner's own event sink
+    def budget_for(runner) = Budget.for(runner)
+
+    # A budget that reads nothing: every plan has spent $0.
+    #
+    # @return [OpenLanes::Engine::Budget]
+    def no_budget = Budget.new
+
     # The coverage check `ready-to-merge` waits on (M15).
     #
     # @return [OpenLanes::Engine::CoverageGate]

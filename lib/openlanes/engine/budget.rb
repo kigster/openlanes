@@ -30,8 +30,8 @@ module OpenLanes
       # @return [OpenLanes::Engine::Budget]
       def self.for(runner)
         sink = runner.events
-        events = sink.respond_to?(:dir) ? -> { Events.log(sink.dir).events } : -> { [] }
-        new(events:)
+        dir = sink.enabled? ? sink.dir : nil
+        new(events: -> { read(dir) })
       end
 
       # The budget of the project the process is in, read from its event log
@@ -41,11 +41,15 @@ module OpenLanes
       # @param root [String, nil] nil takes {Project.root}
       # @return [OpenLanes::Engine::Budget]
       def self.local(root: nil)
-        new(events: lambda {
-          dir = Events.dir(root: root || Project.root || Dir.pwd)
-          Dir.exist?(dir) ? Events.log(dir).events : []
-        })
+        new(events: -> { read(Events.dir(root: root || Project.root || Dir.pwd)) })
       end
+
+      # The one reader of an event log for a budget, so the board and the cap
+      # cannot read the same directory two ways (F203 on PR 211).
+      #
+      # @param dir [String, nil] the log's directory; nil for a run whose log is off
+      # @return [Array<OpenLanes::Events::Event>]
+      def self.read(dir) = dir && Dir.exist?(dir) ? Events.log(dir).events : []
 
       # @param ordinal [String, #to_s]
       # @return [OpenLanes::Events::PlanSpend]

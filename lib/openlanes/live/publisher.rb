@@ -35,7 +35,7 @@ module OpenLanes
       # @param availability [#call] each adapter's latest probe, read once per
       #   snapshot ({Adapters::Probes#current})
       def initialize(store:, keys:, node:, tree:, agents:, project:, claims: nil, run_state: RunState.new,
-        description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine::Budget.local)
+        description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine.budget)
         @budget = budget
         @store = store
         @keys = keys

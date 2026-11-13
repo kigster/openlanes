@@ -152,7 +152,6 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Board : uses
-  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Budget : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Conversions : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__EventJournal__Feed : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Extensions : uses

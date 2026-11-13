@@ -49,7 +49,7 @@ module OpenLanes
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections },
-        lock_ttl: -> { Config.current.refactor_lock_seconds }, budget: Engine::Budget.new)
+        lock_ttl: -> { Config.current.refactor_lock_seconds }, budget: Engine.no_budget)
         @budget = budget
         @board = board
         @tree = tree

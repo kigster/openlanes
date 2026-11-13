@@ -36,6 +36,45 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
 
   after { OpenLanes::Execution::Control.reset! }
 
+  # 062.00 F201: the small-diff model is chosen on the diff in the checkout
+  # the agent runs in, not on the main tree, which sits on main.
+  describe "choosing a small_diff model in a plan worktree" do
+    let(:assessor) do
+      agent.with(name: "deploy-assessor",
+        model: "opus",
+        phase: "completion",
+        small_diff: OpenLanes::Agents::SmallDiff.new(under_lines: 300, model: "sonnet", effort: "medium"))
+    end
+    let(:worktree) { Dir.mktmpdir("executor-worktree") }
+    let(:argvs) { [] }
+    let(:spawn) do
+      lambda { |argv, chdir: nil, **|
+        argvs << argv
+        fake_child
+      }
+    end
+
+    before do
+      allow(OpenLanes::Vcs::DiffSize).to receive(:lines) { |checkout| checkout == worktree ? 900 : 12 }
+    end
+
+    after { FileUtils.rm_rf(worktree) }
+
+    it "keeps opus/high when the worktree holds a large diff and the main tree none" do
+      executor.call(assessor, subject_plan, root: worktree)
+      expect(argvs.last.join(" ")).to match(/--model opus\b/)
+    end
+
+    it "measures the worktree it is given, not the main tree" do
+      executor.call(assessor, subject_plan, root: worktree)
+      expect(OpenLanes::Vcs::DiffSize).not_to have_received(:lines).with(root)
+    end
+
+    it "takes the small model when the checkout it runs in holds a small diff" do
+      expect(executor.invocation(assessor, subject_plan).join(" ")).to match(/--model sonnet\b/)
+    end
+  end
+
   describe "choosing the coding agent" do
     let(:writer) { agent.with(phase: "specification") }
     let(:spec_md) { "---\nphases:\n  specification: { adapter: codex, effort: medium }\n---\n#{spec_body}" }

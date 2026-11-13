@@ -519,23 +519,28 @@ module OpenLanes
       #
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject, nil]
+      # @param root [String] the checkout the agent runs in, whose diff a
+      #   `small_diff:` model is chosen on. Under `--isolation worktree` that
+      #   is the plan's worktree; the main tree sits on main and would measure
+      #   every plan as a near-empty diff.
       # @return [OpenLanes::Agents::Profile]
-      def profile_for(agent, subject = nil)
+      def profile_for(agent, subject = nil, root: @root)
         spec = subject ? Plans::Spec.for(subject) : nil
         replacing = subject ? @replacing.fetch(subject.feature.ordinal.to_s, []).to_a : []
         Agents::Profile.resolve(agent,
           spec:,
           model:      preferred_model(agent, subject) || @model,
           dealing:    Agents::Dealing.current(usable: @usable, replacing:),
-          diff_lines: diff_lines(agent))
+          diff_lines: diff_lines(agent, root))
       end
 
       # Counted only for an agent with a `small_diff:` model, since nothing
       # else reads it and every count is a git process.
       #
       # @param agent [OpenLanes::Agents::Agent]
+      # @param root [String] the checkout to measure
       # @return [Integer, nil]
-      def diff_lines(agent) = agent.small_diff && Vcs::DiffSize.lines(@root)
+      def diff_lines(agent, root) = agent.small_diff && Vcs::DiffSize.lines(root)
 
       # A reviewer that failed its round runs it again on the main coding
       # agent (D14 in plan 031), from its next invocation on this plan until
@@ -623,7 +628,7 @@ module OpenLanes
             seconds: 0.0)
         end
 
-        profile = profile_for(agent, subject)
+        profile = profile_for(agent, subject, root:)
         if agent.confined? && !profile.adapter.confines?
           return Result.new(ok: false,
             note: "#{agent.name} is confined to #{agent.confined_to.join(", ")}, and #{profile.adapter.executable} cannot enforce that",
@@ -675,8 +680,8 @@ module OpenLanes
       # @yieldparam progress [OpenLanes::Execution::Transcript::Progress]
       def reattach(agent, subject, restart:, handle: Handle.new, &on_progress)
         started = UI.monotonic
-        profile = profile_for(agent, subject)
         root = restart.fetch("cwd")
+        profile = profile_for(agent, subject, root:)
         trace = restart.fetch("trace")
         File.write(trace, "")
         handle.trace = trace
@@ -754,7 +759,7 @@ module OpenLanes
       # @return [Array<String>]
       def invocation(agent, subject, root: @root, control: nil, round: 1, successor: nil, partners: [], rebase: nil,
         resume: nil)
-        profile = profile_for(agent, subject)
+        profile = profile_for(agent, subject, root:)
         profile.adapter.argv(
           Adapters::Invocation.new(
             prompt:          prompt_for(agent,
@@ -1111,7 +1116,7 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [String]
       def prompt_for(agent, subject, root = @root, control: nil, round: 1, successor: nil, partners: [],
-        profile: profile_for(agent, subject), rebase: nil, resumed: false)
+        profile: profile_for(agent, subject, root:), rebase: nil, resumed: false)
         Prompt.new(agent:,
           rebase:,
           resumed:,

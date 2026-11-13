@@ -160,7 +160,7 @@ module OpenLanes
       def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
         stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil,
         budget: nil)
-        @budget = budget || Budget.for(runner)
+        @budget = budget || Engine.budget_for(runner)
         @said_budget = {}
         @runner = runner
         @feed = EventJournal::Feed.new(journal)
@@ -748,7 +748,7 @@ module OpenLanes
           role: task.agent.role,
           round: task.round,
           rounds: rounds_for(task.agent),
-          model: model_for(task.agent, task.subject),
+          model: model_for(task.agent, task.subject, root: task.root),
           remaining: job.handle.remaining,
           phase: job.handle.phase,
           up: job.up.to_i,
@@ -783,8 +783,9 @@ module OpenLanes
 
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject, nil] whose spec.md may override it
+      # @param root [String, nil] the plan's checkout, whose diff picks a `small_diff:` model
       # @return [String]
-      def model_for(agent, subject = nil)
+      def model_for(agent, subject = nil, root: nil)
         executor = @runner.executor
         unless subject && executor.respond_to?(:profile_for)
           return (executor.respond_to?(:model) && executor.model) || agent.model || "default"
@@ -792,7 +793,8 @@ module OpenLanes
 
         # Asked on every frame of the board, so spec.md is read once per plan
         # and agent rather than once per frame.
-        (@models ||= {})[[subject.feature.ordinal.to_s, agent.name]] ||= executor.profile_for(agent, subject).label
+        (@models ||= {})[[subject.feature.ordinal.to_s, agent.name, root]] ||=
+          (root ? executor.profile_for(agent, subject, root:) : executor.profile_for(agent, subject)).label
       end
 
       # ---- starting ---------------------------------------------------------
@@ -975,7 +977,10 @@ module OpenLanes
           next if held?(subject)
           next if locked_elsewhere?(subject)
           next if held_outside?(subject) || @refused.include?(subject.feature.ordinal.to_s)
-          next if over_budget?(subject)
+
+          refusal = budget_refusal(subject)
+          announce_budget(subject, refusal)
+          next if refusal
           # A stopped rebase holds the checkout until the harness has
           # continued or aborted it; a partner started now would build on
           # conflict markers.
@@ -1032,21 +1037,26 @@ module OpenLanes
 
       # The dollar cap (plan 062.00): a plan past `budget.plan_usd` gets no
       # new agent, and is held as queued plans are, without a state fired or
-      # a folder renamed. Said once per reason, not on every tick.
+      # a folder renamed. A query only: {#announce_budget} says it.
       #
       # @param subject [OpenLanes::Plans::Subject]
-      # @return [Boolean]
-      def over_budget?(subject)
+      # @return [String, nil] `over budget: $X of $Y`, or nil when it may run
+      def budget_refusal(subject) = @budget.refusal(subject.feature.ordinal.to_s)
+
+      # Says a budget hold once per reason, not on every tick.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param reason [String, nil] what {#budget_refusal} answered
+      # @return [void]
+      def announce_budget(subject, reason)
         ordinal = subject.feature.ordinal.to_s
-        reason = @budget.refusal(ordinal)
         UI.log("#{reason}; no new round starts", plan: ordinal, level: :warn) if reason && @said_budget[ordinal] != reason
         @said_budget[ordinal] = reason
-        !reason.nil?
       end
 
       # @return [Hash{String => String}] in-scope plans the cap holds, with why
       def budget_holds
-        @runner.in_scope.to_h { [it.feature.ordinal.to_s, @budget.refusal(it.feature.ordinal.to_s)] }.compact
+        @runner.in_scope.to_h { [it.feature.ordinal.to_s, budget_refusal(it)] }.compact
       end
 
       # Plans that others wait for go first, so the work that unblocks the
@@ -1213,13 +1223,13 @@ module OpenLanes
           from:       from.to_s,
           started_at: @clock.now.iso8601,
           cwd:        task.root,
-          **profile_fields(agent, subject))
+          **profile_fields(agent, subject, root: task.root))
         @state&.record(ordinal,
           agent:      agent.name,
           round:,
           status:     "Started",
           state:      from.to_s,
-          model:      model_for(agent, subject),
+          model:      model_for(agent, subject, root: task.root),
           file:       agent.ledger.first,
           started_at: @clock.now.iso8601)
         @feed.append(:plan_assigned, plan: ordinal, agent: agent.name, round:)
@@ -2365,7 +2375,7 @@ module OpenLanes
       def event_fields(job)
         task = job.task
         { plan: task.subject.feature.ordinal.to_s, round: task.round, agent: task.agent.name,
-          invocation_start: @invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject) }
+          invocation_start: @invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject, root: task.root) }
       end
 
       # @return [String, nil]
@@ -2401,7 +2411,7 @@ module OpenLanes
           seconds: spend.call(:seconds),
           round: task.round,
           file: job.file || task.agent.ledger.first.to_s,
-          model: model_for(task.agent, task.subject),
+          model: model_for(task.agent, task.subject, root: task.root),
           status: job.status)
       end
 
@@ -2496,11 +2506,11 @@ module OpenLanes
       end
 
       # @return [Hash] adapter, model and effort, when the executor can say
-      def profile_fields(agent, subject)
+      def profile_fields(agent, subject, root: nil)
         executor = @runner.executor
         return {} unless executor.respond_to?(:profile_for)
 
-        profile = executor.profile_for(agent, subject)
+        profile = root ? executor.profile_for(agent, subject, root:) : executor.profile_for(agent, subject)
         { adapter: profile.adapter.name, model: profile.model, effort: profile.effort }
       end
 
