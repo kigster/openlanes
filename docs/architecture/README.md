@@ -186,7 +186,7 @@ classDiagram
   OpenLanes__Web ..> OpenLanes__Engine : 1
   OpenLanes__Web ..> OpenLanes__Live : 28
   OpenLanes__Web ..> OpenLanes__Log : 1
-  OpenLanes__Web ..> OpenLanes__Plans : 4
+  OpenLanes__Web ..> OpenLanes__Plans : 7
   OpenLanes__Web ..> OpenLanes__UI : 2
 ```
 

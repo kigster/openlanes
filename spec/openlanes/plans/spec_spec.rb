@@ -143,6 +143,15 @@ RSpec.describe OpenLanes::Plans::Spec do
       expect(parse("implementation_suggestions: ['', '  ', Ruby]").suggestions).to eq(["Ruby"])
     end
 
+    it "reads summary: as text" do
+      expect(parse("summary: What it is.").summary).to eq("What it is.")
+    end
+
+    it "names a summary: that is not text, and drops it" do
+      spec = parse("summary: {a: 1}")
+      expect([spec.summary, spec.problems]).to eq([nil, ["summary: must be one paragraph of text"]])
+    end
+
     it "frontmatter that is not YAML" do
       expect(parse("starts: [unclosed").problems.first).to start_with("spec.md frontmatter is not valid YAML")
     end
@@ -174,6 +183,25 @@ RSpec.describe OpenLanes::Plans::Spec do
 
     it "cuts a long paragraph at a word, and says so" do
       expect(described_class.summary("#{"word " * 200}\n", limit: 22)).to eq("word word word word…")
+    end
+
+    it "prefers the summary: key, on one line" do
+      text = "---\nsummary: |\n  A graph of the plans,\n  one box each.\n---\n\nSome prose.\n"
+      expect(described_class.summary(text)).to eq("A graph of the plans, one box each.")
+    end
+
+    it "falls back to the first prose paragraph under What we are trying to achieve" do
+      text = "# T\n\nAn opening aside.\n\n## What we are trying to achieve\n\n- a list\n\nThe goal, in prose.\n\n## Why\n\nNo.\n"
+      expect(described_class.summary(text)).to eq("The goal, in prose.")
+    end
+
+    it "falls back to the first prose paragraph when the goal section has none" do
+      text = "# T\n\nAn opening aside.\n\n## What we are trying to achieve\n\n1. only a list\n\n## Why\n\nNo.\n"
+      expect(described_class.summary(text)).to eq("An opening aside.")
+    end
+
+    it "ignores a summary: that is not text" do
+      expect(described_class.summary("---\nsummary: [a, b]\n---\n\nThe prose.\n")).to eq("The prose.")
     end
 
     it "is empty for a spec with no prose, or broken frontmatter" do

@@ -227,3 +227,10 @@ button, textarea { font: inherit; color: inherit; }
 .swatch { flex: none; display: flex; align-items: flex-end; justify-content: flex-end; gap: 3px; width: 44px; height: 30px; padding: 4px;
           border-radius: 7px; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
 .swatch > span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 18%); }
+
+/* Page nav: fixed to the top of the page, above the control room's own bar. */
+.page-nav { position: sticky; top: 0; z-index: 30; background: var(--plate); border-bottom: 1px solid var(--hairline); }
+.page-nav ul { list-style: none; margin: 0; padding: 0 24px; display: flex; gap: 20px; }
+.page-nav a { display: block; padding: 10px 2px; font-weight: 600; color: var(--ink-soft); text-decoration: none; border-bottom: 2px solid transparent; }
+.page-nav a:hover { color: var(--ink); }
+.page-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
