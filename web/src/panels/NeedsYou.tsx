@@ -30,24 +30,34 @@ export function NeedsYou({ plans, onCommand, spotlight = null }: NeedsYouProps) 
     card?.scrollIntoView?.({ block: "nearest" });
     card?.querySelector<HTMLElement>("textarea, button")?.focus({ preventScroll: true });
   }, [spotlight]);
-  // Settled cards sink below the open ones; a settled request the snapshot has dropped still shows its note.
-  const settledCards = settled.map((s) => all.find((a) => a.id === s.id) ?? s);
+  // What was answered this session, newest first, folded away under a toggle that starts closed: twenty lines of
+  // "Answered a) to planner." pushed the open questions off the rail and said nothing about which plan each was for.
+  const answered = [...settled].reverse();
   return (
     <aside className="rail" aria-labelledby="rail-title">
       <h2 id="rail-title">Needs you {open.length ? <span>({open.length})</span> : null}</h2>
       <p className="rail-sub">Questions wait here until you answer them.</p>
       <div className="asks" tabIndex={0} aria-label="Requests waiting on you">
-        {open.length + settledCards.length === 0 ? (
+        {open.length === 0 ? (
           <p className="empty">Nothing waiting on you. Agents will ask here.</p>
         ) : (
-          <>
-            {open.map((ask) => <AskCard key={ask.id} ask={ask} variant="rail" onCommand={onCommand} spotlit={spotlit(ask)} />)}
-            {settledCards.map((ask) => "kind" in ask
-              ? <AskCard key={ask.id} ask={ask} variant="rail" onCommand={onCommand} />
-              : <div key={ask.id} className="ask is-done" data-ask={ask.id}><p className="ask-done">{ask.note}</p></div>)}
-          </>
+          open.map((ask) => <AskCard key={ask.id} ask={ask} variant="rail" onCommand={onCommand} spotlit={spotlit(ask)} />)
         )}
       </div>
+      {answered.length > 0 && (
+        <details className="answered">
+          <summary>Answered <span>({answered.length})</span></summary>
+          <ul>
+            {answered.map((s) => (
+              <li key={s.id} className="ask is-done" data-ask={s.id}>
+                {/* The request's id opens with its plan, "040.00/X3": the note alone never said which plan it was for. */}
+                <span className="answered-plan">{s.id.split("/")[0]}</span>
+                <span className="ask-done">{s.note}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </aside>
   );
 }
