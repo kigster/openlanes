@@ -6,70 +6,30 @@
 #   bin/bump-version 4.0.2             # rewrite version.rb, then bundle lock
 #   bin/bump-version 4.0.2 --dry-run   # say what would change, write nothing
 #
-# Exists because the version was bumped by hand once and the lock was not:
-# main carried `openlanes (4.0.0)` under a 4.0.1 gem. Editing version.rb and
-# relocking are one step here, and the step fails when the lock still
-# disagrees afterwards, rather than leaving the drift for a later build to find.
+# A thin caller of OpenLanes::Release, which holds the logic. Required by
+# path, not through the library, so a bump needs none of its dependencies.
 #
 # Works in the current directory, which must hold lib/openlanes/version.rb,
 # Gemfile and Gemfile.lock. The spec runs it against a temporary copy.
 #
 # © 2026 Konstantin Gredeskoul
 
-require "open3"
-
-VERSION_FILE = "lib/openlanes/version.rb"
-LOCK_FILE = "Gemfile.lock"
-SEMVER = /\A\d+\.\d+\.\d+\z/
-ASSIGNMENT = /^(\s*VERSION\s*=\s*)"[^"]*"/
-LOCKED = /^\s+openlanes \(([^)]+)\)$/
-
-def fail_with(message)
-  warn "bump-version: #{message}"
-  exit 1
-end
-
-# @param lock [String] the lockfile's text
-# @return [Array<String>] every version the lock records for openlanes itself
-def locked_versions(lock) = lock.scan(LOCKED).flatten.uniq
-
-# Runs `bundle lock` against this directory's Gemfile, not the caller's:
-# under `bundle exec`, BUNDLE_GEMFILE points at whichever bundle launched us.
-# --local first, so a bump needs no network when the gems are installed.
-#
-# @return [Boolean] whether a lock attempt succeeded
-def relock
-  env = { "BUNDLE_GEMFILE" => File.expand_path("Gemfile") }
-  [%w[bundle lock --local], %w[bundle lock]].any? do |argv|
-    output, status = Open3.capture2e(env, *argv)
-    warn output unless status.success?
-    status.success?
-  end
+%w[release release/version_file release/lockfile release/relock release/bump].each do |file|
+  require_relative "../lib/openlanes/#{file}"
 end
 
 args = ARGV.dup
 dry_run = !args.delete("--dry-run").nil?
 version = args.shift
 
-fail_with "usage: bin/bump-version MAJOR.MINOR.PATCH [--dry-run]" if version.nil? || !args.empty?
-fail_with "#{version.inspect} is not MAJOR.MINOR.PATCH" unless version.match?(SEMVER)
-[VERSION_FILE, LOCK_FILE, "Gemfile"].each { |f| fail_with "#{f} not found in #{Dir.pwd}" unless File.file?(f) }
-
-source = File.read(VERSION_FILE)
-current = source[/^\s*VERSION\s*=\s*"([^"]*)"/, 1]
-fail_with "no VERSION assignment in #{VERSION_FILE}" unless current
-
-if dry_run
-  puts "#{VERSION_FILE}: #{current} -> #{version}"
-  puts "#{LOCK_FILE}: openlanes (#{locked_versions(File.read(LOCK_FILE)).join(", ")}) -> openlanes (#{version})"
-  puts "dry run: nothing written"
-  exit 0
+if version.nil? || !args.empty?
+  warn "bump-version: usage: bin/bump-version MAJOR.MINOR.PATCH [--dry-run]"
+  exit 1
 end
 
-File.write(VERSION_FILE, source.sub(ASSIGNMENT, "\\1\"#{version}\""))
-fail_with "bundle lock failed; #{VERSION_FILE} now says #{version}" unless relock
-
-locked = locked_versions(File.read(LOCK_FILE))
-fail_with "#{LOCK_FILE} still says openlanes (#{locked.join(", ")}), not #{version}" unless locked == [version]
-
-puts "openlanes #{current} -> #{version}: #{VERSION_FILE} and #{LOCK_FILE} agree"
+begin
+  puts OpenLanes::Release.bump(root: Dir.pwd, version:, dry_run:)
+rescue OpenLanes::Release::Failed => e
+  warn "bump-version: #{e.message}"
+  exit 1
+end

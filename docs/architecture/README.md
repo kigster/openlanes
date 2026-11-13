@@ -24,6 +24,7 @@ classDiagram
   class OpenLanes__Memory["OpenLanes::Memory"]
   class OpenLanes__Plans["OpenLanes::Plans"]
   class OpenLanes__Presentation["OpenLanes::Presentation"]
+  class OpenLanes__Release["OpenLanes::Release"]
   class OpenLanes__Setup["OpenLanes::Setup"]
   class OpenLanes__Skills["OpenLanes::Skills"]
   class OpenLanes__Spawner["OpenLanes::Spawner"]
@@ -203,6 +204,7 @@ classDiagram
 - [openlanes-memory](openlanes-memory.md)
 - [openlanes-plans](openlanes-plans.md)
 - [openlanes-presentation](openlanes-presentation.md)
+- [openlanes-release](openlanes-release.md)
 - [openlanes-setup](openlanes-setup.md)
 - [openlanes-skills](openlanes-skills.md)
 - [openlanes-spawner](openlanes-spawner.md)

@@ -5,7 +5,7 @@
 # keeps the two together; this example catches a bump made any other way.
 RSpec.describe "Gemfile.lock" do
   let(:lock) { File.read(File.expand_path("../../../Gemfile.lock", __dir__)) }
-  let(:locked) { lock.scan(/^\s+openlanes \(([^)]+)\)$/).flatten }
+  let(:locked) { OpenLanes::Release::Lockfile.new(lock).entries }
 
   it "records openlanes at all, both under PATH and under CHECKSUMS" do
     expect(locked).not_to be_empty

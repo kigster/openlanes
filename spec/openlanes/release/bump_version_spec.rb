@@ -11,7 +11,6 @@ RSpec.describe "bin/bump-version" do
   let(:root) { File.expand_path("../../..", __dir__) }
   let(:script) { File.join(root, "bin", "bump-version") }
   let(:copied) { %w[lib/openlanes/version.rb Gemfile Gemfile.lock openlanes.gemspec] }
-  let(:locked_pattern) { /^\s+openlanes \(([^)]+)\)$/ }
 
   let(:dir) { Dir.mktmpdir("bump-version") }
 
@@ -32,7 +31,7 @@ RSpec.describe "bin/bump-version" do
 
   def version_rb = File.read(File.join(dir, "lib/openlanes/version.rb"))
   def lock = File.read(File.join(dir, "Gemfile.lock"))
-  def locked = lock.scan(locked_pattern).flatten.uniq
+  def locked = OpenLanes::Release::Lockfile.new(lock).versions
 
   it "rewrites VERSION and relocks, so both files carry the new version" do
     _out, err, status = bump("9.8.7")
