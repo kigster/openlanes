@@ -101,6 +101,13 @@ RSpec.describe OpenLanes::Evals::Live do
     expect(OpenLanes::Execution).to have_received(:executor).with(hash_including(max_tokens: 300_000))
   end
 
+  it "passes the memory switch to the executor, so --no-memory is a real baseline" do
+    allow(OpenLanes::Execution).to receive(:executor).and_call_original
+    OpenLanes::Evals.run_live(kase, spawn:, trace_dir:, memory: false, **options)
+
+    expect(OpenLanes::Execution).to have_received(:executor).with(hash_including(memory: false))
+  end
+
   it "tells the agent the cap it is held to" do
     outcome
     expect(seen[:argv].join(" ")).to include("Token budget — 300000 tokens")

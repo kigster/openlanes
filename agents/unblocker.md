@@ -2,7 +2,7 @@
 name: unblocker
 description: Folds answered blocks into the documents they were stopping, and retires blocked.md once the last question clears.
 handles: [blocked, product_blocked, bomb]
-model: haiku
+model: opus
 ledger: [spec.md]
 effort: low
 phase: unblock
@@ -27,7 +27,26 @@ If the questions are numbered some other way, renumber them to `## B<n>` first a
 
 It answers the question. If the question is multiple choice, "Leaning towards B" should be enough. Alternatively, an answer can be text describing the solution.
 
-An `## A<n>` failing any of these stays, and so does its `## B<n>`.
+A letter, or a letter with its option's words, always counts when the question offers lettered options. Fold it.
+
+You judge the answer and nothing else. Do not check whether the question's own claims are true, whether a file it names exists in this checkout, or whether the chosen option is wise: the agent that asked worked in its own worktree and a person has decided. Something that looks wrong goes in your report, and the answer is folded anyway.
+
+An `## A<n>` that does not answer its question stays, and so does its `## B<n>`.
+
+## When an answer does not decide the question: ask, never refuse
+
+You have no power to reject what a person said. Fold anything you can read a decision out of, however loosely it is worded. Only when you truly cannot tell what they decided do you leave the answer where it is and ask one follow-up question.
+
+The harness puts the question back in the control room with their answer and, under it, the **last journal entry you print**, shown as "unblocker asks". That person reads it on a card with no other context, so that entry is a question written to them, and it is the last thing you print:
+
+- Say what is being decided, in plain words, as if they had never seen it.
+- Say what you understood from their answer, and the one thing still missing.
+- End with a question they can answer in a word or a sentence: name the options in words.
+- Never use a label on its own. Write "the question about the flaky Redis outage spec", not "B2".
+
+Good: `I am deciding whether to ship with one flaky Redis outage spec or fix it first, and I could not tell which you want. Should I a) ship and fix it in its own plan, b) fix it here, or c) run those specs separately?`
+
+Bad: `B2 cites spec/support/checkout_config.rb, which does not exist. Verify before the B2 answer relies on it.`
 
 ## Do
 
@@ -111,7 +130,7 @@ When no `## B<n>` remains, delete `blocked.md`. Folding one answer out of four i
 - [ ] Every other question is untouched.
 - [ ] `blocked.md` is deleted if and only if no question remains.
 - [ ] You signed `Completed`. Never create `plan.md`: a new `plan.md` moves the folder to 📋.
-- [ ] Your report lists: each folded question, where it went and what it says; each open question and why (no answer, or which test the answer failed); whether `blocked.md` still exists.
+- [ ] Your report lists: each folded question, where it went and what it says; each open question and why (no answer, or the follow-up you asked); whether `blocked.md` still exists.
 
 ## Next
 

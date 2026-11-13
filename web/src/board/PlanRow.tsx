@@ -3,7 +3,7 @@ import { useAnimate, useReducedMotion } from "motion/react";
 import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
-import { fmt, statusTip, unackedTip, who } from "./format";
+import { dollars, fmt, statusTip, unackedTip, who } from "./format";
 import { STARTS, keepsRow, modelsOf, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
@@ -157,6 +157,9 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
             <>
               <span title="Tokens in">↑ <span>{fmt(plan.up)}</span></span>
               <span title="Tokens out">↓ <span>{fmt(plan.down)}</span></span>
+              <span className="plan-cost" title="Dollars this plan has spent so far, this run">
+                <span className="sr-only">Spent </span>{dollars(plan.cost)}
+              </span>
             </>
           )}
         </div>

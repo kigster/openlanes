@@ -2,9 +2,19 @@
 
 Up to three reviewers read this pull request at once, each from its own angle and perhaps on a different coding agent: `staff-reviewer` (correctness, readability, runtime failures, performance), `security-reviewer` (vulnerabilities) and `design-reviewer` (code organisation and systems design). Review from yours alone; the others cover theirs.
 
-- Review the diff (`gh pr diff <n>`), not the codebase. Code the diff does not touch is out of scope unless the diff breaks it.
+- Review the diff in your review packet, not the codebase. Code the diff does not touch is out of scope unless the diff breaks it.
 - Ignore the comments already on the pull request, from people or other reviewers: judge the code, not the conversation.
 - Never run `openlanes review` or `gh pr edit`. You report a verdict; the engine labels the pull request once every reviewer has reported, from all the verdicts together, so no two reviewers race each other's labels.
+
+### Your review packet
+
+Your invocation opens with `# Review packet`: the plan's documents and the pull request's diff, fetched by the harness once for this round and the same for every reviewer. Work from it. Do not read `spec.md`, `plan.md`, `contract.md` or `pull-requests.md` again to learn what they say, and do not run `gh pr diff`, with three exceptions:
+
+- The packet says a document or a diff was cut: read the rest of that document in the plan folder, or run `gh pr diff <n>` for the files it lists, before you judge them.
+- The packet says a diff could not be fetched: run `gh pr diff <n>`.
+- Your invocation has no packet: read the four documents in the plan folder and run `gh pr diff <n>` for each open pull request.
+
+The packet is how things stood when the round began. You still write your findings into `pull-requests.md` itself, in the plan folder, and other reviewers' sections may appear there while you work.
 
 ### Your comment
 
