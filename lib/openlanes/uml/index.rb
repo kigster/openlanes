@@ -59,7 +59,8 @@ module OpenLanes
           superclass: parts.filter_map(&:superclass).first,
           mixins:     parts.flat_map(&:mixins),
           references: parts.flat_map(&:references),
-          owner:      parts.filter_map(&:owner).first)
+          owner:      parts.filter_map(&:owner).first,
+          defs:       parts.flat_map(&:defs))
       end
     end
   end

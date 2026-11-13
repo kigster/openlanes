@@ -38,8 +38,15 @@ RSpec.describe "the uml diagrams" do
     MERMAID
   end
 
+  it "draws a module that defines methods, marked as a module" do
+    files["lib/shop/tools.rb"] = "module Shop\n  module Tools\n    module Helpers\n      def self.x = 1\n    end\n  end\nend\n"
+
+    expect(draw { OpenLanes::Uml::ClassDiagram.new(it, "Shop::Tools").render })
+      .to eq(%(classDiagram\n  class Shop__Tools__Helpers["Helpers"]\n  <<module>> Shop__Tools__Helpers\n))
+  end
+
   it "says so when a namespace declares no class" do
-    files["lib/shop/none.rb"] = "module Shop\n  module None\n    module Helpers\n      def self.x = 1\n    end\n  end\nend\n"
+    files["lib/shop/none.rb"] = "module Shop\n  module None\n    module Limits\n      MAX = 1\n    end\n  end\nend\n"
 
     expect(draw { OpenLanes::Uml::ClassDiagram.new(it, "Shop::None").render }).to include('note "Shop::None declares no class"')
   end
