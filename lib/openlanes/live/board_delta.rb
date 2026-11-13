@@ -13,18 +13,67 @@ module OpenLanes
     # applies it by key and rebuilds each snapshot's `plans` from its order.
     module BoardDelta
       # One event stream's side of the exchange: the board the page was last
-      # sent, and its version, which starts at 1 on every connection.
+      # sent, flattened once and kept, and its version, which starts at 1 on
+      # every connection.
+      #
+      # The flattened board and each entry's size are kept across ticks
+      # because a tick with ten tabs open ran the whole board through JSON
+      # several times per tab for one car's token count: once to flatten
+      # what was sent before, and twice more to measure the delta against
+      # the whole. An unchanged entry is now measured once, when it arrives.
       class Stream
         def initialize
-          @sent = nil
+          @held = nil
+          @sizes = {}
           @version = 0
         end
 
-        # @param board [Hash]
-        # @return [Array(String, Hash)] the frame to send, as {BoardDelta.frame}
+        # @param board [Hash] `{ me:, others: }`, as {Live.board} returns it
+        # @return [Array(String, Hash)] the event name and its data: the
+        #   board whole when the page holds none, or when the delta would not
+        #   be the smaller of the two; otherwise the delta, naming the version
+        #   it applies onto
         def next(board)
           @version += 1
-          BoardDelta.frame(@sent, board, @version).tap { @sent = board }
+          now = BoardDelta.entries(board)
+          frame = frame_for(now, board)
+          @held = now
+          frame
+        end
+
+        private
+
+        # @param now [Hash{String => Hash}] the board's entries
+        # @param board [Hash]
+        # @return [Array(String, Hash)]
+        def frame_for(now, board)
+          measure(now)
+          whole = board.merge(version: @version)
+          return ["board", whole] unless @held
+
+          delta = BoardDelta.changes(@held, now)
+          smaller?(delta) ? ["board_delta", delta.merge(base: @version - 1, version: @version)] : ["board", whole]
+        end
+
+        # Keeps each entry's JSON size, measuring only what changed. The first
+        # board is measured too, so the first delta measures only its changes.
+        #
+        # @param now [Hash{String => Hash}]
+        # @return [void]
+        def measure(now)
+          @sizes = now.to_h { |key, value| [key, (@sizes[key] if @held&.[](key) == value) || JSON.generate(value).bytesize] }
+        end
+
+        # Whether the delta is the smaller frame, estimated from the entries'
+        # own sizes rather than by serialising both frames: the keys and
+        # braces around them are left out of both sides. A wrong guess costs
+        # bytes, never correctness, since the page takes either frame.
+        #
+        # @param delta [Hash] as {BoardDelta.changes}
+        # @return [Boolean]
+        def smaller?(delta)
+          sent = delta[:upsert].sum { @sizes.fetch(it[:key]) } + delta[:remove].sum(&:bytesize)
+          sent < @sizes.each_value.sum
         end
       end
 
@@ -33,28 +82,14 @@ module OpenLanes
       # @param before [Hash] a board, `{ me:, others: }`, string or symbol keys
       # @param after [Hash] the same, later
       # @return [Hash] `{ upsert: [{ key:, value: }], remove: [String] }`
-      def diff(before, after)
-        was = entries(before)
-        now = entries(after)
+      def diff(before, after) = changes(entries(before), entries(after))
+
+      # @param was [Hash{String => Hash}] entries, as {.entries}
+      # @param now [Hash{String => Hash}]
+      # @return [Hash] `{ upsert: [{ key:, value: }], remove: [String] }`
+      def changes(was, now)
         { upsert: now.reject { |key, value| was[key] == value }.map { |key, value| { key:, value: } },
           remove: was.keys - now.keys }
-      end
-
-      # The frame that carries +board+ to a page holding +sent+: the board
-      # whole when the page holds none, or when the delta would not be the
-      # smaller of the two; otherwise the delta, naming the version it
-      # applies onto.
-      #
-      # @param sent [Hash, nil] the board the page holds, at +version+ - 1
-      # @param board [Hash]
-      # @param version [Integer] the version +board+ becomes
-      # @return [Array(String, Hash)] the event name and its data
-      def frame(sent, board, version)
-        whole = board.merge(version:)
-        return ["board", whole] unless sent
-
-        delta = diff(sent, board).merge(base: version - 1, version:)
-        JSON.generate(delta).bytesize < JSON.generate(whole).bytesize ? ["board_delta", delta] : ["board", whole]
       end
 
       # @param board [Hash]

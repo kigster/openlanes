@@ -39,6 +39,8 @@ export function applyDelta(board: WireBoard, delta: BoardDelta): WireBoard {
     snapshots.push({ ...rest, plans } as unknown as Snapshot);
   }
   const me = snapshots.find(s => s.node.me) ?? null;
-  const others = snapshots.filter(s => !s.node.me).sort((a, b) => a.node.host.localeCompare(b.node.host));
+  // Plain comparison, as the server orders `others` (`sort_by { host }`, bytewise): `localeCompare` put
+  // "alpha" before "Zeta", so two lanes swapped places on the first delta after a full board.
+  const others = snapshots.filter(s => !s.node.me).sort((a, b) => (a.node.host < b.node.host ? -1 : a.node.host > b.node.host ? 1 : 0));
   return { me, others, version: delta.version };
 }

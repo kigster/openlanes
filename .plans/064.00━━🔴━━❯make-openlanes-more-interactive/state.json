@@ -5,8 +5,8 @@
     "ordinal": "064.00",
     "slug": "make-openlanes-more-interactive"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-12T23:56:03-08:00",
+  "state": "rejected",
+  "updated_at": "2026-11-13T01:14:18-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -261,6 +261,81 @@
       "seconds": 51.7,
       "note": "completed - 4 tool calls; passed; waiting for security-reviewer, staff-reviewer",
       "moves": 6
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-13T00:00:58-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/064.00-make-openlanes-more-interactive",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "f4d6fc43-a2c6-46b9-9161-0bd9b986b1ed",
+      "verdict": "passed",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-13T00:01:35-08:00",
+      "up": 1139695,
+      "down": 2029,
+      "seconds": 30.1,
+      "note": "completed - 6 tool calls; passed; waiting for security-reviewer, staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-13T00:28:45-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/064.00-make-openlanes-more-interactive",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "f758b360-406c-4185-8faf-fa8c91907182",
+      "verdict": "passed",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-13T00:29:36-08:00",
+      "up": 776486,
+      "down": 5116,
+      "seconds": 47.8,
+      "note": "completed - 7 tool calls; passed; waiting for staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-13T00:29:38-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/064.00-make-openlanes-more-interactive",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "dd8ba461-5f87-470d-aa4e-4d80e195a666",
+      "verdict": "passed",
+      "review": 6,
+      "to": "rejected",
+      "finished_at": "2026-11-13T00:31:30-08:00",
+      "up": 905330,
+      "down": 8493,
+      "seconds": 105.0,
+      "note": "completed - 7 tool calls; review review-passed; rejected: #231 CI is red (passed)",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-13T00:52:20-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/064.00-make-openlanes-more-interactive",
+      "adapter": "claude",
+      "model": "claude-fable-5-1",
+      "effort": "high",
+      "session": "e621fb35-5f5c-4d48-8df1-cff136020550"
     }
   ],
   "signatures": [
@@ -424,6 +499,58 @@
       "status": "Completed",
       "round": 1,
       "note": "passed"
+    },
+    {
+      "at": "2026-11-13T00:01:12-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:01:25-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-13T00:28:59-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:29:28-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-13T00:30:07-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:31:15-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-13T00:52:44-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:14:03-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1,
+      "next": "design-reviewer"
     }
   ],
   "messages": [
@@ -516,9 +643,18 @@
       "to": "backend-coder",
       "body": "The build is done, but the pull request was not opened: plan.md has no\n`## How to test` section, and a pull request nobody can test is not\nready for review. Add one to plan.md: the commands to run and what a person\nshould see, as a list, covering every part of the build and not only yours.\nChange nothing else, then sign Completed again.",
       "read": "yes"
+    },
+    {
+      "id": "309a0832-0304-43b4-806f-176cd7b06ed6",
+      "number": 11,
+      "at": "2026-11-13T01:04:04-08:00",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "Round 2 (🔴): I fixed staff-reviewer F1 in your file web/src/api/boardDelta.ts: others are now sorted with a plain < comparison (server order, bytewise), not localeCompare; added a test in boardDelta.test.ts (hosts Zeta/alpha). Vitest 585 pass, tsc and eslint clean. Back-end fixes F2, F3, F201-F204 are in lib/ and spec/; the extend_time reply now reads e.g. '1.5 more minutes' for 90 s. Nothing else of yours touched.",
+      "read": "no"
     }
   ],
-  "moves": 6,
+  "moves": 7,
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -624,6 +760,45 @@
       "asked_at": "2026-11-12T23:55:13-08:00",
       "closed": "finished",
       "settled_at": "2026-11-12T23:56:03-08:00"
+    },
+    {
+      "number": 6,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T00:28:46-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T00:28:50-08:00"
+    },
+    {
+      "number": 7,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T00:29:39-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T00:29:52-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "backend-coder",
+      "state": "rejected",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:07:20-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T01:10:21-08:00"
     }
   ],
   "memory": {
@@ -692,11 +867,25 @@
               "text": "Round 4: harness mail #10 asked for a '## How to test' section in plan.md before the PR could open; added it (rspec/rubocop, web unit tests, Cypress interactive.cy.ts via bin/web-e2e, and by-hand checks on the demo board covering B1-B4 and F1-F4); nothing else changed; acked #10; signed Completed"
             }
           ]
+        },
+        "5": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 5: contract.md entries amended for F1 (others sorted by plain comparison, bytewise) and F2 (reply amount true to seconds); full bundle exec rspec running to /tmp/ol064-rspec-r5.log, result to be appended to pull-requests.md before signing"
+            },
+            {
+              "kind": "done",
+              "text": "Round 5: full bundle exec rspec 6434 examples 0 failures exit 0; recorded in pull-requests.md; locks released; signed Completed --next design-reviewer"
+            }
+          ]
         }
       },
       "held": {
-        "session": "aaa85ac4-4980-4bb4-b860-fd7adce833c5",
-        "through": 9
+        "session": "e621fb35-5f5c-4d48-8df1-cff136020550",
+        "through": 12
       }
     },
     "frontend-coder": {
@@ -710,6 +899,35 @@
       "rounds": {},
       "held": {
         "session": "f4d6fc43-a2c6-46b9-9161-0bd9b986b1ed",
+        "through": 0
+      }
+    },
+    "security-reviewer": {
+      "rounds": {},
+      "held": {
+        "session": "f758b360-406c-4185-8faf-fa8c91907182",
+        "through": 0
+      }
+    },
+    "staff-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 1 staff review of PR 231: 3 minor findings (F1 others sort mismatch in boardDelta.ts, F2 extend_time minute rounding, F3 BoardDelta per-tick JSON passes); signed passed"
+            },
+            {
+              "kind": "note",
+              "text": "The plan-folder alock is held by this run's own harness (intent 'staff-reviewer on 064.00'); I wrote pull-requests.md under it as my own claim"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "dd8ba461-5f87-470d-aa4e-4d80e195a666",
         "through": 0
       }
     }

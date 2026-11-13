@@ -108,6 +108,8 @@ classDiagram
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
   class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
   <<module>> OpenLanes__Plans__Findings
+  class OpenLanes__Plans__Findings__NotFound["OpenLanes::Plans::Findings::NotFound"]
+  class OpenLanes__Plans__Findings__UnknownVerdict["OpenLanes::Plans::Findings::UnknownVerdict"]
   class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
@@ -180,6 +182,8 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__NotFound : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__UnknownVerdict : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses

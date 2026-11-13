@@ -21,7 +21,7 @@ RSpec.describe OpenLanes::Web::PlanReview, :tree do
 
   it "shows a person's strike once it is recorded" do
     path = OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first.feature.path
-    OpenLanes::Live::Commands.rule!(path, OpenLanes::Plans::Findings.for(path).first, "strike", by: "kig")
+    OpenLanes::Plans::Findings.rule!(path, OpenLanes::Plans::Findings.for(path).first, "strike", by: "kig")
     expect(review.call("003.00")[:findings].map { it[:ruling] }).to eq(["strike"])
   end
 

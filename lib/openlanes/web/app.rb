@@ -81,7 +81,7 @@ module OpenLanes
         def plan_files = PlanFiles.new(plans_dir: context.plans_dir)
 
         # @return [OpenLanes::Web::PlanReview]
-        def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: File.dirname(context.plans_dir)))
+        def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
 
         # The rule the page draws cars by: this machine's board lists the
         # plan with at least one car. No snapshot means no engine, so no car.

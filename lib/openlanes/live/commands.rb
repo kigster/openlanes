@@ -90,32 +90,33 @@ module OpenLanes
         raise Refusal, "seconds must be a whole number from 1 to #{MAX_EXTENSION}, not #{value.inspect}"
       end
 
+      # The finding a `rule_finding` names, once its verdict is one a person
+      # may give. {Web::DemoBoard} asks the same question of its own list.
+      #
       # @param findings [Array<OpenLanes::Plans::Findings::Finding>]
       # @param command [OpenLanes::Live::Command] a `rule_finding`
       # @return [OpenLanes::Plans::Findings::Finding] the one it names
       # @raise [Refusal] for an unknown verdict or finding
       def self.finding!(findings, command)
-        verdict = command["verdict"]
-        raise Refusal, "verdict must be accept or strike, not #{verdict.inspect}" unless Plans::Findings::VERDICTS.key?(verdict)
-
-        findings.rfind { it.id == command["finding"].upcase } or raise Refusal, "#{command.plan} has no finding #{command["finding"]}"
+        Plans::Findings.verdict!(command["verdict"])
+        Plans::Findings.find!(findings, command["finding"], plan: command.plan)
+      rescue Plans::Findings::UnknownVerdict, Plans::Findings::NotFound => e
+        raise Refusal, e.message
       end
 
-      # @param path [String] the plan folder
-      # @param finding [OpenLanes::Plans::Findings::Finding]
-      # @param verdict [String] accept or strike
-      # @param by [String]
-      # @return [Hash] the ruling written
-      def self.rule!(path, finding, verdict, by:)
-        outcome, bucket = Plans::Findings::VERDICTS.fetch(verdict)
-        Plans::PlanState.for(path).rule!(kind: "finding",
-          pr: nil,
-          round: nil,
-          outcome:,
-          winner: nil,
-          trigger: "person",
-          findings: { bucket => [finding.id], "headings" => { finding.id => finding.heading } },
-          reason: "#{verdict} by #{by}")
+      # The reply to more time on a clock, true to the seconds granted: a
+      # grant under a minute says seconds, one that is not whole minutes says
+      # so, rather than rounding 90 seconds down to "1 more minutes".
+      #
+      # @param agent [String]
+      # @param seconds [Integer]
+      # @return [String] e.g. "backend-coder has 10 more minutes"
+      def self.more_time(agent, seconds)
+        amount = if seconds < 60 then "#{seconds} more second#{"s" unless seconds == 1}"
+                 elsif (seconds % 60).zero? then "#{seconds / 60} more minute#{"s" unless seconds == 60}"
+                 else "#{format("%g", (seconds / 60.0).round(1))} more minutes"
+                 end
+        "#{agent} has #{amount}"
       end
 
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -345,7 +346,7 @@ module OpenLanes
           raise Refusal, "X#{number} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
         settled = dispatcher.answer_extension(subject, number, letter.downcase, by: @node.user) or
           raise Refusal, "#{command.plan} has no open request X#{number}"
-        settled["grant"] == "live" ? "#{settled["agent"]} has #{settled["seconds"] / 60} more minutes" : "#{settled["agent"]} gets one more round"
+        settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
       # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
@@ -504,7 +505,7 @@ module OpenLanes
       def extend_time(command, dispatcher)
         seconds = Commands.seconds!(command.payload["seconds"])
         dispatcher.extend(command.car, seconds) or raise Refusal, "#{command.car} is not running"
-        "#{command.agent} has #{seconds / 60} more minutes"
+        Commands.more_time(command.agent, seconds)
       end
 
       # A person's accept or strike on one reviewer finding, from its plan
@@ -515,7 +516,7 @@ module OpenLanes
       def rule_finding(command, dispatcher)
         subject = subject!(command, dispatcher)
         finding = Commands.finding!(Plans::Findings.for(subject.feature.path), command)
-        Commands.rule!(subject.feature.path, finding, command["verdict"], by: @node.user)
+        Plans::Findings.rule!(subject.feature.path, finding, command["verdict"], by: @node.user)
         dispatcher.wake!
         "#{finding.id} #{command["verdict"]}"
       end

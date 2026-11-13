@@ -215,12 +215,12 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
     end
 
     it "stops treating a struck finding as disputed" do
-      OpenLanes::Live::Commands.rule!(plan.feature.path, finding, "strike", by: "kig")
+      OpenLanes::Plans::Findings.rule!(plan.feature.path, finding, "strike", by: "kig")
       expect(arbitration.triggered(plan)&.fetch(:trigger, nil)).not_to eq("appeal")
     end
 
     it "keeps an accepted finding as one the builder must address, and settles the appeal" do
-      OpenLanes::Live::Commands.rule!(plan.feature.path, finding, "accept", by: "kig")
+      OpenLanes::Plans::Findings.rule!(plan.feature.path, finding, "accept", by: "kig")
       aggregate_failures do
         expect(arbitration.triggered(plan)&.fetch(:trigger, nil)).not_to eq("appeal")
         expect(state.rulings.last.values_at("kind", "outcome")).to eq(%w[finding upheld])

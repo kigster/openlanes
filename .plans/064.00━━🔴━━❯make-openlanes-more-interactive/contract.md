@@ -23,7 +23,7 @@ The clean baseline run was killed at its time limit, so failures were attributed
   - `Entry = { key: String, value: Object }`.
   - `base` is the `version` the delta applies onto; `version = base + 1`.
 - Keys flatten the board:
-  - `"node/<node.id>/<node.checkout>"` → the snapshot with `plans` removed and `plan_order: String[]` (the ordinals, in the snapshot's order) added. `value.node.me` says whether it is `me` or one of `others`; `others` stay sorted by `node.host`.
+  - `"node/<node.id>/<node.checkout>"` → the snapshot with `plans` removed and `plan_order: String[]` (the ordinals, in the snapshot's order) added. `value.node.me` says whether it is `me` or one of `others`; `others` stay sorted by `node.host` (amended: round 2, after staff-reviewer F1: a plain code-unit comparison, as the server sorts bytewise, not `localeCompare`).
   - `"plan/<node.id>/<node.checkout>/<ordinal>"` → one `Plan` hash, exactly as it sits in `snapshot.plans`.
 - amended: the stream's version and last-sent board live in `Live::BoardDelta::Stream`, one per connection; the wire shape is unchanged.
 - Apply: replace each upserted key, delete each removed key, rebuild each snapshot's `plans` from its `plan_order`. A removed node key removes its plans too (they are listed in `remove` as well).
@@ -37,7 +37,7 @@ The clean baseline run was killed at its time limit, so failures were attributed
 - `seconds` must be a whole number from 1 to 1200 (`Engine::Extensions::CHOICES`' largest grant, 20 minutes). The drawer sends 600 or 1200.
 - Shape errors (missing plan, agent or seconds) are a 422 from `Command.parse`, as for every kind.
 - Replies (by the `reply` frame):
-  - `done`, reason `"<agent> has <N> more minutes"`; the car's clock deadline moved and its control file says `WARN: <m> minutes left, time was extended`. The car's `remaining` grows on the next board.
+  - `done`, reason `"<agent> has <N> more minutes"` (amended: round 2, after staff-reviewer F2. The amount is true to the seconds: `"30 more seconds"`, `"1 more minute"`, `"1.5 more minutes"`; the drawer sends 600 and 1200, so it still reads `"10 more minutes"` and `"20 more minutes"`); the car's clock deadline moved and its control file says `WARN: <m> minutes left, time was extended`. The car's `remaining` grows on the next board.
   - `refused`, reason `"<plan>/<agent> is not running"` when no such car runs, or `"seconds must be a whole number from 1 to 1200, not <x>"`.
 - Stop after this step: send `wrap_up` (existing kind), see Findings.
 

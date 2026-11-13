@@ -67,3 +67,46 @@ Stream check by hand, `curl -sN --max-time 6 /api/events` on the demo: 1 `board`
 ### F204 [minor] lib/openlanes/live/commands.rb:1
 
 The file is now 802 lines (it grew by about 70 here) and holds a dispatch table, handlers and the new static helpers. The change adds a second reason to edit it (ruling storage, see F202). Moving that out leaves it smaller.
+
+## Findings: security-reviewer
+
+no findings
+
+Checked: the review route (read-only, no shell; git called with argv arrays, no user-controlled refs beyond folder-name globs), `rule_finding` and `extend_time` (behind the existing CSRF and host checks, verdict and seconds validated), patch and finding text rendered by React with no raw HTML, no dependency changes, no secrets added.
+
+## Findings: staff-reviewer
+
+### F1 [minor] web/src/api/boardDelta.ts:42
+
+`applyDelta` re-sorts `others` with `localeCompare`, while `Live.board` sorts them bytewise (`sort_by { host.to_s }`). Input: two peers with hosts `Zeta` and `alpha`. Expected: the order the full `board` frame gave, `[Zeta, alpha]`. Actual: after the first `board_delta` the page holds `[alpha, Zeta]`, so peer lanes swap places on the first delta. Suggest keeping server order (the node keys already arrive in board order) or using a plain `<` comparison.
+
+### F2 [minor] lib/openlanes/live/commands.rb:505
+
+The `extend_time` reason uses integer division. Input: `seconds: 90` (or `30`). Expected: a reply matching the clock, about 1.5 minutes (or 30 seconds). Actual: `"backend-coder has 1 more minutes"` (or `"has 0 more minutes"`) while the deadline moved by 90 (or 30) seconds. The demo board's copy (`demo_board.rb` `extend_time`) has the same problem. The drawer only sends 600/1200, so this is cosmetic today.
+
+### F3 [minor] lib/openlanes/live/board_delta.rb:58
+
+`frame` re-flattens the previous board through a JSON round trip, and serialises both the delta and the whole board, on every changed tick of every connection. Input: 10 open tabs on a 200-plan board where one car's tokens move each tick. Expected: about one board's worth of work per tick per stream. Actual: about four full-board JSON passes per stream per tick. That is linear, not a 10x bug. Caching `entries(@sent)` in `Stream` would remove one pass, and comparing sizes against an estimate would remove another.
+
+## Answers, round 2
+
+Review comments on PR 231 are issue comments (no per-line threads), so each is answered in one reply comment on the pull request, finding by finding.
+
+| Comment | Finding | Answer | What changed |
+| ---: | :--- | :--- | :--- |
+| 6847394495 | F201 | fix | `Plans::Findings.ruling_for(finding, verdict, by:)` builds the ruling once; `Findings.rule!` writes it through `PlanState#rule!`, and `DemoBoard#rule_finding` keeps the same hash (with `at`, string keys) in memory. Demo spec reads an `accept` back through `review`. |
+| 6847394495 | F202 | fix | `finding!`/`rule!` left `Live::Commands`: `Findings.verdict!`, `Findings.find!`, `Findings.rule!`, `Findings.rules?`, with `KIND`, `OUTCOMES` and `BUCKETS` derived from `VERDICTS`. `Arbitration::Ruling::OUTCOMES` registers `finding => [struck, upheld]` from that table (its spec parses every kind/outcome pair). `Engine::Arbitration#ruled?` and `Findings.ruling` read the buckets from the table. `Commands.finding!` only translates the errors into a `Refusal`. |
+| 6847394495 | F203 | fix | `Web::Context` gained `root` (default: parent of `plans_dir`, so existing trees work); `App#plan_review` passes `context.root` to `BranchDiff`; `openlanes web` passes `Dir.pwd`, the project root the command moved to. App spec drives the route with a `.plans` outside the root and asserts the diff ran in the root. |
+| 6847394495 | F204 | partial fix | The second responsibility (ruling storage, F202) left `live/commands.rb` for `plans/findings.rb`, but the file is 803 lines (was 802): the `more_time` helper for F2 and its docs took the room back. A split by concern of the remaining handlers is not in this round; noted as follow-up. |
+| 6848028912 | F1 | fix | `boardDelta.ts` sorts `others` with a plain `<` comparison, as `Live.board` does bytewise; test with hosts `Zeta` and `alpha`. frontend-coder's file; frontend-coder mailed. |
+| 6848028912 | F2 | fix | `Live::Commands.more_time(agent, seconds)`: "30 more seconds", "1 more minute", "1.5 more minutes", "20 more minutes"; used by `extend_time`, `extension` and the demo board. Demo spec covers 30, 60 and 90 seconds. |
+| 6848028912 | F3 | fix | `BoardDelta::Stream` keeps the flattened board and each entry's JSON size across ticks; a tick flattens the new board once and serialises only the entries that changed, and the delta-or-whole choice is an estimate from those sizes. Spec counts `JSON.generate` calls: 3 on a tick where one plan moved. |
+| 6847997111 | review route behind host and admin checks | rebuttal (no change asked) | Confirmed: the route is inside the same `before` filters as the other read routes; nothing to change today. |
+
+## Suite and lint, backend-coder, round 2, 2026-11-13
+
+- `bundle exec rubocop` → 956 files inspected, no offenses detected, exit 0.
+- `bundle exec rspec` on every touched spec (findings, board_delta, demo_board, commands, arbitration, plan_review, ruling, app, events, cli/web, docs/architecture) → 0 failures.
+- `just update-architecture` rerun; `docs/architecture/` regenerated (plans, live, arbitration, engine, README).
+- `npx vitest run` → 585 passed; `tsc --noEmit` and `eslint` clean on the changed files.
+- Full `bundle exec rspec` → 6434 examples, 0 failures, exit 0 (2026-11-13 01:13).

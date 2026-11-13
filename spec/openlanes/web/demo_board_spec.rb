@@ -231,6 +231,20 @@ RSpec.describe OpenLanes::Web::DemoBoard do
       expect([reason, car("001.00/frontend-coder")["remaining"]]).to eq(["frontend-coder has 20 more minutes", before + 1200])
     end
 
+    it "tells the truth about a grant that is not whole minutes" do
+      aggregate_failures do
+        expect(board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 90))).to eq("frontend-coder has 1.5 more minutes")
+        expect(board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 30))).to eq("frontend-coder has 30 more seconds")
+        expect(board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 60))).to eq("frontend-coder has 1 more minute")
+      end
+    end
+
+    it "keeps a ruling in the shape state.json holds, so the review reads it back" do
+      board.apply(command("rule_finding", plan: ordinal, finding: "F1", verdict: "accept"))
+      ruling = board.review(ordinal)[:findings].first[:ruling]
+      expect(ruling).to eq("accept")
+    end
+
     it "refuses a car that is not running" do
       board.apply(command("stop", plan: ordinal, agent: "frontend-coder"))
       expect { board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 600)) }

@@ -140,32 +140,3 @@ Run from the repository root, with Redis on `localhost:6379` (the demo and the e
 ## HTTP surface
 
 Yes. B3 adds `GET /api/plans/:ordinal/review`. B2 and B3 add the command kinds `extend_time` and `rule_finding` (and `stop_after_step` if needed) to the existing command endpoint. B1 adds the `board_delta` frame to the event stream. B3 writes `openapi.yaml` beside `contract.md`, covering the route, the new command payloads and the frame shape.
-
-## Rebase decisions
-
-Rebase of this branch onto `origin/main` (2026-11-12). One line per file, with the reason.
-
-- `.openlanes.yml`: kept main's `coverage:` block; same keys, only the order differed.
-- `.plans/064.00…/plan.md`, `pull-requests.md`, `state.json`: kept the branch's versions; main's side held none of this plan's later work (How to test, the full-suite rerun, the later stages and mail), only an older timestamp.
-- `.plans/068.00…/state.json`: kept main's file; the branch never had plan 068, so the "deleted by them" side was only the branch's older base.
-- `lib/openlanes/engine/dispatcher.rb`: kept main's `running` and `feed` accessors and applied the branch's change on top: `extend` returns whether a running agent's clock moved, and records the feed entry only when it did.
-- `lib/openlanes/live/command.rb`, `commands.rb`: kept both kinds: main's `set_chime` plus the branch's `extend_time` and `rule_finding`.
-- `lib/openlanes/live/snapshot.rb`: kept the branch's `row.up.to_i, row.down.to_i`; the same cost calculation as main, tolerant of nil tokens.
-- `lib/openlanes/live/store.rb`: kept main's Monitor lock with its `failed_at` and `guarded`/`talk` handling; it covers what the branch's plain `@lock.synchronize` did, and drops the branch's duplicate.
-- `lib/openlanes/web/demo_board.rb`: kept main's `spend` (prices at the car's model from the adapter catalogue) and removed the branch's `DEMO_RATES`; main says a car's cost is never a second rate table.
-- `spec/spec_helper.rb`: kept both env lines (`OPENLANES_MODELS_OFFLINE`, and deleting `OPENLANES_ADMIN_CREDENTIALS`).
-- `docs/architecture/README.md`, `openlanes-live.md`, `openlanes-web.md`: generated; took main's, then ran `just update-architecture`.
-- `web/src/api/fixtures/board.json`, `snapshot.json`, `snapshot-outage.json`: kept main's cost figures; they come from main's per-model pricing.
-- `web/src/api/types.ts`: removed the branch's second `cost?` on `Car`, which duplicated main's.
-- `web/src/board/Car.tsx`: kept main's Round/elapsed block and `SpendBadge`, and added the branch's per-car `Cost so far` span before it.
-- `web/src/board/Car.test.tsx`: kept both describe blocks (`SpendBadge`, and the car cost).
-- `web/src/board/PlanRow.tsx`: kept main's `onUnblock` and `.plan-cost` span, and added the branch's `onCommand` and `PlanReview` imports. The branch's plan-level `Cost so far` span is dropped; main's `.plan-cost` shows the same figure.
-- `web/cypress/e2e/interactive.cy.ts`: selector for the plan total changed from `.plan-meta [title='Cost so far']` to `.plan-meta .plan-cost`, parsed as digits and dots, because main's span has a screen-reader prefix.
-- `web/src/panels/AgentDrawer.tsx`: kept main's Cost line (`n/a` when unreported, via `dollars`); dropped the branch's `cost` import and conditional line.
-
-Checked after resolving: `bundle exec rspec` on live, web, dispatcher, arbitration, run_workflow, routing, findings and docs specs (1134 examples, 0 failures), `rubocop` clean, `npx vitest run` (581 passed).
-
-
-- `.plans/064.00…/pull-requests.md`, `state.json` (second replay, commit "Make Openlanes More Interactive"): kept the side already on HEAD (`in_review`, design-reviewer stage, findings F201-F204); the replayed commit carried an older `building` snapshot of the same files, and taking it would roll the plan state back.
-
-- `docs/architecture/README.md` (this replay): generated; took main's side to clear the markers, then regenerated with `openlanes uml self --directory docs/architecture`. Result: `Vcs ..> UI : 6` (main) and `Web ..> OpenLanes : 12` (branch adds callers). `architecture_doc_spec` passes.

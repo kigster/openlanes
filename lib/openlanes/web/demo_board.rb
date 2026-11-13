@@ -279,10 +279,12 @@ module OpenLanes
         raise Refusal, "#{command.car} is not running" unless car["state"] == "running"
 
         car["remaining"] = car["remaining"].to_i + seconds
-        "#{command.agent} has #{seconds / 60} more minutes"
+        Live::Commands.more_time(command.agent, seconds)
       end
 
-      # The demo keeps its rulings in memory, in the shape `state.json` does.
+      # The demo keeps its rulings in memory, in the shape `state.json` does:
+      # the same hash {Plans::Findings.rule!} writes, with string keys, so
+      # what the demo page shows after a strike is what a real plan shows.
       #
       # @return [String]
       def rule_finding(command)
@@ -292,9 +294,8 @@ module OpenLanes
         rescue Live::Commands::Refusal => e
           raise Refusal, e.message
         end
-        outcome, bucket = Plans::Findings::VERDICTS.fetch(command["verdict"])
-        @rulings[command.plan] << { "kind" => "finding", "outcome" => outcome,
-                                    "findings" => { bucket => [finding.id], "headings" => { finding.id => finding.heading } } }
+        ruling = Plans::Findings.ruling_for(finding, command["verdict"], by: @me.dig("node", "user"))
+        @rulings[command.plan] << JSON.parse(JSON.generate(ruling.merge(at: Time.now.iso8601)))
         "#{finding.id} #{command["verdict"]}"
       end
 

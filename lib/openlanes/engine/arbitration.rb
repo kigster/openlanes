@@ -280,10 +280,7 @@ module OpenLanes
       #
       # @return [Boolean]
       def ruled?(state, finding, since)
-        state.rulings.any? do |ruling|
-          ruling["kind"] == "finding" && Time.iso8601(ruling["at"]) >= since &&
-            ruling["findings"].values_at("struck", "critical").flatten.compact.include?(finding)
-        end
+        state.rulings.any? { Plans::Findings.rules?(it, finding) && Time.iso8601(it["at"]) >= since }
       end
 
       # @return [Hash, nil] the oldest unread dispute mailed to the arbitrator

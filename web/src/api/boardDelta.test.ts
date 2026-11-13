@@ -30,6 +30,14 @@ it("replaces an upserted plan and drops a removed one, keeping the order", () =>
   expect(out.me?.plans[0].cost).toBe(42);
 });
 
+it("keeps the server's bytewise order of other machines, upper-case hosts first", () => {
+  const other = board().others[0];
+  const node = (host: string) => ({ ...other.node, id: host, host, me: false });
+  const b = { ...board(), others: [{ ...other, node: node("Zeta"), plans: [] }, { ...other, node: node("alpha"), plans: [] }] };
+  const out = applyDelta(b, { base: 1, version: 2, upsert: [], remove: [] });
+  expect(out.others.map(s => s.node.host)).toEqual(["Zeta", "alpha"]);
+});
+
 it("removes a node and its plans", () => {
   const other = board().others[0];
   const out = applyDelta(board(), { base: 1, version: 2, upsert: [], remove: [`node/${other.node.id}/${other.node.checkout}`] });

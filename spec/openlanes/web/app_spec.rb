@@ -556,6 +556,19 @@ RSpec.describe OpenLanes::Web::App, :tree do
       get "/api/plans/009/review"
       expect([last_response.status, body["error"]]).to eq([404, "there is no plan 009.00"])
     end
+
+    it "runs git in the root the context names, not the parent of a .plans that lives elsewhere" do
+      diffs = []
+      stub_const("OpenLanes::Web::BranchDiff",
+        Class.new do
+          define_method(:initialize) { |root:, **| diffs << root }
+          define_method(:call) { |_feature| { stat: "", patch: "", truncated: false } }
+        end)
+      elsewhere = Dir.mktmpdir
+      app_context = OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, root: elsewhere, url: "memory://")
+      response = Rack::MockRequest.new(OpenLanes::Web.app(app_context)).get("/api/plans/004/review", "HTTP_HOST" => "127.0.0.1:11000")
+      expect([response.status, diffs]).to eq([200, [elsewhere]])
+    end
   end
 
   describe "GET /api/plans/:ordinal/files" do
