@@ -43,7 +43,8 @@ module OpenLanes
         :journal,
         :journaled,
         :journal_round,
-        :sweep) do
+        :sweep,
+        :rounds) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
@@ -744,7 +745,7 @@ module OpenLanes
           agent: task.agent.name,
           role: task.agent.role,
           round: task.round,
-          rounds: rounds_for(task.agent),
+          rounds: job.rounds || rounds_for(task.agent),
           model: model_for(task.agent, task.subject),
           remaining: job.handle.remaining,
           phase: job.handle.phase,
@@ -777,6 +778,21 @@ module OpenLanes
       # @param agent [OpenLanes::Agents::Agent]
       # @return [Integer]
       def rounds_for(agent) = [agent.rounds, @rounds_cap].compact.min
+
+      # Every round the agent may run on the plan's state: its own, plus the
+      # ones a person or the harness granted (E1). What the board shows as
+      # "Round 2 of 3": {#rounds_for} alone read "Round 4 of 1" on an agent
+      # running its third extension, which told a person nothing about how
+      # many more there were.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Integer]
+      def rounds_allowed(agent, subject)
+        return rounds_for(agent) if @runner.dry_run?
+
+        rounds_for(agent) + @extensions.rounds(subject.feature.path, agent.name, subject.status.key)
+      end
 
       # @param agent [OpenLanes::Agents::Agent]
       # @param subject [OpenLanes::Plans::Subject, nil] whose spec.md may override it
@@ -1161,7 +1177,8 @@ module OpenLanes
           up: 0,
           down: 0,
           subagents: 0,
-          frame: 0)
+          frame: 0,
+          rounds: rounds_allowed(agent, subject))
         if task.refresh&.conflicted?
           start_rebase(job, ordinal)
           release_owed = false
@@ -1251,7 +1268,8 @@ module OpenLanes
           up: 0,
           down: 0,
           subagents: 0,
-          frame: 0)
+          frame: 0,
+          rounds: rounds_allowed(agent, subject))
         remember(ordinal, agent.name, job.state, "Started", found.round)
         UI.log("reattached", **task.log_fields)
         @invocations[job.key] = @clock.now
