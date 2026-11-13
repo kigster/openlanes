@@ -188,6 +188,29 @@ module OpenLanes
         raise Error, git_complaint(e)
       end
 
+      # Sends a branch the harness rebased to its open pull request.
+      #
+      # {Refresh} rebases a plan's worktree before every agent, and only
+      # {#publish} pushed, which wants uncommitted work. A rebase leaves none,
+      # so a plan in review was rebased here again and again while its pull
+      # request stayed on the old base: CI kept testing a branch nobody was
+      # reading, and reviewers read one CI had never seen (plan 057, #210).
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean] whether a push was made
+      # @raise [OpenLanes::Error] when the push is refused or fails
+      def catch_up(checkout:, subject:)
+        open = subject.pull_requests.select(&:open?).last
+        return false if @dry_run || open.nil? || !checkout.unpushed?
+
+        mismatch = head_mismatch(open, checkout, refused: "rebased branch not pushed")
+        raise Error, mismatch if mismatch
+
+        pushed!(checkout, "HEAD")
+        true
+      end
+
       # A commit that stayed on this machine is said as one: "not committed"
       # would send someone looking for a change that is right there in the
       # checkout, waiting for the next push to carry it.

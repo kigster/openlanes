@@ -320,6 +320,85 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
 
   # Real git and a bare origin: what is under test is which paths reach the
   # commit, and a stubbed git would only echo back what the stub was told.
+  # Plan 057, #210: rebased in its worktree before every reviewer, and the
+  # pull request never moved off its first commit.
+  describe "#catch_up" do
+    subject(:publisher) do
+      described_class.new(root: repo_root, command: TTY::Command.new(printer: :null), dry_run:, github:)
+    end
+
+    let(:dry_run) { false }
+    let(:checkout) { OpenLanes::Vcs::Worktree::Checkout.new(ordinal: plan.feature.ordinal, branch: "main", path: repo_root, created: false) }
+    let(:origin) { "#{repo_root}-origin.git" }
+    let!(:built) do
+      plans { |t| t.plan "000.00", :in_review, "in-review", files: { "spec.md" => spec_body }, prs: [t.open(7, "In review")] }
+    end
+
+    def tip(ref) = repo_git("rev-parse", ref).strip
+
+    before do
+      init_repo
+      repo_git("config", "user.name", "Test Author")
+      repo_git("config", "user.email", "test@example.com")
+      repo_git("config", "commit.gpgsign", "false")
+      commit_all("seed")
+      system("git", "init", "-q", "--bare", origin, exception: true)
+      repo_git("remote", "add", "origin", origin)
+      repo_git("push", "-q", "-u", "origin", "main")
+      allow(OpenLanes::Execution::Boundary).to receive(:sanction)
+      allow(github).to receive(:pull_request).with("7").and_return(branch: "main")
+    end
+
+    after { FileUtils.rm_rf(origin) }
+
+    context "when the harness has rewritten the branch since its last push" do
+      # What a rebase leaves: new commits, nothing uncommitted.
+      before { repo_git("commit", "-q", "--amend", "-m", "seed, rebased") }
+
+      it "pushes it to the pull request's branch, declared to the boundary first" do
+        aggregate_failures do
+          expect(publisher.catch_up(checkout:, subject: plan)).to be(true)
+          expect(tip("origin/main")).to eq(tip("HEAD"))
+          expect(`git --git-dir #{origin} rev-parse main`.strip).to eq(tip("HEAD"))
+          expect(OpenLanes::Execution::Boundary).to have_received(:sanction).with(repo_root, "origin", "main")
+        end
+      end
+
+      it "refuses when the pull request is built from another branch" do
+        allow(github).to receive(:pull_request).with("7").and_return(branch: "kig/elsewhere")
+        expect { publisher.catch_up(checkout:, subject: plan) }
+          .to raise_error(OpenLanes::Error, %r{rebased branch not pushed — #7 is built from kig/elsewhere})
+      end
+
+      context "with a dry run" do
+        let(:dry_run) { true }
+
+        it "pushes nothing" do
+          expect([publisher.catch_up(checkout:, subject: plan), tip("origin/main") == tip("HEAD")]).to eq([false, false])
+        end
+      end
+
+      context "with no pull request open" do
+        let!(:built) { plans { |t| t.plan "000.00", :building, "building", files: { "spec.md" => spec_body } } }
+
+        it "leaves the first push to publish" do
+          expect(publisher.catch_up(checkout:, subject: plan)).to be(false)
+        end
+      end
+    end
+
+    it "does nothing, and asks GitHub nothing, when origin already holds the branch" do
+      expect(publisher.catch_up(checkout:, subject: plan)).to be(false)
+      expect(github).not_to have_received(:pull_request)
+    end
+
+    it "does not count a branch that was never pushed" do
+      repo_git("checkout", "-q", "-b", "kig/new")
+      fresh = checkout.with(branch: "kig/new")
+      expect(fresh.unpushed?).to be(false)
+    end
+  end
+
   describe "#commit_plan" do
     subject(:publisher) do
       described_class.new(root: repo_root, command: TTY::Command.new(printer: :null), dry_run: false, github:)

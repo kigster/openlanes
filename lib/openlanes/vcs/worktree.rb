@@ -84,6 +84,17 @@ module OpenLanes
         # @return [Boolean] whether the agent left anything behind
         def dirty? = !`git -C #{path.shellescape} status --porcelain 2>/dev/null`.strip.empty?
 
+        # Whether the branch holds commits `origin` has not been sent: its tip
+        # is not the tip of its tracking ref. A branch never pushed has no
+        # tracking ref and is not unpushed, since publishing it is a pull
+        # request's first push and belongs to {Publisher#publish}.
+        #
+        # @return [Boolean]
+        def unpushed?
+          seen = `git -C #{path.shellescape} rev-parse --verify --quiet #{"refs/remotes/origin/#{branch}".shellescape} 2>/dev/null`.strip
+          !seen.empty? && seen != `git -C #{path.shellescape} rev-parse HEAD 2>/dev/null`.strip
+        end
+
         # @return [String] the plans directory inside this checkout
         def plans_dir = File.join(path, OpenLanes::PLANS_DIR)
 
