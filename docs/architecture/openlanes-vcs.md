@@ -43,6 +43,8 @@ classDiagram
   class OpenLanes__Vcs__Review["Review"]
   class OpenLanes__Vcs__SnapshotReads["SnapshotReads"]
   class OpenLanes__Vcs__Warmup["Warmup"]
+  class OpenLanes__Vcs__Warmup__Trust["Warmup::Trust"]
+  <<module>> OpenLanes__Vcs__Warmup__Trust
   class OpenLanes__Vcs__Worktree["Worktree"]
   OpenLanes__Vcs ..> OpenLanes__Vcs__Buckets : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__GitHub : uses
@@ -89,6 +91,7 @@ classDiagram
   OpenLanes__Vcs__Review ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs__SnapshotReads ..> OpenLanes__Error : uses
   OpenLanes__Vcs__SnapshotReads ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Vcs__Warmup ..> OpenLanes__Vcs__Warmup__Trust : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Error : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__UI : uses

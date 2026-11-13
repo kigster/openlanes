@@ -35,8 +35,13 @@ module OpenLanes
       # @return [Hash]
       def self.row(node)
         flat = node.merge("labels" => node.dig("labels", "nodes"), "files" => node.dig("files", "nodes"))
-        GitHub.row(flat).merge(details(node), checks: checks_of(node))
+        GitHub.row(flat).merge(details(node), checks: checks_of(node), complete: !truncated?(node))
       end
+
+      # @param node [Hash]
+      # @return [Boolean] whether any list in {PullSnapshot::TRUNCATABLE} has
+      #   a page this query did not fetch
+      def self.truncated?(node) = PullSnapshot::TRUNCATABLE.any? { node.dig(*it, "pageInfo", "hasNextPage") == true }
 
       # The fields {GitHub#pull_request} reads beyond {GitHub.row}'s, so a
       # snapshot row can stand in for a per-pull-request `gh pr view`.
@@ -71,6 +76,11 @@ module OpenLanes
       def [](number) = pulls.find { it[:number] == number.to_i }
 
       # @param number [Integer]
+      # @return [Hash, nil] that row, but only when every list in it was read
+      #   whole; nil sends the reader to GitHub for that pull request
+      def complete(number) = (row = self[number]) && row[:complete] != false ? row : nil
+
+      # @param number [Integer]
       # @return [Array<Hash>] its checks, empty when it has none or is not open
       def checks(number) = self[number]&.fetch(:checks) || []
 
@@ -82,6 +92,16 @@ module OpenLanes
       def numbers = pulls.map { it[:number] }
     end
 
+    # The nested lists a reader trusts whole. A gate decides from them, so a
+    # pull request with a 101st check context, or a 51st label, must not be
+    # answered from the first page: a failing check past the cut would read
+    # as green, and `CiGate` would fail open.
+    PullSnapshot::TRUNCATABLE = [
+      %w[labels],
+      %w[files],
+      ["commits", "nodes", 0, "commit", "statusCheckRollup", "contexts"]
+    ].freeze
+
     # One page of open pull requests, with what every reader asks of them.
     PullSnapshot::QUERY = <<~GRAPHQL
       query($owner: String!, $name: String!, $after: String) {
@@ -91,9 +111,9 @@ module OpenLanes
             nodes {
               number title url headRefName headRefOid baseRefName body state isDraft mergedAt mergeStateStatus
               mergeCommit { oid }
-              labels(first: 50) { nodes { name } }
-              files(first: 100) { nodes { path } }
-              commits(last: 1) { nodes { commit { statusCheckRollup { contexts(first: 100) { nodes {
+              labels(first: 50) { pageInfo { hasNextPage } nodes { name } }
+              files(first: 100) { pageInfo { hasNextPage } nodes { path } }
+              commits(last: 1) { nodes { commit { statusCheckRollup { contexts(first: 100) { pageInfo { hasNextPage } nodes {
                 __typename
                 ... on CheckRun { name status conclusion }
                 ... on StatusContext { context state }

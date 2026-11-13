@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Vcs::PullSnapshot do
   end
 
   it "builds each row in the shape GitHub#pull_request returns, plus files" do
-    expect(snapshot[201].except(:checks)).to eq(
+    expect(snapshot[201].except(:checks, :complete)).to eq(
       number:       201,
       title:        "[061.00] Speed up openlanes",
       url:          "https://github.com/example/repo/pull/201",
@@ -54,5 +54,25 @@ RSpec.describe OpenLanes::Vcs::PullSnapshot do
 
   it "names the next page's cursor, and none on the last" do
     expect(pages.map { described_class.next_cursor(it) }).to eq(["Y3Vyc29yOjE=", nil])
+  end
+
+  # A gate decides from these lists: a failing 101st check must not read green.
+  describe "a pull request with more checks or labels than one page holds" do
+    def node(**more) = { "number" => 9, "title" => "t", "url" => "https://github.com/o/r/pull/9", "state" => "OPEN" }.merge(more)
+
+    let(:rollup) do
+      { "nodes" => [{ "commit" => { "statusCheckRollup" => { "contexts" => { "pageInfo" => { "hasNextPage" => true }, "nodes" => [] } } } }] }
+    end
+    let(:pages) do
+      [{ "data" => { "repository" => { "pullRequests" => { "nodes" => [
+        node("commits" => rollup),
+        node("number" => 10, "labels" => { "pageInfo" => { "hasNextPage" => true }, "nodes" => [] }),
+        node("number" => 11, "labels" => { "pageInfo" => { "hasNextPage" => false }, "nodes" => [] })
+      ] } } } }]
+    end
+
+    it "is held, but not offered as complete, so a reader asks GitHub for it" do
+      expect([snapshot.numbers, [9, 10, 11].map { snapshot.complete(it)&.fetch(:number) }]).to eq([[9, 10, 11], [nil, nil, 11]])
+    end
   end
 end

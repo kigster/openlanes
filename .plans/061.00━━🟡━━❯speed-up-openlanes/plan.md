@@ -125,24 +125,24 @@ Treat the 12 pre-existing failures as the baseline for this plan and fix them in
 
 > Folded from `blocked.md` by the unblocker on 2026-11-12.
 
-## Rebase decisions
+______________________________________________________________________
 
-- `lib/openlanes/vcs/worktree.rb`: kept both. Main's `Prewarm` (clones `node_modules` from the main checkout) and this plan's `Warmup` (shared Bundler/npm cache) both stay; `Worktree.new` takes `prewarm:` and `warmup:`, and one `furnish` does seed, then prewarm, then warm, on both `checkout_for` paths. Dropped the branch's direct `seed`/`warm` calls in favour of main's `furnish`.
-- `lib/openlanes/vcs/warmup.rb`: `Warmup#npm` now leaves an existing `node_modules` alone (counts it as shared) when the cache entry is not complete, because `npm ci` would delete the clone `Prewarm` just made and install again. Main's `Prewarm` wins the overlap; spec added in `warmup_spec.rb`.
-- `lib/openlanes/agents/agent.rb`: both sides added keyword fields; kept `small_diff` (main) and `review_stage`, `watches` (branch).
-- `lib/openlanes/agents/registry.rb`: kept `small_diff:` (main) and `review_stage:`, `watches:` (branch) in the Agent build.
-- `.plans/061.00` folder: main renamed the plan folder to 🔴 (a later, fuller state.json: 20 stages against 7) and the branch to 🟡 (an earlier snapshot). Kept main's 🔴 folder as is and dropped the branch's 🟡 copy, since one ordinal cannot have two folders and the harness renames the folder to the live state itself. This also kept main's later `contract.md` and `pull-requests.md` over the branch's older ones.
-- `.plans/068.00/state.json`: the branch deleted it, main had changed it. Kept main's; the deletion was plan bookkeeping, not part of this plan's work.
-- `agents/design-reviewer.md`, `lib/openlanes/agents/agent.rb`: kept `watches` (branch) beside main's frontmatter; in `agent.rb` kept main's `rounds: Agent::DEFAULT_ROUNDS` over the branch's literal `1`, and added `watches: []`.
-- `.plans/061.00` folder, second pass: the branch's `contract.md`, `pull-requests.md` and `state.json` (the 🟡 copy) are now the later ones (B2 built, a blocked round and its answer; state `building`), so their content replaces main's in the single 🔴 folder; main's folder name stays because one ordinal cannot have two folders and the harness renames it to the live state. The branch's 🟡 folder is dropped.
-- `plan.md`: kept both appended blocks, the branch's B1/D1 answered question and the earlier Rebase decisions.
-- `lib/openlanes/engine/dispatcher.rb`: took main's split dispatcher (390 lines against the branch's 2,500) and re-applied the branch's two edits where that code now lives: `snapshot: watch&.snapshot` in `build_steps`, and the `@runner.reviews.startable?` gate in `dispatcher/assign.rb` `eligible?`.
-- `lib/openlanes/engine/reviews.rb`: kept both. `decide` runs the branch's `refused_early` and stage-1/stage-2 `pending`, then main's `settled?(notes, pending, running)` so a rejection stops waiting for a reviewer that is not running.
-- `lib/openlanes/vcs/worktree.rb`: `initialize` takes main's `prewarm: Prewarm.new(root:)` and the branch's `warmup: nil` default (the `Vcs.worktree` facade injects `Warmup.new`).
-- `lib/openlanes/vcs/warmup.rb`: kept the branch's data-driven `Kind` rewrite and dropped main-side `npm`/`keep`; ported main's "leave a `node_modules` Prewarm cloned in" rule into `fill` (`return :shared if !kind.bundler? && File.exist?(target)`).
-- `spec/openlanes/vcs/warmup_spec.rb`, `spec/openlanes/vcs/github_spec.rb`: kept both sides' examples (Prewarm overlap and `#diff`, plus the branch's Bundler-copy and `#open_pull_snapshot` ones).
-- `docs/architecture/*.md`: generated, so took main's and regenerated with `openlanes uml self`.
-- `lib/openlanes/engine/reviews.rb`, `engine/run_workflow.rb`, `engine/dispatcher/assign.rb` (this rebase): main had since added `due?` (stage gate plus green CI via `builds:`/`Vcs::CiWatch`), which does the same job as this plan's `startable?`. Kept main's `due?` as the single gate and folded the branch's `watches:` skip into it (a later-stage reviewer is not due when the diff misses its `watches`, checked before the CI wait so a skipped reviewer never logs "waiting for CI"). Dropped `startable?` and its call in `assign.rb` `eligible?`, since `assign.rb` already asks `due?`; `Reviews.new` takes both `builds:` and `changes:`; `reviews_for` passes both. `reviews_spec.rb` and `speed_up_spec.rb` now call `due?(plan, agent)`.
-- `.plans/061.00/state.json`: took main's side (state `in_review`, backend-coder `Completed`, 11 moves), the later record; the branch's copy was an earlier `building` snapshot. `plan.md`: kept both sides' Rebase decisions lines.
-- `docs/architecture/*.md`: generated; took main's and regenerated with `just update-architecture`.
-- `lib/openlanes/engine/reviews/build.rb` (new): `Reviews` hit the 100-line `Metrics/ClassLength` cap once both sides' staging was in it, and the todo list says never to add a file. Moved main's CI wait (`green?` and its once-per-answer log) into `Reviews::Build`, unchanged in behaviour.
+### B2 (answered) — Arbitrator ruled no_go at the rejection cap
+
+⚖️ Ruling (cap): no_go
+
+> F1 holds in the code. SnapshotReads::WRITES omits publisher.pushed!, so within POLL Merging#step passes a stale head to merge(); --match-head-commit refuses it and the rescue calls leave(), which permanently ends an auto merge that a live read used to let wait. F2 and F3 are minor, but security F101 (harness evaluates an agent-edited gemspec) and F102 (unpaginated contexts let CiGate fail open) are also unanswered.
+
+a) Send it back to the builders for one more round. (Recommended)
+b) Close the pull request and replan.
+
+### D2 (decision) — Send it back to the builders for one more round
+
+Answered:
+
+- 2026-11-13
+- By hermes
+
+Send the pull request back to the builders for one more round, to address F1 (stale head after `publisher.pushed!` missing from `SnapshotReads::WRITES`), F2, F3, and security findings F101 (agent-edited gemspec evaluated by the harness) and F102 (unpaginated contexts letting `CiGate` fail open).
+
+> Folded from `blocked.md` by the unblocker on 2026-11-13.

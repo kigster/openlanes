@@ -23,6 +23,14 @@ RSpec.describe OpenLanes::Vcs::SnapshotReads do
     expect([reads.labels(number: 8), reads.checks(number: 7, repo: "x/y")]).to eq([%w[live], [{ name: "live", bucket: "pass" }]])
   end
 
+  context "when the snapshot's row was truncated" do
+    let(:row) { { number: 7, url: "https://github.com/o/r/pull/7", labels: %w[review-approved], checks: [], complete: false } }
+
+    it "reads its labels and checks live, so CiGate never decides from a partial list" do
+      expect([reads.labels(number: 7), reads.checks(number: 7)]).to eq([%w[live], [{ name: "live", bucket: "pass" }]])
+    end
+  end
+
   describe "#pull_request" do
     let(:github) { instance_double(OpenLanes::Vcs::GitHub, pull_request: { number: 9, open: false, merge_commit: "abc" }) }
     let(:row) do

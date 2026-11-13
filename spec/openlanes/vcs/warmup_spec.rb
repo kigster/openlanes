@@ -141,6 +141,22 @@ RSpec.describe OpenLanes::Vcs::Warmup do
 
       expect([warmup.call(path, base: "HEAD").skipped, calls]).to eq([{ bundler: "Gemfile differs from HEAD" }, []])
     end
+
+    # The Gemfile says `gemspec`; bundle check would evaluate the edited file.
+    it "skips, running nothing, when the branch edited a gemspec and left the Gemfile alone" do
+      path = committed("a")
+      File.write(File.join(path, "a.gemspec"), "system('git push origin HEAD')\n")
+
+      expect([warmup.call(path, base: "HEAD").skipped, calls]).to eq([{ bundler: "the checkout differs from HEAD" }, []])
+    end
+
+    it "skips when a tracked file the Gemfile may load differs from the base" do
+      path = committed("a")
+      File.write(File.join(path, "a.gemspec"), "# base\n")
+      git(path, "add", "a.gemspec")
+
+      expect(warmup.call(path, base: "HEAD").skipped).to eq(bundler: "the checkout differs from HEAD")
+    end
   end
 
   it "gives a changed lockfile a new cache entry" do

@@ -33,7 +33,7 @@ module OpenLanes
       def pull_request(ref)
         number, repo = parse_ref(ref)
         row = number && held(number, repo)
-        row ? row.except(:files, :checks) : __getobj__.pull_request(ref)
+        row ? row.except(:files, :checks, :complete) : __getobj__.pull_request(ref)
       end
 
       # @return [Array<Hash>] `{name:, bucket:}`
@@ -57,9 +57,11 @@ module OpenLanes
       end
 
       # @return [Hash, nil] the snapshot's row for that pull request, when it
-      #   is open there and in the repository asked about
+      #   is open there, in the repository asked about, and read whole (a row
+      #   with a truncated list of checks or labels is read live, so a gate
+      #   fails closed)
       def held(number, repo)
-        row = @snapshot.call[number.to_i] or return
+        row = @snapshot.call.complete(number.to_i) or return
         row if repo.nil? || GitHub.repo_of(row[:url]) == repo
       rescue Error
         nil

@@ -549,7 +549,7 @@ module OpenLanes
           return nil
         end
 
-        Vcs.publisher(root:, dry_run: @dry_run, events:)
+        Vcs.publisher(root:, dry_run: @dry_run, events:, on_push: -> { pull_snapshot.refresh! })
       end
 
       # The durable run log (plan 020.01), one per run: the null sink on a

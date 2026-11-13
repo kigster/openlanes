@@ -109,8 +109,9 @@ module OpenLanes
 
       # @return [String, nil] why this kind must not be warmed here
       def refusal(kind, path, base)
-        changed = base && kind.inputs.find { !same_as_base?(path, it, base) }
+        changed = base && kind.inputs.find { !Trust.same_as_base?(path, it, base) }
         return "#{changed} differs from #{base}" if changed
+        return "the checkout differs from #{base}" if base && !Trust.pristine?(path, base)
 
         # The trailing slash says the target is a directory, which a pattern
         # like `/node_modules/` only matches before it exists.
@@ -178,24 +179,11 @@ module OpenLanes
 
       def complete?(entry) = File.file?(File.join(entry, COMPLETE))
 
-      # Whether the worktree's copy of `file` is the one on `base`, compared
-      # by blob id, so an uncommitted or untracked edit counts as a change.
-      def same_as_base?(path, file, base)
-        local = File.join(path, file)
-        return !git?(path, "cat-file", "-e", "#{base}:#{file}") unless File.file?(local)
-
-        theirs, ok = Open3.capture2("git", "-C", path, "rev-parse", "--verify", "--quiet", "#{base}:#{file}", err: File::NULL)
-        ours, = Open3.capture2("git", "-C", path, "hash-object", "--", file, err: File::NULL)
-        ok.success? && theirs.strip == ours.strip
-      end
-
-      def ignored?(path, file) = git?(path, "check-ignore", "--quiet", "--", file)
+      def ignored?(path, file) = Trust.git?(path, "check-ignore", "--quiet", "--", file)
 
       def symlinked?(path, file)
         [File.dirname(file), file].any? { File.symlink?(File.join(path, it)) }
       end
-
-      def git?(path, *) = system("git", "-C", path, *, out: File::NULL, err: File::NULL)
 
       # A copy-on-write clone where the filesystem offers one, a copy elsewhere.
       def copy_on_write(from, to)
