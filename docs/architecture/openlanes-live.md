@@ -124,7 +124,6 @@ classDiagram
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
-  class OpenLanes__Supervision__RestartRequest["OpenLanes::Supervision::RestartRequest"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Live ..> OpenLanes__Config : uses
@@ -196,7 +195,6 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Live__Commands ..> OpenLanes__Supervision : uses
-  OpenLanes__Live__Commands ..> OpenLanes__Supervision__RestartRequest : uses
   OpenLanes__Live__Commands ..> OpenLanes__UI : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Agents__Names : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Error : uses

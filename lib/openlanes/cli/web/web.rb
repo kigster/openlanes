@@ -88,8 +88,8 @@ module OpenLanes
       # @param keys [OpenLanes::Live::Keys]
       # @return [void]
       def restart_note(root, stores:, keys:)
-        path = File.join(Supervision.dir(root).path, Supervision::WebRestart::NOTE)
-        Live::Copilot::RestartNote.new(path:, copilot: Live.copilot(store: stores.current, keys:)).call
+        take = -> { Supervision.take_restart_note(root) }
+        Live::Copilot::RestartNote.new(take:, copilot: Live.copilot(store: stores.current, keys:)).call
       end
 
       # Logs as `web`, to the file the engine named in this process's

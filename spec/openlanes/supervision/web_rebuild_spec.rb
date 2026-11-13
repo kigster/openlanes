@@ -89,4 +89,27 @@ RSpec.describe OpenLanes::Supervision::WebRebuild do
       end
     end
   end
+
+  describe "the build's log (F101)" do
+    let(:status) { exited(2) }
+    let(:log) { spawner.calls.first.options.fetch(:out) }
+
+    it "is written in a directory only this user can use, not under a predictable name in tmp" do
+      rebuild.start
+      aggregate_failures do
+        expect(File.dirname(log)).not_to eq(Dir.tmpdir)
+        expect(File.stat(File.dirname(log)).mode & 0o777).to eq(0o700)
+      end
+    end
+
+    it "is told in the reply and removed once the build has settled" do
+      rebuild.start
+      File.write(log, "error TS2304: Cannot find name 'x'\n")
+      outcome = rebuild.poll
+      aggregate_failures do
+        expect(outcome.message).to include("Cannot find name 'x'")
+        expect(File.exist?(File.dirname(log))).to be(false)
+      end
+    end
+  end
 end

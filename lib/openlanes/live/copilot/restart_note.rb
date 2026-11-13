@@ -1,45 +1,39 @@
 # frozen_string_literal: true
 
-require "json"
-require "time"
-
 module OpenLanes
   module Live
     class Copilot
       # What the supervisor left for the control room it restarted
       # (`/restart-web`, plan 069.00): how the page's build went. The web
-      # server that read the command died with it, so the new one reads the
-      # note on boot, removes it, and tells the person in the copilot.
+      # server that read the command died with it, so the new one takes the
+      # note on boot and tells the person in the copilot. The note's format
+      # is {Supervision::WebRestartNote}'s, read through the facade.
       class RestartNote
-        # @param path [String] the note, `web-restart.json` beside the PID files
+        # @param take [#call] returns the note, removed as it is read, or nil
         # @param copilot [OpenLanes::Live::Copilot] where the turn goes
-        def initialize(path:, copilot:)
-          @path = path
+        def initialize(take:, copilot:)
+          @take = take
           @copilot = copilot
         end
 
-        # Removed before it is told, so a server that crashes after telling
-        # it cannot tell it twice.
+        # The note is removed before it is told, so a server that crashes
+        # after telling it cannot tell it twice.
         #
         # @return [OpenLanes::Live::Copilot::Turn, nil] the turn appended;
         #   nil when there was no note, or none that could be read
         def call
-          text = File.read(@path)
-          File.delete(@path)
-          note = JSON.parse(text)
-          at = Time.iso8601(note.fetch("at"))
-          @copilot.tell(Turn.new(id: "web-restart-#{at.to_i}", from: "copilot", kind: "text", text: text_for(note), at:))
-        rescue Errno::ENOENT, JSON::ParserError, KeyError, TypeError, ArgumentError
-          nil
+          note = @take.call or return
+
+          @copilot.tell(Turn.new(id: "web-restart-#{note.at.to_i}", from: "copilot", kind: "text", text: text_for(note.outcome), at: note.at))
         end
 
         private
 
-        # @param note [Hash]
+        # @param outcome [OpenLanes::Supervision::WebRebuild::Outcome]
         # @return [String]
-        def text_for(note)
-          verdict = note["status"] == "ok" ? "The control room restarted on a rebuilt page." : "The control room restarted on its old page."
-          "#{verdict} #{note["message"].to_s.sub(/\A./, &:upcase)}."
+        def text_for(outcome)
+          verdict = outcome.ok? ? "The control room restarted on a rebuilt page." : "The control room restarted on its old page."
+          "#{verdict} #{outcome.message.sub(/\A./, &:upcase)}."
         end
       end
     end

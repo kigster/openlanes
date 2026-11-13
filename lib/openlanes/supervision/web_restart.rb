@@ -7,9 +7,9 @@ module OpenLanes
   module Supervision
     # `/restart-web` inside the {Supervisor} (plan 069.00): stop the web
     # on purpose, build its page with a {WebRebuild}, leave the outcome in
-    # {NOTE} for the new web to tell, then start it again. The slot carries
-    # the rebuild while it runs, so its exit is no crash and {Crashes}
-    # records nothing.
+    # {NOTE} for the new web to tell, then start it again. It holds the
+    # slot ({Slot#held}) while the rebuild runs, so its exit is no crash and
+    # {Crashes} records nothing; the rebuild itself stays here.
     class WebRestart
       # The note a restarted web reads on boot, beside the PID files.
       NOTE = "web-restart.json"
@@ -36,7 +36,7 @@ module OpenLanes
       def tick(slots)
         web = slots.find { it.role == "web" }
         begin_restart(web) if @asked
-        step(web) if web&.rebuild
+        step(web) if @rebuild
       end
 
       private
@@ -47,10 +47,11 @@ module OpenLanes
       # @return [void]
       def begin_restart(slot)
         @asked = false
-        return if slot.nil? || slot.rebuild
+        return if slot.nil? || @rebuild
 
         Log.logger.info("web restart asked", pid: slot.pid)
-        slot.rebuild = WebRebuild.new(host: @host)
+        @rebuild = WebRebuild.new(host: @host)
+        slot.held = self
         slot.due = nil
         slot.given_up = nil
         @host.signaller.call("INT", -slot.pid) if slot.running?
@@ -65,8 +66,9 @@ module OpenLanes
       def step(slot)
         return if slot.running?
 
-        outcome = slot.rebuild.start.poll or return
-        slot.rebuild = nil
+        outcome = @rebuild.start.poll or return
+        @rebuild = nil
+        slot.held = nil
         note(outcome)
         Log.logger.info("web rebuilt", outcome: outcome.status)
         slot.due = @host.clock.monotonic
@@ -75,8 +77,7 @@ module OpenLanes
       # @param outcome [WebRebuild::Outcome]
       # @return [void]
       def note(outcome)
-        FileUtils.mkdir_p(@dir.path)
-        File.write(File.join(@dir.path, NOTE), JSON.generate(status: outcome.status, message: outcome.message, at: Time.now.utc.iso8601))
+        WebRestartNote.new(outcome:, at: Time.now).write(File.join(@dir.path, NOTE))
       end
     end
   end

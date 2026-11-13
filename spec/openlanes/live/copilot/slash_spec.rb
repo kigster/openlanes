@@ -47,6 +47,13 @@ RSpec.describe OpenLanes::Live::Copilot::Slash do
     end
   end
 
+  it "answers every command its usage lists, never with 'is not one of them' (F201)" do
+    described_class::COMMANDS.each do |entry|
+      parsed = parse("/#{entry.name}")
+      expect(parsed.is_a?(described_class::Help) ? parsed.text : "").not_to include("is not one of them"), entry.name
+    end
+  end
+
   it "lists every command of its table in the usage" do
     expect(described_class::USAGE.lines.size).to eq(described_class::COMMANDS.size + 1)
   end

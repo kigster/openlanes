@@ -10,8 +10,9 @@ module OpenLanes
     # block on a build, so {#start} spawns it and {#poll} asks after it.
     #
     # A build that cannot run or fails leaves `web/dist` as it was (D3):
-    # `vite build` empties its out dir before it writes, so the old page is
-    # copied aside first and put back on any outcome but `ok`.
+    # a {PageBackup} keeps the old page and puts it back on any outcome
+    # but `ok`. The build's output goes to a log in a private directory,
+    # removed once the outcome is settled.
     class WebRebuild
       # Seconds a build may run before it is killed and counted a failure.
       TIMEOUT = 300
@@ -54,8 +55,11 @@ module OpenLanes
       def start
         return self if @pid || @outcome || unbuildable
 
-        keep_old_page
-        @log = File.join(Dir.tmpdir, "openlanes-web-build-#{::Process.pid}.log")
+        @backup = PageBackup.new(File.join(@web, "dist")).keep
+        # A private directory (mode 0700), never a predictable name in a
+        # shared tmp: `spawn(out:)` follows a symlink planted there (F101).
+        @workdir = Dir.mktmpdir("openlanes-web-build")
+        @log = File.join(@workdir, "build.log")
         @started = @host.clock.monotonic
         @pid = @host.spawner.spawn({}, "npm", "run", "build", chdir: @web, pgroup: true, in: File::NULL, out: @log, err: %i[child out])
         self
@@ -105,39 +109,16 @@ module OpenLanes
       # @return [Outcome]
       def settle(status, message)
         @outcome = Outcome.new(status:, message:)
-        @outcome.ok? ? discard_old_page : restore_old_page
+        @outcome.ok? ? @backup&.discard : @backup&.restore
+        FileUtils.rm_rf(@workdir) if @workdir
         @outcome
       end
 
-      # @return [void]
-      def keep_old_page
-        dist = File.join(@web, "dist")
-        return unless File.directory?(dist)
-
-        @kept = Dir.mktmpdir("openlanes-web-dist")
-        FileUtils.cp_r(File.join(dist, "."), @kept)
-      end
-
-      # @return [void]
-      def restore_old_page
-        return unless @kept
-
-        dist = File.join(@web, "dist")
-        FileUtils.rm_rf(dist)
-        FileUtils.mkdir_p(dist)
-        FileUtils.cp_r(File.join(@kept, "."), dist)
-        discard_old_page
-      end
-
-      # @return [void]
-      def discard_old_page
-        FileUtils.rm_rf(@kept) if @kept
-        @kept = nil
-      end
-
+      # Read before {#settle} removes the log.
+      #
       # @return [String] the end of the build's output, or nothing
       def tail
-        lines = File.exist?(@log.to_s) ? File.readlines(@log).last(TAIL).join.strip : ""
+        lines = @log && File.exist?(@log) ? File.readlines(@log).last(TAIL).join.strip : ""
         lines.empty? ? "" : ":\n#{lines}"
       end
     end

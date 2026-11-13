@@ -27,34 +27,43 @@ module OpenLanes
         #   @return [String, nil] the ordinal `/status NNN` names
         Query = Data.define(:kind, :plan)
 
-        # One slash command: its word, how it is typed, and what it does.
-        # README.md's "Copilot commands" section lists the same rows, and a
-        # spec holds the two together.
-        Entry = Data.define(:name, :syntax, :summary)
+        # One slash command: its word, how it is typed, what it does, and the
+        # parser (a method of {Slash}) that reads its arguments. README.md's
+        # "Copilot commands" section lists the same rows, and a spec holds the
+        # two together. {parse} dispatches on this table alone, so a row cannot
+        # be listed in the usage and still be refused (F201).
+        Entry = Data.define(:name, :syntax, :summary, :parser)
 
         # Every slash command, the one table the usage and README read.
         COMMANDS = [
-          Entry.new(name: "stop", syntax: "/stop NNN", summary: "stop every agent on plan NNN and take it off the board"),
-          Entry.new(name: "restart",
+          Entry.new(name:    "stop",
+            syntax:  "/stop NNN",
+            summary: "stop every agent on plan NNN and take it off the board",
+            parser:  :plan_command),
+          Entry.new(name:    "restart",
             syntax:  "/restart NNN",
-            summary: "start plan NNN again when it is on the board with no agent"),
-          Entry.new(name: "concurrency",
+            summary: "start plan NNN again when it is on the board with no agent",
+            parser:  :plan_command),
+          Entry.new(name:    "concurrency",
             syntax:  "/concurrency N",
-            summary: "let N agents run at once; lowering it waits for agents to finish"),
-          Entry.new(name: "restart-web",
+            summary: "let N agents run at once; lowering it waits for agents to finish",
+            parser:  :concurrency),
+          Entry.new(name:    "restart-web",
             syntax:  "/restart-web",
-            summary: "stop the control room, rebuild its page and start it again; needs `openlanes start`"),
-          Entry.new(name: "status",
+            summary: "stop the control room, rebuild its page and start it again; needs `openlanes start`",
+            parser:  :restart_web),
+          Entry.new(name:    "status",
             syntax:  "/status [NNN]",
-            summary: "show every plan on the board, or plan NNN's agents and what each is doing; changes nothing"),
-          Entry.new(name: "stats", syntax: "/stats", summary: "show the run's tokens, cost and agents so far; changes nothing")
+            summary: "show every plan on the board, or plan NNN's agents and what each is doing; changes nothing",
+            parser:  :query),
+          Entry.new(name:    "stats",
+            syntax:  "/stats",
+            summary: "show the run's tokens, cost and agents so far; changes nothing",
+            parser:  :query)
         ].freeze
 
         # The usage, which the help turn starts with.
         USAGE = (["Slash commands:"] + COMMANDS.map { "#{it.syntax} — #{it.summary}" }).join("\n").freeze
-
-        # Words answered without the engine.
-        QUERIES = %w[status stats].freeze
 
         # Word to the command kind it queues.
         PLAN_KINDS = { "stop" => "stop_plan", "restart" => "restart_plan" }.freeze
@@ -69,12 +78,9 @@ module OpenLanes
 
           word, *args = text.delete_prefix("/").split
           word = word.to_s.downcase
-          return plan_command(word, args, id) if PLAN_KINDS.key?(word)
-          return query(word, args) if QUERIES.include?(word)
-          return concurrency(args, id) if word == "concurrency"
-          return restart_web(args, id) if word == "restart-web"
+          entry = COMMANDS.find { it.name == word } or return help("/#{word} is not one of them.")
 
-          help("/#{word} is not one of them.")
+          send(entry.parser, word, args, id)
         end
 
         # @return [OpenLanes::Live::Command, Help]
@@ -86,7 +92,7 @@ module OpenLanes
         end
 
         # @return [OpenLanes::Live::Command, Help]
-        def self.concurrency(args, id)
+        def self.concurrency(_word, args, id)
           limit = args.first.to_i if args.size == 1 && args.first.match?(/\A\d+\z/)
           return help("/concurrency needs a whole number of at least 1, like /concurrency 3.") unless limit&.positive?
 
@@ -94,14 +100,14 @@ module OpenLanes
         end
 
         # @return [OpenLanes::Live::Command, Help]
-        def self.restart_web(args, id)
+        def self.restart_web(_word, args, id)
           return help("/restart-web takes no arguments.") unless args.empty?
 
           command(id, "restart_web")
         end
 
         # @return [Query, Help]
-        def self.query(word, args)
+        def self.query(word, args, _id)
           return (args.empty? ? Query.new(kind: word, plan: nil) : help("/stats takes no arguments.")) if word == "stats"
           return Query.new(kind: word, plan: nil) if args.empty?
 

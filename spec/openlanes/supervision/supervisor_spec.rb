@@ -254,7 +254,7 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     let(:web) { supervisor.slots.last }
     let(:on_tick) do
       lambda do |s|
-        next unless web.running? && web.rebuild.nil?
+        next unless web.running? && web.held.nil?
         next s.stop! if asked.size == 4
 
         asked << web.pid

@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
+# The note is written and read through Supervision::WebRestartNote, the one
+# place that knows its format, so the two sides cannot drift apart (F203).
 RSpec.describe OpenLanes::Live::Copilot::RestartNote do
-  subject(:note) { described_class.new(path:, copilot:) }
+  subject(:note) { described_class.new(take: -> { OpenLanes::Supervision::WebRestartNote.take(path) }, copilot:) }
 
   let(:dir) { Dir.mktmpdir("restart-note") }
-  let(:path) { File.join(dir, "web-restart.json") }
+  let(:path) { File.join(dir, "pids", "web-restart.json") }
   let(:told) { [] }
   let(:copilot) { instance_double(OpenLanes::Live::Copilot).tap { |c| allow(c).to receive(:tell) { told << it } } }
 
-  def leave(status, message) = File.write(path, JSON.generate(status:, message:, at: "2026-11-13T10:00:00Z"))
+  def leave(status, message)
+    outcome = OpenLanes::Supervision::WebRebuild::Outcome.new(status:, message:)
+    OpenLanes::Supervision::WebRestartNote.new(outcome:, at: Time.utc(2026, 11, 13, 10)).write(path)
+  end
 
   after { FileUtils.rm_rf(dir) }
 
@@ -40,7 +45,14 @@ RSpec.describe OpenLanes::Live::Copilot::RestartNote do
   end
 
   it "drops a note it cannot read" do
+    FileUtils.mkdir_p(File.dirname(path))
     File.write(path, "{")
     expect([note.call, told, File.exist?(path)]).to eq([nil, [], false])
+  end
+
+  it "drops a note missing a key" do
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, JSON.generate(status: "ok", at: "2026-11-13T10:00:00Z"))
+    expect([note.call, told]).to eq([nil, []])
   end
 end

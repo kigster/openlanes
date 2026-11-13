@@ -234,7 +234,6 @@ Metrics/ClassLength:
     - 'lib/openlanes/plans/state_machine.rb'
     - 'lib/openlanes/presentation/documentation.rb'
     - 'lib/openlanes/presentation/reporter.rb'
-    - 'lib/openlanes/supervision/supervisor.rb'
     - 'lib/openlanes/support/config.rb'
     - 'lib/openlanes/support/ui.rb'
     - 'lib/openlanes/vcs/github.rb'

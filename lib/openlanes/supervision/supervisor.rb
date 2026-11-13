@@ -107,12 +107,8 @@ module OpenLanes
       def start(slot)
         slot.due = nil
         program = slot.program
-        slot.pid = @host.spawner.spawn(program.env.merge(@lifeline.env),
-          *program.argv,
-          pgroup: true,
-          in:     File::NULL,
-          **@lifeline.options,
-          **program.options)
+        options = { pgroup: true, in: File::NULL, **@lifeline.options, **program.options }
+        slot.pid = @host.spawner.spawn(program.env.merge(@lifeline.env), *program.argv, **options)
         Log.logger.info("child started", role: slot.role, pid: slot.pid, restarts: slot.restarts)
       end
 
@@ -125,7 +121,7 @@ module OpenLanes
         crashed = crashed?(slot, status)
         pid = slot.pid
         slot.pid = nil
-        return if @stopping || slot.rebuild
+        return if @stopping || slot.held
 
         crashed ? crash(slot, status, pid) : ended(slot, status)
       end
@@ -182,7 +178,7 @@ module OpenLanes
       #
       # @return [void]
       def finished
-        return if @slots.any? { it.running? || it.due || it.rebuild }
+        return if @slots.any?(&:busy?)
 
         @status ||= 1
         @stopping = true

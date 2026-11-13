@@ -139,7 +139,7 @@ module OpenLanes
         @record = record
         @claims = claims
         @clock = clock
-        @restart_web = restart_web || ->(root) { Supervision::RestartRequest.new(dir: Supervision.dir(root), probe: Supervision.probe).call }
+        @restart_web = restart_web || Supervision.method(:restart_web)
         @ready = false
         @swept_at = nil
         @pending = {}
@@ -764,7 +764,7 @@ module OpenLanes
       # @return [String]
       def restart_web(_command, dispatcher)
         pid = @restart_web.call(File.dirname(dispatcher.runner.tree.dir))
-        raise Refusal, Supervision::RestartRequest::REFUSAL unless pid
+        raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
 
         "restarting the control room: supervisor #{pid} stops it, rebuilds the page and starts it again; " \
           "the page reconnects when it is back"
