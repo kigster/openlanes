@@ -33,6 +33,29 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     expect(text).not_to include("snapshot the harness overwrites")
   end
 
+  describe "a reviewer's packet (plan 060.00)" do
+    let(:agent) { OpenLanes::Agents.find("staff-reviewer") }
+    let(:packet) { "# Review packet\n\n<diff pr=\"4\">\n+x\n</diff>\n\n---\n\n" }
+
+    it "opens the prompt with the packet, ahead of the reviewer's own definition" do
+      text = described_class.new(agent:, subject: plan, root: "/repo", profile:, packet:).to_s
+
+      expect(text).to start_with("#{packet}#{agent.prompt}")
+    end
+
+    it "tells every reviewer, through the shared brief, when to fetch for itself" do
+      expect(text).to include("### Your review packet", "Your invocation has no packet")
+      expect(text).not_to include("the diff (`gh pr diff <n>`)")
+    end
+
+    it "leaves a stopped rebase's resolution without one" do
+      rebase = instance_double(OpenLanes::Vcs::Refresh::Outcome, base: "origin/main", files: ["lib/a.rb"])
+      text = described_class.new(agent:, subject: plan, root: "/repo", profile:, packet:, rebase:).to_s
+
+      expect(text).not_to include("# Review packet")
+    end
+  end
+
   describe "a reviewer's rejection cap and struck findings (plan 015)" do
     let(:agent) { OpenLanes::Agents.find("staff-reviewer") }
 
