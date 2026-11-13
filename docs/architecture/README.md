@@ -75,7 +75,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Execution : 1
   OpenLanes__CLI ..> OpenLanes__Lifecycle : 7
   OpenLanes__CLI ..> OpenLanes__Linear : 5
-  OpenLanes__CLI ..> OpenLanes__Live : 13
+  OpenLanes__CLI ..> OpenLanes__Live : 14
   OpenLanes__CLI ..> OpenLanes__Log : 7
   OpenLanes__CLI ..> OpenLanes__Memory : 9
   OpenLanes__CLI ..> OpenLanes__Plans : 26
@@ -86,7 +86,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__UI : 19
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
-  OpenLanes__CLI ..> OpenLanes__Web : 14
+  OpenLanes__CLI ..> OpenLanes__Web : 15
   OpenLanes__Config ..> OpenLanes : 2
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Apps : 1
@@ -148,16 +148,16 @@ classDiagram
   OpenLanes__Lifecycle ..> OpenLanes__Vcs : 3
   OpenLanes__Linear ..> OpenLanes : 6
   OpenLanes__Linear ..> OpenLanes__Plans : 1
-  OpenLanes__Live ..> OpenLanes : 17
-  OpenLanes__Live ..> OpenLanes__Adapters : 5
-  OpenLanes__Live ..> OpenLanes__Agents : 5
+  OpenLanes__Live ..> OpenLanes : 20
+  OpenLanes__Live ..> OpenLanes__Adapters : 6
+  OpenLanes__Live ..> OpenLanes__Agents : 7
   OpenLanes__Live ..> OpenLanes__Arbitration : 1
   OpenLanes__Live ..> OpenLanes__Config : 6
   OpenLanes__Live ..> OpenLanes__Engine : 7
   OpenLanes__Live ..> OpenLanes__Events : 1
-  OpenLanes__Live ..> OpenLanes__Execution : 4
+  OpenLanes__Live ..> OpenLanes__Execution : 5
   OpenLanes__Live ..> OpenLanes__Lifecycle : 6
-  OpenLanes__Live ..> OpenLanes__Plans : 26
+  OpenLanes__Live ..> OpenLanes__Plans : 28
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Memory ..> OpenLanes : 3
   OpenLanes__Memory ..> OpenLanes__Agents : 1
@@ -198,7 +198,7 @@ classDiagram
   OpenLanes__Web ..> OpenLanes__Apps : 3
   OpenLanes__Web ..> OpenLanes__Container : 2
   OpenLanes__Web ..> OpenLanes__Engine : 1
-  OpenLanes__Web ..> OpenLanes__Live : 30
+  OpenLanes__Web ..> OpenLanes__Live : 34
   OpenLanes__Web ..> OpenLanes__Log : 1
   OpenLanes__Web ..> OpenLanes__Plans : 11
   OpenLanes__Web ..> OpenLanes__UI : 2

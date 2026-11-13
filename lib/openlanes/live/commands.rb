@@ -31,30 +31,31 @@ module OpenLanes
 
       # Command kind to the method that applies it.
       HANDLERS = {
-        "answer"          => :answer,
-        "hold_blocked"    => :hold_blocked,
-        "release_hold"    => :release_hold,
-        "resume"          => :resume,
-        "discard"         => :discard,
-        "message"         => :message,
-        "hold"            => :signal,
-        "wrap_up"         => :signal,
-        "compact"         => :compact,
-        "stop"            => :signal,
-        "stop_all"        => :stop_all,
-        "set_model"       => :set_model,
-        "switch_model"    => :switch_model,
-        "add_plan"        => :add_plan,
-        "create_plans"    => :create_plans,
-        "respond"         => :respond,
-        "pause_discuss"   => :pause_discuss,
-        "resume_anyway"   => :resume_anyway,
-        "stop_plan"       => :stop_plan,
-        "restart_plan"    => :restart_plan,
-        "set_concurrency" => :set_concurrency,
-        "set_chime"       => :set_chime,
-        "extend_time"     => :extend_time,
-        "rule_finding"    => :rule_finding
+        "answer"            => :answer,
+        "hold_blocked"      => :hold_blocked,
+        "release_hold"      => :release_hold,
+        "resume"            => :resume,
+        "discard"           => :discard,
+        "message"           => :message,
+        "hold"              => :signal,
+        "wrap_up"           => :signal,
+        "compact"           => :compact,
+        "stop"              => :signal,
+        "stop_all"          => :stop_all,
+        "set_model"         => :set_model,
+        "switch_model"      => :switch_model,
+        "add_plan"          => :add_plan,
+        "create_plans"      => :create_plans,
+        "respond"           => :respond,
+        "pause_discuss"     => :pause_discuss,
+        "confirm_interview" => :confirm_interview,
+        "resume_anyway"     => :resume_anyway,
+        "stop_plan"         => :stop_plan,
+        "restart_plan"      => :restart_plan,
+        "set_concurrency"   => :set_concurrency,
+        "set_chime"         => :set_chime,
+        "extend_time"       => :extend_time,
+        "rule_finding"      => :rule_finding
       }.freeze
 
       # The most seconds one `extend_time` adds: the largest grant
@@ -332,6 +333,26 @@ module OpenLanes
         @run_state.hold_question(question_id(subject, question), held: false)
         dispatcher.wake!
         nil
+      end
+
+      # The decision a person confirmed at the end of the unblocker's
+      # interview (plan 068), written as the answer to that question in
+      # exactly the form {#answer} writes, so the drain folds it unchanged.
+      # The interview is closed after: the question is answered, and a
+      # second confirm, or one after a button answer, is refused.
+      #
+      # @return [String, nil]
+      def confirm_interview(command, dispatcher)
+        subject, question = question!(command, dispatcher)
+        return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
+        raise Refusal, "this question already has an answer waiting" if question.answered
+
+        interview = Interview.new(store: @store, keys: @keys, plan: command.plan, number: question.number)
+        decision = interview.decision(command["turn"]) or
+          raise Refusal, "the interview has no decision #{command["turn"]} to confirm"
+        write_answer(subject, question, command.with(payload: command.payload.merge("text" => decision.answer)), dispatcher)
+        interview.close
+        "answered: #{decision.answer}"
       end
 
       # An answer to the harness's request for more time or rounds (E1).

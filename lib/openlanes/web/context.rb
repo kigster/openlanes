@@ -40,6 +40,10 @@ module OpenLanes
     #   @return [#call, nil] who answers the copilot's messages (W17):
     #     {Live::Copilot::Operator} beside a real run, {Demo::COPILOT} under
     #     `--demo`, nil where nothing does, and `POST /api/copilot` says so
+    # @!attribute [r] interview
+    #   @return [#call, nil] who answers in the unblocker's interview (plan 068):
+    #     {Live::Interview::Operator} beside a real run, {Demo::Interview} under
+    #     `--demo`, nil where nothing does
     # @!attribute [r] background
     #   @return [#call] runs the block it is given apart from the request, a
     #     thread by default; the suite passes one that runs it when told
@@ -67,6 +71,7 @@ module OpenLanes
       :lifetime,
       :demo,
       :copilot,
+      :interview,
       :background,
       :chat,
       :listen,
@@ -75,7 +80,7 @@ module OpenLanes
       # +root+ falls back to the parent of +plans_dir+ only where none is
       # given, which is the default layout and what the suite's trees use.
       def initialize(plans_dir:, root: File.dirname(plans_dir), dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil,
-        copilot: nil, chat: nil, background: Context::THREAD, listen: Listen.parse(nil), credentials: nil,
+        copilot: nil, interview: nil, chat: nil, background: Context::THREAD, listen: Listen.parse(nil), credentials: nil,
         stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end

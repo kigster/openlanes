@@ -67,6 +67,7 @@ module OpenLanes
           node:,
           demo:,
           copilot:,
+          interview: demo ? OpenLanes::Web::Demo::Interview : interview_for(root:, tree:),
           listen:,
           credentials:)
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
@@ -158,6 +159,11 @@ module OpenLanes
       def copilot_for(root:, tree:, stores:, keys:)
         Live::Copilot::Operator.new(root:, plans_dir: tree.dir, stores:, keys:)
       end
+
+      # The unblocker, answering in the interview on an open question (plan 068).
+      #
+      # @return [OpenLanes::Live::Interview::Operator]
+      def interview_for(root:, tree:) = Live::Interview::Operator.new(root:, plans_dir: tree.dir)
 
       # Listen until INT or TERM.
       #
