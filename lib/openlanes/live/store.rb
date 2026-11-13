@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "monitor"
 require "redis-client"
 
 module OpenLanes
@@ -16,6 +17,21 @@ module OpenLanes
     #
     # Every connection failure surfaces as {Unavailable}, so a caller that
     # wants to keep running without Redis rescues one class, not a gem's.
+    #
+    # One store is shared by threads: the engine pings Redis from its tick
+    # while agent threads publish through the same instance. RedisClient is
+    # not thread-safe, and unserialized calls raised "can't modify string;
+    # temporarily locked" from inside its write buffer, so every command
+    # holds one Monitor for as long as it talks to the connection. A
+    # blocking {#xread} holds it for the whole wait; give a caller that
+    # blocks a store of its own.
+    #
+    # Serializing would make timeouts add up: six callers queued behind a
+    # Redis that accepts connections but stops answering would each wait
+    # out their own {TIMEOUT}, and the tick's ping would learn of the outage
+    # last. So a caller that queued before a call failed is failed at once
+    # when its turn comes, without touching the connection. A caller that
+    # arrives after the failure tries Redis again.
     class Store
       # One stream entry: its id and its fields.
       #
@@ -69,6 +85,8 @@ module OpenLanes
       def initialize(url:, timeout: TIMEOUT)
         @url = url
         @client = RedisClient.config(url:, timeout:, reconnect_attempts: 1).new_client
+        @lock = Monitor.new
+        @failed_at = nil
       end
 
       # @return [String]
@@ -78,7 +96,7 @@ module OpenLanes
       def ping = call("PING") == "PONG"
 
       # @return [void]
-      def close = @client.close
+      def close = @lock.synchronize { @client.close }
 
       # ---- strings ----------------------------------------------------------
 
@@ -188,7 +206,9 @@ module OpenLanes
       def xack(key, group, *ids) = ids.empty? ? 0 : call("XACK", key, group, *ids)
 
       # Entries after +id+. With +block+ it waits up to that many
-      # milliseconds for one to arrive.
+      # milliseconds for one to arrive, holding the store's lock all the
+      # while: every other caller of this instance, the engine's outage ping
+      # included, waits behind it. Pass +block+ only on a store of your own.
       #
       # @param key [String]
       # @param id [String] "$" for only what arrives from now
@@ -268,13 +288,35 @@ module OpenLanes
 
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
-      def guarded
-        yield
+      def guarded(&)
+        queued_at = monotonic
+        @lock.synchronize do
+          raise Unavailable, "Redis at #{Live.mask(url)} is unavailable: a call failed while this one waited" if failed_since?(queued_at)
+
+          talk(&)
+        end
+      end
+
+      # @return [Object] the block's value
+      # @raise [OpenLanes::Live::Unavailable]
+      def talk
+        # A CommandError is an answer too: either way Redis is back, so
+        # nobody still queued from before the last failure is refused.
+        yield.tap { @failed_at = nil }
       rescue RedisClient::CommandError
+        @failed_at = nil
         raise
       rescue RedisClient::Error => e
+        @failed_at = monotonic
         raise Unavailable, "Redis at #{Live.mask(url)} is unavailable: #{e.message.sub(/\s*\(redis:.*\)\z/, "")}"
       end
+
+      # @param time [Float] monotonic seconds
+      # @return [Boolean] whether a call failed at or after +time+
+      def failed_since?(time) = !@failed_at.nil? && @failed_at >= time
+
+      # @return [Float]
+      def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       # @return [Array] the raw command for one transaction write
       def command_for(name, args, kwargs)
