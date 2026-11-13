@@ -27,6 +27,22 @@ module OpenLanes
       # line may follow.
       STATUSES = ["Started", "Completed", "Almost completed", "Interrupted", "Blocked"].freeze
 
+      # A note passed as the whole line an agent's instructions spell:
+      # `Completed, round 1 (passed)` where `passed` was meant.
+      WRAPPED_NOTE = /\A\s*(?:#{STATUSES.join("|")})\s*,?\s*round\s+\w+\s*\((.+)\)\s*\z/i
+
+      # The words the harness reads out of a note. Instructions write a
+      # signature as `Completed, round R (passed)`, and an agent that passes
+      # that whole line as its note reported a verdict every anchored reader
+      # ({Verdict::NOTE}, {Arbitration::Counter}) missed: plan 057's security
+      # reviewer signed `Completed, round 1 (passed)` thirteen times, each one
+      # counted as no verdict, so two rejections never reached the builder.
+      #
+      # @param note [String, nil]
+      # @return [String, nil] the words in parentheses when the note is such
+      #   a line, the note otherwise
+      def self.bare_note(note) = note&.then { it[WRAPPED_NOTE, 1]&.strip || it }
+
       # Local time with the zone spelled out, so an entry written on one
       # machine reads correctly on another.
       TIME_FORMAT = "%Y-%m-%d %I:%M:%S %p %Z"
