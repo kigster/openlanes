@@ -22,12 +22,12 @@ brew 'age'
 
 # the Secure Enclave plugin exists only on macOS
 if OS.mac? && `arch`.strip =~ /i386/
-  brew 'age-plugin-se' 
+#  brew 'age-plugin-se' 
 else
-  brew 'age-plugin-se' 
+#  brew 'age-plugin-se' 
 end
 
-brew 'kigster/tap/sopsy'
+#brew 'kigster/tap/sopsy'
 
 # Pre-commit hooks to check for secrets
 brew 'gitleaks'
@@ -41,7 +41,7 @@ brew 'redis'
 # Github and other utilities
 brew 'rbenv'
 brew 'gh'
-brew 'mermaid-cli'
+#brew 'mermaid-cli'
 brew 'circleci'
 brew 'gawk'        # bin/ol-tee stamps each line with strftime, which BSD awk lacks
 brew 'git'         # worktrees, branches, the boundary's reflog check

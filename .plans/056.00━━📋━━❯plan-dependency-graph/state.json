@@ -5,10 +5,10 @@
     "ordinal": "056.00",
     "slug": "plan-dependency-graph"
   },
-  "state": "new",
-  "updated_at": "2026-10-27T17:29:13-07:00",
+  "state": "ready_for_planning",
+  "updated_at": "2026-11-12T19:24:05-08:00",
   "stages": [],
   "signatures": [],
   "messages": [],
-  "moves": 1
+  "moves": 2
 }

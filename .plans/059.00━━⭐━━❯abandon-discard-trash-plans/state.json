@@ -2,13 +2,13 @@
   "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
   "version": 1,
   "plan": {
-    "ordinal": "064.00",
-    "slug": "make-openlanes-more-interactive"
+    "ordinal": "059.00",
+    "slug": "abandon-discard-trash-plans"
   },
-  "state": "new",
-  "updated_at": "2026-11-10T12:49:05-08:00",
+  "state": "planned",
+  "updated_at": "2026-11-12T19:24:04-08:00",
   "stages": [],
   "signatures": [],
   "messages": [],
-  "moves": 1
+  "moves": 2
 }
