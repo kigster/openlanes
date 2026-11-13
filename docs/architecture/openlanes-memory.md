@@ -4,6 +4,8 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
@@ -41,6 +43,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Section : uses
   OpenLanes__Memory ..> OpenLanes__Vcs : uses
+  OpenLanes__Memory__Curation ..> OpenLanes__Agents__Names : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Memory__Curation ..> OpenLanes__Memory : uses

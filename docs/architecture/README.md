@@ -141,6 +141,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Plans : 23
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Memory ..> OpenLanes : 2
+  OpenLanes__Memory ..> OpenLanes__Agents : 1
   OpenLanes__Memory ..> OpenLanes__Execution : 3
   OpenLanes__Memory ..> OpenLanes__Vcs : 1
   OpenLanes__Plans ..> OpenLanes : 20

@@ -10,7 +10,7 @@ module OpenLanes
     # each passes {Inbox#add}'s checks or is dropped.
     class Curation
       # The agent that curates unless told otherwise.
-      DEFAULT_AGENT = "curator"
+      DEFAULT_AGENT = Agents::Names::CURATOR
 
       # What one plan yielded.
       #
