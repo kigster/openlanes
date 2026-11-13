@@ -155,6 +155,15 @@ RSpec.configure do |config|
     OpenLanes::Log::Settings.members.each { ENV.delete("OPENLANES_LOG#{"_#{it.upcase}" unless it == :file}") }
   end
   config.after { OpenLanes::Log.reset! }
+
+  # A login the developer's shell (or a harness run) exports must not decide
+  # whether an example's server asks for one.
+  config.around do |example|
+    credentials = ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
+    example.run
+  ensure
+    ENV["OPENLANES_ADMIN_CREDENTIALS"] = credentials if credentials
+  end
   # A dispatcher with a state file says its agents outlive it; the suite's own exit still stops them.
   config.after { OpenLanes::Execution::AgentProcess.reset! }
 
@@ -172,11 +181,18 @@ RSpec.configure do |config|
   end
 
   # Every example tagged `:tree` gets its own throwaway `.plans` directory, so
-  # the suite never reads or writes a real project.
+  # the suite never reads or writes a real project. It also runs from that
+  # directory's root: `Config.current` reads `.openlanes.yml` from the working
+  # directory, and this repository's own (frontend: true,
+  # desired_codebase_quality: high) would otherwise route the fixture's plans.
+  # The around hook above puts the working directory back. A group that reads
+  # this repository on purpose (its agents/, its login settings) says so with
+  # `:host_cwd` and keeps the suite's working directory.
   config.around(:each, :tree) do |example|
     Dir.mktmpdir("openlanes") do |tmp|
       @plans_root = File.join(tmp, OpenLanes::PLANS_DIR)
       FileUtils.mkdir_p(@plans_root)
+      Dir.chdir(tmp) unless example.metadata[:host_cwd]
       example.run
     end
   end

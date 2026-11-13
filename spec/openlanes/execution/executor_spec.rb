@@ -585,7 +585,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
   end
 
-  describe "staff-reviewer, as the repository actually defines him" do
+  describe "staff-reviewer, as the repository actually defines him", :host_cwd do
     let(:staff_reviewer) { OpenLanes::Agents::Registry.new(dir: "agents").all.find { |a| a.name == "staff-reviewer" } }
 
     # A verdict is a review label now (plan 005), set through `openlanes

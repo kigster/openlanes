@@ -25,6 +25,13 @@ module OpenLanes
     # holds one Monitor for as long as it talks to the connection. A
     # blocking {#xread} holds it for the whole wait; give a caller that
     # blocks a store of its own.
+    #
+    # Serializing would make timeouts add up: six callers queued behind a
+    # Redis that accepts connections but stops answering would each wait
+    # out their own {TIMEOUT}, and the tick's ping would learn of the outage
+    # last. So a caller that queued before a call failed is failed at once
+    # when its turn comes, without touching the connection. A caller that
+    # arrives after the failure tries Redis again.
     class Store
       # One stream entry: its id and its fields.
       #
@@ -79,6 +86,7 @@ module OpenLanes
         @url = url
         @client = RedisClient.config(url:, timeout:, reconnect_attempts: 1).new_client
         @lock = Monitor.new
+        @failed_at = nil
       end
 
       # @return [String]
@@ -198,7 +206,9 @@ module OpenLanes
       def xack(key, group, *ids) = ids.empty? ? 0 : call("XACK", key, group, *ids)
 
       # Entries after +id+. With +block+ it waits up to that many
-      # milliseconds for one to arrive.
+      # milliseconds for one to arrive, holding the store's lock all the
+      # while: every other caller of this instance, the engine's outage ping
+      # included, waits behind it. Pass +block+ only on a store of your own.
       #
       # @param key [String]
       # @param id [String] "$" for only what arrives from now
@@ -279,12 +289,31 @@ module OpenLanes
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
       def guarded(&)
-        @lock.synchronize(&)
+        queued_at = monotonic
+        @lock.synchronize do
+          raise Unavailable, "Redis at #{Live.mask(url)} is unavailable: a call failed while this one waited" if failed_since?(queued_at)
+
+          talk(&)
+        end
+      end
+
+      # @return [Object] the block's value
+      # @raise [OpenLanes::Live::Unavailable]
+      def talk
+        yield
       rescue RedisClient::CommandError
         raise
       rescue RedisClient::Error => e
+        @failed_at = monotonic
         raise Unavailable, "Redis at #{Live.mask(url)} is unavailable: #{e.message.sub(/\s*\(redis:.*\)\z/, "")}"
       end
+
+      # @param time [Float] monotonic seconds
+      # @return [Boolean] whether a call failed at or after +time+
+      def failed_since?(time) = !@failed_at.nil? && @failed_at >= time
+
+      # @return [Float]
+      def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       # @return [Array] the raw command for one transaction write
       def command_for(name, args, kwargs)

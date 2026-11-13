@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
-  # Run from the fixture root, so this repository's own .openlanes.yml
-  # (frontend: true, desired_codebase_quality: high) does not route these plans.
-  before { Dir.chdir(File.dirname(plans_root)) }
-
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:agents) { OpenLanes::Agents::Registry.new }
   let(:state) { OpenLanes::Engine::StateFile.new(path: OpenLanes::Engine::StateFile.for(tree)) }
