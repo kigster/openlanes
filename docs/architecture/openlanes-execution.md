@@ -32,6 +32,8 @@ classDiagram
   <<module>> OpenLanes__Execution__ProcessStart
   class OpenLanes__Execution__Prompt["Prompt"]
   class OpenLanes__Execution__Rearm["Rearm"]
+  class OpenLanes__Execution__ReviewPacket["ReviewPacket"]
+  class OpenLanes__Execution__ReviewPacket__Shelf["ReviewPacket::Shelf"]
   class OpenLanes__Execution__ShutdownGrace["ShutdownGrace"]
   <<module>> OpenLanes__Execution__ShutdownGrace
   class OpenLanes__Execution__Trace["Trace"]
@@ -45,15 +47,20 @@ classDiagram
   <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Runtime["OpenLanes::Runtime"]
+  <<module>> OpenLanes__Runtime
   class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
   <<module>> OpenLanes__Spawner__System
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   OpenLanes__Execution ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution ..> OpenLanes__Execution__ReviewPacket : uses
   OpenLanes__Execution ..> OpenLanes__Execution__Trace : uses
+  OpenLanes__Execution ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Execution__AgentProcess ..|> OpenLanes__Execution__AgentProcess__Registry : includes
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
@@ -69,6 +76,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Error : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary__Snapshot : uses
@@ -92,5 +100,12 @@ classDiagram
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Error : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Execution__ReviewPacket__Shelf : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__UI : uses
+  OpenLanes__Execution__ReviewPacket ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__Runtime : uses
+  OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__UI : uses
   OpenLanes__Execution__Transcript ..> OpenLanes__Plans__Journal : uses
 ```
