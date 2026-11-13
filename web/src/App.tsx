@@ -335,6 +335,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               onOpenCar={onOpenCar}
               onUnblock={onUnblock}
               renderModel={renderModel}
+              onCommand={onCommand}
             />
           </Tabs.Content>
           {others.map(o => (

@@ -192,6 +192,57 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     end
   end
 
+  describe "cost" do
+    it "starts every plan at no less than its cars' sum" do
+      expect([me, *board.others].flat_map { it["plans"] })
+        .to all(satisfy { |plan| plan["cost"] >= plan["cars"].sum { it["cost"].to_f }.round(4) })
+    end
+
+    it "rises on a running car and on its plan by the same amount" do
+      plan = me["plans"].find { it["ordinal"] == ordinal }
+      before = [car("001.00/frontend-coder")["cost"], plan["cost"]]
+      board.advance(Time.now)
+      added = [car("001.00/frontend-coder")["cost"] - before[0], plan["cost"] - before[1]]
+      expect(added.first).to be_positive
+      expect(plan["cost"]).to be >= plan["cars"].sum { it["cost"] }.round(4) - 0.001
+    end
+  end
+
+  describe "review" do
+    it "shows a diff and two findings, then the ruling a person gave" do
+      board.apply(command("rule_finding", plan: ordinal, finding: "F1", verdict: "strike"))
+      review = board.review(ordinal)
+      expect([review[:diff][:stat], review[:findings].map { it[:ruling] }]).to match([/1 file changed/, ["strike", nil]])
+    end
+
+    it "refuses a finding it does not have, and a plan it does not have" do
+      aggregate_failures do
+        expect { board.apply(command("rule_finding", plan: ordinal, finding: "F9", verdict: "strike")) }
+          .to raise_error(described_class::Refusal, /no finding F9/)
+        expect { board.review("999.00") }.to raise_error(OpenLanes::Web::PlanReview::NotFound)
+      end
+    end
+  end
+
+  describe "extend_time" do
+    it "adds the seconds to a running car's remaining time" do
+      before = car("001.00/frontend-coder")["remaining"].to_i
+      reason = board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 1200))
+      expect([reason, car("001.00/frontend-coder")["remaining"]]).to eq(["frontend-coder has 20 more minutes", before + 1200])
+    end
+
+    it "refuses a car that is not running" do
+      board.apply(command("stop", plan: ordinal, agent: "frontend-coder"))
+      expect { board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 600)) }
+        .to raise_error(described_class::Refusal, "001.00/frontend-coder is not running")
+    end
+
+    it "refuses seconds out of range" do
+      expect { board.apply(command("extend_time", plan: ordinal, agent: "frontend-coder", seconds: 0)) }
+        .to raise_error(described_class::Refusal, /from 1 to 1200/)
+    end
+  end
+
   describe "stop_all" do
     before { board.apply(command("stop_all")) }
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan, Spend } from "../api/types";
-import { clock, fmt, roundTip, roundsOf } from "./format";
+import { clock, cost, fmt, roundTip, roundsOf } from "./format";
 import { Gear } from "./Gear";
 import { carLook, lockMark, modelLabel, spendLook } from "./model";
 
@@ -73,6 +73,7 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
         <span title="Tokens out">
           ↓ <b>{fmt(car.down)}</b>
         </span>
+        {car.cost !== undefined && <span title="Cost so far">{cost(car.cost)}</span>}
         {/* Which round this is and how many it may run, granted extensions included, beside how long it has run:
             "Round 2 of 3 | 6m 22s". An agent on its last round is the one about to ask for another. */}
         <span className="car-when">

@@ -26,6 +26,9 @@ classDiagram
   class OpenLanes__Plans__Execution["Execution"]
   <<module>> OpenLanes__Plans__Execution
   class OpenLanes__Plans__Feature["Feature"]
+  class OpenLanes__Plans__Findings["Findings"]
+  <<module>> OpenLanes__Plans__Findings
+  class OpenLanes__Plans__Findings__Finding["Findings::Finding"]
   class OpenLanes__Plans__GlobalLock["GlobalLock"]
   class OpenLanes__Plans__Index["Index"]
   class OpenLanes__Plans__Journal["Journal"]
@@ -87,6 +90,9 @@ classDiagram
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Execution ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Execution ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__Findings__Finding : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Execution : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__PlanState : uses

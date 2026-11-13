@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AppStatus, Board, CopilotLog, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
+import { appliesTo, applyDelta } from "./boardDelta";
 import { openStream, type ConnectionState } from "./events";
 import { APPS_KEY, BOARD_KEY, COPILOT_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
@@ -54,6 +55,10 @@ export function useBoard(): BoardState {
   // Counts stream events applied. A GET that sees it move while in flight left before the stream's news, and seq
   // cannot catch every such answer: `{me: null}` (the run finished) has no seq to lose to the snapshot it replaced.
   const streamed = useRef(0);
+  // The version of the board the stream last delivered; null before one arrives. A delta applies only onto it.
+  const version = useRef<number | null>(null);
+  // Bumped when a delta does not follow the board held: the effect below reopens the stream, which starts with a full board.
+  const [epoch, setEpoch] = useState(0);
   const query = useQuery<WireBoard>({
     queryKey: BOARD_KEY,
     queryFn: fixture
@@ -75,7 +80,19 @@ export function useBoard(): BoardState {
         // Cancelling reverts synchronously to the state before that GET, which the event then replaces.
         void client.cancelQueries({ queryKey: BOARD_KEY });
         streamed.current += 1;
+        version.current = board.version ?? null;
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
+      },
+      onBoardDelta: delta => {
+        if (!appliesTo(version.current, delta)) {
+          version.current = null;
+          setEpoch(n => n + 1);
+          return;
+        }
+        // No cancelQueries here, unlike onBoard: `streamed` already makes a GET in flight answer with this cache.
+        streamed.current += 1;
+        version.current = delta.version;
+        client.setQueryData<WireBoard>(BOARD_KEY, old => (old ? applyDelta(old, delta) : old));
       },
       onReply: reply => replies.deliver(reply),
       // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
@@ -96,7 +113,7 @@ export function useBoard(): BoardState {
       },
       onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
     }, eventsUrl());
-  }, [client, fixture]);
+  }, [client, fixture, epoch]);
 
   const data = query.data;
   // The page below works on a Board whose `me` is there; until it is, there is no board to show.

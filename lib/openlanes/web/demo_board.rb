@@ -48,6 +48,23 @@ module OpenLanes
         "stop"    => { "phase" => "stopped", "state" => "done" }
       }.freeze
 
+      # The review every demo plan shows (plan 064, B3): one pretend diff and
+      # a staff-reviewer section of two findings, parsed as a real one is.
+      REVIEW_DIFF = { stat:      " lib/tax/rule.rb | 12 ++++++++----\n 1 file changed, 8 insertions(+), 4 deletions(-)\n",
+                      patch:     "--- a/lib/tax/rule.rb\n+++ b/lib/tax/rule.rb\n@@ -1,3 +1,3 @@\n-def rate = 0.2\n+def rate = BigDecimal(\"0.2\")\n",
+                      truncated: false }.freeze
+      REVIEW_FINDINGS = <<~MARKDOWN
+        ## Findings: staff-reviewer
+
+        ### F1 [critical] lib/tax/rule.rb:2
+
+        A Float rate rounds 0.1 + 0.2 to 0.30000000000000004.
+
+        ### F2 [minor] spec/tax/rule_spec.rb:14
+
+        The spec checks one rate only.
+      MARKDOWN
+
       # The fields of a snapshot's `node` a declared identity replaces.
       IDENTITY = %w[id user host ip checkout].freeze
 
@@ -64,6 +81,12 @@ module OpenLanes
         @me["node"].merge!(node.wire(heartbeat_at: Time.now).transform_keys(&:to_s).slice(*IDENTITY)) if node
         @random = random
         @ticks = 0
+        @rulings = Hash.new { |h, k| h[k] = [] }
+        # A plan's cost is what its cars spent plus what departed cars did,
+        # so it starts no lower than its cars' sum, as the engine's does.
+        [@me, *@others].flat_map { it["plans"] }.each do |plan|
+          plan["cost"] = [plan["cost"].to_f, plan["cars"].sum { it["cost"].to_f }].max.round(4)
+        end
       end
 
       # @return [Hash] this node's snapshot
@@ -79,6 +102,16 @@ module OpenLanes
       def advance(now)
         @ticks += 1
         [@me, *@others].each { |snapshot| advance_snapshot(snapshot, now) }
+      end
+
+      # @param ordinal [String]
+      # @return [Hash] as `GET /api/plans/:ordinal/review` answers
+      # @raise [OpenLanes::Web::PlanReview::NotFound]
+      def review(ordinal)
+        number = Plans::Ordinal.parse(ordinal.to_s)&.to_s
+        raise PlanReview::NotFound, "there is no plan #{ordinal}" unless @me["plans"].any? { it["ordinal"] == number }
+
+        { diff: REVIEW_DIFF, findings: findings(number).map(&:wire) }
       end
 
       # @param command [OpenLanes::Live::Command]
@@ -232,6 +265,41 @@ module OpenLanes
         car!(command).merge!(SIGNALS.fetch(command.kind)).tap { it["held"] = command.kind == "hold" }
         nil
       end
+
+      # The demo's clock moves at once; there is no agent to tell.
+      #
+      # @return [String]
+      def extend_time(command)
+        seconds = begin
+          Live::Commands.seconds!(command.payload["seconds"])
+        rescue Live::Commands::Refusal => e
+          raise Refusal, e.message
+        end
+        car = car!(command)
+        raise Refusal, "#{command.car} is not running" unless car["state"] == "running"
+
+        car["remaining"] = car["remaining"].to_i + seconds
+        "#{command.agent} has #{seconds / 60} more minutes"
+      end
+
+      # The demo keeps its rulings in memory, in the shape `state.json` does.
+      #
+      # @return [String]
+      def rule_finding(command)
+        plan!(command)
+        finding = begin
+          Live::Commands.finding!(findings(command.plan), command)
+        rescue Live::Commands::Refusal => e
+          raise Refusal, e.message
+        end
+        outcome, bucket = Plans::Findings::VERDICTS.fetch(command["verdict"])
+        @rulings[command.plan] << { "kind" => "finding", "outcome" => outcome,
+                                    "findings" => { bucket => [finding.id], "headings" => { finding.id => finding.heading } } }
+        "#{finding.id} #{command["verdict"]}"
+      end
+
+      # @return [Array<OpenLanes::Plans::Findings::Finding>]
+      def findings(ordinal) = Plans::Findings.parse(REVIEW_FINDINGS, rulings: @rulings[ordinal])
 
       # The demo has no session to compact; the car calms as a real one would
       # once its context is shed.

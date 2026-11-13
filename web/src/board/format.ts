@@ -30,6 +30,9 @@ export const span = (s: number): string => {
 
 export const dollars = (n: number): string => "$" + n.toFixed(2);
 
+/** A single agent's spend: cents, but never a flat $0.00 for a few tokens. */
+export const cost = (n: number): string => (n > 0 && n < 0.01 ? "<$0.01" : dollars(n));
+
 /**
  * What the badge's tooltip says: how many, who is waiting on whom, and that nothing waits on it. A count alone left a
  * person guessing whether the red pill was something to fix.

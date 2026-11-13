@@ -269,9 +269,21 @@ module OpenLanes
       def appeal(state)
         last = state.rulings.select { it["kind"] == "appeal" }.map { Time.iso8601(it["at"]) }.max
         signature = state.signatures.rfind do |s|
-          BUILDERS.include?(s["agent"]) && OpenLanes::Arbitration::Appeal.parse(s["note"]) && (last.nil? || Time.iso8601(s["at"]) > last)
+          appeal = BUILDERS.include?(s["agent"]) && OpenLanes::Arbitration::Appeal.parse(s["note"])
+          appeal && (last.nil? || Time.iso8601(s["at"]) > last) && !ruled?(state, appeal.finding, Time.iso8601(s["at"]))
         end
         signature && { trigger: "appeal", key: ["appeal", signature["at"]], appellant: signature["agent"], note: signature["note"] }
+      end
+
+      # A person ruled on the appealed finding from the page after the
+      # appeal was signed: there is nothing left for the arbitrator to decide.
+      #
+      # @return [Boolean]
+      def ruled?(state, finding, since)
+        state.rulings.any? do |ruling|
+          ruling["kind"] == "finding" && Time.iso8601(ruling["at"]) >= since &&
+            ruling["findings"].values_at("struck", "critical").flatten.compact.include?(finding)
+        end
       end
 
       # @return [Hash, nil] the oldest unread dispute mailed to the arbitrator

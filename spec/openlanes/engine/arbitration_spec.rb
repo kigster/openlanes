@@ -196,6 +196,39 @@ RSpec.describe OpenLanes::Engine::Arbitration, :fake_gh, :tree do
     end
   end
 
+  describe "an appeal a person already ruled on from the page" do
+    let(:finding) do
+      OpenLanes::Plans::Findings::Finding.new(id: "F2",
+        reviewer: "staff-reviewer",
+        severity: "minor",
+        file: "a.rb",
+        line: 1,
+        heading: "[minor] a.rb:1",
+        text: "",
+        ruling: nil)
+    end
+
+    before { sign("backend-coder", "appeal: F2 because the spec rules that test out") }
+
+    it "fires while nobody has ruled" do
+      expect(arbitration.triggered(plan)).to include(trigger: "appeal")
+    end
+
+    it "stops treating a struck finding as disputed" do
+      OpenLanes::Live::Commands.rule!(plan.feature.path, finding, "strike", by: "kig")
+      expect(arbitration.triggered(plan)&.fetch(:trigger, nil)).not_to eq("appeal")
+    end
+
+    it "keeps an accepted finding as one the builder must address, and settles the appeal" do
+      OpenLanes::Live::Commands.rule!(plan.feature.path, finding, "accept", by: "kig")
+      aggregate_failures do
+        expect(arbitration.triggered(plan)&.fetch(:trigger, nil)).not_to eq("appeal")
+        expect(state.rulings.last.values_at("kind", "outcome")).to eq(%w[finding upheld])
+        expect(state.rulings.last.dig("findings", "critical")).to eq(["F2"])
+      end
+    end
+  end
+
   describe "a dispute" do
     let(:state_key) { :building }
     let(:answer) { "```ruling\nkind: dispute\npr: 7\nwinner: frontend-coder\nreason: The code wins.\n```\n" }

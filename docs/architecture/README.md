@@ -138,11 +138,11 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Adapters : 5
   OpenLanes__Live ..> OpenLanes__Agents : 5
   OpenLanes__Live ..> OpenLanes__Arbitration : 1
-  OpenLanes__Live ..> OpenLanes__Engine : 6
+  OpenLanes__Live ..> OpenLanes__Engine : 7
   OpenLanes__Live ..> OpenLanes__Events : 1
   OpenLanes__Live ..> OpenLanes__Execution : 4
   OpenLanes__Live ..> OpenLanes__Lifecycle : 6
-  OpenLanes__Live ..> OpenLanes__Plans : 23
+  OpenLanes__Live ..> OpenLanes__Plans : 24
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Memory ..> OpenLanes : 2
   OpenLanes__Memory ..> OpenLanes__Agents : 1
@@ -177,16 +177,17 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__Spawner : 1
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 10
+  OpenLanes__Web ..> OpenLanes : 12
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3
   OpenLanes__Web ..> OpenLanes__Engine : 1
-  OpenLanes__Web ..> OpenLanes__Live : 28
+  OpenLanes__Web ..> OpenLanes__Live : 30
   OpenLanes__Web ..> OpenLanes__Log : 2
-  OpenLanes__Web ..> OpenLanes__Plans : 4
+  OpenLanes__Web ..> OpenLanes__Plans : 8
   OpenLanes__Web ..> OpenLanes__Spawner : 1
   OpenLanes__Web ..> OpenLanes__UI : 2
+  OpenLanes__Web ..> OpenLanes__Vcs : 1
 ```
 
 - [OpenLanes](openlanes.md)

@@ -52,6 +52,14 @@ RSpec.describe "A live command and its reply" do
         expect(parse(kind: "set_concurrency", payload: { limit: 3 })["limit"]).to eq("3")
       end
 
+      it "needs a plan, an agent and seconds for extend_time" do
+        aggregate_failures do
+          expect(parse(kind: "extend_time", plan: "001.00", agent: "backend-coder", payload: { seconds: 600 }).payload).to eq("seconds" => 600)
+          expect { parse(kind: "extend_time", plan: "001.00", payload: { seconds: 600 }) }.to raise_error(described_class::Invalid, /needs an agent/)
+          expect { parse(kind: "extend_time", plan: "001.00", agent: "backend-coder") }.to raise_error(described_class::Invalid, /needs payload seconds/)
+        end
+      end
+
       it "refuses set_concurrency with no limit" do
         expect { parse(kind: "set_concurrency") }.to raise_error(described_class::Invalid, /set_concurrency needs payload limit/)
       end

@@ -222,11 +222,13 @@ module OpenLanes
       #
       # @param key [String]
       # @param seconds [Integer]
-      # @return [void]
+      # @return [Boolean] whether a running agent's clock moved
       def extend(key, seconds)
-        job = running.find { |j| j.key == key } or return
-        job.handle&.extend!(seconds)
+        job = running.find { |j| j.key == key } or return false
+        return false unless job.handle&.extend!(seconds)
+
         feed.append(:extension, plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name, seconds:)
+        true
       end
 
       # A person's answer to an `X<n>` request (E1). A time choice reaches

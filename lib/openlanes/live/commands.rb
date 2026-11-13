@@ -52,8 +52,14 @@ module OpenLanes
         "stop_plan"       => :stop_plan,
         "restart_plan"    => :restart_plan,
         "set_concurrency" => :set_concurrency,
-        "set_chime"       => :set_chime
+        "set_chime"       => :set_chime,
+        "extend_time"     => :extend_time,
+        "rule_finding"    => :rule_finding
       }.freeze
+
+      # The most seconds one `extend_time` adds: the largest grant
+      # {Engine::Extensions} offers when an agent asks for more time.
+      MAX_EXTENSION = Engine::Extensions::CHOICES.map(&:seconds).max
 
       # How long "Resume anyway" lifts a 💣's halt.
       RESUME_FOR = 24 * 3600
@@ -73,6 +79,43 @@ module OpenLanes
           kind: "text",
           text: [reply.status, reply.reason].compact.join(": "),
           at: reply.at)
+      end
+
+      # @param value [Object] the payload's `seconds`
+      # @return [Integer] within 1 and {MAX_EXTENSION}
+      # @raise [Refusal]
+      def self.seconds!(value)
+        return value if value.is_a?(Integer) && value.between?(1, MAX_EXTENSION)
+
+        raise Refusal, "seconds must be a whole number from 1 to #{MAX_EXTENSION}, not #{value.inspect}"
+      end
+
+      # @param findings [Array<OpenLanes::Plans::Findings::Finding>]
+      # @param command [OpenLanes::Live::Command] a `rule_finding`
+      # @return [OpenLanes::Plans::Findings::Finding] the one it names
+      # @raise [Refusal] for an unknown verdict or finding
+      def self.finding!(findings, command)
+        verdict = command["verdict"]
+        raise Refusal, "verdict must be accept or strike, not #{verdict.inspect}" unless Plans::Findings::VERDICTS.key?(verdict)
+
+        findings.rfind { it.id == command["finding"].upcase } or raise Refusal, "#{command.plan} has no finding #{command["finding"]}"
+      end
+
+      # @param path [String] the plan folder
+      # @param finding [OpenLanes::Plans::Findings::Finding]
+      # @param verdict [String] accept or strike
+      # @param by [String]
+      # @return [Hash] the ruling written
+      def self.rule!(path, finding, verdict, by:)
+        outcome, bucket = Plans::Findings::VERDICTS.fetch(verdict)
+        Plans::PlanState.for(path).rule!(kind: "finding",
+          pr: nil,
+          round: nil,
+          outcome:,
+          winner: nil,
+          trigger: "person",
+          findings: { bucket => [finding.id], "headings" => { finding.id => finding.heading } },
+          reason: "#{verdict} by #{by}")
       end
 
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -451,6 +494,30 @@ module OpenLanes
           raise Refusal, "#{command.car} is not running"
         @run_state.hold_car(command.car, held: command.kind == "hold")
         nil
+      end
+
+      # More time on one running agent's clock, from its drawer. Capped at
+      # the largest grant {Engine::Extensions} offers, so the page cannot
+      # hand out more in one press than the harness would on request.
+      #
+      # @return [String]
+      def extend_time(command, dispatcher)
+        seconds = Commands.seconds!(command.payload["seconds"])
+        dispatcher.extend(command.car, seconds) or raise Refusal, "#{command.car} is not running"
+        "#{command.agent} has #{seconds / 60} more minutes"
+      end
+
+      # A person's accept or strike on one reviewer finding, from its plan
+      # row: written as a ruling where the arbitrator's go, so a struck one
+      # is never raised again and settles an appeal against it.
+      #
+      # @return [String]
+      def rule_finding(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        finding = Commands.finding!(Plans::Findings.for(subject.feature.path), command)
+        Commands.rule!(subject.feature.path, finding, command["verdict"], by: @node.user)
+        dispatcher.wake!
+        "#{finding.id} #{command["verdict"]}"
       end
 
       # Stop All Local: every agent on this machine is told to stop, and once

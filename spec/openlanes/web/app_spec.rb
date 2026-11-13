@@ -536,6 +536,28 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "GET /api/plans/:ordinal/review" do
+    before do
+      plans do |t|
+        t.plan("004.00",
+          :ready_for_review,
+          "web-control-room",
+          files: { "pull-requests.md" => "## Findings: staff-reviewer\n\n### F1 [minor] lib/a.rb:4\n\nSlow.\n" })
+      end
+    end
+
+    it "answers the diff and the findings, with no branch to diff" do
+      get "/api/plans/004/review"
+      expect([last_response.status, body["diff"], body["findings"].map { it.values_at("id", "severity", "ruling") }])
+        .to eq([200, { "stat" => "", "patch" => "", "truncated" => false }, [["F1", "minor", nil]]])
+    end
+
+    it "answers 404 for a plan that is not there" do
+      get "/api/plans/009/review"
+      expect([last_response.status, body["error"]]).to eq([404, "there is no plan 009.00"])
+    end
+  end
+
   describe "GET /api/plans/:ordinal/files" do
     before do
       plans do |t|
