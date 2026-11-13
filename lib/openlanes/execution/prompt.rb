@@ -660,6 +660,11 @@ module OpenLanes
       # drift between them. {Plans::Choices} reads it, and still reads the
       # W30 yes/no mark in files written before.
       #
+      # It also says a question stands alone. An agent mid-plan writes "B1 is
+      # applied" and "A13 builds on it" as if the reader shared its journal;
+      # the person meets the card cold and answers "what is B1?", which the
+      # broker cannot fold, so the plan stays blocked on its own shorthand.
+      #
       # @return [String] empty for an agent whose definition never mentions
       #   `blocked.md`, and for the agent that drains it
       def questions_section
@@ -681,6 +686,21 @@ module OpenLanes
               a) A second demo process on another port, started by just web-e2e. (Recommended)
               b) The demo answers its own invites. Fewer processes, but the test covers a fake.
               c) Narrow the spec to steps 1 and 5 and cover the rest in the Ruby suite.
+
+          The person reads each question alone, on a card, days later, with
+          none of your context: not the plan, not your journal, not the other
+          questions. So the heading and the context must make sense to someone
+          who has read nothing else:
+
+          - The heading names the decision in plain words, not a label.
+          - The context says what the plan is building, what you found, and
+            what stops until this is decided.
+          - Never point at something by its label alone. `B1`, `A9`, `D2`,
+            `U3` and "the earlier answer" mean nothing on the card, and one
+            label often means two things in one plan. Say what it is, in
+            words, every time: not "B1 is applied", but "The suite now
+            ignores this checkout's `.openlanes.yml`, as you decided earlier".
+          - Each option says what happens if it is picked.
 
           A yes/no question is `a) yes` and `b) no`. Do not add an option for
           "something else": the page always offers "Type something instead".
