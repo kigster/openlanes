@@ -34,6 +34,21 @@ RSpec.describe "Redis restarting empty under a running engine", :tree do
     server.start
   end
 
+  # RedisClient is not thread-safe. Sharing the session's connection, the
+  # probe thread's replies reached the tick's HGETALL, and this file's other
+  # example failed now and then on "can't modify string; temporarily locked".
+  it "probes the adapters on a connection of their own, and closes it with the session" do
+    own = OpenLanes::Live::Store.new(url: server.url, timeout: 0.5)
+    allow(OpenLanes::Live).to receive(:store).with(server.url).and_return(own)
+    allow(own).to receive(:close).and_call_original
+    allow(store).to receive(:close).and_call_original
+
+    OpenLanes::Live::Session.new(store:, root: plans_root, tree:, agents:, node:, repo: "github.com/example/other").close
+
+    expect(own).to have_received(:close)
+    expect(store).not_to have_received(:close)
+  end
+
   it "keeps ticking, and makes the commands group again" do
     start_agents
     restart_empty

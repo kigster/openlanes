@@ -265,6 +265,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Live__Repo : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__RunRecord : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__RunState : uses
+  OpenLanes__Live__Session ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Session ..> OpenLanes__UI : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters : uses
