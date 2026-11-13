@@ -19,8 +19,8 @@ RSpec.describe OpenLanes::Agents::Profile do
 
   def spec(frontmatter) = OpenLanes::Plans::Spec.parse("---\n#{frontmatter}\n---\n")
 
-  it "takes the agent's own settings, with the model capped at Opus" do
-    expect(described_class.resolve(agent).to_s).to eq("claude:opus/high")
+  it "takes the agent's own settings, Fable included: the adapter caps nothing" do
+    expect(described_class.resolve(agent).to_s).to eq("claude:fable/high")
   end
 
   it "lets the plan's depth set the effort" do
@@ -40,7 +40,7 @@ RSpec.describe OpenLanes::Agents::Profile do
   end
 
   it "ignores overrides for other phases" do
-    expect(described_class.resolve(agent, spec: spec("phases:\n  review: { model: haiku }")).model).to eq("opus")
+    expect(described_class.resolve(agent, spec: spec("phases:\n  review: { model: haiku }")).model).to eq("fable")
   end
 
   # Plan 031, D12: below the agent's and the plan's word, above the project's.
@@ -91,7 +91,7 @@ RSpec.describe OpenLanes::Agents::Profile do
     context "with an agent that names its own" do
       let(:agent) { super().with(adapter: "claude") }
 
-      it("keeps the agent's") { expect(profile.to_s).to eq("claude:opus/high") }
+      it("keeps the agent's") { expect(profile.to_s).to eq("claude:fable/high") }
     end
 
     context "with a plan that names one for the phase" do
@@ -103,7 +103,7 @@ RSpec.describe OpenLanes::Agents::Profile do
     context "when the project names claude" do
       subject(:profile) { described_class.resolve(agent, dealing: OpenLanes::Agents::Dealing.new(fallback: "claude")) }
 
-      it("keeps the agent's Claude model") { expect(profile.model).to eq("opus") }
+      it("keeps the agent's Claude model") { expect(profile.model).to eq("fable") }
     end
   end
 
@@ -114,7 +114,7 @@ RSpec.describe OpenLanes::Agents::Profile do
 
   describe "#label" do
     it "is the bare model for claude" do
-      expect(described_class.resolve(agent).label).to eq("opus")
+      expect(described_class.resolve(agent).label).to eq("fable")
     end
 
     it "names any other adapter" do

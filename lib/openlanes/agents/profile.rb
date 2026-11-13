@@ -19,8 +19,9 @@ module OpenLanes
     #
     # {Dealing} answers 0, 5 and 6.
     #
-    # The adapter has the last word on the model, because it is the one that
-    # knows the ceiling: a Claude agent asked for Fable runs on Opus.
+    # The adapter has the last word on the model, since a name means
+    # something only to the CLI it is written for; today none of them
+    # changes what it is handed.
     #
     # @!attribute [r] adapter
     #   @return [OpenLanes::Adapters::Base]

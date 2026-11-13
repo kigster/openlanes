@@ -1,8 +1,8 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Header, type HeaderProps } from "./Header";
-import { currentTheme } from "./useTheme";
+import { applyPalette, PALETTE_KEY, PALETTES, restorePalette } from "./usePalette";
 import { sampleBoard } from "../board/sample";
 import type { Snapshot } from "../api/types";
 import freshJson from "../api/fixtures/snapshot.json";
@@ -21,6 +21,8 @@ const props = (over: Partial<HeaderProps> = {}): HeaderProps => ({
 
 afterEach(() => {
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.palette;
+  localStorage.clear();
 });
 
 it("names this machine and prints the run's totals as plain text, accessibly", async () => {
@@ -93,31 +95,34 @@ it("presses All machines", async () => {
   expect(onToggleMerged).toHaveBeenCalled();
 });
 
-it("toggles the theme, follows the OS until pressed", async () => {
-  const listeners: Array<() => void> = [];
-  let dark = false;
-  const media = vi.spyOn(window, "matchMedia").mockImplementation(
-    query =>
-      ({
-        get matches() {
-          return dark;
-        },
-        media: query,
-        addEventListener: (_: string, l: () => void) => listeners.push(l),
-        removeEventListener: vi.fn(),
-      }) as unknown as MediaQueryList,
-  );
+it("offers the palettes in a menu, applies the one chosen, and remembers it", async () => {
   const { unmount } = render(<Header {...props()} />);
-  await userEvent.click(screen.getByRole("button", { name: "Switch to dark theme" }));
-  expect(document.documentElement.dataset.theme).toBe("dark");
-  await userEvent.click(screen.getByRole("button", { name: "Switch to light theme" }));
-  expect(currentTheme()).toBe("light");
-  delete document.documentElement.dataset.theme;
-  dark = true;
-  act(() => listeners.forEach(l => l()));
-  expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Theme: System. Change theme" }));
+  expect(screen.getAllByRole("menuitemradio").map(i => i.textContent?.replace(/Light:.*|Dark:.*|Daylight or.*|✓/g, "")))
+    .toEqual(["System", "Daylight", "Paper", "Earth", "Forest", "Midnight", "Ember", "Azure"]);
+  await userEvent.click(screen.getByRole("menuitemradio", { name: /Ember/ }));
+  const { dataset } = document.documentElement;
+  expect([dataset.theme, dataset.palette, localStorage.getItem(PALETTE_KEY)]).toEqual(["dark", "ember", "ember"]);
+  expect(screen.getByRole("button", { name: "Theme: Ember. Change theme" })).toBeInTheDocument();
   unmount();
-  media.mockRestore();
+});
+
+it("leaves the built-in themes to the scheme alone, and System to the operating system", () => {
+  const { dataset } = document.documentElement;
+  applyPalette(PALETTES.find(p => p.id === "forest")!);
+  applyPalette(PALETTES.find(p => p.id === "dark")!);
+  const midnight = [dataset.theme, dataset.palette];
+  applyPalette(PALETTES[0]);
+  expect([midnight, dataset.theme, dataset.palette]).toEqual([["dark", undefined], undefined, undefined]);
+});
+
+it("restores the stored palette before anything renders, and falls back to System for one it does not know", () => {
+  localStorage.setItem(PALETTE_KEY, "azure");
+  restorePalette();
+  const azure = document.documentElement.dataset.palette;
+  localStorage.setItem(PALETTE_KEY, "neon");
+  restorePalette();
+  expect([azure, document.documentElement.dataset.palette]).toEqual(["azure", undefined]);
 });
 
 it("offers narrow lanes as a pressed-or-not toggle", async () => {
@@ -129,6 +134,17 @@ it("offers narrow lanes as a pressed-or-not toggle", async () => {
   expect(onToggleNarrow).toHaveBeenCalledTimes(1);
   rerender(<Header {...props({ narrow: true, onToggleNarrow })} />);
   expect(screen.getByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
+});
+
+it("offers Hide Inactive as a pressed-or-not toggle, and leaves it out when nobody handles it", async () => {
+  const onToggleHideInactive = vi.fn();
+  const { rerender } = render(<Header {...props({ hideInactive: false, onToggleHideInactive })} />);
+  const toggle = screen.getByRole("button", { name: "Hide Inactive" });
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await userEvent.click(toggle);
+  expect(onToggleHideInactive).toHaveBeenCalledTimes(1);
+  rerender(<Header {...props({ hideInactive: true })} />);
+  expect(screen.queryByRole("button", { name: "Hide Inactive" })).toBeNull();
 });
 
 it("has no lanes toggle when nobody handles it", () => {

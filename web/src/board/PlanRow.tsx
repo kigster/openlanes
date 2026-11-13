@@ -3,7 +3,7 @@ import { useAnimate, useReducedMotion } from "motion/react";
 import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SpendBadge, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
-import { fmt, statusTip, unackedTip, who } from "./format";
+import { dollars, fmt, statusTip, unackedTip, who } from "./format";
 import { STARTS, keepsRow, modelsOf, rowColors, rowDomId, routeOf } from "./model";
 import { FADE_MS } from "./useLifecycle";
 
@@ -11,6 +11,8 @@ export interface CarHandlers {
   /** The car whose drawer is open, by Car.key. */
   openCar?: string | null;
   onOpenCar?: (plan: Plan, car: CarData) => void;
+  /** Unblock on a lane with questions waiting: bring them to the front of the rail. */
+  onUnblock?: (plan: Plan) => void;
   /** The model dropdown for one car: ModelSelect from src/panels. */
   renderModel?: (plan: Plan, car: CarData) => ReactNode;
 }
@@ -68,7 +70,7 @@ export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
 }
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, adapters, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, renderModel }: PlanRowProps) {
+export function PlanRow({ plan, stations, adapters, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, onUnblock, renderModel }: PlanRowProps) {
   const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
@@ -131,6 +133,8 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
         <div className="plan-id">
           {plan.ordinal}
           <span className="plan-status" role="img" aria-label={plan.status.label} title={statusTip(plan.status)}>{plan.status.emoji}</span>
+          {/* The emoji's name beside it, so ⭕ is never left to be guessed; the tooltip still carries what it means. */}
+          <span className="plan-state" aria-hidden="true">({plan.status.label})</span>
         </div>
         <h3 className="plan-title" title={plan.summary || plan.title}>{plan.title}</h3>
         <div className="plan-meta">
@@ -139,12 +143,24 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
           <ArbitratingMarker arbitrating={plan.arbitrating} />
           <SpendBadge spend={plan.spend} />
           <UnackedBadge count={plan.unacked} mail={plan.mail} />
+          {!readOnly && onUnblock && plan.questions.length > 0 && (
+            <button
+              type="button" className="btn plan-unblock" onClick={() => onUnblock(plan)}
+              aria-label={`Unblock ${plan.ordinal}: ${plan.questions.length} question${plan.questions.length === 1 ? "" : "s"} waiting`}
+              title="Brings this plan's questions to the front of Needs you. Once every one is answered, the unblocker agent runs on its own."
+            >
+              Unblock
+            </button>
+          )}
           {owner ? (
             <span>on {who(owner)}</span>
           ) : (
             <>
               <span title="Tokens in">↑ <span>{fmt(plan.up)}</span></span>
               <span title="Tokens out">↓ <span>{fmt(plan.down)}</span></span>
+              <span className="plan-cost" title="Dollars this plan has spent so far, this run">
+                <span className="sr-only">Spent </span>{dollars(plan.cost)}
+              </span>
             </>
           )}
         </div>

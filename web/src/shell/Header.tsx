@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Snapshot } from "../api/types";
 import type { ConnectionState } from "../api/events";
 import { dollars, fmt, secondsBetween, who } from "../board/format";
-import { useTheme } from "./useTheme";
+import { ThemeMenu } from "./ThemeMenu";
 import logo from "../assets/logo.png";
 
 export interface HeaderProps {
@@ -16,6 +16,9 @@ export interface HeaderProps {
   /** Narrow lanes is on: rows at half height, the least important details dropped. */
   narrow?: boolean;
   onToggleNarrow?: () => void;
+  /** Hide Inactive is on: only lanes with an agent running are on the board. */
+  hideInactive?: boolean;
+  onToggleHideInactive?: () => void;
   /** The Action ▾ menu: ActionMenu from src/panels. */
   actionMenu?: ReactNode;
   /** Stop All Local and its confirmation: StopAllDialog from src/panels, which brings its own button. */
@@ -40,21 +43,8 @@ function useNow(override?: number): number {
   return override ?? tick;
 }
 
-const SUN = (
-  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-  </svg>
-);
-const MOON = (
-  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-    <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
-  </svg>
-);
-
 /** The top bar: the project, this machine, the run's totals as plain text, and the run-wide controls. */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, actionMenu, stopAll, help, now }: HeaderProps) {
-  const { theme, toggle } = useTheme();
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, stopAll, help, now }: HeaderProps) {
   const { node, run } = snapshot;
   const clock = useNow(now);
   // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
@@ -64,7 +54,6 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
   const minutes = Math.floor(secondsBetween(run.started_at, snapshot.at) / 60);
   // The project is openlanes itself when the tool works on its own repository, and the logo already says so (W18).
   const titled = snapshot.project.toLowerCase() !== "openlanes";
-  const themeLabel = theme === "dark" ? "Switch to light theme" : "Switch to dark theme";
   return (
     <header className="topbar">
       <span className="logo" title="openlanes: the self-running software factory">
@@ -126,10 +115,19 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
           Narrow lanes
         </button>
       )}
+      {onToggleHideInactive && (
+        <button
+          className="btn btn-quiet"
+          type="button"
+          aria-pressed={hideInactive}
+          title="Show only the lanes with an agent running right now. Lanes that are waiting, blocked or finished come back when you turn this off"
+          onClick={onToggleHideInactive}
+        >
+          Hide Inactive
+        </button>
+      )}
       {actionMenu}
-      <button className="btn btn-quiet btn-icon" type="button" aria-label={themeLabel} title={themeLabel} onClick={toggle}>
-        {theme === "dark" ? SUN : MOON}
-      </button>
+      <ThemeMenu />
       {stopAll}
       {help}
       {stale && (

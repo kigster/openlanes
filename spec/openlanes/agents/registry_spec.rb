@@ -236,7 +236,7 @@ RSpec.describe OpenLanes::Agents::Registry do
         "backend-coder"  => 1200,
         "frontend-coder" => 1200,
         "staff-reviewer" => 300,
-        "researcher"     => 300
+        "researcher"     => 900
       )
     end
 

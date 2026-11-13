@@ -4,15 +4,33 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__Probes["OpenLanes::Adapters::Probes"]
   class OpenLanes__Adapters__Report["OpenLanes::Adapters::Report"]
+  class OpenLanes__Agents["OpenLanes::Agents"]
+  <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Apps["OpenLanes::Apps"]
+  <<module>> OpenLanes__Apps
+  class OpenLanes__Apps__Framing["OpenLanes::Apps::Framing"]
+  <<module>> OpenLanes__Apps__Framing
   class OpenLanes__Apps__Supervisor["OpenLanes::Apps::Supervisor"]
   class OpenLanes__Apps__Supervisor__StartFailed["OpenLanes::Apps::Supervisor::StartFailed"]
   class OpenLanes__CLI__API__Docs["API::Docs"]
   class OpenLanes__CLI__Abandon["Abandon"]
   class OpenLanes__CLI__Agents__Describe["Agents::Describe"]
   class OpenLanes__CLI__Agents__List["Agents::List"]
+  class OpenLanes__CLI__Argv["Argv"]
+  <<module>> OpenLanes__CLI__Argv
   class OpenLanes__CLI__Base["Base"]
+  class OpenLanes__CLI__Base__EnterProject["Base::EnterProject"]
+  <<module>> OpenLanes__CLI__Base__EnterProject
+  class OpenLanes__CLI__Base__RefuseStrayArguments["Base::RefuseStrayArguments"]
+  <<module>> OpenLanes__CLI__Base__RefuseStrayArguments
   class OpenLanes__CLI__Coverage["Coverage"]
   class OpenLanes__CLI__Create["Create"]
   class OpenLanes__CLI__Discard["Discard"]
@@ -32,6 +50,14 @@ classDiagram
   class OpenLanes__CLI__Mail__Read["Mail::Read"]
   class OpenLanes__CLI__Mail__Render["Mail::Render"]
   class OpenLanes__CLI__Mail__Send["Mail::Send"]
+  class OpenLanes__CLI__Memory__Approve["Memory::Approve"]
+  class OpenLanes__CLI__Memory__Curate["Memory::Curate"]
+  class OpenLanes__CLI__Memory__Inbox["Memory::Inbox"]
+  class OpenLanes__CLI__Memory__List["Memory::List"]
+  class OpenLanes__CLI__Memory__Promote["Memory::Promote"]
+  class OpenLanes__CLI__Memory__Scan["Memory::Scan"]
+  class OpenLanes__CLI__Memory__Table["Memory::Table"]
+  <<module>> OpenLanes__CLI__Memory__Table
   class OpenLanes__CLI__Preview__Registry["Preview::Registry"]
   <<module>> OpenLanes__CLI__Preview__Registry
   class OpenLanes__CLI__Preview__Start["Preview::Start"]
@@ -62,45 +88,91 @@ classDiagram
   class OpenLanes__CLI__Worktree["Worktree"]
   class OpenLanes__CLI__WorktreePrune["WorktreePrune"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Coverage["OpenLanes::Coverage"]
+  <<module>> OpenLanes__Coverage
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
   class OpenLanes__Coverage__Invalid["OpenLanes::Coverage::Invalid"]
+  class OpenLanes__Engine["OpenLanes::Engine"]
+  <<module>> OpenLanes__Engine
   class OpenLanes__Engine__Dispatcher["OpenLanes::Engine::Dispatcher"]
+  class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
+  <<module>> OpenLanes__Engine__QualityQuestion
   class OpenLanes__Engine__RunWorkflow["OpenLanes::Engine::RunWorkflow"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Evals["OpenLanes::Evals"]
+  <<module>> OpenLanes__Evals
   class OpenLanes__Evals__Invalid["OpenLanes::Evals::Invalid"]
   class OpenLanes__Evals__Live["OpenLanes::Evals::Live"]
   class OpenLanes__Evals__Run["OpenLanes::Evals::Run"]
+  class OpenLanes__Events["OpenLanes::Events"]
+  <<module>> OpenLanes__Events
+  class OpenLanes__Execution["OpenLanes::Execution"]
+  <<module>> OpenLanes__Execution
+  class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
+  <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__ReasonInterview["OpenLanes::Lifecycle::ReasonInterview"]
   class OpenLanes__Lifecycle__UnblockWorkflow["OpenLanes::Lifecycle::UnblockWorkflow"]
+  class OpenLanes__Linear["OpenLanes::Linear"]
+  <<module>> OpenLanes__Linear
   class OpenLanes__Linear__API["OpenLanes::Linear::API"]
   class OpenLanes__Linear__Import["OpenLanes::Linear::Import"]
   class OpenLanes__Linear__Survey["OpenLanes::Linear::Survey"]
+  class OpenLanes__Live["OpenLanes::Live"]
+  <<module>> OpenLanes__Live
   class OpenLanes__Live__Copilot__Operator["OpenLanes::Live::Copilot::Operator"]
   class OpenLanes__Live__Mail["OpenLanes::Live::Mail"]
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Node__Invalid["OpenLanes::Live::Node::Invalid"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Log["OpenLanes::Log"]
+  <<module>> OpenLanes__Log
   class OpenLanes__Log__Invalid["OpenLanes::Log::Invalid"]
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
+  class OpenLanes__Memory["OpenLanes::Memory"]
+  <<module>> OpenLanes__Memory
+  class OpenLanes__Memory__Curation["OpenLanes::Memory::Curation"]
+  class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
   class OpenLanes__Plans__LastKnownState["OpenLanes::Plans::LastKnownState"]
+  class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
+  <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Presentation["OpenLanes::Presentation"]
+  <<module>> OpenLanes__Presentation
   class OpenLanes__Presentation__ApiDocs["OpenLanes::Presentation::ApiDocs"]
   class OpenLanes__Presentation__EventsReport["OpenLanes::Presentation::EventsReport"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
+  class OpenLanes__Setup["OpenLanes::Setup"]
+  <<module>> OpenLanes__Setup
   class OpenLanes__Setup__Architecture["OpenLanes::Setup::Architecture"]
   class OpenLanes__Setup__CiScaffold["OpenLanes::Setup::CiScaffold"]
+  class OpenLanes__Setup__ProjectForm["OpenLanes::Setup::ProjectForm"]
+  <<module>> OpenLanes__Setup__ProjectForm
   class OpenLanes__Setup__ProjectForm__Terminal["OpenLanes::Setup::ProjectForm::Terminal"]
   class OpenLanes__Setup__StackDocument["OpenLanes::Setup::StackDocument"]
+  class OpenLanes__Skills["OpenLanes::Skills"]
+  <<module>> OpenLanes__Skills
+  class OpenLanes__Supervision["OpenLanes::Supervision"]
+  <<module>> OpenLanes__Supervision
   class OpenLanes__Supervision__Program["OpenLanes::Supervision::Program"]
   class OpenLanes__Supervision__Title["OpenLanes::Supervision::Title"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Uml["OpenLanes::Uml"]
+  <<module>> OpenLanes__Uml
   class OpenLanes__Uml__ClassDiagram["OpenLanes::Uml::ClassDiagram"]
+  class OpenLanes__Vcs["OpenLanes::Vcs"]
+  <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__Worktree["OpenLanes::Vcs::Worktree"]
+  class OpenLanes__Web["OpenLanes::Web"]
+  <<module>> OpenLanes__Web
   class OpenLanes__Web__AdminAuth["OpenLanes::Web::AdminAuth"]
   class OpenLanes__Web__AdminAuth__Invalid["OpenLanes::Web::AdminAuth::Invalid"]
   class OpenLanes__Web__Demo["OpenLanes::Web::Demo"]
@@ -109,32 +181,58 @@ classDiagram
   class OpenLanes__Web__Listen__Invalid["OpenLanes::Web::Listen::Invalid"]
   class OpenLanes__Web__Stores["OpenLanes::Web::Stores"]
   OpenLanes__CLI__API__Docs --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__API__Docs ..> OpenLanes__Presentation : uses
   OpenLanes__CLI__API__Docs ..> OpenLanes__Presentation__ApiDocs : uses
   OpenLanes__CLI__API__Docs ..> OpenLanes__UI : uses
   OpenLanes__CLI__Abandon --|> OpenLanes__CLI__RemovalCommand : inherits
+  OpenLanes__CLI__Agents__Describe ..> OpenLanes__Agents : uses
+  OpenLanes__CLI__Agents__Describe ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Agents__Describe ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Agents__Describe ..> OpenLanes__Presentation : uses
   OpenLanes__CLI__Agents__Describe ..|> OpenLanes__UI : includes
+  OpenLanes__CLI__Agents__List ..> OpenLanes__Adapters : uses
   OpenLanes__CLI__Agents__List ..> OpenLanes__Adapters__Report : uses
+  OpenLanes__CLI__Agents__List ..> OpenLanes__Agents : uses
   OpenLanes__CLI__Agents__List ..|> OpenLanes__UI : includes
+  OpenLanes__CLI__Base ..> OpenLanes : uses
+  OpenLanes__CLI__Base ..> OpenLanes__CLI__Base__EnterProject : uses
+  OpenLanes__CLI__Base ..> OpenLanes__CLI__Base__RefuseStrayArguments : uses
   OpenLanes__CLI__Base ..> OpenLanes__Config : uses
   OpenLanes__CLI__Base ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Base ..> OpenLanes__Execution : uses
+  OpenLanes__CLI__Base ..> OpenLanes__Log : uses
+  OpenLanes__CLI__Base ..> OpenLanes__Plans : uses
+  OpenLanes__CLI__Base ..> OpenLanes__Project : uses
   OpenLanes__CLI__Base ..|> OpenLanes__UI : includes
+  OpenLanes__CLI__Base ..> OpenLanes__Web : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__AdminAuth__Invalid : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__Listen : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__Listen__Invalid : uses
   OpenLanes__CLI__Coverage --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Coverage ..> OpenLanes__Config : uses
+  OpenLanes__CLI__Coverage ..> OpenLanes__Coverage : uses
   OpenLanes__CLI__Coverage ..> OpenLanes__Coverage__Config : uses
   OpenLanes__CLI__Coverage ..> OpenLanes__Coverage__Invalid : uses
+  OpenLanes__CLI__Coverage ..> OpenLanes__Engine : uses
   OpenLanes__CLI__Coverage ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Coverage ..> OpenLanes__Vcs : uses
+  OpenLanes__CLI__Create ..> OpenLanes : uses
+  OpenLanes__CLI__Create ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Create --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Create ..> OpenLanes__Lifecycle : uses
   OpenLanes__CLI__Create ..> OpenLanes__Plans__Spec : uses
   OpenLanes__CLI__Discard --|> OpenLanes__CLI__RemovalCommand : inherits
   OpenLanes__CLI__Docs --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Docs ..> OpenLanes__Presentation : uses
   OpenLanes__CLI__EngineCommand --|> OpenLanes__CLI__Run : inherits
+  OpenLanes__CLI__EngineCommand ..> OpenLanes__Engine : uses
   OpenLanes__CLI__EngineCommand ..> OpenLanes__Engine__Dispatcher : uses
+  OpenLanes__CLI__EngineCommand ..> OpenLanes__Supervision : uses
+  OpenLanes__CLI__EngineCommand ..> OpenLanes__Web : uses
+  OpenLanes__CLI__Eval ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Eval --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Eval ..> OpenLanes__Evals : uses
   OpenLanes__CLI__Eval ..> OpenLanes__Evals__Invalid : uses
   OpenLanes__CLI__Eval ..> OpenLanes__Evals__Live : uses
   OpenLanes__CLI__Eval ..> OpenLanes__Evals__Run : uses
@@ -142,128 +240,213 @@ classDiagram
   OpenLanes__CLI__Eval ..> OpenLanes__UI : uses
   OpenLanes__CLI__Events__Report --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Events__Report ..> OpenLanes__Config : uses
+  OpenLanes__CLI__Events__Report ..> OpenLanes__Events : uses
   OpenLanes__CLI__Events__Report ..> OpenLanes__Presentation__EventsReport : uses
+  OpenLanes__CLI__Events__Report ..> OpenLanes__Project : uses
   OpenLanes__CLI__Index --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Index ..> OpenLanes__Plans : uses
+  OpenLanes__CLI__Init ..> OpenLanes : uses
   OpenLanes__CLI__Init --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Init ..> OpenLanes__Config : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__CLI__Init ..> OpenLanes__Error : uses
   OpenLanes__CLI__Init ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Project : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Setup : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__CiScaffold : uses
+  OpenLanes__CLI__Init ..> OpenLanes__Setup__ProjectForm : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__ProjectForm__Terminal : uses
   OpenLanes__CLI__Init ..> OpenLanes__Setup__StackDocument : uses
   OpenLanes__CLI__Init ..> OpenLanes__UI : uses
   OpenLanes__CLI__Linear__Import --|> OpenLanes__CLI__Linear__Team : inherits
   OpenLanes__CLI__Linear__Import ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Linear__Import ..> OpenLanes__Linear : uses
   OpenLanes__CLI__Linear__Import ..> OpenLanes__Linear__API : uses
   OpenLanes__CLI__Linear__Import ..> OpenLanes__Linear__Import : uses
+  OpenLanes__CLI__Linear__Import ..> OpenLanes__Plans : uses
   OpenLanes__CLI__Linear__Projects --|> OpenLanes__CLI__Linear__Team : inherits
   OpenLanes__CLI__Linear__Projects ..> OpenLanes__Error : uses
   OpenLanes__CLI__Linear__Team --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__API : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__Survey : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__UI : uses
   OpenLanes__CLI__ListPlans --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__ListPlans ..> OpenLanes__Presentation : uses
+  OpenLanes__CLI__Mail__Ack ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Mail__Ack --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Ack ..|> OpenLanes__CLI__Mail__Locating : includes
   OpenLanes__CLI__Mail__Ack ..> OpenLanes__Error : uses
   OpenLanes__CLI__Mail__Ack ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__CLI__Mail__Ack ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Ack ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Mail__Locating ..> OpenLanes__Plans : uses
   OpenLanes__CLI__Mail__Locating ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Mail__Read ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Mail__Read --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Read ..|> OpenLanes__CLI__Mail__Locating : includes
   OpenLanes__CLI__Mail__Read ..> OpenLanes__UI : uses
   OpenLanes__CLI__Mail__Render --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Render ..|> OpenLanes__CLI__Mail__Locating : includes
+  OpenLanes__CLI__Mail__Send ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__Mail__Send --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Mail__Send ..|> OpenLanes__CLI__Mail__Locating : includes
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Config : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Mail__Send ..> OpenLanes__Live : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Live__Mail : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__Feature : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Memory__Approve --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Approve ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Agents : uses
+  OpenLanes__CLI__Memory__Curate --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Memory__Curation : uses
+  OpenLanes__CLI__Memory__Inbox --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__CLI__Memory__Table : uses
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__List ..> OpenLanes__Agents : uses
+  OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__List ..> OpenLanes__CLI__Memory__Table : uses
+  OpenLanes__CLI__Memory__List ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Promote --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__CLI__Memory__Scan --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Scan ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Framing : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Apps__Supervisor__StartFailed : uses
   OpenLanes__CLI__Preview__Start --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Preview__Start ..|> OpenLanes__CLI__Preview__Registry : includes
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Config : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Error : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Live : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Project : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Preview__Start ..> OpenLanes__Vcs : uses
   OpenLanes__CLI__Preview__Status --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Preview__Status ..|> OpenLanes__CLI__Preview__Registry : includes
   OpenLanes__CLI__Preview__Status ..> OpenLanes__UI : uses
   OpenLanes__CLI__Preview__Stop --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Preview__Stop ..|> OpenLanes__CLI__Preview__Registry : includes
   OpenLanes__CLI__Preview__Stop ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Programs ..> OpenLanes__CLI__Argv : uses
   OpenLanes__CLI__Programs ..> OpenLanes__CLI__EngineCommand : uses
+  OpenLanes__CLI__Programs ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Programs ..> OpenLanes__Supervision__Program : uses
   OpenLanes__CLI__Programs ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__RemovalCommand --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__RemovalCommand ..> OpenLanes__Lifecycle : uses
+  OpenLanes__CLI__RemovalCommand ..> OpenLanes__Plans : uses
+  OpenLanes__CLI__RemovalCommand ..> OpenLanes__Setup : uses
   OpenLanes__CLI__Resync__Dirs --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Resync__Dirs ..> OpenLanes__Lifecycle : uses
   OpenLanes__CLI__Resync__Prs --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Resync__Prs ..> OpenLanes__Lifecycle : uses
+  OpenLanes__CLI__Resync__Prs ..> OpenLanes__Presentation : uses
+  OpenLanes__CLI__Resync__Prs ..> OpenLanes__Vcs : uses
   OpenLanes__CLI__Review --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Review ..> OpenLanes__Error : uses
   OpenLanes__CLI__Review ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__CLI__Review ..> OpenLanes__Vcs : uses
   OpenLanes__CLI__Run --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Run ..> OpenLanes__Engine : uses
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Live : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Setup ..> OpenLanes__Live : uses
+  OpenLanes__CLI__Setup ..> OpenLanes__Setup : uses
   OpenLanes__CLI__Skills__Install --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Skills__Install ..> OpenLanes__Skills : uses
+  OpenLanes__CLI__Start ..> OpenLanes__CLI__Argv : uses
   OpenLanes__CLI__Start --|> OpenLanes__CLI__EngineCommand : inherits
   OpenLanes__CLI__Start ..> OpenLanes__CLI__Programs : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Live : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Log : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Start ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Web : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__State__Locating ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__CLI__State__Resume ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__State__Resume --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__State__Resume ..|> OpenLanes__CLI__State__Locating : includes
   OpenLanes__CLI__State__Resume ..> OpenLanes__Error : uses
   OpenLanes__CLI__State__Resume ..> OpenLanes__Plans__LastKnownState : uses
+  OpenLanes__CLI__State__Resume ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__CLI__State__Resume ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__State__Resume ..> OpenLanes__UI : uses
   OpenLanes__CLI__State__Show --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__State__Show ..|> OpenLanes__CLI__State__Locating : includes
+  OpenLanes__CLI__State__Sign ..> OpenLanes__Agents__Names : uses
   OpenLanes__CLI__State__Sign --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__State__Sign ..|> OpenLanes__CLI__State__Locating : includes
   OpenLanes__CLI__State__Sign ..> OpenLanes__Error : uses
+  OpenLanes__CLI__State__Sign ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__CLI__State__Sign ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__State__Sign ..> OpenLanes__UI : uses
+  OpenLanes__CLI__States ..> OpenLanes__Presentation : uses
+  OpenLanes__CLI__Status ..> OpenLanes : uses
   OpenLanes__CLI__Status --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Status ..> OpenLanes__Plans : uses
+  OpenLanes__CLI__Status ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Status ..> OpenLanes__Supervision__Title : uses
   OpenLanes__CLI__Status ..> OpenLanes__UI : uses
   OpenLanes__CLI__Stop --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Stop ..> OpenLanes__CLI__Status : uses
+  OpenLanes__CLI__Stop ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Stop ..> OpenLanes__UI : uses
   OpenLanes__CLI__Trash --|> OpenLanes__CLI__RemovalCommand : inherits
   OpenLanes__CLI__Trash ..> OpenLanes__Lifecycle__ReasonInterview : uses
+  OpenLanes__CLI__Uml ..> OpenLanes : uses
   OpenLanes__CLI__Uml --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Uml ..> OpenLanes__Project : uses
+  OpenLanes__CLI__Uml ..> OpenLanes__Uml : uses
   OpenLanes__CLI__Uml ..> OpenLanes__Uml__ClassDiagram : uses
   OpenLanes__CLI__Unblock --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Unblock ..> OpenLanes__Lifecycle : uses
   OpenLanes__CLI__Unblock ..> OpenLanes__Lifecycle__UnblockWorkflow : uses
+  OpenLanes__CLI__Version ..> OpenLanes : uses
   OpenLanes__CLI__Web ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__CLI__Web --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Log : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Supervision : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Web : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
   OpenLanes__CLI__Worktree --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Worktree ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__CLI__Worktree ..> OpenLanes__Vcs : uses
   OpenLanes__CLI__WorktreePrune --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__WorktreePrune ..> OpenLanes__Engine : uses
   OpenLanes__CLI__WorktreePrune ..> OpenLanes__Error : uses
   OpenLanes__CLI__WorktreePrune ..> OpenLanes__UI : uses
+  OpenLanes__CLI__WorktreePrune ..> OpenLanes__Vcs : uses
   OpenLanes__CLI__WorktreePrune ..> OpenLanes__Vcs__Worktree : uses
 ```

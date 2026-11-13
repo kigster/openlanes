@@ -6,7 +6,7 @@ RSpec.describe OpenLanes::Adapters::Model do
 
     it { is_expected.not_to be_priced }
     it { expect(model.cost(1_000_000, 1_000_000)).to eq(0.0) }
-    it { expect(model.wire).to eq(id: "gpt-5.5", label: "GPT-5.5", rates: nil, context: 200_000) }
+    it { expect(model.wire).to eq(id: "gpt-5.5", label: "GPT-5.5", rates: nil, context: 200_000, estimated: false) }
     it { expect(described_class.from_wire(JSON.parse(JSON.generate(model.wire)))).to eq(model) }
   end
 

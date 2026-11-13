@@ -12,7 +12,7 @@ RSpec.describe OpenLanes::Uml::Writer do
     write_into(dir)
 
     expect([Dir.children(dir).sort, File.read(File.join(dir, "README.md"))])
-      .to match([%w[README.md shop-billing.md], /\A#{Regexp.escape(described_class::MARKER)}\n\n# Shop namespaces\n.*\[shop-billing\]\(shop-billing.md\)/m])
+      .to match([%w[README.md shop-billing.md], /\A#{Regexp.escape(described_class::MARKER)}\n\n# Shop namespaces\n.*\[Shop::Billing\]\(shop-billing.md\)/m])
   end
 
   it "wraps each diagram in a mermaid fence GitHub renders" do

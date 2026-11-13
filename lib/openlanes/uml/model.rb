@@ -5,9 +5,11 @@ module OpenLanes
     # The project as a graph: which definitions are drawn, the typed edges
     # between them, and how strongly each namespace depends on another.
     #
-    # Classes are drawn; so is a module something includes, extends or
-    # prepends, since that edge needs both ends. A module that only groups
-    # constants is a namespace, not a node.
+    # Classes are drawn. So is a module something includes, extends or
+    # prepends, since that edge needs both ends, and so is a module that
+    # defines methods: `Execution::Boundary` and `Clock::System` do real work,
+    # and a namespace page without them showed `Clock` as its test double
+    # alone. A module that only groups constants is a namespace, not a node.
     class Model
       # @param definitions [Array<OpenLanes::Uml::Definition>]
       # @return [OpenLanes::Uml::Model]
@@ -50,19 +52,19 @@ module OpenLanes
       # @return [Boolean]
       def node?(name)
         definition = @index[name]
-        !definition.nil? && (definition.class? || @mixins.include?(name))
+        !definition.nil? && (definition.class? || definition.behaviour? || @mixins.include?(name))
       end
 
       # @param name [String]
-      # @return [Boolean]
-      def mixin?(name) = @mixins.include?(name) && !@index[name].class?
+      # @return [Boolean] drawn, and a module rather than a class
+      def module?(name) = node?(name) && !@index[name].class?
 
       private
 
       # @param definition [OpenLanes::Uml::Definition]
       # @return [Boolean]
       def opener?(definition)
-        definition.kind == :module && definition.references.empty? && definition.mixins.empty? &&
+        definition.kind == :module && definition.references.empty? && definition.mixins.empty? && !definition.behaviour? &&
           namespaces.of(definition.name) == definition.name
       end
 

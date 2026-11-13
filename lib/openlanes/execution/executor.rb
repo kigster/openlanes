@@ -50,9 +50,13 @@ module OpenLanes
       #   @return [Integer, nil]
       # @!attribute [r] cached
       #   @return [Integer] of {#up}, read back from the prompt cache
+      # @!attribute [r] throttled
+      #   @return [Boolean] whether it failed on the provider's rate limit or
+      #     overload, having waited as long as {Throttle::Backoff} allows,
+      #     rather than at anything the agent did
       # @return [Data]
-      Result = Data.define(:ok, :note, :up, :down, :subagents, :delegated, :seconds, :killed, :pid, :cached) do
-        def initialize(killed: nil, pid: nil, cached: 0, **rest) = super
+      Result = Data.define(:ok, :note, :up, :down, :subagents, :delegated, :seconds, :killed, :pid, :cached, :throttled) do
+        def initialize(killed: nil, pid: nil, cached: 0, throttled: false, **rest) = super
 
         # @return [Integer] new input, cache writes and output
         def fresh = up - cached + down
@@ -138,6 +142,10 @@ module OpenLanes
         #   whenever that part changes
         attr_accessor :on_restart
 
+        # @return [String, nil] why the invocation was given up on while its
+        #   provider was rate limiting it or overloaded, once it was
+        attr_accessor :throttled
+
         # @param fields [Hash{Symbol => Object}]
         # @return [void]
         def restart!(**fields) = on_restart&.call(fields)
@@ -191,6 +199,20 @@ module OpenLanes
 
         # @return [Symbol, nil] why the process was killed, once it was
         attr_reader :killed
+
+        # Whether anybody has asked this agent to stop: a kill, a stop asked
+        # of the handle, or STOP or INTERRUPT written into its control file.
+        # An agent waiting out a rate limit has no process to read that file,
+        # so the wait reads it instead.
+        #
+        # @return [Boolean]
+        def stopping?
+          return true if @killed || @mutex.synchronize { @stop_requested }
+
+          control ? File.read(control).start_with?(Control::STOP, Control::INTERRUPT) : false
+        rescue SystemCallError
+          false
+        end
 
         # @return [Integer, nil]
         def pid = child&.pid
@@ -312,6 +334,10 @@ module OpenLanes
         # @return [OpenLanes::Execution::Transcript, nil] the one before it
         def previous = @all[-2]
 
+        # @return [OpenLanes::Execution::Transcript::Progress, nil] what the
+        #   board was last told, so a wait can be drawn over the same meter
+        attr_reader :shown
+
         # @return [Integer]
         def up = @all.sum(&:up)
 
@@ -333,6 +359,10 @@ module OpenLanes
         # @return [Integer]
         def tools = @all.sum(&:tools)
 
+        # @return [Boolean] whether any session of the invocation was
+        #   compacted, at a person's request or at the CLI's own threshold
+        def compacted? = @all.any? { it.respond_to?(:compacted) && it.compacted }
+
         # What the sessions already over spent, added to the running one's
         # progress so the meter carries on rather than starting again. Their
         # journal lines go first, for the same reason: the dispatcher counts
@@ -345,7 +375,7 @@ module OpenLanes
         # @return [OpenLanes::Execution::Transcript::Progress]
         def carry(progress)
           before = @all[0...-1]
-          progress.with(up: progress.up + before.sum(&:up),
+          @shown = progress.with(up: progress.up + before.sum(&:up),
             down: progress.down + before.sum(&:down),
             subagents: progress.subagents + before.sum(&:spawned),
             journal: (before.flat_map { it.respond_to?(:journal) ? it.journal : [] } + progress.journal).freeze)
@@ -491,9 +521,23 @@ module OpenLanes
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
       # @param usable [#call] adapter name → whether the startup probe left it
       #   usable, so a reviewer is never dealt a signed-out CLI (plan 031, D12)
+      # @param packets [#call, nil] plan → the review packet its reviewers
+      #   open with ({ReviewPacket}); nil, the default, sends reviewers to the
+      #   documents and `gh pr diff` themselves, so nothing that builds an
+      #   executor without asking for packets reaches GitHub
+      # @param memory [Boolean] tell each agent the project's lessons for it;
+      #   `run --no-memory` turns it off, the baseline that says whether they help.
+      #   The lessons are read once, at the first invocation, and kept for the run
+      # @param throttle [OpenLanes::Execution::Throttle::Backoff] how long an
+      #   agent waits out a provider's rate limit or overload, and when it
+      #   stops waiting; the suite hands in one that does not sleep
       def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
-        fresh_budget: false, usable: Agents::Dealing::ANY)
+        fresh_budget: false, usable: Agents::Dealing::ANY, packets: nil, memory: true, throttle: Throttle::Backoff.new)
+        @throttle = throttle
+        @packets = packets
+        @memory = memory
+        @memory_lock = Mutex.new
         @root = File.expand_path(root)
         @trace_dir = trace_dir
         @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
@@ -648,6 +692,7 @@ module OpenLanes
         handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control:)
         resume = nil unless profile.adapter.resumes?
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
+        forget_journal(agent, subject) if resume
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = start_clock(handle, seconds: timeout_for(agent))
@@ -658,11 +703,15 @@ module OpenLanes
             root:, profile:, trace:, handle:, sessions:,
             &on_progress)
         end
+        # What a throttled start is started with again: the same argv when it
+        # carries a session on, which keeps its id, and a fresh one otherwise.
+        again = resume ? -> { launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress) } : relaunch
         status = supervise(child,
           agent,
           subject,
-          root:, profile:, trace:, handle:, sessions:, clock:, resume:, relaunch:,
+          root:, profile:, trace:, handle:, sessions:, clock:, resume:, relaunch:, again:,
           &on_progress)
+        hold_journal(agent, subject, sessions, handle) unless rebase
         verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
       end
 
@@ -709,11 +758,14 @@ module OpenLanes
       # same thing.
       #
       # @return [OpenLanes::Execution::Executor::Result]
-      def failure(transcript, started, note, pid: nil) = spent(transcript, started, ok: false, note:, pid:)
+      def failure(transcript, started, note, pid: nil, throttled: false)
+        spent(transcript, started, ok: false, note:, pid:, throttled:)
+      end
 
       # @return [OpenLanes::Execution::Executor::Result]
-      def spent(transcript, started, ok:, note:, pid: nil, killed: nil)
+      def spent(transcript, started, ok:, note:, pid: nil, killed: nil, throttled: false)
         Result.new(ok:,
+          throttled:,
           note:,
           up: transcript.up,
           down: transcript.down,
@@ -762,16 +814,7 @@ module OpenLanes
         profile = profile_for(agent, subject, root:)
         profile.adapter.argv(
           Adapters::Invocation.new(
-            prompt:          prompt_for(agent,
-              subject,
-              root,
-              control:,
-              round:,
-              successor:,
-              partners:,
-              profile:,
-              rebase:,
-              resumed: !resume.nil?),
+            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:, resume:),
             root:,
             model:           profile.model,
             effort:          profile.effort,
@@ -860,20 +903,23 @@ module OpenLanes
       #
       # @return [Process::Status]
       def supervise(child, agent, subject, root:, profile:, trace:, handle:, sessions:, clock:, resume: nil, relaunch: nil,
-        &on_progress)
-        status = drain(child, sessions, handle)
-        if resume && !handle.killed && (lost = lost_session(status, sessions.current))
+        again: nil, &on_progress)
+        riding = { root:, profile:, trace:, handle:, sessions: }
+        # Before {#lost_session}, which reads a 429 that spent nothing as a
+        # session gone and would throw away one that is still there.
+        status = ride_out(drain(child, sessions, handle), agent, subject, again:, **riding, &on_progress)
+        if resume && !handle.killed && !handle.throttled && (lost = lost_session(status, sessions.current))
           UI.log("session #{resume} #{lost}, starting #{agent.name} fresh",
             level: :warn,
             plan:  subject.feature.ordinal.to_s,
             agent: agent.name)
-          status = drain(relaunch.call, sessions, handle)
+          status = ride_out(drain(relaunch.call, sessions, handle), agent, subject, again: relaunch, **riding, &on_progress)
         end
         while (compaction = handle.take_compaction)
           resumed = settling(compaction, agent) do
             carry_on(compaction, agent, subject, root:, profile:, trace:, handle:, sessions:, &on_progress)
           end
-          status = resumed if resumed
+          status = ride_out(resumed, agent, subject, **riding, &on_progress) if resumed
         end
         status
       ensure
@@ -896,6 +942,9 @@ module OpenLanes
             killed: handle.killed,
             note:   "#{killed_note(handle.killed, clock)}, last seen #{transcript.activity || "starting up"} - trace: #{trace}")
         end
+        # Ahead of the CLI's own words, which for a limit that never lifted
+        # are the same "429" a reader would take for the agent's failure.
+        return failure(sessions, started, "#{handle.throttled} - trace: #{trace}", pid: handle.pid, throttled: true) if handle.throttled
         unless status.success?
           return failure(sessions,
             started,
@@ -949,6 +998,36 @@ module OpenLanes
         child
       end
 
+      # The record of what the resumed session holds of the journal is dropped
+      # before the session runs again, and written back by {#hold_journal}
+      # only if the round ends with it intact. A round that is killed with the
+      # engine, or compacts, then leaves nothing for the next one to trust,
+      # and that one is sent the whole journal ({JournalWindow}).
+      #
+      # @return [void]
+      def forget_journal(agent, subject)
+        Plans::PlanState.for(subject.feature.path).forget_held!(agent.name)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not cleared: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
+      end
+
+      # Note that the session this invocation ended in holds the journal as it
+      # now stands, so the round that resumes it is sent only what comes
+      # after. Not when any session of the invocation was compacted, by a
+      # person or by the CLI at its threshold: a summary keeps what the model
+      # chose to keep. A folder renamed under the agent is left alone too,
+      # since writing there would mint a state.json in a folder nobody reads.
+      #
+      # @return [void]
+      def hold_journal(agent, subject, sessions, handle)
+        return unless handle.session && File.directory?(subject.feature.path)
+        return if sessions.compacted?
+
+        Plans::PlanState.for(subject.feature.path).hold!(agent: agent.name, session: handle.session)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
+      end
+
       # Whether a resumed invocation failed because its session is gone,
       # rather than at anything it did, and what to say about it. The message
       # is the sure sign; a failure that spent nothing and called no tool is
@@ -957,10 +1036,11 @@ module OpenLanes
       # one more start-up at worst: an invocation that spent nothing has
       # nothing to lose.
       #
-      # That second case also catches an overload, an auth error or a network
-      # drop at start-up, which the fresh start will usually hit again. The
-      # line the CLI printed goes into the log beside the retry, so an outage
-      # reads as an outage rather than as a lost session.
+      # That second case also catches an auth error or a network drop at
+      # start-up, which the fresh start will usually hit again. The line the
+      # CLI printed goes into the log beside the retry, so an outage reads as
+      # an outage rather than as a lost session. A rate limit or an overload
+      # never gets here: {#ride_out} waits those out first, session intact.
       #
       # @param status [Process::Status]
       # @param transcript [OpenLanes::Execution::Transcript]
@@ -974,6 +1054,109 @@ module OpenLanes
 
         detail = said.empty? ? "exit #{status.exitstatus}" : said.last.lines.first.strip[0, 200]
         "failed before spending anything (#{detail})"
+      end
+
+      # An invocation that ended on its provider's rate limit or overload
+      # waits and is started again, for as long as {Throttle::Backoff}
+      # allows, inside the one attempt (plan 060.00, item 4). Its clock is
+      # given the wait back, since the agent did not have that time. When
+      # the limit outlasts the waiting, or somebody stops the agent while it
+      # waits, {Handle#throttled} says so and {#verdict} reports that
+      # instead of the CLI's last words.
+      #
+      # @param status [Process::Status] how the invocation just ended
+      # @param again [#call, nil] starts the invocation over as it was first
+      #   started; nil when only its session can be carried on
+      # @return [Process::Status] how the last start ended
+      def ride_out(status, agent, subject, root:, profile:, trace:, handle:, sessions:, again: nil, &on_progress)
+        waits = @throttle.waits
+        while !handle.killed && (limit = Throttle.detect(status, sessions.current))
+          seconds = waits.next(limit)
+          child = seconds && wait_out(limit, seconds, waits, agent, subject, handle:, sessions:, &on_progress) &&
+                  start_again(limit, agent, subject, root:, profile:, trace:, handle:, sessions:, again:, &on_progress)
+          unless child
+            handle.throttled ||= waits.surrender(limit)
+            break
+          end
+          status = drain(child, sessions, handle)
+        end
+        status
+      end
+
+      # One wait: said, given back to the clock, and sat through unless
+      # somebody stops the agent meanwhile.
+      #
+      # The agent has no process during the wait, so what is said to it then
+      # has to survive until it has one. The clock's "time was extended" line
+      # is written over the control file, so a HOLD, WRAP_UP or PAUSE already
+      # there is put back. And while agents are paused (W32, Redis is out) the
+      # wait goes on past its own end: a pause that started an agent would not
+      # be one (PR 204).
+      #
+      # @return [Boolean] false when the wait was cut short by a stop
+      def wait_out(limit, seconds, waits, agent, subject, handle:, sessions:, &on_progress)
+        announce_wait(limit, seconds, waits, agent, subject, sessions, &on_progress)
+        standing = standing_order(handle)
+        handle.extend!(seconds.ceil)
+        Control.write(handle.control, standing) if standing
+        stopped = -> { handle.stopping? || Control.quit? || Control.interrupted? }
+        passed = @throttle.pause(seconds, &stopped)
+        passed = @throttle.pause(Throttle::Backoff::SLICE, &stopped) while passed && Control.paused?
+        return true if passed
+
+        handle.throttled = "#{limit}: stopped while waiting to retry (#{limit.detail})"
+        false
+      end
+
+      # What a person or the engine has told this agent that it has not yet
+      # had a process to read: the control file's word, when it is one the
+      # next start must still find there.
+      #
+      # @return [String, nil]
+      def standing_order(handle)
+        word = handle.control && File.read(handle.control).strip
+        word if word&.start_with?(Control::HOLD, Control::WRAP_UP, Control::PAUSE)
+      rescue SystemCallError
+        nil
+      end
+
+      # The wait, in the log and over the agent's own line on the board.
+      #
+      # @return [void]
+      def announce_wait(limit, seconds, waits, agent, subject, sessions, &on_progress)
+        waiting = "#{limit}, retry #{waits.count} of #{@throttle.attempts} in #{seconds.round}s"
+        UI.log("#{agent.name} #{waiting} (#{limit.detail})",
+          level: :warn,
+          plan:  subject.feature.ordinal.to_s,
+          agent: agent.name)
+        on_progress&.call(sessions.shown.with(activity: waiting)) if sessions.shown
+      end
+
+      # A start that spent nothing has nothing to carry on, so it is made
+      # again as it was. One that had been working is resumed in its own
+      # session and told why it was paused, which keeps what it had read and
+      # done; where the CLI cannot resume, the round starts over, as a failed
+      # attempt's next round would have.
+      #
+      # @return [OpenLanes::Execution::AgentProcess, nil] nil when there is
+      #   neither a session to carry on nor a way to start over
+      def start_again(limit, agent, subject, root:, profile:, trace:, handle:, sessions:, again:, &)
+        failed = sessions.current
+        unspent = failed.up.zero? && failed.down.zero? && failed.tools.zero?
+        resumable = handle.session && profile.adapter.resumes?
+        unless resumable || again
+          handle.throttled = "#{limit}: no session to carry on, and nothing to start again (#{limit.detail})"
+          return nil
+        end
+
+        # The clock's "time was extended" line, written for the wait, is
+        # cleared. A HOLD or WRAP_UP sent during the wait is not: the start
+        # below is the first process that can read it.
+        Control.write(handle.control, "") unless standing_order(handle)
+        return again.call if again && (unspent || !resumable)
+
+        argv = resumption(agent, profile, subject:, root:, session: handle.session, prompt: Throttle.carry_on(limit), model: profile.model)
+        launch(argv, root:, profile:, trace:, handle:, sessions:, &)
       end
 
       # @return [Process::Status]
@@ -1116,10 +1299,10 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [String]
       def prompt_for(agent, subject, root = @root, control: nil, round: 1, successor: nil, partners: [],
-        profile: profile_for(agent, subject, root:), rebase: nil, resumed: false)
+        profile: profile_for(agent, subject, root:), rebase: nil, resume: nil)
         Prompt.new(agent:,
           rebase:,
-          resumed:,
+          resume:,
           subject:,
           root:,
           profile:,
@@ -1132,8 +1315,41 @@ module OpenLanes
           fresh_budget: @fresh_budget,
           seconds:      timeout_for(agent),
           denied:       denied_commands(agent),
-          granted:      granted_to(agent)).to_s
+          granted:      granted_to(agent),
+          packet:       packet_for(agent, subject, rebase),
+          memory:       lessons_for(agent)).to_s
       end
+
+      # A reviewer's packet for this plan's review round. A dry run fetches
+      # nothing, and a reviewer resolving a stopped rebase is not reviewing.
+      # A packet that cannot be built costs the reviewer its own fetches,
+      # as before plan 060.00, never the round.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
+      # @return [String] empty when this invocation gets none
+      def packet_for(agent, subject, rebase)
+        return "" if @packets.nil? || @dry_run || rebase || agent.phase.to_s != "review"
+
+        @packets.call(subject).to_s
+      rescue Error, SystemCallError => e
+        UI.log("no review packet for #{subject.feature.ordinal}: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+        ""
+      end
+
+      # One snapshot per run: the reviewed lessons as the default branch held
+      # them when the first agent started. Reading the checkout on every
+      # invocation let a builder's freshly written lesson reach the reviewer
+      # judging that builder (PR 196); a snapshot also means every agent in a
+      # run is told the same thing. A lesson merged mid-run waits for the next.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [String]
+      def lessons_for(agent) = @memory ? Memory.section(agent:, library: lessons) : ""
+
+      # @return [OpenLanes::Memory::Library]
+      def lessons = @memory_lock.synchronize { @lessons ||= Memory.library(root: @root) }
 
       # The token budget crossed, or the grace period after `q` spent. Both go
       # through the handle so the kill is the same kill a keypress makes.

@@ -4,7 +4,11 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Log["OpenLanes::Log"]
+  <<module>> OpenLanes__Log
   class OpenLanes__Log__Invalid["Invalid"]
   class OpenLanes__Log__OneLineColor["OneLineColor"]
   class OpenLanes__Log__Settings["Settings"]
+  OpenLanes__Log ..> OpenLanes__Log__Invalid : uses
+  OpenLanes__Log ..> OpenLanes__Log__OneLineColor : uses
 ```

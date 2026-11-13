@@ -24,6 +24,9 @@
 .plan-head { padding: 0 16px 0 20px; }
 .plan-id { font-weight: 800; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .plan-status { margin-left: 6px; font-weight: 400; }
+.plan-state { margin-left: 4px; font-weight: 500; color: var(--ink-soft); }
+.plan-unblock { padding: 1px 10px; font-size: 12px; font-weight: 700; line-height: 1.5; border-color: var(--alarm); color: var(--alarm); }
+.plan-unblock:hover:not(:disabled) { background: var(--alarm); color: #fff; }
 .plan-title { font-weight: 600; font-size: 16px; line-height: 1.25; margin: 2px 0 6px; }
 .plan-meta { font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .lane { display: inline-flex; align-items: center; gap: 6px; }
@@ -91,7 +94,8 @@
 .car-model { color: var(--ink-soft); font-size: 13px; }
 .car-activity { font: 12px/1.4 var(--mono); color: var(--ink-soft); margin: 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .car-stats { display: flex; gap: 12px; font-size: 13px; }
-.car-stats span:last-child { margin-left: auto; color: var(--ink-soft); }
+.car-stats .car-when { margin-left: auto; color: var(--ink-soft); white-space: nowrap; }
+.car-round.is-last { color: var(--alarm); font-weight: 600; }
 .car.is-queued { border-left-style: dashed; cursor: default; }
 /* The whole card opens the drawer through its name's button; the model picker sits above that layer. */
 .car-open { all: unset; cursor: pointer; font-weight: 800; letter-spacing: -0.01em; }
@@ -172,6 +176,7 @@
 /* Their rows in the merged board, slightly faded so ours stay the thing you read. */
 .plan.is-theirs { opacity: .85; }
 .board-empty { padding: 16px 20px; color: var(--ink-soft); }
+.board-hidden { font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
   .seg::after, .cars, .stop, .car { transition: none; }

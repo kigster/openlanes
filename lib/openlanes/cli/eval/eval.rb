@@ -28,6 +28,10 @@ module OpenLanes
       option :max_tokens,
         type: :integer,
         desc: "Token cap per live case (default #{Evals::Live::DEFAULT_MAX_TOKENS})"
+      option :memory,
+        type:    :boolean,
+        default: true,
+        desc:    "With --live, tell the agent your global lessons; --no-memory is the baseline that shows whether they help"
       option :cases, desc: "Directory of <agent>/<id>.yml cases (default: the gem's evals/cases)"
 
       example [
@@ -85,7 +89,7 @@ module OpenLanes
         cap = options[:max_tokens] || Evals::Live::DEFAULT_MAX_TOKENS
         cases.map do |kase|
           UI.line("running #{kase} at #{kase.depth}, capped at #{cap} tokens")
-          outcome = Evals.run_live(kase, max_tokens: cap)
+          outcome = Evals.run_live(kase, max_tokens: cap, memory: options.fetch(:memory, true))
           result = outcome.result
           [outcome.score, Evals::Run.new(seconds: result.seconds, tokens: result.fresh)]
         end

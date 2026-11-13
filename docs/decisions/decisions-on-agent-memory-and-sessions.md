@@ -31,6 +31,7 @@ Implemented (plan 024). `Plans::PlanState#resumption` decides from `state.json` 
   - `note`: anything else the agent must not forget.
 - The agent is told to record each of these as it happens, not at the end, so a round that is killed still leaves everything it printed.
 - Reading the previous round is enforced, not requested: the dispatcher puts the previous round's journal into the next round's prompt, even when the session is resumed. Agents that cannot resume depend on it, and claude benefits too.
+  - Amended by plan 062.00: a resumed session is sent only the entries it does not already hold, and one line in place of the journal instructions. The executor records what a session holds (`memory.<agent>.held`: the session id and the number of the last entry) when a round ends with its session never compacted, and drops the record when a round resumes it. `Execution::JournalWindow` trims only when the record names the very session being resumed; after a compaction, a lost session, a round the engine did not see end, or on a CLI that cannot resume, the whole journal and its instructions are sent as before.
 - This replaces asking a stopped agent to save its work (STOP needs no new instruction).
 
 ### M3. More than one block, answered one at a time

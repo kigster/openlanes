@@ -39,7 +39,7 @@ RSpec.describe "Adapter probes" do
       let(:answers) { { argv => result.call(%({"loggedIn": true, "email": "someone@example.com"})) } }
 
       it { is_expected.to be_available }
-      it { expect(availability.models).to eq(OpenLanes::Adapters::Claude::MODELS) }
+      it { expect(availability.models).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED) }
       it { expect(availability.checked_at).to eq(at) }
     end
 

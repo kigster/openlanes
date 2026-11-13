@@ -276,6 +276,7 @@ module OpenLanes
       # @return [void]
       def prepare(plans, migrated = nil)
         startup("Log", UI.log_path)
+        startup("Models", models_note)
         credentials unless @dry_run || @quiet
         spec_warning(plans) unless @quiet
         ask_quality
@@ -492,7 +493,11 @@ module OpenLanes
           instructions:,
           model:        @options[:model],
           max_tokens:   @options[:max_tokens]&.to_i,
-          lean:         !@options[:user_config])
+          # Only where the build was published: a plan never pushed has no
+          # pull request whose diff could be fetched.
+          packets:      (Execution.review_packets(root: @root) if publishing? && !@dry_run),
+          lean:         !@options[:user_config],
+          memory:       @options.fetch(:memory, true))
       end
 
       # What the live board's probes said of each adapter (plan 031, D12): one
@@ -689,6 +694,16 @@ module OpenLanes
       # @param value [String, Array<String>] parts a narrow box may break between
       # @return [void]
       def startup(label, value) = @startup << [label, value]
+
+      # Which Claude models this run offers and where the list came from, so
+      # a page showing last month's models says why: "12 Claude models from
+      # cache (3 days old, no ANTHROPIC_API_KEY)".
+      #
+      # @return [String]
+      def models_note
+        catalogue = Adapters::Claude::Catalogue.current
+        "#{catalogue.models.size} Claude models from #{catalogue.source}"
+      end
 
       # Where the run writes, what it publishes to, and where its page is:
       # one Info box, drawn once all three are known. A line that does not

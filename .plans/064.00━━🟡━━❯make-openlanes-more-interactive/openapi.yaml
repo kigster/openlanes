@@ -1,0 +1,110 @@
+openapi: 3.1.0
+info:
+  title: OpenLanes control room, plan 064.00 additions
+  version: "064.00"
+  description: >
+    The review route, the extend_time and rule_finding command payloads, and the
+    board_delta event frame. Commands go through the existing command endpoint;
+    only their payloads are new.
+paths:
+  /api/plans/{ordinal}/review:
+    get:
+      summary: The plan branch's diff against the default branch, and its reviewers' findings
+      parameters:
+        - name: ordinal
+          in: path
+          required: true
+          schema: { type: string, examples: ["064", "064.00"] }
+      responses:
+        "200":
+          description: The review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlanReview" }
+        "404":
+          description: Not a plan number, or no such plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, examples: ["there is no plan 009.00"] }
+    PlanReview:
+      type: object
+      required: [diff, findings]
+      properties:
+        diff:
+          type: object
+          required: [stat, patch, truncated]
+          properties:
+            stat: { type: string, description: "git diff --stat; empty when the plan has no branch" }
+            patch: { type: string, description: "the patch, cut at 200000 bytes" }
+            truncated: { type: boolean }
+        findings:
+          type: array
+          items: { $ref: "#/components/schemas/Finding" }
+    Finding:
+      type: object
+      required: [id, reviewer, severity, file, line, text, ruling]
+      properties:
+        id: { type: string, pattern: "^F\\d+$" }
+        reviewer: { type: string }
+        severity: { type: string, enum: [critical, minor] }
+        file: { type: [string, "null"] }
+        line: { type: [integer, "null"] }
+        text: { type: string }
+        ruling: { type: [string, "null"], enum: [accept, strike, null] }
+    ExtendTimeCommand:
+      type: object
+      required: [id, kind, plan, agent, payload]
+      properties:
+        id: { type: string }
+        kind: { const: extend_time }
+        plan: { type: string }
+        agent: { type: string }
+        payload:
+          type: object
+          required: [seconds]
+          properties:
+            seconds: { type: integer, minimum: 1, maximum: 1200 }
+    RuleFindingCommand:
+      type: object
+      required: [id, kind, plan, payload]
+      properties:
+        id: { type: string }
+        kind: { const: rule_finding }
+        plan: { type: string }
+        payload:
+          type: object
+          required: [finding, verdict]
+          properties:
+            finding: { type: string, pattern: "^[Ff]\\d+$" }
+            verdict: { type: string, enum: [accept, strike] }
+    BoardFrame:
+      description: "event: board — the whole board, sent first on every connection"
+      type: object
+      required: [me, others, version]
+      properties:
+        me: { type: [object, "null"] }
+        others: { type: array, items: { type: object } }
+        version: { type: integer, minimum: 1 }
+    BoardDeltaFrame:
+      description: "event: board_delta — what changed since version base"
+      type: object
+      required: [base, version, upsert, remove]
+      properties:
+        base: { type: integer }
+        version: { type: integer }
+        upsert:
+          type: array
+          items:
+            type: object
+            required: [key, value]
+            properties:
+              key: { type: string, description: "node/<id>/<checkout> or plan/<id>/<checkout>/<ordinal>" }
+              value: { type: object }
+        remove: { type: array, items: { type: string } }

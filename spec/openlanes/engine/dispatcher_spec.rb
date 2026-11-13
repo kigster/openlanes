@@ -787,6 +787,19 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       end
     end
 
+    # The board's "Round 2 of 2": the granted round counts toward the total,
+    # so a person reads how many are left rather than "Round 2 of 1".
+    it "counts a granted round in the rounds the board shows for the agent" do
+      boards = []
+      executor = executor_with { |_, _, _| "Almost completed" }
+      runner_with(executor,
+        agents:     agents.only("researcher"),
+        on_board:   ->(board) { boards << board },
+        extensions: OpenLanes::Engine::Extensions.new(stay: false)).call
+      seen = boards.flat_map(&:rows).select { it.agent == "researcher" && it.state == :running }.map { [it.round, it.rounds] }.uniq
+      expect(seen).to eq([[1, 1], [2, 2]])
+    end
+
     it "starts a round a person gave twenty minutes with them on its clock" do
       seen = []
       executor = lambda { |agent, subject, round: 1, handle: nil, **|

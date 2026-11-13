@@ -5,6 +5,7 @@
 @import "@fontsource/overpass-mono/400.css";
 @import "@fontsource/barlow-condensed/600.css";
 @import "./styles/tokens.css";
+@import "./styles/palettes.css";
 @import "highlight.js/styles/base16/gruvbox-dark-medium.css" layer(base);
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));

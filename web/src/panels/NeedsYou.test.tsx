@@ -31,6 +31,52 @@ describe("NeedsYou", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  describe("the ding", () => {
+    const box = () => screen.getByRole("checkbox", { name: "Ding when a question needs you" });
+
+    it("is on by default and boops once per question shown, then once more for one that arrives", () => {
+      const play = vi.fn();
+      const { onCommand } = recorder();
+      const { rerender } = renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("006.00")]} onCommand={onCommand} play={play} />);
+      expect(box()).toBeChecked();
+      rerender(<NeedsYou plans={[planAt("001.00"), planAt("006.00")]} onCommand={onCommand} play={play} />);
+      const third = planAt("005.00");
+      third.questions = [question({ id: "005.00/B1" })];
+      rerender(<NeedsYou plans={[planAt("001.00"), planAt("006.00"), third]} onCommand={onCommand} play={play} />);
+      expect(play.mock.calls).toEqual([[2], [1]]);
+    });
+
+    it("stays quiet when the project has it off, and ticking it saves that without replaying old questions", async () => {
+      const play = vi.fn();
+      const { onCommand, sent } = recorder();
+      renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("006.00")]} onCommand={onCommand} chime={false} play={play} />);
+      expect(box()).not.toBeChecked();
+      expect(play).not.toHaveBeenCalled();
+      await userEvent.click(box());
+      expect(box()).toBeChecked();
+      expect([sent.map((c) => [c.kind, c.payload]), play.mock.calls]).toEqual([[["set_chime", { on: true }]], [[1]]]);
+    });
+
+    it("saves an untick, and follows the engine when the setting changes elsewhere", async () => {
+      const play = vi.fn();
+      const { onCommand, sent } = recorder();
+      const { rerender } = renderPanel(<NeedsYou plans={[]} onCommand={onCommand} play={play} />);
+      await userEvent.click(box());
+      expect([(box() as HTMLInputElement).checked, sent.map((c) => c.payload)]).toEqual([false, [{ on: false }]]);
+      rerender(<NeedsYou plans={[]} onCommand={onCommand} chime={false} play={play} />);
+      rerender(<NeedsYou plans={[]} onCommand={onCommand} chime play={play} />);
+      expect(box()).toBeChecked();
+    });
+  });
+
+  it("puts the spotlit plan's questions first, ringed, and hands the first one focus", () => {
+    const { onCommand } = recorder();
+    renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("006.00")]} onCommand={onCommand} spotlight="006.00" />);
+    const cards = Array.from(document.querySelectorAll<HTMLElement>(".asks .ask"));
+    expect(cards.map((c) => [c.dataset.ask, c.classList.contains("is-spotlit")])).toEqual([["006.00/B1", true], ["001.00/B1", false]]);
+    expect(cards[0].contains(document.activeElement)).toBe(true);
+  });
+
   it("says when nothing waits", () => {
     renderPanel(<NeedsYou plans={[planAt("005.00")]} onCommand={recorder().onCommand} />);
     expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
@@ -52,6 +98,13 @@ describe("NeedsYou", () => {
     expect(sent).toEqual([{ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "B1", text: "The checkout path." } }]);
     expect(await findInline("Answer sent to backend-coder.")).toBeInTheDocument();
     expect(screen.getByTestId("announcer")).toHaveTextContent("Answer sent to backend-coder.");
+    // The note leaves the list of questions for a toggle that starts closed, counted and named by its plan.
+    const answered = document.querySelector<HTMLDetailsElement>(".rail details.answered")!;
+    expect(answered.open).toBe(false);
+    expect(answered.querySelector("summary")).toHaveTextContent("Answered (1)");
+    expect(answered.querySelector('[data-ask="001.00/B1"]')).toHaveTextContent("001.00Answer sent to backend-coder.");
+    expect(document.querySelector(".asks .ask")).toBeNull();
+    expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
   });
 
   it("sends with Ctrl Enter from the answer box", async () => {

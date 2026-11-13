@@ -15,11 +15,13 @@ import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
 import { Header } from "./shell/Header";
 import { Logs } from "./shell/Logs";
+import { Ticker } from "./shell/Ticker";
 import { StatusBar } from "./shell/StatusBar";
 import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
 import { useBoardNews } from "./shell/useBoardNews";
 import { useLanes } from "./shell/useLanes";
+import { useHideInactive } from "./shell/useHideInactive";
 import { PreviewTab } from "./preview/PreviewTab";
 import { appTabLabel, appTabValue } from "./preview/model";
 import { useApps } from "./preview/useApps";
@@ -107,6 +109,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const onCommand = useCallback<SendCommand>(command => send.mutateAsync(command), [send]);
   const life = useLifecycle(me.plans, reduced);
   const lanes = useLanes();
+  const inactive = useHideInactive();
   // Other machines' merged rows stay and fade like ours; one hook tracks them all, keyed by machine and plan.
   const theirPlans = useMemo(
     () => others.flatMap(o => o.plans.map(p => ({ ...p, ordinal: nodePlanKey(o.node.id, p.ordinal) }))),
@@ -119,6 +122,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const [merged, setMergedState] = useState(readMerged);
   const [openCar, setOpenCar] = useState<OpenCar | null>(null);
   const [unblocking, setUnblocking] = useState<string | null>(null);
+  // The lane whose Unblock was clicked last: its questions lead the rail until every one is answered.
+  const [spotlight, setSpotlight] = useState<string | null>(null);
   const [logsSeenAt, setLogsSeenAt] = useState<string | null>(null);
   // #start in the URL opens the idea dialog, so `openlanes start` can send the browser straight to it (W19).
   const [ideaOpen, setIdeaOpen] = useState(() => window.location.hash === "#start");
@@ -165,6 +170,23 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
     setOpenCar(null);
     if (was) document.querySelector<HTMLElement>(`[data-car="${was.plan}/${was.agent}"] .car-open`)?.focus();
   }, [openCar]);
+
+  // Unblock on a lane (U1): the rail takes the drawer's place if the drawer was open, and that plan's questions come
+  // to the front of it. Nothing is sent; the answers go through the cards as always, and once every question has one
+  // the engine hands the plan to the unblocker agent on its own.
+  const onUnblock = useCallback(
+    (plan: Plan) => {
+      setOpenCar(null);
+      setSpotlight(plan.ordinal);
+      const n = plan.questions.length;
+      announce(`${planId(plan.ordinal)}: ${n} question${n === 1 ? "" : "s"} to answer, at the top of Needs you.`);
+    },
+    [announce],
+  );
+  // The spotlight is spent once the plan has nothing left to ask, by answers from anywhere.
+  useEffect(() => {
+    if (spotlight && !me.plans.some(p => p.ordinal === spotlight && p.questions.length > 0)) setSpotlight(null);
+  }, [spotlight, me.plans]);
 
   const onToggleUnblock = useCallback(
     (plan: Plan) => {
@@ -225,6 +247,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onToggleMerged={() => setMerged(!merged)}
         narrow={lanes.lanes === "narrow"}
         onToggleNarrow={lanes.toggle}
+        hideInactive={inactive.hidden}
+        onToggleHideInactive={inactive.toggle}
         actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} catalog={me} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
@@ -257,6 +281,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               </Tab>
             ))}
           </Tabs.List>
+          <Ticker lines={me.log} onOpen={() => setTab("logs")} />
             {others.map(o => {
               const value = machineTab(o.node.id);
               // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
@@ -299,11 +324,13 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <Board
               board={board}
               merged={merged}
+              hideInactive={inactive.hidden}
               retiring={life.retiring}
               gone={life.gone}
               theirs={theirLife}
               openCar={drawer && drawerCar ? drawerCar.key : null}
               onOpenCar={onOpenCar}
+              onUnblock={onUnblock}
               renderModel={renderModel}
             />
           </Tabs.Content>
@@ -329,7 +356,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <AgentDrawer
               plan={drawer} car={drawerCar} models={modelsOf(me, drawerCar.adapter)} unavailable={unusable(adapterOf(me, drawerCar.adapter))} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
-            <NeedsYou plans={me.plans} onCommand={onCommand} />
+            <NeedsYou plans={me.plans} onCommand={onCommand} spotlight={spotlight} chime={me.run.chime} />
           )}
           {side.wide && (
             <ColumnDivider width={side.width} min={side.min} max={side.max} onResize={side.setWidth} onNudge={side.nudge} onReset={side.reset} layoutRef={layoutRef} />

@@ -168,12 +168,19 @@ module OpenLanes
     :review_adapters,
     :refactor_threshold,
     :refactor_lock_hours,
+    :chime,
     :budget_plan_usd) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
+
+    # Whether the control room dings when a question arrives: `chime:`, on
+    # unless the file says `false`. The page's checkbox writes it.
+    #
+    # @return [Boolean]
+    def chime? = chime != false
 
     # The share of the codebase, in percent by files or by lines, above
     # which a refactor runs alone (R6): `refactor.threshold`, else 50.
@@ -264,6 +271,7 @@ module OpenLanes
       refactor = { "threshold" => refactor_threshold, "lock_hours" => refactor_lock_hours }.compact
       settings["refactor"] = refactor unless refactor.empty?
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
+      settings["chime"] = chime unless chime.nil?
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
 
@@ -282,7 +290,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review refactor budget].freeze
+              questions coverage events ci stack architecture_decisions review refactor chime budget].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -369,6 +377,29 @@ module OpenLanes
         load(root).tap { |config| @current = [key, config] }
       end
 
+      # Set one top-level true/false key in the project's file, in place: the
+      # line is rewritten where it stands, or added at the end, and every
+      # comment and every other key is left exactly as a person wrote it.
+      # A dump of the parsed file would drop the comments.
+      #
+      # @param root [String] the project root
+      # @param key [String] one of {KEYS}
+      # @param value [Boolean]
+      # @return [String] the file's path
+      def write_flag(root, key, value)
+        path = File.join(root, FILE)
+        text = File.file?(path) ? File.read(path, encoding: "UTF-8") : ""
+        line = "#{key}: #{value}"
+        if text.match?(/^#{Regexp.escape(key)}:.*$/)
+          text = text.sub(/^#{Regexp.escape(key)}:.*$/, line)
+        else
+          text += "\n" unless text.empty? || text.end_with?("\n")
+          text += "#{line}\n"
+        end
+        File.write(path, text)
+        path
+      end
+
       # @param text [String] the whole file
       # @param path [String] for every error message
       # @return [OpenLanes::Config]
@@ -407,6 +438,7 @@ module OpenLanes
           coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
           **events(settings["events"], path),
           **refactor(settings["refactor"], path),
+          chime:     chime(settings, path),
           **budget(settings["budget"], path))
         conflicts!(config, path)
         config
@@ -444,6 +476,14 @@ module OpenLanes
         return value if [true, false, nil].include?(value)
 
         fail_with(path, "frontend: #{value.inspect} is not true or false")
+      end
+
+      # @return [Boolean, nil]
+      def chime(settings, path)
+        value = settings["chime"]
+        return value if [true, false, nil].include?(value)
+
+        fail_with(path, "chime: #{value.inspect} is not true or false")
       end
 
       # @return [Integer, nil]

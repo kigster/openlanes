@@ -52,6 +52,7 @@ describe("AgentDrawer", () => {
     expect(transcript()[0]).toBe("you: Look at the CI first");
     expect(screen.getByRole("textbox", { name: "Message staff-reviewer" })).toHaveValue("");
     expect(screen.getByTestId("announcer")).toHaveTextContent("Message sent to staff-reviewer.");
+    expect(await findInline("Message sent to staff-reviewer.")).toBeInTheDocument();
   });
 
   it("shows a refused message and keeps the text", async () => {
@@ -78,8 +79,47 @@ describe("AgentDrawer", () => {
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Run /compact now; 27% of its context used")).toBeInTheDocument();
     await user.click(within(menu).getByText(item));
+    if (kind === "stop") {
+      expect(sent).toHaveLength(0);
+      await user.click(within(await screen.findByRole("dialog", { name: "Stop staff-reviewer?" })).getByRole("button", { name: "Stop agent" }));
+    }
     await waitFor(() => expect(sent).toEqual([{ kind, plan: "005.00", agent: "staff-reviewer", payload: {} } satisfies Sent]));
+    // Beside the composer, where it is seen with the log closed, and in the transcript.
+    expect(await findInline(line.replace("you: ", ""))).toBeInTheDocument();
     expect(transcript()[0]).toBe(line);
+  });
+
+  it("asks before stopping, with focus on Cancel, and sends nothing when cancelled", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("005.00");
+    drawer(plan, carOf(plan, "staff-reviewer"), onCommand);
+    await user.click(screen.getByRole("button", { name: "Action" }));
+    await user.click(await screen.findByText("Stop agent"));
+    const dialog = await screen.findByRole("dialog", { name: "Stop staff-reviewer?" });
+    expect(dialog).toHaveTextContent("stops work on 005.00 now and gets 60 seconds to leave a resume note");
+    await waitFor(() => expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus());
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(sent).toHaveLength(0);
+  });
+
+  it("says a held agent is on hold, from the board and not from the click", () => {
+    const plan = planAt("005.00");
+    const { rerender } = drawer(plan, carOf(plan, "staff-reviewer"));
+    expect(screen.queryByText("On hold.")).not.toBeInTheDocument();
+    rerender(<AgentDrawer plan={plan} car={{ ...carOf(plan, "staff-reviewer"), held: true }} models={modelsOf(snapshot)} autocompact={snapshot.autocompact} onCommand={recorder().onCommand} onClose={vi.fn()} />);
+    expect(screen.getByRole("status")).toHaveTextContent("On hold. It pauses after its current step. A message from you releases it.");
+  });
+
+  it("shows what the agent has cost, and n/a from an engine that does not say", () => {
+    const plan = planAt("005.00");
+    const car = carOf(plan, "staff-reviewer");
+    const { unmount } = drawer(plan, { ...car, cost: 2.1796 });
+    expect(screen.getByText("Cost").querySelector("strong")).toHaveTextContent("$2.18");
+    unmount();
+    drawer(plan, { ...car, cost: undefined });
+    expect(screen.getByText("Cost").querySelector("strong")).toHaveTextContent("n/a");
   });
 
   it("says Compacted once the reply is done, and a refusal in place", async () => {
@@ -130,6 +170,7 @@ describe("AgentDrawer", () => {
     const plan = planAt("001.00");
     drawer(plan, carOf(plan, "backend-coder"), onCommand);
     expect(screen.getByText("Blocked on your answer.")).toBeInTheDocument();
+    expect(screen.getByText(plan.questions[0].heading)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Send answer" }));
     expect(sent).toHaveLength(0);
     await user.type(screen.getByRole("textbox", { name: "Your answer" }), "The checkout path.");

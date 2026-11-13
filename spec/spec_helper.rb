@@ -59,6 +59,8 @@ require "tmpdir"
 # is still covered — deliberately, by examples that stub `UI.color?` — rather
 # than by accident, differently, on each machine.
 ENV["NO_COLOR"] = "1"
+# No example reaches Anthropic for the model list, whatever the shell exports.
+ENV["OPENLANES_MODELS_OFFLINE"] = "1"
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
@@ -73,6 +75,11 @@ at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 ENV["OPENLANES_PID_DIR"] = Dir.mktmpdir("openlanes-pids")
 at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_PID_DIR")) }
 
+# Global lessons (docs/continuous-learning.md): a developer's own must never
+# reach a prompt an example asserts on.
+ENV["OPENLANES_MEMORY_HOME"] = Dir.mktmpdir("openlanes-memory")
+at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_MEMORY_HOME")) }
+
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
 # dry/system/stubs reopens Dry::System::Container, so the class has to be
@@ -86,6 +93,7 @@ require "stringio"
 $stderr = StringIO.new
 
 require_relative "support/plans_fixture"
+require_relative "support/lessons_fixture"
 require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"
@@ -162,16 +170,16 @@ RSpec.configure do |config|
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
 
-  # The checkout's own `.openlanes.yml` is this project's settings, not a
-  # fixture. Read through {Config.current} from the gem root, its
-  # `frontend: true` started frontend-coder in routing examples that build
-  # no front end, and its `desired_codebase_quality:` lifted the quality gate
-  # the run examples assert. An example that wants settings writes its own.
-  gem_root = File.expand_path("..", __dir__)
+  # This repository is built with openlanes, so it has an `.openlanes.yml` of
+  # its own, and the suite runs from its root. An example that sets up no
+  # project used to read that file as its project's: `frontend: true` and
+  # `desired_codebase_quality: high` turned seven routing and run examples red
+  # on main. Seen from this checkout, the configuration is the defaults; an
+  # example that moves into a project of its own still reads that project's.
   config.before do
-    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |original, *args|
+    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |current|
       root = OpenLanes::Project.root || Dir.pwd
-      File.expand_path(root) == gem_root ? OpenLanes::Config.new : original.call(*args)
+      File.realpath(root) == File.realpath(REPO_ROOT) ? OpenLanes::Config.new : current.call
     end
   end
 

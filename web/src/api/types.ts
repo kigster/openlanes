@@ -49,6 +49,9 @@ export interface Car {
   history: string[]; // newest first, at most 50
   up: number; // tokens in
   down: number; // tokens out
+  // Dollars this invocation has spent, from the adapter's rates. The engine always sends it; optional because an
+  // older engine's board, read here as another machine's, has none, and that reads as not reported, never as $0.
+  cost?: number;
   context: number | null; // tokens currently in context, when the adapter reports it
   context_limit: number | null;
   elapsed: number; // seconds
@@ -88,6 +91,9 @@ export interface Question {
   kind: "block" | "extension" | "quality"; // quality: R4's desired_codebase_quality, asked once per project
   heading: string;
   body: string; // Markdown
+  // What the unblocker asked back when it could not act on the last answer, with that answer quoted; shown apart
+  // from the question so neither hides the other. Absent from an older engine, and for a question never reopened.
+  follow_up?: string | null; // Markdown
   agent: string | null; // who asked, when the ledger says
   owner: "technical" | "product"; // ⭕ or 🛑
   options: QuestionOption[] | null; // what the question offers to choose from (D3); null when it wants words
@@ -200,6 +206,7 @@ export interface ModelChoice {
   label: string; // "Sonnet 5.5"
   rates: { in: number; out: number } | null; // dollars per million tokens; null for a model nobody has priced
   context: number; // tokens the context window holds
+  estimated?: boolean; // the rates are its tier's, not its own: Anthropic listed the model before anyone priced it here
 }
 
 /** What one coding CLI can do, as its adapter declares it. */
@@ -242,6 +249,7 @@ export interface Run {
   cost: number;
   agents_working: number;
   jobs: number; // the run's concurrency limit, changed live by /concurrency
+  chime?: boolean; // `chime:` in .openlanes.yml; absent from an older engine, which means on
   outage?: Outage | null; // optional: an engine older than plan 022 never sends it
 }
 
@@ -323,7 +331,8 @@ export type CommandKind =
   | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
   | "stop_plan" // /stop: signals the plan's agents and takes it off the board; payload: {}
   | "restart_plan" // /restart: puts an idle plan back on the board; refused while it has an agent
-  | "set_concurrency"; // /concurrency: payload: { limit }, never kills a running agent
+  | "set_concurrency" // /concurrency: payload: { limit }, never kills a running agent
+  | "set_chime"; // the rail's ding box: payload: { on }, written to .openlanes.yml
 
 export interface Command {
   id: string; // ULID, minted by the page; also its idempotency key

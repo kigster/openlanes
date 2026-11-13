@@ -43,18 +43,24 @@
 .rail, .drawer { background: var(--plate); border: 1px solid var(--hairline); border-radius: var(--radius-plate); padding: 18px 18px 20px;
                  position: sticky; top: 16px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
 .rail h2, .drawer h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
+.rail-chime { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 0 6px; cursor: pointer; }
+.rail-chime input { margin: 0; accent-color: var(--alarm); }
 .rail-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 14px; }
 .drawer { overflow-y: auto; }
 @media (max-width: 960px) { .rail, .drawer { position: static; max-height: 70vh; } }
 .asks { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         margin: 0 -6px; padding: 2px 6px 4px; overscroll-behavior: contain; }
 .empty { color: var(--ink-soft); }
+.ask.is-spotlit { box-shadow: 0 0 0 2px var(--alarm); }
 .ask { flex: none; padding: 14px; border-radius: 10px; background: var(--enamel);
        border: 1px solid var(--hairline); border-left: 3px solid var(--alarm); transition: opacity .5s ease; }
 .ask textarea { background: var(--plate); }
 .ask-who { font-size: 13px; color: var(--ink-soft); margin: 0; }
 .ask-heading { font-weight: 600; margin: 4px 0 0; }
 .ask-text { margin: 4px 0 10px; }
+.ask-follow-up { margin: 0 0 10px; padding: 8px 10px; border-left: 3px solid var(--alarm); border-radius: 6px; background: var(--plate); }
+.ask-follow-up .ask-text { margin: 0; }
+.ask-follow-up blockquote { margin: 0; padding: 0; border: 0; }
 .ask-text > :first-child { margin-top: 0; }
 .ask-text > :last-child { margin-bottom: 0; }
 .ask textarea, .drawer textarea {
@@ -65,6 +71,12 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .ask-actions, .composer-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .ask-done { color: var(--ink-soft); font-size: 14px; margin: 0; }
 .ask.is-done { border-left-color: var(--hairline); padding: 10px 14px; }
+.answered { flex: none; margin-top: 12px; border-top: 1px solid var(--hairline); padding-top: 10px; }
+.answered summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.answered summary span { font-weight: 400; }
+.answered ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.answered li { display: flex; gap: 8px; align-items: baseline; }
+.answered-plan { flex: none; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
 .ask-held { --held: color-mix(in srgb, var(--alarm) 70%, #000); margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--held); color: #fff; font-weight: 700; }
 .ask.is-held { border-left-color: var(--alarm); }
 .is-leaving { opacity: 0; }
@@ -167,9 +179,11 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .d-model { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 10px; margin: 0 0 4px; }
 .d-model label { font-weight: 700; font-size: 14px; }
 .d-model-help { grid-column: 2; margin: 0; font-size: 12px; color: var(--ink-soft); }
-.drawer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 16px; }
+.drawer-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 12px 0 16px; }
 .drawer-stats div { font-size: 13px; color: var(--ink-soft); }
 .drawer-stats strong { display: block; font-size: 20px; color: var(--ink); font-weight: 800; }
+.d-held { margin: 0 0 12px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink);
+          background: color-mix(in srgb, var(--alarm) 10%, transparent); border: 1px solid color-mix(in srgb, var(--alarm) 35%, transparent); }
 .d-context { margin: 0 0 16px; font-size: 13px; color: var(--ink-soft); }
 .d-context p { margin: 0 0 6px; }
 .d-context strong { color: var(--ink); }

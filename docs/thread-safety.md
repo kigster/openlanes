@@ -35,9 +35,9 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/apps/runner.rb` | `@stopping` | `Apps::Runner` | runner loop, signal trap | `Concurrent::AtomicBoolean` | guarded |
 | `lib/openlanes/apps/supervisor.rb` | `@statuses`, `@tails` | `Apps::Supervisor` | reader, waiter, caller | `@mutex` on every read and write | guarded |
 | `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot | `Engine::AgentLocks` | tick, agent jobs | `@mutex` | guarded |
-| `lib/openlanes/engine/dispatcher.rb` | `@running`, `@history` | `Engine::Dispatcher` | tick, agent jobs, PR watch, unblock | `@mutex` around every cross-thread read and write | guarded |
+| `lib/openlanes/engine/dispatcher/desk.rb` | `@running`, `@history` | `Engine::Dispatcher::Desk` | tick, agent jobs, PR watch, unblock | `@mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
-| `lib/openlanes/engine/dispatcher.rb` | `@clock` | `Engine::Dispatcher` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |
+| `lib/openlanes/engine/dispatcher/desk.rb` | `@clock` | `Engine::Dispatcher::Desk` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |
 | `lib/openlanes/engine/event_journal.rb` | `@seq` and the journal file | `Engine::EventJournal` | tick, agent jobs | `@lock` around number, write, flush and fsync, so lines never interleave or repeat a `seq` | guarded |
 | `lib/openlanes/engine/finishes.rb` | `@finished` (plans that reached the end this run) | `Engine::Finishes` | tick, agent jobs, PR watch | `@mutex` around every read and write | guarded |
 | `lib/openlanes/engine/narrator.rb` | the narration buffer | `Engine::Narrator` | tick, agent jobs | `@lock` | guarded |
@@ -52,6 +52,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/execution/clock.rb` | the timer thread and deadline | `Execution::Clock` | agent job, timer | `@mutex` | guarded |
 | `lib/openlanes/execution/control.rb` | `@files`, the control files to sweep | `Execution::Control` | agent jobs, poller | `@mutex` | guarded |
 | `lib/openlanes/execution/executor.rb` | `@compaction`, per-run handle state | the run handle | agent job, tick (`compact`, `kill!`) | `@mutex` | guarded |
+| `lib/openlanes/execution/review_packet.rb` | the round's packet file, read or built and written; `@complete` and `@nonce` while one is built | the `ReviewPacket` | agent jobs starting reviewers of one round | `@mutex` | guarded |
 | `lib/openlanes/adapters/capabilities.rb` | each adapter's `CAPABILITIES` | the adapter class | any | frozen `Data` | frozen |
 | `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |

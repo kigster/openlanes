@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Board as BoardData, Snapshot, Station } from "../api/types";
 import { PlanRow, type CarHandlers } from "./PlanRow";
-import { lastSeen, who } from "./format";
+import { active, lastSeen, who } from "./format";
 import { dagBreak, nodePlanKey } from "./model";
 import "./board.css";
 
@@ -64,32 +64,43 @@ interface BoardProps extends CarHandlers {
   gone: ReadonlyMap<string, unknown>;
   /** The same for other machines' rows. */
   theirs?: TheirLifecycle;
+  /** Hide Inactive is on: only lanes with an agent running are drawn, here and under other machines. */
+  hideInactive?: boolean;
 }
 
 /** The transit board: our plans, and with All machines on, everyone else's under ours. */
-export function Board({ board, merged, retiring, gone, theirs = NOTHING, ...cars }: BoardProps) {
+export function Board({ board, merged, retiring, gone, theirs = NOTHING, hideInactive = false, ...cars }: BoardProps) {
   const { me, others } = board;
-  const ours = me.plans.filter(p => !gone.has(p.ordinal));
+  const all = me.plans.filter(p => !gone.has(p.ordinal));
+  const ours = hideInactive ? all.filter(active) : all;
+  const hidden = all.length - ours.length;
   return (
     <Inner stations={me.stations}>
       {merged && <MachineHead name={who(me.node)} facts={[me.node.ip, `${ours.length} plans`, "this machine"].filter((f): f is string => f !== null)} />}
-      {ours.length === 0 && !merged && <p className="board-empty">No plans in this run yet. Add one from Action.</p>}
+      {all.length === 0 && !merged && <p className="board-empty">No plans in this run yet. Add one from Action.</p>}
       {ours.map((plan, i) => (
         <PlanRow
           key={plan.ordinal} plan={plan} stations={me.stations} adapters={me.adapters} retiring={retiring.has(plan.ordinal)}
           dagBreak={dagBreak(ours, i)} {...cars}
         />
       ))}
+      {/* Said in words, so an empty or short board is never mistaken for an idle factory. */}
+      {hidden > 0 && (
+        <p className="board-empty board-hidden" role="status">
+          {ours.length === 0 ? "No lane has an agent running. " : ""}
+          {hidden} inactive lane{hidden === 1 ? "" : "s"} hidden. Turn off Hide Inactive to see {hidden === 1 ? "it" : "them"}.
+        </p>
+      )}
       {merged &&
         others.map(their => (
-          <MachineRows key={their.node.id} their={their} me={me} life={theirs} />
+          <MachineRows key={their.node.id} their={their} me={me} life={theirs} hideInactive={hideInactive} />
         ))}
     </Inner>
   );
 }
 
-function MachineRows({ their, me, life }: { their: Snapshot; me: Snapshot; life: TheirLifecycle }) {
-  const plans = showing(their, life);
+function MachineRows({ their, me, life, hideInactive = false }: { their: Snapshot; me: Snapshot; life: TheirLifecycle; hideInactive?: boolean }) {
+  const plans = showing(their, life).filter(plan => !hideInactive || active(plan));
   return (
     <>
       <MachineHead
