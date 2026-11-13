@@ -78,6 +78,7 @@ classDiagram
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
   class OpenLanes__Engine__Reviews["Reviews"]
+  class OpenLanes__Engine__Reviews__Build["Reviews::Build"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
   class OpenLanes__Engine__StartWorkflow["StartWorkflow"]
@@ -87,6 +88,7 @@ classDiagram
   class OpenLanes__Engine__Steps__Context["Steps::Context"]
   class OpenLanes__Engine__Steps__Interval["Steps::Interval"]
   class OpenLanes__Engine__Steps__Merges["Steps::Merges"]
+  class OpenLanes__Engine__Steps__Snapshot["Steps::Snapshot"]
   class OpenLanes__Engine__Steps__Sweeps["Steps::Sweeps"]
   class OpenLanes__Engine__Steps__Watch["Steps::Watch"]
   class OpenLanes__Engine__Tally["Tally"]
@@ -196,12 +198,14 @@ classDiagram
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs["OpenLanes::Vcs"]
   <<module>> OpenLanes__Vcs
+  class OpenLanes__Vcs__Changes["OpenLanes::Vcs::Changes"]
   class OpenLanes__Vcs__CiGate["OpenLanes::Vcs::CiGate"]
   <<module>> OpenLanes__Vcs__CiGate
   class OpenLanes__Vcs__CiWatch["OpenLanes::Vcs::CiWatch"]
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
   class OpenLanes__Vcs__Review["OpenLanes::Vcs::Review"]
+  class OpenLanes__Vcs__SnapshotReads["OpenLanes::Vcs::SnapshotReads"]
   class OpenLanes__Web["OpenLanes::Web"]
   <<module>> OpenLanes__Web
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
@@ -440,12 +444,14 @@ classDiagram
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Agents__Routing : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Engine__Reviews__Build : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Error : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__Verdict : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Reviews__Build ..> OpenLanes__UI : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Adapters__Claude__Catalogue : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Dealing : uses
@@ -464,6 +470,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__StateFile : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Steps__Snapshot : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Upkeep : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Verification : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Verification__Driver : uses
@@ -487,8 +494,10 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Engine__RunWorkflow ..|> OpenLanes__UI : includes
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__Changes : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__CiWatch : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__Review : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__SnapshotReads : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Clock__System : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses

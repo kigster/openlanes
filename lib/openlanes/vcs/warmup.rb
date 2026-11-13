@@ -2,6 +2,7 @@
 
 require "digest"
 require "fileutils"
+require "open3"
 require "rbconfig"
 
 module OpenLanes
@@ -11,11 +12,17 @@ module OpenLanes
     #
     # A fresh worktree has never run `bundle install` or `npm ci`, so the first
     # thing every agent did was spend minutes installing what the last plan's
-    # worktree had already installed. Dependencies are installed once per
-    # lockfile digest into a cache outside the repository, and every worktree
-    # whose lockfile has that digest shares the result: Bundler through a
-    # worktree-local `.bundle/config` pointing `BUNDLE_PATH` at the cache, and
-    # `node_modules` cloned from it (`cp -cR`, an APFS clonefile, on macOS).
+    # worktree had already installed. Each kind installs into a directory of
+    # the worktree's own, and the cache, one entry per lockfile digest, keeps a
+    # clone of the result (`cp -cR`, an APFS clonefile, on macOS) for the next
+    # worktree. The worktree never writes into the cache, so an agent that
+    # edits an installed gem changes its own copy and no other plan's.
+    #
+    # Installing runs code the branch controls (a `Gemfile` is Ruby), in the
+    # harness and outside the agent's boundary, so a kind is warmed only when
+    # every file it reads matches the base branch, and npm runs with
+    # `--ignore-scripts`. A kind whose target or `.bundle/config` git does not
+    # ignore is skipped too, since `git add -A` would publish it.
     #
     # Never fatal, the same as seeding: a failure is reported in the {Result}
     # and the plan goes on, its agent left to install for itself.
@@ -27,34 +34,36 @@ module OpenLanes
       # leaves an entry without it, which is then installed again.
       COMPLETE = ".complete"
 
-      # Each kind of dependency: the lockfile that names it, and the command
-      # that installs it into the directory it is run in.
-      KINDS = {
-        bundler: { lockfile: "Gemfile.lock", command: %w[bundle install --quiet] },
-        npm:     { lockfile: "package-lock.json", command: %w[npm ci --silent --no-audit --no-fund] }
-      }.freeze
+      # The kinds warmed, in order.
+      KINDS = [Kind::BUNDLER, Kind::NPM].freeze
+
+      # The settings file a Bundler kind points at its target.
+      BUNDLE_CONFIG = ".bundle/config"
 
       # What one warm-up did, kind by kind.
       #
       # @!attribute [r] installed
-      #   @return [Array<Symbol>] kinds installed into the cache by this call
+      #   @return [Array<Symbol>] kinds installed, and kept in the cache, by this call
       # @!attribute [r] shared
-      #   @return [Array<Symbol>] kinds taken from an entry already in the cache
+      #   @return [Array<Symbol>] kinds cloned from an entry already in the cache
+      # @!attribute [r] skipped
+      #   @return [Hash{Symbol => String}] kinds deliberately left alone, and why
       # @!attribute [r] failures
       #   @return [Hash{Symbol => String}] kinds that could not be warmed, and why
-      Result = Data.define(:installed, :shared, :failures) do
-        # @return [Boolean] whether every kind present was warmed
+      Result = Data.define(:installed, :shared, :skipped, :failures) do
+        def initialize(installed: [], shared: [], skipped: {}, failures: {}) = super
+
+        # @return [Boolean] whether no kind failed
         def ok? = failures.empty?
 
         # @return [Boolean] whether the checkout had no lockfile at all
-        def untouched? = installed.empty? && shared.empty? && failures.empty?
+        def untouched? = installed.empty? && shared.empty? && skipped.empty? && failures.empty?
       end
 
-      # The installer used when none is injected: run the kind's command in
-      # `dir` with `env`, silently, since agents' spinner lines are live on
-      # STDERR.
-      DEFAULT_INSTALLER = lambda do |kind, dir, env|
-        system(env, *KINDS.fetch(kind)[:command], chdir: dir, out: File::NULL, err: File::NULL)
+      # The runner used when none is injected: run `argv` in `dir` with `env`,
+      # silently, since agents' spinner lines are live on STDERR.
+      DEFAULT_RUNNER = lambda do |argv, dir, env|
+        system(env, *argv, chdir: dir, out: File::NULL, err: File::NULL)
       end
 
       # @param lockfile [String] path to a lockfile
@@ -62,29 +71,33 @@ module OpenLanes
       def self.digest(lockfile) = Digest::SHA256.file(lockfile).hexdigest[0, 16]
 
       # @param cache [String] where shared installs live
-      # @param installer [#call] `(kind, dir, env) -> Boolean`; the suite
-      #   injects one so it never runs bundler or npm for real
-      def initialize(cache: DEFAULT_CACHE, installer: DEFAULT_INSTALLER)
+      # @param runner [#call] `(argv, dir, env) -> Boolean`; the suite injects
+      #   one so it never runs bundler or npm for real
+      # @param kinds [Array<Kind>]
+      def initialize(cache: DEFAULT_CACHE, runner: DEFAULT_RUNNER, kinds: KINDS)
         @cache = File.expand_path(cache)
-        @installer = installer
+        @runner = runner
+        @kinds = kinds
       end
 
       # @return [String]
       attr_reader :cache
 
       # @param path [String] the worktree to warm
+      # @param base [String, nil] the ref whose dependency files are trusted;
+      #   nil trusts the worktree's own
       # @return [Result]
-      def call(path)
-        result = { installed: [], shared: [], failures: {} }
-        KINDS.each do |kind, spec|
-          lockfile = File.join(path, spec[:lockfile])
-          next unless File.file?(lockfile)
+      def call(path, base: nil)
+        result = Result.new
+        @kinds.each do |kind|
+          next unless File.file?(File.join(path, kind.lockfile))
 
-          warm(kind, path, entry_for(kind, lockfile), result)
-        rescue SystemCallError, IOError => e
-          result[:failures][kind] = e.message
+          why = refusal(kind, path, base)
+          why ? result.skipped[kind.name] = why : warm(kind, path, result)
+        rescue StandardError => e
+          result.failures[kind.name] = e.message
         end
-        Result.new(**result)
+        result
       end
 
       # @param kind [Symbol]
@@ -94,73 +107,99 @@ module OpenLanes
 
       private
 
+      # @return [String, nil] why this kind must not be warmed here
+      def refusal(kind, path, base)
+        changed = base && kind.inputs.find { !same_as_base?(path, it, base) }
+        return "#{changed} differs from #{base}" if changed
+
+        # The trailing slash says the target is a directory, which a pattern
+        # like `/node_modules/` only matches before it exists.
+        unpublished = ["#{kind.target}/", *(BUNDLE_CONFIG if kind.bundler?)].find { !ignored?(path, it) }
+        return "git does not ignore #{unpublished.chomp("/")}" if unpublished
+        return "#{BUNDLE_CONFIG} is a symlink" if kind.bundler? && symlinked?(path, BUNDLE_CONFIG)
+        return "already satisfied" if kind.check && @runner.call(kind.check, path, {})
+
+        nil
+      end
+
       # One kind, under a lock on its entry, so two worktrees warming at once
-      # install it once between them rather than twice into one directory.
-      def warm(kind, path, entry, result)
+      # install it once between them rather than twice.
+      def warm(kind, path, result)
+        entry = entry_for(kind.name, File.join(path, kind.lockfile))
+        target = File.join(path, kind.target)
         FileUtils.mkdir_p(File.dirname(entry))
-        File.open("#{entry}.lock", File::RDWR | File::CREAT, 0o644) do |lock|
+        outcome = File.open("#{entry}.lock", File::RDWR | File::CREAT, 0o644) do |lock|
           lock.flock(File::LOCK_EX)
-          send(kind, path, entry, result)
+          fill(kind, path, entry, target)
         end
+        record(kind, path, outcome, result)
       end
 
-      # Bundler installs straight into the entry, so the worktree only needs
-      # to be told where it is.
-      def bundler(path, entry, result)
-        point_bundler(path, entry)
+      def record(kind, path, outcome, result)
+        return result.failures[kind.name] = "#{kind.install.join(" ")} failed in #{path}" if outcome == :failed
+
+        result.public_send(outcome) << kind.name
+        point_bundler(path, File.join(path, kind.target)) if kind.bundler?
+      end
+
+      # @return [Symbol] :shared, :installed or :failed
+      def fill(kind, path, entry, target)
+        kept = File.join(entry, File.basename(kind.target))
         if complete?(entry)
-          result[:shared] << :bundler
-        elsif @installer.call(:bundler, path, { "BUNDLE_PATH" => entry })
-          complete!(entry)
-          result[:installed] << :bundler
-        else
-          result[:failures][:bundler] = "bundle install failed in #{path}"
+          copy_on_write(kept, target) unless File.exist?(target)
+          return :shared
         end
+        # A node_modules already in the worktree is {Prewarm}'s clone from the
+        # main checkout; `npm ci` would delete it and install again.
+        return :shared if !kind.bundler? && File.exist?(target)
+        return :failed unless @runner.call(kind.install, path, kind.env.call(target))
+
+        keep(target, kept, entry)
+        :installed
       end
 
-      # npm has no path setting, so it installs in the worktree and the entry
-      # keeps a clone of the result for the next worktree. A `node_modules`
-      # already in the worktree is {Prewarm}'s clone from the main checkout;
-      # `npm ci` would delete it and install again, so it is left as it is.
-      def npm(path, entry, result)
-        target = File.join(path, "node_modules")
-        if complete?(entry) || File.exist?(target)
-          clone(File.join(entry, "node_modules"), target) unless File.exist?(target)
-          result[:shared] << :npm
-        elsif @installer.call(:npm, path, {})
-          keep(target, entry)
-          result[:installed] << :npm
-        else
-          result[:failures][:npm] = "npm ci failed in #{path}"
-        end
-      end
-
-      # Stores a fresh install's node_modules as the entry for its digest.
-      def keep(target, entry)
-        FileUtils.rm_rf(File.join(entry, "node_modules"))
+      # Stores a fresh install as the entry for its digest.
+      def keep(target, kept, entry)
+        FileUtils.rm_rf(kept)
         FileUtils.mkdir_p(entry)
-        clone(target, File.join(entry, "node_modules")) if File.directory?(target)
-        complete!(entry)
+        copy_on_write(target, kept) if File.directory?(target)
+        FileUtils.touch(File.join(entry, COMPLETE))
       end
 
       # Writes `BUNDLE_PATH` into the worktree's own `.bundle/config`, keeping
-      # whatever else a person put there.
-      def point_bundler(path, entry)
-        config = File.join(path, ".bundle", "config")
+      # whatever else a person put there. {#refusal} has already checked that
+      # git ignores the file and that it is no symlink.
+      def point_bundler(path, target)
+        config = File.join(path, BUNDLE_CONFIG)
         lines = File.file?(config) ? File.readlines(config, chomp: true).grep_v(/\A(---|BUNDLE_PATH:)/) : []
         FileUtils.mkdir_p(File.dirname(config))
-        File.write(config, ["---", "BUNDLE_PATH: #{entry.inspect}", *lines].join("\n") << "\n")
+        File.write(config, ["---", "BUNDLE_PATH: #{target.inspect}", *lines].join("\n") << "\n")
       end
 
       def complete?(entry) = File.file?(File.join(entry, COMPLETE))
 
-      def complete!(entry)
-        FileUtils.mkdir_p(entry)
-        FileUtils.touch(File.join(entry, COMPLETE))
+      # Whether the worktree's copy of `file` is the one on `base`, compared
+      # by blob id, so an uncommitted or untracked edit counts as a change.
+      def same_as_base?(path, file, base)
+        local = File.join(path, file)
+        return !git?(path, "cat-file", "-e", "#{base}:#{file}") unless File.file?(local)
+
+        theirs, ok = Open3.capture2("git", "-C", path, "rev-parse", "--verify", "--quiet", "#{base}:#{file}", err: File::NULL)
+        ours, = Open3.capture2("git", "-C", path, "hash-object", "--", file, err: File::NULL)
+        ok.success? && theirs.strip == ours.strip
       end
 
+      def ignored?(path, file) = git?(path, "check-ignore", "--quiet", "--", file)
+
+      def symlinked?(path, file)
+        [File.dirname(file), file].any? { File.symlink?(File.join(path, it)) }
+      end
+
+      def git?(path, *) = system("git", "-C", path, *, out: File::NULL, err: File::NULL)
+
       # A copy-on-write clone where the filesystem offers one, a copy elsewhere.
-      def clone(from, to)
+      def copy_on_write(from, to)
+        FileUtils.mkdir_p(File.dirname(to))
         return if RbConfig::CONFIG["host_os"].include?("darwin") &&
                   system("cp", "-cR", from, to, out: File::NULL, err: File::NULL)
 

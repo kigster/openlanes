@@ -3,41 +3,52 @@
 require "tmpdir"
 
 RSpec.describe OpenLanes::Vcs::Warmup do
-  subject(:warmup) { described_class.new(cache:, installer:) }
+  subject(:warmup) { described_class.new(cache:, runner:) }
 
   let(:tmp) { Dir.mktmpdir("openlanes-warmup") }
   let(:cache) { File.join(tmp, "cache") }
   let(:calls) { [] }
   let(:succeeds) { true }
-  # Stands in for bundler and npm: records the call, and for npm leaves a
-  # node_modules behind the way `npm ci` would.
-  let(:installer) do
+  let(:satisfied) { false }
+  # Stands in for bundler and npm: records each install, answers `bundle
+  # check` with `satisfied`, and leaves behind what a real install would.
+  let(:runner) do
     log = calls
     ok = succeeds
-    lambda do |kind, dir, env|
-      log << [kind, dir, env]
-      FileUtils.mkdir_p(File.join(dir, "node_modules", "left-pad")) if ok && kind == :npm
-      ok
+    check = satisfied
+    lambda do |argv, dir, env|
+      next check if argv == %w[bundle check]
+
+      log << [argv.first, dir, env]
+      next ok unless ok
+
+      FileUtils.mkdir_p(argv.first == "npm" ? File.join(dir, "node_modules", "left-pad") : File.join(env["BUNDLE_PATH"], "rake"))
+      true
     end
   end
 
   after { FileUtils.rm_rf(tmp) }
 
-  def checkout(name, gemfile_lock: "GEM\n  rake (13.0)\n", package_lock: "{\"lockfileVersion\": 3}\n")
+  def git(path, *) = system("git", "-C", path, *, out: File::NULL, err: File::NULL)
+
+  def checkout(name, gemfile_lock: "GEM\n  rake (13.0)\n", package_lock: "{\"lockfileVersion\": 3}\n", ignore: "/.bundle/\n/node_modules/\n")
     File.join(tmp, name).tap do |path|
       FileUtils.mkdir_p(path)
+      git(path, "init", "-q")
+      File.write(File.join(path, ".gitignore"), ignore)
       File.write(File.join(path, "Gemfile.lock"), gemfile_lock) if gemfile_lock
       File.write(File.join(path, "package-lock.json"), package_lock) if package_lock
     end
   end
 
-  it "installs once for two worktrees whose lockfiles match, and shares the cache" do
+  it "installs once for two worktrees whose lockfiles match, and clones the result into the second" do
     first = warmup.call(checkout("a"))
     second = warmup.call(checkout("b"))
 
-    expect(calls.map(&:first)).to eq(%i[bundler npm])
+    expect(calls.map(&:first)).to eq(%w[bundle npm])
     expect([first.installed, second.shared]).to eq([%i[bundler npm], %i[bundler npm]])
     expect(File.directory?(File.join(tmp, "b", "node_modules", "left-pad"))).to be(true)
+    expect(File.directory?(File.join(tmp, "b", ".bundle", "openlanes-gems", "rake"))).to be(true)
   end
 
   it "leaves a node_modules that Prewarm cloned in, rather than running npm ci over it" do
@@ -50,14 +61,23 @@ RSpec.describe OpenLanes::Vcs::Warmup do
     expect(File.directory?(File.join(path, "node_modules", "cloned"))).to be(true)
   end
 
-  it "points both worktrees' Bundler at the same cache entry" do
-    a = checkout("a")
-    b = checkout("b")
-    [a, b].each { warmup.call(it) }
-    entry = warmup.entry_for(:bundler, File.join(a, "Gemfile.lock"))
+  it "points each worktree's Bundler at a copy of its own, never at the cache" do
+    a = checkout("a", package_lock: nil)
+    warmup.call(a)
+    target = File.join(a, ".bundle", "openlanes-gems")
 
-    expect([a, b].map { File.read(File.join(it, ".bundle", "config")) }.uniq).to eq(["---\nBUNDLE_PATH: #{entry.inspect}\n"])
-    expect(calls.first.last).to eq("BUNDLE_PATH" => entry)
+    expect(File.read(File.join(a, ".bundle", "config"))).to eq("---\nBUNDLE_PATH: #{target.inspect}\n")
+    expect(calls.first.last).to eq("BUNDLE_PATH" => target)
+  end
+
+  it "keeps a worktree's edit to an installed gem out of the next worktree" do
+    a = checkout("a", package_lock: nil)
+    warmup.call(a)
+    File.write(File.join(a, ".bundle", "openlanes-gems", "rake", "evil.rb"), "system('true')")
+    b = checkout("b", package_lock: nil)
+    warmup.call(b)
+
+    expect(File.exist?(File.join(b, ".bundle", "openlanes-gems", "rake", "evil.rb"))).to be(false)
   end
 
   it "keeps the other settings in a worktree's .bundle/config" do
@@ -66,7 +86,61 @@ RSpec.describe OpenLanes::Vcs::Warmup do
     File.write(File.join(path, ".bundle", "config"), "---\nBUNDLE_JOBS: \"4\"\nBUNDLE_PATH: \"vendor\"\n")
     warmup.call(path)
 
-    expect(File.read(File.join(path, ".bundle", "config"))).to match(/\A---\nBUNDLE_PATH: ".+cache.+"\nBUNDLE_JOBS: "4"\n\z/)
+    expect(File.read(File.join(path, ".bundle", "config"))).to match(/\A---\nBUNDLE_PATH: ".+openlanes-gems"\nBUNDLE_JOBS: "4"\n\z/)
+  end
+
+  it "skips Bundler when git would publish .bundle/config" do
+    path = checkout("a", package_lock: nil, ignore: "")
+    result = warmup.call(path)
+
+    expect([result.skipped, calls, File.exist?(File.join(path, ".bundle"))]).to eq([{ bundler: "git does not ignore .bundle/openlanes-gems" }, [], false])
+  end
+
+  it "skips Bundler when .bundle/config is a symlink" do
+    path = checkout("a", package_lock: nil)
+    outside = File.join(tmp, "outside")
+    File.write(outside, "keep me")
+    FileUtils.mkdir_p(File.join(path, ".bundle"))
+    File.symlink(outside, File.join(path, ".bundle", "config"))
+
+    expect(warmup.call(path).skipped).to eq(bundler: ".bundle/config is a symlink")
+    expect(File.read(outside)).to eq("keep me")
+  end
+
+  context "when bundle check already passes" do
+    let(:satisfied) { true }
+
+    it "installs nothing for Bundler" do
+      result = warmup.call(checkout("a", package_lock: nil))
+      expect([result.skipped, calls]).to eq([{ bundler: "already satisfied" }, []])
+    end
+  end
+
+  describe "against a base branch" do
+    def committed(name)
+      checkout(name, package_lock: nil).tap do |path|
+        git(path, "add", "-A")
+        git(path, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "base")
+      end
+    end
+
+    it "warms when the dependency files match the base" do
+      expect(warmup.call(committed("a"), base: "HEAD").installed).to eq(%i[bundler])
+    end
+
+    it "skips a kind whose lockfile the branch changed" do
+      path = committed("a")
+      File.write(File.join(path, "Gemfile.lock"), "GEM\n  rake (99.0)\n")
+
+      expect(warmup.call(path, base: "HEAD").skipped).to eq(bundler: "Gemfile.lock differs from HEAD")
+    end
+
+    it "skips a kind whose Gemfile the branch added" do
+      path = committed("a")
+      File.write(File.join(path, "Gemfile"), "system('git push')\n")
+
+      expect([warmup.call(path, base: "HEAD").skipped, calls]).to eq([{ bundler: "Gemfile differs from HEAD" }, []])
+    end
   end
 
   it "gives a changed lockfile a new cache entry" do
@@ -81,7 +155,7 @@ RSpec.describe OpenLanes::Vcs::Warmup do
     path = checkout("bare", gemfile_lock: nil, package_lock: nil)
     result = warmup.call(path)
 
-    expect([result.untouched?, calls, Dir.children(path)]).to eq([true, [], []])
+    expect([result.untouched?, calls]).to eq([true, []])
   end
 
   context "when the installer fails" do
@@ -94,6 +168,7 @@ RSpec.describe OpenLanes::Vcs::Warmup do
       expect(first.ok?).to be(false)
       expect(first.failures.keys).to eq(%i[bundler npm])
       expect(calls.size).to eq(4)
+      expect(File.exist?(File.join(tmp, "a", ".bundle", "config"))).to be(false)
     end
   end
 
@@ -103,6 +178,10 @@ RSpec.describe OpenLanes::Vcs::Warmup do
     File.write(File.join(cache, "bundler"), "not a directory")
 
     expect(warmup.call(path).failures.keys).to eq(%i[bundler])
+  end
+
+  it "runs npm without lifecycle scripts" do
+    expect(described_class::KINDS.find { it.name == :npm }.install).to include("--ignore-scripts")
   end
 
   it "keys an entry by the lockfile's contents" do

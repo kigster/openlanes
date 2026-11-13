@@ -93,6 +93,22 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       end
     end
 
+    it "reads the pull request from the tick's snapshot, with no gh pr view" do
+      row = { number: 1, url: "https://github.com/example/repo/pull/1", open: true, state: "OPEN", labels: %w[ready-to-merge], files: [], checks: [], head: "abc", merge_state: "CLEAN" }
+      snapshot = OpenLanes::Vcs::PullSnapshot.new(pulls: [row], taken_at: now)
+      reads = OpenLanes::Vcs::SnapshotReads.new(OpenLanes::Vcs::GitHub.new, snapshot: double(call: snapshot, refresh!: nil))
+      snapshotted = described_class.new(github: reads,
+        outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by: :auto)
+
+      aggregate_failures do
+        expect(snapshotted.assess(plan, "manual").note).to eq("PR #1 merge-manually: deploy-assessor said manual")
+        # swap_label reads the labels it replaces, a write's own read; the
+        # step's read of the pull request asks for headRefOid.
+        expect(gh_calls.select { it.take(2) == %w[pr view] && it.join(" ").include?("headRefOid") }).to be_empty
+      end
+    end
+
     it "does not label it twice on the next poll" do
       merging.assess(plan, "manual")
       calls = gh_calls.size

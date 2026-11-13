@@ -108,9 +108,10 @@ module OpenLanes
       # @param seeder [String, nil] the seeder to run; nil runs none
       # @param prewarm [#call, nil] given a checkout's path, installs what a
       #   worktree would otherwise install for itself; nil installs nothing
-      # @param warmup [#call, nil] gives a checkout its dependencies; nil warms none
+      # @param warmup [#call, nil] gives a checkout its dependencies; nil, the
+      #   default, warms none, so only the {Vcs.worktree} facade installs for real
       def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder, prewarm: Prewarm.new(root:),
-        warmup: Warmup.new)
+        warmup: nil)
         @root = File.expand_path(root)
         @user = user
         @seeder = seeder
@@ -220,7 +221,7 @@ module OpenLanes
       def warm(path)
         return nil unless @warmup
 
-        @warmup.call(path).tap do |result|
+        @warmup.call(path, base: "#{Refresh::REMOTE}/#{Refresh.default_branch(root)}").tap do |result|
           result.failures.each do |kind, why|
             UI.log("worktree: could not warm #{kind} dependencies: #{why}; its agent installs them itself", level: :warn)
           end

@@ -443,7 +443,7 @@ module OpenLanes
           merging:      merging_for(publisher, worktree),
           arbitration:  arbitration_for(publisher, worktree),
           upkeep:       upkeep_for(publisher, worktree),
-          reviews:      reviews_for(agents, publisher),
+          reviews:      reviews_for(agents, publisher, worktree),
           on_board:     on_board_for(live),
           claims:       live&.claims,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
@@ -566,12 +566,15 @@ module OpenLanes
       #
       # @param agents [OpenLanes::Agents::Registry]
       # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil] where the diff a
+      #   stage-2 reviewer watches is read; nil, a shared tree, watches all
       # @return [OpenLanes::Engine::Reviews]
-      def reviews_for(agents, publisher)
+      def reviews_for(agents, publisher, worktree = nil)
         published = !(publisher.nil? || @dry_run)
         Reviews.new(agents:,
-          review: (Vcs::Review.new(github: Vcs.github) if published),
-          builds: (Vcs::CiWatch.new(github: Vcs.github) if published))
+          review:  (Vcs::Review.new(github: Vcs.github) if published),
+          builds:  (Vcs::CiWatch.new(github: Vcs.github) if published),
+          changes: worktree ? Vcs::Changes.new(worktree:) : ->(_) {})
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs
@@ -584,7 +587,7 @@ module OpenLanes
       def verification_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        github = Vcs.github
+        github = snapshot_github
         config = Config.current
         outcome = Verification.outcome(root: @root,
           publisher:,
@@ -624,7 +627,7 @@ module OpenLanes
       def merging_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Merging.new(github: Vcs.github,
+        Merging.new(github: snapshot_github,
           outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
           # Read live, as the quality is: a person may switch `merge.by`
           # while a plan waits at 🏁.
@@ -643,7 +646,7 @@ module OpenLanes
       def upkeep_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
+        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }, github: snapshot_github)
       end
 
       # What the runner is told about idling past its fixed points: nothing,
@@ -672,9 +675,18 @@ module OpenLanes
       # who merges, not whose review counts. Kept apart from {#staying} so
       # {StartWorkflow}, which overrides that, cannot leave it behind.
       #
+      # One snapshot of the open pull requests per {Steps::POLL}, shared by
+      # every reader in the run (plan 061, B3).
+      #
+      # @return [Steps::Snapshot]
+      def pull_snapshot = @pull_snapshot ||= Steps::Snapshot.new(github: Vcs.github)
+
+      # @return [Vcs::SnapshotReads] GitHub, with labels and checks read from {#pull_snapshot}
+      def snapshot_github = Vcs::SnapshotReads.new(Vcs.github, snapshot: pull_snapshot)
+
       # @return [OpenLanes::Engine::PrWatch, nil]
       def watch
-        PrWatch.new(github: Vcs.github) unless @dry_run
+        PrWatch.new(github: Vcs.github, snapshot: pull_snapshot) unless @dry_run
       end
 
       # The open pull requests a run that does not stay leaves for a person,

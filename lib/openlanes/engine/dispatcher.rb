@@ -327,9 +327,10 @@ module OpenLanes
       # @return [void]
       def build_steps(watch)
         context = Steps::Context.new(runner:,
-          busy:   method(:untouchable),
-          wake:   method(:wake!),
-          reopen: ->(ordinal) { finished_plans.delete(ordinal) })
+          busy:     method(:untouchable),
+          wake:     method(:wake!),
+          reopen:   ->(ordinal) { finished_plans.delete(ordinal) },
+          snapshot: watch&.snapshot)
         @merges = Steps::Merges.new(context)
         @sweeps = Steps::Sweeps.new(context, resolve: @start.method(:resolve_conflict))
         @watching = watch && Steps::Watch.new(context, watch:, finishes:, state: state_file)

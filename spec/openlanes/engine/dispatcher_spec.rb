@@ -1532,6 +1532,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       let(:three) { OpenLanes::Agents::Registry.new(dir: reviewers_dir) }
       let(:notes) { { "staff-reviewer" => "great", "security-reviewer" => "passed", "design-reviewer" => "great" } }
       let(:attempts) { runner_with(reviewers, agents: three).call }
+      let(:stage) { "" }
 
       def reviewers
         lambda { |agent, subject, round: 1, **|
@@ -1555,7 +1556,27 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           "design-reviewer" => "starts: [research, planning]\n" }.each do |name, starts|
           File.write(File.join(reviewers_dir, "#{name}.md"),
             "---\nname: #{name}\nhandles: [ready_for_review, in_review]\nadvances_to: approved\nstarts_as: in_review\n" \
-            "phase: review\nledger: [pull-requests.md]\n#{starts}---\nbody")
+            "phase: review\nledger: [pull-requests.md]\n#{starts}#{stage unless name == "staff-reviewer"}---\nbody")
+        end
+      end
+
+      context "when security and design are stage 2 (plan 061, B5)" do
+        let(:stage) { "review_stage: 2\n" }
+
+        it "starts staff-reviewer alone, then the other two after its approval" do
+          aggregate_failures do
+            expect(attempts.first.agent).to eq("staff-reviewer")
+            expect(attempts.drop(1).map(&:agent)).to contain_exactly("security-reviewer", "design-reviewer")
+            expect(attempts.last.note).to include("review review-approved")
+          end
+        end
+
+        it "moves a staff rejection to 🔴 without starting stage 2" do
+          notes["staff-reviewer"] = "rejected 1/2"
+          aggregate_failures do
+            expect(attempts.map(&:agent)).to eq(%w[staff-reviewer])
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
+          end
         end
       end
 

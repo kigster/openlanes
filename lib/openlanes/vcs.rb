@@ -11,7 +11,7 @@ module OpenLanes
 
     # @param root [String] repository root
     # @return [OpenLanes::Vcs::Worktree]
-    def worktree(root:, **) = Worktree.new(root:, **)
+    def worktree(root:, warmup: Warmup.new, **) = Worktree.new(root:, warmup:, **)
 
     # @param root [String] the main checkout, whose installed dependencies
     #   a new worktree is given

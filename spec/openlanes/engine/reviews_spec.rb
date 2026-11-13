@@ -14,6 +14,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
   let(:staff) { agents.find("staff-reviewer") }
   let(:security) { agents.find("security-reviewer") }
   let(:design) { agents.find("design-reviewer") }
+  let(:stages) { { "security-reviewer" => "", "design-reviewer" => "" } }
 
   def plan = OpenLanes::Plans::Tree.new(dir: plans_root).find("031.00")
   def state = OpenLanes::Plans::PlanState.for(plan.feature.path)
@@ -24,6 +25,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
     FileUtils.mkdir_p(agents_dir)
     { "staff-reviewer" => "", "security-reviewer" => "starts: [research, planning]\n",
       "design-reviewer" => "starts: [research, planning]\n" }.each do |name, extra|
+      extra += stages.fetch(name, "")
       File.write(File.join(agents_dir, "#{name}.md"),
         "---\nname: #{name}\nhandles: [ready_for_review, in_review]\nphase: review\nadvances_to: approved\nstarts_as: in_review\n#{extra}---\nbody")
     end
@@ -126,6 +128,46 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
 
     it "records the verdict against the review round, the plan's moves when it was given" do
       expect(state.stages.last).to include("agent" => "security-reviewer", "round" => 3, "verdict" => "rejected 1/2, vulnerability", "review" => 5)
+    end
+  end
+
+  describe "staged review (plan 061, B5)" do
+    subject(:reviews) { described_class.new(agents:, review:, changes: ->(_) { changed }) }
+
+    let(:stages) { { "security-reviewer" => "review_stage: 2\n", "design-reviewer" => "review_stage: 2\nwatches: [\"lib/**\"]\n" } }
+    let(:changed) { ["lib/openlanes/engine/reviews.rb"] }
+
+    it "starts only staff-reviewer until it has passed" do
+      expect([staff, security, design].map { reviews.due?(plan, it) }).to eq([true, false, false])
+    end
+
+    it "decides at once on a staff rejection, with no stage 2" do
+      decision = reviews.decide(plan, staff, "rejected 1/2")
+      expect([decision.pending?, decision.target]).to eq([false, :rejected])
+    end
+
+    it "leaves security and design pending after a staff approval" do
+      expect(reviews.decide(plan, staff, "great").pending).to contain_exactly("security-reviewer", "design-reviewer")
+    end
+
+    it "starts stage 2 once staff's approval is on its stage" do
+      voted("staff-reviewer", "great")
+      expect([security, design].map { reviews.due?(plan, it) }).to eq([true, true])
+    end
+
+    context "when the diff touches nothing design-reviewer watches" do
+      let(:changed) { ["README.md"] }
+
+      it "skips design-reviewer" do
+        voted("staff-reviewer", "great")
+        expect([reviews.due?(plan, design), reviews.decide(plan, security, "passed").target]).to eq([false, :approved])
+      end
+    end
+
+    it "still counts a stage-1 verdict from before a restart" do
+      voted("staff-reviewer", "great")
+      fresh = described_class.new(agents: OpenLanes::Agents::Registry.new(dir: agents_dir), review:, changes: ->(_) { changed })
+      expect(fresh.decide(plan, security, "passed").pending).to eq(%w[design-reviewer])
     end
   end
 
