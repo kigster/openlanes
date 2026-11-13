@@ -148,6 +148,10 @@ lefthook:
 version:
     @echo "{{ version }}"
 
+# Set the gem version and relock Gemfile.lock to match (e.g. just bump 4.0.2, or just bump 4.0.2 --dry-run)
+bump new_version *flags:
+    {{ rbenv }} ruby bin/bump-version {{ new_version }} {{ flags }}
+
 # Clobber
 clobber:
     {{ rbenv }} rake clobber

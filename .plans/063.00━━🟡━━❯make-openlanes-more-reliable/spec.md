@@ -1,6 +1,7 @@
 ---
 created: 2026-11-10
 starts: planning
+depends_on: [none]
 ---
 
 # Make Openlanes More Reliable
