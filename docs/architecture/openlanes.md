@@ -4,22 +4,52 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
   class OpenLanes__Apps__Definition["OpenLanes::Apps::Definition"]
   class OpenLanes__Config["Config"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
   class OpenLanes__Error["Error"]
+  class OpenLanes__Frontmatter["Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
   class OpenLanes__Launcher["Launcher"]
   class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
+  class OpenLanes__Markdown["Markdown"]
+  <<module>> OpenLanes__Markdown
+  class OpenLanes__Plans__Execution["OpenLanes::Plans::Execution"]
+  <<module>> OpenLanes__Plans__Execution
+  class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
+  class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Refusal["Refusal"]
+  class OpenLanes__Runtime["Runtime"]
+  <<module>> OpenLanes__Runtime
   class OpenLanes__Setup__ArchitectureDecisions["OpenLanes::Setup::ArchitectureDecisions"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes ..> OpenLanes__Agents__Names : uses
+  OpenLanes ..> OpenLanes__Config : uses
+  OpenLanes ..> OpenLanes__Container : uses
+  OpenLanes ..> OpenLanes__Plans__Execution : uses
+  OpenLanes ..> OpenLanes__Plans__GlobalLock : uses
+  OpenLanes ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Config ..> OpenLanes__Adapters : uses
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
   OpenLanes__Config ..> OpenLanes__Coverage__Config : uses
   OpenLanes__Config ..> OpenLanes__Error : uses
   OpenLanes__Config ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Config ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Config ..> OpenLanes__Project : uses
   OpenLanes__Config ..> OpenLanes__Setup__ArchitectureDecisions : uses
   OpenLanes__Launcher ..> OpenLanes__UI : uses
+  OpenLanes__Project ..> OpenLanes : uses
 ```

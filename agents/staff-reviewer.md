@@ -18,7 +18,7 @@ You review one plan's pull request as a Staff Engineer fluent in front end and b
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
+The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff. See "Your review packet" below for when to fetch any of it yourself.
 
 ## Check, in order
 

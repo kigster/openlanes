@@ -740,6 +740,51 @@ module OpenLanes
         [number, rejected]
       end
 
+      # Where one agent's {Journal::Held} is kept, beside its rounds.
+      HELD = "held"
+
+      # What the session of the agent's last round already holds of its
+      # journal, as {#hold!} left it.
+      #
+      # @param agent [String]
+      # @return [OpenLanes::Plans::Journal::Held, nil] nil when no round left
+      #   one, or the last one forgot it
+      def held(agent)
+        record = read.dig(MEMORY, agent, HELD)
+        record && Journal::Held.new(session: record["session"].to_s, through: record["through"].to_i)
+      end
+
+      # Record that +session+ holds every entry of the agent's journal written
+      # so far: the ones its prompt listed, and the ones it printed itself.
+      # The count is taken under the same lock as the write, so an entry the
+      # dispatcher adds a moment later is numbered after it and is sent again
+      # next round, which costs a line; counted before it, it would be lost.
+      #
+      # @param agent [String]
+      # @param session [String] the CLI's session id
+      # @return [OpenLanes::Plans::Journal::Held]
+      def hold!(agent:, session:)
+        through = nil
+        update do |data|
+          memory = ((data[MEMORY] ||= {})[agent] ||= {})
+          through = (memory["rounds"] ||= {}).sum { |_, value| Array(value["entries"]).size }
+          memory[HELD] = { "session" => session, "through" => through }
+        end
+        Journal::Held.new(session:, through:)
+      end
+
+      # Drop the agent's {Journal::Held}, so its next prompt carries the whole
+      # journal. Writes nothing when there is none to drop.
+      #
+      # @param agent [String]
+      # @return [void]
+      def forget_held!(agent)
+        return unless held(agent)
+
+        update { |data| data.dig(MEMORY, agent)&.delete(HELD) }
+        nil
+      end
+
       # A person's answer to one of the agent's `blocked.md` questions, kept
       # in the agent's journal with the question (M3): B1 with A1. Appended to
       # the agent's latest round, which is the one that asked. Written once:

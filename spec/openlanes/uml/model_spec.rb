@@ -51,8 +51,26 @@ RSpec.describe OpenLanes::Uml::Model do
     expect(model.dependencies).to eq(%w[Shop::Billing Shop::Audit] => 2, %w[Shop::Billing Shop] => 1)
   end
 
-  it "marks a module only as a mixin" do
-    expect(%w[Shop::Audit::Trail Shop::Audit::Log].map { model.mixin?(it) }).to eq([true, false])
+  it "marks a drawn module as one, and never a class" do
+    expect(%w[Shop::Audit::Trail Shop::Audit::Log].map { model.module?(it) }).to eq([true, false])
+  end
+
+  context "with a module that defines methods" do
+    before do
+      files["lib/shop/audit/clock.rb"] = "module Shop\n  module Audit\n    module Clock\n      module_function\n\n      " \
+                                         "def now = Time.now\n    end\n  end\nend\n"
+      files["lib/shop/audit.rb"] = "module Shop\n  module Audit\n    def self.log = Log.new\n  end\nend\n"
+      files["lib/shop/billing/later.rb"] = "module Shop\n  module Billing\n    class Later\n      def at = Audit::Clock.now\n    end\n  end\nend\n"
+    end
+
+    it "draws it, and a facade under its own namespace, but never a module holding only constants" do
+      expect(model.nodes.map(&:name) & %w[Shop Shop::Audit Shop::Audit::Clock Shop::Billing])
+        .to eq(%w[Shop::Audit Shop::Audit::Clock])
+    end
+
+    it "draws the edges that reach it and leave it" do
+      expect(edges).to include(["Shop::Billing::Later", "Shop::Audit::Clock", :uses], ["Shop::Audit", "Shop::Audit::Log", :uses])
+    end
   end
 
   context "with a Rails application" do

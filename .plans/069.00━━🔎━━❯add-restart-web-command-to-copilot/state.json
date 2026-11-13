@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "069.00",
+    "slug": "add-restart-web-command-to-copilot"
+  },
+  "state": "researched",
+  "updated_at": "2026-11-12T22:22:13-08:00",
+  "stages": [],
+  "signatures": [],
+  "messages": [],
+  "moves": 2
+}

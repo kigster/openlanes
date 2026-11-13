@@ -101,6 +101,17 @@ module OpenLanes
       #   @return [Integer] the number of its first entry in the whole journal
       Round = Data.define(:number, :round, :state, :entries, :first)
 
+      # What one CLI session already holds of an agent's journal: every entry
+      # numbered {#through} or below was in a prompt it was sent or in its own
+      # output. Kept so the round that resumes the session is not sent those
+      # entries a second time.
+      #
+      # @!attribute [r] session
+      #   @return [String] the CLI's session id
+      # @!attribute [r] through
+      #   @return [Integer] the number of the last entry the session holds
+      Held = Data.define(:session, :through)
+
       module_function
 
       # Every entry line in one piece of the agent's text, in order, each

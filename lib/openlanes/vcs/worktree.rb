@@ -95,10 +95,13 @@ module OpenLanes
       # @param dir [String, nil] where worktrees go; defaults to a sibling
       # @param user [String] branch namespace
       # @param seeder [String, nil] the seeder to run; nil runs none
-      def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder)
+      # @param prewarm [#call, nil] given a checkout's path, installs what a
+      #   worktree would otherwise install for itself; nil installs nothing
+      def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder, prewarm: Prewarm.new(root:))
         @root = File.expand_path(root)
         @user = user
         @seeder = seeder
+        @prewarm = prewarm
         @dir = File.expand_path(dir || default_dir)
       end
 
@@ -125,6 +128,11 @@ module OpenLanes
       # so running it again costs one fast subprocess and repairs the worktrees
       # that were created before any of this existed.
       #
+      # Then it is pre-warmed ({Prewarm}): the main checkout's `node_modules`
+      # are cloned in, so the agent does not open with a full install. That
+      # too only adds what is missing, and is run on both paths for the same
+      # reason.
+      #
       # @param feature [OpenLanes::Plans::Feature]
       # @return [OpenLanes::Vcs::Worktree::Checkout]
       # @raise [OpenLanes::Error] when git refuses
@@ -133,7 +141,7 @@ module OpenLanes
         path = path_for(feature)
 
         if File.directory?(path)
-          seed(path)
+          furnish(path)
           return Checkout.new(ordinal: feature.ordinal, branch:, path:, created: false)
         end
 
@@ -145,7 +153,7 @@ module OpenLanes
 
         FileUtils.mkdir_p(dir)
         add(branch, path)
-        seed(path)
+        furnish(path)
         Checkout.new(ordinal: feature.ordinal, branch:, path:, created: true)
       end
 
@@ -353,6 +361,16 @@ module OpenLanes
       end
 
       private
+
+      # Everything a checkout needs that git did not bring: the ignored files
+      # first, since an install script may read `.env`.
+      #
+      # @param path [String]
+      # @return [void]
+      def furnish(path)
+        seed(path)
+        @prewarm&.call(path)
+      end
 
       # Sibling of the repository, not inside it: a worktree under the repo shows
       # up in its own `git status` and in every glob anybody writes.

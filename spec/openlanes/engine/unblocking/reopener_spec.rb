@@ -15,22 +15,22 @@ RSpec.describe OpenLanes::Engine::Unblocking::Reopener, :tree do
     allow(OpenLanes::UI).to receive(:log)
   end
 
-  it "takes the answer out and says what was refused, and why" do
+  it "takes the answer out and puts the broker's follow-up under what was said" do
     OpenLanes::Plans::PlanState.for(plan.feature.path)
                                .journal!(agent: "unblocker", entries: [OpenLanes::Plans::Journal::Entry.new(kind: "note", text: "not a/b/c")])
     reopener.call(drain, outcome)
 
     aggregate_failures do
       expect(file).not_to match(/^## A1/)
-      expect(file).to include("> **Answer not accepted:** yes", "unblocker: not a/b/c")
-      expect(OpenLanes::UI).to have_received(:log).with("answer to B1 not accepted: unblocker: not a/b/c", level: :warn, plan: "002.00")
+      expect(file).to include("> **You answered:** yes", "> **unblocker asks:** not a/b/c")
+      expect(OpenLanes::UI).to have_received(:log).with("answer to B1 needs a follow-up: **unblocker asks:** not a/b/c", level: :warn, plan: "002.00")
     end
   end
 
-  it "says the broker said nothing when its journal is silent" do
+  it "still asks the person something when the broker's journal is silent" do
     reopener.call(drain, outcome)
 
-    expect(file).to include("unblocker left it unfolded and said nothing")
+    expect(file).to include("**unblocker asks:** I could not tell what you decided.")
   end
 
   it "reports a blocked.md it cannot read rather than raising" do
