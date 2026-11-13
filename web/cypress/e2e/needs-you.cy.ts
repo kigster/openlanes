@@ -19,6 +19,13 @@ describe("Needs you", () => {
     cy.boardEventually((me) => me.plans.find((p) => p.ordinal === "006.00")?.questions.length === 0);
   });
 
+  it("names a blocked lane's state beside its emoji, and its Unblock button spotlights its question", () => {
+    cy.get('.plan[data-plan="001.00"] .plan-id').should("contain", "(Technical Block)");
+    cy.get('.plan[data-plan="001.00"]').contains("button", "Unblock").click();
+    cy.get('.rail .ask').first().should("have.attr", "data-ask", "001.00/B1").and("have.class", "is-spotlit");
+    cy.focused().closest('[data-ask="001.00/B1"]').should("exist");
+  });
+
   it("holds a question blocked, which takes it off the rail", () => {
     cy.get('.rail [data-ask="001.00/B1"]').within(() => {
       cy.contains("button", "Hold blocked").click();

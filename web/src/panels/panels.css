@@ -49,6 +49,7 @@
 .asks { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         margin: 0 -6px; padding: 2px 6px 4px; overscroll-behavior: contain; }
 .empty { color: var(--ink-soft); }
+.ask.is-spotlit { box-shadow: 0 0 0 2px var(--alarm); }
 .ask { flex: none; padding: 14px; border-radius: 10px; background: var(--enamel);
        border: 1px solid var(--hairline); border-left: 3px solid var(--alarm); transition: opacity .5s ease; }
 .ask textarea { background: var(--plate); }
