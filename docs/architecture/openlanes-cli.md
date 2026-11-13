@@ -50,7 +50,14 @@ classDiagram
   class OpenLanes__CLI__Mail__Read["Mail::Read"]
   class OpenLanes__CLI__Mail__Render["Mail::Render"]
   class OpenLanes__CLI__Mail__Send["Mail::Send"]
+  class OpenLanes__CLI__Memory__Approve["Memory::Approve"]
+  class OpenLanes__CLI__Memory__Curate["Memory::Curate"]
+  class OpenLanes__CLI__Memory__Inbox["Memory::Inbox"]
   class OpenLanes__CLI__Memory__List["Memory::List"]
+  class OpenLanes__CLI__Memory__Promote["Memory::Promote"]
+  class OpenLanes__CLI__Memory__Scan["Memory::Scan"]
+  class OpenLanes__CLI__Memory__Table["Memory::Table"]
+  <<module>> OpenLanes__CLI__Memory__Table
   class OpenLanes__CLI__Preview__Registry["Preview::Registry"]
   <<module>> OpenLanes__CLI__Preview__Registry
   class OpenLanes__CLI__Preview__Start["Preview::Start"]
@@ -123,6 +130,8 @@ classDiagram
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
   class OpenLanes__Memory["OpenLanes::Memory"]
   <<module>> OpenLanes__Memory
+  class OpenLanes__Memory__Curation["OpenLanes::Memory::Curation"]
+  class OpenLanes__Memory__Promotion["OpenLanes::Memory::Promotion"]
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
@@ -291,9 +300,24 @@ classDiagram
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__Feature : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Memory__Approve --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Approve ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Agents : uses
+  OpenLanes__CLI__Memory__Curate --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Curate ..> OpenLanes__Memory__Curation : uses
+  OpenLanes__CLI__Memory__Inbox --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__CLI__Memory__Table : uses
+  OpenLanes__CLI__Memory__Inbox ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Memory__List ..> OpenLanes__Agents : uses
   OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__List ..> OpenLanes__CLI__Memory__Table : uses
   OpenLanes__CLI__Memory__List ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Promote --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory : uses
+  OpenLanes__CLI__Memory__Promote ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__CLI__Memory__Scan --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__Scan ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes : uses

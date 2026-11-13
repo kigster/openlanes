@@ -59,9 +59,7 @@ module OpenLanes
                    "with `status: active`; it counts once merged.\n"
           end
 
-          rows = [HEADER, *lessons.map { row(it) }]
-          widths = HEADER.each_index.map { |i| rows.map { it[i].size }.max }
-          "#{rows.map { |cells| cells.zip(widths).map { |cell, width| cell.ljust(width) }.join("  ").rstrip }.join("\n")}\n"
+          Table.render([HEADER, *lessons.map { row(it) }])
         end
 
         # @param lesson [OpenLanes::Memory::Lesson]
