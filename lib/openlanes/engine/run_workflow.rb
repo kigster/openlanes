@@ -495,7 +495,8 @@ module OpenLanes
           # Only where the build was published: a plan never pushed has no
           # pull request whose diff could be fetched.
           packets:      (Execution.review_packets(root: @root) if publishing? && !@dry_run),
-          lean:         !@options[:user_config])
+          lean:         !@options[:user_config],
+          memory:       @options.fetch(:memory, true))
       end
 
       # What the live board's probes said of each adapter (plan 031, D12): one

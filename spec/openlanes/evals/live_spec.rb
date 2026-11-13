@@ -73,6 +73,17 @@ RSpec.describe OpenLanes::Evals::Live do
     expect(outcome.score.verdicts.find { it.name.start_with?("tokens") }.detail).to eq("1200 tokens")
   end
 
+  context "with the arbitrator, whose answer is its work" do
+    let(:case_id) { "cap-medium" }
+    let(:agent_writes) { ->(*) {} }
+    let(:ruling) { "F1 stands.\n\n```ruling\nkind: cap\npr: 9\noutcome: no_go\nreason: F1 erases the ledger.\n```\n" }
+    let(:stream) { ["#{JSON.generate(type: "result", is_error: false, result: ruling)}\n"] }
+
+    it "scores the ruling it reads back from the run's own trace" do
+      expect(outcome.score.verdicts.find { it.name.start_with?("ruling") }.to_h.slice(:ok, :detail)).to eq(ok: true, detail: "parsed")
+    end
+  end
+
   it "hands the agent the plan at the state the fixture names" do
     outcome
     expect(seen[:folder]).to eq("001.00━━⚪━━❯billing-retries")
@@ -88,6 +99,13 @@ RSpec.describe OpenLanes::Evals::Live do
     outcome
 
     expect(OpenLanes::Execution).to have_received(:executor).with(hash_including(max_tokens: 300_000))
+  end
+
+  it "passes the memory switch to the executor, so --no-memory is a real baseline" do
+    allow(OpenLanes::Execution).to receive(:executor).and_call_original
+    OpenLanes::Evals.run_live(kase, spawn:, trace_dir:, memory: false, **options)
+
+    expect(OpenLanes::Execution).to have_received(:executor).with(hash_including(memory: false))
   end
 
   it "tells the agent the cap it is held to" do

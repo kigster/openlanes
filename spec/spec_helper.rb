@@ -73,6 +73,11 @@ at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 ENV["OPENLANES_PID_DIR"] = Dir.mktmpdir("openlanes-pids")
 at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_PID_DIR")) }
 
+# Global lessons (docs/continuous-learning.md): a developer's own must never
+# reach a prompt an example asserts on.
+ENV["OPENLANES_MEMORY_HOME"] = Dir.mktmpdir("openlanes-memory")
+at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_MEMORY_HOME")) }
+
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
 # dry/system/stubs reopens Dry::System::Container, so the class has to be
@@ -86,6 +91,7 @@ require "stringio"
 $stderr = StringIO.new
 
 require_relative "support/plans_fixture"
+require_relative "support/lessons_fixture"
 require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"
@@ -161,6 +167,19 @@ RSpec.configure do |config|
   # A command run in an example names its process (S5); the suite's own
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
+
+  # This repository is built with openlanes, so it has an `.openlanes.yml` of
+  # its own, and the suite runs from its root. An example that sets up no
+  # project used to read that file as its project's: `frontend: true` and
+  # `desired_codebase_quality: high` turned seven routing and run examples red
+  # on main. Seen from this checkout, the configuration is the defaults; an
+  # example that moves into a project of its own still reads that project's.
+  config.before do
+    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |current|
+      root = OpenLanes::Project.root || Dir.pwd
+      File.realpath(root) == File.realpath(REPO_ROOT) ? OpenLanes::Config.new : current.call
+    end
+  end
 
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.

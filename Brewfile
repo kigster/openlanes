@@ -1,5 +1,6 @@
- # rubocop:disable Naming/FileName,Lint/MissingCopEnableDirective
- # vim: ft=ruby # rubocop:disable Layout/CommentIndentation
+
+# rubocop:disable Naming/FileName,Lint/MissingCopEnableDirective
+# vim: ft=ruby # rubocop:disable Layout/CommentIndentation
 
 # The one Brewfile: what openlanes shells out to at run time, read from the
 # code rather than guessed, and the tools a contributor works with. It ships
@@ -17,8 +18,16 @@ tap 'kigster/tap'
 # See https://sopsy-cli.dev/
 brew 'sops'
 brew 'age'
-brew 'age-plugin-se' if OS.mac? # the Secure Enclave plugin exists only on macOS
-brew 'kigster/tap/sopsy'
+
+
+# the Secure Enclave plugin exists only on macOS
+if OS.mac? && `arch`.strip =~ /i386/
+#  brew 'age-plugin-se' 
+else
+#  brew 'age-plugin-se' 
+end
+
+#brew 'kigster/tap/sopsy'
 
 # Pre-commit hooks to check for secrets
 brew 'gitleaks'
@@ -32,7 +41,7 @@ brew 'redis'
 # Github and other utilities
 brew 'rbenv'
 brew 'gh'
-brew 'mermaid-cli'
+#brew 'mermaid-cli'
 brew 'circleci'
 brew 'gawk'        # bin/ol-tee stamps each line with strftime, which BSD awk lacks
 brew 'git'         # worktrees, branches, the boundary's reflog check
