@@ -108,6 +108,7 @@ require_relative "support/test_redis"
 require_relative "support/port_window"
 require_relative "support/ruby_project"
 require_relative "support/offline_probes"
+require_relative "support/checkout_config"
 
 TestRedis.scrub!
 
@@ -135,6 +136,16 @@ RSpec.configure do |config|
   # Every real-Redis example holds the machine-wide lock while it runs, and
   # each one flushes its database on entry, so none depends on another run.
   config.around(:example, :redis) { |example| TestRedis.exclusively { example.run } }
+
+  # The checkout's own .openlanes.yml reads as empty (B1); this tag reads the real file.
+  config.around(:example, :checkout_config) do |example|
+    CheckoutConfig.real = true
+    OpenLanes::Config.instance_variable_set(:@current, nil)
+    example.run
+  ensure
+    CheckoutConfig.real = false
+    OpenLanes::Config.instance_variable_set(:@current, nil)
+  end
 
   config.example_status_persistence_file_path = ".rspec_status"
   config.disable_monkey_patching!

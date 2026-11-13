@@ -4,7 +4,7 @@ import type { AppStatus, Board, CopilotLog, Snapshot, WireBoard } from "./types"
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { appliesTo, applyDelta } from "./boardDelta";
 import { openStream, type ConnectionState } from "./events";
-import { APPS_KEY, BOARD_KEY, COPILOT_KEY } from "./queryClient";
+import { APPS_KEY, BOARD_KEY, COPILOT_KEY, DEPENDENCIES_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
 import { replies } from "./replies";
 import { chatBus } from "../chat/bus";
@@ -82,6 +82,8 @@ export function useBoard(): BoardState {
         streamed.current += 1;
         version.current = board.version ?? null;
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
+        // The dependency graph reads the archive too, which no snapshot carries: a plan that moved refetches it.
+        void client.invalidateQueries({ queryKey: DEPENDENCIES_KEY });
       },
       onBoardDelta: delta => {
         if (!appliesTo(version.current, delta)) {
