@@ -40,7 +40,7 @@ module OpenLanes
       # @param outage [Hash, nil] {OutageReport#to_h} of the outage this run
       #   last recovered from; nil when there was none
       # @param max_rejections [#call] `merge.max_rejections`, asked once per
-      #   snapshot, so an edited `.openlanes.yml` shows on the next one
+      #   snapshot, so an edited `.openlanes/config.yml` shows on the next one
       # @param budget [OpenLanes::Engine::Budget] each plan's spend against
       #   `budget.plan_usd` (plan 062.00)
       # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
@@ -238,7 +238,7 @@ module OpenLanes
       # @return [OpenLanes::Arbitration::Counter]
       def counter = @counter ||= Arbitration.counter(agents: @agents)
 
-      # A `.openlanes.yml` that does not parse shows the default cap rather
+      # A `.openlanes/config.yml` that does not parse shows the default cap rather
       # than taking the whole page down; `openlanes run` refuses it anyway.
       #
       # @return [Integer]

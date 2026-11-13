@@ -91,16 +91,16 @@ module OpenLanes
         # Lines of a withheld coverage run quoted in the comment.
         TAIL = CoverageGate::TAIL
 
-        # What the builders are told when the branch's `.openlanes.yml` has
+        # What the builders are told when the branch's `.openlanes/config.yml` has
         # no `coverage:` section. A plain rejection would only say the gate
         # withheld, and the builder would go looking for a defect; this names
         # the one thing to write, in both shapes, so the next round writes it.
         # It is signed "sent back", not "rejected" ({REJECTION}), because
         # this one does not count.
         SETUP = <<~MARKDOWN
-          Coverage is not declared yet: this branch's `.openlanes.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
+          Coverage is not declared yet: this branch's `.openlanes/config.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
 
-          Add a `coverage:` section to `.openlanes.yml` for this stack, in one of two shapes. `command` (runs the whole suite) and `minimum` (the lowest line percentage that merges) are required in both.
+          Add a `coverage:` section to `.openlanes/config.yml` for this stack, in one of two shapes. `command` (runs the whole suite) and `minimum` (the lowest line percentage that merges) are required in both.
 
           A command that prints the line percentage:
 

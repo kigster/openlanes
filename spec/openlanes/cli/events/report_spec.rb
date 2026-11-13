@@ -42,7 +42,7 @@ RSpec.describe OpenLanes::CLI::Events::Report, :tree do
     allow(OpenLanes::Config).to receive(:load).and_return(config(enabled: false))
     _out, err, status = run
     expect(status).to eq(78)
-    expect(err).to include("events: { enabled: true }", ".openlanes.yml")
+    expect(err).to include("events: { enabled: true }", ".openlanes/config.yml")
   end
 
   it "prints the table on STDOUT" do

@@ -10,7 +10,7 @@ module OpenLanes
       WEB_OPTIONS = %i[web open port ips all_interfaces admin_credentials].freeze
 
       # @param options [Hash] what `start` was given
-      # @param defaults [Hash] its defaults, `.openlanes.yml` included, which
+      # @param defaults [Hash] its defaults, `.openlanes/config.yml` included, which
       #   are left out of argv so config values and secrets stay out of `ps`
       # @param root [String] the project root, every child's working directory
       def initialize(options:, defaults:, root:)

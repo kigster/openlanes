@@ -576,7 +576,7 @@ module OpenLanes
 
         <<~MARKDOWN
           A feature takes one of three paths, chosen by `starts:` in its `spec.md`
-          (`#{Plans::Spec::STARTS.join("`, `")}`; the default is the project's `.openlanes.yml`).
+          (`#{Plans::Spec::STARTS.join("`, `")}`; the default is the project's `.openlanes/config.yml`).
 
           | Starts | Path | The harness writes |
           | :--- | :--- | :----------------- |

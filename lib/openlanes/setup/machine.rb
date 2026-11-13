@@ -136,12 +136,12 @@ module OpenLanes
         return Check.new(name: "redis", ok: true, detail: "#{shown} answers PING", fix: nil) if @ping.call(url)
 
         local = url.match?(%r{\Aredis://(?:[^@/]*@)?(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/|\z)})
-        fix = local ? "brew services start redis" : "make #{shown} reachable, or set redis_url in .openlanes.yml"
+        fix = local ? "brew services start redis" : "make #{shown} reachable, or set redis_url in .openlanes/config.yml"
         Check.new(name: "redis", ok: false, detail: "#{shown} does not answer", fix:)
       end
 
       # The project's settings when there is a project, else none: setup runs
-      # from anywhere, and a broken `.openlanes.yml` is a question for the
+      # from anywhere, and a broken `.openlanes/config.yml` is a question for the
       # commands that read it, not a reason the machine is not ready.
       #
       # @return [OpenLanes::Config]

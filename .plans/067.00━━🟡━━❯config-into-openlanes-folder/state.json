@@ -1,0 +1,327 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "067.00",
+    "slug": "config-into-openlanes-folder"
+  },
+  "state": "building",
+  "updated_at": "2026-11-13T09:41:32-08:00",
+  "stages": [
+    {
+      "agent": "planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-11-13T03:28:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/067.00-config-into-openlanes-folder",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "medium",
+      "session": "80323a9a-0dd6-4fa0-95ff-a907008731f1",
+      "to": "planned",
+      "finished_at": "2026-11-13T03:29:59-08:00",
+      "up": 464570,
+      "down": 12970,
+      "seconds": 116.6,
+      "note": "completed - 9 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "planned",
+      "started_at": "2026-11-13T03:30:02-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/067.00-config-into-openlanes-folder",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "medium",
+      "session": "8a7c4ecc-86f6-428d-a41e-8ae37a5df94f",
+      "to": "building",
+      "finished_at": "2026-11-13T03:41:11-08:00",
+      "up": 233422,
+      "down": 1421,
+      "seconds": 668.1,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-13T03:46:17-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/067.00-config-into-openlanes-folder",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "medium",
+      "session": "8a7c4ecc-86f6-428d-a41e-8ae37a5df94f",
+      "to": "building",
+      "finished_at": "2026-11-13T04:16:44-08:00",
+      "up": 283442,
+      "down": 581,
+      "seconds": 1825.2,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-13T09:28:43-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/067.00-config-into-openlanes-folder",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "medium",
+      "session": "8a7c4ecc-86f6-428d-a41e-8ae37a5df94f"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-13T03:28:10-08:00",
+      "agent": "planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T03:29:47-08:00",
+      "agent": "planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "backend-coder"
+    },
+    {
+      "at": "2026-11-13T03:30:11-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T03:40:05-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T03:40:40-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T03:41:04-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T03:46:27-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T04:02:17-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T04:15:05-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T09:28:53-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-13T09:41:22-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 3
+    }
+  ],
+  "messages": [],
+  "moves": 4,
+  "memory": {
+    "planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Legacy .openlanes.yml is read indefinitely with a once-per-process STDERR notice; removing it is a later plan's decision"
+            },
+            {
+              "kind": "decision",
+              "text": "Live factory picks up a moved config without restart: Config.current caches on the resolved path plus mtime"
+            },
+            {
+              "kind": "decision",
+              "text": "Move command is `openlanes config move [--dry-run]`, a new config group in Setup::ConfigMove, using git mv"
+            },
+            {
+              "kind": "decision",
+              "text": "Kept depends_on [\"057.00\"], since a person wrote it and 057.00 is merged (PR #210). execution: concurrent, because this is not a refactor (about 3% of files)"
+            },
+            {
+              "kind": "note",
+              "text": "The harness (pid 9345) holds the alock on the plan folder in the main checkout. plan.md was written under that claim"
+            },
+            {
+              "kind": "done",
+              "text": "plan.md written: 7 back-end units (U1 path resolver through U7 the repo's own move plus integration spec), no front end, no HTTP surface. Signed Completed, next backend-coder"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "80323a9a-0dd6-4fa0-95ff-a907008731f1",
+        "through": 6
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 1 has 20 minutes for 7 units: do U1 (path resolution) and U2 (secret refusal) fully with specs, leave U3-U7 for later rounds via resume record"
+            },
+            {
+              "kind": "todo",
+              "text": "Full suite after U1-U3: about 40 failures, all from the new path. Specs and init still expect .openlanes.yml while write_flag and current now resolve .openlanes/config.yml. Affected: cli/init_spec, quality_question_spec, live commands specs, outcome_spec:194, events/report_spec:41, config_schema_integration_spec, coverage_gate_spec:122, architecture_doc_spec"
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "todo",
+              "text": "Round 3: rerun full rspec from scratch (round 2's run overlapped lib edits, at least 1 F seen), fix old-path message assertions, then U6 prose sweep (README, agents, skills, docs) and U7 (move this repo's config, add spec/integration/config_folder_spec.rb)"
+            },
+            {
+              "kind": "done",
+              "text": "U7: spec/integration/config_folder_spec.rb green (old file only: status, index and resync dirs run with one notice each; both files: refused naming both; config move renames and the notice stops; this checkout resolves .openlanes/config.yml). It uses status, index and resync because states and --help never read the config"
+            },
+            {
+              "kind": "todo",
+              "text": "Next round: confirm /tmp/067-rspec2.log is green; U6 prose sweep of README, agents, skills and docs; cli spec for config move; then sign Completed"
+            },
+            {
+              "kind": "done",
+              "text": "Full rspec green before the integration spec was added: 6662 examples, 0 failures, 10 pending. The integration spec passes on its own (4 examples)"
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 3: old path replaced with .openlanes/config.yml in README (plus a migration note), agents, skills and the living docs; dated docs/decisions records left as written. Added spec/openlanes/cli/config_file/move_spec.rb. Full rspec: 6670 examples, 0 failures; rubocop: 1002 files, 0 offenses. Signed Completed"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "8a7c4ecc-86f6-428d-a41e-8ae37a5df94f",
+        "through": 6
+      }
+    }
+  },
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-13T04:15:03-08:00",
+      "round": 2,
+      "status": "Interrupted",
+      "done": [
+        "U1",
+        "U2",
+        "U3(reduced)",
+        "U4",
+        "U5",
+        "lib sweep",
+        "U7 repo config moved + spec/integration/config_folder_spec.rb (4 green)",
+        "full rubocop clean"
+      ],
+      "remaining": [
+        "confirm full rspec green (/tmp/067-rspec2.log",
+        "no F seen at stop; started before integration spec)",
+        "U6 prose: README.md agents/*.md skills/** docs name the old path",
+        "cli spec for config move"
+      ],
+      "next_step": "Check /tmp/067-rspec2.log tail; rg -l '\\.openlanes\\.yml' README.md agents skills docs and replace prose with .openlanes/config.yml (keep mentions of the legacy file + openlanes config move); run packaging_spec and docs specs; full rspec; sign Completed",
+      "files_touched": [
+        "spec/integration/config_folder_spec.rb",
+        ".openlanes/config.yml",
+        "lib/openlanes/cli/config_file/subcommands/move.rb"
+      ]
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T03:41:11-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T03:46:15-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-13T04:01:18-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T04:04:17-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-13T04:11:17-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-13T04:16:44-08:00"
+    },
+    {
+      "number": 4,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T04:16:44-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T09:28:41-08:00"
+    }
+  ]
+}

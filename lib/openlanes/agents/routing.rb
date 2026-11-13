@@ -88,7 +88,7 @@ module OpenLanes
 
       # What the spec's switch for this agent says: true forces it, false
       # forbids it, nil leaves the decision to {Agent#needs}. A spec.md that
-      # says nothing takes the project's answer from `.openlanes.yml`, so a
+      # says nothing takes the project's answer from `.openlanes/config.yml`, so a
       # command-line tool can say once that no plan of it has a front end.
       #
       # @param config [OpenLanes::Config] the project's settings

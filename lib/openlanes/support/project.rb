@@ -7,22 +7,82 @@ module OpenLanes
   #
   # The search, nearest first:
   #
-  #   1. a directory holding `.openlanes.yml` or the plans directory;
+  #   1. a directory holding `.openlanes/config.yml`, the legacy
+  #      `.openlanes.yml`, or the plans directory;
   #   2. failing that, a directory holding `.git` (a directory, or the file a
   #      worktree has in its place).
   #
-  # `$HOME` counts only when it holds `.openlanes.yml`. A dotfiles repository in
+  # `$HOME` counts only when it holds a config file. A dotfiles repository in
   # `$HOME` has a `.git` too, and taking it would make every project under it
   # that has not been initialised yet silently share one root.
   module Project
+    # The folder every openlanes file a project commits lives in.
+    DIR = ".openlanes"
+
     # The project file. Its presence is what makes a directory a root even
     # where nothing else would.
-    FILE = ".openlanes.yml"
+    FILE = File.join(DIR, "config.yml")
+
+    # Where the project file lived before it moved into {DIR}. Read, with a
+    # notice, until a later plan removes it; the only place under `lib/` that
+    # spells the old name.
+    LEGACY_FILE = ".openlanes.yml"
+
+    # What moves a project from {LEGACY_FILE} to {FILE}.
+    MOVE_COMMAND = "openlanes config move"
 
     # `git rev-parse` asking for the directory every worktree shares.
     COMMON_DIR = %w[rev-parse --path-format=absolute --git-common-dir].freeze
 
     module_function
+
+    # The project file a root actually has: {FILE} when present, else
+    # {LEGACY_FILE} (with a one-line notice, once per process), else {FILE},
+    # where a new one would be written.
+    #
+    # @param root [String] the project root
+    # @return [String] an absolute path
+    # @raise [OpenLanes::Error] when both files are present
+    def config_path(root) = resolve(root, FILE, LEGACY_FILE)
+
+    # One resolver for every file that moved into {DIR}, so the notice and
+    # the refusal are written once.
+    #
+    # @param root [String]
+    # @param current [String] the path relative to +root+ now
+    # @param legacy [String] the path relative to +root+ before the move
+    # @return [String]
+    # @raise [OpenLanes::Error] when both are present
+    def resolve(root, current, legacy)
+      new_path = File.join(root, current)
+      old_path = File.join(root, legacy)
+      return new_path unless File.file?(old_path)
+
+      if File.file?(new_path)
+        raise Error, "both #{new_path} and #{old_path} exist; keep #{current} and remove #{legacy}"
+      end
+
+      notice(legacy, current)
+      old_path
+    end
+
+    # Said once per process per file: a tick loop resolves the path every tick.
+    #
+    # @param legacy [String]
+    # @param current [String]
+    # @return [void]
+    def notice(legacy, current)
+      @noticed ||= {}
+      return if @noticed[legacy]
+
+      @noticed[legacy] = true
+      UI.line("#{legacy} has moved to #{current}; run `#{MOVE_COMMAND}` to move it")
+    end
+
+    # Forget which notices were printed. For specs.
+    #
+    # @return [void]
+    def reset_notices! = (@noticed = {})
 
     # @param from [String] where the search starts
     # @param home [String] the one directory `.plans` and `.git` cannot claim
@@ -34,7 +94,7 @@ module OpenLanes
     end
 
     # Where `openlanes init` writes: the nearest repository, else +from+ itself.
-    # Unlike {.root} this never looks for `.openlanes.yml` or `.plans`, because
+    # Unlike {.root} this never looks for a config file or `.plans`, because
     # it is the command that puts them there.
     #
     # @param from [String]
@@ -99,7 +159,7 @@ module OpenLanes
     # @param home [String]
     # @return [Boolean]
     def marked?(dir, home)
-      return true if File.file?(File.join(dir, FILE))
+      return true if [FILE, LEGACY_FILE].any? { File.file?(File.join(dir, it)) }
       return false if dir == home
 
       File.directory?(File.join(dir, OpenLanes::PLANS_DIR))

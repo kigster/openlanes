@@ -17,9 +17,9 @@ Check each, then report every gap at once with its fix. Ask before installing an
 | `git rev-parse --show-toplevel` | offer `git init`; without git, `openlanes run` needs `--isolation shared` and opens no pull request |
 | `gh auth status` | `gh auth login`; a "token in GH_TOKEN is invalid" line means `unset GH_TOKEN` and retry |
 | the agents' CLI: `command -v claude`, the default adapter, or `codex` / `pi` / `grok` / `gemini` when the plans' `spec.md` select them per phase | install the CLI the plans use; `openlanes agents list` shows each agent's adapter |
-| Redis answers at the URL openlanes will use (order below): `url=$(ruby -ryaml -e 'puts((YAML.safe_load_file(".openlanes.yml") rescue {}).to_h["redis_url"])' 2>/dev/null); redis-cli -u "${url:-${REDIS_URL:-redis://localhost:6379/0}}" ping` | start `redis-server`, or point openlanes at another Redis (below) |
+| Redis answers at the URL openlanes will use (order below): `url=$(ruby -ryaml -e 'puts((YAML.safe_load_file(".openlanes/config.yml") rescue {}).to_h["redis_url"])' 2>/dev/null); redis-cli -u "${url:-${REDIS_URL:-redis://localhost:6379/0}}" ping` | start `redis-server`, or point openlanes at another Redis (below) |
 
-Redis carries the control room, its commands and plan claims. `openlanes start` refuses to run without it (exit 69); `openlanes run` still works, headless, and says so. openlanes looks for it in `--redis-url`, then `redis_url:` in `.openlanes.yml`, then `$REDIS_URL`, then `redis://localhost:6379/0`; `openlanes web` checks `$OPENLANES_REDIS_URL` before all of those but the flag.
+Redis carries the control room, its commands and plan claims. `openlanes start` refuses to run without it (exit 69); `openlanes run` still works, headless, and says so. openlanes looks for it in `--redis-url`, then `redis_url:` in `.openlanes/config.yml`, then `$REDIS_URL`, then `redis://localhost:6379/0`; `openlanes web` checks `$OPENLANES_REDIS_URL` before all of those but the flag.
 
 ## 2. `openlanes init`
 
@@ -32,7 +32,7 @@ Run it at the repository root. Infer values from the repository, say them in one
 
 > Project **Acme**, lane **full**, **front end** (a `web/` React app), default jobs. OK?
 
-Then `openlanes init -y <flags> -n` to show the file, and the same without `-n` to write `.openlanes.yml` and create `.plans/`. An existing `.openlanes.yml` is kept unless `--overwrite`.
+Then `openlanes init -y <flags> -n` to show the file, and the same without `-n` to write `.openlanes/config.yml` and create `.plans/`. An existing `.openlanes/config.yml` is kept unless `--overwrite`.
 
 A person at a terminal can run plain `openlanes init` instead: it scans the repository and asks what it holds now and what they want it to become, with what it found preselected. Under `-y` it records only the scan, as `architecture_decisions:`; pass `--ci` for the CI wanted. To change an answer later, edit that section or run `openlanes init --reconfigure`.
 

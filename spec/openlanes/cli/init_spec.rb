@@ -7,7 +7,7 @@ RSpec.describe OpenLanes::CLI::Init do
 
   let(:top) { File.realpath(Dir.mktmpdir("openlanes-init")) }
   let(:repo) { File.join(top, "acme-app") }
-  let(:file) { File.join(repo, ".openlanes.yml") }
+  let(:file) { File.join(repo, OpenLanes::Config::FILE).tap { FileUtils.mkdir_p(File.dirname(it)) } }
   let(:tty) { false }
   let(:prompt) { instance_double(TTY::Prompt) }
   let(:ready) { true }
@@ -160,8 +160,20 @@ RSpec.describe OpenLanes::CLI::Init do
     end
   end
 
-  context "when .openlanes.yml already exists" do
-    before { File.write(file, "project: Kept\n") }
+  context "when the legacy config file is still there" do
+    before { File.write(File.join(repo, OpenLanes::Project::LEGACY_FILE), "project: Old\n") }
+
+    it "refuses, names the move command, and writes no new file" do
+      _out, err, status = run(project: "New")
+      expect([status, unwrapped(err), File.exist?(file)]).to match([65, include("openlanes config move"), false])
+    end
+  end
+
+  context "when .openlanes/config.yml already exists" do
+    before do
+      FileUtils.mkdir_p(File.dirname(file))
+      File.write(file, "project: Kept\n")
+    end
 
     it "keeps it" do
       _out, err, = run(project: "New")

@@ -63,7 +63,7 @@ module OpenLanes
       log_options
       option :redis_url,
         desc: "Redis for the live board, its commands and plan claims shared with other machines " \
-              "(default: .openlanes.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
+              "(default: .openlanes/config.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
       option :ignore_bombs,
         type:    :boolean,
         default: false,

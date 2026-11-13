@@ -17,7 +17,7 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
 
 ## Input
 
-`spec.md` (complete) and a blank `plan.md`. The other unfinished plans' `spec.md` files, under `.plans/`, to read and never change. `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Plan toward `target`, in the layout it names; it outranks a guess from the code.
+`spec.md` (complete) and a blank `plan.md`. The other unfinished plans' `spec.md` files, under `.plans/`, to read and never change. `.openlanes/config.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Plan toward `target`, in the layout it names; it outranks a guess from the code.
 
 ## Do
 
@@ -45,7 +45,7 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
 1. If `spec.md` frontmatter says `frontend: false`, there is no front-end work in this plan. Give every unit to the back end.
 1. Decide how the plan may run beside the others (R6), and write it as `execution:` in `plan.md`'s frontmatter:
    - A refactor is a spec whose frontmatter says `implementation_requirement: refactor` (or lists `refactor` under `implementation_requirements`), or one that asks to move, rename or restructure code across the codebase.
-   - For a refactor, estimate the share of the codebase it touches: files it changes over `git ls-files | wc -l`, and lines in those files over the lines of every tracked file. Over the threshold by either measure, write `execution: global-lock-required`; otherwise, and for anything that is not a refactor, `execution: concurrent`. The threshold is `refactor.threshold` in `.openlanes.yml`, 50 percent when unset.
+   - For a refactor, estimate the share of the codebase it touches: files it changes over `git ls-files | wc -l`, and lines in those files over the lines of every tracked file. Over the threshold by either measure, write `execution: global-lock-required`; otherwise, and for anything that is not a refactor, `execution: concurrent`. The threshold is `refactor.threshold` in `.openlanes/config.yml`, 50 percent when unset.
    - State both shares and the threshold in one line under the frontmatter, so a reviewer can check the call.
    - A `global-lock-required` plan is built alone: the dispatcher hands it to backend-coder only once no other plan holds a branch or pull request, and starts nothing else until it is merged.
 

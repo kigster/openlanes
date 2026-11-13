@@ -35,7 +35,7 @@ module OpenLanes
       end
 
       # The budget of the project the process is in, read from its event log
-      # wherever `.openlanes.yml` puts it, enabled or not: a log written by an
+      # wherever `.openlanes/config.yml` puts it, enabled or not: a log written by an
       # earlier run still says what was spent.
       #
       # @param root [String, nil] nil takes {Project.root}

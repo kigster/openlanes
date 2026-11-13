@@ -93,7 +93,7 @@ RSpec.describe OpenLanes::Coverage::Config do
     2.times { described_class.load(root) }
 
     expect(OpenLanes::UI).to have_received(:log)
-      .with("#{legacy} is no longer read; move its settings under coverage: in .openlanes.yml", level: :warn).once
+      .with("#{legacy} is no longer read; move its settings under coverage: in .openlanes/config.yml", level: :warn).once
   end
 
   it "warns about nothing when there is no retired file" do

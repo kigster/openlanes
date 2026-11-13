@@ -12,6 +12,8 @@ classDiagram
   <<module>> OpenLanes__Config__CommandsSchema
   class OpenLanes__Config__Schema["Schema"]
   <<module>> OpenLanes__Config__Schema
+  class OpenLanes__Config__Secrets["Secrets"]
+  <<module>> OpenLanes__Config__Secrets
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
@@ -22,6 +24,7 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Adapters : uses
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
   OpenLanes__Config ..> OpenLanes__Config__Schema : uses
+  OpenLanes__Config ..> OpenLanes__Config__Secrets : uses
   OpenLanes__Config ..> OpenLanes__Coverage__Config : uses
   OpenLanes__Config ..> OpenLanes__Error : uses
   OpenLanes__Config ..> OpenLanes__Live__ChoiceConverter : uses
@@ -29,4 +32,5 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Project : uses
   OpenLanes__Config ..> OpenLanes__Setup__ArchitectureDecisions : uses
   OpenLanes__Config__Schema ..> OpenLanes__Config__CommandsSchema : uses
+  OpenLanes__Config__Secrets ..> OpenLanes__Error : uses
 ```

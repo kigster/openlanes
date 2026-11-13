@@ -40,5 +40,6 @@ classDiagram
   OpenLanes ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Launcher ..> OpenLanes__UI : uses
   OpenLanes__Project ..> OpenLanes : uses
+  OpenLanes__Project ..> OpenLanes__Error : uses
   OpenLanes__Project ..> OpenLanes__UI : uses
 ```

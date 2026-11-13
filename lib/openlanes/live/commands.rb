@@ -349,7 +349,7 @@ module OpenLanes
         settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
-      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
+      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes/config.yml` (U3).
       # Only the letter counts, as for {#extension}.
       #
       # @return [String]
@@ -752,7 +752,7 @@ module OpenLanes
       end
 
       # The rail's "Ding when a question needs you" box, kept in
-      # `.openlanes.yml` so it holds across reloads, browsers and restarts.
+      # `.openlanes/config.yml` so it holds across reloads, browsers and restarts.
       # `on` is checked here and not in {Command::PAYLOAD}, whose test for a
       # missing field would take `false` for one.
       #

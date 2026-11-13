@@ -7,7 +7,7 @@ module OpenLanes
     # supervisor itself under `--background`.
     #
     # Only what differs from the command's defaults is typed. The defaults
-    # already hold `.openlanes.yml`, which the child reads for itself, and a
+    # already hold `.openlanes/config.yml`, which the child reads for itself, and a
     # value typed into argv is one anyone can read through `ps`.
     module Argv
       module_function

@@ -22,7 +22,7 @@ module OpenLanes
     class ChoiceConverter
       # Small and quick, and listed by OpenRouter and by inquirex-llm's own
       # catalogue (`Models::OPENROUTER_ALIASES[:claude_haiku]`).
-      # `questions.model` in `.openlanes.yml` replaces it.
+      # `questions.model` in `.openlanes/config.yml` replaces it.
       DEFAULT_MODEL = "anthropic/claude-haiku-5.5"
 
       # What the model reads with the question.

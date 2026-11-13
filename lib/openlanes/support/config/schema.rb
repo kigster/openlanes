@@ -7,7 +7,7 @@ require "json_schemer"
 module OpenLanes
   class Config
     # `schemas/openlanes-config.schema.json`, the one place every key of
-    # `.openlanes.yml` is described (S4): its type, allowed values, default
+    # `.openlanes/config.yml` is described (S4): its type, allowed values, default
     # and one line of help. The parser, the full-file writer and the
     # settings page all read it, so none of them keeps a list of its own.
     #

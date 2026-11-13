@@ -103,13 +103,15 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
   end
 
   describe "set_chime" do
-    let(:file) { File.join(File.dirname(dispatcher.runner.tree.dir), OpenLanes::Config::FILE) }
+    let(:file) do
+      File.join(File.dirname(dispatcher.runner.tree.dir), OpenLanes::Config::FILE).tap { FileUtils.mkdir_p(File.dirname(it)) }
+    end
 
-    it "writes the choice into .openlanes.yml, leaving the rest of the file alone" do
+    it "writes the choice into .openlanes/config.yml, leaving the rest of the file alone" do
       File.write(file, "# ours\njobs: 3\n")
       send_command("set_chime", id: "C1", on: false)
       apply
-      expect([reply_to("C1")["reason"], File.read(file)]).to eq(["chime: false in .openlanes.yml", "# ours\njobs: 3\nchime: false\n"])
+      expect([reply_to("C1")["reason"], File.read(file)]).to eq(["chime: false in .openlanes/config.yml", "# ours\njobs: 3\nchime: false\n"])
     end
 
     it "rewrites the line already there" do

@@ -24,7 +24,7 @@ module OpenLanes
       # @param origin [String] the directory the command was typed in, which
       #   a path typed into `--prompt` is relative to
       # @param options [Hash] the `run` flags as dry-cli parsed them, over
-      #   `.openlanes.yml`
+      #   `.openlanes/config.yml`
       def initialize(tree:, origin: Dir.pwd, **options)
         @tree = tree
         @origin = origin
@@ -36,7 +36,7 @@ module OpenLanes
       end
 
       # Option precedence, quietest to loudest: the built-in default, then
-      # `.openlanes.yml` (`jobs`, and the `commands.run` section), then the
+      # `.openlanes/config.yml` (`jobs`, and the `commands.run` section), then the
       # flag actually typed. {CLI::Base.default_params} folded the file in.
       #
       # @return [Dry::Monads::Result] Success(Integer) the exit status, or
@@ -255,7 +255,7 @@ module OpenLanes
       end
 
       # R4's question on the terminal, before any agent starts (plan 035),
-      # when `.openlanes.yml` has no `desired_codebase_quality:` and a person
+      # when `.openlanes/config.yml` has no `desired_codebase_quality:` and a person
       # is there to answer. Without a terminal the dispatcher holds every
       # plan and the page asks instead ({Dispatcher#quality_awaited?}).
       #
@@ -556,7 +556,7 @@ module OpenLanes
       end
 
       # The durable run log (plan 020.01), one per run: the null sink on a
-      # dry run or when `.openlanes.yml` leaves `events:` off.
+      # dry run or when `.openlanes/config.yml` leaves `events:` off.
       #
       # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
       def events
