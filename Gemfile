@@ -12,7 +12,6 @@ gem "yard"
 
 group :test do
   gem "coverage-badge"
-  gem "json_schemer" # validates configuration.example.yml against configuration.schema.json
   gem "rack-test" # drives the API server (OpenLanes::Web) in process
   gem "rspec"
   gem "rspec-its"
