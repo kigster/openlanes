@@ -5,8 +5,8 @@
     "ordinal": "063.00",
     "slug": "make-openlanes-more-reliable"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-12T23:13:17-08:00",
+  "state": "approved",
+  "updated_at": "2026-11-12T23:19:03-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -278,14 +278,75 @@
     {
       "agent": "security-reviewer",
       "round": 1,
-      "status": "Started",
+      "status": "Interrupted",
       "from": "in_review",
       "started_at": "2026-11-12T23:10:19-08:00",
       "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
       "adapter": "claude",
       "model": "sonnet",
       "effort": "high",
-      "session": "b01ebf79-2208-4cd3-b5d8-82602fb5d383"
+      "session": "b01ebf79-2208-4cd3-b5d8-82602fb5d383",
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:16:20-08:00",
+      "up": 466192,
+      "down": 3653,
+      "seconds": 361.0,
+      "note": "timed out, killed 60s after STOP; Interrupted; no rounds left",
+      "moves": 12,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Started",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:16:18-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "4feddc78-d07c-4d36-85dd-c118a2578e9c",
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:16:21-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "b01ebf79-2208-4cd3-b5d8-82602fb5d383",
+      "verdict": "passed",
+      "review": 12,
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:16:44-08:00",
+      "up": 291865,
+      "down": 1145,
+      "seconds": 22.4,
+      "note": "completed - 2 tool calls; passed; waiting for staff-reviewer",
+      "moves": 12
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:17:36-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "25758b4c-2e85-4990-bbcb-65ab375d1600",
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:18:46-08:00",
+      "up": 323989,
+      "down": 2537,
+      "seconds": 68.9,
+      "note": "Interrupted; no rounds left",
+      "moves": 12
     }
   ],
   "signatures": [
@@ -469,6 +530,51 @@
       "status": "Completed",
       "round": 1,
       "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:16:20-08:00",
+      "agent": "security-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-12T23:16:33-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:16:34-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:16:39-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:17:21-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:17:50-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:18:38-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 1
     }
   ],
   "messages": [
@@ -534,9 +640,18 @@
       "to": "frontend-coder",
       "body": "Round 2 back end: F202/F203 fixed (bump logic moved to lib/openlanes/release, bin/bump-version is a thin caller, one lock pattern in Release::Lockfile); F101/F102 fixed in lib/openlanes/memory. F201 still blocked: Edit on lefthook.yml refused again by the permission layer, so spec/openlanes/support/lefthook_spec.rb stays red. None of your files touched.",
       "read": "no"
+    },
+    {
+      "id": "cfbe9769-f0af-458d-808c-175996fe05fb",
+      "number": 8,
+      "at": "2026-11-12T23:17:22-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "staff-reviewer done: passed, 2 minor (PR #215 comment 6846741961). pull-requests.md was lock-held, findings only in the comment.",
+      "read": "no"
     }
   ],
-  "moves": 12,
+  "moves": 13,
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -544,6 +659,34 @@
       "round": 1,
       "status": "Interrupted",
       "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Completed, round 1; last seen: Plan 063.00 is written and signed `Completed`, so it goes to `backend-coder` next and then to `frontend-coder`."
+    },
+    "security-reviewer": {
+      "source": "harness",
+      "at": "2026-11-12T23:16:20-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "timed out, killed 60s after STOP; last ledger line: Completed, round 1: passed; last seen: Security review of PR 215 is done: no findings, signed `Completed, round 1 (passed)`."
+    },
+    "staff-reviewer": {
+      "source": "agent",
+      "at": "2026-11-12T23:18:37-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "signed Started",
+        "checked PR 215 (MERGED 2026-11-13T07:07Z)",
+        "lefthook architecture job present",
+        "affected specs 121 examples 0 failures",
+        "rubocop 937 files clean"
+      ],
+      "remaining": [
+        "post PR comment",
+        "sign Completed"
+      ],
+      "next_step": "No new findings beyond round-2 minors (bump.rb:48 no rollback; UTF-8 skip untested at Committed/Folder). PR already merged; post short comment on #215 and sign Completed --note passed",
+      "files_touched": [
+        "none"
+      ]
     }
   },
   "extensions": [
@@ -716,6 +859,16 @@
               "text": "design-reviewer F201 (lefthook_spec fails, no architecture job in lefthook.yml) is outside my angle; not re-judged"
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 1 re-run: same diff, F101/F102 confirmed fixed via Lesson.unsafe_name, no new findings; re-signed passed; no duplicate PR comment"
+            }
+          ]
         }
       }
     },
@@ -734,8 +887,44 @@
               "text": "pull-requests.md was locked by the harness glob for security-reviewer, so my Findings section is missing. Findings are in PR #215 comment 6845187393. Next round, write the section first."
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 2 review: signed passed. Round-1 F1 resolved: main's lefthook.yml (8d8f19cb) has the architecture job, and lefthook_spec passes. The affected specs ran 123 examples with 0 failures. The full suite was not run in the 5-minute budget."
+            },
+            {
+              "kind": "done",
+              "text": "Minor findings are in PR #215 comment 6846741961. F1: bump.rb:48 does not roll back version.rb when the relock fails. F2: the invalid-UTF-8 example tests only Lesson.unsafe_name, not that Committed or Folder skip the file."
+            },
+            {
+              "kind": "note",
+              "text": "pull-requests.md was blocked again by the harness glob lock for security-reviewer, two rounds running. Next round, check alock first. If it is still held, the findings go only in the PR comment."
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 3: PR #215 is already MERGED (2026-11-13T07:07Z). lefthook.yml has the architecture job. Release, lefthook and memory specs: 121 examples, 0 failures. Rubocop: 937 files clean. Full suite not run."
+            },
+            {
+              "kind": "note",
+              "text": "The operator sent INTERRUPT before the PR comment was posted. Resume record written and signed Interrupted. Next: post a short comment on #215, then sign Completed --note passed. No new findings beyond the round-2 minors."
+            }
+          ]
         }
       }
     }
+  },
+  "finished": {
+    "kind": "merged",
+    "at": "2026-11-13T07:19:03Z"
   }
 }

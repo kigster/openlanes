@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 215 | [\[063.00\](A) Make Openlanes More Reliable](https://github.com/kigster/openlanes/pull/215) | Open 🟡 |
+| 215 | [\[063.00\](A) Make Openlanes More Reliable](https://github.com/kigster/openlanes/pull/215) | Merged 🟣 |
 
 ## backend-coder, round 1
 

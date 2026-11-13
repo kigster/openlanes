@@ -6,7 +6,7 @@
     "slug": "durable-round-ledger"
   },
   "state": "building",
-  "updated_at": "2026-11-12T23:07:15-08:00",
+  "updated_at": "2026-11-12T23:19:14-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -62,6 +62,25 @@
       "model": "opus",
       "effort": "high",
       "session": "979706cd-3b29-46b7-8daa-e98753e6d57e"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T23:16:46-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/065.00-durable-round-ledger",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "9fff77ed-4ae8-4652-8603-644c05977e36",
+      "to": "building",
+      "finished_at": "2026-11-12T23:19:14-08:00",
+      "up": 448137,
+      "down": 6935,
+      "seconds": 146.5,
+      "note": "interrupted, killed 60s after ctrl-c; Interrupted; no rounds left",
+      "moves": 4
     }
   ],
   "signatures": [
@@ -108,6 +127,26 @@
       "agent": "backend-coder",
       "status": "Started",
       "round": 2
+    },
+    {
+      "at": "2026-11-12T23:16:00-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2,
+      "note": "B1 B2 B3 B7 done; B4 B5 B6 remain"
+    },
+    {
+      "at": "2026-11-12T23:16:58-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-12T23:19:14-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 3,
+      "note": "interrupted, killed 60s after ctrl-c"
     }
   ],
   "messages": [
@@ -149,35 +188,11 @@
       "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Completed, round 1; last seen: Planning for 065.00 is done and signed `Completed, round 1`, next is `backend-coder`."
     },
     "backend-coder": {
-      "source": "agent",
-      "at": "2026-11-12T22:55:30-08:00",
-      "round": 1,
+      "source": "harness",
+      "at": "2026-11-12T23:19:14-08:00",
+      "round": 3,
       "status": "Interrupted",
-      "done": [
-        "B1",
-        "B7",
-        "contract.md"
-      ],
-      "remaining": [
-        "B2",
-        "B3",
-        "B4",
-        "B5",
-        "B6",
-        "openapi.yaml",
-        "coverage check",
-        "baseline count in contract.md"
-      ],
-      "next_step": "Record the full-suite baseline (2 failures seen mid-run) in contract.md, then build B2 (rounds: frontmatter) and B3 (extensions per visit, new labels) before B4",
-      "files_touched": [
-        "lib/openlanes/plans/rounds.rb",
-        "lib/openlanes/plans/plan_state.rb",
-        "schemas/plan-state.schema.json",
-        "lib/openlanes/execution/executor.rb",
-        "spec/openlanes/plans/rounds_spec.rb",
-        "spec/openlanes/plans/plan_state_spec.rb",
-        "spec/openlanes/execution/executor/result_failed_start_spec.rb"
-      ]
+      "note": "interrupted, killed 60s after ctrl-c; last ledger line: Started, round 3; last seen: Apply B4 edits and run engine specs"
     },
     "frontend-coder": {
       "source": "harness",
@@ -223,6 +238,40 @@
               "text": "B2 rounds: frontmatter + generated table, B3 extensions per visit + labels, B4 dispatcher reads Rounds, B5 CLI pause + paused_clis, B6 restart_rounds_spec, openapi.yaml, .openlanes.yml coverage check"
             }
           ]
+        },
+        "2": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Baseline recorded in contract.md: 6194 examples, 5 failures (engine_command_spec:289,317; web_spec:255,277 login checks; architecture_doc_spec:13, stale docs, regenerated)"
+            },
+            {
+              "kind": "done",
+              "text": "B3: Extensions::CHOICES keyed by limit with labels that say what each grants; ask_extension! records moves; Extensions#rounds counts grants for the current visit from state.json; @since removed; specs green"
+            },
+            {
+              "kind": "done",
+              "text": "B2: rounds: in all 15 agents/*.md (all 1 for now), ## Rounds table in Documentation#rounds_table, rounds_frontmatter_spec, docs/WORKFLOW.md regenerated (it was untracked before)"
+            },
+            {
+              "kind": "decision",
+              "text": "Kept rounds: 1 everywhere: plan defaults 3/2/1 break 5 dispatcher_spec examples (lines 468,662,1331,1358,1731) that count rounds; apply the defaults together with B4 and update those specs"
+            },
+            {
+              "kind": "note",
+              "text": "B3 without B4 leaves a gap: Extensions#rounds now survives a restart while used rounds are still the in-memory Desk history, so a restart can briefly over-grant. B4 must land before review"
+            },
+            {
+              "kind": "todo",
+              "text": "B4: stage field `in` (state worked in, after starts_as) plus persisted `refunded` for resume/requeue/block-drained/lane-readd handbacks; Rounds matches in>from>to; replace history in Start:26, Assign eligible?/out_of_rounds, Settle:234, Desk resume/forget_round, Lanes:115, Dispatcher#clear_blocked"
+            },
+            {
+              "kind": "todo",
+              "text": "Then B5 cli_pause + paused_clis in snapshot, B6 restart_rounds_spec with fake CLI, .openlanes.yml coverage check, full suite + rubocop green before Completed"
+            }
+          ]
         }
       }
     }
@@ -253,6 +302,19 @@
       "grant": "round",
       "seconds": 0,
       "settled_at": "2026-11-12T23:06:02-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T23:16:18-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T23:16:22-08:00"
     }
   ]
 }
