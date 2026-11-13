@@ -8,6 +8,11 @@ classDiagram
   <<module>> OpenLanes
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
+  class OpenLanes__Arbitration["OpenLanes::Arbitration"]
+  <<module>> OpenLanes__Arbitration
+  class OpenLanes__Arbitration__Ruling__Ambiguous["OpenLanes::Arbitration::Ruling::Ambiguous"]
+  class OpenLanes__Arbitration__Ruling__IllegalOutcome["OpenLanes::Arbitration::Ruling::IllegalOutcome"]
+  class OpenLanes__Arbitration__Ruling__Missing["OpenLanes::Arbitration::Ruling::Missing"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Evals["OpenLanes::Evals"]
   <<module>> OpenLanes__Evals
@@ -26,6 +31,7 @@ classDiagram
   class OpenLanes__Evals__Verdict["Verdict"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
+  class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
@@ -55,6 +61,10 @@ classDiagram
   OpenLanes__Evals__Case ..> OpenLanes__Plans : uses
   OpenLanes__Evals__Case ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Evals__Changes ..> OpenLanes : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Arbitration : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Arbitration__Ruling__Ambiguous : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Arbitration__Ruling__IllegalOutcome : uses
+  OpenLanes__Evals__Check__Judges ..> OpenLanes__Arbitration__Ruling__Missing : uses
   OpenLanes__Evals__Check__Judges ..> OpenLanes__Evals__Evidence : uses
   OpenLanes__Evals__Check__Judges ..> OpenLanes__Plans : uses
   OpenLanes__Evals__Check__Judges ..> OpenLanes__Plans__Ledger : uses
@@ -67,6 +77,7 @@ classDiagram
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Run : uses
   OpenLanes__Evals__Live ..> OpenLanes__Evals__Scorer : uses
   OpenLanes__Evals__Live ..> OpenLanes__Execution : uses
+  OpenLanes__Evals__Live ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Evals__Live ..> OpenLanes__Frontmatter : uses
   OpenLanes__Evals__Live ..> OpenLanes__Lifecycle : uses
   OpenLanes__Evals__Live ..> OpenLanes__Plans : uses

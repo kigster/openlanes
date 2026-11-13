@@ -1,7 +1,74 @@
 project: openlanes
 starts: research
-jobs: 7
-coverage:
-  command: bundle exec rspec
-  report_command: cat coverage/coverage.json | jq '.total.lines.percent'
-  minimum: 95
+frontend: true
+jobs: 3
+desired_codebase_quality: high
+merge:
+  by: human
+architecture_decisions:
+  version: 1
+  detail: medium
+  current:
+    layout: library
+    languages:
+    - ruby
+    - node
+    frameworks:
+    - sinatra
+    - vite
+    task_runners:
+    - just
+    - rake
+    dev_start:
+    - mprocs
+    secrets:
+    - sopsy
+    - dotenv
+    env_loading:
+    - direnv
+    ci:
+    - circleci
+    deployment:
+    - gem
+    front_end:
+    - react
+    caching:
+    - redis
+    logins:
+    - none
+    testing:
+    - rspec
+    - vitest
+    - cypress
+  target:
+    layout: library
+    languages:
+    - ruby
+    - node
+    frameworks:
+    - sinatra
+    - vite
+    task_runners:
+    - just
+    - rake
+    dev_start:
+    - mprocs
+    secrets:
+    - sopsy
+    - dotenv
+    env_loading:
+    - direnv
+    ci:
+    - circleci
+    deployment:
+    - gem
+    front_end:
+    - react
+    caching:
+    - redis
+    logins:
+    - none
+    testing:
+    - rspec
+    - vitest
+    - cypress

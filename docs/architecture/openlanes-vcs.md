@@ -39,6 +39,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelSync : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Mainline : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Publisher : uses
+  OpenLanes__Vcs ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Worktree : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__Error : uses

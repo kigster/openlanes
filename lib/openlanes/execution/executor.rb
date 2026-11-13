@@ -491,9 +491,14 @@ module OpenLanes
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
       # @param usable [#call] adapter name → whether the startup probe left it
       #   usable, so a reviewer is never dealt a signed-out CLI (plan 031, D12)
+      # @param memory [Boolean] tell each agent the project's lessons for it;
+      #   `run --no-memory` turns it off, the baseline that says whether they help.
+      #   The lessons are read once, at the first invocation, and kept for the run
       def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
-        fresh_budget: false, usable: Agents::Dealing::ANY)
+        fresh_budget: false, usable: Agents::Dealing::ANY, memory: true)
+        @memory = memory
+        @memory_lock = Mutex.new
         @root = File.expand_path(root)
         @trace_dir = trace_dir
         @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
@@ -1109,8 +1114,22 @@ module OpenLanes
           fresh_budget: @fresh_budget,
           seconds:      timeout_for(agent),
           denied:       denied_commands(agent),
-          granted:      granted_to(agent)).to_s
+          granted:      granted_to(agent),
+          memory:       lessons_for(agent)).to_s
       end
+
+      # One snapshot per run: the reviewed lessons as the default branch held
+      # them when the first agent started. Reading the checkout on every
+      # invocation let a builder's freshly written lesson reach the reviewer
+      # judging that builder (PR 196); a snapshot also means every agent in a
+      # run is told the same thing. A lesson merged mid-run waits for the next.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [String]
+      def lessons_for(agent) = @memory ? Memory.section(agent:, library: lessons) : ""
+
+      # @return [OpenLanes::Memory::Library]
+      def lessons = @memory_lock.synchronize { @lessons ||= Memory.library(root: @root) }
 
       # The token budget crossed, or the grace period after `q` spent. Both go
       # through the handle so the kill is the same kill a keypress makes.

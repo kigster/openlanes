@@ -34,9 +34,13 @@ classDiagram
   class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__ShutdownGrace["ShutdownGrace"]
   <<module>> OpenLanes__Execution__ShutdownGrace
+  class OpenLanes__Execution__Trace["Trace"]
+  <<module>> OpenLanes__Execution__Trace
   class OpenLanes__Execution__Transcript["Transcript"]
   class OpenLanes__Lifecycle__Completion["OpenLanes::Lifecycle::Completion"]
   <<module>> OpenLanes__Lifecycle__Completion
+  class OpenLanes__Memory["OpenLanes::Memory"]
+  <<module>> OpenLanes__Memory
   class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
   <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
@@ -49,6 +53,7 @@ classDiagram
   <<module>> OpenLanes__UI
   OpenLanes__Execution ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution ..> OpenLanes__Execution__Trace : uses
   OpenLanes__Execution__AgentProcess ..|> OpenLanes__Execution__AgentProcess__Registry : includes
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
@@ -74,6 +79,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__ProcessStart : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses

@@ -51,6 +51,7 @@ function install_homebrew() {
 
 function install_brew_packages() {
   echo "Installing Brew packages defined in the Brewfile"
+  brew trust --formula kigster/tap/sopsy
   brew bundle --no-upgrade --file="${project_root}/Brewfile"
   hash -r >/dev/null
 }

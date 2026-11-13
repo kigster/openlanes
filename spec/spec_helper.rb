@@ -73,6 +73,11 @@ at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 ENV["OPENLANES_PID_DIR"] = Dir.mktmpdir("openlanes-pids")
 at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_PID_DIR")) }
 
+# Global lessons (docs/continuous-learning.md): a developer's own must never
+# reach a prompt an example asserts on.
+ENV["OPENLANES_MEMORY_HOME"] = Dir.mktmpdir("openlanes-memory")
+at_exit { FileUtils.rm_rf(ENV.fetch("OPENLANES_MEMORY_HOME")) }
+
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "openlanes"
 # dry/system/stubs reopens Dry::System::Container, so the class has to be
@@ -86,6 +91,7 @@ require "stringio"
 $stderr = StringIO.new
 
 require_relative "support/plans_fixture"
+require_relative "support/lessons_fixture"
 require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"

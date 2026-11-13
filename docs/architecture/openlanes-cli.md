@@ -50,6 +50,7 @@ classDiagram
   class OpenLanes__CLI__Mail__Read["Mail::Read"]
   class OpenLanes__CLI__Mail__Render["Mail::Render"]
   class OpenLanes__CLI__Mail__Send["Mail::Send"]
+  class OpenLanes__CLI__Memory__List["Memory::List"]
   class OpenLanes__CLI__Preview__Registry["Preview::Registry"]
   <<module>> OpenLanes__CLI__Preview__Registry
   class OpenLanes__CLI__Preview__Start["Preview::Start"]
@@ -120,6 +121,8 @@ classDiagram
   <<module>> OpenLanes__Log
   class OpenLanes__Log__Invalid["OpenLanes::Log::Invalid"]
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
+  class OpenLanes__Memory["OpenLanes::Memory"]
+  <<module>> OpenLanes__Memory
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
@@ -288,6 +291,9 @@ classDiagram
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__Feature : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__CLI__Mail__Send ..> OpenLanes__UI : uses
+  OpenLanes__CLI__Memory__List ..> OpenLanes__Agents : uses
+  OpenLanes__CLI__Memory__List --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Memory__List ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Apps : uses
   OpenLanes__CLI__Preview__Registry ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__CLI__Preview__Start ..> OpenLanes : uses
@@ -334,6 +340,7 @@ classDiagram
   OpenLanes__CLI__Run ..> OpenLanes__Engine : uses
   OpenLanes__CLI__Run ..> OpenLanes__Engine__RunWorkflow : uses
   OpenLanes__CLI__Run ..> OpenLanes__Live : uses
+  OpenLanes__CLI__Run ..> OpenLanes__Memory : uses
   OpenLanes__CLI__Run ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Setup --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Setup ..> OpenLanes__Live : uses

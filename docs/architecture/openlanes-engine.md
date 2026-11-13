@@ -214,6 +214,7 @@ classDiagram
   OpenLanes__Engine__Arbitration ..> OpenLanes__UI : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter : uses
