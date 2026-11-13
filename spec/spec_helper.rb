@@ -162,6 +162,19 @@ RSpec.configure do |config|
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
 
+  # This repository is built with openlanes, so it has an `.openlanes.yml` of
+  # its own, and the suite runs from its root. An example that sets up no
+  # project used to read that file as its project's: `frontend: true` and
+  # `desired_codebase_quality: high` turned seven routing and run examples red
+  # on main. Seen from this checkout, the configuration is the defaults; an
+  # example that moves into a project of its own still reads that project's.
+  config.before do
+    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |current|
+      root = OpenLanes::Project.root || Dir.pwd
+      File.realpath(root) == File.realpath(REPO_ROOT) ? OpenLanes::Config.new : current.call
+    end
+  end
+
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.
   config.around do |example|
