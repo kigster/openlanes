@@ -5,4 +5,6 @@
 ```mermaid
 classDiagram
   class OpenLanes__Clock__Fake["Fake"]
+  class OpenLanes__Clock__System["System"]
+  <<module>> OpenLanes__Clock__System
 ```

@@ -4,6 +4,13 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
+  class OpenLanes__Skills["OpenLanes::Skills"]
+  <<module>> OpenLanes__Skills
   class OpenLanes__Skills__Installer["Installer"]
   class OpenLanes__Skills__Skill["Skill"]
+  OpenLanes__Skills ..> OpenLanes__Skills__Installer : uses
+  OpenLanes__Skills ..> OpenLanes__Skills__Skill : uses
+  OpenLanes__Skills__Skill ..> OpenLanes__Frontmatter : uses
 ```

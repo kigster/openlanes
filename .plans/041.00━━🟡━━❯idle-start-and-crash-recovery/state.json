@@ -1,0 +1,967 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "041.00",
+    "slug": "idle-start-and-crash-recovery"
+  },
+  "state": "building",
+  "updated_at": "2026-11-12T20:44:15-08:00",
+  "stages": [
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:16:48-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:17:38-07:00",
+      "up": 510954,
+      "down": 8135,
+      "seconds": 48.4,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:22:45-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:23:09-07:00",
+      "up": 244834,
+      "down": 2608,
+      "seconds": 18.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T11:39:14-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T11:39:37-07:00",
+      "up": 268843,
+      "down": 1697,
+      "seconds": 17.2,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:40:17-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:40:32-07:00",
+      "up": 289931,
+      "down": 1436,
+      "seconds": 14.0,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 5,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:41:05-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:41:18-07:00",
+      "up": 206966,
+      "down": 1026,
+      "seconds": 10.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 6,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T12:43:14-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-21T12:43:26-07:00",
+      "up": 220165,
+      "down": 1014,
+      "seconds": 10.3,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-21T21:18:00-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "to": "new",
+      "finished_at": "2026-10-21T21:18:23-07:00",
+      "up": 384210,
+      "down": 1565,
+      "seconds": 14.7,
+      "note": "Interrupted; no rounds left",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "moves": 1
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "new",
+      "started_at": "2026-10-23T14:02:33-07:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "session": "875f179d-3bc6-4ebc-9ae9-b04d56174ede",
+      "to": "new",
+      "finished_at": "2026-10-23T14:02:47-07:00",
+      "up": 292510,
+      "down": 1106,
+      "seconds": 13.3,
+      "note": "Interrupted; no rounds left",
+      "moves": 1
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "planned",
+      "started_at": "2026-11-12T19:34:38-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:01-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.2,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193438-041.00-backend-coder-56963-ec15.ndjson",
+      "session": "d31637ab-2dde-40ca-aaf0-9c3d0ddc4ca1",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:34:38-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:01-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.1,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193438-041.00-frontend-coder-56963-3860.ndjson",
+      "session": "34a32db9-cda7-4d6a-b536-17b05f05da24",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:25-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "132ecda4-56d9-4073-8eaf-af747e906965",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:31-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.2,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193525-041.00-backend-coder-58797-093d.ndjson",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:26-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:31-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.2,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193526-041.00-frontend-coder-58797-4a34.ndjson",
+      "session": "33ba8b1a-8e09-4109-8521-3c5550c437b1",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:00-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "14086567-bd30-4e45-ab05-aa4ba50b85e2",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:07-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.3,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193600-041.00-backend-coder-58797-4df9.ndjson",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:07-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.1,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193601-041.00-frontend-coder-58797-02f9.ndjson",
+      "session": "988b26f7-b95e-467f-b0e5-6d4d5843e8b7",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:32-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:37-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.7,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193632-041.00-backend-coder-58797-8702.ndjson",
+      "session": "8df00d6b-8527-4320-85d4-cc37f393b080",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:33-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:37-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.3,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193633-041.00-frontend-coder-58797-1fa3.ndjson",
+      "session": "c602cb25-88ad-449b-878e-3ca1bacaac82",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Blocked",
+      "from": "building",
+      "started_at": "2026-11-12T19:44:13-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "8df00d6b-8527-4320-85d4-cc37f393b080",
+      "to": "blocked",
+      "finished_at": "2026-11-12T19:55:40-08:00",
+      "up": 777815,
+      "down": 6128,
+      "seconds": 686.7,
+      "note": "blocked; see blocked.md",
+      "moves": 4
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T19:50:15-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "c602cb25-88ad-449b-878e-3ca1bacaac82",
+      "to": "building",
+      "finished_at": "2026-11-12T19:50:32-08:00",
+      "up": 252050,
+      "down": 988,
+      "seconds": 17.0,
+      "note": "completed - 4 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-11-12T20:08:41-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "ffc74254-e22d-4322-8096-9b9dccded5ce"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T20:34:25-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "b814f742-b3bb-4f2e-aef2-7d8e0ccdefd9",
+      "to": "building",
+      "finished_at": "2026-11-12T20:44:15-08:00",
+      "up": 229289,
+      "down": 2382,
+      "seconds": 589.0,
+      "note": "ledger says Completed but 🟢 Ready for Review is not justified: Ready for Review requires an open pull request; none are recorded",
+      "moves": 6
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T20:34:59-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "d4cb57ec-e410-49a9-8df6-5dafb54c8495",
+      "to": "building",
+      "finished_at": "2026-11-12T20:35:20-08:00",
+      "up": 217954,
+      "down": 1323,
+      "seconds": 18.9,
+      "note": "completed - 4 tool calls",
+      "moves": 6
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-10-21T11:16:54-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T11:17:30-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "lock refused"
+    },
+    {
+      "at": "2026-10-21T11:22:51-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:22:59-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 2
+    },
+    {
+      "at": "2026-10-21T11:39:21-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T11:39:28-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 3
+    },
+    {
+      "at": "2026-10-21T12:40:23-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:40:27-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 4
+    },
+    {
+      "at": "2026-10-21T12:41:11-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:41:13-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 5
+    },
+    {
+      "at": "2026-10-21T12:43:20-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T12:43:22-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 6
+    },
+    {
+      "at": "2026-10-21T21:18:07-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-21T21:18:12-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:02:40-07:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-10-23T14:02:43-07:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:44:25-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:50:23-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:50:29-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T19:55:29-08:00",
+      "agent": "backend-coder",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-12T19:56:30-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:56:43-08:00",
+      "agent": "unblocker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:08:52-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:18:10-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "B1 answered a): baseline failures deferred to a separate plan"
+    },
+    {
+      "at": "2026-11-12T20:34:37-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:35:07-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:35:15-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T20:44:04-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "B1 a): baseline failures deferred to a separate plan; rubocop clean"
+    }
+  ],
+  "messages": [
+    {
+      "id": "c5bda6f3-cbbf-4720-bb58-5b509cf15795",
+      "number": 1,
+      "at": "2026-11-12T20:35:14-08:00",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "plan.md has no ## Frontend section and the plan is pure process supervision (supervisor, reattach, shutdown); no UI unit. Signing Completed (no front end). Add a ## Frontend section if you disagree.",
+      "read": "no"
+    }
+  ],
+  "moves": 6,
+  "last-known-state": {
+    "researcher": {
+      "source": "agent",
+      "at": "2026-10-23T14:02:42-07:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "Checked spec.md claim: held by engine pid 91087",
+        "refused; no mail"
+      ],
+      "remaining": [
+        "## Research chapter in spec.md and blocked.md; research questions list still empty"
+      ],
+      "next_step": "When the claim is free: run the test command, then write ## Research from the round-2 resume record findings",
+      "files_touched": [
+        "spec.md"
+      ]
+    },
+    "backend-coder": {
+      "source": "harness",
+      "at": "2026-11-12T20:18:18-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Completed, round 1: B1 answered a): baseline failures deferred to a separate plan; last seen: {\"openlanes_memory\":{\"kind\":\"done\",\"text\":\"Round 3: main still at 4fcb6eb2."
+    },
+    "frontend-coder": {
+      "source": "harness",
+      "at": "2026-11-12T19:36:37-08:00",
+      "round": 3,
+      "status": "Interrupted",
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193633-041.00-frontend-coder-58797-1fa3.ndjson; last seen: Failed to authenticate: OAuth session expired and could not be refreshed"
+    }
+  },
+  "memory": {
+    "researcher": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "spec.md claim refused: held by openlanes pid 82944 (researcher on 041.00); research chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Left the held lock alone and signed Interrupted with a resume record instead of writing spec.md"
+            },
+            {
+              "kind": "note",
+              "text": "StateFile#previous_run_dead? uses kill -0 only; no start-time check, so a reused pid is treated as a live engine"
+            },
+            {
+              "kind": "note",
+              "text": "Child.spawn is pipe plus pgroup owned by the engine; agents do not outlive the engine today"
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 2: spec.md claim still held by engine pid 82944 (re-claimed 18:22:43Z); chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Did not break the engine's claim; signed Interrupted with resume record again"
+            },
+            {
+              "kind": "todo",
+              "text": "Run the test command and the web search for 041.00 once the spec.md claim is free"
+            },
+            {
+              "kind": "question",
+              "text": "What research needs to settle is empty in spec.md: confirm the three How-to-tell checks are the questions"
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 3: spec.md claim still held by engine pid 82944 (re-claimed 18:39:13Z); chapter not written"
+            },
+            {
+              "kind": "decision",
+              "text": "Skipped the rspec run: it writes a coverage badge outside the plan folder"
+            },
+            {
+              "kind": "todo",
+              "text": "Release or hand over the engine's spec.md claim, then write ## Research and run the test command"
+            }
+          ]
+        },
+        "4": {
+          "round": 4,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4: spec.md claim still held by engine pid 82944 (re-claimed 19:40:15Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims the plan folder each round and blocks the researcher: release it or change the handover"
+            }
+          ]
+        },
+        "5": {
+          "round": 5,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: spec.md claim still held by engine pid 82944 (re-claimed 19:41:03Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims the plan folder every round: needs a human to release it or fix the handover before more rounds can run"
+            }
+          ]
+        },
+        "6": {
+          "round": 6,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 6: spec.md claim still held by engine pid 82944 (re-claimed 19:43:13Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Six rounds blocked by the engine's plan-folder claim: a human must release it or fix the handover"
+            }
+          ]
+        },
+        "7": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "New engine run pid 51493 holds the 041.00 spec.md claim (since 04:17:58Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine re-claims plan folders for researchers every run: needs a human to release them or fix the handover"
+            }
+          ]
+        },
+        "8": {
+          "round": 1,
+          "state": "new",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Run pid 91087 holds the 041.00 spec.md claim (since 21:02:30Z); chapter not written"
+            },
+            {
+              "kind": "question",
+              "text": "Engine holds 13 locks across plan folders, blocking researchers: needs a human to release them or narrow its claims"
+            }
+          ]
+        }
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Plan 041's three PRs are already merged on main: #146 supervisor, #147 reattach, #148 graceful shutdown. All code units are done."
+            },
+            {
+              "kind": "done",
+              "text": "Round 1: rubocop exits 0 (847 files). rspec on clean main 4fcb6eb2 gives 5936 examples with 9 failures, none in this plan's files."
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1: 9 baseline failures. 6 come from frontend: true in the repo .openlanes.yml (commit 4fcb6eb2) leaking into the routing, dispatcher and run_workflow specs. 2 come from REDIS_URL pointing at a remote Redis. Fix it in a separate plan or here?"
+            },
+            {
+              "kind": "decision",
+              "text": "Signed Blocked (technical) and did not edit .openlanes.yml or the specs. The user wrote that config on purpose, and the failures are outside 041's scope."
+            },
+            {
+              "kind": "question",
+              "text": "B1 The suite fails on a clean main, outside this plan Plan 041's three pull requests are merged (#146, #147, #148), and every work unit in its code is on `main`. The last unit, and the implementation requirement that `bundle exec rspec` and `bundle exec rubocop` both exit 0, cannot be met from this plan: on an unmodified checkout of `main` (4fcb6eb2), rubocop is clean but rspec reports `5936 examples, 9 failures`. None of them is in a file this plan touches. - 6 failures (`spec/openlanes/agents…",
+              "ref": "B1",
+              "answer": "a) Fix it in a separate plan: isolate the specs from the repository's `.openlanes.yml` and pin the Redis specs to the local server; move 041 to review as it is. Answered by hermes on 2026-11-12"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 3: main still at 4fcb6eb2. rubocop exits 0. rspec: 5936 examples, the same 9 baseline failures, none in plan 041's files."
+            },
+            {
+              "kind": "decision",
+              "text": "Following the B1 answer a): the baseline failures go to a separate plan. Logged the checks in pull-requests.md and signed Completed."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:17:39-07:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T11:22:42-07:00"
+    },
+    {
+      "number": 2,
+      "agent": "researcher",
+      "state": "new",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:23:10-07:00",
+      "answer": "b",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 600,
+      "settled_at": "2026-10-21T11:39:06-07:00",
+      "spent": true
+    },
+    {
+      "number": 3,
+      "agent": "researcher",
+      "state": "new",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T11:39:39-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:40:13-07:00"
+    },
+    {
+      "number": 4,
+      "agent": "researcher",
+      "state": "new",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:40:34-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:41:01-07:00"
+    },
+    {
+      "number": 5,
+      "agent": "researcher",
+      "state": "new",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:41:18-07:00",
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-10-21T12:43:08-07:00"
+    },
+    {
+      "number": 6,
+      "agent": "researcher",
+      "state": "new",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-10-21T12:43:27-07:00",
+      "closed": "finished",
+      "settled_at": "2026-10-21T21:18:23-07:00"
+    },
+    {
+      "number": 7,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:35:31-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:35:58-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:35:31-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:35:58-08:00"
+    },
+    {
+      "number": 9,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:07-08:00",
+      "answer": "c",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 1200,
+      "settled_at": "2026-11-12T19:36:29-08:00",
+      "spent": true
+    },
+    {
+      "number": 10,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:07-08:00",
+      "answer": "c",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 1200,
+      "settled_at": "2026-11-12T19:36:29-08:00",
+      "spent": true
+    },
+    {
+      "number": 11,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:37-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:41:37-08:00"
+    },
+    {
+      "number": 12,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:37-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:41:37-08:00"
+    }
+  ]
+}

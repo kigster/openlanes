@@ -171,7 +171,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__Spawner : 1
-  OpenLanes__Vcs ..> OpenLanes__UI : 4
+  OpenLanes__Vcs ..> OpenLanes__UI : 5
   OpenLanes__Web ..> OpenLanes : 10
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
@@ -184,31 +184,31 @@ classDiagram
   OpenLanes__Web ..> OpenLanes__UI : 2
 ```
 
-- [openlanes](openlanes.md)
-- [openlanes-adapters](openlanes-adapters.md)
-- [openlanes-agents](openlanes-agents.md)
-- [openlanes-apps](openlanes-apps.md)
-- [openlanes-arbitration](openlanes-arbitration.md)
-- [openlanes-cli](openlanes-cli.md)
-- [openlanes-clock](openlanes-clock.md)
-- [openlanes-container](openlanes-container.md)
-- [openlanes-coverage](openlanes-coverage.md)
-- [openlanes-engine](openlanes-engine.md)
-- [openlanes-evals](openlanes-evals.md)
-- [openlanes-events](openlanes-events.md)
-- [openlanes-execution](openlanes-execution.md)
-- [openlanes-lifecycle](openlanes-lifecycle.md)
-- [openlanes-linear](openlanes-linear.md)
-- [openlanes-live](openlanes-live.md)
-- [openlanes-log](openlanes-log.md)
-- [openlanes-memory](openlanes-memory.md)
-- [openlanes-plans](openlanes-plans.md)
-- [openlanes-presentation](openlanes-presentation.md)
-- [openlanes-setup](openlanes-setup.md)
-- [openlanes-skills](openlanes-skills.md)
-- [openlanes-spawner](openlanes-spawner.md)
-- [openlanes-supervision](openlanes-supervision.md)
-- [openlanes-ui](openlanes-ui.md)
-- [openlanes-uml](openlanes-uml.md)
-- [openlanes-vcs](openlanes-vcs.md)
-- [openlanes-web](openlanes-web.md)
+- [OpenLanes](openlanes.md)
+- [OpenLanes::Adapters](openlanes-adapters.md)
+- [OpenLanes::Agents](openlanes-agents.md)
+- [OpenLanes::Apps](openlanes-apps.md)
+- [OpenLanes::Arbitration](openlanes-arbitration.md)
+- [OpenLanes::CLI](openlanes-cli.md)
+- [OpenLanes::Clock](openlanes-clock.md)
+- [OpenLanes::Container](openlanes-container.md)
+- [OpenLanes::Coverage](openlanes-coverage.md)
+- [OpenLanes::Engine](openlanes-engine.md)
+- [OpenLanes::Evals](openlanes-evals.md)
+- [OpenLanes::Events](openlanes-events.md)
+- [OpenLanes::Execution](openlanes-execution.md)
+- [OpenLanes::Lifecycle](openlanes-lifecycle.md)
+- [OpenLanes::Linear](openlanes-linear.md)
+- [OpenLanes::Live](openlanes-live.md)
+- [OpenLanes::Log](openlanes-log.md)
+- [OpenLanes::Memory](openlanes-memory.md)
+- [OpenLanes::Plans](openlanes-plans.md)
+- [OpenLanes::Presentation](openlanes-presentation.md)
+- [OpenLanes::Setup](openlanes-setup.md)
+- [OpenLanes::Skills](openlanes-skills.md)
+- [OpenLanes::Spawner](openlanes-spawner.md)
+- [OpenLanes::Supervision](openlanes-supervision.md)
+- [OpenLanes::UI](openlanes-ui.md)
+- [OpenLanes::Uml](openlanes-uml.md)
+- [OpenLanes::Vcs](openlanes-vcs.md)
+- [OpenLanes::Web](openlanes-web.md)
