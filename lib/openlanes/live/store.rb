@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "monitor"
 require "redis-client"
 
 module OpenLanes
@@ -16,6 +17,14 @@ module OpenLanes
     #
     # Every connection failure surfaces as {Unavailable}, so a caller that
     # wants to keep running without Redis rescues one class, not a gem's.
+    #
+    # One store is shared by threads: the engine pings Redis from its tick
+    # while agent threads publish through the same instance. RedisClient is
+    # not thread-safe, and unserialized calls raised "can't modify string;
+    # temporarily locked" from inside its write buffer, so every command
+    # holds one Monitor for as long as it talks to the connection. A
+    # blocking {#xread} holds it for the whole wait; give a caller that
+    # blocks a store of its own.
     class Store
       # One stream entry: its id and its fields.
       #
@@ -69,6 +78,7 @@ module OpenLanes
       def initialize(url:, timeout: TIMEOUT)
         @url = url
         @client = RedisClient.config(url:, timeout:, reconnect_attempts: 1).new_client
+        @lock = Monitor.new
       end
 
       # @return [String]
@@ -78,7 +88,7 @@ module OpenLanes
       def ping = call("PING") == "PONG"
 
       # @return [void]
-      def close = @client.close
+      def close = @lock.synchronize { @client.close }
 
       # ---- strings ----------------------------------------------------------
 
@@ -268,8 +278,8 @@ module OpenLanes
 
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
-      def guarded
-        yield
+      def guarded(&)
+        @lock.synchronize(&)
       rescue RedisClient::CommandError
         raise
       rescue RedisClient::Error => e

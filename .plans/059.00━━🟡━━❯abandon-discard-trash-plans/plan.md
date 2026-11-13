@@ -30,6 +30,12 @@
 
 ---
 
+## Frontend
+
+No units. This plan is CLI and library work only; there is no web or interface surface, so backend-coder owns every task.
+
+## Backend
+
 ### Task 1: The states
 
 **Files:**
@@ -181,3 +187,35 @@ A close with nothing open writes `discarded-reason.md`. A merge or close for a p
 - [ ] **Step 4: Run `just lint && just test`; both must be green**
 
 - [ ] **Step 5: Commit**: `Keep removed plans' PR rows current`
+
+---
+
+### B1 (answered) — Redis outage specs fail on a locked string
+
+The full suite must exit 0, but three Redis outage specs fail with `RuntimeError: can't modify string; temporarily locked`. The error comes from `Live::Store#call` via `RunRecord#read_redis` in `Dispatcher#tick`, which suggests one `RedisClient` connection read from two threads at once. These specs do not touch plan 059's code. Failing specs: `spec/openlanes/engine/redis_outage_spec.rb:37`, `spec/openlanes/live/redis_outage_integration_spec.rb:72` and `:77`.
+
+Options offered: (a) fix it in a separate plan and name the three as baseline, (recommended) (b) fix it inside this plan, (c) treat it as environmental and rerun on CI.
+
+### D1 (decision) — Fix the Redis race inside this plan
+
+Answered:
+
+- 2026-11-12, 20:53 PST
+- By hermes
+
+Option (b). This plan widens its scope into `lib/openlanes/live/`. The next round fixes the Redis race there, so `bundle exec rspec` exits 0 with no named baseline failures.
+
+## How to test
+
+Run every command from the repository root, after `eval "$(rbenv init -)"`.
+
+- `bundle exec rspec`: 0 failures. Pending examples are only the ones skipped because no Redis or tool is available.
+- `bundle exec rubocop`: no offenses.
+- The states (Task 1): `bundle exec rspec spec/openlanes/plans` passes, and `./exe/openlanes states` draws 👎 Abandoned, ❌ Discarded and 🚮 Trashed, with 🚮 as the only terminal state.
+- Rewiring (Task 2): `bundle exec rspec spec/openlanes/lifecycle/rewiring_spec.rb` passes: removing B from A→B→C leaves A depending on C, a cycle through B drops the entry, and a dependent with invalid YAML is reported and left unchanged.
+- Removal (Task 3): `bundle exec rspec spec/openlanes/lifecycle/removal_spec.rb spec/openlanes/lifecycle/removal_review_spec.rb` passes: a plan lands in `abandoned/`, `discarded/` or `trashed/` with its reason file, a held lock or a taken name puts it in `refused` while the others move, and `dry_run: true` leaves the disk unchanged.
+- resync dirs (Task 4): `bundle exec rspec spec/openlanes/lifecycle/resync/dirs_spec.rb spec/integration/plan_folder_migration_spec.rb` passes: a folder with a non-empty `trashed-reason.md` moves to `trashed/`, and a ❌ still in `abandoned/` moves to `discarded/` and keeps its date.
+- The commands (Task 5): `bundle exec rspec spec/openlanes/cli/removal_command_spec.rb spec/openlanes/lifecycle/reason_interview_spec.rb` passes. `./exe/openlanes plans trash --help`, `plans abandon --help` and `plans discard --help` each show `IDS...`, `--reason` and `-n, --dry-run`. Bare `./exe/openlanes plans` still prints the table.
+- By hand, in a project with plans on `main`: `ol plans trash -n <id> --reason "built elsewhere"` prints the move and every `depends_on:` rewrite and writes nothing. The same command without `-n` moves the folder under `.plans/trashed/` with a 🚮 name, writes `trashed-reason.md` with the reason, and rewrites each dependent's `depends_on:`. An unknown id exits non-zero and moves nothing.
+- The PR watcher (Task 6): `bundle exec rspec spec/openlanes/engine/pr_outcomes_spec.rb` passes: a closed PR writes `discarded-reason.md`, and a plan already removed keeps its folder and gets only its `pull-requests.md` row updated.
+- The Redis race (D1): `bundle exec rspec spec/openlanes/live/store_spec.rb spec/openlanes/engine/redis_outage_spec.rb spec/openlanes/live/redis_outage_integration_spec.rb spec/openlanes/thread_safety_inventory_spec.rb` passes with Redis running locally, including "answers callers on several threads at once". Without Redis these examples skip.

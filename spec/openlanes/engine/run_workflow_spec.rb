@@ -8,6 +8,9 @@ RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
   let(:tree) { OpenLanes::Plans.tree(plans_root) }
 
   before do
+    # Run from the fixture root, so this repository's own .openlanes.yml
+    # (frontend: true, desired_codebase_quality: high) does not route these plans.
+    Dir.chdir(File.dirname(plans_root))
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
       # The temp project has no desired_codebase_quality:, whose gate
       # (plan 035, dispatcher_quality_gate_spec) would hold every plan.

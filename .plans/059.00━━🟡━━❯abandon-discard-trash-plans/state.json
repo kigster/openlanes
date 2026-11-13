@@ -1,0 +1,609 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "059.00",
+    "slug": "abandon-discard-trash-plans"
+  },
+  "state": "building",
+  "updated_at": "2026-11-12T21:19:08-08:00",
+  "stages": [
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "planned",
+      "started_at": "2026-11-12T19:34:46-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:01-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.1,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193446-059.00-backend-coder-56963-127a.ndjson",
+      "session": "52c78694-d1a4-4f2b-b0c5-03cbe68273cc",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:34:47-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:01-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.1,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193447-059.00-frontend-coder-56963-ff13.ndjson",
+      "session": "0914bd00-fa7d-4b64-949e-56b469aa467e",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:30-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "6f608856-ebcd-492e-bd3d-7b4afd1dbd25",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:37-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.5,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193530-059.00-backend-coder-58797-70e2.ndjson",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:32-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:35:37-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.3,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193532-059.00-frontend-coder-58797-bcb1.ndjson",
+      "session": "c3973bcd-6753-44e0-920c-438fa4860345",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:57-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "7c95399f-398e-4394-8d09-6eab4feede67",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:02-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.3,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193557-059.00-backend-coder-58797-691e.ndjson",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:35:58-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:02-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.5,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193558-059.00-frontend-coder-58797-96f8.ndjson",
+      "session": "445775e8-ae5b-40c9-a2d0-966604edc2fe",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:28-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:34-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.3,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193628-059.00-backend-coder-58797-e279.ndjson",
+      "session": "ae146e4e-282d-4a73-aa81-08edfa6dabc3",
+      "moves": 3
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T19:36:29-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "to": "building",
+      "finished_at": "2026-11-12T19:36:34-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.7,
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193629-059.00-frontend-coder-58797-f63d.ndjson",
+      "session": "ce363b01-93cd-41ff-901a-e6a3c9152f87",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-12T19:54:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "ae146e4e-282d-4a73-aa81-08edfa6dabc3"
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T19:55:41-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "ce363b01-93cd-41ff-901a-e6a3c9152f87",
+      "to": "building",
+      "finished_at": "2026-11-12T19:55:55-08:00",
+      "up": 150975,
+      "down": 714,
+      "seconds": 13.7,
+      "note": "completed - 2 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Blocked",
+      "from": "building",
+      "started_at": "2026-11-12T20:35:22-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "86d2af49-4758-458f-885e-f28f865a9149",
+      "to": "blocked",
+      "finished_at": "2026-11-12T20:47:08-08:00",
+      "up": 1409729,
+      "down": 11187,
+      "seconds": 705.0,
+      "note": "blocked; see blocked.md",
+      "moves": 4
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T20:35:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "ce363b01-93cd-41ff-901a-e6a3c9152f87",
+      "to": "building",
+      "finished_at": "2026-11-12T20:35:53-08:00",
+      "up": 115756,
+      "down": 354,
+      "seconds": 9.2,
+      "note": "completed - 1 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "planned",
+      "started_at": "2026-11-12T20:54:29-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "27ef2b0c-3682-4dd2-b35f-c52b89df4a52",
+      "to": "building",
+      "finished_at": "2026-11-12T21:06:16-08:00",
+      "up": 426020,
+      "down": 2699,
+      "seconds": 705.5,
+      "note": "completed - 22 tool calls; publish refused: publish refused — plan.md has no `## How to test` section; backend-coder was asked to add it",
+      "moves": 6
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-12T21:06:21-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "27ef2b0c-3682-4dd2-b35f-c52b89df4a52"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-12T19:54:21-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:55:52-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T19:55:53-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T20:08:59-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:35:32-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:35:50-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:35:51-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T20:46:56-08:00",
+      "agent": "backend-coder",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-12T20:53:47-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:54:02-08:00",
+      "agent": "unblocker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T20:54:43-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:06:06-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:06:34-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:18:54-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [
+    {
+      "id": "527855db-bdb7-4eb4-9f64-d18a2c57c96b",
+      "number": 1,
+      "at": "2026-11-12T21:06:16-08:00",
+      "from": "openlanes",
+      "to": "backend-coder",
+      "body": "The build is done, but the pull request was not opened: plan.md has no\n`## How to test` section, and a pull request nobody can test is not\nready for review. Add one to plan.md: the commands to run and what a person\nshould see, as a list, covering every part of the build and not only yours.\nChange nothing else, then sign Completed again.",
+      "read": "yes"
+    }
+  ],
+  "moves": 6,
+  "last-known-state": {
+    "backend-coder": {
+      "source": "harness",
+      "at": "2026-11-12T20:17:36-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Completed, round 1; last seen: The second waiting loop was stopped as well, and it doesn't matter either."
+    },
+    "frontend-coder": {
+      "source": "harness",
+      "at": "2026-11-12T19:36:34-08:00",
+      "round": 3,
+      "status": "Interrupted",
+      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193629-059.00-frontend-coder-58797-f63d.ndjson; last seen: Failed to authenticate: OAuth session expired and could not be refreshed"
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:35:37-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:35:49-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:35:37-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:35:49-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:02-08:00",
+      "answer": "c",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 1200,
+      "settled_at": "2026-11-12T19:36:20-08:00",
+      "spent": true
+    },
+    {
+      "number": 4,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:02-08:00",
+      "answer": "c",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 1200,
+      "settled_at": "2026-11-12T19:36:20-08:00",
+      "spent": true
+    },
+    {
+      "number": 5,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:34-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:41:34-08:00"
+    },
+    {
+      "number": 6,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T19:36:34-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T19:41:34-08:00"
+    },
+    {
+      "number": 7,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T20:09:01-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T20:12:01-08:00"
+    }
+  ],
+  "memory": {
+    "frontend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Plan 059.00 has no Frontend units; signed Completed (no front end)"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Re-signed Completed (no front end) in round 1 again; nothing to build"
+            }
+          ]
+        }
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Tasks 1-6 of plan.md were already on main when round 1 started (states, Rewiring, Removal, RemovedReadme, resync dirs, plans abandon/discard/trash, PR watcher). Round 1 only checked them against the plan and closed the gaps."
+            },
+            {
+              "kind": "decision",
+              "text": "Added '## Frontend' with no units to plan.md: this plan is CLI and library work only, so backend-coder owns every task and there is no contract.md and no mailbox exchange"
+            },
+            {
+              "kind": "done",
+              "text": "Fixed the stale skills/openlanes/SKILL.md line 31 that still put discarded plans in abandoned/; it now names abandoned/, discarded/ and trashed/"
+            },
+            {
+              "kind": "done",
+              "text": "Added a coverage: section to .openlanes.yml: bundle exec rspec, minimum 95, report_command jq '.total.lines.percent' coverage/coverage.json. SimpleCov here writes no .last_run.json"
+            },
+            {
+              "kind": "done",
+              "text": "Fixed baseline failure routing_spec.rb:32: those examples read the repo's own .openlanes.yml (frontend: true) through Config.current. The spec now chdirs to the fixture root"
+            },
+            {
+              "kind": "todo",
+              "text": "Re-run the full bundle exec rspec (about 10 min) after the routing_spec fix. Only that file was re-run this round (22/0)"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Full rspec after the routing fix: 5936 examples, 7 failures. 4 came from the repo's .openlanes.yml (frontend: true, desired_codebase_quality) leaking via Config.current; fixed by chdir to the fixture root in dispatcher_spec.rb and run_workflow_spec.rb (157/0 across the 3 files)"
+            },
+            {
+              "kind": "question",
+              "text": "blocked.md B1: 3 Redis outage specs fail with 'can't modify string; temporarily locked' in Live::Store#call (a RedisClient shared across threads). Outside plan scope; Recommended: fix in a separate plan, count them as baseline"
+            },
+            {
+              "kind": "note",
+              "text": "rubocop: 847 files, 0 offenses. Merged the chdir into run_workflow_spec's existing before block to satisfy RSpec/ScatteredSetup"
+            },
+            {
+              "kind": "todo",
+              "text": "Once B1 is answered, re-run the full bundle exec rspec. lib/openlanes/live/store.rb was not touched this round"
+            },
+            {
+              "kind": "question",
+              "text": "B1 Redis outage specs fail with \"can't modify string; temporarily locked\" The implementation requirement is that `bundle exec rspec` exits 0. After this round's fixes the full suite has 3 failures, all Redis outage specs, and none of them touch plan 059's code: `spec/openlanes/engine/redis_outage_spec.rb:37`, `spec/openlanes/live/redis_outage_integration_spec.rb:72` and `:77`. They fail the same way in isolation (2 of 4 failed on a rerun), with `RuntimeError: can't modify string; temporarily lo…",
+              "ref": "B1",
+              "answer": "b) Fix it inside plan 059 next round, widening this plan's scope into `lib/openlanes/live/`. Answered by hermes on 2026-11-12"
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Full rspec after the Store fix: 5937 examples, 1 failure (thread_safety_inventory_spec:18, the new Monitor was missing from docs/thread-safety.md). Added the live/store.rb row; the inventory, store and outage specs give 38/0. rubocop: 847 files, 0 offenses. Signed Completed"
+            },
+            {
+              "kind": "note",
+              "text": "The full suite was not re-run after the docs/thread-safety.md row was added. Only the inventory spec reads that file"
+            }
+          ]
+        },
+        "4": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Added '## How to test' to plan.md as the operator's mail #1 asked: commands and expected results for Tasks 1-6 and the D1 Redis fix. Checked against the states output and the command help. Mail #1 acked"
+            },
+            {
+              "kind": "note",
+              "text": "A scratch-project demo of ol plans trash is not possible from an agent round: create needs main with a commit, and git commit is withheld"
+            },
+            {
+              "kind": "done",
+              "text": "Full rspec with the Store fix and the thread-safety row: 5937 examples, 0 failures, 9 pending, coverage 99.17%, exit 0. rubocop 847/0. Signed Completed"
+            }
+          ]
+        }
+      }
+    },
+    "unblocker": {
+      "rounds": {
+        "1": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Folded B1 (Redis locked-string race) answer option b into plan.md as D1: fix the race inside plan 059 and widen scope into lib/openlanes/live/."
+            }
+          ]
+        }
+      }
+    }
+  }
+}

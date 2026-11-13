@@ -5,6 +5,11 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
   let(:subject_plan) { OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first }
   let(:planned) { OpenLanes::Plans.status(:planned) }
 
+  # Run from the fixture's root, so a spec.md that says nothing about the
+  # front end is not decided by this repository's own `.openlanes.yml`,
+  # which says `frontend: true`.
+  before { Dir.chdir(File.dirname(plans_root)) }
+
   def plan_with(files)
     plans { |t| t.plan "001.00", :planned, "work", files: { "spec.md" => spec_body, "plan.md" => "## U1\n" }.merge(files) }
   end
