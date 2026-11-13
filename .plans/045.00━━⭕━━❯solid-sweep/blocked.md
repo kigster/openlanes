@@ -6,6 +6,10 @@ Already checked: dependencies 049.00 to 052.00 are all ✅ in `.plans/archive`, 
 
 ## B3 dry-monitor on Ruby 4.0.6
 
+> **Answer not accepted:** Screw you
+>
+> unblocker: B3 (dry-monitor on Ruby 4.0.6) still needs a real answer: a, b or c with a reason, from a human.
+
 > **Answer not accepted:** Give me each blocked question as a question to answer here, and I'll answer them.
 >
 > unblocker: Journal round 1 entry 1 said B3 was answered. That was wrong. B3 is open; blocked.md still exists.
@@ -23,6 +27,7 @@ A13 builds logs and spans on dry-monitor events. The latest release found is 1.0
 a) The spans plan tries dry-monitor 1.0.1 first, and falls back to the existing `EventBus` port from 038.00 if it does not install or pass the suite, saying which in its pull request. (Recommended)
 b) Skip dry-monitor and build the instrumentation events on the existing `EventBus` port.
 c) Use a maintained fork of dry-monitor, named by a person.
+
 
 
 

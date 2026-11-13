@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Sets OpenLanes::VERSION and brings Gemfile.lock along with it.
+#
+#   bin/bump-version 4.0.2             # rewrite version.rb, then bundle lock
+#   bin/bump-version 4.0.2 --dry-run   # say what would change, write nothing
+#
+# A thin caller of OpenLanes::Release, which holds the logic. Required by
+# path, not through the library, so a bump needs none of its dependencies.
+#
+# Works in the current directory, which must hold lib/openlanes/version.rb,
+# Gemfile and Gemfile.lock. The spec runs it against a temporary copy.
+#
+# © 2026 Konstantin Gredeskoul
+
+%w[release release/version_file release/lockfile release/relock release/bump].each do |file|
+  require_relative "../lib/openlanes/#{file}"
+end
+
+args = ARGV.dup
+dry_run = !args.delete("--dry-run").nil?
+version = args.shift
+
+if version.nil? || !args.empty?
+  warn "bump-version: usage: bin/bump-version MAJOR.MINOR.PATCH [--dry-run]"
+  exit 1
+end
+
+begin
+  puts OpenLanes::Release.bump(root: Dir.pwd, version:, dry_run:)
+rescue OpenLanes::Release::Failed => e
+  warn "bump-version: #{e.message}"
+  exit 1
+end

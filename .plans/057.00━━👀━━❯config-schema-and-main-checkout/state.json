@@ -6,7 +6,7 @@
     "slug": "config-schema-and-main-checkout"
   },
   "state": "in_review",
-  "updated_at": "2026-11-12T22:04:56-08:00",
+  "updated_at": "2026-11-12T22:28:12-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -675,6 +675,87 @@
       "seconds": 21.0,
       "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
       "moves": 6
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:27:10-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "1e0a0900-b5af-40bc-8af2-a2eb7bbe1c90",
+      "verdict": "rejected 3/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:27:41-08:00",
+      "up": 365678,
+      "down": 2275,
+      "seconds": 29.6,
+      "note": "completed - 2 tool calls; rejected; waiting for security-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:27:11-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:27:44-08:00",
+      "up": 958509,
+      "down": 2037,
+      "seconds": 31.0,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:27:11-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "0fdd20d8-b7ac-4e7d-8128-95203956bc9e",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:27:41-08:00",
+      "up": 362814,
+      "down": 1582,
+      "seconds": 29.5,
+      "note": "completed - 2 tool calls; rejected; waiting for security-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:27:46-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:28:12-08:00",
+      "up": 1147611,
+      "down": 1076,
+      "seconds": 23.3,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
     }
   ],
   "signatures": [
@@ -1118,6 +1199,58 @@
       "status": "Completed",
       "round": 1,
       "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T22:27:25-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:25-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:25-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:33-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T22:27:34-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 3/2"
+    },
+    {
+      "at": "2026-11-12T22:27:37-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T22:28:00-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:28:06-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
     }
   ],
   "messages": [
@@ -1239,6 +1372,20 @@
               "text": "The signature went in with --round 1 as the invocation instructed; the ledger already holds earlier rounds"
             }
           ]
+        },
+        "3": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 3 design review of PR 210: code unchanged, F201 and F202 stand as critical. Commented and signed Completed (rejected 3/2), past the cap, so the plan is for the arbitrator"
+            },
+            {
+              "kind": "note",
+              "text": "Two earlier rejected rounds existed (20:33 and 22:03), so the K+1/M formula gave 3/2. If the arbitrator rules, F201 and F202 are the only blockers"
+            }
+          ]
         }
       }
     },
@@ -1273,6 +1420,20 @@
             {
               "kind": "todo",
               "text": "Copy F1-F3 from PR comment 6844083710 into pull-requests.md under ## Findings: staff-reviewer once the plan folder lock (held by the openlanes harness) is free"
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Third run of round 1: PR head still 30537b23 and the packet diff matches it, so the verdict stands at rejected 1/2 and I posted no new comment"
+            },
+            {
+              "kind": "note",
+              "text": "alock refused pull-requests.md a third time: the harness pid (30962) holds the plan folder under the intent 'design-reviewer on 057.00'. A person has to fix how the harness takes this lock"
             }
           ]
         }

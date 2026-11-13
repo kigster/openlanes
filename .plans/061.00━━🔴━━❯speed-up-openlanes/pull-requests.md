@@ -79,3 +79,10 @@ No critical findings. Dependency check: no gem or npm package added or bumped.
 - Done (B3, part): `Steps::Snapshot`, `POLL = 10`, `Context#snapshot`, PrWatch on the snapshot, `Vcs::SnapshotReads` (labels and checks from the snapshot, refreshed on every write) wired into Merging and Verification, and a row in `docs/thread-safety.md`. Specs: `steps/snapshot_spec.rb`, `vcs/snapshot_reads_spec.rb`, and two snapshot examples in `pr_watch_spec.rb`.
 - Remaining: the `pull_request` reads in `merging.rb` and `upkeep/sweep.rb`, then B6.
 - `bundle exec rubocop`: no offenses (860 files). `bundle exec rspec`: 4142 examples. Failures: `run_workflow_spec` x3 (baseline), and `cli/web_spec.rb:255,:277` plus `cli/engine_command_spec.rb:289,:317`. Those four come from an OpenLanes admin-login variable in this shell's environment: credentials come back as user "kig" where the spec expects none. The thread-safety inventory failure from this round is fixed.
+
+## Round 6, backend-coder
+
+- Done (B3, rest): `Vcs::SnapshotReads#pull_request` now answers from the snapshot row whenever the pull request is open there. The GraphQL query adds `headRefOid baseRefName body mergeStateStatus mergeCommit`, and `PullSnapshot.details` fills in `head body merge_state base merge_commit`. A merged pull request is never in the snapshot, so it is still read live, and that read is what carries its merge commit. `Upkeep.keeper` gets `snapshot_github`, so `Sweep#ask` reads from the snapshot as well.
+- Specs: `snapshot_reads_spec.rb` has a `#pull_request` group. `merging_spec.rb` has "reads the pull request from the tick's snapshot, with no gh pr view". The page1 fixture node 201 carries the new fields.
+- Remaining: B6, the integration spec.
+- Targeted runs: `merging_spec:96`, `pull_snapshot_spec`, `snapshot_reads_spec` and `engine/upkeep` give 48 examples, 0 failures. Rubocop is clean on the touched paths. I did not run the full suite this round: about 19 rspec processes from other agents were sharing the machine.

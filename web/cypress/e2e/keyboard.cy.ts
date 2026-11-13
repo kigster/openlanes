@@ -127,14 +127,19 @@ describe("the keyboard flow", () => {
     tabTo(matching(".drawer .model-trigger"));
     key(ENTER);
     cy.get('[role="listbox"]').should("be.visible");
-    // Arrow up to Opus 5.5, the first option, and choose it; the listbox opens on the current model. Each check can
-    // read focus before the last key has landed and so send one key too many: going up, that extra key stops at the
-    // top, where going down past Opus 5.5 (or a Home that Radix's own opening focus overrides) did not.
+    // Arrow up to Opus 5.5, the first option; the listbox opens on the current model. Each key waits, with a retrying
+    // assertion, for focus to land on a different option before the next one is sent, so no key is sent on a stale
+    // read of focus and none is sent past the top. No one-shot activeElement reads, no fixed waits.
+    const optionText = ($el: JQuery<HTMLElement>) => ($el.text() ?? "").trim();
     const choose = (left = 12): void => {
-      cy.document().then((doc) => {
-        if ((doc.activeElement?.textContent ?? "").includes("Opus 5.5")) return;
-        if (left <= 0) throw new Error(`the arrow keys never reached Opus 5.5; focus is on ${doc.activeElement?.textContent}`);
+      cy.focused().then(($el) => {
+        const here = optionText($el);
+        if (here.includes("Opus 5.5")) return;
+        if (left <= 0) throw new Error(`the arrow keys never reached Opus 5.5; focus is on ${here}`);
         key(UP_ARROW);
+        cy.focused().should(($next) => {
+          expect(optionText($next), "the option focused after ArrowUp").not.to.eq(here);
+        });
         choose(left - 1);
       });
     };

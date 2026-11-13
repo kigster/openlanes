@@ -166,7 +166,11 @@ module OpenLanes
           own = real(rev_parse_path(root))
           out = `git -C #{root.shellescape} worktree list --porcelain 2>/dev/null`
           out.split("\n\n").each_with_object(Set.new) do |block, heads|
-            fields = block.lines.to_h { |line| line.chomp.split(" ", 2) }
+            # `detached`, `bare`, `locked` and `prunable` are a word with no
+            # value. A worktree stopped in a rebase is detached, and a pair made
+            # of that one word raised ArgumentError out of every rebase the
+            # harness tried to have resolved.
+            fields = block.lines.to_h { |line| line.chomp.split(" ", 2).then { |key, value| [key, value.to_s] } }
             heads << fields["HEAD"] if fields["HEAD"] && real(fields["worktree"]) != own
           end
         end

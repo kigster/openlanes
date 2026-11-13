@@ -38,6 +38,15 @@ RSpec.describe OpenLanes::Live::Store, :redis do
     expect { store.xreadgroup("gone", "engine", "me") }.to raise_error(OpenLanes::Live::GroupMissing, /NOGROUP/)
   end
 
+  # The engine pings from its tick while agent threads publish through the
+  # same store. RedisClient is not thread-safe: unserialized, one thread's
+  # call found the other's buffer mid-write and raised "can't modify string;
+  # temporarily locked".
+  it "answers callers on several threads at once" do
+    threads = Array.new(8) { |n| Thread.new { 200.times { |i| store.set("k#{n}", i.to_s) && store.ping } } }
+    expect { threads.each(&:join) }.not_to raise_error
+  end
+
   it "waits for an entry when asked to block, and returns empty when none comes" do
     expect(store.xread("s", id: "$", block: 20)).to eq([])
   end

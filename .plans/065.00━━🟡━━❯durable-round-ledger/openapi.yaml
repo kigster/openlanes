@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: openlanes live board, fields added by plan 065.00
+  version: "065.00"
+  description: >
+    Only what plan 065.00 adds or changes on the existing board snapshot. No new route.
+paths:
+  /api/board:
+    get:
+      summary: The live board snapshot (Live::Snapshot#to_h)
+      responses:
+        "200":
+          description: The snapshot. Fields not listed here are unchanged.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paused_clis:
+                    description: CLIs paused after an authentication failure, until their probe passes. Always an array, never null; empty when nothing is paused. (B5, not built yet)
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PausedCli"
+                  plans:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cars:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Car"
+components:
+  schemas:
+    PausedCli:
+      type: object
+      required: [adapter, reason, since]
+      properties:
+        adapter:
+          enum: [claude, codex, pi, grok, gemini]
+        reason:
+          type: string
+          description: The CLI's own words, e.g. "OAuth session expired".
+        since:
+          type: string
+          format: date-time
+    Car:
+      type: object
+      properties:
+        round:
+          type: integer
+          minimum: 1
+          description: The round the agent was told and signs, from Plans::Rounds over state.json (B4, not wired yet).
+        rounds:
+          type: integer
+          minimum: 1
+          description: The agent's rounds:, plus round grants on this visit.
+    ExtensionChoice:
+      type: object
+      description: One option on an X<n> request; the page renders label as sent.
+      properties:
+        letter:
+          enum: [a, b, c]
+        label:
+          type: string
+          description: >
+            Rounds request: "One more round", "One more round with 10 extra minutes", "One more round with 20 extra minutes".
+            Time request: "One more round, starting again from its resume note", "10 more minutes on this round", "20 more minutes on this round".
+        answer:
+          type: string
+          description: '"<letter>) <label>". The server reads only the letter, so older labels are still accepted.'

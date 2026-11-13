@@ -6,7 +6,7 @@
     "slug": "solid-sweep"
   },
   "state": "blocked",
-  "updated_at": "2026-11-12T22:03:37-08:00",
+  "updated_at": "2026-11-12T22:27:57-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -247,6 +247,19 @@
       "status": "Blocked",
       "round": 1,
       "note": "technical"
+    },
+    {
+      "at": "2026-11-12T22:27:47-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:54-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [],
@@ -421,6 +434,29 @@
             {
               "kind": "note",
               "text": "Journal round 1 entry 1 said B3 was answered. That was wrong. B3 is open; blocked.md still exists."
+            },
+            {
+              "kind": "question",
+              "text": "B3 dry-monitor on Ruby 4.0.6 > **Answer not accepted:** Give me each blocked question as a question to answer here, and I'll answer them. > > unblocker: Journal round 1 entry 1 said B3 was answered. That was wrong. B3 is open; blocked.md still exists. > **Answer not accepted:** There is no question. So I have no idea how to unblock you. > > unblocker: Journal round 1 entry 1 said B3 was answered. That was wrong: blocked.md still has B3 and A3, and the A3 text does not answer the question. B3 is…",
+              "ref": "B3",
+              "answer": "Screw you Answered by hermes on 2026-11-12"
+            }
+          ]
+        },
+        "5": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Round 1: folded nothing. B3's only answer, A3, reads 'Screw you' and does not answer the question, so B3 and A3 stay in blocked.md."
+            },
+            {
+              "kind": "note",
+              "text": "Earlier journal entries that said B3 was answered were wrong. blocked.md still holds B3 and A3. The A3 section also carries appended 'Answer not accepted' notes that a human should clean up."
+            },
+            {
+              "kind": "question",
+              "text": "B3 (dry-monitor on Ruby 4.0.6) still needs a real answer: a, b or c with a reason, from a human."
             }
           ]
         }
