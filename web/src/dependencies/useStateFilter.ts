@@ -1,9 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
+import type { DependencyState } from "../api/types";
 
 export const FILTER_KEY = "openlanes-dependency-states";
-/** Off until asked for: finished work crowds the graph. */
-/** States whose plans live in the archive subfolders (Tree::INACTIVE_DIRS): the graph starts on live work. */
-export const OFF_BY_DEFAULT = ["approved", "deployed", "deferred", "abandoned", "discarded", "trashed"];
 
 function read(): string[] | null {
   try {
@@ -25,23 +23,25 @@ function write(keys: string[]): void {
 
 /**
  * The checked states. Each project's page is served from its own origin, so localStorage is already per project.
- * Until a choice is made, every state but the archived ones is checked.
+ * Until a choice is made, every state the server does not flag `archived` is checked: the flag comes from
+ * Tree::INACTIVE_DIRS, so a new archived state in status.rb is off here without a copy of the list.
  */
-export function useStateFilter(states: string[]) {
+export function useStateFilter(states: DependencyState[]) {
   const [chosen, setChosen] = useState<string[] | null>(read);
+  const keys = useMemo(() => states.map(s => s.key), [states]);
   const checked = useMemo(
-    () => new Set(chosen ?? states.filter(k => !OFF_BY_DEFAULT.includes(k))),
+    () => new Set(chosen ?? states.filter(s => !s.archived).map(s => s.key)),
     [chosen, states],
   );
   const toggle = useCallback(
     (key: string) => {
       const next = new Set(checked);
       if (!next.delete(key)) next.add(key);
-      const keys = states.filter(k => next.has(k));
-      setChosen(keys);
-      write(keys);
+      const picked = keys.filter(k => next.has(k));
+      setChosen(picked);
+      write(picked);
     },
-    [checked, states],
+    [checked, keys],
   );
   return { checked, toggle };
 }

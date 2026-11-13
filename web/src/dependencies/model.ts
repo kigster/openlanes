@@ -98,14 +98,3 @@ export function layout(plans: DependencyPlan[], links: Array<{ from: string; to:
     return { plan, x: n.x - NODE_WIDTH / 2, y: n.y - NODE_HEIGHT / 2, group: group.get(plan.ordinal)! };
   });
 }
-
-export interface Point {
-  x: number;
-  y: number;
-}
-
-/** A curve from one box's right edge to the next one's left, shared by real and bridged arrows. */
-export const curve = (a: Point, b: Point): string => {
-  const mid = (a.x + b.x) / 2;
-  return `M${a.x},${a.y} C${mid},${a.y} ${mid},${b.y} ${b.x},${b.y}`;
-};

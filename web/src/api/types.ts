@@ -472,6 +472,7 @@ export interface DependencyState {
   key: string; // a Plans::STATUSES key, in STATUSES order
   emoji: string;
   name: string;
+  archived: boolean; // its plans live in an inactive subfolder (Tree::INACTIVE_DIRS); the graph starts with these off
 }
 
 export interface DependencyPlan {

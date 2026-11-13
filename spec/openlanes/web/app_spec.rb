@@ -99,7 +99,7 @@ RSpec.describe OpenLanes::Web::App, :tree do
 
     it "answers every plan, archive included, and the edges between them" do
       expect([last_response.status, body]).to eq([200, JSON.parse(JSON.generate(
-        OpenLanes::Web::DependencyGraph.new(OpenLanes::Plans::Tree.new(dir: plans_root)).to_h
+        OpenLanes::Web::DependencyGraph.new(OpenLanes::Plans.tree(plans_root)).to_h
       ))])
     end
 

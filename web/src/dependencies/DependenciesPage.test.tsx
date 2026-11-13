@@ -25,7 +25,7 @@ afterEach(() => vi.unstubAllGlobals());
 it("draws a box per plan in a checked state and an arrow per edge, Approved off by default", async () => {
   draw();
   await waitFor(() => expect(boxes()).toEqual(["001.00", "002.00", "003.00", "004.00"]));
-  expect(document.querySelectorAll("path.dep-edge[data-from]")).toHaveLength(2);
+  await waitFor(() => expect(document.querySelectorAll("path.dep-edge[data-from]")).toHaveLength(2));
 });
 
 it("brings the archived plan in when Approved is checked", async () => {

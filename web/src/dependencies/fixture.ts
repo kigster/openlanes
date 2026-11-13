@@ -3,9 +3,9 @@ import type { DependencyGraph } from "../api/types";
 /** A chain 001 → 002 → 003, a loner 004, and an archived 005, for the tests. */
 export const graph: DependencyGraph = {
   states: [
-    { key: "building", emoji: "🟡", name: "Building" },
-    { key: "planned", emoji: "⭐️", name: "Planned" },
-    { key: "approved", emoji: "✅", name: "Approved" },
+    { key: "building", emoji: "🟡", name: "Building", archived: false },
+    { key: "planned", emoji: "⭐️", name: "Planned", archived: false },
+    { key: "approved", emoji: "✅", name: "Approved", archived: true },
   ],
   plans: [
     { ordinal: "001.00", title: "First", state: "building", summary: "The first plan.", archived: false },

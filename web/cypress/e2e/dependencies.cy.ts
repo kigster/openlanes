@@ -4,6 +4,8 @@ import type { DependencyGraph } from "../../src/api/types";
 // read from GET /api/dependencies itself, so the spec holds for the demo's tree and for a fixture tree alike.
 describe("plan dependencies", () => {
   const graph = () => cy.request<DependencyGraph>("/api/dependencies").its("body");
+  // Off by default: the states the server flags archived, so this spec copies no list out of status.rb.
+  const archived = (g: DependencyGraph) => new Set(g.states.filter(s => s.archived).map(s => s.key));
 
   beforeEach(() => {
     cy.window().then(w => w.localStorage.clear());
@@ -26,7 +28,7 @@ describe("plan dependencies", () => {
 
   it("draws one box per plan and one arrow per edge among the checked states", () => {
     graph().then(g => {
-      const on = new Set(g.states.map(s => s.key).filter(k => !["approved", "deployed", "deferred", "abandoned", "discarded", "trashed"].includes(k)));
+      const on = new Set(g.states.map(s => s.key).filter(k => !archived(g).has(k)));
       const plans = g.plans.filter(p => on.has(p.state));
       const ids = new Set(plans.map(p => p.ordinal));
       const edges = g.edges.filter(e => ids.has(e.from) && ids.has(e.to));
@@ -37,16 +39,17 @@ describe("plan dependencies", () => {
 
   it("brings archived plans in when Approved is checked", () => {
     graph().then(g => {
-      const archived = g.plans.filter(p => p.archived);
+      const gone = g.plans.filter(p => p.archived);
       const done = g.states.find(s => s.key === "approved")!;
+      expect(done.archived, "approved is an archived state").to.eq(true);
       cy.contains(".dep-filter label", done.name).find("input").check();
-      archived.forEach(p => cy.get(`.dep-node[data-plan="${p.ordinal}"]`).should("exist"));
+      gone.forEach(p => cy.get(`.dep-node[data-plan="${p.ordinal}"]`).should("exist"));
     });
   });
 
   it("filters a state out and shows its summary, or the fallback, on hover", () => {
     graph().then(g => {
-      const first = g.plans.find(p => !["approved", "deployed", "deferred", "abandoned", "discarded", "trashed"].includes(p.state))!;
+      const first = g.plans.find(p => !archived(g).has(p.state))!;
       const state = g.states.find(s => s.key === first.state)!;
       cy.get(`.dep-node[data-plan="${first.ordinal}"]`).trigger("mouseover").trigger("pointermove");
       cy.get(".dep-tip").should("be.visible");

@@ -7,8 +7,10 @@ module OpenLanes
     # the board snapshot: the snapshot leaves the inactive subfolders out, and
     # the page shows them when Done is checked.
     #
-    # The states travel with the plans, in {Plans::STATUSES} order, so the
-    # page's filter never keeps a copy of the vocabulary of its own.
+    # The states travel with the plans, in {Plans::STATUSES} order, each
+    # saying whether its plans live in an inactive subfolder, so the page's
+    # filter keeps no copy of the vocabulary and no list of what is hidden by
+    # default: both come from {Plans::Tree::INACTIVE_DIRS}, through the tree.
     class DependencyGraph
       # @param tree [OpenLanes::Plans::Tree] any tree over the `.plans`
       #   directory; its inactive subfolders are read whatever it was built with
@@ -22,7 +24,11 @@ module OpenLanes
       private
 
       # @return [Array<Hash>]
-      def states = Plans::STATUSES.map { { key: it.key.to_s, emoji: it.emoji, name: it.label } }
+      def states
+        Plans::STATUSES.map do |status|
+          { key: status.key.to_s, emoji: status.emoji, name: status.label, archived: !Plans::Tree.subfolder_for(status).nil? }
+        end
+      end
 
       # @return [Array<Hash>]
       def plans
@@ -31,8 +37,8 @@ module OpenLanes
           { ordinal:  feature.ordinal.to_s,
             title:    feature.title,
             state:    subject.status.key.to_s,
-            summary:  Plans::Spec.summary(subject.read(Plans::Spec::FILENAME).to_s),
-            archived: inactive?(feature) }
+            summary:  subject.summary,
+            archived: @tree.inactive?(feature) }
         end
       end
 
@@ -42,14 +48,10 @@ module OpenLanes
       # @return [Array<Hash>]
       def edges
         known = @tree.ordinals.to_set(&:to_s)
-        graph = Plans::Dependencies.new(@tree)
         known.flat_map do |to|
-          Array(graph.depends_on(to)).select { known.include?(it) }.map { |from| { from:, to: } }
+          Array(@tree.dependencies.depends_on(to)).select { known.include?(it) }.map { |from| { from:, to: } }
         end.sort_by { [it[:to], it[:from]] }
       end
-
-      # @return [Boolean] whether the folder sits in an inactive subfolder
-      def inactive?(feature) = Plans::Tree::SUBFOLDERS.include?(File.basename(File.dirname(feature.path)))
     end
   end
 end

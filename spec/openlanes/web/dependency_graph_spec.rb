@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Web::DependencyGraph, :tree do
-  subject(:graph) { described_class.new(OpenLanes::Plans::Tree.new(dir: plans_root)).to_h }
+  subject(:graph) { described_class.new(OpenLanes::Plans.tree(plans_root)).to_h }
 
   def spec_md(depends_on, summary: nil)
     front = ["depends_on: #{depends_on}", summary && "summary: #{summary}"].compact.join("\n")
@@ -30,6 +30,12 @@ RSpec.describe OpenLanes::Web::DependencyGraph, :tree do
 
   it "lists the states in STATUSES order" do
     expect(graph[:states].map { it[:key] }).to eq(OpenLanes::Plans::STATUSES.map { it.key.to_s })
+  end
+
+  it "marks archived exactly the states whose plans live in an inactive subfolder" do
+    archived = graph[:states].select { it[:archived] }.map { it[:key].to_sym }
+    expect(archived).to eq(OpenLanes::Plans::Tree::INACTIVE_DIRS.keys)
+    expect(graph[:states].find { it[:key] == "building" }).to eq(key: "building", emoji: "🟡", name: "Building", archived: false)
   end
 
   it "summarises each plan from its summary: key, or the goal paragraph" do

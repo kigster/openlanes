@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { DependencyGraph } from "./types";
 import { ApiError } from "./client";
+import { DEPENDENCIES_KEY } from "./queryClient";
 
-export const DEPENDENCIES_KEY = ["dependencies"] as const;
+export { DEPENDENCIES_KEY };
 
 /** GET /api/dependencies: the plan graph the Plan dependencies page draws. */
 export async function fetchDependencies(): Promise<DependencyGraph> {
@@ -13,9 +14,9 @@ export async function fetchDependencies(): Promise<DependencyGraph> {
 }
 
 /**
- * The graph, refetched whenever `stamp` changes. The page passes a signature of the board's plans, so a plan that
- * moved on the SSE stream refetches here; the snapshot itself leaves out the archive, which this page needs.
+ * The graph, under one key. useBoard invalidates it when a board snapshot arrives on the stream, so a plan that moved
+ * refetches here while the old graph stays on screen; the snapshot itself leaves out the archive, which this page needs.
  */
-export function useDependencies(stamp: string) {
-  return useQuery({ queryKey: [...DEPENDENCIES_KEY, stamp], queryFn: fetchDependencies, staleTime: 0 });
+export function useDependencies() {
+  return useQuery({ queryKey: DEPENDENCIES_KEY, queryFn: fetchDependencies });
 }
