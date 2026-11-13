@@ -45,7 +45,8 @@ module OpenLanes
 
       # @return [String]
       def table
-        lines = ["Runs", *summary, "", "PR outcomes", *pr_lines, "", "Usage by adapter and model", *usage(result.usage_by_model),
+        lines = ["Runs", *summary, "", "PR outcomes", *pr_lines, "", "Memory: reviews to approval", *memory_lines,
+                 "", "Usage by adapter and model", *usage(result.usage_by_model),
                  "", "Usage by run", *usage(result.usage_by_run)]
         lines.push("", "#{result.skipped_lines} unreadable line(s) skipped") if result.skipped_lines.positive?
         "#{lines.join("\n")}\n"
@@ -68,6 +69,14 @@ module OpenLanes
         return "no answered blocks" if wait[:count].to_i.zero?
 
         "#{wait[:count]} answered, median #{wait[:median_s]}s, max #{wait[:max_s]}s"
+      end
+
+      # @return [Array<String>]
+      def memory_lines
+        result.memory.map do |side, row|
+          "  #{side.to_s.ljust(4)} #{row[:runs]} run(s), #{row[:approved]} approved, " \
+            "rounds mean #{row[:rounds_mean] || "n/a"}, median #{row[:rounds_median] || "n/a"}"
+        end
       end
 
       # @return [Array<String>]

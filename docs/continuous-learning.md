@@ -82,7 +82,6 @@ The `applies_to` list routes one fact to every role that needs it. `checked_by` 
 .openlanes/memory/
   lessons/L-0042-real-plans-trees-in-specs.md     # one lesson per file, the source of truth
   inbox/2026-11-07-pr-193-staff-reviewer.md        # candidates the curator proposed, not yet active
-  usage.json                                       # cited/violated counters, written by the harness only
 ```
 
 There is no hand-written index. `openlanes memory list` and the prompt section are derived from the frontmatter, in keeping with "nothing is written down twice".
@@ -129,7 +128,7 @@ Memory is committed, so several people's factories will add to it concurrently.
 
 - **Additions don't conflict** in git: every lesson is its own file. Ids are allocated like plan ordinals, highest id plus one, and a collision found at merge time is renumbered by `openlanes memory resync`, the way `resync dirs` reconciles plan folders.
 - **Disagreements are semantic, not textual.** When the curator finds two active lessons that contradict each other ("extract a class at 100 lines" against "don't split until a second caller exists"), it does not pick one. It opens a blocked question for a human, and the answer becomes a `decision` lesson that `supersedes:` both.
-- `usage.json` is merge-friendly (counters keyed by lesson id, summed on conflict) or kept local and gitignored _(open question below)_.
+- Nothing under `.openlanes/` churns per run. A per-run citation counter, if one is ever built, lives in `$XDG_STATE_HOME/openlanes/`, never in `.openlanes/` (decided in plan 066.00, below).
 
 ### Global memory
 
@@ -185,10 +184,10 @@ Phases 1 and 2 are each a plan of their own; 0 and 3 are small.
 
 ## Open questions for the maintainer
 
-1. **Location of project memory:** `.openlanes/memory/` (next to `.openlanes.yml`, needs a new dot-directory) or `docs/memory/` (visible, reviewable like docs)?
-2. **`usage.json`: committed or local?** Committed gives the team shared evidence but churns on every run; local is quiet but each person measures alone.
-3. **Promotion threshold:** two plans, or always a human, at least until the curator has earned trust?
-4. **Should memory PRs be bundled** with the plan PR that produced them (one review), or always separate (cleaner history, more PRs)?
+1. **Location of project memory.** Decided (PR 196 and the owner): `.openlanes/memory/`, committed whole; nothing under it is gitignored, and `openlanes memory scan` fails CI on a secret or an ignored file there.
+2. **`usage.json`.** Decided (plan 066.00): not built. Confirmations, the only count the requirements ask for, are derived from a lesson's `source:` list and change only through a reviewed memory pull request, so they do not churn. A per-run citation counter, if one is ever built, belongs in the XDG state directory (`$XDG_STATE_HOME/openlanes/`), never in `.openlanes/`.
+3. **Promotion threshold.** Decided (plan 066.00): two plans (`Promotion::THRESHOLD`) or a person's `openlanes memory approve`. A person still merges every memory pull request, so the curator never has the last word.
+4. **Bundled or separate memory PRs.** Decided (plan 066.00): always separate. Every change to `lessons/` reaches `main` as its own pull request, cut from the default branch, carrying only `.openlanes/memory/`.
 5. **Global scope location:** `~/.config/openlanes/memory/` as proposed, or keep `~/.local/config/openlanes/memory-shared.md` as first suggested?
 
 [memtool]: https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool

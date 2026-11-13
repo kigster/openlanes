@@ -144,3 +144,17 @@ No. This plan adds no HTTP endpoint and changes none.
 - bundle exec rspec
 - bundle exec rubocop
 - An integration spec takes two plans with the same rejected finding through the curator in a temp repository and finds one active lesson in the proposed pull request
+
+## Build progress (backend-coder)
+
+### Round 1
+
+- [x] B6: `Lesson#confirmations` (distinct plans in `source:`), `Library#for` ranks by it, then severity, `confirmed:`, id. Severity kept as a tiebreaker so the existing severity ranking still holds.
+- [x] B4: `spec/openlanes/memory/repository_scan_spec.rb`; CircleCI `linter` step runs `exe/openlanes memory scan`; `.gitignore` audited (no rule under `.openlanes/`); open questions answered in `docs/continuous-learning.md`.
+- [x] B2 core: `Engine::Curating` plus `spec/openlanes/engine/curating_spec.rb`. Called once at the end of `RunWorkflow#call`, not after each round: a per-round hook needs `runner.rb`. `Curating.snapshot` skips plans that had already ended before the run, so the first run after an upgrade does not curate every merged plan.
+- [x] `Inbox#add` drops a candidate that reads as an instruction to other agents.
+- [x] B2 leftover: `memory curate` and `memory promote` refuse (exit 64) under `memory: false` / `--no-memory`.
+- [x] B1 `Memory::Publication` (detached worktree of `origin/<default>`, lessons written there, root inbox mirrored, whole-folder secret scan before the commit), `Publisher#publish_memory` (commits only `.openlanes/memory/`, sanctioned push, `gh pr create`, never merges), `Memory.publication`, `memory promote` publishes by default and `--local` keeps the write-only path. Branch is created inside a temporary `git worktree` directly rather than through `Vcs::Worktree`, whose checkouts are keyed to plan features.
+- [x] B5 events: `run_started` carries `memory`; `Events::Compounding` gives runs, approved, rounds mean and median to first approval per side; runs recorded before the flag count on neither side.
+- [x] B7 `spec/integration/memory_compounding_spec.rb`, with the real `Vcs::Publisher` against a bare origin; only `gh` and the curator are faked (`spec/support/memory_fixture.rb`). It reads the lesson back through `Memory.library` and `Memory.section`, not by running `exe/openlanes memory list` as a subprocess.
+- [x] Full suite: 6409 examples, 1 failure (the stale `docs/architecture/` check, regenerated since; `spec/openlanes/docs` is now green), 9 pending, which were already pending before this plan. Rubocop: 0 offenses.

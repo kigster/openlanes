@@ -86,6 +86,8 @@ module OpenLanes
       # @param reviews [OpenLanes::Engine::Reviews, nil] counts a review
       #   round's verdicts and labels the pull request; nil counts them with
       #   no pull request to label
+      # @param memory [Boolean] whether agents are shown lessons; recorded on
+      #   `run_started` so the events report can compare runs with and without
       # @param lock_ttl [#call, nil] seconds a refactor's global lock holds,
       #   asked every tick so an edited `refactor.lock_hours` applies on the
       #   next; nil keeps {Plans::GlobalLock::DEFAULT_HOURS}
@@ -94,8 +96,9 @@ module OpenLanes
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
         merging: nil, arbitration: nil, upkeep: nil, quality_gate: nil, stop_at: nil, events: Events::NullSink.new,
-        reviews: nil, lock_ttl: nil)
+        reviews: nil, lock_ttl: nil, memory: true)
         @tree = tree
+        @memory = memory
         @lock_ttl = lock_ttl || -> { Plans::GlobalLock::DEFAULT_HOURS * 3600 }
         @events = events
         @executor = executor
@@ -271,7 +274,7 @@ module OpenLanes
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def call
         @events = @events.with(run: mint_run)
-        @events.record(:run_started, jobs: @jobs, isolation: @isolation.to_s)
+        @events.record(:run_started, jobs: @jobs, isolation: @isolation.to_s, memory: @memory)
         dispatcher = Dispatcher.new(runner: self,
           state:    @state,
           rounds:   @rounds,
