@@ -162,6 +162,19 @@ RSpec.configure do |config|
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
 
+  # The checkout's own `.openlanes.yml` is this project's settings, not a
+  # fixture. Read through {Config.current} from the gem root, its
+  # `frontend: true` started frontend-coder in routing examples that build
+  # no front end, and its `desired_codebase_quality:` lifted the quality gate
+  # the run examples assert. An example that wants settings writes its own.
+  gem_root = File.expand_path("..", __dir__)
+  config.before do
+    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |original, *args|
+      root = OpenLanes::Project.root || Dir.pwd
+      File.expand_path(root) == gem_root ? OpenLanes::Config.new : original.call(*args)
+    end
+  end
+
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.
   config.around do |example|

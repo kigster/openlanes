@@ -158,7 +158,10 @@ module OpenLanes
       # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
       #   journal (S9); nil keeps none
       def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
-        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil)
+        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil,
+        budget: nil)
+        @budget = budget || Budget.for(runner)
+        @said_budget = {}
         @runner = runner
         @feed = EventJournal::Feed.new(journal)
         @extensions = extensions || Extensions.new(stay:)
@@ -924,6 +927,8 @@ module OpenLanes
         reasons.concat(@verifying.map { |plan, note| "#{plan} #{note}" })
         held = @runner.held(@runner.dependencies(except: untouchable), @runner.global_lock(except: untouchable))
         reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
+        over = budget_holds
+        reasons << "held by budget: #{over.map { |o, why| "#{o} #{why}" }.join("; ")}" unless over.empty?
         reasons.empty? ? "idle: nothing to do" : "idle: #{reasons.join("; ")}"
       end
 
@@ -970,6 +975,7 @@ module OpenLanes
           next if held?(subject)
           next if locked_elsewhere?(subject)
           next if held_outside?(subject) || @refused.include?(subject.feature.ordinal.to_s)
+          next if over_budget?(subject)
           # A stopped rebase holds the checkout until the harness has
           # continued or aborted it; a partner started now would build on
           # conflict markers.
@@ -1022,6 +1028,25 @@ module OpenLanes
       def held?(subject)
         ordinal = subject.feature.ordinal
         !@dependencies.reason(ordinal).nil? || !@global_lock.reason(ordinal).nil?
+      end
+
+      # The dollar cap (plan 062.00): a plan past `budget.plan_usd` gets no
+      # new agent, and is held as queued plans are, without a state fired or
+      # a folder renamed. Said once per reason, not on every tick.
+      #
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Boolean]
+      def over_budget?(subject)
+        ordinal = subject.feature.ordinal.to_s
+        reason = @budget.refusal(ordinal)
+        UI.log("#{reason}; no new round starts", plan: ordinal, level: :warn) if reason && @said_budget[ordinal] != reason
+        @said_budget[ordinal] = reason
+        !reason.nil?
+      end
+
+      # @return [Hash{String => String}] in-scope plans the cap holds, with why
+      def budget_holds
+        @runner.in_scope.to_h { [it.feature.ordinal.to_s, @budget.refusal(it.feature.ordinal.to_s)] }.compact
       end
 
       # Plans that others wait for go first, so the work that unblocks the

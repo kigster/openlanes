@@ -10,8 +10,10 @@ classDiagram
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
+  class OpenLanes__Engine__Budget["OpenLanes::Engine::Budget"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Events__PlanSpend["OpenLanes::Events::PlanSpend"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
   class OpenLanes__Lifecycle__Aging["OpenLanes::Lifecycle::Aging"]
@@ -149,6 +151,7 @@ classDiagram
   OpenLanes__Live__Outage ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Outage ..> OpenLanes__UI : uses
   OpenLanes__Live__OutageReport ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__Publisher ..> OpenLanes__Engine__Budget : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Keys : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Meter : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__RunState : uses
@@ -175,8 +178,10 @@ classDiagram
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Config : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Board : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Budget : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Error : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Aging : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Live__Meter : uses

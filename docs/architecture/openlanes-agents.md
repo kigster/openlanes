@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Agents__Profile["Profile"]
   class OpenLanes__Agents__Registry["Registry"]
   class OpenLanes__Agents__Roster["Roster"]
+  class OpenLanes__Agents__SmallDiff["SmallDiff"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
   class OpenLanes__Engine__Reviews["OpenLanes::Engine::Reviews"]
@@ -22,10 +23,12 @@ classDiagram
   OpenLanes__Agents__Profile ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Agents__SmallDiff : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Engine__Rebase : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Agents__Roster ..> OpenLanes__UI : uses
+  OpenLanes__Agents__SmallDiff ..> OpenLanes__Error : uses
 ```

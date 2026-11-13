@@ -63,3 +63,6 @@ export const stamp = (iso: string): string => {
 
 /** Seconds since a machine's last heartbeat, measured against our own snapshot's clock rather than the browser's. */
 export const lastSeen = (their: Snapshot, me: Snapshot): number => secondsBetween(their.node.heartbeat_at, me.at);
+
+/** "$1.84 / $5.00" against a cap, "$1.84" alone without one. Estimates, so the badge's tooltip says "est.". */
+export const spendText = (usd: number, cap: number | null): string => (cap == null ? dollars(usd) : `${dollars(usd)} / ${dollars(cap)}`);

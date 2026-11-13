@@ -5,6 +5,7 @@ handles: [completed]
 advances_to: approved
 model: opus
 effort: high
+small_diff: { under_lines: 300, model: sonnet, effort: medium }
 timeout: 600
 ledger: [plan.md]
 phase: completion

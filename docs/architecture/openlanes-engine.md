@@ -19,6 +19,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration["Arbitration"]
   class OpenLanes__Engine__Arbitration__Asker["Arbitration::Asker"]
   class OpenLanes__Engine__Board["Board"]
+  class OpenLanes__Engine__Budget["Budget"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Dispatcher["Dispatcher"]
@@ -72,6 +73,7 @@ classDiagram
   class OpenLanes__Engine__Verification__Screenshots__Refused["Verification::Screenshots::Refused"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
+  class OpenLanes__Events__PlanSpend["OpenLanes::Events::PlanSpend"]
   class OpenLanes__Events__Usage["OpenLanes::Events::Usage"]
   class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
@@ -131,6 +133,8 @@ classDiagram
   OpenLanes__Engine__Arbitration ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Error : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution__Executor__Handle : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Config : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
@@ -148,6 +152,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Config : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Board : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Budget : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Conversions : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__EventJournal__Feed : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Extensions : uses

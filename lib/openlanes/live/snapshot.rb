@@ -41,13 +41,16 @@ module OpenLanes
       #   last recovered from; nil when there was none
       # @param max_rejections [#call] `merge.max_rejections`, asked once per
       #   snapshot, so an edited `.openlanes.yml` shows on the next one
+      # @param budget [OpenLanes::Engine::Budget] each plan's spend against
+      #   `budget.plan_usd` (plan 062.00)
       # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
       #   same way
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections },
-        lock_ttl: -> { Config.current.refactor_lock_seconds })
+        lock_ttl: -> { Config.current.refactor_lock_seconds }, budget: Engine::Budget.new)
+        @budget = budget
         @board = board
         @tree = tree
         @agents = agents
@@ -166,6 +169,7 @@ module OpenLanes
           up:          spent[:up],
           down:        spent[:down],
           cost:        spent[:cost],
+          spend:       spend(ordinal),
           started_at:  started && iso(started),
           elapsed:     started ? (@at - started).round : 0,
           cars:        rows.map { car(it, subject, stages) },
@@ -206,6 +210,17 @@ module OpenLanes
         # Verdict counts slop as a rejection; the page says which it was.
         word = note[Plans::Verdict::NOTE, 1].casecmp?("slop") ? "slop" : vote.word.to_s
         { agent: vote.agent, adapter: stage["adapter"], verdict: word, vulnerability: vote.vulnerability? }
+      end
+
+      # The plan's spend against `budget.plan_usd` (plan 062.00). A cap that
+      # cannot be read shows as none rather than taking the page down.
+      #
+      # @param ordinal [String]
+      # @return [Hash] `PlanSpend`
+      def spend(ordinal)
+        @budget.spend(ordinal).wire
+      rescue Error
+        Events::PlanSpend.for(ordinal, []).wire
       end
 
       # @return [OpenLanes::Arbitration::Counter]

@@ -31,10 +31,12 @@ module OpenLanes
       # @param run_state [OpenLanes::Live::RunState]
       # @param description [String, nil]
       # @param clock [Proc] wall time
+      # @param budget [OpenLanes::Engine::Budget] what each plan has spent
       # @param availability [#call] each adapter's latest probe, read once per
       #   snapshot ({Adapters::Probes#current})
       def initialize(store:, keys:, node:, tree:, agents:, project:, claims: nil, run_state: RunState.new,
-        description: nil, clock: -> { Time.now }, availability: -> { [] })
+        description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine::Budget.local)
+        @budget = budget
         @store = store
         @keys = keys
         @node = node
@@ -169,6 +171,7 @@ module OpenLanes
           redis_url:   @store.url,
           outage:      @outage,
           availability: @availability,
+          budget:      @budget,
           log:).to_h
       end
 

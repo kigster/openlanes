@@ -48,18 +48,25 @@ module OpenLanes
       # @param model [String, nil] what `run --model` typed
       # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes.yml` gives
       #   an agent that names no adapter of its own
+      # @param diff_lines [Integer, nil] the plan's changed lines, insertions
+      #   plus deletions; nil when unknown, and then no `small_diff:` applies
       # @return [OpenLanes::Agents::Profile]
-      def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current)
+      def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current, diff_lines: nil) # rubocop:disable Metrics/ParameterLists
         override = spec ? spec.override_for(agent.phase) : {}
         adapter = Adapters.for(dealing.replacement_for(agent) || override["adapter"] || agent.adapter || dealing.adapter_for(agent))
         # A model named for one CLI means nothing to another, so the agent's
         # own model is kept only on the CLI its frontmatter wrote it for,
         # which is the default one when it names none.
-        own_model = adapter.name == (agent.adapter || Adapters::DEFAULT) ? agent.model : nil
+        native = adapter.name == (agent.adapter || Adapters::DEFAULT)
+        # `small_diff:` stands in for the frontmatter, and so only where the
+        # frontmatter would have had the last word: anything a person typed,
+        # on the command line or in the spec, outranks it.
+        small = native && model.nil? && override.empty? && agent.small_diff&.applies?(diff_lines) ? agent.small_diff : nil
+        own_model = native ? (small&.model || agent.model) : nil
         depth_effort = spec&.depth && Plans::Spec::EFFORT_FOR_DEPTH[spec.depth]
         new(adapter:,
           model:   adapter.model(model || override["model"] || own_model),
-          effort:  override["effort"] || depth_effort || agent.effort)
+          effort:  override["effort"] || depth_effort || small&.effort || agent.effort)
       end
     end
   end

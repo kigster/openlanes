@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import type { Car as CarData, ModelChoice, Plan } from "../api/types";
+import type { Car as CarData, ModelChoice, Plan, Spend } from "../api/types";
 import { clock, fmt } from "./format";
 import { Gear } from "./Gear";
-import { carLook, lockMark, modelLabel } from "./model";
+import { carLook, lockMark, modelLabel, spendLook } from "./model";
 
 interface CarProps {
   plan: Plan;
@@ -99,5 +99,26 @@ export function SubagentTiles({ car }: { car: CarData }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * A plan's estimated spend against its cap, with a thin meter. Past the cap it says why the plan is held. Nothing when
+ * the engine sends no spend; unpriced runs are listed beside the figure, never counted as $0.
+ */
+export function SpendBadge({ spend }: { spend?: Spend | null }) {
+  const look = spendLook(spend);
+  if (!look) return null;
+  return (
+    <span className={`spend is-${look.kind}`} title="Estimated spend, from the adapter's rates (est.)">
+      <span className="spend-text">est. {look.text}</span>
+      {look.percent != null && (
+        <span className="spend-meter" role="meter" aria-label="Spend against cap" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(look.percent)}>
+          <span className="spend-fill" style={{ width: `${look.percent}%` }} />
+        </span>
+      )}
+      {look.unpriced && <span className="spend-unpriced">{look.unpriced}</span>}
+      {look.reason && <span className="spend-reason">{look.reason}</span>}
+    </span>
   );
 }

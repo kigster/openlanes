@@ -72,4 +72,34 @@ RSpec.describe OpenLanes::Execution::Prompt, :tree do
     File.write(state.path, "{")
     expect(text).to include("Your journal could not be read")
   end
+
+  # 062.00 B1: a resumed session already read every round before this one.
+  context "when the prompt goes to a resumed session on round 3" do
+    subject(:text) { prompt(resumed: true).to_s }
+
+    def prompt(resumed:)
+      described_class.new(agent:, subject: plan, root: File.dirname(plans_root), profile:, round: 3, resumed:)
+    end
+
+    before do
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "decision", text: "Integer cents")])
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "done", text: "U1")])
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "override", text: "BigDecimal", overrides: 1)])
+    end
+
+    it "lists only round 3's entries, numbered globally" do
+      expect(text).to include("  Journal round 3:\n    3. [override of 1] BigDecimal")
+      expect(text).not_to include("Integer cents", "[done] U1")
+    end
+
+    it "says how many earlier entries the session holds, and how to read them back" do
+      expect(text).to include("This session already holds 2 earlier journal entries, from rounds up to 2",
+        "state show --dir \"#{plans_root}\" --plan 001.00 | jq '.memory.\"backend-coder\"'")
+    end
+
+    it "leaves a fresh prompt for the same round unchanged" do
+      expect(prompt(resumed: false).to_s).to include("Integer cents  (overridden by 3)", "[done] U1", "BigDecimal")
+        .and(satisfy { !it.include?("already holds") })
+    end
+  end
 end

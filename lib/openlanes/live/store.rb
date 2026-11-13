@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "monitor"
 require "redis-client"
 
 module OpenLanes
@@ -69,6 +70,11 @@ module OpenLanes
       def initialize(url:, timeout: TIMEOUT)
         @url = url
         @client = RedisClient.config(url:, timeout:, reconnect_attempts: 1).new_client
+        # One connection, shared by the engine's threads: two commands in
+        # flight at once interleave on the socket, and redis-client raises
+        # "can't modify string; temporarily locked". Monitor, since a
+        # transaction's block may itself be guarded.
+        @guard = Monitor.new
       end
 
       # @return [String]
@@ -268,8 +274,8 @@ module OpenLanes
 
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
-      def guarded
-        yield
+      def guarded(&)
+        @guard.synchronize(&)
       rescue RedisClient::CommandError
         raise
       rescue RedisClient::Error => e

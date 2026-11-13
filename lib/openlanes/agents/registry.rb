@@ -136,7 +136,8 @@ module OpenLanes
           starts:        Array(meta["starts"]).map { |l| l.to_s.to_sym },
           needs:         Array(meta["needs"]).map(&:to_s),
           toggle:        meta["toggle"]&.to_s,
-          confined_to:   confined_to(meta["confined_to"], path)
+          confined_to:   confined_to(meta["confined_to"], path),
+          small_diff:    SmallDiff.parse(meta["small_diff"], path)
         )
       end
 

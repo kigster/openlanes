@@ -72,3 +72,7 @@ architecture_decisions:
     - rspec
     - vitest
     - cypress
+coverage:
+  command: bundle exec rspec
+  minimum: 95
+  report_command: jq ".result.line" coverage/.last_run.json

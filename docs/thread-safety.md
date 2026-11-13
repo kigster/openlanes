@@ -66,6 +66,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/live/memory_subscriber.rb` | `@queue` | one subscription | publisher, reader | `Thread::Queue` | guarded |
 | `lib/openlanes/live/publisher.rb` | `@log` | `Live::Publisher` | tick, agent jobs | `@log_mutex` | guarded |
 | `lib/openlanes/live/run_state.rb` | concurrency, run fields | `Live::RunState` | tick, web commands | `@mutex` | guarded |
+| `lib/openlanes/live/store.rb` | the one `RedisClient` connection | `Live::Store` | tick, agent jobs, publisher, web requests | `@guard` (`Monitor`) around every command | guarded |
 | `lib/openlanes/support/clock.rb` | `Clock::Fake` time | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/spawner.rb` | `Spawner::Fake` calls and pids | the spec | stress threads | `@mutex` | guarded |
 | `lib/openlanes/support/ui.rb` | `@parts` of a line | `UI::Line` | ticker, worker | `@lock` | guarded |

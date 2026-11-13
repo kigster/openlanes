@@ -49,9 +49,12 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param resumed [Boolean] whether the prompt goes to a resumed session,
+      #   which already holds the journal of every round before this one
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, resumed: false)
+        @resumed = resumed
         @rebase = rebase
         @max_rejections = max_rejections
         @agent = agent
@@ -368,33 +371,60 @@ module OpenLanes
           Entries are numbered from 1 across all your rounds on this plan, as
           listed below, and a later entry wins over an earlier one. Keep each to
           one line under #{Plans::Journal::TEXT_LIMIT} characters.
-          #{journal_so_far}
+          #{journal_so_far(since_round: (round - 1 if @resumed))}
         SECTION
       end
 
+      # A resumed session already holds every entry up to its last round, so
+      # it is sent only what came after, plus a line saying how much it holds:
+      # resending the whole journal paid up to {JOURNAL_LIMIT} entries of
+      # tokens a round for text the session had already read. Numbering stays
+      # global, so "overridden by N" names the same entry either way.
+      #
+      # @param since_round [Integer, nil] the resumed session's last round;
+      #   nil for a fresh session, which gets the whole journal
       # @return [String]
-      def journal_so_far
+      def journal_so_far(since_round: nil)
         rounds = Plans::PlanState.for(subject.feature.path).journal(agent.name)
         numbered = rounds.flat_map { |r| r.entries.each_with_index.map { |e, i| [r, r.first + i, e] } }
         return "\nYour journal on this plan is empty: this is your first round to keep one.\n" if numbered.empty?
 
         overridden = numbered.each_with_object({}) { |(_, n, e), map| map[e.overrides] = n if e.overrides }
+        return journal_delta(numbered, overridden, since_round) if since_round
+
         shown = numbered.last(JOURNAL_LIMIT)
         cut = numbered.size - shown.size
-        lines = shown.chunk_while { |a, b| a.first.equal?(b.first) }.flat_map do |group|
+        omitted = if cut.positive?
+                    "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    #{journal_command}\n"
+                  end
+        "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
+          "check the files it names rather than taking it on trust.\n#{journal_lines(shown, overridden).join("\n")}\n#{omitted}"
+      rescue OpenLanes::Error
+        "\nYour journal could not be read: state.json is not valid JSON.\n"
+      end
+
+      # @return [String] what a resumed session has not seen, and how much it has
+      def journal_delta(numbered, overridden, since_round)
+        fresh = numbered.select { |r, _, _| r.number > since_round }
+        held = numbered.size - fresh.size
+        added = fresh.empty? ? "\nNothing has been added to your journal since.\n" : "#{journal_lines(fresh, overridden).join("\n")}\n"
+        "\nThis session already holds #{held} earlier journal entr#{held == 1 ? "y" : "ies"}, from rounds up to " \
+          "#{since_round}; read them back with\n\n    #{journal_command}\n#{added}"
+      end
+
+      # @return [Array<String>] numbered entries, grouped under their round
+      def journal_lines(numbered, overridden)
+        numbered.chunk_while { |a, b| a.first.equal?(b.first) }.flat_map do |group|
           round = group.first.first
           ["", "  Journal round #{round.number}#{" (#{round.state})" if round.state}:",
            *group.map { |_, n, e| "    #{n}. #{journal_line(e)}#{"  (overridden by #{overridden[n]})" if overridden[n]}" }]
         end
-        omitted = if cut.positive?
-                    "\n#{cut} earlier entr#{cut == 1 ? "y is" : "ies are"} not shown; read them with\n\n    " \
-                      "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
-                      "| jq '.memory.\"#{agent.name}\"'\n"
-                  end
-        "\nRead your journal so far before you do anything else. Do not redo what it says is done;\n" \
-          "check the files it names rather than taking it on trust.\n#{lines.join("\n")}\n#{omitted}"
-      rescue OpenLanes::Error
-        "\nYour journal could not be read: state.json is not valid JSON.\n"
+      end
+
+      # @return [String] the command that prints the whole journal
+      def journal_command
+        "#{cli} state show --dir \"#{File.dirname(subject.feature.path)}\" --plan #{subject.feature.ordinal} " \
+          "| jq '.memory.\"#{agent.name}\"'"
       end
 
       # @param entry [OpenLanes::Plans::Journal::Entry]
