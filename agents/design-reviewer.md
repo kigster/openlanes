@@ -19,7 +19,7 @@ You review one plan's pull request for code organisation and systems design, and
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff (`gh pr diff <n>`). Read the neighbours of a changed file, to judge whether it fits the code around it.
+The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff. See "Your review packet" below for when to fetch any of it yourself. Read the neighbours of a changed file, to judge whether it fits the code around it.
 
 ## Check, in order
 

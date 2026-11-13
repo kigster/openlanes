@@ -359,6 +359,10 @@ module OpenLanes
         # @return [Integer]
         def tools = @all.sum(&:tools)
 
+        # @return [Boolean] whether any session of the invocation was
+        #   compacted, at a person's request or at the CLI's own threshold
+        def compacted? = @all.any? { it.respond_to?(:compacted) && it.compacted }
+
         # What the sessions already over spent, added to the running one's
         # progress so the meter carries on rather than starting again. Their
         # journal lines go first, for the same reason: the dispatcher counts
@@ -517,13 +521,23 @@ module OpenLanes
       #   plugins, skills, hooks and MCP servers; `run --user-config` turns it off
       # @param usable [#call] adapter name → whether the startup probe left it
       #   usable, so a reviewer is never dealt a signed-out CLI (plan 031, D12)
+      # @param packets [#call, nil] plan → the review packet its reviewers
+      #   open with ({ReviewPacket}); nil, the default, sends reviewers to the
+      #   documents and `gh pr diff` themselves, so nothing that builds an
+      #   executor without asking for packets reaches GitHub
+      # @param memory [Boolean] tell each agent the project's lessons for it;
+      #   `run --no-memory` turns it off, the baseline that says whether they help.
+      #   The lessons are read once, at the first invocation, and kept for the run
       # @param throttle [OpenLanes::Execution::Throttle::Backoff] how long an
       #   agent waits out a provider's rate limit or overload, and when it
       #   stops waiting; the suite hands in one that does not sleep
       def initialize(root:, spawn: nil, timeout: nil, dry_run: false,
         trace_dir: TRACE_DIR, instructions: nil, model: nil, max_tokens: nil, lean: true,
-        fresh_budget: false, usable: Agents::Dealing::ANY, throttle: Throttle::Backoff.new)
+        fresh_budget: false, usable: Agents::Dealing::ANY, packets: nil, memory: true, throttle: Throttle::Backoff.new)
         @throttle = throttle
+        @packets = packets
+        @memory = memory
+        @memory_lock = Mutex.new
         @root = File.expand_path(root)
         @trace_dir = trace_dir
         @spawn = spawn || AgentProcess.spawner(dir: trace_dir, root: @root)
@@ -665,6 +679,7 @@ module OpenLanes
         handle.label = AgentProcess::Label.new(plan: subject.feature.ordinal.to_s, agent: agent.name, control:)
         resume = nil unless profile.adapter.resumes?
         argv = invocation(agent, subject, root:, control:, round:, successor:, partners:, rebase:, resume:)
+        forget_journal(agent, subject) if resume
         sessions = Sessions.new
         child = launch(argv, root:, profile:, trace:, handle:, sessions:, &on_progress)
         clock = start_clock(handle, seconds: timeout_for(agent))
@@ -683,6 +698,7 @@ module OpenLanes
           subject,
           root:, profile:, trace:, handle:, sessions:, clock:, resume:, relaunch:, again:,
           &on_progress)
+        hold_journal(agent, subject, sessions, handle) unless rebase
         verdict(sessions, started, status, profile:, handle:, clock:, trace:, before:, root:)
       end
 
@@ -785,7 +801,7 @@ module OpenLanes
         profile = profile_for(agent, subject)
         profile.adapter.argv(
           Adapters::Invocation.new(
-            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:),
+            prompt:          prompt_for(agent, subject, root, control:, round:, successor:, partners:, profile:, rebase:, resume:),
             root:,
             model:           profile.model,
             effort:          profile.effort,
@@ -967,6 +983,36 @@ module OpenLanes
         transcript.pid = child.pid
         handle.restart!(process: child.restart) if child.respond_to?(:restart)
         child
+      end
+
+      # The record of what the resumed session holds of the journal is dropped
+      # before the session runs again, and written back by {#hold_journal}
+      # only if the round ends with it intact. A round that is killed with the
+      # engine, or compacts, then leaves nothing for the next one to trust,
+      # and that one is sent the whole journal ({JournalWindow}).
+      #
+      # @return [void]
+      def forget_journal(agent, subject)
+        Plans::PlanState.for(subject.feature.path).forget_held!(agent.name)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not cleared: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
+      end
+
+      # Note that the session this invocation ended in holds the journal as it
+      # now stands, so the round that resumes it is sent only what comes
+      # after. Not when any session of the invocation was compacted, by a
+      # person or by the CLI at its threshold: a summary keeps what the model
+      # chose to keep. A folder renamed under the agent is left alone too,
+      # since writing there would mint a state.json in a folder nobody reads.
+      #
+      # @return [void]
+      def hold_journal(agent, subject, sessions, handle)
+        return unless handle.session && File.directory?(subject.feature.path)
+        return if sessions.compacted?
+
+        Plans::PlanState.for(subject.feature.path).hold!(agent: agent.name, session: handle.session)
+      rescue SystemCallError, OpenLanes::Error => e
+        UI.log("journal record not written: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s, agent: agent.name)
       end
 
       # Whether a resumed invocation failed because its session is gone,
@@ -1240,9 +1286,10 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
       # @return [String]
       def prompt_for(agent, subject, root = @root, control: nil, round: 1, successor: nil, partners: [],
-        profile: profile_for(agent, subject), rebase: nil)
+        profile: profile_for(agent, subject), rebase: nil, resume: nil)
         Prompt.new(agent:,
           rebase:,
+          resume:,
           subject:,
           root:,
           profile:,
@@ -1255,8 +1302,41 @@ module OpenLanes
           fresh_budget: @fresh_budget,
           seconds:      timeout_for(agent),
           denied:       denied_commands(agent),
-          granted:      granted_to(agent)).to_s
+          granted:      granted_to(agent),
+          packet:       packet_for(agent, subject, rebase),
+          memory:       lessons_for(agent)).to_s
       end
+
+      # A reviewer's packet for this plan's review round. A dry run fetches
+      # nothing, and a reviewer resolving a stopped rebase is not reviewing.
+      # A packet that cannot be built costs the reviewer its own fetches,
+      # as before plan 060.00, never the round.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param subject [OpenLanes::Plans::Subject]
+      # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil]
+      # @return [String] empty when this invocation gets none
+      def packet_for(agent, subject, rebase)
+        return "" if @packets.nil? || @dry_run || rebase || agent.phase.to_s != "review"
+
+        @packets.call(subject).to_s
+      rescue Error, SystemCallError => e
+        UI.log("no review packet for #{subject.feature.ordinal}: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
+        ""
+      end
+
+      # One snapshot per run: the reviewed lessons as the default branch held
+      # them when the first agent started. Reading the checkout on every
+      # invocation let a builder's freshly written lesson reach the reviewer
+      # judging that builder (PR 196); a snapshot also means every agent in a
+      # run is told the same thing. A lesson merged mid-run waits for the next.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @return [String]
+      def lessons_for(agent) = @memory ? Memory.section(agent:, library: lessons) : ""
+
+      # @return [OpenLanes::Memory::Library]
+      def lessons = @memory_lock.synchronize { @lessons ||= Memory.library(root: @root) }
 
       # The token budget crossed, or the grace period after `q` spent. Both go
       # through the handle so the kill is the same kill a keypress makes.

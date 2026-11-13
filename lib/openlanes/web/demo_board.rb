@@ -100,11 +100,13 @@ module OpenLanes
         stamp = now.utc.iso8601
         snapshot["at"] = stamp
         snapshot["node"]["heartbeat_at"] = stamp
+        spent = snapshot["plans"].sum { it["cost"].to_f }
         snapshot["plans"].each { |plan| advance_plan(plan) }
         snapshot["plans"].flat_map { it["cars"] }.select { it["key"] == FANNED }.each { fan(it) }
         run = snapshot["run"]
         run["up"] = snapshot["plans"].sum { it["up"] }
         run["down"] = snapshot["plans"].sum { it["down"] }
+        run["cost"] = (run["cost"].to_f + snapshot["plans"].sum { it["cost"].to_f } - spent).round(4)
         run["agents_working"] = running(snapshot).size
       end
 
@@ -117,11 +119,24 @@ module OpenLanes
           car["down"] += down
           plan["up"] += up
           plan["down"] += down
+          spend(plan, car, up, down)
           car["elapsed"] += 1
           car["remaining"] = [car["remaining"] - 1, 0].max if car["remaining"]
           chatter(car) if (@ticks % 4).zero?
         end
         plan["elapsed"] += 1 if plan["cars"].any? { it["state"] == "running" }
+      end
+
+      # Prices one tick's tokens at the car's own model, from the adapter's
+      # catalogue as {Live::Snapshot} does, so the demo's dollars move with
+      # its tokens and a car's cost is never a second rate table.
+      #
+      # @return [void]
+      def spend(plan, car, tokens_in, tokens_out)
+        adapter = Adapters.known?(car["adapter"].to_s) ? Adapters.for(car["adapter"]) : nil
+        cost = adapter&.model_entry(car["model"])&.cost(tokens_in, tokens_out).to_f
+        car["cost"] = (car["cost"].to_f + cost).round(4)
+        plan["cost"] = (plan["cost"].to_f + cost).round(4)
       end
 
       # A car that stopped has nothing in flight.

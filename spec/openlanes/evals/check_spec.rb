@@ -193,6 +193,35 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
     end
   end
 
+  describe "ruling" do
+    let(:kind) { :ruling }
+    let(:args) { { fields: { "kind" => "cap", "outcome" => "no_go" } } }
+    let(:run) { OpenLanes::Evals::Run.new(answer:) }
+    let(:answer) { "Ruled.\n\n```ruling\nkind: cap\npr: 9\noutcome: no_go\nreason: F1 stands.\n```\n" }
+
+    it "passes an answer whose one block reads as expected" do
+      expect([verdict.ok, verdict.detail]).to eq([true, "parsed"])
+    end
+
+    context "with the other outcome" do
+      let(:answer) { "```ruling\nkind: cap\noutcome: go\nreason: Fine.\n```\n" }
+
+      it("fails, naming the field") { expect([verdict.ok, verdict.detail]).to eq([false, 'outcome is "go", expected no_go']) }
+    end
+
+    context "with no block at all" do
+      let(:answer) { "I would rule go." }
+
+      it("fails with the parser's reason") { expect([verdict.ok, verdict.detail]).to eq([false, "the answer has no ```ruling block"]) }
+    end
+
+    context "when nothing recorded the answer" do
+      let(:run) { OpenLanes::Evals::Run.new }
+
+      it("fails") { expect(verdict.detail).to eq("the run recorded no answer") }
+    end
+  end
+
   describe ".for" do
     subject(:names) { described_class.for(kase).map(&:name) }
 
@@ -206,7 +235,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
         expect: {
           "signed" => "approved", "files_exist" => ["a.md"], "files_absent" => ["b.md"],
           "contains" => { "a.md" => %w[x y] }, "excludes" => { "a.md" => "z" },
-          "changed_paths" => ["lib/**"], "untouched" => ["Gemfile"],
+          "changed_paths" => ["lib/**"], "untouched" => ["Gemfile"], "ruling" => { "kind" => "cap", "outcome" => "go" },
           "depth" => { "fast" => {
             "words" => [{ "file" => "a.md", "max" => 9 }, { "file" => "a.md", "section" => "S", "min" => 2 }],
             "count" => { "file" => "a.md", "pattern" => "x", "min" => 1, "max" => 3 },
@@ -219,7 +248,7 @@ RSpec.describe OpenLanes::Evals::Check, :tree do
     it "names every check the way a report reads it" do
       expect(names).to eq([
                             "signed Completed (approved)", "has a.md", "no b.md", "a.md contains x", "a.md contains y",
-                            "a.md excludes z", "changed lib/**", "untouched Gemfile",
+                            "a.md excludes z", "changed lib/**", "untouched Gemfile", "ruling kind: cap, outcome: go",
                             "words in a.md ≤ 9 @fast", "words in a.md#S ≥ 2 @fast", "count /x/ in a.md 1..3 @fast",
                             "changed files ≤ 2 @fast", "changed lines 1..9 @fast", "seconds ≤ 5 @fast", "tokens ≤ 6 @fast"
                           ])

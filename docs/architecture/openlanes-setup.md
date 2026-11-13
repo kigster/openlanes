@@ -4,10 +4,16 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__ProbeRunner["OpenLanes::Adapters::ProbeRunner"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Live["OpenLanes::Live"]
+  <<module>> OpenLanes__Live
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Setup["OpenLanes::Setup"]
+  <<module>> OpenLanes__Setup
   class OpenLanes__Setup__Architecture["Architecture"]
   class OpenLanes__Setup__ArchitectureDecisions["ArchitectureDecisions"]
   class OpenLanes__Setup__ArchitectureScan["ArchitectureScan"]
@@ -15,6 +21,8 @@ classDiagram
   class OpenLanes__Setup__Check["Check"]
   class OpenLanes__Setup__CiDetector["CiDetector"]
   class OpenLanes__Setup__CiScaffold["CiScaffold"]
+  class OpenLanes__Setup__Extraction["Extraction"]
+  <<module>> OpenLanes__Setup__Extraction
   class OpenLanes__Setup__Extraction__CliAdapter["Extraction::CliAdapter"]
   class OpenLanes__Setup__Extraction__GeminiAdapter["Extraction::GeminiAdapter"]
   class OpenLanes__Setup__Extraction__Ollama["Extraction::Ollama"]
@@ -25,6 +33,8 @@ classDiagram
   class OpenLanes__Setup__Extractor["Extractor"]
   class OpenLanes__Setup__Interview["Interview"]
   class OpenLanes__Setup__Machine["Machine"]
+  class OpenLanes__Setup__ProjectForm["ProjectForm"]
+  <<module>> OpenLanes__Setup__ProjectForm
   class OpenLanes__Setup__ProjectForm__Answers["ProjectForm::Answers"]
   class OpenLanes__Setup__ProjectForm__Driver["ProjectForm::Driver"]
   class OpenLanes__Setup__ProjectForm__Preselection["ProjectForm::Preselection"]
@@ -37,12 +47,23 @@ classDiagram
   class OpenLanes__Setup__StackDocument["StackDocument"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Setup ..> OpenLanes__Config : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__CiDetector : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__Extraction : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__Extractor : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__Interview : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__Machine : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__Stack : uses
+  OpenLanes__Setup ..> OpenLanes__Setup__StackDetector : uses
+  OpenLanes__Setup ..> OpenLanes__UI : uses
   OpenLanes__Setup__ArchitectureDecisions ..> OpenLanes__Error : uses
   OpenLanes__Setup__ArchitectureDecisions ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__ArchitectureScan__Manifests : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__CiDetector : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__StackDetector : uses
+  OpenLanes__Setup__Extraction ..> OpenLanes__Setup__Extraction__Routes : uses
+  OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Adapters : uses
   OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Adapters__ProbeRunner : uses
   OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__CliAdapter : uses
   OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Setup__Extraction__GeminiAdapter : uses
@@ -57,18 +78,24 @@ classDiagram
   OpenLanes__Setup__Interview ..> OpenLanes__Error : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ArchitectureDecisions : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ArchitectureScan : uses
+  OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Answers : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Driver : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Preselection : uses
   OpenLanes__Setup__Interview ..> OpenLanes__Setup__ProjectForm__Renderer : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Config : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Error : uses
+  OpenLanes__Setup__Machine ..> OpenLanes__Live : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Setup__Machine ..> OpenLanes__Setup__Check : uses
+  OpenLanes__Setup__ProjectForm ..> OpenLanes__Setup__ProjectForm__Validator : uses
   OpenLanes__Setup__ProjectForm__Answers ..> OpenLanes__Setup__Architecture : uses
   OpenLanes__Setup__ProjectForm__Answers ..> OpenLanes__Setup__ArchitectureDecisions : uses
+  OpenLanes__Setup__ProjectForm__Driver ..> OpenLanes__Setup__ProjectForm : uses
   OpenLanes__Setup__ProjectForm__Preselection ..> OpenLanes__Setup__Architecture : uses
+  OpenLanes__Setup__ProjectForm__Renderer ..> OpenLanes__Setup__ProjectForm : uses
   OpenLanes__Setup__ProjectForm__Renderer ..> OpenLanes__Setup__ProjectForm__WrappedNode : uses
   OpenLanes__Setup__ProjectForm__Validator ..> OpenLanes__Setup__ProjectForm__Answers : uses
+  OpenLanes__Setup__ProjectForm__WrappedNode ..> OpenLanes__Setup__ProjectForm : uses
   OpenLanes__Setup__StackDetector ..> OpenLanes__Setup__Stack : uses
 ```

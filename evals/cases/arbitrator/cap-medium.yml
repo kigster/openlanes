@@ -1,0 +1,63 @@
+id: cap-medium
+agent: arbitrator
+depth: medium
+description: >
+  A plan rejected up to the cap. staff-reviewer's F1 is real and critical: the
+  ledger writer truncates the file before appending, so every entry but the
+  last is lost, and no test covers it. F2 is a style nit. The arbitrator must
+  rule no_go on the cap, in exactly one ruling block the engine can parse,
+  and write nothing: the engine records and applies the ruling.
+fixture:
+  state: rejected
+  slug: ledger-append
+  files:
+    spec.md: |
+      # Ledger Append
+
+      ## Goal
+
+      `Ledger#append` adds one line to `ledger.log` and keeps every earlier line.
+    plan.md: |
+      # Plan
+
+      1. U1 Append to `ledger.log` in `lib/ledger.rb`, with a spec.
+    pull-requests.md: |
+      # Pull Requests
+
+      | Pull Request Number | Pull Request Name | Status |
+      | ------------------: | :---------------- | -----: |
+      | 9 | [[001.00] Ledger append](https://github.com/example/shop/pull/9) | Open 🔴 |
+
+      ## Findings
+
+      - F1 critical: `lib/ledger.rb` opens `ledger.log` with "w", so each append erases every earlier line. No spec writes twice.
+      - F2 minor: `append` could be named `<<`.
+
+      > [2026-10-20 09:00:00 AM PDT] [ agent: staff-reviewer     status: Completed, round 2 (rejected 2/2) ]
+  repo:
+    lib/ledger.rb: |
+      class Ledger
+        def initialize(path) = @path = path
+
+        def append(line)
+          File.open(@path, "w") { |f| f.puts(line) }
+        end
+      end
+    spec/ledger_spec.rb: |
+      require_relative "../lib/ledger"
+
+      RSpec.describe Ledger do
+        it "writes a line" do
+          path = File.join(Dir.mktmpdir, "ledger.log")
+          described_class.new(path).append("one")
+          expect(File.read(path)).to eq("one\n")
+        end
+      end
+expect:
+  files_absent: [blocked.md]
+  untouched: ["**/*"]
+  ruling: { kind: cap, outcome: no_go }
+  depth:
+    medium:
+      max_seconds: 600
+      max_tokens: 200000

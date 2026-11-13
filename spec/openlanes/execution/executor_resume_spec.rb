@@ -71,7 +71,8 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   # M2: the session may have compacted the round that wrote the journal, so
-  # the journal is in the prompt whether or not the session carries on.
+  # unless a round recorded that it holds the journal (plan 062.00, in
+  # executor_journal_held_spec.rb) the whole of it is in the resumed prompt.
   context "when the previous round left a journal" do
     before do
       OpenLanes::Plans::PlanState.for(plan.feature.path)

@@ -1,0 +1,47 @@
+openapi: 3.1.0
+info:
+  title: OpenLanes control room, Plan dependencies (plan 056)
+  version: "1"
+paths:
+  /api/dependencies:
+    get:
+      summary: Every plan, archive included, and every depends_on edge
+      responses:
+        "200":
+          description: The graph. A missing .plans answers empty plans and edges.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [states, plans, edges]
+                properties:
+                  states:
+                    description: Every state, in STATUSES order
+                    type: array
+                    items:
+                      type: object
+                      required: [key, emoji, name]
+                      properties:
+                        key: { type: string, example: building }
+                        emoji: { type: string, example: "🟡" }
+                        name: { type: string, example: Building }
+                  plans:
+                    type: array
+                    items:
+                      type: object
+                      required: [ordinal, title, state, summary, archived]
+                      properties:
+                        ordinal: { type: string, example: "056.00" }
+                        title: { type: string }
+                        state: { type: string, description: a key in states }
+                        summary: { type: string, description: "summary: key, else goal paragraph, else first prose paragraph; never null" }
+                        archived: { type: boolean, description: true for a plan in an inactive subfolder }
+                  edges:
+                    description: from is the dependency, to the dependent; edges to unknown plans are dropped
+                    type: array
+                    items:
+                      type: object
+                      required: [from, to]
+                      properties:
+                        from: { type: string }
+                        to: { type: string }
