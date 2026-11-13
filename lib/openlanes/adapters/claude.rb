@@ -23,6 +23,7 @@ module OpenLanes
       # 2026-10-13. Haiku 5.5 is priced for prompts up to 100k tokens; above
       # that it is $0.50 in and $2.50 out, which this table does not model.
       CATALOGUE = [
+        Model.new(id: "claude-fable-5-2", label: "Fable 5.2", rate_in: 10, rate_out: 50),
         Model.new(id: "claude-fable-5-1", label: "Fable 5.1", rate_in: 10, rate_out: 50),
         Model.new(id: "claude-opus-5-5", label: "Opus 5.5", rate_in: 4, rate_out: 20),
         Model.new(id: "claude-opus-5", label: "Opus 5", rate_in: 5, rate_out: 25),
@@ -109,13 +110,21 @@ module OpenLanes
 
       # @param model [String, nil] an alias (`sonnet`) or a full id
       #   (`claude-fable-5-1`)
+      # @param uncapped [Boolean] true when `.openlanes.yml` `sizing:` names
+      #   the model, the one way past {CEILING}
       # @return [String, nil]
-      def model(model)
+      def model(model, uncapped: false)
         return model if model.nil? || model.to_s.empty?
 
         rank = LADDER.index { |tier| model.to_s.include?(tier) }
-        rank && rank > LADDER.index(CEILING) ? CEILING : model.to_s
+        return model.to_s unless rank && rank > LADDER.index(CEILING)
+
+        uncapped ? newest(model.to_s) : CEILING
       end
+
+      # @param model [String] a tier (`fable`) or a full id
+      # @return [String] a tier as its newest id in {CATALOGUE}, an id as itself
+      def newest(model) = CATALOGUE.find { |m| m.id.start_with?("claude-#{model}-") }&.id || model
 
       # `--disallowedTools` is refused by the CLI itself, and `--resume
       # <session id>` carries a conversation on. `claude -p --resume <id>

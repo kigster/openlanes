@@ -817,6 +817,32 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       it "still names the trace, since a failure is when it is wanted" do
         expect(streaming.call(agent, subject_plan).note).to include(".ndjson")
       end
+
+      # Plan 060, B4: a provider turning the run away for load is its own
+      # outcome, so the dispatcher can wait it out instead of counting it.
+      it "reports a mid-run 429 as rate-limited, with what the provider asked for" do
+        stream << tool("Read", {})
+        stream << event(type: "result", is_error: true, result: "API Error: 429 rate_limit_error, retry-after: 12")
+
+        expect(streaming.call(agent, subject_plan)).to have_attributes(
+          ok:            false,
+          rate_limited?: true,
+          rate_limit:    have_attributes(kind: :rate_limited, retry_after: 12),
+          note:          a_string_including("claude was turned away (rate_limited)")
+        )
+      end
+
+      it "reports a 529 as overloaded" do
+        stream << "API Error: 529 Overloaded\n"
+
+        expect(streaming.call(agent, subject_plan).rate_limit.kind).to eq(:overloaded)
+      end
+
+      it "leaves any other failure an ordinary one" do
+        stream << event(type: "result", is_error: true, result: "model refused the tool")
+
+        expect(streaming.call(agent, subject_plan)).to have_attributes(rate_limited?: false, rate_limit: nil)
+      end
     end
   end
 

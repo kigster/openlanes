@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "monitor"
 require "redis-client"
 
 module OpenLanes
@@ -66,9 +67,18 @@ module OpenLanes
 
       # @param url [String]
       # @param timeout [Float] seconds
+      #
+      # A RedisClient is not thread-safe, and the tick, the agent jobs and the
+      # PR watch all call one store: two commands interleaved on its socket
+      # raised "can't modify string; temporarily locked" under a running
+      # engine. Every command takes `@lock`; a blocking XREAD, which may wait
+      # seconds, has a client and a lock of its own so it holds nobody up.
       def initialize(url:, timeout: TIMEOUT)
         @url = url
-        @client = RedisClient.config(url:, timeout:, reconnect_attempts: 1).new_client
+        @config = RedisClient.config(url:, timeout:, reconnect_attempts: 1)
+        @client = @config.new_client
+        @lock = Monitor.new
+        @reader_lock = Mutex.new
       end
 
       # @return [String]
@@ -78,7 +88,10 @@ module OpenLanes
       def ping = call("PING") == "PONG"
 
       # @return [void]
-      def close = @client.close
+      def close
+        @lock.synchronize { @client.close }
+        @reader_lock.synchronize { @reader&.close }
+      end
 
       # ---- strings ----------------------------------------------------------
 
@@ -197,7 +210,7 @@ module OpenLanes
       # @return [Array<Entry>]
       def xread(key, id: "0", count: 100, block: nil)
         reply = if block
-                  guarded { @client.blocking_call((block / 1000.0) + TIMEOUT, "XREAD", "BLOCK", block, "COUNT", count, "STREAMS", key, id) }
+                  guarded(@reader_lock) { (@reader ||= @config.new_client).blocking_call((block / 1000.0) + TIMEOUT, "XREAD", "BLOCK", block, "COUNT", count, "STREAMS", key, id) }
                 else
                   call("XREAD", "COUNT", count, "STREAMS", key, id)
                 end
@@ -266,10 +279,12 @@ module OpenLanes
       # @return [Object] the reply
       def call(*command) = guarded { @client.call(*command) }
 
+      # @param lock [Monitor, Mutex] the lock in front of the client the
+      #   block uses
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
-      def guarded
-        yield
+      def guarded(lock = @lock, &)
+        lock.synchronize(&)
       rescue RedisClient::CommandError
         raise
       rescue RedisClient::Error => e

@@ -49,10 +49,13 @@ module OpenLanes
       # @param rebase [OpenLanes::Vcs::Refresh::Outcome, nil] a rebase stopped
       #   on conflicts, which this invocation resolves instead of working the plan
       # @param max_rejections [#call] `merge.max_rejections`, told to a reviewer
+      # @param packet [#call] (subject, root) → the review packet a reviewer
+      #   reads instead of gathering the plan and the diff itself (plan 060)
       def initialize(agent:, subject:, root:, profile:, round: 1, successor: nil, partners: [], control: nil,
         instructions: "", max_tokens: nil, fresh_budget: false, seconds: nil, denied: [], granted: [], rebase: nil,
-        max_rejections: -> { Config.current.max_rejections })
+        max_rejections: -> { Config.current.max_rejections }, packet: Engine::ReviewPacket.method(:build))
         @rebase = rebase
+        @packet = packet
         @max_rejections = max_rejections
         @agent = agent
         @subject = subject
@@ -88,7 +91,7 @@ module OpenLanes
 
           #{"The folder's name is not currently justified: #{subject.violation}" if subject.violation}
           #{snapshot_note}
-          #{operator_instructions}#{requirements_section}#{review_section}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
+          #{operator_instructions}#{requirements_section}#{review_section}#{review_packet}#{completion_section}#{suggestions_section}#{journal_section}#{ledger_section(agent, subject, round:, successor:)}#{budget_section}#{time_budget_section(agent)}#{control_section(control, agent, subject)}#{questions_section}#{mailbox_section(agent, subject, partners)}
           ## Boundary — enforced, not requested
 
           You may read anything, and write source, tests and the plan's own
@@ -135,6 +138,16 @@ module OpenLanes
           #{struck.empty? ? "No finding has been struck." : "Struck by the arbitrator, never to be raised again, whatever id it would carry now:\n#{struck.map { "- #{it}" }.join("\n")}"}
 
         TEXT
+      end
+
+      # @return [String] the shared packet for a reviewer; empty for anyone
+      #   else, and when it cannot be built, so the reviewer gathers it itself
+      def review_packet
+        return "" unless agent.phase.to_s == "review"
+
+        @packet.call(subject, root).to_prompt
+      rescue Error
+        ""
       end
 
       # The brief every reviewer shares (plan 031, D8): written once, in

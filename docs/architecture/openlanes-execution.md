@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Engine__ReviewPacket["OpenLanes::Engine::ReviewPacket"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__AgentProcess["AgentProcess"]
   class OpenLanes__Execution__AgentProcess__Registry["AgentProcess::Registry"]
@@ -21,6 +22,7 @@ classDiagram
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
   class OpenLanes__Execution__Prompt["Prompt"]
+  class OpenLanes__Execution__RateLimit["RateLimit"]
   class OpenLanes__Execution__Rearm["Rearm"]
   class OpenLanes__Execution__Transcript["Transcript"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
@@ -40,12 +42,14 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__RateLimit : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Engine__ReviewPacket : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Spec : uses

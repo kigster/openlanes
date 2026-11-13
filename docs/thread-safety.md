@@ -37,6 +37,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot | `Engine::AgentLocks` | tick, agent jobs | `@mutex` | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | `@running`, `@history` | `Engine::Dispatcher` | tick, agent jobs, PR watch, unblock | `@mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
+| `lib/openlanes/engine/review_packet.rb` | the packet cache | `Engine::ReviewPacket` | the three reviewers' prompts, built on agent jobs | `@lock` around every read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | `@clock` | `Engine::Dispatcher` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |
 | `lib/openlanes/engine/event_journal.rb` | `@seq` and the journal file | `Engine::EventJournal` | tick, agent jobs | `@lock` around number, write, flush and fsync, so lines never interleave or repeat a `seq` | guarded |
 | `lib/openlanes/engine/finishes.rb` | `@finished` (plans that reached the end this run) | `Engine::Finishes` | tick, agent jobs, PR watch | `@mutex` around every read and write | guarded |
@@ -63,6 +64,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/live/copilot/operator.rb` | the running child, the turn | `Live::Copilot::Operator` | web request, watchdog | `@mutex` for the child, `@turns` serialises turns | guarded |
 | `lib/openlanes/live/interviewer.rb` | the interview state | `Live::Interviewer` | web requests | `@mutex` | guarded |
 | `lib/openlanes/live/memory_store.rb` | `@data`, `@expiry`, `@groups`, `@subscribers` | `Live::MemoryStore` | every thread with the store | `@mutex` (`Monitor`, so `multi` can call its own writes) | guarded |
+| `lib/openlanes/live/store.rb` | the RedisClient socket, and the blocking reader's | `Live::Store` | every thread with the store | `@lock` (`Monitor`) around every command; `@reader_lock` around the blocking XREAD client: interleaved commands raised "temporarily locked" (fixed in 060.00) | guarded |
 | `lib/openlanes/live/memory_subscriber.rb` | `@queue` | one subscription | publisher, reader | `Thread::Queue` | guarded |
 | `lib/openlanes/live/publisher.rb` | `@log` | `Live::Publisher` | tick, agent jobs | `@log_mutex` | guarded |
 | `lib/openlanes/live/run_state.rb` | concurrency, run fields | `Live::RunState` | tick, web commands | `@mutex` | guarded |

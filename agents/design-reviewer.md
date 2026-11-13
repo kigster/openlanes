@@ -19,7 +19,7 @@ You review one plan's pull request for code organisation and systems design, and
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff (`gh pr diff <n>`). Read the neighbours of a changed file, to judge whether it fits the code around it.
+Start from the review packet in your invocation: the harness built its plan digest and the diff once, for every reviewer. Run `gh pr diff <n>` only when the packet says the diff was truncated, or when there is no packet. Open `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003) or `pull-requests.md` only for what the digest leaves out. Read the neighbours of a changed file, to judge whether it fits the code around it.
 
 ## Check, in order
 

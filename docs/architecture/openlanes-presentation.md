@@ -4,6 +4,7 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Lifecycle__Brief["OpenLanes::Lifecycle::Brief"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
@@ -23,6 +24,7 @@ classDiagram
   <<module>> OpenLanes__UI
   OpenLanes__Presentation__Diagram ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Presentation__Diagram ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Brief : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__ReviewLabel : uses

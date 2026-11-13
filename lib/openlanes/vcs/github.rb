@@ -535,6 +535,18 @@ module OpenLanes
         raise Error, "could not read comments of ##{number}: #{first_line(e)}"
       end
 
+      # The pull request's diff, for the packet every reviewer shares.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [String]
+      # @raise [OpenLanes::Error]
+      def pr_diff(number:, repo: nil)
+        @command.run("gh", "pr", "diff", number.to_s, *repo_flag(repo)).out.to_s
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not read the diff of ##{number}: #{first_line(e)}"
+      end
+
       # @param url [String] a pull request URL
       # @return [String, nil] "owner/repo", or nil when the URL is not GitHub's
       def self.repo_of(url) = url.to_s[%r{github\.com/([^/]+/[^/]+)/pull/}, 1]

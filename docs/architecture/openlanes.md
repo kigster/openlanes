@@ -4,6 +4,7 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Apps__Definition["OpenLanes::Apps::Definition"]
   class OpenLanes__Config["Config"]
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
@@ -15,6 +16,7 @@ classDiagram
   class OpenLanes__Setup__ArchitectureDecisions["OpenLanes::Setup::ArchitectureDecisions"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Config ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
   OpenLanes__Config ..> OpenLanes__Coverage__Config : uses
   OpenLanes__Config ..> OpenLanes__Error : uses

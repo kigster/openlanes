@@ -37,8 +37,10 @@ module OpenLanes
       # The model to ask for, after any ceiling this CLI imposes.
       #
       # @param model [String, nil]
+      # @param uncapped [Boolean] the operator named this model in `sizing:`,
+      #   which lifts a ceiling; a CLI with none has nothing to lift
       # @return [String, nil]
-      def model(model) = model
+      def model(model, uncapped: false) = model # rubocop:disable Lint/UnusedMethodArgument
 
       # @param effort [String, nil] one of {EFFORTS}
       # @return [String, nil] this CLI's word for it

@@ -30,6 +30,7 @@ You write the plan for one folder whose `spec.md` is complete, and you decide wh
    - In `spec.md` you change that one key and nothing else.
 1. Split the spec into work units. Each unit states:
    - **Discipline:** back end or front end. Split anything that is both.
+   - **Size:** `small`, `medium` or `large`. The builder's model and effort follow the plan's largest unit (`.openlanes.yml` `sizing:`), so size honestly: `small` is a few files and an afternoon's tests, `large` a refactor or a new subsystem.
    - **Owns:** the files it creates or edits.
    - **Must not touch:** files other units own.
    - **Depends on:** unit ids, or `nothing`.

@@ -18,7 +18,7 @@ You review one plan's pull request as a Staff Engineer fluent in front end and b
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md` (the PR list and any earlier verdicts), and the diff (`gh pr diff <n>`).
+Start from the review packet in your invocation: the harness built its plan digest and the diff once, for every reviewer. Run `gh pr diff <n>` only when the packet says the diff was truncated, or when there is no packet. Open `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003) or `pull-requests.md` (the PR list and any earlier verdicts) only for what the digest leaves out.
 
 ## Check, in order
 

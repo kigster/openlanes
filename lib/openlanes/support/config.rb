@@ -138,6 +138,9 @@ module OpenLanes
   # @!attribute [r] events_dir
   #   @return [String, nil] `events.dir`: an absolute path; nil takes
   #     {Events::Location}'s default
+  # @!attribute [r] sizing
+  #   @return [OpenLanes::Agents::Sizing] `sizing:`: the builder profile for
+  #     a plan whose largest unit is small, medium or large
   Config = Data.define(:path,
     :project,
     :starts,
@@ -163,10 +166,11 @@ module OpenLanes
     :events_dir,
     :review_adapters,
     :refactor_threshold,
-    :refactor_lock_hours) do
+    :refactor_lock_hours,
+    :sizing) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -276,7 +280,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review refactor].freeze
+              questions coverage events ci stack architecture_decisions review refactor sizing].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -397,7 +401,8 @@ module OpenLanes
           **questions(settings["questions"], path),
           coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
           **events(settings["events"], path),
-          **refactor(settings["refactor"], path))
+          **refactor(settings["refactor"], path),
+          sizing:    Agents::Sizing.parse(settings["sizing"], path:))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e

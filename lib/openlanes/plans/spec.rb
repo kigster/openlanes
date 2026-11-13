@@ -67,6 +67,9 @@ module OpenLanes
     #     {#how_to_verify} when the spec has no such section (until plan 007).
     # @!attribute [r] problems
     #   @return [Array<String>] what was ignored, and why
+    # @!attribute [r] unit_size
+    #   @return [String, nil] the largest `**Size:**` among plan.md's units
+    #     ({UnitSizes}), read beside the spec by {.for}; nil when none is sized
     Spec = Data.define(:starts,
       :frontend,
       :depth,
@@ -78,9 +81,10 @@ module OpenLanes
       :depends_on,
       :linked,
       :how_to_test,
-      :problems) do
+      :problems,
+      :unit_size) do
       def initialize(starts: :research, frontend: nil, depth: nil, phases: {}, suggestions: [], requirements: [],
-        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [])
+        completed_when: [], how_to_verify: [], how_to_test: [], depends_on: nil, linked: false, problems: [], unit_size: nil)
         super
       end
 
@@ -163,7 +167,19 @@ module OpenLanes
       class << self
         # @param subject [#read]
         # @return [OpenLanes::Plans::Spec]
-        def for(subject) = parse(subject.read(FILENAME).to_s)
+        def for(subject) = parse(subject.read(FILENAME).to_s).with(unit_size: UnitSizes.largest(plan_text(subject)))
+
+        # plan.md, read from disk rather than through the subject: a memoized
+        # read would hand a caller that rewrites plan.md the text from before.
+        #
+        # @param subject [#read, #feature]
+        # @return [String, nil]
+        def plan_text(subject)
+          return subject.read("plan.md") unless subject.respond_to?(:feature)
+
+          path = File.join(subject.feature.path, "plan.md")
+          File.read(path, encoding: "UTF-8") if File.file?(path)
+        end
 
         # @param dir [String] a plan folder
         # @return [OpenLanes::Plans::Spec]

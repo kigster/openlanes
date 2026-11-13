@@ -40,6 +40,7 @@ classDiagram
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
+  class OpenLanes__Engine__ReviewPacket["ReviewPacket"]
   class OpenLanes__Engine__Reviews["Reviews"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
@@ -48,6 +49,7 @@ classDiagram
   class OpenLanes__Engine__Steps__Context["Steps::Context"]
   class OpenLanes__Engine__Steps__Interval["Steps::Interval"]
   class OpenLanes__Engine__Steps__Merges["Steps::Merges"]
+  class OpenLanes__Engine__Steps__Rename["Steps::Rename"]
   class OpenLanes__Engine__Steps__Sweeps["Steps::Sweeps"]
   class OpenLanes__Engine__Steps__Watch["Steps::Watch"]
   class OpenLanes__Engine__Tally["Tally"]
@@ -163,6 +165,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Runner : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Context : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Merges : uses
+  OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Rename : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Sweeps : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Steps__Watch : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Verification__AppSession : uses
@@ -236,6 +239,7 @@ classDiagram
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__ReviewPacket ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Error : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
@@ -285,6 +289,11 @@ classDiagram
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Engine__Steps__Interval : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__Error : uses
   OpenLanes__Engine__Steps__Merges ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Steps__Rename ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Steps__Rename ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__Steps__Rename ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Engine__Steps__Rename ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Engine__Steps__Rename ..> OpenLanes__UI : uses
   OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__Engine__Steps__Interval : uses
   OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__Error : uses
   OpenLanes__Engine__Steps__Sweeps ..> OpenLanes__UI : uses

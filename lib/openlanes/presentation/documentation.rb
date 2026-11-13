@@ -415,7 +415,10 @@ module OpenLanes
 
           The units themselves live in `plan.md`, under `## Backend` and
           `## Frontend`. `#{Agents::Names::FRONTEND_CODER}` is started only when `## Frontend` holds a
-          unit heading.
+          unit heading. Each unit carries a `**Size:**` of #{Plans::UnitSizes::SIZES.map { "`#{it}`" }.join(", ")}:
+          the plan's largest picks the builders' model and effort through
+          `.openlanes.yml` `sizing:` (#{Agents::Sizing::DEFAULTS.map { |size, p| "#{size} #{p[:model]}/#{p[:effort]}" }.join(", ")}
+          unless it says otherwise).
 
           Nothing else belongs there. A folder holding notes, diagrams or scratch files
           is a folder nobody can audit at a glance.

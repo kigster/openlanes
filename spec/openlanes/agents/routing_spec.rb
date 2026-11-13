@@ -11,6 +11,11 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
 
   def routed = described_class.filter(agents.for_status(planned), subject_plan).map(&:name)
 
+  # Run from the fixture root, so the project defaults come from the fixture
+  # and not from whatever `.openlanes.yml` the suite happens to start beside:
+  # this repository's own says `frontend: true`.
+  before { Dir.chdir(File.dirname(plans_root)) }
+
   it "gives a full-lane plan with front-end units to the pair" do
     plan_with("plan-frontend.md" => "# FE\n\n## F1\n")
     expect(routed).to eq(%w[backend-coder frontend-coder])

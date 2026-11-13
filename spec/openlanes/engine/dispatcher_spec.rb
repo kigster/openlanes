@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
+  # From the fixture root, so the project defaults are the fixture's and not
+  # this repository's `.openlanes.yml`, which says `frontend: true`.
+  before { Dir.chdir(File.dirname(plans_root)) }
+
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:agents) { OpenLanes::Agents::Registry.new }
   let(:state) { OpenLanes::Engine::StateFile.new(path: OpenLanes::Engine::StateFile.for(tree)) }

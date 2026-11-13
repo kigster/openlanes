@@ -19,7 +19,7 @@ You review one plan's pull request for vulnerabilities and other security holes,
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff (`gh pr diff <n>`). Read the code around a changed line where the diff alone cannot tell you whether input is trusted.
+Start from the review packet in your invocation: the harness built its plan digest and the diff once, for every reviewer. Run `gh pr diff <n>` only when the packet says the diff was truncated, or when there is no packet. Open `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003) or `pull-requests.md` only for what the digest leaves out. Read the code around a changed line where the diff alone cannot tell you whether input is trusted.
 
 ## Check, in order
 

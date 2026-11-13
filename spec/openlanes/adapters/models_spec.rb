@@ -13,7 +13,7 @@ RSpec.describe "The adapters' models" do
 
     it "keeps Fable priced, but off the menu while Opus is the ceiling" do
       expect([described_class::CATALOGUE.first.id, adapter.model_entry("fable"), adapter.model_entry("claude-fable-5-1")])
-        .to eq(["claude-fable-5-1", nil, nil])
+        .to eq(["claude-fable-5-2", nil, nil])
     end
 
     it "gives every model a context window" do

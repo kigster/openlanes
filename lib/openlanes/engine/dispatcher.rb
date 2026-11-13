@@ -257,7 +257,7 @@ module OpenLanes
         @tick_lock.synchronize do
           @before_tick.each { |hook| hook.call(self) }
           reap
-          finish_discards
+          @renames.call
           @unblocking.call
           convert_questions
           poll
@@ -440,7 +440,7 @@ module OpenLanes
       # Throw a plan's work away (W9): every agent on it is stopped, each with
       # {KILL_GRACE} seconds to finish the line it is writing, and once the
       # last is gone the plan's worktree is reset and its folder sent back
-      # to the state that work started from (see {#started_from}).
+      # to the state that work started from (see {Steps::Rename.started_from}).
       # Plan-wide, because a pair shares one worktree and a reset takes both
       # halves. What can be refused is refused here, before any agent is
       # stopped.
@@ -460,7 +460,7 @@ module OpenLanes
         end
         subject = fresh_by(Plans::Ordinal.parse(ordinal)) or raise OpenLanes::Error, "there is no plan #{ordinal}"
         jobs = @running.select { plan_of(it) == ordinal }
-        from = started_from(jobs)
+        from = Steps::Rename.started_from(jobs)
         refusal = subject.machine.retreat_refusal(from) and raise OpenLanes::Error, "#{ordinal} cannot go back: #{refusal}"
 
         jobs.each do |job|
@@ -575,6 +575,7 @@ module OpenLanes
         @sweeps = Steps::Sweeps.new(context, resolve: method(:resolve_conflict))
         @watching = watch && Steps::Watch.new(context, watch:, finishes: @finishes, state: @state)
         @unblocking = Unblocking.drainer(context, history: method(:clear_blocked))
+        @renames = Steps::Rename.new(context, discarding: @discarding, running: -> { @running.map { plan_of(it) } })
       end
 
       # @return [Symbol]
@@ -665,50 +666,6 @@ module OpenLanes
       # @param subject [OpenLanes::Plans::Subject]
       # @return [void]
       def unfinish(subject) = @finishes.unfinish(subject)
-
-      # ---- discarding -------------------------------------------------------
-
-      # Discards whose agents have all gone: the worktree is reset and the
-      # folder moved back. A finished one stays one tick, for
-      # {Live::Commands} to reply from, and is dropped on the next.
-      #
-      # @return [void]
-      def finish_discards
-        @discarding.delete_if { |_, discard| discard.finished? }
-        @discarding.each_value do |discard|
-          next if @running.any? { plan_of(it) == discard.ordinal }
-
-          discard.status, discard.reason = throw_back(discard)
-        end
-      end
-
-      # The state the discarded work started from: each job's {Job#from},
-      # the state the plan showed when it was picked. Only an agent with
-      # `starts_as` moved the folder on, so stepping back from the folder's
-      # own state sent every other agent's plan one phase too far (issue
-      # #173). A pair can be picked on either side of backend-coder's
-      # `starts_as` rename, so the earliest of its starts wins: the one with
-      # the longest road ahead of it.
-      #
-      # @param jobs [Array<OpenLanes::Engine::Dispatcher::Job>]
-      # @return [Symbol, nil] nil when no agent was running
-      def started_from(jobs) = jobs.map(&:from).compact.uniq.max_by { Plans::StateMachine.onward(it).size }
-
-      # @param discard [OpenLanes::Engine::Dispatcher::Discard]
-      # @return [Array(String, String)] status and reason
-      def throw_back(discard)
-        ordinal = discard.ordinal
-        subject = fresh_by(Plans::Ordinal.parse(ordinal)) or return ["refused", "#{ordinal}'s folder vanished"]
-        reset = @runner.worktree.reset(subject.feature)
-        from = subject.status
-        to = subject.machine.retreat!(discard.from)
-        @finished_plans.delete(ordinal)
-        UI.log("discarded: #{from} -> #{to}", plan: ordinal)
-        moved = to.key == from.key ? "stays at #{to}, where its work started" : "went back from #{from} to #{to}"
-        ["done", "#{ordinal} #{reset ? "reset" : "had no worktree to reset"}, and #{moved}"]
-      rescue OpenLanes::Error => e
-        ["refused", "#{ordinal}'s agents were stopped, but: #{e.message}"]
-      end
 
       # ---- unblocking ------------------------------------------------------
 

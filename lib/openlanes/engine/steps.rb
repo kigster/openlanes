@@ -9,6 +9,7 @@ module OpenLanes
     # - {Merges}: assessed 🏁 plans moved on by their merges (P1 to P5).
     # - {Sweeps}: pull requests nobody is working on kept fresh (U1 to U4).
     # - {Watch}: pull requests a person owes, polled off the tick thread (M4).
+    # - {Rename}: discards whose agents have gone, thrown back (W9, 060 B5a).
     #
     # None of them knows the dispatcher: what they need of it arrives as a
     # {Context} of callables.

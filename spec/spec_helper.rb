@@ -59,6 +59,10 @@ require "tmpdir"
 # is still covered — deliberately, by examples that stub `UI.color?` — rather
 # than by accident, differently, on each machine.
 ENV["NO_COLOR"] = "1"
+
+# The operator's own control-room login, exported by their shell, must not
+# reach the suite: the web and engine specs assert what happens without one.
+ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
@@ -161,6 +165,10 @@ RSpec.configure do |config|
   # A command run in an example names its process (S5); the suite's own
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
+
+  # Review packets are cached per plan and head, and every fixture plan is
+  # 001.00 at the same HEAD: one example's packet must not reach the next.
+  config.before { OpenLanes::Engine::ReviewPacket.reset! }
 
   # Project commands chdir to the root they find. Put the suite back where it
   # was, or one example's root becomes the next example's working directory.

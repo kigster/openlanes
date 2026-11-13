@@ -50,9 +50,16 @@ module OpenLanes
       #   @return [Integer, nil]
       # @!attribute [r] cached
       #   @return [Integer] of {#up}, read back from the prompt cache
+      # @!attribute [r] rate_limit
+      #   @return [OpenLanes::Execution::RateLimit, nil] set when the provider
+      #     turned the run away for load: HTTP 429, 529 and their kin
       # @return [Data]
-      Result = Data.define(:ok, :note, :up, :down, :subagents, :delegated, :seconds, :killed, :pid, :cached) do
-        def initialize(killed: nil, pid: nil, cached: 0, **rest) = super
+      Result = Data.define(:ok, :note, :up, :down, :subagents, :delegated, :seconds, :killed, :pid, :cached, :rate_limit) do
+        def initialize(killed: nil, pid: nil, cached: 0, rate_limit: nil, **rest) = super
+
+        # @return [Boolean] whether the provider turned the run away for load
+        #   (plan 060, B4), which is waited out rather than counted as a failure
+        def rate_limited? = !rate_limit.nil?
 
         # @return [Integer] new input, cache writes and output
         def fresh = up - cached + down
@@ -699,7 +706,7 @@ module OpenLanes
       def failure(transcript, started, note, pid: nil) = spent(transcript, started, ok: false, note:, pid:)
 
       # @return [OpenLanes::Execution::Executor::Result]
-      def spent(transcript, started, ok:, note:, pid: nil, killed: nil)
+      def spent(transcript, started, ok:, note:, pid: nil, killed: nil, rate_limit: nil)
         Result.new(ok:,
           note:,
           up: transcript.up,
@@ -709,7 +716,22 @@ module OpenLanes
           seconds: UI.monotonic - started,
           killed:,
           pid:,
-          cached: transcript.cached)
+          cached: transcript.cached,
+          rate_limit:)
+      end
+
+      # A run the provider turned away for load. It is not ok, but it is an
+      # outcome of its own rather than a failed attempt: the dispatcher can
+      # wait it out and start the plan again ({RateLimit#delay}).
+      #
+      # @return [OpenLanes::Execution::Executor::Result]
+      def rate_limited(transcript, started, limit, profile:, pid:, trace:)
+        spent(transcript,
+          started,
+          ok:         false,
+          pid:,
+          rate_limit: limit,
+          note:       "#{profile.adapter.executable} was turned away (#{limit.kind}): #{limit.line} - trace: #{trace}")
       end
 
       # @param transcript [OpenLanes::Execution::Transcript]
@@ -874,6 +896,9 @@ module OpenLanes
             killed: handle.killed,
             note:   "#{killed_note(handle.killed, clock)}, last seen #{transcript.activity || "starting up"} - trace: #{trace}")
         end
+        limit = RateLimit.detect(status, transcript)
+        return rate_limited(sessions, started, limit, profile:, pid: handle.pid, trace:) if limit
+
         unless status.success?
           return failure(sessions,
             started,
