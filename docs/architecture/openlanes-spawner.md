@@ -5,4 +5,6 @@
 ```mermaid
 classDiagram
   class OpenLanes__Spawner__Fake["Fake"]
+  class OpenLanes__Spawner__System["System"]
+  <<module>> OpenLanes__Spawner__System
 ```

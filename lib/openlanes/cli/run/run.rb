@@ -33,6 +33,11 @@ module OpenLanes
       option :model,
         desc: "Model for every agent this run, overriding each agent's own frontmatter and spec.md " \
               "(default: what the agent declares, else the CLI's default). Claude models above Opus run as Opus"
+      option :memory,
+        type:    :boolean,
+        default: true,
+        desc:    "Tell each agent the lessons in #{OpenLanes::Memory::PROJECT_DIR} meant for it; " \
+                 "--no-memory leaves them out, the baseline that shows whether they help"
       option :user_config,
         type:    :boolean,
         default: false,

@@ -317,7 +317,7 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | `security-reviewer` | Ready for Review, In Review                     | Verifying, or Approved & Merged | sonnet/high   | full, plan |
 | `design-reviewer` | Ready for Review, In Review                       | Verifying, or Approved & Merged | sonnet/high   | full, plan |
 | `verifier`   | Verifying                                         | Approved & Merged               | sonnet/medium | all        |
-| `unblocker`      | Technical Block, Product Block, Bomb              | by contents                     | haiku/low     | all        |
+| `unblocker`      | Technical Block, Product Block, Bomb              | by contents                     | opus/low      | all        |
 | `rebaser`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
 | `copilot`     | none: the control room's read-only copilot        | read-only                       | haiku/low     | all        |
 

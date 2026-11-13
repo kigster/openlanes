@@ -8,12 +8,14 @@ import { AgentActionMenu, type AgentAction } from "./AgentActionMenu";
 import { AnswerBox, Choices } from "./AskCard";
 import { useAsk } from "./asks";
 import { refusal, useCommand, type Outcome } from "./command";
+import { StopAgentDialog } from "./dialogs";
 import { Feedback } from "./feedback";
 import { LastKnownTable } from "./LastKnownTable";
 import { useQuestion } from "./question";
 import { renderMarkdown } from "./markdown";
 import { ModelSelect } from "./ModelSelect";
 import { pend, unconfirmed, type Pending } from "./transcript";
+import { dollars } from "../board/format";
 import { ariaSendKeys, clock, fmt, isSendKey, modelName, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 export interface AgentDrawerProps {
@@ -88,7 +90,11 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
   const history = useRef(car.history);
   useEffect(() => { history.current = car.history; }, [car.history]);
   const [text, setText] = useState("");
-  const [refused, setRefused] = useState<Outcome | null>(null);
+  // What the engine answered to the last command, shown beside the composer. Keyed by car, so one agent's "Asked to
+  // hold" is never read as another's. The transcript line alone was not enough: the log starts closed.
+  const [answer, setAnswer] = useState<{ key: string; outcome: Outcome } | null>(null);
+  const outcome = answer?.key === car.key ? answer.outcome : null;
+  const [stopping, setStopping] = useState(false);
   // Keyed by car, so switching to another agent closes the log again rather than carrying the last one's choice over.
   const [log, setLog] = useState({ key: car.key, open: false });
   const logOpen = log.key === car.key && log.open;
@@ -108,9 +114,11 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
   const push = (line: string) =>
     setMine((was) => ({ key: car.key, lines: pend(was.key === car.key ? was.lines : [], history.current, line) }));
   const say = (line: string) => push(`you: ${line}`);
-  const heard = (said: string, wasRefused: boolean) => {
-    if (wasRefused) setRefused({ tone: "refused", text: said });
-    else { setRefused(null); say(said); }
+  // `shown` is what the feedback line says when it differs from the transcript's line: a message's own words go in the
+  // transcript, and "Message sent" beside the composer.
+  const heard = (said: string, wasRefused: boolean, shown = said) => {
+    setAnswer({ key: car.key, outcome: { tone: wasRefused ? "refused" : "ok", text: shown } });
+    if (!wasRefused) say(said);
   };
 
   const question = plan.questions.find((q) => q.agent === car.agent);
@@ -133,7 +141,7 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
     const reply = await command.send({ kind: "message", plan: plan.ordinal, agent: car.agent, payload: { text: body } }, `Message sent to ${car.agent}.`);
     if (!reply) return;
     if (reply.status === "refused") { heard(refusal(reply), true); return; }
-    heard(body, false);
+    heard(body, false, `Message sent to ${car.agent}.`);
     setText("");
   };
   const onKeyDown = (e: KeyboardEvent) => {
@@ -161,9 +169,17 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
         {unavailable && <p className="drawer-meta">Unavailable: {unavailable}</p>}
         <p className="d-model-help">Switches this agent now, then runs /compact.</p>
       </div>
+      {car.held && (
+        <p className="d-held" role="status">
+          <strong>On hold.</strong> It pauses after its current step. A message from you releases it.
+        </p>
+      )}
       <div className="drawer-stats">
         <div>Tokens in<strong>{fmt(car.up)}</strong></div>
         <div>Tokens out<strong>{fmt(car.down)}</strong></div>
+        <div title="Dollars this agent has spent so far in this round, at its model's rates">
+          Cost<strong>{car.cost === undefined ? "n/a" : dollars(car.cost)}</strong>
+        </div>
         <div>Elapsed<strong>{clock(car.elapsed)}</strong></div>
       </div>
       <div className="d-context">
@@ -197,10 +213,14 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
         />
         <div className="composer-actions">
           <button type="submit" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={command.pending}>Send message</button>
-          <AgentActionMenu contextUsed={used} onAction={act} disabled={command.pending} />
+          <AgentActionMenu contextUsed={used} onAction={(kind) => (kind === "stop" ? setStopping(true) : void act(kind))} disabled={command.pending} />
         </div>
-        <Feedback outcome={refused} announced={command.announced} />
+        <Feedback outcome={outcome} announced={command.announced} />
       </form>
+      <StopAgentDialog
+        agent={stopping ? car.agent : null} plan={plan.ordinal}
+        onConfirm={() => { setStopping(false); void act("stop"); }} onCancel={() => setStopping(false)}
+      />
     </aside>
   );
 }

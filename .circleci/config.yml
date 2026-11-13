@@ -57,6 +57,14 @@ jobs:
       - run:
           command: BUNDLE_GEMFILE=Gemfile bundle exec rubocop
           name: Lint with Rubocop
+      # The two files a change elsewhere leaves stale: the diagrams drawn from
+      # lib/, and the lockfile's copy of the gem's version. The `test` job runs
+      # these as well, but names the cause only after the whole suite; here it
+      # is named in seconds. The pre-commit hook redraws the diagrams, and a
+      # merge from main made on GitHub never runs that hook.
+      - run:
+          name: Generated files are current
+          command: bundle exec rspec spec/openlanes/docs
 
   test:
     # ubuntu-latest is 4 vCPU / 16 GB; CircleCI's `medium` is 2 vCPU. `large`

@@ -140,7 +140,7 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
 
     it "runs the case under the default cap" do
       result
-      expect(OpenLanes::Evals).to have_received(:run_live).with(kase, max_tokens: 300_000)
+      expect(OpenLanes::Evals).to have_received(:run_live).with(kase, max_tokens: 300_000, memory: true)
     end
 
     it "reports what the run spent" do
@@ -152,7 +152,16 @@ RSpec.describe OpenLanes::CLI::Eval, :tree do
 
       it "passes the tighter cap through" do
         result
-        expect(OpenLanes::Evals).to have_received(:run_live).with(kase, max_tokens: 50_000)
+        expect(OpenLanes::Evals).to have_received(:run_live).with(kase, max_tokens: 50_000, memory: true)
+      end
+    end
+
+    context "with --no-memory" do
+      let(:options) { { live: true, case: "task-fast", memory: false } }
+
+      it "runs the baseline with no lessons" do
+        result
+        expect(OpenLanes::Evals).to have_received(:run_live).with(kase, max_tokens: 300_000, memory: false)
       end
     end
   end

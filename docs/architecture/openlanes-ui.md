@@ -4,9 +4,12 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Log["OpenLanes::Log"]
+  <<module>> OpenLanes__Log
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__UI__Line["Line"]
+  OpenLanes__UI ..> OpenLanes__Log : uses
   OpenLanes__UI ..> OpenLanes__UI__Line : uses
   OpenLanes__UI__Line ..> OpenLanes__UI : uses
 ```
