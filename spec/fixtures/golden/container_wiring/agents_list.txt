@@ -4,7 +4,7 @@
 │ arbitrator        │                                                   │ read-only                  │ opus/high     │ all                          │
 │ backend-coder     │ Planned, Building, Changes Requested              │ Ready for Review           │ opus/high     │ research, planning           │
 │ chores-coder      │ Planned, Building, Changes Requested              │ Ready for Review           │ haiku/medium  │ building                     │
-│ copilot           │                                                   │ read-only                  │ haiku/low     │ all                          │
+│ copilot           │                                                   │ read-only                  │ sonnet/low    │ all                          │
 │ curator           │                                                   │ read-only                  │ sonnet/medium │ all                          │
 │ deploy-assessor   │ Completed                                         │ Approved & Merged          │ opus/high     │ research, planning, building │
 │ design-reviewer   │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │

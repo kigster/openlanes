@@ -36,6 +36,7 @@ module OpenLanes
         @stopping = false
         @forced = false
         @status = nil
+        @web_restart = WebRestart.new(dir: registration.dir, host:)
       end
 
       # @return [Array<Slot>]
@@ -67,10 +68,16 @@ module OpenLanes
         @stopping = true
       end
 
+      # `/restart-web`, by way of USR2 (plan 069.00). Safe in a signal trap.
+      #
+      # @return [void]
+      def restart_web! = @web_restart.ask!
+
       # One look at the children. Public so a spec can drive it.
       #
       # @return [void]
       def tick
+        @web_restart.tick(@slots) unless @stopping
         @slots.each do |slot|
           reap(slot)
           start(slot) if slot.due?(clock.monotonic) && !@stopping
@@ -100,12 +107,8 @@ module OpenLanes
       def start(slot)
         slot.due = nil
         program = slot.program
-        slot.pid = @host.spawner.spawn(program.env.merge(@lifeline.env),
-          *program.argv,
-          pgroup: true,
-          in:     File::NULL,
-          **@lifeline.options,
-          **program.options)
+        options = { pgroup: true, in: File::NULL, **@lifeline.options, **program.options }
+        slot.pid = @host.spawner.spawn(program.env.merge(@lifeline.env), *program.argv, **options)
         Log.logger.info("child started", role: slot.role, pid: slot.pid, restarts: slot.restarts)
       end
 
@@ -118,7 +121,7 @@ module OpenLanes
         crashed = crashed?(slot, status)
         pid = slot.pid
         slot.pid = nil
-        return if @stopping
+        return if @stopping || slot.held
 
         crashed ? crash(slot, status, pid) : ended(slot, status)
       end
@@ -175,7 +178,7 @@ module OpenLanes
       #
       # @return [void]
       def finished
-        return if @slots.any? { it.running? || it.due }
+        return if @slots.any?(&:busy?)
 
         @status ||= 1
         @stopping = true

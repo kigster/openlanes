@@ -63,7 +63,8 @@ module OpenLanes
       # answer: it is queued for this node's engine under the message's id,
       # and the engine's reply comes back into the conversation as turn
       # `"<id>.1"`. A slash message that is not a command is answered here,
-      # at once, with the usage. Neither reaches the responder, so a server
+      # at once, with the usage, and a read-only question ({Slash::Query})
+      # with a {Report} from the engine's snapshot. Neither reaches the responder, so a server
       # with no copilot still takes them, and {Turn#slash?} tells the caller
       # not to {#answer} them.
       #
@@ -86,7 +87,18 @@ module OpenLanes
         case slash
         when Command then EventBus.for(@store).append(@keys.commands, { json: JSON.generate(slash.wire) })
         when Slash::Help then append(Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: slash.text))
+        when Slash::Query then append(Turn.new(id: "#{turn.id}.1", from: "copilot", kind: "text", text: Report.new(@store.get(@keys.snapshot)).call(slash)))
         end
+        turn
+      end
+
+      # A turn of the copilot's own, such as a restarted control room's
+      # report ({RestartNote}).
+      #
+      # @param turn [OpenLanes::Live::Copilot::Turn]
+      # @return [OpenLanes::Live::Copilot::Turn]
+      def tell(turn)
+        append(turn)
         turn
       end
 

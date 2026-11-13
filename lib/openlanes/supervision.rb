@@ -75,5 +75,23 @@ module OpenLanes
 
     # @return [OpenLanes::Supervision::Probe]
     def probe = Probe.new
+
+    # The signal that asks a supervisor for `/restart-web` (plan 069.00).
+    RESTART_WEB_SIGNAL = RestartRequest::SIGNAL
+
+    # What `/restart-web` answers when no supervisor can be asked.
+    RESTART_WEB_REFUSAL = RestartRequest::REFUSAL
+
+    # Asks the project's supervisor to restart its control room.
+    #
+    # @param root [String]
+    # @return [Integer, nil] the supervisor's pid once signalled, else nil
+    def restart_web(root) = RestartRequest.new(dir: dir(root), probe:).call
+
+    # Takes the note a restarted control room tells on boot.
+    #
+    # @param root [String]
+    # @return [OpenLanes::Supervision::WebRestartNote, nil]
+    def take_restart_note(root) = WebRestartNote.take(File.join(dir(root).path, WebRestart::NOTE))
   end
 end

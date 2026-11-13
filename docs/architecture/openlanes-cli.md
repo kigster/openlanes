@@ -121,6 +121,7 @@ classDiagram
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__Copilot__Operator["OpenLanes::Live::Copilot::Operator"]
+  class OpenLanes__Live__Copilot__RestartNote["OpenLanes::Live::Copilot::RestartNote"]
   class OpenLanes__Live__Mail["OpenLanes::Live::Mail"]
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Node__Invalid["OpenLanes::Live::Node::Invalid"]
@@ -431,6 +432,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__RestartNote : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses

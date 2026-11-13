@@ -833,6 +833,44 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  describe "restart_web" do
+    subject(:commands) do
+      described_class.new(store:,
+        keys:,
+        node:,
+        run_state:,
+        claims:,
+        clock: -> { Time.utc(2026, 10, 13, 9) },
+        restart_web: ->(root) { asked << root and supervisor })
+    end
+
+    let(:asked) { [] }
+
+    before { send_command("restart_web", id: "01JW") }
+
+    context "when a supervisor with a control room runs" do
+      let(:supervisor) { 4242 }
+
+      it "asks it exactly once, for this project, and says the restart has started" do
+        reply = apply.first
+        aggregate_failures do
+          expect(asked).to eq([File.dirname(dispatcher.runner.tree.dir)])
+          expect(reply.status).to eq("done")
+          expect(reply.reason).to start_with("restarting the control room: supervisor 4242")
+        end
+      end
+    end
+
+    context "when no supervisor runs, or it runs with --no-web" do
+      let(:supervisor) { nil }
+
+      it "refuses with the reason a person reads" do
+        expect(apply.first).to have_attributes(status: "refused",
+          reason: "`/restart-web` needs `openlanes start`; no supervisor is running.")
+      end
+    end
+  end
+
   describe "the done hash" do
     it "forgets replies older than a day, and keeps the rest" do
       store.hset(keys.done, "old", JSON.generate(id: "old", status: "done", reason: nil, at: "2026-10-11T09:00:00Z"))

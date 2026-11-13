@@ -2,7 +2,7 @@
 # vim: ft=bash
 #
 # The lanes integration test: a throwaway git repository with three quick-lane plans, `openlanes start -j 3` serving
-# it, and Cypress typing /concurrency, /stop and /restart into the copilot while real agents work. It spends real
+# it, and Cypress typing /concurrency, /stop, /restart and /restart-web into the copilot while real agents work. It spends real
 # tokens, so it refuses to run unless OPENLANES_LANES_E2E=1 says so, and nothing in `just test`, `just web-e2e` or
 # CircleCI calls it.
 #
@@ -120,4 +120,5 @@ done
 curl -sf "http://127.0.0.1:${port}/healthz" >/dev/null || { echo "The control room never answered on ${port}." >&2; exit 1; }
 
 cd "${repo}/web"
+# specPattern is cypress/lanes/**: lanes.cy.ts first, then restart-web.cy.ts (which restarts the web server).
 npx cypress run --config-file cypress.lanes.config.ts --config "baseUrl=http://127.0.0.1:${port}"
