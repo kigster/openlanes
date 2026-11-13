@@ -178,6 +178,7 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .drawer-meta { color: var(--ink-soft); font-size: 13px; margin: 0 0 12px; }
 .d-model { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 10px; margin: 0 0 4px; }
 .d-model label { font-weight: 700; font-size: 14px; }
+.d-steer { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .d-model-help { grid-column: 2; margin: 0; font-size: 12px; color: var(--ink-soft); }
 .drawer-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 12px 0 16px; }
 .drawer-stats div { font-size: 13px; color: var(--ink-soft); }

@@ -337,7 +337,7 @@ module OpenLanes
           history:       Array(row.history).first(Engine::Board::Row::HISTORY),
           up:            row.up.to_i,
           down:          row.down.to_i,
-          cost:          price(row.model)&.cost(row.up, row.down).to_f.round(4),
+          cost:          price(row.model)&.cost(row.up.to_i, row.down.to_i).to_f.round(4),
           context:       row.context,
           context_limit: price(row.model)&.context,
           elapsed:       row.elapsed.to_i,

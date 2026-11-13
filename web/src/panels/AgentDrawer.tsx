@@ -136,6 +136,16 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
     if (!reply) return;
     heard(reply.status === "refused" ? refusal(reply) : kind === "compact" ? compactSaid(reply) : SAID[kind], reply.status === "refused");
   };
+  // Extend time (+10 and +20 minutes) and Stop after this step, for a car that is running. Stop after this step is the
+  // engine's wrap_up: finish the step in hand, write to disk, sign, exit (contract.md, Findings).
+  const extend = async (minutes: number) => {
+    const reply = await command.send(
+      { kind: "extend_time", plan: plan.ordinal, agent: car.agent, payload: { seconds: minutes * 60 } },
+      (r) => r.reason ?? `Gave ${car.agent} ${minutes} more minutes.`,
+    );
+    if (!reply) return;
+    heard(reply.status === "refused" ? refusal(reply) : (reply.reason ?? `Gave ${car.agent} ${minutes} more minutes.`), reply.status === "refused");
+  };
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
     const body = text.trim();
@@ -206,6 +216,13 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
       <ol id={ids.log} className="transcript" hidden={!logOpen} aria-live={logOpen ? "polite" : "off"} aria-label={`Transcript of ${car.agent}`}>
         {[...lines, ...car.history].map((line, i) => <li key={i}>{line}</li>)}
       </ol>
+      {car.state === "running" && (
+        <div className="d-steer" role="group" aria-label={`Steer ${car.agent}`}>
+          <button type="button" className="btn" disabled={command.pending} onClick={() => void extend(10)}>Extend time +10 min</button>
+          <button type="button" className="btn" disabled={command.pending} onClick={() => void extend(20)}>Extend time +20 min</button>
+          <button type="button" className="btn" disabled={command.pending} onClick={() => void act("wrap_up")}>Stop after this step</button>
+        </div>
+      )}
       <form className="composer" onSubmit={send}>
         <label htmlFor={ids.message}>Message {car.agent}</label>
         <textarea

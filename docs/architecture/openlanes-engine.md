@@ -163,6 +163,8 @@ classDiagram
   <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Dependencies["OpenLanes::Plans::Dependencies"]
+  class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
+  <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Journal["OpenLanes::Plans::Journal"]
   <<module>> OpenLanes__Plans__Journal
@@ -226,6 +228,7 @@ classDiagram
   OpenLanes__Engine__Arbitration ..> OpenLanes__Engine__Arbitration__Asker : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Error : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Execution : uses
+  OpenLanes__Engine__Arbitration ..> OpenLanes__Plans__Findings : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Arbitration ..> OpenLanes__Plans__Tree : uses

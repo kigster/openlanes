@@ -209,3 +209,14 @@
      Same selector as the spin rule: a bare .car-gear loses to it on specificity and the gear keeps turning. */
   .car.is-running .car-gear { animation: none; }
 }
+
+/* Diff and findings under a plan row (plan 064, F3). */
+.plan-review { margin-top: 8px; font-size: 13px; }
+.review-stat, .review-patch { margin: 6px 0; padding: 6px 8px; overflow: auto; max-height: 280px; background: var(--lane-bg); font-size: 12px; }
+.findings { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 6px; }
+.finding { padding: 6px 8px; border-left: 3px solid var(--ink-soft); }
+.finding.is-strike { opacity: 0.6; }
+.finding.is-accept { border-left-color: var(--alarm); }
+.finding p { margin: 0 0 4px; }
+.finding-actions { display: flex; gap: 6px; align-items: center; }
+.finding-where { color: var(--ink-soft); }
