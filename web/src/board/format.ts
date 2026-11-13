@@ -1,5 +1,5 @@
 // Number and time formats, exactly as the mockup prints them, so counters read the same everywhere.
-import type { Node, Snapshot, Status, UnackedMail } from "../api/types";
+import type { Node, Plan, Snapshot, Status, UnackedMail } from "../api/types";
 
 /** 1.24M, 86.0k, 412. */
 export const fmt = (n: number): string =>
@@ -63,3 +63,6 @@ export const stamp = (iso: string): string => {
 
 /** Seconds since a machine's last heartbeat, measured against our own snapshot's clock rather than the browser's. */
 export const lastSeen = (their: Snapshot, me: Snapshot): number => secondsBetween(their.node.heartbeat_at, me.at);
+
+/** A lane with work going on right now: an agent of the plan is running. Waiting on a person, or on nothing, is not. */
+export const active = (plan: Plan): boolean => plan.cars.some(car => car.state === "running");

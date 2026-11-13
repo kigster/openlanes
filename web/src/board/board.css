@@ -169,6 +169,7 @@
 /* Their rows in the merged board, slightly faded so ours stay the thing you read. */
 .plan.is-theirs { opacity: .85; }
 .board-empty { padding: 16px 20px; color: var(--ink-soft); }
+.board-hidden { font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
   .seg::after, .cars, .stop, .car { transition: none; }

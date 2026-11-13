@@ -53,6 +53,22 @@ describe("under ?fixture", () => {
     expect(screen.queryByRole("button", { name: /Chat with/ })).toBeNull();
   });
 
+  it("hides the lanes with no agent running, says how many, and remembers it in this browser", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderApp();
+    const toggle = await screen.findByRole("button", { name: "Hide Inactive" });
+    const rows = () => Array.from(document.querySelectorAll<HTMLElement>(".board [data-plan]")).map(r => r.dataset.plan);
+    const all = [...new Set(rows())];
+    const running = sampleBoard().me.plans.filter(p => p.cars.some(c => c.state === "running")).map(p => p.ordinal);
+    await user.click(toggle);
+    expect([[...new Set(rows())], running.length > 0 && running.length < all.length]).toEqual([running, true]);
+    expect(screen.getByText(new RegExp(`${all.length - running.length} inactive lanes? hidden`))).toBeInTheDocument();
+    unmount();
+    renderApp();
+    expect(await screen.findByRole("button", { name: "Hide Inactive" })).toHaveAttribute("aria-pressed", "true");
+    expect([...new Set(rows())]).toEqual(running);
+  });
+
   it("switches to narrow lanes and remembers it in this browser", async () => {
     const user = userEvent.setup();
     const { unmount } = renderApp();

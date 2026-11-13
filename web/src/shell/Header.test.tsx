@@ -136,6 +136,17 @@ it("offers narrow lanes as a pressed-or-not toggle", async () => {
   expect(screen.getByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
 });
 
+it("offers Hide Inactive as a pressed-or-not toggle, and leaves it out when nobody handles it", async () => {
+  const onToggleHideInactive = vi.fn();
+  const { rerender } = render(<Header {...props({ hideInactive: false, onToggleHideInactive })} />);
+  const toggle = screen.getByRole("button", { name: "Hide Inactive" });
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await userEvent.click(toggle);
+  expect(onToggleHideInactive).toHaveBeenCalledTimes(1);
+  rerender(<Header {...props({ hideInactive: true })} />);
+  expect(screen.queryByRole("button", { name: "Hide Inactive" })).toBeNull();
+});
+
 it("has no lanes toggle when nobody handles it", () => {
   render(<Header {...props()} />);
   expect(screen.queryByRole("button", { name: "Narrow lanes" })).toBeNull();

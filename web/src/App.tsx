@@ -21,6 +21,7 @@ import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
 import { useBoardNews } from "./shell/useBoardNews";
 import { useLanes } from "./shell/useLanes";
+import { useHideInactive } from "./shell/useHideInactive";
 import { PreviewTab } from "./preview/PreviewTab";
 import { appTabLabel, appTabValue } from "./preview/model";
 import { useApps } from "./preview/useApps";
@@ -108,6 +109,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const onCommand = useCallback<SendCommand>(command => send.mutateAsync(command), [send]);
   const life = useLifecycle(me.plans, reduced);
   const lanes = useLanes();
+  const inactive = useHideInactive();
   // Other machines' merged rows stay and fade like ours; one hook tracks them all, keyed by machine and plan.
   const theirPlans = useMemo(
     () => others.flatMap(o => o.plans.map(p => ({ ...p, ordinal: nodePlanKey(o.node.id, p.ordinal) }))),
@@ -245,6 +247,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         onToggleMerged={() => setMerged(!merged)}
         narrow={lanes.lanes === "narrow"}
         onToggleNarrow={lanes.toggle}
+        hideInactive={inactive.hidden}
+        onToggleHideInactive={inactive.toggle}
         actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} catalog={me} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
@@ -320,6 +324,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <Board
               board={board}
               merged={merged}
+              hideInactive={inactive.hidden}
               retiring={life.retiring}
               gone={life.gone}
               theirs={theirLife}
