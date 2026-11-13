@@ -11,6 +11,7 @@ module OpenLanes
 
         dry_run_option "Invoke no agent; name the plans that would be read"
         option :agent, default: OpenLanes::Memory::Curation::DEFAULT_AGENT, desc: "Hand the plans to a different agent"
+        option :memory, type: :boolean, default: true, desc: "--no-memory (or `memory: false` in .openlanes.yml) refuses to curate"
 
         example [
           "056          # propose lessons from plan 056",
@@ -19,6 +20,8 @@ module OpenLanes
 
         # @return [void]
         def call(plans:, **options)
+          refuse("Memory is off for this project (`memory: false` or --no-memory): nothing is curated.", 64) unless options.fetch(:memory, true)
+
           curation = OpenLanes::Memory.curation(root: Dir.pwd, agent: agent(options), dry_run: dry_run?(options))
           subjects = subjects(plans, tree_for(options))
           credentials_warning unless dry_run?(options)

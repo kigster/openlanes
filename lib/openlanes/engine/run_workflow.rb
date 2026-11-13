@@ -59,7 +59,9 @@ module OpenLanes
         startup_box
 
         started  = UI.monotonic
+        ended    = Curating.snapshot(Plans::Tree.new(dir: @tree.dir, all: true).subjects)
         attempts = run(runner, live, web)
+        curate(ended)
         Success(finish(runner, attempts, seconds: UI.monotonic - started))
       end
 
@@ -453,6 +455,7 @@ module OpenLanes
           quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
           lock_ttl:     -> { Config.current.refactor_lock_seconds },
           stop_at:,
+          memory:       @options.fetch(:memory, true),
           **staying(web, live)
         )
       end
@@ -748,6 +751,23 @@ module OpenLanes
       # The closing report. A halted run that exited 0 would read to a
       # script as a tree with nothing left to do, so a 💣 makes it 1 (N9).
       #
+      # The curator, over every plan this run ended: rejected, rewritten,
+      # merged or discarded. Nothing under `--no-memory` or `-n`, and a
+      # curator that fails costs its lessons, never the run's exit status.
+      #
+      # @param ended [Set<Array(String, Symbol)>] what {Curating.snapshot} saw before the run
+      # @return [void]
+      def curate(ended)
+        return if @dry_run || !@options.fetch(:memory, true)
+
+        curation = Memory.curation(root: @root, agent: Agents.find(Agents::Names::CURATOR))
+        Curating.new(curation:, before: ended).call(Plans::Tree.new(dir: @tree.dir, all: true).subjects).each do |report|
+          UI.log("curated #{report.ordinal}: #{report.outcomes.count { it.status != :dropped }} lesson candidate(s)")
+        end
+      rescue OpenLanes::Error => e
+        UI.log("plans not curated this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
       # @param runner [OpenLanes::Engine::Runner]
       # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
       # @param seconds [Float] wall clock for the whole loop

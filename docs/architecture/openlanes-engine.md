@@ -40,6 +40,7 @@ classDiagram
   class OpenLanes__Engine__Budget["Budget"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
+  class OpenLanes__Engine__Curating["Curating"]
   class OpenLanes__Engine__Dispatcher["Dispatcher"]
   class OpenLanes__Engine__Dispatcher__Assign["Dispatcher::Assign"]
   class OpenLanes__Engine__Dispatcher__Desk["Dispatcher::Desk"]
@@ -154,6 +155,8 @@ classDiagram
   <<module>> OpenLanes__Log
   class OpenLanes__Log__Invalid["OpenLanes::Log::Invalid"]
   class OpenLanes__Log__Settings["OpenLanes::Log::Settings"]
+  class OpenLanes__Memory["OpenLanes::Memory"]
+  <<module>> OpenLanes__Memory
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
   class OpenLanes__Plans__BlockedFile["OpenLanes::Plans::BlockedFile"]
@@ -251,6 +254,8 @@ classDiagram
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Coverage__Report : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Execution__Child : uses
   OpenLanes__Engine__CoverageGate ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Curating ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Engine__Curating ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Container : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Conversions : uses
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Engine__Dispatcher__Assign : uses
@@ -454,6 +459,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Config : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Arbitration : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Curating : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__EventJournal : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Merging : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Engine__Narrator : uses
@@ -478,10 +484,12 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Invalid : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Log__Settings : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Memory : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Refusal : uses
   OpenLanes__Engine__RunWorkflow ..|> OpenLanes__UI : includes
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs : uses

@@ -71,6 +71,16 @@ module OpenLanes
       end
 
       # @param root [String] the project root
+      # @param dry_run [Boolean] true promotes nothing and opens nothing
+      # @param publisher [#publish_memory] defaults to {Vcs::Publisher} against the default branch
+      # @return [OpenLanes::Memory::Publication]
+      def publication(root:, dry_run: false, publisher: nil)
+        base = Vcs.default_branch(File.expand_path(root))
+        publisher ||= Vcs.publisher(root: File.expand_path(root), base:, dry_run:)
+        Publication.new(root:, publisher:, base:, dry_run:)
+      end
+
+      # @param root [String] the project root
       # @param agent [OpenLanes::Agents::Agent]
       # @param dry_run [Boolean] true invokes no agent
       # @return [OpenLanes::Memory::Curation]
