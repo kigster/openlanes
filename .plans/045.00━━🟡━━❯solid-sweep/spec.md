@@ -102,7 +102,7 @@ Settled from the code and the decisions file:
 Kept open for planner or a human:
 
 1. **Pool vs `TimerTask` per `Thread.new` site** (researcher Q2). Not classified: sites need reading one by one. Working rule: a fan-out joined with `.value`/`.join` (e.g. `adapters.rb:137`) takes a bounded `Concurrent::Promises` future on a pool; a periodic loop takes `TimerTask`; a one-shot deadline (`execution/clock.rb:85`) is a `ScheduledTask`. The remaining sites are unverified; the coder classifies each in its pull request and says so.
-1. **dry-monitor on Ruby 4.0.6**: latest found is 1.0.1 (Nov 2022); installability unconfirmed. If it fails, the fallback (existing `EventBus` port, or a maintained fork) is a decision for a human.
+1. ~~**dry-monitor on Ruby 4.0.6**~~: settled by D3 (dry-monitor 1.0.1; fallback is a small in-process notifier, not `EventBus`).
 1. **Does a 100-line class limit cover the dry-cli command classes** in `cli/<command>/`, whose `option` DSL lines count? Assumed yes (A8 says "every class").
 1. **Local default for `Judgment`** when `TYPESAFE_API_KEY` is unset: not defined in the decisions file.
 1. **Pull request count and slicing of the spans work** (one or several): not decided.
@@ -148,6 +148,21 @@ Answered:
 - By hermes
 
 When `TYPESAFE_API_KEY` is unset, `Judgment` is a local implementation that asks through the configured coding-agent adapter.
+
+______________________________________________________________________
+
+### B3 (answered) — Which instrumentation library the spans plan builds on
+
+A13 builds logs and spans on dry-monitor events. The latest release found was 1.0.1 (November 2022), not in the gemspec, and its install on Ruby 4.0.6 was unconfirmed.
+
+### D3 (decision) — Use dry-monitor 1.0.1; fall back to a small in-process notifier, never `EventBus`
+
+Answered:
+
+- 2026-11-12
+- By hermes
+
+The spans plan uses dry-monitor 1.0.1, which was verified to install and run on Ruby 4.0.6 (an event registered, subscribed to and timed). If the suite fails with it, write a small in-process notifier instead. Do not use the `EventBus` port for instrumentation.
 
 ______________________________________________________________________
 
