@@ -21,6 +21,7 @@
     "cost": 14.8,
     "agents_working": 4,
     "jobs": 4,
+    "chime": true,
     "outage": {
       "started_at": "2026-10-13T09:40:00Z",
       "ended_at": "2026-10-13T09:41:12Z",

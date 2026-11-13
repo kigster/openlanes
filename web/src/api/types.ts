@@ -236,6 +236,7 @@ export interface Run {
   cost: number;
   agents_working: number;
   jobs: number; // the run's concurrency limit, changed live by /concurrency
+  chime?: boolean; // `chime:` in .openlanes.yml; absent from an older engine, which means on
   outage?: Outage | null; // optional: an engine older than plan 022 never sends it
 }
 
@@ -317,7 +318,8 @@ export type CommandKind =
   | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
   | "stop_plan" // /stop: signals the plan's agents and takes it off the board; payload: {}
   | "restart_plan" // /restart: puts an idle plan back on the board; refused while it has an agent
-  | "set_concurrency"; // /concurrency: payload: { limit }, never kills a running agent
+  | "set_concurrency" // /concurrency: payload: { limit }, never kills a running agent
+  | "set_chime"; // the rail's ding box: payload: { on }, written to .openlanes.yml
 
 export interface Command {
   id: string; // ULID, minted by the page; also its idempotency key

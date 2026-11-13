@@ -308,6 +308,17 @@ module OpenLanes
         "#{command.plan} restarts at the next tick"
       end
 
+      # The rail's ding box, kept on the board only: the demo has no project file.
+      #
+      # @return [String]
+      def set_chime(command) # rubocop:disable Naming/AccessorMethodName -- the engine's handler name
+        on = command.payload["on"]
+        raise Refusal, "chime is true or false, not #{on.inspect}" unless [true, false].include?(on)
+
+        @me["run"]["chime"] = on
+        "chime: #{on}"
+      end
+
       # `/concurrency N`, worded as the engine words it. Lowering it stops
       # nobody, as in the engine.
       #

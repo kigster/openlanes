@@ -21,6 +21,7 @@
     "cost": 14.8,
     "agents_working": 4,
     "jobs": 4,
+    "chime": true,
     "outage": null
   },
   "stations": [

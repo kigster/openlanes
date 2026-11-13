@@ -43,6 +43,8 @@
 .rail, .drawer { background: var(--plate); border: 1px solid var(--hairline); border-radius: var(--radius-plate); padding: 18px 18px 20px;
                  position: sticky; top: 16px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
 .rail h2, .drawer h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
+.rail-chime { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 0 0 6px; cursor: pointer; }
+.rail-chime input { margin: 0; accent-color: var(--alarm); }
 .rail-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 14px; }
 .drawer { overflow-y: auto; }
 @media (max-width: 960px) { .rail, .drawer { position: static; max-height: 70vh; } }

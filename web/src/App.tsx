@@ -349,7 +349,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <AgentDrawer
               plan={drawer} car={drawerCar} models={modelsOf(me, drawerCar.adapter)} unavailable={unusable(adapterOf(me, drawerCar.adapter))} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
-            <NeedsYou plans={me.plans} onCommand={onCommand} spotlight={spotlight} />
+            <NeedsYou plans={me.plans} onCommand={onCommand} spotlight={spotlight} chime={me.run.chime} />
           )}
           {side.wide && (
             <ColumnDivider width={side.width} min={side.min} max={side.max} onResize={side.setWidth} onNudge={side.nudge} onReset={side.reset} layoutRef={layoutRef} />
