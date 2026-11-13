@@ -59,6 +59,8 @@ require "tmpdir"
 # is still covered — deliberately, by examples that stub `UI.color?` — rather
 # than by accident, differently, on each machine.
 ENV["NO_COLOR"] = "1"
+# No example reaches Anthropic for the model list, whatever the shell exports.
+ENV["OPENLANES_MODELS_OFFLINE"] = "1"
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"

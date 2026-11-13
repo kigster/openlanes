@@ -421,10 +421,10 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       end
     end
 
-    it "refuses a model above the ceiling rather than promising one that will not run" do
-      send_command("set_model", plan: "001.00", agent:, model: "fable")
+    it "refuses a model claude does not offer rather than promising one that will not run" do
+      send_command("set_model", plan: "001.00", agent:, model: "gpt-5")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(["claude offers no model fable"])
+        expect(apply.map(&:reason)).to eq(["claude offers no model gpt-5"])
         expect(run_state.model_for(car)).to be_nil
       end
     end

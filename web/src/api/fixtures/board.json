@@ -493,7 +493,8 @@
               "in": 5,
               "out": 25
             },
-            "context": 200000
+            "context": 200000,
+            "estimated": false
           },
           {
             "id": "claude-sonnet-5-5",
@@ -502,7 +503,8 @@
               "in": 3,
               "out": 15
             },
-            "context": 200000
+            "context": 200000,
+            "estimated": false
           },
           {
             "id": "claude-haiku-5-5",
@@ -511,7 +513,8 @@
               "in": 1,
               "out": 5
             },
-            "context": 200000
+            "context": 200000,
+            "estimated": false
           }
         ],
         "checked_at": "2026-10-13T09:00:00Z",
@@ -530,7 +533,8 @@
             "id": "gpt-5.5",
             "label": "GPT-5.5",
             "rates": null,
-            "context": 272000
+            "context": 272000,
+            "estimated": false
           }
         ],
         "checked_at": "2026-10-13T09:00:00Z",
@@ -824,7 +828,8 @@
                 "in": 5,
                 "out": 25
               },
-              "context": 200000
+              "context": 200000,
+              "estimated": false
             },
             {
               "id": "claude-sonnet-5-5",
@@ -833,7 +838,8 @@
                 "in": 3,
                 "out": 15
               },
-              "context": 200000
+              "context": 200000,
+              "estimated": false
             },
             {
               "id": "claude-haiku-5-5",
@@ -842,7 +848,8 @@
                 "in": 1,
                 "out": 5
               },
-              "context": 200000
+              "context": 200000,
+              "estimated": false
             }
           ],
           "checked_at": "2026-10-13T09:00:00Z",
@@ -861,7 +868,8 @@
               "id": "gpt-5.5",
               "label": "GPT-5.5",
               "rates": null,
-              "context": 272000
+              "context": 272000,
+              "estimated": false
             }
           ],
           "checked_at": "2026-10-13T09:00:00Z",

@@ -6,39 +6,16 @@ module OpenLanes
   module Adapters
     # `claude -p`, streaming JSON.
     class Claude < Base
-      # Models by capability, cheapest first. Anything ranked above
-      # {CEILING} is asked for as the ceiling instead: a run that quietly
-      # spends Fable money on a task Opus does fine is a run nobody budgeted.
-      LADDER = %w[haiku sonnet opus fable].freeze
-
-      # The most expensive model any agent may run on.
-      CEILING = "opus"
-
-      # Every Claude model priced, most capable first, newest first within a
-      # tier. The one place a model id, its label and its rates are written:
-      # the dropdown, the cost meter and alias resolution all read it, through
-      # {#models}, which offers only what {CEILING} lets run. Rates are base
-      # dollars per million tokens, in and out, from
-      # https://platform.claude.com/docs/en/about-claude/pricing as read on
-      # 2026-10-13. Haiku 5.5 is priced for prompts up to 100k tokens; above
-      # that it is $0.50 in and $2.50 out, which this table does not model.
-      CATALOGUE = [
-        Model.new(id: "claude-fable-5-1", label: "Fable 5.1", rate_in: 10, rate_out: 50),
-        Model.new(id: "claude-opus-5-5", label: "Opus 5.5", rate_in: 4, rate_out: 20),
-        Model.new(id: "claude-opus-5", label: "Opus 5", rate_in: 5, rate_out: 25),
-        Model.new(id: "claude-sonnet-5-5", label: "Sonnet 5.5", rate_in: 2, rate_out: 10),
-        Model.new(id: "claude-sonnet-5", label: "Sonnet 5", rate_in: 2, rate_out: 10),
-        Model.new(id: "claude-haiku-5-5", label: "Haiku 5.5", rate_in: 0.10, rate_out: 0.50)
-      ].freeze
-
-      # What an agent may actually run on: the catalogue below {CEILING}. A
-      # model the CLI would be asked for as something cheaper is not offered,
-      # so the page never shows a choice that will not happen.
-      MODELS = CATALOGUE.select { |m| LADDER.index { |tier| m.id.include?(tier) } <= LADDER.index(CEILING) }.freeze
-
       # The tier `claude` runs when an agent names no model, so an unnamed
       # model is still priced rather than shown as free.
       UNNAMED = "sonnet"
+
+      # The models, their labels, rates and windows, live in {Catalogue}:
+      # Anthropic's list when a credential lets this machine read it, the
+      # shipped list otherwise. There is no ceiling. The one that capped
+      # every agent at Opus kept Fable off the page and quietly ran a
+      # `model: fable` agent on Opus; what an agent runs on is the
+      # operator's call, priced on the page, not the adapter's.
 
       # The variable `claude` reads its autocompact threshold from, as a
       # percentage. Found in the 2.1.x binary, where `Vle()` reads it with
@@ -107,15 +84,12 @@ module OpenLanes
       # @return [Array<String>]
       def restricted(tools) = ["--restricted", "--tools", tools.join(","), "--permission-mode", "dontAsk"]
 
-      # @param model [String, nil] an alias (`sonnet`) or a full id
-      #   (`claude-fable-5-1`)
+      # An alias (`sonnet`) or a full id (`claude-fable-5-1`), asked for as
+      # written: `claude` resolves its own aliases, and nothing here caps it.
+      #
+      # @param model [String, nil]
       # @return [String, nil]
-      def model(model)
-        return model if model.nil? || model.to_s.empty?
-
-        rank = LADDER.index { |tier| model.to_s.include?(tier) }
-        rank && rank > LADDER.index(CEILING) ? CEILING : model.to_s
-      end
+      def model(model) = model.nil? || model.to_s.empty? ? model : model.to_s
 
       # `--disallowedTools` is refused by the CLI itself, and `--resume
       # <session id>` carries a conversation on. `claude -p --resume <id>
@@ -137,23 +111,20 @@ module OpenLanes
       # @return [Hash{String => String}]
       def environment = { AUTOCOMPACT_VARIABLE => AUTOCOMPACT.to_s }
 
+      # Every model Anthropic serves, most capable first; see {Catalogue}.
+      #
       # @return [Array<OpenLanes::Adapters::Model>]
-      def models = MODELS
+      def models = catalogue.models
 
-      # A full id as itself; an alias that is exactly a tier (`opus`) as the
-      # newest model of that tier, the first in {MODELS} to carry its name;
-      # no name as {UNNAMED}. Anything else, `not-opus` or `sonnet-old`
-      # included, is no model at all.
+      # A full id as itself, an alias that is exactly a tier (`opus`) as the
+      # newest model of that tier, no name as {UNNAMED}; see {Catalogue#find}.
       #
       # @param name [String, nil]
       # @return [OpenLanes::Adapters::Model, nil]
-      def model_entry(name)
-        text = name.to_s
-        text = UNNAMED if text.empty? || text == "default"
-        return MODELS.find { |m| m.id.match?(/\Aclaude-#{text}-/) } if LADDER.include?(text)
+      def model_entry(name) = catalogue.find(name)
 
-        MODELS.find { |m| m.id == text }
-      end
+      # @return [OpenLanes::Adapters::Claude::Catalogue]
+      def catalogue = Catalogue.current
 
       private
 
