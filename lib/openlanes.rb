@@ -219,3 +219,8 @@ OpenLanes::LOADER = loader
 # `Plans.status` names no constant, so without this those methods exist
 # or not depending on what happened to load first.
 %w[status feature].each { |name| loader.load_file("#{__dir__}/openlanes/plans/#{name}.rb") }
+
+# The providers threads resolve together start here, on one thread, before
+# any of them asks. Which ones those are is a fact about the providers, so
+# the list lives beside them, in {OpenLanes::Container::EAGER}.
+OpenLanes::Container.start_eager

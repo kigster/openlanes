@@ -141,7 +141,7 @@ module OpenLanes
         #   a callable is asked at each look, so an edit counts mid-run
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now },
+          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Container["clock"].now },
           ci_pending_limit: Config::DEFAULT_CI_PENDING_HOURS * 3600.0)
           @root = root
           @publisher = publisher

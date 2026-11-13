@@ -19,7 +19,7 @@ module OpenLanes
       # @param clock [#monotonic]
       # @param limit [Integer]
       # @param window [Numeric]
-      def initialize(clock: OpenLanes::Clock::System, limit: LIMIT, window: WINDOW)
+      def initialize(clock: Container["clock"], limit: LIMIT, window: WINDOW)
         @clock = clock
         @limit = limit
         @window = window

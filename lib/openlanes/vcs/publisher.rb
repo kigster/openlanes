@@ -53,6 +53,9 @@ module OpenLanes
       # Why a pull request nobody could test is not opened.
       UNTESTABLE = "publish refused — plan.md has no `#{Lifecycle::Completion::HOW_TO_TEST}` section".freeze
 
+      # The only folder a memory pull request commits.
+      MEMORY_DIR = File.join(".openlanes", "memory")
+
       # A..Z, which is more parts than any feature should be split into.
       LETTERS = ("A".."Z").to_a.freeze
 
@@ -63,7 +66,7 @@ module OpenLanes
       # @param github [OpenLanes::Vcs::GitHub] asked which branch an open pull
       #   request is built from
       # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each pull request opened
-      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: GitHub.new,
+      def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: Container["github"],
         events: Events::NullSink.new)
         @root = root
         @events = events
@@ -147,6 +150,26 @@ module OpenLanes
 
       # Paths named in a {#commit_plan} refusal before the rest are counted.
       STRAY_SHOWN = 10
+
+      # Push a memory branch and open its pull request: the one way a change
+      # to `.openlanes/memory/lessons/` reaches the default branch. Only that
+      # folder is committed, whatever else the checkout holds, and the pull
+      # request is opened and never merged: a person merges every one, and
+      # `gh pr merge` stays ungrantable.
+      #
+      # @param checkout [OpenLanes::Vcs::Worktree::Checkout] cut from the default branch
+      # @param title [String]
+      # @param body [String] the lessons, each with its evidence
+      # @return [OpenLanes::Vcs::Publisher::Publication] no url on a dry run
+      def publish_memory(checkout:, title:, body:)
+        fields = { ordinal: nil, branch: checkout.branch, title:, refusal: nil }
+        return Publication.new(**fields, url: nil) if @dry_run
+
+        run(checkout, "git", "add", "--", MEMORY_DIR)
+        run(checkout, "git", "commit", "-m", title, "--", MEMORY_DIR)
+        push(checkout)
+        Publication.new(**fields, url: open_memory_pull_request(checkout, title, body))
+      end
 
       # Commit the plan's folder, and nothing else, to the checkout's branch and
       # push it. Verification uses it to land verifier's screenshots on the pull
@@ -444,6 +467,15 @@ module OpenLanes
           "refs/remotes/origin/#{checkout.branch}",
           err: File::NULL)
         seen.strip.empty? ? [] : ["--force-with-lease=refs/heads/#{checkout.branch}", "--force-if-includes"]
+      end
+
+      # @return [String, nil] the pull request URL
+      def open_memory_pull_request(checkout, title, body)
+        Tempfile.create(["memory-pr", ".md"]) do |file|
+          file.write(body)
+          file.flush
+          return run(checkout, "gh", "pr", "create", "-B", @base, "-t", title, "-F", file.path).out.to_s[%r{https://\S+}]
+        end
       end
 
       # @return [String, nil] the pull request URL

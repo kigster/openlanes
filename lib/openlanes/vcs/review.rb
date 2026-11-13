@@ -14,10 +14,9 @@ module OpenLanes
         alias_method :dry_run?, :dry_run
       end
 
-      # @param github [GitHub]
-      def initialize(github: GitHub.new)
-        @github = github
-      end
+      # `github:` defaults to the container's client, so a caller may pass
+      # its own and a spec may stub the key instead.
+      include Deps["github"]
 
       # @param pr [String, Integer] "12", "#12" or a pull request URL
       # @param label [String] a {Plans::ReviewLabel} name

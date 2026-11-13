@@ -89,7 +89,7 @@ module OpenLanes
       # @param clock [#call]
       # @param held [#call, nil] path -> who holds an alock lock in it, or nil;
       #   a merged plan's checkout somebody holds is not retired
-      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Clock::System.now }, held: nil)
+      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Container["clock"].now }, held: nil)
         @github = github
         @outcomes = outcomes
         @merge_by = merge_by
