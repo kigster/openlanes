@@ -37,6 +37,7 @@ classDiagram
   class OpenLanes__Vcs__RenameDate["RenameDate"]
   <<module>> OpenLanes__Vcs__RenameDate
   class OpenLanes__Vcs__Review["Review"]
+  class OpenLanes__Vcs__Warmup["Warmup"]
   class OpenLanes__Vcs__Worktree["Worktree"]
   OpenLanes__Vcs ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelMigration : uses
@@ -80,4 +81,5 @@ classDiagram
   OpenLanes__Vcs__Worktree ..> OpenLanes__UI : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Vcs__Prewarm : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Vcs__Refresh : uses
+  OpenLanes__Vcs__Worktree ..> OpenLanes__Vcs__Warmup : uses
 ```

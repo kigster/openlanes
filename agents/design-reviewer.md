@@ -11,6 +11,7 @@ timeout: 900
 ledger: [pull-requests.md]
 phase: review
 review_stage: 2
+watches: ["lib/**", "app/**", "web/src/**"]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]

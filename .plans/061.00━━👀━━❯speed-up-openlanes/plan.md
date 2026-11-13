@@ -124,3 +124,13 @@ Answered:
 Treat the 12 pre-existing failures as the baseline for this plan and fix them in a separate plan. This plan goes on to review as it is; the "full suite exits 0" requirement is satisfied when no failures beyond that baseline appear.
 
 > Folded from `blocked.md` by the unblocker on 2026-11-12.
+
+## Rebase decisions
+
+- `lib/openlanes/vcs/worktree.rb`: kept both. Main's `Prewarm` (clones `node_modules` from the main checkout) and this plan's `Warmup` (shared Bundler/npm cache) both stay; `Worktree.new` takes `prewarm:` and `warmup:`, and one `furnish` does seed, then prewarm, then warm, on both `checkout_for` paths. Dropped the branch's direct `seed`/`warm` calls in favour of main's `furnish`.
+- `lib/openlanes/vcs/warmup.rb`: `Warmup#npm` now leaves an existing `node_modules` alone (counts it as shared) when the cache entry is not complete, because `npm ci` would delete the clone `Prewarm` just made and install again. Main's `Prewarm` wins the overlap; spec added in `warmup_spec.rb`.
+- `lib/openlanes/agents/agent.rb`: both sides added keyword fields; kept `small_diff` (main) and `review_stage`, `watches` (branch).
+- `lib/openlanes/agents/registry.rb`: kept `small_diff:` (main) and `review_stage:`, `watches:` (branch) in the Agent build.
+- `.plans/061.00` folder: main renamed the plan folder to 🔴 (a later, fuller state.json: 20 stages against 7) and the branch to 🟡 (an earlier snapshot). Kept main's 🔴 folder as is and dropped the branch's 🟡 copy, since one ordinal cannot have two folders and the harness renames the folder to the live state itself. This also kept main's later `contract.md` and `pull-requests.md` over the branch's older ones.
+- `.plans/068.00/state.json`: the branch deleted it, main had changed it. Kept main's; the deletion was plan bookkeeping, not part of this plan's work.
+- `agents/design-reviewer.md`, `lib/openlanes/agents/agent.rb`: kept `watches` (branch) beside main's frontmatter; in `agent.rb` kept main's `rounds: Agent::DEFAULT_ROUNDS` over the branch's literal `1`, and added `watches: []`.

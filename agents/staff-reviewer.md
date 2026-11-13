@@ -9,6 +9,7 @@ effort: high
 timeout: 900
 ledger: [pull-requests.md]
 phase: review
+review_stage: 1
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]
