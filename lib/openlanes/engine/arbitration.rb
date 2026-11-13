@@ -357,12 +357,7 @@ module OpenLanes
           result = @executor.call(brief).call(agent, subject, handle:)
           raise Error, "the arbitrator's run failed: #{result.note}" unless result.ok
 
-          trace = handle.trace
-          return "" unless trace && File.exist?(trace)
-
-          File.foreach(trace).filter_map { JSON.parse(it)["result"] if it.include?("\"result\"") }.last.to_s
-        rescue JSON::ParserError
-          ""
+          Execution.answer(handle.trace)
         end
       end
     end

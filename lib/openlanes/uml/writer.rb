@@ -21,8 +21,9 @@ module OpenLanes
 
       # @return [Hash{String => String}] file name to contents
       def files
-        pages = @model.namespace_names.to_h { [Writer.file_name(it), page(it, ClassDiagram.new(@model, it).render)] }
-        { "README.md" => page("#{@title} namespaces", NamespaceMap.new(@model).render, index: pages.keys) }.merge(pages)
+        names = @model.namespace_names
+        pages = names.to_h { [Writer.file_name(it), page(it, ClassDiagram.new(@model, it).render)] }
+        { "README.md" => page("#{@title} namespaces", NamespaceMap.new(@model).render, index: names) }.merge(pages)
       end
 
       # @param dir [String]
@@ -40,9 +41,12 @@ module OpenLanes
 
       private
 
+      # The index names each namespace as the code does, `OpenLanes::Plans`,
+      # not by its file's slug, which a reader would have to decode.
+      #
       # @return [String]
       def page(heading, mermaid, index: [])
-        links = index.map { "- [#{it.delete_suffix(".md")}](#{it})" }
+        links = index.map { "- [#{it}](#{Writer.file_name(it)})" }
         [MARKER, "", "# #{heading}", "", "```mermaid", mermaid.chomp, "```", *(["", *links] unless links.empty?), ""].join("\n")
       end
 

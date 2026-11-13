@@ -43,8 +43,12 @@ module OpenLanes
       # @param spawn [#call, nil] the executor's seam; nil starts the real CLI
       # @param trace_dir [String, nil] where the NDJSON trace goes
       # @param keep [Boolean] leave the repository on disk for inspection
+      # @param memory [Boolean] tell the agent the operator's global lessons
+      #   (the temp repository has no project ones); `eval --live --no-memory`
+      #   is the baseline that says whether they help
       def initialize(kase, registry: Agents.registry, max_tokens: DEFAULT_MAX_TOKENS, timeout: nil, spawn: nil,
-        trace_dir: nil, keep: false)
+        trace_dir: nil, keep: false, memory: true)
+        @memory = memory
         @kase = kase
         @registry = registry
         @agent = registry.find(kase.agent) or raise Invalid, "#{kase.path}: names no agent called #{kase.agent}"
@@ -60,10 +64,11 @@ module OpenLanes
         root = Dir.mktmpdir("openlanes-eval-")
         begin
           plans = build(root)
-          result = executor(root).call(@agent, start(plans), root:)
+          handle = Execution::Executor::Handle.new
+          result = executor(root).call(@agent, start(plans), root:, handle:)
           Lifecycle.resync_dirs(tree: Plans.tree(plans)).call(commit: true)
           found = Plans.tree(plans).find(ORDINAL)
-          run = Run.new(seconds: result.seconds, tokens: result.fresh)
+          run = Run.new(seconds: result.seconds, tokens: result.fresh, answer: Execution.answer(handle.trace))
           score = Scorer.new(@kase, registry: @registry)
                         .call(folder: found&.feature&.path || File.join(plans, "missing"), run:, repo: root)
           Outcome.new(score:, result:, root: @keep ? root : nil)
@@ -116,7 +121,7 @@ module OpenLanes
 
       # @return [OpenLanes::Execution::Executor]
       def executor(root)
-        options = { root:, max_tokens: @max_tokens, fresh_budget: true, timeout: @timeout }
+        options = { root:, max_tokens: @max_tokens, fresh_budget: true, timeout: @timeout, memory: @memory }
         options[:spawn] = @spawn if @spawn
         options[:trace_dir] = @trace_dir if @trace_dir
         Execution.executor(**options)
