@@ -266,6 +266,17 @@ describe("NeedsYou", () => {
     expect(document.querySelector("details.answered")).toBeNull();
   });
 
+  it("keeps a held question off the rail until its lane's Unblock asks for it", () => {
+    const { onCommand } = recorder();
+    const held = lettered();
+    held.questions[0].held = true;
+    const { rerender } = renderPanel(<NeedsYou plans={[held]} onCommand={onCommand} />);
+    expect(document.querySelector(".asks .ask")).toBeNull();
+    rerender(<NeedsYou plans={[held]} onCommand={onCommand} spotlight="001.00" nudge={1} />);
+    const card = document.querySelector<HTMLElement>(".asks .ask.is-spotlit.is-held")!;
+    expect(within(card).getByRole("button", { name: /Carry the checkout path/ })).toBeEnabled();
+  });
+
   it("hands the card focus again on a second click on the same lane's Unblock", () => {
     const { onCommand } = recorder();
     const plans = [planAt("001.00"), planAt("006.00")];

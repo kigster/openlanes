@@ -27,8 +27,10 @@ export function NeedsYou({ plans, onCommand, spotlight = null, nudge = 0, chime:
   const settled = useSettled();
   const done = new Set(settled.map((s) => s.id));
   const all = asksOf(plans);
-  const waiting = all.filter((a) => !done.has(a.id) && !(a.kind === "question" && a.question.held));
   const spotlit = (a: { plan: Plan }) => a.plan.ordinal === spotlight;
+  // A held question stays off the rail, except on the plan whose Unblock was clicked: that click asks for this
+  // plan's questions, and a lane whose only question was on hold had no card to bring forward (plan 045).
+  const waiting = all.filter((a) => !done.has(a.id) && !(a.kind === "question" && a.question.held && !spotlit(a)));
   const open = [...waiting.filter(spotlit), ...waiting.filter((a) => !spotlit(a))];
   // Each click on Unblock brings the first of that plan's cards into view and hands it focus: the answer box when
   // the question wants words, the first choice otherwise. jsdom has no scrollIntoView, hence the optional call.
