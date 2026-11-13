@@ -50,11 +50,13 @@ module OpenLanes
       # @param builds [#call, nil] receives a subject and answers
       #   {Vcs::CiGate.verdict} for its open pull requests; nil in a run
       #   that publishes nothing, where there is no CI to wait for
-      def initialize(agents:, review: nil, builds: nil)
+      # @param changes [#call] `(subject) -> Array<String>, nil`, the files the
+      #   plan's diff touches; nil means unknown, which every reviewer watches
+      def initialize(agents:, review: nil, builds: nil, changes: ->(_) {})
         @agents = agents
         @review = review
-        @builds = builds
-        @said = {}
+        @build = Build.new(builds)
+        @changes = changes
       end
 
       # Whether +agent+ may start on +subject+ now. A review round runs in
@@ -62,7 +64,9 @@ module OpenLanes
       # reviewers of a later `review_stage:` start only once every earlier
       # one has passed it and CI is green. Started together, three reviewers
       # read a diff the first of them was about to send back, and a red
-      # build was reviewed three times before anybody fixed it.
+      # build was reviewed three times before anybody fixed it. A later
+      # reviewer is also skipped when the diff touches nothing it `watches:`
+      # (plan 061, B5).
       #
       # @param subject [Plans::Subject]
       # @param agent [Agents::Agent]
@@ -74,9 +78,23 @@ module OpenLanes
         return true if earlier.empty?
 
         notes = round(subject)
-        return false unless earlier.all? { passed?(it.name, notes[it.name]) }
+        return false unless earlier.all? { passed?(it.name, notes[it.name]) } && stage_two(subject, notes).include?(agent)
 
-        green?(subject)
+        @build.green?(subject)
+      end
+
+      # The stage-2 reviewers this round still needs: none until stage 1 has
+      # passed, then those watching the diff.
+      #
+      # @param subject [Plans::Subject]
+      # @param notes [Hash{String => String}] verdicts so far, by name
+      # @return [Array<Agents::Agent>]
+      def stage_two(subject, notes)
+        first = stage(subject, 1)
+        return [] unless first.all? { notes.key?(it.name) } && votes(notes.slice(*first.map(&:name))).passing?
+
+        files = @changes.call(subject)
+        reviewers(subject).select { it.review_stage > 1 && (files.nil? || it.watching?(files)) }
       end
 
       # @param agent [Agents::Agent]
@@ -103,7 +121,9 @@ module OpenLanes
         vote = Plans::Verdict.vote(agent: agent.name, note:) or return
 
         notes = round(subject).merge(agent.name => note)
-        pending = reviewers(subject).map(&:name) - notes.keys
+        early = refused_early(subject, notes) and return early
+
+        pending = (stage(subject, 1) + stage_two(subject, notes)).map(&:name) - notes.keys
         return decided(notes) if pending.empty? || settled?(notes, pending, running)
 
         Decision.new(verdict: nil, pending:, target: nil, note: "#{vote.word}; waiting for #{pending.join(", ")}")
@@ -173,23 +193,6 @@ module OpenLanes
         !vote.nil? && !vote.rejected?
       end
 
-      # CI on the plan's pull requests, said once per answer while a later
-      # pass waits on it. A run with no CI to ask does not wait.
-      #
-      # @param subject [Plans::Subject]
-      # @return [Boolean]
-      def green?(subject)
-        return true if @builds.nil?
-
-        state = @builds.call(subject)
-        ordinal = subject.feature.ordinal.to_s
-        if state != :green && @said[ordinal] != state
-          UI.log("review: the next reviewers wait for green CI, which is #{state}", plan: ordinal, level: state == :red ? :warn : :info)
-        end
-        @said[ordinal] = state
-        state == :green
-      end
-
       # A rejection decides the round whatever the others would say, so it
       # waits only for a reviewer that is reading the pull request right now.
       # One that has not reported and is not running may never report: it ran
@@ -214,10 +217,28 @@ module OpenLanes
                       .to_h { [it["agent"], it["verdict"]] }
       end
 
+      # A stage-1 rejection or slop decides the round at once: no stage-2
+      # reviewer is started on code that is going back anyway.
+      #
+      # @return [Decision, nil]
+      def refused_early(subject, notes)
+        first = notes.slice(*stage(subject, 1).map(&:name))
+        decided(first) if first.size == stage(subject, 1).size && !votes(first).passing?
+      end
+
+      # @param subject [Plans::Subject]
+      # @param number [Integer]
+      # @return [Array<Agents::Agent>] this plan's reviewers in that stage
+      def stage(subject, number) = reviewers(subject).select { it.review_stage == number }
+
+      # @param notes [Hash{String => String}]
+      # @return [Plans::Verdict]
+      def votes(notes) = Plans.verdict(notes.map { |name, said| Plans::Verdict.vote(agent: name, note: said) })
+
       # @param notes [Hash{String => String}] every reviewer's note, by name
       # @return [Decision]
       def decided(notes)
-        verdict = Plans.verdict(notes.map { |name, said| Plans::Verdict.vote(agent: name, note: said) })
+        verdict = votes(notes)
         Decision.new(verdict:, pending: [], target: target(verdict, notes.values), note: "review #{verdict.names.join(" + ")}")
       end
 

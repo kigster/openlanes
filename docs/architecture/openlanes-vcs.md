@@ -21,6 +21,9 @@ classDiagram
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs["OpenLanes::Vcs"]
   <<module>> OpenLanes__Vcs
+  class OpenLanes__Vcs__Buckets["Buckets"]
+  <<module>> OpenLanes__Vcs__Buckets
+  class OpenLanes__Vcs__Changes["Changes"]
   class OpenLanes__Vcs__CiGate["CiGate"]
   <<module>> OpenLanes__Vcs__CiGate
   class OpenLanes__Vcs__CiWatch["CiWatch"]
@@ -32,21 +35,30 @@ classDiagram
   class OpenLanes__Vcs__Mainline["Mainline"]
   class OpenLanes__Vcs__Prewarm["Prewarm"]
   class OpenLanes__Vcs__Publisher["Publisher"]
+  class OpenLanes__Vcs__PullSnapshot["PullSnapshot"]
   class OpenLanes__Vcs__Refresh["Refresh"]
   class OpenLanes__Vcs__RenameDate["RenameDate"]
   <<module>> OpenLanes__Vcs__RenameDate
   class OpenLanes__Vcs__Review["Review"]
+  class OpenLanes__Vcs__SnapshotReads["SnapshotReads"]
+  class OpenLanes__Vcs__Warmup["Warmup"]
+  class OpenLanes__Vcs__Warmup__Trust["Warmup::Trust"]
+  <<module>> OpenLanes__Vcs__Warmup__Trust
   class OpenLanes__Vcs__Worktree["Worktree"]
   OpenLanes__Vcs ..> OpenLanes__Container : uses
+  OpenLanes__Vcs ..> OpenLanes__Vcs__Buckets : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelMigration : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelSync : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Mainline : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Prewarm : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Publisher : uses
+  OpenLanes__Vcs ..> OpenLanes__Vcs__PullSnapshot : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Review : uses
+  OpenLanes__Vcs ..> OpenLanes__Vcs__Warmup : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Worktree : uses
+  OpenLanes__Vcs__Changes ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs__CiWatch ..> OpenLanes__Error : uses
   OpenLanes__Vcs__CiWatch ..> OpenLanes__UI : uses
   OpenLanes__Vcs__CiWatch ..> OpenLanes__Vcs__CiGate : uses
@@ -54,6 +66,8 @@ classDiagram
   OpenLanes__Vcs__DiffSize ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__Error : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__UI : uses
+  OpenLanes__Vcs__GitHub ..> OpenLanes__Vcs__Buckets : uses
+  OpenLanes__Vcs__GitHub ..> OpenLanes__Vcs__PullSnapshot : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Error : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__UI : uses
@@ -75,6 +89,9 @@ classDiagram
   OpenLanes__Vcs__Review ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Vcs__Review ..> OpenLanes__Vcs__CiGate : uses
   OpenLanes__Vcs__Review ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Vcs__SnapshotReads ..> OpenLanes__Error : uses
+  OpenLanes__Vcs__SnapshotReads ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Vcs__Warmup ..> OpenLanes__Vcs__Warmup__Trust : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__Error : uses
   OpenLanes__Vcs__Worktree ..> OpenLanes__UI : uses

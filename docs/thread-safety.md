@@ -44,6 +44,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/engine/plan_locks.rb` | the held plan set | `Engine::PlanLocks` | tick, agent jobs | `@mutex` | guarded |
 | `lib/openlanes/engine/rebase.rb` | `@tallies` | `Engine::Rebase` | agent jobs | `@mutex` | guarded |
 | `lib/openlanes/engine/state_file.rb` | `@data` (the restart file) | `Engine::StateFile` | tick, agent jobs | `@mutex` around every write and the heartbeat | guarded |
+| `lib/openlanes/engine/steps/snapshot.rb` | `@current`, `@taken` (the shared pull snapshot) | `Engine::Steps::Snapshot` | tick, PR watch thread, verification | `@lock` around every read and refresh | guarded |
 | `lib/openlanes/execution/agent_process/registry.rb` | `AgentProcess.@live`, the agent supervisors started or attached; `@reattachable`; the one `at_exit` hook | `Execution::AgentProcess` | agent jobs, the dispatcher, `at_exit` | class-level `@mutex` | guarded |
 | `lib/openlanes/execution/agent_process.rb` | one agent's `@terminating`; `@abandoned` and `@reaped` only ever turn true | the `AgentProcess` | agent job (reader), timeout timer, kill thread | `@guard` per agent | guarded |
 | `lib/openlanes/execution/boundary.rb` | `@sanctioned` pushes | `Execution::Boundary` | agent jobs, publisher | `@lock` | guarded |

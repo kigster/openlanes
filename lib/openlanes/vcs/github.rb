@@ -56,20 +56,47 @@ module OpenLanes
         # "bad output", sending you to look at the wrong thing entirely.
         raise Error, no_output_message if out.to_s.strip.empty?
 
-        JSON.parse(out).map do |pr|
-          {
-            number: pr["number"],
-            title:  pr["title"].to_s,
-            url:    pr["url"],
-            branch: pr["headRefName"].to_s,
-            files:  Array(pr["files"]).map { |f| f["path"] }.compact,
-            state:  self.class.state_label(pr),
-            open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
-            labels: Array(pr["labels"]).map { |l| l["name"] }
-          }
-        end
+        JSON.parse(out).map { self.class.row(it) }
       rescue TTY::Command::ExitError, JSON::ParserError => e
         raise Error, "could not list pull requests via `gh`: #{e.message.lines.first.to_s.strip}"
+      end
+
+      # One pull request, normalised: the shape {#pulls} returns, shared by
+      # {PullSnapshot} so a row reads the same whichever API it came from.
+      #
+      # @param pr [Hash] `gh pr list --json` fields, labels and files as arrays
+      # @return [Hash] `{number:, title:, url:, branch:, files:, state:, open:, labels:}`
+      def self.row(pr)
+        {
+          number: pr["number"],
+          title:  pr["title"].to_s,
+          url:    pr["url"],
+          branch: pr["headRefName"].to_s,
+          files:  Array(pr["files"]).map { |f| f["path"] }.compact,
+          state:  state_label(pr),
+          open:   pr["mergedAt"].nil? && pr["state"].to_s.upcase == "OPEN",
+          labels: Array(pr["labels"]).map { |l| l["name"] }
+        }
+      end
+
+      # Every open pull request with its labels and checks, one `gh api
+      # graphql` call per hundred of them.
+      #
+      # @param repo [String, nil] "owner/name"; nil means the checkout's own
+      # @param clock [#call] the time the snapshot is stamped with
+      # @return [PullSnapshot]
+      # @raise [OpenLanes::Error] when GitHub cannot be read
+      def open_pull_snapshot(repo: nil, clock: -> { Time.now })
+        owner, name = repo ? repo.split("/", 2) : %w[{owner} {repo}]
+        pages = []
+        cursor = nil
+        loop do
+          pages << JSON.parse(@command.run(*snapshot_page(owner, name, cursor)).out)
+          break unless (cursor = PullSnapshot.next_cursor(pages.last))
+        end
+        PullSnapshot.parse(pages, taken_at: clock.call)
+      rescue TTY::Command::ExitError, JSON::ParserError, SystemCallError => e
+        raise Error, "could not read open pull requests: #{first_line(e)}"
       end
 
       # @return [String] the diagnosis for a silent `gh`
@@ -578,33 +605,15 @@ module OpenLanes
 
       def repo_flag(repo) = repo ? ["-R", repo] : []
 
-      # A check run as a `gh pr checks` bucket. An unlisted conclusion is a
-      # failure, as {CiGate} treats an unknown bucket.
-      #
-      # @param run [Hash] one entry of `check_runs`
-      # @return [String]
-      def bucket_of(run)
-        return "pending" unless run["status"].to_s == "completed"
-
-        case run["conclusion"].to_s
-        when "success", "neutral" then "pass"
-        when "skipped" then "skipping"
-        else "fail"
-        end
+      # @return [Array<String>] the `gh api graphql` argv for one snapshot page
+      def snapshot_page(owner, name, cursor)
+        argv = ["gh", "api", "graphql", "-f", "query=#{PullSnapshot::QUERY}", "-F", "owner=#{owner}", "-F", "name=#{name}"]
+        cursor ? argv + ["-f", "after=#{cursor}"] : argv
       end
 
-      # A commit status as a `gh pr checks` bucket. `error`, and any state
-      # GitHub adds later, is a failure.
-      #
-      # @param status [Hash] one entry of `statuses`
-      # @return [String]
-      def status_bucket(status)
-        case status["state"].to_s
-        when "success" then "pass"
-        when "pending" then "pending"
-        else "fail"
-        end
-      end
+      def bucket_of(run) = Buckets.check_run(run["status"], run["conclusion"])
+
+      def status_bucket(status) = Buckets.status(status["state"])
 
       # The first line `gh` wrote to stderr, which is the one naming the problem.
       def first_line(error)

@@ -364,6 +364,19 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
         end
       end
 
+      # The run's pull-request snapshot still holds the head this push
+      # replaced; merging against it inside the poll interval is refused.
+      it "tells on_push after the push, so the run can drop its snapshot" do
+        heads = []
+        pushing = described_class.new(root: repo_root,
+          command: TTY::Command.new(printer: :null),
+          dry_run:,
+          github:,
+          on_push: -> { heads << `git --git-dir #{origin} rev-parse main`.strip })
+        pushing.catch_up(checkout:, subject: plan)
+        expect(heads).to eq([tip("HEAD")])
+      end
+
       it "refuses when the pull request is built from another branch" do
         allow(github).to receive(:pull_request).with("7").and_return(branch: "kig/elsewhere")
         expect { publisher.catch_up(checkout:, subject: plan) }

@@ -41,6 +41,28 @@ RSpec.describe OpenLanes::Engine::PrWatch, :tree do
     end
   end
 
+  context "with a shared snapshot of the open pull requests (plan 061, B3)" do
+    subject(:watch) { described_class.new(github:, clock: -> { now }, snapshot: -> { open_now }) }
+
+    let(:github) { instance_double(OpenLanes::Vcs::GitHub, review_comments: comments, pull_request: nil, pulls: rows) }
+    let(:open_now) { OpenLanes::Vcs::PullSnapshot.new(pulls: rows.select { it[:open] }, taken_at: Time.at(0)) }
+
+    before do
+      allow(github).to receive(:pull_request) { |n| rows.find { it[:number] == n.to_i } }
+    end
+
+    it "reads the open ones from the snapshot and asks only for those that left it" do
+      expect(kinds).to eq(11 => :rejected, 12 => :waiting, 13 => :merged, 14 => :closed)
+      expect(github).to have_received(:pull_request).twice
+      expect(github).not_to have_received(:pull_request).with("11")
+    end
+
+    it "lists no pull requests itself" do
+      watch.poll(subjects)
+      expect(github).not_to have_received(:pulls)
+    end
+  end
+
   it "makes one pulls call per poll, whatever the number of plans" do
     watch.poll(subjects)
 

@@ -42,6 +42,45 @@ RSpec.describe OpenLanes::Vcs::GitHub do
     end
   end
 
+  describe "#open_pull_snapshot" do
+    let(:fixtures) { File.expand_path("../../fixtures/github", __dir__) }
+    let(:page) { ->(n) { instance_double(TTY::Command::Result, out: File.read(File.join(fixtures, "pull_snapshot_page#{n}.json"))) } }
+
+    before do
+      allow(command).to receive(:run).with("gh", "api", "graphql", any_args) do |*argv|
+        argv.include?("after=Y3Vyc29yOjE=") ? page.call(2) : page.call(1)
+      end
+    end
+
+    it "makes exactly one gh api graphql call per page, and none per pull request" do
+      expect(github.open_pull_snapshot(repo: "example/repo").numbers).to eq([201, 202, 203, 204])
+      expect(command).to have_received(:run).twice
+    end
+
+    it "asks for the first page without a cursor and the second with one" do
+      github.open_pull_snapshot(repo: "example/repo")
+      repo = %w[-F owner=example -F name=repo]
+
+      expect(command).to have_received(:run).with("gh", "api", "graphql", "-f", /\Aquery=query\(/, *repo)
+      expect(command).to have_received(:run).with("gh", "api", "graphql", "-f", /\Aquery=/, *repo, "-f", "after=Y3Vyc29yOjE=")
+    end
+
+    it "lets gh fill in the checkout's own repository" do
+      github.open_pull_snapshot
+      expect(command).to have_received(:run).with("gh", "api", "graphql", "-f", anything, "-F", "owner={owner}", "-F", "name={repo}")
+    end
+
+    it "stamps the snapshot with the clock" do
+      at = Time.utc(2026, 11, 12)
+      expect(github.open_pull_snapshot(clock: -> { at }).taken_at).to eq(at)
+    end
+
+    it "raises an OpenLanes::Error when gh fails" do
+      allow(command).to receive(:run).with("gh", "api", "graphql", any_args).and_raise(SystemCallError.new("gh", 2))
+      expect { github.open_pull_snapshot }.to raise_error(OpenLanes::Error, /could not read open pull requests/)
+    end
+  end
+
   describe "#pulls" do
     it "asks gh for exactly the fields the resync needs" do
       github.pulls

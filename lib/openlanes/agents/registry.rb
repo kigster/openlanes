@@ -133,12 +133,13 @@ module OpenLanes
           holds_at:      symbol_or_nil(meta["holds_at"]),
           adapter:       adapter(meta["adapter"], path),
           phase:         meta["phase"]&.to_s,
-          review_stage:  [meta["review_stage"].to_i, 1].max,
           starts:        Array(meta["starts"]).map { |l| l.to_s.to_sym },
           needs:         Array(meta["needs"]).map(&:to_s),
           toggle:        meta["toggle"]&.to_s,
           confined_to:   confined_to(meta["confined_to"], path),
-          small_diff:    SmallDiff.parse(meta["small_diff"], path)
+          small_diff:    SmallDiff.parse(meta["small_diff"], path),
+          review_stage:  review_stage(meta["review_stage"], path),
+          watches:       watches(meta, path)
         )
       end
 
@@ -184,6 +185,31 @@ module OpenLanes
 
           raise OpenLanes::Error, "#{File.basename(path)}: confined_to #{file.inspect} is not a file inside the plan folder"
         end
+      end
+
+      # @param value [Object, nil]
+      # @param path [String]
+      # @return [Integer] 1 when the definition names none
+      # @raise [OpenLanes::Error]
+      def review_stage(value, path)
+        return 1 if value.nil?
+        return value if [1, 2].include?(value)
+
+        raise OpenLanes::Error, "#{File.basename(path)}: review_stage #{value.inspect} is not 1 or 2"
+      end
+
+      # `watches:` decides whether a reviewer is skipped, so on anything else
+      # it would be a key that silently does nothing.
+      #
+      # @param meta [Hash]
+      # @param path [String]
+      # @return [Array<String>]
+      # @raise [OpenLanes::Error]
+      def watches(meta, path)
+        globs = Array(meta["watches"]).map(&:to_s)
+        return globs if globs.empty? || meta["phase"].to_s == "review"
+
+        raise OpenLanes::Error, "#{File.basename(path)}: watches is only for an agent whose phase is review"
       end
 
       # @param value [Object, nil]

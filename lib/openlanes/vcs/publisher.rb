@@ -66,9 +66,13 @@ module OpenLanes
       # @param github [OpenLanes::Vcs::GitHub] asked which branch an open pull
       #   request is built from
       # @param events [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] told of each pull request opened
+      # @param on_push [#call] called after every push this publisher makes;
+      #   the run drops its pull-request snapshot there, since the head it
+      #   holds is the one just replaced, and a merge asked against it is refused
       def initialize(root:, command: TTY::Command.new(printer: :null), base: "main", dry_run: true, github: Container["github"],
-        events: Events::NullSink.new)
+        events: Events::NullSink.new, on_push: -> {})
         @root = root
+        @on_push = on_push
         @events = events
         @command = command
         @github = github
@@ -451,6 +455,7 @@ module OpenLanes
         # not blamed for the tracking ref this push moves under it.
         Execution::Boundary.sanction(checkout.path, "origin", checkout.branch)
         run(checkout, "git", "push", *lease(checkout), "-u", "origin", checkout.branch)
+        @on_push.call
       end
 
       # @param checkout [OpenLanes::Vcs::Worktree::Checkout]
