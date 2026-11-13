@@ -52,8 +52,14 @@ module OpenLanes
         "stop_plan"       => :stop_plan,
         "restart_plan"    => :restart_plan,
         "set_concurrency" => :set_concurrency,
-        "set_chime"       => :set_chime
+        "set_chime"       => :set_chime,
+        "extend_time"     => :extend_time,
+        "rule_finding"    => :rule_finding
       }.freeze
+
+      # The most seconds one `extend_time` adds: the largest grant
+      # {Engine::Extensions} offers when an agent asks for more time.
+      MAX_EXTENSION = Engine::Extensions::CHOICES.map(&:seconds).max
 
       # How long "Resume anyway" lifts a 💣's halt.
       RESUME_FOR = 24 * 3600
@@ -73,6 +79,44 @@ module OpenLanes
           kind: "text",
           text: [reply.status, reply.reason].compact.join(": "),
           at: reply.at)
+      end
+
+      # @param value [Object] the payload's `seconds`
+      # @return [Integer] within 1 and {MAX_EXTENSION}
+      # @raise [Refusal]
+      def self.seconds!(value)
+        return value if value.is_a?(Integer) && value.between?(1, MAX_EXTENSION)
+
+        raise Refusal, "seconds must be a whole number from 1 to #{MAX_EXTENSION}, not #{value.inspect}"
+      end
+
+      # The finding a `rule_finding` names, once its verdict is one a person
+      # may give. {Web::DemoBoard} asks the same question of its own list.
+      #
+      # @param findings [Array<OpenLanes::Plans::Findings::Finding>]
+      # @param command [OpenLanes::Live::Command] a `rule_finding`
+      # @return [OpenLanes::Plans::Findings::Finding] the one it names
+      # @raise [Refusal] for an unknown verdict or finding
+      def self.finding!(findings, command)
+        Plans::Findings.verdict!(command["verdict"])
+        Plans::Findings.find!(findings, command["finding"], plan: command.plan)
+      rescue Plans::Findings::UnknownVerdict, Plans::Findings::NotFound => e
+        raise Refusal, e.message
+      end
+
+      # The reply to more time on a clock, true to the seconds granted: a
+      # grant under a minute says seconds, one that is not whole minutes says
+      # so, rather than rounding 90 seconds down to "1 more minutes".
+      #
+      # @param agent [String]
+      # @param seconds [Integer]
+      # @return [String] e.g. "backend-coder has 10 more minutes"
+      def self.more_time(agent, seconds)
+        amount = if seconds < 60 then "#{seconds} more second#{"s" unless seconds == 1}"
+                 elsif (seconds % 60).zero? then "#{seconds / 60} more minute#{"s" unless seconds == 60}"
+                 else "#{format("%g", (seconds / 60.0).round(1))} more minutes"
+                 end
+        "#{agent} has #{amount}"
       end
 
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
@@ -302,7 +346,7 @@ module OpenLanes
           raise Refusal, "X#{number} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
         settled = dispatcher.answer_extension(subject, number, letter.downcase, by: @node.user) or
           raise Refusal, "#{command.plan} has no open request X#{number}"
-        settled["grant"] == "live" ? "#{settled["agent"]} has #{settled["seconds"] / 60} more minutes" : "#{settled["agent"]} gets one more round"
+        settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
       # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
@@ -451,6 +495,30 @@ module OpenLanes
           raise Refusal, "#{command.car} is not running"
         @run_state.hold_car(command.car, held: command.kind == "hold")
         nil
+      end
+
+      # More time on one running agent's clock, from its drawer. Capped at
+      # the largest grant {Engine::Extensions} offers, so the page cannot
+      # hand out more in one press than the harness would on request.
+      #
+      # @return [String]
+      def extend_time(command, dispatcher)
+        seconds = Commands.seconds!(command.payload["seconds"])
+        dispatcher.extend(command.car, seconds) or raise Refusal, "#{command.car} is not running"
+        Commands.more_time(command.agent, seconds)
+      end
+
+      # A person's accept or strike on one reviewer finding, from its plan
+      # row: written as a ruling where the arbitrator's go, so a struck one
+      # is never raised again and settles an appeal against it.
+      #
+      # @return [String]
+      def rule_finding(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        finding = Commands.finding!(Plans::Findings.for(subject.feature.path), command)
+        Plans::Findings.rule!(subject.feature.path, finding, command["verdict"], by: @node.user)
+        dispatcher.wake!
+        "#{finding.id} #{command["verdict"]}"
       end
 
       # Stop All Local: every agent on this machine is told to stop, and once

@@ -363,6 +363,31 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  describe "rule_finding" do
+    before do
+      building("001.00",
+        "tax-rule-dsl",
+        files: { "pull-requests.md" => "# Pull Requests\n\n## Findings: staff-reviewer\n\n### F1 [critical] lib/a.rb:3\n\nBroken.\n" })
+    end
+
+    def findings = OpenLanes::Plans::Findings.for(path_of("001.00"))
+
+    it "records a person's strike where the reviewer's prompt reads struck findings" do
+      send_command("rule_finding", plan: "001.00", finding: "f1", verdict: "strike")
+      aggregate_failures do
+        expect(apply.map(&:reason)).to eq(["F1 strike"])
+        expect(findings.map(&:ruling)).to eq(["strike"])
+        expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).rulings.last).to include("kind" => "finding", "trigger" => "person")
+      end
+    end
+
+    it "refuses an unknown finding or verdict" do
+      send_command("rule_finding", plan: "001.00", finding: "F7", verdict: "strike")
+      send_command("rule_finding", plan: "001.00", finding: "F1", verdict: "maybe")
+      expect(apply.map(&:reason)).to eq(["001.00 has no finding F7", 'verdict must be accept or strike, not "maybe"'])
+    end
+  end
+
   describe "with an agent at work" do
     before do
       building("001.00", "tax-rule-dsl")
@@ -405,6 +430,32 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       send_command("message", plan: "001.00", text: "status?")
       apply
       expect(mailbox("001.00").map(&:to)).to eq([agent])
+    end
+
+    describe "extend_time" do
+      before do
+        handle.clock = OpenLanes::Execution::Clock.new(seconds: 600, control: handle.control, on_expire: -> {})
+      end
+
+      it "moves the running agent's deadline and tells it so" do
+        before = handle.remaining
+        send_command("extend_time", plan: "001.00", agent:, seconds: 600)
+        aggregate_failures do
+          expect(apply.map(&:reason)).to eq(["#{agent} has 10 more minutes"])
+          expect(handle.remaining).to be > before + 590
+          expect(control_of(car)).to match(/\AWARN: \d+ minutes left, time was extended\z/)
+        end
+      end
+
+      it "refuses an agent that is not running, without raising" do
+        send_command("extend_time", plan: "001.00", agent: "researcher", seconds: 600)
+        expect(apply.map { [it.status, it.reason] }).to eq([["refused", "001.00/researcher is not running"]])
+      end
+
+      it "refuses more than the largest grant" do
+        send_command("extend_time", plan: "001.00", agent:, seconds: 3600)
+        expect(apply.map(&:reason)).to eq(["seconds must be a whole number from 1 to 1200, not 3600"])
+      end
     end
 
     it "refuses a word for an agent that is not running" do

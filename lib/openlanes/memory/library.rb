@@ -47,15 +47,18 @@ module OpenLanes
         end
       end
 
-      # The active lessons +agent+ follows or checks, most costly first: by
-      # severity, then the most recently confirmed, then id, so the order is
-      # the same on every machine and the budget cuts the same lessons.
+      # The active lessons +agent+ follows or checks, addressed to its name,
+      # its phase or everyone. The lesson the most plans confirmed comes
+      # first, so one that keeps proving itself outlasts a one-off when the
+      # budget cuts from the bottom; then severity, the most recently
+      # confirmed, and id, so the order is the same on every machine.
+      # Retired, graduated and candidate lessons are never shown.
       #
       # @param agent [OpenLanes::Agents::Agent]
       # @return [Array<OpenLanes::Memory::Lesson>]
       def for(agent)
         lessons.select { it.active? && (it.for?(agent) || it.checked_by?(agent)) }
-               .sort_by { [Lesson::SEVERITIES.index(it.severity), -(it.confirmed&.jd || 0), it.id] }
+               .sort_by { [-it.confirmations, Lesson::SEVERITIES.index(it.severity), -(it.confirmed&.jd || 0), it.id] }
       end
     end
   end

@@ -46,7 +46,7 @@ module OpenLanes
       # @param spawner [#spawn] what starts the server process
       def initialize(root:, plans_dir:, port:, redis_url:, log: default_log(root), logging: Log.settings,
         ready_within: READY_WITHIN, probe: nil, listen: Listen.parse(nil), credentials: nil,
-        spawner: Spawner::System)
+        spawner: Container["process"])
         @root = root
         @spawner = spawner
         @plans_dir = plans_dir

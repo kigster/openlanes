@@ -514,4 +514,34 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       expect(dry.commit_plan(checkout:, plan:, message: "Verify")).to be_nil
     end
   end
+
+  describe "#publish_memory" do
+    let(:body) { "- L-0001 Run the Redis specs alone, from 001.00 and 002.00\n" }
+    let(:argvs) { [] }
+
+    before do
+      allow(OpenLanes::Execution::Boundary).to receive(:sanction)
+      allow(command).to receive(:run) do |*argv, **|
+        argvs << argv
+        result
+      end
+    end
+
+    it "commits only .openlanes/memory, pushes it sanctioned, and opens one pull request it never merges" do
+      publication = publisher.publish_memory(checkout:, title: "Memory: 1 lesson", body:)
+
+      expect(argvs.first(2)).to eq([%w[git add -- .openlanes/memory], ["git", "commit", "-m", "Memory: 1 lesson", "--", ".openlanes/memory"]])
+      expect(OpenLanes::Execution::Boundary).to have_received(:sanction).with(checkout.path, "origin", checkout.branch)
+      expect(argvs.count { it.first(3) == %w[gh pr create] }).to eq(1)
+      expect(argvs.flatten).not_to include("merge")
+      expect(publication).to have_attributes(url: "https://github.com/example/repo/pull/7", branch: checkout.branch)
+    end
+
+    it "touches nothing on a dry run" do
+      dry = described_class.new(root: File.dirname(plans_root), command:, dry_run: true, github:)
+
+      expect(dry.publish_memory(checkout:, title: "Memory", body:).url).to be_nil
+      expect(argvs).to eq([])
+    end
+  end
 end

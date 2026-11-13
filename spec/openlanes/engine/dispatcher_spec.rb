@@ -504,6 +504,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   describe "routing" do
+    # Away from the checkout, whose `.openlanes.yml` says `frontend: true`.
+    before { Dir.chdir(File.dirname(plans_root)) }
+
     let(:seen) { [] }
     let(:executor) do
       lambda { |agent, subject, **|

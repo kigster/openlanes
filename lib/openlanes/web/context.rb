@@ -14,6 +14,10 @@ module OpenLanes
     #   @return [OpenLanes::Live::Keys] this node's
     # @!attribute [r] plans_dir
     #   @return [String] the `.plans` directory plan files are read from
+    # @!attribute [r] root
+    #   @return [String] the repository the plans belong to, where the review
+    #     route runs git. Passed in from {Project.root} rather than taken as
+    #     the parent of +plans_dir+, since `$PLANS_DIR` may point anywhere
     # @!attribute [r] url
     #   @return [String] the Redis address
     # @!attribute [r] csrf
@@ -54,6 +58,7 @@ module OpenLanes
     Context = Data.define(:stores,
       :keys,
       :plans_dir,
+      :root,
       :url,
       :csrf,
       :dist,
@@ -67,8 +72,11 @@ module OpenLanes
       :listen,
       :credentials,
       :stopping) do
-      def initialize(dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
-        background: Context::THREAD, listen: Listen.parse(nil), credentials: nil, stopping: Concurrent::AtomicBoolean.new, **rest)
+      # +root+ falls back to the parent of +plans_dir+ only where none is
+      # given, which is the default layout and what the suite's trees use.
+      def initialize(plans_dir:, root: File.dirname(plans_dir), dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil,
+        copilot: nil, chat: nil, background: Context::THREAD, listen: Listen.parse(nil), credentials: nil,
+        stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end
 

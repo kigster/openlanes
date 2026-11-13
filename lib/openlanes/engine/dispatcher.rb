@@ -98,7 +98,7 @@ module OpenLanes
       #   journal (S9); nil keeps none
       # @param budget [OpenLanes::Engine::Budget, nil] the dollar cap per plan
       #   (plan 062.00); nil reads it from the runner's event log
-      def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
+      def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Container["clock"], on_board: nil,
         stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil,
         budget: nil)
         @desk = Desk.new(runner:, state:, rounds:, clock:, stay:, journal:, extensions:, budget:)
@@ -222,11 +222,13 @@ module OpenLanes
       #
       # @param key [String]
       # @param seconds [Integer]
-      # @return [void]
+      # @return [Boolean] whether a running agent's clock moved
       def extend(key, seconds)
-        job = running.find { |j| j.key == key } or return
-        job.handle&.extend!(seconds)
+        job = running.find { |j| j.key == key } or return false
+        return false unless job.handle&.extend!(seconds)
+
         feed.append(:extension, plan: job.task.subject.feature.ordinal.to_s, agent: job.task.agent.name, seconds:)
+        true
       end
 
       # A person's answer to an `X<n>` request (E1). A time choice reaches

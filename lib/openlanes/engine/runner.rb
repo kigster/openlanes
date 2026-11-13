@@ -86,6 +86,8 @@ module OpenLanes
       # @param reviews [OpenLanes::Engine::Reviews, nil] counts a review
       #   round's verdicts and labels the pull request; nil counts them with
       #   no pull request to label
+      # @param memory [Boolean] whether agents are shown lessons; recorded on
+      #   `run_started` so the events report can compare runs with and without
       # @param lock_ttl [#call, nil] seconds a refactor's global lock holds,
       #   asked every tick so an edited `refactor.lock_hours` applies on the
       #   next; nil keeps {Plans::GlobalLock::DEFAULT_HOURS}
@@ -94,8 +96,9 @@ module OpenLanes
         sleeper: ->(seconds) { sleep(seconds) }, on_board: nil, claims: nil, stay: false, rescan: Dispatcher::RESCAN,
         watch: nil, ignore_bombs: false, aging_since: nil, extensions: nil, verification: nil, journal: nil,
         merging: nil, arbitration: nil, upkeep: nil, quality_gate: nil, stop_at: nil, events: Events::NullSink.new,
-        reviews: nil, lock_ttl: nil)
+        reviews: nil, lock_ttl: nil, memory: true)
         @tree = tree
+        @memory = memory
         @lock_ttl = lock_ttl || -> { Plans::GlobalLock::DEFAULT_HOURS * 3600 }
         @events = events
         @executor = executor
@@ -271,7 +274,7 @@ module OpenLanes
       # @return [Array<OpenLanes::Engine::Runner::Attempt>]
       def call
         @events = @events.with(run: mint_run)
-        @events.record(:run_started, jobs: @jobs, isolation: @isolation.to_s)
+        @events.record(:run_started, jobs: @jobs, isolation: @isolation.to_s, memory: @memory)
         dispatcher = Dispatcher.new(runner: self,
           state:    @state,
           rounds:   @rounds,
@@ -293,7 +296,7 @@ module OpenLanes
       # pid and a start time), and the log needs one to group usage by run.
       #
       # @return [String] 16 hex digits
-      def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Clock::System.now.utc.iso8601(6)}")[0, 16]
+      def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Container["clock"].now.utc.iso8601(6)}")[0, 16]
 
       # Plans in scope waiting on a person: every ⭕ 🛑 💣, and every 💤 the
       # aging sweep made that still asks its questions. Leaving that 💤 out
@@ -310,7 +313,7 @@ module OpenLanes
       # @param except [Array<String>] ordinals an agent or a drain is in
       # @param now [Time]
       # @return [OpenLanes::Lifecycle::Aging::Result]
-      def age!(except: [], now: Clock::System.now)
+      def age!(except: [], now: Container["clock"].now)
         subjects = in_scope.reject { except.include?(it.feature.ordinal.to_s) || foreign?(it) }
         result = Lifecycle.age(tree:, subjects:, since: @aging_since, now:, commit: !dry_run?)
         @would_bomb = result.bombed if dry_run?
@@ -329,7 +332,7 @@ module OpenLanes
       #
       # @param now [Time]
       # @return [Array<OpenLanes::Plans::Subject>]
-      def halted_by(now: Clock::System.now)
+      def halted_by(now: Container["clock"].now)
         return [] if @ignore_bombs
 
         bombs.reject { Plans::PlanState.for(it.feature.path).resumed?(now:) }

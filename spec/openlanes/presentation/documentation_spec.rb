@@ -9,6 +9,13 @@ RSpec.describe OpenLanes::Presentation::Documentation do
 
   let(:document) { documentation.render }
 
+  describe "the spec.md frontmatter keys" do
+    it "lists every key Spec reads, summary: included" do
+      listed = OpenLanes::Plans::Spec::KEYS.keys.reject { document.include?("| `#{it}:` |") }
+      expect([listed, document]).to match([[], a_string_including("| `summary:` | one paragraph of text")])
+    end
+  end
+
   def happy_diagram(starts)
     document[/^### Starts at `#{starts}`\n\n#### The Happy Path\n\n```mermaid\n(.*?)```/m, 1].to_s
   end

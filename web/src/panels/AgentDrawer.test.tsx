@@ -32,6 +32,39 @@ describe("AgentDrawer", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it("extends a running agent's time by 10 or 20 minutes and shows the reply", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("005.00");
+    drawer(plan, { ...carOf(plan, "staff-reviewer"), state: "running" }, onCommand);
+    await user.click(screen.getByRole("button", { name: "Extend time +10 min" }));
+    await waitFor(() => expect(sent).toEqual([{ kind: "extend_time", plan: "005.00", agent: "staff-reviewer", payload: { seconds: 600 } }]));
+    await user.click(await screen.findByRole("button", { name: "Extend time +20 min" }));
+    await waitFor(() => expect(sent[1]).toEqual({ kind: "extend_time", plan: "005.00", agent: "staff-reviewer", payload: { seconds: 1200 } }));
+  });
+
+  it("stops after this step by sending wrap_up", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("005.00");
+    drawer(plan, { ...carOf(plan, "staff-reviewer"), state: "running" }, onCommand);
+    await user.click(screen.getByRole("button", { name: "Stop after this step" }));
+    await waitFor(() => expect(sent).toEqual([{ kind: "wrap_up", plan: "005.00", agent: "staff-reviewer", payload: {} }]));
+  });
+
+  it("shows a refused extension, and offers no steering for an agent that is not running", async () => {
+    const user = userEvent.setup();
+    const plan = planAt("005.00");
+    const car = carOf(plan, "staff-reviewer");
+    const view = drawer(plan, { ...car, state: "running" }, recorder("refused", "not running").onCommand);
+    await user.click(screen.getByRole("button", { name: "Extend time +10 min" }));
+    expect((await screen.findAllByText(/Refused: not running/)).length).toBeGreaterThan(0);
+    view.unmount();
+    drawer(plan, { ...car, state: "done" });
+    expect(screen.queryByRole("button", { name: /Extend time/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Stop after this step" })).toBeNull();
+  });
+
   it("says when the adapter does not report its context", () => {
     const plan = planAt("005.00");
     const car = { ...carOf(plan, "staff-reviewer"), context: null };

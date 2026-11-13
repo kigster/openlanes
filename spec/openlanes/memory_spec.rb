@@ -19,6 +19,24 @@ RSpec.describe OpenLanes::Memory do
     end
   end
 
+  describe ".publication" do
+    it "promotes against the default branch, through the publisher it is handed" do
+      publisher = instance_double(OpenLanes::Vcs::Publisher)
+      allow(OpenLanes::Vcs).to receive(:default_branch).and_return("trunk")
+      allow(OpenLanes::Memory::Publication).to receive(:new).and_call_original
+
+      expect(described_class.publication(root: "/tmp/project", publisher:)).to be_a(OpenLanes::Memory::Publication)
+      expect(OpenLanes::Memory::Publication).to have_received(:new).with(root: "/tmp/project", publisher:, base: "trunk", dry_run: false)
+    end
+  end
+
+  describe ".ignored" do
+    it "is empty where git cannot be run" do
+      allow(Open3).to receive(:capture2e).and_raise(Errno::ENOENT)
+      expect(described_class.ignored(root: "/tmp/project")).to eq([])
+    end
+  end
+
   describe ".library" do
     let(:root) { Dir.mktmpdir("project") }
     let(:global) { ENV.fetch("OPENLANES_MEMORY_HOME") }

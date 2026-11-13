@@ -167,7 +167,8 @@ module OpenLanes
       def board(out, seqs)
         board = Live.board(store: @store, keys: @keys)
         now = [board[:me], *board[:others]].compact.map { [it.dig("node", "id"), it.dig("node", "checkout"), it["seq"]] }
-        out << self.class.frame("board", board) unless now == seqs
+        # The first board goes whole, later ones as deltas (B1).
+        out << self.class.frame(*(@boards ||= Live::BoardDelta::Stream.new).next(board)) unless now == seqs
         now
       end
 

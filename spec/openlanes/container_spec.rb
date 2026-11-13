@@ -61,6 +61,19 @@ RSpec.describe OpenLanes::Container do
     it "registers Redis and the event bus without connecting" do
       expect(described_class.keys).to include("redis", "event_bus")
     end
+
+    # Two threads resolving an unstarted provider together race dry-system's
+    # unlocked first start, so the ones threads share are started at boot.
+    # The list is a fact about the providers and lives beside them, not in
+    # the load file.
+    it "starts the eager providers at boot, and only providers that exist" do
+      aggregate_failures do
+        expect(described_class::EAGER).to eq(%w[clock process logger])
+        expect(described_class::EAGER.map { described_class.providers[it.to_sym].started? }).to all(be(true))
+        expect(Dir[File.expand_path("../../lib/openlanes/providers/*.rb", __dir__)].map { File.basename(it, ".rb") })
+          .to include(*described_class::EAGER)
+      end
+    end
   end
 
   describe "the Redis provider" do
@@ -117,6 +130,39 @@ RSpec.describe OpenLanes::Container do
 
     it "still takes what a caller passes" do
       expect(injected.new(clock: :given).clock).to eq(:given)
+    end
+  end
+
+  describe "the keys this wiring leaves behind" do
+    it "keeps a collapsed cli/<command>/ directory in the key: cli/create/create.rb is cli.create.create" do
+      expect(described_class["cli.create.create"]).to be_a(OpenLanes::CLI::Create)
+    end
+
+    it "has a provider file for exactly the seven provider keys" do
+      providers = Dir[File.expand_path("../../lib/openlanes/providers/*.rb", __dir__)].map { File.basename(it, ".rb") }
+
+      expect(providers).to match_array(%w[clock event_bus github linear logger process redis])
+    end
+
+    it "resolves each provider key" do
+      allow(OpenLanes::Linear::API).to receive(:token_from_env).and_return("lin_api_example")
+      described_class.stub("redis", OpenLanes::Live.memory_store)
+
+      %w[clock event_bus github linear logger process redis].each do |key|
+        expect(described_class[key]).not_to be_nil, "#{key} resolved to nil"
+      end
+    end
+
+    {
+      "claude" => OpenLanes::Adapters::Claude,
+      "codex"  => OpenLanes::Adapters::Codex,
+      "pi"     => OpenLanes::Adapters::Pi,
+      "grok"   => OpenLanes::Adapters::Grok,
+      "gemini" => OpenLanes::Adapters::Gemini
+    }.each do |name, klass|
+      it "resolves adapters.#{name} to its adapter" do
+        expect(described_class["adapters.#{name}"]).to be_a(klass)
+      end
     end
   end
 end

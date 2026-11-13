@@ -61,6 +61,9 @@ require "tmpdir"
 ENV["NO_COLOR"] = "1"
 # No example reaches Anthropic for the model list, whatever the shell exports.
 ENV["OPENLANES_MODELS_OFFLINE"] = "1"
+# A developer's shell (direnv) may export the control room's login; the
+# examples that need one set it themselves.
+ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
@@ -94,6 +97,7 @@ $stderr = StringIO.new
 
 require_relative "support/plans_fixture"
 require_relative "support/lessons_fixture"
+require_relative "support/memory_fixture"
 require_relative "support/captured_stream"
 require_relative "support/box_text"
 require_relative "support/git_repo"
@@ -105,6 +109,7 @@ require_relative "support/test_redis"
 require_relative "support/port_window"
 require_relative "support/ruby_project"
 require_relative "support/offline_probes"
+require_relative "support/checkout_config"
 
 TestRedis.scrub!
 
@@ -132,6 +137,16 @@ RSpec.configure do |config|
   # Every real-Redis example holds the machine-wide lock while it runs, and
   # each one flushes its database on entry, so none depends on another run.
   config.around(:example, :redis) { |example| TestRedis.exclusively { example.run } }
+
+  # The checkout's own .openlanes.yml reads as empty (B1); this tag reads the real file.
+  config.around(:example, :checkout_config) do |example|
+    CheckoutConfig.real = true
+    OpenLanes::Config.instance_variable_set(:@current, nil)
+    example.run
+  ensure
+    CheckoutConfig.real = false
+    OpenLanes::Config.instance_variable_set(:@current, nil)
+  end
 
   config.example_status_persistence_file_path = ".rspec_status"
   config.disable_monkey_patching!

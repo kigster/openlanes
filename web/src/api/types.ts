@@ -308,6 +308,38 @@ export interface Board {
 export interface WireBoard {
   me: Snapshot | null;
   others: Snapshot[];
+  /** Per stream, from 1: only a `board` frame carries it, and a `board_delta` names it as its `base`. */
+  version?: number;
+}
+
+/** One flattened part of the board: `node/<id>/<checkout>` (a snapshot without `plans`, plus `plan_order`) or `plan/<id>/<checkout>/<ordinal>`. */
+export interface BoardEntry {
+  key: string;
+  value: Record<string, unknown>;
+}
+
+/** What changed since the board at `base`; applying it yields `version` (= base + 1). */
+export interface BoardDelta {
+  base: number;
+  version: number;
+  upsert: BoardEntry[];
+  remove: string[];
+}
+
+/** `GET /api/plans/:ordinal/review` */
+export interface ReviewFinding {
+  id: string; // "F1"
+  reviewer: string;
+  severity: string | null;
+  file: string | null;
+  line: number | null;
+  text: string;
+  ruling: "accept" | "strike" | null;
+}
+
+export interface PlanReview {
+  diff: { stat: string; patch: string; truncated: boolean };
+  findings: ReviewFinding[];
 }
 
 export type CommandKind =
@@ -318,7 +350,9 @@ export type CommandKind =
   | "discard" // plan-wide (W9)
   | "message" // payload: { text }
   | "hold"
-  | "wrap_up"
+  | "wrap_up" // also "stop after this step": the agent finishes its step, writes to disk, signs, and exits
+  | "extend_time" // payload: { seconds } from 1 to 1200; plan and agent required
+  | "rule_finding" // payload: { finding: "F1", verdict: "accept" | "strike" }
   | "compact" // now: stopped, its session compacted with claude --resume "/compact", then carried on in it; a fresh restart when it has no session id
   | "stop"
   | "stop_all" // every agent on this node
@@ -465,4 +499,32 @@ export interface AppCommand {
   plan: string;
   action: "restart" | "stop";
   target?: string | null; // "backend" (every process but the previewed one), a process name, or every process
+}
+
+// GET /api/dependencies (plan 056): every plan, archive included, and one edge per depends_on: entry.
+export interface DependencyState {
+  key: string; // a Plans::STATUSES key, in STATUSES order
+  emoji: string;
+  name: string;
+  archived: boolean; // its plans live in an inactive subfolder (Tree::INACTIVE_DIRS); the graph starts with these off
+}
+
+export interface DependencyPlan {
+  ordinal: string;
+  title: string;
+  state: string; // a DependencyState key
+  summary: string | null;
+  archived: boolean;
+}
+
+/** `from` is the dependency, `to` the dependent, so arrows run left to right. */
+export interface DependencyEdge {
+  from: string;
+  to: string;
+}
+
+export interface DependencyGraph {
+  states: DependencyState[];
+  plans: DependencyPlan[];
+  edges: DependencyEdge[];
 }

@@ -226,3 +226,47 @@ it("ignores a GET whose fetch outlives its cancellation, answering from what the
   await waitFor(() => expect(result.current.waiting).toBe(true));
   expect(result.current.board).toBeUndefined();
 });
+
+describe("board deltas", () => {
+  // One client for the whole test: the shared wrapper builds a fresh one on every render, which drops the cache.
+  const stable = () => {
+    const client = createQueryClient();
+    return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+  const full = () => ({ ...loadFixtureBoard(), version: 1 });
+  const planOf = (b: ReturnType<typeof full>) => b.me.plans[0];
+
+  it("applies a delta whose base is the held version onto the cached board", async () => {
+    const first = full();
+    fetchMock.mockResolvedValue(json(first));
+    const { result } = renderHook(() => useBoard(), { wrapper: stable() });
+    await waitFor(() => expect(result.current.board).toBeDefined());
+    act(() => streams[0].onBoard(first));
+    const plan = planOf(first);
+    const key = `plan/${first.me.node.id}/${first.me.node.checkout}/${plan.ordinal}`;
+    // A real delta carries the node entry too: its seq moved, which is what reconcile trusts over the held snapshot.
+    const node = { ...first.me, plans: undefined };
+    const nodeEntry = (seq: number) => ({ key: `node/${first.me.node.id}/${first.me.node.checkout}`, value: { ...node, seq, plan_order: first.me.plans.map(p => p.ordinal) } });
+    act(() => streams[0].onBoardDelta?.({ base: 1, version: 2, upsert: [nodeEntry(first.me.seq + 1), { key, value: { ...plan, cost: 123.45 } }], remove: [] }));
+    await waitFor(() => expect(result.current.board?.me.plans[0].cost).toBe(123.45));
+    expect(result.current.board?.me.plans.length).toBe(first.me.plans.length);
+    expect(streams).toHaveLength(1);
+    // The next delta must name version 2.
+    act(() => streams[0].onBoardDelta?.({ base: 2, version: 3, upsert: [nodeEntry(first.me.seq + 2), { key, value: { ...plan, cost: 200 } }], remove: [] }));
+    await waitFor(() => expect(result.current.board?.me.plans[0].cost).toBe(200));
+  });
+
+  it("does not apply a delta whose base is not the held version; it reopens the stream for a fresh board", async () => {
+    const first = full();
+    fetchMock.mockResolvedValue(json(first));
+    const { result } = renderHook(() => useBoard(), { wrapper: stable() });
+    await waitFor(() => expect(result.current.board).toBeDefined());
+    act(() => streams[0].onBoard(first));
+    const plan = planOf(first);
+    const key = `plan/${first.me.node.id}/${first.me.node.checkout}/${plan.ordinal}`;
+    act(() => streams[0].onBoardDelta?.({ base: 7, version: 8, upsert: [{ key, value: { ...plan, cost: 999 } }], remove: [] }));
+    expect(result.current.board?.me.plans[0].cost).not.toBe(999);
+    await waitFor(() => expect(streams).toHaveLength(2));
+    expect(closed).toHaveBeenCalled();
+  });
+});

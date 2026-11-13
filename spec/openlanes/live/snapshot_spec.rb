@@ -287,6 +287,16 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       end
     end
 
+    it "prices each car at its model's rates, and a plan at no less than its cars" do
+      cars = by_ordinal.values.flat_map { it[:cars] }
+      aggregate_failures do
+        expect(cars).to all(include(:cost))
+        expect(cars.map { it[:cost] }).to all(be_a(Float))
+        expect(by_ordinal["005.00"][:cost]).to eq(by_ordinal["005.00"][:cars].sum { it[:cost] }.round(4))
+        expect(by_ordinal.values).to all(satisfy { |plan| plan[:cost] >= plan[:cars].sum { it[:cost] }.round(4) })
+      end
+    end
+
     it "carries an open pull request as open" do
       expect(snapshot[:plans].find { it[:ordinal] == "005.00" }[:pr])
         .to eq(number: 44, url: "https://github.com/example/repo/pull/44", state: "open", ci: nil, merged_at: nil)

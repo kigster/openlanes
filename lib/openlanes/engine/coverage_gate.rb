@@ -191,7 +191,7 @@ module OpenLanes
 
       # @return [Run]
       def run(command, root)
-        started = Clock::System.now
+        started = Container["clock"].now
         child = @spawner.spawn(["sh", "-c", command], chdir: root)
         output = +""
         reader = Thread.new { child.each_chunk { output = keep_tail(output << it) } }
