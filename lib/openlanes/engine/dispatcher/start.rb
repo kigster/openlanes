@@ -62,7 +62,8 @@ module OpenLanes
             up: 0,
             down: 0,
             subagents: 0,
-            frame: 0)
+            frame: 0,
+            rounds: rounds_allowed(agent, subject))
           if task.refresh&.conflicted?
             start_rebase(job, ordinal)
             release_owed = false
@@ -152,7 +153,8 @@ module OpenLanes
             up: 0,
             down: 0,
             subagents: 0,
-            frame: 0)
+            frame: 0,
+            rounds: rounds_allowed(agent, subject))
           remember(ordinal, agent.name, job.state, "Started", found.round)
           UI.log("reattached", **task.log_fields)
           invocations[job.key] = clock.now

@@ -47,7 +47,7 @@ module OpenLanes
             agent: task.agent.name,
             role: task.agent.role,
             round: task.round,
-            rounds: rounds_for(task.agent),
+            rounds: job.rounds || rounds_for(task.agent),
             model: model_for(task.agent, task.subject),
             remaining: job.handle.remaining,
             phase: job.handle.phase,

@@ -11,6 +11,17 @@ export const clock = (s: number): string => {
   return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, "0")}s`;
 };
 
+/** The rounds a car may run. Never fewer than the one it is on: an older engine leaves granted rounds out. */
+export const roundsOf = (car: { round: number; rounds: number }): number => Math.max(car.rounds, car.round);
+
+/** What "Round 2 of 3" means, and what happens after the last one. */
+export const roundTip = (car: { round: number; rounds: number }): string => {
+  const left = roundsOf(car) - car.round;
+  return left > 0
+    ? `Round ${car.round} of ${roundsOf(car)}: ${left} more after this one if it does not finish.`
+    : `Round ${car.round} of ${roundsOf(car)}, its last: if it does not finish, it asks for another.`;
+};
+
 /** clock() under an hour, then 2h 14m. A plan's time on its pill. */
 export const span = (s: number): string => {
   const secs = Math.max(0, Math.floor(s));

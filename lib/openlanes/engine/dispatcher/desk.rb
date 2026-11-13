@@ -291,6 +291,21 @@ module OpenLanes
         # @return [Integer]
         def rounds_for(agent) = [agent.rounds, rounds_cap].compact.min
 
+        # Every round the agent may run on the plan's state: its own, plus the
+        # ones a person or the harness granted (E1). What the board shows as
+        # "Round 2 of 3": {#rounds_for} alone read "Round 4 of 1" on an agent
+        # running its third extension, which told a person nothing about how
+        # many more there were.
+        #
+        # @param agent [OpenLanes::Agents::Agent]
+        # @param subject [OpenLanes::Plans::Subject]
+        # @return [Integer]
+        def rounds_allowed(agent, subject)
+          return rounds_for(agent) if runner.dry_run?
+
+          rounds_for(agent) + extensions.rounds(subject.feature.path, agent.name, subject.status.key)
+        end
+
         # @param agent [OpenLanes::Agents::Agent]
         # @param subject [OpenLanes::Plans::Subject, nil] whose spec.md may override it
         # @return [String]

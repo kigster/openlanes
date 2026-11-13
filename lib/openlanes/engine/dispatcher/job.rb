@@ -31,7 +31,8 @@ module OpenLanes
         :journal,
         :journaled,
         :journal_round,
-        :sweep) do
+        :sweep,
+        :rounds) do
         # @return [Boolean]
         def finished? = !thread.alive?
       end
