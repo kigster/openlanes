@@ -38,3 +38,7 @@ The comment names `just update-config-schema`, and the spec failure message tell
 
 ### F205 [minor] lib/openlanes/support/project.rb:62
 `Project.enter_main_checkout` is a command-boot step: it calls `Dir.chdir` and `UI.line`. It sits in `Project` beside the pure root-finding helpers, and `Start` calls it directly. Consider placing it with `Start` or a boot helper, keeping `Project` free of side effects.
+
+### Round 2 recheck (design-reviewer)
+
+The code under review is unchanged for F201 to F205. `lib/openlanes/support/config.rb` is still not in the diff, `Config::Schema` still has no caller outside `lib/openlanes/support/config/`, and the `justfile` still has no `update-config-schema` recipe. F201 and F202 stand as critical, F203 to F205 as minor.

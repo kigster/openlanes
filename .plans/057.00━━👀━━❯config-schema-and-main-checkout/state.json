@@ -6,7 +6,7 @@
     "slug": "config-schema-and-main-checkout"
   },
   "state": "in_review",
-  "updated_at": "2026-11-12T21:54:53-08:00",
+  "updated_at": "2026-11-12T22:04:56-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -594,6 +594,87 @@
       "note": "completed - 4 tool calls; signed no verdict: great, passed, rejected or slop",
       "moves": 6,
       "replaced_by": "claude"
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:03:17-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "1e0a0900-b5af-40bc-8af2-a2eb7bbe1c90",
+      "verdict": "rejected 2/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:04:00-08:00",
+      "up": 324617,
+      "down": 3240,
+      "seconds": 42.3,
+      "note": "completed - 4 tool calls; rejected; waiting for security-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:03:43-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:04:16-08:00",
+      "up": 1012203,
+      "down": 1992,
+      "seconds": 33.2,
+      "note": "completed - 3 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:04:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "0fdd20d8-b7ac-4e7d-8128-95203956bc9e",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:04:56-08:00",
+      "up": 321265,
+      "down": 2608,
+      "seconds": 52.3,
+      "note": "completed - 4 tool calls; rejected; waiting for security-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-12T22:04:17-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "to": "in_review",
+      "finished_at": "2026-11-12T22:04:38-08:00",
+      "up": 786621,
+      "down": 850,
+      "seconds": 21.0,
+      "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
+      "moves": 6
     }
   ],
   "signatures": [
@@ -985,6 +1066,58 @@
       "status": "Completed",
       "round": 13,
       "note": "Completed, round 13 (passed)"
+    },
+    {
+      "at": "2026-11-12T22:03:29-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:03:55-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 2/2"
+    },
+    {
+      "at": "2026-11-12T22:03:55-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:04:12-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T22:04:18-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:04:28-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:04:35-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T22:04:44-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
     }
   ],
   "messages": [
@@ -995,6 +1128,15 @@
       "from": "staff-reviewer",
       "to": "design-reviewer",
       "body": "staff-reviewer done: rejected 1/2 (F1 critical: parse/writer ignore schema; F2, F3 minor). alock refused pull-requests.md (held by openlanes:43808), so findings are in PR #210 comment 6844083710 only.",
+      "read": "no"
+    },
+    {
+      "id": "b4db90b0-6de6-4c24-b9a4-206b60851df9",
+      "number": 2,
+      "at": "2026-11-12T22:04:42-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "staff-reviewer rerun: PR #210 head still 30537b23, so my round-1 verdict stands (rejected 1/2, comment 6844083710). pull-requests.md is still locked by openlanes:55939, so my findings are not in it.",
       "read": "no"
     }
   ],
@@ -1083,6 +1225,20 @@
               "text": "Next round: check that Config.parse validates via Config::Schema, that to_yaml writes every key, and that the just update-config-schema recipe exists"
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Second design review of PR 210: code unchanged, so F201 and F202 stand as critical. Commented and signed Completed (rejected 2/2), which sends the plan to the arbitrator"
+            },
+            {
+              "kind": "note",
+              "text": "The signature went in with --round 1 as the invocation instructed; the ledger already holds earlier rounds"
+            }
+          ]
         }
       }
     },
@@ -1103,6 +1259,20 @@
             {
               "kind": "note",
               "text": "alock refused pull-requests.md, held by openlanes:43808 (the plan dir/**), so my findings are not in pull-requests.md. Write them there next round if the lock is free"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Rerun of round 1: PR #210 head unchanged at 30537b23 (local worktree HEAD is 56140912, unpushed), so I kept the verdict and posted no second comment"
+            },
+            {
+              "kind": "todo",
+              "text": "Copy F1-F3 from PR comment 6844083710 into pull-requests.md under ## Findings: staff-reviewer once the plan folder lock (held by the openlanes harness) is free"
             }
           ]
         }

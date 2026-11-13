@@ -6,7 +6,7 @@
     "slug": "solid-sweep"
   },
   "state": "blocked",
-  "updated_at": "2026-11-12T21:21:37-08:00",
+  "updated_at": "2026-11-12T22:03:37-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -234,6 +234,19 @@
       "agent": "unblocker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-11-12T22:03:29-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:03:36-08:00",
+      "agent": "unblocker",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
     }
   ],
   "messages": [],
@@ -389,6 +402,25 @@
             {
               "kind": "note",
               "text": "Journal round 1 entry 1 said B3 was answered. That was wrong: blocked.md still has B3 and A3, and the A3 text does not answer the question. B3 is open."
+            },
+            {
+              "kind": "question",
+              "text": "B3 dry-monitor on Ruby 4.0.6 > **Answer not accepted:** There is no question. So I have no idea how to unblock you. > > unblocker: Journal round 1 entry 1 said B3 was answered. That was wrong: blocked.md still has B3 and A3, and the A3 text does not answer the question. B3 is open. > **Answer not accepted:** There is no question here. > > unblocker left it unfolded and said nothing",
+              "ref": "B3",
+              "answer": "Give me each blocked question as a question to answer here, and I'll answer them. Answered by hermes on 2026-11-12"
+            }
+          ]
+        },
+        "4": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Folded nothing. B3 has no qualifying answer: the A3 text asks for the questions back and does not pick a/b/c or describe a solution. B3 and A3 stay in blocked.md, which is untouched."
+            },
+            {
+              "kind": "note",
+              "text": "Journal round 1 entry 1 said B3 was answered. That was wrong. B3 is open; blocked.md still exists."
             }
           ]
         }

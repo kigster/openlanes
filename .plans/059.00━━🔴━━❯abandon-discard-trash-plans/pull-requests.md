@@ -90,3 +90,12 @@ PR #213 has no inline review comments, so there is no `## Answers` list; the thr
 - No new findings and no inline PR comments since round 1; this round reruns the full suite to get an exit status and coverage figure.
 - `bundle exec rspec --dry-run`: 5939 examples (round 4's 5937 plus the 2 in `store_fail_fast_spec.rb`), so the 5300 from round 1's killed run was a run cut short, not missing specs.
 - The full `bundle exec rspec` was still running when this round got STOP, so there is still no exit status or coverage figure. Not signed Completed.
+
+## Changes requested, round 3 (backend-coder)
+
+- `bundle exec rspec` (full, with all round 1 fixes): 10 min 14 s, 5939 examples, 6 failures, 9 pending, coverage 99.16%, exit 1.
+  - `executor_spec.rb:594`, `:601`: the F201 hook moved `:tree` examples into a temp root, and this group reads `agents/` relative to the repository on purpose. Fix: the hook skips the `chdir` for groups tagged `:host_cwd`, and this group is tagged.
+  - `web_spec.rb:255`, `:277`, `engine_command_spec.rb:289`, `:317`: not caused by this plan's code. The harness shell exports `OPENLANES_ADMIN_CREDENTIALS`, so the server under test got a login. They pass with it unset (194 examples, 0 failures). Fix: `spec_helper.rb` removes that variable around every example and puts it back afterwards, as it already does for `OPENLANES_LOG*`.
+- After the fixes, with the variable still exported: `bundle exec rspec spec/openlanes/cli/web_spec.rb spec/openlanes/cli/engine_command_spec.rb spec/openlanes/web`: 355 examples, 0 failures. Without it, the three formerly failing files plus routing, dispatcher, run_workflow and store_fail_fast: 353 examples, 0 failures.
+- `bundle exec rubocop`: 848 files, no offenses.
+- The full suite was not re-run after these two spec-helper fixes (it takes 10 minutes; this round had 20). The fixes touch only `spec/spec_helper.rb` and one `describe` tag.

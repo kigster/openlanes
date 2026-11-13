@@ -31,3 +31,12 @@
   - `architecture_doc_spec.rb:13`: stale after `rate_limit.rb` and the `Executor::Result` change. Fix with `just update-architecture`.
   - `redis_outage_integration_spec.rb:72, :100`: timing-flaky, as in earlier rounds.
   - `apps/restart_spec.rb:77`: not yet investigated. Run it alone to see whether it is flaky.
+
+## Round 5, backend-coder
+
+- `just update-architecture` re-run; `architecture_doc_spec.rb` green.
+- `apps/restart_spec.rb:77` passes when run alone (6 examples, 0 failures): timing under a loaded machine.
+- The flaky `redis_outage_integration_spec.rb` was a real race: `Live::Store` shared one RedisClient across the tick, agent jobs and PR watch, and interleaved commands raised "can't modify string; temporarily locked". Every command now takes a `Monitor`, and the blocking XREAD has its own client behind its own lock. Before: 2 of 3 runs failed. After: 3 of 3 runs green; `spec/openlanes/live` 626 examples, 0 failures. Row added to `docs/thread-safety.md`.
+- Full `bundle exec rspec` this round: 5986 examples, 4 failures, all in `cli/web_spec.rb:255, :277` and `cli/engine_command_spec.rb:289, :317`. The operator's shell exports `OPENLANES_ADMIN_CREDENTIALS`, and the suite inherited it. `spec_helper.rb` now deletes it at load, beside `NO_COLOR`; both files then ran 84 examples, 0 failures. No other failures in that run, so the suite should now be green. Not confirmed by a second full run.
+- `bundle exec rubocop`: 857 files, 0 offenses.
+- Units still open: B5a, B5b, B4 settle requeue, B2, B6.

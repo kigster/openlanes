@@ -6,7 +6,7 @@
     "slug": "improve-openlanes-low-hanging-fruit"
   },
   "state": "building",
-  "updated_at": "2026-11-12T21:48:48-08:00",
+  "updated_at": "2026-11-12T22:21:08-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -197,6 +197,37 @@
       "seconds": 688.9,
       "note": "Almost completed; no rounds left",
       "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-12T22:05:41-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "54182d55-5483-4d37-8196-9c375839da52"
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T22:05:47-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "ed05bd11-9f11-45a1-aff3-4b882586098e",
+      "to": "building",
+      "finished_at": "2026-11-12T22:06:01-08:00",
+      "up": 108318,
+      "down": 486,
+      "seconds": 13.4,
+      "note": "completed - 1 tool calls",
+      "moves": 4
     }
   ],
   "signatures": [
@@ -286,6 +317,25 @@
       "agent": "backend-coder",
       "status": "Almost completed",
       "round": 4
+    },
+    {
+      "at": "2026-11-12T22:05:58-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T22:06:05-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:20:52-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
     }
   ],
   "messages": [],
@@ -313,27 +363,30 @@
     },
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T21:39:32-08:00",
-      "round": 4,
+      "at": "2026-11-12T22:20:50-08:00",
+      "round": 1,
       "status": "Interrupted",
       "done": [
         "B3",
         "B1",
-        "spec isolation",
-        "B4 RateLimit + Executor::Result#rate_limit"
+        "B4 detect+Executor result",
+        "spec isolation (.openlanes.yml",
+        "OPENLANES_ADMIN_CREDENTIALS)",
+        "Live::Store thread safety"
       ],
       "remaining": [
-        "read /tmp/ol060-r4-full.txt or rerun full rspec",
+        "confirm full rspec green",
         "B5a",
         "B5b",
         "B4 settle requeue",
         "B2",
         "B6"
       ],
-      "next_step": "Read /tmp/ol060-r4-full.txt (full run from round 4; 3 F seen at 4374 examples) and fix any failure; then B5a: extract Steps::Assign and Steps::Rename from dispatcher.rb",
+      "next_step": "Run full rspec (run_in_background, ~10 min) to confirm 0 failures; then B5a: extract Steps::Assign and Steps::Rename from dispatcher.rb",
       "files_touched": [
-        "lib/openlanes/execution/executor.rb",
-        "spec/openlanes/execution/executor_spec.rb"
+        "lib/openlanes/live/store.rb",
+        "docs/thread-safety.md",
+        "spec/spec_helper.rb"
       ]
     }
   },
@@ -516,6 +569,16 @@
               "text": "Plan 060.00 has no front-end units; signed Completed (no front end)"
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 1 re-signed Completed (no front end); plan.md still has no Frontend units"
+            }
+          ]
         }
       }
     },
@@ -626,6 +689,32 @@
             {
               "kind": "note",
               "text": "Round 4 full rspec: 5983 examples, 4 failures, exit 1. architecture_doc_spec:13 is stale (run just update-architecture). redis_outage_integration :72/:100 fail on timing. apps/restart_spec.rb:77 not investigated yet"
+            }
+          ]
+        },
+        "5": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "architecture docs regenerated. apps/restart_spec:77 passes alone, so it only fails on timing"
+            },
+            {
+              "kind": "done",
+              "text": "Fixed a real race in Live::Store: one RedisClient was shared across threads ('can't modify string; temporarily locked'). Every command now takes a Monitor; the blocking XREAD has its own client and lock. redis_outage spec went from 2/3 failing to 3/3 green; live specs 626/0. Row added to thread-safety.md"
+            },
+            {
+              "kind": "done",
+              "text": "spec_helper deletes OPENLANES_ADMIN_CREDENTIALS at load (the operator's shell exports it). That fixed cli/web_spec :255/:277 and engine_command_spec :289/:317; both files now 84/0. Full rubocop: 857 files, 0 offenses"
+            },
+            {
+              "kind": "note",
+              "text": "This invocation was labelled round 1 and used the installed gem openlanes-4.0.1, not the checkout's exe. I signed with what was given"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: one full rspec run (run_in_background, about 10 min) to confirm 0 failures; then B5a, B5b, B4 settle requeue, B2, B6"
             }
           ]
         }

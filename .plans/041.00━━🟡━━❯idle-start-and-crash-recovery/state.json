@@ -6,7 +6,7 @@
     "slug": "idle-start-and-crash-recovery"
   },
   "state": "building",
-  "updated_at": "2026-11-12T20:44:15-08:00",
+  "updated_at": "2026-11-12T22:14:26-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -399,6 +399,75 @@
       "seconds": 18.9,
       "note": "completed - 4 tool calls",
       "moves": 6
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-12T21:58:10-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "b814f742-b3bb-4f2e-aef2-7d8e0ccdefd9"
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T21:58:11-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "d4cb57ec-e410-49a9-8df6-5dafb54c8495",
+      "to": "building",
+      "finished_at": "2026-11-12T21:58:36-08:00",
+      "up": 157438,
+      "down": 892,
+      "seconds": 24.3,
+      "note": "Interrupted; no rounds left",
+      "moves": 6
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-12T22:02:02-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3c1f656d-5de3-4cc1-97f2-098eb92988cc",
+      "to": "building",
+      "finished_at": "2026-11-12T22:14:26-08:00",
+      "up": 606977,
+      "down": 5110,
+      "seconds": 742.8,
+      "note": "ledger says Completed but 🟢 Ready for Review is not justified: Ready for Review requires an open pull request; none are recorded",
+      "moves": 6
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-12T22:02:03-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/041.00-idle-start-and-crash-recovery",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "d4cb57ec-e410-49a9-8df6-5dafb54c8495",
+      "to": "building",
+      "finished_at": "2026-11-12T22:02:27-08:00",
+      "up": 181739,
+      "down": 849,
+      "seconds": 23.3,
+      "note": "completed - 2 tool calls",
+      "moves": 6
     }
   ],
   "signatures": [
@@ -575,6 +644,55 @@
       "status": "Completed",
       "round": 1,
       "note": "B1 a): baseline failures deferred to a separate plan; rubocop clean"
+    },
+    {
+      "at": "2026-11-12T21:58:24-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:58:24-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:58:32-08:00",
+      "agent": "frontend-coder",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T21:58:40-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:02:13-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:02:17-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:02:22-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T22:14:15-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -585,6 +703,24 @@
       "from": "frontend-coder",
       "to": "backend-coder",
       "body": "plan.md has no ## Frontend section and the plan is pure process supervision (supervisor, reattach, shutdown); no UI unit. Signing Completed (no front end). Add a ## Frontend section if you disagree.",
+      "read": "yes"
+    },
+    {
+      "id": "ad81a965-cb8c-4d19-8b3b-769aac11f56f",
+      "number": 2,
+      "at": "2026-11-12T22:02:20-08:00",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "No ## Frontend section and no UI unit in 041.00 (supervisor, reattach, shutdown only). Signing Completed (no front end).",
+      "read": "yes"
+    },
+    {
+      "id": "670bbf75-8620-48a0-9957-fc85ec3f4b5d",
+      "number": 3,
+      "at": "2026-11-12T22:14:05-08:00",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "Back end done: no code changes in round 5, checks logged in pull-requests.md. Signing Completed.",
       "read": "no"
     }
   ],
@@ -608,18 +744,36 @@
       ]
     },
     "backend-coder": {
-      "source": "harness",
-      "at": "2026-11-12T20:18:18-08:00",
+      "source": "agent",
+      "at": "2026-11-12T21:58:39-08:00",
       "round": 1,
       "status": "Interrupted",
-      "note": "wrong array length at 2 (expected 2, was 1); last ledger line: Completed, round 1: B1 answered a): baseline failures deferred to a separate plan; last seen: {\"openlanes_memory\":{\"kind\":\"done\",\"text\":\"Round 3: main still at 4fcb6eb2."
+      "done": [
+        "PR1 supervisor #146",
+        "PR2 reattach #147",
+        "PR3 shutdown #148",
+        "round-4 checks: rubocop 0 offenses; rspec 8 failures all in B1 baseline"
+      ],
+      "remaining": [
+        "harness to accept Completed and move 041 to review"
+      ],
+      "next_step": "No code work left. Re-run rubocop and rspec, confirm only B1 baseline failures (deferred per B1 a)), sign Completed.",
+      "files_touched": [
+        "none"
+      ]
     },
     "frontend-coder": {
-      "source": "harness",
-      "at": "2026-11-12T19:36:37-08:00",
-      "round": 3,
+      "source": "agent",
+      "at": "2026-11-12T21:58:30-08:00",
+      "round": 1,
       "status": "Interrupted",
-      "note": "claude exited 1: Failed to authenticate: OAuth session expired and could not be refreshed - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261112-193633-041.00-frontend-coder-58797-1fa3.ndjson; last seen: Failed to authenticate: OAuth session expired and could not be refreshed"
+      "done": [
+        "read plan and mailbox"
+      ],
+      "remaining": [
+        "decide front-end scope"
+      ],
+      "next_step": "plan.md has no ## Frontend and the plan is pure process supervision; if backend-coder adds no Frontend section, sign Completed (no front end)"
     }
   },
   "memory": {
@@ -800,6 +954,38 @@
             {
               "kind": "decision",
               "text": "Following the B1 answer a): the baseline failures go to a separate plan. Logged the checks in pull-requests.md and signed Completed."
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 4 was INTERRUPTED at start. Before that, I signed Completed twice (20:18 and 20:44) and the harness still kept 041 at Building. The 20:18 one failed with 'wrong array length at 2'. Likely a harness bug, not plan work."
+            },
+            {
+              "kind": "done",
+              "text": "Round 4 checks: rubocop 0 offenses in 847 files. rspec: 5936 examples, 8 failures, all in the B1 baseline. Acked mail #1: frontend-coder found no front end and signed Completed."
+            }
+          ]
+        },
+        "4": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 5: origin/main moved to 1c39173d. rubocop 0 offenses in 867 files. rspec slower this round (several concurrent rspec runs on the machine)."
+            },
+            {
+              "kind": "done",
+              "text": "Round 5 on main 1c39173d: rubocop 0 offenses in 867 files. rspec: 6037 examples, 6 failures, coverage 99.17%. All 6 come from env leaks: OPENLANES_ADMIN_CREDENTIALS (web_spec, engine_command_spec) and REDIS_URL (redis_outage_integration). Logged in pull-requests.md, signed Completed per B1 a)."
+            },
+            {
+              "kind": "note",
+              "text": "New env leak for the separate spec-isolation plan: OPENLANES_ADMIN_CREDENTIALS set in the shell breaks web_spec:255,277 and engine_command_spec:289,317."
             }
           ]
         }

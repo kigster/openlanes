@@ -28,6 +28,10 @@ amended: after review (F2, F3, F101–F103, F201–F204). Each kind installs int
 
 `Reviews.new(agents:, review:, changes:)`: `changes` is `(subject) -> Array<String>, nil`; nil (the default) means every stage-2 reviewer watches. `Reviews#startable?(agent, subject)`: stage 1 always, stage 2 only after every stage-1 reviewer passed this round and `Agent#watching?(changes)`. `#stage_two(subject, notes)`. `#decide` decides at once on a stage-1 rejection or slop; otherwise pending is stage 1 plus watching stage 2. `Dispatcher#eligible?` asks `startable?`. amended: wired. `RunWorkflow#reviews_for` passes `Vcs::Changes.new(worktree:)`, which runs `git -C <plan worktree> diff --name-only origin/<default>...HEAD` with no network and answers nil when there is no checkout or git fails. A shared-tree run passes nil, so every stage-2 reviewer watches. `dispatcher_spec` shows that staff-reviewer runs alone first and that a staff rejection never starts stage 2.
 
+## Snapshot readers (B3), partly built
+
+`Steps::POLL = 10`. `Steps::Snapshot.new(github:, seconds:, clock:)`: `#call` returns one `PullSnapshot` per interval, behind a mutex; `#refresh!` drops it. `Steps::Context` gains `snapshot:` (default nil), which the dispatcher fills from `PrWatch#snapshot`. `PrWatch.new(snapshot:)` reads the open rows from the snapshot and calls `pull_request` only for a watched PR that has left it (merged or closed); with no snapshot it still uses `pulls(state: "all")`. `Vcs::SnapshotReads` wraps GitHub: `labels` and `checks` come from the snapshot when it holds that PR in that repo, and every write in `WRITES` refreshes it first. `RunWorkflow` shares one `pull_snapshot` across PrWatch, Merging and Verification. Not yet moved over: the `pull_request` reads in `merging.rb` and `upkeep/sweep.rb`, and the "fails on a per-PR call" doubles in the step specs.
+
 ## Still to build
 
 B3 (snapshot consumers, `POLL = 10`), B5 (staged review round in `reviews.rb` and `dispatcher.rb`), B6 (integration spec).

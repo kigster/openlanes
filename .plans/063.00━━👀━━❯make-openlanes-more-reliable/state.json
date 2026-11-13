@@ -5,8 +5,8 @@
     "ordinal": "063.00",
     "slug": "make-openlanes-more-reliable"
   },
-  "state": "ready_for_review",
-  "updated_at": "2026-11-12T21:55:32-08:00",
+  "state": "in_review",
+  "updated_at": "2026-11-12T22:16:20-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -477,7 +477,7 @@
       "read": "no"
     }
   ],
-  "moves": 11,
+  "moves": 12,
   "last-known-state": {
     "planner": {
       "source": "harness",

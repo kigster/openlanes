@@ -73,3 +73,9 @@ No critical findings. Dependency check: no gem or npm package added or bumped.
 - Done: B5 wiring. `Vcs::Changes` (git diff in the plan's worktree) is passed into `Reviews` by `RunWorkflow#reviews_for`. Specs: `spec/openlanes/vcs/changes_spec.rb`, plus two staged examples in `dispatcher_spec.rb` (staff alone first; a staff rejection skips stage 2).
 - Remaining for staff F1: B3, B6.
 - `bundle exec rubocop`: no offenses (856 files). `bundle exec rspec`: 3110 examples, 3 failures, all `routing_spec.rb:19,:32,:42` (baseline). The process overran the 330 s shell timeout after printing its summary, so its exit code was the timeout's.
+
+## Round 5, backend-coder
+
+- Done (B3, part): `Steps::Snapshot`, `POLL = 10`, `Context#snapshot`, PrWatch on the snapshot, `Vcs::SnapshotReads` (labels and checks from the snapshot, refreshed on every write) wired into Merging and Verification, and a row in `docs/thread-safety.md`. Specs: `steps/snapshot_spec.rb`, `vcs/snapshot_reads_spec.rb`, and two snapshot examples in `pr_watch_spec.rb`.
+- Remaining: the `pull_request` reads in `merging.rb` and `upkeep/sweep.rb`, then B6.
+- `bundle exec rubocop`: no offenses (860 files). `bundle exec rspec`: 4142 examples. Failures: `run_workflow_spec` x3 (baseline), and `cli/web_spec.rb:255,:277` plus `cli/engine_command_spec.rb:289,:317`. Those four come from an OpenLanes admin-login variable in this shell's environment: credentials come back as user "kig" where the spec expects none. The thread-safety inventory failure from this round is fixed.
