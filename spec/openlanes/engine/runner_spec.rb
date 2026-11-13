@@ -198,6 +198,44 @@ RSpec.describe OpenLanes::Engine::Runner, :tree do
     # failed politely, must land as a failed attempt on the plan it was
     # running, not abort the loop or vanish. Every invocation runs on its own
     # thread, so this is the only path a raise can take.
+    describe "a worktree the harness brought up to date" do
+      subject(:runner) do
+        described_class.new(tree:, executor: ->(*, **) {}, agents:, isolation: :worktree, jobs: 1, worktree:, publisher:, sleeper: ->(_) {})
+      end
+
+      let(:checkout) { instance_double(OpenLanes::Vcs::Worktree::Checkout, branch: "kig/000.00-x", path: "/does-not-exist", dirty?: false) }
+      let(:outcome) { OpenLanes::Vcs::Refresh::Outcome.new(kind: :rebased, base: "origin/main") }
+      let(:worktree) { instance_double(OpenLanes::Vcs::Worktree, checkout_for: checkout, refresh: outcome) }
+      let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, catch_up: true) }
+      let(:plan) do
+        plans { |t| t.plan "000.00", :in_review, "in-review", files: { "spec.md" => spec_body } }
+        OpenLanes::Plans::Tree.new(dir: plans_root).subjects.first
+      end
+      let(:agent) { agents.all.first }
+
+      it "sends the rebased branch to its pull request before the agent starts" do
+        task = runner.prepare(agent, plan, 1)
+        expect(publisher).to have_received(:catch_up).with(checkout:, subject: plan)
+        expect(task.refresh).to eq(outcome)
+      end
+
+      it "starts the agent all the same when the push fails, and says why" do
+        allow(publisher).to receive(:catch_up).and_raise(OpenLanes::Error, "committed abc1234 locally, but the push failed: rejected")
+        allow(OpenLanes::UI).to receive(:log)
+        expect(runner.prepare(agent, plan, 1).root).to eq("/does-not-exist")
+        expect(OpenLanes::UI).to have_received(:log).with(a_string_including("the push failed: rejected"), level: :warn, plan: "000.00")
+      end
+
+      context "when the rebase stopped on a conflict" do
+        let(:outcome) { OpenLanes::Vcs::Refresh::Outcome.new(kind: :conflicted, base: "origin/main", files: ["a.rb"]) }
+
+        it "pushes nothing" do
+          runner.prepare(agent, plan, 1)
+          expect(publisher).not_to have_received(:catch_up)
+        end
+      end
+    end
+
     describe "an executor that raises mid-round, in parallel" do
       subject(:runner) do
         described_class.new(tree:,

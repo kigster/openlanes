@@ -440,6 +440,7 @@ module OpenLanes
 
         checkout = worktree.checkout_for(subject.feature)
         outcome = worktree.refresh(checkout, hold:) if refresh
+        catch_up(checkout, subject) if outcome&.done?
         Task.new(agent:, subject:, root: checkout.path, checkout:, round:, refresh: outcome)
       end
 
@@ -461,6 +462,20 @@ module OpenLanes
       end
 
       private
+
+      # The pull request follows the branch the harness just brought up to
+      # date ({Vcs::Publisher#catch_up}). A push that fails is said and the
+      # round goes on: the agent works on the rebased checkout either way,
+      # and the next round tries the push again.
+      #
+      # @return [void]
+      def catch_up(checkout, subject)
+        return unless @publisher&.catch_up(checkout:, subject:)
+
+        UI.log("worktree: pushed the rebased branch to its pull request", plan: subject.feature.ordinal.to_s)
+      rescue OpenLanes::Error => e
+        UI.log("worktree: #{e.message.lines.first.to_s.strip}", level: :warn, plan: subject.feature.ordinal.to_s)
+      end
 
       # @return [String]
       def shared_root = File.dirname(tree.dir)
