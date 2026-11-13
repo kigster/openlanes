@@ -59,7 +59,7 @@ Edit each `spec.md` before the agents start; [`spec-template.md`](https://github
 ## 6. Start the factory
 
 ```bash
-ol start              # engine plus control room, until Stop All Local or Ctrl-C
+ol start              # engine plus control room, until Stop Local Workers or Ctrl-C
 ol start --no-git-push   # keep everything local: no pushes, no pull requests
 ```
 

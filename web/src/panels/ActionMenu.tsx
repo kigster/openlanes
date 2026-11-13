@@ -65,7 +65,7 @@ export function ActionMenu({ backlog, onCommand, note, ideaOpen, onIdeaOpenChang
   return (
     <>
       <Menu.Root open={open} onOpenChange={onOpenChange}>
-        <Menu.Trigger className="btn">Action <span aria-hidden="true">▾</span></Menu.Trigger>
+        <Menu.Trigger className="btn nav-pill">Actions <span aria-hidden="true">▾</span></Menu.Trigger>
         <Menu.Portal>
           <Menu.Content className="menu" align="end" sideOffset={6} loop>
             {view === "main" ? (

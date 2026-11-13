@@ -29,7 +29,7 @@ export function useQuestion(plan: Plan, question: Question, onCommand: SendComma
   const settle = async (text: string, note: string) => {
     const reply = await command.send({ ...base, kind: "answer", payload: { question: questionRef(question), text } }, note);
     if (reply && reply.status !== "refused") {
-      update({ settled: note, draft: "" });
+      update({ settled: note, draft: "", seen: question.follow_up ?? null });
       onAnswered?.(text);
     }
     return reply;

@@ -72,13 +72,13 @@ describe("under ?fixture", () => {
   it("switches to narrow lanes and remembers it in this browser", async () => {
     const user = userEvent.setup();
     const { unmount } = renderApp();
-    const toggle = await screen.findByRole("button", { name: "Narrow lanes" });
+    const toggle = await screen.findByRole("button", { name: "Narrow Lanes" });
     expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "wide");
     await user.click(toggle);
     expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "narrow");
     unmount();
     renderApp();
-    expect(await screen.findByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("button", { name: "Narrow Lanes" })).toHaveAttribute("aria-pressed", "true");
     expect(document.querySelector("main.layout")).toHaveAttribute("data-lanes", "narrow");
   });
 
@@ -152,11 +152,11 @@ describe("under ?fixture", () => {
     expect(screen.getByText(/this machine will not start them/)).toBeInTheDocument();
     await user.click(tab);
     expect(screen.getByRole("tab", { name: "Board" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("button", { name: "All machines" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "All Machines" })).toHaveAttribute("aria-pressed", "true");
     expect(localStorage.getItem("openlanes-merged")).toBe("1");
     await waitFor(() => expect(screen.getByTestId("announcer")).toHaveTextContent("Showing every machine's plans."));
-    await user.click(screen.getByRole("button", { name: "All machines" }));
-    expect(screen.getByRole("button", { name: "All machines" })).toHaveAttribute("aria-pressed", "false");
+    await user.click(screen.getByRole("button", { name: "All Machines" }));
+    expect(screen.getByRole("button", { name: "All Machines" })).toHaveAttribute("aria-pressed", "false");
     // Their pill opens their tab.
     await user.click(screen.getByTitle(/^010 .*Read only\./));
     expect(tab).toHaveAttribute("aria-selected", "true");
@@ -274,7 +274,7 @@ it("does not reopen the idea dialog on a reload once #start is spent", async () 
   await screen.findByRole("dialog");
   first.unmount();
   renderApp();
-  await screen.findByRole("button", { name: "All machines" });
+  await screen.findByRole("button", { name: "All Machines" });
   expect(screen.queryByRole("dialog")).toBeNull();
 });
 
@@ -287,7 +287,7 @@ it("works in a private window, where storage throws", async () => {
     throw new Error("denied");
   });
   renderApp();
-  const toggle = await screen.findByRole("button", { name: "All machines" });
+  const toggle = await screen.findByRole("button", { name: "All Machines" });
   await userEvent.click(toggle);
   expect(toggle).toHaveAttribute("aria-pressed", "true");
   get.mockRestore();
@@ -397,7 +397,7 @@ describe("live", () => {
     expect(screen.getByRole("tab", { name: label })).toHaveAttribute("aria-selected", "true");
   });
 
-  it("counts only agents still at work in Stop All Local, and keeps their merged rows ten seconds", async () => {
+  it("counts only agents still at work in Stop Local Workers, and keeps their merged rows ten seconds", async () => {
     const first = sampleBoard();
     first.me.plans[1].cars[0].state = "done"; // 005: its reviewer finished, the car lingers
     first.me.plans[2].cars[0].state = "failed"; // 006: nothing left to stop
@@ -408,7 +408,7 @@ describe("live", () => {
     await screen.findByRole("tab", { name: "Board" });
     // Their merged row is still on the merged board, not dropped on sight.
     expect(document.querySelector('.plan.is-theirs[data-plan="010.00"]')).not.toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Stop All Local" }));
+    await userEvent.click(screen.getByRole("button", { name: "Stop Local Workers" }));
     expect(await screen.findByText(/shut down 2 agents currently working on 1 plans/)).toBeInTheDocument();
   });
 

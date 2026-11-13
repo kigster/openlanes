@@ -240,6 +240,41 @@ describe("NeedsYou", () => {
     expect(screen.queryByRole("button", { name: "Keep work and resume" })).not.toBeInTheDocument();
   });
 
+  // Plan 045: four answers sent back, and the question never showed again, so Unblock had nothing to bring forward.
+  it("shows a question again when its answer comes back not accepted, with what the agent said", async () => {
+    const user = userEvent.setup();
+    const { onCommand } = recorder();
+    const { rerender } = renderPanel(<NeedsYou plans={[lettered()]} onCommand={onCommand} />);
+    await user.click(screen.getByRole("button", { name: /Carry the checkout path/ }));
+    await findInline("Answered b) to backend-coder.");
+    expect(document.querySelector(".asks .ask")).toBeNull();
+
+    // The same question, unanswered still: nothing has come back yet.
+    rerender(<NeedsYou plans={[lettered()]} onCommand={onCommand} />);
+    expect(document.querySelector(".asks .ask")).toBeNull();
+
+    const back = lettered();
+    back.questions[0].follow_up = "> **Answer not accepted:** b)\n>\n> unblocker: B1 needs a reason too.";
+    rerender(<NeedsYou plans={[back]} onCommand={onCommand} spotlight="001.00" />);
+    const card = await waitFor(() => {
+      const found = document.querySelector<HTMLElement>(".asks .ask.is-spotlit");
+      expect(found).not.toBeNull();
+      return found!;
+    });
+    expect(within(card).getByRole("note", { name: "Follow-up on your last answer" })).toHaveTextContent("B1 needs a reason too.");
+    expect(screen.getByRole("heading", { name: "Needs you (1)" })).toBeInTheDocument();
+    expect(document.querySelector("details.answered")).toBeNull();
+  });
+
+  it("hands the card focus again on a second click on the same lane's Unblock", () => {
+    const { onCommand } = recorder();
+    const plans = [planAt("001.00"), planAt("006.00")];
+    const { rerender } = renderPanel(<NeedsYou plans={plans} onCommand={onCommand} spotlight="006.00" nudge={1} />);
+    (document.activeElement as HTMLElement).blur();
+    rerender(<NeedsYou plans={plans} onCommand={onCommand} spotlight="006.00" nudge={2} />);
+    expect(document.querySelector(".asks .ask.is-spotlit")!.contains(document.activeElement)).toBe(true);
+  });
+
   it("keeps a settled note after the snapshot drops its question", async () => {
     const user = userEvent.setup();
     const { onCommand } = recorder();
