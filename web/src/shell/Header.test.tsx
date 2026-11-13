@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Header, type HeaderProps } from "./Header";
@@ -25,43 +25,46 @@ afterEach(() => {
   localStorage.clear();
 });
 
-it("names this machine and prints the run's totals as plain text, accessibly", async () => {
-  const snapshot = sampleBoard().me;
-  snapshot.run.started_at = "2026-10-13T08:42:00Z";
+it("is a bar of pills: the toggles carry a checkbox, the theme and help stand apart, accessibly", async () => {
   const { container } = render(
-    <Header {...props({ snapshot })} actionMenu={<button type="button">Action</button>} stopAll={<button type="button">Stop All Local</button>}
+    <Header {...props({ merged: true, narrow: false, onToggleNarrow: vi.fn(), hideInactive: false, onToggleHideInactive: vi.fn() })}
+      actionMenu={<button type="button">Actions</button>} stopAll={<button type="button">Stop Local Workers</button>}
       help={<button type="button" aria-label="How this works">?</button>} />,
   );
   expect(screen.getByRole("heading", { level: 1, name: "OpenLanes control room" })).toHaveClass("sr-only");
-  expect(screen.getByText("dana@studio-mini")).toBeInTheDocument();
-  expect(screen.getByText("18 min")).toBeInTheDocument();
-  expect(screen.getByText("agents", { exact: false, selector: ".topbar-stat" })).toHaveTextContent("4 of 4 agents");
-  expect(screen.getByText("2.82M")).toBeInTheDocument();
-  expect(screen.getByText("$14.80")).toBeInTheDocument();
-  expect(screen.queryByText("Sample data")).toBeNull();
+  const nav = within(screen.getByRole("navigation", { name: "Run controls" }));
+  expect(nav.getAllByRole("button").map(b => b.textContent)).toEqual(["Menu", "✓All Machines", "Narrow Lanes", "Hide Inactive", "Actions", "Stop Local Workers"]);
+  expect(nav.queryByRole("button", { name: /theme/i })).toBeNull();
+  expect(nav.queryByRole("button", { name: "How this works" })).toBeNull();
   expect(screen.queryByText("Fixture data")).toBeNull();
-  expect(screen.getByRole("button", { name: "Stop All Local" })).toBeInTheDocument();
   expect(screen.getByRole("img", { name: "openlanes" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });
 
-it("shows the agents working against the run's limit", () => {
-  const snapshot = sampleBoard().me;
-  snapshot.run.agents_working = 3;
-  snapshot.run.jobs = 4;
-  render(<Header {...props({ snapshot })} />);
-  expect(screen.getByText(/agents$/, { selector: ".topbar-stat" })).toHaveTextContent("3 of 4 agents");
+it("folds the pills behind Menu: it opens and closes them, and Escape or a click elsewhere closes them", async () => {
+  render(<Header {...props()} />);
+  const menu = screen.getByRole("button", { name: "Menu" });
+  const nav = screen.getByRole("navigation", { name: "Run controls" });
+  const open = () => [menu.getAttribute("aria-expanded"), nav.hasAttribute("data-open")];
+  const states = [open()];
+  await userEvent.click(menu);
+  states.push(open());
+  await userEvent.keyboard("{Escape}");
+  states.push(open());
+  await userEvent.click(menu);
+  await userEvent.click(screen.getByRole("button", { name: "All Machines" }));
+  states.push(open());
+  await userEvent.click(document.body);
+  states.push(open());
+  expect(states).toEqual([["false", false], ["true", true], ["false", false], ["true", true], ["false", false]]);
+  expect(menu).toHaveAttribute("aria-controls", "nav-items");
 });
 
-it("titles a project that is not openlanes itself and leaves out a missing description", () => {
+it("titles a project that is not openlanes itself", () => {
   const snapshot = sampleBoard().me;
   snapshot.project = "Ledger";
-  snapshot.description = null;
-  snapshot.node.ip = null;
   render(<Header {...props({ snapshot })} />);
-  expect(screen.getByRole("heading", { level: 1, name: "Ledger" })).not.toHaveClass("sr-only");
-  expect(screen.queryByText(/software factory/)).toBeNull();
-  expect(screen.getByText("dana@studio-mini").parentElement).not.toHaveAttribute("title", expect.stringContaining("IP"));
+  expect(screen.getByRole("heading", { level: 1, name: "Ledger" })).toBeInTheDocument();
 });
 
 it("flags fixture data and a lost connection", () => {
@@ -76,20 +79,20 @@ it("shows reconnecting when the stream errors and clears it when the stream reop
   const snapshot = sampleBoard().me;
   const { rerender } = render(<Header {...props({ snapshot })} />);
   expect(screen.queryByRole("status")).toBeNull();
-  const totals = screen.getByText("$14.80");
+  const pills = screen.getByRole("button", { name: "All Machines" });
   rerender(<Header {...props({ snapshot, connection: "reconnecting" })} />);
   expect(screen.getByRole("status")).toHaveTextContent("Reconnecting…");
-  // The totals stay on screen while the stream is down: the last board is kept, not blanked.
-  expect(screen.getByText("$14.80")).toBe(totals);
+  // The bar stays as it was while the stream is down: nothing is rebuilt or blanked.
+  expect(screen.getByRole("button", { name: "All Machines" })).toBe(pills);
   rerender(<Header {...props({ snapshot, connection: "live" })} />);
   expect(screen.queryByRole("status")).toBeNull();
-  expect(screen.getByText("$14.80")).toBe(totals);
+  expect(screen.getByRole("button", { name: "All Machines" })).toBe(pills);
 });
 
-it("presses All machines", async () => {
+it("presses All Machines", async () => {
   const onToggleMerged = vi.fn();
   render(<Header {...props({ merged: true, onToggleMerged })} />);
-  const button = screen.getByRole("button", { name: "All machines" });
+  const button = screen.getByRole("button", { name: "All Machines" });
   expect(button).toHaveAttribute("aria-pressed", "true");
   await userEvent.click(button);
   expect(onToggleMerged).toHaveBeenCalled();
@@ -97,9 +100,9 @@ it("presses All machines", async () => {
 
 it("offers the palettes in a menu, applies the one chosen, and remembers it", async () => {
   const { unmount } = render(<Header {...props()} />);
-  await userEvent.click(screen.getByRole("button", { name: "Theme: System. Change theme" }));
-  expect(screen.getAllByRole("menuitemradio").map(i => i.textContent?.replace(/Light:.*|Dark:.*|Daylight or.*|✓/g, "")))
-    .toEqual(["System", "Daylight", "Paper", "Earth", "Forest", "Midnight", "Ember", "Azure"]);
+  await userEvent.click(screen.getByRole("button", { name: "Theme: Daylight. Change theme" }));
+  expect(screen.getAllByRole("menuitemradio").map(i => i.textContent?.replace(/Light:.*|Dark:.*|✓/g, "")))
+    .toEqual(["Daylight", "Paper", "Earth", "Forest", "Midnight", "Ember", "Azure"]);
   await userEvent.click(screen.getByRole("menuitemradio", { name: /Ember/ }));
   const { dataset } = document.documentElement;
   expect([dataset.theme, dataset.palette, localStorage.getItem(PALETTE_KEY)]).toEqual(["dark", "ember", "ember"]);
@@ -107,33 +110,41 @@ it("offers the palettes in a menu, applies the one chosen, and remembers it", as
   unmount();
 });
 
-it("leaves the built-in themes to the scheme alone, and System to the operating system", () => {
+it("leaves the built-in themes to the scheme alone", () => {
   const { dataset } = document.documentElement;
   applyPalette(PALETTES.find(p => p.id === "forest")!);
+  const forest = [dataset.theme, dataset.palette];
   applyPalette(PALETTES.find(p => p.id === "dark")!);
-  const midnight = [dataset.theme, dataset.palette];
-  applyPalette(PALETTES[0]);
-  expect([midnight, dataset.theme, dataset.palette]).toEqual([["dark", undefined], undefined, undefined]);
+  expect([forest, dataset.theme, dataset.palette]).toEqual([["light", "forest"], "dark", undefined]);
 });
 
-it("restores the stored palette before anything renders, and falls back to System for one it does not know", () => {
+it("restores the stored palette before anything renders", () => {
   localStorage.setItem(PALETTE_KEY, "azure");
   restorePalette();
-  const azure = document.documentElement.dataset.palette;
+  expect([document.documentElement.dataset.theme, document.documentElement.dataset.palette]).toEqual(["dark", "azure"]);
+});
+
+it("starts on what the operating system prefers when nothing is stored, or the stored one is unknown", () => {
+  const media = vi.spyOn(window, "matchMedia").mockImplementation(query => ({ matches: query.includes("dark"), media: query }) as MediaQueryList);
   localStorage.setItem(PALETTE_KEY, "neon");
   restorePalette();
-  expect([azure, document.documentElement.dataset.palette]).toEqual(["azure", undefined]);
+  const dark = [document.documentElement.dataset.theme, document.documentElement.dataset.palette];
+  media.mockImplementation(query => ({ matches: false, media: query }) as MediaQueryList);
+  localStorage.clear();
+  restorePalette();
+  expect([dark, document.documentElement.dataset.theme]).toEqual([["dark", undefined], "light"]);
+  media.mockRestore();
 });
 
 it("offers narrow lanes as a pressed-or-not toggle", async () => {
   const onToggleNarrow = vi.fn();
   const { rerender } = render(<Header {...props({ narrow: false, onToggleNarrow })} />);
-  const toggle = screen.getByRole("button", { name: "Narrow lanes" });
+  const toggle = screen.getByRole("button", { name: "Narrow Lanes" });
   expect(toggle).toHaveAttribute("aria-pressed", "false");
   await userEvent.click(toggle);
   expect(onToggleNarrow).toHaveBeenCalledTimes(1);
   rerender(<Header {...props({ narrow: true, onToggleNarrow })} />);
-  expect(screen.getByRole("button", { name: "Narrow lanes" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Narrow Lanes" })).toHaveAttribute("aria-pressed", "true");
 });
 
 it("offers Hide Inactive as a pressed-or-not toggle, and leaves it out when nobody handles it", async () => {
@@ -149,7 +160,7 @@ it("offers Hide Inactive as a pressed-or-not toggle, and leaves it out when nobo
 
 it("has no lanes toggle when nobody handles it", () => {
   render(<Header {...props()} />);
-  expect(screen.queryByRole("button", { name: "Narrow lanes" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Narrow Lanes" })).toBeNull();
 });
 
 describe("Redis outage notice", () => {

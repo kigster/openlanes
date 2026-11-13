@@ -5,7 +5,7 @@ import { ActionMenu } from "./ActionMenu";
 import { findInline, recorder, renderPanel, snapshot } from "./testing";
 
 const open = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole("button", { name: "Action" }));
+  await user.click(screen.getByRole("button", { name: "Actions" }));
   return screen.findByRole("menu");
 };
 
@@ -22,7 +22,7 @@ describe("ActionMenu", () => {
   it("moves with the arrow keys and closes with Esc back to the button", async () => {
     const user = userEvent.setup();
     renderPanel(<ActionMenu backlog={snapshot.backlog} onCommand={recorder().onCommand} />);
-    screen.getByRole("button", { name: "Action" }).focus();
+    screen.getByRole("button", { name: "Actions" }).focus();
     await user.keyboard("{ArrowDown}");
     const items = within(await screen.findByRole("menu")).getAllByRole("menuitem");
     await waitFor(() => expect(items[0]).toHaveFocus());
@@ -30,7 +30,7 @@ describe("ActionMenu", () => {
     expect(items[1]).toHaveFocus();
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
-    expect(screen.getByRole("button", { name: "Action" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Actions" })).toHaveFocus();
   });
 
   it("New idea opens the idea dialog", async () => {

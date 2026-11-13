@@ -22,13 +22,12 @@ const props = (over: Partial<StatusBarProps> = {}): StatusBarProps => ({
 });
 const ours = () => within(screen.getAllByRole("list")[0]);
 
-it("draws a pill per plan with the mockup's states and the summary, accessibly", async () => {
+it("draws a pill per plan with the mockup's states, accessibly", async () => {
   const { container } = render(<StatusBar {...props({ unblocking: "001.00" })} />);
   const pill = screen.getByRole("button", { name: /^001 [^,]*, needs technical decision/ });
   expect(pill).toHaveClass("pill is-blocked");
   expect(pill).toHaveAttribute("aria-expanded", "true");
   expect(screen.getByRole("button", { name: "005 1h 38m, working, at Review" })).not.toHaveAttribute("aria-expanded");
-  expect(screen.getByText("1 merged, 1 ready to merge, 3 blocked")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "010 1h 38m, on sam@ci-runner-2, read only, at Review" })).toBeInTheDocument();
   expect(await axe(container)).toHaveNoViolations();
 });
@@ -74,7 +73,6 @@ it("puts finished plans after a divider, in the order they finished, gone ones p
   expect(ids).toEqual(["001", "004", "|", "003", "002", "009"]);
   expect(ours().getByRole("button", { name: /^004 [^,]*, held blocked/ })).toHaveClass("is-held");
   expect(ours().getByRole("button", { name: /^009 / })).toHaveClass("is-gone");
-  expect(screen.getByText("2 merged, 1 ready to merge, 1 blocked")).toBeInTheDocument();
 });
 
 it("marks other machines' approved and merged plans", () => {
@@ -167,23 +165,4 @@ it("writes its real height into --statusbar-h, follows it as it changes, and put
     height.mockRestore();
     globalThis.ResizeObserver = Real;
   }
-});
-
-// Two engines on different Redis servers never see each other's claims, so the bar says which one this engine uses.
-describe("the Redis the engine uses", () => {
-  it("is shown as the engine sent it", () => {
-    render(<StatusBar {...props({ redisUrl: "redis://localhost:6379/0" })} />);
-    expect(screen.getByText("redis://localhost:6379/0")).toBeInTheDocument();
-  });
-
-  it("never shows a password or user name, even from an engine that sent one", () => {
-    render(<StatusBar {...props({ redisUrl: "rediss://dana:hunter2@10.0.4.2:6380/3" })} />);
-    expect(screen.getByText("rediss://:***@10.0.4.2:6380/3")).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent("hunter2");
-  });
-
-  it("is left out when the engine did not say", () => {
-    render(<StatusBar {...props({ redisUrl: null })} />);
-    expect(screen.queryByText(/^Redis/)).toBeNull();
-  });
 });

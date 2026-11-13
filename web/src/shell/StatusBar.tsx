@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Plan, Snapshot, Station } from "../api/types";
-import { planId, redactUrl, span, who } from "../board/format";
+import { planId, span, who } from "../board/format";
 import { hasRequest, isApproved, isMerged, pillState } from "../board/model";
 import { MERGED_STAYS_MS, type GonePlan } from "../board/useLifecycle";
 
 export interface StatusBarProps {
-  /** The Redis the engine keeps plan claims and run state in, from its snapshot; null or absent from an older engine. */
-  redisUrl?: string | null;
   plans: Plan[];
   stations: Station[];
   others: Snapshot[];
@@ -58,10 +56,10 @@ const SLIDE = { duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as const };
 
 /**
  * The status bar along the bottom: one pill per plan of ours (working and blocked first in plan order, finished ones
- * after a divider in the order they finished), other machines' plans at the right end, and the summary.
+ * after a divider in the order they finished), and other machines' plans at the right end. The counts are in StatusLine.
  */
 export function StatusBar(props: StatusBarProps) {
-  const { redisUrl, plans, stations, others, gone, offBar, finishOrder, unblocking, onToggleUnblock, onShowPlan, onOpenMachine, onDropGone } = props;
+  const { plans, stations, others, gone, offBar, finishOrder, unblocking, onToggleUnblock, onShowPlan, onOpenMachine, onDropGone } = props;
   const list = useRef<HTMLOListElement>(null);
   const bar = useRef<HTMLElement>(null);
   useBarHeight(bar);
@@ -94,11 +92,6 @@ export function StatusBar(props: StatusBarProps) {
     const id = setInterval(trim, 15_000);
     return () => clearInterval(id);
   }, [trim]);
-
-  const ours = [...plans.filter(p => !gone.has(p.ordinal)), ...[...gone.values()].map(g => g.plan)];
-  const merged = ours.filter(isMerged).length;
-  const ready = ours.filter(isApproved).length;
-  const blocked = live.filter(p => pillState(p, stations).blocked).length;
 
   // Each pill's name starts with what it shows, "005 1h 38m", for voice control (label-content-name-mismatch); the
   // space between the id and the time keeps that text "005 1h 38m" in the DOM, not "0051h 38m".
@@ -169,14 +162,6 @@ export function StatusBar(props: StatusBarProps) {
           }),
         )}
       </ol>
-      <p className="statusbar-sum">
-        {merged} merged, {ready} ready to merge, {blocked} blocked
-      </p>
-      {redisUrl && (
-        <p className="statusbar-redis" title="The Redis this machine's engine keeps plan claims, locks and run state in">
-          Redis <code>{redactUrl(redisUrl)}</code>
-        </p>
-      )}
     </footer>
   );
 }

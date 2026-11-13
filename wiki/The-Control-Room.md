@@ -20,7 +20,7 @@ Starting top left and going clockwise:
 - Next is the button: "All Machines" → if other nodes join your project, there user@hostname
   - Action button that offers you to create a "New Idea" which it turns into a `.plans/<idea-folder>` or to select from existing plans not already taken by remote nodes.
 - Further is the dark/light switch.
-- The button "Stop All Local" terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
+- The button "Stop Local Workers" terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
 
 ## Secondary Nav
 

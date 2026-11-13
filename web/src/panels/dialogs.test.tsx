@@ -16,21 +16,21 @@ describe("StopAllDialog", () => {
   it("asks with the live counts, Cancel focused, and passes axe", async () => {
     const user = userEvent.setup();
     const { container } = renderPanel(<StopAllDialog agents={4} plans={3} onCommand={recorder().onCommand} />);
-    await user.click(screen.getByRole("button", { name: "Stop All Local" }));
+    await user.click(screen.getByRole("button", { name: "Stop Local Workers" }));
     const dialog = await screen.findByRole("dialog", { name: "Stop all local agents?" });
     expect(dialog).toHaveAccessibleDescription("Are you sure you want to shut down 4 agents currently working on 3 plans, and then the engine and this page? This only affects this machine.");
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     expect(await axe(container.ownerDocument.body)).toHaveNoViolations();
     await user.keyboard("{Enter}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(screen.getByRole("button", { name: "Stop All Local" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Stop Local Workers" })).toHaveFocus();
   });
 
   it("sends stop_all and closes", async () => {
     const user = userEvent.setup();
     const { sent, onCommand } = recorder();
     renderPanel(<StopAllDialog agents={2} plans={1} onCommand={onCommand} />);
-    await user.click(screen.getByRole("button", { name: "Stop All Local" }));
+    await user.click(screen.getByRole("button", { name: "Stop Local Workers" }));
     await user.click(await screen.findByRole("button", { name: "Stop them" }));
     expect(sent).toEqual([{ kind: "stop_all", plan: null, agent: null, payload: {} }]);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -56,7 +56,7 @@ describe("HelpDialog", () => {
     const dialog = await screen.findByRole("dialog", { name: "How this works" });
     expect(dialog).toHaveTextContent("This is a distributed software factory. Every machine that runs openlanes on this repository and points at the same Redis works on the same set of plans, side by side.");
     expect(dialog).toHaveTextContent("You join by sharing $REDIS_URL. There is no other mechanism: no invitation, no accounts.");
-    expect(dialog).toHaveTextContent("Stop All Local stops the agents on this machine, then its engine and this page. The other machines keep running.");
+    expect(dialog).toHaveTextContent("Stop Local Workers stops the agents on this machine, then its engine and this page. The other machines keep running.");
     await user.click(screen.getByRole("button", { name: "Got it" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(screen.getByRole("button", { name: "How this works" })).toHaveFocus();

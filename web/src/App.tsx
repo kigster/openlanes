@@ -15,7 +15,8 @@ import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
 import { Header } from "./shell/Header";
 import { Logs } from "./shell/Logs";
-import { Ticker } from "./shell/Ticker";
+import { StatusLine } from "./shell/StatusLine";
+import { planCounts } from "./shell/planCounts";
 import { StatusBar } from "./shell/StatusBar";
 import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
@@ -234,7 +235,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
     [me, onCommand],
   );
 
-  // Stop All Local counts agents that are still at it: a done or failed car lingers on the board but has nothing to stop.
+  // Stop Local Workers counts agents that are still at it: a done or failed car lingers on the board but has nothing to stop.
   const busy = me.plans.map(p => p.cars.filter(isWorking).length).filter(n => n > 0);
 
   return (
@@ -254,6 +255,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         help={<HelpDialog />}
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
+        <GlobalLockBanner lock={me.global_lock ?? null} />
+        <BombNotice bombs={me.bombs} onCommand={onCommand} />
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}
         <div className="tabs" onKeyDownCapture={e => acrossTabs(e, tab => tab.dataset.tab && setTab(tab.dataset.tab))}>
@@ -281,7 +284,6 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               </Tab>
             ))}
           </Tabs.List>
-          <Ticker lines={me.log} onOpen={() => setTab("logs")} />
             {others.map(o => {
               const value = machineTab(o.node.id);
               // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.
@@ -314,9 +316,8 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
                 </span>
               );
             })}
+          <StatusLine snapshot={me} counts={planCounts(me.plans, me.stations, life.gone)} />
         </div>
-        <GlobalLockBanner lock={me.global_lock ?? null} />
-        <BombNotice bombs={me.bombs} onCommand={onCommand} />
         <UnblockWidget plan={unblockPlan} onCommand={onCommand} onClose={closeUnblock} />
         <PlanDrawer plan={unblockPlan} />
         <main className="layout" data-lanes={lanes.lanes} ref={layoutRef} style={{ "--side-width": `${side.width}px` } as CSSProperties}>
@@ -364,7 +365,6 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         </main>
       </Tabs.Root>
       <StatusBar
-        redisUrl={me.redis_url}
         plans={me.plans}
         stations={me.stations}
         others={others}

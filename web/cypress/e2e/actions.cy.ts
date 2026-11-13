@@ -13,15 +13,15 @@ describe("the controls", () => {
   });
 
   it("stops all local agents after asking first", () => {
-    cy.contains("button", "Stop All Local").click();
+    cy.contains("button", "Stop Local Workers").click();
     cy.get(MODAL).invoke("text").should("match", /Are you sure you want to shut down \d+ agents currently working on \d+ plans/);
     cy.get(MODAL).contains("button", "Stop them").click();
     cy.get(MODAL).should("not.exist");
     cy.boardEventually((me) => me.run.status === "quitting" && me.plans.every((p) => p.cars.every((c) => c.state !== "running")));
   });
 
-  it("cancels Stop All Local without stopping anything", () => {
-    cy.contains("button", "Stop All Local").click();
+  it("cancels Stop Local Workers without stopping anything", () => {
+    cy.contains("button", "Stop Local Workers").click();
     cy.get(MODAL).contains("button", "Cancel").click();
     cy.get(MODAL).should("not.exist");
     cy.request("/api/board").its("body.me.run.status").should("eq", "running");
@@ -70,8 +70,23 @@ describe("the controls", () => {
   it("toggles the machine tab: first press shows that machine, the second shows every machine", () => {
     cy.contains(".tab-machine", "sam@ci-runner-2").click();
     cy.contains(".tab-machine", "sam@ci-runner-2").should("have.attr", "aria-selected", "true");
-    cy.contains("button", "All machines").should("have.attr", "aria-pressed", "false");
+    cy.contains("button", "All Machines").should("have.attr", "aria-pressed", "false");
     cy.contains(".tab-machine", "sam@ci-runner-2").click();
-    cy.contains("button", "All machines").should("have.attr", "aria-pressed", "true");
+    cy.contains("button", "All Machines").should("have.attr", "aria-pressed", "true");
+  });
+
+  // The pills fold behind Menu on a narrow page, and the status line moves above the tabs.
+  it("folds the pills behind Menu when the page is narrow", () => {
+    cy.contains("button", "Menu").should("not.be.visible");
+    // Wide, the status line is beside the tabs: it reaches below their top edge.
+    cy.get(".statusline").then(($line) => expect($line[0].getBoundingClientRect().bottom).to.be.greaterThan(Cypress.$(".tab")[0].getBoundingClientRect().top + 10));
+    cy.viewport(900, 900);
+    cy.contains("button", "All Machines").should("not.be.visible");
+    cy.contains("button", "Menu").click().should("have.attr", "aria-expanded", "true");
+    cy.contains("button", "All Machines").should("be.visible").click().should("have.attr", "aria-pressed", "true");
+    cy.contains("button", "Stop Local Workers").should("be.visible");
+    cy.get("body").type("{esc}");
+    cy.contains("button", "All Machines").should("not.be.visible");
+    cy.get(".statusline").then(($line) => expect($line[0].getBoundingClientRect().bottom).to.be.at.most(Cypress.$(".tab")[0].getBoundingClientRect().top + 1));
   });
 });
