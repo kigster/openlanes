@@ -53,8 +53,7 @@ module OpenLanes
         # @return [Array<OpenLanes::Live::Interview::Turn>]
         def turns(interview, prompt, again: true)
           data = JSON.parse(json_in(ask(prompt)))
-          first = interview.history.size + 1
-          Array(data["turns"]).each_with_index.map { |raw, i| Turn.parse(raw.merge("id" => "u#{first + i}", "from" => "unblocker")) }
+          Array(data["turns"]).map { Turn.parse(it.merge("id" => interview.next_id, "from" => "unblocker")) }
                               .tap { raise Invalid, "the reply held no turns" if it.empty? }
         rescue Invalid, JSON::ParserError
           raise if again

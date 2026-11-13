@@ -48,7 +48,7 @@ components:
       type: object
       required: [id, from, kind, text, at]
       properties:
-        id: { type: string, description: "the person's own id; the unblocker's are u1, u2, ..." }
+        id: { type: string, description: "the person's own id; the unblocker's are u plus 12 random letters and digits" }
         from: { enum: [you, unblocker] }
         kind: { enum: [text, question, decision] }
         text: { type: string }

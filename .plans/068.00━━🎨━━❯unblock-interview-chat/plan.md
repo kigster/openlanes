@@ -104,3 +104,11 @@ Yes. `GET` and `POST /api/plans/:plan/questions/:number/interview`, and a new co
 - bundle exec rspec
 - cd web && npx vitest run
 - bin/web-e2e, with a Cypress spec that opens the interview on the demo board's blocked plan, answers two questions and confirms
+
+## Rebase decisions
+
+- `docs/architecture/README.md`: took main's side, then regenerated with `just update-architecture`; it is derived output, so hand-merging counts would only go stale.
+- `lib/openlanes/live/command.rb`: kept main's `extend_time`/`rule_finding` and added `confirm_interview` to KINDS, PLAN_KINDS and its `question turn` PAYLOAD.
+- `lib/openlanes/live/commands.rb`: kept main's HANDLERS (incl. `extend_time`, `rule_finding`) and added `confirm_interview`.
+- `lib/openlanes/web/context.rb`: kept main's `root:` initializer and added the branch's `interview:` keyword.
+- `web/src/api/events.ts`: union of imports, `BoardDelta` from main plus `InterviewEvent` from the branch.

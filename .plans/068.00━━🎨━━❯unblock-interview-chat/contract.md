@@ -28,7 +28,7 @@ Full schema: [openapi.yaml](openapi.yaml).
 - 202 `{turn: InterviewTurn}` (the person's turn). The reply arrives as SSE `event: interview` with `{plan, number, turn}`.
 - 403 `{error}` without the session's X-CSRF-Token; 404 `{error}` when the path names no plan (`NNN.MM`) or question number; 422 `{error}` for an invalid message; 503 `{error}` when nothing answers interviews in this server.
 - amended: no 409. A reply after the question was answered is stored but harmless; confirm is what refuses (round 2, kept the route free of file reads).
-- The unblocker's turn ids are `u<n>`, n being the turn's place in the conversation.
+- The unblocker's turn ids are `u` plus 12 random letters and digits, unique per turn. amended: staff-reviewer F2, two replies reading the same history minted the same `u<n>`.
 - SSE `event: interview` data is `{plan, number, turn}`; it is followed from one repo-wide stream (`Keys#interviews`), so it carries no `id:` and never moves the reply cursor.
 
 ### Confirm: POST /api/commands

@@ -20,15 +20,26 @@ module OpenLanes
         # @param interview [OpenLanes::Live::Interview]
         # @return [Array<OpenLanes::Live::Interview::Turn>]
         def self.call(interview)
-          history = interview.history
-          said = history.select { it.from == "you" }.map(&:text)
-          turn = Live::Interview::Turn
-          if said.size < QUESTIONS.size
-            [turn.new(id: interview.next_id, from: "unblocker", kind: "question", **QUESTIONS[said.size])]
-          else
-            answer = said.join("; ")
-            [turn.new(id: interview.next_id, from: "unblocker", kind: "decision", text: "Here is what I understood: #{answer}. Is that right?", answer:)]
-          end
+          said = interview.history.select { it.from == "you" }.map(&:text)
+          return [question(interview, QUESTIONS[said.size])] if said.size < QUESTIONS.size
+
+          [decision(interview, said.join("; "))]
+        end
+
+        # @return [OpenLanes::Live::Interview::Turn]
+        def self.question(interview, asked) = Live::Interview::Turn.new(id: interview.next_id, from: "unblocker", kind: "question", **asked)
+
+        # The person's words go in `answer` only, which the panel shows as the
+        # answer to confirm; `text` stays the unblocker's own, so a label the
+        # person typed is not refused as the unblocker's (F3).
+        #
+        # @return [OpenLanes::Live::Interview::Turn]
+        def self.decision(interview, answer)
+          Live::Interview::Turn.new(id: interview.next_id,
+            from: "unblocker",
+            kind: "decision",
+            text: "Here is what I understood from your answers. Is that right?",
+            answer:)
         end
       end
     end

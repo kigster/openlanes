@@ -27,9 +27,10 @@ RSpec.describe OpenLanes::Live::Interview::Operator, :tree do
     end
   end
 
-  it "turns the model's JSON into checked turns, numbered after the history" do
+  it "turns the model's JSON into checked turns, each with an id of its own" do
     turns = interview.reply(operator)
-    expect(turns.map { [it.id, it.from, it.kind] }).to eq([%w[u1 unblocker question]])
+    expect(turns.map { [it.from, it.kind] }).to eq([%w[unblocker question]])
+    expect(turns.first.id).to match(/\Au[[:alnum:]]{12}\z/)
   end
 
   it "briefs the model with the question, the rules and the conversation" do

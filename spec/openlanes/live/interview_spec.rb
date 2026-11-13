@@ -38,6 +38,41 @@ RSpec.describe OpenLanes::Live::Interview do
     expect(interview.history).to be_empty
   end
 
+  describe "#reply" do
+    let(:asked) { [] }
+    let(:responder) do
+      lambda do |talk|
+        asked << talk.history.size
+        [turn.new(id: talk.next_id, from: "unblocker", kind: "text", text: "Tell me more")]
+      end
+    end
+
+    it "answers only when the person is owed a turn, so a second read of an empty interview adds nothing" do
+      2.times { interview.reply(responder) }
+      expect(interview.history.map(&:from)).to eq(%w[unblocker])
+      interview.say(turn.new(id: "r1", from: "you", kind: "text", text: "ok"))
+      interview.reply(responder)
+      expect(interview.history.map(&:from)).to eq(%w[unblocker you unblocker])
+      expect(interview.history.map(&:id).uniq.size).to eq(3)
+    end
+
+    it "leaves a reply under way alone, so a reload during a slow turn stores one opening, not two" do
+      inner = nil
+      slow = lambda do |talk|
+        inner = talk.reply(responder) # a second caller, while this one holds the interview
+        responder.call(talk)
+      end
+      interview.reply(slow)
+      expect(inner).to eq([])
+      expect(interview.history.map(&:from)).to eq(%w[unblocker])
+    end
+  end
+
+  it "accepts a bare label in a decision's answer: those are the person's words" do
+    decision = turn.new(id: "d1", from: "unblocker", kind: "decision", text: "Settle it?", answer: "like B2 said")
+    expect(decision.answer).to eq("like B2 said")
+  end
+
   it "nudges the open pages for each turn" do
     news = OpenLanes::Live::News.subscribe(store:, keys:)
     interview.say(question)
@@ -49,7 +84,7 @@ RSpec.describe OpenLanes::Live::Interview do
   describe OpenLanes::Live::Interview::Turn do
     {
       "a bare label in a question"               => [{ kind: "question", text: "Is B2 still right?" }, /B2 is a bare label/],
-      "a bare label in a decision's answer"      => [{ kind: "decision", text: "Settle it?", answer: "as A9 said" }, /A9/],
+      "a bare label in a decision's text"        => [{ kind: "decision", text: "Settle it as A9 said?", answer: "yes" }, /A9/],
       "a question with every option recommended" => [{ kind: "question", text: "Which?", options: :all }, /exactly one/],
       "a question with one option"               => [{ kind: "question", text: "Which?", options: :one }, /2 to 5/],
       "a decision with no answer"                => [{ kind: "decision", text: "Settle it?" }, /needs an answer/],

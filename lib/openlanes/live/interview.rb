@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "securerandom"
 require "time"
 
 module OpenLanes
@@ -63,13 +64,80 @@ module OpenLanes
         turn
       end
 
-      # Store what +responder+ says next. A responder that fails is answered
-      # for in plain words, never as a refusal of what the person said, so
-      # the page shows why it went quiet and the buttons stay usable.
+      # How long one reply may hold the interview before another may start,
+      # in seconds: longer than a slow model's turn, short enough that a
+      # crashed server does not silence the interview for good.
+      BUSY = 600
+
+      # Store what +responder+ says next, when the person is owed a turn: the
+      # interview is empty, or the person spoke last. One reply runs at a
+      # time per question (F2): a second caller, say a reload while the
+      # opening question is still being written, leaves a note and returns,
+      # and the one running looks again once it is done, so a turn said
+      # meanwhile is still answered, and answered once.
+      #
+      # A responder that fails is answered for in plain words, never as a
+      # refusal of what the person said, so the page shows why it went quiet
+      # and the buttons stay usable.
       #
       # @param responder [#call] given this interview, returns its next {Turn}s
       # @return [Array<OpenLanes::Live::Interview::Turn>] what was stored
       def reply(responder)
+        said = []
+        while (turns = held { owed? ? answer(responder) : [] })
+          said.concat(turns)
+          break unless @store.get(again_key)
+        end
+        said
+      end
+
+      # @return [Boolean] whether the person waits on the unblocker
+      def owed?
+        last = history.last
+        last.nil? || last.from == "you"
+      end
+
+      # An id for the unblocker's next turn. Random rather than counted from
+      # the history, so two replies that read the same history cannot mint
+      # the same id.
+      #
+      # @return [String]
+      def next_id = "u#{SecureRandom.alphanumeric(12)}"
+
+      # The decision turn +id+, or nil when there is none by that id.
+      #
+      # @param id [String]
+      # @return [OpenLanes::Live::Interview::Turn, nil]
+      def decision(id) = history.find { it.id == id.to_s && it.kind == "decision" }
+
+      # Forget the conversation: the question is answered, so it is over.
+      #
+      # @return [void]
+      def close = @store.del(key, busy_key, again_key)
+
+      # @return [Hash] `{turns: [InterviewTurn]}`, as the API serves it
+      def wire = { turns: history.map(&:wire) }
+
+      private
+
+      # Run the block holding the interview, or leave a note for the holder.
+      #
+      # @return [Object, nil] the block's value, nil when another reply holds it
+      def held
+        @store.set(again_key, "1", ex: BUSY)
+        token = SecureRandom.hex(8)
+        return unless @store.set(busy_key, token, ex: BUSY, nx: true)
+
+        begin
+          @store.del(again_key)
+          yield
+        ensure
+          @store.compare_and_delete(busy_key, token)
+        end
+      end
+
+      # @return [Array<OpenLanes::Live::Interview::Turn>] what was stored
+      def answer(responder)
         turns = begin
           responder.call(self)
         rescue StandardError => e
@@ -81,27 +149,14 @@ module OpenLanes
         turns.each { say(it) }
       end
 
-      # @return [String] an id for the unblocker's next turn
-      def next_id = "u#{history.size + 1}"
-
-      # The decision turn +id+, or nil when there is none by that id.
-      #
-      # @param id [String]
-      # @return [OpenLanes::Live::Interview::Turn, nil]
-      def decision(id) = history.find { it.id == id.to_s && it.kind == "decision" }
-
-      # Forget the conversation: the question is answered, so it is over.
-      #
-      # @return [void]
-      def close = @store.del(key)
-
-      # @return [Hash] `{turns: [InterviewTurn]}`, as the API serves it
-      def wire = { turns: history.map(&:wire) }
-
-      private
-
       # @return [String]
       def key = @keys.interview(@plan, @number)
+
+      # @return [String] held while a reply is being written
+      def busy_key = "#{key}:busy"
+
+      # @return [String] set by a caller that found a reply under way
+      def again_key = "#{key}:again"
     end
 
     class Interview
@@ -164,9 +219,12 @@ module OpenLanes
           raise Invalid, "a turn is at most #{LIMIT} characters" if text.length > LIMIT
         end
 
+        # The unblocker's own words only. A decision's `answer` carries the
+        # person's words, which may say "B2" and are theirs to say (F3).
+        #
         # @return [void]
         def self.check_label(turn)
-          words = [turn.text, turn.answer, *Array(turn.options).map { it[:label] }].compact.join(" ")
+          words = [turn.text, *Array(turn.options).map { it[:label] }].compact.join(" ")
           label = words[LABEL] and raise Invalid, "#{label} is a bare label; say what it is in words"
         end
 
