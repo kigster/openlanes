@@ -31,4 +31,9 @@ RSpec.describe OpenLanes::Config::CommandsSchema do
       }
     })
   end
+
+  it "names nothing about the machine it was built on, so the checked-in file is the same everywhere" do
+    text = JSON.generate(described_class.build)
+    expect([text.include?(Dir.home), text.include?("(installed)")]).to eq([false, false])
+  end
 end

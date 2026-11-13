@@ -5,8 +5,8 @@
     "ordinal": "057.00",
     "slug": "config-schema-and-main-checkout"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-12T23:24:24-08:00",
+  "state": "building",
+  "updated_at": "2026-11-13T01:42:15-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -837,6 +837,167 @@
       "seconds": 28.2,
       "note": "completed - 2 tool calls; signed no verdict: great, passed, rejected or slop",
       "moves": 6
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:58:03-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "1e0a0900-b5af-40bc-8af2-a2eb7bbe1c90",
+      "verdict": "rejected 5/2",
+      "review": 7,
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:58:30-08:00",
+      "up": 720902,
+      "down": 2060,
+      "seconds": 24.8,
+      "note": "completed - 2 tool calls; rejected; waiting for security-reviewer, staff-reviewer",
+      "moves": 7
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:58:04-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
+      "verdict": "passed",
+      "review": 6,
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:58:27-08:00",
+      "up": 613317,
+      "down": 1135,
+      "seconds": 18.7,
+      "note": "completed - 2 tool calls; review review-rejected (passed)",
+      "moves": 7
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:58:04-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "0fdd20d8-b7ac-4e7d-8128-95203956bc9e",
+      "verdict": "rejected 1/2",
+      "review": 7,
+      "to": "building_ui",
+      "finished_at": "2026-11-12T23:59:18-08:00",
+      "up": 1192934,
+      "down": 2076,
+      "seconds": 68.0,
+      "note": "completed - 4 tool calls; review review-rejected (rejected 1/2)",
+      "moves": 8
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building_ui",
+      "started_at": "2026-11-12T23:59:20-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "e0e8b2d3-4835-4ab4-8770-a872b0983ab0",
+      "to": "ready_for_review",
+      "finished_at": "2026-11-12T23:59:34-08:00",
+      "up": 130521,
+      "down": 614,
+      "seconds": 13.1,
+      "note": "completed - 2 tool calls (no front end)",
+      "moves": 9
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-11-12T23:59:42-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "e50a28b3-4026-47c2-a0c4-f5e8673ba6fd",
+      "verdict": "rejected 6/2",
+      "review": 10,
+      "to": "rejected",
+      "finished_at": "2026-11-13T00:00:20-08:00",
+      "up": 264631,
+      "down": 2395,
+      "seconds": 32.6,
+      "note": "completed - 2 tool calls; review review-rejected (rejected 6/2)",
+      "moves": 11
+    },
+    {
+      "agent": "arbitrator",
+      "round": 1,
+      "status": "Completed",
+      "started_at": "2026-11-13T00:00:26-08:00",
+      "note": "⚖️ Ruling (cap): no_go",
+      "finished_at": "2026-11-13T00:01:05-08:00"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-13T00:55:10-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "eb23a92a-a52e-4aa2-8dd3-6c9c1651cec3",
+      "to": "building",
+      "finished_at": "2026-11-13T01:11:09-08:00",
+      "up": 2482493,
+      "down": 21635,
+      "seconds": 958.5,
+      "note": "Interrupted; no rounds left",
+      "moves": 13
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "building",
+      "started_at": "2026-11-13T00:56:14-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "b91e448a-c0d3-44ce-9fbd-0f00fbcfda99",
+      "to": "building",
+      "finished_at": "2026-11-13T00:56:25-08:00",
+      "up": 130216,
+      "down": 575,
+      "seconds": 11.5,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🟡 Building",
+      "moves": 13
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-13T01:11:12-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/057.00-config-schema-and-main-checkout",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "eb23a92a-a52e-4aa2-8dd3-6c9c1651cec3"
     }
   ],
   "signatures": [
@@ -1384,6 +1545,131 @@
       "status": "Completed",
       "round": 1,
       "note": "Completed, round 1 (passed)"
+    },
+    {
+      "at": "2026-11-12T23:58:15-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:58:15-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:58:20-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:58:24-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 5/2"
+    },
+    {
+      "at": "2026-11-12T23:58:40-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:59:04-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T23:59:28-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:59:31-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-12T23:59:58-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:00:08-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 6/2"
+    },
+    {
+      "at": "2026-11-13T00:01:34-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:01:44-08:00",
+      "agent": "unblocker",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:55:19-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:56:23-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-13T01:10:19-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:11:33-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T01:40:26-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T01:42:15-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 2,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-13T01:42:15-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 2,
+      "note": "signed by harness: work verified on disk",
+      "next": "design-reviewer"
     }
   ],
   "messages": [
@@ -1406,7 +1692,7 @@
       "read": "no"
     }
   ],
-  "moves": 6,
+  "moves": 13,
   "memory": {
     "planner": {
       "rounds": {
@@ -1473,7 +1759,59 @@
               "text": "U4: to_yaml writes every key, filling from Schema.defaults, and init writes the whole file. U6: integration spec. Then contract.md baseline, pull-requests.md, a coverage: check, full rspec, and sign Completed."
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U3: schema got chime+budget, top-level order matches old KEYS; KEYS/*_KEYS/QUALITIES/MERGERS derived from Schema.static (not document: building commands loads CLI, which loads Config). parse runs schema!(config.to_settings.except('commands')) after hand checks; errors mapped to '<path>: <key>: <problem>'. just update-config-schema added; schema regenerated."
+            },
+            {
+              "kind": "decision",
+              "text": "Schema check validates the normalised config.to_settings, not raw YAML, so 'starts: Research' stays accepted; and skips commands, which CLI::Base.check_config! already checks with alias-aware messages that existing specs assert."
+            },
+            {
+              "kind": "note",
+              "text": "Full rspec takes ~7+ minutes; start it in the background early. Adding methods to lib/ makes docs/architecture stale: run just update-architecture."
+            },
+            {
+              "kind": "todo",
+              "text": "U4 needs every config.rb hand check to treat an explicit null as unset (starts, desired_codebase_quality, merge.by, ci, events.enabled, review.adapters, etc.) before to_yaml can write every key and round-trip. Then init.rb writes the whole file, add round-trip specs, U6 integration spec, contract.md baseline, pull-requests.md, coverage check."
+            }
+          ]
+        },
+        "3": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U4: to_yaml = Config.fill(Schema.defaults, to_settings) writes every key; parse drops empty values (unset_dropped), compacting nested nils only in schema-closed sections. ci.provider enum allows null. Specs adapted via spec/support/settings_in.rb (SettingsIn#settings_in)."
+            },
+            {
+              "kind": "done",
+              "text": "U6: spec/openlanes/config_schema_integration_spec.rb runs exe/openlanes init -n -y as a subprocess (-n because a real init runs machine setup). start-in-worktree is covered in-process by start_spec; start has no dry run."
+            },
+            {
+              "kind": "done",
+              "text": "F101: CommandsSchema.portable maps Dir.home to ~ and keeps only a description's first paragraph; schema regenerated. contract.md written; pull-requests.md has Answers, round 2 (F201-F203 and F101 fixed, F204 and F205 rebutted)."
+            },
+            {
+              "kind": "decision",
+              "text": "An empty top-level coverage: now reads as no section, because the full file writes it empty; the coverage spec was changed to match."
+            },
+            {
+              "kind": "todo",
+              "text": "Confirm the full bundle exec rspec is green (the last full run had 7 failures, all fixed and green when run alone), then sign Completed --next design-reviewer."
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "eb23a92a-a52e-4aa2-8dd3-6c9c1651cec3",
+        "through": 15
       }
     },
     "design-reviewer": {
@@ -1533,11 +1871,39 @@
               "text": "Three earlier rejected rounds (20:33, 22:03, 22:27), so K+1/M gave 4/2. The author has not touched config.rb or the justfile across four reviews"
             }
           ]
+        },
+        "5": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 5 design review of PR 210: diff unchanged, F201 and F202 still critical. Commented and signed Completed with note 'rejected 5/2'; plan is past the cap and belongs to the arbitrator"
+            },
+            {
+              "kind": "note",
+              "text": "Four earlier rejected rounds (20:33, 22:03, 22:27, 23:23), so K+1/M gave 5/2. The note is the word first, as the new instructions require"
+            }
+          ]
+        },
+        "6": {
+          "round": 1,
+          "state": "ready_for_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 6 design review of PR 210: diff unchanged, F201 and F202 still critical. Commented and signed Completed with note 'rejected 6/2'; plan is past the cap and belongs to the arbitrator"
+            },
+            {
+              "kind": "note",
+              "text": "Five earlier rejected rounds, so K+1/M gave 6/2. Config.parse still uses the KEYS constants, to_yaml still writes only set keys, and the justfile still has no update-config-schema recipe"
+            }
+          ]
         }
       },
       "held": {
-        "session": "1e0a0900-b5af-40bc-8af2-a2eb7bbe1c90",
-        "through": 8
+        "session": "e50a28b3-4026-47c2-a0c4-f5e8673ba6fd",
+        "through": 12
       }
     },
     "staff-reviewer": {
@@ -1601,11 +1967,21 @@
               "text": "alock refused pull-requests.md a fourth time: harness pid 61773 holds the plan dir/** under the intent 'design-reviewer on 057.00'. My findings live only in PR comment 6844083710"
             }
           ]
+        },
+        "5": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Fifth run of round 1: the PR head moved to fe33b1db, a rebase onto newer main. The PR still touches the same 13 files and config.rb is still not among them, so F1 stands. Signed rejected 1/2 again, no new comment"
+            },
+            {
+              "kind": "note",
+              "text": "The plan folder is already 🔴 Rejected, yet the harness relaunched staff-reviewer on round 1 with a stale packet (30537b23). The lock on pull-requests.md was refused a fifth time (pid 9345)"
+            }
+          ]
         }
-      },
-      "held": {
-        "session": "0fdd20d8-b7ac-4e7d-8128-95203956bc9e",
-        "through": 7
       }
     },
     "security-reviewer": {
@@ -1614,44 +1990,91 @@
         "session": "8d978e30-6ad2-4e10-ac22-bebed26f6b5a",
         "through": 0
       }
+    },
+    "frontend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "building_ui",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "plan.md ## Frontend says none (plan 058 renders settings page); signed Completed (no front end)"
+            }
+          ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 1 re-check: ## Frontend still says none; re-signed Completed (no front end)"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "b91e448a-c0d3-44ce-9fbd-0f00fbcfda99",
+        "through": 2
+      }
+    },
+    "arbitrator": {
+      "rounds": {},
+      "held": {
+        "session": "62bbd1c2-82de-449c-acca-c69f742b7b8e",
+        "through": 0
+      }
+    },
+    "unblocker": {
+      "rounds": {
+        "1": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Folded B1 (arbitrator no_go at cap) into plan.md as D1: send back to builders for one more round to wire Config.parse/to_yaml to the schema and add round-trip spec. blocked.md deleted."
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "f2be857b-1afb-41ae-b89f-8885f7c818c5",
+        "through": 1
+      }
     }
   },
   "last-known-state": {
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T20:32:00-08:00",
-      "round": 1,
+      "at": "2026-11-13T01:40:26-08:00",
+      "round": 2,
       "status": "Interrupted",
       "done": [
         "U1",
         "U2",
-        "U5",
-        "json_schemer runtime dep"
-      ],
-      "remaining": [
         "U3",
         "U4",
+        "U5",
         "U6",
+        "F101",
         "contract.md",
         "pull-requests.md",
-        "coverage check",
-        "full suite run"
+        "rubocop clean",
+        "affected specs green (241)"
       ],
-      "next_step": "U3: in config.rb derive KEYS/*_KEYS from Config::Schema (keep KEYS order: schema puts commands last, today's KEYS has it after merge, so reorder schema properties or keep message order), run Schema.errors after the hand checks and map data_pointer/type into '<path>: <key>: <problem>' shape; add just update-config-schema recipe (ruby -Ilib -e 'require \"openlanes\"; OpenLanes::Config::Schema.write'); then U4 to_yaml every key from Schema.defaults, then U6 integration spec",
+      "remaining": [
+        "confirm full rspec green"
+      ],
+      "next_step": "Run bundle exec rspec (about 8 min); previous full run had 7 failures, all since fixed and green in isolation; if green sign Completed --next design-reviewer",
       "files_touched": [
-        "schemas/openlanes-config.schema.json",
-        "lib/openlanes/support/config/schema.rb",
+        "lib/openlanes/support/config.rb",
         "lib/openlanes/support/config/commands_schema.rb",
-        "lib/openlanes/support/project.rb",
-        "lib/openlanes/cli/start/start.rb",
-        "lib/openlanes/lifecycle/allocator.rb",
-        "openlanes.gemspec",
-        "Gemfile",
-        "Gemfile.lock",
-        "spec/openlanes/config/schema_spec.rb",
-        "spec/openlanes/config/commands_schema_spec.rb",
-        "spec/openlanes/project_spec.rb",
-        "spec/openlanes/cli/start_spec.rb"
+        "spec/openlanes/coverage/config_spec.rb",
+        "spec/openlanes/config_quality_spec.rb",
+        "spec/openlanes/config_merge_spec.rb",
+        "spec/openlanes/config_redis_url_spec.rb",
+        "spec/openlanes/cli/init_integration_spec.rb"
       ]
     }
   },
@@ -1662,7 +2085,12 @@
       "state": "building",
       "round": 1,
       "limit": "rounds",
-      "asked_at": "2026-11-12T20:32:17-08:00"
+      "asked_at": "2026-11-12T20:32:17-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T00:02:09-08:00"
     },
     {
       "number": 2,
@@ -1995,6 +2423,55 @@
       "asked_at": "2026-11-12T21:54:20-08:00",
       "closed": "finished",
       "settled_at": "2026-11-12T21:54:53-08:00"
+    },
+    {
+      "number": 31,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:10:10-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-13T01:11:09-08:00"
+    },
+    {
+      "number": 32,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:26:12-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T01:29:12-08:00"
+    },
+    {
+      "number": 33,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:36:12-08:00"
+    }
+  ],
+  "rulings": [
+    {
+      "at": "2026-11-13T00:01:04-08:00",
+      "kind": "cap",
+      "pr": 210,
+      "round": 1,
+      "outcome": "no_go",
+      "findings": {
+        "struck": [],
+        "critical": [
+          "F1"
+        ]
+      },
+      "reason": "F1 is critical and still holds. config.rb is untouched in the diff and nothing outside schema.rb calls Schema.errors or Schema.defaults, so Config.parse does not validate against the schema, to_yaml does not write every key, and there is no round-trip spec. That leaves two of the spec's five checks unmet. F2 and F3 are minor.",
+      "trigger": "cap",
+      "review": 1
     }
   ]
 }

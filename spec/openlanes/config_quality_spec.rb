@@ -2,6 +2,8 @@
 
 # `desired_codebase_quality:` (R4), which replaced M5's `build_quality`.
 RSpec.describe OpenLanes::Config do
+  include SettingsIn
+
   def parse(text) = described_class.parse(text, path: "/p/.openlanes.yml")
 
   it "reads high, standard and mvp, in any case" do
@@ -40,7 +42,7 @@ RSpec.describe OpenLanes::Config do
   end
 
   it "writes it back, before merge:" do
-    expect(described_class.new(desired_codebase_quality: :mvp, merge_by: :auto).to_yaml)
-      .to eq("desired_codebase_quality: mvp\nmerge:\n  by: auto\n")
+    expect(settings_in(described_class.new(desired_codebase_quality: :mvp, merge_by: :auto).to_yaml))
+      .to eq(settings_in("desired_codebase_quality: mvp\nmerge:\n  by: auto\n"))
   end
 end

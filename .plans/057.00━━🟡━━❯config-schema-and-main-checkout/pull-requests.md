@@ -50,3 +50,25 @@ The packet's diff still has no `config.rb` change, no `justfile` recipe, and no 
 ### Round 4 recheck (design-reviewer)
 
 The packet's diff is the same as in rounds 2 and 3: no `config.rb` change, no `update-config-schema` recipe, and `Config::Schema` has no caller outside `lib/openlanes/support/config/`. F201 and F202 stand as critical; F203 to F205 stand as minor. Nothing new found.
+
+### Round 5 recheck (design-reviewer)
+
+The packet's diff is unchanged again: no `config.rb` change, no `update-config-schema` recipe, and no caller of `Config::Schema` outside `lib/openlanes/support/config/`. F201 and F202 stand as critical; F203 to F205 stand as minor. Nothing new found.
+
+### Round 6 recheck (design-reviewer)
+
+The diff is unchanged again: no `config.rb` change, no `update-config-schema` recipe in the `justfile`, and `Config::Schema` has no caller outside `lib/openlanes/support/config/`. F201 and F202 stand as critical; F203 to F205 stand as minor. Nothing new found.
+
+## Answers, round 2 (backend-coder)
+
+- F201 fix: `Config.parse` now ends with a schema check (`schema!` in `lib/openlanes/support/config.rb`); `KEYS`, every `*_KEYS`, `STACK_FIELDS`, `QUALITIES` and `MERGERS` are read from the checked-in schema. `commands:` is left to `CLI::Base.check_config!`, whose alias-aware messages existing specs assert.
+- F202 fix: `Config#to_yaml` writes every schema key (`Config.fill(Schema.defaults, to_settings)`); `parse` reads an empty value as unset, so the file round-trips. `openlanes init` writes the full file through it. Specs: `spec/openlanes/config_spec.rb` ("against the schema"), `spec/openlanes/config_schema_integration_spec.rb`.
+- F203 fix: `just update-config-schema` added to the `justfile`.
+- F101 fix: `CommandsSchema` writes the home directory as `~` and keeps only the first paragraph of a command description, so the checked-in schema is the same on every machine; spec in `spec/openlanes/config/commands_schema_spec.rb`.
+- F204 not changed: dry-cli exposes no public walk of its registry; the reach is already one method (`CommandsSchema.commands`), and `commands_schema_spec.rb` fails on a dry-cli upgrade that renames it.
+- F205 not changed: `enter_main_checkout` sits beside `primary_of`, which `openlanes create` also uses, so there is one definition of the main checkout (plan U5).
+
+## Checks, round 2
+
+- `openlanes start` in a worktree: covered in-process with a real `git worktree add` in `spec/openlanes/cli/start_spec.rb` ("the checkout it boots in"). Not run as a subprocess: `start` has no dry run and would boot the web server and supervisor.
+- `openlanes init` as a subprocess: `exe/openlanes init -n -y` in `spec/openlanes/config_schema_integration_spec.rb`; `-n` because without it `init` runs machine setup.

@@ -50,7 +50,7 @@ module OpenLanes
       def command_schema(name, command)
         options = command.options.sort_by { it.name.to_s }.to_h { [it.name.to_s, option_schema(it)] }
         { "type"                 => "object",
-          "description"          => command.description || "openlanes #{name}",
+          "description"          => portable(command.description.to_s.split("\n\n").first || "openlanes #{name}"),
           "default"              => {},
           "additionalProperties" => false,
           "properties"           => options }
@@ -59,13 +59,22 @@ module OpenLanes
       # @param option [Dry::CLI::Option]
       # @return [Hash{String => Object}]
       def option_schema(option)
-        schema = { "type" => TYPES.fetch(option.type&.to_sym, SCALAR) }
-        schema["items"] = { "type" => SCALAR } if schema["type"] == "array"
-        schema["enum"] = option.values.map(&:to_s) if option.values
-        schema["description"] = option.options[:desc].to_s # #desc appends the values, which enum already says
-        schema["default"] = option.default unless option.default.nil?
-        schema
+        type = TYPES.fetch(option.type&.to_sym, SCALAR)
+        { "type"        => type,
+          "items"       => ({ "type" => SCALAR } if type == "array"),
+          "enum"        => option.values&.map(&:to_s),
+          "description" => portable(option.options[:desc].to_s), # #desc appends the values, which enum already says
+          "default"     => portable(option.default) }.compact
       end
+
+      # The checked-in file is built on one machine and checked on every
+      # other, so nothing may name the machine it was built on: the home
+      # directory reads as `~`. A description's first paragraph is kept and
+      # the rest dropped, since some commands list what is installed locally.
+      #
+      # @param value [Object]
+      # @return [Object]
+      def portable(value) = value.is_a?(String) ? value.gsub(Dir.home, "~") : value
     end
   end
 end

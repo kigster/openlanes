@@ -33,7 +33,7 @@ RSpec.describe OpenLanes::Config::Schema do
   it("lists the adapters Adapters knows") { expect(document.dig("properties", "adapter", "enum").compact).to eq(OpenLanes::Adapters.names) }
   it("lists the starts Spec knows") { expect(document.dig("properties", "starts", "enum").compact).to eq(OpenLanes::Plans::Spec::STARTS.map(&:to_s)) }
   it("lists the qualities") { expect(document.dig("properties", "desired_codebase_quality", "enum").compact).to eq(OpenLanes::Config::QUALITIES.map(&:to_s)) }
-  it("lists the CI providers") { expect(document.dig("properties", "ci", "properties", "provider", "enum")).to eq(OpenLanes::Config::CI_PROVIDERS.map(&:to_s)) }
+  it("lists the CI providers") { expect(document.dig("properties", "ci", "properties", "provider", "enum").compact).to eq(OpenLanes::Config::CI_PROVIDERS.map(&:to_s)) }
 
   it "is checked in as it is built, so an editor validates against the real thing" do
     expect(JSON.parse(File.read(described_class::PATH))).to eq(document), "run `just update-config-schema`"

@@ -173,294 +173,6 @@
         }
       }
     },
-    "app": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "How to run the app a plan builds (M12): kind and processes",
-      "default": null
-    },
-    "plans": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "Settings about plans themselves",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "aging_since": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "No blocked plan ages from before this date, YYYY-MM-DD",
-          "default": null
-        }
-      }
-    },
-    "questions": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "How prose questions become lettered choices (D9)",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "model": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The OpenRouter model that rewrites prose questions; null is anthropic/claude-haiku-5.5",
-          "default": null,
-          "minLength": 1
-        }
-      }
-    },
-    "coverage": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "What the coverage gate measures (M15): command, minimum, and report_command or report with format",
-      "default": null
-    },
-    "events": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "The durable run log (plan 020.01)",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Whether runs append to the event log",
-          "default": false
-        },
-        "dir": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "An absolute path; null is under $XDG_STATE_HOME",
-          "default": null,
-          "pattern": "^\\s*[/~]"
-        }
-      }
-    },
-    "ci": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "What checks a pull request (M21); `openlanes init` settles it",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "provider": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The CI provider; none is a decision, not a missing answer",
-          "default": null,
-          "enum": [
-            "github_actions",
-            "circleci",
-            "jenkins",
-            "external",
-            "none"
-          ]
-        },
-        "config": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The CI configuration file",
-          "default": null,
-          "minLength": 1
-        }
-      }
-    },
-    "stack": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "The project's stack, also written to docs/decisions/stack.md",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "language": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's language",
-          "default": null,
-          "minLength": 1
-        },
-        "frameworks": {
-          "type": [
-            "array",
-            "string",
-            "null"
-          ],
-          "description": "The frameworks in use, a list of names",
-          "default": null,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "front_end": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's front end",
-          "default": null,
-          "minLength": 1
-        },
-        "persistence": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's persistence",
-          "default": null,
-          "minLength": 1
-        },
-        "caching": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's caching",
-          "default": null,
-          "minLength": 1
-        },
-        "logins": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's logins",
-          "default": null,
-          "minLength": 1
-        },
-        "deployment": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's deployment",
-          "default": null,
-          "minLength": 1
-        },
-        "domain": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's domain",
-          "default": null,
-          "minLength": 1
-        },
-        "from": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's from",
-          "default": null,
-          "minLength": 1
-        },
-        "to": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "The stack's to",
-          "default": null,
-          "minLength": 1
-        }
-      }
-    },
-    "architecture_decisions": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "What the repository holds now (current) and what is wanted (target)",
-      "default": null
-    },
-    "review": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "How reviews are dealt",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "adapters": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "description": "The coding agents the reviewers are dealt across, main one first; null takes `adapter:`",
-          "default": null,
-          "items": {
-            "type": "string",
-            "enum": [
-              "claude",
-              "codex",
-              "pi",
-              "grok",
-              "gemini"
-            ]
-          },
-          "uniqueItems": true
-        }
-      }
-    },
-    "refactor": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "description": "How a refactor is kept apart (R6)",
-      "default": null,
-      "additionalProperties": false,
-      "properties": {
-        "threshold": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "description": "The percent of the codebase above which a refactor runs alone; null is 50",
-          "default": null,
-          "minimum": 1,
-          "maximum": 100
-        },
-        "lock_hours": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "How long a refactor's global lock holds; null is 24",
-          "default": null,
-          "exclusiveMinimum": 0
-        }
-      }
-    },
     "commands": {
       "type": "object",
       "description": "Per-command option defaults, by command name: run, \"resync dirs\"",
@@ -1381,6 +1093,82 @@
             }
           }
         },
+        "memory approve": {
+          "type": "object",
+          "description": "Mark a waiting lesson for promotion whatever the number of plans it was seen in",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory curate": {
+          "type": "object",
+          "description": "Have the curator read finished or rejected plans and propose lessons into .openlanes/memory/inbox",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Hand the plans to a different agent",
+              "default": "curator"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Invoke no agent; name the plans that would be read",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory inbox": {
+          "type": "object",
+          "description": "List the lessons waiting in .openlanes/memory/inbox, and the plans each was seen in",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
         "memory list": {
           "type": "object",
           "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent, the section that agent's prompt carries",
@@ -1394,6 +1182,53 @@
               ],
               "description": "Print the section this agent's prompt would carry, e.g. --agent backend-coder"
             },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory promote": {
+          "type": "object",
+          "description": "Turn waiting lessons into active ones: those seen in 2 plans, or approved. Writes files only; agents see a lesson once it is merged",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Write nothing; print what would be promoted, confirmed or left waiting",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory scan": {
+          "type": "object",
+          "description": "Check that nothing under .openlanes/ is a secret or is ignored by git. Exits 1 when something is",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
             "dir": {
               "type": [
                 "string",
@@ -1925,7 +1760,7 @@
         },
         "skills install": {
           "type": "object",
-          "description": "Copy the skills bundled with this gem into a skill directory, /Users/hermes/.agents/skills by default.\n\nopenlanes (installed) — The openlanes software factory (`openlanes` CLI) that drives `.plans/` folders through spec → plan → build → review with specialist agents.\n\nopenlanes-documents (installed) — The files inside a openlanes plan folder: what spec.md, plan.md, blocked.md, pull-requests.md and the closing documents are for, the exact formats openlanes parses, and a template for each.\n\nopenlanes-run (installed) — Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop All Local or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents over named plans to a fixed point with `openlanes run <NNN,...>` and clear blocked plans with `openlanes unblock`.\n\nopenlanes-setup (installed) — Set a project up on openlanes: check the prerequisites, run `openlanes init`, install the skills, and create the first plan.\n\nopenlanes-spec (installed) — Create a openlanes plan and write its spec.md: choose the lane (research, planning, building) and depth, and record implementation suggestions, requirements, done criteria and verification.\n\nopenlanes-status (installed) — Report where openlanes plans stand: every plan's state and pull requests, the INDEX.md, one plan's agent history from state.json, the messages in its mailbox, or the live control room.\n\nopenlanes-sync (installed) — Bring openlanes's `.plans/` back in step with reality: rename folders whose names lag their contents, prefix pull request titles with their plan's `[NNN.MM]`, adopt orphan PRs as retroactive plans, and export plans to Linear.",
+          "description": "Copy the skills bundled with this gem into a skill directory, ~/.agents/skills by default.",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -1948,7 +1783,7 @@
                 "number"
               ],
               "description": "The skill directory to copy into",
-              "default": "/Users/hermes/.agents/skills"
+              "default": "~/.agents/skills"
             },
             "overwrite": {
               "type": "boolean",
@@ -2656,6 +2491,323 @@
               "default": false
             }
           }
+        }
+      }
+    },
+    "app": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How to run the app a plan builds (M12): kind and processes",
+      "default": null
+    },
+    "plans": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Settings about plans themselves",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "aging_since": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "No blocked plan ages from before this date, YYYY-MM-DD",
+          "default": null
+        }
+      }
+    },
+    "questions": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How prose questions become lettered choices (D9)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The OpenRouter model that rewrites prose questions; null is anthropic/claude-haiku-5.5",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "coverage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What the coverage gate measures (M15): command, minimum, and report_command or report with format",
+      "default": null
+    },
+    "events": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The durable run log (plan 020.01)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether runs append to the event log",
+          "default": false
+        },
+        "dir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "An absolute path; null is under $XDG_STATE_HOME",
+          "default": null,
+          "pattern": "^\\s*[/~]"
+        }
+      }
+    },
+    "ci": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What checks a pull request (M21); `openlanes init` settles it",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The CI provider; none is a decision, not a missing answer",
+          "default": null,
+          "enum": [
+            "github_actions",
+            "circleci",
+            "jenkins",
+            "external",
+            "none",
+            null
+          ]
+        },
+        "config": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The CI configuration file",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "stack": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The project's stack, also written to docs/decisions/stack.md",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's language",
+          "default": null,
+          "minLength": 1
+        },
+        "frameworks": {
+          "type": [
+            "array",
+            "string",
+            "null"
+          ],
+          "description": "The frameworks in use, a list of names",
+          "default": null,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "front_end": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's front end",
+          "default": null,
+          "minLength": 1
+        },
+        "persistence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's persistence",
+          "default": null,
+          "minLength": 1
+        },
+        "caching": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's caching",
+          "default": null,
+          "minLength": 1
+        },
+        "logins": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's logins",
+          "default": null,
+          "minLength": 1
+        },
+        "deployment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's deployment",
+          "default": null,
+          "minLength": 1
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's domain",
+          "default": null,
+          "minLength": 1
+        },
+        "from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's from",
+          "default": null,
+          "minLength": 1
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's to",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "architecture_decisions": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What the repository holds now (current) and what is wanted (target)",
+      "default": null
+    },
+    "review": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How reviews are dealt",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "adapters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "The coding agents the reviewers are dealt across, main one first; null takes `adapter:`",
+          "default": null,
+          "items": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex",
+              "pi",
+              "grok",
+              "gemini"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "refactor": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How a refactor is kept apart (R6)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "threshold": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "The percent of the codebase above which a refactor runs alone; null is 50",
+          "default": null,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "lock_hours": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "How long a refactor's global lock holds; null is 24",
+          "default": null,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "chime": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "Whether the control room dings when a question arrives; unset is on",
+      "default": null
+    },
+    "budget": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Spending limits for agent work",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "plan_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "description": "The most a plan may spend, in estimated dollars, before no new round starts on it; unset is no cap",
+          "default": null
         }
       }
     }

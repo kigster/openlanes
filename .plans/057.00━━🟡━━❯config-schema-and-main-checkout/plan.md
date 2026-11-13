@@ -85,6 +85,23 @@ None in this plan; plan 058 renders the settings page.
 
 No. This plan adds no route and changes none.
 
+## Unblocked decisions
+
+### B1 (answered) — Arbitrator ruled no_go at the rejection cap
+
+The arbitrator ruled no_go: F1 (critical) still holds. `config.rb` is untouched and nothing outside `schema.rb` calls `Schema.errors` or `Schema.defaults`, so `Config.parse` does not validate against the schema, `to_yaml` does not write every key, and there is no round-trip spec. Two of five spec checks are unmet; F2 and F3 are minor. Options: a) one more builder round, b) close the PR and replan.
+
+### D1 (decision) — Arbitrator ruled no_go at the rejection cap
+
+Answered:
+
+- 2026-11-13
+- By hermes
+
+a) Send it back to the builders for one more round, to wire `Config.parse` and `to_yaml` to the schema (U3, U4) and add the round-trip spec.
+
+______________________________________________________________________
+
 ## Task completed when
 
 - Every key `Config.parse` accepts is in the schema, and a spec fails when one is missing or extra.
@@ -100,12 +117,3 @@ No. This plan adds no route and changes none.
 - Writing a config produces every key; parsing it back gives the same `Config`.
 - A new option on a command appears in the generated `commands` schema with no hand edit.
 - `openlanes start` run in a worktree boots in the main checkout, and says so on STDERR.
-
-## Rebase decisions
-
-- `.plans/057.00━━👀━━❯…/spec.md`, `plan.md`, `state.json`: kept main's folder as is. `origin/main` already holds the plan in review (`in_review`, with `pull-requests.md`); the branch's commit only carried it to the earlier `building` state, so replaying that rename would move the plan backwards.
-- `.plans/057.00━━🟡━━❯…/` (spec.md, plan.md, state.json): dropped from the rebased tree. `spec.md` and `plan.md` are byte-identical to main's `👀` copies; `state.json` is the older `building` snapshot, superseded by main's. Still in git history on the original branch commit.
-- `.plans/057.00━━📋━━❯…/spec.md`: both sides deleted it (renamed away), nothing to keep.
-- `.plans/068.00━━📋━━❯unblock-interview-chat/state.json`: kept main's version. The branch's base never had plan 068, so its "deletion" is only absence; the plan is unrelated to 057.
-- Source, spec and schema files from the commit applied cleanly and were left untouched.
-- `schemas/openlanes-config.schema.json`: regenerated with `Config::Schema.write` after the rebase. Main added CLI options (`memory` on `run` and `evals`, the `memory list` command) after the branch was cut, so the checked-in generated `commands` schema was stale and its staleness spec failed; the regeneration adds exactly those 48 lines.

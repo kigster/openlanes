@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Config do
+  include SettingsIn
+
   def parse(text) = described_class.parse(text, path: "/p/.openlanes.yml")
 
   it "lets a person merge unless told otherwise (M4)" do
@@ -15,7 +17,7 @@ RSpec.describe OpenLanes::Config do
   end
 
   it "writes it back" do
-    expect(described_class.new(jobs: 2, merge_by: :human).to_yaml).to eq("jobs: 2\nmerge:\n  by: human\n")
+    expect(settings_in(described_class.new(jobs: 2, merge_by: :human).to_yaml)).to eq(settings_in("jobs: 2\nmerge:\n  by: human\n"))
   end
 
   it "refuses a merger it does not know, naming the file" do
@@ -44,7 +46,7 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "writes it back" do
-      expect(described_class.new(merge_by: :auto, merge_max_rejections: 3).to_yaml).to eq("merge:\n  by: auto\n  max_rejections: 3\n")
+      expect(settings_in(described_class.new(merge_by: :auto, merge_max_rejections: 3).to_yaml)).to eq(settings_in("merge:\n  by: auto\n  max_rejections: 3\n"))
     end
 
     it "refuses anything but a whole number above zero" do

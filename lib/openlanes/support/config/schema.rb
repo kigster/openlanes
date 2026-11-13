@@ -21,22 +21,32 @@ module OpenLanes
 
       module_function
 
+      # The checked-in file as it stands. {Config}'s key lists are read from
+      # this rather than {.document}, because building `commands` loads the
+      # whole CLI, and the CLI loads {Config}.
+      #
+      # @return [Hash{String => Object}]
+      def static = @static ||= JSON.parse(File.read(PATH, encoding: "UTF-8")).freeze
+
       # @return [Hash{String => Object}] the schema, `commands` from the registry
       def document
-        @document ||= begin
-          static = JSON.parse(File.read(PATH, encoding: "UTF-8"))
-          static["properties"]["commands"] = CommandsSchema.build
-          static.freeze
-        end
+        @document ||= JSON.parse(JSON.generate(static)).tap { it["properties"]["commands"] = CommandsSchema.build }.freeze
       end
 
       # @return [Array<String>] every key the top level may hold, in documented order
-      def keys = document.fetch("properties").keys
+      def keys = static.fetch("properties").keys
 
       # @param section [String, Symbol] e.g. "merge"
       # @return [Array<String>] every key the section may hold; empty for an
       #   open section whose own parser checks it (app, coverage, …)
-      def keys_for(section) = document.dig("properties", section.to_s, "properties")&.keys || []
+      def keys_for(section) = static.dig("properties", section.to_s, "properties")&.keys || []
+
+      # @param path [Array<String>] e.g. "merge", "by"
+      # @return [Array<String>] the values the key allows, null left out
+      def enum_for(*path)
+        node = path.reduce(static) { |schema, key| schema.fetch("properties").fetch(key) }
+        node.fetch("enum").compact
+      end
 
       # @return [Hash{String => Object}] every key with its default, nested
       #   sections as Hashes of their own keys' defaults

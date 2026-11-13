@@ -150,8 +150,9 @@ RSpec.describe OpenLanes::Coverage::Config do
     expect_invalid(%w[a b], ": must be a mapping with command, minimum, and report_command alone, or report with format")
   end
 
-  it "refuses an empty section" do
-    expect_invalid("coverage:\n", ": must be a mapping")
+  it "reads an empty section as none, which is how the full file writes it" do
+    write("coverage:\n")
+    expect(described_class.load(root)).to be_nil
   end
 
   it "reports invalid YAML as invalid coverage, naming the file" do
