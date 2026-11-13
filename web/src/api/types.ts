@@ -360,6 +360,7 @@ export type CommandKind =
   | "switch_model" // now: as compact, carried on in the new model; a fresh restart on it when the session cannot be resumed; payload: { model }
   | "add_plan" // payload: { ordinal }
   | "create_plans" // payload: { idea }
+  | "confirm_interview" // payload: { question: "1", turn }: writes the interview's decision as the answer
   | "respond" // a 💣 plan: answers its first open question in blocked.md; payload: { text }
   | "pause_discuss" // a 💣 plan: holds its running agents while the person talks it over with the copilot
   | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
@@ -527,4 +528,30 @@ export interface DependencyGraph {
   states: DependencyState[];
   plans: DependencyPlan[];
   edges: DependencyEdge[];
+}
+
+/** One option of an interview question: lettered by its place, one of them the unblocker's recommendation. */
+export interface InterviewOption {
+  label: string;
+  recommended: boolean;
+}
+
+/** One turn of the unblocker's interview about a question (contract.md, "InterviewTurn"). */
+export interface InterviewTurn {
+  id: string;
+  from: "you" | "unblocker";
+  kind: "text" | "question" | "decision";
+  text: string;
+  at: string;
+  /** `question` turns only: 2 to 5, exactly one recommended. */
+  options?: InterviewOption[];
+  /** `decision` turns only: what Confirm writes to blocked.md as the answer. */
+  answer?: string;
+}
+
+/** What `event: interview` carries: the turn, and which question's conversation it belongs to. */
+export interface InterviewEvent {
+  plan: string;
+  number: number;
+  turn: InterviewTurn;
 }

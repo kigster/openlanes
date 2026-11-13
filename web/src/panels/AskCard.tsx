@@ -6,6 +6,7 @@ import { Feedback } from "./feedback";
 import { renderMarkdown } from "./markdown";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { isWord, useQuestion, type Ask } from "./question";
+import { InterviewPanel } from "../interview/InterviewPanel";
 import { ariaSendKeys, isSendKey, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 const FADE_MS = 500;
@@ -112,6 +113,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
   const q = useQuestion(plan, question, onCommand);
   const { leaving, gone, leave } = useLeaving(onLeft);
   const [heldNote, setHeldNote] = useState(false);
+  const [talking, setTalking] = useState(false);
   const pending = q.command.pending;
   const hold = async () => {
     if (await q.toggleHold()) { setHeldNote(true); leave(); }
@@ -122,6 +124,10 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
     return <div className={`ask is-done${leaving ? " is-leaving" : ""}`} data-ask={question.id}><p className="ask-done">{note}</p></div>;
   }
   const holdButton = <HoldButton held={q.isHeld} onClick={hold} disabled={pending} />;
+  // Only a blocked plan's own question can be talked through: the harness's other requests take one of their options.
+  const talkButton = (question.kind === "block" || question.kind == null) && (
+    <button type="button" className="btn btn-quiet" aria-expanded={talking} onClick={() => setTalking(true)}>Talk it through</button>
+  );
   const body = <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.body) }} />;
   // The text box: the whole answer for a question that offers nothing to choose, the last choice for one that does.
   const box = variant === "widget" ? (
@@ -134,6 +140,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
       <div className="unblock-buttons">
         <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
         {holdButton}
+        {talkButton}
       </div>
     </div>
   ) : (
@@ -142,6 +149,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
       <div className="ask-actions">
         <button type="button" className="btn btn-primary" aria-keyshortcuts={ariaSendKeys()} disabled={pending} onClick={q.answer}>Send answer</button>
         {holdButton}
+        {talkButton}
       </div>
     </>
   );
@@ -156,8 +164,9 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
       {children}
     </Choices>
   );
-  let answerUi: ReactNode = box;
-  if (q.options) answerUi = q.inWords && !extension ? <>{choices()}{box}</> : choices(extension ? undefined : holdButton);
+  // A question with nothing to choose has no button row, so the control sits under its text box.
+  let answerUi: ReactNode = q.options ? box : <>{box}{talkButton}</>;
+  if (q.options) answerUi = q.inWords && !extension ? <>{choices()}{box}</> : choices(extension ? undefined : <>{holdButton}{talkButton}</>);
   return (
     <div className={`ask${q.isHeld ? " is-held" : ""}${spotlit ? " is-spotlit" : ""}`} data-ask={question.id} data-plan={plan.ordinal}>
       <Who plan={plan} agent={question.agent} held={q.isHeld} />
@@ -168,6 +177,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
       <FollowUp question={question} />
       {answerUi}
       <Feedback outcome={q.command.outcome?.tone === "refused" ? q.command.outcome : null} announced={q.command.announced} />
+      {talking && <InterviewPanel plan={plan.ordinal} question={question} onCommand={onCommand} onClose={() => setTalking(false)} />}
     </div>
   );
 }

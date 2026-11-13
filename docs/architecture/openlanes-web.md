@@ -33,6 +33,9 @@ classDiagram
   class OpenLanes__Live__Copilot__Unanswered["OpenLanes::Live::Copilot::Unanswered"]
   class OpenLanes__Live__EventBus["OpenLanes::Live::EventBus"]
   <<module>> OpenLanes__Live__EventBus
+  class OpenLanes__Live__Interview["OpenLanes::Live::Interview"]
+  class OpenLanes__Live__Interview__Feed["OpenLanes::Live::Interview::Feed"]
+  class OpenLanes__Live__Interview__Invalid["OpenLanes::Live::Interview::Invalid"]
   class OpenLanes__Live__Keys["OpenLanes::Live::Keys"]
   class OpenLanes__Live__News["OpenLanes::Live::News"]
   <<module>> OpenLanes__Live__News
@@ -58,6 +61,8 @@ classDiagram
   class OpenLanes__Web__BranchDiff["BranchDiff"]
   class OpenLanes__Web__Context["Context"]
   class OpenLanes__Web__Demo["Demo"]
+  class OpenLanes__Web__Demo__Interview["Demo::Interview"]
+  <<module>> OpenLanes__Web__Demo__Interview
   class OpenLanes__Web__DemoBoard["DemoBoard"]
   class OpenLanes__Web__DemoBoard__Refusal["DemoBoard::Refusal"]
   class OpenLanes__Web__DependencyGraph["DependencyGraph"]
@@ -96,6 +101,8 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Live__Copilot__Invalid : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Copilot__Unanswered : uses
   OpenLanes__Web__App ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Web__App ..> OpenLanes__Live__Interview : uses
+  OpenLanes__Web__App ..> OpenLanes__Live__Interview__Invalid : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Reply : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Web__App ..> OpenLanes__Plans : uses
@@ -127,6 +134,7 @@ classDiagram
   OpenLanes__Web__Demo ..> OpenLanes__UI : uses
   OpenLanes__Web__Demo ..> OpenLanes__Web__DemoBoard : uses
   OpenLanes__Web__Demo ..> OpenLanes__Web__DemoBoard__Refusal : uses
+  OpenLanes__Web__Demo__Interview ..> OpenLanes__Live__Interview : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Adapters : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Agents__Names : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Live__Commands : uses
@@ -141,6 +149,7 @@ classDiagram
   OpenLanes__Web__Events ..> OpenLanes__Live : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__BoardDelta__Stream : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Chat : uses
+  OpenLanes__Web__Events ..> OpenLanes__Live__Interview__Feed : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Web__Events ..> OpenLanes__UI : uses

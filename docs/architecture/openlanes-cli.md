@@ -121,6 +121,7 @@ classDiagram
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__Copilot__Operator["OpenLanes::Live::Copilot::Operator"]
+  class OpenLanes__Live__Interview__Operator["OpenLanes::Live::Interview::Operator"]
   class OpenLanes__Live__Mail["OpenLanes::Live::Mail"]
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Node__Invalid["OpenLanes::Live::Node::Invalid"]
@@ -177,6 +178,8 @@ classDiagram
   class OpenLanes__Web__AdminAuth["OpenLanes::Web::AdminAuth"]
   class OpenLanes__Web__AdminAuth__Invalid["OpenLanes::Web::AdminAuth::Invalid"]
   class OpenLanes__Web__Demo["OpenLanes::Web::Demo"]
+  class OpenLanes__Web__Demo__Interview["OpenLanes::Web::Demo::Interview"]
+  <<module>> OpenLanes__Web__Demo__Interview
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
   class OpenLanes__Web__Listen__Invalid["OpenLanes::Web::Listen::Invalid"]
@@ -431,6 +434,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live__Interview__Operator : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
@@ -440,6 +444,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Web__Demo__Interview : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
   OpenLanes__CLI__Worktree --|> OpenLanes__CLI__Base : inherits

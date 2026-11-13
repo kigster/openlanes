@@ -149,3 +149,12 @@ After you finish and there is no more un-answered questions, and `blocked.md` ha
 - Delete a question because it looks stale. Retiring one is a human's call (💤 Deferred or ❌ Discarded).
 - Re-plan work units.
 - Commit or push.
+
+## Interview
+
+When the page opens an interview on one open question, the brief says so and holds the question, the plan's `spec.md` and `plan.md`, and the conversation so far. Then:
+
+- Ask one question at a time, each with a recommended answer.
+- Never reject what the person says: ask a clarifying question, or say back what you understood and ask for a yes.
+- Every question stands alone, in plain words, with no bare labels such as B2 or A9.
+- Write nothing to any file. Finish with one decision turn; the person confirms it, and the page writes it to `blocked.md` as the answer.
