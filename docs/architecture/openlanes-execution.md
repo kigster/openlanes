@@ -37,6 +37,11 @@ classDiagram
   class OpenLanes__Execution__ReviewPacket__Shelf["ReviewPacket::Shelf"]
   class OpenLanes__Execution__ShutdownGrace["ShutdownGrace"]
   <<module>> OpenLanes__Execution__ShutdownGrace
+  class OpenLanes__Execution__Throttle["Throttle"]
+  <<module>> OpenLanes__Execution__Throttle
+  class OpenLanes__Execution__Throttle__Backoff["Throttle::Backoff"]
+  class OpenLanes__Execution__Throttle__Backoff__Waits["Throttle::Backoff::Waits"]
+  class OpenLanes__Execution__Throttle__Limit["Throttle::Limit"]
   class OpenLanes__Execution__Trace["Trace"]
   <<module>> OpenLanes__Execution__Trace
   class OpenLanes__Execution__Transcript["Transcript"]
@@ -88,6 +93,8 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__ProcessStart : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__Backoff : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
@@ -110,5 +117,7 @@ classDiagram
   OpenLanes__Execution__ReviewPacket ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__Runtime : uses
   OpenLanes__Execution__ReviewPacket__Shelf ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Throttle ..> OpenLanes__Execution__Throttle__Limit : uses
+  OpenLanes__Execution__Throttle__Backoff ..> OpenLanes__Execution__Throttle__Backoff__Waits : uses
   OpenLanes__Execution__Transcript ..> OpenLanes__Plans__Journal : uses
 ```
