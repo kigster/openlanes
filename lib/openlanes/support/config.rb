@@ -142,6 +142,9 @@ module OpenLanes
   #   @return [Float, nil] `budget.plan_usd`: the most a plan may spend, in
   #     estimated dollars, before no new round starts on it; nil is no cap.
   #     Read through {Events::PlanSpend.cap_for}, the one place that asks
+  # @!attribute [r] sizing
+  #   @return [OpenLanes::Agents::Sizing] `sizing:`: the builder profile for
+  #     a plan whose largest unit is small, medium or large
   Config = Data.define(:path,
     :project,
     :starts,
@@ -169,10 +172,11 @@ module OpenLanes
     :refactor_threshold,
     :refactor_lock_hours,
     :chime,
-    :budget_plan_usd) do
+    :budget_plan_usd,
+    :sizing) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -290,7 +294,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review refactor chime budget].freeze
+              questions coverage events ci stack architecture_decisions review refactor chime budget sizing].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -439,7 +443,8 @@ module OpenLanes
           **events(settings["events"], path),
           **refactor(settings["refactor"], path),
           chime:     chime(settings, path),
-          **budget(settings["budget"], path))
+          **budget(settings["budget"], path),
+          sizing:    Agents::Sizing.parse(settings["sizing"], path:))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e

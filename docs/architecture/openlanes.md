@@ -10,6 +10,7 @@ classDiagram
   <<module>> OpenLanes__Adapters
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Apps__Definition["OpenLanes::Apps::Definition"]
   class OpenLanes__Config["Config"]
   class OpenLanes__Container["OpenLanes::Container"]
@@ -36,6 +37,7 @@ classDiagram
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes ..> OpenLanes__Agents__Names : uses
+  OpenLanes ..> OpenLanes__Agents__Sizing : uses
   OpenLanes ..> OpenLanes__Config : uses
   OpenLanes ..> OpenLanes__Container : uses
   OpenLanes ..> OpenLanes__Plans__Execution : uses
@@ -43,6 +45,7 @@ classDiagram
   OpenLanes ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Config ..> OpenLanes__Adapters : uses
+  OpenLanes__Config ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
   OpenLanes__Config ..> OpenLanes__Coverage__Config : uses
   OpenLanes__Config ..> OpenLanes__Error : uses

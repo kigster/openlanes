@@ -60,6 +60,8 @@ classDiagram
   class OpenLanes__Plans__Status["Status"]
   class OpenLanes__Plans__Subject["Subject"]
   class OpenLanes__Plans__Tree["Tree"]
+  class OpenLanes__Plans__UnitSizes["UnitSizes"]
+  <<module>> OpenLanes__Plans__UnitSizes
   class OpenLanes__Plans__Verdict["Verdict"]
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
@@ -129,6 +131,7 @@ classDiagram
   OpenLanes__Plans__Spec ..> OpenLanes__Adapters : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans__Spec ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses

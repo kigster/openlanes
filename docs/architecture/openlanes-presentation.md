@@ -10,6 +10,7 @@ classDiagram
   <<module>> OpenLanes__Agents
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Engine["OpenLanes::Engine"]
   <<module>> OpenLanes__Engine
   class OpenLanes__Error["OpenLanes::Error"]
@@ -26,6 +27,8 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Plans__UnitSizes["OpenLanes::Plans::UnitSizes"]
+  <<module>> OpenLanes__Plans__UnitSizes
   class OpenLanes__Presentation["OpenLanes::Presentation"]
   <<module>> OpenLanes__Presentation
   class OpenLanes__Presentation__ApiDocs["ApiDocs"]
@@ -51,6 +54,7 @@ classDiagram
   OpenLanes__Presentation__Documentation ..> OpenLanes : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Agents : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Brief : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Lanes : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans : uses
@@ -59,6 +63,7 @@ classDiagram
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Presentation__PrChanges ..> OpenLanes : uses
   OpenLanes__Presentation__PrChanges ..|> OpenLanes__UI : includes
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans : uses

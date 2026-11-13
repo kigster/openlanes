@@ -11,13 +11,15 @@ module OpenLanes
     #   0. a failed reviewer's replacement     (adapter only, D14 in plan 031)
     #   1. `run --model`                       (model only)
     #   2. spec.md `phases.<phase>`            (adapter, model, effort)
-    #   3. spec.md `depth`                     (effort only)
-    #   4. the agent's frontmatter
-    #   5. `.openlanes.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
-    #   6. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
-    #   7. {Adapters::DEFAULT}                 (adapter only)
+    #   3. `.openlanes.yml` `sizing:`          (model, effort; builders only, plan 060)
+    #   4. spec.md `depth`                     (effort only)
+    #   5. the agent's frontmatter
+    #   6. `.openlanes.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
+    #   7. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
+    #   8. {Adapters::DEFAULT}                 (adapter only)
     #
-    # {Dealing} answers 0, 5 and 6.
+    # {Dealing} answers 0, 6 and 7. Step 3 keys on the largest `**Size:**`
+    # among plan.md's units ({Plans::UnitSizes}); a plan with none skips it.
     #
     # The adapter has the last word on the model, since a name means
     # something only to the CLI it is written for; today none of them
@@ -64,11 +66,30 @@ module OpenLanes
         # on the command line or in the spec, outranks it.
         small = native && model.nil? && override.empty? && agent.small_diff&.applies?(diff_lines) ? agent.small_diff : nil
         own_model = native ? (small&.model || agent.model) : nil
-        depth_effort = spec&.depth && Plans::Spec::EFFORT_FOR_DEPTH[spec.depth]
+        sized = sized(agent, spec)
         new(adapter:,
-          model:   adapter.model(model || override["model"] || own_model),
-          effort:  override["effort"] || depth_effort || small&.effort || agent.effort)
+          model:   adapter.model(model || override["model"] || sized[:model] || own_model),
+          effort:  override["effort"] || sized[:effort] || depth_effort(spec) || small&.effort || agent.effort)
       end
+
+      # `.openlanes.yml` `sizing:` for the plan's largest unit, a builder only.
+      #
+      # @param agent [OpenLanes::Agents::Agent]
+      # @param spec [OpenLanes::Plans::Spec, nil]
+      # @return [Hash{Symbol => String}] `{model:, effort:}`; empty
+      #   for an agent that does not build or a plan with no sized unit
+      def self.sized(agent, spec)
+        size = spec&.unit_size if Sizing::PHASES.include?(agent.phase.to_s)
+        return {} unless size
+
+        Config.current.sizing.for(size)
+      end
+
+      # @param spec [OpenLanes::Plans::Spec, nil]
+      # @return [String, nil]
+      def self.depth_effort(spec) = spec&.depth && Plans::Spec::EFFORT_FOR_DEPTH[spec.depth]
+
+      private_class_method :sized, :depth_effort
     end
   end
 end
