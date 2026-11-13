@@ -16,6 +16,9 @@ export interface HeaderProps {
   /** Narrow lanes is on: rows at half height, the least important details dropped. */
   narrow?: boolean;
   onToggleNarrow?: () => void;
+  /** Hide Inactive is on: only lanes with an agent running are on the board. */
+  hideInactive?: boolean;
+  onToggleHideInactive?: () => void;
   /** The Action ▾ menu: ActionMenu from src/panels. */
   actionMenu?: ReactNode;
   /** Stop All Local and its confirmation: StopAllDialog from src/panels, which brings its own button. */
@@ -41,7 +44,7 @@ function useNow(override?: number): number {
 }
 
 /** The top bar: the project, this machine, the run's totals as plain text, and the run-wide controls. */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, actionMenu, stopAll, help, now }: HeaderProps) {
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, stopAll, help, now }: HeaderProps) {
   const { node, run } = snapshot;
   const clock = useNow(now);
   // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
@@ -110,6 +113,17 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
           onClick={onToggleNarrow}
         >
           Narrow lanes
+        </button>
+      )}
+      {onToggleHideInactive && (
+        <button
+          className="btn btn-quiet"
+          type="button"
+          aria-pressed={hideInactive}
+          title="Show only the lanes with an agent running right now. Lanes that are waiting, blocked or finished come back when you turn this off"
+          onClick={onToggleHideInactive}
+        >
+          Hide Inactive
         </button>
       )}
       {actionMenu}
