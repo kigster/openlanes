@@ -43,11 +43,12 @@ module OpenLanes
       #   snapshot, so an edited `.openlanes.yml` shows on the next one
       # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
       #   same way
+      # @param chime [#call] `chime:`, asked the same way
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections },
-        lock_ttl: -> { Config.current.refactor_lock_seconds })
+        lock_ttl: -> { Config.current.refactor_lock_seconds }, chime: -> { Config.current.chime? })
         @board = board
         @tree = tree
         @agents = agents
@@ -68,6 +69,7 @@ module OpenLanes
         @outage = outage
         @max_rejections = max_rejections
         @lock_ttl = lock_ttl
+        @chime = chime
       end
 
       # @return [Hash]
@@ -122,6 +124,7 @@ module OpenLanes
           cost:           plans.sum { it[:cost] }.round(4),
           agents_working: @board.running.to_i,
           jobs:           @board.jobs.to_i,
+          chime:          chime?,
           outage:         @outage }
       end
 
@@ -206,6 +209,15 @@ module OpenLanes
         # Verdict counts slop as a rejection; the page says which it was.
         word = note[Plans::Verdict::NOTE, 1].casecmp?("slop") ? "slop" : vote.word.to_s
         { agent: vote.agent, adapter: stage["adapter"], verdict: word, vulnerability: vote.vulnerability? }
+      end
+
+      # Whether the page dings; a file that does not parse leaves it on.
+      #
+      # @return [Boolean]
+      def chime?
+        @chime.call
+      rescue Error
+        true
       end
 
       # @return [OpenLanes::Arbitration::Counter]
@@ -310,6 +322,7 @@ module OpenLanes
           history:       Array(row.history).first(Engine::Board::Row::HISTORY),
           up:            row.up.to_i,
           down:          row.down.to_i,
+          cost:          price(row.model)&.cost(row.up, row.down).to_f.round(4),
           context:       row.context,
           context_limit: price(row.model)&.context,
           elapsed:       row.elapsed.to_i,
@@ -445,12 +458,16 @@ module OpenLanes
       # @return [Hash]
       def question(subject, open, body, asker, asked_at)
         id = "#{subject.feature.ordinal}/B#{open.number}"
-        choices = choices(open.heading, body)
+        asked, follow_ups = Plans::BlockedFile.follow_ups(body)
+        choices = choices(open.heading, asked)
         { id:,
           number:   open.number,
           kind:     "block",
           heading:  open.heading.sub(Plans::Choices::YES_NO, "").strip,
-          body:     choices ? choices.context : body.strip,
+          body:     choices ? choices.context : asked,
+          # What the broker asked when it could not fold the last answer,
+          # apart from the question, so neither hides the other.
+          follow_up: follow_ups.first,
           agent:    asker&.fetch("agent", nil),
           owner:    subject.status.key == :product_blocked ? "product" : "technical",
           options:  choices&.to_a,

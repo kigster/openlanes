@@ -176,3 +176,32 @@ button, textarea { font: inherit; color: inherit; }
 
 .outage-notice { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--ink-soft); }
 .outage-notice.is-stale { color: var(--alarm); font-weight: 600; }
+
+/* The activity strip beside the tabs: the last three log lines, newest at the bottom, in the space the row left empty. */
+.ticker { flex: 1 1 0; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 1px;
+          margin: 0 8px; padding: 4px 14px; border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent); border-radius: 10px;
+          background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink-soft);
+          font: 400 12px/1.35 var(--mono); text-align: left; cursor: pointer; overflow: hidden; }
+.ticker.is-empty { border: 0; background: none; cursor: default; }
+.ticker:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.ticker:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* No opacity and no coloured text: every line keeps --ink-soft's 4.5:1 on the strip. The newest is --ink, and a
+   warning or an error is marked by a bar at its left edge, which is not text and needs no text contrast. */
+.ticker-line { display: flex; gap: 10px; min-width: 0; white-space: nowrap; padding-left: 8px; border-left: 3px solid transparent; }
+.ticker-line:last-child { color: var(--ink); }
+.ticker-at { flex: none; }
+.ticker-src { flex: none; font-weight: 600; }
+.ticker-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ticker-line.is-warn { border-left-color: var(--starts-planning); }
+.ticker-line.is-error { border-left-color: var(--alarm); }
+@media (max-width: 960px) { .ticker { display: none; } }
+
+/* The theme menu: a swatch of each palette's page, panel and accent beside its name. */
+.theme-menu { width: 300px; }
+.theme-item { flex-direction: row; align-items: center; gap: 12px; }
+.theme-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.theme-check { font-weight: 800; }
+.swatch { flex: none; display: flex; align-items: flex-end; justify-content: flex-end; gap: 3px; width: 44px; height: 30px; padding: 4px;
+          border-radius: 7px; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.swatch > span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 18%); }
+.swatch.is-auto { background: linear-gradient(135deg, #E9EDF1 50%, #0E1522 50%); }

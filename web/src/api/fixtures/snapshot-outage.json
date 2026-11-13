@@ -21,6 +21,7 @@
     "cost": 14.8,
     "agents_working": 4,
     "jobs": 4,
+    "chime": true,
     "outage": {
       "started_at": "2026-10-13T09:40:00Z",
       "ended_at": "2026-10-13T09:41:12Z",
@@ -118,6 +119,7 @@
           ],
           "up": 374000,
           "down": 26400,
+          "cost": 2.024,
           "context": 54100,
           "context_limit": 200000,
           "elapsed": 229,
@@ -143,6 +145,7 @@
           ],
           "up": 463700,
           "down": 32800,
+          "cost": 1.2554,
           "context": 54100,
           "context_limit": 200000,
           "elapsed": 229,
@@ -167,6 +170,7 @@
           "owner": "technical",
           "options": null,
           "held": false,
+          "follow_up": null,
           "asked_at": "2026-10-13T09:00:00Z"
         }
       ],
@@ -231,6 +235,7 @@
           ],
           "up": 805800,
           "down": 56800,
+          "cost": 2.1796,
           "context": 54100,
           "context_limit": 200000,
           "elapsed": 229,
@@ -293,6 +298,7 @@
           ],
           "up": 476200,
           "down": 33400,
+          "cost": 1.2864,
           "context": 54100,
           "context_limit": 200000,
           "elapsed": 229,
@@ -328,6 +334,7 @@
             }
           ],
           "held": false,
+          "follow_up": null,
           "asked_at": "2026-10-13T09:00:00Z"
         }
       ],
@@ -415,7 +422,8 @@
             "in": 5,
             "out": 25
           },
-          "context": 200000
+          "context": 200000,
+          "estimated": false
         },
         {
           "id": "claude-sonnet-5-5",
@@ -424,7 +432,8 @@
             "in": 3,
             "out": 15
           },
-          "context": 200000
+          "context": 200000,
+          "estimated": false
         },
         {
           "id": "claude-haiku-5-5",
@@ -433,7 +442,8 @@
             "in": 1,
             "out": 5
           },
-          "context": 200000
+          "context": 200000,
+          "estimated": false
         }
       ],
       "checked_at": "2026-10-13T09:00:00Z",
@@ -452,7 +462,8 @@
           "id": "gpt-5.5",
           "label": "GPT-5.5",
           "rates": null,
-          "context": 272000
+          "context": 272000,
+          "estimated": false
         }
       ],
       "checked_at": "2026-10-13T09:00:00Z",

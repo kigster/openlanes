@@ -20,6 +20,29 @@ describe("UnblockWidget", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  // Plan 056: the card opened on a pile of quoted answers and never said what was being asked.
+  it("names the decision, then shows the question, and the follow-up under it", () => {
+    const plan = planAt("001.00");
+    plan.questions = [question({
+      heading: "B1 Ship with the flaky outage spec?", body: "One outage spec fails now and then.",
+      follow_up: "> **You answered:** yes\n>\n> **unblocker asks:** Ship now, or after the fix?",
+    })];
+    const { container } = renderPanel(<UnblockWidget plan={plan} onCommand={recorder().onCommand} onClose={() => {}} />);
+    const heading = screen.getByText("B1 Ship with the flaky outage spec?");
+    const followUp = screen.getByRole("note", { name: "Follow-up on your last answer" });
+    expect(heading).toHaveClass("ask-heading");
+    expect(followUp).toHaveTextContent("You answered: yes");
+    expect(followUp).toHaveTextContent("unblocker asks: Ship now, or after the fix?");
+    const order = [...container.querySelectorAll(".ask-heading, .ask > .ask-text, .ask-follow-up")].map((el) => el.className);
+    expect(order).toEqual(["ask-heading", "ask-text", "ask-follow-up"]);
+  });
+
+  it("shows no follow-up for a question never reopened", () => {
+    renderPanel(<UnblockWidget plan={planAt("001.00")} onCommand={recorder().onCommand} onClose={() => {}} />);
+    expect(screen.queryByRole("note", { name: "Follow-up on your last answer" })).toBeNull();
+    expect(screen.getByText("B1 Redis key layout")).toBeInTheDocument();
+  });
+
   it("offers a question's options before the editor, which opens to type something instead", async () => {
     const user = userEvent.setup();
     const plan = planAt("001.00");

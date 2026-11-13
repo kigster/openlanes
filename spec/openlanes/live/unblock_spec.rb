@@ -108,14 +108,14 @@ RSpec.describe "Unblocking from the run loop", :tree do
     it "puts the question back on the page, saying what was refused and why" do
       aggregate_failures do
         expect(file).not_to match(/^## A1/)
-        expect(file).to include("> **Answer not accepted:** yes", "unblocker: 'yes' names none of a/b/c")
+        expect(file).to include("> **You answered:** yes", "**unblocker asks:** 'yes' names none of a/b/c")
         expect(OpenLanes::Lifecycle::Unblocker.questions(tree.find("002.00")).map(&:answered)).to eq([false])
       end
     end
 
     it "logs which answer was refused, and why" do
       expect(OpenLanes::UI).to have_received(:log)
-        .with("answer to B1 not accepted: unblocker: 'yes' names none of a/b/c; not an answer", level: :warn, plan: "002.00")
+        .with("answer to B1 needs a follow-up: **unblocker asks:** 'yes' names none of a/b/c; not an answer", level: :warn, plan: "002.00")
     end
   end
 

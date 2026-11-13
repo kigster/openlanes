@@ -7,10 +7,18 @@ require "yaml"
 # the docs; this holds the job's shape in place.
 RSpec.describe "lefthook.yml" do
   let(:config) { YAML.safe_load_file(File.expand_path("../../../lefthook.yml", __dir__)) }
-  let(:job) { config.dig("pre-commit", "jobs").find { |j| j["name"] == "architecture" } }
+  # The job sits inside the piped `ruby` group, after rubocop and before
+  # rspec, so the diagrams are drawn from files rubocop has finished with.
+  let(:jobs) { config.dig("pre-commit", "jobs").flat_map { |j| [j, *j.dig("group", "jobs")] } }
+  let(:job) { jobs.find { |j| j["name"] == "architecture" } }
 
   it "has a pre-commit job named architecture" do
     expect(job).not_to be_nil
+  end
+
+  it "runs it after rubocop, one at a time" do
+    group = config.dig("pre-commit", "jobs").find { |j| j["name"] == "ruby" }["group"]
+    expect([group["piped"], group["jobs"].map { |j| j["name"] }.first(2)]).to eq([true, %w[rubocop architecture]])
   end
 
   it "runs at the repository root, where lib/ and the justfile are" do

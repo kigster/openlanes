@@ -102,6 +102,30 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     end
   end
 
+  describe "set_chime" do
+    let(:file) { File.join(File.dirname(dispatcher.runner.tree.dir), OpenLanes::Config::FILE) }
+
+    it "writes the choice into .openlanes.yml, leaving the rest of the file alone" do
+      File.write(file, "# ours\njobs: 3\n")
+      send_command("set_chime", id: "C1", on: false)
+      apply
+      expect([reply_to("C1")["reason"], File.read(file)]).to eq(["chime: false in .openlanes.yml", "# ours\njobs: 3\nchime: false\n"])
+    end
+
+    it "rewrites the line already there" do
+      File.write(file, "chime: false\njobs: 3\n")
+      send_command("set_chime", id: "C2", on: true)
+      apply
+      expect([File.read(file), OpenLanes::Config.load(File.dirname(file)).chime?]).to eq(["chime: true\njobs: 3\n", true])
+    end
+
+    it "refuses anything but true or false" do
+      send_command("set_chime", id: "C3", on: "loud")
+      apply
+      expect(reply_to("C3")).to include("status" => "refused", "reason" => 'chime is true or false, not "loud"')
+    end
+  end
+
   it "answers a page's command only on replies" do
     OpenLanes::Live.enqueue(store:, keys:, input: { id: "P1", kind: "set_concurrency", payload: { limit: 2 } })
     apply

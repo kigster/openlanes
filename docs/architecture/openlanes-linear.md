@@ -4,10 +4,16 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Linear["OpenLanes::Linear"]
+  <<module>> OpenLanes__Linear
   class OpenLanes__Linear__API["API"]
   class OpenLanes__Linear__Action["Action"]
   class OpenLanes__Linear__Attribution["Attribution"]
+  class OpenLanes__Linear__Fuzzy["Fuzzy"]
+  <<module>> OpenLanes__Linear__Fuzzy
   class OpenLanes__Linear__Import["Import"]
   class OpenLanes__Linear__Issue["Issue"]
   class OpenLanes__Linear__Issues["Issues"]
@@ -17,14 +23,22 @@ classDiagram
   class OpenLanes__Linear__Survey["Survey"]
   class OpenLanes__Linear__Unit["Unit"]
   class OpenLanes__Linear__Units["Units"]
+  class OpenLanes__Markdown["OpenLanes::Markdown"]
+  <<module>> OpenLanes__Markdown
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
+  OpenLanes__Linear ..> OpenLanes__Error : uses
+  OpenLanes__Linear ..> OpenLanes__Linear__Placement : uses
   OpenLanes__Linear__API ..> OpenLanes__Error : uses
+  OpenLanes__Linear__Attribution ..> OpenLanes__Linear__Fuzzy : uses
+  OpenLanes__Linear__Import ..> OpenLanes : uses
+  OpenLanes__Linear__Import ..> OpenLanes__Linear : uses
   OpenLanes__Linear__Import ..> OpenLanes__Linear__Action : uses
   OpenLanes__Linear__Import ..> OpenLanes__Linear__Issues : uses
   OpenLanes__Linear__Import ..> OpenLanes__Linear__Unit : uses
   OpenLanes__Linear__Import ..> OpenLanes__Linear__Units : uses
   OpenLanes__Linear__Import ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Linear__Issues ..> OpenLanes__Linear__Issue : uses
+  OpenLanes__Linear__Issues ..> OpenLanes__Markdown : uses
   OpenLanes__Linear__Push ..> OpenLanes__Error : uses
   OpenLanes__Linear__Push ..> OpenLanes__Linear__Issue : uses
   OpenLanes__Linear__Push ..> OpenLanes__Linear__Issues : uses

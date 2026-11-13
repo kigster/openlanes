@@ -76,3 +76,7 @@ architecture_decisions:
     - rspec
     - vitest
     - cypress
+coverage:
+  command: bundle exec rspec
+  report_command: cat coverage/coverage.json | jq '.total.lines.percent'
+  minimum: 95

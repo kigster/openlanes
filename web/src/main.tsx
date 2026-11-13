@@ -5,6 +5,10 @@ import "./index.css";
 import App from "./App.tsx";
 import { createQueryClient } from "./api/queryClient";
 import favicon from "./assets/favicon.png";
+import { restorePalette } from "./shell/usePalette";
+
+// Before the first render, so the page never flashes the wrong colours.
+restorePalette();
 
 // The favicon is docs/logos/square-239x239.png converted to sRGB, bundled like the header's logo.
 const icon = document.querySelector<HTMLLinkElement>("link[rel~='icon']") ?? document.head.appendChild(document.createElement("link"));

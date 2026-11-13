@@ -23,6 +23,12 @@ module OpenLanes
       # A question or an answer heading, either of which ends an answer.
       BLOCK = Regexp.union(OPEN_BLOCK, ANSWER_BLOCK)
 
+      # How a follow-up opens: the quote {Engine::Unblocking::Reopener} puts
+      # back with a question whose answer could not be folded. "Answer not
+      # accepted" is how it read before the broker lost the power to refuse,
+      # and files written then are still on disk.
+      FOLLOW_UP = /\A> \*\*(?:You answered|Answer not accepted):\*\*/
+
       module_function
 
       # @param text [String] the whole of blocked.md
@@ -90,7 +96,24 @@ module OpenLanes
         return nil unless from && bodies(text).key?(number)
 
         reopened = (lines[0...(from - 1)] + lines[to..]).join
-        replace(reopened, number, "#{note.strip}\n\n#{bodies(reopened)[number].strip}")
+        asked, = follow_ups(bodies(reopened)[number])
+        replace(reopened, number, "#{note.strip}\n\n#{asked}")
+      end
+
+      # A question as it was asked, and the follow-ups put back with it since,
+      # newest first.
+      #
+      # Each reopening used to add its quote above the last one. After three
+      # the card opened on a pile of quoted answers, the question was below
+      # them, and an `a)` inside a quoted answer kept the options at its end
+      # from being read as buttons (plan 056). So {reject} keeps only the
+      # newest, and the page reads the question and the follow-up apart.
+      #
+      # @param body [String] one question's body
+      # @return [Array(String, Array<String>)]
+      def follow_ups(body)
+        notes, asked = body.to_s.strip.split(/\n{2,}/).partition { it.match?(FOLLOW_UP) }
+        [asked.join("\n\n"), notes]
       end
 
       # @param lines [Array<String>]

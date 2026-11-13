@@ -4,19 +4,37 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__Availability["OpenLanes::Adapters::Availability"]
   class OpenLanes__Adapters__Invocation["OpenLanes::Adapters::Invocation"]
   class OpenLanes__Adapters__Probes["OpenLanes::Adapters::Probes"]
+  class OpenLanes__Agents["OpenLanes::Agents"]
+  <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
+  class OpenLanes__Arbitration["OpenLanes::Arbitration"]
+  <<module>> OpenLanes__Arbitration
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
+  class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
+  <<module>> OpenLanes__Engine__QualityQuestion
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
+  class OpenLanes__Execution__Control["OpenLanes::Execution::Control"]
+  <<module>> OpenLanes__Execution__Control
   class OpenLanes__Execution__Executor["OpenLanes::Execution::Executor"]
+  class OpenLanes__Lifecycle["OpenLanes::Lifecycle"]
+  <<module>> OpenLanes__Lifecycle
   class OpenLanes__Lifecycle__Aging["OpenLanes::Lifecycle::Aging"]
   class OpenLanes__Lifecycle__Creator["OpenLanes::Lifecycle::Creator"]
+  class OpenLanes__Lifecycle__Lanes["OpenLanes::Lifecycle::Lanes"]
+  <<module>> OpenLanes__Lifecycle__Lanes
   class OpenLanes__Lifecycle__Unblocker["OpenLanes::Lifecycle::Unblocker"]
+  class OpenLanes__Live["OpenLanes::Live"]
+  <<module>> OpenLanes__Live
   class OpenLanes__Live__Chat["Chat"]
   class OpenLanes__Live__Chat__Invalid["Chat::Invalid"]
   class OpenLanes__Live__Chat__Settled["Chat::Settled"]
@@ -30,11 +48,17 @@ classDiagram
   class OpenLanes__Live__Commands__Refusal["Commands::Refusal"]
   class OpenLanes__Live__Copilot["Copilot"]
   class OpenLanes__Live__Copilot__Brief["Copilot::Brief"]
+  class OpenLanes__Live__Copilot__Cards["Copilot::Cards"]
+  <<module>> OpenLanes__Live__Copilot__Cards
   class OpenLanes__Live__Copilot__Invalid["Copilot::Invalid"]
   class OpenLanes__Live__Copilot__Operator["Copilot::Operator"]
+  class OpenLanes__Live__Copilot__Slash["Copilot::Slash"]
+  <<module>> OpenLanes__Live__Copilot__Slash
   class OpenLanes__Live__Copilot__Slash__Help["Copilot::Slash::Help"]
   class OpenLanes__Live__Copilot__Turn["Copilot::Turn"]
   class OpenLanes__Live__Copilot__Unanswered["Copilot::Unanswered"]
+  class OpenLanes__Live__EventBus["EventBus"]
+  <<module>> OpenLanes__Live__EventBus
   class OpenLanes__Live__EventBus__Base["EventBus::Base"]
   class OpenLanes__Live__EventBus__MemoryBus["EventBus::MemoryBus"]
   class OpenLanes__Live__EventBus__RedisBus["EventBus::RedisBus"]
@@ -47,21 +71,33 @@ classDiagram
   class OpenLanes__Live__MemoryStore["MemoryStore"]
   class OpenLanes__Live__MemorySubscriber["MemorySubscriber"]
   class OpenLanes__Live__Meter["Meter"]
+  class OpenLanes__Live__News["News"]
+  <<module>> OpenLanes__Live__News
   class OpenLanes__Live__Node["Node"]
   class OpenLanes__Live__Node__Invalid["Node::Invalid"]
   class OpenLanes__Live__Outage["Outage"]
   class OpenLanes__Live__OutageReport["OutageReport"]
+  class OpenLanes__Live__Phases["Phases"]
+  <<module>> OpenLanes__Live__Phases
   class OpenLanes__Live__Publisher["Publisher"]
   class OpenLanes__Live__Reply["Reply"]
+  class OpenLanes__Live__Repo["Repo"]
+  <<module>> OpenLanes__Live__Repo
   class OpenLanes__Live__RunRecord["RunRecord"]
   class OpenLanes__Live__RunState["RunState"]
   class OpenLanes__Live__Session["Session"]
   class OpenLanes__Live__Snapshot["Snapshot"]
+  class OpenLanes__Live__Stations["Stations"]
+  <<module>> OpenLanes__Live__Stations
   class OpenLanes__Live__Stations__Station["Stations::Station"]
   class OpenLanes__Live__Store["Store"]
   class OpenLanes__Live__Store__Transaction["Store::Transaction"]
   class OpenLanes__Live__Subscriber["Subscriber"]
   class OpenLanes__Live__Unavailable["Unavailable"]
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__BlockedFile["OpenLanes::Plans::BlockedFile"]
+  <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
   class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
@@ -70,13 +106,32 @@ classDiagram
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Live ..> OpenLanes__Config : uses
+  OpenLanes__Live ..> OpenLanes__Error : uses
+  OpenLanes__Live ..> OpenLanes__Live__ChoiceConverter : uses
+  OpenLanes__Live ..> OpenLanes__Live__ChoiceJudge : uses
+  OpenLanes__Live ..> OpenLanes__Live__Command : uses
+  OpenLanes__Live ..> OpenLanes__Live__Copilot : uses
+  OpenLanes__Live ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Live ..> OpenLanes__Live__Interviewer : uses
+  OpenLanes__Live ..> OpenLanes__Live__Keys : uses
+  OpenLanes__Live ..> OpenLanes__Live__MemoryStore : uses
+  OpenLanes__Live ..> OpenLanes__Live__Node : uses
+  OpenLanes__Live ..> OpenLanes__Live__Reply : uses
+  OpenLanes__Live ..> OpenLanes__Live__Repo : uses
+  OpenLanes__Live ..> OpenLanes__Live__Session : uses
+  OpenLanes__Live ..> OpenLanes__Live__Store : uses
+  OpenLanes__Live ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Chat ..> OpenLanes__Error : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Invalid : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Settled : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Command : uses
+  OpenLanes__Live__Chat ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Live__Chat ..> OpenLanes__Live__News : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Chat ..> OpenLanes__UI : uses
   OpenLanes__Live__Chat__Invalid --|> OpenLanes__Error : inherits
@@ -84,6 +139,8 @@ classDiagram
   OpenLanes__Live__ChoiceConverter ..> OpenLanes__Config : uses
   OpenLanes__Live__ChoiceConverter ..> OpenLanes__Error : uses
   OpenLanes__Live__ChoiceConverter ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
+  OpenLanes__Live__ChoiceConverter ..> OpenLanes__Plans : uses
+  OpenLanes__Live__ChoiceConverter ..> OpenLanes__Plans__BlockedFile : uses
   OpenLanes__Live__ChoiceConverter ..> OpenLanes__Plans__Choices : uses
   OpenLanes__Live__ChoiceConverter__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__ChoiceJudge ..> OpenLanes__UI : uses
@@ -93,15 +150,20 @@ classDiagram
   OpenLanes__Live__Command ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Command__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Commands ..> OpenLanes__Config : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Commands ..> OpenLanes__Error : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Lifecycle : uses
   OpenLanes__Live__Commands ..> OpenLanes__Lifecycle__Creator : uses
   OpenLanes__Live__Commands ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Command : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Command__Invalid : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Commands__Refusal : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Copilot : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__GroupMissing : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Keys : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Live__News : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Reply : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Snapshot : uses
@@ -112,24 +174,45 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Live__Commands ..> OpenLanes__UI : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Agents__Names : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Error : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Command : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Invalid : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Slash : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Slash__Help : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Unanswered : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Keys : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Live__News : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Live__Command : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Live__Command__Invalid : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Live__Copilot : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Live__Copilot__Invalid : uses
+  OpenLanes__Live__Copilot__Cards ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Copilot__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Adapters__Invocation : uses
+  OpenLanes__Live__Copilot__Operator ..> OpenLanes__Agents : uses
+  OpenLanes__Live__Copilot__Operator ..> OpenLanes__Agents__Names : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Error : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Execution__Child : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot__Brief : uses
+  OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot__Cards : uses
+  OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Command : uses
+  OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Copilot__Slash__Help : uses
+  OpenLanes__Live__Copilot__Slash ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Copilot__Turn ..> OpenLanes__Live__Command : uses
   OpenLanes__Live__Copilot__Turn ..> OpenLanes__Live__Command__Invalid : uses
   OpenLanes__Live__Copilot__Turn ..> OpenLanes__Live__Copilot__Invalid : uses
   OpenLanes__Live__Copilot__Unanswered --|> OpenLanes__Error : inherits
+  OpenLanes__Live__EventBus ..> OpenLanes__Live__EventBus__Base : uses
+  OpenLanes__Live__EventBus ..> OpenLanes__Live__EventBus__MemoryBus : uses
+  OpenLanes__Live__EventBus ..> OpenLanes__Live__EventBus__RedisBus : uses
+  OpenLanes__Live__EventBus ..> OpenLanes__Live__MemoryStore : uses
   OpenLanes__Live__EventBus__Base ..> OpenLanes__Live__EventBus__Transaction : uses
   OpenLanes__Live__EventBus__MemoryBus --|> OpenLanes__Live__EventBus__Base : inherits
   OpenLanes__Live__EventBus__MemoryBus ..> OpenLanes__Live__MemoryStore : uses
@@ -140,17 +223,26 @@ classDiagram
   OpenLanes__Live__Interviewer ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Plans__Choices : uses
+  OpenLanes__Live__Mail ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Mail ..> OpenLanes__Live__Keys : uses
   OpenLanes__Live__MemoryStore ..> OpenLanes__Live__GroupMissing : uses
   OpenLanes__Live__MemoryStore ..> OpenLanes__Live__MemorySubscriber : uses
   OpenLanes__Live__MemoryStore ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__MemoryStore ..> OpenLanes__Live__Store__Transaction : uses
+  OpenLanes__Live__News ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Live__News ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Node ..> OpenLanes__Live__Node__Invalid : uses
+  OpenLanes__Live__Outage ..> OpenLanes__Execution__Control : uses
   OpenLanes__Live__Outage ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Outage ..> OpenLanes__UI : uses
   OpenLanes__Live__OutageReport ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__Phases ..> OpenLanes__Lifecycle__Lanes : uses
+  OpenLanes__Live__Phases ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Live__Phases ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Live__Publisher ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Keys : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Meter : uses
+  OpenLanes__Live__Publisher ..> OpenLanes__Live__News : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__RunState : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Snapshot : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Unavailable : uses
@@ -158,8 +250,10 @@ classDiagram
   OpenLanes__Live__RunRecord ..> OpenLanes__Error : uses
   OpenLanes__Live__RunRecord ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__RunRecord ..> OpenLanes__UI : uses
+  OpenLanes__Live__Session ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
+  OpenLanes__Live__Session ..> OpenLanes__Live : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Keys : uses
@@ -168,29 +262,43 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Live__Outage : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__OutageReport : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Publisher : uses
+  OpenLanes__Live__Session ..> OpenLanes__Live__Repo : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__RunRecord : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__RunState : uses
+  OpenLanes__Live__Session ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Session ..> OpenLanes__UI : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Arbitration : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Config : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Board : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Extensions : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Error : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Aging : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Unblocker : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Live : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Live__Meter : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Live__Phases : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Live__RunState : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Live__Stations : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Plans : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Plans__BlockedFile : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Choices : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__GlobalLock : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Plans__Verdict : uses
+  OpenLanes__Live__Stations ..> OpenLanes__Live__Stations__Station : uses
+  OpenLanes__Live__Stations ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Live__Store ..> OpenLanes__Live : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__GroupMissing : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__Store__Transaction : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__Subscriber : uses
   OpenLanes__Live__Store ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__Subscriber ..> OpenLanes__Live : uses
   OpenLanes__Live__Subscriber ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__Subscriber ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Unavailable --|> OpenLanes__Error : inherits

@@ -16,6 +16,45 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
   let(:written) { JSON.parse(File.read(state.path)) }
   let(:entry) { OpenLanes::Plans::Journal::Entry }
 
+  # Plan 062.00: what a session already holds of the journal, so the round
+  # that resumes it is not sent those entries again.
+  describe "#hold!" do
+    before do
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "todo", text: "U1"), entry.new(kind: "done", text: "U1")])
+      state.hold!(agent: "backend-coder", session: "sess-1")
+    end
+
+    it "records the session and the number of the last entry it holds" do
+      expect(state.held("backend-coder").to_h).to eq(session: "sess-1", through: 2)
+    end
+
+    it "writes a document the schema accepts" do
+      expect(schema.validate(written).map { it["error"] }).to eq([])
+    end
+
+    it "keeps the count it took when entries arrive later" do
+      state.journal!(agent: "backend-coder", entries: [entry.new(kind: "note", text: "later")])
+      expect(state.held("backend-coder").through).to eq(2)
+    end
+
+    it "is dropped by #forget_held!, leaving the entries" do
+      state.forget_held!("backend-coder")
+      expect([state.held("backend-coder"), state.journal("backend-coder").sum { it.entries.size }]).to eq([nil, 2])
+    end
+
+    it "holds nothing for an agent that kept no journal, in a document the schema accepts" do
+      state.hold!(agent: "frontend-coder", session: "sess-9")
+      expect([state.held("frontend-coder").through, schema.validate(written).map { it["error"] }]).to eq([0, []])
+    end
+  end
+
+  describe "#forget_held!" do
+    it "writes no state.json for a plan that has none" do
+      state.forget_held!("backend-coder")
+      expect(state.exist?).to be(false)
+    end
+  end
+
   describe "#journal!" do
     before do
       number, = state.journal!(agent: "backend-coder", entries: [entry.new(kind: "todo", text: "U1")], round: 1, state: :building)

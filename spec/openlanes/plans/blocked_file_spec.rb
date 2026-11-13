@@ -89,6 +89,21 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
     end
   end
 
+  describe ".follow_ups" do
+    it "reads the question apart from the follow-ups put back with it, newest first" do
+      body = "> **You answered:** b\n>\n> why\n\nContext.\n\n> **Answer not accepted:** a) Ship\n>\n> why\n\n> a quote of the agent's own\n\na) Ship\nb) Wait\n"
+
+      expect(described_class.follow_ups(body)).to eq(
+        ["Context.\n\n> a quote of the agent's own\n\na) Ship\nb) Wait",
+         ["> **You answered:** b\n>\n> why", "> **Answer not accepted:** a) Ship\n>\n> why"]]
+      )
+    end
+
+    it "is the body and nothing else for a question never reopened" do
+      expect(described_class.follow_ups("Should I rebase first?\n")).to eq(["Should I rebase first?", []])
+    end
+  end
+
   describe ".reject" do
     it "takes the answer out and puts the note at the top of its question" do
       expect(described_class.reject(text, 1, "> Not accepted")).to eq(<<~MD)
@@ -109,6 +124,13 @@ RSpec.describe OpenLanes::Plans::BlockedFile do
     it "keeps the options at the end of the body, where the page reads them" do
       file = "## B1 Fit?\n\na) Split\nb) Wait\n\n## A1\n\nRebase onto main\n"
       expect(described_class.reject(file, 1, "> No")).to eq("## B1 Fit?\n\n> No\n\na) Split\nb) Wait\n")
+    end
+
+    it "leaves only the newest follow-up above the question, however often it is reopened" do
+      file = "## B1 Fit?\n\n> **You answered:** hm\n>\n> **unblocker asks:** Which?\n\nSeven units.\n\na) Split\nb) Wait\n\n## A1\n\nyes\n"
+
+      expect(described_class.reject(file, 1, "> **You answered:** yes\n>\n> **unblocker asks:** Yes to which?"))
+        .to eq("## B1 Fit?\n\n> **You answered:** yes\n>\n> **unblocker asks:** Yes to which?\n\nSeven units.\n\na) Split\nb) Wait\n")
     end
 
     it "is nil for a question with no answer" do

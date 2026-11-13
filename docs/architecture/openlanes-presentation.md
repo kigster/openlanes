@@ -4,14 +4,30 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
+  class OpenLanes__Agents["OpenLanes::Agents"]
+  <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
+  <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Engine["OpenLanes::Engine"]
+  <<module>> OpenLanes__Engine
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
+  <<module>> OpenLanes__Frontmatter
   class OpenLanes__Lifecycle__Brief["OpenLanes::Lifecycle::Brief"]
+  class OpenLanes__Lifecycle__Lanes["OpenLanes::Lifecycle::Lanes"]
+  <<module>> OpenLanes__Lifecycle__Lanes
+  class OpenLanes__Plans["OpenLanes::Plans"]
+  <<module>> OpenLanes__Plans
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Presentation["OpenLanes::Presentation"]
+  <<module>> OpenLanes__Presentation
   class OpenLanes__Presentation__ApiDocs["ApiDocs"]
   class OpenLanes__Presentation__Diagram["Diagram"]
   class OpenLanes__Presentation__Documentation["Documentation"]
@@ -21,15 +37,31 @@ classDiagram
   class OpenLanes__Presentation__Viewer["Viewer"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  OpenLanes__Presentation ..> OpenLanes__Engine : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__ApiDocs : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__Diagram : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__Documentation : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__PrChanges : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__Reporter : uses
+  OpenLanes__Presentation ..> OpenLanes__Presentation__Viewer : uses
+  OpenLanes__Presentation__ApiDocs ..> OpenLanes__Frontmatter : uses
+  OpenLanes__Presentation__Diagram ..> OpenLanes__Plans : uses
   OpenLanes__Presentation__Diagram ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Presentation__Diagram ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Documentation ..> OpenLanes : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Agents : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Agents__Names : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Brief : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Lifecycle__Lanes : uses
+  OpenLanes__Presentation__Documentation ..> OpenLanes__Plans : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Presentation__Documentation ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Presentation__PrChanges ..> OpenLanes : uses
   OpenLanes__Presentation__PrChanges ..|> OpenLanes__UI : includes
+  OpenLanes__Presentation__Reporter ..> OpenLanes__Plans : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Presentation__Reporter ..> OpenLanes__Plans__Spec : uses

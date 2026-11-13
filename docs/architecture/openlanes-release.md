@@ -4,11 +4,15 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Release["OpenLanes::Release"]
+  <<module>> OpenLanes__Release
   class OpenLanes__Release__Bump["Bump"]
   class OpenLanes__Release__Failed["Failed"]
   class OpenLanes__Release__Lockfile["Lockfile"]
   class OpenLanes__Release__Relock["Relock"]
   class OpenLanes__Release__VersionFile["VersionFile"]
+  OpenLanes__Release ..> OpenLanes__Release__Bump : uses
+  OpenLanes__Release ..> OpenLanes__Release__Relock : uses
   OpenLanes__Release__Bump ..> OpenLanes__Release__Failed : uses
   OpenLanes__Release__Bump ..> OpenLanes__Release__Lockfile : uses
   OpenLanes__Release__Bump ..> OpenLanes__Release__VersionFile : uses
