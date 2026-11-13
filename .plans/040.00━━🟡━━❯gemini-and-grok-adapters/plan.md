@@ -98,3 +98,19 @@ Five pull requests, in order. Each lands on `main` before the next starts. Q1 to
 - [x] Transcript dialect and fixture.
 - [x] Probe with the refused-tier reason.
 - [x] Docs, lint, the full suite, coverage.
+
+## Backend
+
+Every unit in PR 1 to PR 5 above is on `main`. Round 4 fixed the baseline failures; see contract.md.
+
+## Frontend
+
+None. The PR 3 web units are already on `main`.
+
+## How to test
+
+- `adapter: grok` and `adapter: gemini` run a phase end to end against recorded transcripts. No spec reaches the network.
+- `openlanes agents` reports each adapter's capabilities and availability, with the reason when unavailable.
+- `adapter: codex` in `.openlanes.yml` runs every agent without its own `adapter:` on codex; verifier stays on claude.
+- The new-plan dialog offers only available adapters, and the choice lands in `spec.md` `phases`.
+- Startup time does not grow: the probes run on their own thread.

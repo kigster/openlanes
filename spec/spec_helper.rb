@@ -158,6 +158,16 @@ RSpec.configure do |config|
   # A dispatcher with a state file says its agents outlive it; the suite's own exit still stops them.
   config.after { OpenLanes::Execution::AgentProcess.reset! }
 
+  # This checkout's own .openlanes.yml is the project's settings, not the
+  # suite's: `frontend: true` in it sent frontend-coder to every routing
+  # example. An example that writes a file of its own, in a root of its
+  # own, still reads it.
+  config.before do
+    allow(OpenLanes::Config).to receive(:current).and_wrap_original do |original|
+      (OpenLanes::Project.root || Dir.pwd) == REPO_ROOT ? OpenLanes::Config.new : original.call
+    end
+  end
+
   # A command run in an example names its process (S5); the suite's own
   # title stays `rspec`.
   config.before { allow(Process).to receive(:setproctitle) }
