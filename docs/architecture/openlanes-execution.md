@@ -28,6 +28,7 @@ classDiagram
   class OpenLanes__Execution__Executor["Executor"]
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
+  class OpenLanes__Execution__JournalWindow["JournalWindow"]
   class OpenLanes__Execution__ProcessStart["ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
   class OpenLanes__Execution__Prompt["Prompt"]
@@ -88,6 +89,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses
@@ -96,6 +98,7 @@ classDiagram
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Execution__Checks : uses
+  OpenLanes__Execution__Prompt ..> OpenLanes__Execution__JournalWindow : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Lifecycle__Completion : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Plans__PlanState : uses

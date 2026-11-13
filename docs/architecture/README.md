@@ -117,7 +117,7 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Agents : 3
   OpenLanes__Execution ..> OpenLanes__Lifecycle : 1
   OpenLanes__Execution ..> OpenLanes__Memory : 1
-  OpenLanes__Execution ..> OpenLanes__Plans : 6
+  OpenLanes__Execution ..> OpenLanes__Plans : 7
   OpenLanes__Execution ..> OpenLanes__Spawner : 2
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
   OpenLanes__Execution ..> OpenLanes__UI : 5
