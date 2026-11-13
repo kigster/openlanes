@@ -520,6 +520,17 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       expect(car.slice(:context, :context_limit)).to eq(context: 54_100, context_limit: 200_000)
     end
 
+    it "prices the car's own tokens at its model's rates" do
+      rows.replace([row("001.00", "backend-coder", model: "opus", up: 1_000_000, down: 100_000)])
+      entry = OpenLanes::Adapters.for("claude").model_entry("opus")
+      expect(car[:cost]).to eq(entry.cost(1_000_000, 100_000).round(4)).and be_positive
+    end
+
+    it "costs nothing on a model the catalogue does not know" do
+      rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
+      expect(car[:cost]).to eq(0.0)
+    end
+
     it "has no window for a model the catalogue does not know" do
       rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
       expect(car.slice(:context, :context_limit)).to eq(context: nil, context_limit: nil)

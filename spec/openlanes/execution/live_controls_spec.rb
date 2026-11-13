@@ -103,6 +103,17 @@ RSpec.describe "The live controls on one invocation" do
       expect(choices.options.map { [it.letter, it.recommended] }).to eq([["a", true], ["b", false], ["c", false]])
     end
 
+    it "tells it the person reads the question alone, so a label is never enough" do
+      expect(prompt_for("backend-coder")).to include("reads each question alone", "Never point at something by its label alone")
+    end
+
+    it "tells the agent that drains blocked.md to ask a follow-up, never refuse, and without labels" do
+      expect(prompt_for("unblocker")).to include("ask, never refuse",
+        "last journal entry you print",
+        "Never use a label on its own",
+        "You judge the answer and nothing else")
+    end
+
     it "leaves that out for the agent that drains blocked.md" do
       expect(prompt_for("unblocker")).not_to include("context, then lettered options")
     end

@@ -75,6 +75,12 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
       expect(spawned.size).to eq(3)
     end
 
+    # Plan 062.00: a summary keeps what the model chose to keep, so the next
+    # round is sent the whole journal, not only what was written since.
+    it "does not record the compacted session as holding the journal" do
+      expect(OpenLanes::Plans::PlanState.for(plan.feature.path).held("backend-coder")).to be_nil
+    end
+
     it "asks the agent to stop with INTERRUPT, and clears that before it carries on" do
       expect([File.exist?(handle.control), controls]).to eq([false, ["", "INTERRUPT\n", ""]])
     end

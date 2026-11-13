@@ -197,6 +197,21 @@ publish otp="": build
     echo "published {{ gem_name }} {{ version }} → {{ gem_url }}"
     open "{{ gem_url }}" 2>/dev/null || xdg-open "{{ gem_url }}" 2>/dev/null || true
 
+# Set the gem's version in lib/openlanes/version.rb and re-lock Gemfile.lock to match
+bump new_version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! "{{ new_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9A-Za-z]+)*$ ]]; then
+        echo "bump: '{{ new_version }}' is not a version; expected something like 4.0.2 or 4.1.0.pre1" >&2
+        exit 64
+    fi
+    eval "$(rbenv init - bash 2>/dev/null || true)"
+    ruby -pi -e 'sub(/VERSION = ".*"/, %(VERSION = "{{ new_version }}"))' lib/openlanes/version.rb
+    # The lockfile names the gem's own version twice. Without this, every later
+    # `bundle` run rewrites it, in every checkout, as an unrelated change.
+    bundle install
+    git --no-pager diff --stat -- lib/openlanes/version.rb Gemfile.lock
+
 # Tag v{{ version }}, publish the GH release, & refresh the Homebrew tap.
 release:
     git fetch --tags

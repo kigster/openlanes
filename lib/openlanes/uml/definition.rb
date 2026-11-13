@@ -13,7 +13,8 @@ module OpenLanes
     # @!attribute mixins [Array<OpenLanes::Uml::Reference>] include, extend, prepend
     # @!attribute references [Array<OpenLanes::Uml::Reference>] every other constant it names
     # @!attribute owner [String, nil] for a value type, the class it is declared in
-    Definition = Data.define(:name, :kind, :file, :superclass, :mixins, :references, :owner) do
+    # @!attribute defs [Array<Symbol>] the methods written directly in its body
+    Definition = Data.define(:name, :kind, :file, :superclass, :mixins, :references, :owner, :defs) do
       # @param name [String]
       # @param kind [Symbol]
       # @param file [String]
@@ -21,11 +22,17 @@ module OpenLanes
       # @param owner [String, nil]
       # @return [OpenLanes::Uml::Definition] with empty, appendable lists
       def self.open(name:, kind:, file:, superclass: nil, owner: nil)
-        new(name:, kind:, file:, superclass:, mixins: [], references: [], owner:)
+        new(name:, kind:, file:, superclass:, mixins: [], references: [], owner:, defs: [])
       end
 
       # @return [Boolean]
       def class? = kind == :class
+
+      # A module that defines methods does work of its own: a facade, a set of
+      # `module_function` helpers. One that defines none only holds constants.
+      #
+      # @return [Boolean]
+      def behaviour? = kind == :module && !defs.empty?
 
       # @return [Array<String>] "OpenLanes::Plans::Tree" as its segments
       def segments = name.split("::")

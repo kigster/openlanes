@@ -21,6 +21,7 @@ export function sampleCar(over: Partial<Car> = {}): Car {
     history: [],
     up: 1200,
     down: 80,
+    cost: 0.0064,
     context: null,
     context_limit: null,
     elapsed: 75,

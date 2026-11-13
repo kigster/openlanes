@@ -4,12 +4,32 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
+  class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Events["OpenLanes::Events"]
+  <<module>> OpenLanes__Events
   class OpenLanes__Events__Event["Event"]
+  class OpenLanes__Events__Identity["Identity"]
+  <<module>> OpenLanes__Events__Identity
+  class OpenLanes__Events__Location["Location"]
+  <<module>> OpenLanes__Events__Location
   class OpenLanes__Events__Log["Log"]
   class OpenLanes__Events__NullSink["NullSink"]
   class OpenLanes__Events__Report["Report"]
   class OpenLanes__Events__Sink["Sink"]
   class OpenLanes__Events__Usage["Usage"]
+  class OpenLanes__Live__Node["OpenLanes::Live::Node"]
+  OpenLanes__Events ..> OpenLanes__Config : uses
+  OpenLanes__Events ..> OpenLanes__Events__Event : uses
+  OpenLanes__Events ..> OpenLanes__Events__Location : uses
+  OpenLanes__Events ..> OpenLanes__Events__Log : uses
+  OpenLanes__Events ..> OpenLanes__Events__NullSink : uses
+  OpenLanes__Events ..> OpenLanes__Events__Report : uses
+  OpenLanes__Events ..> OpenLanes__Events__Sink : uses
+  OpenLanes__Events ..> OpenLanes__Live__Node : uses
   OpenLanes__Events__Log ..> OpenLanes__Events__Event : uses
   OpenLanes__Events__Sink ..> OpenLanes__Events__Event : uses
+  OpenLanes__Events__Sink ..> OpenLanes__Events__Identity : uses
+  OpenLanes__Events__Usage ..> OpenLanes__Adapters : uses
 ```
