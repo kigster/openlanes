@@ -15,6 +15,7 @@ import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
 import { Header } from "./shell/Header";
 import { Logs } from "./shell/Logs";
+import { Ticker } from "./shell/Ticker";
 import { StatusBar } from "./shell/StatusBar";
 import { TestsPanel } from "./shell/TestsPanel";
 import { backlogNote } from "./shell/notes";
@@ -276,6 +277,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               </Tab>
             ))}
           </Tabs.List>
+          <Ticker lines={me.log} onOpen={() => setTab("logs")} />
             {others.map(o => {
               const value = machineTab(o.node.id);
               // A machine tab toggles: the first press shows just that machine, the second shows all of them on the Board.

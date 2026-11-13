@@ -1,0 +1,52 @@
+/* Palettes beyond the built-in light and dark, chosen in the header's Theme menu (shell/usePalette.ts).
+   Each sets data-palette on <html>, and data-theme to its scheme, so everything that keys off light or dark (the
+   editor, code highlighting, the copilot's inverted surface) follows without knowing the palette exists. A palette
+   therefore only overrides surfaces, text, lines and accents; the lane, alarm and go colours stay the scheme's.
+   The five are the themes of kig.re: page background -> --enamel, panel -> --plate, text -> --ink.
+   Muted text and the alarm red are adjusted where the site's or the scheme's value fell under 4.5:1 on these
+   surfaces; web/cypress/e2e/board.cy.ts runs axe over each palette. */
+
+/* Ember: near-black brown with cream text and a hot orange accent. Dark. */
+:root[data-palette="ember"] {
+  --enamel: #140C02; --plate: #1D1305; --ink: #F7E4C2; --ink-soft: #B89A68;
+  --hairline: #3A2A10; --road: #5C431A;
+  --focus: #FFC300; --highlight: #FF5F00; --on-highlight: #1A0D00;
+  --inv-plate: #FFF3DC; --inv-enamel: #F3E3C0; --inv-ink: #2A1A05; --inv-ink-soft: #7A5E2E;
+  --inv-hairline: #E6D6B4; --inv-focus: #B84A00;
+}
+
+/* Azure: slate blue with warm sand accents. Dark. */
+:root[data-palette="azure"] {
+  --enamel: #2D3C59; --plate: #26334D; --ink: #F4F1E8; --ink-soft: #C3CCDC;
+  --hairline: #3D4D70; --road: #62749B;
+  --focus: #E5BA41; --highlight: #E87F24; --on-highlight: #1B1408; --alarm: #FF8A8E;
+  --inv-plate: #F4F1E8; --inv-enamel: #E6E1D2; --inv-ink: #26334D; --inv-ink-soft: #55627D;
+  --inv-hairline: #CFC8B4; --inv-focus: #A85A10;
+}
+
+/* Paper: off-white page, cream panels, brown secondary text. Light. */
+:root[data-palette="paper"] {
+  --enamel: #F8F8F8; --plate: #FFF3DC; --ink: #222222; --ink-soft: #6F5527;
+  --hairline: #E6D6B4; --road: #C9B68C;
+  --focus: #B84A00; --alarm: #B92A31;
+  --inv-plate: #1D1305; --inv-enamel: #140C02; --inv-ink: #F7E4C2; --inv-ink-soft: #B89A68;
+  --inv-hairline: #3A2A10; --inv-focus: #FFC300;
+}
+
+/* Earth: parchment and umber. Light. */
+:root[data-palette="earth"] {
+  --enamel: #F7F1DE; --plate: #ECE2C4; --ink: #4E220F; --ink-soft: #5A4026;
+  --hairline: #D2C39A; --road: #B8A67A;
+  --focus: #7D4C22; --highlight: #9D4F1C; --alarm: #A3222A;
+  --inv-plate: #3B2414; --inv-enamel: #2C1A0D; --inv-ink: #F7F1DE; --inv-ink-soft: #CDBB93;
+  --inv-hairline: #5A3D26; --inv-focus: #E5BA41;
+}
+
+/* Forest: mint surfaces, deep green text, a magenta accent. Light. */
+:root[data-palette="forest"] {
+  --enamel: #A9ECD8; --plate: #C9F3E6; --ink: #06241B; --ink-soft: #0A3D2E;
+  --hairline: #4FBF9C; --road: #2FA883;
+  --focus: #0047B8; --highlight: #C7003F; --alarm: #B3122B;
+  --inv-plate: #06241B; --inv-enamel: #03170F; --inv-ink: #C9F3E6; --inv-ink-soft: #8AD3BC;
+  --inv-hairline: #145A45; --inv-focus: #FFD400;
+}
