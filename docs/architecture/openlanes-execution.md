@@ -61,6 +61,8 @@ classDiagram
   <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs__DiffSize["OpenLanes::Vcs::DiffSize"]
+  <<module>> OpenLanes__Vcs__DiffSize
   class OpenLanes__Vcs__GitHub["OpenLanes::Vcs::GitHub"]
   OpenLanes__Execution ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution ..> OpenLanes__Execution__Executor : uses
@@ -99,6 +101,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Vcs__DiffSize : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses

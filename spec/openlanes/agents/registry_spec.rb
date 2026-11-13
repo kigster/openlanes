@@ -200,6 +200,28 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
+    it "reads deploy-assessor's small_diff model (062.00)" do
+      expect(OpenLanes::Agents.find("deploy-assessor").small_diff)
+        .to eq(OpenLanes::Agents::SmallDiff.new(under_lines: 300, model: "sonnet", effort: "medium"))
+    end
+
+    it "has no small_diff on an agent that names none" do
+      expect(OpenLanes::Agents.find("backend-coder").small_diff).to be_nil
+    end
+
+    {
+      "no threshold"  => ["{ model: sonnet }", /small_diff needs a positive under_lines/],
+      "a bad effort"  => ["{ under_lines: 10, effort: loud }", /small_diff effort "loud"/],
+      "not a mapping" => ["sonnet", /small_diff needs a positive under_lines/]
+    }.each do |label, (value, message)|
+      it "refuses a small_diff with #{label}" do
+        Dir.mktmpdir do |dir|
+          File.write(File.join(dir, "x.md"), "---\nname: x\nsmall_diff: #{value}\n---\nbody\n")
+          expect { described_class.new(dir:).all }.to raise_error(OpenLanes::Error, message)
+        end
+      end
+    end
+
     it "accepts confined_to naming a file inside the plan folder" do
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "x.md"), "---\nname: x\nconfined_to: [spec.md, notes/a.md]\n---\nbody\n")

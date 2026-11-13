@@ -1,7 +1,7 @@
 // What a plan looks like on the board, derived from the Snapshot alone. Pure functions, so the rules (which stop is
 // skipped, when a row turns green, what a pill says) are tested without rendering anything.
-import type { AdapterAvailability, Car, ModelChoice, Plan, Question, ReviewVote, Snapshot, Starts, Station } from "../api/types";
-import { planId } from "./format";
+import type { AdapterAvailability, Car, ModelChoice, Plan, Question, ReviewVote, Snapshot, Spend, Starts, Station } from "../api/types";
+import { planId, spendText } from "./format";
 
 export interface StartsLook {
   label: string;
@@ -211,3 +211,27 @@ export const ADAPTER_MARKS: Record<string, { letter: string; vendor: string }> =
 /** What a vote says in words, for its tooltip and a screen reader: "security-reviewer on codex: rejected, a vulnerability". */
 export const voteLabel = (vote: ReviewVote): string =>
   `${vote.agent}${vote.adapter ? ` on ${vote.adapter}` : ""}: ${vote.verdict}${vote.vulnerability ? ", a vulnerability" : ""}`;
+
+export interface SpendLook {
+  text: string;
+  /** "capped" has a meter, "uncapped" shows the figure alone, "over" is past the cap. */
+  kind: "uncapped" | "capped" | "over";
+  /** Meter fill, 0 to 100; null when there is no cap to fill against. */
+  percent: number | null;
+  /** "+2 unpriced": runs with no known price, never folded in as $0. Empty when none. */
+  unpriced: string;
+  /** The hold reason, only once over the cap. */
+  reason: string;
+}
+
+/** What the spend badge shows. Null when the snapshot sends no spend (an older engine), so nothing is drawn. */
+export function spendLook(spend: Spend | null | undefined): SpendLook | null {
+  if (!spend) return null;
+  const { usd, cap, over, unpriced_runs: n } = spend;
+  const unpriced = n > 0 ? `+${n} unpriced` : "";
+  const text = spendText(usd, cap);
+  if (cap == null) return { text, kind: "uncapped", percent: null, unpriced, reason: "" };
+  const percent = cap > 0 ? Math.min(100, Math.max(0, (usd / cap) * 100)) : 100;
+  if (over) return { text, kind: "over", percent: 100, unpriced, reason: `over budget: ${text}` };
+  return { text, kind: "capped", percent, unpriced, reason: "" };
+}

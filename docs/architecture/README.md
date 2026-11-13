@@ -49,8 +49,8 @@ classDiagram
   OpenLanes__Adapters ..> OpenLanes__Log : 1
   OpenLanes__Adapters ..> OpenLanes__Plans : 1
   OpenLanes__Adapters ..> OpenLanes__UI : 2
-  OpenLanes__Agents ..> OpenLanes : 4
-  OpenLanes__Agents ..> OpenLanes__Adapters : 4
+  OpenLanes__Agents ..> OpenLanes : 5
+  OpenLanes__Agents ..> OpenLanes__Adapters : 5
   OpenLanes__Agents ..> OpenLanes__Engine : 2
   OpenLanes__Agents ..> OpenLanes__Plans : 5
   OpenLanes__Agents ..> OpenLanes__UI : 1
@@ -87,7 +87,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Web : 14
   OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__UI : 1
-  OpenLanes__Engine ..> OpenLanes : 37
+  OpenLanes__Engine ..> OpenLanes : 39
   OpenLanes__Engine ..> OpenLanes__Adapters : 1
   OpenLanes__Engine ..> OpenLanes__Agents : 19
   OpenLanes__Engine ..> OpenLanes__Apps : 4
@@ -95,7 +95,7 @@ classDiagram
   OpenLanes__Engine ..> OpenLanes__Clock : 10
   OpenLanes__Engine ..> OpenLanes__Container : 1
   OpenLanes__Engine ..> OpenLanes__Coverage : 4
-  OpenLanes__Engine ..> OpenLanes__Events : 5
+  OpenLanes__Engine ..> OpenLanes__Events : 7
   OpenLanes__Engine ..> OpenLanes__Execution : 18
   OpenLanes__Engine ..> OpenLanes__Lifecycle : 11
   OpenLanes__Engine ..> OpenLanes__Live : 11
@@ -123,7 +123,7 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Spawner : 2
   OpenLanes__Execution ..> OpenLanes__Supervision : 1
   OpenLanes__Execution ..> OpenLanes__UI : 5
-  OpenLanes__Execution ..> OpenLanes__Vcs : 2
+  OpenLanes__Execution ..> OpenLanes__Vcs : 3
   OpenLanes__Lifecycle ..> OpenLanes : 22
   OpenLanes__Lifecycle ..> OpenLanes__Adapters : 1
   OpenLanes__Lifecycle ..> OpenLanes__Agents : 5
@@ -138,7 +138,8 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Adapters : 5
   OpenLanes__Live ..> OpenLanes__Agents : 5
   OpenLanes__Live ..> OpenLanes__Arbitration : 1
-  OpenLanes__Live ..> OpenLanes__Engine : 4
+  OpenLanes__Live ..> OpenLanes__Engine : 6
+  OpenLanes__Live ..> OpenLanes__Events : 1
   OpenLanes__Live ..> OpenLanes__Execution : 4
   OpenLanes__Live ..> OpenLanes__Lifecycle : 6
   OpenLanes__Live ..> OpenLanes__Plans : 23

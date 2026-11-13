@@ -17,11 +17,14 @@ classDiagram
   class OpenLanes__Arbitration["OpenLanes::Arbitration"]
   <<module>> OpenLanes__Arbitration
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Engine["OpenLanes::Engine"]
+  <<module>> OpenLanes__Engine
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
   class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
   <<module>> OpenLanes__Engine__QualityQuestion
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Events__PlanSpend["OpenLanes::Events::PlanSpend"]
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Execution__Control["OpenLanes::Execution::Control"]
   <<module>> OpenLanes__Execution__Control
@@ -239,6 +242,7 @@ classDiagram
   OpenLanes__Live__Phases ..> OpenLanes__Lifecycle__Lanes : uses
   OpenLanes__Live__Phases ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Live__Phases ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Live__Publisher ..> OpenLanes__Engine : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Keys : uses
   OpenLanes__Live__Publisher ..> OpenLanes__Live__Meter : uses
@@ -272,10 +276,12 @@ classDiagram
   OpenLanes__Live__Snapshot ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Arbitration : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Config : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Engine : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Board : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Error : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Aging : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Live : uses

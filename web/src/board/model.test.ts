@@ -1,5 +1,5 @@
 import { clock, dollars, fmt, lastSeen, planId, redactUrl, secondsBetween, span, stamp, who } from "./format";
-import { adapterOf, carLook, hasRequest, isFinished, isWorking, keepsRow, lockMark, modelLabel, modelsOf, nodePlanKey, pillState, routeOf, rowColors, STARTS, testRuns, testTabLabel, testTabValue, unusable } from "./model";
+import { adapterOf, carLook, hasRequest, isFinished, isWorking, keepsRow, lockMark, modelLabel, modelsOf, nodePlanKey, pillState, routeOf, rowColors, spendLook, STARTS, testRuns, testTabLabel, testTabValue, unusable } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
 const stations = sampleBoard().me.stations;
@@ -186,5 +186,20 @@ describe("adapterOf, modelsOf and unusable (plan 040)", () => {
 
   it("falls back to a generic reason when the probe gave none", () => {
     expect(unusable({ ...down, reason: null })).toBe("pi: not available");
+  });
+});
+
+describe("spendLook", () => {
+  it("reads a capped spend", () => {
+    expect(spendLook({ usd: 1.84, cap: 5, over: false, unpriced_runs: 0 })).toMatchObject({ text: "$1.84 / $5.00", kind: "capped", unpriced: "" });
+  });
+  it("reads an uncapped spend", () => {
+    expect(spendLook({ usd: 1.84, cap: null, over: false, unpriced_runs: 1 })).toMatchObject({ text: "$1.84", kind: "uncapped", percent: null, unpriced: "+1 unpriced" });
+  });
+  it("reads an over-cap spend", () => {
+    expect(spendLook({ usd: 6, cap: 5, over: true, unpriced_runs: 0 })).toMatchObject({ kind: "over", percent: 100, reason: "over budget: $6.00 / $5.00" });
+  });
+  it("is null when absent", () => {
+    expect(spendLook(undefined)).toBeNull();
   });
 });

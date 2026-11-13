@@ -138,6 +138,10 @@ module OpenLanes
   # @!attribute [r] events_dir
   #   @return [String, nil] `events.dir`: an absolute path; nil takes
   #     {Events::Location}'s default
+  # @!attribute [r] budget_plan_usd
+  #   @return [Float, nil] `budget.plan_usd`: the most a plan may spend, in
+  #     estimated dollars, before no new round starts on it; nil is no cap.
+  #     Read through {Events::PlanSpend.cap_for}, the one place that asks
   Config = Data.define(:path,
     :project,
     :starts,
@@ -164,10 +168,11 @@ module OpenLanes
     :review_adapters,
     :refactor_threshold,
     :refactor_lock_hours,
-    :chime) do
+    :chime,
+    :budget_plan_usd) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -265,6 +270,7 @@ module OpenLanes
       settings["review"] = { "adapters" => review_adapters } unless review_adapters.empty?
       refactor = { "threshold" => refactor_threshold, "lock_hours" => refactor_lock_hours }.compact
       settings["refactor"] = refactor unless refactor.empty?
+      settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
       settings["chime"] = chime unless chime.nil?
       YAML.dump(settings.compact).delete_prefix("---\n")
     end
@@ -284,7 +290,7 @@ module OpenLanes
 
     # Every key the top level may hold.
     KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review refactor chime].freeze
+              questions coverage events ci stack architecture_decisions review refactor chime budget].freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
@@ -336,6 +342,9 @@ module OpenLanes
 
     # Every key `refactor:` may hold.
     REFACTOR_KEYS = %w[threshold lock_hours].freeze
+
+    # Every key `budget:` may hold.
+    BUDGET_KEYS = %w[plan_usd].freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -429,7 +438,8 @@ module OpenLanes
           coverage:  settings.key?("coverage") ? Coverage::Config.parse(settings["coverage"], path:) : nil,
           **events(settings["events"], path),
           **refactor(settings["refactor"], path),
-          chime:     chime(settings, path))
+          chime:     chime(settings, path),
+          **budget(settings["budget"], path))
         conflicts!(config, path)
         config
       rescue Psych::Exception => e
@@ -738,6 +748,26 @@ module OpenLanes
         end
         { refactor_threshold:  refactor_threshold(settings["threshold"], path),
           refactor_lock_hours: refactor_lock_hours(settings["lock_hours"], path) }.compact
+      end
+
+      # `budget.plan_usd`: a positive dollar figure. Zero is refused rather
+      # than read as "no cap", since a plan capped at nothing could never run.
+      #
+      # @return [Hash{Symbol => Float}] as keywords for {Config.new}
+      def budget(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "budget: must be a mapping, e.g. `budget: { plan_usd: 5 }`") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - BUDGET_KEYS).each do |key|
+          fail_with(path, "budget.#{key}: unknown key; known: #{BUDGET_KEYS.join(", ")}")
+        end
+        usd = settings["plan_usd"]
+        return {} if usd.nil?
+        return { budget_plan_usd: usd.to_f } if usd.is_a?(Numeric) && usd.positive?
+
+        fail_with(path, "budget.plan_usd: #{usd.inspect} is not a dollar amount above zero")
       end
 
       # @return [Integer, nil]

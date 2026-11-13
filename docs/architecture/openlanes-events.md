@@ -16,6 +16,7 @@ classDiagram
   <<module>> OpenLanes__Events__Location
   class OpenLanes__Events__Log["Log"]
   class OpenLanes__Events__NullSink["NullSink"]
+  class OpenLanes__Events__PlanSpend["PlanSpend"]
   class OpenLanes__Events__Report["Report"]
   class OpenLanes__Events__Sink["Sink"]
   class OpenLanes__Events__Usage["Usage"]

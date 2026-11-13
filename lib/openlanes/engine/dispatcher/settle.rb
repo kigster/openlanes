@@ -349,7 +349,7 @@ module OpenLanes
             seconds: spend.call(:seconds),
             round: task.round,
             file: job.file || task.agent.ledger.first.to_s,
-            model: model_for(task.agent, task.subject),
+            model: model_for(task.agent, task.subject, root: task.root),
             status: job.status)
         end
 

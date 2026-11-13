@@ -101,6 +101,10 @@ module OpenLanes
             next if held?(subject)
             next if locked_elsewhere?(subject)
             next if held_outside?(subject) || refusals.include?(subject.feature.ordinal.to_s)
+
+            refusal = budget_refusal(subject)
+            announce_budget(subject, refusal)
+            next if refusal
             # A stopped rebase holds the checkout until the harness has
             # continued or aborted it; a partner started now would build on
             # conflict markers.
@@ -155,6 +159,8 @@ module OpenLanes
           reasons.concat(verifying.map { |plan, note| "#{plan} #{note}" })
           held = runner.held(runner.dependencies(except: untouchable), runner.global_lock(except: untouchable))
           reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
+          over = budget_holds
+          reasons << "held by budget: #{over.map { |o, why| "#{o} #{why}" }.join("; ")}" unless over.empty?
           reasons.empty? ? "idle: nothing to do" : "idle: #{reasons.join("; ")}"
         end
 

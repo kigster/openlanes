@@ -39,6 +39,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration["Arbitration"]
   class OpenLanes__Engine__Arbitration__Asker["Arbitration::Asker"]
   class OpenLanes__Engine__Board["Board"]
+  class OpenLanes__Engine__Budget["Budget"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Dispatcher["Dispatcher"]
@@ -120,6 +121,7 @@ classDiagram
   class OpenLanes__Events["OpenLanes::Events"]
   <<module>> OpenLanes__Events
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
+  class OpenLanes__Events__PlanSpend["OpenLanes::Events::PlanSpend"]
   class OpenLanes__Events__Usage["OpenLanes::Events::Usage"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
@@ -183,6 +185,8 @@ classDiagram
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
@@ -202,6 +206,7 @@ classDiagram
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
   OpenLanes__Engine ..> OpenLanes__Engine__AgentLocks : uses
   OpenLanes__Engine ..> OpenLanes__Engine__Board : uses
+  OpenLanes__Engine ..> OpenLanes__Engine__Budget : uses
   OpenLanes__Engine ..> OpenLanes__Engine__CoverageGate : uses
   OpenLanes__Engine ..> OpenLanes__Engine__RunWorkflow : uses
   OpenLanes__Engine ..> OpenLanes__Engine__Runner : uses
@@ -227,6 +232,10 @@ classDiagram
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Error : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution : uses
   OpenLanes__Engine__Arbitration__Asker ..> OpenLanes__Execution__Executor__Handle : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Config : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Events : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Events__PlanSpend : uses
+  OpenLanes__Engine__Budget ..> OpenLanes__Project : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter__Invalid : uses

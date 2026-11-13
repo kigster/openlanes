@@ -32,6 +32,12 @@
 .lane { display: inline-flex; align-items: center; gap: 6px; }
 .rejections, .arbitrating { white-space: nowrap; }
 .rejections { color: var(--alarm); font-weight: 600; }
+.spend { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.spend-meter { display: inline-block; width: 48px; height: 3px; border-radius: 2px; background: color-mix(in srgb, currentColor 18%, transparent); overflow: hidden; }
+.spend-fill { display: block; height: 100%; background: var(--go); }
+.spend-unpriced { opacity: 0.7; }
+.spend.is-over { color: var(--alarm); font-weight: 600; }
+.spend.is-over .spend-fill { background: var(--alarm); }
 .unacked { display: none; }
 .unacked.is-warning { display: inline-flex; flex: none; align-items: center; padding: 0 8px; border-radius: 999px; font-weight: 700;
                       white-space: nowrap; cursor: help;

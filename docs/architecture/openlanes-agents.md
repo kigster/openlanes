@@ -17,6 +17,7 @@ classDiagram
   class OpenLanes__Agents__Roster["Roster"]
   class OpenLanes__Agents__Routing["Routing"]
   <<module>> OpenLanes__Agents__Routing
+  class OpenLanes__Agents__SmallDiff["SmallDiff"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
   class OpenLanes__Engine__Reviews["OpenLanes::Engine::Reviews"]
@@ -43,6 +44,7 @@ classDiagram
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Agents__SmallDiff : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Frontmatter : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Agents__Profile : uses
@@ -54,4 +56,6 @@ classDiagram
   OpenLanes__Agents__Routing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Agents__SmallDiff ..> OpenLanes__Adapters : uses
+  OpenLanes__Agents__SmallDiff ..> OpenLanes__Error : uses
 ```

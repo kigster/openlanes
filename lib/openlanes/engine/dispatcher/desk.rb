@@ -20,8 +20,12 @@ module OpenLanes
         # @param stay [Boolean] whether the run idles past its fixed points
         # @param journal [OpenLanes::Engine::EventJournal, nil]
         # @param extensions [OpenLanes::Engine::Extensions, nil]
-        def initialize(runner:, state:, rounds:, clock:, stay:, journal:, extensions:)
+        # @param budget [OpenLanes::Engine::Budget, nil] nil reads the cap and
+        #   the spend from the runner's own event log
+        def initialize(runner:, state:, rounds:, clock:, stay:, journal:, extensions:, budget: nil)
           @runner = runner
+          @budget = budget || Engine.budget_for(runner)
+          @said_budget = {}
           @state_file = state
           @rounds_cap = rounds
           @clock = clock
@@ -258,6 +262,30 @@ module OpenLanes
         # @return [Boolean]
         def locked_elsewhere?(subject) = Plans::Lock.read(subject.feature.path)&.held_elsewhere? || false
 
+        # The dollar cap (plan 062.00): a plan past `budget.plan_usd` gets no
+        # new agent, and is held as queued plans are, without a state fired or
+        # a folder renamed. A query only: {#announce_budget} says it.
+        #
+        # @param subject [OpenLanes::Plans::Subject]
+        # @return [String, nil] `over budget: $X of $Y`, or nil when it may run
+        def budget_refusal(subject) = @budget.refusal(subject.feature.ordinal.to_s)
+
+        # Says a budget hold once per reason, not on every tick.
+        #
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param reason [String, nil] what {#budget_refusal} answered
+        # @return [void]
+        def announce_budget(subject, reason)
+          ordinal = subject.feature.ordinal.to_s
+          UI.log("#{reason}; no new round starts", plan: ordinal, level: :warn) if reason && @said_budget[ordinal] != reason
+          @said_budget[ordinal] = reason
+        end
+
+        # @return [Hash{String => String}] in-scope plans the cap holds, with why
+        def budget_holds
+          runner.in_scope.to_h { [it.feature.ordinal.to_s, budget_refusal(it)] }.compact
+        end
+
         # An agent outside openlanes holds the plan's folder or its worktree in
         # alock (W31). Said once per holder, not on every tick it stays held.
         #
@@ -308,8 +336,9 @@ module OpenLanes
 
         # @param agent [OpenLanes::Agents::Agent]
         # @param subject [OpenLanes::Plans::Subject, nil] whose spec.md may override it
+        # @param root [String, nil] the plan's checkout, whose diff picks a `small_diff:` model
         # @return [String]
-        def model_for(agent, subject = nil)
+        def model_for(agent, subject = nil, root: nil)
           executor = runner.executor
           unless subject && executor.respond_to?(:profile_for)
             return (executor.respond_to?(:model) && executor.model) || agent.model || "default"
@@ -317,7 +346,8 @@ module OpenLanes
 
           # Asked on every frame of the board, so spec.md is read once per plan
           # and agent rather than once per frame.
-          models[[subject.feature.ordinal.to_s, agent.name]] ||= executor.profile_for(agent, subject).label
+          models[[subject.feature.ordinal.to_s, agent.name, root]] ||=
+            (root ? executor.profile_for(agent, subject, root:) : executor.profile_for(agent, subject)).label
         end
 
         # @param task [OpenLanes::Engine::Runner::Task]
@@ -354,11 +384,11 @@ module OpenLanes
         end
 
         # @return [Hash] adapter, model and effort, when the executor can say
-        def profile_fields(agent, subject)
+        def profile_fields(agent, subject, root: nil)
           executor = runner.executor
           return {} unless executor.respond_to?(:profile_for)
 
-          profile = executor.profile_for(agent, subject)
+          profile = root ? executor.profile_for(agent, subject, root:) : executor.profile_for(agent, subject)
           { adapter: profile.adapter.name, model: profile.model, effort: profile.effort }
         end
 
@@ -367,7 +397,7 @@ module OpenLanes
         def event_fields(job)
           task = job.task
           { plan: task.subject.feature.ordinal.to_s, round: task.round, agent: task.agent.name,
-            invocation_start: invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject) }
+            invocation_start: invocations[job.key], adapter: adapter_name(job), model: model_for(task.agent, task.subject, root: task.root) }
         end
 
         # @return [String, nil]

@@ -24,6 +24,8 @@ classDiagram
   <<module>> OpenLanes__Vcs
   class OpenLanes__Vcs__CiGate["CiGate"]
   <<module>> OpenLanes__Vcs__CiGate
+  class OpenLanes__Vcs__DiffSize["DiffSize"]
+  <<module>> OpenLanes__Vcs__DiffSize
   class OpenLanes__Vcs__GitHub["GitHub"]
   class OpenLanes__Vcs__LabelMigration["LabelMigration"]
   class OpenLanes__Vcs__LabelSync["LabelSync"]
@@ -44,6 +46,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Review : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__Worktree : uses
+  OpenLanes__Vcs__DiffSize ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__Error : uses
   OpenLanes__Vcs__GitHub ..> OpenLanes__UI : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Error : uses

@@ -60,6 +60,9 @@ module OpenLanes
     #   @return [Array<String>] the plan files, relative to its folder, that
     #     are all it may edit; empty means it is not confined. Enforced by
     #     {Execution::Executor}, not asked for in the prompt.
+    # @!attribute [r] small_diff
+    #   @return [OpenLanes::Agents::SmallDiff, nil] the model it runs on for a
+    #     small diff; nil when it has none
     Agent = Data.define(:name,
       :description,
       :handles,
@@ -82,9 +85,10 @@ module OpenLanes
       :starts,
       :needs,
       :toggle,
-      :confined_to) do
+      :confined_to,
+      :small_diff) do
       def initialize(covers: [], ledger: [], rounds: 1, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
-        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], **rest)
+        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, **rest)
         super
       end
 

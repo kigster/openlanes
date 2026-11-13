@@ -90,13 +90,13 @@ module OpenLanes
             from:       from.to_s,
             started_at: clock.now.iso8601,
             cwd:        task.root,
-            **profile_fields(agent, subject))
+            **profile_fields(agent, subject, root: task.root))
           state_file&.record(ordinal,
             agent:      agent.name,
             round:,
             status:     "Started",
             state:      from.to_s,
-            model:      model_for(agent, subject),
+            model:      model_for(agent, subject, root: task.root),
             file:       agent.ledger.first,
             started_at: clock.now.iso8601)
           feed.append(:plan_assigned, plan: ordinal, agent: agent.name, round:)

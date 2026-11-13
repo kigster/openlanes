@@ -121,4 +121,35 @@ RSpec.describe OpenLanes::Agents::Profile do
       expect(described_class.resolve(agent, spec: spec("phases:\n  build: { adapter: pi, model: x }")).label).to eq("pi:x")
     end
   end
+
+  # 062.00 B2: deploy-assessor runs cheaper on a small diff.
+  context "when the agent has a small_diff model" do
+    let(:assessor) do
+      agent.with(name: "deploy-assessor",
+        model: "opus",
+        phase: "completion",
+        small_diff: OpenLanes::Agents::SmallDiff.new(under_lines: 300, model: "sonnet", effort: "medium"))
+    end
+
+    it "runs on sonnet/medium for a 120-line diff" do
+      expect(described_class.resolve(assessor, diff_lines: 120).to_s).to eq("claude:sonnet/medium")
+    end
+
+    it "stays on opus/high for a 900-line diff" do
+      expect(described_class.resolve(assessor, diff_lines: 900).to_s).to eq("claude:opus/high")
+    end
+
+    it "stays on opus/high when the diff is unknown" do
+      expect(described_class.resolve(assessor).to_s).to eq("claude:opus/high")
+    end
+
+    it "yields to run --model" do
+      expect(described_class.resolve(assessor, model: "opus", diff_lines: 120).to_s).to eq("claude:opus/high")
+    end
+
+    it "yields to a spec phase override" do
+      expect(described_class.resolve(assessor, spec: spec("phases:\n  completion: { effort: max }"), diff_lines: 120).to_s)
+        .to eq("claude:opus/max")
+    end
+  end
 end

@@ -243,6 +243,29 @@ RSpec.describe OpenLanes::Config do
       end
     end
 
+    describe "budget.plan_usd" do
+      it "is no cap when the file says nothing" do
+        expect([config.budget_plan_usd, OpenLanes::Events::PlanSpend.cap_for(config)]).to eq([nil, nil])
+      end
+
+      it "reads the cap and writes it back" do
+        openlanes_yml("budget:\n  plan_usd: 5\n")
+        expect([config.budget_plan_usd, config.to_yaml]).to match([5.0, /budget:\n  plan_usd: 5\.0/])
+      end
+
+      {
+        "zero"           => ["budget:\n  plan_usd: 0\n", /budget\.plan_usd: 0 is not a dollar amount above zero/],
+        "a word"         => ["budget:\n  plan_usd: lots\n", /budget\.plan_usd: "lots" is not a dollar amount/],
+        "an unknown key" => ["budget:\n  run_usd: 1\n", /budget\.run_usd: unknown key; known: plan_usd/],
+        "not a mapping"  => ["budget: 5\n", /budget: must be a mapping/]
+      }.each do |label, (text, message)|
+        it "refuses #{label}" do
+          openlanes_yml(text)
+          expect { config }.to raise_error(OpenLanes::Error, message)
+        end
+      end
+    end
+
     describe "refactor.threshold" do
       it "defaults to R6's fifty percent" do
         expect([config.refactor_threshold, config.refactor_percent]).to eq([nil, 50])

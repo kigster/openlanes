@@ -154,6 +154,14 @@ export interface Ruling {
   review?: number; // the round of staff-reviewer's review the ids belong to
 }
 
+/** A plan's estimated spend against budget.plan_usd; cap is null when no cap is set. */
+export interface Spend {
+  usd: number;
+  cap: number | null;
+  over: boolean;
+  unpriced_runs: number;
+}
+
 export interface Plan {
   ordinal: string; // "004.00"
   title: string;
@@ -175,6 +183,7 @@ export interface Plan {
   interrupted: { agent: string; at: Iso; note: string } | null;
   claimed_by: string | null; // Node.id holding the claim
   unacked: number; // mailbox messages nobody has acked; a warning only (D2)
+  spend?: Spend | null; // estimated dollars against the plan cap; absent from an older engine
   rejections?: { count: number; max: number }; // reviewer rejections so far, against merge.max_rejections
   ruling?: Ruling | null; // the arbitrator's latest ruling, null when there is none
   arbitrating?: boolean; // the arbitrator is on this plan now

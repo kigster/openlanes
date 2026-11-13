@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useAnimate, useReducedMotion } from "motion/react";
 import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
-import { Car, SubagentTiles } from "./Car";
+import { Car, SpendBadge, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
 import { dollars, fmt, statusTip, unackedTip, who } from "./format";
 import { STARTS, keepsRow, modelsOf, rowColors, rowDomId, routeOf } from "./model";
@@ -141,6 +141,7 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
           <span className="lane">{lane.label}</span>
           <RejectionsBadge rejections={plan.rejections} />
           <ArbitratingMarker arbitrating={plan.arbitrating} />
+          <SpendBadge spend={plan.spend} />
           <UnackedBadge count={plan.unacked} mail={plan.mail} />
           {!readOnly && onUnblock && plan.questions.length > 0 && (
             <button

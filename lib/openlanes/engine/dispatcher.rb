@@ -96,9 +96,12 @@ module OpenLanes
       #   (D9); nil, as without OPENROUTER_API_KEY, leaves them as written
       # @param journal [OpenLanes::Engine::EventJournal, nil] the progress
       #   journal (S9); nil keeps none
+      # @param budget [OpenLanes::Engine::Budget, nil] the dollar cap per plan
+      #   (plan 062.00); nil reads it from the runner's event log
       def initialize(runner:, state: nil, rounds: nil, sleeper: nil, clock: Clock::System, on_board: nil,
-        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil)
-        @desk = Desk.new(runner:, state:, rounds:, clock:, stay:, journal:, extensions:)
+        stay: false, rescan: RESCAN, watch: nil, converter: Live.choice_converter, extensions: nil, journal: nil,
+        budget: nil)
+        @desk = Desk.new(runner:, state:, rounds:, clock:, stay:, journal:, extensions:, budget:)
         # The desk's own collections under the names the suite reads them by.
         @holds = @desk.holds
         @finished_plans = @desk.finished_plans
