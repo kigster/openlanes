@@ -6,6 +6,7 @@
 classDiagram
   class OpenLanes["OpenLanes"]
   <<module>> OpenLanes
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
   class OpenLanes__Execution__Boundary["OpenLanes::Execution::Boundary"]
@@ -16,8 +17,6 @@ classDiagram
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
-  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
-  <<module>> OpenLanes__Spawner__System
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs["OpenLanes::Vcs"]
@@ -38,6 +37,7 @@ classDiagram
   <<module>> OpenLanes__Vcs__RenameDate
   class OpenLanes__Vcs__Review["Review"]
   class OpenLanes__Vcs__Worktree["Worktree"]
+  OpenLanes__Vcs ..> OpenLanes__Container : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelMigration : uses
   OpenLanes__Vcs ..> OpenLanes__Vcs__LabelSync : uses
@@ -57,10 +57,10 @@ classDiagram
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Error : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Vcs__LabelMigration ..> OpenLanes__UI : uses
-  OpenLanes__Vcs__LabelMigration ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Vcs__LabelSync ..> OpenLanes__Container : uses
   OpenLanes__Vcs__LabelSync ..> OpenLanes__Plans__ReviewLabel : uses
-  OpenLanes__Vcs__LabelSync ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Vcs__Prewarm ..> OpenLanes__UI : uses
+  OpenLanes__Vcs__Publisher ..> OpenLanes__Container : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Error : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Events__NullSink : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Execution__Boundary : uses
@@ -68,7 +68,7 @@ classDiagram
   OpenLanes__Vcs__Publisher ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Vcs__Publisher ..> OpenLanes__Vcs__GitHub : uses
-  OpenLanes__Vcs__Refresh ..> OpenLanes__Spawner__System : uses
+  OpenLanes__Vcs__Refresh ..> OpenLanes__Container : uses
   OpenLanes__Vcs__Refresh ..> OpenLanes__UI : uses
   OpenLanes__Vcs__RenameDate ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Vcs__RenameDate ..> OpenLanes__Plans__PlanState : uses

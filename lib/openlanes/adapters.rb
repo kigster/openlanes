@@ -100,19 +100,26 @@ module OpenLanes
       @probe_runner = runner
     end
 
+    # Every adapter's name, in the order probes run and messages list them.
+    # Each one is registered in {Container} as `adapters.<name>` by its file
+    # (A2), so this list is the only place a name is written down.
+    NAMES = %w[claude codex pi grok gemini].freeze
+
+    # Each name with the class the container builds for it.
+    #
     # @return [Hash{String => Class}]
-    def registry = { "claude" => Claude, "codex" => Codex, "pi" => Pi, "grok" => Grok, "gemini" => Gemini }
+    def registry = names.to_h { |name| [name, self.for(name).class] }
 
     # @return [Array<String>]
-    def names = registry.keys
+    def names = NAMES
 
     # @param name [String, Symbol, nil]
     # @return [OpenLanes::Adapters::Base]
     # @raise [OpenLanes::Error] for a name nothing answers to
     def for(name)
       key = (name || DEFAULT).to_s
-      klass = registry[key] or raise OpenLanes::Error, "unknown adapter #{key.inspect}; known: #{names.join(", ")}"
-      klass.new
+      known?(key) or raise OpenLanes::Error, "unknown adapter #{key.inspect}; known: #{names.join(", ")}"
+      Container["adapters.#{key}"]
     end
 
     # The lean-start flags of one CLI, so a caller building its own argv
@@ -124,7 +131,7 @@ module OpenLanes
 
     # @param name [String, Symbol, nil]
     # @return [Boolean]
-    def known?(name) = registry.key?((name || DEFAULT).to_s)
+    def known?(name) = names.include?((name || DEFAULT).to_s)
 
     # Every adapter, probed side by side (D5): each waits on its own CLI,
     # and one that hangs to its timeout must not add to the others'.

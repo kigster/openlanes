@@ -296,7 +296,7 @@ module OpenLanes
       # pid and a start time), and the log needs one to group usage by run.
       #
       # @return [String] 16 hex digits
-      def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Clock::System.now.utc.iso8601(6)}")[0, 16]
+      def mint_run = Digest::SHA256.hexdigest("#{Socket.gethostname}:#{Process.pid}:#{Container["clock"].now.utc.iso8601(6)}")[0, 16]
 
       # Plans in scope waiting on a person: every ⭕ 🛑 💣, and every 💤 the
       # aging sweep made that still asks its questions. Leaving that 💤 out
@@ -313,7 +313,7 @@ module OpenLanes
       # @param except [Array<String>] ordinals an agent or a drain is in
       # @param now [Time]
       # @return [OpenLanes::Lifecycle::Aging::Result]
-      def age!(except: [], now: Clock::System.now)
+      def age!(except: [], now: Container["clock"].now)
         subjects = in_scope.reject { except.include?(it.feature.ordinal.to_s) || foreign?(it) }
         result = Lifecycle.age(tree:, subjects:, since: @aging_since, now:, commit: !dry_run?)
         @would_bomb = result.bombed if dry_run?
@@ -332,7 +332,7 @@ module OpenLanes
       #
       # @param now [Time]
       # @return [Array<OpenLanes::Plans::Subject>]
-      def halted_by(now: Clock::System.now)
+      def halted_by(now: Container["clock"].now)
         return [] if @ignore_bombs
 
         bombs.reject { Plans::PlanState.for(it.feature.path).resumed?(now:) }
