@@ -95,6 +95,49 @@ RSpec.describe "openlanes memory, the writer's commands" do
       expect([err, status, inbox.candidates]).to match([/002\.00: dry run - would invoke curator/, 0, []])
     end
 
+    context "with a curator that answers" do
+      let(:report) { OpenLanes::Memory::Curation::Report }
+      let(:outcome) { OpenLanes::Memory::Inbox::Outcome }
+      let(:curation) { instance_double(OpenLanes::Memory::Curation) }
+
+      before do
+        %w[002 003].each do |n|
+          FileUtils.mkdir_p(File.join(root, ".plans", OpenLanes::Plans.plan_dirname("#{n}.00", OpenLanes::Plans.status(:rejected), "plan-#{n}")))
+        end
+        allow(OpenLanes::Memory).to receive(:curation).and_return(curation)
+        allow(OpenLanes::Execution).to receive(:credentials_notice).and_return("credentials: none found")
+      end
+
+      it "prints each proposal on STDOUT with what became of it, after the credentials notice" do
+        allow(curation).to receive(:call).and_return(report.new(ordinal: "002.00",
+          ok: true,
+          note: "done",
+          outcomes: [
+            outcome.new(slug: "real-trees", status: :added, reason: nil),
+            outcome.new(slug: nil, status: :dropped, reason: "not JSON")
+          ]))
+
+        out, err, status = run(OpenLanes::CLI::Memory::Curate, plans: ["002"])
+        expect([out.lines.map(&:split), err, status])
+          .to match([[%w[002.00 added real-trees], %w[002.00 dropped : not JSON]], /credentials: none found/, 0])
+      end
+
+      it "takes plans separated by commas, and exits 1 naming the ones the curator did not finish" do
+        allow(curation).to receive(:call) do |subject|
+          ordinal = subject.feature.ordinal.to_s
+          report.new(ordinal:, ok: ordinal == "002.00", note: "timed out", outcomes: [])
+        end
+
+        _, err, status = run(OpenLanes::CLI::Memory::Curate, plans: ["002,003"])
+        expect([err, status]).to match([/003\.00: timed out.*003\.00: the curator did not finish/m, 1])
+      end
+
+      it "refuses an agent nobody defined" do
+        expect(run(OpenLanes::CLI::Memory::Curate, plans: ["002"], agent: "nobody").values_at(1, 2))
+          .to match([/No agent named nobody/, 64])
+      end
+    end
+
     it "refuses a plan that does not exist" do
       expect(run(OpenLanes::CLI::Memory::Curate, plans: ["042"], dry_run: true).last).to eq(66)
     end
