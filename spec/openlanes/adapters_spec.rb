@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 RSpec.describe OpenLanes::Adapters do
   describe ".for" do
     it "defaults to claude" do
@@ -39,6 +41,25 @@ RSpec.describe OpenLanes::Adapters do
 
         expect(described_class.for(name)).to be(fake)
       end
+    end
+  end
+
+  # {OpenLanes::Adapters.availability} probes the five adapters side by side,
+  # each thread resolving its own `adapters.<name>` lazily. Component
+  # resolution has no first-start step to race, unlike a provider, and this
+  # pins that in a fresh process, where nothing has resolved them yet: the
+  # suite's own container has, so a race there would prove nothing.
+  describe "resolving every adapter from five threads at once" do
+    it "hands each thread its adapter, with no key left unregistered" do
+      script = <<~RUBY
+        require "openlanes"
+        names = OpenLanes::Adapters.names
+        got = names.map { |n| Thread.new { OpenLanes::Adapters.for(n).name } }.map(&:value)
+        puts got.sort.join(" ")
+      RUBY
+      output, status = Open3.capture2e(RbConfig.ruby, "-Ilib", "-e", script)
+
+      expect([status.success?, output]).to eq([true, "claude codex gemini grok pi\n"])
     end
   end
 

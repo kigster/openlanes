@@ -220,10 +220,7 @@ OpenLanes::LOADER = loader
 # or not depending on what happened to load first.
 %w[status feature].each { |name| loader.load_file("#{__dir__}/openlanes/plans/#{name}.rb") }
 
-# The three providers that reach nothing outside the process start here, on
-# one thread. dry-system starts a provider on its first resolve without a
-# lock, and two threads asking for `process` together (one `Child.spawn` per
-# job) left one of them with `key not found: "process"` in sixty of thirty
-# racing runs. Redis, GitHub and Linear stay lazy: each connects or needs a
-# token, and a run that never asks must never pay for it.
-%i[clock process logger].each { OpenLanes::Container.start(it) }
+# The providers threads resolve together start here, on one thread, before
+# any of them asks. Which ones those are is a fact about the providers, so
+# the list lives beside them, in {OpenLanes::Container::EAGER}.
+OpenLanes::Container.start_eager

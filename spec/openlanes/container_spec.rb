@@ -61,6 +61,19 @@ RSpec.describe OpenLanes::Container do
     it "registers Redis and the event bus without connecting" do
       expect(described_class.keys).to include("redis", "event_bus")
     end
+
+    # Two threads resolving an unstarted provider together race dry-system's
+    # unlocked first start, so the ones threads share are started at boot.
+    # The list is a fact about the providers and lives beside them, not in
+    # the load file.
+    it "starts the eager providers at boot, and only providers that exist" do
+      aggregate_failures do
+        expect(described_class::EAGER).to eq(%w[clock process logger])
+        expect(described_class::EAGER.map { described_class.providers[it.to_sym].started? }).to all(be(true))
+        expect(Dir[File.expand_path("../../lib/openlanes/providers/*.rb", __dir__)].map { File.basename(it, ".rb") })
+          .to include(*described_class::EAGER)
+      end
+    end
   end
 
   describe "the Redis provider" do
