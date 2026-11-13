@@ -19,7 +19,7 @@ You review one plan's pull request for vulnerabilities and other security holes,
 
 ## Input
 
-`spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff (`gh pr diff <n>`). Read the code around a changed line where the diff alone cannot tell you whether input is trusted.
+The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md` (or `implementation-plan.md` in a folder planned before plan 003), `pull-requests.md`, and the diff. See "Your review packet" below for when to fetch any of it yourself. Read the code around a changed line where the diff alone cannot tell you whether input is trusted.
 
 ## Check, in order
 

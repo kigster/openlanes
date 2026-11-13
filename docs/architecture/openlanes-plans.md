@@ -31,6 +31,7 @@ classDiagram
   class OpenLanes__Plans__Journal["Journal"]
   <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__Journal__Entry["Journal::Entry"]
+  class OpenLanes__Plans__Journal__Held["Journal::Held"]
   class OpenLanes__Plans__Journal__Rejection["Journal::Rejection"]
   class OpenLanes__Plans__Journal__Round["Journal::Round"]
   class OpenLanes__Plans__LastKnownState["LastKnownState"]
@@ -109,6 +110,7 @@ classDiagram
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Entry : uses
+  OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Held : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Rejection : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__Journal__Round : uses
   OpenLanes__Plans__PlanState ..> OpenLanes__Plans__LastKnownState : uses

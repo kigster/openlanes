@@ -36,6 +36,37 @@ describe("the controls", () => {
     cy.get(".drawer .drawer-meta").should("contain", "Model Opus 5.5");
   });
 
+  it("holds an agent from its drawer and shows the board heard it", () => {
+    cy.get('[data-car="005.00/staff-reviewer"] .car-open').click();
+    cy.get(".drawer").contains("button", "Action").click();
+    cy.contains('[role="menuitem"]', "Hold for now").click();
+    cy.get(".drawer .feedback").should("contain", "Asked to hold for now.");
+    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.held === true);
+    cy.get(".drawer .d-held").should("contain", "On hold.");
+  });
+
+  it("asks before stopping an agent, and stops nothing when cancelled", () => {
+    cy.get('[data-car="005.00/staff-reviewer"] .car-open').click();
+    cy.get(".drawer").contains("button", "Action").click();
+    cy.contains('[role="menuitem"]', "Stop agent").click();
+    cy.get(MODAL).should("contain", "Stop staff-reviewer?");
+    cy.get(MODAL).contains("button", "Cancel").click();
+    cy.get(MODAL).should("not.exist");
+    cy.request("/api/board").its("body.me.plans").then((plans: { cars: { key: string; state: string }[] }[]) => {
+      expect(plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.state).to.eq("running");
+    });
+    cy.get(".drawer").contains("button", "Action").click();
+    cy.contains('[role="menuitem"]', "Stop agent").click();
+    cy.get(MODAL).contains("button", "Stop agent").click();
+    cy.boardEventually((me) => me.plans.flatMap((p) => p.cars).find((c) => c.key === "005.00/staff-reviewer")?.state !== "running");
+  });
+
+  it("shows dollars spent on a plan's row and in its agent's drawer", () => {
+    cy.get('[data-plan="005.00"] .plan-cost').invoke("text").should("match", /\$\d+\.\d\d/);
+    cy.get('[data-car="005.00/staff-reviewer"] .car-open').click();
+    cy.contains(".drawer .drawer-stats div", "Cost").find("strong").invoke("text").should("match", /^\$\d+\.\d\d$/);
+  });
+
   it("toggles the machine tab: first press shows that machine, the second shows every machine", () => {
     cy.contains(".tab-machine", "sam@ci-runner-2").click();
     cy.contains(".tab-machine", "sam@ci-runner-2").should("have.attr", "aria-selected", "true");
