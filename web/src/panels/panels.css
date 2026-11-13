@@ -49,6 +49,7 @@
 .asks { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
         margin: 0 -6px; padding: 2px 6px 4px; overscroll-behavior: contain; }
 .empty { color: var(--ink-soft); }
+.ask.is-spotlit { box-shadow: 0 0 0 2px var(--alarm); }
 .ask { flex: none; padding: 14px; border-radius: 10px; background: var(--enamel);
        border: 1px solid var(--hairline); border-left: 3px solid var(--alarm); transition: opacity .5s ease; }
 .ask textarea { background: var(--plate); }
@@ -65,6 +66,12 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 .ask-actions, .composer-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .ask-done { color: var(--ink-soft); font-size: 14px; margin: 0; }
 .ask.is-done { border-left-color: var(--hairline); padding: 10px 14px; }
+.answered { flex: none; margin-top: 12px; border-top: 1px solid var(--hairline); padding-top: 10px; }
+.answered summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.answered summary span { font-weight: 400; }
+.answered ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.answered li { display: flex; gap: 8px; align-items: baseline; }
+.answered-plan { flex: none; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
 .ask-held { --held: color-mix(in srgb, var(--alarm) 70%, #000); margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--held); color: #fff; font-weight: 700; }
 .ask.is-held { border-left-color: var(--alarm); }
 .is-leaving { opacity: 0; }
