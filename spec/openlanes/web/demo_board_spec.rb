@@ -276,6 +276,10 @@ RSpec.describe OpenLanes::Web::DemoBoard do
         .to eq(["concurrency 4 → 1; the run waits for 2 agents to finish", 1, 3])
     end
 
+    it "turns the ding off on the board" do
+      expect([board.apply(command("set_chime", on: false)), me["run"]["chime"]]).to eq(["chime: false", false])
+    end
+
     it "refuses a limit that is not a whole number of at least 1" do
       expect { board.apply(command("set_concurrency", limit: 0)) }
         .to raise_error(described_class::Refusal, "concurrency must be a whole number of at least 1, not 0")

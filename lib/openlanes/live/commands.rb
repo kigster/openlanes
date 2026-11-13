@@ -51,7 +51,8 @@ module OpenLanes
         "resume_anyway"   => :resume_anyway,
         "stop_plan"       => :stop_plan,
         "restart_plan"    => :restart_plan,
-        "set_concurrency" => :set_concurrency
+        "set_concurrency" => :set_concurrency,
+        "set_chime"       => :set_chime
       }.freeze
 
       # How long "Resume anyway" lifts a 💣's halt.
@@ -680,6 +681,20 @@ module OpenLanes
         ordinal = ordinal!(command)
         dispatcher.restart_plan(ordinal)
         "#{ordinal} restarts at the next tick"
+      end
+
+      # The rail's "Ding when a question needs you" box, kept in
+      # `.openlanes.yml` so it holds across reloads, browsers and restarts.
+      # `on` is checked here and not in {Command::PAYLOAD}, whose test for a
+      # missing field would take `false` for one.
+      #
+      # @return [String]
+      def set_chime(command, dispatcher)
+        on = command.payload["on"]
+        raise Refusal, "chime is true or false, not #{on.inspect}" unless [true, false].include?(on)
+
+        Config.write_flag(File.dirname(dispatcher.runner.tree.dir), "chime", on)
+        "chime: #{on} in #{Config::FILE}"
       end
 
       # `/concurrency N`. Lowering it stops nobody; the run waits for agents
