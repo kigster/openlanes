@@ -49,6 +49,9 @@ export interface Car {
   history: string[]; // newest first, at most 50
   up: number; // tokens in
   down: number; // tokens out
+  // Dollars this invocation has spent, from the adapter's rates. The engine always sends it; optional because an
+  // older engine's board, read here as another machine's, has none, and that reads as not reported, never as $0.
+  cost?: number;
   context: number | null; // tokens currently in context, when the adapter reports it
   context_limit: number | null;
   elapsed: number; // seconds

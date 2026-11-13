@@ -450,6 +450,20 @@ module OpenLanes
         raise Error, "could not comment on ##{number}: #{first_line(e)}"
       end
 
+      # The whole diff of one pull request, as `gh pr diff` prints it. Asked
+      # once per review round, for the packet every reviewer reads
+      # ({Execution::ReviewPacket}), not once per reviewer.
+      #
+      # @param number [Integer]
+      # @param repo [String, nil]
+      # @return [String] a unified diff
+      # @raise [OpenLanes::Error]
+      def diff(number:, repo: nil)
+        @command.run("gh", "pr", "diff", number.to_s, *repo_flag(repo)).out.to_s
+      rescue TTY::Command::ExitError => e
+        raise Error, "could not read the diff of ##{number}: #{first_line(e)}"
+      end
+
       # @param number [Integer]
       # @param repo [String, nil]
       # @return [Array<Hash>] `{name:, bucket:}`, bucket as `gh` reports it

@@ -186,6 +186,11 @@ module OpenLanes
       prefix.register "render", Mail::Render
     end
 
+    # The lessons agents are told. See {OpenLanes::Memory}.
+    register "memory" do |prefix|
+      prefix.register "list", Memory::List, aliases: %w[ls]
+    end
+
     # The durable run log, read back. See {OpenLanes::Events}.
     register "events" do |prefix|
       prefix.register "report", Events::Report

@@ -26,6 +26,22 @@ RSpec.describe OpenLanes::Vcs::GitHub do
 
   before { allow(command).to receive(:run).and_return(result) }
 
+  describe "#diff" do
+    let(:payload) { "diff --git a/lib/a.rb b/lib/a.rb\n" }
+
+    it "returns what gh pr diff printed, asked of the named repository" do
+      expect(github.diff(number: 12, repo: "example/repo")).to eq(payload)
+      expect(command).to have_received(:run).with("gh", "pr", "diff", "12", "-R", "example/repo")
+    end
+
+    it "raises an Error naming the pull request when gh fails" do
+      failure = TTY::Command::ExitError.new("gh pr diff 12", instance_double(TTY::Command::Result, exit_status: 1, out: "", err: "HTTP 502\n"))
+      allow(command).to receive(:run).and_raise(failure)
+
+      expect { github.diff(number: 12) }.to raise_error(OpenLanes::Error, /could not read the diff of #12/)
+    end
+  end
+
   describe "#pulls" do
     it "asks gh for exactly the fields the resync needs" do
       github.pulls
