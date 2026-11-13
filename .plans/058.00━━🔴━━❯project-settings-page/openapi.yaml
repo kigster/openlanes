@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: openlanes control room, project settings (plan 058)
+  version: "1.0"
+paths:
+  /api/settings:
+    get:
+      summary: .openlanes.yml as the settings page draws it
+      responses:
+        "200":
+          description: schema, keys, values, defaults, etag, branch
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/View" }
+    put:
+      summary: Save, commit and push to main
+      parameters:
+        - { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
+        - { name: If-Match, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [values]
+              properties:
+                values: { type: object, description: "the whole file; absent, null, empty string or empty object is unset" }
+      responses:
+        "200":
+          description: unchanged ({changed:false}) or written, committed and pushed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [changed]
+                properties:
+                  changed: { type: boolean }
+                  commit: { type: string }
+                  etag: { type: string }
+        "403": { description: X-CSRF-Token mismatch, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "409":
+          description: an S1 guard refused; nothing written, HEAD and origin/main unmoved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [refusal, reason]
+                properties:
+                  refusal: { type: string, enum: [not_on_main, dirty_config, cannot_fast_forward, stale_etag, push_failed, commit_failed] }
+                  reason: { type: string }
+        "422":
+          description: refused by the schema or Config.parse; nothing written
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [errors]
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      required: [path, message]
+                      properties:
+                        path: { type: array, items: { type: string } }
+                        message: { type: string }
+        "428": { description: If-Match missing, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "500": { description: "a git failure other than a refusal; fixed message, no path", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  schemas:
+    Error:
+      type: object
+      properties: { error: { type: string } }
+    View:
+      type: object
+      required: [schema, keys, values, defaults, etag, branch]
+      properties:
+        schema: { type: object, description: Config::Schema.document }
+        keys: { type: array, items: { type: string } }
+        values: { type: object }
+        defaults: { type: object }
+        etag: { type: string, description: sha256 hex of the file bytes }
+        branch: { type: [string, "null"] }

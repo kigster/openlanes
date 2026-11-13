@@ -192,12 +192,14 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 12
+  OpenLanes__Web ..> OpenLanes : 14
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3
+  OpenLanes__Web ..> OpenLanes__Config : 3
   OpenLanes__Web ..> OpenLanes__Container : 2
   OpenLanes__Web ..> OpenLanes__Engine : 1
+  OpenLanes__Web ..> OpenLanes__Execution : 1
   OpenLanes__Web ..> OpenLanes__Live : 30
   OpenLanes__Web ..> OpenLanes__Log : 1
   OpenLanes__Web ..> OpenLanes__Plans : 11

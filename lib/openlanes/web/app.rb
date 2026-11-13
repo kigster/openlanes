@@ -372,6 +372,28 @@ module OpenLanes
         json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
       end
 
+      # `.openlanes.yml` as the settings page draws it (plan 058, B3).
+      get "/api/settings" do
+        json(Settings.read(context.root).to_json_hash)
+      end
+
+      # A save is synchronous rather than a `POST /api/commands` entry: those
+      # run only inside a live dispatcher, and a refused field has to come
+      # back on the same request.
+      put "/api/settings" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        if_match = request.env["HTTP_IF_MATCH"].to_s.strip
+        halt 428, json(error: "If-Match is required; send the etag from GET") if if_match.empty?
+
+        values = body_json["values"]
+        halt 422, json(errors: [{ path: [], message: "values is a JSON object" }]) unless values.is_a?(Hash)
+
+        outcome = SettingsSave.new(root: context.root).call(values:, if_match:)
+        status outcome.status
+        json(outcome.body)
+      end
+
       get "/api/*" do
         halt 404, json(error: "no such endpoint")
       end
