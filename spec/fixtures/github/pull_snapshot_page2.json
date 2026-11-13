@@ -1,0 +1,94 @@
+{
+  "data": {
+    "repository": {
+      "pullRequests": {
+        "pageInfo": {
+          "hasNextPage": false,
+          "endCursor": "Y3Vyc29yOjI="
+        },
+        "nodes": [
+          {
+            "number": 203,
+            "title": "[063.00] Third",
+            "url": "https://github.com/example/repo/pull/203",
+            "headRefName": "tester/063.00-third",
+            "state": "OPEN",
+            "isDraft": false,
+            "mergedAt": null,
+            "labels": {
+              "nodes": [
+                {
+                  "name": "openlanes:rejected"
+                },
+                {
+                  "name": "bug"
+                }
+              ]
+            },
+            "files": {
+              "nodes": []
+            },
+            "commits": {
+              "nodes": [
+                {
+                  "commit": {
+                    "statusCheckRollup": {
+                      "contexts": {
+                        "nodes": [
+                          {
+                            "__typename": "StatusContext",
+                            "context": "ci/circleci: test",
+                            "state": "ERROR"
+                          },
+                          {
+                            "__typename": "CheckRun",
+                            "name": "e2e",
+                            "status": "COMPLETED",
+                            "conclusion": "FAILURE"
+                          },
+                          {
+                            "__typename": "StatusContext",
+                            "context": "deploy",
+                            "state": "SUCCESS"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "number": 204,
+            "title": "[064.00] No CI yet",
+            "url": "https://github.com/example/repo/pull/204",
+            "headRefName": "tester/064.00-quiet",
+            "state": "OPEN",
+            "isDraft": false,
+            "mergedAt": null,
+            "labels": {
+              "nodes": []
+            },
+            "files": {
+              "nodes": [
+                {
+                  "path": "web/src/app.ts"
+                }
+              ]
+            },
+            "commits": {
+              "nodes": [
+                {
+                  "commit": {
+                    "statusCheckRollup": null
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

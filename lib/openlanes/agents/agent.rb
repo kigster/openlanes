@@ -91,9 +91,11 @@ module OpenLanes
       :toggle,
       :confined_to,
       :small_diff,
-      :review_stage) do
+      :review_stage,
+      :watches) do
       def initialize(covers: [], ledger: [], rounds: Agent::DEFAULT_ROUNDS, effort: nil, starts_as: nil, holds_at: nil, adapter: nil,
-        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, review_stage: 1, **rest)
+        phase: nil, starts: [], needs: [], toggle: nil, confined_to: [], small_diff: nil, review_stage: 1, watches: [],
+        **rest)
         super
       end
 
@@ -121,6 +123,17 @@ module OpenLanes
       #
       # @return [String]
       def role = name.split("-").last.to_s
+
+      # Whether a diff touching these files is one this reviewer should see.
+      # No {#watches} means every diff is.
+      #
+      # @param files [Array<String>] paths relative to the repository root
+      # @return [Boolean]
+      def watching?(files)
+        return true if watches.empty?
+
+        files.any? { |file| watches.any? { |glob| File.fnmatch?(glob, file, File::FNM_EXTGLOB | File::FNM_DOTMATCH) } }
+      end
     end
 
     # More rounds than this costs tokens and buys nothing: an agent that has

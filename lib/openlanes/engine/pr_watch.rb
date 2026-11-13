@@ -23,12 +23,19 @@ module OpenLanes
       # @param github [Vcs::GitHub]
       # @param clock [#call] monotonic seconds
       # @param interval [Numeric] seconds between polls
-      def initialize(github:, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, interval: 15)
+      # @param snapshot [#call, nil] `-> Vcs::PullSnapshot`, the open pull
+      #   requests; nil lists them with `gh pr list --state all` instead
+      def initialize(github:, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, interval: 15, snapshot: nil)
         @github = github
+        @snapshot = snapshot
         @clock = clock
         @interval = interval
         @last = nil
       end
+
+      # @return [#call, nil] the snapshot this watch reads, shared with the
+      #   tick's other readers
+      attr_reader :snapshot
 
       # @return [Boolean] whether a poll is due; the first one waits a full interval
       def due?
@@ -37,8 +44,10 @@ module OpenLanes
         now - @last >= @interval
       end
 
-      # One `gh pr list` for every watched plan, and one `gh pr view` for each
-      # watched pull request that list left out.
+      # One snapshot of the open pull requests (or one `gh pr list`) for
+      # every watched plan, and one `gh pr view` for each watched pull
+      # request it left out: with a snapshot, only one that has just merged
+      # or closed.
       #
       # @param subjects [Array<Plans::Subject>]
       # @return [Array<Outcome>] one per open pull request a plan records
@@ -47,7 +56,7 @@ module OpenLanes
         watched = subjects.flat_map { |s| s.pull_requests.select(&:open?).map { |pr| [s, pr.number.to_s.delete("#").to_i] } }
         return [] if watched.empty?
 
-        by_number = @github.pulls(state: "all").to_h { |row| [row[:number], row] }
+        by_number = rows.to_h { |row| [row[:number], row] }
         watched.filter_map do |subject, number|
           row = by_number[number] || lookup(number) or next
           outcome(subject, number, row)
@@ -55,6 +64,9 @@ module OpenLanes
       end
 
       private
+
+      # @return [Array<Hash>] rows shaped like {Vcs::GitHub#pulls}
+      def rows = @snapshot ? @snapshot.call.pulls : @github.pulls(state: "all")
 
       # `gh pr list` returns only the newest pull requests, up to its limit,
       # so a plan whose pull request is older than that would drop out of
