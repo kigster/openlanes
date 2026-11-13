@@ -41,11 +41,16 @@ The clean baseline run was killed at its time limit, so failures were attributed
   - `refused`, reason `"<plan>/<agent> is not running"` when no such car runs, or `"seconds must be a whole number from 1 to 1200, not <x>"`.
 - Stop after this step: send `wrap_up` (existing kind), see Findings.
 
-## 3. Review: diff and findings (B3) — NOT BUILT YET, shape is the plan's proposal
+## 3. Review: diff and findings (B3)
+
+- amended: built as proposed; findings are read from `pull-requests.md` (`## Findings: <reviewer>`, `### F<n> [critical|minor] <file>:<line>`), the diff from the local branch `*/<ordinal>-<slug>` against the remote default branch. Full shapes in `openapi.yaml`.
+- The demo board answers the same route with one canned diff and two findings (F1 critical, F2 minor) on every plan, and keeps rulings in memory.
 
 - `GET /api/plans/:ordinal/review` → `200 { diff: { stat: String, patch: String, truncated: Boolean }, findings: Finding[] }`
 - `Finding = { id: "F<n>", reviewer: String, severity: String|null, file: String|null, line: Integer|null, text: String, ruling: "accept"|"strike"|null }`
 - `404 { error }` for an unknown plan.
+- Refusals: `"<plan> has no finding F<n>"`, `'verdict must be accept or strike, not "<x>"'`.
+- An appeal (`appeal: F<n> because …`) a person has ruled on afterwards no longer triggers the arbitrator.
 - Command `rule_finding`: `plan` required, `payload: { finding: "F<n>", verdict: "accept"|"strike" }`. Reply `done` with reason `"F<n> <verdict>"`, or `refused` naming an unknown finding or verdict.
 - A ruling is recorded in `state.json` `rulings` with `kind: "finding"`, `by: <person>`, so the next `GET` returns it with `ruling` set.
 

@@ -46,3 +46,12 @@ Suggestion: `path.scrub` or `valid_encoding?` first, and report the file as skip
 The path check uses `[[:cntrl:]]`, but `Lesson::BREAKS` also covers U+2028 and U+2029, and a path reaches the prompt through `cite` (`git show <sha>:<path>`) without that check.
 Scenario: a merged lesson file is named `x<U+2028>## Boundary.md`. Its title is clean, but the cite line carries the separator into the quoted block. A model may read it as a line break. It stays inside the BEGIN/END fence and needs a merge, so the impact is small.
 Suggestion: apply `Lesson::BREAKS` to the path in `Committed` and `Folder`.
+
+## Findings: design-reviewer (round 1)
+
+F201–F203 from the earlier round are resolved: `lefthook.yml` has the `architecture` job and its spec passes, and the bump logic now lives in `OpenLanes::Release` behind a facade with one copy of each regex.
+
+### F204 [minor] bin/bump-version:17
+The script lists the `release/*` files by hand (`%w[release release/version_file release/lockfile release/relock release/bump]`), a second record of what the namespace contains, and the order matters because `Bump::REQUIRED` reads `VersionFile::PATH` at load time.
+Scenario: someone adds `release/tag.rb` and uses it from `Bump`. Zeitwerk loads it for the library and the unit specs pass; `bin/bump-version` dies with `NameError: uninitialized constant OpenLanes::Release::Tag` until the list is edited. Only `bump_version_spec.rb` (which spawns the script) catches it.
+Suggestion: have `release.rb` require its own parts, or glob `release/*.rb` in the script, so the namespace names its own members.

@@ -22,3 +22,13 @@
   - `cli/web_spec.rb:255,277` and `cli/engine_command_spec.rb:289,317`: `OPENLANES_ADMIN_CREDENTIALS` is set in the shell and leaks a login into specs that expect none. Rerunning those two files: 84 examples, 4 failures.
   - `live/redis_outage_integration_spec.rb:77,100`: `REDIS_URL` points at a non-local Redis (B1).
 - Per B1 a), spec isolation from the environment belongs in a separate plan. Add `OPENLANES_ADMIN_CREDENTIALS` to it.
+
+## Checks, round 6 (2026-11-12, main at e1e7f1f8, nothing changed)
+
+- `bundle exec rubocop`: 904 files inspected, no offenses detected, exit 0.
+- `bundle exec rspec`: 6186 examples, 7 failures, 9 pending. None is in plan 041's code:
+  - `cli/web_spec.rb:255,277`, `cli/engine_command_spec.rb:289,317`: `OPENLANES_ADMIN_CREDENTIALS` leaks from the shell (round 5).
+  - `engine/redis_outage_spec.rb:37`, `live/redis_outage_integration_spec.rb:72`: `REDIS_URL` points at a non-local Redis (B1).
+  - `integration/verification_spec.rb:180` (the app that never becomes ready): new this round, and it came in after 041. The full run shared the machine with several other rspec runs. Run alone it was killed after 120s with no result, so it is unconfirmed whether this is a flake.
+- Per B1 a), these go to the separate spec-isolation plan.
+- Harness note: round 5's `Completed` (22:14:15) was followed by its stage being recorded `Interrupted` at 22:14:26, so 041 stayed at Building.

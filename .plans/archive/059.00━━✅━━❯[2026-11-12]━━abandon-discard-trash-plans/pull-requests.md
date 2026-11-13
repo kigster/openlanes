@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 213 | [\[059.00\](A) Abandon Discard Trash Plans](https://github.com/kigster/openlanes/pull/213) | Open 🟡 |
+| 213 | [\[059.00\](A) Abandon Discard Trash Plans](https://github.com/kigster/openlanes/pull/213) | Merged 🟣 |
 
 ## Building, round 1 (backend-coder)
 
@@ -50,13 +50,9 @@ B1 was answered `b)`: fix the Redis outage failures inside this plan.
 
 ## Findings: design-reviewer
 
-### F201 [minor] spec/openlanes/engine/dispatcher_spec.rb:6
+no findings
 
-The same fix (`Dir.chdir(File.dirname(plans_root))`, with a near-identical comment about this repository's `.openlanes.yml`) is pasted into three specs (`dispatcher_spec.rb`, `run_workflow_spec.rb`, `routing_spec.rb`). The rule "a `:tree` spec must not read the host repo's `.openlanes.yml`" is written down three times, and the next spec that builds a tree will hit the same failure. Scenario: a new `:tree` spec routes a plan; `Config.current` reads the checkout's `frontend: true`; it expects backend-coder alone and gets both coders. Suggest doing it once in the `:tree` hook (`spec/support/git_repo.rb` / `plans_fixture.rb`); `spec_helper.rb:165` already restores the cwd.
-
-### F202 [minor] lib/openlanes/live/store.rb:26
-
-Serialising on one `Monitor` that a blocking `xread` holds for its whole wait makes the "give a blocking caller its own store" rule a convention only the comment enforces. No caller in `lib/` passes `block:` today (only `Live.replies` forwards it), so nothing is wrong yet. Scenario: a future caller passes `block: 5000` on the shared store; the tick's outage `ping` then waits up to 5 s behind it. Consider noting it on `#xread` as well, or rejecting `block:` on a shared instance.
+Checked: F201 (the `chdir` now lives once in the `:tree` hook, with a `:host_cwd` opt-out the one group that needs it uses) and F202 (`#xread` states the lock cost on itself) are both addressed. `Store` still has one reason to change (talking to Redis safely); the fail-fast stamp sits inside the lock beside the code that sets it, and `docs/thread-safety.md` records it. `store_fail_fast_spec.rb` uses a stand-in client, so it runs without Redis.
 
 ## Findings: security-reviewer
 
@@ -99,3 +95,23 @@ PR #213 has no inline review comments, so there is no `## Answers` list; the thr
 - After the fixes, with the variable still exported: `bundle exec rspec spec/openlanes/cli/web_spec.rb spec/openlanes/cli/engine_command_spec.rb spec/openlanes/web`: 355 examples, 0 failures. Without it, the three formerly failing files plus routing, dispatcher, run_workflow and store_fail_fast: 353 examples, 0 failures.
 - `bundle exec rubocop`: 848 files, no offenses.
 - The full suite was not re-run after these two spec-helper fixes (it takes 10 minutes; this round had 20). The fixes touch only `spec/spec_helper.rb` and one `describe` tag.
+
+## Changes requested, round 4 (backend-coder)
+
+- No new findings and no inline comments on PR #213 (`gh api .../pulls/213/comments`: 0). Code unchanged this round.
+- `bundle exec rspec` (full, with every fix through round 3, `OPENLANES_ADMIN_CREDENTIALS` still exported by the harness shell): `Finished in 12 minutes 12 seconds`, 5939 examples, 0 failures, 9 pending, coverage 99.17%, exit 0.
+- `bundle exec rubocop`: 848 files, no offenses.
+
+## Findings: security-reviewer, re-review
+
+no findings
+
+Checked: `Live::Store` fail-fast (`@failed_at` is read and written only inside the Monitor; the error text still masks the URL through `Live.mask`; no new input), the `spec_helper.rb` hook that strips and restores `OPENLANES_ADMIN_CREDENTIALS` (test-only; the value is held in a local and never logged or written), the `chdir` into a `Dir.mktmpdir` fixture root, `.openlanes.yml` `coverage:` commands (repo-owned fixed strings), `state.json` in the diff (paths and trace names only, no secrets), no dependency changes.
+
+## Findings: staff-reviewer, re-review
+
+### F2 [minor] lib/openlanes/live/store.rb:292
+
+`@failed_at` is set on a connection error and never cleared on success, and `Monitor` does not hand the lock over in FIFO order. So a caller that queued before a failure can be failed after Redis has already answered someone else. Scenario: call A times out at t1 while B waits (queued at t0 < t1); C arrives at t2 > t1, gets the lock ahead of B, and its `ping` returns `PONG`. Expected: B goes to Redis, which is answering again. Actual: B raises `Unavailable` ("a call failed while this one waited"), and a publish behind it drops its event. Suggest `@failed_at = nil` after a successful `yield` in `talk`. This is bounded (one queue's worth of callers) and callers already rescue `Unavailable`, so it does not block.
+
+Checked and holding: F201, F1 and F202 are fixed as described. Every `@client` use in `store.rb` goes through `guarded` or the lock (`call`, `multi`, `blocking_call`, `close`), apart from `db`, which reads config only. `store_fail_fast_spec.rb` fails without the fix (the queued ping would reach the stand-in and get `PONG`), and its `Thread.pass until waiting.status == "sleep"` waits on the Monitor rather than racing it. The `:tree` chdir runs inside `mktmpdir`, the outer around hook restores the cwd, and `:host_cwd` is honoured. The `ensure` restore of `OPENLANES_ADMIN_CREDENTIALS` is correct. `coverage:` was added at 95, not lowered. Tasks 1 to 6 are on `origin/main` (`3e74922e` is an ancestor, and `removal.rb` and `rewiring.rb` exist), so plan.md describes what was built. Ran `store_fail_fast_spec.rb` and `store_spec.rb` with Redis up: 32 examples, 0 failures. The builder's round 4 full run (5939 examples, 0 failures, exit 0, 99.17%) is pasted above.

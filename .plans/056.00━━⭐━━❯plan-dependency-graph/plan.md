@@ -29,6 +29,21 @@ Option a: `spec_helper` pins `Config.current` to an empty config by default, and
 
 ______________________________________________________________________
 
+### B2 (answered) — Ship plan 056 while a Redis outage spec is flaky
+
+Between one and four examples in the Redis outage specs fail intermittently with `can't modify string; temporarily locked` at `lib/openlanes/live/store.rb:267`, a thread race on one shared connection. It also fails on `main` and is outside this plan's changes.
+
+### D2 (decision) — Ship plan 056 as it is; the race is fixed in PR #206
+
+Answered:
+
+- 2026-11-12
+- By hermes
+
+Ship plan 056 without changing the Redis code. The race is fixed separately in pull request #206, which gives the adapter probes a connection of their own. Option b (a mutex around `Live::Store#call` inside this plan) and option c (tagging the outage specs out of the main suite) are rejected.
+
+______________________________________________________________________
+
 ## Order and dependency graph
 
 ```mermaid

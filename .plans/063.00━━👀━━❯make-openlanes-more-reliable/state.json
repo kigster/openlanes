@@ -6,7 +6,7 @@
     "slug": "make-openlanes-more-reliable"
   },
   "state": "in_review",
-  "updated_at": "2026-11-12T22:16:20-08:00",
+  "updated_at": "2026-11-12T23:13:17-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -253,6 +253,39 @@
       "seconds": 24.5,
       "note": "completed - 4 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 10
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:09:35-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "28f50447-9070-4140-b933-f60eaaf8719a",
+      "verdict": "passed",
+      "review": 12,
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:10:16-08:00",
+      "up": 192226,
+      "down": 2750,
+      "seconds": 39.9,
+      "note": "completed - 2 tool calls; passed; waiting for security-reviewer, staff-reviewer",
+      "moves": 12
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Started",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:10:19-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "b01ebf79-2208-4cd3-b5d8-82602fb5d383"
     }
   ],
   "signatures": [
@@ -410,6 +443,32 @@
       "round": 1,
       "note": "signed by harness: work verified on disk",
       "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-12T23:09:49-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:10:10-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:10:32-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:13:17-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
     }
   ],
   "messages": [

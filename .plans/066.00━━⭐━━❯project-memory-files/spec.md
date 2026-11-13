@@ -3,6 +3,7 @@ created: 2026-11-12
 starts: planning
 depth: deep
 frontend: false
+depends_on: [none]
 implementation_suggestions:
   - "Follow `docs/continuous-learning.md`, sections 'Where lessons come from' and 'The curator, and why agents never write memory directly'"
   - "Add the curator as `agents/curator.md`, and the promotion step as plain Ruby under `lib/openlanes/memory/`, beside `Library` and `Lesson`"

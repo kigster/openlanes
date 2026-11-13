@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 223 | [\[060.00\](A) Improve Openlanes Low Hanging Fruit](https://github.com/kigster/openlanes/pull/223) | Open 🟡 |
+
 ## Round 1, backend-coder
 
 - Baseline on clean HEAD (before this plan): `spec/openlanes/agents/routing_spec.rb` lines 19, 32, 42 fail; `spec/openlanes/live/redis_outage_integration_spec.rb:77` fails. Not caused by this plan.

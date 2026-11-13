@@ -6,7 +6,7 @@
     "slug": "speed-up-openlanes"
   },
   "state": "rejected",
-  "updated_at": "2026-11-12T22:21:00-08:00",
+  "updated_at": "2026-11-12T22:42:17-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -343,6 +343,37 @@
       "seconds": 33.9,
       "note": "completed - 4 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
       "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-12T22:29:08-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "84e84c39-3161-43ce-b355-c2579d0ff364"
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T22:41:33-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "bfc5f63f-ef09-4a4a-adc5-35f746dac34a",
+      "to": "rejected",
+      "finished_at": "2026-11-12T22:41:51-08:00",
+      "up": 202076,
+      "down": 622,
+      "seconds": 14.8,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
+      "moves": 7
     }
   ],
   "signatures": [
@@ -549,6 +580,32 @@
       "status": "Almost completed",
       "round": 1,
       "note": "B3 part done; B3 rest, B6 remain"
+    },
+    {
+      "at": "2026-11-12T22:29:21-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:36:16-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:41:42-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:41:46-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
     }
   ],
   "messages": [
@@ -582,36 +639,29 @@
     },
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T22:20:44-08:00",
+      "at": "2026-11-12T22:36:16-08:00",
       "round": 1,
       "status": "Interrupted",
       "done": [
-        "B4",
         "B1",
-        "review fixes",
         "B2",
-        "B5",
-        "B3 part (Snapshot",
-        "POLL=10",
-        "PrWatch",
-        "SnapshotReads in Merging/Verification)"
+        "B3",
+        "B4",
+        "B5"
       ],
       "remaining": [
-        "B3 rest (merging.rb and upkeep/sweep.rb pull_request reads via snapshot)",
-        "B6 integration spec"
+        "B6 integration spec",
+        "full suite run"
       ],
-      "next_step": "Answer pull_request(url) from the snapshot row when the PR is open there (SnapshotReads#pull_request), add step specs whose GitHub double fails on a per-PR read, then write spec/openlanes/integration/speed_up_spec.rb (B6)",
+      "next_step": "Run full bundle exec rspec (background, long timeout) to confirm only baseline failures, then write spec/openlanes/integration/speed_up_spec.rb (B6) per plan.md, then sign Completed --next design-reviewer",
       "files_touched": [
-        "lib/openlanes/engine/steps/snapshot.rb",
-        "lib/openlanes/engine/steps.rb",
-        "lib/openlanes/engine/pr_watch.rb",
-        "lib/openlanes/engine/dispatcher.rb",
-        "lib/openlanes/engine/run_workflow.rb",
         "lib/openlanes/vcs/snapshot_reads.rb",
-        "spec/openlanes/engine/steps/snapshot_spec.rb",
-        "spec/openlanes/engine/pr_watch_spec.rb",
+        "lib/openlanes/vcs/pull_snapshot.rb",
+        "lib/openlanes/engine/run_workflow.rb",
         "spec/openlanes/vcs/snapshot_reads_spec.rb",
-        "docs/thread-safety.md",
+        "spec/openlanes/vcs/pull_snapshot_spec.rb",
+        "spec/openlanes/engine/merging_spec.rb",
+        "spec/fixtures/github/pull_snapshot_page1.json",
         "docs/architecture"
       ]
     }
@@ -878,6 +928,32 @@
               "text": "Next: SnapshotReads#pull_request answering from the snapshot row (merging.rb:197,238,343; upkeep/sweep.rb:57), step specs with a GitHub double that fails on per-PR reads, then the B6 integration spec, then sign Completed --next design-reviewer"
             }
           ]
+        },
+        "7": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B3 complete: SnapshotReads#pull_request answers from the snapshot row when the PR is open there. The query adds headRefOid/baseRefName/body/mergeStateStatus/mergeCommit, mapped by PullSnapshot.details. Upkeep.keeper gets snapshot_github, so Sweep reads from it too."
+            },
+            {
+              "kind": "decision",
+              "text": "A merged or closed PR is never in the snapshot (it holds open ones only), so Merging#retire still reads it live. That live read is what carries merge_commit."
+            },
+            {
+              "kind": "note",
+              "text": "GitHub#swap_label reads labels itself (pr view --json labels) on the inner client. That is a write path and exempt. Specs that check for 'no per-PR read' should look for headRefOid in the view call."
+            },
+            {
+              "kind": "note",
+              "text": "The machine was shared with about 19 rspec processes from other agents, so three spec files took about 110s. I skipped the full suite in round 6, and it still has to be run."
+            },
+            {
+              "kind": "todo",
+              "text": "Next: run the full rspec in the background with a long timeout, write spec/openlanes/integration/speed_up_spec.rb (B6), then sign Completed --next design-reviewer"
+            }
+          ]
         }
       }
     },
@@ -934,6 +1010,16 @@
             {
               "kind": "done",
               "text": "Round 5: no front-end work; re-signed Completed (no front end), no files changed"
+            }
+          ]
+        },
+        "6": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 6: no front-end work; re-signed Completed (no front end), no files changed"
             }
           ]
         }

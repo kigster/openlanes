@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 206 | [\[040.00\](A) Gemini and Grok Adapters](https://github.com/kigster/openlanes/pull/206) | Open 🟡 |
+| 206 | [\[040.00\](A) Gemini and Grok Adapters](https://github.com/kigster/openlanes/pull/206) | Merged 🟣 |
 
 ## Round 4, backend-coder
 

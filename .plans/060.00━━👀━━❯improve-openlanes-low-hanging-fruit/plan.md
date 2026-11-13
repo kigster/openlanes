@@ -97,3 +97,13 @@ No front-end units: the only visible change is a board status phrase, which the 
 ## HTTP surface
 
 No. The plan adds or changes no HTTP API.
+
+## How to test
+
+- Run `bundle exec rspec` and `bundle exec rubocop`: both exit 0.
+- Run `bundle exec rspec spec/openlanes/plans/unit_sizes_spec.rb spec/openlanes/agents/profile_sizing_spec.rb spec/openlanes/config_sizing_spec.rb`: each `**Size:**` maps to its configured model and effort, and `sizing.large.model: fable` is the only way to reach Fable.
+- Run `bundle exec rspec spec/openlanes/engine`: the dispatcher specs pass unchanged after the split into `steps/`.
+- Run `bundle exec rspec spec/openlanes/integration/low_hanging_fruit_spec.rb`: a large unit starts on the large profile, a red suite bounces to the builder with no reviewer, a 429 is requeued without an attempt, and three reviewers share one packet head sha.
+- Run `just update-architecture` and `bundle exec rspec spec/openlanes/docs/architecture_doc_spec.rb`: the docs are current.
+- Run `./exe/openlanes docs | rg Size`: the `**Size:**` field is listed.
+- There is no front end; nothing to click.

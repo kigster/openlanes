@@ -5,8 +5,8 @@
     "ordinal": "056.00",
     "slug": "plan-dependency-graph"
   },
-  "state": "blocked",
-  "updated_at": "2026-11-12T22:02:56-08:00",
+  "state": "planned",
+  "updated_at": "2026-11-12T22:41:33-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -241,6 +241,31 @@
       "agent": "unblocker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:52-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:27:57-08:00",
+      "agent": "unblocker",
+      "status": "Completed",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-12T22:31:45-08:00",
+      "agent": "unblocker",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:32:02-08:00",
+      "agent": "unblocker",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -290,7 +315,7 @@
       "read": "no"
     }
   ],
-  "moves": 8,
+  "moves": 9,
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -503,6 +528,18 @@
               "text": "B2 A flaky Redis outage spec keeps `bundle exec rspec` from exiting 0 > **Answer not accepted:** What do need? What is the qestion? > > unblocker: B2 cites spec/support/checkout_config.rb, but that file does not exist at this path in the checkout. Verify before the B2 answer relies on it.",
               "ref": "B2",
               "answer": "what is B2? Answered by hermes on 2026-11-12"
+            },
+            {
+              "kind": "question",
+              "text": "B2 A flaky Redis outage spec keeps `bundle exec rspec` from exiting 0 > **Answer not accepted:** what is B2? > > unblocker left it unfolded and said nothing > **Answer not accepted:** What do need? What is the qestion? > > unblocker: B2 cites spec/support/checkout_config.rb, but that file does not exist at this path in the checkout. Verify before the B2 answer relies on it.",
+              "ref": "B2",
+              "answer": "Give me all the blocks here in form of a question, and I'll answer them one at a time. Answered by hermes on 2026-11-12"
+            },
+            {
+              "kind": "question",
+              "text": "B2 Ship the plan dependency graph while one Redis outage spec is flaky? Plan 056 (the plan dependency graph) is built and rubocop is clean, but the full suite does not exit 0 every time. Between 1 and 4 examples fail now and then in `spec/openlanes/live/redis_outage_integration_spec.rb` and `spec/openlanes/engine/redis_outage_spec.rb`, with `RuntimeError: can't modify string; temporarily locked` at `lib/openlanes/live/store.rb:267`. The cause is a thread race on one shared Redis connection. It …",
+              "ref": "B2",
+              "answer": "a) Ship plan 056 as it is; the race is fixed separately, in pull request #206. Answered by hermes on 2026-11-12"
             }
           ]
         }
@@ -537,6 +574,15 @@
             {
               "kind": "note",
               "text": "B2 cites spec/support/checkout_config.rb, but that file does not exist at this path in the checkout. Verify before the B2 answer relies on it."
+            }
+          ]
+        },
+        "3": {
+          "state": "⭕ Technical Block",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Folded answered B2 (ship plan 056 as is, Redis race fixed in PR #206) into plan.md as D2; the answer is option a, which answers the question. blocked.md deleted because no questions remained."
             }
           ]
         }

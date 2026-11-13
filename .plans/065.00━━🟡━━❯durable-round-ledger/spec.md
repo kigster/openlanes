@@ -3,6 +3,7 @@ created: 2026-11-12
 starts: planning
 depth: deep
 frontend: true
+depends_on: [none]
 implementation_suggestions:
   - "A `Plans::Rounds` (or `Engine::RoundLedger`) value object built from `state.json` stages, asked `used(agent, state)`, `next(agent, state)` and `left(agent, state, budget)`; the dispatcher keeps no round counter of its own"
   - "Record the state a round ran in on each stage (`from`), since today's stages carry `to` and `state: null`"
