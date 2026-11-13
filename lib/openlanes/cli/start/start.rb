@@ -44,10 +44,10 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
+        root = Project.enter_main_checkout # S0: once per project, from its main checkout
         prepare(options)
         page = page_for(options)
         tree = tree_for(options)
-        root = Dir.pwd
         supervisor_logging(options, root)
         running(Supervision.registration(Supervision::SUPERVISOR, root:).holder)
         web = launcher_for(options, root, tree, page)

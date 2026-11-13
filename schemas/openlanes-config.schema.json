@@ -1,0 +1,2830 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openlanes.dev/schemas/openlanes-config.schema.json",
+  "title": ".openlanes.yml",
+  "description": "A project's openlanes settings. Precedence, loudest first: a flag typed on the command line, the plan's spec.md frontmatter, this file, the built-in default.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Heading for INDEX.md; null takes the root's name",
+      "default": null,
+      "minLength": 1
+    },
+    "starts": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Where `openlanes create` starts a plan",
+      "default": null,
+      "enum": [
+        "research",
+        "planning",
+        "building",
+        null
+      ]
+    },
+    "frontend": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "A spec's `frontend:` when spec.md omits it; null lets each plan decide",
+      "default": null
+    },
+    "jobs": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "How many plans `openlanes run` works on at once",
+      "default": null,
+      "minimum": 1
+    },
+    "adapter": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The coding agent for every agent that names none; null is claude",
+      "default": null,
+      "enum": [
+        "claude",
+        "codex",
+        "pi",
+        "grok",
+        "gemini",
+        null
+      ]
+    },
+    "redis_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The Redis the live run shares: a redis://, rediss:// or unix:// URL",
+      "default": null,
+      "pattern": "^\\s*(redis|rediss|unix):"
+    },
+    "redis_outage_hours": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "How long agents stay paused for a lost Redis before the run shuts down; null is 1",
+      "default": null,
+      "exclusiveMinimum": 0
+    },
+    "ci_pending_hours": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "How long CI may stay pending after verification before the plan is surfaced to a person; null is 4",
+      "default": null,
+      "exclusiveMinimum": 0
+    },
+    "redis_backoff": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How a lost Redis is asked again",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "initial": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds; the Fibonacci gaps are its multiples",
+          "default": null,
+          "exclusiveMinimum": 0
+        },
+        "cap": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds, the longest gap between two asks",
+          "default": null,
+          "exclusiveMinimum": 0
+        },
+        "jitter": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Full jitter: each gap drawn from [0, gap)",
+          "default": null
+        }
+      }
+    },
+    "desired_codebase_quality": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "What a review that is ok but not perfect does (R4); null until the person is asked",
+      "default": null,
+      "enum": [
+        "high",
+        "standard",
+        "mvp",
+        null
+      ]
+    },
+    "merge": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Who merges a reviewed pull request, and when it stops going back",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Who merges a reviewed PR (M4); null is human",
+          "default": null,
+          "enum": [
+            "human",
+            "auto",
+            null
+          ]
+        },
+        "max_rejections": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Rejections before the plan stops going back to its builders (M6); null takes the quality's",
+          "default": null,
+          "minimum": 1
+        }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "description": "Per-command option defaults, by command name: run, \"resync dirs\"",
+      "default": {},
+      "additionalProperties": false,
+      "properties": {
+        "agents describe": {
+          "type": "object",
+          "description": "Open one specialist's definition in a Markdown viewer",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "mdfried": {
+              "type": "boolean",
+              "description": "Render in the terminal through mdfried instead of the system viewer",
+              "default": false
+            }
+          }
+        },
+        "agents list": {
+          "type": "object",
+          "description": "List every specialist, what it handles, and what it advances to, then which coding CLIs can take an agent on this machine",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "api docs": {
+          "type": "object",
+          "description": "List the openapi.yaml files in the plan folders, and check each one parses",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "completion": {
+          "type": "object",
+          "description": "Print a shell completion script",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "coverage": {
+          "type": "object",
+          "description": "Run a plan's declared test command in its worktree and check line coverage",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Print the declaration and where the command would run; run nothing",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "create": {
+          "type": "object",
+          "description": "Create the next numbered plan folder",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Create a retroactive plan in the gap after this plan, e.g. 002"
+            },
+            "depth": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "fast",
+                "medium",
+                "deep"
+              ],
+              "description": "How hard every phase should think: fast, medium or deep. Written into spec.md's frontmatter"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "draft": {
+              "type": "boolean",
+              "description": "For a new feature (no --prs), attempt spec.md's four headings from project context via `claude`. --no-draft leaves them bare",
+              "default": true
+            },
+            "from": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seed from a markdown file: its frontmatter `title:` names the folder, and its body fills the spec."
+            },
+            "open": {
+              "type": "boolean",
+              "description": "Open the new spec.md in the system editor when done (macOS `open`). --no-open leaves it for you to open",
+              "default": true
+            },
+            "prs": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Document work that already shipped: pull request numbers or URLs, comma separated. Requires --after"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "spec": {
+              "type": "boolean",
+              "description": "With --prs, write spec.md from what the pull requests did. --no-spec records them and stops, which is fast and offline",
+              "default": true
+            },
+            "starts": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "research",
+                "planning",
+                "building"
+              ],
+              "description": "Where the plan starts: research (the whole spine), planning (skip research), building (one agent, a short mechanical task). Written into spec.md as starts:"
+            },
+            "status": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Open in a state other than the default"
+            }
+          }
+        },
+        "describe": {
+          "type": "object",
+          "description": "Open one specialist's definition in a Markdown viewer",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "mdfried": {
+              "type": "boolean",
+              "description": "Render in the terminal through mdfried instead of the system viewer",
+              "default": false
+            }
+          }
+        },
+        "docs": {
+          "type": "object",
+          "description": "Generate the conventions document from the state machine itself",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "output": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write here instead of STDOUT; - for STDOUT"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "engine": {
+          "type": "object",
+          "description": "The factory's engine over the whole tree, until Stop All Local; `openlanes start` runs it",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "admin_credentials": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "USER:PASSWORD, the Basic auth login asked of every request from off this machine; required when listening past loopback (default: $OPENLANES_ADMIN_CREDENTIALS)"
+            },
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only run this one agent; answered blocked.md questions are still drained"
+            },
+            "all_interfaces": {
+              "type": "boolean",
+              "description": "Listen on every interface, the same as --ips 0.0.0.0",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "git_push": {
+              "type": "boolean",
+              "description": "With --isolation worktree, a finished branch is pushed and its pull request opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted.",
+              "default": true
+            },
+            "ignore_bombs": {
+              "type": "boolean",
+              "description": "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run",
+              "default": false
+            },
+            "ips": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Comma-separated addresses the control room listens on, e.g. 127.0.0.1,192.168.1.20 (default: 127.0.0.1). Any address past loopback needs --admin-credentials"
+            },
+            "isolation": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "worktree",
+                "shared"
+              ],
+              "description": "worktree: a checkout and branch per plan, run in parallel. shared: one tree, serial",
+              "default": "worktree"
+            },
+            "jobs": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Agents to run at once (default: cores - 2, capped at 12)"
+            },
+            "log": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the log to FILE, appending; - for STDOUT (default: log/development.log under the project root)"
+            },
+            "log_format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "color",
+                "standard",
+                "json"
+              ],
+              "description": "color or standard (one line per entry, with or without colour) or json (default: standard)"
+            },
+            "log_level": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal"
+              ],
+              "description": "The lowest level written (default: info)"
+            },
+            "max_tokens": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Token budget per agent invocation, input plus output, sub-agents included. The agent is told the number so it can finish inside it; the meter aborts it past the number so the telling is true. (default: unmetered)"
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
+              "default": true
+            },
+            "model": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Model for every agent this run, overriding each agent's own frontmatter and spec.md (default: what the agent declares, else the CLI's default). Claude models above Opus run as Opus"
+            },
+            "open": {
+              "type": "boolean",
+              "description": "Open the control room in the browser; --no-open only prints its URL",
+              "default": true
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only these plans, comma separated: NNN or NNN.MM, e.g. --plan 003,005.01. Default: the whole tree"
+            },
+            "port": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Port the control room listens on",
+              "default": "11000"
+            },
+            "prompt": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Extra instructions appended to the agent's prompt (only with --agent); a path to an existing text file under 80 characters is read instead"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            },
+            "rescan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds between rescans of .plans while idle; a command from the page rescans at once",
+              "default": "5"
+            },
+            "root": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Repository root the agents work in (default: the .plans parent)"
+            },
+            "rounds": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+            },
+            "skip": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Never assign this agent; its plans wait, the rest of the pipeline runs. Answered blocked.md questions are still drained, even with --skip unblocker. Comma separated for several"
+            },
+            "timeout": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds before one agent is abandoned; only tightens an agent's own clock (default: the agent's own, else 900)"
+            },
+            "user_config": {
+              "type": "boolean",
+              "description": "Start agents with your personal plugins, skills, hooks and MCP servers. Off by default: they cost every agent context and start-up time on every turn",
+              "default": false
+            },
+            "web": {
+              "type": "boolean",
+              "description": "Serve the control room from this process; --no-web leaves it to an `openlanes web` run apart, as `just start` does, and the engine waits for that page",
+              "default": true
+            }
+          }
+        },
+        "eval": {
+          "type": "object",
+          "description": "Score agents against evals/cases: recorded folders by default, real runs with --live",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only this agent's cases"
+            },
+            "case": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only the case with this id"
+            },
+            "cases": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Directory of <agent>/<id>.yml cases (default: the gem's evals/cases)"
+            },
+            "depth": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "fast",
+                "medium",
+                "deep"
+              ],
+              "description": "Hold every case to this depth's bounds instead of its own"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "live": {
+              "type": "boolean",
+              "description": "Run the real agent in a temp repository (spends tokens)",
+              "default": false
+            },
+            "max_tokens": {
+              "type": "integer",
+              "description": "Token cap per live case (default 300000)"
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "With --live, tell the agent your global lessons; --no-memory is the baseline that shows whether they help",
+              "default": true
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "recording": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "pass",
+                "fail"
+              ],
+              "description": "Which recording to score offline",
+              "default": "pass"
+            }
+          }
+        },
+        "events report": {
+          "type": "object",
+          "description": "Report completion, blocks, time to answer, PR outcomes and usage from the event log",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "table",
+                "json"
+              ],
+              "description": "table for people, json for scripts",
+              "default": "table"
+            },
+            "output": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the report here instead of STDOUT; - for STDOUT"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "index": {
+          "type": "object",
+          "description": "Create or update .plans/INDEX.md — a global index of every plan.",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "output": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write somewhere other than <plans>/INDEX.md; - for STDOUT"
+            },
+            "project": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Heading for the page, default: the repository's directory name"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "init": {
+          "type": "object",
+          "description": "Write .openlanes.yml at the project root and create the plans directory",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "ci": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "github_actions",
+                "circleci",
+                "jenkins",
+                "gitlab",
+                "buildkite",
+                "external",
+                "none"
+              ],
+              "description": "What checks pull requests: github_actions, circleci, jenkins, gitlab, buildkite, external or none (-y default: what the folder runs)"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Write nothing; print the file that would be written",
+              "default": false
+            },
+            "frontend": {
+              "type": "boolean",
+              "description": "Whether plans have a front end; leave it out to let each plan decide"
+            },
+            "jobs": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "How many plans `openlanes run` works on at once (default: cores - 2)"
+            },
+            "merge_by": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "human",
+                "auto"
+              ],
+              "description": "Who merges a reviewed pull request (default: human)"
+            },
+            "overwrite": {
+              "type": "boolean",
+              "description": "Replace an existing .openlanes.yml, which is otherwise kept",
+              "default": false
+            },
+            "project": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Heading for INDEX.md and similar (default: the root's directory name)"
+            },
+            "quality": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "high",
+                "standard",
+                "mvp"
+              ],
+              "description": "desired_codebase_quality: high, standard or mvp (R4); asked on a terminal when left out"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "reconfigure": {
+              "type": "boolean",
+              "description": "Ask again with the current answers as defaults; show the diff before writing",
+              "default": false
+            },
+            "setup": {
+              "type": "boolean",
+              "description": "Run openlanes setup first when the machine is not ready; --no-setup skips the check",
+              "default": true
+            },
+            "starts": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "research",
+                "planning",
+                "building"
+              ],
+              "description": "Where new plans start: research, planning or building (default: research)"
+            },
+            "yes": {
+              "type": "boolean",
+              "description": "Ask nothing; take the flags and the defaults",
+              "default": false
+            }
+          }
+        },
+        "linear import": {
+          "type": "object",
+          "description": "Create Linear issues from the plans: one per folder, one child per work unit",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Send nothing to Linear; print what would be created and updated",
+              "default": false
+            },
+            "format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "text",
+                "json"
+              ],
+              "description": "json emits the exact arguments the Linear MCP tools take",
+              "default": "text"
+            },
+            "project": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The project to file everything under: its URL, its name, or its id"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "since": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Skip plans numbered below this, e.g. 010.00"
+            },
+            "status": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only plans in these states: a comma-separated list of status keys"
+            },
+            "update_unchanged": {
+              "type": "boolean",
+              "description": "Update everything, whether the plan has changed or not",
+              "default": false
+            }
+          }
+        },
+        "linear projects": {
+          "type": "object",
+          "description": "List the Linear projects a team owns, and which plans they already cover",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "mail ack": {
+          "type": "object",
+          "description": "Mark a message in a plan's mailbox as read",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "for": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent that read it, who must be its recipient"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "mail read": {
+          "type": "object",
+          "description": "Print the messages waiting for an agent in a plan's mailbox",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "after": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only messages numbered above this, so a poll shows what is new",
+              "default": "0"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "for": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent reading"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "mail render": {
+          "type": "object",
+          "description": "Print a plan's whole mailbox as Markdown",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "mail send": {
+          "type": "object",
+          "description": "Append a message to a plan's mailbox",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "from": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent writing"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "to": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent it is for"
+            }
+          }
+        },
+        "memory approve": {
+          "type": "object",
+          "description": "Mark a waiting lesson for promotion whatever the number of plans it was seen in",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory curate": {
+          "type": "object",
+          "description": "Have the curator read finished or rejected plans and propose lessons into .openlanes/memory/inbox",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Hand the plans to a different agent",
+              "default": "curator"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Invoke no agent; name the plans that would be read",
+              "default": false
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to curate",
+              "default": true
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory inbox": {
+          "type": "object",
+          "description": "List the lessons waiting in .openlanes/memory/inbox, and the plans each was seen in",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory list": {
+          "type": "object",
+          "description": "List the lessons in .openlanes/memory/lessons and your global memory, or with --agent, the section that agent's prompt carries",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Print the section this agent's prompt would carry, e.g. --agent backend-coder"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory promote": {
+          "type": "object",
+          "description": "Turn waiting lessons into active ones: those seen in 2 plans, or approved, as a memory pull request a person merges",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Write nothing; print what would be promoted, confirmed or left waiting",
+              "default": false
+            },
+            "local": {
+              "type": "boolean",
+              "description": "Write the lesson files into this checkout and open no pull request",
+              "default": false
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to promote",
+              "default": true
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "memory scan": {
+          "type": "object",
+          "description": "Check that nothing under .openlanes/ is a secret or is ignored by git. Exits 1 when something is",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "plans": {
+          "type": "object",
+          "description": "Print every plan, its state, and its pull requests",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "type": "boolean",
+              "description": "Also list the plans in archive/, deferred/, abandoned/, discarded/ and trashed/",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "plans abandon": {
+          "type": "object",
+          "description": "Take plans out of the active list, because work on them stopped",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Move nothing; print what would move and be rewritten",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "reason": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The reason, for every plan listed; asks each plan's otherwise"
+            }
+          }
+        },
+        "plans discard": {
+          "type": "object",
+          "description": "Take plans out of the active list, by deliberate decision",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Move nothing; print what would move and be rewritten",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "reason": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The reason, for every plan listed; asks each plan's otherwise"
+            }
+          }
+        },
+        "plans trash": {
+          "type": "object",
+          "description": "Remove plans from the workspace: done elsewhere, never to be done, or to start over",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Move nothing; print what would move and be rewritten",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "reason": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The reason, for every plan listed; asks each plan's otherwise"
+            }
+          }
+        },
+        "project start": {
+          "type": "object",
+          "description": "Run a plan's app from .openlanes.yml app:, for the Preview tab",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "control_room": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The control room's origin, which the app must allow to frame it",
+              "default": "http://127.0.0.1:11000"
+            },
+            "demo": {
+              "type": "boolean",
+              "description": "Publish where `openlanes web --demo` reads, beside its sample board",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "ready_timeout": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds each process has to become ready",
+              "default": "30"
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis the control room reads (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            }
+          }
+        },
+        "project status": {
+          "type": "object",
+          "description": "List the apps running on this machine: plan, process, port, pid, checkout",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "project stop": {
+          "type": "object",
+          "description": "Stop a plan's app (every app on this machine when no plan is given)",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "resync dirs": {
+          "type": "object",
+          "description": "Rename and move plan folders so the name, the place and the contents agree",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Rename nothing; print what would be renamed or moved",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "resync prs": {
+          "type": "object",
+          "description": "Add missing [NNN.MM] prefixes to pull request titles",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "adopt": {
+              "type": "boolean",
+              "description": "Mint a retroactive plan folder for every pull request that resolves to none. --no-adopt flags them for a human instead",
+              "default": true
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Retitle nothing; print what would be retitled and adopted",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "state": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "open",
+                "closed",
+                "merged",
+                "all"
+              ],
+              "description": "Which pull requests to consider",
+              "default": "all"
+            }
+          }
+        },
+        "review": {
+          "type": "object",
+          "description": "Replace a pull request's review label, refusing a passing verdict while CI is red",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Compute the transition and write nothing to GitHub",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "run": {
+          "type": "object",
+          "description": "Run specialist agents over the plans named, headless, until nothing changes",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only run this one agent; answered blocked.md questions are still drained"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Invoke no agent; print which agent would take which plan",
+              "default": false
+            },
+            "git_push": {
+              "type": "boolean",
+              "description": "With --isolation worktree, a finished branch is pushed and its pull request opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted.",
+              "default": true
+            },
+            "ignore_bombs": {
+              "type": "boolean",
+              "description": "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run",
+              "default": false
+            },
+            "isolation": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "worktree",
+                "shared"
+              ],
+              "description": "worktree: a checkout and branch per plan, run in parallel. shared: one tree, serial",
+              "default": "worktree"
+            },
+            "jobs": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Agents to run at once (default: cores - 2, capped at 12)"
+            },
+            "log": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the log to FILE, appending; - for STDOUT (default: log/development.log under the project root)"
+            },
+            "log_format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "color",
+                "standard",
+                "json"
+              ],
+              "description": "color or standard (one line per entry, with or without colour) or json (default: standard)"
+            },
+            "log_level": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal"
+              ],
+              "description": "The lowest level written (default: info)"
+            },
+            "max_tokens": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Token budget per agent invocation, input plus output, sub-agents included. The agent is told the number so it can finish inside it; the meter aborts it past the number so the telling is true. (default: unmetered)"
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
+              "default": true
+            },
+            "model": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Model for every agent this run, overriding each agent's own frontmatter and spec.md (default: what the agent declares, else the CLI's default). Claude models above Opus run as Opus"
+            },
+            "prompt": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Extra instructions appended to the agent's prompt (only with --agent); a path to an existing text file under 80 characters is read instead"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            },
+            "root": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Repository root the agents work in (default: the .plans parent)"
+            },
+            "rounds": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+            },
+            "skip": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Never assign this agent; its plans wait, the rest of the pipeline runs. Answered blocked.md questions are still drained, even with --skip unblocker. Comma separated for several"
+            },
+            "timeout": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds before one agent is abandoned; only tightens an agent's own clock (default: the agent's own, else 900)"
+            },
+            "until": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Stop each plan once it reaches this state, by key or emoji (e.g. planned, 🔨): short dogfood runs. Default: as far as the agents take it"
+            },
+            "user_config": {
+              "type": "boolean",
+              "description": "Start agents with your personal plugins, skills, hooks and MCP servers. Off by default: they cost every agent context and start-up time on every turn",
+              "default": false
+            }
+          }
+        },
+        "setup": {
+          "type": "object",
+          "description": "Install the tools openlanes needs (brew bundle) and check claude, gh auth and Redis",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Install nothing; list what would be installed and run the checks",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis to check (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            }
+          }
+        },
+        "skills install": {
+          "type": "object",
+          "description": "Copy the skills bundled with this gem into a skill directory, ~/.agents/skills by default.",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Copy nothing; print what would be installed, kept and replaced",
+              "default": false
+            },
+            "into": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The skill directory to copy into",
+              "default": "~/.agents/skills"
+            },
+            "overwrite": {
+              "type": "boolean",
+              "description": "Replace a skill already there, which is otherwise kept",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "start": {
+          "type": "object",
+          "description": "The factory: the engine and its control room, kept up until `openlanes stop`, Stop All Local or Ctrl-C",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "admin_credentials": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "USER:PASSWORD, the Basic auth login asked of every request from off this machine; required when listening past loopback (default: $OPENLANES_ADMIN_CREDENTIALS)"
+            },
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only run this one agent; answered blocked.md questions are still drained"
+            },
+            "all_interfaces": {
+              "type": "boolean",
+              "description": "Listen on every interface, the same as --ips 0.0.0.0",
+              "default": false
+            },
+            "background": {
+              "type": "boolean",
+              "description": "Detach from the terminal, write its output to log/openlanes-start.log, and return once the control room answers",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "git_push": {
+              "type": "boolean",
+              "description": "With --isolation worktree, a finished branch is pushed and its pull request opened as soon as it lands, titled [NNN.MM](X). --no-git-push turns that off and leaves it uncommitted.",
+              "default": true
+            },
+            "ignore_bombs": {
+              "type": "boolean",
+              "description": "Work on while a 💣 stands: a plan others wait on, blocked too long, halts nothing this run",
+              "default": false
+            },
+            "ips": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Comma-separated addresses the control room listens on, e.g. 127.0.0.1,192.168.1.20 (default: 127.0.0.1). Any address past loopback needs --admin-credentials"
+            },
+            "isolation": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "worktree",
+                "shared"
+              ],
+              "description": "worktree: a checkout and branch per plan, run in parallel. shared: one tree, serial",
+              "default": "worktree"
+            },
+            "jobs": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Agents to run at once (default: cores - 2, capped at 12)"
+            },
+            "log": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the log to FILE, appending; - for STDOUT (default: log/development.log under the project root)"
+            },
+            "log_format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "color",
+                "standard",
+                "json"
+              ],
+              "description": "color or standard (one line per entry, with or without colour) or json (default: standard)"
+            },
+            "log_level": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal"
+              ],
+              "description": "The lowest level written (default: info)"
+            },
+            "max_tokens": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Token budget per agent invocation, input plus output, sub-agents included. The agent is told the number so it can finish inside it; the meter aborts it past the number so the telling is true. (default: unmetered)"
+            },
+            "memory": {
+              "type": "boolean",
+              "description": "Tell each agent the lessons in .openlanes/memory/lessons meant for it; --no-memory leaves them out, the baseline that shows whether they help",
+              "default": true
+            },
+            "model": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Model for every agent this run, overriding each agent's own frontmatter and spec.md (default: what the agent declares, else the CLI's default). Claude models above Opus run as Opus"
+            },
+            "open": {
+              "type": "boolean",
+              "description": "Open the control room in the browser; --no-open only prints its URL",
+              "default": true
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only these plans, comma separated: NNN or NNN.MM, e.g. --plan 003,005.01. Default: the whole tree"
+            },
+            "port": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Port the control room listens on",
+              "default": "11000"
+            },
+            "prompt": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Extra instructions appended to the agent's prompt (only with --agent); a path to an existing text file under 80 characters is read instead"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            },
+            "rescan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds between rescans of .plans while idle; a command from the page rescans at once",
+              "default": "5"
+            },
+            "root": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Repository root the agents work in (default: the .plans parent)"
+            },
+            "rounds": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Cap on rounds per agent per plan; each agent declares its own, at most 5 (default: the agent's own)"
+            },
+            "skip": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Never assign this agent; its plans wait, the rest of the pipeline runs. Answered blocked.md questions are still drained, even with --skip unblocker. Comma separated for several"
+            },
+            "timeout": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Seconds before one agent is abandoned; only tightens an agent's own clock (default: the agent's own, else 900)"
+            },
+            "user_config": {
+              "type": "boolean",
+              "description": "Start agents with your personal plugins, skills, hooks and MCP servers. Off by default: they cost every agent context and start-up time on every turn",
+              "default": false
+            },
+            "web": {
+              "type": "boolean",
+              "description": "Serve the control room from this process; --no-web leaves it to an `openlanes web` run apart, as `just start` does, and the engine waits for that page",
+              "default": true
+            }
+          }
+        },
+        "state resume": {
+          "type": "object",
+          "description": "Record where an interrupted agent stood, for the next round to resume from",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent recording"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "done": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "What is finished, comma-separated"
+            },
+            "files": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Files touched, comma-separated"
+            },
+            "next_step": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The exact first thing to do on resuming"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "remaining": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "What is not, comma-separated"
+            },
+            "round": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which round this is, as the prompt states it"
+            },
+            "status": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "Started",
+                "Completed",
+                "Almost completed",
+                "Interrupted",
+                "Blocked"
+              ],
+              "description": "Where the agent stands",
+              "default": "Interrupted"
+            }
+          }
+        },
+        "state show": {
+          "type": "object",
+          "description": "Print a plan's state.json",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "state sign": {
+          "type": "object",
+          "description": "Sign a plan's ledger: Started, Completed, Almost completed, Interrupted or Blocked",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The agent signing"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "next": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Only with Completed: the agent that should go next"
+            },
+            "note": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "A word or two the harness reads, e.g. approved, rejected, technical, product"
+            },
+            "plan": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which plan: NNN or NNN.MM"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "round": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Which round this is, as the prompt states it"
+            },
+            "status": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "Started",
+                "Completed",
+                "Almost completed",
+                "Interrupted",
+                "Blocked"
+              ],
+              "description": "Where the agent stands"
+            }
+          }
+        },
+        "states": {
+          "type": "object",
+          "description": "Print a diagram of every state and the transitions between them",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "status": {
+          "type": "object",
+          "description": "Which factory processes are up, with PIDs, URL and uptime, and how many plans are in each state",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "stop": {
+          "type": "object",
+          "description": "Stop the factory: its supervisor, engine and control room; --all stops every `openlanes run` too",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "type": "boolean",
+              "description": "Every `openlanes run` in this project as well, and any agent left behind",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Signal nothing; print what would be stopped",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "uml": {
+          "type": "object",
+          "description": "Print Mermaid class diagrams of the Ruby source, parsed with Prism and never loaded",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "directory": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the map and one file per namespace into this directory"
+            },
+            "output": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write here instead of STDOUT; - for STDOUT"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
+        "unblock": {
+          "type": "object",
+          "description": "Fold answered blocks into a plan's documents and retire blocked.md",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Hand the folder to a different agent",
+              "default": "unblocker"
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Invoke no agent; print the questions still open",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "root": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Repository root the agent works in (default: the .plans parent)"
+            }
+          }
+        },
+        "version": {
+          "type": "object",
+          "description": "Print the version and exit",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "web": {
+          "type": "object",
+          "description": "Serve the control room page and its API, on 127.0.0.1 unless told otherwise",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "admin_credentials": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "USER:PASSWORD, the Basic auth login asked of every request from off this machine; required when listening past loopback (default: $OPENLANES_ADMIN_CREDENTIALS)"
+            },
+            "all_interfaces": {
+              "type": "boolean",
+              "description": "Listen on every interface, the same as --ips 0.0.0.0",
+              "default": false
+            },
+            "demo": {
+              "type": "boolean",
+              "description": "Serve a sample run that moves and answers commands, with no agents. Uses Redis when it answers, an in-memory store when it does not",
+              "default": false
+            },
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "identity": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "With --demo: register as USER@HOST instead of this login and host, so a second demo on another port is another machine on the same Redis"
+            },
+            "ips": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Comma-separated addresses the control room listens on, e.g. 127.0.0.1,192.168.1.20 (default: 127.0.0.1). Any address past loopback needs --admin-credentials"
+            },
+            "log": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Write the log to FILE, appending; - for STDOUT (default: log/development.log under the project root)"
+            },
+            "log_format": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "color",
+                "standard",
+                "json"
+              ],
+              "description": "color or standard (one line per entry, with or without colour) or json (default: standard)"
+            },
+            "log_level": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal"
+              ],
+              "description": "The lowest level written (default: info)"
+            },
+            "open": {
+              "type": "boolean",
+              "description": "Open the page in the browser; --no-open prints the URL only",
+              "default": true
+            },
+            "port": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Port to listen on",
+              "default": "11000"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "redis_url": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+            }
+          }
+        },
+        "worktree": {
+          "type": "object",
+          "description": "Create and seed a worktree for a plan",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "skip_seed": {
+              "type": "boolean",
+              "description": "Create the worktree but skip seeding it with .env and credential files",
+              "default": false
+            }
+          }
+        },
+        "worktree prune": {
+          "type": "object",
+          "description": "Remove plan worktrees whose pull request merged and whose work is on main",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Remove nothing; print what would be removed and why the rest stay",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        }
+      }
+    },
+    "app": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How to run the app a plan builds (M12): kind and processes",
+      "default": null
+    },
+    "plans": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Settings about plans themselves",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "aging_since": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "No blocked plan ages from before this date, YYYY-MM-DD",
+          "default": null
+        }
+      }
+    },
+    "questions": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How prose questions become lettered choices (D9)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The OpenRouter model that rewrites prose questions; null is anthropic/claude-haiku-5.5",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "coverage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What the coverage gate measures (M15): command, minimum, and report_command or report with format",
+      "default": null
+    },
+    "events": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The durable run log (plan 020.01)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether runs append to the event log",
+          "default": false
+        },
+        "dir": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "An absolute path; null is under $XDG_STATE_HOME",
+          "default": null,
+          "pattern": "^\\s*[/~]"
+        }
+      }
+    },
+    "ci": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What checks a pull request (M21); `openlanes init` settles it",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The CI provider; none is a decision, not a missing answer",
+          "default": null,
+          "enum": [
+            "github_actions",
+            "circleci",
+            "jenkins",
+            "external",
+            "none",
+            null
+          ]
+        },
+        "config": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The CI configuration file",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "stack": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The project's stack, also written to docs/decisions/stack.md",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's language",
+          "default": null,
+          "minLength": 1
+        },
+        "frameworks": {
+          "type": [
+            "array",
+            "string",
+            "null"
+          ],
+          "description": "The frameworks in use, a list of names",
+          "default": null,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "front_end": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's front end",
+          "default": null,
+          "minLength": 1
+        },
+        "persistence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's persistence",
+          "default": null,
+          "minLength": 1
+        },
+        "caching": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's caching",
+          "default": null,
+          "minLength": 1
+        },
+        "logins": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's logins",
+          "default": null,
+          "minLength": 1
+        },
+        "deployment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's deployment",
+          "default": null,
+          "minLength": 1
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's domain",
+          "default": null,
+          "minLength": 1
+        },
+        "from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's from",
+          "default": null,
+          "minLength": 1
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The stack's to",
+          "default": null,
+          "minLength": 1
+        }
+      }
+    },
+    "architecture_decisions": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What the repository holds now (current) and what is wanted (target)",
+      "default": null
+    },
+    "review": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How reviews are dealt",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "adapters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "The coding agents the reviewers are dealt across, main one first; null takes `adapter:`",
+          "default": null,
+          "items": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex",
+              "pi",
+              "grok",
+              "gemini"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "refactor": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How a refactor is kept apart (R6)",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "threshold": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "The percent of the codebase above which a refactor runs alone; null is 50",
+          "default": null,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "lock_hours": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "How long a refactor's global lock holds; null is 24",
+          "default": null,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "chime": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "Whether the control room dings when a question arrives; unset is on",
+      "default": null
+    },
+    "budget": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Spending limits for agent work",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "plan_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "description": "The most a plan may spend, in estimated dollars, before no new round starts on it; unset is no cap",
+          "default": null
+        }
+      }
+    }
+  }
+}

@@ -379,6 +379,7 @@ classDiagram
   OpenLanes__CLI__Start ..> OpenLanes__Log : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Project : uses
   OpenLanes__CLI__Start ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Start ..> OpenLanes__UI : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web : uses

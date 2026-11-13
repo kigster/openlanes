@@ -73,7 +73,7 @@ module OpenLanes
         def worktree? = git_dir != common_dir
 
         # @return [String] the primary checkout, which owns the common directory
-        def primary = File.basename(common_dir) == ".git" ? File.dirname(common_dir) : common_dir
+        def primary = Project.primary_of(common_dir) || common_dir
 
         # @return [String]
         def lock_path = File.join(common_dir, LOCK_FILE)

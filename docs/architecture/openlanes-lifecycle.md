@@ -64,6 +64,8 @@ classDiagram
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
@@ -106,6 +108,7 @@ classDiagram
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Lifecycle__Allocator__Refused : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Lifecycle__Allocator ..> OpenLanes__Project : uses
   OpenLanes__Lifecycle__Allocator__Refused --|> OpenLanes__Error : inherits
   OpenLanes__Lifecycle__Brief ..> OpenLanes : uses
   OpenLanes__Lifecycle__Brief ..> OpenLanes__Adapters : uses

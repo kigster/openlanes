@@ -19,6 +19,9 @@ module OpenLanes
     # where nothing else would.
     FILE = ".openlanes.yml"
 
+    # `git rev-parse` asking for the directory every worktree shares.
+    COMMON_DIR = %w[rev-parse --path-format=absolute --git-common-dir].freeze
+
     module_function
 
     # @param from [String] where the search starts
@@ -40,6 +43,47 @@ module OpenLanes
     def init_root(from: Dir.pwd, home: Dir.home)
       home = expand(home)
       ancestors(from).find { |dir| git?(dir, home) } || expand(from)
+    end
+
+    # The repository's main checkout, the one that owns the git directory
+    # every linked worktree shares (S0). The control room runs there, so a
+    # settings change it commits to `main` is the one every worktree sees.
+    #
+    # @param dir [String] anywhere inside a checkout
+    # @return [String, nil] nil outside git, or in a bare repository
+    def main_checkout(dir = Dir.pwd)
+      common, status = Open3.capture2("git", "-C", dir.to_s, *COMMON_DIR, err: File::NULL)
+      return nil unless status.success?
+
+      primary_of(common.chomp)
+    rescue SystemCallError
+      nil
+    end
+
+    # Moves the process to the main checkout when it started in a linked
+    # worktree (S0), and says so on STDERR; elsewhere it stays put, silent.
+    #
+    # @param from [String] where the command was started
+    # @return [String] the directory the process is in afterwards
+    def enter_main_checkout(from = Dir.pwd)
+      main = main_checkout(from)
+      return from if main.nil? || expand(main) == expand(from)
+
+      UI.line("Started in a worktree; the factory runs from the main checkout, #{main}")
+      Dir.chdir(main)
+      main
+    end
+
+    # The checkout a git common directory belongs to: the directory holding
+    # `.git`. One definition, shared with {Lifecycle::Allocator}'s refusal.
+    #
+    # @param common_dir [String] `git rev-parse --git-common-dir`, absolute
+    # @return [String, nil] nil for a bare repository, which has no checkout
+    def primary_of(common_dir)
+      return nil if common_dir.to_s.empty?
+      return File.dirname(common_dir) if File.basename(common_dir) == ".git"
+
+      nil
     end
 
     # @param from [String]

@@ -99,4 +99,27 @@ RSpec.describe OpenLanes::Project do
       expect(described_class.init_root(from: deep, home:)).to eq(repo)
     end
   end
+
+  describe ".primary_of" do
+    it("is the directory holding .git") { expect(described_class.primary_of("/x/repo/.git")).to eq("/x/repo") }
+    it("is nil for a bare repository") { expect(described_class.primary_of("/x/repo.git")).to be_nil }
+    it("is nil for nothing") { expect(described_class.primary_of("")).to be_nil }
+  end
+
+  describe ".main_checkout" do
+    def git(*) = system("git", "-C", repo, "-c", "user.name=T", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", *, out: File::NULL, err: File::NULL)
+
+    let(:linked) { File.join(top, "linked") }
+
+    before do
+      FileUtils.mkdir_p(repo)
+      git("init", "-q", "-b", "main")
+      git("commit", "-q", "--allow-empty", "-m", "seed")
+      git("worktree", "add", "-q", "-b", "other", linked)
+    end
+
+    it("is the checkout itself from the main checkout") { expect(described_class.main_checkout(repo)).to eq(repo) }
+    it("is the main checkout from a linked worktree") { expect(described_class.main_checkout(linked)).to eq(repo) }
+    it("is nil outside git") { expect(described_class.main_checkout(home.tap { FileUtils.mkdir_p(it) })).to be_nil }
+  end
 end

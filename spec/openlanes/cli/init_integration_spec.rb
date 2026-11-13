@@ -53,8 +53,8 @@ RSpec.describe "openlanes init, end to end" do
 
     it "writes no stack and no stack.md" do
       _out, _err, status = init("-y")
-      expect([status, YAML.safe_load_file(File.join(repo, ".openlanes.yml")).key?("stack"),
-              File.exist?(File.join(repo, "docs/decisions/stack.md"))]).to eq([0, false, false])
+      expect([status, OpenLanes::Config.load(repo).stack.nil?,
+              File.exist?(File.join(repo, "docs/decisions/stack.md"))]).to eq([0, true, false])
     end
   end
 end

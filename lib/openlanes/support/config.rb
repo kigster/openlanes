@@ -248,11 +248,21 @@ module OpenLanes
     # @return [Boolean] whether the project has a file at all
     def file? = !path.nil?
 
-    # The file `openlanes init` writes: only what was set, in the order the
-    # keys are documented, so it reads like the example it came from.
+    # The file `openlanes init` writes: every key the schema knows, in the
+    # order it documents them, unset ones as their default (most of them
+    # empty). A person editing it sees every setting there is, and
+    # {Config.parse} reads an empty one as unset, so the file parses back to
+    # this same Config.
     #
     # @return [String]
-    def to_yaml
+    def to_yaml = YAML.dump(Config.fill(Config::Schema.defaults, to_settings)).delete_prefix("---\n")
+
+    # What {#to_yaml} writes, as a Hash with string keys: the values as the
+    # parser normalised them, which is what {Config.parse} checks against
+    # the schema.
+    #
+    # @return [Hash{String => Object}]
+    def to_settings
       settings = { "project" => project, "starts" => starts&.to_s, "frontend" => frontend, "jobs" => jobs,
                    "adapter" => adapter, "redis_url" => redis_url, "redis_outage_hours" => redis_outage_hours,
                    "ci_pending_hours" => ci_pending_hours,
@@ -272,7 +282,7 @@ module OpenLanes
       settings["refactor"] = refactor unless refactor.empty?
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
       settings["chime"] = chime unless chime.nil?
-      YAML.dump(settings.compact).delete_prefix("---\n")
+      settings.compact
     end
 
     private
@@ -288,22 +298,22 @@ module OpenLanes
     # The file, at the project root.
     FILE = Project::FILE
 
-    # Every key the top level may hold.
-    KEYS = %w[project starts frontend jobs adapter redis_url redis_outage_hours ci_pending_hours redis_backoff desired_codebase_quality merge commands app plans
-              questions coverage events ci stack architecture_decisions review refactor chime budget].freeze
+    # Every key the top level may hold. This and every key list below is
+    # read from the schema, so the schema and the parser cannot disagree.
+    KEYS = Schema.keys.freeze
 
     # What `desired_codebase_quality:` may say (R4, plan 035), the strictest first. M5's
     # `top_notch` and `medium` were dropped.
-    QUALITIES = %i[high standard mvp].freeze
+    QUALITIES = Schema.enum_for("desired_codebase_quality").map(&:to_sym).freeze
 
     # Who may merge, the default first.
-    MERGERS = %i[human auto].freeze
+    MERGERS = Schema.enum_for("merge", "by").map(&:to_sym).freeze
 
     # Every key `review:` may hold.
-    REVIEW_KEYS = %w[adapters].freeze
+    REVIEW_KEYS = Schema.keys_for("review").freeze
 
     # Every key `merge:` may hold.
-    MERGE_KEYS = %w[by max_rejections].freeze
+    MERGE_KEYS = Schema.keys_for("merge").freeze
 
     # {#max_rejections} when the file names none (M6).
     DEFAULT_MAX_REJECTIONS = 2
@@ -319,32 +329,32 @@ module OpenLanes
     DEFAULT_CI_PENDING_HOURS = 4
 
     # Every key `redis_backoff:` may hold.
-    BACKOFF_KEYS = %w[initial cap jitter].freeze
+    BACKOFF_KEYS = Schema.keys_for("redis_backoff").freeze
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
-    PLAN_KEYS = %w[aging_since].freeze
+    PLAN_KEYS = Schema.keys_for("plans").freeze
 
     # Every key `questions:` may hold.
-    QUESTION_KEYS = %w[model].freeze
+    QUESTION_KEYS = Schema.keys_for("questions").freeze
 
     # What may check a pull request (M21). `external` is a CI openlanes does
     # not scaffold; `none` is a decision, not a missing answer.
     CI_PROVIDERS = %i[github_actions circleci jenkins external none].freeze
 
     # What `stack:` may hold. `from` and `to` are set when a port is planned.
-    STACK_FIELDS = %i[language frameworks front_end persistence caching logins deployment domain from to].freeze
+    STACK_FIELDS = Schema.keys_for("stack").map(&:to_sym).freeze
 
     # The one stack field that is a list.
     STACK_LISTS = %i[frameworks].freeze
 
     # Every key `events:` may hold.
-    EVENT_KEYS = %w[enabled dir].freeze
+    EVENT_KEYS = Schema.keys_for("events").freeze
 
     # Every key `refactor:` may hold.
-    REFACTOR_KEYS = %w[threshold lock_hours].freeze
+    REFACTOR_KEYS = Schema.keys_for("refactor").freeze
 
     # Every key `budget:` may hold.
-    BUDGET_KEYS = %w[plan_usd].freeze
+    BUDGET_KEYS = Schema.keys_for("budget").freeze
 
     # Schemes a `redis_url:` may use.
     REDIS_SCHEMES = %w[redis rediss unix].freeze
@@ -407,7 +417,7 @@ module OpenLanes
         data = YAML.safe_load(text, permitted_classes: [Date]) || {}
         fail_with(path, "expected a mapping of settings at the top") unless data.is_a?(Hash)
 
-        settings = data.transform_keys(&:to_s)
+        settings = unset_dropped(data.transform_keys(&:to_s))
         unknown = settings.keys - KEYS
         unless unknown.empty?
           fail_with(path,
@@ -441,12 +451,47 @@ module OpenLanes
           chime:     chime(settings, path),
           **budget(settings["budget"], path))
         conflicts!(config, path)
+        schema!(config.to_settings.except("commands"), path)
         config
       rescue Psych::Exception => e
         fail_with(path, "is not valid YAML (#{e.message.lines.first.to_s.strip})")
       end
 
+      # A full file's settings laid over the defaults, key by key: the
+      # defaults give the order and the empty slots, the settings the values.
+      #
+      # @param defaults [Hash{String => Object}] {Schema.defaults}
+      # @param settings [Hash{String => Object}] {#to_settings}
+      # @return [Hash{String => Object}]
+      def fill(defaults, settings)
+        defaults.merge(settings) { |_, default, value| default.is_a?(Hash) && value.is_a?(Hash) ? default.merge(value) : value }
+      end
+
       private
+
+      # An empty value means unset, as if the key were not there, and a
+      # mapping whose every value is empty is left out with it. That is what
+      # lets {#to_yaml} write every key: `starts:` with nothing after it is
+      # the same file as no `starts:` at all. A mapping written empty on
+      # purpose (`app: {}`) is kept, so its own check still refuses it.
+      #
+      # @param settings [Hash{String => Object}]
+      # @return [Hash{String => Object}]
+      def unset_dropped(settings)
+        settings.each_with_object({}) do |(key, value), kept|
+          next if value.nil?
+
+          # A section the schema leaves open (`app`, `coverage`, ...) is
+          # passed whole to its own parser, which decides what an empty value
+          # inside it means.
+          if value.is_a?(Hash) && !value.empty? && !Schema.keys_for(key).empty?
+            inner = value.compact
+            kept[key] = inner unless inner.empty?
+          else
+            kept[key] = value
+          end
+        end
+      end
 
       # @return [void] never returns
       def fail_with(path, message) = raise(Error, "#{path}: #{message}")
@@ -796,6 +841,50 @@ module OpenLanes
         Date.iso8601(value.to_s)
       rescue Date::Error
         fail_with(path, "plans.aging_since: #{value.inspect} is not a date (YYYY-MM-DD)")
+      end
+
+      # The schema has the last word. The hand checks above give the
+      # friendliest message for what they know; anything they let through
+      # that the schema refuses is refused here, in the same
+      # `<path>: <key>: <problem>` shape. `commands:` is left to
+      # {CLI::Base.check_config!}, which knows each command by its aliases.
+      #
+      # @return [void]
+      def schema!(settings, path)
+        error = Schema.errors(settings).first
+        return if error.nil?
+
+        fail_with(path, "#{schema_key(error)}: #{schema_problem(error)}")
+      end
+
+      # @param error [Hash] one json_schemer error
+      # @return [String] the dotted key it points at, e.g. `commands.run.bogus`
+      def schema_key(error)
+        keys = error.fetch("data_pointer").split("/").drop(1).map { it.gsub("~1", "/").gsub("~0", "~") }
+        keys.empty? ? "settings" : keys.join(".")
+      end
+
+      # @param error [Hash] one json_schemer error
+      # @return [Array<String>, nil] the keys a closed mapping knows, when the
+      #   error is a key it does not
+      def known_keys(error)
+        pointer = error.fetch("schema_pointer")
+        return nil unless pointer.end_with?("/additionalProperties")
+
+        parent = pointer.delete_suffix("/additionalProperties").split("/").drop(1)
+        (parent.empty? ? Schema.document : Schema.document.dig(*parent)).fetch("properties", {}).keys
+      end
+
+      # @param error [Hash] one json_schemer error
+      # @return [String] what is wrong, with the value as typed
+      def schema_problem(error)
+        if (known = known_keys(error))
+          "unknown key; known: #{known.join(", ")}"
+        elsif error.fetch("type") == "enum"
+          "#{error.fetch("data").inspect} is not one of #{error.dig("schema", "enum").compact.join(", ")}"
+        else
+          "#{error.fetch("data").inspect} #{error.fetch("error").sub(/\Avalue at `[^`]*` /, "")}"
+        end
       end
 
       # @return [void]

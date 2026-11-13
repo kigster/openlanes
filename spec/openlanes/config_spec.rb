@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Config do
+  include SettingsIn
+
   let(:root) { File.realpath(Dir.mktmpdir("openlanes-config")) }
   let(:path) { File.join(root, ".openlanes.yml") }
 
@@ -25,7 +27,7 @@ RSpec.describe OpenLanes::Config do
 
       it "is written back by to_yaml" do
         openlanes_yml("adapter: pi\n")
-        expect(config.to_yaml).to eq("adapter: pi\n")
+        expect(settings_in(config.to_yaml)).to eq(settings_in("adapter: pi\n"))
       end
     end
 
@@ -91,7 +93,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out under plans:" do
-        expect(described_class.new(aging_since: Date.new(2026, 10, 1)).to_yaml).to eq("plans:\n  aging_since: '2026-10-01'\n")
+        expect(settings_in(described_class.new(aging_since: Date.new(2026, 10, 1)).to_yaml)).to eq(settings_in("plans:\n  aging_since: '2026-10-01'\n"))
       end
     end
 
@@ -105,7 +107,7 @@ RSpec.describe OpenLanes::Config do
       it "is off with no directory when absent" do
         openlanes_yml("jobs: 2\n")
         expect(config).to have_attributes(events_enabled: false, events_dir: nil)
-        expect(config.to_yaml).not_to include("events")
+        expect(settings_in(config.to_yaml)).not_to have_key("events")
       end
 
       it "refuses a value that is not a mapping" do
@@ -156,7 +158,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out under questions:" do
-        expect(described_class.new(questions_model: "m/x").to_yaml).to eq("questions:\n  model: m/x\n")
+        expect(settings_in(described_class.new(questions_model: "m/x").to_yaml)).to eq(settings_in("questions:\n  model: m/x\n"))
       end
     end
 
@@ -193,7 +195,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out under review:" do
-        expect(described_class.new(review_adapters: %w[claude codex]).to_yaml).to eq("review:\n  adapters:\n  - claude\n  - codex\n")
+        expect(settings_in(described_class.new(review_adapters: %w[claude codex]).to_yaml)).to eq(settings_in("review:\n  adapters:\n  - claude\n  - codex\n"))
       end
     end
 
@@ -209,7 +211,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out" do
-        expect(described_class.new(ci_pending_hours: 2).to_yaml).to eq("ci_pending_hours: 2\n")
+        expect(settings_in(described_class.new(ci_pending_hours: 2).to_yaml)).to eq(settings_in("ci_pending_hours: 2\n"))
       end
 
       { "zero" => "0", "a negative" => "-2", "a word" => "soon" }.each do |label, value|
@@ -232,7 +234,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out" do
-        expect(described_class.new(redis_outage_hours: 6).to_yaml).to eq("redis_outage_hours: 6\n")
+        expect(settings_in(described_class.new(redis_outage_hours: 6).to_yaml)).to eq(settings_in("redis_outage_hours: 6\n"))
       end
 
       { "zero" => "0", "a negative" => "-2", "a word" => "soon" }.each do |label, value|
@@ -282,7 +284,7 @@ RSpec.describe OpenLanes::Config do
 
       it "reads lock_hours, fractions included, and writes it back" do
         openlanes_yml("refactor:\n  lock_hours: 1.5\n")
-        expect([config.refactor_lock_seconds, config.to_yaml]).to match([5400, /refactor:\n  lock_hours: 1\.5/])
+        expect([config.refactor_lock_seconds, config.to_yaml]).to match([5400, /\n  lock_hours: 1\.5\n/])
       end
 
       {
@@ -310,7 +312,7 @@ RSpec.describe OpenLanes::Config do
       end
 
       it "writes itself back out" do
-        expect(described_class.new(redis_backoff: { cap: 10 }).to_yaml).to eq("redis_backoff:\n  cap: 10\n")
+        expect(settings_in(described_class.new(redis_backoff: { cap: 10 }).to_yaml)).to eq(settings_in("redis_backoff:\n  cap: 10\n"))
       end
 
       {
@@ -442,7 +444,7 @@ RSpec.describe OpenLanes::Config do
     end
 
     it "leaves them out of the file when unset" do
-      expect(described_class.new(starts: :planning).to_yaml).to eq("starts: planning\n")
+      expect(settings_in(described_class.new(starts: :planning).to_yaml)).to eq(settings_in("starts: planning\n"))
     end
 
     {
@@ -546,6 +548,64 @@ RSpec.describe OpenLanes::Config do
     it "refuses what the closed lists do not hold" do
       expect { described_class.parse("architecture_decisions:\n  target:\n    ci:\n    - travis\n", path:) }
         .to raise_error(OpenLanes::Error, /architecture_decisions/)
+    end
+  end
+
+  describe "against the schema" do
+    let(:path) { "/project/.openlanes.yml" }
+
+    let(:populated) do
+      <<~YAML
+        project: Demo
+        starts: planning
+        jobs: 3
+        merge:
+          by: auto
+        stack:
+          language: ruby
+          frameworks: [rails]
+        events:
+          enabled: true
+        review:
+          adapters: [claude]
+        chime: false
+        budget:
+          plan_usd: 5
+        commands:
+          run:
+            timeout: 1800
+      YAML
+    end
+
+    it "takes every key list from the schema, so neither can name a key the other lacks" do
+      expect(described_class::KEYS).to eq(described_class::Schema.keys)
+      expect(described_class::MERGE_KEYS).to eq(described_class::Schema.keys_for("merge"))
+      expect(described_class::MERGERS).to eq(%i[human auto])
+    end
+
+    {
+      "a value outside an enum" => ["merge:\n  by: robot\n", /: merge\.by: "robot" is not one of human, auto/],
+    }.each do |label, (text, message)|
+      it "refuses #{label} in the <path>: <key>: <problem> shape" do
+        expect { described_class.parse(text, path:) }.to raise_error(OpenLanes::Error, /\A#{Regexp.escape(path)}#{message.source}/)
+      end
+    end
+
+    it "writes every key the schema knows, unset ones empty" do
+      expect(YAML.safe_load(described_class.new.to_yaml).keys).to eq(described_class::Schema.keys)
+    end
+
+    it "parses what it writes back into the same Config" do
+      config = described_class.parse(populated, path:)
+      expect(described_class.parse(config.to_yaml, path:)).to eq(config)
+    end
+
+    it "reads an empty value as unset" do
+      expect(described_class.parse("starts:\nmerge:\n  by:\n", path:)).to eq(described_class.new(path:))
+    end
+
+    it "checks values as normalised, so a capitalised enum the parser accepts still passes" do
+      expect(described_class.parse("starts: Research\n", path:).starts).to eq(:research)
     end
   end
 end

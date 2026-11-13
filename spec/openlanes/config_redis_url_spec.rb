@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::Config do
+  include SettingsIn
+
   def parse(text) = described_class.parse(text, path: "/p/.openlanes.yml")
 
   it "reads redis_url, the live run's Redis (W16)" do
@@ -8,7 +10,7 @@ RSpec.describe OpenLanes::Config do
   end
 
   it "writes it back" do
-    expect(described_class.new(jobs: 2, redis_url: "redis://h/0").to_yaml).to eq("jobs: 2\nredis_url: redis://h/0\n")
+    expect(settings_in(described_class.new(jobs: 2, redis_url: "redis://h/0").to_yaml)).to eq(settings_in("jobs: 2\nredis_url: redis://h/0\n"))
   end
 
   it "refuses an address that is not a Redis URL, naming the file" do

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::CLI::Init do
+  include SettingsIn
+
   subject(:command) { described_class.new }
 
   let(:top) { File.realpath(Dir.mktmpdir("openlanes-init")) }
@@ -43,7 +45,7 @@ RSpec.describe OpenLanes::CLI::Init do
     [strip_ansi(out.string), strip_ansi(err.string), status]
   end
 
-  def written = YAML.safe_load_file(file)
+  def written = settings_in(File.read(file))
 
   context "with a ready machine" do
     it "does not run setup" do
@@ -178,7 +180,7 @@ RSpec.describe OpenLanes::CLI::Init do
     it "prints the file and writes nothing" do
       out, err, = result
       expect([out, unwrapped(err), File.exist?(file), Dir.exist?(File.join(repo, ".plans"))])
-        .to match([start_with("project: Acme\nstarts: research\nmerge:\n  by: human\n"),
+        .to match([satisfy { settings_in(it).slice("project", "starts", "merge") == { "project" => "Acme", "starts" => "research", "merge" => { "by" => "human" } } },
                    include("nothing was written", "Would write"), false, false])
     end
   end
