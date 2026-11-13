@@ -144,3 +144,11 @@ Yes. One new read-only route; `backend-coder` writes `openapi.yaml` beside `cont
 - Hover and click show the `summary:` paragraph, or the fallback.
 - `summary:` is validated as text in spec.md frontmatter, and `openlanes docs` lists it.
 - Component tests for the filter and the bridging, and a Cypress test that opens the page, filters, and hovers a box.
+
+## Rebase decisions
+
+- `.openlanes.yml`: kept main's `coverage:` block (`report_command` reads `coverage/coverage.json`); the branch's duplicate used `.last_run.json`. Main is reviewed.
+- `web/src/shell/shell.css`: kept both: main's theme-menu rules and this plan's `.page-nav` rules; they touch different selectors.
+- `docs/architecture/openlanes-web.md`: took the union, then regenerated with `openlanes uml self --directory docs/architecture`, since the file is derived from `lib/`.
+- Plan 056 folder: kept `056.00━━🎨━━❯plan-dependency-graph` (state `building_ui`, with the branch's newer `state.json` and `pull-requests.md`); dropped main's `━━⭐━━` copy (state `planned`, older) and the old `📋` `spec.md`. All three had identical `spec.md`, `plan.md`, `contract.md`, `openapi.yaml`.
+- `.plans/068.00━━📋━━❯unblock-interview-chat/state.json`: kept main's version; the branch's deletion was incidental to its plan sync and is unrelated to this plan.

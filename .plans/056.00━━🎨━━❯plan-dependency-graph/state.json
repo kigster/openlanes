@@ -5,8 +5,8 @@
     "ordinal": "056.00",
     "slug": "plan-dependency-graph"
   },
-  "state": "planned",
-  "updated_at": "2026-11-12T22:41:33-08:00",
+  "state": "building_ui",
+  "updated_at": "2026-11-13T00:28:12-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -152,6 +152,37 @@
       "model": "opus",
       "effort": "high",
       "session": "0563d46a-9af2-48be-b656-cefefc826aa7"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-11-13T00:01:39-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/056.00-plan-dependency-graph",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "aec851c5-34c5-45bd-b7fc-00f9fd87a08a",
+      "to": "building",
+      "finished_at": "2026-11-13T00:14:49-08:00",
+      "up": 360514,
+      "down": 2530,
+      "seconds": 789.5,
+      "note": "completed - 19 tool calls; holds at 🎨 Building UI once its partner settles",
+      "moves": 10
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "building",
+      "started_at": "2026-11-13T00:02:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/056.00-plan-dependency-graph",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "d44427ac-0b08-4b05-af18-4d05a97d73c4"
     }
   ],
   "signatures": [
@@ -266,6 +297,30 @@
       "agent": "unblocker",
       "status": "Completed",
       "round": 1
+    },
+    {
+      "at": "2026-11-13T00:01:53-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:02:24-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:12:45-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T00:18:17-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -313,9 +368,27 @@
       "to": "frontend-coder",
       "body": "Back end done; B1 applied (spec/support/checkout_config.rb). Blocked on B2: pre-existing flaky Redis outage specs (Live::Store thread race) keep rspec from exiting 0. Rubocop clean.",
       "read": "no"
+    },
+    {
+      "id": "d097dd62-ffa4-4f30-922c-9c81c12d8736",
+      "number": 6,
+      "at": "2026-11-13T00:12:44-08:00",
+      "from": "backend-coder",
+      "to": "frontend-coder",
+      "body": "Back end done: GET /api/dependencies per contract.md. The human said to ship 056 while the Redis spec stays flaky (fixed in PR #206). Rubocop is clean and the 056 specs are green.",
+      "read": "no"
+    },
+    {
+      "id": "d27ab7f5-b241-4c86-8e8e-cd5a6093dcf2",
+      "number": 7,
+      "at": "2026-11-13T00:18:16-08:00",
+      "from": "frontend-coder",
+      "to": "backend-coder",
+      "body": "Front end done: Nav/useRoute, DependenciesPage, filter, bridging, tooltip; vitest 553 pass, tsc/eslint clean, Cypress dependencies.cy.ts 4/4 (proof in pull-requests.md). Rubocop clean; rspec has 4 failures outside our files (redis outage spec, 3 specs reading the local .openlanes.yml credentials). No back-end file touched.",
+      "read": "no"
     }
   ],
-  "moves": 9,
+  "moves": 11,
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -405,7 +478,38 @@
       "state": "building",
       "round": 1,
       "limit": "rounds",
-      "asked_at": "2026-11-12T20:25:48-08:00"
+      "asked_at": "2026-11-12T20:25:48-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T00:02:09-08:00"
+    },
+    {
+      "number": 7,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T00:17:01-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T00:19:44-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "frontend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T00:27:01-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T00:27:22-08:00"
     }
   ],
   "memory": {
@@ -470,7 +574,29 @@
               "text": "The Ruby suite and rubocop were not run by me; backend-coder owns lib/ and spec/, and its work was in flight. The last coder must run both plus Cypress."
             }
           ]
+        },
+        "2": {
+          "round": 1,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "State filter off-by-default now uses archived-state keys (approved, deployed, deferred, abandoned, discarded, trashed); there is no 'done' state key, so Cypress found none and the Done toggle never existed in real data"
+            },
+            {
+              "kind": "done",
+              "text": "Cypress dependencies.cy.ts 4/4 against the demo; vitest 553 pass on Node 22; tsc, eslint and rubocop clean"
+            },
+            {
+              "kind": "note",
+              "text": "Volta Node 26 breaks localStorage in jsdom and /usr/local node lacks llhttp; use ~/.local/bin node (v22) for vitest and Cypress"
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "d44427ac-0b08-4b05-af18-4d05a97d73c4",
+        "through": 7
       }
     },
     "backend-coder": {
@@ -542,7 +668,29 @@
               "answer": "a) Ship plan 056 as it is; the race is fixed separately, in pull request #206. Answered by hermes on 2026-11-12"
             }
           ]
+        },
+        "3": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Redis race question answered (a): ship 056 as is, with the race fixed in PR #206. Rubocop: 0 offenses. The 056 specs: 216 examples, 0 failures. Signed Completed."
+            },
+            {
+              "kind": "note",
+              "text": "Full rspec did not finish within 11 min, with another agent's rspec running alongside; possibly the Live::Store race (PR #206), not confirmed. Logged in pull-requests.md, round 3."
+            },
+            {
+              "kind": "note",
+              "text": "Full rspec: 5952 examples, 5 failures. 1 is the Redis race (PR #206). 4 in cli/web_spec and cli/engine_command_spec fail only because the shell sets OPENLANES_ADMIN_CREDENTIALS; with it unset, 84/0. spec_helper should clear it."
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "aec851c5-34c5-45bd-b7fc-00f9fd87a08a",
+        "through": 14
       }
     },
     "unblocker": {

@@ -88,6 +88,28 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "GET /api/dependencies" do
+    before do
+      plans do |t|
+        t.plan "001.00", :approved, "shipped", under: "archive", files: { "spec.md" => "---\ndepends_on: [none]\n---\n" }
+        t.plan "002.00", :new, "next", files: { "spec.md" => "---\nsummary: Next up.\ndepends_on: [\"001.00\"]\n---\n" }
+      end
+      get "/api/dependencies"
+    end
+
+    it "answers every plan, archive included, and the edges between them" do
+      expect([last_response.status, body]).to eq([200, JSON.parse(JSON.generate(
+        OpenLanes::Web::DependencyGraph.new(OpenLanes::Plans::Tree.new(dir: plans_root)).to_h
+      ))])
+    end
+
+    it "carries the archived plan, its edge and the summary" do
+      expect([body["plans"].map { it.values_at("ordinal", "archived", "summary") }, body["edges"]]).to eq(
+        [[["002.00", false, "Next up."], ["001.00", true, ""]], [{ "from" => "001.00", "to" => "002.00" }]]
+      )
+    end
+  end
+
   describe "GET /api/board" do
     before do
       store.set(keys.snapshot, JSON.generate(snapshot))

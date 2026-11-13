@@ -187,6 +187,12 @@ module OpenLanes
         json(Live.board(store:, keys: context.keys))
       end
 
+      # Every plan and edge for the Plan dependencies page (plan 056), read
+      # from the folders on each request: the archive is not in the board.
+      get "/api/dependencies" do
+        json(DependencyGraph.new(Plans::Tree.new(dir: context.plans_dir)).to_h)
+      end
+
       get "/api/events" do
         content_type "text/event-stream"
         headers "Cache-Control" => "no-cache, no-transform", "X-Accel-Buffering" => "no"

@@ -13,7 +13,10 @@ import { adapterOf, isWorking, modelsOf, nodePlanKey, rowDomId, testRuns, testTa
 import { useLifecycle } from "./board/useLifecycle";
 import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
+import { DependenciesPage } from "./dependencies/DependenciesPage";
 import { Header } from "./shell/Header";
+import { Nav } from "./shell/Nav";
+import { useRoute } from "./shell/useRoute";
 import { Logs } from "./shell/Logs";
 import { StatusLine } from "./shell/StatusLine";
 import { planCounts } from "./shell/planCounts";
@@ -387,9 +390,16 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
 /** The control room. Needs a QueryClientProvider above it (main.tsx). */
 export default function App() {
   const { board, waiting, error, connection, fixture } = useBoard();
+  const { route, navigate } = useRoute();
+  // A plan that moved on the stream refetches the dependency graph, whose snapshot-free data includes the archive.
+  const stamp = board ? board.me.plans.map(p => `${p.ordinal}:${p.station}`).join(",") : "";
   return (
     <MotionConfig reducedMotion="user">
       <AnnouncerProvider>
+        <Nav route={route} onNavigate={navigate} />
+        {route === "/dependencies" && <DependenciesPage stamp={stamp} />}
+        {/* The board stays mounted while hidden, so its tab, drawer and stream state survive a visit to the graph. */}
+        <div style={{ display: route === "/" ? "contents" : "none" }}>
         {board ? (
           <ControlRoom board={board} connection={connection} fixture={fixture} />
         ) : error ? (
@@ -414,6 +424,7 @@ export default function App() {
             )}
           </main>
         )}
+        </div>
       </AnnouncerProvider>
     </MotionConfig>
   );
