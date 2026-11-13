@@ -5,7 +5,7 @@ import { useCallback, useEffect } from "react";
 import type { Plan } from "../api/types";
 import { AskCard } from "./AskCard";
 import { asksOf } from "./question";
-import { useSettled } from "./asks";
+import { useReopened, useSettled } from "./asks";
 import { useChime } from "./chime";
 import type { SendCommand } from "./support";
 
@@ -14,13 +14,16 @@ export interface NeedsYouProps {
   onCommand: SendCommand;
   /** The plan whose Unblock was clicked last, or null: its open questions lead the rail, ringed. */
   spotlight?: string | null;
+  /** Counts the clicks on Unblock, so a second click on the same lane brings its card back into view too. */
+  nudge?: number;
   /** `chime:` from .openlanes.yml, as the engine reports it; an older engine says nothing, which means on. */
   chime?: boolean;
   /** What makes the sound for a new question; the tests pass their own. */
   play?: (count: number) => void;
 }
 
-export function NeedsYou({ plans, onCommand, spotlight = null, chime: saved = true, play }: NeedsYouProps) {
+export function NeedsYou({ plans, onCommand, spotlight = null, nudge = 0, chime: saved = true, play }: NeedsYouProps) {
+  useReopened(plans);
   const settled = useSettled();
   const done = new Set(settled.map((s) => s.id));
   const all = asksOf(plans);
@@ -34,7 +37,7 @@ export function NeedsYou({ plans, onCommand, spotlight = null, chime: saved = tr
     const card = document.querySelector<HTMLElement>(`.asks .ask.is-spotlit`);
     card?.scrollIntoView?.({ block: "nearest" });
     card?.querySelector<HTMLElement>("textarea, button")?.focus({ preventScroll: true });
-  }, [spotlight]);
+  }, [spotlight, nudge]);
   // What was answered this session, newest first, folded away under a toggle that starts closed: twenty lines of
   // "Answered a) to planner." pushed the open questions off the rail and said nothing about which plan each was for.
   const answered = [...settled].reverse();

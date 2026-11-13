@@ -124,6 +124,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
   const [unblocking, setUnblocking] = useState<string | null>(null);
   // The lane whose Unblock was clicked last: its questions lead the rail until every one is answered.
   const [spotlight, setSpotlight] = useState<string | null>(null);
+  const [nudge, setNudge] = useState(0);
   const [logsSeenAt, setLogsSeenAt] = useState<string | null>(null);
   // #start in the URL opens the idea dialog, so `openlanes start` can send the browser straight to it (W19).
   const [ideaOpen, setIdeaOpen] = useState(() => window.location.hash === "#start");
@@ -178,6 +179,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
     (plan: Plan) => {
       setOpenCar(null);
       setSpotlight(plan.ordinal);
+      setNudge(n => n + 1);
       const n = plan.questions.length;
       announce(`${planId(plan.ordinal)}: ${n} question${n === 1 ? "" : "s"} to answer, at the top of Needs you.`);
     },
@@ -356,7 +358,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
             <AgentDrawer
               plan={drawer} car={drawerCar} models={modelsOf(me, drawerCar.adapter)} unavailable={unusable(adapterOf(me, drawerCar.adapter))} autocompact={me.autocompact} onCommand={onCommand} onClose={closeDrawer} />
           ) : (
-            <NeedsYou plans={me.plans} onCommand={onCommand} spotlight={spotlight} chime={me.run.chime} />
+            <NeedsYou plans={me.plans} onCommand={onCommand} spotlight={spotlight} nudge={nudge} chime={me.run.chime} />
           )}
           {side.wide && (
             <ColumnDivider width={side.width} min={side.min} max={side.max} onResize={side.setWidth} onNudge={side.nudge} onReset={side.reset} layoutRef={layoutRef} />
