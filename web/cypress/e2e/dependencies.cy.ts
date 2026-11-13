@@ -51,10 +51,20 @@ describe("plan dependencies", () => {
     graph().then(g => {
       const first = g.plans.find(p => !archived(g).has(p.state))!;
       const state = g.states.find(s => s.key === first.state)!;
-      cy.get(`.dep-node[data-plan="${first.ordinal}"]`).trigger("mouseover").trigger("pointermove");
-      cy.get(".dep-tip").should("be.visible");
+      const box = `.dep-node[data-plan="${first.ordinal}"]`;
+      // React hears pointerenter through pointerover; a real mouse sends both.
+      cy.get(box).trigger("pointerover", { pointerType: "mouse", force: true });
+      cy.get(".dep-tip").should("be.visible").and("contain.text", first.summary?.trim() || "No summary has been written for this plan yet.");
+      cy.get(box).trigger("pointerout", { pointerType: "mouse", force: true });
+      cy.get(".dep-tip").should("not.exist");
       cy.contains(".dep-filter label", state.name).find("input").uncheck();
-      cy.get(`.dep-node[data-plan="${first.ordinal}"]`).should("not.exist");
+      cy.get(box).should("not.exist");
+      // Hiding a state may leave a dashed bridge over its plans; where one is drawn, hovering it names them.
+      cy.get("body").then($body => {
+        if ($body.find(".dep-bridge").length === 0) return;
+        cy.get(".dep-bridge").first().trigger("pointerover", { pointerType: "mouse", force: true });
+        cy.get(".dep-tip").should("be.visible").and("contain.text", "Passes through hidden");
+      });
     });
   });
 });

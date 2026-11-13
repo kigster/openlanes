@@ -26,6 +26,10 @@ export function PlanNode({ data: { plan, state } }: NodeProps<Node<PlanNodeData>
           data-archived={plan.archived || undefined}
           aria-pressed={pinned}
           onClick={() => setPinned(p => !p)}
+          // Radix opens only on a pointermove it believes came from a mouse, which a canvas that pans under the
+          // pointer does not always deliver. Entering and leaving the box are said outright (F1).
+          onPointerEnter={() => setHover(true)}
+          onPointerLeave={() => setHover(false)}
         >
           <span className="dep-node-id">{plan.ordinal}</span>
           <span className="dep-node-title">{plan.title}</span>
