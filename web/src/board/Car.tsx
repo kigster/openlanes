@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Car as CarData, ModelChoice, Plan } from "../api/types";
-import { clock, fmt } from "./format";
+import { clock, fmt, roundTip, roundsOf } from "./format";
 import { Gear } from "./Gear";
 import { carLook, lockMark, modelLabel } from "./model";
 
@@ -73,7 +73,19 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
         <span title="Tokens out">
           ↓ <b>{fmt(car.down)}</b>
         </span>
-        <span>{clock(car.elapsed)}</span>
+        {/* Which round this is and how many it may run, granted extensions included, beside how long it has run:
+            "Round 2 of 3 | 6m 22s". An agent on its last round is the one about to ask for another. */}
+        <span className="car-when">
+          {car.round > 0 && (
+            <>
+              <span className={`car-round${car.round >= roundsOf(car) ? " is-last" : ""}`} title={roundTip(car)}>
+                Round {car.round} of {roundsOf(car)}
+              </span>
+              <span className="car-sep" aria-hidden="true"> | </span>
+            </>
+          )}
+          <span title="Time this round has run">{clock(car.elapsed)}</span>
+        </span>
       </div>
     </div>
   );

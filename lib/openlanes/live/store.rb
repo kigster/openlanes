@@ -300,8 +300,11 @@ module OpenLanes
       # @return [Object] the block's value
       # @raise [OpenLanes::Live::Unavailable]
       def talk
-        yield
+        # A CommandError is an answer too: either way Redis is back, so
+        # nobody still queued from before the last failure is refused.
+        yield.tap { @failed_at = nil }
       rescue RedisClient::CommandError
+        @failed_at = nil
         raise
       rescue RedisClient::Error => e
         @failed_at = monotonic

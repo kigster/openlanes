@@ -315,6 +315,7 @@ RSpec.describe OpenLanes::Config do
       "an unknown key"                 => ["jobz: 4\n", /unknown key jobz/],
       "a lane that is not one"         => ["starts: fast\n", /starts: "fast" is not one of research, planning, building/],
       "a frontend that is not boolean" => ["frontend: maybe\n", /frontend: "maybe" is not true or false/],
+      "a chime that is not boolean"    => ["chime: loud\n", /chime: "loud" is not true or false/],
       "jobs that are not a count"      => ["jobs: 0\n", /jobs: 0 is not a whole number/],
       "a blank project"                => ["project: ' '\n", /project: must be a non-empty name/],
       "a list at the top"              => ["- jobs\n", /expected a mapping/],

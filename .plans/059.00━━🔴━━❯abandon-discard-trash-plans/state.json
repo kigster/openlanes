@@ -6,7 +6,7 @@
     "slug": "abandon-discard-trash-plans"
   },
   "state": "rejected",
-  "updated_at": "2026-11-12T22:41:31-08:00",
+  "updated_at": "2026-11-12T22:16:17-08:00",
   "stages": [
     {
       "agent": "backend-coder",
@@ -417,37 +417,6 @@
       "seconds": 19.9,
       "note": "completed - 2 tool calls",
       "moves": 9
-    },
-    {
-      "agent": "backend-coder",
-      "round": 1,
-      "status": "Started",
-      "from": "rejected",
-      "started_at": "2026-11-12T22:28:19-08:00",
-      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
-      "adapter": "claude",
-      "model": "opus",
-      "effort": "high",
-      "session": "ad9516ea-765d-4de7-bc85-575b3f24fc73"
-    },
-    {
-      "agent": "frontend-coder",
-      "round": 1,
-      "status": "Completed",
-      "from": "rejected",
-      "started_at": "2026-11-12T22:28:21-08:00",
-      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/059.00-abandon-discard-trash-plans",
-      "adapter": "claude",
-      "model": "sonnet",
-      "effort": "medium",
-      "session": "be26b338-5113-4bb8-b5c2-749e07b63c75",
-      "to": "rejected",
-      "finished_at": "2026-11-12T22:28:38-08:00",
-      "up": 175864,
-      "down": 509,
-      "seconds": 16.7,
-      "note": "completed - 2 tool calls",
-      "moves": 9
     }
   ],
   "signatures": [
@@ -636,32 +605,6 @@
     },
     {
       "at": "2026-11-12T22:16:06-08:00",
-      "agent": "backend-coder",
-      "status": "Completed",
-      "round": 1,
-      "next": "design-reviewer"
-    },
-    {
-      "at": "2026-11-12T22:28:32-08:00",
-      "agent": "frontend-coder",
-      "status": "Started",
-      "round": 1
-    },
-    {
-      "at": "2026-11-12T22:28:33-08:00",
-      "agent": "backend-coder",
-      "status": "Started",
-      "round": 1
-    },
-    {
-      "at": "2026-11-12T22:28:36-08:00",
-      "agent": "frontend-coder",
-      "status": "Completed",
-      "round": 1,
-      "note": "no front end"
-    },
-    {
-      "at": "2026-11-12T22:41:25-08:00",
       "agent": "backend-coder",
       "status": "Completed",
       "round": 1,
@@ -906,16 +849,6 @@
               "text": "Round 4 (rejected): findings F201, F202 and F1 are all in backend files; no Frontend units, re-signed Completed (no front end)"
             }
           ]
-        },
-        "5": {
-          "round": 1,
-          "state": "rejected",
-          "entries": [
-            {
-              "kind": "note",
-              "text": "Round 5: still no Frontend units and no mail; re-signed Completed (no front end)"
-            }
-          ]
         }
       }
     },
@@ -1050,20 +983,6 @@
             {
               "kind": "todo",
               "text": "Full suite not re-run after the :host_cwd tag and the OPENLANES_ADMIN_CREDENTIALS strip in spec/spec_helper.rb. Re-run it if another round comes"
-            }
-          ]
-        },
-        "8": {
-          "round": 1,
-          "state": "rejected",
-          "entries": [
-            {
-              "kind": "done",
-              "text": "Full rspec after the :host_cwd tag and the OPENLANES_ADMIN_CREDENTIALS strip: 5939 examples, 0 failures, 9 pending, coverage 99.17%, exit 0 (12 min 12 s). rubocop 848/0. PR #213 has 0 inline comments. Signed Completed --next design-reviewer"
-            },
-            {
-              "kind": "note",
-              "text": "The full suite now takes about 12 min, so run it in the background at the start of a round. The harness already holds the plan-folder lock for this run (pid in the control-file name), so a refused alock acquire on the plan folder is my own claim"
             }
           ]
         }

@@ -70,17 +70,13 @@ RSpec.describe OpenLanes::Adapters::Claude do
   end
 
   describe "#model" do
-    it "runs anything above Opus as Opus" do
-      expect(%w[fable claude-fable-5-1].map { |m| adapter.model(m) }).to eq(%w[opus opus])
+    it "asks for every model as written, Fable included: there is no ceiling" do
+      expect(%w[fable claude-fable-5-1 haiku sonnet opus claude-opus-5-5 something-else].map { |m| adapter.model(m) })
+        .to eq(%w[fable claude-fable-5-1 haiku sonnet opus claude-opus-5-5 something-else])
     end
 
-    it "leaves Opus and below alone" do
-      expect(%w[haiku sonnet opus claude-opus-5-5].map { |m| adapter.model(m) })
-        .to eq(%w[haiku sonnet opus claude-opus-5-5])
-    end
-
-    it "leaves a model it does not rank alone" do
-      expect(adapter.model("something-else")).to eq("something-else")
+    it "passes no model through as no model" do
+      expect([adapter.model(nil), adapter.model("")]).to eq([nil, ""])
     end
   end
 

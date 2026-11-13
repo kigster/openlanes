@@ -45,4 +45,19 @@ RSpec.describe OpenLanes::Live::Store do
     queued_outcome
     expect(store.ping).to be(true)
   end
+
+  # Monitor is not first in, first out: a caller that queued before the
+  # failure can get its turn after a later caller has had an answer.
+  it "forgets the failure once Redis has answered again" do
+    queued_outcome
+    store.ping
+    expect(store.send(:failed_since?, 0.0)).to be(false)
+  end
+
+  it "counts a command Redis refused as an answer" do
+    queued_outcome
+    allow(client).to receive(:call).and_raise(RedisClient::CommandError, "ERR wrong type")
+    expect { store.ping }.to raise_error(RedisClient::CommandError)
+    expect(store.send(:failed_since?, 0.0)).to be(false)
+  end
 end

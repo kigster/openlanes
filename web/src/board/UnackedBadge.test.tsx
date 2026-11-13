@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { PlanRow, UnackedBadge } from "./PlanRow";
-import { sampleBoard, samplePlan } from "./sample";
+import { sampleBoard, samplePlan, sampleQuestion } from "./sample";
 
 describe("UnackedBadge", () => {
   it("shows nothing at zero", () => {
@@ -67,5 +68,28 @@ const adapters = sampleBoard().me.adapters;
     const { container } = render(<PlanRow plan={samplePlan()} stations={stations} adapters={adapters} />);
     expect(container.querySelector(".plan-status")).toHaveAttribute("title", "Building: an agent is building the plan's work units");
     expect(container.querySelector(".plan-title")).toHaveAttribute("title", "Agents may write docs and code, but nothing leaves the machine.");
+  });
+
+  it("names the state beside its emoji, so ⭕ is never left to be guessed", () => {
+    const { stations, adapters } = sampleBoard().me;
+    const blocked = samplePlan({ status: { key: "blocked", emoji: "⭕", label: "Technical Block", note: "cannot proceed" } });
+    const { container } = render(<PlanRow plan={blocked} stations={stations} adapters={adapters} />);
+    expect(container.querySelector(".plan-id")).toHaveTextContent("001.00⭕(Technical Block)");
+    expect(container.querySelector(".plan-state")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("offers Unblock only on a lane with questions waiting, and hands the plan back", async () => {
+    const { stations, adapters } = sampleBoard().me;
+    const onUnblock = vi.fn();
+    const quiet = samplePlan();
+    const asking = samplePlan({ questions: [sampleQuestion(), sampleQuestion({ id: "001.00/B2", number: 2 })] });
+    const { rerender } = render(<PlanRow plan={quiet} stations={stations} adapters={adapters} onUnblock={onUnblock} />);
+    expect(screen.queryByRole("button", { name: /Unblock/ })).toBeNull();
+    rerender(<PlanRow plan={asking} stations={stations} adapters={adapters} onUnblock={onUnblock} />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Unblock 001.00: 2 questions waiting" }));
+    expect(onUnblock).toHaveBeenCalledWith(asking);
+    // Another machine's row is read only: no button, whatever it is asking.
+    rerender(<PlanRow plan={asking} stations={stations} adapters={adapters} owner={sampleBoard().me.node} onUnblock={onUnblock} />);
+    expect(screen.queryByRole("button", { name: /Unblock/ })).toBeNull();
   });
 });

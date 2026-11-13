@@ -17,8 +17,12 @@ module OpenLanes
     # @!attribute [r] context
     #   @return [Integer] tokens the model's context window holds, the
     #     ceiling a car's context meter is drawn against
-    Model = Data.define(:id, :label, :rate_in, :rate_out, :context) do
-      def initialize(context: Model::WINDOW, rate_in: nil, rate_out: nil, **rest) = super
+    # @!attribute [r] estimated
+    #   @return [Boolean] whether the rates are the tier's latest known
+    #     price rather than this model's own: Anthropic listed it before
+    #     anyone here read its price off the pricing page
+    Model = Data.define(:id, :label, :rate_in, :rate_out, :context, :estimated) do
+      def initialize(context: Model::WINDOW, rate_in: nil, rate_out: nil, estimated: false, **rest) = super # rubocop:disable Metrics/ParameterLists -- every field but the id and label has a default
 
       # Built back from {#wire}, as {Availability.from_wire} reads it out of Redis.
       #
@@ -30,7 +34,8 @@ module OpenLanes
           label: hash.fetch("label"),
           rate_in: rates["in"],
           rate_out: rates["out"],
-          context: hash["context"] || Model::WINDOW)
+          context: hash["context"] || Model::WINDOW,
+          estimated: hash["estimated"] == true)
       end
 
       # @return [Boolean] whether a token on this model has a price
@@ -46,7 +51,7 @@ module OpenLanes
       # {WINDOW}, and codex's 272k models with it.
       #
       # @return [Hash]
-      def wire = { id:, label:, rates: priced? ? { in: rate_in, out: rate_out } : nil, context: }
+      def wire = { id:, label:, rates: priced? ? { in: rate_in, out: rate_out } : nil, context:, estimated: }
     end
 
     # The context window a model gets when its entry names none: every

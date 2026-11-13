@@ -53,6 +53,22 @@ describe("under ?fixture", () => {
     expect(screen.queryByRole("button", { name: /Chat with/ })).toBeNull();
   });
 
+  it("hides the lanes with no agent running, says how many, and remembers it in this browser", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderApp();
+    const toggle = await screen.findByRole("button", { name: "Hide Inactive" });
+    const rows = () => Array.from(document.querySelectorAll<HTMLElement>(".board [data-plan]")).map(r => r.dataset.plan);
+    const all = [...new Set(rows())];
+    const running = sampleBoard().me.plans.filter(p => p.cars.some(c => c.state === "running")).map(p => p.ordinal);
+    await user.click(toggle);
+    expect([[...new Set(rows())], running.length > 0 && running.length < all.length]).toEqual([running, true]);
+    expect(screen.getByText(new RegExp(`${all.length - running.length} inactive lanes? hidden`))).toBeInTheDocument();
+    unmount();
+    renderApp();
+    expect(await screen.findByRole("button", { name: "Hide Inactive" })).toHaveAttribute("aria-pressed", "true");
+    expect([...new Set(rows())]).toEqual(running);
+  });
+
   it("switches to narrow lanes and remembers it in this browser", async () => {
     const user = userEvent.setup();
     const { unmount } = renderApp();
@@ -162,6 +178,21 @@ describe("under ?fixture", () => {
     await user.click(pill);
     await user.click(within(screen.getByRole("region", { name: /Unblock 001/ })).getByRole("button", { name: "Hide" }));
     expect(pill).toHaveFocus();
+  });
+
+  it("brings a lane's questions to the front of the rail from its Unblock button, and closes an open drawer to do it", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const row = (await screen.findByRole("button", { name: /^Unblock 001\.00:/ })).closest(".plan")!;
+    expect(row.querySelector(".plan-id")).toHaveTextContent("(Technical Block)");
+    // A car's drawer stands where the rail does; Unblock gives the rail the room back.
+    await user.click(within(row as HTMLElement).getByRole("button", { name: "backend-coder" }));
+    expect(screen.queryByRole("heading", { name: /Needs you/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /^Unblock 001\.00:/ }));
+    expect(screen.getByRole("heading", { name: /Needs you/ })).toBeInTheDocument();
+    const card = document.querySelector<HTMLElement>('.rail [data-ask="001.00/B1"]')!;
+    expect(card).toHaveClass("is-spotlit");
+    expect(card.contains(document.activeElement)).toBe(true);
   });
 
   it("opens the plan drawer with the unblock widget and lists the plan's files", async () => {

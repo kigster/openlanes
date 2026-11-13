@@ -99,9 +99,3 @@ PR #213 has no inline review comments, so there is no `## Answers` list; the thr
 - After the fixes, with the variable still exported: `bundle exec rspec spec/openlanes/cli/web_spec.rb spec/openlanes/cli/engine_command_spec.rb spec/openlanes/web`: 355 examples, 0 failures. Without it, the three formerly failing files plus routing, dispatcher, run_workflow and store_fail_fast: 353 examples, 0 failures.
 - `bundle exec rubocop`: 848 files, no offenses.
 - The full suite was not re-run after these two spec-helper fixes (it takes 10 minutes; this round had 20). The fixes touch only `spec/spec_helper.rb` and one `describe` tag.
-
-## Changes requested, round 4 (backend-coder)
-
-- No new findings and no inline comments on PR #213 (`gh api .../pulls/213/comments`: 0). Code unchanged this round.
-- `bundle exec rspec` (full, with every fix through round 3, `OPENLANES_ADMIN_CREDENTIALS` still exported by the harness shell): `Finished in 12 minutes 12 seconds`, 5939 examples, 0 failures, 9 pending, coverage 99.17%, exit 0.
-- `bundle exec rubocop`: 848 files, no offenses.

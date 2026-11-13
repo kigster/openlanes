@@ -6,7 +6,7 @@ advances_to: researched
 model: haiku
 effort: medium
 network: true
-timeout: 300
+timeout: 900
 ledger: [spec.md]
 phase: research
 starts: [research]

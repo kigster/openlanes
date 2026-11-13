@@ -22,14 +22,14 @@ RSpec.describe OpenLanes::Adapters::Availability do
     subject(:availability) { described_class.unchecked(OpenLanes::Adapters.for("claude")) }
 
     it { expect([availability.available, availability.checked_at]).to eq([nil, nil]) }
-    it { expect(availability.models).to eq(OpenLanes::Adapters::Claude::MODELS) }
+    it { expect(availability.models).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED) }
     it { is_expected.not_to be_available }
   end
 
   describe "#wire and .from_wire" do
     subject(:wire) { described_class.up("codex", [model], at).wire }
 
-    it { is_expected.to eq(name: "codex", available: true, reason: nil, checked_at: "2026-10-27T09:00:00Z", models: [{ id: "gpt-5.5", label: "GPT-5.5", rates: nil, context: 200_000 }]) }
+    it { is_expected.to eq(name: "codex", available: true, reason: nil, checked_at: "2026-10-27T09:00:00Z", models: [{ id: "gpt-5.5", label: "GPT-5.5", rates: nil, context: 200_000, estimated: false }]) }
 
     it "round-trips through JSON" do
       expect(described_class.from_wire(JSON.parse(JSON.generate(wire)))).to eq(described_class.up("codex", [model], at))

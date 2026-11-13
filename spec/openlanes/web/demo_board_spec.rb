@@ -33,6 +33,21 @@ RSpec.describe OpenLanes::Web::DemoBoard do
       expect([running["history"].first, described_class::CHATTER.include?(running["message"])]).to eq([running["message"], true])
     end
 
+    it "prices a running car's tokens at its model's rates, on the car, its plan and the run" do
+      fresh = described_class.new
+      was = { car: 2.1796, plan: 4.2, run: 14.8 }
+      fresh.advance(Time.utc(2026, 10, 13, 9, 0, 0))
+      plan = fresh.me["plans"].find { it["ordinal"] == "005.00" }
+      spent = plan["cars"].first["cost"] - was[:car]
+      expect(spent).to be_positive
+      expect(plan["cost"]).to be_within(0.0002).of(was[:plan] + spent)
+      expect(fresh.me["run"]["cost"]).to be > was[:run]
+    end
+
+    it "leaves a stuck car's cost alone" do
+      expect(car("001.00/backend-coder")["cost"]).to eq(2.024)
+    end
+
     it "keeps the run's totals the sum of its plans" do
       expect(me["run"]["up"]).to eq(me["plans"].sum { it["up"] })
     end
@@ -274,6 +289,10 @@ RSpec.describe OpenLanes::Web::DemoBoard do
     it "lowers the limit without stopping anyone" do
       expect([board.apply(command("set_concurrency", limit: 1)), me["run"]["jobs"], running(me).size])
         .to eq(["concurrency 4 → 1; the run waits for 2 agents to finish", 1, 3])
+    end
+
+    it "turns the ding off on the board" do
+      expect([board.apply(command("set_chime", on: false)), me["run"]["chime"]]).to eq(["chime: false", false])
     end
 
     it "refuses a limit that is not a whole number of at least 1" do

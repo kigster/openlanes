@@ -1,5 +1,5 @@
 // Number and time formats, exactly as the mockup prints them, so counters read the same everywhere.
-import type { Node, Snapshot, Status, UnackedMail } from "../api/types";
+import type { Node, Plan, Snapshot, Status, UnackedMail } from "../api/types";
 
 /** 1.24M, 86.0k, 412. */
 export const fmt = (n: number): string =>
@@ -9,6 +9,17 @@ export const fmt = (n: number): string =>
 export const clock = (s: number): string => {
   const secs = Math.max(0, Math.floor(s));
   return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, "0")}s`;
+};
+
+/** The rounds a car may run. Never fewer than the one it is on: an older engine leaves granted rounds out. */
+export const roundsOf = (car: { round: number; rounds: number }): number => Math.max(car.rounds, car.round);
+
+/** What "Round 2 of 3" means, and what happens after the last one. */
+export const roundTip = (car: { round: number; rounds: number }): string => {
+  const left = roundsOf(car) - car.round;
+  return left > 0
+    ? `Round ${car.round} of ${roundsOf(car)}: ${left} more after this one if it does not finish.`
+    : `Round ${car.round} of ${roundsOf(car)}, its last: if it does not finish, it asks for another.`;
 };
 
 /** clock() under an hour, then 2h 14m. A plan's time on its pill. */
@@ -63,3 +74,6 @@ export const stamp = (iso: string): string => {
 
 /** Seconds since a machine's last heartbeat, measured against our own snapshot's clock rather than the browser's. */
 export const lastSeen = (their: Snapshot, me: Snapshot): number => secondsBetween(their.node.heartbeat_at, me.at);
+
+/** A lane with work going on right now: an agent of the plan is running. Waiting on a person, or on nothing, is not. */
+export const active = (plan: Plan): boolean => plan.cars.some(car => car.state === "running");

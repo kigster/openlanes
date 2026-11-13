@@ -25,6 +25,7 @@ module OpenLanes
       UNBLOCKER         = "unblocker"
       REBASER           = "rebaser"
       ARBITRATOR        = "arbitrator"
+      CURATOR           = "curator"
       DEPLOY_ASSESSOR   = "deploy-assessor"
       COPILOT           = "copilot"
 

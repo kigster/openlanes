@@ -232,6 +232,40 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       end
     end
 
+    # Plan 056 on the page: three answers the broker could not fold, each put
+    # back above the last, so the card opened on quotes and offered no buttons.
+    it "sends a reopened question as it was asked, with only the newest follow-up beside it" do
+      File.write(File.join(path_of("001.00"), "blocked.md"), <<~MD)
+        # Blocked
+
+        ## B1 Ship with the flaky outage spec?
+
+        > **You answered:** a) Ship it.
+        >
+        > **unblocker asks:** Ship it now, or after the fix lands?
+
+        > **Answer not accepted:** what is B1?
+        >
+        > unblocker left it unfolded and said nothing
+
+        One outage spec fails now and then, and this plan did not cause it.
+
+        a) Ship it and fix the race separately. (Recommended)
+        b) Fix the race here.
+      MD
+
+      expect(blocked_plan[:questions].first).to include(
+        heading:   "B1 Ship with the flaky outage spec?",
+        body:      "One outage spec fails now and then, and this plan did not cause it.",
+        follow_up: "> **You answered:** a) Ship it.\n>\n> **unblocker asks:** Ship it now, or after the fix lands?",
+        options:   [a_hash_including(letter: "a", recommended: true), a_hash_including(letter: "b")]
+      )
+    end
+
+    it "sends no follow-up with a question nobody has answered yet" do
+      expect(blocked_plan[:questions].map { it[:follow_up] }).to eq([nil, nil])
+    end
+
     it "offers Yes and No only for the question the agent marked, without the mark" do
       aggregate_failures do
         expect(blocked_plan[:questions].map { it[:options]&.map { |o| o[:answer] } }).to eq([nil, %w[yes no]])
@@ -294,7 +328,8 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       subject(:claude) { snapshot[:adapters].first }
 
       it { is_expected.to include(name: "claude", available: nil, reason: nil, checked_at: nil) }
-      it { expect(claude[:models].map { it[:id] }).to eq(%w[claude-opus-5-5 claude-opus-5 claude-sonnet-5-5 claude-sonnet-5 claude-haiku-5-5]) }
+      it { expect(claude[:models].map { it[:id] }).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED.map(&:id)) }
+      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-1") }
       it { expect(claude[:capabilities]).to eq(compacts: true, resumes: true, enforces_tool_denial: true) }
     end
 
@@ -517,7 +552,18 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     let(:car) { snapshot[:plans].first[:cars].first }
 
     it "carries the context the stream reported, against the model's window" do
-      expect(car.slice(:context, :context_limit)).to eq(context: 54_100, context_limit: 200_000)
+      expect(car.slice(:context, :context_limit)).to eq(context: 54_100, context_limit: 1_000_000)
+    end
+
+    it "prices the car's own tokens at its model's rates" do
+      rows.replace([row("001.00", "backend-coder", model: "opus", up: 1_000_000, down: 100_000)])
+      entry = OpenLanes::Adapters.for("claude").model_entry("opus")
+      expect(car[:cost]).to eq(entry.cost(1_000_000, 100_000).round(4)).and be_positive
+    end
+
+    it "costs nothing on a model the catalogue does not know" do
+      rows.replace([row("001.00", "backend-coder", model: "codex:gpt-5-codex")])
+      expect(car[:cost]).to eq(0.0)
     end
 
     it "has no window for a model the catalogue does not know" do

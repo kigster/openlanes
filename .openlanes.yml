@@ -74,5 +74,5 @@ architecture_decisions:
     - cypress
 coverage:
   command: bundle exec rspec
+  report_command: cat coverage/coverage.json | jq '.total.lines.percent'
   minimum: 95
-  report_command: jq '.total.lines.percent' coverage/coverage.json

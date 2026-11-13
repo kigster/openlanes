@@ -71,7 +71,8 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   # M2: the session may have compacted the round that wrote the journal, so
-  # the journal is in the prompt whether or not the session carries on.
+  # unless a round recorded that it holds the journal (plan 062.00, in
+  # executor_journal_held_spec.rb) the whole of it is in the resumed prompt.
   context "when the previous round left a journal" do
     before do
       OpenLanes::Plans::PlanState.for(plan.feature.path)
@@ -122,7 +123,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
   end
 
   context "when a resumed run fails having spent nothing, without the usual message" do
-    let(:streams) { [[["API Error: 529 overloaded\n"], broken], [fresh_stream, ok]] }
+    let(:streams) { [[["API Error: connection reset\n"], broken], [fresh_stream, ok]] }
     let(:heard) { [] }
     let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
 
@@ -135,7 +136,7 @@ RSpec.describe OpenLanes::Execution::Executor, :tree do
     end
 
     it "logs what the CLI said, so an outage reads as one" do
-      expect(heard).to include("session sess-1 failed before spending anything (API Error: 529 overloaded), " \
+      expect(heard).to include("session sess-1 failed before spending anything (API Error: connection reset), " \
                                "starting backend-coder fresh")
     end
   end

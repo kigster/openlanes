@@ -4,11 +4,15 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes__Uml["OpenLanes::Uml"]
+  <<module>> OpenLanes__Uml
   class OpenLanes__Uml__ClassDiagram["ClassDiagram"]
   class OpenLanes__Uml__Constructor["Constructor"]
   class OpenLanes__Uml__Definition["Definition"]
   class OpenLanes__Uml__Edge["Edge"]
   class OpenLanes__Uml__Index["Index"]
+  class OpenLanes__Uml__Mermaid["Mermaid"]
+  <<module>> OpenLanes__Uml__Mermaid
   class OpenLanes__Uml__Model["Model"]
   class OpenLanes__Uml__NamespaceMap["NamespaceMap"]
   class OpenLanes__Uml__Namespaces["Namespaces"]
@@ -16,9 +20,16 @@ classDiagram
   class OpenLanes__Uml__Reference["Reference"]
   class OpenLanes__Uml__Sources["Sources"]
   class OpenLanes__Uml__Writer["Writer"]
+  OpenLanes__Uml ..> OpenLanes__Uml__ClassDiagram : uses
+  OpenLanes__Uml ..> OpenLanes__Uml__Model : uses
+  OpenLanes__Uml ..> OpenLanes__Uml__NamespaceMap : uses
+  OpenLanes__Uml ..> OpenLanes__Uml__Sources : uses
+  OpenLanes__Uml ..> OpenLanes__Uml__Writer : uses
+  OpenLanes__Uml__ClassDiagram ..> OpenLanes__Uml__Mermaid : uses
   OpenLanes__Uml__Model ..> OpenLanes__Uml__Edge : uses
   OpenLanes__Uml__Model ..> OpenLanes__Uml__Index : uses
   OpenLanes__Uml__Model ..> OpenLanes__Uml__Namespaces : uses
+  OpenLanes__Uml__NamespaceMap ..> OpenLanes__Uml__Mermaid : uses
   OpenLanes__Uml__Parser ..> OpenLanes__Uml__Constructor : uses
   OpenLanes__Uml__Parser ..> OpenLanes__Uml__Definition : uses
   OpenLanes__Uml__Parser ..> OpenLanes__Uml__Reference : uses
