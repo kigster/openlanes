@@ -83,6 +83,19 @@ RSpec.describe OpenLanes::Engine::Curating, :tree do
     expect(reports.map(&:ordinal)).to contain_exactly("001.00", "002.00")
   end
 
+  it "snapshots nothing once the curator has been here, so a plan whose curator failed is retried next run" do
+    allow(result).to receive(:ok).and_return(false)
+    curating.call(subjects)
+    allow(result).to receive(:ok).and_return(true)
+
+    fresh = OpenLanes::Plans::Tree.new(dir: plans_root).subjects
+    before = described_class.snapshot(fresh)
+    reports = described_class.new(curation:, before:).call(fresh)
+
+    expect(before).to be_empty
+    expect(reports.map(&:ordinal)).to contain_exactly("001.00", "002.00", "003.00")
+  end
+
   it "does not mark a plan curated when the curator did not finish" do
     allow(result).to receive(:ok).and_return(false)
     curating.call(subjects)

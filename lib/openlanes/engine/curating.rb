@@ -20,14 +20,30 @@ module OpenLanes
       # The stage status that marks a plan as curated for one ending.
       CURATED = "curated"
 
-      # What a tree's plans had ended in before a run, so the run curates
-      # only what it ended itself. Without it, the first run after an
-      # upgrade would start the curator on every plan ever merged.
+      # The stage status written just before the curator is asked, so a
+      # plan whose curator failed, or whose run was cut short, still shows
+      # the curator has been here.
+      PENDING = "pending"
+
+      # What a tree's plans had ended in before the curator ever ran here, so
+      # the first run after an upgrade does not start it on every plan ever
+      # merged. Once any plan carries a curator stage the snapshot is empty
+      # and the `curated` stage alone decides: a plan ended by a run that was
+      # killed, raised, or whose curator failed is curated by the next run.
       #
       # @param subjects [Enumerable<OpenLanes::Plans::Subject>]
       # @return [Set<Array(String, Symbol)>] ordinal and ending, one per ended plan
       def self.snapshot(subjects)
+        subjects = subjects.to_a
+        return Set.new if subjects.any? { curator_stages(it).any? }
+
         subjects.select { ENDINGS.include?(it.status.key) }.to_set { [it.feature.ordinal.to_s, it.status.key] }
+      end
+
+      # @param subject [OpenLanes::Plans::Subject]
+      # @return [Array<Hash>] the curator's stages in this plan's `state.json`
+      def self.curator_stages(subject)
+        Plans::PlanState.for(subject.feature.path).stages.select { it["agent"] == Agents::Names::CURATOR }
       end
 
       # @param curation [#call, nil] takes a {Plans::Subject}, returns a
@@ -63,9 +79,17 @@ module OpenLanes
 
       # @return [OpenLanes::Memory::Curation::Report]
       def curate(subject)
+        pend(subject)
         report = @curation.call(subject)
         mark(subject) if report.ok
         report
+      end
+
+      # @return [void]
+      def pend(subject)
+        return if stages(subject).any? { it["status"] == PENDING }
+
+        Plans::PlanState.for(subject.feature.path).stage!(agent: Agents::Names::CURATOR, round: 0, status: PENDING, note: subject.status.key.to_s)
       end
 
       # @return [void]
@@ -76,9 +100,7 @@ module OpenLanes
       end
 
       # @return [Array<Hash>] the curator's stages in this plan's `state.json`
-      def stages(subject)
-        Plans::PlanState.for(subject.feature.path).stages.select { it["agent"] == Agents::Names::CURATOR }
-      end
+      def stages(subject) = self.class.curator_stages(subject)
     end
   end
 end

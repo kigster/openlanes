@@ -108,5 +108,14 @@ RSpec.describe OpenLanes::Events::Report do
         "off" => { "runs" => 1, "approved" => 1, "rounds_mean" => 2.0, "rounds_median" => 2.0 }
       )
     end
+
+    it "leaves out a plan rejected without memory and approved with it, rather than charging either side" do
+      mixed = log + [review("r8", "off1", "005.00", "rejected"), review("r9", "on1", "005.00", "approved")]
+
+      expect(JSON.parse(JSON.generate(OpenLanes::Events.report(mixed).to_h))["memory"]).to include(
+        "on"  => include("approved" => 2, "rounds_mean" => 2.0),
+        "off" => include("approved" => 1, "rounds_mean" => 2.0)
+      )
+    end
   end
 end

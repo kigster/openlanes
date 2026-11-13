@@ -85,4 +85,45 @@ RSpec.describe OpenLanes::Memory::Publication do
     expect(publication.call).to have_attributes(branch: nil, url: nil)
     expect(opened).to eq([])
   end
+
+  it "leaves the root inbox alone until the pull request is open, so a failed publish loses nothing" do
+    inbox = OpenLanes::Memory.inbox(root:)
+    inbox.add(proposal("redis-specs"), plan: "001.00")
+    inbox.add(proposal("redis-specs"), plan: "002.00")
+    failing = Object.new
+    failing.define_singleton_method(:publish_memory) { |**| raise OpenLanes::Error, "gh: not logged in" }
+
+    expect { described_class.new(root:, publisher: failing, base: "main").call }.to raise_error(OpenLanes::Error, /not logged in/)
+    expect(inbox.candidates.map(&:slug)).to eq(["redis-specs"])
+    expect(Dir.glob(File.join(root, OpenLanes::Memory::PROJECT_DIR, "*"))).to eq([])
+  end
+
+  it "takes a promoted candidate out of the root inbox once the pull request is open" do
+    inbox = OpenLanes::Memory.inbox(root:)
+    inbox.add(proposal("redis-specs"), plan: "001.00")
+    inbox.add(proposal("redis-specs"), plan: "002.00")
+
+    publication.call
+
+    expect(inbox.candidates).to eq([])
+  end
+
+  it "never deletes a lesson already on the default branch, even one the scan flags" do
+    lessons = File.join(root, OpenLanes::Memory::PROJECT_DIR)
+    FileUtils.mkdir_p(lessons)
+    File.write(File.join(lessons, "L-0003-old.md"),
+      "---\nid: L-0003\ntitle: Old\napplies_to: [build]\nstatus: active\n---\n\nUse #{fake_key}\n")
+    lessons_git(root, "add", "-A")
+    lessons_git(root, "commit", "-q", "-m", "old lesson")
+    lessons_git(root, "push", "-q", "origin", "main")
+    lessons_git(root, "fetch", "-q", "origin")
+    inbox = OpenLanes::Memory.inbox(root:)
+    inbox.add(proposal("redis-specs"), plan: "001.00")
+    inbox.add(proposal("redis-specs"), plan: "002.00")
+
+    result = publication.call
+
+    expect(opened.first[:files]).not_to include(".openlanes/memory/lessons/L-0003-old.md")
+    expect(result.held_back).to eq([])
+  end
 end
