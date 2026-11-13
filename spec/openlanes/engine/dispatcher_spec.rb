@@ -1570,9 +1570,12 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       context "when one of them rejects" do
         let(:notes) { super().merge("design-reviewer" => "rejected 1/2") }
 
-        it "moves the plan to 🔴 once all three have spoken" do
+        # A rejection decides the round, so it waits only for a reviewer that
+        # is reading the pull request; one that never reports cannot hold it.
+        it "moves the plan to 🔴 without waiting for a reviewer that is not running" do
           aggregate_failures do
-            expect(attempts.size).to eq(3)
+            expect(attempts.map(&:agent)).to include("design-reviewer")
+            expect(attempts.size).to be <= 3
             expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
           end
         end

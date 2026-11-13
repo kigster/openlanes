@@ -27,6 +27,23 @@ module OpenLanes
       # line may follow.
       STATUSES = ["Started", "Completed", "Almost completed", "Interrupted", "Blocked"].freeze
 
+      # A note written as the whole ledger line, `Completed, round 3
+      # (passed)`, around the words that were meant: `passed`.
+      WRAPPED = /\A\s*(?:#{STATUSES.map { Regexp.escape(it) }.join("|")}),?\s+round\s+\w+\s*\((.*)\)\s*\z/im
+
+      # The words of a note, out of the ledger line an agent may have wrapped
+      # them in.
+      #
+      # Agent instructions show a signature as `Completed, round R (passed)`,
+      # and a reviewer passed all of that as its `--note`. The harness reads a
+      # note's first word, found `Completed`, and counted no verdict: plan
+      # 057's review round waited on that reviewer for thirteen rounds while
+      # two rejections sat undelivered.
+      #
+      # @param note [String, nil]
+      # @return [String, nil] the note, or what its parentheses held
+      def self.words(note) = note&.then { it[WRAPPED, 1]&.strip || it }
+
       # Local time with the zone spelled out, so an entry written on one
       # machine reads correctly on another.
       TIME_FORMAT = "%Y-%m-%d %I:%M:%S %p %Z"

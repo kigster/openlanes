@@ -44,10 +44,10 @@ Count the earlier review rounds that rejected this PR: the `rejected` notes in `
 
 | Condition                                                | Do                                                     | Sign                                  |
 | :------------------------------------------------------- | :----------------------------------------------------- | :------------------------------------ |
-| a critical finding, K earlier rejected rounds            | the comment above, listing each finding                | `Completed, round R (rejected K+1/M)` |
-| only minor findings, or none, and nothing to admire      | the comment above                                      | `Completed, round R (passed)`         |
-| no findings, and the code is a pleasure to read          | the comment above, ending "👍🏼 to deploy"               | `Completed, round R (great)`          |
-| code missing, not working, untested, or off-spec         | write `rewrite.md` saying why, then the comment above  | `Completed, round R (slop)`           |
+| a critical finding, K earlier rejected rounds            | the comment above, listing each finding                | `Completed`, `--note "rejected K+1/M"` |
+| only minor findings, or none, and nothing to admire      | the comment above                                      | `Completed`, `--note passed`         |
+| no findings, and the code is a pleasure to read          | the comment above, ending "👍🏼 to deploy"               | `Completed`, `--note great`          |
+| code missing, not working, untested, or off-spec         | write `rewrite.md` saying why, then the comment above  | `Completed`, `--note slop`           |
 
 R is this review's round and M is `merge.max_rejections`, given under `## Rejection cap` in your invocation: with M 2, the first rejection signs `(rejected 1/2)` and the second `(rejected 2/2)`. A plan at the cap goes to the arbitrator, not back to you, so keep reviewing on findings alone.
 
@@ -59,7 +59,7 @@ The engine adds your verdict to the other reviewers': any `rejected` or `slop` l
 
 - [ ] Every check in your own instructions ran, and every finding has a failing scenario.
 - [ ] Your comment is on the pull request, opening with the "Reviewed by" line.
-- [ ] You signed `Completed` with exactly one of the four notes above as `--note`. The harness reads the word in the note.
+- [ ] You signed `Completed` with exactly one of the four notes above as `--note`. The harness reads the note's first word, so the note is that word and what follows it, never the whole ledger line: `--note passed`, not `--note "Completed, round 1 (passed)"`.
 
 ### Next
 

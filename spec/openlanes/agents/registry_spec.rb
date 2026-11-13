@@ -252,7 +252,7 @@ RSpec.describe OpenLanes::Agents::Registry do
     end
 
     it "tells every reviewer the verdict words, the finding headings and the configured cap" do
-      expect(brief).to include("(rejected 1/2)", "(rejected 2/2)", "(rejected K+1/M)", "### F<n> [critical|minor]", "(great)", "(passed)", "(slop)", "👍🏼 to deploy")
+      expect(brief).to include("(rejected 1/2)", "(rejected 2/2)", "--note \"rejected K+1/M\"", "### F<n> [critical|minor]", "--note great", "--note passed", "--note slop", "👍🏼 to deploy")
     end
 
     it "tells every reviewer how its comment opens, and the emoji only security-reviewer may use" do

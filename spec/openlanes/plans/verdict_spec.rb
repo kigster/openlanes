@@ -71,12 +71,15 @@ RSpec.describe OpenLanes::Plans::Verdict do
     let(:agent) { "staff-reviewer" }
 
     {
-      "great"                    => :great,
-      "Great, nothing to reject" => :great,
-      "approved"                 => :great,
-      "passed"                   => :passed,
-      "rejected 1/2"             => :rejected,
-      "slop"                     => :rejected
+      "great"                                             => :great,
+      "Great, nothing to reject"                          => :great,
+      "approved"                                          => :great,
+      "passed"                                            => :passed,
+      "rejected 1/2"                                      => :rejected,
+      "slop"                                              => :rejected,
+      # Plan 057: the whole ledger line passed as the note.
+      "Completed, round 1 (passed)"                       => :passed,
+      "Completed, round 13 (rejected 1/2, vulnerability)" => :rejected
     }.each do |note, word|
       context "with the note #{note.inspect}" do
         let(:note) { note }

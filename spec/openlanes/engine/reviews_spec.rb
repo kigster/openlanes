@@ -84,6 +84,31 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
       it { expect(decision.target).to be_nil }
     end
 
+    # Plan 057: two rejections waited thirteen rounds for a reviewer whose
+    # note nobody could read, and never reached the builder.
+    context "when a reviewer rejects and the ones still to report are not running" do
+      before { voted("staff-reviewer", "rejected 1/2") }
+
+      it "decides the round without them" do
+        decision = reviews.decide(plan, design, "rejected 1/2")
+        expect([decision.pending?, decision.target, decision.pending]).to eq([false, :rejected, []])
+      end
+
+      it "waits for one that is reading the pull request now" do
+        decision = reviews.decide(plan, design, "rejected 1/2", running: ["security-reviewer"])
+        expect([decision.pending?, decision.pending]).to eq([true, ["security-reviewer"]])
+      end
+
+      it "reads a verdict signed as the whole ledger line" do
+        voted("design-reviewer", "rejected 1/2")
+        expect(reviews.decide(plan, security, "Completed, round 1 (passed)").target).to eq(:rejected)
+      end
+    end
+
+    it "waits for the others while nobody has rejected, running or not" do
+      expect(reviews.decide(plan, staff, "passed")).to have_attributes(pending?: true, pending: contain_exactly("security-reviewer", "design-reviewer"))
+    end
+
     context "when the last reviewer reports" do
       subject(:decision) { reviews.decide(plan, design, last) }
 
