@@ -83,6 +83,20 @@ module OpenLanes
       const_set(:BREAKS, /[[:cntrl:]\u0085\u2028\u2029]/)
 
       class << self
+        # A lesson file's name reaches the prompt through its cite line, so it
+        # is held to the title's rule. Read as UTF-8 first: a name that is not
+        # valid UTF-8 made `match?` raise and took every agent's prompt down
+        # with it, where it should cost that one file (F101, F102).
+        #
+        # @param name [String] a path, or the part of one that is checked
+        # @return [String, nil] why the name is refused, nil when it is safe
+        def unsafe_name(name)
+          utf8 = name.dup.force_encoding(Encoding::UTF_8)
+          return "the file name is not valid UTF-8" unless utf8.valid_encoding?
+
+          "the file name holds a control character or line separator" if utf8.match?(self::BREAKS)
+        end
+
         # @param entry [OpenLanes::Memory::Entry]
         # @param scope [Symbol]
         # @return [OpenLanes::Memory::Lesson]

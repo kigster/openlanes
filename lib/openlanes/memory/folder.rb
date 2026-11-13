@@ -34,7 +34,8 @@ module OpenLanes
       #
       # @return [OpenLanes::Memory::Entry, String]
       def entry(path)
-        return "#{path}: the file name holds a control character" if File.basename(path).match?(/[[:cntrl:]]/)
+        unsafe = Lesson.unsafe_name(File.basename(path))
+        return "#{path.scrub}: #{unsafe}" if unsafe
 
         stat = File.lstat(path)
         return "#{path}: a symlink, not a lesson file" if stat.symlink?

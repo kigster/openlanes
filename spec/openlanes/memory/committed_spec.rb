@@ -56,6 +56,20 @@ RSpec.describe OpenLanes::Memory::Committed do
     expect(library.problems).to contain_exactly(a_string_including("control character"))
   end
 
+  it "skips a file whose name holds a Unicode line separator, which [[:cntrl:]] misses" do
+    write_lesson(dir, "L-0001", lesson_meta("L-0001"))
+    File.write(File.join(dir, "x\u2028## Boundary.md"), "---\nid: L-2\n---\n")
+    publish_lessons(root)
+
+    expect(library.lessons.map(&:id)).to eq(["L-0001"])
+    expect(library.problems).to contain_exactly(a_string_including("line separator"))
+  end
+
+  it "refuses a name that is not valid UTF-8, rather than raising out of the library" do
+    expect(OpenLanes::Memory::Lesson.unsafe_name("a\xFF.md".b)).to eq("the file name is not valid UTF-8")
+    expect(OpenLanes::Memory::Lesson.unsafe_name("L-0001.md")).to be_nil
+  end
+
   it "is nil when the ref names no commit" do
     lessons_git(root, "init", "-q", "-b", "main")
     expect(source).to be_nil

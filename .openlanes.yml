@@ -5,6 +5,10 @@ jobs: 3
 desired_codebase_quality: high
 merge:
   by: human
+coverage:
+  command: bundle exec rspec
+  minimum: 95
+  report_command: jq '.result.line' coverage/.last_run.json
 architecture_decisions:
   version: 1
   detail: medium

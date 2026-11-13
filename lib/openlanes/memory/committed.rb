@@ -71,7 +71,9 @@ module OpenLanes
       def entry(mode, object, path)
         where = "#{path} at #{short}"
         return "#{where}: not a plain file (mode #{mode})" unless self.class::BLOB_MODES.include?(mode)
-        return "#{where}: the file name holds a control character" if path.match?(/[[:cntrl:]]/)
+
+        unsafe = Lesson.unsafe_name(path)
+        return "#{where.scrub}: #{unsafe}" if unsafe
 
         text, status = Open3.capture2("git", "-C", root, "cat-file", "blob", object, err: File::NULL)
         return "#{where}: git could not read it" unless status.success?
