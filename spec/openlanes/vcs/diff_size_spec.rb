@@ -33,4 +33,9 @@ RSpec.describe OpenLanes::Vcs::DiffSize do
   it "is nil when the base does not exist" do
     expect(described_class.lines(dir)).to be_nil
   end
+
+  it "is nil on a machine where git cannot be run" do
+    allow(Open3).to receive(:capture2).and_raise(Errno::ENOENT, "git")
+    expect(described_class.lines(dir, base: "base")).to be_nil
+  end
 end
