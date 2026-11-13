@@ -10,7 +10,6 @@ const ICON = (
 );
 
 function Swatch({ palette }: { palette: Palette }) {
-  if (!palette.swatch) return <span className="swatch is-auto" aria-hidden="true" />;
   const [page, panel, accent] = palette.swatch;
   return (
     <span className="swatch" aria-hidden="true" style={{ background: page }}>

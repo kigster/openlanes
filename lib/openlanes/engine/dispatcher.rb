@@ -191,7 +191,7 @@ module OpenLanes
       # start. A staying run (the engine with its control room) never ends on
       # its own, not even once every plan is {FINISHED}: the page can create
       # the next plan at any moment, and a run that had quit would leave it
-      # nowhere to go. Only a quit ends it (Stop All Local, Ctrl-C, SIGTERM),
+      # nowhere to go. Only a quit ends it (Stop Local Workers, Ctrl-C, SIGTERM),
       # once the agents have gone.
       #
       # @return [Boolean]

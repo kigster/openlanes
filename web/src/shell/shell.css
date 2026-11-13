@@ -20,9 +20,7 @@ button, textarea { font: inherit; color: inherit; }
 }
 .logo img { height: 30px; width: auto; display: block; }
 /* The project being worked on is the page's title; openlanes is only the tool showing it. */
-.project { min-width: 0; max-width: 52ch; }
 .project-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
-.project-meta { margin: 0; font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 0 12px; }
 .project-path { font-size: 12px; }
 .topbar-stat { color: var(--ink-soft); }
 .topbar-stat strong { color: var(--ink); font-weight: 600; }
@@ -45,6 +43,31 @@ button, textarea { font: inherit; color: inherit; }
 .btn-quiet { border-color: transparent; background: transparent; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn-icon { display: inline-grid; place-items: center; width: 44px; padding: 0; }
+
+/* The run's controls are navigation pills. A toggle carries a checkbox, so its state is read off the pill itself and
+   needs no filled background to say it. */
+.nav { display: flex; align-items: center; min-width: 0; }
+.nav-items { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.btn.nav-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 16px; border-radius: 999px; white-space: nowrap;
+                border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink); }
+.btn.nav-pill:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); border-color: color-mix(in srgb, var(--ink) 32%, transparent); }
+.btn.nav-pill[aria-pressed="true"] { background: color-mix(in srgb, var(--focus) 14%, transparent); border-color: var(--focus); color: var(--ink); }
+.btn.nav-pill.btn-alarm { color: var(--alarm); border-color: color-mix(in srgb, var(--alarm) 45%, transparent); }
+.btn.nav-pill.btn-alarm:hover { border-color: var(--alarm); }
+.nav-check { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px;
+             border: 2px solid color-mix(in srgb, var(--ink) 55%, transparent); font-size: 13px; font-weight: 900; line-height: 1; }
+.nav-toggle[aria-pressed="true"] .nav-check { background: var(--focus); border-color: var(--focus); color: var(--plate); }
+.topbar > .btn-icon { border-radius: 999px; }
+.btn.nav-burger { display: none; }
+/* Too narrow for the row: the pills fold behind Menu and open as a panel under the bar. */
+@media (max-width: 1180px) {
+  .btn.nav-burger { display: inline-flex; }
+  .nav-items { display: none; }
+  .nav[data-open] .nav-items { display: flex; flex-direction: column; align-items: stretch; flex-wrap: nowrap;
+                               position: absolute; top: calc(100% + 6px); left: calc(var(--logo-plate-w) + 16px); z-index: 30; min-width: 240px; padding: 12px;
+                               background: var(--plate); border: 1px solid var(--hairline); border-radius: 14px; box-shadow: 0 12px 32px rgb(0 0 0 / 22%); }
+  .nav[data-open] .nav-items .btn.nav-pill { justify-content: flex-start; }
+}
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--plate); border-color: var(--ink); }
 .help-pill { min-width: 40px; padding-inline: 0; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 999px; font-weight: 800; }
 
@@ -64,21 +87,45 @@ button, textarea { font: inherit; color: inherit; }
 .loading { padding: 40px 24px; color: var(--ink-soft); }
 .loading.is-error { color: var(--alarm); }
 
-/* Tabs are very faint pills: a whisper of ink, a little more when hovered, more again when selected. */
-.tabs { display: flex; align-items: center; gap: 8px; padding: 14px 24px 2px; overflow-x: auto; scrollbar-width: thin; }
-.tab { --pill-tint: 4%; border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent); border-radius: 999px;
-       background: color-mix(in srgb, var(--ink) var(--pill-tint), transparent); }
-.tab { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 16px; cursor: pointer; font-weight: 600; color: color-mix(in srgb, var(--ink) 30%, var(--ink-soft)); flex: none; white-space: nowrap; }
-.tab:hover { --pill-tint: 8%; color: var(--ink); }
-.tab[aria-selected="true"] { --pill-tint: 14%; color: var(--ink); border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
-.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* The tab strip sits directly on the panel it switches. A tab is a folder tab: square at the bottom, and the selected
+   one is the panel's own colour with no bottom edge, lowered 1px over the panel's top border so the two read as one
+   sheet. The row wraps upward (wrap-reverse), so whatever does not fit beside the tabs goes above them; wrap-reverse
+   also swaps the cross axis, which is why flex-start is what stands everything on the bottom edge. */
+.tabs { display: flex; flex-wrap: wrap-reverse; align-items: flex-start; gap: 0 6px; padding: 14px 24px 0; }
+.tabs-list { display: flex; flex-wrap: wrap-reverse; align-items: flex-start; gap: 0 4px; }
+.tab { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 18px; cursor: pointer; font-weight: 600; flex: none; white-space: nowrap;
+       position: relative; margin-bottom: -1px; border: 1px solid transparent; border-bottom: 0; border-radius: 10px 10px 0 0;
+       background: color-mix(in srgb, var(--ink) 5%, transparent); color: color-mix(in srgb, var(--ink) 30%, var(--ink-soft)); }
+.tab:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
+.tab[aria-selected="true"] { z-index: 1; background: var(--plate); color: var(--ink); border-color: var(--hairline); box-shadow: inset 0 3px 0 var(--focus); }
+.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* The panel under the tabs: no gap above it, and a square corner where the first tab stands. */
+.tabs + .layout, .tabs ~ .layout { padding-top: 0; }
+.layout > [role="tabpanel"] { border-top-left-radius: 0; }
+
+/* The status line, to the right of the tabs: one line when there is room, breaking between its items as the page
+   narrows. Under 1100px it takes the whole row, which wrap-reverse puts above the tabs. */
+.statusline { flex: 1 1 0; min-width: 0; margin: 0; padding: 4px 0 10px 16px; text-align: right;
+              font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
+.status-item { white-space: nowrap; margin-left: 14px; }
+.status-about { white-space: normal; }
+.status-item strong { color: var(--ink); font-weight: 600; }
+.status-redis code { font: 12px var(--mono); color: var(--ink); }
+/* What never changes goes first as the page narrows: the project's description, then its path (kept in the
+   machine's tooltip), so the numbers stay on one line for longer. */
+@media (max-width: 2200px) { .status-about { display: none; } }
+@media (max-width: 1900px) and (min-width: 1101px) { .statusline .project-path { display: none; } }
+@media (max-width: 1100px) {
+  .statusline { flex-basis: 100%; padding: 0 0 10px; text-align: left; }
+  .status-item { margin: 0 14px 0 0; }
+}
+@media (max-width: 960px) { .tabs { padding-inline: 16px; } }
+
 .tab-count { margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 12px;
              background: color-mix(in srgb, var(--alarm) 16%, transparent); color: var(--alarm); }
 .tab-count:empty { display: none; }
 .tab-machine::before { content: "🖥️"; margin-right: 6px; font-size: 13px; }
 /* Other machines sit at the far right of the tab bar, away from this machine's own views. */
-.tabs > :not(.tab-machine-wrap) + .tab-machine-wrap { margin-left: auto; }
-.tabs-list { display: flex; align-items: center; gap: 8px; }
 .run-chip { margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
             background: var(--hairline); color: var(--ink-soft); }
 @media (max-width: 960px) { .tabs { padding: 8px 16px 0; } }
@@ -167,34 +214,10 @@ button, textarea { font: inherit; color: inherit; }
 .pills-theirs .pill { --tint: 9%; }
 .pills-theirs .pill:hover { --tint: 18%; }
 .pills-theirs .pill-mark { opacity: .7; }
-.statusbar-sum { margin: 0; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
-/* Which Redis the engine keeps claims and run state in: two engines on different ones never see each other's claims,
-   so the address is on screen rather than in a log. Already redacted by the engine. */
-.statusbar-redis { margin: 0; flex: none; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
-.statusbar-redis code { font: 12px var(--mono); color: var(--ink); }
-@media (max-width: 720px) { .statusbar h2, .statusbar-sum, .statusbar-redis { display: none; } }
+@media (max-width: 720px) { .statusbar h2 { display: none; } }
 
 .outage-notice { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--ink-soft); }
 .outage-notice.is-stale { color: var(--alarm); font-weight: 600; }
-
-/* The activity strip beside the tabs: the last three log lines, newest at the bottom, in the space the row left empty. */
-.ticker { flex: 1 1 0; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 1px;
-          margin: 0 8px; padding: 4px 14px; border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent); border-radius: 10px;
-          background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink-soft);
-          font: 400 12px/1.35 var(--mono); text-align: left; cursor: pointer; overflow: hidden; }
-.ticker.is-empty { border: 0; background: none; cursor: default; }
-.ticker:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
-.ticker:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-/* No opacity and no coloured text: every line keeps --ink-soft's 4.5:1 on the strip. The newest is --ink, and a
-   warning or an error is marked by a bar at its left edge, which is not text and needs no text contrast. */
-.ticker-line { display: flex; gap: 10px; min-width: 0; white-space: nowrap; padding-left: 8px; border-left: 3px solid transparent; }
-.ticker-line:last-child { color: var(--ink); }
-.ticker-at { flex: none; }
-.ticker-src { flex: none; font-weight: 600; }
-.ticker-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.ticker-line.is-warn { border-left-color: var(--starts-planning); }
-.ticker-line.is-error { border-left-color: var(--alarm); }
-@media (max-width: 960px) { .ticker { display: none; } }
 
 /* The theme menu: a swatch of each palette's page, panel and accent beside its name. */
 .theme-menu { width: 300px; }
@@ -204,4 +227,3 @@ button, textarea { font: inherit; color: inherit; }
 .swatch { flex: none; display: flex; align-items: flex-end; justify-content: flex-end; gap: 3px; width: 44px; height: 30px; padding: 4px;
           border-radius: 7px; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
 .swatch > span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 18%); }
-.swatch.is-auto { background: linear-gradient(135deg, #E9EDF1 50%, #0E1522 50%); }

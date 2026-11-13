@@ -13,7 +13,7 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 | Command                                       | What it does                                                                                              |
 | :-------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
 | `init`                                        | write `.openlanes.yml` at the project root and create `.plans/`                                           |
-| `start`                                       | the engine plus its control room, until Stop All Local or Ctrl-C                                          |
+| `start`                                       | the engine plus its control room, until Stop Local Workers or Ctrl-C                                          |
 | `web --demo`                                  | replay a sample run in the control room; otherwise `start` serves the page                                |
 | `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes.yml` `app:`                               |
 | `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`                                                    |

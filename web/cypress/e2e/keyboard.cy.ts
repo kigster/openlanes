@@ -83,7 +83,7 @@ describe("the keyboard flow", () => {
   });
 
   it("stops all local through its confirm dialog and returns focus to the button that opened it", () => {
-    const opener = named("BUTTON", "Stop All Local");
+    const opener = named("BUTTON", "Stop Local Workers");
     tabTo(opener);
     key(ENTER);
     cy.get(MODAL).should("be.visible");

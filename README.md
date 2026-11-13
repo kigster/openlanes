@@ -109,7 +109,7 @@ Starting top left and going clockwise:
 * Next is the button: "All Machines" → if other nodes join your project, there user@hostname
   * Action button that offers you to create a "New Idea" which it turns into a `.plans/<idea-folder>`  or to select from existing plans not already taken by remote nodes.
 * Further is the dark/light switch.
-* The button "Stop All Local"  terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
+* The button "Stop Local Workers"  terminates local openlanes instance and the web. It's a "oh-shit" button. Finally, a small circled ? pops up a bit of help to provide the context for what you are seeing.
 
 ### Secondary Nav
 
@@ -206,7 +206,7 @@ openlanes status                  # what is up; `openlanes stop` stops it, `star
 openlanes plans              # every open plan, its state and its pull requests; --all adds archived ones
 ```
 
-`openlanes start` runs until you press **Stop All Local** on the page, Ctrl-C, or run `openlanes stop`; it restarts the engine or the page if either crashes. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
+`openlanes start` runs until you press **Stop Local Workers** on the page, Ctrl-C, or run `openlanes stop`; it restarts the engine or the page if either crashes. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
 
 `init` scans the repository, then asks about what it holds now and what you want it to become, with what it found preselected and yours to change. The first question is how much detail you want to give: low, medium or high ask about 10, 15 or 21 topics, from layout, languages, task runner, how the app starts and how development secrets are kept, down to search and observability. Most questions take several answers. It then asks who merges a reviewed pull request (`human` or `auto`) and the desired codebase quality (`high` or `mvp`). The answers are written under `architecture_decisions:` in `.openlanes.yml`, the agents read them from there, and CI you asked for and the folder lacks is scaffolded. The stack is also written to `docs/decisions/stack.md`.
 
@@ -349,7 +349,7 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 | Command                                       | What it does                                                 |
 | :-------------------------------------------- | :----------------------------------------------------------- |
 | `init`                                        | write `.openlanes.yml` at the project root and create `.plans/` |
-| `start`                                       | the engine plus its control room, until Stop All Local or Ctrl-C |
+| `start`                                       | the engine plus its control room, until Stop Local Workers or Ctrl-C |
 | `web --demo`                                  | replay a sample run in the control room; otherwise `start` serves the page |
 | `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes.yml` `app:` |
 | `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`       |

@@ -1,5 +1,5 @@
-// The page's colours. "auto" follows the operating system between the built-in light and dark; every other choice
-// is pinned. A choice is this viewer's own, kept in localStorage, and applied by two attributes on <html>:
+// The page's colours. Until a person picks one, the operating system's preference chooses between Daylight and
+// Midnight. A choice is this viewer's own, kept in localStorage, and applied by two attributes on <html>:
 // data-theme, the scheme everything already keys off, and data-palette, which styles/palettes.css reads.
 import { useCallback, useState } from "react";
 
@@ -9,14 +9,12 @@ export interface Palette {
   id: string;
   name: string;
   note: string;
-  /** Left unset on <html> for "auto", so the system's preference decides. */
-  scheme: "light" | "dark" | null;
-  /** Page, panel and accent, for the menu's swatch. Null for "auto", which has no colours of its own. */
-  swatch: [string, string, string] | null;
+  scheme: "light" | "dark";
+  /** Page, panel and accent, for the menu's swatch. */
+  swatch: [string, string, string];
 }
 
 export const PALETTES: Palette[] = [
-  { id: "auto", name: "System", note: "Daylight or Midnight, as your computer says", scheme: null, swatch: null },
   { id: "light", name: "Daylight", note: "Light: cool grey and navy", scheme: "light", swatch: ["#E9EDF1", "#FFFFFF", "#1F5FD1"] },
   { id: "paper", name: "Paper", note: "Light: cream panels, warm text", scheme: "light", swatch: ["#F8F8F8", "#FFF3DC", "#D35728"] },
   { id: "earth", name: "Earth", note: "Light: parchment and umber", scheme: "light", swatch: ["#F7F1DE", "#ECE2C4", "#9D4F1C"] },
@@ -26,22 +24,27 @@ export const PALETTES: Palette[] = [
   { id: "azure", name: "Azure", note: "Dark: slate blue and sand", scheme: "dark", swatch: ["#2D3C59", "#26334D", "#E5BA41"] },
 ];
 
-const find = (id: string | null | undefined): Palette => PALETTES.find(p => p.id === id) ?? PALETTES[0];
+/** With nothing chosen, or a choice this build no longer has: what the operating system prefers. */
+function preferred(): Palette {
+  const dark = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches;
+  return PALETTES.find(p => p.id === (dark ? "dark" : "light"))!;
+}
+
+const find = (id: string | null | undefined): Palette => PALETTES.find(p => p.id === id) ?? preferred();
 
 function stored(): Palette {
   try {
     return find(localStorage.getItem(PALETTE_KEY));
   } catch {
-    return PALETTES[0]; // a private window: the system's
+    return preferred(); // a private window
   }
 }
 
 /** Puts a palette on <html>. The built-in two need no data-palette: their colours are the scheme's own. */
 export function applyPalette(palette: Palette): void {
   const { dataset } = document.documentElement;
-  if (palette.scheme) dataset.theme = palette.scheme;
-  else delete dataset.theme;
-  if (palette.id === "auto" || palette.id === "light" || palette.id === "dark") delete dataset.palette;
+  dataset.theme = palette.scheme;
+  if (palette.id === "light" || palette.id === "dark") delete dataset.palette;
   else dataset.palette = palette.id;
 }
 

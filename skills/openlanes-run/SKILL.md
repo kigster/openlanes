@@ -1,6 +1,6 @@
 ---
 name: openlanes-run
-description: Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop All Local or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents over named plans to a fixed point with `openlanes run <NNN,...>` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕ / 🛑 plan.
+description: Start the openlanes factory with `openlanes start` (engine plus control room, up until Stop Local Workers or Ctrl-C, questions answered and plans created on the page), or run openlanes's specialist agents over named plans to a fixed point with `openlanes run <NNN,...>` and clear blocked plans with `openlanes unblock`. Use when the user wants to start, run, resume or finish the agents, build or ship a plan, or unblock a ⭕ / 🛑 plan.
 ---
 
 # openlanes-run: drive the plans
@@ -20,8 +20,8 @@ openlanes stop               # stops the factory; --all stops every `openlanes r
 ```
 
 - It takes `run`'s flags except `-n` and `--until`, plus `--plan` to narrow it. It needs Redis and refuses without it (exit 69). `--no-web` leaves the page to an `openlanes web` served apart, as `just start` does.
-- Every human decision goes through the page: answers, hold, wrap up, stop, models, new plans. **Stop All Local** stops this machine's agents, then its engine and the page; nothing else on the page ends the run. The terminal is output only.
-- It never ends on its own, not even once every plan is finished: the page can create the next one. A project with no plans waits for the first. Stop All Local, Ctrl-C or `kill -TERM` end it, with exit 0; agents get the graceful stop and the page goes down with it.
+- Every human decision goes through the page: answers, hold, wrap up, stop, models, new plans. **Stop Local Workers** stops this machine's agents, then its engine and the page; nothing else on the page ends the run. The terminal is output only.
+- It never ends on its own, not even once every plan is finished: the page can create the next one. A project with no plans waits for the first. Stop Local Workers, Ctrl-C or `kill -TERM` end it, with exit 0; agents get the graceful stop and the page goes down with it.
 - It is a supervisor over two children, the engine and the page, and restarts whichever crashes (three crashes in five minutes and it gives that one up; `openlanes status` says why). A second `start` in the same project is refused (exit 75) with the running one's URL.
 - Start it with `openlanes start --background`, give the user the URL it prints, and leave the answering to them on the page. `openlanes stop` ends it. Steps 1 to 5 below are the scripted, headless alternative.
 

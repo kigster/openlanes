@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Snapshot } from "../api/types";
 import type { ConnectionState } from "../api/events";
-import { dollars, fmt, secondsBetween, who } from "../board/format";
 import { ThemeMenu } from "./ThemeMenu";
 import logo from "../assets/logo.png";
 
@@ -19,9 +18,9 @@ export interface HeaderProps {
   /** Hide Inactive is on: only lanes with an agent running are on the board. */
   hideInactive?: boolean;
   onToggleHideInactive?: () => void;
-  /** The Action ▾ menu: ActionMenu from src/panels. */
+  /** The Actions ▾ menu: ActionMenu from src/panels. */
   actionMenu?: ReactNode;
-  /** Stop All Local and its confirmation: StopAllDialog from src/panels, which brings its own button. */
+  /** Stop Local Workers and its confirmation: StopAllDialog from src/panels, which brings its own button. */
   stopAll?: ReactNode;
   /** The round ? pill and its dialog: HelpDialog from src/panels. */
   help?: ReactNode;
@@ -43,15 +42,64 @@ function useNow(override?: number): number {
   return override ?? tick;
 }
 
-/** The top bar: the project, this machine, the run's totals as plain text, and the run-wide controls. */
+/** A toggle in the nav: a pill with a checkbox drawn in it. Still a pressed-or-not button, which is what it is. */
+function Toggle({ on, onClick, title, children }: { on: boolean; onClick: () => void; title: string; children: ReactNode }) {
+  return (
+    <button className="btn nav-pill nav-toggle" type="button" aria-pressed={on} title={title} onClick={onClick}>
+      <span className="nav-check" aria-hidden="true">{on ? "✓" : ""}</span>
+      {children}
+    </button>
+  );
+}
+
+/** Clicks inside a menu or dialog a pill opened are not "outside": both render in a portal, away from the nav. */
+const PORTALLED = '[role="menu"], [role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper]';
+
+/**
+ * The run's controls. Wide, they are a row of pills. Under 1180px (shell.css) the row is hidden behind a Menu button
+ * and opens as a panel below the bar; the pills are the same elements either way, so nothing is built twice.
+ */
+function Nav({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (target && (nav.current?.contains(target) || target.closest(PORTALLED))) return;
+      setOpen(false);
+    };
+    const escape = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+  return (
+    <nav className="nav" aria-label="Run controls" ref={nav} data-open={open || undefined}>
+      <button className="btn nav-pill nav-burger" type="button" aria-expanded={open} aria-controls="nav-items" onClick={() => setOpen(was => !was)}>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        Menu
+      </button>
+      <div className="nav-items" id="nav-items">
+        {children}
+      </div>
+    </nav>
+  );
+}
+
+/** The top bar: the logo, the run-wide controls as pills, and the theme and help buttons. The run's numbers are in StatusLine. */
 export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, stopAll, help, now }: HeaderProps) {
-  const { node, run } = snapshot;
+  const { run } = snapshot;
   const clock = useNow(now);
   // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
   const silent = Math.floor((clock - Date.parse(snapshot.at)) / 1000);
   const stale = connection === "live" && silent > STALE_AFTER_SECONDS;
   const { outage } = run;
-  const minutes = Math.floor(secondsBetween(run.started_at, snapshot.at) / 60);
   // The project is openlanes itself when the tool works on its own repository, and the logo already says so (W18).
   const titled = snapshot.project.toLowerCase() !== "openlanes";
   return (
@@ -59,31 +107,25 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
       <span className="logo" title="openlanes: the self-running software factory">
         <img src={logo} alt="openlanes" height={30} />
       </span>
-      <div className="project">
-        {titled ? <h1 className="project-title">{snapshot.project}</h1> : <h1 className="sr-only">OpenLanes control room</h1>}
-        <p className="project-meta">
-          {snapshot.description && <span>{snapshot.description}</span>}
-          <span className="project-path">{node.checkout}</span>
-          <span
-            className="node"
-            title={`Node ${node.id}, the first 96 bits of SHA-256("${who(node)}").${node.ip ? ` IP ${node.ip}.` : ""} Repository ${snapshot.repo}`}
-          >
-            On <strong>{who(node)}</strong>
-          </span>
-        </p>
-      </div>
-      <span className="topbar-stat">
-        Run <strong>{minutes} min</strong>
-      </span>
-      <span className="topbar-stat">
-        <strong>{run.agents_working}</strong> of <strong>{run.jobs}</strong> agents
-      </span>
-      <span className="topbar-stat" title="Tokens in and out, all plans">
-        ↑ <strong>{fmt(run.up)}</strong> &nbsp; ↓ <strong>{fmt(run.down)}</strong>
-      </span>
-      <span className="topbar-stat">
-        <strong>{dollars(run.cost)}</strong> so far
-      </span>
+      {titled ? <h1 className="project-title">{snapshot.project}</h1> : <h1 className="sr-only">OpenLanes control room</h1>}
+      <Nav>
+        <Toggle on={merged} onClick={onToggleMerged} title="Show every machine's plans on one board: ours first, theirs below and faded">
+          All Machines
+        </Toggle>
+        {onToggleNarrow && (
+          <Toggle on={narrow} onClick={onToggleNarrow} title="Narrow lanes: half-height rows with the plan number, status, title and agents; tokens, lane and activity lines left to the drawer">
+            Narrow Lanes
+          </Toggle>
+        )}
+        {onToggleHideInactive && (
+          <Toggle on={hideInactive} onClick={onToggleHideInactive} title="Show only the lanes with an agent running right now. Lanes that are waiting, blocked or finished come back when you turn this off">
+            Hide Inactive
+          </Toggle>
+        )}
+        {actionMenu}
+        {stopAll}
+      </Nav>
+      <span className="topbar-spacer" />
       {fixture && (
         <span className="sample" title="Served from web/src/api/fixtures/board.json because the URL has ?fixture">
           Fixture data
@@ -94,41 +136,7 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
           {connection === "offline" ? "Offline, retrying" : "Reconnecting…"}
         </span>
       )}
-      <span className="topbar-spacer" />
-      <button
-        className="btn btn-quiet"
-        type="button"
-        aria-pressed={merged}
-        title="Show every machine's plans on one board: ours first, theirs below and faded"
-        onClick={onToggleMerged}
-      >
-        All machines
-      </button>
-      {onToggleNarrow && (
-        <button
-          className="btn btn-quiet"
-          type="button"
-          aria-pressed={narrow}
-          title="Narrow lanes: half-height rows with the plan number, status, title and agents; tokens, lane and activity lines left to the drawer"
-          onClick={onToggleNarrow}
-        >
-          Narrow lanes
-        </button>
-      )}
-      {onToggleHideInactive && (
-        <button
-          className="btn btn-quiet"
-          type="button"
-          aria-pressed={hideInactive}
-          title="Show only the lanes with an agent running right now. Lanes that are waiting, blocked or finished come back when you turn this off"
-          onClick={onToggleHideInactive}
-        >
-          Hide Inactive
-        </button>
-      )}
-      {actionMenu}
       <ThemeMenu />
-      {stopAll}
       {help}
       {stale && (
         <p className="outage-notice is-stale" role="alert">

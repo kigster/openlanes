@@ -68,7 +68,7 @@ describe("ActionMenu (2, 8)", () => {
   it("shows a successful add in place, not only to screen readers", async () => {
     const user = userEvent.setup();
     renderPanel(<ActionMenu backlog={snapshot.backlog} onCommand={recorder().onCommand} />);
-    await user.click(screen.getByRole("button", { name: "Action" }));
+    await user.click(screen.getByRole("button", { name: "Actions" }));
     await user.click(await screen.findByText("Choose an existing plan"));
     await user.click(screen.getByText("012.00 Linear two-way sync"));
     expect(await findInline("012.00 added to this run.")).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("ActionMenu (2, 8)", () => {
     const user = userEvent.setup();
     const onIdeaOpenChange = vi.fn();
     renderPanel(<ActionMenu backlog={[]} onCommand={recorder().onCommand} ideaOpen={false} onIdeaOpenChange={onIdeaOpenChange} />);
-    await user.click(screen.getByRole("button", { name: "Action" }));
+    await user.click(screen.getByRole("button", { name: "Actions" }));
     await user.click(await screen.findByText("New idea"));
     expect(onIdeaOpenChange).toHaveBeenCalledWith(true);
     expect(screen.queryByRole("dialog")).toBeNull();
