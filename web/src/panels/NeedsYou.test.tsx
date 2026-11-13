@@ -31,6 +31,14 @@ describe("NeedsYou", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it("puts the spotlit plan's questions first, ringed, and hands the first one focus", () => {
+    const { onCommand } = recorder();
+    renderPanel(<NeedsYou plans={[planAt("001.00"), planAt("006.00")]} onCommand={onCommand} spotlight="006.00" />);
+    const cards = Array.from(document.querySelectorAll<HTMLElement>(".asks .ask"));
+    expect(cards.map((c) => [c.dataset.ask, c.classList.contains("is-spotlit")])).toEqual([["006.00/B1", true], ["001.00/B1", false]]);
+    expect(cards[0].contains(document.activeElement)).toBe(true);
+  });
+
   it("says when nothing waits", () => {
     renderPanel(<NeedsYou plans={[planAt("005.00")]} onCommand={recorder().onCommand} />);
     expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
@@ -52,6 +60,13 @@ describe("NeedsYou", () => {
     expect(sent).toEqual([{ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "B1", text: "The checkout path." } }]);
     expect(await findInline("Answer sent to backend-coder.")).toBeInTheDocument();
     expect(screen.getByTestId("announcer")).toHaveTextContent("Answer sent to backend-coder.");
+    // The note leaves the list of questions for a toggle that starts closed, counted and named by its plan.
+    const answered = document.querySelector<HTMLDetailsElement>(".rail details.answered")!;
+    expect(answered.open).toBe(false);
+    expect(answered.querySelector("summary")).toHaveTextContent("Answered (1)");
+    expect(answered.querySelector('[data-ask="001.00/B1"]')).toHaveTextContent("001.00Answer sent to backend-coder.");
+    expect(document.querySelector(".asks .ask")).toBeNull();
+    expect(screen.getByText("Nothing waiting on you. Agents will ask here.")).toBeInTheDocument();
   });
 
   it("sends with Ctrl Enter from the answer box", async () => {

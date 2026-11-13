@@ -164,6 +164,21 @@ describe("under ?fixture", () => {
     expect(pill).toHaveFocus();
   });
 
+  it("brings a lane's questions to the front of the rail from its Unblock button, and closes an open drawer to do it", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const row = (await screen.findByRole("button", { name: /^Unblock 001\.00:/ })).closest(".plan")!;
+    expect(row.querySelector(".plan-id")).toHaveTextContent("(Technical Block)");
+    // A car's drawer stands where the rail does; Unblock gives the rail the room back.
+    await user.click(within(row as HTMLElement).getByRole("button", { name: "backend-coder" }));
+    expect(screen.queryByRole("heading", { name: /Needs you/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /^Unblock 001\.00:/ }));
+    expect(screen.getByRole("heading", { name: /Needs you/ })).toBeInTheDocument();
+    const card = document.querySelector<HTMLElement>('.rail [data-ask="001.00/B1"]')!;
+    expect(card).toHaveClass("is-spotlit");
+    expect(card.contains(document.activeElement)).toBe(true);
+  });
+
   it("opens the plan drawer with the unblock widget and lists the plan's files", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ files: ["spec.md", "plan.md"] }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);

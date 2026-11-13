@@ -106,8 +106,8 @@ export function FollowUp({ question }: { question: Question }) {
   );
 }
 
-function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
-  plan: Plan; question: Question; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void;
+function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = false }: {
+  plan: Plan; question: Question; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void; spotlit?: boolean;
 }) {
   const q = useQuestion(plan, question, onCommand);
   const { leaving, gone, leave } = useLeaving(onLeft);
@@ -159,7 +159,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   let answerUi: ReactNode = box;
   if (q.options) answerUi = q.inWords && !extension ? <>{choices()}{box}</> : choices(extension ? undefined : holdButton);
   return (
-    <div className={`ask${q.isHeld ? " is-held" : ""}`} data-ask={question.id}>
+    <div className={`ask${q.isHeld ? " is-held" : ""}${spotlit ? " is-spotlit" : ""}`} data-ask={question.id} data-plan={plan.ordinal}>
       <Who plan={plan} agent={question.agent} held={q.isHeld} />
       {/* Every question shows its heading: for a blocked one it names the decision, and without it the card opened
           on context with nothing saying what was being asked. */}
@@ -173,6 +173,10 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
 }
 
 /** A request, whichever kind. `onLeft` fires once a held card has faded out. */
-export function AskCard({ ask, variant, onCommand, onLeft }: { ask: Ask; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void }) {
-  return <QuestionCard plan={ask.plan} question={ask.question} variant={variant} onCommand={onCommand} onLeft={onLeft} />;
+export function AskCard({ ask, variant, onCommand, onLeft, spotlit }: {
+  ask: Ask; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void;
+  /** Unblock on the plan's lane put this card at the front of the rail; it is ringed and takes focus. */
+  spotlit?: boolean;
+}) {
+  return <QuestionCard plan={ask.plan} question={ask.question} variant={variant} onCommand={onCommand} onLeft={onLeft} spotlit={spotlit} />;
 }
