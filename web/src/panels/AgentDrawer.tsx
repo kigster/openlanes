@@ -5,7 +5,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Car, ModelChoice, Plan, Question, Reply } from "../api/types";
 import { AgentActionMenu, type AgentAction } from "./AgentActionMenu";
-import { AnswerBox, Choices } from "./AskCard";
+import { AnswerBox, Choices, FollowUp } from "./AskCard";
 import { useAsk } from "./asks";
 import { refusal, useCommand, type Outcome } from "./command";
 import { StopAgentDialog } from "./dialogs";
@@ -45,8 +45,10 @@ function QuestionBlock({ plan, question, onCommand, onAnswered }: {
   const extension = optionsOnly(question);
   return (
     <div className="d-block">
-      <p><strong>{extension ? question.heading : "Blocked on your answer."}</strong></p>
+      {!extension && <p>Blocked on your answer.</p>}
+      <p><strong>{question.heading}</strong></p>
       <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.body) }} />
+      <FollowUp question={question} />
       {q.options && (
         <Choices
           options={q.options} onChoose={q.choose} onWords={() => q.update({ inWords: true })} inWords={q.inWords}

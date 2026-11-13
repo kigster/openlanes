@@ -91,6 +91,9 @@ export interface Question {
   kind: "block" | "extension" | "quality"; // quality: R4's desired_codebase_quality, asked once per project
   heading: string;
   body: string; // Markdown
+  // What the unblocker asked back when it could not act on the last answer, with that answer quoted; shown apart
+  // from the question so neither hides the other. Absent from an older engine, and for a question never reopened.
+  follow_up?: string | null; // Markdown
   agent: string | null; // who asked, when the ledger says
   owner: "technical" | "product"; // ⭕ or 🛑
   options: QuestionOption[] | null; // what the question offers to choose from (D3); null when it wants words

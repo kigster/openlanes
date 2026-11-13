@@ -93,6 +93,19 @@ function useLeaving(onLeft?: () => void) {
   return { leaving, gone, leave: () => setLeaving(true) };
 }
 
+/**
+ * The unblocker asking again: the last answer, quoted, and what it still needs to know. Under the question, never
+ * in place of it, so the person reads what was asked before what was asked back.
+ */
+export function FollowUp({ question }: { question: Question }) {
+  if (!question.follow_up) return null;
+  return (
+    <div className="ask-follow-up" role="note" aria-label="Follow-up on your last answer">
+      <div className="ask-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(question.follow_up) }} />
+    </div>
+  );
+}
+
 function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   plan: Plan; question: Question; variant: "rail" | "widget"; onCommand: SendCommand; onLeft?: () => void;
 }) {
@@ -148,8 +161,11 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft }: {
   return (
     <div className={`ask${q.isHeld ? " is-held" : ""}`} data-ask={question.id}>
       <Who plan={plan} agent={question.agent} held={q.isHeld} />
-      {extension && <p className="ask-heading">{question.heading}</p>}
+      {/* Every question shows its heading: for a blocked one it names the decision, and without it the card opened
+          on context with nothing saying what was being asked. */}
+      <p className="ask-heading">{question.heading}</p>
       {body}
+      <FollowUp question={question} />
       {answerUi}
       <Feedback outcome={q.command.outcome?.tone === "refused" ? q.command.outcome : null} announced={q.command.announced} />
     </div>

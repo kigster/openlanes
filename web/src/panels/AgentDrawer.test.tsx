@@ -170,6 +170,7 @@ describe("AgentDrawer", () => {
     const plan = planAt("001.00");
     drawer(plan, carOf(plan, "backend-coder"), onCommand);
     expect(screen.getByText("Blocked on your answer.")).toBeInTheDocument();
+    expect(screen.getByText(plan.questions[0].heading)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Send answer" }));
     expect(sent).toHaveLength(0);
     await user.type(screen.getByRole("textbox", { name: "Your answer" }), "The checkout path.");
