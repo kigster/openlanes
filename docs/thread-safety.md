@@ -57,6 +57,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |
 | `lib/openlanes/live/event_bus/base.rb` | a bus | its caller | any | frozen; all state lives in the store behind it | frozen |
+| `lib/openlanes/live/store.rb` | the one Redis connection | `Live::Store` | engine tick, outage watcher, publisher, web requests | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/chat.rb` | `@pages`, `@unavailable`, the subscriber | `Live::Chat` | web requests, chat thread | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/choice_converter.rb` | the conversion cache | `Live::ChoiceConverter` | unblock, conversions | `@mutex` | guarded |
 | `lib/openlanes/live/choice_judge.rb` | `@answers` | `Live::ChoiceJudge` | caller, judge thread | `@mutex` | guarded |

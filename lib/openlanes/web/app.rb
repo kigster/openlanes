@@ -80,6 +80,9 @@ module OpenLanes
         # @return [OpenLanes::Web::PlanFiles]
         def plan_files = PlanFiles.new(plans_dir: context.plans_dir)
 
+        # @return [OpenLanes::Web::PlanReview]
+        def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
+
         # The rule the page draws cars by: this machine's board lists the
         # plan with at least one car. No snapshot means no engine, so no car.
         #
@@ -149,6 +152,11 @@ module OpenLanes
       end
 
       error PlanFiles::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanReview::NotFound do
         status 404
         json(error: env["sinatra.error"].message)
       end
@@ -357,6 +365,11 @@ module OpenLanes
         tag = plan_files.write(ordinal, name, body: request.body.read, if_match:)
         headers "ETag" => tag
         json(etag: tag)
+      end
+
+      # The plan branch's diff and its reviewers' findings (plan 064, B3).
+      get "/api/plans/:ordinal/review" do
+        json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
       end
 
       get "/api/*" do

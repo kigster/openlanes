@@ -60,6 +60,9 @@ module OpenLanes
         context = OpenLanes::Web.context(stores:,
           keys:,
           plans_dir: tree.dir,
+          # The review route runs git here: the project root the command
+          # moved to, not the parent of `.plans`, which `-D` can put anywhere.
+          root: Dir.pwd,
           url: stores.current.url,
           node:,
           demo:,

@@ -9,6 +9,11 @@ RSpec.describe OpenLanes::Agents::Routing, :tree do
     plans { |t| t.plan "001.00", :planned, "work", files: { "spec.md" => spec_body, "plan.md" => "## U1\n" }.merge(files) }
   end
 
+  # Run where no `.openlanes.yml` is: the checkout's own says
+  # `frontend: true`, and these examples are about what the plan folder says.
+  # spec_helper puts the working directory back afterwards.
+  before { Dir.chdir(File.dirname(plans_root)) }
+
   def routed = described_class.filter(agents.for_status(planned), subject_plan).map(&:name)
 
   it "gives a full-lane plan with front-end units to the pair" do

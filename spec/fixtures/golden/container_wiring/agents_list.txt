@@ -1,0 +1,30 @@
+┌───────────────────┬───────────────────────────────────────────────────┬────────────────────────────┬───────────────┬──────────────────────────────┐
+│ Agent             │ Handles                                           │ Advances to                │ Runs on       │ Starts                       │
+├───────────────────┼───────────────────────────────────────────────────┼────────────────────────────┼───────────────┼──────────────────────────────┤
+│ arbitrator        │                                                   │ read-only                  │ opus/high     │ all                          │
+│ backend-coder     │ Planned, Building, Changes Requested              │ Ready for Review           │ opus/high     │ research, planning           │
+│ chores-coder      │ Planned, Building, Changes Requested              │ Ready for Review           │ haiku/medium  │ building                     │
+│ copilot           │                                                   │ read-only                  │ haiku/low     │ all                          │
+│ curator           │                                                   │ read-only                  │ sonnet/medium │ all                          │
+│ deploy-assessor   │ Completed                                         │ Approved & Merged          │ opus/high     │ research, planning, building │
+│ design-reviewer   │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │
+│ frontend-coder    │ Planned, Building, Building UI, Changes Requested │ Ready for Review           │ sonnet/medium │ research, planning           │
+│ planner           │ Ready for Planning                                │ Planned                    │ opus/high     │ research, planning           │
+│ rebaser           │ stopped rebases, from the harness                 │ stages, never moves a plan │ sonnet/high   │ all                          │
+│ researcher        │ New                                               │ Researched                 │ haiku/medium  │ research                     │
+│ security-reviewer │ Ready for Review, In Review                       │ Approved & Merged          │ sonnet/high   │ research, planning           │
+│ spec-writer       │ Researched, Retroactive                           │ Ready for Planning         │ sonnet/medium │ research                     │
+│ staff-reviewer    │ Ready for Review, In Review                       │ Approved & Merged          │ opus/high     │ all                          │
+│ unblocker         │ Technical Block, Product Block, Bomb              │ by contents                │ opus/low      │ all                          │
+│ verifier          │ Verifying                                         │ Approved & Merged          │ sonnet/medium │ all                          │
+└───────────────────┴───────────────────────────────────────────────────┴────────────────────────────┴───────────────┴──────────────────────────────┘
+
+┌─────────┬─────────────────────────────────────┬─────────────────────────────────────────┬────────┐
+│ Adapter │ Available                           │ Can                                     │ Models │
+├─────────┼─────────────────────────────────────┼─────────────────────────────────────────┼────────┤
+│ claude  │ not installed (no `claude` on PATH) │ compacts, resumes, refuses denied tools │ 0      │
+│ codex   │ not installed (no `codex` on PATH)  │ —                                       │ 0      │
+│ pi      │ not installed (no `pi` on PATH)     │ —                                       │ 0      │
+│ grok    │ not installed (no `grok` on PATH)   │ compacts, resumes, refuses denied tools │ 0      │
+│ gemini  │ not installed (no `gemini` on PATH) │ resumes, refuses denied tools           │ 0      │
+└─────────┴─────────────────────────────────────┴─────────────────────────────────────────┴────────┘

@@ -88,6 +88,7 @@ classDiagram
   class OpenLanes__CLI__Worktree["Worktree"]
   class OpenLanes__CLI__WorktreePrune["WorktreePrune"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Coverage["OpenLanes::Coverage"]
   <<module>> OpenLanes__Coverage
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
@@ -268,8 +269,8 @@ classDiagram
   OpenLanes__CLI__Linear__Projects --|> OpenLanes__CLI__Linear__Team : inherits
   OpenLanes__CLI__Linear__Projects ..> OpenLanes__Error : uses
   OpenLanes__CLI__Linear__Team --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Linear__Team ..> OpenLanes__Container : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear : uses
-  OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__API : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__Survey : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__UI : uses
   OpenLanes__CLI__ListPlans --|> OpenLanes__CLI__Base : inherits

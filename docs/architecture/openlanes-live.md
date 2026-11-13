@@ -38,6 +38,9 @@ classDiagram
   class OpenLanes__Lifecycle__Unblocker["OpenLanes::Lifecycle::Unblocker"]
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
+  class OpenLanes__Live__BoardDelta["BoardDelta"]
+  <<module>> OpenLanes__Live__BoardDelta
+  class OpenLanes__Live__BoardDelta__Stream["BoardDelta::Stream"]
   class OpenLanes__Live__Chat["Chat"]
   class OpenLanes__Live__Chat__Invalid["Chat::Invalid"]
   class OpenLanes__Live__Chat__Settled["Chat::Settled"]
@@ -103,6 +106,10 @@ classDiagram
   <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
+  class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
+  <<module>> OpenLanes__Plans__Findings
+  class OpenLanes__Plans__Findings__NotFound["OpenLanes::Plans::Findings::NotFound"]
+  class OpenLanes__Plans__Findings__UnknownVerdict["OpenLanes::Plans::Findings::UnknownVerdict"]
   class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
@@ -129,6 +136,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Live__Session : uses
   OpenLanes__Live ..> OpenLanes__Live__Store : uses
   OpenLanes__Live ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__BoardDelta__Stream ..> OpenLanes__Live__BoardDelta : uses
   OpenLanes__Live__Chat ..> OpenLanes__Error : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Invalid : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Settled : uses
@@ -153,6 +161,7 @@ classDiagram
   OpenLanes__Live__Command ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Command__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Commands ..> OpenLanes__Config : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Commands ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Commands ..> OpenLanes__Error : uses
   OpenLanes__Live__Commands ..> OpenLanes__Execution__Control : uses
@@ -172,6 +181,9 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Live__Snapshot : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__NotFound : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__UnknownVerdict : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses

@@ -63,7 +63,7 @@ module OpenLanes
 
       # The payload keys each kind may carry, and nothing else.
       PAYLOAD_KEYS = {
-        "run_started"    => %w[jobs isolation],
+        "run_started"    => %w[jobs isolation memory],
         "run_finished"   => %w[rounds changed],
         "agent_started"  => %w[round invocation_start],
         "agent_finished" => %w[round invocation_start status duration_s] + USAGE_KEYS,

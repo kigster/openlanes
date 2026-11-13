@@ -16,6 +16,8 @@ classDiagram
   class OpenLanes__Arbitration__Ruling__IllegalOutcome["Ruling::IllegalOutcome"]
   class OpenLanes__Arbitration__Ruling__Missing["Ruling::Missing"]
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
+  <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ledger["OpenLanes::Plans::Ledger"]
   <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
@@ -49,6 +51,7 @@ classDiagram
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Arbitration__Ruling__IllegalOutcome : uses
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Arbitration__Ruling__Missing : uses
   OpenLanes__Arbitration__Ruling ..> OpenLanes__Error : uses
+  OpenLanes__Arbitration__Ruling ..> OpenLanes__Plans__Findings : uses
   OpenLanes__Arbitration__Ruling__Ambiguous --|> OpenLanes__Error : inherits
   OpenLanes__Arbitration__Ruling__IllegalOutcome --|> OpenLanes__Error : inherits
   OpenLanes__Arbitration__Ruling__Missing --|> OpenLanes__Error : inherits

@@ -47,7 +47,7 @@ RSpec.describe "openlanes memory, the writer's commands" do
     propose("flaky-redis-specs", "056.00", "060.00")
     propose("seen-once", "056.00")
     preview = run(OpenLanes::CLI::Memory::Promote, dry_run: true)
-    written = run(OpenLanes::CLI::Memory::Promote)
+    written = run(OpenLanes::CLI::Memory::Promote, local: true)
     aggregate_failures do
       expect(preview.first).to include("promote L-0001 flaky-redis-specs: seen in 2 plans", "wait    seen-once: seen in 1 plan")
       expect([preview[1], preview.last]).to match([/1 lesson pending — nothing was changed/, 0])
@@ -58,8 +58,29 @@ RSpec.describe "openlanes memory, the writer's commands" do
   it "promotes a lesson a person approved, and refuses a slug nothing waits under" do
     propose("seen-once", "056.00")
     approved = run(OpenLanes::CLI::Memory::Approve, slug: "seen-once")
-    expect([approved.last, run(OpenLanes::CLI::Memory::Promote).first, run(OpenLanes::CLI::Memory::Approve, slug: "nope").last])
+    expect([approved.last, run(OpenLanes::CLI::Memory::Promote, local: true).first, run(OpenLanes::CLI::Memory::Approve, slug: "nope").last])
       .to match([0, /promote L-0001 seen-once: approved by a person/, 66])
+  end
+
+  # Without --local the promotion happens on a branch of its own, and the
+  # command's deliverable is the pull request a person merges.
+  it "opens the memory pull request, and says which candidates the secret scan held back" do
+    change = OpenLanes::Memory::Promotion::Change.new(kind: :promote, slug: "flaky-redis-specs", id: "L-0001", path: nil, why: "seen in 2 plans")
+    result = OpenLanes::Memory::Publication::Result.new(branch: "memory/promote", url: "https://github.com/example/repo/pull/9", changes: [change], held_back: ["leaky"])
+    allow(OpenLanes::Memory).to receive(:publication).and_return(instance_double(OpenLanes::Memory::Publication, call: result))
+
+    out, err, status = run(OpenLanes::CLI::Memory::Promote)
+    aggregate_failures do
+      expect(out).to include("held back leaky", "promote L-0001 flaky-redis-specs")
+      expect(out + err).to include("memory pull request: https://github.com/example/repo/pull/9")
+      expect(status).to eq(0)
+    end
+  end
+
+  it "promotes and curates nothing when memory is off" do
+    propose("flaky-redis-specs", "056.00", "060.00")
+    expect([run(OpenLanes::CLI::Memory::Promote, memory: false).last, Dir.exist?(lessons)]).to eq([64, false])
+    expect(run(OpenLanes::CLI::Memory::Curate, plans: ["056"], memory: false).last).to eq(64)
   end
 
   describe "scan" do

@@ -45,7 +45,21 @@ module OpenLanes
     #   @return [String] what the prompt tells an agent to read for the full text
     # @!attribute [r] scope
     #   @return [Symbol] `:project` or `:global`
-    Lesson = Data.define(:id, :title, :applies_to, :checked_by, :kind, :severity, :status, :confirmed, :path, :cite, :scope) do
+    # @!attribute [r] confirmations
+    #   @return [Integer] distinct plans named in `source:`, derived, never a key of its own:
+    #     a stored count could drift from the evidence it counts
+    Lesson = Data.define(:id,
+      :title,
+      :applies_to,
+      :checked_by,
+      :kind,
+      :severity,
+      :status,
+      :confirmed,
+      :path,
+      :cite,
+      :scope,
+      :confirmations) do
       # The ranking order: a lesson whose violation costs a review round
       # comes before one that costs a comment.
       const_set(:SEVERITIES, %i[high medium low].freeze)
@@ -104,7 +118,7 @@ module OpenLanes
         def parse(entry, scope:)
           path = entry.path
           meta, = Frontmatter.split(utf8(entry.text, path))
-          new(**audience(meta, path), **choices(meta, path), path:, cite: entry.cite, scope:)
+          new(**audience(meta, path), **choices(meta, path), path:, cite: entry.cite, scope:, confirmations: confirmations(meta))
         rescue Psych::Exception => e
           raise self::Invalid, "#{path}: frontmatter is not valid YAML (#{e.message.lines.first.strip})"
         end
@@ -117,6 +131,14 @@ module OpenLanes
           raise self::Invalid, "#{path}: not valid UTF-8" unless text.valid_encoding?
 
           text
+        end
+
+        # Each plan that met the lesson counts once, however many findings it
+        # raised. A `source:` that is not a list of maps counts nothing.
+        #
+        # @return [Integer]
+        def confirmations(meta)
+          Array(meta["source"]).grep(Hash).map { it["plan"].to_s.strip }.reject(&:empty?).uniq.size
         end
 
         def audience(meta, path)

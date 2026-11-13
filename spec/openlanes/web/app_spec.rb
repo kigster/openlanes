@@ -558,6 +558,41 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "GET /api/plans/:ordinal/review" do
+    before do
+      plans do |t|
+        t.plan("004.00",
+          :ready_for_review,
+          "web-control-room",
+          files: { "pull-requests.md" => "## Findings: staff-reviewer\n\n### F1 [minor] lib/a.rb:4\n\nSlow.\n" })
+      end
+    end
+
+    it "answers the diff and the findings, with no branch to diff" do
+      get "/api/plans/004/review"
+      expect([last_response.status, body["diff"], body["findings"].map { it.values_at("id", "severity", "ruling") }])
+        .to eq([200, { "stat" => "", "patch" => "", "truncated" => false }, [["F1", "minor", nil]]])
+    end
+
+    it "answers 404 for a plan that is not there" do
+      get "/api/plans/009/review"
+      expect([last_response.status, body["error"]]).to eq([404, "there is no plan 009.00"])
+    end
+
+    it "runs git in the root the context names, not the parent of a .plans that lives elsewhere" do
+      diffs = []
+      stub_const("OpenLanes::Web::BranchDiff",
+        Class.new do
+          define_method(:initialize) { |root:, **| diffs << root }
+          define_method(:call) { |_feature| { stat: "", patch: "", truncated: false } }
+        end)
+      elsewhere = Dir.mktmpdir
+      app_context = OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, root: elsewhere, url: "memory://")
+      response = Rack::MockRequest.new(OpenLanes::Web.app(app_context)).get("/api/plans/004/review", "HTTP_HOST" => "127.0.0.1:11000")
+      expect([response.status, diffs]).to eq([200, [elsewhere]])
+    end
+  end
+
   describe "GET /api/plans/:ordinal/files" do
     before do
       plans do |t|

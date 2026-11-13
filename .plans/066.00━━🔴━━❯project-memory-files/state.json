@@ -1,0 +1,436 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "066.00",
+    "slug": "project-memory-files"
+  },
+  "state": "rejected",
+  "updated_at": "2026-11-13T02:03:28-08:00",
+  "stages": [
+    {
+      "agent": "planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-11-12T22:55:56-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "bc189835-ad74-40b0-862a-018b128bff16",
+      "to": "planned",
+      "finished_at": "2026-11-12T22:59:30-08:00",
+      "up": 822152,
+      "down": 18567,
+      "seconds": 212.4,
+      "note": "completed - 13 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "planned",
+      "started_at": "2026-11-13T01:16:46-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "4e212dca-42af-4e73-9405-93315d7dcb52",
+      "to": "ready_for_review",
+      "finished_at": "2026-11-13T01:40:36-08:00",
+      "up": 709632,
+      "down": 1350,
+      "seconds": 1416.4,
+      "note": "completed - 108 tool calls; opened https://github.com/kigster/openlanes/pull/237",
+      "moves": 5
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_review",
+      "started_at": "2026-11-13T01:40:48-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "b345c089-7b81-41e8-8a6d-dd18ac458143",
+      "verdict": "passed",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-13T01:41:40-08:00",
+      "up": 474990,
+      "down": 5529,
+      "seconds": 51.2,
+      "note": "completed - 4 tool calls; passed; waiting for security-reviewer, staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-13T01:40:49-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "fe7b3967-255e-454f-90c1-2ec320802b96",
+      "verdict": "passed",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-13T01:41:49-08:00",
+      "up": 693465,
+      "down": 6448,
+      "seconds": 59.6,
+      "note": "completed - 7 tool calls; passed; waiting for staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-13T01:41:41-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d3f22954-1952-44bf-a7af-da9a02eb34af",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "rejected",
+      "finished_at": "2026-11-13T01:43:17-08:00",
+      "up": 677943,
+      "down": 6764,
+      "seconds": 89.9,
+      "note": "completed - 6 tool calls; review review-rejected (rejected 1/2)",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-13T01:43:19-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "dbb1449a-de6c-4b01-a42d-237f0b74d338",
+      "to": "rejected",
+      "finished_at": "2026-11-13T01:47:46-08:00",
+      "up": 1136716,
+      "down": 13063,
+      "seconds": 265.1,
+      "note": "claude exited 1: Failed to authenticate. API Error: 403 Attention Required! | Cloudflare - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261113-014319-066.00-backend-coder-9345-3f10.ndjson",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-13T01:53:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "dbb1449a-de6c-4b01-a42d-237f0b74d338"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-12T22:56:08-08:00",
+      "agent": "planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:59:15-08:00",
+      "agent": "planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "backend-coder"
+    },
+    {
+      "at": "2026-11-13T01:16:56-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:32:23-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:40:16-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:40:58-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:40:58-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:41:31-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-13T01:41:44-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-13T01:41:53-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:43:00-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-13T01:43:30-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:53:13-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T02:03:20-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 2,
+      "note": "F1-F3 fixed with specs; F102/F202 fixed; rspec 6435/0 failures, rubocop clean; pull-requests.md answers not written (plan folder alock held by harness)",
+      "next": "design-reviewer"
+    }
+  ],
+  "messages": [],
+  "moves": 7,
+  "memory": {
+    "planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "PRs 196 and 218 already merged Inbox, Candidate, Proposal, Curation, Promotion, Secrets, agents/curator.md and the memory curate/approve/promote/scan commands; this plan only wires them up"
+            },
+            {
+              "kind": "decision",
+              "text": "depends_on: [none]. The read and write classes are already on main. Plan 067.00 (moving .openlanes.yml) shares files but is not a dependency"
+            },
+            {
+              "kind": "decision",
+              "text": "Promotion: seen in 2 plans or approved by a person. The memory PR is always separate, branched from the default branch. No usage.json: confirmations live in the lesson's sources; any future citation counter goes in XDG state"
+            },
+            {
+              "kind": "decision",
+              "text": "7 back-end units: B1 memory PR via Publisher, B2 auto-curation when a plan ends plus the --no-memory gate, B4 .openlanes scan in suite and CI, B5 events report memory on vs off, B6 ranking by confirmations, B7 integration check. B5 runs after B2"
+            },
+            {
+              "kind": "note",
+              "text": "The alock on the plan folder belonged to the harness (pid 30962, 'planner on 066.00'), i.e. this invocation, so I wrote under it"
+            },
+            {
+              "kind": "done",
+              "text": "Wrote plan.md, added depends_on: [none] to spec.md, signed Completed --next backend-coder"
+            }
+          ]
+        }
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Full suite: 6409 examples, 1 failure (stale docs/architecture, regenerated; spec/openlanes/docs green after), 9 pending, which were already pending before. Rubocop 0 offenses. Signed Completed"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "dbb1449a-de6c-4b01-a42d-237f0b74d338",
+        "through": 1
+      }
+    },
+    "design-reviewer": {
+      "rounds": {},
+      "held": {
+        "session": "b345c089-7b81-41e8-8a6d-dd18ac458143",
+        "through": 0
+      }
+    },
+    "security-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Security review of PR 237 done: no critical findings. F101 (instruction deny-list is bypassable, minor) and F102 (hold_back can silently delete tracked lessons, minor). Signed Completed, passed."
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "fe7b3967-255e-454f-90c1-2ec320802b96",
+        "through": 0
+      }
+    },
+    "staff-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "F1 critical: Publication promotes against the root inbox, so a failed push or gh call deletes uncommitted candidates for good. Verdict rejected 1/2"
+            },
+            {
+              "kind": "note",
+              "text": "F2 minor (Curating.snapshot means a plan whose curation failed is never retried), F3 minor (Compounding counts rounds across runs but credits them all to the approving run)"
+            },
+            {
+              "kind": "done",
+              "text": "Findings F1-F3 in pull-requests.md, comment on PR 237, signed Completed --note 'rejected 1/2'"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "d3f22954-1952-44bf-a7af-da9a02eb34af",
+        "through": 0
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:31:47-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T01:34:46-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "design-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:40:50-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-13T01:41:40-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:40:50-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-13T01:41:49-08:00"
+    },
+    {
+      "number": 4,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:41:42-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-13T01:43:17-08:00"
+    },
+    {
+      "number": 5,
+      "agent": "backend-coder",
+      "state": "rejected",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T01:47:49-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T01:52:59-08:00"
+    }
+  ],
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-13T01:32:16-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "B1",
+        "B2",
+        "B4",
+        "B5",
+        "B6",
+        "B7"
+      ],
+      "remaining": [
+        "full-suite confirmation"
+      ],
+      "next_step": "Run bundle exec rspec; one F appeared mid-run before docs/architecture was regenerated. Fix any failure, rerun rubocop, sign Completed",
+      "files_touched": [
+        "lib/openlanes/memory/publication.rb",
+        "lib/openlanes/vcs/publisher.rb",
+        "lib/openlanes/engine/curating.rb",
+        "lib/openlanes/engine/run_workflow.rb",
+        "lib/openlanes/engine/runner.rb",
+        "lib/openlanes/events/compounding.rb",
+        "lib/openlanes/events/report.rb",
+        "lib/openlanes/memory/inbox.rb",
+        "lib/openlanes/memory/lesson.rb",
+        "lib/openlanes/memory/library.rb",
+        "lib/openlanes/cli/memory/subcommands/promote.rb",
+        "lib/openlanes/cli/memory/subcommands/curate.rb",
+        "spec/integration/memory_compounding_spec.rb"
+      ]
+    }
+  }
+}
