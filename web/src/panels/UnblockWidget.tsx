@@ -4,7 +4,7 @@ import { useEffect, type KeyboardEvent } from "react";
 import type { Plan } from "../api/types";
 import { AskCard } from "./AskCard";
 import { asksOf } from "./question";
-import { useSettled } from "./asks";
+import { useReopened, useSettled } from "./asks";
 import type { SendCommand } from "./support";
 
 export interface UnblockWidgetProps {
@@ -16,6 +16,7 @@ export interface UnblockWidgetProps {
 }
 
 export function UnblockWidget({ plan, onCommand, onClose }: UnblockWidgetProps) {
+  useReopened(plan ? [plan] : []);
   const settled = useSettled();
   // Opened from the pill, a held question shows too: tagged held blocked, with Release hold.
   const ask = plan ? asksOf([plan]).find((a) => !settled.some((s) => s.id === a.id)) : undefined;
