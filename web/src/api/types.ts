@@ -197,6 +197,7 @@ export interface ModelChoice {
   label: string; // "Sonnet 5.5"
   rates: { in: number; out: number } | null; // dollars per million tokens; null for a model nobody has priced
   context: number; // tokens the context window holds
+  estimated?: boolean; // the rates are its tier's, not its own: Anthropic listed the model before anyone priced it here
 }
 
 /** What one coding CLI can do, as its adapter declares it. */

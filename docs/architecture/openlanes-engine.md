@@ -6,6 +6,7 @@
 classDiagram
   class OpenLanes["OpenLanes"]
   <<module>> OpenLanes
+  class OpenLanes__Adapters__Claude__Catalogue["OpenLanes::Adapters::Claude::Catalogue"]
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
   class OpenLanes__Agents__Dealing["OpenLanes::Agents::Dealing"]
@@ -435,6 +436,7 @@ classDiagram
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__Verdict : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__UI : uses
+  OpenLanes__Engine__RunWorkflow ..> OpenLanes__Adapters__Claude__Catalogue : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Names : uses

@@ -42,12 +42,12 @@ classDiagram
   OpenLanes ..> OpenLanes__Plans : 5
   OpenLanes ..> OpenLanes__Setup : 1
   OpenLanes ..> OpenLanes__UI : 1
-  OpenLanes__Adapters ..> OpenLanes : 1
+  OpenLanes__Adapters ..> OpenLanes : 2
   OpenLanes__Adapters ..> OpenLanes__Execution : 2
   OpenLanes__Adapters ..> OpenLanes__Live : 1
   OpenLanes__Adapters ..> OpenLanes__Log : 1
   OpenLanes__Adapters ..> OpenLanes__Plans : 1
-  OpenLanes__Adapters ..> OpenLanes__UI : 1
+  OpenLanes__Adapters ..> OpenLanes__UI : 2
   OpenLanes__Agents ..> OpenLanes : 4
   OpenLanes__Agents ..> OpenLanes__Adapters : 4
   OpenLanes__Agents ..> OpenLanes__Engine : 2
@@ -87,6 +87,7 @@ classDiagram
   OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__UI : 1
   OpenLanes__Engine ..> OpenLanes : 37
+  OpenLanes__Engine ..> OpenLanes__Adapters : 1
   OpenLanes__Engine ..> OpenLanes__Agents : 19
   OpenLanes__Engine ..> OpenLanes__Apps : 4
   OpenLanes__Engine ..> OpenLanes__Arbitration : 5

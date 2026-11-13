@@ -328,7 +328,8 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       subject(:claude) { snapshot[:adapters].first }
 
       it { is_expected.to include(name: "claude", available: nil, reason: nil, checked_at: nil) }
-      it { expect(claude[:models].map { it[:id] }).to eq(%w[claude-opus-5-5 claude-opus-5 claude-sonnet-5-5 claude-sonnet-5 claude-haiku-5-5]) }
+      it { expect(claude[:models].map { it[:id] }).to eq(OpenLanes::Adapters::Claude::Pricing::BUNDLED.map(&:id)) }
+      it("puts Fable first: there is no ceiling") { expect(claude[:models].first[:id]).to eq("claude-fable-5-1") }
       it { expect(claude[:capabilities]).to eq(compacts: true, resumes: true, enforces_tool_denial: true) }
     end
 
@@ -551,7 +552,7 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     let(:car) { snapshot[:plans].first[:cars].first }
 
     it "carries the context the stream reported, against the model's window" do
-      expect(car.slice(:context, :context_limit)).to eq(context: 54_100, context_limit: 200_000)
+      expect(car.slice(:context, :context_limit)).to eq(context: 54_100, context_limit: 1_000_000)
     end
 
     it "prices the car's own tokens at its model's rates" do

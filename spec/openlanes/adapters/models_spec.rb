@@ -4,20 +4,20 @@ RSpec.describe "The adapters' models" do
   describe OpenLanes::Adapters::Claude do
     subject(:adapter) { described_class.new }
 
-    it "offers only what may run, most capable first, priced as the pricing page says" do
+    it "offers every model it ships, Fable at the top, priced as the pricing page says" do
       expect(adapter.models.map(&:wire).first(2)).to eq([
-                                                          { id: "claude-opus-5-5", label: "Opus 5.5", rates: { in: 4, out: 20 }, context: 200_000 },
-                                                          { id: "claude-opus-5", label: "Opus 5", rates: { in: 5, out: 25 }, context: 200_000 }
+                                                          { id: "claude-fable-5-1", label: "Fable 5.1", rates: { in: 10, out: 50 }, context: 1_000_000, estimated: false },
+                                                          { id: "claude-fable-5", label: "Fable 5", rates: { in: 10, out: 50 }, context: 1_000_000, estimated: false }
                                                         ])
     end
 
-    it "keeps Fable priced, but off the menu while Opus is the ceiling" do
-      expect([described_class::CATALOGUE.first.id, adapter.model_entry("fable"), adapter.model_entry("claude-fable-5-1")])
-        .to eq(["claude-fable-5-1", nil, nil])
+    it "puts Fable on the menu" do
+      expect([adapter.model_entry("fable")&.id, adapter.model_entry("claude-fable-5-1")&.id])
+        .to eq(%w[claude-fable-5-1 claude-fable-5-1])
     end
 
     it "gives every model a context window" do
-      expect(adapter.models.map(&:context).uniq).to eq([200_000])
+      expect(adapter.models.map(&:context).uniq.sort).to eq([200_000, 1_000_000])
     end
 
     it "resolves a full id, an alias, and no name to a model" do
@@ -28,6 +28,11 @@ RSpec.describe "The adapters' models" do
 
     it "takes an alias only when it is exactly a tier" do
       expect(%w[not-opus sonnet-old claude-opus].map { adapter.model_entry(it) }).to eq([nil, nil, nil])
+    end
+
+    it "prices a model it has never seen at its tier's rate, and says the price is a guess" do
+      entry = adapter.model_entry("claude-opus-6")
+      expect([entry.label, entry.rate_in, entry.rate_out, entry.estimated]).to eq(["Opus 6", 4, 20, true])
     end
 
     it "sets its autocompact threshold for the child" do

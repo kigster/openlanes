@@ -10,6 +10,10 @@ classDiagram
   class OpenLanes__Adapters__Base["Base"]
   class OpenLanes__Adapters__Capabilities["Capabilities"]
   class OpenLanes__Adapters__Claude["Claude"]
+  class OpenLanes__Adapters__Claude__Catalogue["Claude::Catalogue"]
+  class OpenLanes__Adapters__Claude__ModelCache["Claude::ModelCache"]
+  class OpenLanes__Adapters__Claude__Pricing["Claude::Pricing"]
+  <<module>> OpenLanes__Adapters__Claude__Pricing
   class OpenLanes__Adapters__Codex["Codex"]
   class OpenLanes__Adapters__Gemini["Gemini"]
   class OpenLanes__Adapters__Gemini__Policy["Gemini::Policy"]
@@ -47,8 +51,15 @@ classDiagram
   OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Claude --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Capabilities : uses
-  OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Claude ..> OpenLanes__Adapters__Claude__Catalogue : uses
   OpenLanes__Adapters__Claude ..> OpenLanes__Execution__Transcript : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude__ModelCache : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Adapters__Claude__Pricing : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__Error : uses
+  OpenLanes__Adapters__Claude__Catalogue ..> OpenLanes__UI : uses
+  OpenLanes__Adapters__Claude__ModelCache ..> OpenLanes__Adapters__Model : uses
+  OpenLanes__Adapters__Claude__Pricing ..> OpenLanes__Adapters__Model : uses
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Availability : uses
   OpenLanes__Adapters__Codex --|> OpenLanes__Adapters__Base : inherits
   OpenLanes__Adapters__Codex ..> OpenLanes__Adapters__Capabilities : uses
