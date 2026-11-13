@@ -1,0 +1,182 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "066.00",
+    "slug": "project-memory-files"
+  },
+  "state": "building",
+  "updated_at": "2026-11-13T01:40:22-08:00",
+  "stages": [
+    {
+      "agent": "planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-11-12T22:55:56-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "bc189835-ad74-40b0-862a-018b128bff16",
+      "to": "planned",
+      "finished_at": "2026-11-12T22:59:30-08:00",
+      "up": 822152,
+      "down": 18567,
+      "seconds": 212.4,
+      "note": "completed - 13 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "planned",
+      "started_at": "2026-11-13T01:16:46-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/066.00-project-memory-files",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "4e212dca-42af-4e73-9405-93315d7dcb52"
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-12T22:56:08-08:00",
+      "agent": "planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T22:59:15-08:00",
+      "agent": "planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "backend-coder"
+    },
+    {
+      "at": "2026-11-13T01:16:56-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:32:23-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T01:40:16-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1
+    }
+  ],
+  "messages": [],
+  "moves": 4,
+  "memory": {
+    "planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "PRs 196 and 218 already merged Inbox, Candidate, Proposal, Curation, Promotion, Secrets, agents/curator.md and the memory curate/approve/promote/scan commands; this plan only wires them up"
+            },
+            {
+              "kind": "decision",
+              "text": "depends_on: [none]. The read and write classes are already on main. Plan 067.00 (moving .openlanes.yml) shares files but is not a dependency"
+            },
+            {
+              "kind": "decision",
+              "text": "Promotion: seen in 2 plans or approved by a person. The memory PR is always separate, branched from the default branch. No usage.json: confirmations live in the lesson's sources; any future citation counter goes in XDG state"
+            },
+            {
+              "kind": "decision",
+              "text": "7 back-end units: B1 memory PR via Publisher, B2 auto-curation when a plan ends plus the --no-memory gate, B4 .openlanes scan in suite and CI, B5 events report memory on vs off, B6 ranking by confirmations, B7 integration check. B5 runs after B2"
+            },
+            {
+              "kind": "note",
+              "text": "The alock on the plan folder belonged to the harness (pid 30962, 'planner on 066.00'), i.e. this invocation, so I wrote under it"
+            },
+            {
+              "kind": "done",
+              "text": "Wrote plan.md, added depends_on: [none] to spec.md, signed Completed --next backend-coder"
+            }
+          ]
+        }
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Full suite: 6409 examples, 1 failure (stale docs/architecture, regenerated; spec/openlanes/docs green after), 9 pending, which were already pending before. Rubocop 0 offenses. Signed Completed"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "4e212dca-42af-4e73-9405-93315d7dcb52",
+        "through": 1
+      }
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-13T01:31:47-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-13T01:34:46-08:00"
+    }
+  ],
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-13T01:32:16-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "done": [
+        "B1",
+        "B2",
+        "B4",
+        "B5",
+        "B6",
+        "B7"
+      ],
+      "remaining": [
+        "full-suite confirmation"
+      ],
+      "next_step": "Run bundle exec rspec; one F appeared mid-run before docs/architecture was regenerated. Fix any failure, rerun rubocop, sign Completed",
+      "files_touched": [
+        "lib/openlanes/memory/publication.rb",
+        "lib/openlanes/vcs/publisher.rb",
+        "lib/openlanes/engine/curating.rb",
+        "lib/openlanes/engine/run_workflow.rb",
+        "lib/openlanes/engine/runner.rb",
+        "lib/openlanes/events/compounding.rb",
+        "lib/openlanes/events/report.rb",
+        "lib/openlanes/memory/inbox.rb",
+        "lib/openlanes/memory/lesson.rb",
+        "lib/openlanes/memory/library.rb",
+        "lib/openlanes/cli/memory/subcommands/promote.rb",
+        "lib/openlanes/cli/memory/subcommands/curate.rb",
+        "spec/integration/memory_compounding_spec.rb"
+      ]
+    }
+  }
+}
