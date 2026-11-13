@@ -528,3 +528,36 @@ export interface DependencyGraph {
   plans: DependencyPlan[];
   edges: DependencyEdge[];
 }
+
+/** One node of the JSON Schema GET /api/settings serves; only the keywords the form reads are typed. */
+export interface SettingsSchemaNode {
+  type?: string | string[];
+  description?: string;
+  default?: unknown;
+  enum?: Array<string | number | boolean | null>;
+  minimum?: number;
+  properties?: Record<string, SettingsSchemaNode>;
+}
+
+export type SettingsValues = Record<string, unknown>;
+
+/** GET /api/settings (plan 058, contract.md). */
+export interface SettingsDocument {
+  schema: SettingsSchemaNode;
+  keys: string[];
+  values: SettingsValues;
+  defaults: SettingsValues;
+  etag: string;
+  /** The main checkout's branch; null when its HEAD is detached. */
+  branch: string | null;
+}
+
+export interface SettingsFieldError {
+  path: string[];
+  message: string;
+}
+
+export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed";
+
+/** PUT /api/settings, 200. */
+export type SettingsSaveResult = { changed: false } | { changed: true; commit: string; etag: string };

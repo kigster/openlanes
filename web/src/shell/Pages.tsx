@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { DependenciesPage } from "../dependencies/DependenciesPage";
+import { SettingsPage } from "../settings/SettingsPage";
 import { Nav } from "./Nav";
 import { useRoute } from "./useRoute";
 
@@ -13,6 +14,7 @@ export function Pages({ children }: { children: ReactNode }) {
     <>
       <Nav route={route} onNavigate={navigate} />
       {route === "/dependencies" && <DependenciesPage />}
+      {route === "/settings" && <SettingsPage />}
       <div className="page-board" style={{ display: route === "/" ? "contents" : "none" }}>
         {children}
       </div>

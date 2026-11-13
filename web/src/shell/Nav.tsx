@@ -4,7 +4,7 @@ import type { Route } from "./useRoute";
 const PAGES: Array<{ route: Route; label: string }> = [
   { route: "/", label: "Board" },
   { route: "/dependencies", label: "Plan dependencies" },
-  // Plan 058 adds "Project settings" here.
+  { route: "/settings", label: "Project settings" },
 ];
 
 /** The page links, fixed to the top. A plain click switches page in place; a modified one opens the real address. */

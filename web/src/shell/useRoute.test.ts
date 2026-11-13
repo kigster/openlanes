@@ -6,6 +6,8 @@ afterEach(() => window.history.replaceState(null, "", "/"));
 it("reads the page from the path", () => {
   expect(routeOf("/dependencies")).toBe("/dependencies");
   expect(routeOf("/dependencies/")).toBe("/dependencies");
+  expect(routeOf("/settings")).toBe("/settings");
+  expect(routeOf("/settings/")).toBe("/settings");
   expect(routeOf("/anything")).toBe("/");
 });
 
