@@ -62,7 +62,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 11
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 26
+  OpenLanes__CLI ..> OpenLanes : 28
   OpenLanes__CLI ..> OpenLanes__Adapters : 3
   OpenLanes__CLI ..> OpenLanes__Agents : 12
   OpenLanes__CLI ..> OpenLanes__Apps : 5
@@ -80,14 +80,14 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Memory : 9
   OpenLanes__CLI ..> OpenLanes__Plans : 26
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
-  OpenLanes__CLI ..> OpenLanes__Setup : 8
+  OpenLanes__CLI ..> OpenLanes__Setup : 9
   OpenLanes__CLI ..> OpenLanes__Skills : 1
   OpenLanes__CLI ..> OpenLanes__Supervision : 9
-  OpenLanes__CLI ..> OpenLanes__UI : 19
+  OpenLanes__CLI ..> OpenLanes__UI : 20
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
   OpenLanes__CLI ..> OpenLanes__Web : 14
-  OpenLanes__Config ..> OpenLanes : 2
+  OpenLanes__Config ..> OpenLanes : 3
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Apps : 1
   OpenLanes__Config ..> OpenLanes__CLI : 1
@@ -95,10 +95,10 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Live : 1
   OpenLanes__Config ..> OpenLanes__Plans : 1
   OpenLanes__Config ..> OpenLanes__Setup : 1
-  OpenLanes__Coverage ..> OpenLanes : 4
+  OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__Config : 1
   OpenLanes__Coverage ..> OpenLanes__UI : 1
-  OpenLanes__Engine ..> OpenLanes : 31
+  OpenLanes__Engine ..> OpenLanes : 32
   OpenLanes__Engine ..> OpenLanes__Adapters : 1
   OpenLanes__Engine ..> OpenLanes__Agents : 20
   OpenLanes__Engine ..> OpenLanes__Apps : 4
@@ -173,7 +173,7 @@ classDiagram
   OpenLanes__Presentation ..> OpenLanes__Lifecycle : 2
   OpenLanes__Presentation ..> OpenLanes__Plans : 12
   OpenLanes__Presentation ..> OpenLanes__UI : 3
-  OpenLanes__Setup ..> OpenLanes : 3
+  OpenLanes__Setup ..> OpenLanes : 6
   OpenLanes__Setup ..> OpenLanes__Adapters : 2
   OpenLanes__Setup ..> OpenLanes__Config : 4
   OpenLanes__Setup ..> OpenLanes__Live : 2

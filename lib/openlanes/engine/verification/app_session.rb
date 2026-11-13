@@ -81,7 +81,7 @@ module OpenLanes
           return <<~MARKDOWN if statuses.empty?
             # The app
 
-            This project declares no `app:` in `.openlanes.yml`, so nothing was started.
+            This project declares no `app:` in `.openlanes/config.yml`, so nothing was started.
             Follow `## How to test` through the shell (M11).
           MARKDOWN
 

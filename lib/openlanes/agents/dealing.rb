@@ -33,7 +33,7 @@ module OpenLanes
       # Every adapter usable: what a run without the probe's answers assumes.
       ANY = ->(_name) { true }
 
-      # The project's own: `review.adapters` and `adapter:` from `.openlanes.yml`.
+      # The project's own: `review.adapters` and `adapter:` from `.openlanes/config.yml`.
       #
       # @param usable [#call]
       # @param replacing [Array<String>] reviewers running a failed round again

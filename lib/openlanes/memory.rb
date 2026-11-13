@@ -7,7 +7,7 @@ module OpenLanes
   # prompt: one lesson per markdown file, each naming the agents it is for
   # (docs/continuous-learning.md, phase 1).
   #
-  # Two scopes. The project's lessons are committed beside `.openlanes.yml`,
+  # Two scopes. The project's lessons are committed beside `.openlanes/config.yml`,
   # so everyone working on it teaches and reads the same memory, and they
   # count only once merged: they are read from the default branch, never
   # from a checkout an agent can write to. The global

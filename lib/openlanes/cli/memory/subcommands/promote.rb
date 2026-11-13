@@ -10,7 +10,7 @@ module OpenLanes
 
         dry_run_option "Write nothing; print what would be promoted, confirmed or left waiting"
         option :local, type: :boolean, default: false, desc: "Write the lesson files into this checkout and open no pull request"
-        option :memory, type: :boolean, default: true, desc: "--no-memory (or `memory: false` in .openlanes.yml) refuses to promote"
+        option :memory, type: :boolean, default: true, desc: "--no-memory (or `memory: false` in .openlanes/config.yml) refuses to promote"
 
         example [
           "-n      # what would change",

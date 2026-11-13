@@ -22,7 +22,9 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
     section("command" => command, "report" => report, "format" => format, "minimum" => minimum)
   end
 
-  def section(coverage) = File.write(File.join(dir, ".openlanes.yml"), YAML.dump("coverage" => coverage))
+  def config_file = File.join(dir, OpenLanes::Config::FILE).tap { FileUtils.mkdir_p(File.dirname(it)) }
+
+  def section(coverage) = File.write(config_file, YAML.dump("coverage" => coverage))
 
   def printing(report_command, command: "true")
     section("command" => command, "report_command" => report_command, "minimum" => minimum)
@@ -119,28 +121,28 @@ RSpec.describe OpenLanes::Engine::CoverageGate do
     end
   end
 
-  it "withholds as unconfigured when .openlanes.yml has no coverage: section" do
-    File.write(File.join(dir, ".openlanes.yml"), "jobs: 2\n")
+  it "withholds as unconfigured when .openlanes/config.yml has no coverage: section" do
+    File.write(config_file, "jobs: 2\n")
     verdict = gate.call(checkout:)
 
     expect(verdict).to have_attributes(passed?: false,
       unconfigured?: true,
       minimum: nil,
-      reason: ".openlanes.yml in #{dir} has no coverage: section, so nothing was measured")
+      reason: ".openlanes/config.yml in #{dir} has no coverage: section, so nothing was measured")
   end
 
-  it "withholds as unconfigured when there is no .openlanes.yml at all" do
+  it "withholds as unconfigured when there is no .openlanes/config.yml at all" do
     expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: true)
   end
 
   it "withholds, configured, when the section is invalid" do
-    File.write(File.join(dir, ".openlanes.yml"), "coverage:\n  command: true\n")
+    File.write(config_file, "coverage:\n  command: true\n")
 
     expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: false, reason: /coverage: missing key minimum/)
   end
 
   it "withholds, configured, when the file around the section is invalid" do
-    File.write(File.join(dir, ".openlanes.yml"), "jobs: many\n")
+    File.write(config_file, "jobs: many\n")
 
     expect(gate.call(checkout:)).to have_attributes(passed?: false, unconfigured?: false, reason: /jobs: "many"/)
   end

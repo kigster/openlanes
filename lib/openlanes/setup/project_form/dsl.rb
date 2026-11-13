@@ -5,7 +5,7 @@
 # inquirex-webui and inquirex-widget front ends.
 #
 # Its answers fill two Setup::Architecture snapshots, serialized under
-# `architecture_decisions:` in `.openlanes.yml`: what the repository holds now,
+# `architecture_decisions:` in `.openlanes/config.yml`: what the repository holds now,
 # and what the person wants.
 #
 # It holds no per-run data, so it stays one valid graph. The scan and the

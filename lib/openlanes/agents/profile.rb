@@ -13,8 +13,8 @@ module OpenLanes
     #   2. spec.md `phases.<phase>`            (adapter, model, effort)
     #   3. spec.md `depth`                     (effort only)
     #   4. the agent's frontmatter
-    #   5. `.openlanes.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
-    #   6. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
+    #   5. `.openlanes/config.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
+    #   6. `.openlanes/config.yml` `adapter:`         (adapter only, plan 040)
     #   7. {Adapters::DEFAULT}                 (adapter only)
     #
     # {Dealing} answers 0, 5 and 6.
@@ -47,7 +47,7 @@ module OpenLanes
       # @param agent [OpenLanes::Agents::Agent]
       # @param spec [OpenLanes::Plans::Spec, nil]
       # @param model [String, nil] what `run --model` typed
-      # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes.yml` gives
+      # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes/config.yml` gives
       #   an agent that names no adapter of its own
       # @param diff_lines [Integer, nil] the plan's changed lines, insertions
       #   plus deletions; nil when unknown, and then no `small_diff:` applies

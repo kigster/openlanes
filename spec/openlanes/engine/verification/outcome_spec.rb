@@ -188,6 +188,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
                                  .sign!(agent: "verifier", round: 1, status: "Completed", note: "rejected")
       outcome
       # Q1 answered mvp after the run started, with no merge.max_rejections.
+      FileUtils.mkdir_p(File.join(repo_root, OpenLanes::Project::DIR))
       File.write(File.join(repo_root, OpenLanes::Config::FILE), "desired_codebase_quality: mvp\n")
     end
 
@@ -597,7 +598,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       let(:unconfigured) do
         OpenLanes::Engine::CoverageGate::Verdict.new(passed: false,
           unconfigured: true,
-          reason: ".openlanes.yml in /x has no coverage: section, so nothing was measured")
+          reason: ".openlanes/config.yml in /x has no coverage: section, so nothing was measured")
       end
 
       before do
@@ -613,11 +614,11 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           expect(result).to have_attributes(kind: :rejected, to: :rejected)
           expect(result.note).to include("sent back PR #1, sent back for setup, not counted (0 of 2)")
           expect(comments.first).to include("verifier: sent back for setup",
-            "Add a `coverage:` section to `.openlanes.yml`",
+            "Add a `coverage:` section to `.openlanes/config.yml`",
             "report_command:",
             "format: lcov",
             "does not count against `merge.max_rejections`")
-          expect(mail.body).to include("Add a `coverage:` section to `.openlanes.yml` for this stack")
+          expect(mail.body).to include("Add a `coverage:` section to `.openlanes/config.yml` for this stack")
           expect(labels).to eq(%w[review-rejected])
           expect(OpenLanes::Engine::Verification.latest(plan.feature.path).report.verdict).to eq(:rejected)
         end

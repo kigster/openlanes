@@ -4,10 +4,10 @@ module OpenLanes
   module Engine
     # R4's question, `desired_codebase_quality`, put to a person once per
     # project: on the first pull request labelled `review-passed`
-    # while `.openlanes.yml` has no key. It hangs on the plan whose pull
+    # while `.openlanes/config.yml` has no key. It hangs on the plan whose pull
     # request raised it, kept in that plan's `state.json` so it survives a
     # restart, and every other plan waiting on the same answer stays 👀
-    # without asking again. The answer is written into `.openlanes.yml`,
+    # without asking again. The answer is written into `.openlanes/config.yml`,
     # after which nothing asks.
     module QualityQuestion
       # The question's name on its plan, as `X<n>` is an extension's.
@@ -110,7 +110,7 @@ module OpenLanes
       # @param plan_dir [String]
       # @param letter [String] "a", "b" or "c"
       # @param by [String]
-      # @param root [String] the project root, where `.openlanes.yml` lives
+      # @param root [String] the project root, where `.openlanes/config.yml` lives
       # @param at [Time]
       # @return [Symbol, nil] the quality chosen; nil when the question was not open
       # @raise [ArgumentError] on a letter that is not one of {CHOICES}
@@ -129,7 +129,7 @@ module OpenLanes
       # an earlier run left open on the page is settled with it, so the
       # page stops asking what the terminal already answered.
       #
-      # @param root [String] the project root, where `.openlanes.yml` lives
+      # @param root [String] the project root, where `.openlanes/config.yml` lives
       # @param plans_dir [String]
       # @param quality [Symbol] one of {Config::QUALITIES}
       # @param by [String]
@@ -148,9 +148,10 @@ module OpenLanes
       #
       # @return [void]
       def write_key(root, quality)
-        path = File.join(root, Config::FILE)
+        path = Project.config_path(root)
         return unless Config.load(root).quality_unset?
 
+        FileUtils.mkdir_p(File.dirname(path))
         text = File.file?(path) ? File.read(path, encoding: "UTF-8") : ""
         text += "\n" unless text.empty? || text.end_with?("\n")
         File.write(path, "#{text}desired_codebase_quality: #{quality}\n")

@@ -5,7 +5,7 @@
 RSpec.describe OpenLanes::Engine::QualityQuestion, :tree do
   let(:tree) { OpenLanes::Plans::Tree.new(dir: plans_root) }
   let(:root) { File.dirname(plans_root) }
-  let(:config) { File.join(root, OpenLanes::Config::FILE) }
+  let(:config) { File.join(root, OpenLanes::Config::FILE).tap { FileUtils.mkdir_p(File.dirname(it)) } }
 
   before do
     plans do |t|

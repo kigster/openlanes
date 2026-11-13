@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Setup
-    # `architecture_decisions:` in `.openlanes.yml`: what the repository holds
+    # `architecture_decisions:` in `.openlanes/config.yml`: what the repository holds
     # now, what the person wants, and how the code gets from one to the other.
     #
     # @!attribute [r] detail

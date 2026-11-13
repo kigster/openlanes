@@ -7,7 +7,7 @@ module OpenLanes
   module Engine
     # Decides whether a pull request's checkout has earned `ready-to-merge` on
     # coverage (decision M15): runs the test command the checkout's
-    # `.openlanes.yml` declares under `coverage:`, reads the line figure (from
+    # `.openlanes/config.yml` declares under `coverage:`, reads the line figure (from
     # the report it wrote, or from what `report_command` prints), and compares
     # it with the declared minimum.
     #
@@ -54,7 +54,7 @@ module OpenLanes
       #     it never ran
       # @!attribute [r] unconfigured
       #   @return [Boolean] withheld only because the checkout's
-      #     `.openlanes.yml` has no `coverage:` section
+      #     `.openlanes/config.yml` has no `coverage:` section
       Verdict = Data.define(:passed, :percent, :minimum, :reason, :config, :output, :unconfigured) do
         def initialize(percent: 0.0, minimum: nil, config: nil, output: [], unconfigured: false, **rest) = super
 

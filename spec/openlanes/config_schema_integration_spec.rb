@@ -20,6 +20,7 @@ RSpec.describe "the config schema end to end" do
     out, err, status = Open3.capture3(exe, "init", "-n", "-y", "--project", "Demo", "--jobs", "3", chdir: repo, stdin_data: "")
     raise "openlanes init failed: #{err}" unless status.success?
 
+    FileUtils.mkdir_p(File.dirname(file))
     File.write(file, out)
   end
 

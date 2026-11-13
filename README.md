@@ -44,7 +44,7 @@ brew install openlanes
 
 # cd into your project directory, which can be nearly blank or can be an established codebase
 ol setup      # downloads dependencies, ensures your `gh` is authenticated or runs `gh auth login -w`
-ol init       # interactively creates the configuration file .openlanes.yml for project specific settings
+ol init       # interactively creates the configuration file .openlanes/config.yml for project specific settings
 ol start -j 8 # number of concurrent processes allowed
 ```
 
@@ -197,7 +197,7 @@ Run these anywhere inside your project:
 
 ```bash
 ol setup
-ol init                    # .openlanes.yml and .plans/ at the project root; -y asks nothing
+ol init                    # .openlanes/config.yml and .plans/ at the project root; -y asks nothing
 ol create tax rule dsl     # .plans/000.00━━⚪━━❯tax-rule-dsl/spec.md, drafted and opened
                                   # finish the brief in spec.md and save it
 openlanes run 001 -n              # dry run: which agent would take plan 001
@@ -208,7 +208,7 @@ openlanes plans              # every open plan, its state and its pull requests;
 
 `openlanes start` runs until you press **Stop Local Workers** on the page, Ctrl-C, or run `openlanes stop`; it restarts the engine or the page if either crashes. Answer the agents' questions under **Needs You**, create new plans, and watch the board. For scripts and CI, `openlanes run 001,002` works just those plans, headless, and stops at the first round in which none of them changed state; `--until planned` stops them earlier.
 
-`init` scans the repository, then asks about what it holds now and what you want it to become, with what it found preselected and yours to change. The first question is how much detail you want to give: low, medium or high ask about 10, 15 or 21 topics, from layout, languages, task runner, how the app starts and how development secrets are kept, down to search and observability. Most questions take several answers. It then asks who merges a reviewed pull request (`human` or `auto`) and the desired codebase quality (`high` or `mvp`). The answers are written under `architecture_decisions:` in `.openlanes.yml`, the agents read them from there, and CI you asked for and the folder lacks is scaffolded. The stack is also written to `docs/decisions/stack.md`.
+`init` scans the repository, then asks about what it holds now and what you want it to become, with what it found preselected and yours to change. The first question is how much detail you want to give: low, medium or high ask about 10, 15 or 21 topics, from layout, languages, task runner, how the app starts and how development secrets are kept, down to search and observability. Most questions take several answers. It then asks who merges a reviewed pull request (`human` or `auto`) and the desired codebase quality (`high` or `mvp`). The answers are written under `architecture_decisions:` in `.openlanes/config.yml`, the agents read them from there, and CI you asked for and the folder lacks is scaffolded. The stack is also written to `docs/decisions/stack.md`.
 
 If something can read it, `init` also asks you to describe the app, and preselects what the description states. It tells you where the description goes before asking. It uses the first of: a `claude`, `codex`, `pi`, `grok` or `gemini` CLI that is signed in, however it authenticates, in a read-only mode; `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `GEMINI_API_KEY` or `OPENROUTER_API_KEY`; a local Ollama. With none of them it asks every question. `OPENLANES_EXTRACTION_MODEL` picks the model.
 
@@ -223,8 +223,10 @@ openlanes init --reconfigure -n   # the diff only, nothing written
 Under `-y` it records what the scan found, never a recommendation; the defaults are `--merge-by human` and no `desired_codebase_quality` (the first review-passed review asks it). A folder with two languages gets no `docs/decisions/stack.md`.
 
 > [!NOTE]
->
-> `.openlanes.yml` files written by this release can hold `architecture_decisions:`. An older openlanes refuses that key as unknown, so upgrade every machine that reads the file. A file with `ci:` or `stack:` still reads, and `init --reconfigure` moves them over.
+> The project file lives at `.openlanes/config.yml`, and the whole `.openlanes/` folder is committed with the project. A project still on the old top-level `.openlanes.yml` keeps working, with a one-line notice on every command; `openlanes config move` (`-n` to preview) moves it across with `git mv`, so its history follows. A project holding both files is refused. The file never holds a secret: a `redis_url` with a password, or a token-shaped value, is refused when it is read; set `REDIS_URL` in the environment instead.
+
+> [!NOTE]
+> `.openlanes/config.yml` files written by this release can hold `architecture_decisions:`. An older openlanes refuses that key as unknown, so upgrade every machine that reads the file. A file with `ci:` or `stack:` still reads, and `init --reconfigure` moves them over.
 
 For a small mechanical task, skip research and planning:
 
@@ -297,7 +299,7 @@ Generated by `openlanes docs`; `openlanes states` draws every transition.
 | ❌ | Discarded | `discarded-reason.md` |
 | 🚮 | Trashed | `trashed-reason.md` |
 
-🧪 sits between review and merge: verifier starts the app the way `.openlanes.yml` says and walks the plan's How to test. 💣 is a ⭕ or 🛑 left too long while other plans depend on it; the run halts until someone answers.
+🧪 sits between review and merge: verifier starts the app the way `.openlanes/config.yml` says and walks the plan's How to test. 💣 is a ⭕ or 🛑 left too long while other plans depend on it; the run halts until someone answers.
 
 Besides those, each plan folder holds `state.json` (each round's agent, model, tokens and time, the agents' signatures, their journals, and the messages between them) and, while building, `implementation-plan.md`, `plan-backend.md` and `plan-frontend.md`.
 
@@ -348,10 +350,10 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 
 | Command                                       | What it does                                                 |
 | :-------------------------------------------- | :----------------------------------------------------------- |
-| `init`                                        | write `.openlanes.yml` at the project root and create `.plans/` |
+| `init`                                        | write `.openlanes/config.yml` at the project root and create `.plans/` |
 | `start`                                       | the engine plus its control room, until Stop Local Workers or Ctrl-C |
 | `web --demo`                                  | replay a sample run in the control room; otherwise `start` serves the page |
-| `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes.yml` `app:` |
+| `project` (`preview`)                         | `start`, `status`, `stop` the app being built, from `.openlanes/config.yml` `app:` |
 | `create` (`new`, `c`)                         | create the next numbered plan folder and its `spec.md`       |
 | `run`                                         | run the agents over the plans named, headless, to a fixed point; `-n` to preview, `--until` to stop early |
 | `plans`                                       | open plans, their states and pull requests (`--all`: archived too) |
@@ -376,11 +378,11 @@ Global flag: `-C, --no-color`.
 
 ## Configuration
 
-- **`.openlanes.yml`** at the project root: `project`, `lane`, `frontend`, `jobs`, `redis_url`, `redis_outage_hours`, `ci_pending_hours` (how long CI may stay pending after verification before the run warns a person, 4 by default; a plan with several open pull requests waits on CI for each, and one built from another branch than the plan's is not run through the coverage gate, so its CI config alone gates it), `desired_codebase_quality`, `merge`, `ci`, `stack`, `chime` (whether the control room dings when a question arrives, on by default; the checkbox under "Needs you" writes it), and per-command defaults under `commands:`. A typed flag beats `spec.md` frontmatter, which beats `.openlanes.yml`, which beats the built-in default. Unknown keys are an error.
+- **`.openlanes/config.yml`** at the project root: `project`, `lane`, `frontend`, `jobs`, `redis_url`, `redis_outage_hours`, `ci_pending_hours` (how long CI may stay pending after verification before the run warns a person, 4 by default; a plan with several open pull requests waits on CI for each, and one built from another branch than the plan's is not run through the coverage gate, so its CI config alone gates it), `desired_codebase_quality`, `merge`, `ci`, `stack`, `chime` (whether the control room dings when a question arrives, on by default; the checkbox under "Needs you" writes it), and per-command defaults under `commands:`. A typed flag beats `spec.md` frontmatter, which beats `.openlanes/config.yml`, which beats the built-in default. Unknown keys are an error.
 - **`spec.md` frontmatter**: `lane`, `frontend`, `depth`, per-phase `adapter` / `model` / `effort`, `implementation_suggestions`, `implementation_requirements`, `task-completed-when`, `how-to-verify`.
 - **`PLANS_DIR`**: the plans directory, `.plans` by default.
-- **A lost Redis** does not stop the run. After 10 seconds without an answer every agent is paused through its control file (its clock stands still), nothing new starts, and the outage is recorded in `.plans/openlanes-state.json`. Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds, never more than 30 seconds apart, each gap drawn at random below that (full jitter) so engines sharing one Redis do not ask in step; `redis_backoff:` in `.openlanes.yml` changes the three (`initial: 1`, `cap: 30`, `jitter: true`). When it answers, the agents resume. If it has not answered within `redis_outage_hours` (1 by default, any positive number), the run shuts down the way `q` does. On resume the log says how long Redis was gone and which copy of the run state won, e.g. `Redis is back after 72s (by heartbeat), run state from file; resuming`: the length comes from this node's last heartbeat in Redis, or from the engine's own clock when Redis came back without one, and the run state from whichever of Redis and `.plans/openlanes-state.json` has the higher `seq`. The board page shows the same as `run.outage`, and warns while the engine has not published for more than 15 seconds. A Redis that restarts empty (no AOF, an old RDB snapshot) does not stop the run either: the engine makes its commands group again (issue #59).
-- **`events:`** in `.openlanes.yml`: `enabled` and `dir` for the opt-in durable run log, read back with `openlanes events report`. See [`docs/events.md`](docs/events.md).
+- **A lost Redis** does not stop the run. After 10 seconds without an answer every agent is paused through its control file (its clock stands still), nothing new starts, and the outage is recorded in `.plans/openlanes-state.json`. Redis is asked again after 1, 1, 2, 3, 5, 8 … seconds, never more than 30 seconds apart, each gap drawn at random below that (full jitter) so engines sharing one Redis do not ask in step; `redis_backoff:` in `.openlanes/config.yml` changes the three (`initial: 1`, `cap: 30`, `jitter: true`). When it answers, the agents resume. If it has not answered within `redis_outage_hours` (1 by default, any positive number), the run shuts down the way `q` does. On resume the log says how long Redis was gone and which copy of the run state won, e.g. `Redis is back after 72s (by heartbeat), run state from file; resuming`: the length comes from this node's last heartbeat in Redis, or from the engine's own clock when Redis came back without one, and the run state from whichever of Redis and `.plans/openlanes-state.json` has the higher `seq`. The board page shows the same as `run.outage`, and warns while the engine has not published for more than 15 seconds. A Redis that restarts empty (no AOF, an old RDB snapshot) does not stop the run either: the engine makes its commands group again (issue #59).
+- **`events:`** in `.openlanes/config.yml`: `enabled` and `dir` for the opt-in durable run log, read back with `openlanes events report`. See [`docs/events.md`](docs/events.md).
 
 ## Further reading
 

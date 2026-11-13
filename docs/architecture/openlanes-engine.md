@@ -433,6 +433,7 @@ classDiagram
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Container : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Engine__QualityQuestion__Choice : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__QualityQuestion ..> OpenLanes__Project : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses

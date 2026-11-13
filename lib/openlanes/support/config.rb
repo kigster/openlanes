@@ -4,7 +4,7 @@ require "date"
 require "yaml"
 
 module OpenLanes
-  # A project's `.openlanes.yml`, at its root:
+  # A project's `.openlanes/config.yml`, at its root:
   #
   #   project: Equilibris App   # heading for INDEX.md; default: the root's name
   #   starts: research          # default for `openlanes create`: one of Spec::STARTS
@@ -367,7 +367,7 @@ module OpenLanes
       # @return [OpenLanes::Config] empty when the root holds no file
       # @raise [OpenLanes::Error] when the file exists and cannot be used
       def load(root)
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
         return new unless File.file?(path)
 
         parse(File.read(path, encoding: "UTF-8"), path:)
@@ -380,7 +380,7 @@ module OpenLanes
       # @return [OpenLanes::Config]
       def current
         root = Project.root || Dir.pwd
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
         key = [path, File.file?(path) && File.mtime(path)]
         return @current.last if @current&.first == key
 
@@ -397,7 +397,8 @@ module OpenLanes
       # @param value [Boolean]
       # @return [String] the file's path
       def write_flag(root, key, value)
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
+        FileUtils.mkdir_p(File.dirname(path))
         text = File.file?(path) ? File.read(path, encoding: "UTF-8") : ""
         line = "#{key}: #{value}"
         if text.match?(/^#{Regexp.escape(key)}:.*$/)
@@ -418,6 +419,7 @@ module OpenLanes
         fail_with(path, "expected a mapping of settings at the top") unless data.is_a?(Hash)
 
         settings = unset_dropped(data.transform_keys(&:to_s))
+        Secrets.refuse!(settings, path)
         unknown = settings.keys - KEYS
         unless unknown.empty?
           fail_with(path,

@@ -35,7 +35,7 @@ You do one small, well-understood change, the kind an engineer would describe in
 
 ## Before you sign `Completed`
 
-Run the project's whole local check yourself, last thing, after your final edit: every test suite the repository has and its linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. You work alone, so both halves are yours. Sign `Completed` only when all of it passes, apart from failures that were there before you started.
+Run the project's whole local check yourself, last thing, after your final edit: every test suite the repository has and its linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes/config.yml` name. You work alone, so both halves are yours. Sign `Completed` only when all of it passes, apart from failures that were there before you started.
 
 - A red test or a lint offense is unfinished work, not a note for the reviewer. Fix it and run the check again.
 - A run from before your last edit does not count, and neither does a run of only the files you touched.

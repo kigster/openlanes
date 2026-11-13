@@ -20,7 +20,7 @@ module OpenLanes
       dry_run_option "Print the declaration and where the command would run; run nothing"
 
       example [
-        "013                  # run .openlanes.yml's coverage.command in plan 013's worktree",
+        "013                  # run .openlanes/config.yml's coverage.command in plan 013's worktree",
         "013 --dry-run        # show what would run, and where"
       ]
 
