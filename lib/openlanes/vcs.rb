@@ -17,6 +17,10 @@ module OpenLanes
     # @return [OpenLanes::Vcs::Mainline]
     def mainline(root:, **) = Mainline.new(root:, **)
 
+    # @param root [String] any checkout of the repository
+    # @return [String] the branch `origin/HEAD` names, e.g. "main"
+    def default_branch(root) = Refresh.default_branch(root)
+
     # @return [OpenLanes::Vcs::Publisher]
     def publisher(**) = Publisher.new(**)
 
