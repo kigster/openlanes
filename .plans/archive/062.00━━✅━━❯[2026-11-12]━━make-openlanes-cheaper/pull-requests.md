@@ -2,7 +2,7 @@
 
 | Pull Request Number | Pull Request Name | Status |
 | ------------------: | :---------------- | -----: |
-| 211 | [\[062.00\](A) Make Openlanes Cheaper](https://github.com/kigster/openlanes/pull/211) | Open 🟡 |
+| 211 | [\[062.00\](A) Make Openlanes Cheaper](https://github.com/kigster/openlanes/pull/211) | Merged 🟣 |
 
 ## Back end, round 1 (backend-coder)
 

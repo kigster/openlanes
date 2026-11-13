@@ -107,3 +107,20 @@ No. The plan adds and changes no HTTP API.
 - B5: `bundle exec rspec spec/openlanes/engine/reviews_spec.rb spec/openlanes/engine/dispatcher_spec.rb`. Only `staff-reviewer` starts first; stage 2 follows its approval; design is skipped when the diff misses its `watches`.
 - B6: `bundle exec rspec spec/openlanes/integration/speed_up_spec.rb`. One install for two worktrees, one snapshot call for three open pull requests, staged review reaching ✅.
 - Front end: none, nothing to see in a browser.
+
+______________________________________________________________________
+
+### B1 (answered) — Pre-existing suite failures are out of scope for this plan
+
+The requirements say the whole `bundle exec rspec` run must exit 0, but 12 examples fail outside the files this plan touches: seven on a clean base checkout (front-end routing in `routing_spec.rb` and `dispatcher_spec.rb`, plus `run_workflow_spec.rb`), four because the shell sets an openlanes admin-login variable (`cli/web_spec.rb`, `cli/engine_command_spec.rb`), and one that needs a live Redis (`redis_outage_spec.rb`). Must they be fixed here?
+
+### D1 (decision) — Accept the 12 failures as baseline; fix them in a separate plan
+
+Answered:
+
+- 2026-11-12
+- By hermes
+
+Treat the 12 pre-existing failures as the baseline for this plan and fix them in a separate plan. This plan goes on to review as it is; the "full suite exits 0" requirement is satisfied when no failures beyond that baseline appear.
+
+> Folded from `blocked.md` by the unblocker on 2026-11-12.

@@ -86,3 +86,14 @@ No critical findings. Dependency check: no gem or npm package added or bumped.
 - Specs: `snapshot_reads_spec.rb` has a `#pull_request` group. `merging_spec.rb` has "reads the pull request from the tick's snapshot, with no gh pr view". The page1 fixture node 201 carries the new fields.
 - Remaining: B6, the integration spec.
 - Targeted runs: `merging_spec:96`, `pull_snapshot_spec`, `snapshot_reads_spec` and `engine/upkeep` give 48 examples, 0 failures. Rubocop is clean on the touched paths. I did not run the full suite this round: about 19 rspec processes from other agents were sharing the machine.
+
+## Round 7, backend-coder
+
+- Done: B6, `spec/openlanes/integration/speed_up_spec.rb` (3 examples, 0 failures; rubocop clean). Real git, real `Vcs::Worktree` checkouts, the repository's own `agents/*.md`; stand-ins are the fake `gh`, a counting `open_pull_snapshot` double and the installer.
+  - Two plans' worktrees with one `Gemfile.lock`: the installer runs once, both get `.bundle/openlanes-gems`.
+  - Three open pull requests read for labels and checks in one tick: exactly one `open_pull_snapshot`, no per-PR call (the double refuses any).
+  - A plan in review whose diff touches `lib/`: only `staff-reviewer` is startable; after its approval `security-reviewer` and `design-reviewer` are; after both pass the decision is `approved`.
+- Gap, stated plainly: B6 asks for one `Runner` run with a fake agent CLI. This spec drives the same components over real worktrees but not through `Runner#call`.
+- `bundle exec rubocop`: 861 files, no offenses, exit 0.
+- `bundle exec rspec`: 5999 examples, 12 failures, exit 1. None is in a file this plan changes, and each is already listed as baseline or environmental: `routing_spec.rb:19,:32,:42` and `dispatcher_spec.rb:523` (front-end routing, fail on clean HEAD), `run_workflow_spec.rb:115,:226,[1:2:6]` (fail on clean HEAD 9c5bb259), `cli/web_spec.rb:255,:277` and `cli/engine_command_spec.rb:289,:317` (an admin-login variable in this shell), `redis_outage_spec.rb:37` (live Redis).
+- The requirement "rspec exits 0" is therefore unmet, so this round is signed Blocked (technical); see `blocked.md`.

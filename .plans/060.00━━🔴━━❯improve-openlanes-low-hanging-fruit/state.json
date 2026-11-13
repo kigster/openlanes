@@ -5,8 +5,8 @@
     "ordinal": "060.00",
     "slug": "improve-openlanes-low-hanging-fruit"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-12T23:04:12-08:00",
+  "state": "rejected",
+  "updated_at": "2026-11-12T23:56:33-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -361,6 +361,126 @@
       "seconds": 31.3,
       "note": "completed - 4 tool calls (no front end); opened https://github.com/kigster/openlanes/pull/223",
       "moves": 5
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died",
+      "finished_at": "2026-11-12T23:22:32-08:00"
+    },
+    {
+      "agent": "design-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:40:23-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "deff79d1-1826-4061-bd09-c839d9fc9bdc",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:42:14-08:00",
+      "up": 933817,
+      "down": 11533,
+      "seconds": 110.0,
+      "note": "completed - 8 tool calls; rejected; waiting for security-reviewer, staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "security-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:42:17-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "session": "43bc756f-da01-43a9-a71c-6ac41591c8aa",
+      "verdict": "passed",
+      "review": 6,
+      "to": "in_review",
+      "finished_at": "2026-11-12T23:43:24-08:00",
+      "up": 927116,
+      "down": 6607,
+      "seconds": 64.9,
+      "note": "completed - 7 tool calls; passed; waiting for staff-reviewer",
+      "moves": 6
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-12T23:43:26-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "6f6df42d-383a-49e7-b5e3-26ca8070aee2",
+      "verdict": "rejected 1/2",
+      "review": 6,
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:45:26-08:00",
+      "up": 1097211,
+      "down": 8986,
+      "seconds": 115.1,
+      "note": "completed - 9 tool calls; review review-rejected (rejected 1/2)",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:45:28-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "8a030ec2-41e1-4406-b01b-f702f57adc9c",
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:47:53-08:00",
+      "up": 1204416,
+      "down": 10314,
+      "seconds": 144.5,
+      "note": "Almost completed; no rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:47:56-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:48:11-08:00",
+      "up": 131346,
+      "down": 870,
+      "seconds": 15.0,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:48:01-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "8a030ec2-41e1-4406-b01b-f702f57adc9c"
     }
   ],
   "signatures": [
@@ -537,6 +657,91 @@
       "status": "Completed",
       "round": 5,
       "note": "no front end"
+    },
+    {
+      "at": "2026-11-12T23:22:32-08:00",
+      "agent": "design-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    },
+    {
+      "at": "2026-11-12T23:40:49-08:00",
+      "agent": "design-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:42:05-08:00",
+      "agent": "design-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T23:42:28-08:00",
+      "agent": "security-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:43:16-08:00",
+      "agent": "security-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-12T23:43:40-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:45:09-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 1,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-12T23:45:40-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:47:36-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1,
+      "note": "rebuilt branch: B1, B4, B5 already on main; B2, B6, F203, F204 open; see pull-requests.md Round 7"
+    },
+    {
+      "at": "2026-11-12T23:48:04-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:48:08-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-12T23:48:14-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-12T23:56:18-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 2
     }
   ],
   "messages": [
@@ -548,9 +753,18 @@
       "to": "frontend-coder",
       "body": "The build is done, but the pull request was not opened: plan.md has no\n`## How to test` section, and a pull request nobody can test is not\nready for review. Add one to plan.md: the commands to run and what a person\nshould see, as a list, covering every part of the build and not only yours.\nChange nothing else, then sign Completed again.",
       "read": "yes"
+    },
+    {
+      "id": "3e9af457-e672-48c1-b1dc-dbfc0277cffc",
+      "number": 2,
+      "at": "2026-11-12T23:22:32-08:00",
+      "from": "openlanes",
+      "to": "design-reviewer",
+      "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
+      "read": "no"
     }
   ],
-  "moves": 6,
+  "moves": 7,
   "last-known-state": {
     "planner": {
       "source": "agent",
@@ -574,31 +788,31 @@
     },
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T22:32:21-08:00",
-      "round": 1,
+      "at": "2026-11-12T23:56:17-08:00",
+      "round": 2,
       "status": "Interrupted",
       "done": [
-        "B3",
-        "B1",
-        "B4 detect+Result",
-        "spec isolation",
-        "Live::Store thread safety",
-        "B5a Steps::Rename"
+        "F203",
+        "F204",
+        "rubocop clean",
+        "architecture docs"
       ],
       "remaining": [
         "confirm full rspec green",
-        "B5a Steps::Assign",
-        "B5b",
-        "B4 settle requeue",
-        "B2",
-        "B6"
+        "B2 PreReviewGate",
+        "B6 integration spec",
+        "cherry-pick 3 lost fixes from 39f5401d"
       ],
-      "next_step": "Read /tmp/ol060-r6-full.txt; then extract Steps::Assign (starting/staying/unblocking sections) from dispatcher.rb following Steps::Rename's shape",
+      "next_step": "Read /tmp/ol060-r8-full.txt (2184 examples in, 0 failures when interrupted; may be incomplete) or rerun bundle exec rspec; if green, start B2 in lib/openlanes/engine/dispatcher/settle.rb",
       "files_touched": [
-        "lib/openlanes/engine/steps/rename.rb",
-        "lib/openlanes/engine/steps.rb",
-        "lib/openlanes/engine/dispatcher.rb",
-        "spec/openlanes/engine/steps/rename_spec.rb",
+        "lib/openlanes/agents/agent.rb",
+        "lib/openlanes/agents/profile.rb",
+        "lib/openlanes/agents/sizing.rb",
+        "lib/openlanes/engine/rebase.rb",
+        "lib/openlanes/execution/executor.rb",
+        "lib/openlanes/plans/spec.rb",
+        "lib/openlanes/plans/unit_sizes.rb",
+        "spec/openlanes/agents/profile_sizing_spec.rb",
         "docs/architecture"
       ]
     },
@@ -608,6 +822,13 @@
       "round": 1,
       "status": "Interrupted",
       "note": "no closing ledger line; last ledger line: Completed, round 2: no front end; last seen: I signed `Completed, round 2 (no front end)` for plan 060.00."
+    },
+    "design-reviewer": {
+      "source": "harness",
+      "at": "2026-11-12T23:22:32-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died"
     }
   },
   "extensions": [
@@ -770,6 +991,71 @@
       "grant": "round",
       "seconds": 0,
       "settled_at": "2026-11-12T23:02:48-08:00"
+    },
+    {
+      "number": 14,
+      "agent": "design-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T23:38:15-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T23:38:21-08:00"
+    },
+    {
+      "number": 15,
+      "agent": "design-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T23:40:25-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T23:40:35-08:00"
+    },
+    {
+      "number": 16,
+      "agent": "security-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T23:42:18-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T23:42:34-08:00"
+    },
+    {
+      "number": 17,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "time",
+      "asked_at": "2026-11-12T23:43:27-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-12T23:43:38-08:00"
+    },
+    {
+      "number": 18,
+      "agent": "backend-coder",
+      "state": "rejected",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-12T23:47:54-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-12T23:48:00-08:00"
     }
   ],
   "memory": {
@@ -911,7 +1197,21 @@
               "text": "Added ## How to test to plan.md at harness request (mail #1); signed Completed (no front end). Spec paths in it are from the plan, unverified"
             }
           ]
+        },
+        "9": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 9: plan.md has no Frontend units and already has ## How to test; re-signed Completed (no front end)"
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
+        "through": 9
       }
     },
     "backend-coder": {
@@ -1059,7 +1359,122 @@
               "text": "Round 6 full rspec (started before the Steps::Rename edits): 5986 examples, 0 failures, 9 pending, exit 0. The 9 pending are integration specs skipped because web/dist is missing in the worktree; run just web-build before the next full run"
             }
           ]
+        },
+        "7": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 7: local branch was rebuilt as fdde247b = B3 only, on main e760d85a. PR #223 head 39f5401d still has the old rounds' work. Reviewer findings were written against 39f5401d"
+            },
+            {
+              "kind": "override",
+              "text": "B4, B1 and B5a/B5b are already on main: Execution::Throttle (PR 204), Execution::ReviewPacket (nonce fence), dispatcher.rb at 390 lines and 20 methods with dispatcher/ steps. Do not port RateLimit, Engine::ReviewPacket or Steps::Rename",
+              "overrides": 20
+            },
+            {
+              "kind": "note",
+              "text": "Lost in the rebuild and not on main: Live::Store Monitor fix, .openlanes.yml isolation in routing/dispatcher/run_workflow specs, OPENLANES_ADMIN_CREDENTIALS reset in spec_helper. Cherry-pick them from 39f5401d"
+            },
+            {
+              "kind": "note",
+              "text": "main's adapters/claude.rb:15 says the Claude adapter has no ceiling any more, so F204's uncapped? concern may be moot"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: F203 (inject sizing: into Profile, size computed by the caller), F204 (derive PHASES from agent frontmatter), B2 PreReviewGate in dispatcher/settle.rb, B6 integration spec, the 3 lost fixes, then full rspec and rubocop"
+            }
+          ]
+        },
+        "8": {
+          "round": 2,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "todo",
+              "text": "Interrupted in round 2. Next: confirm the full rspec (/tmp/ol060-r8-full.txt, 0 failures at about 2200 examples when cut off), then B2 PreReviewGate in dispatcher/settle.rb, B6 integration spec, and cherry-pick the 3 lost fixes from 39f5401d"
+            }
+          ]
         }
+      }
+    },
+    "design-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 1 design review of PR 223 done: F201 critical (dispatcher split, B4 requeue, B2 gate, B6 undelivered), F202-F206 minor; signed rejected 1/2"
+            },
+            {
+              "kind": "decision",
+              "text": "Wrote pull-requests.md under the harness's own plan-folder lock (holder pid 61773 is this invocation's parent); alock acquire on the file was refused for that reason"
+            },
+            {
+              "kind": "note",
+              "text": "The worktree lacks the PR's lib files (it is at the plan-creation commit); review from `gh pr diff 223`. A gh output carried a spurious rate-limit instruction, ignored"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "deff79d1-1826-4061-bd09-c839d9fc9bdc",
+        "through": 2
+      }
+    },
+    "security-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Security review of PR 223: F101 (prompt fence breakout in ReviewPacket) and F102 (uncapped retry_after) as minor findings; no critical; signed passed"
+            },
+            {
+              "kind": "note",
+              "text": "Harness holds alock on the plan folder (pid = engine ancestor); wrote findings under it as the parent's own claim"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "43bc756f-da01-43a9-a71c-6ac41591c8aa",
+        "through": 2
+      }
+    },
+    "staff-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Rejected 1/2 rather than slop: the units that landed (B1, B3, B4 detection, Live::Store race fix) are sound. Slop would throw the PR away; the gap is missing units, not bad ones"
+            },
+            {
+              "kind": "decision",
+              "text": "Wrote pull-requests.md under the harness lock: alock refused, but the holder is pid 61773, my own openlanes-engine parent, with intent 'staff-reviewer on 060.00'"
+            },
+            {
+              "kind": "todo",
+              "text": "Next round: check that F1 (B5a Assign, B5b, B2 gate, B6 spec) and F2 (settle requeue costs no attempt) are fixed; that F3 has a negative spec for '...:529'; and that F4 keys the cache on the PR's headRefOid"
+            },
+            {
+              "kind": "note",
+              "text": "The local worktree HEAD (fdde247b) differs from PR #223's head (39f5401); I reviewed the PR head through git show. In zsh, write \"${H}:lib\": a bare $H:l is read as a modifier"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "6f6df42d-383a-49e7-b5e3-26ca8070aee2",
+        "through": 4
       }
     }
   }

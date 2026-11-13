@@ -117,6 +117,26 @@ flowchart LR
 - Strike on a finding in a plan row returns that finding with `ruling: strike` after a reload;
 - the plan row's cost equals the sum of its cars' costs.
 
+## How to test
+
+Run from the repository root, with Redis on `localhost:6379` (the demo and the e2e suite use db 14).
+
+1. Ruby suite and lint, which cover B1 to B4 (`spec/openlanes/live/board_delta_spec.rb`, `spec/openlanes/web/events_spec.rb`, `spec/openlanes/live/command_spec.rb`, `spec/openlanes/live/commands_spec.rb`, `spec/openlanes/web/demo_board_spec.rb`, `spec/openlanes/web/plan_review_spec.rb`, `spec/openlanes/engine/arbitration_spec.rb`, `spec/openlanes/engine/board_spec.rb`, `spec/openlanes/live/snapshot_spec.rb`):
+   - `bundle exec rspec` → `5975 examples, 0 failures`, exit 0, and a line coverage figure of at least 95 (`jq '.total.lines.percent' coverage/coverage.json` prints about 99).
+   - `bundle exec rubocop` → `no offenses detected`.
+1. Front-end unit tests, lint and types, which cover F1 to F4 (`boardDelta.test.ts`, `events.test.ts`, `useBoard.test.tsx`, `AgentDrawer.test.tsx`, `PlanReview.test.tsx`, `Car.test.tsx`):
+   - `cd web && npm run lint && npm run typecheck && npx vitest run` (or `just web-test`) → all pass, 538 tests, no lint or type errors.
+1. The integration check, Cypress against two real demo servers, nothing stubbed:
+   - `just web-build && just web-e2e` (`bin/web-e2e` starts both `openlanes web --demo` servers and runs every spec), or only this plan's spec: `cd web && npx cypress run --spec cypress/e2e/interactive.cy.ts` with the `baseUrl`, `peer` and `plansDir` settings `bin/web-e2e` passes.
+   - Expect `interactive.cy.ts` to report `4 passing`: a car advances through `board_delta` frames after one `board` frame; Extend time gets the engine's reply; a struck finding stays struck after a reload; a plan's cost is at least the sum of its cars' costs.
+1. By hand, on the demo board:
+   - `bundle exec exe/openlanes web --demo --no-open --port 11000`, then open `http://127.0.0.1:11000/`.
+   - `curl -sN --max-time 6 http://127.0.0.1:11000/api/events | grep '^event:'` → exactly one `event: board`, then only `event: board_delta` lines (B1, F1).
+   - Open a running car (click the agent's name on a car whose token count is moving). Its drawer offers `Extend time +10 min`, `Extend time +20 min` and `Stop after this step`; pressing Extend time shows a reply containing `more minutes`. Open a car that is not running: the three buttons are absent (B2, F2).
+   - `curl -s http://127.0.0.1:11000/api/plans/<ordinal>/review` for a plan on the board → JSON with `diff.stat`, `diff.patch`, `diff.truncated` and a `findings` array; each finding has `id`, `reviewer`, `severity`, `file`, `line`, `text`, `ruling` (B3).
+   - In a plan row with a pull request, press `Review`: the diff stat, an expandable patch and the findings appear. Press `Strike` on one finding: it shows `Struck`, and still does after reloading the page; `Accept` leaves it as one the builder must address (B3, F3).
+   - Each running car shows `Cost so far` and elapsed time that rise with its tokens; the plan row's `Cost so far` is at least the sum of its cars' costs (B4, F4).
+
 ## HTTP surface
 
 Yes. B3 adds `GET /api/plans/:ordinal/review`. B2 and B3 add the command kinds `extend_time` and `rule_finding` (and `stop_after_step` if needed) to the existing command endpoint. B1 adds the `board_delta` frame to the event stream. B3 writes `openapi.yaml` beside `contract.md`, covering the route, the new command payloads and the frame shape.

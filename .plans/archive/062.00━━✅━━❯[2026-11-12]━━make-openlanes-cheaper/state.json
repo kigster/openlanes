@@ -5,8 +5,8 @@
     "ordinal": "062.00",
     "slug": "make-openlanes-cheaper"
   },
-  "state": "in_review",
-  "updated_at": "2026-11-12T21:41:17-08:00",
+  "state": "approved",
+  "updated_at": "2026-11-12T23:45:01-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -457,7 +457,7 @@
       "read": "no"
     }
   ],
-  "moves": 10,
+  "moves": 11,
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -677,5 +677,9 @@
         }
       }
     }
+  },
+  "finished": {
+    "kind": "merged",
+    "at": "2026-11-13T07:45:01Z"
   }
 }

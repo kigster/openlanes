@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 231 | [\[064.00\](A) Make Openlanes More Interactive](https://github.com/kigster/openlanes/pull/231) | Open 🟡 |
+
 ## Frontend, round 1
 
 - F1 `boardDelta.ts`, `useBoard.ts`, `events.ts`, `types.ts`: a `board_delta` applies only onto the held version; a mismatch reopens the stream (fresh full `board`). Tests: `boardDelta.test.ts`, `useBoard.test.tsx`, `events.test.ts`.
@@ -39,3 +43,27 @@ Stream check by hand, `curl -sN --max-time 6 /api/events` on the demo: 1 `board`
 - After the fixes, those four files: `bundle exec rspec spec/openlanes/thread_safety_inventory_spec.rb spec/openlanes/engine/dispatcher_spec.rb spec/openlanes/cli/web_spec.rb spec/openlanes/cli/engine_command_spec.rb` → 189 examples, 0 failures. The full suite was not rerun after them (a full run takes about 10 minutes, more than the time left in the round).
 - `bundle exec rubocop` → 855 files inspected, no offenses detected.
 - `.openlanes.yml` gained `coverage:` (`bundle exec rspec`, minimum 95, `jq '.total.lines.percent' coverage/coverage.json`). The command prints a figure; the one on disk comes from a partial run, so it is not the suite's.
+
+## Full suite rerun, backend-coder, 2026-11-12
+
+- `bundle exec rspec` (full) → 5975 examples, 0 failures, exit 0.
+- `bundle exec rubocop` → 855 files inspected, no offenses detected, exit 0.
+- `jq '.total.lines.percent' coverage/coverage.json` → 99.18 (line coverage, minimum 95)
+
+## Findings: design-reviewer
+
+### F201 [minor] lib/openlanes/web/demo_board.rb:295
+
+`DemoBoard#rule_finding` hand-builds the ruling hash (`kind`, `outcome`, `findings.{bucket,headings}`) that `Live::Commands.rule!` builds for the engine, and the two already differ (the demo omits `trigger`, `reason`, `pr`, `round`). The shape is written down twice. Scenario: someone makes `Findings.ruling` read `trigger: "person"` or `by`; the engine path passes and the demo board (and the Cypress proof run on it) silently shows no ruling. Give `Plans::Findings` one `ruling_for(finding, verdict, by:)` that returns the hash, and have both call it.
+
+### F202 [minor] lib/openlanes/live/commands.rb:99
+
+`Commands.finding!` and `Commands.rule!` are domain operations (parse a verdict, write a ruling into `PlanState`) parked as class methods on the Live command dispatcher, which `engine/arbitration_spec.rb`, `web/plan_review_spec.rb` and `DemoBoard` now call. The bucket vocabulary (`struck`/`critical`) is split across `Findings::VERDICTS`, `Findings.ruling` and `Engine::Arbitration#ruled?`. The `Arbitration::Ruling::OUTCOMES` table, which owns the ruling kinds, does not know the new `kind: "finding"`. Scenario: a new outcome is added to `Ruling::OUTCOMES`; the person-written `finding` rulings are outside it, so nothing validates them and `Counter` and `Prompt` read them by accident of shared bucket names. Move `rule!` and `finding!` beside `Findings` (or `Arbitration`) and register the kind in the ruling vocabulary; `Commands` should only call them.
+
+### F203 [minor] lib/openlanes/web/app.rb:84
+
+`plan_review` derives the repository root as `File.dirname(context.plans_dir)`. `$PLANS_DIR` may point anywhere, so the root is wrong whenever the plans directory is not directly under the repository. `BranchDiff` then reads another directory's refs or none, and the row shows an empty diff with no error. The root is not passed in from where `Project.root` is already known (`Context`). Add it to `Context` and pass it.
+
+### F204 [minor] lib/openlanes/live/commands.rb:1
+
+The file is now 802 lines (it grew by about 70 here) and holds a dispatch table, handlers and the new static helpers. The change adds a second reason to edit it (ruling storage, see F202). Moving that out leaves it smaller.
