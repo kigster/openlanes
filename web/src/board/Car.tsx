@@ -25,7 +25,7 @@ export function Car({ plan, car, models, open = false, onOpen, modelSlot }: CarP
   const readOnly = !onOpen;
   const lock = lockMark(plan);
   const spinning = car.state === "running" && !look.blocked;
-  // At most three lines: more would crowd the 248px tile, and the count itself is in the label. An older engine's
+  // At most three lines: more would crowd the 272px tile, and the count itself is in the label. An older engine's
   // read-only board sends no list, read as none.
   const running = car.subagents?.length ?? 0;
   const fanned = Math.min(running, 3);
