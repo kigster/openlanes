@@ -24,7 +24,7 @@ module OpenLanes
     class EngineCommand < Run
       desc "The factory's engine over the whole tree, until Stop All Local; `openlanes start` runs it"
 
-      # Reads the `commands.start` section of `.openlanes.yml`: the one a
+      # Reads the `commands.start` section of `.openlanes/config.yml`: the one a
       # person writes for the factory, whichever process ends up reading it.
       #
       # @return [String]

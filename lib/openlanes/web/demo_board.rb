@@ -198,6 +198,12 @@ module OpenLanes
         nil
       end
 
+      # The interview's confirm (plan 068): the demo has no blocked.md to
+      # write, so it settles the question exactly as an answer does.
+      #
+      # @return [nil]
+      def confirm_interview(command) = answer(command)
+
       # @return [nil]
       def hold_blocked(command) = hold_question(command, true)
 

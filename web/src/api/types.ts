@@ -360,6 +360,7 @@ export type CommandKind =
   | "switch_model" // now: as compact, carried on in the new model; a fresh restart on it when the session cannot be resumed; payload: { model }
   | "add_plan" // payload: { ordinal }
   | "create_plans" // payload: { idea }
+  | "confirm_interview" // payload: { question: "1", turn }: writes the interview's decision as the answer
   | "respond" // a 💣 plan: answers its first open question in blocked.md; payload: { text }
   | "pause_discuss" // a 💣 plan: holds its running agents while the person talks it over with the copilot
   | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
@@ -528,3 +529,62 @@ export interface DependencyGraph {
   plans: DependencyPlan[];
   edges: DependencyEdge[];
 }
+
+/** One option of an interview question: lettered by its place, one of them the unblocker's recommendation. */
+export interface InterviewOption {
+  label: string;
+  recommended: boolean;
+}
+
+/** One turn of the unblocker's interview about a question (contract.md, "InterviewTurn"). */
+export interface InterviewTurn {
+  id: string;
+  from: "you" | "unblocker";
+  kind: "text" | "question" | "decision";
+  text: string;
+  at: string;
+  /** `question` turns only: 2 to 5, exactly one recommended. */
+  options?: InterviewOption[];
+  /** `decision` turns only: what Confirm writes to blocked.md as the answer. */
+  answer?: string;
+}
+
+/** What `event: interview` carries: the turn, and which question's conversation it belongs to. */
+export interface InterviewEvent {
+  plan: string;
+  number: number;
+  turn: InterviewTurn;
+}
+
+/** One node of the JSON Schema GET /api/settings serves; only the keywords the form reads are typed. */
+export interface SettingsSchemaNode {
+  type?: string | string[];
+  description?: string;
+  default?: unknown;
+  enum?: Array<string | number | boolean | null>;
+  minimum?: number;
+  properties?: Record<string, SettingsSchemaNode>;
+}
+
+export type SettingsValues = Record<string, unknown>;
+
+/** GET /api/settings (plan 058, contract.md). */
+export interface SettingsDocument {
+  schema: SettingsSchemaNode;
+  keys: string[];
+  values: SettingsValues;
+  defaults: SettingsValues;
+  etag: string;
+  /** The main checkout's branch; null when its HEAD is detached. */
+  branch: string | null;
+}
+
+export interface SettingsFieldError {
+  path: string[];
+  message: string;
+}
+
+export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed" | "commit_failed";
+
+/** PUT /api/settings, 200. */
+export type SettingsSaveResult = { changed: false } | { changed: true; commit: string; etag: string };

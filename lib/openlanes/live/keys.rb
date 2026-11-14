@@ -87,6 +87,21 @@ module OpenLanes
       # @return [String]
       def copilot_session(of = node) = "#{base}:#{of}:copilot-session"
 
+      # Stream: `{json}`, one `InterviewTurn`: the unblocker's interview on
+      # one open question (plan 068). Per repository, not per node, so a
+      # second machine reads the same conversation.
+      #
+      # @param plan [String] the plan's ordinal, e.g. `068.00`
+      # @param number [Integer, String] the question's number
+      # @return [String]
+      def interview(plan, number) = "#{base}:interview:#{plan}:#{number}"
+
+      # Stream: `{json}`, `{plan, number, turn}` for every interview turn on
+      # any question, so an event stream follows one key, not one per question.
+      #
+      # @return [String]
+      def interviews = "#{base}:interviews"
+
       # Stream: `{json}`, one mailbox message and the plan it belongs to,
       # what `openlanes mail send` publishes after writing `state.json`
       # (plan 003, B3). One stream per checkout; the plan rides in the entry,

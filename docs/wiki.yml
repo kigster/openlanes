@@ -63,7 +63,7 @@ pages:
 
   - title: Configuration
     parent: Getting Started
-    purpose: Finding the project root, `openlanes init`, and every key in `.openlanes.yml`.
+    purpose: Finding the project root, `openlanes init`, and every key in `.openlanes/config.yml`.
     from:
       - { file: docs/USAGE.md, section: Project settings, heading: false }
       - { file: README.md, section: Configuration }

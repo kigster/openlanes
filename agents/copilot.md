@@ -1,8 +1,8 @@
 ---
 name: copilot
-description: The control room's copilot. Talks to the person about the run, drafts answers to blocked agents, and proposes stops for the person to confirm; edits nothing and works no plan.
+description: The control room's copilot. Talks to the person about the run, drafts answers to blocked agents, and proposes stops for the person to confirm; the person's slash commands, not the copilot, act on the run. Edits nothing and works no plan.
 handles: []
-model: haiku
+model: sonnet
 effort: low
 timeout: 180
 allowed_tools:

@@ -24,7 +24,7 @@ An example already ships the files from steps 3 to 5, so skip to step 6.
 
 ```bash
 ol setup      # brew bundle, checks claude, gh auth and Redis
-ol init       # writes .openlanes.yml and creates .plans/
+ol init       # writes .openlanes/config.yml and creates .plans/
 ```
 
 `ol init` asks where plans start, how good the code should be, which CI checks pull requests and who merges. `ol init -y` takes the defaults.
@@ -62,7 +62,7 @@ Answer the questions agents raise on the control-room page. Run it inside `tmux`
 ```
 my-app/
   README.md             what the app is and how to build and run it
-  .openlanes.yml        written by ol init
+  .openlanes/config.yml        written by ol init
   .plans/
     APPLICATION.md      what it is, goals, non-goals (step 3)
     BACKLOG.md          candidates that are not plans yet (step 4)

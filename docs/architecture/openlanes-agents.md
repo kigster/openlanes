@@ -17,6 +17,7 @@ classDiagram
   class OpenLanes__Agents__Roster["Roster"]
   class OpenLanes__Agents__Routing["Routing"]
   <<module>> OpenLanes__Agents__Routing
+  class OpenLanes__Agents__Sizing["Sizing"]
   class OpenLanes__Agents__SmallDiff["SmallDiff"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
@@ -30,17 +31,22 @@ classDiagram
   <<module>> OpenLanes__Plans__Ledger
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
+  class OpenLanes__Plans__UnitSizes["OpenLanes::Plans::UnitSizes"]
+  <<module>> OpenLanes__Plans__UnitSizes
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Agents ..> OpenLanes__Adapters : uses
   OpenLanes__Agents ..> OpenLanes__Agents__Agent : uses
   OpenLanes__Agents ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Agents ..> OpenLanes__Agents__Roster : uses
+  OpenLanes__Agents ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Agents__Dealing : uses
+  OpenLanes__Agents__Profile ..> OpenLanes__Agents__Sizing : uses
+  OpenLanes__Agents__Profile ..> OpenLanes__Config : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
@@ -56,6 +62,9 @@ classDiagram
   OpenLanes__Agents__Routing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Agents__Sizing ..> OpenLanes__Adapters : uses
+  OpenLanes__Agents__Sizing ..> OpenLanes__Error : uses
+  OpenLanes__Agents__Sizing ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Agents__SmallDiff ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__SmallDiff ..> OpenLanes__Error : uses
 ```

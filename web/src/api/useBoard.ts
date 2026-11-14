@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AppStatus, Board, CopilotLog, Snapshot, WireBoard } from "./types";
+import type { AppStatus, Board, CopilotLog, InterviewTurn, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
 import { appliesTo, applyDelta } from "./boardDelta";
 import { openStream, type ConnectionState } from "./events";
 import { APPS_KEY, BOARD_KEY, COPILOT_KEY, DEPENDENCIES_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
+import { interviewKey, withTurn as withInterviewTurn } from "./interview";
 import { replies } from "./replies";
 import { chatBus } from "../chat/bus";
 import { withApp } from "../preview/model";
@@ -100,6 +101,8 @@ export function useBoard(): BoardState {
       // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
       // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
       onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
+      onInterview: ({ plan, number, turn }) =>
+        client.setQueryData<InterviewTurn[]>(interviewKey(plan, number), old => withInterviewTurn(old ?? [], turn)),
       onChat: event => chatBus.deliver(event),
       onApps: apps => client.setQueryData<AppStatus[]>(APPS_KEY, apps),
       onApp: app => client.setQueryData<AppStatus[]>(APPS_KEY, old => withApp(old ?? [], app)),
@@ -113,7 +116,10 @@ export function useBoard(): BoardState {
         void client.cancelQueries({ queryKey: COPILOT_KEY });
         void client.refetchQueries({ queryKey: COPILOT_KEY });
       },
-      onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
+      onReconnect: () => {
+        void client.refetchQueries({ queryKey: BOARD_KEY });
+        void client.refetchQueries({ queryKey: ["interview"] }); // a turn sent while the stream was down
+      },
     }, eventsUrl());
   }, [client, fixture, epoch]);
 

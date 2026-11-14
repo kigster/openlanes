@@ -31,30 +31,32 @@ module OpenLanes
 
       # Command kind to the method that applies it.
       HANDLERS = {
-        "answer"          => :answer,
-        "hold_blocked"    => :hold_blocked,
-        "release_hold"    => :release_hold,
-        "resume"          => :resume,
-        "discard"         => :discard,
-        "message"         => :message,
-        "hold"            => :signal,
-        "wrap_up"         => :signal,
-        "compact"         => :compact,
-        "stop"            => :signal,
-        "stop_all"        => :stop_all,
-        "set_model"       => :set_model,
-        "switch_model"    => :switch_model,
-        "add_plan"        => :add_plan,
-        "create_plans"    => :create_plans,
-        "respond"         => :respond,
-        "pause_discuss"   => :pause_discuss,
-        "resume_anyway"   => :resume_anyway,
-        "stop_plan"       => :stop_plan,
-        "restart_plan"    => :restart_plan,
-        "set_concurrency" => :set_concurrency,
-        "set_chime"       => :set_chime,
-        "extend_time"     => :extend_time,
-        "rule_finding"    => :rule_finding
+        "answer"            => :answer,
+        "hold_blocked"      => :hold_blocked,
+        "release_hold"      => :release_hold,
+        "resume"            => :resume,
+        "discard"           => :discard,
+        "message"           => :message,
+        "hold"              => :signal,
+        "wrap_up"           => :signal,
+        "compact"           => :compact,
+        "stop"              => :signal,
+        "stop_all"          => :stop_all,
+        "set_model"         => :set_model,
+        "switch_model"      => :switch_model,
+        "add_plan"          => :add_plan,
+        "create_plans"      => :create_plans,
+        "respond"           => :respond,
+        "pause_discuss"     => :pause_discuss,
+        "confirm_interview" => :confirm_interview,
+        "resume_anyway"     => :resume_anyway,
+        "stop_plan"         => :stop_plan,
+        "restart_plan"      => :restart_plan,
+        "set_concurrency"   => :set_concurrency,
+        "set_chime"         => :set_chime,
+        "extend_time"       => :extend_time,
+        "rule_finding"      => :rule_finding,
+        "restart_web"       => :restart_web
       }.freeze
 
       # The most seconds one `extend_time` adds: the largest grant
@@ -127,7 +129,10 @@ module OpenLanes
       #   in the same `MULTI` as each reply
       # @param claims [OpenLanes::Live::Claims, nil]
       # @param clock [Proc] wall time
-      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now })
+      # @param restart_web [#call, nil] root in; the supervisor's pid once
+      #   asked to restart the control room, nil when none runs
+      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now },
+        restart_web: nil)
         @store = store
         @keys = keys
         @node = node
@@ -135,6 +140,7 @@ module OpenLanes
         @record = record
         @claims = claims
         @clock = clock
+        @restart_web = restart_web || Supervision.method(:restart_web)
         @ready = false
         @swept_at = nil
         @pending = {}
@@ -334,6 +340,26 @@ module OpenLanes
         nil
       end
 
+      # The decision a person confirmed at the end of the unblocker's
+      # interview (plan 068), written as the answer to that question in
+      # exactly the form {#answer} writes, so the drain folds it unchanged.
+      # The interview is closed after: the question is answered, and a
+      # second confirm, or one after a button answer, is refused.
+      #
+      # @return [String, nil]
+      def confirm_interview(command, dispatcher)
+        subject, question = question!(command, dispatcher)
+        return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
+        raise Refusal, "this question already has an answer waiting" if question.answered
+
+        interview = Interview.new(store: @store, keys: @keys, plan: command.plan, number: question.number)
+        decision = interview.decision(command["turn"]) or
+          raise Refusal, "the interview has no decision #{command["turn"]} to confirm"
+        write_answer(subject, question, command.with(payload: command.payload.merge("text" => decision.answer)), dispatcher)
+        interview.close
+        "answered: #{decision.answer}"
+      end
+
       # An answer to the harness's request for more time or rounds (E1).
       # The page sends the chosen option, "b) Extend Time by 10 minutes";
       # only its letter counts, so there is nothing to parse but that.
@@ -349,7 +375,7 @@ module OpenLanes
         settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
-      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
+      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes/config.yml` (U3).
       # Only the letter counts, as for {#extension}.
       #
       # @return [String]
@@ -751,8 +777,22 @@ module OpenLanes
         "#{ordinal} restarts at the next tick"
       end
 
+      # `/restart-web` (plan 069.00): the supervisor that `openlanes start`
+      # runs stops the control room, rebuilds its page and starts it again.
+      # The engine only asks; the page's server goes away and comes back,
+      # and the new one reports how the build went.
+      #
+      # @return [String]
+      def restart_web(_command, dispatcher)
+        pid = @restart_web.call(File.dirname(dispatcher.runner.tree.dir))
+        raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
+
+        "restarting the control room: supervisor #{pid} stops it, rebuilds the page and starts it again; " \
+          "the page reconnects when it is back"
+      end
+
       # The rail's "Ding when a question needs you" box, kept in
-      # `.openlanes.yml` so it holds across reloads, browsers and restarts.
+      # `.openlanes/config.yml` so it holds across reloads, browsers and restarts.
       # `on` is checked here and not in {Command::PAYLOAD}, whose test for a
       # missing field would take `false` for one.
       #
