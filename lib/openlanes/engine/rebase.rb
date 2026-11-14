@@ -185,15 +185,23 @@ module OpenLanes
       # @param spent [Array<OpenLanes::Execution::Executor::Result>]
       # @return [OpenLanes::Execution::Executor::Result]
       def result(spent, passed:, note:)
-        sum = ->(field) { spent.sum { it.respond_to?(field) ? it.public_send(field).to_i : 0 } }
         Execution::Executor::Result.new(ok: passed,
           note:,
-          up: sum.call(:up),
-          down: sum.call(:down),
-          subagents: sum.call(:subagents),
-          delegated: sum.call(:delegated),
-          seconds: spent.sum { it.respond_to?(:seconds) ? it.seconds.to_f : 0.0 },
-          cached: sum.call(:cached))
+          **tokens(spent),
+          seconds: spent.sum { it.respond_to?(:seconds) ? it.seconds.to_f : 0.0 })
+      end
+
+      # What the rounds spent, read through literal readers rather than a
+      # computed method name; a value that cannot say counts as 0.
+      #
+      # @param spent [Array<OpenLanes::Execution::Executor::Result>]
+      # @return [Hash{Symbol => Integer}]
+      def tokens(spent)
+        { up:        spent.sum { it.respond_to?(:up) ? it.up.to_i : 0 },
+          down:      spent.sum { it.respond_to?(:down) ? it.down.to_i : 0 },
+          subagents: spent.sum { it.respond_to?(:subagents) ? it.subagents.to_i : 0 },
+          delegated: spent.sum { it.respond_to?(:delegated) ? it.delegated.to_i : 0 },
+          cached:    spent.sum { it.respond_to?(:cached) ? it.cached.to_i : 0 } }
       end
     end
   end

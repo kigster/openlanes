@@ -791,12 +791,9 @@ module OpenLanes
         bombs = runner.halted_by
         bomb_report(bombs)
         status = failures(attempts).empty? && bombs.empty? ? 0 : 1
-        Log.logger.public_send(status.zero? ? :info : :warn,
-          "run finished",
-          attempts: attempts.size,
-          failed:   failures(attempts).size,
-          seconds:  seconds.round(1),
-          exit:     status)
+        finished = { attempts: attempts.size, failed: failures(attempts).size, seconds: seconds.round(1), exit: status }
+        # Literal calls rather than a computed level: a failed run warns.
+        status.zero? ? Log.logger.info("run finished", **finished) : Log.logger.warn("run finished", **finished)
         status
       end
 
