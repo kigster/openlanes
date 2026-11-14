@@ -56,7 +56,7 @@ module OpenLanes
       def self.standalone? = @standalone == true
 
       # The name this command is typed as, and the key its section takes
-      # under `commands:` in `.openlanes.yml`: "run", "resync dirs", "plans".
+      # under `commands:` in `.openlanes/config.yml`: "run", "resync dirs", "plans".
       #
       # @return [String, nil] nil for a class with no name, as in a spec
       def self.command_name
@@ -66,7 +66,7 @@ module OpenLanes
             .map { OpenLanes.inflector.underscore(it).tr("_", "-") }.join(" ")
       end
 
-      # dry-cli merges what was typed over these, so a `.openlanes.yml` value
+      # dry-cli merges what was typed over these, so a `.openlanes/config.yml` value
       # placed here sits exactly between the flag and the built-in default.
       # A file that cannot be read adds nothing at this point; {#enter_project}
       # reads it again and refuses with the reason.

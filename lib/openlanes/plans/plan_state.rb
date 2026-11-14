@@ -141,7 +141,7 @@ module OpenLanes
       def state = read["state"]
 
       # Until when a 💣 on this plan does not halt the run: "Resume anyway
-      # for 24 h" from the control room. Kept here, not in `.openlanes.yml`,
+      # for 24 h" from the control room. Kept here, not in `.openlanes/config.yml`,
       # so it lapses on its own and nobody has to remember to take it out.
       #
       # @return [Time, nil]

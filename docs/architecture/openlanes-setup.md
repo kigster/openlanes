@@ -4,6 +4,8 @@
 
 ```mermaid
 classDiagram
+  class OpenLanes["OpenLanes"]
+  <<module>> OpenLanes
   class OpenLanes__Adapters["OpenLanes::Adapters"]
   <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__ProbeRunner["OpenLanes::Adapters::ProbeRunner"]
@@ -12,6 +14,8 @@ classDiagram
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Setup["OpenLanes::Setup"]
   <<module>> OpenLanes__Setup
   class OpenLanes__Setup__Architecture["Architecture"]
@@ -21,6 +25,7 @@ classDiagram
   class OpenLanes__Setup__Check["Check"]
   class OpenLanes__Setup__CiDetector["CiDetector"]
   class OpenLanes__Setup__CiScaffold["CiScaffold"]
+  class OpenLanes__Setup__ConfigMove["ConfigMove"]
   class OpenLanes__Setup__Extraction["Extraction"]
   <<module>> OpenLanes__Setup__Extraction
   class OpenLanes__Setup__Extraction__CliAdapter["Extraction::CliAdapter"]
@@ -62,6 +67,9 @@ classDiagram
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__ArchitectureScan__Manifests : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__CiDetector : uses
   OpenLanes__Setup__ArchitectureScan ..> OpenLanes__Setup__StackDetector : uses
+  OpenLanes__Setup__ConfigMove ..> OpenLanes : uses
+  OpenLanes__Setup__ConfigMove ..> OpenLanes__Error : uses
+  OpenLanes__Setup__ConfigMove ..> OpenLanes__Project : uses
   OpenLanes__Setup__Extraction ..> OpenLanes__Setup__Extraction__Routes : uses
   OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Adapters : uses
   OpenLanes__Setup__Extraction__Routes ..> OpenLanes__Adapters__ProbeRunner : uses

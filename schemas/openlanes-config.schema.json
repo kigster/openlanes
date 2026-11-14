@@ -227,6 +227,32 @@
           "additionalProperties": false,
           "properties": {}
         },
+        "config move": {
+          "type": "object",
+          "description": "Move the legacy config file to .openlanes/config.yml, with git mv so its history follows",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "dry_run": {
+              "type": "boolean",
+              "description": "Show the move without making it",
+              "default": false
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            }
+          }
+        },
         "coverage": {
           "type": "object",
           "description": "Run a plan's declared test command in its worktree and check line coverage",
@@ -540,7 +566,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             },
             "rescan": {
               "type": [
@@ -747,7 +773,7 @@
         },
         "init": {
           "type": "object",
-          "description": "Write .openlanes.yml at the project root and create the plans directory",
+          "description": "Write .openlanes/config.yml at the project root and create the plans directory",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -804,7 +830,7 @@
             },
             "overwrite": {
               "type": "boolean",
-              "description": "Replace an existing .openlanes.yml, which is otherwise kept",
+              "description": "Replace an existing .openlanes/config.yml, which is otherwise kept",
               "default": false
             },
             "project": {
@@ -1143,7 +1169,7 @@
             },
             "memory": {
               "type": "boolean",
-              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to curate",
+              "description": "--no-memory (or `memory: false` in .openlanes/config.yml) refuses to curate",
               "default": true
             },
             "quiet": {
@@ -1228,7 +1254,7 @@
             },
             "memory": {
               "type": "boolean",
-              "description": "--no-memory (or `memory: false` in .openlanes.yml) refuses to promote",
+              "description": "--no-memory (or `memory: false` in .openlanes/config.yml) refuses to promote",
               "default": true
             },
             "quiet": {
@@ -1386,7 +1412,7 @@
         },
         "project start": {
           "type": "object",
-          "description": "Run a plan's app from .openlanes.yml app:, for the Preview tab",
+          "description": "Run a plan's app from .openlanes/config.yml app:, for the Preview tab",
           "default": {},
           "additionalProperties": false,
           "properties": {
@@ -1429,7 +1455,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis the control room reads (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis the control room reads (default: .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             }
           }
         },
@@ -1696,7 +1722,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             },
             "root": {
               "type": [
@@ -1769,7 +1795,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis to check (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis to check (default: .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             }
           }
         },
@@ -1975,7 +2001,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis for the live board, its commands and plan claims shared with other machines (default: .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             },
             "rescan": {
               "type": [
@@ -2451,7 +2477,7 @@
                 "string",
                 "number"
               ],
-              "description": "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
+              "description": "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes/config.yml redis_url, else $REDIS_URL, else redis://localhost:6379/0)"
             }
           }
         },

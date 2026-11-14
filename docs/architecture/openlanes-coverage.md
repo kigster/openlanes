@@ -20,6 +20,8 @@ classDiagram
   class OpenLanes__Coverage__Simplecov["Simplecov"]
   <<module>> OpenLanes__Coverage__Simplecov
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Coverage ..> OpenLanes__Coverage__Config : uses
@@ -29,6 +31,7 @@ classDiagram
   OpenLanes__Coverage__Config ..> OpenLanes__Config : uses
   OpenLanes__Coverage__Config ..> OpenLanes__Coverage__Invalid : uses
   OpenLanes__Coverage__Config ..> OpenLanes__Error : uses
+  OpenLanes__Coverage__Config ..> OpenLanes__Project : uses
   OpenLanes__Coverage__Config ..> OpenLanes__UI : uses
   OpenLanes__Coverage__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Coverage__Istanbul ..> OpenLanes__Coverage__Malformed : uses

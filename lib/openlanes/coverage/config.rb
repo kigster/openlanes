@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Coverage
-    # The `coverage:` section of a project's `.openlanes.yml` (M15, amended
+    # The `coverage:` section of a project's `.openlanes/config.yml` (M15, amended
     # 2026-10-17). One of two shapes, never both:
     #
     #   coverage:                 # the figure, printed by a command
@@ -18,7 +18,7 @@ module OpenLanes
     #
     # `command` and `minimum` are required in both. A key the gate ignored
     # would be a promise nobody checks, which is the failure this section
-    # exists to end; so, as everywhere in `.openlanes.yml`, anything
+    # exists to end; so, as everywhere in `.openlanes/config.yml`, anything
     # unexpected is an error naming the file and the section. A
     # `report_command` beside a `format` is refused rather than read as one
     # of them: which of the two the author meant is exactly what is unknown.
@@ -28,7 +28,7 @@ module OpenLanes
     # settings in two files is two places to look, and one gets forgotten.
     #
     # @!attribute [r] path
-    #   @return [String] the `.openlanes.yml` it was read from
+    #   @return [String] the `.openlanes/config.yml` it was read from
     # @!attribute [r] command
     #   @return [String] run through `sh -c` in the checkout
     # @!attribute [r] report
@@ -56,7 +56,7 @@ module OpenLanes
       # @return [String]
       def source = report_command? ? "report_command: `#{report_command}`" : "#{format}: #{report}"
 
-      # The section as `.openlanes.yml` holds it.
+      # The section as `.openlanes/config.yml` holds it.
       #
       # @return [Hash{String => Object}]
       def to_h
@@ -66,7 +66,7 @@ module OpenLanes
     end
 
     class Config
-      # The section's key at the top of `.openlanes.yml`.
+      # The section's key at the top of `.openlanes/config.yml`.
       SECTION = "coverage"
 
       # Report formats with a parser. Each reports lines (plan decision 1).
@@ -90,7 +90,7 @@ module OpenLanes
       class << self
         # @param root [String] a checkout
         # @return [OpenLanes::Coverage::Config, nil] nil when its
-        #   `.openlanes.yml` has no `coverage:` section, or there is no file
+        #   `.openlanes/config.yml` has no `coverage:` section, or there is no file
         # @raise [OpenLanes::Coverage::Invalid] when the section, or the file
         #   around it, cannot be used
         def load(root)
@@ -103,7 +103,7 @@ module OpenLanes
         end
 
         # @param value [Object] what YAML gave for `coverage:`
-        # @param path [String] the `.openlanes.yml`, named in every error
+        # @param path [String] the `.openlanes/config.yml`, named in every error
         # @return [OpenLanes::Coverage::Config]
         # @raise [OpenLanes::Coverage::Invalid]
         def parse(value, path:)
@@ -132,11 +132,11 @@ module OpenLanes
           @warned ||= Set.new
           return unless File.exist?(path) && @warned.add?(path)
 
-          UI.log("#{path} is no longer read; move its settings under #{SECTION}: in .openlanes.yml", level: :warn)
+          UI.log("#{path} is no longer read; move its settings under #{SECTION}: in #{Project::FILE}", level: :warn)
         end
 
         # @param message [String] after the section's name: ": …" for the
-        #   section, ".key: …" for one key, as the rest of `.openlanes.yml` reads
+        #   section, ".key: …" for one key, as the rest of `.openlanes/config.yml` reads
         # @return [void] never returns
         def fail_with(path, message) = raise(Invalid, "#{path}: #{SECTION}#{message}")
 
