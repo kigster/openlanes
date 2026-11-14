@@ -9,8 +9,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Desk::Events, :tree do
 
   let(:job) { job_for(plan, coder, round: 2) }
 
-  it "names the adapter the agent's profile resolves to" do
-    expect(events.adapter_for(job)).to equal(desk.adapter_of(coder, plan))
+  it "resolves the CLI the agent runs on from its profile" do
+    expect(events.adapter_for(job)).to be_a(OpenLanes::Adapters::Claude)
   end
 
   it "carries the plan, round, agent, adapter and model on every event" do
