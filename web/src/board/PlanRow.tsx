@@ -3,6 +3,7 @@ import { useAnimate, useReducedMotion } from "motion/react";
 import type { AdapterAvailability, Car as CarData, Node, Plan, Station, UnackedMail } from "../api/types";
 import { Car, SpendBadge, SubagentTiles } from "./Car";
 import { Terminus } from "./Terminus";
+import { LaneDocuments } from "./LaneDocuments";
 import { PlanReview } from "./PlanReview";
 import type { SendCommand } from "../panels/support";
 import { dollars, fmt, statusTip, unackedTip, who } from "./format";
@@ -34,6 +35,8 @@ interface PlanRowProps extends CarHandlers {
   retiring?: boolean;
   /** The row above belongs to another dependency group: the groove between them runs deeper. */
   dagBreak?: boolean;
+  /** The lanes toggle; narrow lanes show no Documents dropdown. */
+  lanes?: "wide" | "narrow";
 }
 
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
@@ -74,7 +77,7 @@ export function ArbitratingMarker({ arbitrating }: { arbitrating?: boolean }) {
 }
 
 /** One plan as its own horizontal line through the station columns, with its agents hanging under its station. */
-export function PlanRow({ plan, stations, adapters, owner, faded = false, retiring = false, dagBreak = false, openCar, onOpenCar, onUnblock, renderModel, onCommand }: PlanRowProps) {
+export function PlanRow({ plan, stations, adapters, owner, faded = false, retiring = false, dagBreak = false, lanes = "wide", openCar, onOpenCar, onUnblock, renderModel, onCommand }: PlanRowProps) {
   const lane = STARTS[plan.starts];
   const route = routeOf(plan, stations);
   const { color, bg } = rowColors(plan);
@@ -168,6 +171,7 @@ export function PlanRow({ plan, stations, adapters, owner, faded = false, retiri
             </>
           )}
         </div>
+        {!readOnly && <LaneDocuments ordinal={plan.ordinal} lanes={keepsRow(plan) ? "narrow" : lanes} />}
       </div>
       <div className="route">
         <div className="track" aria-hidden="true">
