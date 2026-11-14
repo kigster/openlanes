@@ -220,3 +220,7 @@
 .finding p { margin: 0 0 4px; }
 .finding-actions { display: flex; gap: 6px; align-items: center; }
 .finding-where { color: var(--ink-soft); }
+
+/* The lane's Documents dropdown, at the foot of the details block (plan 070). */
+.plan-actions { margin-top: 6px; }
+.doc-trigger { padding: 1px 8px; font-size: 12px; }

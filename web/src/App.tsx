@@ -331,6 +331,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               board={board}
               merged={merged}
               hideInactive={inactive.hidden}
+              lanes={lanes.lanes}
               retiring={life.retiring}
               gone={life.gone}
               theirs={theirLife}

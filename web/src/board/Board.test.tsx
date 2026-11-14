@@ -6,6 +6,9 @@ import { PlanRow } from "./PlanRow";
 import { dagBreak, nodePlanKey } from "./model";
 import { sampleBoard, sampleCar, samplePlan, samplePr, sampleQuestion } from "./sample";
 
+// The lane's Documents dropdown reads the server through react-query; these tests are about the row, not that request.
+vi.mock("../panels/useDocuments", () => ({ useDocuments: () => ({ documents: [{ name: "spec.md", label: "Specification" }], loading: false, error: null }) }));
+
 const none = new Map<string, unknown>();
 const noRetire = new Set<string>();
 
@@ -287,5 +290,19 @@ describe("dagBreak", () => {
     const { container } = render(<Board board={board} merged={false} retiring={noRetire} gone={none} />);
     expect(container.querySelector('[data-plan="001.00"]')).not.toHaveClass("is-dag-break");
     expect(container.querySelector('[data-plan="003.00"]')).toHaveClass("is-dag-break");
+  });
+});
+
+describe("lane documents", () => {
+  it("offers Documents on our wide lanes only, not on another machine's, and not on narrow lanes", () => {
+    const board = sampleBoard();
+    const { container, rerender } = render(<Board board={board} merged retiring={noRetire} gone={none} />);
+    const ours = container.querySelector<HTMLElement>('[data-plan="001.00"]')!;
+    expect(within(ours).getByRole("button", { name: "Documents of 001.00" })).toBeInTheDocument();
+    for (const row of container.querySelectorAll<HTMLElement>(".plan.is-theirs")) {
+      expect(within(row).queryByRole("button", { name: /^Documents of/ })).toBeNull();
+    }
+    rerender(<Board board={board} merged={false} retiring={noRetire} gone={none} lanes="narrow" />);
+    expect(screen.queryByRole("button", { name: /^Documents of/ })).toBeNull();
   });
 });

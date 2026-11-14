@@ -25,7 +25,7 @@ RSpec.describe OpenLanes::Web::PlanFiles, :tree do
       expect(files.list("017")).to eq(%w[spec.md plan.md blocked.md])
     end
 
-    it "lists all six when the folder has all six" do
+    it "lists every readable name when the folder has them all" do
       described_class::READABLE.each { File.write(File.join(folder, it), "# #{it}\n") }
       expect(files.list("017.00")).to eq(described_class::READABLE)
     end
@@ -106,6 +106,14 @@ RSpec.describe OpenLanes::Web::PlanFiles, :tree do
     it "refuses blocked.md as read only" do
       expect { files.write("017.00", "blocked.md", body: "x", if_match: etag_of("## B1 Which\n")) }
         .to raise_error(described_class::ReadOnly, "blocked.md is read only")
+    end
+
+    it "lists and reads pull-requests.md but refuses to write it" do
+      File.write(File.join(folder, "pull-requests.md"), "# Pull Requests\n")
+      expect(files.list("017.00").last).to eq("pull-requests.md")
+      expect(files.read("017.00", "pull-requests.md").body).to eq("# Pull Requests\n")
+      expect { files.write("017.00", "pull-requests.md", body: "x", if_match: etag_of("# Pull Requests\n")) }
+        .to raise_error(described_class::ReadOnly, "pull-requests.md is read only")
     end
 
     it "refuses an unknown ordinal" do
