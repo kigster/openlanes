@@ -41,6 +41,10 @@ module OpenLanes
           if from == :ready_for_review && agent.phase.to_s == REVIEW_PHASE && !runner.dry_run?
             runner.reviews.started(subject)
             end_replacements(ordinal)
+          elsif agent.phase.to_s == REVIEW_PHASE && agent.review_stage > 1 && !runner.dry_run?
+            # The first group's verdict took `review-in-progress` off; a
+            # later group reading the pull request puts it back.
+            runner.reviews.started(subject)
           end
           finishes.unfinish(subject)
 

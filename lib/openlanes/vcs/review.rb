@@ -25,11 +25,11 @@ module OpenLanes
       # @raise [OpenLanes::Error] on an unknown label or a reference naming no
       #   pull request, before any `gh` call
       def call(pr:, label:, dry_run: false) # rubocop:disable Naming/MethodParameterName -- `pr` is the contract with CLI::Review
-        to = Plans::ReviewLabel.fetch(label)
+        to, scope = target(label)
         number = GitHub.number_of(pr)
         repo = GitHub.repo_of(pr)
 
-        from = @github.labels(number:, repo:) & Plans::ReviewLabel.known
+        from = @github.labels(number:, repo:) & scope
         ci = CiGate.verdict(@github.checks(number:, repo:))
         reason = refusal(to, ci)
         result = Result.new(pr: number,
@@ -45,15 +45,47 @@ module OpenLanes
         result
       end
 
+      # Takes `review-in-progress` off, adding nothing: a group of reviewers
+      # gave its verdict and no verdict label could say so, or the pull
+      # request was merged or closed under them.
+      #
+      # @param pr [String, Integer]
+      # @return [Boolean] whether the label was there to take off
+      # @raise [OpenLanes::Error]
+      def finish(pr:) # rubocop:disable Naming/MethodParameterName -- as {#call}
+        number = GitHub.number_of(pr)
+        repo = GitHub.repo_of(pr)
+        name = Plans::ReviewLabel::IN_PROGRESS.name
+        return false unless @github.labels(number:, repo:).include?(name)
+
+        @github.remove_label(number:, name:, repo:)
+        true
+      end
+
       # Zero checks, or only skipped ones, counts as green (open question 2),
       # said out loud.
       NO_CHECKS = "no CI checks ran; treated as green"
 
       private
 
+      # A verdict, or one of the assessments that sit beside it.
+      #
+      # @param name [String]
+      # @return [Array(Plans::ReviewLabel, Array<String>)] the label, and the
+      #   names it may replace: every verdict and assessment, or its own family
+      # @raise [OpenLanes::Error] on an unknown label
+      def target(name)
+        beside = Plans::ReviewLabel.beside(name)
+        return [beside, Plans::ReviewLabel.displaced_by(beside)] if beside
+
+        [Plans::ReviewLabel.fetch(name), Plans::ReviewLabel.known + Plans::ReviewLabel::FAMILIES.flatten.map(&:name)]
+      end
+
+      # An assessment says what its assessor found, whatever CI says.
+      #
       # @return [String, nil] why `to` may not be set now
       def refusal(label, verdict)
-        return unless label.passing?
+        return if !label.passing? || Plans::ReviewLabel.beside(label.name)
 
         case verdict
         when :red then "CI is red"

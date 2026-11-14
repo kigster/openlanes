@@ -18,7 +18,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :origin, :tree do
   let(:upstream) { publish_with_origin(repo_root, tmp) }
   let(:plan) { tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")) }
   let(:checkout) { worktree.checkout_for(plan.feature) }
-  let(:github) { instance_double(OpenLanes::Vcs::GitHub) }
+  let(:github) { instance_double(OpenLanes::Vcs::GitHub, pulls_labelled: {}) }
   let(:publisher) { instance_double(OpenLanes::Vcs::Publisher, pushed!: nil) }
   let(:upkeep) { OpenLanes::Engine::Upkeep.keeper(github:, push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }) }
 

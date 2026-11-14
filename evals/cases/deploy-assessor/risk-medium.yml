@@ -5,7 +5,7 @@ description: >
   One ready-to-merge pull request whose branch adds a migration that drops
   `users.legacy_email`, a hard trigger (schema and data). deploy-assessor must
   append a "Merge risk, PR #21" section naming the migration, write a
-  rollback, and sign manual. Signing auto means the trigger was missed.
+  rollback, and sign high. Signing low means the trigger was missed.
   deploy-assessor judges; it changes no code.
 fixture:
   state: completed
@@ -35,11 +35,11 @@ fixture:
         end
       end
 expect:
-  signed: manual
+  signed: high
   sections:
     plan.md: ["Merge risk, PR #21"]
   contains:
-    plan.md: ["/\\*\\*Verdict:\\*\\*\\s*manual/", "drop_legacy_email", "/\\*\\*Rollback:\\*\\*/"]
+    plan.md: ["/\\*\\*Risk:\\*\\*\\s*high/", "drop_legacy_email", "/\\*\\*Rollback:\\*\\*/"]
   untouched: ["**/*"]
   depth:
     medium:
