@@ -164,8 +164,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
       {children}
     </Choices>
   );
-  // A question with nothing to choose has no button row, so the control sits under its text box.
-  let answerUi: ReactNode = q.options ? box : <>{box}{talkButton}</>;
+  let answerUi: ReactNode = box;
   if (q.options) answerUi = q.inWords && !extension ? <>{choices()}{box}</> : choices(extension ? undefined : <>{holdButton}{talkButton}</>);
   return (
     <div className={`ask${q.isHeld ? " is-held" : ""}${spotlit ? " is-spotlit" : ""}`} data-ask={question.id} data-plan={plan.ordinal}>

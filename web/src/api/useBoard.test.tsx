@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { COPILOT_KEY, createQueryClient } from "./queryClient";
-import type { CopilotLog } from "./types";
+import type { CopilotLog, InterviewTurn } from "./types";
+import { interviewKey } from "./interview";
+import { chatBus } from "../chat/bus";
 import { reconcile, useBoard } from "./useBoard";
 import { replies } from "./replies";
 import type { StreamHandlers } from "./events";
@@ -269,4 +271,29 @@ describe("board deltas", () => {
     await waitFor(() => expect(streams).toHaveLength(2));
     expect(closed).toHaveBeenCalled();
   });
+});
+
+// An interview turn reaches the page on the board's stream and lands in that question's own query, once.
+it("files an interview turn under its question, and reads the open interviews again on reconnect", () => {
+  const client = createQueryClient();
+  fetchMock.mockResolvedValue(json(loadFixtureBoard()));
+  renderHook(() => useBoard(), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+  const turn = { id: "t1", from: "unblocker", kind: "text", text: "Which one?", at: "2026-11-13T00:00:00Z" } as const;
+  act(() => streams[0].onInterview?.({ plan: "068.00", number: 2, turn }));
+  act(() => streams[0].onInterview?.({ plan: "068.00", number: 2, turn }));
+  expect(client.getQueryData<InterviewTurn[]>(interviewKey("068.00", 2))).toEqual([turn]);
+  expect(client.getQueryData(interviewKey("068.00", 3))).toBeUndefined();
+
+  // A turn sent while the stream was down was never relayed, so a reconnect reads every open interview again.
+  const refetch = vi.spyOn(client, "refetchQueries");
+  act(() => streams[0].onReconnect());
+  expect(refetch).toHaveBeenCalledWith({ queryKey: ["interview"] });
+});
+
+it("tells the chat when the stream starts relaying it", () => {
+  fetchMock.mockResolvedValue(json(loadFixtureBoard()));
+  renderHook(() => useBoard(), { wrapper });
+  const opened = vi.spyOn(chatBus, "opened");
+  act(() => streams[0].onChatCursor?.());
+  expect(opened).toHaveBeenCalled();
 });

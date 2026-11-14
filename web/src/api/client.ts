@@ -78,10 +78,6 @@ async function send(path: string, body: unknown, csrf: string): Promise<Response
  * POSTs with the session's token. A 403 means the token went stale (the server restarted), so it fetches a new one
  * and sends the same body, same id, once more.
  */
-export async function postJson(path: string, body: unknown): Promise<Response> {
-  return post(path, body);
-}
-
 async function post(path: string, body: unknown): Promise<Response> {
   const res = await send(path, body, (await getSession()).csrf);
   if (res.status !== 403) return res;
@@ -91,6 +87,11 @@ async function post(path: string, body: unknown): Promise<Response> {
     throw new ApiError(`POST ${path} answered 403 and no new session could be fetched`, 403);
   });
   return send(path, body, fresh.csrf);
+}
+
+/** `post` for a caller outside this file that reads the response itself (the interview's 202, 409 and 422). */
+export async function postJson(path: string, body: unknown): Promise<Response> {
+  return post(path, body);
 }
 
 /**
