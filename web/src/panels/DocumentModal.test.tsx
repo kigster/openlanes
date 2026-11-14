@@ -74,7 +74,7 @@ describe("panels.css", () => {
   // Read from disk: vitest runs with css: false, which turns a ?raw import of a stylesheet into an empty string.
   const css = readFileSync("src/panels/panels.css", "utf8");
   it("sizes the modal for each breakpoint", () => {
-    expect(css).toMatch(/\.document-modal\s*\{[^}]*width:\s*min\(1000px, 70vw\)/);
+    expect(css).toMatch(/\.document-modal\s*\{[^}]*width:\s*1000px/);
     expect(css).toMatch(/@media \(max-width: 1200px\)\s*\{\s*\.document-modal\s*\{[^}]*left:\s*15%[^}]*right:\s*15%/);
     expect(css).toMatch(/@media \(max-width: 600px\)\s*\{\s*\.document-modal\s*\{[^}]*width:\s*90vw;\s*max-height:\s*90vh/);
     expect(css).toMatch(/@media \(max-width: 450px\)\s*\{\s*\.document-modal\s*\{[^}]*width:\s*calc\(100vw - 2px\)/);

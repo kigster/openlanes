@@ -327,7 +327,7 @@ textarea[aria-invalid="true"] { border-color: var(--alarm); }
 
 /* The lane's document modal (plan 070): 10% above and below, 1000px wide at most, then narrower margins as the page does. */
 .document-modal { position: fixed; z-index: 60; top: 10vh; bottom: 10vh; left: 50%; transform: translateX(-50%);
-  width: min(1000px, 70vw); max-height: 80vh; display: flex; flex-direction: column; background: var(--plate); color: var(--ink);
+  width: 1000px; max-height: 80vh; display: flex; flex-direction: column; background: var(--plate); color: var(--ink);
   border: 1px solid var(--hairline); border-radius: 12px; box-shadow: 0 12px 40px rgb(0 0 0 / .3); }
 .document-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--hairline); }
 .document-modal-head h2 { margin: 0; font-size: 16px; }

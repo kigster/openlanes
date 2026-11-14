@@ -6,7 +6,7 @@
     "slug": "an-action-strip-per-lane"
   },
   "state": "rejected",
-  "updated_at": "2026-11-14T11:47:34-08:00",
+  "updated_at": "2026-11-14T14:26:48-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -131,14 +131,229 @@
     {
       "agent": "backend-coder",
       "round": 1,
-      "status": "Started",
+      "status": "Completed",
       "from": "rejected",
       "started_at": "2026-11-14T11:27:13-08:00",
       "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
       "adapter": "claude",
       "model": "claude-sonnet-5-5",
       "effort": "medium",
-      "session": "727d9a43-a5e3-471d-a753-e614a2f885ca"
+      "session": "727d9a43-a5e3-471d-a753-e614a2f885ca",
+      "to": "ready_for_review",
+      "finished_at": "2026-11-14T11:47:44-08:00",
+      "up": 66922,
+      "down": 166,
+      "seconds": 1220.2,
+      "note": "completed - 16 tool calls; pushed to https://github.com/kigster/openlanes/pull/242",
+      "moves": 8
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "ready_for_review",
+      "started_at": "2026-11-14T11:47:54-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "e599d232-b6ff-4ef4-92c3-8afb32a08882",
+      "to": "in_review",
+      "finished_at": "2026-11-14T11:53:58-08:00",
+      "up": 4160346,
+      "down": 26067,
+      "seconds": 362.8,
+      "note": "timed out, killed 60s after STOP; Interrupted; no rounds left",
+      "moves": 9,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T11:54:00-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "claude",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "4aeab079-a745-4026-8921-6c5451a816de",
+      "to": "in_review",
+      "finished_at": "2026-11-14T11:54:04-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.0,
+      "note": "claude exited 1: There's an issue with the selected model (grok-4.7-build-fast). It may not exist or you may not have access to it. Run --model to pick a different model. - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261114-115400-070.00-staff-reviewer-9345-5a69.ndjson",
+      "moves": 9
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T11:59:07-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "b26ab386-76b2-4044-a1d4-1dee514381ad",
+      "to": "in_review",
+      "finished_at": "2026-11-14T12:05:10-08:00",
+      "up": 4241020,
+      "down": 27257,
+      "seconds": 361.3,
+      "note": "timed out, killed 60s after STOP; Interrupted; no rounds left",
+      "moves": 9,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 2,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T12:05:12-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "claude",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "0ba2e584-3808-4e75-abc8-b5685eb7d4e7",
+      "to": "in_review",
+      "finished_at": "2026-11-14T12:05:15-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.7,
+      "note": "claude exited 1: There's an issue with the selected model (grok-4.7-build-fast). It may not exist or you may not have access to it. Run --model to pick a different model. - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261114-120513-070.00-staff-reviewer-9345-8ff1.ndjson",
+      "moves": 9
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T12:52:57-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "270d4fb1-b344-473e-8241-72876c0739a0",
+      "to": "in_review",
+      "finished_at": "2026-11-14T13:09:00-08:00",
+      "up": 7012442,
+      "down": 35245,
+      "seconds": 963.0,
+      "note": "timed out, killed 60s after STOP; Interrupted; no rounds left",
+      "moves": 9,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 3,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T13:09:03-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "claude",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "9a1ddb8f-56d4-4686-9cf6-fe380f796b1e",
+      "to": "in_review",
+      "finished_at": "2026-11-14T13:09:06-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.9,
+      "note": "claude exited 1: There's an issue with the selected model (grok-4.7-build-fast). It may not exist or you may not have access to it. Run --model to pick a different model. - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261114-130903-070.00-staff-reviewer-9345-ace4.ndjson",
+      "moves": 9
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 4,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T13:12:49-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "b6eb9d13-a8ed-44a1-a383-4a0b8ab7d647",
+      "to": "in_review",
+      "finished_at": "2026-11-14T13:18:54-08:00",
+      "up": 1634447,
+      "down": 19405,
+      "seconds": 363.6,
+      "note": "timed out, killed 60s after STOP; Interrupted; no rounds left",
+      "moves": 9
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T13:58:07-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "b6eb9d13-a8ed-44a1-a383-4a0b8ab7d647",
+      "to": "in_review",
+      "finished_at": "2026-11-14T14:11:01-08:00",
+      "up": 1282649,
+      "down": 6304,
+      "seconds": 767.3,
+      "note": "no closing ledger line; Interrupted; 3 rounds left",
+      "moves": 9,
+      "replaced_by": "claude"
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 1,
+      "status": "Interrupted",
+      "from": "in_review",
+      "started_at": "2026-11-14T14:11:03-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "claude",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "8ed2cbb0-1282-41ff-8b3c-cb95b1332f0b",
+      "to": "in_review",
+      "finished_at": "2026-11-14T14:11:05-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 1.8,
+      "note": "claude exited 1: There's an issue with the selected model (grok-4.7-build-fast). It may not exist or you may not have access to it. Run --model to pick a different model. - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261114-141103-070.00-staff-reviewer-48965-e8f8.ndjson",
+      "moves": 9
+    },
+    {
+      "agent": "staff-reviewer",
+      "round": 2,
+      "status": "Completed",
+      "from": "in_review",
+      "started_at": "2026-11-14T14:11:13-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "grok",
+      "model": "grok-4.7-build-fast",
+      "effort": "medium",
+      "session": "83be1b41-4430-41ef-8227-d22cebdba29c",
+      "verdict": "rejected 1/2",
+      "review": 9,
+      "to": "rejected",
+      "finished_at": "2026-11-14T14:14:08-08:00",
+      "up": 1561089,
+      "down": 12671,
+      "seconds": 169.0,
+      "note": "completed - 30 tool calls; review review-rejected (rejected 1/2)",
+      "moves": 10
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-14T14:14:15-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/070.00-an-action-strip-per-lane",
+      "adapter": "claude",
+      "model": "claude-sonnet-5-5",
+      "effort": "medium",
+      "session": "ee01ec00-1894-4bf0-b9e8-29a67f377c62"
     }
   ],
   "signatures": [
@@ -230,6 +445,105 @@
       "status": "Completed",
       "round": 1,
       "next": "staff-reviewer"
+    },
+    {
+      "at": "2026-11-14T11:48:39-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-14T11:53:58-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-14T11:59:42-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-14T12:05:10-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 2,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-14T12:53:31-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-14T13:08:29-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 3,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-14T13:09:00-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 3,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-14T13:13:28-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-11-14T13:18:54-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 4,
+      "note": "timed out, killed 60s after STOP"
+    },
+    {
+      "at": "2026-11-14T14:10:45-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 4,
+      "note": "passed"
+    },
+    {
+      "at": "2026-11-14T14:11:01-08:00",
+      "agent": "staff-reviewer",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "no closing ledger line"
+    },
+    {
+      "at": "2026-11-14T14:12:31-08:00",
+      "agent": "staff-reviewer",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-14T14:13:52-08:00",
+      "agent": "staff-reviewer",
+      "status": "Completed",
+      "round": 2,
+      "note": "rejected 1/2"
+    },
+    {
+      "at": "2026-11-14T14:14:24-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-14T14:26:45-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 1,
+      "next": "design-reviewer"
     }
   ],
   "messages": [
@@ -267,7 +581,7 @@
       "from": "security-reviewer",
       "to": "staff-reviewer",
       "body": "Security review: no findings. Signed passed. pull-requests.md has Findings: security-reviewer.",
-      "read": "no"
+      "read": "yes"
     },
     {
       "id": "1c1777ef-53a0-470e-875e-55d102dde930",
@@ -277,9 +591,63 @@
       "to": "design-reviewer",
       "body": "Security review: no findings. Signed passed. pull-requests.md has Findings: security-reviewer.",
       "read": "yes"
+    },
+    {
+      "id": "ee57b2fa-6b3f-4dce-924b-ed20c20a2a1e",
+      "number": 6,
+      "at": "2026-11-14T12:59:57-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "Staff round 3 passed with minors. F1: CircleCI e2e job 2938 fails lane-documents on axe label-content-name-mismatch because DocumentModal [x] has aria-label Close. F2: modal width min(1000px, 70vw) shrinks before 1200px. Comment 6884120348.",
+      "read": "no"
+    },
+    {
+      "id": "c21f7d91-0ea1-4ebc-8902-da78aa2b82dd",
+      "number": 7,
+      "at": "2026-11-14T12:59:58-08:00",
+      "from": "staff-reviewer",
+      "to": "security-reviewer",
+      "body": "Staff round 3 passed with minors only: axe name mismatch on the modal [x] (CI e2e red), and modal width shrinks before 1200px. No security change. Comment 6884120348.",
+      "read": "no"
+    },
+    {
+      "id": "124b6ab9-b39f-4892-a67b-84b37b561b6c",
+      "number": 8,
+      "at": "2026-11-14T13:16:43-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "Staff round 4 passed with the same two minors, commit fcf236f4 unchanged. F1 modal [x] aria-label Close vs visible [x] still fails axe and ci/circleci e2e. F2 base width min(1000px, 70vw) still shrinks before 1200px. Findings appended to pull-requests.md.",
+      "read": "no"
+    },
+    {
+      "id": "4a705090-56c4-4447-8a58-2208fee15f55",
+      "number": 9,
+      "at": "2026-11-14T13:16:43-08:00",
+      "from": "staff-reviewer",
+      "to": "security-reviewer",
+      "body": "Staff round 4 passed, minors only. No new security-relevant change. e2e still red on the modal [x] accessible name. Commit fcf236f4.",
+      "read": "no"
+    },
+    {
+      "id": "538a45b8-eee5-4288-aea0-9b33d0ce777d",
+      "number": 10,
+      "at": "2026-11-14T14:13:39-08:00",
+      "from": "staff-reviewer",
+      "to": "design-reviewer",
+      "body": "Staff review rejected 1/2. ci/circleci: e2e is red on fcf236f4 (https://app.circleci.com/workflow/f5a4f2f5-c3ab-47a4-ac5c-14b64e8ed524/job/b198552f-29c3-44f0-b94a-ac23408c5b22). One critical finding in pull-requests.md. Diff not reviewed.",
+      "read": "no"
+    },
+    {
+      "id": "51343d85-7177-490b-9703-d167beb9a09d",
+      "number": 11,
+      "at": "2026-11-14T14:13:39-08:00",
+      "from": "staff-reviewer",
+      "to": "security-reviewer",
+      "body": "Staff review rejected 1/2. ci/circleci: e2e is red on fcf236f4. One critical finding in pull-requests.md. Diff not reviewed. Linter, test and web are green.",
+      "read": "no"
     }
   ],
-  "moves": 7,
+  "moves": 10,
   "memory": {
     "planner": {
       "rounds": {
@@ -306,7 +674,7 @@
     "backend-coder": {
       "rounds": {},
       "held": {
-        "session": "727d9a43-a5e3-471d-a753-e614a2f885ca",
+        "session": "ee01ec00-1894-4bf0-b9e8-29a67f377c62",
         "through": 0
       }
     },
@@ -389,11 +757,65 @@
               "text": "RSpec finished after the Completed signature: 6645 examples, 0 failures, 9 pending, seed 1973."
             }
           ]
+        },
+        "2": {
+          "round": 3,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Verdict passed. Minors: axe label-content-name-mismatch on the modal [x] (CI e2e job 2938 red), and modal width min(1000px, 70vw) shrinks before 1200px. Prior mermaid-theme and failed-list fixes hold."
+            },
+            {
+              "kind": "done",
+              "text": "Findings appended under Findings: staff-reviewer in pull-requests.md. PR comment 6884120348. Mailed design-reviewer and security-reviewer. Signed Completed --note passed."
+            },
+            {
+              "kind": "note",
+              "text": "RuboCop clean (993 files). plan_files_spec 19 examples, 0 failures. Full rspec still running at STOP. CircleCI test and web jobs on fcf236f4 were already green. Harness held the plan dir lock, so findings were appended without an alock acquire."
+            }
+          ]
+        },
+        "3": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Verdict passed. Same two minors still open on fcf236f4: modal [x] aria-label Close vs visible text fails axe and e2e, and base width min(1000px, 70vw) shrinks before 1200px."
+            },
+            {
+              "kind": "done",
+              "text": "Findings appended under Findings: staff-reviewer. PR comment 6884325234. Mailed design-reviewer (#8) and security-reviewer (#9). Signed Completed round 4 --note passed. Resume record was round 4 Interrupted, so this close used round 4."
+            },
+            {
+              "kind": "note",
+              "text": "RuboCop clean, 993 files. RSpec 6645 examples, 0 failures, 9 pending, seed 49067, coverage 99.14%. Harness held the plan dir lock, so findings were appended without an alock acquire."
+            }
+          ]
+        },
+        "4": {
+          "round": 2,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Verdict rejected 1/2. ci/circleci: e2e is FAILURE on fcf236f4 (job b198552f). Linter, test and web passed. No earlier signature note is rejected, so this is 1/2. Diff not reviewed."
+            },
+            {
+              "kind": "done",
+              "text": "Critical F1 appended under Findings: staff-reviewer in pull-requests.md. PR comment 6885012785. Mailed design-reviewer #10 and security-reviewer #11. Signed Completed round 2 --note rejected 1/2."
+            },
+            {
+              "kind": "note",
+              "text": "alock acquire REFUSED: harness openlanes pid 48965 holds .plans/070.00/**. Appended only the staff section. Did not re-run rspec or rubocop; CircleCI linter and test on this commit are already green."
+            }
+          ]
         }
       },
       "held": {
-        "session": "9eec040d-5433-4ee7-b64d-cd400c32391d",
-        "through": 4
+        "session": "83be1b41-4430-41ef-8227-d22cebdba29c",
+        "through": 10
       }
     }
   },
@@ -479,6 +901,97 @@
       "grant": "live",
       "seconds": 600,
       "settled_at": "2026-11-14T11:45:13-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T11:54:04-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T11:59:05-08:00"
+    },
+    {
+      "number": 9,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 2,
+      "limit": "time",
+      "asked_at": "2026-11-14T11:59:09-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-14T12:05:10-08:00"
+    },
+    {
+      "number": 10,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T12:05:15-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T12:52:54-08:00"
+    },
+    {
+      "number": 11,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 3,
+      "limit": "time",
+      "asked_at": "2026-11-14T12:52:58-08:00",
+      "answer": "b",
+      "by": "hermes",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-14T12:53:03-08:00"
+    },
+    {
+      "number": 12,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 3,
+      "limit": "time",
+      "asked_at": "2026-11-14T13:02:57-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-14T13:09:00-08:00"
+    },
+    {
+      "number": 13,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T13:09:06-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T13:12:45-08:00"
+    },
+    {
+      "number": 14,
+      "agent": "staff-reviewer",
+      "state": "in_review",
+      "round": 4,
+      "limit": "time",
+      "asked_at": "2026-11-14T13:12:51-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-14T13:18:54-08:00"
     }
-  ]
+  ],
+  "last-known-state": {
+    "staff-reviewer": {
+      "source": "harness",
+      "at": "2026-11-14T14:11:05-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "claude exited 1: There's an issue with the selected model (grok-4.7-build-fast). It may not exist or you may not have access to it. Run --model to pick a different model. - trace: /var/folders/jh/7gz210fj2hg5l5nqhqxswt2w0000gq/T/openlanes-traces/20261114-141103-070.00-staff-reviewer-48965-e8f8.ndjson; last ledger line: Interrupted, round 1: no closing ledger line; last seen: There's an issue with the selected model (grok-4.7-build-fast)."
+    }
+  }
 }

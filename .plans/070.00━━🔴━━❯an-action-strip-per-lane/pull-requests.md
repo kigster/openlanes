@@ -63,3 +63,56 @@ no findings
   - F203 / F3: `LaneDocuments` reads `error`; a failed list disables the trigger with "Could not list the documents: …".
   - F2: the preview is keyed by theme, so a switch remounts it and Mermaid draws again with the new theme.
 - F1: `just web-e2e` is recorded below if it ran within this round's budget; otherwise it remains unrun.
+
+## Findings: staff-reviewer
+
+### F1 [minor] web/src/panels/DocumentModal.tsx:50
+
+The modal's `[x]` is a `Dialog.Close` whose visible text is `[x]` and whose accessible name is `Close` (`aria-label="Close"`). Those two disagree, so axe-core 4.14's `label-content-name-mismatch` (impact serious) fails. `lane-documents.cy.ts` runs that rule on `.document-modal` with `includedImpacts: ["serious", "critical"]`.
+
+Failing scenario: CircleCI e2e job 2938, commit `fcf236f4`, spec `web/cypress/e2e/lane-documents.cy.ts`, test "lists Specification first and renders it with highlighted YAML frontmatter and a rendered body". Expected: `cy.checkA11y` reports 0 violations. Actual: the spec logs `axe: label-content-name-mismatch` and fails with `AssertionError: 1 accessibility violation was detected: expected 1 to equal 0`. The other four tests in that file passed (Pull requests last and footer Close, `[!NOTE]` plus a `.mermaid-diagram svg`, width at least 398px at a 400px viewport, no Documents trigger on narrow lanes). `ci/circleci: e2e` is red. Linter, test and web on the same commit are green.
+
+Hide the glyphs from the name: `<Dialog.Close className="document-modal-x" aria-label="Close"><span aria-hidden="true">[x]</span></Dialog.Close>`.
+
+### F2 [minor] web/src/panels/panels.css:329
+
+The base rule sets `width: min(1000px, 70vw)`. Seventy percent of the viewport drops below 1000px at about 1429px wide, so the modal starts shrinking there. The `@media (max-width: 1200px)` rule, which is what keeps a 15% horizontal margin, never decides the width for a window between 1200px and 1429px.
+
+Failing scenario: viewport 1300px wide. Expected: width stays at the 1000px maximum until the page is 1200px or narrower, then the horizontal margins are 15%. Actual: width is `70vw`, 910px.
+
+Set the base width to `1000px` and leave the 1200px query as `left: 15%; right: 15%; width: auto`.
+
+## Findings: staff-reviewer
+
+### F1 [minor] web/src/panels/DocumentModal.tsx:50
+
+Still open on `fcf236f4`. The `[x]` control's visible text is `[x]` and its accessible name is `Close`. axe-core's `label-content-name-mismatch` (serious) fails, and `lane-documents.cy.ts` checks `.document-modal` for serious and critical violations.
+
+Failing scenario: `gh pr checks 242` on `fcf236f4` reports `ci/circleci: e2e` fail (https://app.circleci.com/workflow/f5a4f2f5-c3ab-47a4-ac5c-14b64e8ed524/job/b198552f-29c3-44f0-b94a-ac23408c5b22). The spec opens Specification and runs `cy.checkA11y`. Expected: 0 violations. Actual: `label-content-name-mismatch` because `Dialog.Close` is `aria-label="Close"` with text node `[x]`. Linter, test and web on this commit are green. The source line is unchanged since that failure.
+
+Hide the glyphs: `<Dialog.Close className="document-modal-x" aria-label="Close"><span aria-hidden="true">[x]</span></Dialog.Close>`.
+
+### F2 [minor] web/src/panels/panels.css:330
+
+Still open. The base rule is `width: min(1000px, 70vw)`. `70vw` falls through 1000px at about 1429px, so the modal shrinks before the page is 1200px wide. The `@media (max-width: 1200px)` block now sets `width: auto` with `left`/`right: 15%`, and that block does not apply above 1200px.
+
+Failing scenario: viewport 1300px wide. Expected: width stays 1000px until the page is 1200px or narrower, then the horizontal margins are 15%. Actual: width is `70vw`, 910px.
+
+Set the base width to `1000px`.
+
+## Findings: staff-reviewer
+
+### F1 [critical] web/cypress/e2e/lane-documents.cy.ts:35
+
+`gh pr checks 242` reports `ci/circleci: e2e` failed on head `fcf236f4`. A red required check sends the pull request back to the builder. Linter, test and web on the same commit passed. Mermaid Diagram Sync Assistant is skipped. The diff was not reviewed.
+
+Failing scenario: `gh pr checks 242` for `fcf236f4800abc9eb9035cca110a5ec3e8d1d480`. Expected: `ci/circleci: e2e` success. Actual: state FAILURE, job https://app.circleci.com/workflow/f5a4f2f5-c3ab-47a4-ac5c-14b64e8ed524/job/b198552f-29c3-44f0-b94a-ac23408c5b22. The spec at that line runs `cy.checkA11y` on `.document-modal`. The recorded failure on this same job is axe `label-content-name-mismatch` (serious): the `[x]` control's visible text is `[x]` and its accessible name is `Close`.
+
+Hide the glyphs from the name: `<Dialog.Close className="document-modal-x" aria-label="Close"><span aria-hidden="true">[x]</span></Dialog.Close>`.
+
+## Answers, round 3
+
+- F1 (staff-reviewer, axe `label-content-name-mismatch`): fix. The `[x]` glyphs are wrapped in `<span aria-hidden="true">` in `DocumentModal.tsx`, so the accessible name is `Close` alone.
+- F2: fix. `.document-modal` width is `1000px` in `panels.css`; the 1200px query still sets 15% margins. `DocumentModal.test.tsx` asserts the new width.
+- Checks: `bundle exec rubocop` 993 files, no offenses; `npx vitest run` 69 files, 648 passed; `npm run lint` and `tsc --noEmit` clean.
+- `bundle exec rspec` — 6645 examples, 0 failures, 9 pending (pre-existing).
