@@ -694,6 +694,18 @@ RSpec.describe OpenLanes::Vcs::GitHub do
       end
     end
 
+    describe "#pulls_labelled" do
+      it "asks for the pull requests in the state named, merged ones among the closed" do
+        allow(command).to receive(:run)
+          .and_return(instance_double(TTY::Command::Result, out: "#{JSON.generate(number: 7, labels: %w[openlanes review-in-progress])}\n"))
+
+        aggregate_failures do
+          expect(github.pulls_labelled("review-in-progress", state: "closed")).to eq(7 => %w[openlanes review-in-progress])
+          expect(command).to have_received(:run).with(*%w[gh api --paginate -X GET repos/{owner}/{repo}/issues -f state=closed], any_args)
+        end
+      end
+    end
+
     describe "#rename_label" do
       let(:passed) { OpenLanes::Plans::ReviewLabel::PASSED }
 

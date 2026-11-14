@@ -58,4 +58,13 @@ RSpec.describe OpenLanes::CLI::ConfigFile::Move do
     _out, err, status = run
     expect([status, err.gsub(/[│\s]+/, "")]).to match([65, include("both")])
   end
+
+  # The command's own refusal: loading the config already refuses two files,
+  # so only a destination that is not a file reaches the mover's check.
+  it "refuses when something other than a file sits at the destination" do
+    File.write(legacy, "jobs: 2\n")
+    FileUtils.mkdir_p(target)
+    _out, err, status = run
+    expect([status, err.gsub(/[│\s]+/, ""), File.read(legacy)]).to match([65, include("both"), "jobs: 2\n"])
+  end
 end

@@ -45,7 +45,7 @@ SimpleCov starts on every rspec run, not only under `COVERAGE=true`, so a single
 
 CI is CircleCI, configured in `.circleci/config.yml`: `linter`, `test`, `web` and `e2e` jobs.
 
-Commands do the work they are named for, but `.openlanes.yml` can change what a run actually does, so read a command's `--help` before starting a run.
+Commands do the work they are named for, but `.openlanes/config.yml` can change what a run actually does, so read a command's `--help` before starting a run.
 
 ### Distribution
 
@@ -135,7 +135,7 @@ lib/openlanes/
   presentation/          OpenLanes::Presentation —
                          documentation.rb (`openlanes docs`), diagram.rb (`openlanes states`), reporter.rb, viewer.rb
   support/               collapsed by Zeitwerk, so these stay OpenLanes::UI, ::Markdown, ::Frontmatter,
-                         ::Project (the root search) and ::Config (.openlanes.yml)
+                         ::Project (the root search) and ::Config (.openlanes/config.yml)
   uml/                   OpenLanes::Uml — `openlanes uml`: Prism parses lib/ (and app/), Model draws classes and typed edges,
                          NamespaceMap and ClassDiagram render Mermaid, Writer fills docs/architecture/
   skills/                OpenLanes::Skills — the bundled skills/*/SKILL.md, and the installer that copies them
@@ -186,7 +186,7 @@ Raw NDJSON traces land in `Dir.tmpdir/openlanes-traces` on purpose, outside the 
 - A command does the work it is named for; anything that writes to disk, GitHub or Linear previews with `-n` / `--dry-run`.
 - `Data.define` for value objects, everywhere. Endless method definitions (`def open? = state.match?(...)`) are idiomatic here.
 - YARD on public methods, with `@param` and `@return`. Comments explain why, usually by naming the specific failure the code prevents. Match that density; it is the house style, not decoration.
-- Project commands find the root (`OpenLanes::Project.root`) and `chdir` there before `call` runs; a command that needs no project says `standalone!`. `.openlanes.yml` reaches a command through `Base.default_params`, so dry-cli's own merge keeps a typed flag above the file.
+- Project commands find the root (`OpenLanes::Project.root`) and `chdir` there before `call` runs; a command that needs no project says `standalone!`. `.openlanes/config.yml` reaches a command through `Base.default_params`, so dry-cli's own merge keeps a typed flag above the file.
 - `GitHub` and `Linear::API` are seams. The suite injects doubles into both and never reaches the network.
 - Specs build real `.plans` trees in temp directories through `PlansFixture` and the `:tree` tag. Do not mock the filesystem. Faking it would test the fake.
 - `spec_helper.rb` forces `NO_COLOR=1` so assertions test content on every machine. Cover the colored path deliberately, by stubbing `UI.color?`.

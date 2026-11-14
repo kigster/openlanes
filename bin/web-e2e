@@ -45,9 +45,17 @@ stop() {
 }
 trap stop EXIT
 
-bundle exec exe/openlanes web --demo --no-open --port "$port" --redis-url "$redis" --dir "$plans" &
+# Both servers run from the temp project, not this checkout: the settings
+# spec (plan 058) saves, commits and pushes `main` in the server's project
+# root, and rooted here it would push this repository's own main.
+# They still go through `bundle exec` with this checkout's Gemfile: CI installs
+# the gems into vendor/bundle, which a bare exe/openlanes cannot see, and the
+# Gemfile's own .bundle/config is what points Bundler there.
+repo="$PWD"
+export BUNDLE_GEMFILE="$repo/Gemfile"
+(cd "$plans_tmp" && exec bundle exec "$repo/exe/openlanes" web --demo --no-open --port "$port" --redis-url "$redis" --dir "$plans") &
 pids+=($!)
-bundle exec exe/openlanes web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine --dir "$plans" &
+(cd "$plans_tmp" && exec bundle exec "$repo/exe/openlanes" web --demo --no-open --port "$peer" --redis-url "$redis" --identity demo@second-machine --dir "$plans") &
 pids+=($!)
 
 for p in "$port" "$peer"; do

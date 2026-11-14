@@ -23,7 +23,7 @@ module OpenLanes
         return [] unless File.file?(from)
 
         to = File.join(@root, Project::FILE)
-        raise Error, "both #{to} and #{from} exist; keep one and remove the other" if File.exist?(to)
+        raise Error, Project.both(to, from) if File.exist?(to)
 
         OpenLanes.move_directory(from, to) unless dry_run
         [[from, to]]

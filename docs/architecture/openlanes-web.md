@@ -12,10 +12,15 @@ classDiagram
   class OpenLanes__Apps__Listing["OpenLanes::Apps::Listing"]
   <<module>> OpenLanes__Apps__Listing
   class OpenLanes__Apps__Runner["OpenLanes::Apps::Runner"]
+  class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Config__Schema["OpenLanes::Config::Schema"]
+  <<module>> OpenLanes__Config__Schema
   class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Engine__ProgressLog["OpenLanes::Engine::ProgressLog"]
   <<module>> OpenLanes__Engine__ProgressLog
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Execution__Boundary["OpenLanes::Execution::Boundary"]
+  <<module>> OpenLanes__Execution__Boundary
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Live["OpenLanes::Live"]
@@ -47,6 +52,8 @@ classDiagram
   <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
@@ -74,6 +81,12 @@ classDiagram
   class OpenLanes__Web__PlanReview__NotFound["PlanReview::NotFound"]
   class OpenLanes__Web__RequestLog["RequestLog"]
   class OpenLanes__Web__Server["Server"]
+  class OpenLanes__Web__Settings["Settings"]
+  <<module>> OpenLanes__Web__Settings
+  class OpenLanes__Web__Settings__Problem["Settings::Problem"]
+  class OpenLanes__Web__Settings__View["Settings::View"]
+  class OpenLanes__Web__SettingsSave["SettingsSave"]
+  class OpenLanes__Web__SettingsSave__Refused["SettingsSave::Refused"]
   class OpenLanes__Web__Stores["Stores"]
   OpenLanes__Web ..> OpenLanes__Live__Chat : uses
   OpenLanes__Web ..> OpenLanes__Web__App : uses
@@ -111,6 +124,8 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__Stale : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanReview : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanReview__NotFound : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__Settings : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__SettingsSave : uses
   OpenLanes__Web__BranchDiff ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Web__Demo ..> OpenLanes__Agents__Names : uses
   OpenLanes__Web__Demo ..> OpenLanes__Live : uses
@@ -173,4 +188,15 @@ classDiagram
   OpenLanes__Web__RequestLog ..> OpenLanes__Container : uses
   OpenLanes__Web__Server ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Server ..> OpenLanes__Web__Listen : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Config : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Config__Schema : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Error : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Project : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__Problem : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__View : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Config : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Error : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Execution__Boundary : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Web__Settings : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Web__SettingsSave__Refused : uses
 ```

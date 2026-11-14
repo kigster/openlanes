@@ -6,6 +6,7 @@
 classDiagram
   class OpenLanes__Adapters["OpenLanes::Adapters"]
   <<module>> OpenLanes__Adapters
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Apps__Definition["OpenLanes::Apps::Definition"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Config__CommandsSchema["CommandsSchema"]
@@ -22,6 +23,7 @@ classDiagram
   <<module>> OpenLanes__Project
   class OpenLanes__Setup__ArchitectureDecisions["OpenLanes::Setup::ArchitectureDecisions"]
   OpenLanes__Config ..> OpenLanes__Adapters : uses
+  OpenLanes__Config ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Config ..> OpenLanes__Apps__Definition : uses
   OpenLanes__Config ..> OpenLanes__Config__Schema : uses
   OpenLanes__Config ..> OpenLanes__Config__Secrets : uses

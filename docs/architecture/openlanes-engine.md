@@ -78,6 +78,7 @@ classDiagram
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
   class OpenLanes__Engine__Reviews["Reviews"]
   class OpenLanes__Engine__Reviews__Build["Reviews::Build"]
+  class OpenLanes__Engine__Reviews__Labels["Reviews::Labels"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
   class OpenLanes__Engine__StartWorkflow["StartWorkflow"]
@@ -102,6 +103,7 @@ classDiagram
   class OpenLanes__Engine__Upkeep__Actions["Upkeep::Actions"]
   class OpenLanes__Engine__Upkeep__Addressing["Upkeep::Addressing"]
   class OpenLanes__Engine__Upkeep__Conflict["Upkeep::Conflict"]
+  class OpenLanes__Engine__Upkeep__Finishing["Upkeep::Finishing"]
   class OpenLanes__Engine__Upkeep__Keeper["Upkeep::Keeper"]
   class OpenLanes__Engine__Upkeep__Owed["Upkeep::Owed"]
   class OpenLanes__Engine__Upkeep__Report["Upkeep::Report"]
@@ -452,13 +454,15 @@ classDiagram
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Agents__Routing : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Engine__Reviews__Build : uses
-  OpenLanes__Engine__Reviews ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Reviews ..> OpenLanes__Engine__Reviews__Labels : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans__Verdict : uses
-  OpenLanes__Engine__Reviews ..> OpenLanes__UI : uses
   OpenLanes__Engine__Reviews__Build ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Reviews__Labels ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Reviews__Labels ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Reviews__Labels ..> OpenLanes__UI : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Adapters__Claude__Catalogue : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents : uses
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Agents__Dealing : uses
@@ -569,6 +573,7 @@ classDiagram
   OpenLanes__Engine__Upkeep ..> OpenLanes__Container : uses
   OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Actions : uses
   OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Addressing : uses
+  OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Finishing : uses
   OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Keeper : uses
   OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Owed : uses
   OpenLanes__Engine__Upkeep ..> OpenLanes__Engine__Upkeep__Resolution : uses
@@ -579,6 +584,10 @@ classDiagram
   OpenLanes__Engine__Upkeep__Addressing ..> OpenLanes__Engine__Upkeep : uses
   OpenLanes__Engine__Upkeep__Addressing ..> OpenLanes__Error : uses
   OpenLanes__Engine__Upkeep__Addressing ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Upkeep__Finishing ..> OpenLanes__Engine__Upkeep : uses
+  OpenLanes__Engine__Upkeep__Finishing ..> OpenLanes__Error : uses
+  OpenLanes__Engine__Upkeep__Finishing ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__Upkeep__Finishing ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Engine__Upkeep__Resolution ..> OpenLanes__Engine__Upkeep : uses
   OpenLanes__Engine__Upkeep__Resolution ..> OpenLanes__Engine__Upkeep__Report : uses
   OpenLanes__Engine__Upkeep__Resolution ..> OpenLanes__Error : uses

@@ -2824,6 +2824,14 @@
         }
       }
     },
+    "sizing": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The builders' model and effort by the plan's largest unit: small, medium or large, each { model, effort }",
+      "default": null
+    },
     "chime": {
       "type": [
         "boolean",

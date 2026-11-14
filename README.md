@@ -20,7 +20,7 @@ Next phase is the planning phase, performed by a single agent who creates `plan.
 
 After the planner is finished, builders pick it up and when they are done in their worktree, the harness (ruby dispatcher) submits a pull request and invokes several agents to perform PR review. There are three types of reviewers who all use different models, and one specializes on security.  The reviewers are able to create and attach the PR labels used in this process. They can reject the PR (and almost always do), which returns it to the builders who address the feedback and re-submit the PR. The number of times this may occur is defined by "rounds" and in most cases the builders fix the PR to reviewer satisfaction.
 
-A currently planned but not yet implemented feature is once the PR has `review-approved` label, another agent determines the risk surface area and depending on what it finds attaches one of two labels: `auto-merge` or `human-should-merge` etc.
+The harness takes `review-in-progress` off once each group of reviewers has given its verdict. A rejected PR is labelled `review-rejected`; when the builders push their fix the harness swaps that for `review-addressed`, and the PR goes back to review. Two assessments sit beside the reviewers' verdict: the security reviewer's (`opsec-approved`, `opsec-concerned-approved` or `opsec-rejected`) and, once the PR is verified, the risk that deploying it breaks production (`risk-low`, `risk-medium` or `risk-high`). Under `merge.by: auto` the harness merges a PR by itself only when CI is green and it carries `review-approved`, `risk-low` and `opsec-approved`, and then rebases the others. Any other combination waits for a person.
 
 `.plans/001.00-<emoji>-plan-title/{spec.md,plan.md,....}`
 

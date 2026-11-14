@@ -8,6 +8,7 @@ classDiagram
   <<module>> OpenLanes
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Agents__Sizing["OpenLanes::Agents::Sizing"]
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Config__Schema["OpenLanes::Config::Schema"]
   <<module>> OpenLanes__Config__Schema
@@ -31,6 +32,7 @@ classDiagram
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes ..> OpenLanes__Agents__Names : uses
+  OpenLanes ..> OpenLanes__Agents__Sizing : uses
   OpenLanes ..> OpenLanes__Config : uses
   OpenLanes ..> OpenLanes__Config__Schema : uses
   OpenLanes ..> OpenLanes__Container : uses

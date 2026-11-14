@@ -58,13 +58,19 @@ module OpenLanes
       old_path = File.join(root, legacy)
       return new_path unless File.file?(old_path)
 
-      if File.file?(new_path)
-        raise Error, "both #{new_path} and #{old_path} exist; keep #{current} and remove #{legacy}"
-      end
+      raise Error, both(new_path, old_path) if File.file?(new_path)
 
       notice(legacy, current)
       old_path
     end
+
+    # The refusal for a root holding a file at both paths, worded once for
+    # {.resolve} and for {Setup::ConfigMove}.
+    #
+    # @param new_path [String]
+    # @param old_path [String]
+    # @return [String]
+    def both(new_path, old_path) = "both #{new_path} and #{old_path} exist; keep one and remove the other"
 
     # Said once per process per file: a tick loop resolves the path every tick.
     #

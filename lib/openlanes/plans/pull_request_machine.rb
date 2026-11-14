@@ -39,13 +39,13 @@ module OpenLanes
         state :closed
 
         event :submit do
-          transitions from: %i[unlabelled review_rejected review_vulnerability], to: :ready_for_review
+          transitions from: %i[unlabelled review_rejected], to: :ready_for_review
         end
 
         # Fixes reached a rejected pull request (U1). The harness fires it,
         # whoever pushed them.
         event :address do
-          transitions from: %i[review_rejected review_vulnerability], to: :review_addressed
+          transitions from: %i[review_rejected], to: :review_addressed
         end
 
         event :start_review do
@@ -60,10 +60,6 @@ module OpenLanes
         event :reject do
           transitions from: %i[review_in_progress review_passed review_approved ready_to_merge merge_manually],
             to: :review_rejected
-        end
-
-        event :flag_vulnerability do
-          transitions from: %i[review_in_progress review_rejected], to: :review_vulnerability
         end
 
         event :pass_with_doubts do

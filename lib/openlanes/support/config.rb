@@ -101,6 +101,9 @@ module OpenLanes
   #   @return [Array<String>] `review.adapters`: the coding agents
   #     {Agents::Dealing} deals the reviewers across, main one first; empty
   #     when unset, and then every reviewer runs on {#adapter}
+  # @!attribute [r] sizing
+  #   @return [OpenLanes::Agents::Sizing] `sizing:`: the builder profile for
+  #     a plan whose largest unit is small, medium or large
   # @!attribute [r] merge_by
   #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
   # @!attribute [r] merge_max_rejections
@@ -169,10 +172,11 @@ module OpenLanes
     :refactor_threshold,
     :refactor_lock_hours,
     :chime,
-    :budget_plan_usd) do
+    :budget_plan_usd,
+    :sizing) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -282,6 +286,7 @@ module OpenLanes
       settings["refactor"] = refactor unless refactor.empty?
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
       settings["chime"] = chime unless chime.nil?
+      settings["sizing"] = sizing.to_settings unless sizing.to_settings.empty?
       settings.compact
     end
 
@@ -451,7 +456,8 @@ module OpenLanes
           **events(settings["events"], path),
           **refactor(settings["refactor"], path),
           chime:     chime(settings, path),
-          **budget(settings["budget"], path))
+          **budget(settings["budget"], path),
+          sizing:    Agents::Sizing.parse(settings["sizing"], path:))
         conflicts!(config, path)
         schema!(config.to_settings.except("commands"), path)
         config
