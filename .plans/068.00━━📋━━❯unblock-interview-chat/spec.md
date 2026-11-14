@@ -1,7 +1,6 @@
 ---
 created: 2026-11-12
 starts: planning
-depends_on: [none]
 depth: medium
 frontend: true
 implementation_suggestions:

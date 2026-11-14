@@ -53,7 +53,7 @@ R is this review's round and M is `merge.max_rejections`, given under `## Reject
 
 If `pull-requests.md` lists several PRs, judge each, and sign the worst verdict any of them earned.
 
-The engine adds your verdict to the other reviewers': any `rejected` or `slop` labels the pull request `review-rejected`; otherwise it is `review-approved` when most of you said `great`, and `review-passed` when not. A passing label is refused while CI is red, and the plan goes back to its builders.
+The engine adds your verdict to the other reviewers': any `rejected` or `slop` labels the pull request `review-rejected`; otherwise it is `review-approved` when most of you said `great`, and `review-passed` when not. A passing label is refused while CI is red, and the plan goes back to its builders. The engine takes `review-in-progress` off once each group of reviewers has given its verdict; `security-reviewer`'s own verdict is also said beside the label as `opsec-approved`, `opsec-concerned-approved` or `opsec-rejected`.
 
 ### Done when
 

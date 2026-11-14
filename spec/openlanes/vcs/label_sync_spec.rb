@@ -18,23 +18,12 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
       changes = sync.call(repo: "o/r")
 
       aggregate_failures do
-        expect(changes.to_h { [it.label.name, it.action] }).to eq(
-          "ready-for-review"     => :keep,
-          "review-in-progress"   => :create,
-          "review-rejected"      => :recolour,
-          "review-vulnerability" => :create,
-          "review-addressed"     => :create,
-          "review-passed"        => :create,
-          "review-approved"      => :create,
-          "ready-to-merge"       => :create,
-          "auto-merged"          => :create,
-          "merge-manually"       => :create,
-          "openlanes"            => :create,
-          "conflicts"            => :create,
-          "conflicts-resolved"   => :create
-        )
+        created = labels::SYNCED.map(&:name) - %w[ready-for-review review-rejected]
+        expect(changes.to_h { [it.label.name, it.action] })
+          .to eq({ "ready-for-review" => :keep, "review-rejected" => :recolour }.merge(created.to_h { [it, :create] }))
+        expect(created).to include("review-in-progress", "risk-low", "opsec-concerned-approved", "conflicts-resolved")
         expect(github).to have_received(:recolour_label).with(labels::REJECTED, repo: "o/r")
-        expect(github).to have_received(:ensure_label).exactly(11).times
+        expect(github).to have_received(:ensure_label).exactly(16).times
       end
     end
 
@@ -48,7 +37,7 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
       changes = sync.call(dry_run: true)
 
       aggregate_failures do
-        expect(changes.count(&:write?)).to eq(12)
+        expect(changes.count(&:write?)).to eq(17)
         expect(github).not_to have_received(:ensure_label)
         expect(github).not_to have_received(:recolour_label)
       end
@@ -74,6 +63,14 @@ RSpec.describe OpenLanes::Vcs::LabelSync do
       sync.call(dry_run: true)
 
       expect(github).not_to have_received(:rename_label)
+    end
+  end
+
+  context "with review-vulnerability on the repository" do
+    let(:have) { in_r3_colours.except("opsec-rejected").merge("review-vulnerability" => "ff0050") }
+
+    it "renames it to opsec-rejected, so the pull requests that carry it keep it" do
+      expect(sync.call(repo: "o/r").select(&:write?).map(&:to_s)).to eq(["rename review-vulnerability → opsec-rejected"])
     end
   end
 

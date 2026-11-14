@@ -20,6 +20,11 @@ class FakeReviewGitHub
     @writes << [number, repo, add.name, remove]
     @labels_on = (@labels_on - remove.map(&:to_s)) | [add.name]
   end
+
+  def remove_label(number:, name:, repo: nil)
+    @writes << [number, repo, nil, [name]]
+    @labels_on -= [name]
+  end
 end
 
 RSpec.describe OpenLanes::Vcs::Review do
@@ -28,12 +33,60 @@ RSpec.describe OpenLanes::Vcs::Review do
   let(:github) { FakeReviewGitHub.new(labels: %w[ready-for-review bug]) }
   let(:review_labels) { -> { github.labels_on & OpenLanes::Plans::ReviewLabel.names } }
 
-  it "replaces the review label at every transition, leaving exactly one" do
-    %w[review-in-progress review-rejected review-in-progress review-approved ready-to-merge].each do |label|
+  it "replaces the review label at every transition up to the verdict, leaving exactly one" do
+    %w[review-in-progress review-rejected review-addressed review-in-progress review-approved].each do |label|
       review.call(pr: "12", label:)
       expect(review_labels.call).to eq([label])
     end
     expect(github.labels_on).to include("bug")
+  end
+
+  it "leaves the reviewers' passing verdict beside what follows it" do
+    seen = %w[review-in-progress review-approved review-in-progress review-approved ready-to-merge merge-manually].map do |label|
+      review.call(pr: "12", label:)
+      review_labels.call.sort
+    end
+
+    expect(seen).to eq([%w[review-in-progress], %w[review-approved], %w[review-approved review-in-progress],
+                        %w[review-approved], %w[ready-to-merge review-approved], %w[merge-manually review-approved]])
+  end
+
+  describe "a risk or a security verdict" do
+    let(:github) { FakeReviewGitHub.new(labels: %w[review-approved opsec-rejected bug], buckets: %w[fail]) }
+
+    it "sits beside the verdict, replaces its own family only, and is never refused over CI" do
+      result = review.call(pr: "12", label: "opsec-approved")
+      review.call(pr: "12", label: "risk-low")
+
+      aggregate_failures do
+        expect(result).to have_attributes(refused?: false, from: %w[opsec-rejected], to: "opsec-approved")
+        expect(github.labels_on).to eq(%w[review-approved bug opsec-approved risk-low])
+      end
+    end
+
+    it "goes when a new judgement of the pull request opens" do
+      review.call(pr: "12", label: "review-addressed")
+
+      expect(github.labels_on).to eq(%w[bug review-addressed])
+    end
+  end
+
+  describe "#finish" do
+    it "takes review-in-progress off and nothing else" do
+      github = FakeReviewGitHub.new(labels: %w[review-in-progress review-approved bug])
+
+      aggregate_failures do
+        expect(described_class.new(github:).finish(pr: "12")).to be(true)
+        expect(github.labels_on).to eq(%w[review-approved bug])
+      end
+    end
+
+    it "writes nothing to a pull request that does not carry it" do
+      aggregate_failures do
+        expect(review.finish(pr: "12")).to be(false)
+        expect(github.writes).to be_empty
+      end
+    end
   end
 
   # Grok on #69: a verdict set under M3 would otherwise sit beside R3's.
@@ -97,22 +150,13 @@ RSpec.describe OpenLanes::Vcs::Review do
       expect(review_labels.call).to eq(%w[review-rejected])
     end
 
-    it "accepts review-vulnerability beside review-rejected, in either order" do
+    it "accepts opsec-rejected beside review-rejected, in either order" do
       review.call(pr: "12", label: "review-rejected")
-      expect(review.call(pr: "12", label: "review-vulnerability")).not_to be_refused
-      expect(review_labels.call).to contain_exactly("review-rejected", "review-vulnerability")
+      expect(review.call(pr: "12", label: "opsec-rejected")).not_to be_refused
+      review.call(pr: "12", label: "review-rejected")
 
-      review.call(pr: "12", label: "review-rejected")
-      expect(review_labels.call).to contain_exactly("review-rejected", "review-vulnerability")
+      expect(github.labels_on).to include("review-rejected", "opsec-rejected")
     end
-  end
-
-  it "takes both review-rejected and review-vulnerability off for the next verdict" do
-    review.call(pr: "12", label: "review-rejected")
-    review.call(pr: "12", label: "review-vulnerability")
-    review.call(pr: "12", label: "review-in-progress")
-
-    expect(review_labels.call).to eq(%w[review-in-progress])
   end
 
   it "makes a passing verdict wait while CI is pending" do
