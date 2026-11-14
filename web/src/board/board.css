@@ -144,7 +144,6 @@
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-id { flex: none; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-title { font-size: 14px; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-meta > :not(.unacked) { display: none; }
-:is([data-lanes="narrow"] .plan, .plan.is-half) .plan-actions { display: none; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .cars { margin-top: 2px; gap: 4px; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .car { padding: 3px 10px; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) :is(.car-activity, .car-stats) { display: none; }

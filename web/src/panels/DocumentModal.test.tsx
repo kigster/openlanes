@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DocumentModal } from "./DocumentModal";
 
@@ -19,6 +19,20 @@ afterEach(() => vi.unstubAllGlobals());
 const serve = (text: string) => fetchMock.mockResolvedValue(new Response(text, { status: 200, headers: { ETag: '"e"' } }));
 
 describe("DocumentModal", () => {
+  it("remounts the rendered preview when the theme switches, so diagrams are drawn again", async () => {
+    serve(SPEC);
+    document.documentElement.dataset.theme = "light";
+    try {
+      render(<DocumentModal ordinal="070.00" document={doc} onClose={() => {}} />);
+      await screen.findByRole("heading", { name: "Title here" });
+      const before = screen.getByLabelText("Specification rendered");
+      await act(async () => { document.documentElement.dataset.theme = "dark"; });
+      await waitFor(() => expect(screen.getByLabelText("Specification rendered")).not.toBe(before));
+    } finally {
+      delete document.documentElement.dataset.theme;
+    }
+  });
+
   it("renders the frontmatter as YAML and the body as markdown", async () => {
     serve(SPEC);
     render(<DocumentModal ordinal="070.00" document={doc} onClose={() => {}} />);

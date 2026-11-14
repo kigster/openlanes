@@ -2,17 +2,18 @@ import { describe, expect, it } from "vitest";
 import { DOCUMENT_LABELS, documentsOf } from "./documents";
 
 describe("documentsOf", () => {
-  it("returns labels in display order whatever order the server listed", () => {
-    expect(documentsOf(["pull-requests.md", "plan.md", "blocked.md", "spec.md"]).map((d) => d.label))
+  it("keeps the order the server listed", () => {
+    expect(documentsOf(["spec.md", "plan.md", "blocked.md", "pull-requests.md"]).map((d) => d.label))
       .toEqual(["Specification", "Plan", "Blocked", "Pull requests"]);
   });
 
-  it("puts the Specification first when the plan has it", () => {
-    expect(documentsOf(["design.md", "spec.md"])[0]).toEqual({ name: "spec.md", label: "Specification" });
-  });
-
-  it("drops names it has no label for", () => {
-    expect(documentsOf(["notes.txt", "spec.md", "plan-backend.md"]).map((d) => d.name)).toEqual(["spec.md"]);
+  it("labels a name the table lacks from its file name instead of dropping it", () => {
+    expect(documentsOf(["spec.md", "verdict.md", "code-review_notes.md"]))
+      .toEqual([
+        { name: "spec.md", label: "Specification" },
+        { name: "verdict.md", label: "Verdict" },
+        { name: "code-review_notes.md", label: "Code review notes" },
+      ]);
   });
 
   it("returns nothing for an empty list", () => {

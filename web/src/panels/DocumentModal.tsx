@@ -35,7 +35,7 @@ export function DocumentModal({ ordinal, document: doc, onClose }: DocumentModal
     return () => { live = false; };
   }, [ordinal, doc.name]);
 
-  // The diagrams are drawn into the rendered node after it mounts; a re-render of the same HTML leaves them be.
+  // The diagrams are drawn into the rendered node after it mounts; a re-render of the same HTML leaves them be, so the preview is keyed by theme: a switch remounts it and draws again.
   useEffect(() => {
     if (file && preview.current) void renderMermaid(preview.current, dark);
   }, [file, dark]);
@@ -57,7 +57,7 @@ export function DocumentModal({ ordinal, document: doc, onClose }: DocumentModal
                 {file.frontmatter && (
                   <div className="document-frontmatter" aria-label="Frontmatter" dangerouslySetInnerHTML={{ __html: renderFrontmatter(file.frontmatter) }} />
                 )}
-                <div ref={preview} className="md-preview document-preview" aria-label={`${doc.label} rendered`} dangerouslySetInnerHTML={{ __html: renderMarkdown(file.body) }} />
+                <div key={dark ? "dark" : "light"} ref={preview} className="md-preview document-preview" aria-label={`${doc.label} rendered`} dangerouslySetInnerHTML={{ __html: renderMarkdown(file.body) }} />
               </>
             )}
           </div>

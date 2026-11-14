@@ -8,7 +8,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   fetchMock = vi.fn(async (url: string) =>
     url.endsWith("/files")
-      ? new Response(JSON.stringify({ files: ["pull-requests.md", "plan.md", "spec.md"] }), { status: 200 })
+      ? new Response(JSON.stringify({ files: ["spec.md", "plan.md", "pull-requests.md"] }), { status: 200 })
       : new Response("# The spec\n", { status: 200, headers: { ETag: '"e"' } }));
   vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }));
@@ -41,6 +41,14 @@ describe("LaneDocuments", () => {
     mount();
     await waitFor(() => expect(screen.getByRole("button", { name: "Documents of 070.00" })).toBeDisabled());
     expect(screen.getByRole("button", { name: "Documents of 070.00" })).toHaveAttribute("title", "This plan has no documents yet");
+  });
+
+  it("says the list failed, rather than that the plan has no documents", async () => {
+    fetchMock.mockImplementation(async () => new Response("boom", { status: 500 }));
+    mount();
+    const trigger = screen.getByRole("button", { name: "Documents of 070.00" });
+    await waitFor(() => expect(trigger.getAttribute("title")).toMatch(/^Could not list the documents/));
+    expect(trigger).toBeDisabled();
   });
 
   it("shows nothing and fetches nothing on a narrow lane", () => {

@@ -24,7 +24,7 @@ describe("useDocuments", () => {
   });
 
   it("maps the listed names to labels", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ files: ["plan.md", "spec.md", "x.md"] }), { status: 200 }));
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ files: ["spec.md", "plan.md"] }), { status: 200 }));
     const { result } = renderHook(() => useDocuments("070.00", true), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.documents.length).toBe(2));
     expect(result.current.documents.map((d) => d.label)).toEqual(["Specification", "Plan"]);

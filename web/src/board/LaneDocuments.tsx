@@ -1,5 +1,6 @@
 // The "Documents" dropdown at the foot of a wide lane's details block. It lists the plan's markdown under English labels
-// and opens one in the read-only document modal. Narrow lanes never mount it, so they cost the server nothing.
+// and opens one in the read-only document modal. This component alone decides whether the strip exists: a narrow lane
+// renders nothing and costs the server nothing, so no stylesheet rule repeats that.
 import { useState } from "react";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { DocumentModal } from "../panels/DocumentModal";
@@ -14,16 +15,17 @@ export interface LaneDocumentsProps {
 
 export function LaneDocuments({ ordinal, lanes = "wide" }: LaneDocumentsProps) {
   const enabled = lanes === "wide";
-  const { documents, loading } = useDocuments(ordinal, enabled);
+  const { documents, loading, error } = useDocuments(ordinal, enabled);
   const [open, setOpen] = useState<Document | null>(null);
   if (!enabled) return null;
-  const empty = !loading && documents.length === 0;
+  const empty = !loading && !error && documents.length === 0;
+  const failed = !loading && error !== null;
   return (
     <div className="plan-actions">
       <Menu.Root>
         <Menu.Trigger
-          className="btn doc-trigger" disabled={empty} aria-label={`Documents of ${ordinal}`}
-          title={empty ? "This plan has no documents yet" : "Read this plan's documents"}
+          className="btn doc-trigger" disabled={empty || failed} aria-label={`Documents of ${ordinal}`}
+          title={failed ? `Could not list the documents: ${error.message}` : empty ? "This plan has no documents yet" : "Read this plan's documents"}
         >
           Documents <span aria-hidden="true">▾</span>
         </Menu.Trigger>
