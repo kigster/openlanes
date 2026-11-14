@@ -2765,6 +2765,20 @@
             ]
           },
           "uniqueItems": true
+        },
+        "gate": {
+          "type": "boolean",
+          "description": "Run the project's lint and tests before a builder's work goes to review; false skips the gate",
+          "default": true
+        },
+        "gate_timeout": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds the gate's commands may take; null takes the built-in limit",
+          "default": null,
+          "exclusiveMinimum": 0
         }
       }
     },

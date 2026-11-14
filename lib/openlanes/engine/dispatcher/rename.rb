@@ -21,6 +21,11 @@ module OpenLanes
           Change nothing else, then sign Completed again.
         MAIL
 
+        # How many times one run hands a builder its round back for a red
+        # pre-review gate. Past this the round is Interrupted like any other
+        # failed one, so a suite that never goes green stops costing rounds.
+        GATE_BOUNCES = 2
+
         # `starts_as`: the folder moves the moment the agent is dispatched, where
         # the topology allows, so backend-coder's start is what makes a plan 🟡.
         #
@@ -72,6 +77,8 @@ module OpenLanes
             attempt = hold(ordinal, target, attempt)
           elsif target
             attempt = attempt.with(note: "#{base.note}#{" (#{entry.note})" if entry.note}")
+            return gate_red(job, attempt, subject) if target == :ready_for_review && job.gate && !job.gate.passed?
+
             published = publish_for_review(task, target, subject, attempt)
             return untestable(job, published.attempt, subject) if published.untestable
             return unpublished(published, ordinal) if published.refused
@@ -383,6 +390,43 @@ module OpenLanes
 
           remember(ordinal, agent.name, job.state, "Interrupted", job.task.round)
           attempt.with(status: "Interrupted", note: "#{attempt.note}; still missing after #{agent.name} was asked")
+        end
+
+        # The builder signed Completed on a red suite. No reviewer starts:
+        # three of them once spent a round each rejecting work for a failure
+        # the harness could see for free. The plan stays with its builder,
+        # which is mailed the failing command's last lines, and the round
+        # counts as a failed one, so a suite that never goes green runs out
+        # of attempts instead of bouncing forever.
+        #
+        # @param job [Job]
+        # @param attempt [OpenLanes::Engine::Runner::Attempt]
+        # @param subject [OpenLanes::Plans::Subject]
+        # @return [OpenLanes::Engine::Runner::Attempt]
+        def gate_red(job, attempt, subject)
+          agent = job.task.agent
+          verdict = job.gate
+          body = "The pre-review gate is red: #{verdict.reason}. No reviewer was started. " \
+                 "Make it pass, then sign Completed again.\n\n```\n#{verdict.log_tail.rstrip}\n```"
+          Plans::Mailbox.new(dir: subject.feature.path).append(from: HARNESS, to: agent.name, body:)
+          note = "#{attempt.note}; pre-review gate red: #{verdict.reason}"
+          if bounce!(plan_of(job))
+            forget_round(job)
+            return attempt.with(ok: false, status: "Interrupted", note: "#{note}; back to #{agent.name}")
+          end
+
+          remember(plan_of(job), agent.name, job.state, "Interrupted", job.task.round)
+          attempt.with(ok: false, status: "Interrupted", note: "#{note}; still red after #{GATE_BOUNCES} tries")
+        end
+
+        # Counts one hand-back for a red gate. Only the tick thread settles,
+        # so the count needs no lock of its own.
+        #
+        # @param ordinal [String]
+        # @return [Boolean] whether the builder may have its round back
+        def bounce!(ordinal)
+          @gate_bounces ||= Hash.new(0)
+          (@gate_bounces[ordinal] += 1) <= GATE_BOUNCES
         end
 
         # A refused publish leaves the plan where it was. Running the builder

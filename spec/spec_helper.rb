@@ -188,6 +188,17 @@ RSpec.configure do |config|
   ensure
     ENV["OPENLANES_ADMIN_CREDENTIALS"] = credentials if credentials
   end
+  # The pre-review gate runs the project's whole suite in a plan's checkout.
+  # Left real, every dispatcher example whose checkout holds a Gemfile or a
+  # justfile would start a suite inside this one. Examples tagged :real_gate
+  # run it for real; the rest see a green gate unless they say otherwise.
+  config.before do |example|
+    next if example.metadata[:real_gate]
+
+    green = OpenLanes::Engine::PreReviewGate::Verdict.new(passed: true, reason: "stubbed by spec_helper", log_tail: "")
+    allow(OpenLanes::Engine::PreReviewGate).to receive(:call).and_return(green)
+  end
+
   # A dispatcher with a state file says its agents outlive it; the suite's own exit still stops them.
   config.after { OpenLanes::Execution::AgentProcess.reset! }
 

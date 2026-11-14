@@ -78,6 +78,12 @@ flowchart LR
 
 ### B6 Integration check
 
+Split in round 12, because points 3 and 4 need a real `Executor` driving a fake agent CLI, which is larger than the plan implied:
+
+- **B6a (done, round 12):** `spec/openlanes/integration/low_hanging_fruit_spec.rb` covers points 1 and 2. It uses a real Runner, dispatcher and tree, and a real `Executor#profile_for`. A `large` unit starts on `sizing.large` (`fable`, recorded as the stage model). A red gate bounces the build to the builder with no publish, and the green build is published to 🟢.
+- **B6b (done, round 13):** point 3 in `low_hanging_fruit_spec.rb`, under a real `Executor`: the first process ends on a 429, `Execution::Throttle` waits the 20s it was told, the second process works, and the round is one attempt on its way to 🟢. Point 4 in `spec/openlanes/integration/shared_review_packet_spec.rb`: three reviewers under a real Runner and `Executor` with a real `ReviewPacket` over a doubled `gh`. The diff is fetched once, and all three prompts carry the diff and the same packet nonce. `main`'s packet keys on the nonce and the plan's move count, not a head sha.
+
+
 - **Discipline:** back end
 - **Owns:** `spec/openlanes/integration/low_hanging_fruit_spec.rb`, `docs/WORKFLOW.md` (`just update-workflow`)
 - **Must not touch:** any `lib/` file
@@ -133,3 +139,16 @@ Rebased onto `origin/main`, which had meanwhile landed its own review packet, ra
 - `docs/architecture/{README,openlanes}.md`: took main's side, then regenerated with `openlanes uml self`.
 - `lib/openlanes/agents/{profile,sizing}.rb`, `spec/openlanes/agents/profile_sizing_spec.rb`, `spec/openlanes/config_sizing_spec.rb` (fourth replay): took main's side whole. Main merged unit sizing (PR #245, `Pick the builders' model by the plan's unit size`), which already holds everything B3 added here, plus `to_settings`, the `small_diff:` step and the non-Claude adapter rule; keeping the branch's copy would have duplicated or undone them.
 - `lib/openlanes/support/config.rb`, `schemas/openlanes-config.schema.json` (fourth replay): reset to main's versions. Both merged without a marker but doubled main's `sizing` doc attribute and `sizing` schema section.
+- (fourth replay) `.plans/060.00…/{pull-requests.md,state.json}`: kept the branch's. Both are this plan's own ledger and the branch's copies are newer supersets (rounds 8 and 9, 54 signatures against 40); the other side was the same files as of the previous replay.
+- (fourth replay) `.plans/060.00…/plan.md`: kept the existing `## Rebase decisions` section; the branch's side of the conflict was empty.
+- (fourth replay) `lib/openlanes/plans/spec.rb`: net result is main's file. This replay removes `Spec#unit_size` and `Spec.plan_text`, because `Profile.resolve` now takes `unit_size:` and `Executor` reads it with `UnitSizes.in_folder`. The conflict dropped main's `summary` attribute along with them, so I restored `summary`.
+- (fourth replay) `lib/openlanes/support/config.rb`: kept main's `REVIEW_KEYS = Schema.keys_for("review")` over the branch's hand-written list. Added `gate` and `gate_timeout` to `schemas/openlanes-config.schema.json` so the derived list still accepts the branch's new `review.gate` and `review.gate_timeout`.
+- (fourth replay) `spec/openlanes/engine/run_workflow_spec.rb`: kept main's version. It already `chdir`s to the fixture root, so the branch's added comment would have documented a duplicate.
+- (fourth replay) `docs/architecture/README.md`: regenerated with `just update-architecture` instead of choosing either side's dependency counts.
+- (fourth replay) `spec/openlanes/agents/routing_spec.rb`: dropped the branch's second `Dir.chdir` `before`; main's already does it, and rubocop flags two `before` hooks (`RSpec/ScatteredSetup`).
+- (fourth replay) `spec/openlanes/config_review_gate_spec.rb`: main's `to_yaml` now writes every key with its default, so "writes only what differs" no longer holds; the example now asserts the gate round-trips (on by default, off and timeout when set).
+- (fourth replay) `spec/openlanes/engine/dispatcher_pre_review_gate_spec.rb`: main's runner retries an interrupted plan within its own budget, so a never-green suite makes more than `GATE_BOUNCES + 1` attempts. The spec now asserts exactly `GATE_BOUNCES` hand-backs and a finite run with no publish, instead of an exact attempt count.
+- (fifth replay) `lib/openlanes/agents/profile.rb`, `spec/openlanes/agents/profile_sizing_spec.rb`: took main's side whole, as in the fourth replay: main's `Profile.resolve` reads `spec.unit_size` and applies the non-Claude adapter rule, which the branch's `unit_size:`/`sizing:` keywords would have undone.
+- (fifth replay) `lib/openlanes/plans/spec.rb`, `agents/sizing.rb`, `plans/unit_sizes.rb`, `execution/executor.rb`: restored main's versions, since they only carried the branch's `unit_size:` keyword plumbing. `Agent#builder?` and `Agent::BUILD_PHASES` stay: review gating and `Rebase` use them.
+- (fifth replay) `lib/openlanes/support/config.rb`: kept main's `sizing` doc attribute once; kept the branch's `review_gate` / `review_gate_timeout`.
+- (fifth replay) `.plans/060.00…/plan.md`: kept both sides of the conflicting decisions list.

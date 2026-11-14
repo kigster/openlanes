@@ -117,3 +117,51 @@ Note on F204: `lib/openlanes/adapters/claude.rb:15` on `main` says the Claude ad
 - `just update-architecture` re-run. `bundle exec rubocop`: 951 files, no offenses.
 - Full `bundle exec rspec`: started this round, output in `/tmp/ol060-r8-full.txt`. Check it before signing Completed.
 - Still open: B2 `PreReviewGate`, B6 integration spec, and the three fixes the rebuild dropped (they are on `39f5401d`).
+
+## Round 9, backend-coder
+
+- Lost fixes: `Live::Store`'s Monitor and the `OPENLANES_ADMIN_CREDENTIALS` reset are already on `main` in their own form, so nothing was ported for them. The `.openlanes.yml` isolation (chdir to the fixture root) is back in `routing_spec`, `dispatcher_spec` and `run_workflow_spec`: 158 examples, 0 failures.
+- Round 8's full run (`/tmp/ol060-r8-full.txt`) ended at 2715 examples, 0 failures; it was not the whole suite.
+- B2, first half: `lib/openlanes/engine/pre_review_gate.rb`. `PreReviewGate.call(checkout) -> Verdict(passed?, reason, log_tail)` runs `Execution::Checks.commands(checkout)` through `Execution::Child`, stops at the first red command, keeps the last 40 lines, calls a command past its timeout red, and passes a checkout with nothing it recognises. `spec/openlanes/engine/pre_review_gate_spec.rb`: 7 examples, 0 failures, including a justfile whose `check-all` exits 1. Rubocop clean; `just update-architecture` re-run.
+- Still open: wiring the gate into `dispatcher/settle.rb` (it must not block the tick: run it on the job's thread, or as its own job), `review.gate` / `review.gate_timeout` in `support/config.rb`, `settle_gate_spec.rb`, B6, then the full suite.
+
+## Round 10, backend-coder
+
+- B2 wired in:
+  - `Config` reads `review.gate` (true unless set false) and `review.gate_timeout` (seconds; nil uses `PreReviewGate::TIMEOUT`), validates both, and writes them back only when they differ from the default. File: `support/config.rb`.
+  - `Engine::ReviewGating` (new, `engine/review_gating.rb`) decides whether the gate applies: gate on, a builder agent, a clean exit, and a `Completed` line for this round. Then it runs `PreReviewGate` in the checkout.
+  - `Dispatcher::Start` runs it on the builder's job thread, after the executor returns. A minutes-long suite never holds up the tick. The verdict rides on the new `Job#gate`. A gate that raises is logged and treated as no verdict.
+  - `Dispatcher::Rename#complete`: when the target is 🟢 and the verdict is red, `gate_red` publishes nothing and starts no reviewer. It mails the builder the reason and the log tail, and returns the round as Interrupted (`ok: false`). A suite that never goes green runs out of attempts rather than bouncing forever.
+- Specs: `config_review_gate_spec.rb` (6), `engine/review_gating_spec.rb` (7), `engine/pre_review_gate_spec.rb` (7): 20 examples, 0 failures. Rubocop clean on `lib/openlanes/engine` and `support/config.rb`.
+- Still open: a dispatcher-level `settle_gate_spec.rb`, driving a fake builder through a red, then a green, then a `review.gate: false` round. Then B6 `integration/low_hanging_fruit_spec.rb`.
+- **Not green, do not review yet.** The full `bundle exec rspec` run (`/tmp/ol060-r10-full.txt`) stalled at about 2200 examples and I stopped it. The new `spec/openlanes/engine/dispatcher_pre_review_gate_spec.rb` also hangs, even its `review.gate: false` example; `dispatcher_spec.rb:1272` passes alone. Suspect: with the gate on by default, an existing spec whose checkout has a Gemfile or justfile now runs a real `bundle exec rspec` / `just check-all` inside the suite. Round 8's run stopped near the same count, before the gate existed, so the cause is not certain. Next round: find the stalled example (`--format documentation`), keep the real gate out of the suite (for example a passing `PreReviewGate` stub in `spec_helper`, which `pre_review_gate_spec` lifts), then debug the hanging spec.
+
+## Round 11, backend-coder
+
+- **Why the gate spec hung:** a deadlock in the spec, not in the library. The executor lambda first read the `calls`/`stamp` lets on a job thread while the example thread held RSpec's memo lock inside `attempts`. A thread dump showed it. Fixed by forcing them in `before`, as `dispatcher_spec` already does.
+- **The gate now hands the round back:** a red gate calls `forget_round`, the same way the how-to-test bounce does, so the builder really runs again. `Rename::GATE_BOUNCES = 2` caps it per run; after that the round is Interrupted ("still red after 2 tries"). `dispatcher_pre_review_gate_spec.rb` covers three cases: red then green (one publish, 🟢), always red (no publish, capped), and `review.gate: false` (no gate, published). 3 examples, 0 failures.
+- **No suite inside the suite:** `spec_helper` stubs `PreReviewGate.call` green for every example. Examples tagged `:real_gate` (`pre_review_gate_spec.rb`) run it for real.
+- `bundle exec rubocop`: 957 files inspected, no offenses detected. `just update-architecture` re-run; `architecture_doc_spec`: 2 examples, 0 failures.
+- Full `bundle exec rspec` (`/tmp/ol060-r11-full.txt`): reached about 1272 examples with 0 failures, then its process vanished. There was no exit line, and the 14-minute stall dump never fired, so it was killed rather than stuck. Several other sessions were running rspec on this machine at the same time. **There is no full green run yet.**
+- Still open: B6 `spec/openlanes/integration/low_hanging_fruit_spec.rb`. For its first point (a large unit starts on `sizing.large`), the started model reaches state.json through `Desk#model_for`, which asks `executor.profile_for`. A double that delegates `profile_for` to a real `Executor` shows it. After B6, one full rspec run.
+- Correction to the line above: the full run had not died. My process check missed it. It finished: `bundle exec rspec` gave 6415 examples, 1 failure, 9 pending, exit 1. The one failure was `spec/openlanes/engine/dispatcher_event_journal_spec.rb:108`, where `s-002.00` was recorded twice. That file passes 3/3 when run alone, so it is timing-sensitive. In the full run its jobs were researchers, which the gate never applies to, yet each job thread still read the ledger before the builder check, which made the job live longer. `Start#gated` now returns before that read for any non-builder. The file passes again (with the gate specs, 18 examples, 0 failures), but no full run has happened since that edit.
+
+## Round 12, backend-coder
+
+- B6 split into two units (see plan.md, B6).
+- B6a done: `spec/openlanes/integration/low_hanging_fruit_spec.rb`, 1 example, 0 failures. A real Runner, dispatcher and tree, with a real `Executor#profile_for`, drive one plan. With `.openlanes.yml` set to `sizing: { large: { model: fable } }`, the builder's stages record `fable` both times. The first build is gated red: the builder is mailed, nothing is published, and it runs again. The second build is gated green: published once, and the plan moves to 🟢.
+- B6b open: point 3, a 429 retried without an attempt counted, and point 4, three reviewers sharing one packet head sha. Next round, put a real `Executor` (`spawn:` plus `throttle:` as in `spec/openlanes/execution/executor_throttle_spec.rb`, with a `streams` playback holding one 429 stream, then a working one) under the Runner instead of the fake `call`. For point 4, add `packets:` with a `GitHub` double counting `pr_diff`.
+- `bundle exec rubocop`: 958 files inspected, no offenses detected.
+- `bundle exec rspec` (after the last code edit; only plan Markdown changed afterwards): `6416 examples, 0 failures, 9 pending`, exit 0. The 9 pending are the integration specs skipped while `web/dist` is missing in the worktree. `dispatcher_event_journal_spec.rb:108` passed.
+- Not signed Completed: B6b is still open.
+
+## Round 13, backend-coder
+
+- B6b done. The plan's B6 entry has the details.
+  - `low_hanging_fruit_spec.rb` has a second example: a real `Executor` playing back a 429 stream, then a working one. The wait sums to 20s, there are two spawns, one attempt, and the plan reaches 🟢 with one publish.
+  - New `shared_review_packet_spec.rb`: three reviewers, one `gh diff` call, and one nonce across all three prompts.
+  - Both files: 3 examples, 0 failures.
+- `bundle exec rubocop`: 959 files inspected, no offenses detected.
+- `bundle exec rspec`, run after the last edit: `6418 examples, 0 failures, 9 pending`, exit 0. The 9 pending are integration specs skipped because `web/dist` is missing in the worktree.
+- `bundle exec rubocop`, run after the last edit: `959 files inspected, no offenses detected`.
+- Every unit under `## Backend` is built (B1, B4 and B5 landed on `main` as noted in round 7; B2, B3 and B6 are on this branch). There are no front-end units, so frontend-coder was not started.

@@ -6,7 +6,7 @@
     "slug": "improve-openlanes-low-hanging-fruit"
   },
   "state": "rejected",
-  "updated_at": "2026-11-12T23:56:33-08:00",
+  "updated_at": "2026-11-14T14:21:35-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -481,6 +481,132 @@
       "model": "opus",
       "effort": "high",
       "session": "8a030ec2-41e1-4406-b01b-f702f57adc9c"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:58:32-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+      "to": "rejected",
+      "finished_at": "2026-11-13T00:02:00-08:00",
+      "up": 1259452,
+      "down": 12198,
+      "seconds": 205.9,
+      "note": "Almost completed; no rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:58:48-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:59:05-08:00",
+      "up": 153928,
+      "down": 720,
+      "seconds": 16.3,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-14T13:27:13-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+      "to": "rejected",
+      "finished_at": "2026-11-14T13:36:37-08:00",
+      "up": 4477706,
+      "down": 26626,
+      "seconds": 558.7,
+      "note": "Almost completed; 3 rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-14T13:36:41-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+      "to": "rejected",
+      "finished_at": "2026-11-14T13:53:32-08:00",
+      "up": 1057807,
+      "down": 2929,
+      "seconds": 1010.3,
+      "note": "Almost completed; 2 rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-11-14T13:37:00-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
+      "to": "rejected",
+      "finished_at": "2026-11-14T13:37:17-08:00",
+      "up": 176904,
+      "down": 717,
+      "seconds": 16.8,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-14T13:53:36-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+      "to": "rejected",
+      "finished_at": "2026-11-14T14:06:14-08:00",
+      "up": 4301223,
+      "down": 13373,
+      "seconds": 754.0,
+      "note": "Almost completed; 1 round left",
+      "moves": 7
+    },
+    {
+      "agent": "backend-coder",
+      "round": 4,
+      "status": "Started",
+      "from": "rejected",
+      "started_at": "2026-11-14T14:06:17-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca"
     }
   ],
   "signatures": [
@@ -742,6 +868,98 @@
       "agent": "backend-coder",
       "status": "Interrupted",
       "round": 2
+    },
+    {
+      "at": "2026-11-12T23:58:44-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:58:59-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:59:02-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-13T00:01:47-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-14T13:27:25-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-14T13:36:19-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1,
+      "note": "full rspec stalls near 2200 examples; dispatcher_pre_review_gate_spec hangs"
+    },
+    {
+      "at": "2026-11-14T13:36:53-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-14T13:37:10-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-14T13:37:14-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-14T13:43:53-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2,
+      "note": "B6 not written; full rspec killed at ~1272 examples with 0 failures, no complete run"
+    },
+    {
+      "at": "2026-11-14T13:53:55-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-14T14:05:59-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 3,
+      "note": "B6b open; full rspec 6416 examples 0 failures, rubocop clean"
+    },
+    {
+      "at": "2026-11-14T14:06:30-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-11-14T14:21:24-08:00",
+      "agent": "backend-coder",
+      "status": "Completed",
+      "round": 4,
+      "next": "design-reviewer"
     }
   ],
   "messages": [
@@ -788,32 +1006,24 @@
     },
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T23:56:17-08:00",
-      "round": 2,
+      "at": "2026-11-14T14:05:58-08:00",
+      "round": 3,
       "status": "Interrupted",
       "done": [
-        "F203",
-        "F204",
-        "rubocop clean",
-        "architecture docs"
+        "B2",
+        "B3",
+        "B6a integration spec",
+        "full rspec 6416/0 exit 0",
+        "rubocop 958 files 0 offenses"
       ],
       "remaining": [
-        "confirm full rspec green",
-        "B2 PreReviewGate",
-        "B6 integration spec",
-        "cherry-pick 3 lost fixes from 39f5401d"
+        "B6b: 429 retried without an attempt counted",
+        "and three reviewers sharing one packet head sha",
+        "through a real Executor under the Runner"
       ],
-      "next_step": "Read /tmp/ol060-r8-full.txt (2184 examples in, 0 failures when interrupted; may be incomplete) or rerun bundle exec rspec; if green, start B2 in lib/openlanes/engine/dispatcher/settle.rb",
+      "next_step": "Extend spec/openlanes/integration/low_hanging_fruit_spec.rb: a real Executor with spawn: playback (one 429 stream, then a working one) and throttle: Backoff with an instant sleep, as executor_throttle_spec.rb does; then packets: with a GitHub double counting pr_diff for three reviewers",
       "files_touched": [
-        "lib/openlanes/agents/agent.rb",
-        "lib/openlanes/agents/profile.rb",
-        "lib/openlanes/agents/sizing.rb",
-        "lib/openlanes/engine/rebase.rb",
-        "lib/openlanes/execution/executor.rb",
-        "lib/openlanes/plans/spec.rb",
-        "lib/openlanes/plans/unit_sizes.rb",
-        "spec/openlanes/agents/profile_sizing_spec.rb",
-        "docs/architecture"
+        "spec/openlanes/integration/low_hanging_fruit_spec.rb"
       ]
     },
     "frontend-coder": {
@@ -1207,11 +1417,31 @@
               "text": "Round 9: plan.md has no Frontend units and already has ## How to test; re-signed Completed (no front end)"
             }
           ]
+        },
+        "10": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 10: Frontend section unchanged (no front-end units); mailbox has only already-handled mail #1; re-signed Completed (no front end)"
+            }
+          ]
+        },
+        "11": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 11: Frontend section still says no front-end units; no new mail; re-signed Completed (no front end)"
+            }
+          ]
         }
       },
       "held": {
         "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
-        "through": 9
+        "through": 10
       }
     },
     "backend-coder": {
@@ -1396,7 +1626,130 @@
               "text": "Interrupted in round 2. Next: confirm the full rspec (/tmp/ol060-r8-full.txt, 0 failures at about 2200 examples when cut off), then B2 PreReviewGate in dispatcher/settle.rb, B6 integration spec, and cherry-pick the 3 lost fixes from 39f5401d"
             }
           ]
+        },
+        "9": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 9: two of the three dropped fixes (Live::Store Monitor, OPENLANES_ADMIN_CREDENTIALS reset) were already on main. Ported only the .openlanes.yml chdir isolation into routing_spec, dispatcher_spec and run_workflow_spec: 158 examples, 0 failures"
+            },
+            {
+              "kind": "done",
+              "text": "B2 part 1: Engine::PreReviewGate (lib/openlanes/engine/pre_review_gate.rb) runs Execution::Checks.commands through Child. It returns Verdict(passed?, reason, log_tail) with a 40-line tail and treats a timeout as red. 7 examples in its spec, 0 failures. Rubocop is clean and the architecture docs are regenerated"
+            },
+            {
+              "kind": "decision",
+              "text": "PreReviewGate blocks for minutes, so settle must not call it on the tick thread. Run it on the builder job's thread or as its own job"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: wire PreReviewGate into dispatcher/settle.rb (builder Completed toward review + red -> back to backend-coder with log_tail mailed, no reviewer started). Add review.gate/gate_timeout to config.rb and write settle_gate_spec.rb. Then B6 low_hanging_fruit_spec, the full rspec run and rubocop"
+            }
+          ]
+        },
+        "10": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B2 wired: Config review.gate (default true) and review.gate_timeout. Engine::ReviewGating runs PreReviewGate on the builder job thread (Dispatcher::Start#gated, Job#gate). Rename#gate_red mails the builder the log tail and returns Interrupted ok:false before any publish. config_review_gate_spec, review_gating_spec and pre_review_gate_spec: 20 examples green, rubocop clean"
+            },
+            {
+              "kind": "note",
+              "text": "Round 10: full rspec stalled at about 2200 examples (/tmp/ol060-r10-full.txt) and I stopped it. New dispatcher_pre_review_gate_spec hangs even with review.gate false. Suspect the default-on gate runs a real suite in a fixture checkout with a Gemfile, but round 8 stalled near the same count before the gate existed"
+            },
+            {
+              "kind": "note",
+              "text": "pkill -f 'bundle exec rspec' matches by command line and can kill other sessions' runs. Next time kill by the PID of my own background task only"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: rspec --format documentation to find the stalled example. Keep the real gate out of the suite (stub PreReviewGate in spec_helper, lifted in pre_review_gate_spec). Fix the hanging dispatcher_pre_review_gate_spec, then B6 and a full rspec + rubocop"
+            }
+          ]
+        },
+        "11": {
+          "round": 2,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Gate spec hang explained: the executor lambda first read the calls/stamp lets on a job thread while attempts held RSpec's memo lock. Forced them in before, as dispatcher_spec does. dispatcher_pre_review_gate_spec: 3 examples, 0 failures"
+            },
+            {
+              "kind": "done",
+              "text": "B2 finished: a red gate calls forget_round so the builder reruns, capped by Rename::GATE_BOUNCES = 2, then Interrupted. spec_helper stubs PreReviewGate.call green except for :real_gate examples. Full rubocop 957 files with 0 offenses; architecture docs regenerated; architecture_doc_spec green"
+            },
+            {
+              "kind": "note",
+              "text": "Round 11 full rspec ran about 1272 examples with 0 failures, then its process vanished: no exit line, no stall dump. Other sessions run rspec on this machine at the same time. To get a thread dump, preload /tmp/ol060-dbg/dump.rb through RUBYOPT; it writes /tmp/ol060-dbg/threads.txt"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: B6 spec/openlanes/integration/low_hanging_fruit_spec.rb. Show the large profile through Desk#model_for, which asks executor.profile_for. Then one full bundle exec rspec, confirmed exit 0, before signing Completed"
+            },
+            {
+              "kind": "override",
+              "text": "The round 11 full rspec was not killed; it finished: 6415 examples, 1 failure (dispatcher_event_journal_spec:108, s-002.00 recorded twice, timing; passes 3/3 alone), 9 pending. Start#gated now returns before the ledger read for non-builders",
+              "overrides": 44
+            },
+            {
+              "kind": "todo",
+              "text": "Next: B6 integration spec, then a full rspec after the last edit. If dispatcher_event_journal_spec:108 fails again in the full run, find the double agent_session record in poll.rb:146"
+            }
+          ]
+        },
+        "12": {
+          "round": 3,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B6a: spec/openlanes/integration/low_hanging_fruit_spec.rb drives a real Runner with a real Executor#profile_for. A large unit records model fable from sizing.large; a red gate bounces the build, a green one is published to 🟢. 1 example, 0 failures"
+            },
+            {
+              "kind": "decision",
+              "text": "Split B6 in plan.md: B6a covers points 1-2. B6b (a 429 retried within one attempt; three reviewers sharing one packet head sha) needs a real Executor with spawn playback under the Runner"
+            },
+            {
+              "kind": "done",
+              "text": "Round 12: full bundle exec rspec after the last code edit: 6416 examples, 0 failures, 9 pending, exit 0. bundle exec rubocop: 958 files, 0 offenses"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: B6b in low_hanging_fruit_spec.rb, built like executor_throttle_spec.rb: spawn playback with one 429 stream then a working one, Backoff with an instant sleep, packets: with a GitHub double counting pr_diff. Then a full rspec and sign Completed"
+            }
+          ]
+        },
+        "13": {
+          "round": 4,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "B6b point 3: low_hanging_fruit_spec has a real Executor playing back a 429 stream then a working one. Throttle waits a summed 20s (in 1s slices), 2 spawns, one attempt, plan reaches 🟢"
+            },
+            {
+              "kind": "done",
+              "text": "B6b point 4: spec/openlanes/integration/shared_review_packet_spec.rb has three reviewers under a real Runner and Executor with a real ReviewPacket over a gh double. One diff call, one nonce in all three prompts"
+            },
+            {
+              "kind": "note",
+              "text": "main's ReviewPacket keys on a nonce plus the plan's move count, not a head sha, so the 'same head_sha' check is the same nonce across prompts. Throttle::Backoff sleeps in 1s slices: assert slept.sum, not the list"
+            },
+            {
+              "kind": "done",
+              "text": "Round 13: full bundle exec rspec after the last edit: 6418 examples, 0 failures, 9 pending, exit 0. Rubocop: 959 files, 0 offenses. Signed Completed, next design-reviewer"
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+        "through": 55
       }
     },
     "design-reviewer": {
