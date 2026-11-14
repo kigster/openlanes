@@ -51,21 +51,26 @@ module OpenLanes
       # Spawns the build, or settles at once when it cannot run. Asked
       # again, it does nothing, so a tick may call it every time.
       #
+      # A `web/` that cannot be read or written (a gem installed by another
+      # user) raises from the backup or the spawn. That is a build failure
+      # to report, never an error to raise: nothing between here and
+      # {Supervisor#tick} rescues, so it would end `openlanes start`, the
+      # engine with it (F1).
+      #
       # @return [self]
       def start
         return self if @pid || @outcome || unbuildable
 
-        @backup = PageBackup.new(File.join(@web, "dist")).keep
-        # A private directory (mode 0700), never a predictable name in a
-        # shared tmp: `spawn(out:)` follows a symlink planted there (F101).
-        @workdir = Dir.mktmpdir("openlanes-web-build")
-        @log = File.join(@workdir, "build.log")
-        @started = @host.clock.monotonic
-        @pid = @host.spawner.spawn({}, "npm", "run", "build", chdir: @web, pgroup: true, in: File::NULL, out: @log, err: %i[child out])
+        spawn_build
+        self
+      rescue SystemCallError => e
+        # Nothing was built, so there is nothing to put back.
+        @backup&.discard
+        settle("failed", "the build could not start (#{e.message}), so the old page stays")
         self
       end
 
-      # Never blocks.
+      # Never blocks, and never raises a {SystemCallError} (F1).
       #
       # @return [Outcome, nil] nil while the build runs
       def poll
@@ -73,9 +78,11 @@ module OpenLanes
 
         status = @host.waiter.call(@pid)
         return finished(status) if status
-        return timed_out if @host.clock.monotonic - @started > @timeout
 
+        stop_late_build
         nil
+      rescue SystemCallError => e
+        settle("failed", "the build's outcome could not be read (#{e.message}), so the old page stays")
       end
 
       private
@@ -89,29 +96,53 @@ module OpenLanes
         settle("no_npm", "the page was not rebuilt: npm is not on PATH") unless @npm.call
       end
 
+      # @return [void]
+      def spawn_build
+        @backup = PageBackup.new(File.join(@web, "dist")).keep
+        # A private directory (mode 0700), never a predictable name in a
+        # shared tmp: `spawn(out:)` follows a symlink planted there (F101).
+        @workdir = Dir.mktmpdir("openlanes-web-build")
+        @log = File.join(@workdir, "build.log")
+        @started = @host.clock.monotonic
+        @pid = @host.spawner.spawn({}, "npm", "run", "build", chdir: @web, pgroup: true, in: File::NULL, out: @log, err: %i[child out])
+      end
+
       # @param status [Process::Status, Symbol]
       # @return [Outcome]
       def finished(status)
+        return settle("timeout", "the build ran past #{@timeout} seconds and was stopped, so the old page stays") if @killed
         return settle("ok", "the page was rebuilt") if status.respond_to?(:exitstatus) && status.exitstatus&.zero?
 
         settle("failed", "the build failed (#{Host.describe(status)}), so the old page stays#{tail}")
       end
 
-      # @return [Outcome]
-      def timed_out
+      # Kills a build past its time, once. It settles on a later {#poll},
+      # when the waiter has reaped it: a single non-blocking wait straight
+      # after the KILL finds nothing ended yet, and with nobody asking
+      # after the pid again the build would stay a zombie (F2).
+      #
+      # @return [void]
+      def stop_late_build
+        return if @killed || @host.clock.monotonic - @started <= @timeout
+
+        @killed = true
         @host.signaller.call("KILL", -@pid)
-        @host.waiter.call(@pid)
-        settle("timeout", "the build ran past #{@timeout} seconds and was stopped, so the old page stays")
       end
 
+      # Never raises: an old page that cannot be put back is said in the
+      # outcome, since this runs on the supervisor's tick (F1).
+      #
       # @param status [String]
       # @param message [String]
       # @return [Outcome]
       def settle(status, message)
         @outcome = Outcome.new(status:, message:)
         @outcome.ok? ? @backup&.discard : @backup&.restore
-        FileUtils.rm_rf(@workdir) if @workdir
         @outcome
+      rescue SystemCallError => e
+        @outcome = Outcome.new(status: "failed", message: "#{message}; the old page could not be put back (#{e.message})")
+      ensure
+        FileUtils.rm_rf(@workdir) if @workdir
       end
 
       # Read before {#settle} removes the log.

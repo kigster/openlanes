@@ -80,12 +80,99 @@ RSpec.describe OpenLanes::Supervision::WebRebuild do
   end
 
   context "when the build runs past its time" do
-    it "kills its group and counts it a failure" do
+    let(:reaped) { [] }
+    let(:host) do
+      OpenLanes::Supervision::Host.new(spawner:, waiter: ->(_) { reaped.shift }, signaller: ->(*args) { signals << args }, clock:)
+    end
+
+    before do
       rebuild.start
+      File.write(File.join(web, "dist", "index.html"), "half a page")
       clock.advance(301)
+    end
+
+    it "kills its group once, and waits for it to end before settling (F2)" do
       aggregate_failures do
-        expect(rebuild.poll).to have_attributes(status: "timeout")
+        expect([rebuild.poll, rebuild.poll]).to eq([nil, nil])
         expect(signals).to eq([["KILL", -501]])
+      end
+    end
+
+    it "counts it a failure once the killed build is reaped, and puts the old page back" do
+      rebuild.poll
+      reaped << :gone
+      aggregate_failures do
+        expect(rebuild.poll).to have_attributes(status: "timeout", message: include("ran past 300 seconds"))
+        expect(File.read(File.join(web, "dist", "index.html"))).to eq("old page")
+      end
+    end
+  end
+
+  # F1: nothing between Supervisor#tick and here rescues, so an error from
+  # the file system has to come back as an outcome.
+  describe "a web/ that cannot be used (F1)" do
+    let(:dist) { File.join(web, "dist") }
+
+    context "when the build cannot be spawned" do
+      let(:spawner) do
+        Class.new { def spawn(*, **) = raise(Errno::EACCES, "web") }.new
+      end
+
+      it "settles as failed, with the reason, and leaves the page alone" do
+        outcome = rebuild.start.poll
+        aggregate_failures do
+          expect(outcome).to have_attributes(status: "failed", message: include("could not start", "Permission denied"))
+          expect(File.read(File.join(dist, "index.html"))).to eq("old page")
+        end
+      end
+    end
+
+    context "when the old page cannot be copied aside" do
+      before do
+        File.write(File.join(dist, "secret.js"), "x")
+        File.chmod(0o000, File.join(dist, "secret.js"))
+      end
+
+      after { File.chmod(0o644, File.join(dist, "secret.js")) }
+
+      it "starts no build and settles as failed" do
+        skip "root reads any file" if Process.uid.zero?
+        outcome = rebuild.start.poll
+        aggregate_failures do
+          expect(outcome).to have_attributes(status: "failed", message: include("could not start"))
+          expect(spawner.calls).to be_empty
+        end
+      end
+    end
+
+    context "when the old page cannot be put back after a failed build" do
+      let(:status) { exited(1) }
+
+      before do
+        rebuild.start
+        # An installed gem's web/ that this user may not write.
+        FileUtils.rm_rf(dist)
+        File.chmod(0o555, web)
+      end
+
+      after { File.chmod(0o755, web) }
+
+      it "settles as failed and says the page could not be put back" do
+        skip "root writes anywhere" if Process.uid.zero?
+        expect(rebuild.poll).to have_attributes(status: "failed", message: include("exit 1", "could not be put back"))
+      end
+    end
+
+    context "when the build's log cannot be read" do
+      let(:status) { exited(1) }
+
+      before do
+        rebuild.start
+        FileUtils.mkdir_p(spawner.calls.first.options.fetch(:out))
+      end
+
+      it "settles as failed instead of raising" do
+        expect(rebuild.poll).to have_attributes(status: "failed", message: include("could not be read"))
       end
     end
   end

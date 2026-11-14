@@ -18,17 +18,23 @@ module OpenLanes
       # to keep when there is no page yet.
       #
       # @return [self]
+      # @raise [SystemCallError] when the page cannot be read; the half
+      #   copy is removed first
       def keep
         return self unless File.directory?(@dist)
 
         @kept = Dir.mktmpdir("openlanes-web-dist")
         FileUtils.cp_r(File.join(@dist, "."), @kept)
         self
+      rescue SystemCallError
+        discard
+        raise
       end
 
       # Puts the kept page back in place of whatever the build left.
       #
       # @return [void]
+      # @raise [SystemCallError] when the page's directory cannot be written
       def restore
         return unless @kept
 
