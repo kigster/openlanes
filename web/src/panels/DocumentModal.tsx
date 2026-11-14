@@ -47,7 +47,7 @@ export function DocumentModal({ ordinal, document: doc, onClose }: DocumentModal
         <Dialog.Content className="document-modal" aria-describedby={undefined}>
           <div className="document-modal-head">
             <Dialog.Title asChild><h2>{`${ordinal} · ${doc.label}`}</h2></Dialog.Title>
-            <Dialog.Close className="document-modal-x" aria-label="Close"><span aria-hidden="true">[x]</span></Dialog.Close>
+            <Dialog.Close className="document-modal-x" aria-label="[x] Close">[x]</Dialog.Close>
           </div>
           <div className="document-modal-body">
             {failure && <p role="alert" className="plan-file-error">{failure}</p>}
