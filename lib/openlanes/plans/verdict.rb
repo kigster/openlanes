@@ -7,9 +7,9 @@ module OpenLanes
     #
     # Each reviewer reports one verdict in its closing ledger note: `great`,
     # `passed` or `rejected`. Once every reviewer has reported: any rejection
-    # rejects (and `security-reviewer`'s `vulnerability` adds
-    # {ReviewLabel::VULNERABILITY} beside it); otherwise a majority of `great`
-    # approves; otherwise {ReviewLabel::PASSED}. With three reviewers that is
+    # rejects; otherwise a majority of `great` approves; otherwise
+    # {ReviewLabel::PASSED}. `security-reviewer`'s own verdict is also said on
+    # its own, as one of {ReviewLabel::OPSEC} ({#opsec}). With three reviewers that is
     # two `great` of three, and an odd count (V5) never ties.
     #
     # This replaced R3's pooled emoji count: the comments still open with
@@ -19,8 +19,7 @@ module OpenLanes
     # Pure: it reads notes and answers labels, and nothing here reads GitHub.
     #
     # @!attribute [r] labels
-    #   @return [Array<ReviewLabel>] one verdict, or {ReviewLabel::REJECTED}
-    #     and {ReviewLabel::VULNERABILITY} together
+    #   @return [Array<ReviewLabel>] the one verdict
     # @!attribute [r] votes
     #   @return [Array<Vote>] the verdicts counted
     # @!attribute [r] ignored
@@ -32,6 +31,15 @@ module OpenLanes
 
       # @return [Array<String>] the label names, as `openlanes review` takes them
       def names = labels.map(&:name)
+
+      # What the security reviewer said, as its own label: `great` approves,
+      # `passed` approves with concerns, `rejected` rejects.
+      #
+      # @return [ReviewLabel, nil] nil when the security reviewer has not reported
+      def opsec
+        vote = votes.find { it.agent.to_s == Verdict::SECURITY_REVIEWER } or return
+        ReviewLabel::OPSEC.fetch(Verdict::WORDS.index(vote.word))
+      end
     end
 
     class Verdict
@@ -72,9 +80,8 @@ module OpenLanes
       # What marks a rejection as a security hole.
       VULNERABILITY = /\bvulnerab/i
 
-      # The one reviewer whose `vulnerability` counts. From anyone else it
-      # would put {ReviewLabel::VULNERABILITY} on a pull request on a
-      # reviewer's say-so outside its remit.
+      # The one reviewer whose `vulnerability` counts, and whose verdict
+      # {#opsec} reads. From anyone else it is a plain rejection.
       SECURITY_REVIEWER = Agents::Names::SECURITY_REVIEWER
 
       class << self
@@ -85,7 +92,7 @@ module OpenLanes
           raise ArgumentError, "no reviewer has reported a verdict" if votes.empty?
 
           ignored = votes.select { it.vulnerability? && it.agent.to_s != SECURITY_REVIEWER }
-          new(labels: labels_for(votes, ignored), votes:, ignored:)
+          new(labels: labels_for(votes), votes:, ignored:)
         end
 
         # The verdict a reviewer's closing ledger note reports (D1 of plan 031).
@@ -108,10 +115,9 @@ module OpenLanes
         private
 
         # @return [Array<ReviewLabel>]
-        def labels_for(votes, ignored)
+        def labels_for(votes)
           if votes.any?(&:rejected?)
-            flaw = (votes - ignored).any?(&:vulnerability?)
-            [ReviewLabel::REJECTED, *(ReviewLabel::VULNERABILITY if flaw)]
+            [ReviewLabel::REJECTED]
           elsif votes.count(&:great?) * 2 > votes.size
             [ReviewLabel::APPROVED]
           else

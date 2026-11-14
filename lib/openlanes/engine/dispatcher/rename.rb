@@ -108,7 +108,7 @@ module OpenLanes
         # deploy-assessor finished, or stopped without a verdict. The engine labels,
         # merges and rebases from here; the folder moves only to ✅ or 🔴.
         #
-        # @param note [String, nil] the Completed note; nil reads as `manual`
+        # @param note [String, nil] the Completed note; nil leaves every pull request unassessed
         # @return [OpenLanes::Engine::Runner::Attempt]
         def assessed(job, base, note)
           task = job.task
@@ -163,7 +163,7 @@ module OpenLanes
           decision = reviews.decide(subject, task.agent, entry.note.to_s, running: others) or return
 
           reviews.vote!(subject, task.agent, task.round, entry.note.to_s)
-          decision.pending? ? decision : reviews.conclude(subject, decision)
+          decision.pending? ? reviews.paused(subject, decision) : reviews.conclude(subject, decision)
         end
 
         # A reviewer signed Completed without a verdict. Moving the plan on

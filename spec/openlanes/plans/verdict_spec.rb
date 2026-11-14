@@ -47,7 +47,8 @@ RSpec.describe OpenLanes::Plans::Verdict do
     context "when security-reviewer reports a vulnerability" do
       let(:votes) { [vote(:great), vote(:rejected, agent: security, vulnerability: true)] }
 
-      it { expect(verdict.names).to eq(%w[review-rejected review-vulnerability]) }
+      it { expect(verdict.names).to eq(%w[review-rejected]) }
+      it { expect(verdict.opsec.name).to eq("opsec-rejected") }
       it { expect(verdict.ignored).to be_empty }
     end
 
@@ -56,6 +57,7 @@ RSpec.describe OpenLanes::Plans::Verdict do
 
       it { expect(verdict.names).to eq(%w[review-rejected]) }
       it { expect(verdict.ignored).to eq(votes) }
+      it { expect(verdict.opsec).to be_nil }
     end
 
     context "with no votes" do

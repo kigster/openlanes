@@ -5,7 +5,7 @@ RSpec.describe OpenLanes::Engine::Steps::Sweeps do
 
   let(:conflict) { OpenLanes::Engine::Upkeep::Conflict.new(ordinal: "033.00", number: 1, url: "https://github.com/example/repo/pull/1") }
   let(:sweep) { OpenLanes::Engine::Upkeep::Sweep::Result.new(notes: ["PR #1 behind"], conflicts: [conflict]) }
-  let(:upkeep) { instance_double(OpenLanes::Engine::Upkeep::Keeper, address: ["PR #2 addressed"], sweep:) }
+  let(:upkeep) { instance_double(OpenLanes::Engine::Upkeep::Keeper, address: ["PR #2 addressed"], finish: ["PR #3 finished"], sweep:) }
   let(:runner) { instance_double(OpenLanes::Engine::Runner, upkeep:, dry_run?: false, in_scope: []) }
   let(:resolved) { [] }
   let(:context) { OpenLanes::Engine::Steps::Context.new(runner:, busy: -> { ["001.00"] }, wake: -> {}, reopen: ->(_) {}) }
@@ -18,6 +18,7 @@ RSpec.describe OpenLanes::Engine::Steps::Sweeps do
     aggregate_failures do
       expect(upkeep).to have_received(:sweep).with([], busy: ["001.00"])
       expect(OpenLanes::UI).to have_received(:log).with("PR #2 addressed")
+      expect(OpenLanes::UI).to have_received(:log).with("PR #3 finished")
       expect(OpenLanes::UI).to have_received(:log).with("PR #1 behind")
       expect(resolved).to eq([[upkeep, conflict]])
     end

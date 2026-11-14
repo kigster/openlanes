@@ -79,6 +79,7 @@ classDiagram
   OpenLanes__Plans ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__ReviewLabel : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Status : uses
