@@ -28,10 +28,17 @@ RSpec.describe "rounds across an engine restart", :tree do
   let(:told) { File.exist?(told_log) ? File.readlines(told_log, chomp: true).map(&:to_i) : [] }
   let(:heard) { [] }
   let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }
+  # The suite's own bundle, handed back to the agent's environment. The
+  # executor starts an agent outside the harness's bundle (`Child.environment`),
+  # which is right for a real `claude`, but the fake signs through this
+  # checkout's `exe/openlanes`: where the gems live in `vendor/bundle`, as on
+  # CI, that process found none of them, signed nothing, and the engine
+  # reported `no closing ledger line` for every round.
+  let(:bundle) { ENV.to_h.slice("BUNDLE_GEMFILE", "BUNDLE_PATH", "BUNDLE_BIN_PATH", "RUBYOPT", "RUBYLIB", "GEM_HOME", "GEM_PATH") }
   let(:executor) do
     starter = OpenLanes::Execution::AgentProcess.spawner(dir: File.join(bin, "traces"), root:)
     spawn = lambda { |argv, chdir:, env:, label:|
-      starter.call(argv, chdir:, env: env.merge("PATH" => path), label:)
+      starter.call(argv, chdir:, env: env.merge(bundle, "PATH" => path), label:)
     }
     OpenLanes::Execution::Executor.new(root:, spawn:, trace_dir: File.join(bin, "traces"))
   end
@@ -91,7 +98,10 @@ RSpec.describe "rounds across an engine restart", :tree do
     it "tells the agent round 2 next, and it signs the round it was told" do
       signed = OpenLanes::Plans::PlanState.for(folder).read["signatures"].select { it["agent"] == "researcher" }
 
-      expect([told, signed.map { it["round"] }]).to eq([[1, 2, 3], [1, 2, 3]])
+      # The status too: the harness signs `Interrupted` under the same round
+      # for an agent that signed nothing, which the rounds alone cannot tell apart.
+      expect([told, signed.map { [it["round"], it["status"]] }])
+        .to eq([[1, 2, 3], [1, 2, 3].map { [it, "Almost completed"] }])
     end
 
     it "leaves the rounds left at the budget less those spent" do
