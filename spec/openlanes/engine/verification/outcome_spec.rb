@@ -332,7 +332,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
       aggregate_failures do
         expect(waiting).to have_attributes(kind: :waiting, note: "🧪 waiting on CI for PR #1")
         expect(ready).to have_attributes(kind: :ready, to: :completed)
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(labels).to eq(%w[review-approved ready-to-merge])
         expect(gh_calls.map { it.take(2) }).not_to include(%w[pr merge])
         expect(plan.status.key).to eq(:completed)
       end
@@ -387,7 +387,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
 
           aggregate_failures do
             expect(result).to have_attributes(kind: :ready, to: :completed)
-            expect([labels, sibling_labels]).to eq([%w[ready-to-merge], %w[ready-to-merge]])
+            expect([labels, sibling_labels]).to eq([%w[review-approved ready-to-merge], %w[ready-to-merge]])
             expect(gate).to have_received(:call).once
             expect(plan.status.key).to eq(:completed)
           end
@@ -427,7 +427,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           aggregate_failures do
             expect(result).to have_attributes(kind: :waiting, to: nil)
             expect(result.note).to include("waiting on CI for PR #2")
-            expect(labels).to eq(%w[ready-to-merge])
+            expect(labels).to eq(%w[review-approved ready-to-merge])
             expect(plan.status.key).to eq(:verifying)
           end
         end
@@ -443,7 +443,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           result = look_again!
 
           aggregate_failures do
-            expect([waiting.kind, labelled]).to eq([:waiting, %w[ready-to-merge]])
+            expect([waiting.kind, labelled]).to eq([:waiting, %w[review-approved ready-to-merge]])
             expect(result).to have_attributes(kind: :rejected, to: :rejected)
             expect(result.note).to include("ready-to-merge taken off PR #1")
             expect(labels).not_to include("ready-to-merge")
@@ -474,7 +474,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
         aggregate_failures do
           expect(result).to have_attributes(kind: :waiting, to: nil)
           expect(result.note).to end_with("waiting for the plan's other pull requests")
-          expect(labels).to eq(%w[ready-to-merge])
+          expect(labels).to eq(%w[review-approved ready-to-merge])
           expect(plan.status.key).to eq(:verifying)
         end
       end
@@ -527,7 +527,7 @@ RSpec.describe OpenLanes::Engine::Verification::Outcome, :fake_gh, :tree do
           outcome.pass(checkout:, plan:, pull: pr, round:)
 
           expect(outcome.settle(checkout:, plan:, pull: pr, round:).kind).to eq(:ready)
-          expect(labels).to eq(%w[ready-to-merge])
+          expect(labels).to eq(%w[review-approved ready-to-merge])
         end
       end
     end
