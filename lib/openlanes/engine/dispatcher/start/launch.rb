@@ -21,10 +21,7 @@ module OpenLanes
           # @param from [Symbol] the state the plan was dispatched in
           # @return [void]
           def open(agent, subject, from)
-            if from == :ready_for_review && agent.phase.to_s == REVIEW_PHASE && !runner.dry_run?
-              runner.reviews.started(subject)
-              @settle.end_replacements(subject.feature.ordinal.to_s)
-            end
+            mark(agent, subject, from) if agent.phase.to_s == REVIEW_PHASE && !runner.dry_run?
             finishes.unfinish(subject)
           end
 
@@ -43,6 +40,19 @@ module OpenLanes
           end
 
           private
+
+          # The pull request marked as being read: by the reviewer that opens
+          # the round, and again by each later group.
+          def mark(agent, subject, from)
+            if from == :ready_for_review
+              runner.reviews.started(subject)
+              @settle.end_replacements(subject.feature.ordinal.to_s)
+            elsif agent.review_stage > 1
+              # The first group's verdict took `review-in-progress` off; a
+              # later group reading the pull request puts it back.
+              runner.reviews.started(subject)
+            end
+          end
 
           # A rebase still to run shows what it will do.
           def pending(job)

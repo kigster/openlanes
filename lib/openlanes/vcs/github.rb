@@ -288,7 +288,17 @@ module OpenLanes
       # @return [Hash{Integer => Array<String>}] each one's number, and every
       #   label it carries
       # @raise [OpenLanes::Error]
-      def open_pulls_labelled(name, repo: nil)
+      def open_pulls_labelled(name, repo: nil) = pulls_labelled(name, state: "open", repo:)
+
+      # As {#open_pulls_labelled}, for the pull requests in +state+. `closed`
+      # is GitHub's word for merged and closed alike.
+      #
+      # @param name [String] the label
+      # @param state [String] `open`, `closed` or `all`
+      # @param repo [String, nil]
+      # @return [Hash{Integer => Array<String>}]
+      # @raise [OpenLanes::Error]
+      def pulls_labelled(name, state:, repo: nil)
         out = @command.run("gh",
           "api",
           "--paginate",
@@ -296,7 +306,7 @@ module OpenLanes
           "GET",
           "repos/#{repo || "{owner}/{repo}"}/issues",
           "-f",
-          "state=open",
+          "state=#{state}",
           "-f",
           "labels=#{name}",
           "-f",

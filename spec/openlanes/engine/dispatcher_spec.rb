@@ -1574,6 +1574,21 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           end
         end
 
+        # `review-in-progress` comes off after each group's verdict, so
+        # each group puts it on as it starts.
+        it "marks the pull request in progress as each group starts, and pauses it between them" do
+          runner = runner_with(reviewers, agents: three)
+          reviews = runner.reviews
+          allow(reviews).to receive(:started).and_call_original
+          allow(reviews).to receive(:paused).and_call_original
+          runner.call
+
+          aggregate_failures do
+            expect(reviews).to have_received(:started).at_least(:twice)
+            expect(reviews).to have_received(:paused).at_least(:once)
+          end
+        end
+
         it "moves a staff rejection to 🔴 without starting stage 2" do
           notes["staff-reviewer"] = "rejected 1/2"
           aggregate_failures do

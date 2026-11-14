@@ -35,7 +35,14 @@ module OpenLanes
             decision = reviews.decide(round.subject, round.agent, note, running: others(round.job)) or return
 
             reviews.vote!(round.subject, round.agent, round.job.task.round, note)
-            decision.pending? ? decision : reviews.conclude(round.subject, decision)
+            settled(round.subject, decision)
+          end
+
+          # A round with reviewers still to speak pauses the pull request; a
+          # complete one is concluded.
+          def settled(subject, decision)
+            reviews = runner.reviews
+            decision.pending? ? reviews.paused(subject, decision) : reviews.conclude(subject, decision)
           end
 
           # The other agents still in the plan, by name.

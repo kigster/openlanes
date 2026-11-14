@@ -18,7 +18,7 @@ module OpenLanes
           # deploy-assessor finished, or stopped without a verdict. The engine
           # labels, merges and rebases from here; the folder moves only to ✅ or 🔴.
           #
-          # @param note [String, nil] the Completed note; nil reads as `manual`
+          # @param note [String, nil] the Completed note; nil leaves every pull request unassessed
           # @return [OpenLanes::Engine::Runner::Attempt]
           def assessed(job, base, note)
             task = job.task
