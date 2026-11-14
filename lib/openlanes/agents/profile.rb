@@ -53,8 +53,12 @@ module OpenLanes
       #   an agent that names no adapter of its own
       # @param diff_lines [Integer, nil] the plan's changed lines, insertions
       #   plus deletions; nil when unknown, and then no `small_diff:` applies
+      # @param unit_size [String, nil] the largest `**Size:**` among plan.md's
+      #   units ({Plans::UnitSizes.in_folder}); nil when none is sized
+      # @param sizing [OpenLanes::Agents::Sizing] `.openlanes.yml` `sizing:`
       # @return [OpenLanes::Agents::Profile]
-      def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current, diff_lines: nil) # rubocop:disable Metrics/ParameterLists
+      def self.resolve(agent, spec: nil, model: nil, dealing: Dealing.current, diff_lines: nil, # rubocop:disable Metrics/ParameterLists
+        unit_size: nil, sizing: Config.current.sizing)
         override = spec ? spec.override_for(agent.phase) : {}
         adapter = Adapters.for(dealing.replacement_for(agent) || override["adapter"] || agent.adapter || dealing.adapter_for(agent))
         # A model named for one CLI means nothing to another, so the agent's
@@ -66,30 +70,17 @@ module OpenLanes
         # on the command line or in the spec, outranks it.
         small = native && model.nil? && override.empty? && agent.small_diff&.applies?(diff_lines) ? agent.small_diff : nil
         own_model = native ? (small&.model || agent.model) : nil
-        sized = sized(agent, spec)
+        sized = (agent.builder? && sizing.for(unit_size)) || {}
         new(adapter:,
           model:   adapter.model(model || override["model"] || sized[:model] || own_model),
           effort:  override["effort"] || sized[:effort] || depth_effort(spec) || small&.effort || agent.effort)
-      end
-
-      # `.openlanes.yml` `sizing:` for the plan's largest unit, a builder only.
-      #
-      # @param agent [OpenLanes::Agents::Agent]
-      # @param spec [OpenLanes::Plans::Spec, nil]
-      # @return [Hash{Symbol => String}] `{model:, effort:}`; empty
-      #   for an agent that does not build or a plan with no sized unit
-      def self.sized(agent, spec)
-        size = spec&.unit_size if Sizing::PHASES.include?(agent.phase.to_s)
-        return {} unless size
-
-        Config.current.sizing.for(size)
       end
 
       # @param spec [OpenLanes::Plans::Spec, nil]
       # @return [String, nil]
       def self.depth_effort(spec) = spec&.depth && Plans::Spec::EFFORT_FOR_DEPTH[spec.depth]
 
-      private_class_method :sized, :depth_effort
+      private_class_method :depth_effort
     end
   end
 end

@@ -53,6 +53,8 @@ classDiagram
   <<module>> OpenLanes__Plans__Journal
   class OpenLanes__Plans__PlanState["OpenLanes::Plans::PlanState"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
+  class OpenLanes__Plans__UnitSizes["OpenLanes::Plans::UnitSizes"]
+  <<module>> OpenLanes__Plans__UnitSizes
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
   class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
@@ -100,6 +102,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Vcs__DiffSize : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses

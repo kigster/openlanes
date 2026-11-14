@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Adapters__Claude__Catalogue["OpenLanes::Adapters::Claude::Catalogue"]
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
+  class OpenLanes__Agents__Agent["OpenLanes::Agents::Agent"]
   class OpenLanes__Agents__Dealing["OpenLanes::Agents::Dealing"]
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
@@ -67,6 +68,7 @@ classDiagram
   class OpenLanes__Engine__PlanLocks__Refused["PlanLocks::Refused"]
   class OpenLanes__Engine__PrOutcomes["PrOutcomes"]
   class OpenLanes__Engine__PrWatch["PrWatch"]
+  class OpenLanes__Engine__PreReviewGate["PreReviewGate"]
   class OpenLanes__Engine__ProgressLog["ProgressLog"]
   <<module>> OpenLanes__Engine__ProgressLog
   class OpenLanes__Engine__QualityQuestion["QualityQuestion"]
@@ -77,6 +79,7 @@ classDiagram
   class OpenLanes__Engine__Recovery__Records["Recovery::Records"]
   class OpenLanes__Engine__Recovery__Round["Recovery::Round"]
   class OpenLanes__Engine__Recovery__Stranded["Recovery::Stranded"]
+  class OpenLanes__Engine__ReviewGating["ReviewGating"]
   class OpenLanes__Engine__Reviews["Reviews"]
   class OpenLanes__Engine__RunWorkflow["RunWorkflow"]
   class OpenLanes__Engine__Runner["Runner"]
@@ -126,6 +129,8 @@ classDiagram
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Execution__AgentProcess["OpenLanes::Execution::AgentProcess"]
+  class OpenLanes__Execution__Checks["OpenLanes::Execution::Checks"]
+  <<module>> OpenLanes__Execution__Checks
   class OpenLanes__Execution__Child["OpenLanes::Execution::Child"]
   class OpenLanes__Execution__Clock["OpenLanes::Execution::Clock"]
   class OpenLanes__Execution__Control["OpenLanes::Execution::Control"]
@@ -190,6 +195,8 @@ classDiagram
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
+  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
+  <<module>> OpenLanes__Spawner__System
   class OpenLanes__Supervision__PidFile["OpenLanes::Supervision::PidFile"]
   class OpenLanes__Supervision__Probe["OpenLanes::Supervision::Probe"]
   class OpenLanes__UI["OpenLanes::UI"]
@@ -362,10 +369,12 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Start --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Engine__PlanLocks__Refused : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Engine__Rebase : uses
+  OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Engine__ReviewGating : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Error : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Execution__Executor__Handle : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Lifecycle__Resync__Dirs : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Plans : uses
+  OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Plans__Lock__Held : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__UI : uses
@@ -417,11 +426,15 @@ classDiagram
   OpenLanes__Engine__PrOutcomes ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__PrWatch ..> OpenLanes__Error : uses
   OpenLanes__Engine__PrWatch ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Engine__PreReviewGate ..> OpenLanes__Execution__Checks : uses
+  OpenLanes__Engine__PreReviewGate ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Engine__PreReviewGate ..> OpenLanes__Spawner__System : uses
   OpenLanes__Engine__ProgressLog ..> OpenLanes__UI : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Clock__System : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Config : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Engine__QualityQuestion__Choice : uses
   OpenLanes__Engine__QualityQuestion ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Rebase ..> OpenLanes__Agents__Agent : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Agents__Names : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Rebase ..> OpenLanes__UI : uses
@@ -438,6 +451,8 @@ classDiagram
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Recovery__Stranded ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__ReviewGating ..> OpenLanes__Config : uses
+  OpenLanes__Engine__ReviewGating ..> OpenLanes__Engine__PreReviewGate : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Agents__Routing : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Error : uses
   OpenLanes__Engine__Reviews ..> OpenLanes__Plans : uses

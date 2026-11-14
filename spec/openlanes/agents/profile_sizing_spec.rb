@@ -6,65 +6,65 @@ RSpec.describe OpenLanes::Agents::Profile do
       { name: "backend-coder", description: "", handles: [:planned], advances_to: :ready_for_review, model: "opus",
         allowed_tools: [], may: [], network: false, timeout: nil, prompt: "", path: "", effort: "high", phase: "build" }
     end
+    let(:sizing) { OpenLanes::Agents::Sizing.new }
 
     def agent(**changes) = OpenLanes::Agents::Agent.new(**fields, **changes)
 
-    def spec(size, frontmatter = "starts: planning")
-      OpenLanes::Plans::Spec.parse("---\n#{frontmatter}\n---\n").with(unit_size: size)
-    end
+    def spec(frontmatter = "starts: planning") = OpenLanes::Plans::Spec.parse("---\n#{frontmatter}\n---\n")
 
-    def configure(yaml = "jobs: 1\n")
-      allow(OpenLanes::Config).to receive(:current).and_return(OpenLanes::Config.parse(yaml, path: ".openlanes.yml"))
-    end
+    def sized(yaml) = OpenLanes::Config.parse(yaml, path: ".openlanes.yml").sizing
 
-    before { configure }
+    def resolve(size, agent: agent(), spec: spec(), **rest)
+      described_class.resolve(agent, spec:, unit_size: size, sizing:, **rest)
+    end
 
     it "maps each size to its default profile" do
-      profiles = %w[small medium large].map { described_class.resolve(agent, spec: spec(it)).to_s }
-      expect(profiles).to eq(["claude:sonnet/medium", "claude:opus/medium", "claude:opus/high"])
+      expect(%w[small medium large].map { resolve(it).to_s }).to eq(["claude:sonnet/medium", "claude:opus/medium", "claude:opus/high"])
     end
 
     it "maps a size to what sizing: configures" do
-      configure("sizing:\n  small: { model: haiku, effort: low }\n")
-      expect(described_class.resolve(agent, spec: spec("small")).to_s).to eq("claude:haiku/low")
+      expect(resolve("small", sizing: sized("sizing:\n  small: { model: haiku, effort: low }\n")).to_s).to eq("claude:haiku/low")
     end
 
     it "keeps today's behaviour for a plan with no sized unit" do
-      expect(described_class.resolve(agent(model: "haiku", effort: "low"), spec: spec(nil)).to_s).to eq("claude:haiku/low")
+      expect(resolve(nil, agent: agent(model: "haiku", effort: "low")).to_s).to eq("claude:haiku/low")
     end
 
     it "leaves agents that do not build alone" do
-      expect(described_class.resolve(agent(phase: "review", model: "haiku", effort: "low"), spec: spec("large")).to_s)
-        .to eq("claude:haiku/low")
+      expect(resolve("large", agent: agent(phase: "review", model: "haiku", effort: "low")).to_s).to eq("claude:haiku/low")
+    end
+
+    it "sizes the front-end builder too, from its phase" do
+      expect(resolve("small", agent: agent(phase: "frontend")).to_s).to eq("claude:sonnet/medium")
     end
 
     it "lets run --model win over sizing" do
-      expect(described_class.resolve(agent, spec: spec("small"), model: "haiku").model).to eq("haiku")
+      expect(resolve("small", model: "haiku").model).to eq("haiku")
     end
 
     it "lets spec phases win over sizing" do
-      profile = described_class.resolve(agent, spec: spec("small", "phases:\n  build: { model: haiku, effort: max }"))
-      expect(profile.to_s).to eq("claude:haiku/max")
+      expect(resolve("small", spec: spec("phases:\n  build: { model: haiku, effort: max }")).to_s).to eq("claude:haiku/max")
     end
 
     it "beats the spec's depth" do
-      expect(described_class.resolve(agent, spec: spec("small", "depth: deep")).effort).to eq("medium")
+      expect(resolve("small", spec: spec("depth: deep")).effort).to eq("medium")
     end
 
     it "reaches Fable when sizing.large.model names it" do
-      configure("sizing:
-  large: { model: fable }
-")
-      expect(described_class.resolve(agent, spec: spec("large")).model).to eq("fable")
+      expect(resolve("large", sizing: sized("sizing:\n  large: { model: fable }\n")).model).to eq("fable")
     end
+  end
 
-    it "reads the unit size from plan.md beside the spec" do
+  describe OpenLanes::Plans::UnitSizes, ".in_folder" do
+    it "reads the largest size from the folder's plan.md" do
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "plan.md"), "### B1 X\n\n- **Size:** medium\n")
-        plan = instance_double(OpenLanes::Plans::Subject, feature: Struct.new(:path).new(dir))
-        allow(plan).to receive(:read).with("spec.md").and_return("---\nstarts: planning\n---\n")
-        expect(OpenLanes::Plans::Spec.for(plan).unit_size).to eq("medium")
+        expect(described_class.in_folder(dir)).to eq("medium")
       end
+    end
+
+    it "answers nil for a folder with no plan.md" do
+      Dir.mktmpdir { |dir| expect(described_class.in_folder(dir)).to be_nil }
     end
   end
 end

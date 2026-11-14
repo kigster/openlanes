@@ -131,7 +131,6 @@ classDiagram
   OpenLanes__Plans__Spec ..> OpenLanes__Adapters : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
-  OpenLanes__Plans__Spec ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses

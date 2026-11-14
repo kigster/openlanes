@@ -45,7 +45,6 @@ classDiagram
   OpenLanes__Agents__Dealing ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Agents__Dealing : uses
-  OpenLanes__Agents__Profile ..> OpenLanes__Agents__Sizing : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Config : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Adapters : uses

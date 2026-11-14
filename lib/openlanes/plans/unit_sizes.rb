@@ -50,6 +50,17 @@ module OpenLanes
       # @param text [String, nil] plan.md
       # @return [String, nil] the largest size any unit names; nil when none does
       def largest(text) = parse(text).values.max_by { SIZES.index(it) }
+
+      # plan.md in a plan folder, read from disk each time: a memoized read
+      # would hand a caller that rewrote plan.md the text from before.
+      #
+      # @param dir [String] a plan folder
+      # @return [String, nil] the largest size its plan.md names; nil when
+      #   there is no plan.md or no sized unit
+      def in_folder(dir)
+        path = File.join(dir, "plan.md")
+        largest(File.read(path, encoding: "UTF-8")) if File.file?(path)
+      end
     end
   end
 end

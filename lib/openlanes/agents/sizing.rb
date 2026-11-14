@@ -34,9 +34,6 @@ module OpenLanes
       # What each size may set.
       KEYS = %w[model effort].freeze
 
-      # The phases that build, the only ones sizing applies to.
-      PHASES = %w[build frontend].freeze
-
       class << self
         # @param value [Object, nil] the `sizing:` section as YAML gave it
         # @param path [String] for every error message

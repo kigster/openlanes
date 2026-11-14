@@ -28,7 +28,7 @@ module OpenLanes
       RESOLVER = Agents::Names::REBASER
 
       # Phases whose agents wrote the branch, and so try its conflicts first.
-      IMPLEMENTER_PHASES = %w[build frontend].freeze
+      IMPLEMENTER_PHASES = Agents::Agent::BUILD_PHASES
 
       # Commits that may stop on conflicts in one run. A branch that conflicts
       # on more of its commits than this is better served by an abort and a

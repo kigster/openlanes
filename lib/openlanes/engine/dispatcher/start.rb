@@ -11,10 +11,12 @@ module OpenLanes
         # @param desk [Desk]
         # @param rename [Rename]
         # @param settle [Settle]
-        def initialize(desk, rename:, settle:)
+        # @param gating [#call] {ReviewGating} unless a spec stands in
+        def initialize(desk, rename:, settle:, gating: ReviewGating.new)
           super(desk)
           @rename = rename
           @settle = settle
+          @gating = gating
         end
 
         # @param agent [OpenLanes::Agents::Agent]
@@ -115,7 +117,9 @@ module OpenLanes
                 resume:,
                 &progress_of(job))
             }
-            verifier?(agent) ? runner.verification.around(task, subject, &invoke) : invoke.call
+            result = verifier?(agent) ? runner.verification.around(task, subject, &invoke) : invoke.call
+            job.gate = gated(task, result)
+            result
           end
           release_owed = false
           running << job
@@ -208,6 +212,25 @@ module OpenLanes
 
         def_delegators :@rename, :rename_on_start
         def_delegators :@settle, :end_replacements
+
+        # The pre-review gate's verdict on a builder's finished round, run
+        # here on the job's thread so a minutes-long suite holds up no tick.
+        # A gate that cannot run says nothing, and review goes ahead as it
+        # did before the gate existed.
+        #
+        # @param task [OpenLanes::Engine::Runner::Task]
+        # @param result [Object] what the executor returned
+        # @return [OpenLanes::Engine::PreReviewGate::Verdict, nil]
+        def gated(task, result)
+          # Before the ledger read: only a builder can be gated, and every
+          # other job's thread should end as soon as its agent does.
+          return nil if runner.dry_run? || !task.agent.builder?
+
+          @gating.call(task, result, Plans::Ledger.last_for(read_ledger(task), task.agent.name))
+        rescue OpenLanes::Error, SystemCallError => e
+          UI.log("pre-review gate did not run: #{e.message}", level: :warn, plan: task.subject.feature.ordinal.to_s)
+          nil
+        end
 
         # The job's thread: its result is what the block returned, or the
         # error it raised, and the plan's lock goes when it ends.

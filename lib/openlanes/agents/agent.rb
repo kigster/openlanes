@@ -95,6 +95,10 @@ module OpenLanes
       # @return [Boolean] whether this agent changes anything on disk
       def read_only? = advances_to.nil?
 
+      # @return [Boolean] whether its frontmatter `phase:` is one that builds
+      #   the plan's units ({Agent::BUILD_PHASES})
+      def builder? = Agent::BUILD_PHASES.include?(phase.to_s)
+
       # @return [Boolean] whether {#confined_to} limits what it may edit
       def confined? = !confined_to.empty?
 
@@ -116,6 +120,13 @@ module OpenLanes
       #
       # @return [String]
       def role = name.split("-").last.to_s
+    end
+
+    class Agent
+      # The frontmatter `phase:` values whose agents build a plan's units:
+      # sizing picks their model ({Profile}), and they try a stopped rebase's
+      # conflicts first ({Engine::Rebase}).
+      BUILD_PHASES = %w[build frontend].freeze
     end
 
     # More rounds than this costs tokens and buys nothing: an agent that has

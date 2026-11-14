@@ -25,6 +25,8 @@ module OpenLanes
   #   review:
   #     adapters: [claude, codex, gemini]  # the coding agents the reviewers are dealt
   #                             # across, main one first (plan 031, V7); unset: `adapter:`
+  #     gate: true              # lint and tests must pass before a reviewer starts (060.00)
+  #     gate_timeout: 900       # seconds the gate's commands may take
   #   merge:
   #     by: human               # who merges a reviewed PR (M4); `openlanes start` watches it
   #     max_rejections: 2       # rejections, staff-reviewer's and verifier's together, before
@@ -145,6 +147,13 @@ module OpenLanes
   # @!attribute [r] sizing
   #   @return [OpenLanes::Agents::Sizing] `sizing:`: the builder profile for
   #     a plan whose largest unit is small, medium or large
+  # @!attribute [r] review_gate
+  #   @return [Boolean] `review.gate`: run the project's lint and tests
+  #     ({Engine::PreReviewGate}) before a builder's work goes to review;
+  #     true unless set false
+  # @!attribute [r] review_gate_timeout
+  #   @return [Numeric, nil] `review.gate_timeout`: seconds the gate's
+  #     commands may run; nil is {Engine::PreReviewGate::TIMEOUT}
   Config = Data.define(:path,
     :project,
     :starts,
@@ -173,10 +182,12 @@ module OpenLanes
     :refactor_lock_hours,
     :chime,
     :budget_plan_usd,
-    :sizing) do
+    :sizing,
+    :review_gate,
+    :review_gate_timeout) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, review_gate: true, review_gate_timeout: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -271,7 +282,10 @@ module OpenLanes
       settings["questions"] = { "model" => questions_model } if questions_model
       settings["coverage"] = coverage.to_h if coverage
       settings["events"] = { "enabled" => events_enabled, "dir" => events_dir }.compact if events_enabled || events_dir
-      settings["review"] = { "adapters" => review_adapters } unless review_adapters.empty?
+      review = { "adapters"     => (review_adapters unless review_adapters.empty?),
+                 "gate"         => (false unless review_gate),
+                 "gate_timeout" => review_gate_timeout }.compact
+      settings["review"] = review unless review.empty?
       refactor = { "threshold" => refactor_threshold, "lock_hours" => refactor_lock_hours }.compact
       settings["refactor"] = refactor unless refactor.empty?
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
@@ -304,7 +318,7 @@ module OpenLanes
     MERGERS = %i[human auto].freeze
 
     # Every key `review:` may hold.
-    REVIEW_KEYS = %w[adapters].freeze
+    REVIEW_KEYS = %w[adapters gate gate_timeout].freeze
 
     # Every key `merge:` may hold.
     MERGE_KEYS = %w[by max_rejections].freeze
@@ -580,7 +594,23 @@ module OpenLanes
         unknown = settings.keys - REVIEW_KEYS
         fail_with(path, "review: unknown key #{unknown.join(", ")}; known: #{REVIEW_KEYS.join(", ")}") unless unknown.empty?
 
-        { review_adapters: review_adapters(settings["adapters"], path) }
+        { review_adapters: review_adapters(settings["adapters"], path), **review_gate(settings, path) }
+      end
+
+      # `review.gate` and `review.gate_timeout`: whether the builder's suite
+      # must pass before a reviewer starts, and how many seconds it may take.
+      #
+      # @return [Hash{Symbol => Object}] as keywords for {Config.new}
+      def review_gate(settings, path)
+        gate = settings.fetch("gate", true)
+        fail_with(path, "review.gate: #{gate.inspect} is not true or false") unless [true, false].include?(gate)
+
+        timeout = settings["gate_timeout"]
+        unless timeout.nil? || (timeout.is_a?(Numeric) && timeout.positive?)
+          fail_with(path, "review.gate_timeout: #{timeout.inspect} is not a number of seconds above zero")
+        end
+
+        { review_gate: gate, review_gate_timeout: timeout }
       end
 
       # @return [Array<String>]

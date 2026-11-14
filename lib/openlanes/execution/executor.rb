@@ -575,7 +575,8 @@ module OpenLanes
           spec:,
           model:      preferred_model(agent, subject) || @model,
           dealing:    Agents::Dealing.current(usable: @usable, replacing:),
-          diff_lines: diff_lines(agent, root))
+          diff_lines: diff_lines(agent, root),
+          unit_size:  subject && agent.builder? ? Plans::UnitSizes.in_folder(subject.feature.path) : nil)
       end
 
       # Counted only for an agent with a `small_diff:` model, since nothing
