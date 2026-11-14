@@ -3,6 +3,9 @@ import { axe } from "vitest-axe";
 import { PlanRow } from "./PlanRow";
 import { sampleBoard, samplePlan } from "./sample";
 
+// The lane's Documents dropdown reads the server through react-query; these tests are about the row, not that request.
+vi.mock("../panels/useDocuments", () => ({ useDocuments: () => ({ documents: [{ name: "spec.md", label: "Specification" }], loading: false, error: null }) }));
+
 const { stations } = sampleBoard().me;
 const adapters = sampleBoard().me.adapters;
 const row = (over: Parameters<typeof samplePlan>[0]) => render(<PlanRow plan={samplePlan(over)} stations={stations} adapters={adapters} />);

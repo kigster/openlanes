@@ -24,3 +24,9 @@ describe("board.css gear", () => {
     expect(css).toMatch(/\.car-top > :is\(\.car-agent, \.car-open\)\s*\{\s*margin-right:\s*auto;/);
   });
 });
+
+describe("board.css lane actions", () => {
+  it("hides the Documents strip on narrow and half-height lanes", () => {
+    expect(css).toMatch(/:is\(\[data-lanes="narrow"\] \.plan, \.plan\.is-half\) \.plan-actions\s*\{\s*display:\s*none;/);
+  });
+});

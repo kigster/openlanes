@@ -144,6 +144,7 @@
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-id { flex: none; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-title { font-size: 14px; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .plan-meta > :not(.unacked) { display: none; }
+:is([data-lanes="narrow"] .plan, .plan.is-half) .plan-actions { display: none; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .cars { margin-top: 2px; gap: 4px; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) .car { padding: 3px 10px; }
 :is([data-lanes="narrow"] .plan, .plan.is-half) :is(.car-activity, .car-stats) { display: none; }
@@ -220,3 +221,7 @@
 .finding p { margin: 0 0 4px; }
 .finding-actions { display: flex; gap: 6px; align-items: center; }
 .finding-where { color: var(--ink-soft); }
+
+/* The lane's Documents dropdown, at the foot of the details block (plan 070). */
+.plan-actions { margin-top: 6px; }
+.doc-trigger { padding: 1px 8px; font-size: 12px; }

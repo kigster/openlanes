@@ -4,6 +4,9 @@ import { axe } from "vitest-axe";
 import { PlanRow, UnackedBadge } from "./PlanRow";
 import { sampleBoard, samplePlan, sampleQuestion } from "./sample";
 
+// The lane's Documents dropdown reads the server through react-query; these tests are about the row, not that request.
+vi.mock("../panels/useDocuments", () => ({ useDocuments: () => ({ documents: [{ name: "spec.md", label: "Specification" }], loading: false, error: null }) }));
+
 describe("UnackedBadge", () => {
   it("shows nothing at zero", () => {
     const { container } = render(<UnackedBadge count={0} />);

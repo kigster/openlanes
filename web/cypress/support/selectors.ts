@@ -6,3 +6,7 @@
  * minimised, so "the dialog closed" would never come true and `within` would find two.
  */
 export const MODAL = '[role="dialog"].start';
+
+/** A lane's Documents dropdown trigger (plan 070), and the document modal it opens. */
+export const LANE_DOCUMENTS = 'button[aria-label^="Documents of "]';
+export const DOCUMENT_MODAL = ".document-modal";
