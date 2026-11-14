@@ -4,7 +4,7 @@ frontend: true
 jobs: 3
 desired_codebase_quality: high
 merge:
-  by: human
+  by: auto
 coverage:
   command: bundle exec rspec
   minimum: 95

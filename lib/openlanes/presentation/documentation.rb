@@ -444,18 +444,29 @@ module OpenLanes
           "| `#{l.name}` | `#{l.colour}` | #{l.passing? ? "yes" : "no"} | #{l.meaning} |"
         end
 
+        beside = OpenLanes::Plans::ReviewLabel::FAMILIES.flatten.map { |l| "| `#{l.name}` | `#{l.colour}` | #{l.meaning} |" }
+
         <<~MARKDOWN
           ## Review labels
 
           A pull request carries one of these at a time, set by the engine once every reviewer has
           reported, or by a person through `openlanes review <pr> <label>`.
-          A new label replaces the previous one, except that `#{OpenLanes::Plans::ReviewLabel::VULNERABILITY}`
-          sits beside `#{OpenLanes::Plans::ReviewLabel::REJECTED}`. No passing verdict is given while CI is red.
+          A new label replaces the previous one, except that the reviewers' passing verdict stays beside the
+          labels that follow it. No passing verdict is given while CI is red.
           The engine creates or recolours every one of them on the repository when a run starts.
 
           | Label | Colour | Passing | Meaning |
           | --- | --- | --- | --- |
           #{rows.join("\n")}
+
+          Two assessments sit beside the verdict, one label each. The engine takes `review-in-progress` off
+          once a group of reviewers has given its verdict, and merges a pull request itself only when CI is
+          green and it carries #{OpenLanes::Plans::ReviewLabel::MERGEABLE.map { "`#{it}`" }.join(", ")}, under `merge.by: auto`.
+          Any other combination waits for a person.
+
+          | Label | Colour | Meaning |
+          | --- | --- | --- |
+          #{beside.join("\n")}
         MARKDOWN
       end
 

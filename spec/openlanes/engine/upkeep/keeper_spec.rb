@@ -18,6 +18,22 @@ RSpec.describe OpenLanes::Engine::Upkeep::Keeper do
     end
   end
 
+  it "finishes: review-in-progress comes off a pull request nobody is reviewing" do
+    allow(github).to receive(:pulls_labelled).and_return(7 => %w[review-in-progress])
+    allow(github).to receive(:remove_label)
+
+    aggregate_failures do
+      expect(keeper.finish([])).to eq(["PR #7: review-in-progress taken off, nobody is reviewing it"])
+      expect(github).to have_received(:remove_label).with(number: 7, name: "review-in-progress")
+    end
+  end
+
+  it "finishes nothing when built without that duty" do
+    bare = described_class.new(addressing: nil, sweep: nil, resolution: nil, owed: nil)
+
+    expect(bare.finish([])).to be_empty
+  end
+
   it "pushes through the push it was built with" do
     keeper.rebased(conflict, :checkout, done)
 

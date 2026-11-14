@@ -54,7 +54,7 @@ module OpenLanes
       #   plan's diff touches; nil means unknown, which every reviewer watches
       def initialize(agents:, review: nil, builds: nil, changes: ->(_) {})
         @agents = agents
-        @review = review
+        @labels = Labels.new(review)
         @build = Build.new(builds)
         @changes = changes
       end
@@ -143,24 +143,10 @@ module OpenLanes
         nil
       end
 
-      # Puts +labels+ on every open pull request of +subject+, stopping at
-      # the first refusal. A `gh` failure is logged, never raised: the round
-      # is decided either way, and the label is the decision's echo.
-      #
       # @param subject [Plans::Subject]
       # @param labels [Array<Plans::ReviewLabel>]
       # @return [String, nil] why a passing label was refused
-      def label(subject, labels)
-        return if @review.nil?
-
-        subject.pull_requests.select(&:open?).each do |pull|
-          refused = refusal(pull, labels) and return refused
-        end
-        nil
-      rescue Error => e
-        UI.log("could not label #{subject.feature.ordinal}: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
-        nil
-      end
+      def label(subject, labels) = @labels.put(subject, labels)
 
       # Labels the pull request for a decided round. A passing label refused
       # while CI is red or pending turns the round into a rejection: the
@@ -170,10 +156,33 @@ module OpenLanes
       # @param decision [Decision] decided, not pending
       # @return [Decision] the one the pull request now carries
       def conclude(subject, decision)
-        refused = label(subject, decision.verdict.labels) or return decision
+        refused = label(subject, decision.verdict.labels)
+        label(subject, [Plans::ReviewLabel::REJECTED]) if refused
+        # security-reviewer's own verdict, beside whatever the round came to.
+        label(subject, [decision.verdict.opsec].compact)
+        return decision unless refused
 
-        label(subject, [Plans::ReviewLabel::REJECTED])
         decision.with(target: :rejected, note: "#{decision.note}; rejected: #{refused}")
+      end
+
+      # The first group of reviewers has passed the pull request and a later
+      # group is still to read it: the pull request says what the first
+      # group said, and `review-in-progress` comes off until the next group
+      # starts ({#started} puts it back beside that verdict). Left on, it
+      # sat there through every wait for CI, and on a pull request merged
+      # by hand in the meantime it sat there for good. A verdict refused
+      # while CI is red or pending still takes the label off.
+      #
+      # @param subject [Plans::Subject]
+      # @param decision [Decision] pending
+      # @return [Decision] the same one
+      def paused(subject, decision)
+        notes = round(subject)
+        first = stage(subject, 1).map(&:name)
+        return decision unless notes.keys.sort == first.sort && votes(notes).passing?
+
+        @labels.finish(subject) if label(subject, votes(notes).labels)
+        decision
       end
 
       # @param subject [Plans::Subject]
@@ -240,17 +249,6 @@ module OpenLanes
       def decided(notes)
         verdict = votes(notes)
         Decision.new(verdict:, pending: [], target: target(verdict, notes.values), note: "review #{verdict.names.join(" + ")}")
-      end
-
-      # @param pull [Plans::PullRequest]
-      # @param labels [Array<Plans::ReviewLabel>]
-      # @return [String, nil] why the first refused label was refused
-      def refusal(pull, labels)
-        labels.each do |label|
-          result = @review.call(pr: pull.url || pull.number, label: label.name)
-          return "##{result.pr} #{result.reason}" if result.refused?
-        end
-        nil
       end
 
       # @param verdict [Plans::Verdict]

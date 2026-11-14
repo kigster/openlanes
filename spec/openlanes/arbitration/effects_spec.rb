@@ -118,7 +118,7 @@ RSpec.describe OpenLanes::Arbitration::Effects, :fake_gh, :tree do
 
     it "too_harsh: ready-to-merge, plan unchanged" do
       apply("passed_check", "too_harsh")
-      expect([plan.status.key, labels]).to eq([:in_review, %w[ready-to-merge]])
+      expect([plan.status.key, labels]).to eq([:in_review, %w[review-passed ready-to-merge]])
     end
 
     it "too_lenient: review-rejected, 👀 → 🔴, the count one higher, and the builders told" do

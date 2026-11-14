@@ -660,7 +660,7 @@ module OpenLanes
         record["moves"] == moves ? record : nil
       end
 
-      # @param verdicts [Hash{Integer, String => String}] number => `auto` or `manual`
+      # @param verdicts [Hash{Integer, String => String}] number => its risk, one of {Engine::Merging::RISKS}, or `unassessed`
       # @param at [Time]
       # @return [Hash] the record kept
       def assess!(verdicts, at: Time.now)

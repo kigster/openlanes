@@ -33,6 +33,14 @@ The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md
 
 ## Your marks
 
-💣 and 🔓 are yours alone. A 💣 is a critical finding; when you sign `rejected` because of one, add `vulnerability` to the note, as in `--note "rejected 1/2, vulnerability"`, and the engine puts `review-vulnerability` beside `review-rejected`. A 🔓 is never a reason to reject.
+💣 and 🔓 are yours alone. A 💣 is a critical finding; when you sign `rejected` because of one, add `vulnerability` to the note, as in `--note "rejected 1/2, vulnerability"`. A 🔓 is never a reason to reject.
+
+Your verdict is also said on the pull request on its own, beside the reviewers' label, and the engine merges nothing by itself without `opsec-approved`:
+
+| You sign   | When                                              | The engine labels the PR   |
+| :--------- | :------------------------------------------------ | :------------------------- |
+| `great`    | you found nothing: no 💣 and no 🔓                | `opsec-approved`           |
+| `passed`   | no 💣, but at least one 🔓 a person should read   | `opsec-concerned-approved` |
+| `rejected` | at least one 💣 or ⛔️                            | `opsec-rejected`           |
 
 Your findings number from F101, so they never share an id with another reviewer's.
