@@ -33,6 +33,7 @@ module OpenLanes
         # @return [void]
         def keep(upkeep)
           upkeep.address.each { UI.log(it) }
+          upkeep.finish(@context.runner.in_scope).each { UI.log(it) }
           sweep = upkeep.sweep(@context.runner.in_scope, busy: @context.busy.call)
           sweep.notes.each { UI.log(it) }
           sweep.conflicts.each { @resolve.call(upkeep, it) }

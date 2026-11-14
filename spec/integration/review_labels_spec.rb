@@ -149,10 +149,10 @@ RSpec.describe "Review labels, end to end", :tree do
       expect(labels(number)).to contain_exactly("openlanes", "review-rejected")
     end
 
-    _, _, status = openlanes("review", number, "review-vulnerability")
-    aggregate_failures "a vulnerability sits beside the rejection" do
+    _, _, status = openlanes("review", number, "opsec-rejected")
+    aggregate_failures "the security verdict sits beside the rejection" do
       expect(status).to eq(0)
-      expect(labels(number)).to contain_exactly("openlanes", "review-rejected", "review-vulnerability")
+      expect(labels(number)).to contain_exactly("openlanes", "review-rejected", "opsec-rejected")
     end
 
     edit_gh do |data|

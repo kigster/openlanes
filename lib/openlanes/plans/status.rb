@@ -295,7 +295,7 @@ module OpenLanes
       ),
       # Completed is not done. `ready-to-merge` is a pull request's state
       # (P2), and once every pull request of the plan carries it the plan is
-      # 🏁: deploy-assessor rules on each, the engine merges the `auto` ones one at
+      # 🏁: deploy-assessor rates the risk of each, the engine merges the mergeable ones one at
       # a time and rebases the rest onto `main`, and `merge-manually` ones
       # wait for a person. At least one is still open, or the plan would be
       # ✅ (P3).

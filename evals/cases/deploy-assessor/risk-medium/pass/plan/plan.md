@@ -4,7 +4,7 @@
 
 ## Merge risk, PR #21
 
-**Verdict:** manual
+**Risk:** high
 
 **Triggers:** schema and data: `db/migrate/20261020120000_drop_legacy_email.rb:3` drops `users.legacy_email`; the old code still running during the deploy overlap may read it.
 
@@ -22,4 +22,4 @@
 > [!NOTE]
 >
 > [2026-10-20 10:00:00 AM PDT] [ agent: deploy-assessor   status: Started, round 1 ]
-> [2026-10-20 10:03:00 AM PDT] [ agent: deploy-assessor   status: Completed, round 1 (manual) ]
+> [2026-10-20 10:03:00 AM PDT] [ agent: deploy-assessor   status: Completed, round 1 (high) ]

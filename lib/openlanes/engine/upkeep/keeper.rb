@@ -11,8 +11,10 @@ module OpenLanes
         # @param sweep [Sweep]
         # @param resolution [Resolution]
         # @param owed [Owed]
-        def initialize(addressing:, sweep:, resolution:, owed:)
+        # @param finishing [Finishing, nil]
+        def initialize(addressing:, sweep:, resolution:, owed:, finishing: nil) # rubocop:disable Metrics/ParameterLists -- one per duty
           @addressing = addressing
+          @finishing = finishing
           @sweep = sweep
           @resolution = resolution
           @owed = owed
@@ -20,6 +22,10 @@ module OpenLanes
 
         # @return [Array<String>] see {Addressing#call}
         def address = @addressing.call
+
+        # @param subjects [Array<Plans::Subject>]
+        # @return [Array<String>] see {Finishing#call}
+        def finish(subjects) = @finishing ? @finishing.call(subjects) : []
 
         # @param subjects [Array<Plans::Subject>]
         # @param busy [Array<String>]

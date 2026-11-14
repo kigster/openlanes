@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Route = "/" | "/dependencies";
+export type Route = "/" | "/dependencies" | "/settings";
 
-/** Any path but /dependencies is the board, so an unknown address still lands on something. */
-export const routeOf = (pathname: string): Route => (pathname.replace(/\/+$/, "") === "/dependencies" ? "/dependencies" : "/");
+const PAGES: Route[] = ["/dependencies", "/settings"];
+
+/** Any path but a page's own is the board, so an unknown address still lands on something. */
+export const routeOf = (pathname: string): Route => PAGES.find(r => r === pathname.replace(/\/+$/, "")) ?? "/";
 
 /** The page the URL names, and a way to change it without a reload: history.pushState plus popstate for Back. */
 export function useRoute() {

@@ -13,14 +13,15 @@ module OpenLanes
       argument :pull_request, required: true, desc: "Pull request number or URL, e.g. 12, #12"
       argument :label,
         required: true,
-        values:   Plans::ReviewLabel.names,
-        desc:     "One of: #{Plans::ReviewLabel.names.join(", ")}"
+        values:   Plans::ReviewLabel.settable,
+        desc:     "One of: #{Plans::ReviewLabel.settable.join(", ")}"
 
       dry_run_option "Compute the transition and write nothing to GitHub"
 
       example [
         "12 #{Plans::ReviewLabel::INITIAL.name}   # label PR #12",
-        "12 #{Plans::ReviewLabel::REJECTED.name} -n   # what that would do"
+        "12 #{Plans::ReviewLabel::REJECTED.name} -n   # what that would do",
+        "12 #{Plans::ReviewLabel::RISK_LOW.name}   # a risk or opsec label sits beside the verdict"
       ]
 
       # @param pull_request [String]
@@ -31,7 +32,7 @@ module OpenLanes
         quiet?(options)
         begin
           # Checked here so a typo is a usage error, not a `gh` failure.
-          Plans::ReviewLabel.fetch(label)
+          Plans::ReviewLabel.beside(label) || Plans::ReviewLabel.fetch(label)
         rescue OpenLanes::Error => e
           refuse(e.message, 64)
         end
@@ -58,8 +59,7 @@ module OpenLanes
 
         if result.refused?
           error("PR ##{result.pr} stays #{from}: #{result.reason}.\n" \
-                "Only #{Plans::ReviewLabel::REJECTED.name} and #{Plans::ReviewLabel::VULNERABILITY.name} " \
-                "are accepted until CI is green.")
+                "Only #{Plans::ReviewLabel::REJECTED.name} is accepted until CI is green.")
           return
         end
 

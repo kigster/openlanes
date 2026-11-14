@@ -258,7 +258,8 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
         voted("design-reviewer", "great")
       end
 
-      it { expect(decision.verdict.names).to eq(%w[review-rejected review-vulnerability]) }
+      it { expect(decision.verdict.names).to eq(%w[review-rejected]) }
+      it { expect(decision.verdict.opsec.name).to eq("opsec-rejected") }
     end
 
     context "when an earlier round's verdicts are on file" do
@@ -344,6 +345,103 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
       it "logs it" do
         concluded
         expect(OpenLanes::UI).to have_received(:log).with("could not label 031.00: gh is down", level: :warn, plan: "031.00")
+      end
+    end
+
+    context "without a pull request to label" do
+      let(:review) { nil }
+
+      it { is_expected.to eq(decision) }
+    end
+  end
+
+  # The security reviewer's verdict is said on its own, beside the round's.
+  describe "#conclude, with the security reviewer's verdict" do
+    def concluded_with(note)
+      voted("staff-reviewer", "great")
+      voted("design-reviewer", "great")
+      voted("security-reviewer", note)
+      reviews.conclude(plan, reviews.decide(plan, security, note))
+      labels
+    end
+
+    it "labels a pull request it found nothing in opsec-approved" do
+      expect(concluded_with("great")).to eq(%w[review-approved opsec-approved])
+    end
+
+    it "labels one it let through with concerns opsec-concerned-approved" do
+      expect(concluded_with("passed")).to eq(%w[review-approved opsec-concerned-approved])
+    end
+
+    it "labels one it rejected opsec-rejected, beside review-rejected" do
+      expect(concluded_with("rejected 1/2, vulnerability")).to eq(%w[review-rejected opsec-rejected])
+    end
+
+    it "says the security verdict on a round CI turned into a rejection too" do
+      edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
+
+      expect(concluded_with("great")).to eq(%w[review-rejected opsec-approved])
+    end
+  end
+
+  # `review-in-progress` comes off after each group of reviewers, not only
+  # at the end of the round.
+  describe "#paused" do
+    subject(:paused) { reviews.paused(plan, decision) }
+
+    let(:decision) { reviews.decide(plan, staff, "great") }
+    let(:stages) { { "security-reviewer" => "review_stage: 2\n", "design-reviewer" => "review_stage: 2\n" } }
+
+    before do
+      decision
+      voted("staff-reviewer", "great")
+    end
+
+    it "labels the pull request with the first group's verdict, in place of review-in-progress" do
+      aggregate_failures do
+        expect(decision).to be_pending
+        expect(paused).to eq(decision)
+        expect(labels).to eq(%w[review-approved])
+      end
+    end
+
+    it "puts review-in-progress back beside that verdict when the next group starts" do
+      paused
+      reviews.started(plan)
+
+      expect(labels).to eq(%w[review-approved review-in-progress])
+    end
+
+    context "when CI is not green yet" do
+      let(:checks) { [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+
+      it "still takes review-in-progress off, and gives no passing verdict" do
+        paused
+        expect(labels).to be_empty
+      end
+    end
+
+    context "when a later reviewer has reported and another has not" do
+      before { voted("security-reviewer", "great") }
+
+      it "leaves the pull request in progress" do
+        paused
+        expect(labels).to eq(%w[review-in-progress])
+      end
+    end
+
+    context "when gh fails" do
+      before do
+        allow(review).to receive(:call).and_return(OpenLanes::Vcs::Review::Result.new(pr: 1, from: [], to: "review-approved", ci: :red, refused: true, reason: "CI is red", dry_run: false))
+        allow(review).to receive(:finish).and_raise(OpenLanes::Error, "gh is down")
+        allow(OpenLanes::UI).to receive(:log)
+      end
+
+      it "logs it, and the round goes on" do
+        aggregate_failures do
+          expect(paused).to eq(decision)
+          expect(OpenLanes::UI).to have_received(:log).with("could not take review-in-progress off 031.00: gh is down", level: :warn, plan: "031.00")
+        end
       end
     end
 
