@@ -72,6 +72,7 @@ module OpenLanes
         @store = store
         @keys = context.keys
         @copilot = Live.copilot(store:, keys: @keys)
+        @interviews = Live::Interview::Feed.new(store:, keys: @keys)
         @last_id = last_id.to_s.match?(/\A\d+-\d+\z/) ? last_id : nil
         @chat = context.chat
         @page = page.to_s.match?(Live::Chat::PAGE) ? page : nil
@@ -93,6 +94,7 @@ module OpenLanes
         out << self.class.frame("cursor", { id: cursor }, id: cursor)
         said = @copilot.newest
         out << self.class.frame("copilot_cursor", { id: said }) unless out.closed?
+        asked = @interviews.newest
         # The page is attached, so every chat event from here on is queued for
         # it: a `GET /api/chat` the page starts on this misses nothing.
         out << self.class.frame("chat_cursor", {}) if @chat && @page && !out.closed?
@@ -101,8 +103,9 @@ module OpenLanes
         until over?(out, started)
           seqs = board(out, seqs)
           apps = app_news(out, apps)
-          cursor = replies(out, cursor)
-          said = copilot(out, said)
+          cursor = follow(out, "reply", method(:replies_after), cursor, ids: true)
+          said = follow(out, "copilot", @copilot.method(:since), said)
+          asked = follow(out, "interview", @interviews.method(:since), asked)
           chat(out)
           pinged = ping(out) if @clock.call - pinged >= @context.ping_every
           wait(news, started, pinged)
@@ -191,22 +194,20 @@ module OpenLanes
       # @return [Hash{Array(String, String) => Hash}]
       def live_apps = Apps::Listing.read(store: @store, keys: @keys).to_h { [[it["plan"], it["process"]], it] }
 
-      # @return [String] the last reply id sent
-      def replies(out, cursor)
-        Live.replies(store: @store, keys: @keys, after: cursor).each do |id, reply|
-          out << self.class.frame("reply", reply, id:)
+      # @return [Array<Array(String, Hash)>] replies after +cursor+, as {#follow} reads a source
+      def replies_after(cursor) = Live.replies(store: @store, keys: @keys, after: cursor)
+
+      # Send what +source+ (given a stream id) returns after +cursor+ as +event+ frames: the
+      # engine's replies (with their ids, which move the page's cursor), the
+      # copilot's turns, and every interview's ({Live::Interview::Feed}).
+      #
+      # @return [String] the last stream id sent
+      def follow(out, event, source, cursor, ids: false)
+        source.call(cursor).each do |id, data|
+          out << self.class.frame(event, data, id: (id if ids))
           cursor = id
         end
         cursor
-      end
-
-      # @return [String] the last copilot turn's stream id sent
-      def copilot(out, said)
-        @copilot.since(said).each do |id, turn|
-          out << self.class.frame("copilot", turn)
-          said = id
-        end
-        said
       end
 
       # @return [void]

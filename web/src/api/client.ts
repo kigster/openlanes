@@ -89,6 +89,11 @@ async function post(path: string, body: unknown): Promise<Response> {
   return send(path, body, fresh.csrf);
 }
 
+/** `post` for a caller outside this file that reads the response itself (the interview's 202, 409 and 422). */
+export async function postJson(path: string, body: unknown): Promise<Response> {
+  return post(path, body);
+}
+
 /**
  * Sends one command. Resolves with the server's first reply: `accepted` once it is queued (202) or `refused` when it
  * is invalid (422). A 403 means the token went stale (the server restarted), so it fetches a new one and sends the
