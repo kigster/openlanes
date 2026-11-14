@@ -22,6 +22,7 @@ module OpenLanes
 
         # @return [void]
         def dispatch
+          cli_pause.probe
           ask_for_rounds
           refusals.clear
           started = 0
@@ -158,6 +159,7 @@ module OpenLanes
                        "edit blocked.md to try again"
           end
           reasons.concat(verifying.map { |plan, note| "#{plan} #{note}" })
+          cli_pause.reason&.then { reasons << it }
           held = runner.held(runner.dependencies(except: untouchable), runner.global_lock(except: untouchable))
           reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
           over = budget_holds
@@ -308,7 +310,10 @@ module OpenLanes
           return false if runner.arbitration&.holds?(subject) || arbitrating_now.include?(ordinal)
           return false if running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
 
-          past = history[[ordinal, agent.name]].select { |h| h[:state] == subject.status.key }
+          return false if failed_starts_capped?(subject, agent)
+          return false if cli_pause.paused?(adapter_of(agent, subject).name)
+
+          past = past_rounds(subject, agent)
           return true if past.empty?
           return false if %w[Completed Blocked].include?(past.last[:status])
 
@@ -342,7 +347,7 @@ module OpenLanes
         # @param subject [OpenLanes::Plans::Subject]
         # @return [Hash, nil] the agent's last round on the plan's state, when it was its last allowed one
         def out_of_rounds(agent, subject)
-          past = history[[subject.feature.ordinal.to_s, agent.name]].select { |h| h[:state] == subject.status.key }
+          past = past_rounds(subject, agent)
           return nil if past.empty? || %w[Completed Blocked Started].include?(past.last[:status])
           return nil if past.size < rounds_for(agent) + extensions.rounds(subject.feature.path, agent.name, subject.status.key)
 

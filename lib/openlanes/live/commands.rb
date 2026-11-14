@@ -59,7 +59,7 @@ module OpenLanes
 
       # The most seconds one `extend_time` adds: the largest grant
       # {Engine::Extensions} offers when an agent asks for more time.
-      MAX_EXTENSION = Engine::Extensions::CHOICES.map(&:seconds).max
+      MAX_EXTENSION = Engine::Extensions::CHOICES.values.flatten.map(&:seconds).max
 
       # How long "Resume anyway" lifts a 💣's halt.
       RESUME_FOR = 24 * 3600

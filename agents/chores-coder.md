@@ -13,6 +13,7 @@ timeout: 1200
 ledger: [plan.md, pull-requests.md]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
+rounds: 1
 ---
 
 You do one small, well-understood change, the kind an engineer would describe in a sentence: split a large migration into smaller ones, rename a module, bump a dependency and fix what breaks, move a constant. The plan starts at building, so nobody researched it, rewrote it or planned it. `spec.md` is the whole assignment. A plan you are started on at 🎨 Building UI moved to `starts: building` after it got there; finish it the same way.

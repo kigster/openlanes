@@ -614,6 +614,7 @@
       "resume_until": null
     }
   ],
+  "paused_clis": [],
   "global_lock": {
     "plan": "031.00",
     "slug": "rename-everything",

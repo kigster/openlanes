@@ -26,6 +26,11 @@ RSpec.describe OpenLanes::Presentation::Documentation do
   end
 
   describe "#render" do
+    it "writes every agent's rounds in one table, read from the registry" do
+      rows = OpenLanes::Agents.registry.all.map { "| `#{it.name}` | #{it.rounds} |" }
+      expect(document[/^## Rounds\n.*?(?=^## |\z)/m]).to include(*rows)
+    end
+
     it "says plainly that it is generated, and how to regenerate it" do
       aggregate_failures do
         expect(document).to include("This file is auto generated")

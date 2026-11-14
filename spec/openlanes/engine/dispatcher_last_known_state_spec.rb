@@ -28,7 +28,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       OpenLanes::Execution::Executor::Result.new(ok: false,
         note: "timed out",
         up: 0,
-        down: 0,
+        down: 1,
         subagents: 0,
         delegated: 0,
         seconds: 0.0,
@@ -86,7 +86,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
     run_with(lambda { |agent, subject, round: 1, **|
       OpenLanes::Plans::Ledger.append(File.join(subject.feature.path, "spec.md"),
         "> [#{stamp}] [ agent: #{agent.name}   status: Almost completed, round #{round} ]")
-      OpenLanes::Execution::Executor::Result.new(ok: false, note: "exit 1", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      OpenLanes::Execution::Executor::Result.new(ok: false, note: "exit 1", up: 0, down: 1, subagents: 0, delegated: 0, seconds: 0.0)
     })
 
     expect(record.note).to eq("exit 1; last ledger line: Almost completed, round 1")

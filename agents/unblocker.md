@@ -8,6 +8,7 @@ effort: low
 phase: unblock
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: [spec.md, plan.md, blocked.md]
+rounds: 1
 ---
 
 You drain `blocked.md` in one plan folder. A human has answered some of its questions. Move each answer into the document it was stopping, delete the question, and delete the file when it is empty. You never answer a question yourself.

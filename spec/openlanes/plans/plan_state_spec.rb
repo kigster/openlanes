@@ -55,6 +55,28 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
     end
   end
 
+  describe "#stage! on dispatch" do
+    before do
+      state.state!(:building)
+      state.stage!(agent: "backend-coder", round: 1, reset: true, status: "Started", from: "building")
+    end
+
+    it "records the visit the round was dispatched in" do
+      expect(state.stages.last.values_at("from", "visit")).to eq(["building", 1])
+    end
+
+    it "keeps the visit when the plan moves before the round settles" do
+      state.state!(:built)
+      state.stage!(agent: "backend-coder", round: 1, status: "Completed", to: "built", from: "building")
+      expect(state.stages.last.values_at("visit", "moves")).to eq([1, 2])
+    end
+
+    it "accepts a failed start in the schema" do
+      state.stage!(agent: "backend-coder", round: 1, status: described_class::FAILED_START)
+      expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+    end
+  end
+
   describe "#sign!" do
     let(:reading) do
       state.sign!(agent: "spec-writer", round: 1, status: "Completed", next_agent: "planner", note: "done")

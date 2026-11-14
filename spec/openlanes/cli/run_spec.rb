@@ -559,7 +559,8 @@ RSpec.describe OpenLanes::CLI::Run, :tree do
       out, err, status = run(dry_run: false, rounds: 1)
 
       expect(out).to include("FAIL")
-      expect(unwrapped(err)).to include("001.00 backend-coder: claude exited 1: 401 API key is invalid")
+      # It spent nothing, so it is a failed start that costs no round (plan 065.00).
+      expect(unwrapped(err)).to include("001.00 backend-coder: failed start: claude exited 1: 401 API key is invalid")
       expect(status).to eq(1)
     end
 

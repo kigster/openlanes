@@ -46,11 +46,14 @@ module OpenLanes
       # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
       #   same way
       # @param chime [#call] `chime:`, asked the same way
+      # @param paused_clis [#call] returns {Engine::CliPause::Entry}s, the CLIs
+      #   the engine has stopped starting agents on (plan 065.00)
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections },
-        lock_ttl: -> { Config.current.refactor_lock_seconds }, chime: -> { Config.current.chime? }, budget: Engine.no_budget)
+        lock_ttl: -> { Config.current.refactor_lock_seconds }, chime: -> { Config.current.chime? }, budget: Engine.no_budget,
+        paused_clis: -> { [] })
         @budget = budget
         @board = board
         @tree = tree
@@ -73,6 +76,7 @@ module OpenLanes
         @max_rejections = max_rejections
         @lock_ttl = lock_ttl
         @chime = chime
+        @paused_clis = paused_clis
       end
 
       # @return [Hash]
@@ -91,6 +95,7 @@ module OpenLanes
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
           bombs:       bombs(subjects),
           global_lock: global_lock,
+          paused_clis: @paused_clis.call.map(&:to_h),
           adapters:    adapters,
           phases:      Phases.wire(@agents),
           autocompact: Adapters::AUTOCOMPACT / 100.0,

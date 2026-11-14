@@ -51,12 +51,25 @@ module OpenLanes
       #   @return [Integer] extra seconds on the clock, 0 for a round alone
       Choice = Data.define(:letter, :label, :seconds)
 
-      # @return [Array<Choice>]
-      CHOICES = [
-        Choice.new(letter: "a", label: "Extend Rounds by 1", seconds: 0),
-        Choice.new(letter: "b", label: "Extend Time by 10 minutes", seconds: 600),
-        Choice.new(letter: "c", label: "Extend Time by 20 minutes", seconds: 1200)
-      ].freeze
+      # The three choices, by what ran out, each label saying what it
+      # grants. Every choice on a rounds request is a round, so its labels
+      # say so; on a time request only a) is a round, and b) and c) move the
+      # running clock. Answers are read by letter alone, so a page showing
+      # the labels an older release wrote is still understood.
+      #
+      # @return [Hash{String => Array<Choice>}]
+      CHOICES = {
+        "rounds" => [
+          Choice.new(letter: "a", label: "One more round", seconds: 0),
+          Choice.new(letter: "b", label: "One more round with 10 extra minutes", seconds: 600),
+          Choice.new(letter: "c", label: "One more round with 20 extra minutes", seconds: 1200)
+        ].freeze,
+        "time"   => [
+          Choice.new(letter: "a", label: "One more round, starting again from its resume note", seconds: 0),
+          Choice.new(letter: "b", label: "10 more minutes on this round", seconds: 600),
+          Choice.new(letter: "c", label: "20 more minutes on this round", seconds: 1200)
+        ].freeze
+      }.freeze
 
       # The choice granted without an answer, by what ran out.
       DEFAULTS = { "time" => "b", "rounds" => "a" }.freeze
@@ -68,10 +81,6 @@ module OpenLanes
         @stay = stay
         @auto = auto
         @now = now
-        # Rounds used are counted in memory, from this run's start; rounds
-        # granted are counted from the same moment, or a restart would hand
-        # back every round ever granted on top of a fresh allowance.
-        @since = now.call
       end
 
       # A running agent whose clock is nearly out: ask once per round, and
@@ -129,10 +138,11 @@ module OpenLanes
       # @return [Hash, nil] the request as settled; nil when it was settled already
       # @raise [ArgumentError] on a letter that is not one of {CHOICES}
       def answer!(path, number, letter, by:, live: nil)
-        choice = CHOICES.find { it.letter == letter.to_s.downcase } or
-          raise ArgumentError, "#{letter} is not one of #{CHOICES.map { "#{it.letter})" }.join(", ")}"
         plan = Plans::PlanState.for(path)
         request = plan.extensions.find { it["number"] == Integer(number) }
+        choices = self.class.choices(request)
+        choice = choices.find { it.letter == letter.to_s.downcase } or
+          raise ArgumentError, "#{letter} is not one of #{choices.map { "#{it.letter})" }.join(", ")}"
         return nil if request.nil? || request.key?("settled_at")
 
         # Only a time request moves a running clock: every choice on a
@@ -150,14 +160,20 @@ module OpenLanes
         settled
       end
 
-      # The rounds a person or this class has added to an agent's own.
+      # The rounds a person or this class has added to an agent's own on
+      # the plan's current visit to +state+. Read from `state.json` alone,
+      # as the rounds used are ({Plans::Rounds}), so a restart neither drops
+      # a grant nor hands one back twice; a grant expires when the plan
+      # moves. One asked before grants named their visit counts until then.
       #
       # @param path [String]
       # @param agent [String]
       # @param state [#to_s]
       # @return [Integer]
       def rounds(path, agent, state)
-        granted(Plans::PlanState.for(path).extensions, agent, state.to_s).count { Time.iso8601(it["settled_at"]) >= @since.floor }
+        plan = Plans::PlanState.for(path)
+        moves = plan.moves
+        granted(plan.extensions, agent, state.to_s).count { !it.key?("moves") || it["moves"] == moves }
       end
 
       # The extra seconds a granted round runs on, handed out once.
@@ -190,6 +206,10 @@ module OpenLanes
       end
 
       class << self
+        # @param request [Hash, nil]
+        # @return [Array<Choice>] the choices a request offers, by what ran out
+        def choices(request) = CHOICES.fetch(request&.fetch("limit", nil), CHOICES.fetch("rounds"))
+
         # The requests a plan still has open for its state, as the page's
         # `Question`s, beside the ones `blocked.md` asks.
         #
@@ -214,7 +234,7 @@ module OpenLanes
             body:     body(subject, request, time),
             agent:    request["agent"],
             owner:    "technical",
-            options:  CHOICES.map do |choice|
+            options:  choices(request).map do |choice|
               { letter:      choice.letter,
                 label:       choice.label,
                 recommended: choice.letter == recommended,

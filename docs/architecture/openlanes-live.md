@@ -20,6 +20,7 @@ classDiagram
   class OpenLanes__Engine["OpenLanes::Engine"]
   <<module>> OpenLanes__Engine
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
+  class OpenLanes__Engine__CliPause["OpenLanes::Engine::CliPause"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
   class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
   <<module>> OpenLanes__Engine__QualityQuestion
@@ -269,6 +270,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
+  OpenLanes__Live__Session ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Live__Session ..> OpenLanes__Live : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses

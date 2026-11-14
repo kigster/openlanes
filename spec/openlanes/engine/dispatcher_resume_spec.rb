@@ -27,7 +27,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       OpenLanes::Execution::Executor::Result.new(ok: false,
         note: "exited 1",
         up: 0,
-        down: 0,
+        down: 1,
         subagents: 0,
         delegated: 0,
         seconds: 0.0)

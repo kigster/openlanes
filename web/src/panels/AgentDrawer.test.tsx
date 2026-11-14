@@ -65,6 +65,15 @@ describe("AgentDrawer", () => {
     expect(screen.queryByRole("button", { name: "Stop after this step" })).toBeNull();
   });
 
+  it("shows the round from the snapshot, of the budget this visit allows", () => {
+    const plan = planAt("005.00");
+    const { unmount } = drawer(plan, { ...carOf(plan, "staff-reviewer"), round: 3, rounds: 4 });
+    expect(screen.getByText("Round 3 of 4.")).toBeInTheDocument();
+    unmount();
+    drawer(plan, { ...carOf(plan, "staff-reviewer"), round: 2, rounds: 0 });
+    expect(screen.getByText("Round 2.")).toBeInTheDocument();
+  });
+
   it("says when the adapter does not report its context", () => {
     const plan = planAt("005.00");
     const car = { ...carOf(plan, "staff-reviewer"), context: null };
@@ -256,16 +265,16 @@ describe("AgentDrawer", () => {
       id: "001.00/X2", number: 2, kind: "extension", heading: "backend-coder is running out of time",
       body: "Round 1 on Building has under 5 minutes left on its clock.",
       options: [
-        { letter: "a", label: "Extend Rounds by 1", recommended: false, answer: "a) Extend Rounds by 1" },
-        { letter: "b", label: "Extend Time by 10 minutes", recommended: true, answer: "b) Extend Time by 10 minutes" },
+        { letter: "a", label: "One more round", recommended: false, answer: "a) One more round" },
+        { letter: "b", label: "One more round with 10 extra minutes", recommended: true, answer: "b) One more round with 10 extra minutes" },
       ],
     })];
     drawer(plan, { ...carOf(plan, "backend-coder"), state: "running" }, onCommand);
     expect(screen.getByText("backend-coder is running out of time")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Type something instead" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: /Extend Time by 10 minutes/ }));
-    await waitFor(() => expect(sent[0].payload).toEqual({ question: "X2", text: "b) Extend Time by 10 minutes" }));
+    await user.click(screen.getByRole("button", { name: /One more round with 10 extra minutes/ }));
+    await waitFor(() => expect(sent[0].payload).toEqual({ question: "X2", text: "b) One more round with 10 extra minutes" }));
   });
 
   it("keeps the log closed on open, with its line count, and the composer and Action menu in view", async () => {

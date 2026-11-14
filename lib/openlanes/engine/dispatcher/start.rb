@@ -23,7 +23,7 @@ module OpenLanes
         #   first, nil when an agent outside openlanes holds the plan
         def start(agent, subject)
           ordinal = subject.feature.ordinal.to_s
-          round = history[[ordinal, agent.name]].count { |h| h[:state] == subject.status.key } + 1
+          round = next_round(subject, agent)
           from = subject.status.key
           # Before the rename, so a plan somebody outside openlanes holds is
           # left exactly as they had it (W31).

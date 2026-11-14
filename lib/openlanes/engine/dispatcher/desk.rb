@@ -32,12 +32,15 @@ module OpenLanes
           @stay = stay
           @feed = EventJournal::Feed.new(journal)
           @extensions = extensions || Extensions.new(stay:)
+          @cli_pause = runner.respond_to?(:cli_pause) ? runner.cli_pause : CliPause.new
           @idle = false
           @wake = false
           @running = []
           @recent = []
           @attempts = []
           @history = Hash.new { |h, k| h[k] = [] }
+          @seeded = Set.new
+          @floors = Hash.new(0)
           @finished_plans = []
           @asked_how_to_test = Set.new
           @preferred_agents = {}
@@ -71,6 +74,9 @@ module OpenLanes
 
         # @return [Integer, nil] `--rounds`
         attr_reader :rounds_cap
+
+        # @return [OpenLanes::Engine::CliPause] the CLIs no agent is started on
+        attr_reader :cli_pause
 
         # @return [#now, #sleep]
         attr_reader :clock
@@ -338,6 +344,75 @@ module OpenLanes
           return rounds_for(agent) if runner.dry_run?
 
           rounds_for(agent) + extensions.rounds(subject.feature.path, agent.name, subject.status.key)
+        end
+
+        # The agent's rounds on the plan's current state. The first time this
+        # process asks, the history is seeded from `state.json` ({Plans::Rounds}),
+        # so a restarted engine carries on at the round the last one reached
+        # instead of telling the agent round 1 again and then finding no
+        # closing ledger line for the round it counted. Handbacks made later
+        # in the run (resume, requeue) still edit the in-memory history.
+        #
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param agent [OpenLanes::Agents::Agent]
+        # @return [Array<Hash>] `{state:, status:, round:}`, oldest first
+        def past_rounds(subject, agent)
+          key = [subject.feature.ordinal.to_s, agent.name]
+          state = subject.status.key
+          mutex.synchronize do
+            seed(history[key], subject, agent, state) if @seeded.add?([*key, state])
+            history[key].select { |h| h[:state] == state }
+          end
+        end
+
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param agent [OpenLanes::Agents::Agent]
+        # @return [Integer] the round to tell the agent: one past what this
+        #   process counted, and never below what `state.json` had spent or
+        #   signed when this process first looked. A round handed back later in
+        #   the run keeps its number, since it was never spent.
+        def next_round(subject, agent)
+          counted = past_rounds(subject, agent).size + 1
+          [counted, @floors[[subject.feature.ordinal.to_s, agent.name, subject.status.key]]].max
+        end
+
+        # How many failed starts in a row stop an agent on a visit. Each one
+        # cost nothing, so without a cap a CLI that cannot log in would be
+        # started again on every tick.
+        FAILED_START_CAP = 3
+
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param agent [OpenLanes::Agents::Agent]
+        # @return [Boolean] whether the agent's last {FAILED_START_CAP} rounds
+        #   on this visit all failed to start; its rounds are left untouched
+        def failed_starts_capped?(subject, agent)
+          rounds, moves = ledger_for(subject)
+          return false unless rounds
+
+          rounds.failed_starts(agent.name, subject.status.key, moves:) >= FAILED_START_CAP
+        end
+
+        # @return [Array(Plans::Rounds, Integer), nil] the plan's rounds and its
+        #   moves count; nil on a dry run or for a plan folder not on disk
+        def ledger_for(subject)
+          return nil if runner.dry_run? || !File.directory?(subject.feature.path.to_s)
+
+          state = Plans::PlanState.for(subject.feature.path)
+          [Plans::Rounds.from(state), state.moves]
+        end
+
+        # @return [void]
+        def seed(entries, subject, agent, state)
+          rounds, moves = ledger_for(subject)
+          return unless rounds
+
+          @floors[[subject.feature.ordinal.to_s, agent.name, state]] = rounds.next(agent.name, state, moves:)
+          rounds.visit(agent.name, state, moves:).each do |stage|
+            round = stage["round"].to_i
+            next if entries.any? { |h| h[:state] == state && h[:round] == round }
+
+            entries << { state:, status: stage["status"].to_s, round: }
+          end
         end
 
         # @param agent [OpenLanes::Agents::Agent]

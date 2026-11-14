@@ -12,6 +12,7 @@ phase: completion
 starts: [research, planning, building]
 allowed_tools: [Read, Grep, Glob, Bash, Edit, Write, Skill]
 writes: [plan.md]
+rounds: 1
 ---
 
 The plan is 🏁 Completed: every one of its open pull requests is labelled `ready-to-merge`. For each of them you decide whether it can merge and deploy with nobody watching. CI is green, end-to-end tests passed, and reviewers signed off. Your job is not to find bugs. Your job is to answer two questions: if this change is wrong, how bad is it and how fast can we undo it? And how much should we trust the evidence that it is right?

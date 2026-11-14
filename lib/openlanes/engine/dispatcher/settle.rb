@@ -71,6 +71,23 @@ module OpenLanes
         private
 
         def_delegators :@rename, :complete, :park, :assessed, :apply_hold
+
+        # @return [Boolean] whether the CLI failed before the agent spent
+        #   anything; a fake executor's result that cannot say is not one
+        def failed_start?(result) = result.respond_to?(:failed_start?) && result.failed_start?
+
+        # A start that spent nothing costs the agent no round (plan 065.00):
+        # the round is handed back, and its stage is written as a failed
+        # start so the log and `state.json` still show it happened.
+        #
+        # @return [OpenLanes::Engine::Runner::Attempt]
+        def failed_start(job, base, result)
+          forget_round(job)
+          # A CLI that cannot log in fails every agent started on it the same
+          # way, so it is held until a probe says it is signed in again.
+          cli_pause.pause(adapter_for(job).name, result.auth_reason) if result.auth_failure?
+          base.with(ok: false, status: Plans::PlanState::FAILED_START, note: "failed start: #{result.note}")
+        end
         def_delegators :@poll, :record_journal
 
         # @param job [OpenLanes::Engine::Dispatcher::Job]
@@ -103,6 +120,8 @@ module OpenLanes
                       assessed(job, base, nil)
                     elsif result.killed || (result.ok && (entry.nil? || entry.status == "Started"))
                       verify_and_sign(job, base, reason_for(result))
+                    elsif failed_start?(result)
+                      failed_start(job, base, result)
                     elsif !result.ok
                       fresh(task)&.then { harness_resume(it, agent, task.round, result.note, phrase: job.message) }
                       remember(ordinal, agent.name, job.state, "Interrupted", task.round)

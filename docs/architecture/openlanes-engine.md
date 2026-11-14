@@ -6,6 +6,8 @@
 classDiagram
   class OpenLanes["OpenLanes"]
   <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__Claude__Catalogue["OpenLanes::Adapters::Claude::Catalogue"]
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
@@ -38,6 +40,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration__Asker["Arbitration::Asker"]
   class OpenLanes__Engine__Board["Board"]
   class OpenLanes__Engine__Budget["Budget"]
+  class OpenLanes__Engine__CliPause["CliPause"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Curating["Curating"]
@@ -185,6 +188,7 @@ classDiagram
   class OpenLanes__Plans__PullRequestMachine["OpenLanes::Plans::PullRequestMachine"]
   class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
+  class OpenLanes__Plans__Rounds["OpenLanes::Plans::Rounds"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
@@ -245,6 +249,7 @@ classDiagram
   OpenLanes__Engine__Budget ..> OpenLanes__Events : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Project : uses
+  OpenLanes__Engine__CliPause ..> OpenLanes__Adapters : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
@@ -300,6 +305,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Agents__Profile : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__EventJournal__Feed : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Finishes : uses
@@ -315,6 +321,8 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Lanes ..> OpenLanes__Engine__Dispatcher : uses
@@ -509,6 +517,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__SnapshotReads : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Container : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses
