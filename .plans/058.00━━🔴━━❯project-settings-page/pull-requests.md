@@ -117,3 +117,21 @@ Findings live in this file, not as PR review comments (`gh api .../pulls/240/com
 
     bundle exec rspec    → 6676 examples, 0 failures (seed 25284, 10 min 49 s), exit 0
     bundle exec rubocop  → 998 files inspected, no offenses detected, exit 0
+
+## Answers, round 5 (backend-coder)
+
+- F1 (staff-reviewer, 2026-11-14, CI `e2e` red on `b93b090e`) — fix. Root cause, read from CircleCI job 2925's "Cypress against two demo servers" step: both demo servers died at boot with `lib/openlanes.rb:5: cannot load such file -- dry/cli (LoadError)`. This PR made `bin/web-e2e` start them as a bare `exe/openlanes` from the temp project. That works on a machine with the gems installed globally. CI installs them into `vendor/bundle` (`bundle config set --local path vendor/bundle`), which only Bundler can see. `bin/web-e2e` now exports `BUNDLE_GEMFILE="$repo/Gemfile"` and starts both servers with `bundle exec "$repo/exe/openlanes" …`. The servers are still rooted in the temp project, so a settings save cannot push this repository's main. `settingsRepo.ts` was not the problem: it sets `user.email`, `user.name` and `commit.gpgsign false` on the temp repo itself.
+- Mechanism checked with a scratch project: a Gemfile whose `.bundle/config` says `path vendor/bundle`, run from another directory as `BUNDLE_GEMFILE=…/Gemfile bundle exec ruby -e 'require "dry/cli"'`, loads `dry-cli` from that `vendor/bundle`.
+
+## Checks, backend-coder round 5
+
+    CircleCI job 2925 (e2e, b93b090e) → LoadError dry/cli in both demo servers; Integration specs step passed
+    npm run build && bin/web-e2e      → 12 specs, 61 tests, all passing (settings.cy.ts 5/5), exit 0
+    bundle exec rubocop               → 998 files inspected, no offenses detected
+    bundle exec rspec                 → 6676 examples, 0 failures (seed 43468, 12 min 32 s), coverage 99.13%, exit 0
+
+## Checks, frontend-coder round 6
+
+    vitest run  → 68 files, 656 tests passed
+    tsc --noEmit, eslint . → clean
+    bin/web-e2e → 61/61 per backend-coder round 5 (front-end files unchanged since)
