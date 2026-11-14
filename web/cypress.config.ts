@@ -2,6 +2,7 @@
 // publishes the fixture board and answers commands, so the specs drive the real page, server and Redis with no agents.
 import { defineConfig } from "cypress";
 import { closePeers, peerTasks } from "./cypress/peer";
+import { settingsRepoTasks } from "./cypress/support/settingsRepo";
 
 export default defineConfig({
   e2e: {
@@ -25,6 +26,7 @@ export default defineConfig({
           return null;
         },
         ...peerTasks,
+        ...settingsRepoTasks,
       });
     },
   },
