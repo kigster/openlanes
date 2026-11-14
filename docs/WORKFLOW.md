@@ -20,7 +20,7 @@ Every project keeps its specs and plans in a `.plans/` directory at its root. Th
 
 Each medium-to-large feature gets one folder, and the folder's **name includes its state**: the number identifies it forever, the emoji says what phase it is in, and the slug says what it is, acting as a kebab-case title of the feature.
 
-A feature takes one of three paths, chosen by `starts:` in its `spec.md` (`research`, `planning`, `building`; the default is the project's `.openlanes.yml`).
+A feature takes one of three paths, chosen by `starts:` in its `spec.md` (`research`, `planning`, `building`; the default is the project's `.openlanes/config.yml`).
 
 | Starts       | Path                                                                                                                                                                                               | The harness writes   |
 | :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------- |
@@ -664,7 +664,7 @@ stateDiagram-v2
 
 `contract.md` is the one file no state requires. `backend-coder` writes it before it writes code, and `frontend-coder` builds from it a round later: the interfaces the back end landed, their shapes and their errors, which files each half owns, which units may run concurrently, and the one test that proves the halves are joined rather than merely both present. No state requires it because a plan with no back-end work never needs one. When `plan.md` says the plan has an HTTP surface, `openapi.yaml` sits beside it, linked from it, and `openlanes api docs` lists every one in the project.
 
-The units themselves live in `plan.md`, under `## Backend` and `## Frontend`. `frontend-coder` is started only when `## Frontend` holds a unit heading.
+The units themselves live in `plan.md`, under `## Backend` and `## Frontend`. `frontend-coder` is started only when `## Frontend` holds a unit heading. Each unit carries a `**Size:**` of `small`, `medium`, `large`: the plan's largest picks the builders' model and effort through `.openlanes/config.yml` `sizing:` (small sonnet/medium, medium opus/medium, large opus/high unless it says otherwise).
 
 Nothing else belongs there. A folder holding notes, diagrams or scratch files is a folder nobody can audit at a glance.
 
@@ -698,20 +698,30 @@ Most unmatched pull requests. The test is whether **somebody would need to read 
 
 ## Review labels
 
-A pull request carries one of these at a time, set by the engine once every reviewer has reported, or by a person through `openlanes review <pr> <label>`. A new label replaces the previous one, except that `review-vulnerability` sits beside `review-rejected`. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
+A pull request carries one of these at a time, set by the engine once every reviewer has reported, or by a person through `openlanes review <pr> <label>`. A new label replaces the previous one, except that the reviewers' passing verdict stays beside the labels that follow it. No passing verdict is given while CI is red. The engine creates or recolours every one of them on the repository when a run starts.
 
-| Label                  | Colour   | Passing | Meaning                                                                        |
-| ---------------------- | -------- | ------- | ------------------------------------------------------------------------------ |
-| `ready-for-review`     | `c2e0c6` | no      | backend-coder and frontend-coder are done; the PR waits for a free review slot |
-| `review-in-progress`   | `FFBE20` | no      | the reviewers have started                                                     |
-| `review-rejected`      | `F90000` | no      | a reviewer rejected it                                                         |
-| `review-vulnerability` | `FF0050` | no      | security-reviewer found an exploitable hole; sits beside review-rejected       |
-| `review-addressed`     | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review       |
-| `review-passed`        | `E8E890` | yes     | no reviewer rejected it, but most did not call it great                        |
-| `review-approved`      | `109a10` | yes     | no reviewer rejected it, and most called it great                              |
-| `ready-to-merge`       | `5319e7` | yes     | verifier verified it and its E2E tests pass                                    |
-| `auto-merged`          | `953384` | yes     | deploy-assessor judged it safe and the engine merged it                        |
-| `merge-manually`       | `0e8a16` | yes     | deploy-assessor, or merge.by: human, left it for a person to merge             |
+| Label                | Colour   | Passing | Meaning                                                                                            |
+| -------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `ready-for-review`   | `c2e0c6` | no      | backend-coder and frontend-coder are done; the PR waits for a free review slot                     |
+| `review-in-progress` | `FFBE20` | no      | the reviewers have started                                                                         |
+| `review-rejected`    | `F90000` | no      | a reviewer rejected it                                                                             |
+| `review-addressed`   | `A2FF02` | no      | fixes were pushed after review-rejected; the PR waits for another review                           |
+| `review-passed`      | `E8E890` | yes     | no reviewer rejected it, but most did not call it great                                            |
+| `review-approved`    | `109a10` | yes     | no reviewer rejected it, and most called it great                                                  |
+| `ready-to-merge`     | `5319e7` | yes     | verifier verified it and its E2E tests pass                                                        |
+| `auto-merged`        | `953384` | yes     | green, approved, low risk and cleared by security, so the engine merged it                         |
+| `merge-manually`     | `0e8a16` | yes     | not approved, low risk and cleared by security all at once, or merge.by: human; a person merges it |
+
+Two assessments sit beside the verdict, one label each. The engine takes `review-in-progress` off once a group of reviewers has given its verdict, and merges a pull request itself only when CI is green and it carries `review-approved`, `risk-low`, `opsec-approved`, under `merge.by: auto`. Any other combination waits for a person.
+
+| Label                      | Colour   | Meaning                                                             |
+| -------------------------- | -------- | ------------------------------------------------------------------- |
+| `risk-low`                 | `0E8A16` | deploy-assessor: deploying it is unlikely to break production       |
+| `risk-medium`              | `FBCA04` | deploy-assessor: deploying it could break production                |
+| `risk-high`                | `D93F0B` | deploy-assessor: deploying it is likely to break production         |
+| `opsec-approved`           | `1D76DB` | security-reviewer found nothing                                     |
+| `opsec-concerned-approved` | `C5DEF5` | security-reviewer let it through with concerns a person should read |
+| `opsec-rejected`           | `FF0050` | security-reviewer rejected it                                       |
 
 ## Rounds
 

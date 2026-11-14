@@ -279,14 +279,14 @@ it("survives a private window, where storage throws", async () => {
   vi.restoreAllMocks();
 });
 
-it("hints at /stop, /restart and /concurrency while the box starts with a slash, and not otherwise", async () => {
+it("hints at every slash command while the box starts with a slash, and not otherwise", async () => {
   const user = userEvent.setup();
   setup();
   const box = await screen.findByRole("textbox", { name: "Message copilot" });
   expect(screen.queryByText(/Run commands/)).toBeNull();
   await user.type(box, "/");
   const hint = screen.getByText(/Run commands/);
-  for (const command of ["/stop", "/restart", "/concurrency"]) expect(within(hint).getByText(command)).toBeInTheDocument();
+  for (const command of ["/stop", "/restart", "/concurrency", "/restart-web", "/status", "/stats"]) expect(within(hint).getByText(command)).toBeInTheDocument();
   expect(box).toHaveAccessibleDescription(/Run commands/);
   await user.clear(box);
   await user.type(box, "why /stop");

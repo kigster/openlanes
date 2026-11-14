@@ -14,7 +14,7 @@ module OpenLanes
         desc:    "Port to listen on"
       listen_options
       option :redis_url,
-        desc: "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes.yml redis_url, else $REDIS_URL, " \
+        desc: "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes/config.yml redis_url, else $REDIS_URL, " \
               "else #{Live::DEFAULT_URL})"
       option :open,
         type:    :boolean,
@@ -67,8 +67,10 @@ module OpenLanes
           node:,
           demo:,
           copilot:,
+          interview: demo ? OpenLanes::Web::Demo::Interview : interview_for(root:, tree:),
           listen:,
           credentials:)
+        restart_note(root, stores:, keys:) unless demo
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
@@ -78,6 +80,18 @@ module OpenLanes
       end
 
       private
+
+      # A control room that `/restart-web` started tells the person how the
+      # rebuild of its page went (plan 069.00).
+      #
+      # @param root [String]
+      # @param stores [OpenLanes::Web::Stores]
+      # @param keys [OpenLanes::Live::Keys]
+      # @return [void]
+      def restart_note(root, stores:, keys:)
+        take = -> { Supervision.take_restart_note(root) }
+        Live::Copilot::RestartNote.new(take:, copilot: Live.copilot(store: stores.current, keys:)).call
+      end
 
       # Logs as `web`, to the file the engine named in this process's
       # environment when the engine spawned it, else to the same default the
@@ -158,6 +172,11 @@ module OpenLanes
       def copilot_for(root:, tree:, stores:, keys:)
         Live::Copilot::Operator.new(root:, plans_dir: tree.dir, stores:, keys:)
       end
+
+      # The unblocker, answering in the interview on an open question (plan 068).
+      #
+      # @return [OpenLanes::Live::Interview::Operator]
+      def interview_for(root:, tree:) = Live::Interview::Operator.new(root:, plans_dir: tree.dir)
 
       # Listen until INT or TERM.
       #

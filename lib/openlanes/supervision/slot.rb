@@ -31,11 +31,20 @@ module OpenLanes
       # @return [Integer]
       attr_accessor :restarts
 
+      # @return [Object, nil] whatever has stopped it on purpose and will
+      #   start it again, such as a {WebRestart}; while set, its exit is no
+      #   crash and the supervisor waits for it. Any later restart kind sets
+      #   the same field, so the supervisor checks one thing (F205).
+      attr_accessor :held
+
       # @return [String]
       def role = program.role
 
       # @return [Boolean]
       def running? = !pid.nil?
+
+      # @return [Boolean] whether the supervisor still has this one to mind
+      def busy? = running? || !due.nil? || !held.nil?
 
       # @param now [Float]
       # @return [Boolean] whether a restart it waits for has come round

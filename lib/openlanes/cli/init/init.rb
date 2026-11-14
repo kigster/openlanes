@@ -5,13 +5,13 @@ require "tty-prompt"
 
 module OpenLanes
   module CLI
-    # `openlanes init` — make a directory a project: `.openlanes.yml` and `.plans/`.
+    # `openlanes init` — make a directory a project: `.openlanes/config.yml` and `.plans/`.
     #
     # It decides its own root rather than searching for one, because it is
     # the command that creates what the search looks for.
     class Init < Base
       standalone!
-      desc "Write .openlanes.yml at the project root and create the plans directory"
+      desc "Write .openlanes/config.yml at the project root and create the plans directory"
 
       option :project, desc: "Heading for INDEX.md and similar (default: the root's directory name)"
       option :starts,
@@ -42,7 +42,7 @@ module OpenLanes
       option :overwrite,
         type:    :boolean,
         default: false,
-        desc:    "Replace an existing .openlanes.yml, which is otherwise kept"
+        desc:    "Replace an existing .openlanes/config.yml, which is otherwise kept"
       option :setup,
         type:    :boolean,
         default: true,
@@ -63,6 +63,7 @@ module OpenLanes
         quiet?(options)
         prepare(options)
         root = Project.init_root
+        refuse_legacy(root)
         path = File.join(root, Config::FILE)
         plans = File.expand_path(options.fetch(:dir, OpenLanes::PLANS_DIR), root)
         reconfigure = options[:reconfigure] && File.file?(path)
@@ -175,7 +176,7 @@ module OpenLanes
         refuse("--jobs must be a whole number above zero, not #{value.inspect}.", 64)
       end
 
-      # `.openlanes.yml`, `docs/decisions/stack.md` when the stack is known,
+      # `.openlanes/config.yml`, `docs/decisions/stack.md` when the stack is known,
       # and a CI file for each provider openlanes scaffolds and the folder does
       # not already run. One list, so the diff, the confirm prompt and the
       # write cannot disagree about what is written.
@@ -198,6 +199,18 @@ module OpenLanes
         (decisions.target.ci & (OpenLanes::Setup::CiScaffold.providers - running)).map do |provider|
           OpenLanes::Setup::CiScaffold.new(root, provider:, stack: decisions.stack)
         end
+      end
+
+      # A project still on the old file is moved, not initialised beside it:
+      # two files would be refused by every command that followed.
+      #
+      # @param root [String]
+      # @return [void]
+      def refuse_legacy(root)
+        legacy = File.join(root, Project::LEGACY_FILE)
+        return unless File.file?(legacy)
+
+        refuse("#{legacy} exists; run `#{Project::MOVE_COMMAND}` to move it to #{Config::FILE} first", 65)
       end
 
       # @return [void]
@@ -260,7 +273,7 @@ module OpenLanes
         lines
       end
 
-      # Names every file the write would touch, not only `.openlanes.yml`.
+      # Names every file the write would touch, not only `.openlanes/config.yml`.
       #
       # @param options [Hash]
       # @return [Boolean]

@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Apps
-    # The `app:` block of `.openlanes.yml`: what kind of app a project builds
+    # The `app:` block of `.openlanes/config.yml`: what kind of app a project builds
     # and the processes that run it, in the order they start.
     #
     # Written by backend-coder on a plan's first build (M12) and only ever read here.
@@ -31,7 +31,7 @@ module OpenLanes
       # @return [Array<OpenLanes::Apps::ProcessSpec>]
       def backend = processes.reject(&:preview?)
 
-      # @return [Hash] as `.openlanes.yml` spells it
+      # @return [Hash] as `.openlanes/config.yml` spells it
       def to_h = { "kind" => kind, "processes" => processes.map(&:to_h) }.compact
     end
 

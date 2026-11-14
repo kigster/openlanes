@@ -4,7 +4,7 @@ require "date"
 require "yaml"
 
 module OpenLanes
-  # A project's `.openlanes.yml`, at its root:
+  # A project's `.openlanes/config.yml`, at its root:
   #
   #   project: Equilibris App   # heading for INDEX.md; default: the root's name
   #   starts: research          # default for `openlanes create`: one of Spec::STARTS
@@ -101,6 +101,9 @@ module OpenLanes
   #   @return [Array<String>] `review.adapters`: the coding agents
   #     {Agents::Dealing} deals the reviewers across, main one first; empty
   #     when unset, and then every reviewer runs on {#adapter}
+  # @!attribute [r] sizing
+  #   @return [OpenLanes::Agents::Sizing] `sizing:`: the builder profile for
+  #     a plan whose largest unit is small, medium or large
   # @!attribute [r] merge_by
   #   @return [Symbol, nil] `merge.by`, one of {MERGERS}; nil reads as {#merger}'s default
   # @!attribute [r] merge_max_rejections
@@ -169,10 +172,11 @@ module OpenLanes
     :refactor_threshold,
     :refactor_lock_hours,
     :chime,
-    :budget_plan_usd) do
+    :budget_plan_usd,
+    :sizing) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -282,6 +286,7 @@ module OpenLanes
       settings["refactor"] = refactor unless refactor.empty?
       settings["budget"] = { "plan_usd" => budget_plan_usd } if budget_plan_usd
       settings["chime"] = chime unless chime.nil?
+      settings["sizing"] = sizing.to_settings unless sizing.to_settings.empty?
       settings.compact
     end
 
@@ -367,7 +372,7 @@ module OpenLanes
       # @return [OpenLanes::Config] empty when the root holds no file
       # @raise [OpenLanes::Error] when the file exists and cannot be used
       def load(root)
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
         return new unless File.file?(path)
 
         parse(File.read(path, encoding: "UTF-8"), path:)
@@ -380,7 +385,7 @@ module OpenLanes
       # @return [OpenLanes::Config]
       def current
         root = Project.root || Dir.pwd
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
         key = [path, File.file?(path) && File.mtime(path)]
         return @current.last if @current&.first == key
 
@@ -397,7 +402,8 @@ module OpenLanes
       # @param value [Boolean]
       # @return [String] the file's path
       def write_flag(root, key, value)
-        path = File.join(root, FILE)
+        path = Project.config_path(root)
+        FileUtils.mkdir_p(File.dirname(path))
         text = File.file?(path) ? File.read(path, encoding: "UTF-8") : ""
         line = "#{key}: #{value}"
         if text.match?(/^#{Regexp.escape(key)}:.*$/)
@@ -418,6 +424,7 @@ module OpenLanes
         fail_with(path, "expected a mapping of settings at the top") unless data.is_a?(Hash)
 
         settings = unset_dropped(data.transform_keys(&:to_s))
+        Secrets.refuse!(settings, path)
         unknown = settings.keys - KEYS
         unless unknown.empty?
           fail_with(path,
@@ -449,7 +456,8 @@ module OpenLanes
           **events(settings["events"], path),
           **refactor(settings["refactor"], path),
           chime:     chime(settings, path),
-          **budget(settings["budget"], path))
+          **budget(settings["budget"], path),
+          sizing:    Agents::Sizing.parse(settings["sizing"], path:))
         conflicts!(config, path)
         schema!(config.to_settings.except("commands"), path)
         config

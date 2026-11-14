@@ -699,7 +699,7 @@ module OpenLanes
             `U3` and "the earlier answer" mean nothing on the card, and one
             label often means two things in one plan. Say what it is, in
             words, every time: not "B1 is applied", but "The suite now
-            ignores this checkout's `.openlanes.yml`, as you decided earlier".
+            ignores this checkout's `.openlanes/config.yml`, as you decided earlier".
           - Each option says what happens if it is picked.
 
           A yes/no question is `a) yes` and `b) no`. Do not add an option for

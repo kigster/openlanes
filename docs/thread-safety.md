@@ -35,7 +35,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/apps/runner.rb` | `@stopping` | `Apps::Runner` | runner loop, signal trap | `Concurrent::AtomicBoolean` | guarded |
 | `lib/openlanes/apps/supervisor.rb` | `@statuses`, `@tails` | `Apps::Supervisor` | reader, waiter, caller | `@mutex` on every read and write | guarded |
 | `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot | `Engine::AgentLocks` | tick, agent jobs | `@mutex` | guarded |
-| `lib/openlanes/engine/dispatcher/desk.rb` | `@running`, `@history` | `Engine::Dispatcher::Desk` | tick, agent jobs, PR watch, unblock | `@mutex` around every cross-thread read and write | guarded |
+| `lib/openlanes/engine/dispatcher/desk/registers.rb` | `running`, `history` | `Engine::Dispatcher::Desk::Registers`, read through `Desk` and `Desk::Rounds` | tick, agent jobs, PR watch, unblock | `mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
 | `lib/openlanes/engine/dispatcher/desk.rb` | `@clock` | `Engine::Dispatcher::Desk` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |
 | `lib/openlanes/engine/event_journal.rb` | `@seq` and the journal file | `Engine::EventJournal` | tick, agent jobs | `@lock` around number, write, flush and fsync, so lines never interleave or repeat a `seq` | guarded |

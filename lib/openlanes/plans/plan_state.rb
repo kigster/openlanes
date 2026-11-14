@@ -146,7 +146,7 @@ module OpenLanes
       def state = read["state"]
 
       # Until when a 💣 on this plan does not halt the run: "Resume anyway
-      # for 24 h" from the control room. Kept here, not in `.openlanes.yml`,
+      # for 24 h" from the control room. Kept here, not in `.openlanes/config.yml`,
       # so it lapses on its own and nobody has to remember to take it out.
       #
       # @return [Time, nil]
@@ -673,7 +673,7 @@ module OpenLanes
         record["moves"] == moves ? record : nil
       end
 
-      # @param verdicts [Hash{Integer, String => String}] number => `auto` or `manual`
+      # @param verdicts [Hash{Integer, String => String}] number => its risk, one of {Engine::Merging::RISKS}, or `unassessed`
       # @param at [Time]
       # @return [Hash] the record kept
       def assess!(verdicts, at: Time.now)

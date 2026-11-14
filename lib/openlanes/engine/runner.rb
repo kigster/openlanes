@@ -78,7 +78,7 @@ module OpenLanes
       # @param upkeep [OpenLanes::Engine::Upkeep::Keeper, nil] relabels
       #   fixed pull requests and sweeps waiting ones for conflicts with
       #   `main` (U1 to U4); nil when the run publishes nothing
-      # @param quality_gate [#call, nil] true while `.openlanes.yml` has
+      # @param quality_gate [#call, nil] true while `.openlanes/config.yml` has
       #   no `desired_codebase_quality:`, which holds every new agent back
       #   (plan 035); nil runs ungated
       # @param stop_at [OpenLanes::Plans::Status, nil] `run --until`: a plan

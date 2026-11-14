@@ -11,7 +11,7 @@ RSpec.shared_context "with a dispatcher desk" do
   let(:rounds) { nil }
   let(:desk) do
     OpenLanes::Engine::Dispatcher::Desk
-      .new(runner:, state: nil, rounds:, clock: OpenLanes::Clock::System, stay:, journal: nil, extensions: nil)
+      .new(OpenLanes::Engine::Dispatcher::Desk::Setup.new(runner:, rounds:, stay:), clock: OpenLanes::Clock::System)
       .tap { it.unblocking = [] }
   end
   let(:plan) { tree.reload.subjects.find { it.feature.ordinal.to_s == "001.00" } }
