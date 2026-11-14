@@ -585,6 +585,10 @@ module OpenLanes
       # settled: a second answer, from another page or a replayed command,
       # changes nothing.
       #
+      # A request asked before requests named their visit is stamped with the
+      # visit it is answered in, so its grant expires when the plan moves like
+      # any other, instead of counting on every return to the state.
+      #
       # @param number [Integer]
       # @param fields [Hash{String => Object}] `answer`, `by`, `grant`, `seconds`, `closed`
       # @param at [Time]
@@ -596,6 +600,7 @@ module OpenLanes
           found = (data["extensions"] || []).find { it["number"] == Integer(number) } or next
           next if found.key?("settled_at")
 
+          found["moves"] = data["moves"].to_i unless found.key?("moves")
           settled = found.merge!(fields.transform_keys(&:to_s).compact, "settled_at" => at.iso8601)
         end
         settled

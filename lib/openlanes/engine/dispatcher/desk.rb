@@ -377,19 +377,45 @@ module OpenLanes
         end
 
         # How many failed starts in a row stop an agent on a visit. Each one
-        # cost nothing, so without a cap a CLI that cannot log in would be
-        # started again on every tick.
+        # cost nothing, so without a cap a CLI that fails in two seconds would
+        # be started again on every tick.
         FAILED_START_CAP = 3
+
+        # Seconds before an agent whose last start failed is tried again,
+        # doubled for each failed start in the run: a network blip of ten
+        # seconds once spent all three tries inside eight.
+        FAILED_START_BACKOFF = 30
+
+        # Why an agent is not started on a plan, when its starts keep failing:
+        # `:capped` once {FAILED_START_CAP} in a row failed, until a person
+        # grants it a round; `:backing_off` while it waits for its next try.
+        # A failed login is not counted, since {CliPause} holds the whole CLI
+        # for it, and a grant settled after the run of failures starts the
+        # count again, so a restart lifts nothing a person did not.
+        #
+        # @param subject [OpenLanes::Plans::Subject]
+        # @param agent [OpenLanes::Agents::Agent]
+        # @return [Symbol, nil] nil when it may start
+        def failed_start_hold(subject, agent)
+          streak, last = failed_streak(subject, agent)
+          return nil if streak.to_i.zero?
+          return :capped if streak >= FAILED_START_CAP
+
+          :backing_off if last && clock.now < last + (FAILED_START_BACKOFF * (2**(streak - 1)))
+        end
 
         # @param subject [OpenLanes::Plans::Subject]
         # @param agent [OpenLanes::Agents::Agent]
-        # @return [Boolean] whether the agent's last {FAILED_START_CAP} rounds
-        #   on this visit all failed to start; its rounds are left untouched
-        def failed_starts_capped?(subject, agent)
+        # @return [Array(Integer, Time), nil] failed starts in a row that
+        #   count, and when the latest ended; nil when there is no ledger
+        def failed_streak(subject, agent)
           rounds, moves = ledger_for(subject)
-          return false unless rounds
+          return nil unless rounds
 
-          rounds.failed_starts(agent.name, subject.status.key, moves:) >= FAILED_START_CAP
+          state = subject.status.key
+          count = Plans::Rounds::Count.new(since: extensions.lifted_at(subject.feature.path, agent.name, state),
+            except: Execution::Executor::AUTH_FAILURE)
+          [rounds.failed_starts(agent.name, state, moves:, count:), rounds.last_failed_start(agent.name, state, moves:, count:)]
         end
 
         # @return [Array(Plans::Rounds, Integer), nil] the plan's rounds and its

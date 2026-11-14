@@ -154,9 +154,9 @@ RSpec.describe "resuming an agent's session across rounds", :tree do
 
     it "starts every round fresh, and says why" do
       aggregate_failures do
-        # The fake spends nothing, so each try is a failed start (plan 065.00),
-        # which costs no round and stops at the cap of three.
-        expect(invocations.map(&:first)).to eq(%w[exec exec exec])
+        # The fake spends nothing, so its try is a failed start (plan 065.00),
+        # which costs no round and backs off, so this run ends after one.
+        expect(invocations.map(&:first)).to eq(%w[exec])
         expect(invocations.flatten).not_to include("--resume")
         expect(heard).to include("fresh session: codex cannot resume one")
       end

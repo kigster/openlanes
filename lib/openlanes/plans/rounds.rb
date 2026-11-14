@@ -68,16 +68,36 @@ module OpenLanes
       # @param agent [#to_s]
       # @param state [#to_s]
       # @param moves [Integer]
+      # @param count [Rounds::Count] which failed starts count
       # @return [Integer] how many failed starts in a row end this visit's
       #   record for the agent, which is what the cap of three counts
-      def failed_starts(agent, state, moves:)
-        mine(agent).select { visit?(it, state.to_s, moves.to_i) }
-                   .reverse.take_while { it["status"] == PlanState::FAILED_START }.size
+      def failed_starts(agent, state, moves:, count: Rounds::Count.new) = streak(agent, state, moves, count).size
+
+      # @param (see #failed_starts)
+      # @return [Time, nil] when the latest counted failed start ended
+      def last_failed_start(agent, state, moves:, count: Rounds::Count.new)
+        streak(agent, state, moves, count).filter_map { instant(it["finished_at"] || it["started_at"]) }.max
       end
 
       private
 
       def mine(agent) = stages.select { it["agent"] == agent.to_s }
+
+      # The failed starts that end the visit's record, less the excused ones,
+      # which neither count nor break the run of the others.
+      def streak(agent, state, moves, count)
+        mine(agent).select { visit?(it, state.to_s, moves.to_i) && after?(it, count.since) }
+                   .reverse.take_while { it["status"] == PlanState::FAILED_START }
+                   .reject { count.except&.match?(it["note"].to_s) }
+      end
+
+      def after?(stage, since)
+        return true unless since
+
+        # Strictly after: times carry whole seconds, and a stage started in
+        # the second a grant settled is the failure that grant answered.
+        (at = instant(stage["started_at"])) ? at > since : false
+      end
 
       def spent(agent, state, moves)
         mine(agent).select { it["status"] != PlanState::FAILED_START && visit?(it, state.to_s, moves.to_i) }
@@ -99,10 +119,23 @@ module OpenLanes
 
       # The highest round the agent signed since this visit's first stage
       # started; zero when the visit has no stage yet.
+      #
+      # Times are parsed, not compared as strings: ISO 8601 strings only sort
+      # by time when they share an offset, and a DST change (`-07:00` against
+      # `-08:00`) put a signature 40 minutes into a visit before its start.
       def signed(agent, visit)
-        since = visit.filter_map { it["started_at"] }.min or return 0
+        since = visit.filter_map { instant(it["started_at"]) }.min or return 0
 
-        signatures.select { it["agent"] == agent.to_s && it["at"].to_s >= since }.map { it["round"].to_i }.max.to_i
+        signatures.select { it["agent"] == agent.to_s && (at = instant(it["at"])) && at >= since }
+                  .map { it["round"].to_i }.max.to_i
+      end
+
+      # @return [Time, nil] nil for a missing or malformed timestamp, which
+      #   then neither opens a visit nor counts as signed inside one
+      def instant(value)
+        Time.iso8601(value.to_s)
+      rescue ArgumentError
+        nil
       end
     end
   end

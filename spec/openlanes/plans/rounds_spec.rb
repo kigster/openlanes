@@ -56,6 +56,29 @@ RSpec.describe OpenLanes::Plans::Rounds do
       more = described_class.new(stages: stages + [stage(2)], signatures:)
       expect(more.failed_starts("backend-coder", "building", moves: 1)).to eq(0)
     end
+
+    it "counts only the ones started after a grant" do
+      since = Time.iso8601("2026-11-12T10:01:30+00:00")
+      tail = [stage(2, status: failed, started_at: "2026-11-12T10:02:00+00:00")]
+      more = described_class.new(stages: stages.first(1) + [stage(2, status: failed, started_at: "2026-11-12T10:01:00+00:00")] + tail, signatures:)
+      expect(more.failed_starts("backend-coder", "building", moves: 1, count: described_class::Count.new(since:))).to eq(1)
+    end
+
+    it "excuses a failed login without breaking the run of the others" do
+      login = stage(2, status: failed, note: "failed start: OAuth session expired")
+      more = described_class.new(stages: stages + [login], signatures:)
+      expect(more.failed_starts("backend-coder", "building", moves: 1, count: described_class::Count.new(except: /OAuth/))).to eq(2)
+    end
+
+    it "says when the latest one ended" do
+      last = stage(2, status: failed, finished_at: "2026-11-12T10:09:00-08:00")
+      more = described_class.new(stages: stages + [last], signatures:)
+      expect(more.last_failed_start("backend-coder", "building", moves: 1)).to eq(Time.utc(2026, 11, 12, 18, 9))
+    end
+
+    it "says nothing ended when none failed" do
+      expect(described_class.new(stages: [stage(1)], signatures:).last_failed_start("backend-coder", "building", moves: 1)).to be_nil
+    end
   end
 
   context "with stages an older release wrote" do
@@ -83,6 +106,18 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
 
     it "is never lower than the highest round signed in the visit" do
+      expect(rounds.next("backend-coder", "building", moves: 1)).to eq(5)
+    end
+  end
+
+  context "when the signature and the stage carry different UTC offsets" do
+    let(:stages) { [stage(1, started_at: "2026-11-01T01:30:00-07:00")] }
+    let(:signatures) do
+      [{ "agent" => "backend-coder", "round" => 4, "status" => "Completed", "at" => "2026-11-01T01:10:00-08:00" },
+       { "agent" => "backend-coder", "round" => 7, "status" => "Completed", "at" => "not a time" }]
+    end
+
+    it "orders them by time, not as strings, and ignores a malformed one" do
       expect(rounds.next("backend-coder", "building", moves: 1)).to eq(5)
     end
   end

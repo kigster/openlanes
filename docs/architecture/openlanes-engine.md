@@ -295,6 +295,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Agents__Routing : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Config : uses
+  OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Desk : uses
   OpenLanes__Engine__Dispatcher__Assign --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Execution__Control : uses
@@ -316,6 +317,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Recovery__Round : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Verification : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Ledger__Reading : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__Lock : uses

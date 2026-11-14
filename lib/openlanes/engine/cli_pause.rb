@@ -37,6 +37,10 @@ module OpenLanes
         @prober = prober
         @clock = clock
         @entries = {}
+        # Probes that failed, kept past a release: `claude auth status` can
+        # say signed in while the stored token has already expired, so a CLI
+        # released and paused again waits longer each time, not 30 s again.
+        @strikes = Hash.new(0)
         @mutex = Mutex.new
       end
 
@@ -46,9 +50,17 @@ module OpenLanes
       def pause(adapter, reason)
         now = @clock.call
         @mutex.synchronize do
-          @entries[adapter.to_s] ||= Entry.new(adapter: adapter.to_s, reason: reason.to_s, since: now, probe_at: now + FIRST, tries: 0)
+          tries = @strikes[adapter.to_s]
+          @entries[adapter.to_s] ||= Entry.new(adapter: adapter.to_s, reason: reason.to_s, since: now, probe_at: now + wait(tries), tries:)
         end
       end
+
+      # Forget the failed probes of a CLI an agent has just spent something
+      # on: it is signed in for real, so its next pause starts at {FIRST}.
+      #
+      # @param adapter [#to_s]
+      # @return [void]
+      def clear(adapter) = @mutex.synchronize { @strikes.delete(adapter.to_s) }
 
       # @param adapter [#to_s]
       # @return [Boolean]
@@ -66,8 +78,7 @@ module OpenLanes
         entries.select { it.probe_at <= now }.filter_map do |entry|
           next entry.adapter if release?(entry)
 
-          wait = [FIRST * (2**(entry.tries + 1)), CEILING].min
-          @mutex.synchronize { @entries[entry.adapter] = entry.with(probe_at: now + wait, tries: entry.tries + 1) }
+          @mutex.synchronize { @entries[entry.adapter] = entry.with(probe_at: now + wait(entry.tries + 1), tries: entry.tries + 1) }
           nil
         end
       end
@@ -82,10 +93,16 @@ module OpenLanes
 
       private
 
+      # @return [Integer] seconds to wait after +tries+ failed probes
+      def wait(tries) = [FIRST * (2**tries), CEILING].min
+
       def release?(entry)
         return false unless @prober.call(entry.adapter)
 
-        @mutex.synchronize { @entries.delete(entry.adapter) }
+        @mutex.synchronize do
+          @entries.delete(entry.adapter)
+          @strikes[entry.adapter] = entry.tries + 1
+        end
         true
       end
     end

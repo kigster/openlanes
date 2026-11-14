@@ -112,6 +112,9 @@ module OpenLanes
           entry = nil if entry && entry.round != task.round
           problems = reading.problems.map { |p| "#{p.file}:#{p.line} unreadable ledger line" }
 
+          # A round that spent something proves its CLI is signed in, so the
+          # next pause on that CLI starts short again.
+          cli_pause.clear(adapter_for(job).name) unless failed_start?(result)
           attempt = if (why = stopped_for(ordinal))
                       stopped_by_harness(job, base, why)
                     elsif assessor?(agent) && !(result.ok && entry&.completed?)

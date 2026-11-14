@@ -164,7 +164,9 @@ module OpenLanes
       # the plan's current visit to +state+. Read from `state.json` alone,
       # as the rounds used are ({Plans::Rounds}), so a restart neither drops
       # a grant nor hands one back twice; a grant expires when the plan
-      # moves. One asked before grants named their visit counts until then.
+      # moves. One settled before grants named their visit has expired: the
+      # engine that granted it counted it only until it stopped, and counting
+      # it now would hand it back on every return to the state.
       #
       # @param path [String]
       # @param agent [String]
@@ -173,7 +175,43 @@ module OpenLanes
       def rounds(path, agent, state)
         plan = Plans::PlanState.for(path)
         moves = plan.moves
-        granted(plan.extensions, agent, state.to_s).count { !it.key?("moves") || it["moves"] == moves }
+        granted(plan.extensions, agent, state.to_s).count { it["moves"] == moves }
+      end
+
+      # When the latest round granted to +agent+ on the plan's current visit
+      # to +state+ was settled. A grant answers a request raised after
+      # repeated failed starts, so the count of those starts again from here.
+      #
+      # @param path [String]
+      # @param agent [String]
+      # @param state [#to_s]
+      # @return [Time, nil]
+      def lifted_at(path, agent, state)
+        plan = Plans::PlanState.for(path)
+        moves = plan.moves
+        granted(plan.extensions, agent, state.to_s).select { it["moves"] == moves }
+                                                   .filter_map { settled_time(it) }.max
+      end
+
+      # A request for an agent whose starts keep failing: asked once per run
+      # of failures, so a person sees the agent is stuck and why. Granting it
+      # a round lifts the cap ({#lifted_at}); closing it leaves the agent
+      # parked without asking again until it fails anew.
+      #
+      # @param path [String]
+      # @param agent [String]
+      # @param state [#to_s]
+      # @param round [Integer] the round the agent would be told
+      # @param after [Time] when the latest failed start ended
+      # @return [Hash, nil] the open request
+      def stalled(path, agent, state, round, after:)
+        plan = Plans::PlanState.for(path)
+        state = state.to_s
+        all = plan.extensions
+        return pending(all, agent, state) if pending(all, agent, state)
+        return nil if all.any? { it["agent"] == agent && it["state"] == state && settled_after?(it, after) }
+
+        plan.ask_extension!(agent:, state:, round:, limit: "rounds", at: @now.call)
       end
 
       # The extra seconds a granted round runs on, handed out once.
@@ -260,6 +298,16 @@ module OpenLanes
 
       # @return [Hash, nil] the agent's unsettled request on this state
       def pending(all, agent, state) = all.find { it["agent"] == agent && it["state"] == state && !it.key?("settled_at") }
+
+      # @return [Boolean] whether the request was settled at or after +time+
+      def settled_after?(request, time) = (at = settled_time(request)) ? at >= time : false
+
+      # @return [Time, nil] nil for an open request or a malformed time
+      def settled_time(request)
+        request.key?("settled_at") ? Time.iso8601(request["settled_at"].to_s) : nil
+      rescue ArgumentError
+        nil
+      end
 
       # @return [Array<Hash>] the requests that gave the agent a round on this state
       def granted(all, agent, state) = all.select { it["grant"] == "round" && it["agent"] == agent && it["state"] == state }

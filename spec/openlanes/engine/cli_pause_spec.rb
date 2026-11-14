@@ -64,5 +64,20 @@ RSpec.describe OpenLanes::Engine::CliPause do
         expect(pause.paused?("claude")).to be(false)
       end
     end
+
+    it "waits longer when the same CLI fails again soon after, since a probe can pass on an expired token" do
+      pause.probe
+      pause.pause("claude", "OAuth session expired")
+
+      expect(pause.entries.first.probe_at).to eq(now + (described_class::FIRST * 2))
+    end
+
+    it "starts the wait short again once an agent on the CLI has spent something" do
+      pause.probe
+      pause.clear(:claude)
+      pause.pause("claude", "OAuth session expired")
+
+      expect(pause.entries.first.probe_at).to eq(now + described_class::FIRST)
+    end
   end
 end

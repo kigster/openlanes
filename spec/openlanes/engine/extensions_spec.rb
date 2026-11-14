@@ -151,10 +151,19 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
     end
 
-    it "counts a grant asked before grants named their visit" do
+    it "counts a grant asked before grants named their visit, for the visit it is answered in" do
       plan.update { |data| data["extensions"].first.delete("moves") }
       extensions.answer!(path, 1, "a", by: "dana")
       expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
+      plan.state!(:built)
+      plan.state!(:building)
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
+    end
+
+    it "does not count a grant settled before grants named their visit" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      plan.update { |data| data["extensions"].first.delete("moves") }
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
     end
 
     it "answers once: a second answer changes nothing" do

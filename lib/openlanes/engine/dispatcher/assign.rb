@@ -160,6 +160,7 @@ module OpenLanes
           end
           reasons.concat(verifying.map { |plan, note| "#{plan} #{note}" })
           cli_pause.reason&.then { reasons << it }
+          failed_start_reason(subjects)&.then { reasons << it }
           held = runner.held(runner.dependencies(except: untouchable), runner.global_lock(except: untouchable))
           reasons << "held by dependencies: #{held.map { |o, why| "#{o} #{why}" }.join("; ")}" unless held.empty?
           over = budget_holds
@@ -310,7 +311,7 @@ module OpenLanes
           return false if runner.arbitration&.holds?(subject) || arbitrating_now.include?(ordinal)
           return false if running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
 
-          return false if failed_starts_capped?(subject, agent)
+          return false if failed_start_hold(subject, agent)
           return false if cli_pause.paused?(adapter_of(agent, subject).name)
 
           past = past_rounds(subject, agent)
@@ -337,10 +338,39 @@ module OpenLanes
             next if busy.include?(subject.feature.ordinal.to_s) || Plans::StateMachine::SETTLED.include?(subject.status.key)
 
             Agents::Routing.offer(runner.agents, subject.status, subject).each do |agent|
+              ask_if_stalled(agent, subject)
               last = out_of_rounds(agent, subject) or next
               extensions.exhausted(subject.feature.path, agent.name, subject.status.key, last[:round])
             end
           end
+        end
+
+        # An agent parked by its failed starts asks a person for a round, so
+        # it is not left out of the run with nobody told.
+        #
+        # @return [void]
+        def ask_if_stalled(agent, subject)
+          return unless failed_start_hold(subject, agent) == :capped
+
+          _, last = failed_streak(subject, agent)
+          extensions.stalled(subject.feature.path, agent.name, subject.status.key, next_round(subject, agent), after: last)
+        end
+
+        # The idle line's clause for agents held by failed starts, naming
+        # each agent, its plan and what lets it go.
+        #
+        # @param subjects [Array<OpenLanes::Plans::Subject>]
+        # @return [String, nil]
+        def failed_start_reason(subjects)
+          held = subjects.flat_map do |subject|
+            Agents::Routing.offer(runner.agents, subject.status, subject).filter_map do |agent|
+              case failed_start_hold(subject, agent)
+              when :capped then "#{subject.feature.ordinal} #{agent.name} (#{Desk::FAILED_START_CAP} in a row; grant it a round to retry)"
+              when :backing_off then "#{subject.feature.ordinal} #{agent.name} (retrying after a backoff)"
+              end
+            end
+          end
+          "failed starts: #{held.join("; ")}" unless held.empty?
         end
 
         # @param agent [OpenLanes::Agents::Agent]
