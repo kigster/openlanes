@@ -54,7 +54,8 @@ module OpenLanes
         "set_concurrency" => :set_concurrency,
         "set_chime"       => :set_chime,
         "extend_time"     => :extend_time,
-        "rule_finding"    => :rule_finding
+        "rule_finding"    => :rule_finding,
+        "restart_web"     => :restart_web
       }.freeze
 
       # The most seconds one `extend_time` adds: the largest grant
@@ -127,7 +128,10 @@ module OpenLanes
       #   in the same `MULTI` as each reply
       # @param claims [OpenLanes::Live::Claims, nil]
       # @param clock [Proc] wall time
-      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now })
+      # @param restart_web [#call, nil] root in; the supervisor's pid once
+      #   asked to restart the control room, nil when none runs
+      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now },
+        restart_web: nil)
         @store = store
         @keys = keys
         @node = node
@@ -135,6 +139,7 @@ module OpenLanes
         @record = record
         @claims = claims
         @clock = clock
+        @restart_web = restart_web || Supervision.method(:restart_web)
         @ready = false
         @swept_at = nil
         @pending = {}
@@ -349,7 +354,7 @@ module OpenLanes
         settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
-      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
+      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes/config.yml` (U3).
       # Only the letter counts, as for {#extension}.
       #
       # @return [String]
@@ -751,8 +756,22 @@ module OpenLanes
         "#{ordinal} restarts at the next tick"
       end
 
+      # `/restart-web` (plan 069.00): the supervisor that `openlanes start`
+      # runs stops the control room, rebuilds its page and starts it again.
+      # The engine only asks; the page's server goes away and comes back,
+      # and the new one reports how the build went.
+      #
+      # @return [String]
+      def restart_web(_command, dispatcher)
+        pid = @restart_web.call(File.dirname(dispatcher.runner.tree.dir))
+        raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
+
+        "restarting the control room: supervisor #{pid} stops it, rebuilds the page and starts it again; " \
+          "the page reconnects when it is back"
+      end
+
       # The rail's "Ding when a question needs you" box, kept in
-      # `.openlanes.yml` so it holds across reloads, browsers and restarts.
+      # `.openlanes/config.yml` so it holds across reloads, browsers and restarts.
       # `on` is checked here and not in {Command::PAYLOAD}, whose test for a
       # missing field would take `false` for one.
       #

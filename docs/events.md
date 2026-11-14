@@ -6,7 +6,7 @@ It is **off by default**. Nothing is created, and no directory is made, until yo
 
 ## Configuration
 
-In `.openlanes.yml` at the project root:
+In `.openlanes/config.yml` at the project root:
 
 ```yaml
 events:

@@ -28,7 +28,7 @@ RSpec.describe "/api/settings", :origin do
   after { FileUtils.rm_rf(tmp) }
 
   before do
-    FileUtils.mkdir_p(main)
+    FileUtils.mkdir_p(File.dirname(file))
     File.write(file, "jobs: 2\n")
     publish_with_origin(main, tmp)
     header "Host", "127.0.0.1:11000"

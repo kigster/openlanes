@@ -74,7 +74,7 @@ export function DraftCard({ turn }: { turn: Extract<CopilotReply, { kind: "draft
 }
 
 /** The run-control commands the server's slash grammar accepts; shown as a hint only, the server parses them. */
-const SLASH_COMMANDS = ["/stop", "/restart", "/concurrency"] as const;
+const SLASH_COMMANDS = ["/stop", "/restart", "/concurrency", "/restart-web", "/status", "/stats"] as const;
 
 function Turn({ turn, onCommand }: { turn: CopilotTurn; onCommand: SendCommand }) {
   const you = turn.from === "you";

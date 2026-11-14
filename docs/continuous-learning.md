@@ -92,7 +92,7 @@ A new `memory_section` in `Execution::Prompt`, next to `review_section` and `jou
 
 1. Select active lessons whose `applies_to` names this agent or its phase, from project and global scope.
 2. Rank by severity, then by how often the lesson was violated recently, then by recency of confirmation.
-3. Fill a budget (_my call_: 1,500 tokens by default, `memory.budget` in `.openlanes.yml`) with **one line per lesson**: id, title, path. Agents read the full file only when it bears on the task, the progressive disclosure that skills use.
+3. Fill a budget (_my call_: 1,500 tokens by default, `memory.budget` in `.openlanes/config.yml`) with **one line per lesson**: id, title, path. Agents read the full file only when it bears on the task, the progressive disclosure that skills use.
 4. Reviewers additionally get their `checked_by` lessons as an explicit checklist and are asked to cite ids in findings.
 
 `openlanes run --no-memory` and `memory.enabled: false` turn it off. That switch is what lets us measure whether memory helps at all.

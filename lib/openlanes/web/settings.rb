@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "open3"
 require "yaml"
 
 module OpenLanes
   module Web
-    # The settings page's model (plan 058, B1): `.openlanes.yml` as the page
+    # The settings page's model (plan 058, B1): `.openlanes/config.yml` as the page
     # reads it, and the check a save must pass before anything is written.
     # The schema is {Config::Schema}'s and the judge is {Config.parse}, so the
     # page never accepts a value the engine would refuse on its next load.
@@ -67,10 +68,34 @@ module OpenLanes
       # @return [String] the YAML {Config.parse} is given
       def text(values) = YAML.dump(compact(values))
 
+      # The project file this root has, relative to it: the legacy name while
+      # a project still carries it. Saving to {Config::FILE} there would leave
+      # two files, and every command refuses a root that holds both.
+      #
+      # @param root [String]
+      # @return [String]
+      def file(root)
+        Project.config_path(root).delete_prefix("#{root}/")
+      rescue Error
+        Config::FILE
+      end
+
+      # Writes the project file, making `.openlanes/` for a project that has
+      # no config file yet.
+      #
+      # @param root [String]
+      # @param text [String]
+      # @return [void]
+      def write(root, text)
+        path = File.join(root, file(root))
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, text)
+      end
+
       # @param root [String]
       # @return [String] sha256 of the file, of nothing when there is none
       def etag(root)
-        path = File.join(root, Config::FILE)
+        path = File.join(root, file(root))
         Digest::SHA256.hexdigest(File.file?(path) ? File.binread(path) : "")
       end
 
@@ -84,7 +109,7 @@ module OpenLanes
       # @param root [String]
       # @return [Hash] the file as YAML reads it, {} when absent or not a mapping
       def file_values(root)
-        path = File.join(root, Config::FILE)
+        path = File.join(root, file(root))
         return {} unless File.file?(path)
 
         data = YAML.safe_load_file(path, permitted_classes: [Date])
@@ -122,7 +147,7 @@ module OpenLanes
         schema.empty? ? [parser_problem(message)] : schema
       end
 
-      # @param message [String] e.g. ".openlanes.yml: merge.by: \"x\" is not one of …"
+      # @param message [String] e.g. ".openlanes/config.yml: merge.by: \"x\" is not one of …"
       # @return [Problem]
       def parser_problem(message)
         text = message.delete_prefix("#{Config::FILE}: ")

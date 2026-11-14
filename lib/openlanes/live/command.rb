@@ -43,7 +43,7 @@ module OpenLanes
       # Every kind the page may send.
       KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop stop_all
                  set_model switch_model add_plan create_plans respond pause_discuss resume_anyway
-                 stop_plan restart_plan set_concurrency set_chime extend_time rule_finding].freeze
+                 stop_plan restart_plan set_concurrency set_chime extend_time rule_finding restart_web].freeze
 
       # Kinds that act on one plan, and so must name it.
       PLAN_KINDS = %w[answer hold_blocked release_hold resume discard message hold wrap_up compact stop

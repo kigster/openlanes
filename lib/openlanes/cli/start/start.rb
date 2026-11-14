@@ -125,7 +125,7 @@ module OpenLanes
         unwrap(registration.claim)
         programs = Programs.new(options:, defaults: self.class.default_params, root:).call(web)
         supervisor = Supervision.supervisor(programs:, registration:)
-        %w[INT TERM].each { |name| Signal.trap(name) { supervisor.stop! } }
+        { "INT" => :stop!, "TERM" => :stop!, Supervision::RESTART_WEB_SIGNAL => :restart_web! }.each { |name, act| Signal.trap(name) { supervisor.public_send(act) } }
         announce(options, web)
         on_tick = opener(web) if web && options[:open]
         registration.hold { supervisor.call(&on_tick) }

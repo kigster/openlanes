@@ -52,6 +52,8 @@ classDiagram
   <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
@@ -189,6 +191,7 @@ classDiagram
   OpenLanes__Web__Settings ..> OpenLanes__Config : uses
   OpenLanes__Web__Settings ..> OpenLanes__Config__Schema : uses
   OpenLanes__Web__Settings ..> OpenLanes__Error : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Project : uses
   OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__Problem : uses
   OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__View : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Config : uses

@@ -62,7 +62,7 @@ classDiagram
   OpenLanes__Arbitration ..> OpenLanes__Agents : 3
   OpenLanes__Arbitration ..> OpenLanes__Plans : 11
   OpenLanes__Arbitration ..> OpenLanes__Vcs : 2
-  OpenLanes__CLI ..> OpenLanes : 26
+  OpenLanes__CLI ..> OpenLanes : 28
   OpenLanes__CLI ..> OpenLanes__Adapters : 3
   OpenLanes__CLI ..> OpenLanes__Agents : 12
   OpenLanes__CLI ..> OpenLanes__Apps : 5
@@ -75,19 +75,19 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Execution : 1
   OpenLanes__CLI ..> OpenLanes__Lifecycle : 7
   OpenLanes__CLI ..> OpenLanes__Linear : 5
-  OpenLanes__CLI ..> OpenLanes__Live : 13
+  OpenLanes__CLI ..> OpenLanes__Live : 14
   OpenLanes__CLI ..> OpenLanes__Log : 7
   OpenLanes__CLI ..> OpenLanes__Memory : 9
   OpenLanes__CLI ..> OpenLanes__Plans : 26
   OpenLanes__CLI ..> OpenLanes__Presentation : 8
-  OpenLanes__CLI ..> OpenLanes__Setup : 8
+  OpenLanes__CLI ..> OpenLanes__Setup : 9
   OpenLanes__CLI ..> OpenLanes__Skills : 1
   OpenLanes__CLI ..> OpenLanes__Supervision : 9
-  OpenLanes__CLI ..> OpenLanes__UI : 19
+  OpenLanes__CLI ..> OpenLanes__UI : 20
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
   OpenLanes__CLI ..> OpenLanes__Web : 14
-  OpenLanes__Config ..> OpenLanes : 2
+  OpenLanes__Config ..> OpenLanes : 3
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Agents : 1
   OpenLanes__Config ..> OpenLanes__Apps : 1
@@ -96,10 +96,10 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Live : 1
   OpenLanes__Config ..> OpenLanes__Plans : 1
   OpenLanes__Config ..> OpenLanes__Setup : 1
-  OpenLanes__Coverage ..> OpenLanes : 4
+  OpenLanes__Coverage ..> OpenLanes : 5
   OpenLanes__Coverage ..> OpenLanes__Config : 1
   OpenLanes__Coverage ..> OpenLanes__UI : 1
-  OpenLanes__Engine ..> OpenLanes : 34
+  OpenLanes__Engine ..> OpenLanes : 35
   OpenLanes__Engine ..> OpenLanes__Adapters : 1
   OpenLanes__Engine ..> OpenLanes__Agents : 21
   OpenLanes__Engine ..> OpenLanes__Apps : 4
@@ -159,6 +159,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Execution : 4
   OpenLanes__Live ..> OpenLanes__Lifecycle : 6
   OpenLanes__Live ..> OpenLanes__Plans : 26
+  OpenLanes__Live ..> OpenLanes__Supervision : 1
   OpenLanes__Live ..> OpenLanes__UI : 7
   OpenLanes__Memory ..> OpenLanes : 3
   OpenLanes__Memory ..> OpenLanes__Agents : 1
@@ -174,7 +175,7 @@ classDiagram
   OpenLanes__Presentation ..> OpenLanes__Lifecycle : 2
   OpenLanes__Presentation ..> OpenLanes__Plans : 13
   OpenLanes__Presentation ..> OpenLanes__UI : 3
-  OpenLanes__Setup ..> OpenLanes : 3
+  OpenLanes__Setup ..> OpenLanes : 6
   OpenLanes__Setup ..> OpenLanes__Adapters : 2
   OpenLanes__Setup ..> OpenLanes__Config : 4
   OpenLanes__Setup ..> OpenLanes__Live : 2
@@ -183,8 +184,8 @@ classDiagram
   OpenLanes__Supervision ..> OpenLanes : 2
   OpenLanes__Supervision ..> OpenLanes__Container : 2
   OpenLanes__Supervision ..> OpenLanes__Execution : 7
-  OpenLanes__Supervision ..> OpenLanes__Log : 1
-  OpenLanes__Supervision ..> OpenLanes__Web : 1
+  OpenLanes__Supervision ..> OpenLanes__Log : 2
+  OpenLanes__Supervision ..> OpenLanes__Web : 2
   OpenLanes__UI ..> OpenLanes__Log : 1
   OpenLanes__Vcs ..> OpenLanes : 7
   OpenLanes__Vcs ..> OpenLanes__Container : 4
@@ -193,7 +194,7 @@ classDiagram
   OpenLanes__Vcs ..> OpenLanes__Lifecycle : 1
   OpenLanes__Vcs ..> OpenLanes__Plans : 7
   OpenLanes__Vcs ..> OpenLanes__UI : 6
-  OpenLanes__Web ..> OpenLanes : 14
+  OpenLanes__Web ..> OpenLanes : 15
   OpenLanes__Web ..> OpenLanes__Adapters : 1
   OpenLanes__Web ..> OpenLanes__Agents : 2
   OpenLanes__Web ..> OpenLanes__Apps : 3

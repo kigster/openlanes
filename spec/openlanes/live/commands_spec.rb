@@ -208,12 +208,12 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
 
     let(:config) { File.join(File.dirname(plans_root), OpenLanes::Config::FILE) }
 
-    it "writes the chosen quality into .openlanes.yml, and refuses what is not a choice or not open" do
+    it "writes the chosen quality into .openlanes/config.yml, and refuses what is not a choice or not open" do
       send_command("answer", plan: "001.00", question: "Q1", text: "maybe")
       send_command("answer", plan: "001.00", question: "Q1", text: "c) mvp: the fastest")
       send_command("answer", plan: "001.00", question: "Q1", text: "a")
       aggregate_failures do
-        expect(apply.map(&:reason)).to eq(['Q1 takes a), b) or c), not "maybe"', "desired_codebase_quality: mvp in .openlanes.yml",
+        expect(apply.map(&:reason)).to eq(['Q1 takes a), b) or c), not "maybe"', "desired_codebase_quality: mvp in .openlanes/config.yml",
                                            "001.00 has no open question Q1"])
         expect(File.read(config)).to eq("desired_codebase_quality: mvp\n")
         expect(OpenLanes::Plans::PlanState.for(path_of("001.00")).quality_ask).to include("answer" => "mvp", "by" => "dana")
@@ -829,6 +829,44 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       aggregate_failures do
         expect(apply.map(&:reason)).to eq(["message failed: disk full"])
         expect(OpenLanes::UI).to have_received(:log).with("message failed: IOError: disk full", plan: "001.00")
+      end
+    end
+  end
+
+  describe "restart_web" do
+    subject(:commands) do
+      described_class.new(store:,
+        keys:,
+        node:,
+        run_state:,
+        claims:,
+        clock: -> { Time.utc(2026, 10, 13, 9) },
+        restart_web: ->(root) { asked << root and supervisor })
+    end
+
+    let(:asked) { [] }
+
+    before { send_command("restart_web", id: "01JW") }
+
+    context "when a supervisor with a control room runs" do
+      let(:supervisor) { 4242 }
+
+      it "asks it exactly once, for this project, and says the restart has started" do
+        reply = apply.first
+        aggregate_failures do
+          expect(asked).to eq([File.dirname(dispatcher.runner.tree.dir)])
+          expect(reply.status).to eq("done")
+          expect(reply.reason).to start_with("restarting the control room: supervisor 4242")
+        end
+      end
+    end
+
+    context "when no supervisor runs, or it runs with --no-web" do
+      let(:supervisor) { nil }
+
+      it "refuses with the reason a person reads" do
+        expect(apply.first).to have_attributes(status: "refused",
+          reason: "`/restart-web` needs `openlanes start`; no supervisor is running.")
       end
     end
   end

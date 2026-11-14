@@ -8,16 +8,16 @@ The reference behind the [README](../README.md). For the state machine, numberin
 
 Every command that reads or writes plans first finds the project root and works from there, so it does not matter which subdirectory you type it in. The search, nearest first:
 
-1. a directory holding `.openlanes.yml` or `.plans/`;
+1. a directory holding `.openlanes/config.yml` or `.plans/`;
 1. failing that, a directory holding `.git`.
 
-Your home directory counts only if it holds `.openlanes.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `uml`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
+Your home directory counts only if it holds `.openlanes/config.yml`, so a dotfiles repository there cannot capture every project under it. When the root is not where you are, one line on STDERR says so (`-q` silences it); when there is none, the command exits 66. `-D` and `PLANS_DIR` resolve against the root. `version`, `states`, `uml`, `docs`, `agents`, `describe`, `completion`, `eval` and `skills` need no project and skip the search.
 
 ### `openlanes init`
 
-Writes `.openlanes.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--starts`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, an existing file is kept unless `--overwrite`, and `--no-setup` skips the machine check that otherwise runs `openlanes setup` first.
+Writes `.openlanes/config.yml` at the nearest `.git` (else the current directory) and creates `.plans/`. It takes `--project`, `--starts`, `--[no-]frontend` and `--jobs`, asks on a terminal for whatever no flag gave, and confirms before writing. `-y` asks nothing, `-n` prints the file instead, an existing file is kept unless `--overwrite`, and `--no-setup` skips the machine check that otherwise runs `openlanes setup` first.
 
-### `.openlanes.yml`
+### `.openlanes/config.yml`
 
 ```yaml
 project: Demo App         # heading for INDEX.md; default: the root's directory name
@@ -35,7 +35,7 @@ commands:                 # option defaults for any command, by the name you typ
     adopt: false
 ```
 
-- Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes.yml`, the built-in default.
+- Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes/config.yml`, the built-in default.
 - `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
@@ -55,7 +55,7 @@ frontend: false      # true forces frontend-coder; false keeps it out
 depth: fast          # fast | medium | deep: the default effort for every phase
 phases:              # per-phase overrides: research, specification, planning,
   build:             # build, frontend, review, unblock
-    adapter: codex   # claude | codex | pi | grok | gemini; default: the agent's own, then (reviewers) .openlanes.yml review.adapters, then adapter:, then claude
+    adapter: codex   # claude | codex | pi | grok | gemini; default: the agent's own, then (reviewers) .openlanes/config.yml review.adapters, then adapter:, then claude
     model: gpt-5-codex
     effort: medium   # low | medium | high | xhigh | max
   review: { model: opus }
@@ -76,7 +76,7 @@ how-to-verify:                # the commands or checks that show it
 
 Model and effort precedence, highest first: `run --model` (model only), `phases.<phase>`, `depth` (effort only), the agent's own frontmatter. The adapter has the last word: a Claude agent asked for anything above Opus runs on Opus.
 
-Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). An agent confined to its own files, such as `spec-keeper`, runs only on claude: codex, pi, grok and gemini cannot hold it there, so it is refused on them rather than run unconfined. Grok and gemini do refuse the forbidden commands themselves (grok through `--deny`, gemini through a policy file passed with `--policy`), and both run without web search or fetch unless the agent declares `network: true`. Gemini has no effort flag, so a phase's `effort:` does not reach it. Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
+Adapter precedence, highest first: `phases.<phase>.adapter`, the agent's own `adapter:`, `.openlanes/config.yml` `adapter:`, `claude`. An agent names an adapter only when it depends on one (the verifier needs Claude's browser tools). An agent confined to its own files, such as `spec-keeper`, runs only on claude: codex, pi, grok and gemini cannot hold it there, so it is refused on them rather than run unconfined. Grok and gemini do refuse the forbidden commands themselves (grok through `--deny`, gemini through a policy file passed with `--policy`), and both run without web search or fetch unless the agent declares `network: true`. Gemini has no effort flag, so a phase's `effort:` does not reach it. Its own model is kept only on the adapter its frontmatter wrote it for, so a project on codex does not ask codex for `opus`.
 
 Whether each adapter can take an agent on this machine is probed, never assumed: installed (on `PATH`), signed in, and with a model to run (`claude auth status`, `codex login status`, `pi --list-models`, `grok models`, `gemini -p ""` with nothing on stdin, which checks the sign-in and exits for want of input; no prompt reaches a model). The engine and the page each probe at start and every 15 minutes, one at a time per machine, and share the answer through Redis, and every snapshot the page reads carries it, the reason included. `openlanes agents list` probes there and then and prints an Adapters table under the roster: available or why not, what it can do, how many models it offers.
 
@@ -188,7 +188,7 @@ The engine (`run`, `start`) and the control room's server (`web`, or the one `ru
 | `-L`, `--log-level LEVEL` | `info` | `debug`, `info`, `warn`, `error` or `fatal`; lower levels are not written |
 | `--log-format FORMAT` | `standard` | `standard` (one line per entry) or `json` (one object per line) |
 
-`run`, `start` and `web` take all three, and `run`/`start` hand theirs to the server they spawn (through `OPENLANES_LOG`, `OPENLANES_LOG_LEVEL` and `OPENLANES_LOG_FORMAT`), so both processes always write the same file. A project can set them once in `.openlanes.yml` under `commands: run:` (or `start:`, `web:`) as `log:`, `log_level:` and `log_format:`. The server's raw STDOUT and STDERR (a crash before its logger is up) still go to a file under the system temp directory.
+`run`, `start` and `web` take all three, and `run`/`start` hand theirs to the server they spawn (through `OPENLANES_LOG`, `OPENLANES_LOG_LEVEL` and `OPENLANES_LOG_FORMAT`), so both processes always write the same file. A project can set them once in `.openlanes/config.yml` under `commands: run:` (or `start:`, `web:`) as `log:`, `log_level:` and `log_format:`. The server's raw STDOUT and STDERR (a crash before its logger is up) still go to a file under the system temp directory.
 
 The log is never rotated or capped. For a long-running `start`, rotate it externally with `copytruncate` (logrotate, or `newsyslog` on macOS): both processes append with O_APPEND, so truncating in place is safe and neither needs a restart. `log/` is created in the project's own checkout, so add `/log/*` to the project's `.gitignore` if it is not there already. A URL's password is replaced by `***` in every line, whether it appears in the message or in a field.
 - `unblock` and `create` show each agent as a spinner line on a terminal.
@@ -220,7 +220,7 @@ Partial answers are fine. The plan stays blocked until the last question is answ
 
 ### Running the app a plan builds: `openlanes project`
 
-A project declares how to run its app under `app:` in `.openlanes.yml` (backend-coder writes it on a plan's first build):
+A project declares how to run its app under `app:` in `.openlanes/config.yml` (backend-coder writes it on a plan's first build):
 
 ```yaml
 app:
