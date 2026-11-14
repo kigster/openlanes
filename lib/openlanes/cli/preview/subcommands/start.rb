@@ -7,16 +7,16 @@ module OpenLanes
   module CLI
     module Preview
       # `openlanes project start` — run a plan's app in the foreground, as
-      # `.openlanes.yml` `app:` declares it, until Ctrl-C, `openlanes project
+      # `.openlanes/config.yml` `app:` declares it, until Ctrl-C, `openlanes project
       # stop`, or Stop in the Preview tab.
       class Start < Base
         include Registry
 
-        desc "Run a plan's app from .openlanes.yml app:, for the Preview tab"
+        desc "Run a plan's app from .openlanes/config.yml app:, for the Preview tab"
 
         argument :plan, required: false, desc: "Which plan: NNN or NNN.MM; its worktree when it has one"
 
-        option :redis_url, desc: "Redis the control room reads (default: .openlanes.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
+        option :redis_url, desc: "Redis the control room reads (default: .openlanes/config.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
         option :demo,
           type:    :boolean,
           default: false,
@@ -73,7 +73,7 @@ module OpenLanes
           File.directory?(path) ? path : Dir.pwd
         end
 
-        # The checkout's own `.openlanes.yml`: on a plan's branch, backend-coder may
+        # The checkout's own `.openlanes/config.yml`: on a plan's branch, backend-coder may
         # have written `app:` there and nowhere else yet (M12).
         #
         # @return [OpenLanes::Apps::Definition]

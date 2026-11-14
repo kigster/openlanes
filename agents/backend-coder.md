@@ -27,7 +27,7 @@ When `plan.md`'s `## Frontend` section has no unit headings, or `spec.md` says `
 - `contract.md`: the contract between you and frontend-coder. You own it.
 - `openapi.yaml`, when `plan.md` says the plan has an HTTP surface. You own it too, and link it from `contract.md`.
 - A folder planned before units moved into `plan.md` holds `plan-backend.md`, `plan-frontend.md` and `implementation-plan.md` instead. Read them as the same three documents; do not rename them.
-- `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
+- `.openlanes/config.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
 - On 🔴 Rejected: staff-reviewer's findings in `pull-requests.md` and `gh pr view <n> --comments`.
 
 ## Design
@@ -59,7 +59,7 @@ In any language, build code that is easy to change:
 
 1. Run the back-end suite yourself after the last unit lands.
 
-1. If `.openlanes.yml` has no `coverage:` section, add one for this stack (M15), without disturbing its other keys. `command` runs the whole suite and `minimum` is the lowest line percentage that merges (95 unless the plan says otherwise). Then give exactly one of: `report_command`, a command whose STDOUT is the line percentage as a bare number (e.g. `cat coverage/coverage.json | jq '.total.lines.percent'`); or `report`, the report file's path, with `format`, one of `lcov`, `cobertura`, `istanbul`, `simplecov`. Run both commands once and check the figure prints. Never lower an existing `minimum`.
+1. If `.openlanes/config.yml` has no `coverage:` section, add one for this stack (M15), without disturbing its other keys. `command` runs the whole suite and `minimum` is the lowest line percentage that merges (95 unless the plan says otherwise). Then give exactly one of: `report_command`, a command whose STDOUT is the line percentage as a bare number (e.g. `cat coverage/coverage.json | jq '.total.lines.percent'`); or `report`, the report file's path, with `format`, one of `lcov`, `cobertura`, `istanbul`, `simplecov`. Run both commands once and check the figure prints. Never lower an existing `minimum`.
 
 1. When the contract changes, edit the entry in place, mark it `amended:` with one line on why, and mail frontend-coder. When frontend-coder asks for something, answer in the mailbox. Do not wait on replies: write your assumption into `contract.md`, mail it, and carry on.
 
@@ -76,7 +76,7 @@ In any language, build code that is easy to change:
 
 ## Before you sign `Completed`
 
-Run the back-end check yourself, last thing, after your final edit: the whole back-end test suite (in a Ruby project, all of `bundle exec rspec`) and the back-end linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
+Run the back-end check yourself, last thing, after your final edit: the whole back-end test suite (in a Ruby project, all of `bundle exec rspec`) and the back-end linter, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes/config.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
 
 The front-end tests are frontend-coder's to run, not yours. Run them too only when frontend-coder was not started and you own the whole plan.
 

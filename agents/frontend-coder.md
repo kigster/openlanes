@@ -23,7 +23,7 @@ You build the front-end half of one plan: everything a user sees or touches. `ba
 - `plan.md`, `## Backend`: backend-coder's units. Read once, to learn which files are not yours.
 - `contract.md`: the contract backend-coder writes. Read it before writing markup, and again whenever backend-coder mails that it moved.
 - A folder planned before units moved into `plan.md` holds `plan-frontend.md`, `plan-backend.md` and `implementation-plan.md` instead. Read them as the same three documents; do not rename them.
-- `.openlanes.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
+- `.openlanes/config.yml`, `architecture_decisions:`, when it has that section: `current` is what the repository holds now, `target` what is wanted. Build toward `target`, and put new code where its layout says. It outranks a guess from the code.
 - On 🔴 Rejected: staff-reviewer's findings in `pull-requests.md` and `gh pr view <n> --comments`.
 
 ## Design
@@ -69,7 +69,7 @@ In any language, build code that is easy to change:
 
 ## Before you sign `Completed`
 
-Run the front-end check yourself, last thing, after your final edit: the front-end unit tests, type check and linter, and the end-to-end suite where the repository has one, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
+Run the front-end check yourself, last thing, after your final edit: the front-end unit tests, type check and linter, and the end-to-end suite where the repository has one, by the commands `CLAUDE.md`, `AGENTS.md`, the `justfile` or `.openlanes/config.yml` name. Sign `Completed` only when all of it passes, apart from failures your baseline recorded before you started.
 
 The back-end specs are backend-coder's to run, not yours: do not run `rspec` or any other back-end suite.
 

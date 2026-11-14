@@ -11,12 +11,12 @@ module OpenLanes
     #   0. a failed reviewer's replacement     (adapter only, D14 in plan 031)
     #   1. `run --model`                       (model only)
     #   2. spec.md `phases.<phase>`            (adapter, model, effort)
-    #   3. `.openlanes.yml` `sizing:`          (model, effort; builders only, plan 060)
+    #   3. `.openlanes/config.yml` `sizing:`   (model, effort; builders only, plan 060)
     #   4. spec.md `depth`                     (effort only)
     #   5. the agent's `small_diff:`           (model, effort)
     #   6. the agent's frontmatter
-    #   7. `.openlanes.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
-    #   8. `.openlanes.yml` `adapter:`         (adapter only, plan 040)
+    #   7. `.openlanes/config.yml` `review.adapters:` (adapter only, reviewers only, plan 031)
+    #   8. `.openlanes/config.yml` `adapter:`         (adapter only, plan 040)
     #   9. {Adapters::DEFAULT}                 (adapter only)
     #
     # {Dealing} answers 0, 7 and 8. Step 3 keys on the largest `**Size:**`
@@ -50,7 +50,7 @@ module OpenLanes
       # @param agent [OpenLanes::Agents::Agent]
       # @param spec [OpenLanes::Plans::Spec, nil]
       # @param model [String, nil] what `run --model` typed
-      # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes.yml` gives
+      # @param dealing [OpenLanes::Agents::Dealing] what `.openlanes/config.yml` gives
       #   an agent that names no adapter of its own
       # @param diff_lines [Integer, nil] the plan's changed lines, insertions
       #   plus deletions; nil when unknown, and then no `small_diff:` applies
@@ -74,7 +74,7 @@ module OpenLanes
           effort:  override["effort"] || sized[:effort] || depth_effort || small&.effort || agent.effort)
       end
 
-      # `.openlanes.yml` `sizing:` for the plan's largest unit, a builder only.
+      # `.openlanes/config.yml` `sizing:` for the plan's largest unit, a builder only.
       # The table names Claude's models, which mean nothing to another CLI,
       # so there it sets the effort alone.
       #

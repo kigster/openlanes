@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The live run's Redis, at the address W16 resolves (`.openlanes.yml`, then
+# The live run's Redis, at the address W16 resolves (`.openlanes/config.yml`, then
 # `$REDIS_URL`, then the default), connected and answering PING. One per
 # process, closed when the container shuts down.
 #

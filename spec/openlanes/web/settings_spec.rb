@@ -7,6 +7,7 @@ RSpec.describe OpenLanes::Web::Settings do
   let(:root) { Dir.mktmpdir("settings") }
   let(:file) { File.join(root, OpenLanes::Config::FILE) }
 
+  before { FileUtils.mkdir_p(File.dirname(file)) }
   after { FileUtils.rm_rf(root) }
 
   describe ".read" do
@@ -41,6 +42,32 @@ RSpec.describe OpenLanes::Web::Settings do
       expect(described_class.read(root).values).to eq({})
     end
 
+    context "when the project still has the legacy file" do
+      let(:legacy) { File.join(root, OpenLanes::Project::LEGACY_FILE) }
+
+      around do |example|
+        OpenLanes::Project.reset_notices!
+        example.run
+      ensure
+        OpenLanes::Project.reset_notices!
+      end
+
+      it "reads the legacy file, values and etag" do
+        File.write(legacy, "jobs: 5\n")
+        view = nil
+        expect { view = described_class.read(root) }.to output(/config move/).to_stderr
+        expect([described_class.file(root), view.values, view.etag])
+          .to eq([OpenLanes::Project::LEGACY_FILE, { "jobs" => 5 }, Digest::SHA256.hexdigest("jobs: 5\n")])
+      end
+
+      it "falls back to the new file when both are present, leaving the refusal to Config" do
+        File.write(legacy, "jobs: 5\n")
+        File.write(file, "jobs: 3\n")
+        expect([described_class.file(root), described_class.read(root).values])
+          .to eq([OpenLanes::Config::FILE, { "jobs" => 3 }])
+      end
+    end
+
     it "names the branch the checkout is on" do
       system("git", "init", "-q", "--initial-branch=main", root, out: File::NULL, err: File::NULL)
       expect(described_class.read(root).branch).to eq("main")
@@ -64,7 +91,7 @@ RSpec.describe OpenLanes::Web::Settings do
     end
 
     it "keeps a refusal that names no key, on the whole file" do
-      problem = described_class.parser_problem(".openlanes.yml: expected a mapping of settings at the top")
+      problem = described_class.parser_problem(".openlanes/config.yml: expected a mapping of settings at the top")
       expect(problem.to_json_hash).to eq(path: [], message: "expected a mapping of settings at the top")
     end
   end

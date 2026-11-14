@@ -196,6 +196,10 @@ module OpenLanes
       prefix.register "scan", Memory::Scan
     end
 
+    register "config" do |prefix|
+      prefix.register "move", ConfigFile::Move
+    end
+
     # The durable run log, read back. See {OpenLanes::Events}.
     register "events" do |prefix|
       prefix.register "report", Events::Report

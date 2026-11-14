@@ -6,7 +6,7 @@
 ---
 starts: research                      # research | planning | building
 depth: medium                   # fast | medium | deep
-frontend: false                 # omit to inherit .openlanes.yml; true forces the front-end agent, false forbids it
+frontend: false                 # omit to inherit .openlanes/config.yml; true forces the front-end agent, false forbids it
 implementation_suggestions:     # offered to agents, who may take a better route and say why
   - Reuse the HTTP client already in lib/acme/http.rb
 implementation_requirements:    # met exactly as written, or the agent blocks and asks

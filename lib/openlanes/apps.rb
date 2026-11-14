@@ -2,7 +2,7 @@
 
 module OpenLanes
   # The app a plan builds, run on this machine (plan 012, M12, M13): the
-  # processes `.openlanes.yml` declares under `app:`, started in order on
+  # processes `.openlanes/config.yml` declares under `app:`, started in order on
   # ports from 11100, kept ready, restarted when their files change, and
   # shown in the control room's Preview tab.
   #

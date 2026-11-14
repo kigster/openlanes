@@ -5,7 +5,7 @@ require "fileutils"
 module OpenLanes
   module Setup
     # `docs/decisions/stack.md`: the same fields `stack:` holds in
-    # `.openlanes.yml`, in prose, for the agents and people who read docs
+    # `.openlanes/config.yml`, in prose, for the agents and people who read docs
     # rather than config. Rewritten whole on every `init`, never appended.
     class StackDocument
       # Where it lives, relative to the root.

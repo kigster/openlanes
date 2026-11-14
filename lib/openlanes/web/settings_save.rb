@@ -6,7 +6,7 @@ require "open3"
 module OpenLanes
   module Web
     # One save from the settings page (plan 058, B2, decision S1): write
-    # `.openlanes.yml` in the main checkout, commit it alone and push `main`,
+    # `.openlanes/config.yml` in the main checkout, commit it alone and push `main`,
     # so every worktree made or rebased afterwards reads the new settings.
     #
     # Every refusal is decided before anything is written, so a refused save
@@ -78,7 +78,7 @@ module OpenLanes
       # @return [Outcome]
       def failed(error)
         warn("settings save: #{error.message}")
-        Outcome.new(500, { error: "git failed while saving #{Config::FILE}; see the server log" })
+        Outcome.new(500, { error: "git failed while saving #{file}; see the server log" })
       end
 
       # The S1 guards, cheapest first. None of them writes.
@@ -90,8 +90,8 @@ module OpenLanes
         unless branch == BRANCH
           raise Refused.new("not_on_main", "the main checkout is on #{branch || "a detached HEAD"}, not #{BRANCH}")
         end
-        raise Refused.new("dirty_config", "#{Config::FILE} has uncommitted edits; commit or discard them first") if dirty?
-        raise Refused.new("stale_etag", "#{Config::FILE} changed since the page read it; reload") unless if_match == Settings.etag(@root)
+        raise Refused.new("dirty_config", "#{file} has uncommitted edits; commit or discard them first") if dirty?
+        raise Refused.new("stale_etag", "#{file} changed since the page read it; reload") unless if_match == Settings.etag(@root)
 
         behind_remote!
       end
@@ -112,7 +112,7 @@ module OpenLanes
         end
         return if blob("HEAD") == blob("refs/remotes/#{REMOTE}/#{BRANCH}")
 
-        raise Refused.new("stale_etag", "#{REMOTE}/#{BRANCH} holds a newer #{Config::FILE}; pull and reload")
+        raise Refused.new("stale_etag", "#{REMOTE}/#{BRANCH} holds a newer #{file}; pull and reload")
       end
 
       # @param config [Config]
@@ -150,13 +150,13 @@ module OpenLanes
       # @return [void]
       def commit!(config)
         before = git!("rev-parse", "HEAD").strip
-        File.write(path, config.to_yaml)
-        git!("add", "--", Config::FILE)
-        git!("commit", "-q", "-m", MESSAGE, "--", Config::FILE)
+        Settings.write(@root, config.to_yaml)
+        git!("add", "--", file)
+        git!("commit", "-q", "-m", MESSAGE, "--", file)
       rescue Error
         git("reset", "-q", "--soft", before) if before
         restore!
-        raise Refused.new("commit_failed", "git could not commit #{Config::FILE}; nothing was changed")
+        raise Refused.new("commit_failed", "git could not commit #{file}; nothing was changed")
       end
 
       # Takes back the commit {#land} made, and the file with it.
@@ -171,23 +171,26 @@ module OpenLanes
       #
       # @return [void]
       def restore!
-        git("reset", "-q", "--", Config::FILE)
-        _, tracked = git("cat-file", "-e", "HEAD:#{Config::FILE}")
-        tracked ? git!("checkout", "-q", "HEAD", "--", Config::FILE) : FileUtils.rm_f(path)
+        git("reset", "-q", "--", file)
+        _, tracked = git("cat-file", "-e", "HEAD:#{file}")
+        tracked ? git!("checkout", "-q", "HEAD", "--", file) : FileUtils.rm_f(path)
       end
 
       # @return [Boolean]
-      def dirty? = !git!("status", "--porcelain", "--", Config::FILE).strip.empty?
+      def dirty? = !git!("status", "--porcelain", "--", file).strip.empty?
 
       # @param ref [String]
       # @return [String, nil] the file's blob at +ref+
       def blob(ref)
-        out, ok = git("rev-parse", "-q", "--verify", "#{ref}:#{Config::FILE}")
+        out, ok = git("rev-parse", "-q", "--verify", "#{ref}:#{file}")
         ok ? out.strip : nil
       end
 
       # @return [String]
-      def path = File.join(@root, Config::FILE)
+      def path = File.join(@root, file)
+
+      # @return [String] the file this checkout has, relative to the root
+      def file = Settings.file(@root)
 
       # @param args [Array<String>]
       # @return [Array(String, Boolean)]

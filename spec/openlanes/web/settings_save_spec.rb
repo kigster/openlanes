@@ -11,8 +11,8 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
   let(:file) { File.join(main, OpenLanes::Config::FILE) }
   let(:boundary) { class_double(OpenLanes::Execution::Boundary, sanction: nil) }
   let!(:upstream) do
-    FileUtils.mkdir_p(main)
-    File.write(File.join(main, OpenLanes::Config::FILE), "jobs: 2\n")
+    FileUtils.mkdir_p(File.dirname(file))
+    File.write(file, "jobs: 2\n")
     publish_with_origin(main, tmp)
   end
 
@@ -70,7 +70,7 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
       expect([head, origin_main, File.read(file)]).to eq(before)
     end
 
-    it "refuses when .openlanes.yml has uncommitted edits" do
+    it "refuses when .openlanes/config.yml has uncommitted edits" do
       File.write(file, "jobs: 9\n")
       before = [head, origin_main]
       expect_untouched(save({ "jobs" => 3 }), "dirty_config")
@@ -83,7 +83,7 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
       expect([head, origin_main, File.read(file)]).to eq(before)
     end
 
-    it "refuses when origin/main holds a newer .openlanes.yml" do
+    it "refuses when origin/main holds a newer .openlanes/config.yml" do
       commit_file(upstream, OpenLanes::Config::FILE, "jobs: 7\n")
       git!(upstream, "push", "-q", "origin", "main")
       before = [head, File.read(file)]
@@ -127,6 +127,43 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
       expect_untouched(outcome, "commit_failed")
       expect(outcome.body[:reason]).not_to include(main, "secret hook output")
       expect([head, origin_main, File.read(file)]).to eq(before)
+      expect(git!(main, "status", "--porcelain")).to eq("")
+    end
+  end
+
+  it "creates the .openlanes folder for a project that has no config file yet" do
+    git!(main, "rm", "-q", OpenLanes::Config::FILE)
+    git!(main, "commit", "-q", "-m", "drop the config")
+    git!(main, "push", "-q", "origin", "main")
+    outcome = save({ "jobs" => 4 })
+
+    expect([outcome.status, File.read(file), origin_main])
+      .to eq([200, OpenLanes::Config.load(main).to_yaml, head])
+  end
+
+  context "when the project still has the legacy file" do
+    let(:legacy) { File.join(main, OpenLanes::Project::LEGACY_FILE) }
+
+    around do |example|
+      OpenLanes::Project.reset_notices!
+      example.run
+    ensure
+      OpenLanes::Project.reset_notices!
+    end
+
+    before do
+      git!(main, "mv", OpenLanes::Config::FILE, OpenLanes::Project::LEGACY_FILE)
+      git!(main, "commit", "-q", "-m", "back to the legacy name")
+      git!(main, "push", "-q", "origin", "main")
+    end
+
+    it "saves into the legacy file and never writes a second one" do
+      outcome = nil
+      expect { outcome = save({ "jobs" => 4 }) }.to output(/config move/).to_stderr
+
+      expect([outcome.status, File.exist?(file), OpenLanes::Config.load(main).jobs])
+        .to eq([200, false, 4])
+      expect(git!(main, "show", "--name-only", "--format=", "HEAD")).to eq(OpenLanes::Project::LEGACY_FILE)
       expect(git!(main, "status", "--porcelain")).to eq("")
     end
   end

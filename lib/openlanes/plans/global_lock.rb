@@ -23,7 +23,7 @@ module OpenLanes
     # tree's names cannot say, so {LockClock} writes it into the refactor's
     # `state.json` and this class only reads it back.
     class GlobalLock
-      # How long the lock holds, in hours, when `.openlanes.yml` is silent.
+      # How long the lock holds, in hours, when `.openlanes/config.yml` is silent.
       DEFAULT_HOURS = 24
 
       # The states in which a plan is finished: its branch merged or closed.

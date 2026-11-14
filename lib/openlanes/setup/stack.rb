@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Setup
-    # A project's stack: the fields `stack:` holds in `.openlanes.yml`
+    # A project's stack: the fields `stack:` holds in `.openlanes/config.yml`
     # ({Config::STACK_FIELDS}), each nil until somebody answered it.
     # `frameworks` is a list; every other field is one name.
     Stack = Data.define(*Config::STACK_FIELDS) do
@@ -19,7 +19,7 @@ module OpenLanes
         new(**fields)
       end
 
-      # The `.openlanes.yml` shape: answered fields only, so an unknown is
+      # The `.openlanes/config.yml` shape: answered fields only, so an unknown is
       # left out rather than written as a placeholder.
       #
       # @return [Hash{Symbol => Object}]

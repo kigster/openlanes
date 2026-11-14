@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Agents
-    # `.openlanes.yml` `sizing:`: the model and effort a builder runs on for a
+    # `.openlanes/config.yml` `sizing:`: the model and effort a builder runs on for a
     # plan whose largest unit is small, medium or large ({Plans::UnitSizes}).
     #
     #   sizing:

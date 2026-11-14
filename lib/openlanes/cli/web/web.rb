@@ -14,7 +14,7 @@ module OpenLanes
         desc:    "Port to listen on"
       listen_options
       option :redis_url,
-        desc: "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes.yml redis_url, else $REDIS_URL, " \
+        desc: "Redis the engine publishes to (default: $OPENLANES_REDIS_URL, else .openlanes/config.yml redis_url, else $REDIS_URL, " \
               "else #{Live::DEFAULT_URL})"
       option :open,
         type:    :boolean,

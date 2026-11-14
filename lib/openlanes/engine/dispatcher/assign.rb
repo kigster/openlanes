@@ -194,7 +194,7 @@ module OpenLanes
           @said = said
         end
 
-        # No agent starts while `.openlanes.yml` has no `desired_codebase_quality:`
+        # No agent starts while `.openlanes/config.yml` has no `desired_codebase_quality:`
         # (plan 035): every level changes what the builders and reviewers aim
         # for, so work done before the answer would be done to the wrong
         # standard. The question goes on the first plan in scope, where the

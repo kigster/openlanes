@@ -425,7 +425,7 @@ module OpenLanes
         json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
       end
 
-      # `.openlanes.yml` as the settings page draws it (plan 058, B3).
+      # `.openlanes/config.yml` as the settings page draws it (plan 058, B3).
       get "/api/settings" do
         json(Settings.read(context.root).to_json_hash)
       end

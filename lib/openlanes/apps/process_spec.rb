@@ -2,7 +2,7 @@
 
 module OpenLanes
   module Apps
-    # One process of an app, as `.openlanes.yml` declares it under
+    # One process of an app, as `.openlanes/config.yml` declares it under
     # `app.processes` (M12).
     #
     # @!attribute [r] name
@@ -29,7 +29,7 @@ module OpenLanes
       # @return [Boolean]
       def preview? = preview == true
 
-      # @return [Hash] as `.openlanes.yml` spells it, defaults left out
+      # @return [Hash] as `.openlanes/config.yml` spells it, defaults left out
       def to_h
         { "name" => name, "start" => start, "ready" => ready,
           "restart_on" => (restart_on unless restart_on.empty?), "preview" => (true if preview?) }.compact

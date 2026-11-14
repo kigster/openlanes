@@ -122,7 +122,7 @@ RSpec.describe OpenLanes::Setup::Machine do
 
       it "masks the password and says where to set the URL" do
         expect(check("redis").detail).to eq("redis://kig:***@10.0.4.2:6379/0 does not answer")
-        expect(check("redis").fix).to include(".openlanes.yml")
+        expect(check("redis").fix).to include(".openlanes/config.yml")
       end
     end
   end

@@ -23,7 +23,7 @@ module OpenLanes
       REFACTOR = "refactor"
 
       # The share of the codebase, in percent by files or by lines, above
-      # which a refactor runs alone. `.openlanes.yml` overrides it with
+      # which a refactor runs alone. `.openlanes/config.yml` overrides it with
       # `refactor: { threshold: N }`.
       DEFAULT_THRESHOLD = 50
 
