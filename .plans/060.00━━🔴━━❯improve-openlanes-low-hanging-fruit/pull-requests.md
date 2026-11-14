@@ -117,3 +117,10 @@ Note on F204: `lib/openlanes/adapters/claude.rb:15` on `main` says the Claude ad
 - `just update-architecture` re-run. `bundle exec rubocop`: 951 files, no offenses.
 - Full `bundle exec rspec`: started this round, output in `/tmp/ol060-r8-full.txt`. Check it before signing Completed.
 - Still open: B2 `PreReviewGate`, B6 integration spec, and the three fixes the rebuild dropped (they are on `39f5401d`).
+
+## Round 9, backend-coder
+
+- Lost fixes: `Live::Store`'s Monitor and the `OPENLANES_ADMIN_CREDENTIALS` reset are already on `main` in their own form, so nothing was ported for them. The `.openlanes.yml` isolation (chdir to the fixture root) is back in `routing_spec`, `dispatcher_spec` and `run_workflow_spec`: 158 examples, 0 failures.
+- Round 8's full run (`/tmp/ol060-r8-full.txt`) ended at 2715 examples, 0 failures; it was not the whole suite.
+- B2, first half: `lib/openlanes/engine/pre_review_gate.rb`. `PreReviewGate.call(checkout) -> Verdict(passed?, reason, log_tail)` runs `Execution::Checks.commands(checkout)` through `Execution::Child`, stops at the first red command, keeps the last 40 lines, calls a command past its timeout red, and passes a checkout with nothing it recognises. `spec/openlanes/engine/pre_review_gate_spec.rb`: 7 examples, 0 failures, including a justfile whose `check-all` exits 1. Rubocop clean; `just update-architecture` re-run.
+- Still open: wiring the gate into `dispatcher/settle.rb` (it must not block the tick: run it on the job's thread, or as its own job), `review.gate` / `review.gate_timeout` in `support/config.rb`, `settle_gate_spec.rb`, B6, then the full suite.

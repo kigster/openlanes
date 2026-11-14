@@ -1,0 +1,798 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "045.02",
+    "slug": "split-dispatcher"
+  },
+  "state": "building",
+  "updated_at": "2026-11-14T13:19:25-08:00",
+  "stages": [
+    {
+      "agent": "planner",
+      "round": 1,
+      "status": "Completed",
+      "from": "ready_for_planning",
+      "started_at": "2026-11-13T02:41:56-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "e3f808fb-4688-46ed-a037-110e752b17b4",
+      "to": "planned",
+      "finished_at": "2026-11-13T02:44:22-08:00",
+      "up": 621058,
+      "down": 16745,
+      "seconds": 144.3,
+      "note": "completed - 11 tool calls",
+      "moves": 3
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "planned",
+      "started_at": "2026-11-13T02:44:25-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-13T02:54:00-08:00",
+      "up": 209789,
+      "down": 723,
+      "seconds": 573.3,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 2,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-13T02:59:10-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-13T03:04:36-08:00",
+      "up": 2820742,
+      "down": 18608,
+      "seconds": 324.3,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 3,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-13T09:28:35-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-13T09:41:53-08:00",
+      "up": 775597,
+      "down": 1534,
+      "seconds": 794.3,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 4,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-13T14:11:14-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-13T14:24:52-08:00",
+      "up": 1211887,
+      "down": 1566,
+      "seconds": 816.7,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 5,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-13T22:31:02-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-13T22:45:34-08:00",
+      "up": 876573,
+      "down": 658,
+      "seconds": 870.5,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 6,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-14T10:18:56-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-14T10:25:48-08:00",
+      "up": 7241442,
+      "down": 27595,
+      "seconds": 410.9,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 7,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-14T10:51:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-14T11:18:17-08:00",
+      "up": 4634993,
+      "down": 41949,
+      "seconds": 1592.6,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 8,
+      "status": "Almost completed",
+      "from": "building",
+      "started_at": "2026-11-14T12:52:45-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-14T13:03:13-08:00",
+      "up": 484295,
+      "down": 621,
+      "seconds": 627.3,
+      "note": "Almost completed; no rounds left",
+      "moves": 4
+    },
+    {
+      "agent": "backend-coder",
+      "round": 9,
+      "status": "Interrupted",
+      "from": "building",
+      "started_at": "2026-11-14T13:12:44-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/045.02-split-dispatcher",
+      "adapter": "claude",
+      "model": "claude-fable-5-1",
+      "effort": "high",
+      "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+      "to": "building",
+      "finished_at": "2026-11-14T13:19:25-08:00",
+      "up": 2667658,
+      "down": 19437,
+      "seconds": 400.7,
+      "note": "interrupted, killed 60s after ctrl-c; Interrupted; no rounds left",
+      "moves": 4
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-13T02:42:06-08:00",
+      "agent": "planner",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T02:44:11-08:00",
+      "agent": "planner",
+      "status": "Completed",
+      "round": 1,
+      "next": "backend-coder"
+    },
+    {
+      "at": "2026-11-13T02:44:34-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T02:50:15-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
+    },
+    {
+      "at": "2026-11-13T02:59:20-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T03:04:24-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 2
+    },
+    {
+      "at": "2026-11-13T09:28:47-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 3
+    },
+    {
+      "at": "2026-11-13T09:32:12-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 3
+    },
+    {
+      "at": "2026-11-13T14:11:25-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 4
+    },
+    {
+      "at": "2026-11-13T14:15:55-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 4
+    },
+    {
+      "at": "2026-11-13T22:31:20-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 5
+    },
+    {
+      "at": "2026-11-13T22:36:29-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 5
+    },
+    {
+      "at": "2026-11-14T10:19:17-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 6
+    },
+    {
+      "at": "2026-11-14T10:25:34-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 6
+    },
+    {
+      "at": "2026-11-14T10:52:04-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 7
+    },
+    {
+      "at": "2026-11-14T10:59:37-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 7
+    },
+    {
+      "at": "2026-11-14T11:18:06-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 7,
+      "note": "U1-U7 code done and rubocop-clean with the dispatcher todo entries removed; U7 specs, docs regen and U8 integration spec remain"
+    },
+    {
+      "at": "2026-11-14T12:52:58-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 8
+    },
+    {
+      "at": "2026-11-14T12:56:12-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 8,
+      "note": "U1-U7 done with specs; U8 todo entries, public_send and docs done; the integration spec against a fixture captured on main remains"
+    },
+    {
+      "at": "2026-11-14T13:13:08-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 9
+    },
+    {
+      "at": "2026-11-14T13:18:47-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 9
+    },
+    {
+      "at": "2026-11-14T13:19:25-08:00",
+      "agent": "backend-coder",
+      "status": "Interrupted",
+      "round": 9,
+      "note": "interrupted, killed 60s after ctrl-c"
+    }
+  ],
+  "messages": [],
+  "moves": 4,
+  "memory": {
+    "planner": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "ready_for_planning",
+          "entries": [
+            {
+              "kind": "decision",
+              "text": "Kept depends_on [\"045.01\"] as written; 045.01 (dry-system wiring) is merged, so Deps[...] is available"
+            },
+            {
+              "kind": "decision",
+              "text": "execution: concurrent: 14/2166 files (0.6%), 2960/197445 lines (1.5%), threshold 50%"
+            },
+            {
+              "kind": "decision",
+              "text": "8 units: U1 Desk first (shared contract), U2-U7 disjoint (Dispatcher, Assign, Start, Settle, Rename, Poll/Lanes/Rows/Rulings), U8 alone owns .rubocop_todo.yml, docs/architecture and the integration spec"
+            },
+            {
+              "kind": "note",
+              "text": "settle.rb:338 uses result.public_send(field), a computed name that A8 forbids; U5 replaces it with literal readers"
+            },
+            {
+              "kind": "note",
+              "text": "Integration check: compare a PlansFixture run through the real Dispatcher (shared isolation, scripted fake adapter) against a fixture captured on main before the split"
+            },
+            {
+              "kind": "done",
+              "text": "plan.md written; signed Completed, next backend-coder"
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "e3f808fb-4688-46ed-a037-110e752b17b4",
+        "through": 6
+      }
+    },
+    "backend-coder": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "planned",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U1 Desk split: desk.rb 98 lines; collaborators under desk/: Setup, Registers, Guards, Profiles, Budgeting, Fences, Rounds, RoundRecords, Lookups, Events. All 292 dispatcher and container examples pass; rubocop is clean across the repo."
+            },
+            {
+              "kind": "decision",
+              "text": "Desk.new still accepts the old keywords and folds them into Desk::Setup, so dispatcher.rb and desk_spec.rb stay unedited. Clock comes in through Deps[\"clock\"]."
+            },
+            {
+              "kind": "decision",
+              "text": "Desk#remember and #harness_resume keep their positional signatures behind an inline ParameterLists disable, because the steps call them positionally. Revisit in U8."
+            },
+            {
+              "kind": "todo",
+              "text": "Confirm the full rspec suite is green with U1; the baseline run had not finished when the round ended. Then build U2 (dispatcher.rb into controls, ticker, restart, options), U3 to U7, and U8 (todo cleanup, architecture docs, integration spec)."
+            },
+            {
+              "kind": "note",
+              "text": "Plan is frontend:false, so there is no contract.md and no mailbox. The baseline full-suite output is going to /tmp/045.02-baseline.txt."
+            },
+            {
+              "kind": "todo",
+              "text": "Full suite: 6482 examples, 2 failures, 9 pending. Both failures are likely caused by U1. The thread-safety inventory spec needs desk/registers.rb, which now holds Mutex.new. The architecture-doc spec needs a run of just update-architecture."
+            }
+          ]
+        },
+        "2": {
+          "round": 2,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Fixed the thread-safety inventory failure: the Desk row in docs/thread-safety.md now names desk/registers.rb, which holds the mutex."
+            },
+            {
+              "kind": "done",
+              "text": "U2 code: dispatcher.rb now hands its work to Options, Controls, Restart and Ticker. Dispatcher, live, runner and inventory specs: 964 examples, 0 failures. Rubocop is clean across the repo."
+            },
+            {
+              "kind": "decision",
+              "text": "Dispatcher#initialize takes **options and folds them into Options.with_defaults, so callers are unchanged. Clock comes from Deps[clock] via @clock, because the delegated clock reader is nil until the desk exists."
+            },
+            {
+              "kind": "note",
+              "text": "Specs reach into Dispatcher internals: @sleeper, @watching, @holds, @finished_plans, @discarding, @conversions, @unblocking, and the private methods reattach, resume_stranded, idle_reason, blockers_first, apply_hold, record_journal, untouchable and finish. Keep all of them on Dispatcher."
+            },
+            {
+              "kind": "todo",
+              "text": "U2 is not finished: dispatcher.rb is 179 lines by wc (most of it constants and their docs), and the controls, ticker, restart and options specs are not written. Then U3 to U8, and a full-suite run."
+            }
+          ]
+        },
+        "3": {
+          "round": 3,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U2 done: dispatcher.rb is 100 lines. New FixedPoint class holds done?. New specs for controls, options, restart, ticker and fixed_point (15 examples) pass. Rubocop clean on dispatcher files."
+            },
+            {
+              "kind": "decision",
+              "text": "Dispatcher constants stay on Dispatcher with one-line comments: six step files use LINGER, KILL_GRACE, FINISHED, REVIEW_PHASE and HARNESS unqualified, which an included module would not resolve."
+            },
+            {
+              "kind": "done",
+              "text": "Ran just update-architecture in round 3: README.md and openlanes-engine.md changed; docs/architecture/before is untouched."
+            },
+            {
+              "kind": "todo",
+              "text": "U3 split plan for assign.rb: Candidates (next_dispatchable, held?, partners_only, eligible?, blockers_first), IdleReason (idle_reason, quality_awaited?), Rounds (ask_for_rounds, out_of_rounds), Upkeep (reconcile, fast_forward)."
+            },
+            {
+              "kind": "note",
+              "text": "The full suite is slow when other runs share the machine (15 rspec processes in round 3). Start it early in a round, and read /tmp/045.02-r3-full.txt first next round."
+            },
+            {
+              "kind": "done",
+              "text": "Full suite after U1, U2 and the architecture regen: 6157 examples, 0 failures, 9 pending, coverage 98.41%. Killed by the 10-minute background limit after the summary printed, so the exit code is unknown. Result recorded in pull-requests.md."
+            },
+            {
+              "kind": "note",
+              "text": "Full suite takes about 10 minutes, right at the background limit. Next time run it with run_in_background and timeout above 600000 ms so the exit code is captured. Round 1 counted 6482 examples and this run 6157; work out why."
+            }
+          ]
+        },
+        "4": {
+          "round": 4,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U3 done: assign.rb is 93 lines. New classes under assign/: Candidates, Refusals, Quota, QualityGate, IdleReason, Upkeep, each at most 100 lines and passing rubocop. Dispatcher-area specs: 975 examples, 0 failures. New assign/ specs: 13 examples, 0 failures."
+            },
+            {
+              "kind": "decision",
+              "text": "Assign's collaborators subclass Step, so they reach the desk through Step's private delegators, as the steps already do. Refusals keeps the original check order, because held_outside? and the budget check both log."
+            },
+            {
+              "kind": "done",
+              "text": "Round 4: full bundle exec rubocop exits 0 (1002 files). Full rspec started in the background with a 30-minute timeout; output and EXIT line go to /tmp/045.02-r4-full.txt."
+            },
+            {
+              "kind": "todo",
+              "text": "U4 split plan for Start#start (about 114 lines): Admission (reserve, lock, rename on start, opening a review round), JobBuilder (prepare the task, handle, bonus seconds, Job.new), Record (remember, stage!, state file, feed, log, event), Invocation (successor, partners, resume, the executor lambda). Both Thread.new calls stay in Start."
+            },
+            {
+              "kind": "done",
+              "text": "Round 4 full suite after U3: 6563 examples, 1 failure (architecture_doc_spec, docs stale), 9 pending, coverage 99.23%, exit 1. Reran just update-architecture; that spec now passes. Rubocop exits 0."
+            },
+            {
+              "kind": "note",
+              "text": "Every unit that adds classes makes architecture_doc_spec fail until just update-architecture is rerun. Regenerate the docs after each unit, not only in the final integration unit, so the full suite stays green."
+            }
+          ]
+        },
+        "5": {
+          "round": 5,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U4 done: start.rb is 100 lines and keeps both Thread.new sites (work, start_rebase). New classes under start/: Claims, Session, Jobs, Record, Invocation, Launch, Adoption, Conflicts. Dispatcher-area specs: 988 examples, 0 failures; new start/ specs: 6 examples, 0 failures. Rubocop exits 0 (1012 files). Architecture docs regenerated."
+            },
+            {
+              "kind": "decision",
+              "text": "Start#launch keeps the original failure handling: unreserve on any error after reserve, and release the lock only once the review round is opened and before the thread exists. Adoption and Conflicts get work/start_rebase as callables, so Thread.new stays in Start."
+            },
+            {
+              "kind": "note",
+              "text": "An error raised inside Claims#reserve, other than a refusal, no longer reaches the unreserve that used to follow it; the original method-wide rescue covered it. Probably harmless, since a reserve that raised has taken nothing, but check it in review."
+            },
+            {
+              "kind": "note",
+              "text": "The live-run spec context already defines let(:claims), which overrides a subject of the same name. Pick another name in specs."
+            },
+            {
+              "kind": "done",
+              "text": "Full suite after U4: 6569 examples, 0 failures, 9 pending, coverage 99.25%, EXIT 0. Rubocop exits 0. Recorded in pull-requests.md."
+            }
+          ]
+        },
+        "6": {
+          "round": 6,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U5 done: settle.rb is 100 lines. New under settle/: Spend, Stops, Signing, Verdict, Records, Replacement, Announcement, Special, Linger. The public_send spend lambda is replaced by Spend.of with literal readers. Dispatcher-area specs: 994 examples, 0 failures; new settle/ specs: 5, 0 failures. Rubocop exits 0 (1023 files). Docs regenerated."
+            },
+            {
+              "kind": "decision",
+              "text": "Signing#unsigned takes the stop reason as base.note, to stay within 4 parameters; the outcome replaces that note, so nothing else sees it."
+            },
+            {
+              "kind": "todo",
+              "text": "U8 requires no computed-name hit in lib/openlanes/engine, but rebase.rb:188 (a spend lambda) and run_workflow.rb:782 (a computed log level) both call public_send, outside this plan's files. Fix them in U8 or ask the maintainer."
+            },
+            {
+              "kind": "note",
+              "text": "Round 6 suite: pkill -f on the output file name killed the wrapper shell, so /tmp/045.02-r6-full.txt will hold the rspec summary but no EXIT line. Run the suite only through Bash run_in_background, never with & inside a command."
+            }
+          ]
+        },
+        "7": {
+          "round": 7,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 6 full suite (after U5): 6574 examples, 0 failures, 9 pending, coverage 99.25%."
+            },
+            {
+              "kind": "done",
+              "text": "U6 done: rename.rb is 91 lines. New under rename/: Completed (a value object), Verdicts, Holds, Parking, Approval, Verify, Publication, Promotion, Advance, Review. Dispatcher, live, runner and integration specs: 1071 examples, 0 failures. New rename/ specs: 6 examples, 0 failures. Rubocop exits 0 (1035 files). Docs regenerated."
+            },
+            {
+              "kind": "decision",
+              "text": "Advance#honour falls back to the round's subject when the folder can no longer be found, where the old code fell back to the subject the publish returned. Only reachable when the folder vanished mid-round."
+            },
+            {
+              "kind": "decision",
+              "text": "045.02 U7: removed all 28 lib/openlanes/engine/dispatcher* entries from .rubocop_todo.yml before splitting, so rubocop reports the real A8 offenses. That exposed offenses still hidden in settle.rb (attempt_for, now Settle::Account) and start.rb (launch, start_rebase; the rebase body now lives in Start::Jobs#resolve, and Thread.new stays in start.rb)."
+            },
+            {
+              "kind": "note",
+              "text": "045.02: Desk has a public `finish`, so a Step subclass method named `finish` would shadow it. Discards uses `complete` instead. Before naming a step method, check Desk.public_instance_methods(false)."
+            }
+          ]
+        },
+        "8": {
+          "round": 8,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 8: specs for U7's new classes (Poll::Mail, Journal, Sighting, Lanes::Discards, Copilot, Rows::Active, Settle::Account): 21 examples, 0 failures, rubocop clean. Architecture docs regenerated."
+            },
+            {
+              "kind": "done",
+              "text": "U8: public_send replaced by literal calls in rebase.rb (a new private tokens(spent) method) and run_workflow.rb (info or warn chosen by a ternary). rg for method_missing, public_send and send( across lib/openlanes/engine prints nothing. Rebase and run specs: 126 examples, 0 failures."
+            },
+            {
+              "kind": "done",
+              "text": "U8: all 28 lib/openlanes/engine/dispatcher* entries are out of .rubocop_todo.yml (AbcSize 10, ClassLength 6, MethodLength 10, ParameterLists 2), listed in pull-requests.md round 8."
+            },
+            {
+              "kind": "todo",
+              "text": "U8 integration spec not written. Model it on spec/integration/resume_across_rounds_spec.rb (a real Runner and a fake CLI in a temp bin). Capture the fixture under spec/fixtures/ by running the same spec in a temporary main worktree, then compare folder names per tick, state.json signatures, blocked.md and the board text."
+            },
+            {
+              "kind": "todo",
+              "text": "The round 8 full suite was still running at sign-off; its output and EXIT line go to /tmp/045.02-r8-full.txt. It started before the U7 specs and the public_send fixes landed. Read it first next round, then rerun the full rspec and rubocop before signing Completed."
+            },
+            {
+              "kind": "done",
+              "text": "Round 8 full suite, run on the U7 code but before the U7 specs and the public_send fixes: 6580 examples, 0 failures, 9 pending, coverage 99.26%, EXIT 0. Recorded in pull-requests.md."
+            }
+          ]
+        },
+        "9": {
+          "round": 9,
+          "state": "building",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "U8 integration spec written: spec/openlanes/engine/dispatcher_split_integration_spec.rb drives a real Runner through the real Dispatcher (--isolation shared, scripted executor, jobs 1, rounds 1): 001.00 moves 📋 → ⭐ → 🟡, 002.00 blocks. It records folder names per tick (consecutive repeats collapsed), state.json signatures, blocked.md, attempts and board text, compared with spec/fixtures/dispatcher_split/run.yml. Passes on the split: 1 example, 0 failures."
+            },
+            {
+              "kind": "decision",
+              "text": "The fixture was captured at this branch's HEAD 6a60b1f0 (the pre-split main tip; all split work is uncommitted) in a detached temporary git worktree, by running the spec with OPENLANES_CAPTURE_FIXTURE=1, then the worktree was removed. origin/main in this checkout was stale at c9514793, so it was not used."
+            },
+            {
+              "kind": "done",
+              "text": "Round 9: full bundle exec rubocop, 1050 files, no offenses. rg for method_missing, public_send and send( across lib/openlanes/engine prints nothing. docs/architecture/before is untouched."
+            },
+            {
+              "kind": "note",
+              "text": "Round 9 ended on INTERRUPT with the full rspec still running in the background into /tmp/045.02-r9-full.txt (EXIT line at the end). Next round: read it; if EXIT 0, record it in pull-requests.md and sign Completed; otherwise fix and rerun. Nothing else remains."
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "d1d4452d-09d8-46a9-9312-5cc28c5fa46e",
+        "through": 48
+      }
+    }
+  },
+  "last-known-state": {
+    "backend-coder": {
+      "source": "agent",
+      "at": "2026-11-14T13:18:34-08:00",
+      "round": 9,
+      "status": "Interrupted",
+      "done": [
+        "U1-U7",
+        "U8 todo entries removed",
+        "U8 public_send removed",
+        "U8 architecture docs regenerated",
+        "U8 integration spec dispatcher_split_integration_spec.rb with fixture spec/fixtures/dispatcher_split/run.yml captured on pre-split HEAD 6a60b1f0 (passes)",
+        "full rubocop 1050 files 0 offenses"
+      ],
+      "remaining": [
+        "full rspec result (running into /tmp/045.02-r9-full.txt with EXIT line)",
+        "sign Completed"
+      ],
+      "next_step": "Read /tmp/045.02-r9-full.txt; if EXIT 0 record it in pull-requests.md and sign Completed; otherwise fix the failure, rerun, then sign",
+      "files_touched": [
+        "spec/openlanes/engine/dispatcher_split_integration_spec.rb",
+        "spec/fixtures/dispatcher_split/run.yml",
+        "lib/openlanes/engine/dispatcher.rb",
+        "lib/openlanes/engine/dispatcher/",
+        "lib/openlanes/engine/rebase.rb",
+        "lib/openlanes/engine/run_workflow.rb",
+        ".rubocop_todo.yml",
+        "docs/architecture/",
+        "docs/thread-safety.md",
+        "spec/openlanes/engine/dispatcher/"
+      ]
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T02:54:00-08:00",
+      "answer": "a",
+      "by": "auto",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T02:59:08-08:00"
+    },
+    {
+      "number": 2,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 2,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T03:04:38-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T09:28:33-08:00"
+    },
+    {
+      "number": 3,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 3,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T09:41:54-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T14:11:10-08:00"
+    },
+    {
+      "number": 4,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 4,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T14:24:52-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-13T22:31:00-08:00"
+    },
+    {
+      "number": 5,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 5,
+      "limit": "rounds",
+      "asked_at": "2026-11-13T22:45:34-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T10:18:54-08:00"
+    },
+    {
+      "number": 6,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 6,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T10:25:48-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T10:51:42-08:00"
+    },
+    {
+      "number": 7,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 7,
+      "limit": "time",
+      "asked_at": "2026-11-14T11:06:44-08:00",
+      "answer": "b",
+      "by": "auto",
+      "grant": "live",
+      "seconds": 600,
+      "settled_at": "2026-11-14T11:09:44-08:00"
+    },
+    {
+      "number": 8,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 7,
+      "limit": "time",
+      "asked_at": "2026-11-14T11:16:44-08:00",
+      "closed": "finished",
+      "settled_at": "2026-11-14T11:18:17-08:00"
+    },
+    {
+      "number": 9,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 7,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T11:18:18-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T12:52:43-08:00"
+    },
+    {
+      "number": 10,
+      "agent": "backend-coder",
+      "state": "building",
+      "round": 8,
+      "limit": "rounds",
+      "asked_at": "2026-11-14T13:03:14-08:00",
+      "answer": "a",
+      "by": "hermes",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-14T13:12:42-08:00"
+    }
+  ]
+}

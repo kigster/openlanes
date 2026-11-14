@@ -6,7 +6,7 @@
     "slug": "improve-openlanes-low-hanging-fruit"
   },
   "state": "rejected",
-  "updated_at": "2026-11-12T23:56:33-08:00",
+  "updated_at": "2026-11-13T00:02:00-08:00",
   "stages": [
     {
       "agent": "planner",
@@ -481,6 +481,44 @@
       "model": "opus",
       "effort": "high",
       "session": "8a030ec2-41e1-4406-b01b-f702f57adc9c"
+    },
+    {
+      "agent": "backend-coder",
+      "round": 1,
+      "status": "Almost completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:58:32-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "opus",
+      "effort": "high",
+      "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+      "to": "rejected",
+      "finished_at": "2026-11-13T00:02:00-08:00",
+      "up": 1259452,
+      "down": 12198,
+      "seconds": 205.9,
+      "note": "Almost completed; no rounds left",
+      "moves": 7
+    },
+    {
+      "agent": "frontend-coder",
+      "round": 1,
+      "status": "Completed",
+      "from": "rejected",
+      "started_at": "2026-11-12T23:58:48-08:00",
+      "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/060.00-improve-openlanes-low-hanging-fruit",
+      "adapter": "claude",
+      "model": "sonnet",
+      "effort": "medium",
+      "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
+      "to": "rejected",
+      "finished_at": "2026-11-12T23:59:05-08:00",
+      "up": 153928,
+      "down": 720,
+      "seconds": 16.3,
+      "note": "completed - 2 tool calls; next: names design-reviewer, who does not handle 🔴 Changes Requested",
+      "moves": 7
     }
   ],
   "signatures": [
@@ -742,6 +780,32 @@
       "agent": "backend-coder",
       "status": "Interrupted",
       "round": 2
+    },
+    {
+      "at": "2026-11-12T23:58:44-08:00",
+      "agent": "backend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:58:59-08:00",
+      "agent": "frontend-coder",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-12T23:59:02-08:00",
+      "agent": "frontend-coder",
+      "status": "Completed",
+      "round": 1,
+      "note": "no front end",
+      "next": "design-reviewer"
+    },
+    {
+      "at": "2026-11-13T00:01:47-08:00",
+      "agent": "backend-coder",
+      "status": "Almost completed",
+      "round": 1
     }
   ],
   "messages": [
@@ -788,31 +852,29 @@
     },
     "backend-coder": {
       "source": "agent",
-      "at": "2026-11-12T23:56:17-08:00",
-      "round": 2,
+      "at": "2026-11-13T00:01:45-08:00",
+      "round": 1,
       "status": "Interrupted",
       "done": [
         "F203",
         "F204",
-        "rubocop clean",
-        "architecture docs"
+        "spec .openlanes.yml isolation",
+        "PreReviewGate class+spec"
       ],
       "remaining": [
-        "confirm full rspec green",
-        "B2 PreReviewGate",
+        "wire gate into dispatcher/settle.rb",
+        "review.gate config",
+        "settle_gate_spec",
         "B6 integration spec",
-        "cherry-pick 3 lost fixes from 39f5401d"
+        "full rspec"
       ],
-      "next_step": "Read /tmp/ol060-r8-full.txt (2184 examples in, 0 failures when interrupted; may be incomplete) or rerun bundle exec rspec; if green, start B2 in lib/openlanes/engine/dispatcher/settle.rb",
+      "next_step": "Wire Engine::PreReviewGate into dispatcher/settle.rb off the tick thread (builder Completed toward review: red -> back to builder with log_tail in mail, no reviewer); add review.gate/gate_timeout to support/config.rb",
       "files_touched": [
-        "lib/openlanes/agents/agent.rb",
-        "lib/openlanes/agents/profile.rb",
-        "lib/openlanes/agents/sizing.rb",
-        "lib/openlanes/engine/rebase.rb",
-        "lib/openlanes/execution/executor.rb",
-        "lib/openlanes/plans/spec.rb",
-        "lib/openlanes/plans/unit_sizes.rb",
-        "spec/openlanes/agents/profile_sizing_spec.rb",
+        "lib/openlanes/engine/pre_review_gate.rb",
+        "spec/openlanes/engine/pre_review_gate_spec.rb",
+        "spec/openlanes/agents/routing_spec.rb",
+        "spec/openlanes/engine/dispatcher_spec.rb",
+        "spec/openlanes/engine/run_workflow_spec.rb",
         "docs/architecture"
       ]
     },
@@ -1207,11 +1269,21 @@
               "text": "Round 9: plan.md has no Frontend units and already has ## How to test; re-signed Completed (no front end)"
             }
           ]
+        },
+        "10": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "note",
+              "text": "Round 10: Frontend section unchanged (no front-end units); mailbox has only already-handled mail #1; re-signed Completed (no front end)"
+            }
+          ]
         }
       },
       "held": {
         "session": "b58d4e82-ac2f-49da-ab11-88451e4602cf",
-        "through": 9
+        "through": 10
       }
     },
     "backend-coder": {
@@ -1396,7 +1468,33 @@
               "text": "Interrupted in round 2. Next: confirm the full rspec (/tmp/ol060-r8-full.txt, 0 failures at about 2200 examples when cut off), then B2 PreReviewGate in dispatcher/settle.rb, B6 integration spec, and cherry-pick the 3 lost fixes from 39f5401d"
             }
           ]
+        },
+        "9": {
+          "round": 1,
+          "state": "rejected",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Round 9: two of the three dropped fixes (Live::Store Monitor, OPENLANES_ADMIN_CREDENTIALS reset) were already on main. Ported only the .openlanes.yml chdir isolation into routing_spec, dispatcher_spec and run_workflow_spec: 158 examples, 0 failures"
+            },
+            {
+              "kind": "done",
+              "text": "B2 part 1: Engine::PreReviewGate (lib/openlanes/engine/pre_review_gate.rb) runs Execution::Checks.commands through Child. It returns Verdict(passed?, reason, log_tail) with a 40-line tail and treats a timeout as red. 7 examples in its spec, 0 failures. Rubocop is clean and the architecture docs are regenerated"
+            },
+            {
+              "kind": "decision",
+              "text": "PreReviewGate blocks for minutes, so settle must not call it on the tick thread. Run it on the builder job's thread or as its own job"
+            },
+            {
+              "kind": "todo",
+              "text": "Next: wire PreReviewGate into dispatcher/settle.rb (builder Completed toward review + red -> back to backend-coder with log_tail mailed, no reviewer started). Add review.gate/gate_timeout to config.rb and write settle_gate_spec.rb. Then B6 low_hanging_fruit_spec, the full rspec run and rubocop"
+            }
+          ]
         }
+      },
+      "held": {
+        "session": "3d58d7c7-ed33-4883-999c-0ae4cd9c5fca",
+        "through": 37
       }
     },
     "design-reviewer": {

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "045.11",
+    "slug": "split-seams-batch-6"
+  },
+  "state": "ready_for_planning",
+  "updated_at": "2026-11-13T00:16:49-08:00",
+  "stages": [],
+  "signatures": [],
+  "messages": [],
+  "moves": 2
+}
