@@ -319,7 +319,7 @@ From `openlanes agents list`; read one with `openlanes describe <name>`.
 | `verifier`   | Verifying                                         | Approved & Merged               | sonnet/medium | all        |
 | `unblocker`      | Technical Block, Product Block, Bomb              | by contents                     | opus/low      | all        |
 | `rebaser`      | stopped rebases, from the harness                 | stages, never moves a plan      | sonnet/high   | all        |
-| `copilot`     | none: the control room's read-only copilot        | read-only                       | haiku/low     | all        |
+| `copilot`     | none: the control room's copilot, see [Copilot commands](#copilot-commands) | moves no plan | sonnet/low    | all        |
 
 Agent definitions are Markdown files with frontmatter in [`agents/`](agents/). A plan's `spec.md` frontmatter can change the adapter, model and effort per phase.
 
@@ -373,6 +373,23 @@ Run `openlanes <command> --help` for flags and examples. Anything that writes to
 | `version`                                     | print the version                                            |
 
 Global flag: `-C, --no-color`.
+
+### Copilot commands
+
+The copilot panel in the control room takes slash commands. The copilot agent itself only talks and proposes, through cards a person confirms; a slash command is the person commanding, and it goes to the engine on the same stream as the page's buttons, which replies in the panel. `/status` and `/stats` are questions: the panel answers them from the engine's snapshot and sends the engine nothing.
+
+The copilot runs on Sonnet (`agents/copilot.md`). Every message resumes its session, so a chat costs more per message than it did on Haiku.
+
+| Command | Arguments | What it does |
+| :------ | :-------- | :----------- |
+| `/stop NNN` | a plan number, like `20` or `020.00` | stop every agent on plan NNN and take it off the board |
+| `/restart NNN` | a plan number | start plan NNN again when it is on the board with no agent |
+| `/concurrency N` | a whole number, at least 1 | let N agents run at once; lowering it waits for agents to finish |
+| `/restart-web` | none | stop the control room, rebuild its page and start it again; needs `openlanes start` |
+| `/status [NNN]` | an optional plan number | show every plan on the board, or plan NNN's agents and what each is doing; changes nothing |
+| `/stats` | none | show the run's tokens, cost and agents so far; changes nothing |
+
+`/restart-web` touches the control room and nothing else: no engine, no agent, no plan. The engine sends `USR2` to the supervisor that `openlanes start` runs; the supervisor stops the web server, runs `npm run build` in the gem's `web/` (in the background, for up to five minutes), and starts the server again on the same port. When `npm` or the page sources are missing, or the build fails, the old page stays and the server restarts anyway. The page reconnects by itself, and the new server says in the panel how the build went. Without a supervisor, for example `openlanes web` started alone or `openlanes start --no-web`, the command is refused. A deliberate restart is not counted as a crash.
 
 ## Configuration
 

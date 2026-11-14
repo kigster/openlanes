@@ -224,4 +224,92 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
 
     it { expect(titles.last).to match(/\] up \d+s, 0 restarts, web down\z/) }
   end
+
+  describe "restarting the web, as /restart-web asks" do
+    subject(:supervisor) do
+      described_class.new(programs:, registration:, lifeline:, host: OpenLanes::Supervision::Host.new(spawner:, waiter:, signaller: logged, clock:))
+    end
+
+    # A build that takes two polls, so a tick is seen not to wait on it.
+    let(:fake_build) do
+      Class.new do
+        def initialize(log) = @log = log
+
+        def start
+          @log << :build unless @polls
+          @polls ||= 0
+          self
+        end
+
+        def poll
+          @polls += 1
+          OpenLanes::Supervision::WebRebuild::Outcome.new(status: "ok", message: "the page was rebuilt") if @polls > 2
+        end
+      end
+    end
+    let(:log) { [] }
+    let(:rebuilder) { -> { fake_build.new(log) } }
+    let(:logged) { ->(signal, group) { log << [signal, -group] and signaller.call(signal, group) } }
+    let(:asked) { [] }
+    let(:web) { supervisor.slots.last }
+    let(:on_tick) do
+      lambda do |s|
+        next unless web.running? && web.held.nil?
+        next s.stop! if asked.size == 4
+
+        asked << web.pid
+        s.restart_web!
+      end
+    end
+
+    before do
+      allow(OpenLanes::Supervision::WebRebuild).to receive(:new) { rebuilder.call }
+      supervisor.call(&on_tick)
+    end
+
+    it "stops the web, builds, then starts it again, four times over" do
+      aggregate_failures do
+        expect(log.first(8)).to eq([["INT", 102], :build, ["INT", 103], :build, ["INT", 104], :build, ["INT", 105], :build])
+        expect(spawned).to eq(%w[engine web web web web web])
+        expect(asked).to eq([102, 103, 104, 105])
+      end
+    end
+
+    it "counts no restart as a crash, and gives nothing up" do
+      expect([web.crashes.exhausted?, web.given_up, web.restarts]).to eq([false, nil, 0])
+    end
+
+    it "leaves the build's outcome for the new web to show" do
+      note = JSON.parse(File.read(File.join(dir.path, OpenLanes::Supervision::WebRestart::NOTE)))
+      expect(note).to include("status" => "ok", "message" => "the page was rebuilt")
+    end
+
+    it "keeps the engine running throughout" do
+      expect(spawned.count("engine")).to eq(1)
+    end
+  end
+
+  describe "a restart asked for twice before the first is done" do
+    subject(:supervisor) do
+      described_class.new(programs:, registration:, lifeline:, host: OpenLanes::Supervision::Host.new(spawner:, waiter:, signaller:, clock:))
+    end
+
+    let(:builds) { [] }
+    let(:slow) { instance_double(OpenLanes::Supervision::WebRebuild, poll: nil) }
+    let(:on_tick) do
+      lambda do |s|
+        s.restart_web!
+        clock.advance(1)
+        s.stop! if clock.monotonic > 5
+      end
+    end
+
+    before do
+      allow(slow).to receive(:start).and_return(slow)
+      allow(OpenLanes::Supervision::WebRebuild).to receive(:new) { builds << 1 and slow }
+      supervisor.call(&on_tick)
+    end
+
+    it("starts one build") { expect(builds).to eq([1]) }
+  end
 end
