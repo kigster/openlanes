@@ -99,7 +99,10 @@ function Nav({ toggles, children }: { toggles: ReactNode; children: ReactNode })
   );
 }
 
-/** The top bar: the logo, the run-wide controls as pills, and the theme and help buttons. The run's numbers are in StatusLine. */
+/**
+ * The top bar: the logo, the run-wide controls as pills, and the theme and help buttons. The run's numbers are in
+ * StatusLine. The outage notices sit outside the row a phone can hide, so hiding the bar never hides an alarm.
+ */
 export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, restartWeb, stopAll, help, now }: HeaderProps) {
   const { run } = snapshot;
   const clock = useNow(now);
@@ -156,6 +159,7 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
           }
         >
           {actionMenu}
+          {restartWeb}
           {stopAll}
         </Nav>
         <span className="topbar-spacer" />
@@ -169,20 +173,23 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
             {connection === "offline" ? "Offline, retrying" : "Reconnecting…"}
           </span>
         )}
-        {actionMenu}
-        {restartWeb}
-        {stopAll}
-      </Nav>
-      <span className="topbar-spacer" />
-      {fixture && (
-        <span className="sample" title="Served from web/src/api/fixtures/board.json because the URL has ?fixture">
-          Fixture data
-        </span>
-      )}
-      {connection !== "live" && (
-        <span className={`conn is-${connection}`} role="status">
-          {connection === "offline" ? "Offline, retrying" : "Reconnecting…"}
-        </span>
+        <ThemeMenu />
+        {help}
+        {phone && (
+          <button className="btn btn-quiet btn-icon nav-hide" type="button" ref={hide} aria-expanded="true" aria-controls="topbar-row" aria-label="Hide navigation" title="Hide this bar. A Nav button at the top of the screen brings it back" onClick={toggleBar}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 15l6-6 6 6" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {hidden && (
+        <button className="btn nav-restore" type="button" ref={restore} aria-expanded="false" aria-controls="topbar-row" title="Show the navigation bar" onClick={toggleBar}>
+          Nav
+          <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
       )}
       {stale && (
         <p className="outage-notice is-stale" role="alert">
