@@ -87,7 +87,7 @@ classDiagram
   OpenLanes__CLI ..> OpenLanes__Uml : 2
   OpenLanes__CLI ..> OpenLanes__Vcs : 7
   OpenLanes__CLI ..> OpenLanes__Web : 15
-  OpenLanes__Config ..> OpenLanes : 3
+  OpenLanes__Config ..> OpenLanes : 4
   OpenLanes__Config ..> OpenLanes__Adapters : 1
   OpenLanes__Config ..> OpenLanes__Agents : 2
   OpenLanes__Config ..> OpenLanes__Apps : 1

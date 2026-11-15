@@ -14,7 +14,9 @@ RSpec.describe OpenLanes::CLI::Init do
   let(:machine) { instance_double(OpenLanes::Setup::Machine, ready?: ready) }
   # What every run without a flag for them records for the new keys. Quality
   # stays unset under -y, to be asked on the first review-passed review (R4).
-  let(:decided) { { "merge" => { "by" => "human" } } }
+  # What every file init writes holds beyond the answers: the merger, and the application named after the project.
+  let(:decided) { { "merge" => { "by" => "human" }, "application" => { "name" => project } } }
+  let(:project) { "acme-app" }
 
   before do
     FileUtils.mkdir_p(File.join(repo, ".git"))
@@ -115,7 +117,8 @@ RSpec.describe OpenLanes::CLI::Init do
         "frontend" => false,
         "jobs" => 4,
         "desired_codebase_quality" => "mvp",
-**decided)
+        **decided,
+        "application" => { "name" => "Acme" })
     end
 
     it "writes a file every other command can read" do
@@ -221,7 +224,8 @@ RSpec.describe OpenLanes::CLI::Init do
         "jobs" => 3,
         "merge" => { "by" => "auto" },
         "desired_codebase_quality" => "high",
-        "architecture_decisions" => { "version" => 1, "detail" => "low", "current" => {}, "target" => { "layout" => "library" } })
+        "architecture_decisions" => { "version" => 1, "detail" => "low", "current" => {}, "target" => { "layout" => "library" } },
+        "application" => { "name" => "Acme" })
     end
 
     it "asks only for what no flag gave" do

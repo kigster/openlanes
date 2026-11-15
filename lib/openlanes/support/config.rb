@@ -43,6 +43,12 @@ module OpenLanes
   #   events:                   # the durable run log (plan 020.01), off by default
   #     enabled: true
   #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
+  #   application:              # the application openlanes is working on
+  #     name: Equilibris App
+  #     current_phase: beta     # mvp | alpha | beta | in-production
+  #     commands:
+  #       start: [bin/rails server, bin/vite dev]
+  #       backend_tests: bundle exec rspec
   #   app:                      # how to run the app a plan builds (M12)
   #     kind: web
   #     processes:
@@ -158,6 +164,10 @@ module OpenLanes
   # @!attribute [r] agents
   #   @return [OpenLanes::Agents::Overrides] `agents:`: what this machine
   #     changes about an agent's frontmatter; {Agents::Registry} applies it
+  # @!attribute [r] application
+  #   @return [OpenLanes::Config::Application, nil] `application:`: the
+  #     application openlanes is working on, its phase and its commands; nil
+  #     when the file says nothing about it
   Config = Data.define(:path,
     :project,
     :starts,
@@ -187,10 +197,11 @@ module OpenLanes
     :chime,
     :budget_plan_usd,
     :sizing,
-    :agents) do
+    :agents,
+    :application) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, agents: Agents::Overrides.new) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, agents: Agents::Overrides.new, application: nil) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -290,6 +301,7 @@ module OpenLanes
                    "stack" => stack&.transform_keys(&:to_s),
                    "architecture_decisions" => architecture_decisions&.to_file }
       settings["commands"] = commands.transform_values { it.transform_keys(&:to_s) } unless commands.empty?
+      settings["application"] = application.to_h if application
       settings["app"] = app.to_h if app
       settings["plans"] = { "aging_since" => aging_since.iso8601 } if aging_since
       settings["questions"] = { "model" => questions_model } if questions_model
@@ -473,7 +485,8 @@ module OpenLanes
           chime:     chime(settings, path),
           **budget(settings["budget"], path),
           sizing:    Agents::Sizing.parse(settings["sizing"], path:),
-          agents:    Agents::Overrides.parse(settings["agents"], path:))
+          agents:    Agents::Overrides.parse(settings["agents"], path:),
+          application: Config::Application.parse(settings["application"], path:))
         conflicts!(config, path)
         schema!(config.to_settings.except("commands"), path)
         config
@@ -488,7 +501,7 @@ module OpenLanes
       # @param settings [Hash{String => Object}] {#to_settings}
       # @return [Hash{String => Object}]
       def fill(defaults, settings)
-        defaults.merge(settings) { |_, default, value| default.is_a?(Hash) && value.is_a?(Hash) ? default.merge(value) : value }
+        defaults.merge(settings) { |_, default, value| default.is_a?(Hash) && value.is_a?(Hash) ? fill(default, value) : value }
       end
 
       private

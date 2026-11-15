@@ -36,12 +36,25 @@ module OpenLanes
           frontend:               frontend(decisions),
           ci:                     nil,
           stack:                  nil,
-          architecture_decisions: decisions.empty? ? nil : decisions)
+          architecture_decisions: decisions.empty? ? nil : decisions,
+          application:            application(basics(answers)[:project]))
       end
 
       private
 
+      # The `application:` section, named after the project unless the current
+      # file already names it. Its description, phase and commands are left
+      # for a person: guessing a start command would be a setting nobody chose.
+      #
+      # @param project [String]
+      # @return [OpenLanes::Config::Application]
+      def application(project)
+        current = @defaults.application || Config::Application.new
+        current.name ? current : current.with(name: project)
+      end
+
       # @return [OpenLanes::Setup::Architecture]
+
       def scan = @scan ||= ArchitectureScan.new(@root).call
 
       # The current file's decisions; an older file's `ci:` and `stack:` read as
