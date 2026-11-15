@@ -35,8 +35,7 @@ module OpenLanes
         @host = host
         @stopping = false
         @forced = false
-        @status = nil
-        @web_restart = WebRestart.new(dir: registration.dir, host:)
+        @web_restart = WebRestart.new(registration:, host:, grace: GRACE)
       end
 
       # @return [Array<Slot>]
@@ -51,8 +50,10 @@ module OpenLanes
       def call(&on_tick)
         @on_tick = on_tick
         @started = clock.monotonic
+        @web_restart.forget
         @slots.each { start(it) }
         watch
+        @web_restart.abandon(@slots)
         Shutdown.new(@slots, host: @host, sweep: AgentSweep.new(dir: @registration.dir, host: @host)).call(grace: GRACE) { @forced }
         @status || 0
       ensure
@@ -171,7 +172,7 @@ module OpenLanes
       def give_up(slot, reason)
         slot.given_up = reason
         Log.logger.error("child given up", role: slot.role, reason:)
-        @registration.update(failed: @slots.select(&:given_up).to_h { [it.role, it.given_up] })
+        @registration.update(failed: Slot.failed(@slots))
       end
 
       # Nothing running and nothing due: there is nothing left to supervise.

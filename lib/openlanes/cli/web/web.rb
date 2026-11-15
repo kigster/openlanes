@@ -70,7 +70,10 @@ module OpenLanes
           interview: demo ? OpenLanes::Web::Demo::Interview : interview_for(root:, tree:),
           listen:,
           credentials:)
-        restart_note(root, stores:, keys:) unless demo
+        # Beside the supervisor's PID files, under the project root this
+        # process is in. `root` above is the parent of the plans directory,
+        # which `-D docs/plans` makes `docs`, where no note is ever left.
+        restart_note(Dir.pwd, stores:, keys:) unless demo
         server = OpenLanes::Web.server(app: OpenLanes::Web.app(context), context:, port: options[:port], listen:)
         serve(server, options, keys:, node:, url: stores.current.url, credentials:)
       ensure
