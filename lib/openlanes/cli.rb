@@ -17,6 +17,7 @@ require_relative "cli/resync/subcommands/prs"
 require_relative "cli/linear/linear"
 require_relative "cli/linear/subcommands/projects"
 require_relative "cli/linear/subcommands/import"
+require_relative "cli/slack/subcommands/test"
 require_relative "cli/docs/docs"
 require_relative "cli/eval/eval"
 require_relative "cli/run/run"
@@ -121,7 +122,7 @@ module OpenLanes
         "events",
         "state",
         "eval"
-      group "Reference", "docs", "api", "states", "uml", "linear", "skills", "completion", "version"
+      group "Reference", "docs", "api", "states", "uml", "linear", "slack", "skills", "completion", "version"
     end
 
     register "setup", Setup
@@ -176,6 +177,10 @@ module OpenLanes
     register "linear" do |prefix|
       prefix.register "import", Linear::Import
       prefix.register "projects", Linear::Projects
+    end
+
+    register "slack" do |prefix|
+      prefix.register "test", Slack::Test
     end
 
     # What a paired agent shells out to between steps. See {OpenLanes::Plans::Mailbox}.
