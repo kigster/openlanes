@@ -18,9 +18,6 @@ module OpenLanes
       BRANCH = "main"
       REMOTE = "origin"
 
-      # The commit's subject.
-      MESSAGE = "Update #{Config::FILE} from the settings page".freeze
-
       # What the route answers: an HTTP status and its JSON body.
       Outcome = Data.define(:status, :body)
 
@@ -48,10 +45,15 @@ module OpenLanes
       # @param if_match [String] the etag the page read
       # @return [Outcome]
       def call(values:, if_match:)
-        problems = Settings.validate(values)
+        # Said first and as a refusal: reading the file raises in a root that
+        # holds both, which used to surface as a 500 blaming git. The paths
+        # are relative, so the reason carries no checkout path (F102).
+        raise Refused.new("both_files", Project.both(*Settings::FILES)) if Settings.both?(@root)
+
+        problems = Settings.validate(values, path: file)
         return Outcome.new(422, { errors: problems.map(&:to_json_hash) }) unless problems.empty?
 
-        save(Settings.parse(values), if_match)
+        save(Settings.parse(values, path: file), if_match)
       rescue Refused => e
         Outcome.new(409, { refusal: e.refusal, reason: e.message })
       rescue Error => e
@@ -100,6 +102,11 @@ module OpenLanes
       # it. A `main` ahead of `origin/main` is refused too: the push would
       # carry commits nobody asked the page to publish.
       #
+      # The fast-forward must not change the project file at either path.
+      # Comparing only the path this checkout uses let a save into a root
+      # with no config overwrite the legacy file `origin/main` had just
+      # added, with the page's defaults.
+      #
       # @return [void]
       def behind_remote!
         _, ok = git("fetch", "-q", REMOTE, BRANCH)
@@ -110,9 +117,8 @@ module OpenLanes
           raise Refused.new("cannot_fast_forward",
             "#{BRANCH} has commits #{REMOTE}/#{BRANCH} does not; it cannot fast-forward")
         end
-        return if blob("HEAD") == blob("refs/remotes/#{REMOTE}/#{BRANCH}")
-
-        raise Refused.new("stale_etag", "#{REMOTE}/#{BRANCH} holds a newer #{file}; pull and reload")
+        newer = Settings::FILES.find { blob("HEAD", it) != blob("refs/remotes/#{REMOTE}/#{BRANCH}", it) }
+        raise Refused.new("stale_etag", "#{REMOTE}/#{BRANCH} holds a newer #{newer}; pull and reload") if newer
       end
 
       # @param config [Config]
@@ -152,7 +158,7 @@ module OpenLanes
         before = git!("rev-parse", "HEAD").strip
         Settings.write(@root, config.to_yaml)
         git!("add", "--", file)
-        git!("commit", "-q", "-m", MESSAGE, "--", file)
+        git!("commit", "-q", "-m", "Update #{file} from the settings page", "--", file)
       rescue Error
         git("reset", "-q", "--soft", before) if before
         restore!
@@ -173,21 +179,19 @@ module OpenLanes
       def restore!
         git("reset", "-q", "--", file)
         _, tracked = git("cat-file", "-e", "HEAD:#{file}")
-        tracked ? git!("checkout", "-q", "HEAD", "--", file) : FileUtils.rm_f(path)
+        tracked ? git!("checkout", "-q", "HEAD", "--", file) : FileUtils.rm_f(File.join(@root, file))
       end
 
       # @return [Boolean]
       def dirty? = !git!("status", "--porcelain", "--", file).strip.empty?
 
       # @param ref [String]
-      # @return [String, nil] the file's blob at +ref+
-      def blob(ref)
-        out, ok = git("rev-parse", "-q", "--verify", "#{ref}:#{file}")
+      # @param name [String] one of {Settings::FILES}
+      # @return [String, nil] that file's blob at +ref+
+      def blob(ref, name)
+        out, ok = git("rev-parse", "-q", "--verify", "#{ref}:#{name}")
         ok ? out.strip : nil
       end
-
-      # @return [String]
-      def path = File.join(@root, file)
 
       # @return [String] the file this checkout has, relative to the root
       def file = Settings.file(@root)

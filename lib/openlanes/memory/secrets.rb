@@ -32,19 +32,31 @@ module OpenLanes
       # characters with a lower-case letter, an upper-case letter and a digit.
       BLOB = %r{(?<![A-Za-z0-9+/_-])(?=[A-Za-z0-9+/_-]*[a-z])(?=[A-Za-z0-9+/_-]*[A-Z])(?=[A-Za-z0-9+/_-]*\d)[A-Za-z0-9+/_-]{40,}={0,2}}
 
+      # The shapes a vendor's credential has, by what to call it. Each asks
+      # for a realistic length after its prefix, so `sk-8 ski club` and
+      # `sk-server` are words. {Config::Secrets} refuses the same shapes in
+      # the project file, and reads them from here, so the two cannot drift.
+      VENDOR = {
+        "a private key"              => /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+        "an Anthropic or OpenAI key" => /\bsk-[A-Za-z0-9_-]{16,}/,
+        "a GitHub token"             => /\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/,
+        "a GitLab token"             => /\bglpat-[A-Za-z0-9_-]{16,}/,
+        "an AWS access key"          => /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/,
+        "a Slack token"              => /\bxox[abprs]-[A-Za-z0-9-]{10,}/,
+        "a Linear API key"           => /\blin_api_[A-Za-z0-9]{16,}/,
+        "a Google API key"           => /\bAIza[0-9A-Za-z_-]{30,}/,
+        "a Stripe key"               => /\b[rs]k_(?:live|test)_[A-Za-z0-9]{16,}/,
+        "a JSON web token"           => /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\./
+      }.freeze
+
+      # `scheme://user:password@`, wherever it sits in a line.
+      CREDENTIAL_URL = %r{\b[a-z][a-z0-9+.-]*://[^/\s:@]*:[^/\s@]+@}
+
       # Each shape, by what to call it. Vendor prefixes first, since they are
       # exact; the general shapes after.
       PATTERNS = {
-        "a private key"                => /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
-        "an Anthropic or OpenAI key"   => /\bsk-[A-Za-z0-9_-]{16,}/,
-        "a GitHub token"               => /\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/,
-        "a GitLab token"               => /\bglpat-[A-Za-z0-9_-]{16,}/,
-        "an AWS access key"            => /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/,
-        "a Slack token"                => /\bxox[abprs]-[A-Za-z0-9-]{10,}/,
-        "a Google API key"             => /\bAIza[0-9A-Za-z_-]{30,}/,
-        "a Stripe key"                 => /\b[rs]k_(?:live|test)_[A-Za-z0-9]{16,}/,
-        "a JSON web token"             => /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\./,
-        "a URL carrying credentials"   => %r{\b[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@},
+        **VENDOR,
+        "a URL carrying credentials"   => CREDENTIAL_URL,
         "a key, token or password set to a value" =>
           /\b[\w-]*(?:api[_-]?key|secret|token|passw(?:or)?d|credential)s?["']?[ \t]*[:=][ \t]*["']?[^\s"'<>{}$]{8,}/i,
         "an email address"             => /(?<![\w.+-])(?!git@)[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/,

@@ -43,6 +43,7 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
     expect(OpenLanes::Config.load(main).jobs).to eq(4)
     expect(File.read(file)).to eq(OpenLanes::Config.load(main).to_yaml)
     expect(git!(main, "show", "--name-only", "--format=", "HEAD")).to eq(OpenLanes::Config::FILE)
+    expect(git!(main, "log", "-1", "--format=%s")).to eq("Update .openlanes/config.yml from the settings page")
     expect(git!(main, "status", "--porcelain")).to eq("M app.rb")
     expect(boundary).to have_received(:sanction).with(main, "origin", "main")
   end
@@ -89,6 +90,34 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
       before = [head, File.read(file)]
       expect_untouched(save({ "jobs" => 3 }), "stale_etag")
       expect([head, File.read(file)]).to eq(before)
+    end
+
+    # Issue 251: only the path this checkout uses was compared, so a save
+    # into a root with no config fast-forwarded onto the legacy file
+    # origin/main had just added, and overwrote it with the page's defaults.
+    it "refuses when origin/main added a config at the other path" do
+      git!(main, "rm", "-q", OpenLanes::Config::FILE)
+      git!(main, "commit", "-q", "-m", "drop the config")
+      git!(main, "push", "-q", "origin", "main")
+      git!(upstream, "pull", "-q", "origin", "main")
+      commit_file(upstream, OpenLanes::Project::LEGACY_FILE, "jobs: 7\nproject: Theirs\n")
+      git!(upstream, "push", "-q", "origin", "main")
+      before = head
+      outcome = save({ "jobs" => 3 })
+
+      expect_untouched(outcome, "stale_etag")
+      expect(outcome.body[:reason]).to eq("origin/main holds a newer .openlanes.yml; pull and reload")
+      expect([head, git!(origin, "show", "main:#{OpenLanes::Project::LEGACY_FILE}")]).to eq([before, "jobs: 7\nproject: Theirs"])
+    end
+
+    it "answers 409 with the both-files message when the root holds both files" do
+      File.write(File.join(main, OpenLanes::Project::LEGACY_FILE), "jobs: 5\n")
+      before = [head, origin_main, File.read(file)]
+      outcome = save({ "jobs" => 3 })
+
+      expect_untouched(outcome, "both_files")
+      expect(outcome.body[:reason]).to eq("both .openlanes/config.yml and .openlanes.yml exist; keep one and remove the other")
+      expect([head, origin_main, File.read(file)]).to eq(before)
     end
 
     it "refuses when main cannot fast-forward to origin/main" do
@@ -165,6 +194,20 @@ RSpec.describe OpenLanes::Web::SettingsSave, :origin do
         .to eq([200, false, 4])
       expect(git!(main, "show", "--name-only", "--format=", "HEAD")).to eq(OpenLanes::Project::LEGACY_FILE)
       expect(git!(main, "status", "--porcelain")).to eq("")
+    end
+
+    it "names the legacy file in the commit subject" do
+      expect { save({ "jobs" => 4 }) }.to output.to_stderr
+      expect(git!(main, "log", "-1", "--format=%s")).to eq("Update .openlanes.yml from the settings page")
+    end
+
+    it "strips the legacy file's name from a parser refusal, as it does the new one's" do
+      outcome = nil
+      expect { outcome = save({ "redis_url" => "redis://:pw@host:6379/0" }) }.to output.to_stderr
+
+      expect(outcome.to_h).to eq(status: 422,
+        body: { errors: [{ path:    ["redis_url"],
+                           message: "redis_url carries a password; this file is committed, so set the REDIS_URL environment variable instead" }] })
     end
   end
 

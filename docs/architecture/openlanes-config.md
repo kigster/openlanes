@@ -18,6 +18,8 @@ classDiagram
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Live__ChoiceConverter["OpenLanes::Live::ChoiceConverter"]
+  class OpenLanes__Memory__Secrets["OpenLanes::Memory::Secrets"]
+  <<module>> OpenLanes__Memory__Secrets
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Project["OpenLanes::Project"]
   <<module>> OpenLanes__Project
@@ -35,4 +37,5 @@ classDiagram
   OpenLanes__Config ..> OpenLanes__Setup__ArchitectureDecisions : uses
   OpenLanes__Config__Schema ..> OpenLanes__Config__CommandsSchema : uses
   OpenLanes__Config__Secrets ..> OpenLanes__Error : uses
+  OpenLanes__Config__Secrets ..> OpenLanes__Memory__Secrets : uses
 ```
