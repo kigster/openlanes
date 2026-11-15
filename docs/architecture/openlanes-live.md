@@ -21,6 +21,9 @@ classDiagram
   <<module>> OpenLanes__Engine
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
   class OpenLanes__Engine__CliPause["OpenLanes::Engine::CliPause"]
+  class OpenLanes__Engine__CycleQuestion["OpenLanes::Engine::CycleQuestion"]
+  <<module>> OpenLanes__Engine__CycleQuestion
+  class OpenLanes__Engine__CycleQuestion__Invalid["OpenLanes::Engine::CycleQuestion::Invalid"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
   class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
   <<module>> OpenLanes__Engine__QualityQuestion
@@ -177,6 +180,8 @@ classDiagram
   OpenLanes__Live__Command ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Command__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Commands ..> OpenLanes__Config : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Engine__CycleQuestion : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Engine__CycleQuestion__Invalid : uses
   OpenLanes__Live__Commands ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Commands ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Commands ..> OpenLanes__Error : uses
@@ -338,6 +343,7 @@ classDiagram
   OpenLanes__Live__Snapshot ..> OpenLanes__Config : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Board : uses
+  OpenLanes__Live__Snapshot ..> OpenLanes__Engine__CycleQuestion : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Snapshot ..> OpenLanes__Error : uses

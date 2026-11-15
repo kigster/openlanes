@@ -157,6 +157,12 @@ RSpec.describe OpenLanes::Plans::Dependencies, :tree do
       expect(deps.cycle_of("004.00")).to be_nil
       expect(deps.reason("004.00")).to eq("waiting on 001.00")
     end
+
+    it "names every plan on the cycle, from any of them, and none for a plan off it" do
+      expect(deps.tangle_of("002.00")).to eq(%w[001.00 002.00 003.00])
+      expect(deps.tangle_of("004.00")).to be_nil
+      expect(deps.tangle_of("099.00")).to be_nil
+    end
   end
 
   # 034 shipped while it still named 050, and 050 still names 034. The

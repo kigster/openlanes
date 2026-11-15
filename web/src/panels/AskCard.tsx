@@ -7,7 +7,7 @@ import { renderMarkdown } from "./markdown";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { isWord, useQuestion, type Ask } from "./question";
 import { InterviewPanel } from "../interview/InterviewPanel";
-import { ariaSendKeys, isSendKey, optionsOnly, sendKeys, type SendCommand } from "./support";
+import { ariaSendKeys, holdable, isSendKey, optionsOnly, sendKeys, type SendCommand } from "./support";
 
 const FADE_MS = 500;
 const capital = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
@@ -123,7 +123,7 @@ function QuestionCard({ plan, question, variant, onCommand, onLeft, spotlit = fa
     const note = heldNote ? `Held blocked. ${plan.ordinal} stays red in the status bar; click it to answer.` : q.state.settled;
     return <div className={`ask is-done${leaving ? " is-leaving" : ""}`} data-ask={question.id}><p className="ask-done">{note}</p></div>;
   }
-  const holdButton = <HoldButton held={q.isHeld} onClick={hold} disabled={pending} />;
+  const holdButton = holdable(question) && <HoldButton held={q.isHeld} onClick={hold} disabled={pending} />;
   // Only a blocked plan's own question can be talked through: the harness's other requests take one of their options.
   const talkButton = (question.kind === "block" || question.kind == null) && (
     <button type="button" className="btn btn-quiet" aria-expanded={talking} onClick={() => setTalking(true)}>Talk it through</button>

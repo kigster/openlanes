@@ -169,6 +169,27 @@ describe("NeedsYou", () => {
     expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "X2", text: "c) One more round with 20 extra minutes" } });
   });
 
+  it("offers a dependency cycle its one option and words for another plan, with nothing to hold, and answers C1", async () => {
+    const user = userEvent.setup();
+    const { sent, onCommand } = recorder();
+    const plan = planAt("001.00");
+    const label = "Remove 001.00's dependency on 002.00, so 001.00 runs next";
+    plan.questions = [question({
+      id: "001.00/C1", number: 1, kind: "cycle", agent: null, heading: "These plans wait on each other, so none of them can start",
+      body: "`001.00 → 002.00 → 001.00`", options: [{ letter: "a", label, recommended: true, answer: `a) ${label}` }],
+    })];
+    renderPanel(<NeedsYou plans={[plan]} onCommand={onCommand} />);
+    const group = screen.getByRole("group", { name: "Choose an answer" });
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual([`a)${label}Recommended`, "Type something instead"]);
+    expect(screen.queryByRole("button", { name: "Hold blocked" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Talk it through" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Type something instead" }));
+    await user.type(screen.getByRole("textbox", { name: "Your answer" }), "002");
+    expect(screen.queryByRole("button", { name: "Hold blocked" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Send answer" }));
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: null, payload: { question: "C1", text: "002" } });
+  });
+
   it("stacks a lettered question's options in order, the recommended one tagged, and Type something instead last", async () => {
     const { container } = renderPanel(<NeedsYou plans={[lettered()]} onCommand={recorder().onCommand} />);
     const group = screen.getByRole("group", { name: "Choose an answer" });
