@@ -91,7 +91,8 @@ module OpenLanes
     # Takes the note a restarted control room tells on boot.
     #
     # @param root [String]
+    # @param now [Time] a note older than {WebRestartNote::STALE_AFTER} is dropped untold
     # @return [OpenLanes::Supervision::WebRestartNote, nil]
-    def take_restart_note(root) = WebRestartNote.take(File.join(dir(root).path, WebRestart::NOTE))
+    def take_restart_note(root, now: Time.now) = WebRestartNote.take(File.join(dir(root).path, WebRestart::NOTE), now:)
   end
 end
