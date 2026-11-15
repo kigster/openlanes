@@ -569,16 +569,42 @@ module OpenLanes
       # @param round [Integer]
       # @param limit [String] "time" or "rounds", whichever ran out
       # @param at [Time]
+      # @param fields [Hash] what else the request opens with: `stage`, for
+      #   one the engine works out before any person sees it (E2), or the
+      #   `by`, `grant`, `seconds` and `settled_at` of a grant made outright
       # @return [Hash] the request as written, with its `number`
-      def ask_extension!(agent:, state:, round:, limit:, at: Time.now)
+      def ask_extension!(agent:, state:, round:, limit:, at: Time.now, **fields)
         record = nil
         update do |data|
           all = (data["extensions"] ||= [])
           record = { "number" => (all.map { it["number"] }.max || 0) + 1, "agent" => agent, "state" => state.to_s,
                      "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601, "moves" => data["moves"].to_i }
+                   .merge(fields.transform_keys(&:to_s).compact)
           all << record
         end
         record
+      end
+
+      # The agent's own answer to "how much more time do you need" (E2),
+      # written onto the request that asked it. Only a request still at its
+      # `estimate` stage takes one: an answer that arrives after the engine
+      # stopped waiting changes nothing, and the caller is told so.
+      #
+      # @param agent [String]
+      # @param seconds [Integer]
+      # @param why [String, nil]
+      # @param at [Time]
+      # @return [Hash, nil] the request as it now stands; nil when nobody is
+      #   waiting on this agent's estimate
+      def estimate_extension!(agent:, seconds:, why: nil, at: Time.now)
+        found = nil
+        update do |data|
+          found = (data["extensions"] || []).find do |request|
+            request["agent"] == agent && request["stage"] == "estimate" && !request.key?("settled_at")
+          end
+          found&.merge!({ "estimate" => Integer(seconds), "why" => why, "estimated_at" => at.iso8601 }.compact)
+        end
+        found
       end
 
       # Answer a request, or close it unanswered. Once settled it stays

@@ -12,6 +12,7 @@ classDiagram
   class OpenLanes__Agents__Dealing["Dealing"]
   class OpenLanes__Agents__Names["Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Agents__Overrides["Overrides"]
   class OpenLanes__Agents__Profile["Profile"]
   class OpenLanes__Agents__Registry["Registry"]
   class OpenLanes__Agents__Roster["Roster"]
@@ -20,6 +21,8 @@ classDiagram
   class OpenLanes__Agents__Sizing["Sizing"]
   class OpenLanes__Agents__SmallDiff["SmallDiff"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Config__Schema["OpenLanes::Config::Schema"]
+  <<module>> OpenLanes__Config__Schema
   class OpenLanes__Engine__Rebase["OpenLanes::Engine::Rebase"]
   class OpenLanes__Engine__Reviews["OpenLanes::Engine::Reviews"]
   class OpenLanes__Error["OpenLanes::Error"]
@@ -33,6 +36,8 @@ classDiagram
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__UnitSizes["OpenLanes::Plans::UnitSizes"]
   <<module>> OpenLanes__Plans__UnitSizes
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Agents ..> OpenLanes__Adapters : uses
@@ -43,6 +48,11 @@ classDiagram
   OpenLanes__Agents__Dealing ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Dealing ..> OpenLanes__Engine__Reviews : uses
+  OpenLanes__Agents__Overrides ..> OpenLanes__Adapters : uses
+  OpenLanes__Agents__Overrides ..> OpenLanes__Agents__Agent : uses
+  OpenLanes__Agents__Overrides ..> OpenLanes__Agents__Names : uses
+  OpenLanes__Agents__Overrides ..> OpenLanes__Config__Schema : uses
+  OpenLanes__Agents__Overrides ..> OpenLanes__Error : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Agents__Dealing : uses
   OpenLanes__Agents__Profile ..> OpenLanes__Agents__Sizing : uses
@@ -51,6 +61,7 @@ classDiagram
   OpenLanes__Agents__Registry ..> OpenLanes__Adapters : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__Agent : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Agents__SmallDiff : uses
+  OpenLanes__Agents__Registry ..> OpenLanes__Config : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Error : uses
   OpenLanes__Agents__Registry ..> OpenLanes__Frontmatter : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Agents__Profile : uses
@@ -58,6 +69,7 @@ classDiagram
   OpenLanes__Agents__Roster ..> OpenLanes__Engine__Rebase : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Plans : uses
   OpenLanes__Agents__Roster ..> OpenLanes__Plans__StateMachine : uses
+  OpenLanes__Agents__Roster ..> OpenLanes__Project : uses
   OpenLanes__Agents__Roster ..> OpenLanes__UI : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Config : uses
   OpenLanes__Agents__Routing ..> OpenLanes__Plans__Ledger : uses

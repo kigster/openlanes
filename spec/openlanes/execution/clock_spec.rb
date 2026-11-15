@@ -83,6 +83,46 @@ RSpec.describe OpenLanes::Execution::Clock do
     end
   end
 
+  # E2: the engine's question goes out at the five-minute mark, the very
+  # second the clock's own warning is due.
+  describe "#say!" do
+    it "writes the line, and keeps the warning due this second from overwriting it" do
+      now[:t] = 900.0
+      aggregate_failures do
+        expect(clock.say!("ESTIMATE: say how long")).to be(true)
+        expect(at(901)).to eq("ESTIMATE: say how long")
+        expect(at(1140)).to eq("WRAP_UP: 1 minute left, write to disk now")
+      end
+    end
+
+    it "says nothing once STOP is out" do
+      at(1200)
+      expect([clock.say!("ESTIMATE: say how long"), File.read(control).strip]).to eq([false, "STOP"])
+    end
+  end
+
+  describe "#hold!" do
+    it "leaves a clock with more than the floor alone" do
+      expect([clock.hold!(180), clock.remaining]).to eq([false, 1200])
+    end
+
+    it "raises a low clock to the floor, saying nothing, and re-arms the wrap-up" do
+      at(1150)
+      File.write(control, "ESTIMATE: say how long\n")
+      aggregate_failures do
+        expect(clock.hold!(180)).to be(true)
+        expect(clock.remaining).to eq(180)
+        expect(at(1160)).to eq("ESTIMATE: say how long")
+        expect(at(1150 + 121)).to eq("WRAP_UP: 1 minute left, write to disk now")
+      end
+    end
+
+    it "holds nothing once STOP is out" do
+      at(1200)
+      expect([clock.hold!(180), clock.remaining]).to eq([false, 0])
+    end
+  end
+
   # An agent told STOP is on its way out; time given then reaches nobody.
   it "refuses more time once STOP is out, or once the clock is stopped" do
     at(1200)

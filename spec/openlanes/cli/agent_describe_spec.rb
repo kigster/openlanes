@@ -91,4 +91,23 @@ RSpec.describe OpenLanes::CLI::Agents::Describe do
     expect(status).to eq(65)
     expect(err).to include("ghost-agent").and include("backend-coder")
   end
+
+  # The file that opens still holds the definition's values.
+  context "when this machine overrides an agent" do
+    let(:agents) do
+      OpenLanes::Agents::Registry.new(dir: @dir, overrides: OpenLanes::Agents::Overrides.new(table: { "researcher" => { rounds: 3 } }))
+    end
+
+    it "says what it changed before opening the definition" do
+      err, status = run(name: "researcher")
+      # The box wraps the sentence; read it back as one line.
+      expect([status, err.gsub(/[│\s]+/, " ")])
+        .to match([0, a_string_including("researcher: .openlanes/config.yml `agents:` sets rounds 3 over its definition")])
+    end
+
+    it "says nothing about an agent it left alone" do
+      err, = run(name: "unblocker")
+      expect(err).not_to include("agents:")
+    end
+  end
 end

@@ -19,7 +19,12 @@ module OpenLanes
     # fires: it is asked again only after {BACKOFF} seconds, doubled each
     # time, and after {ATTEMPTS} the engine gives up on it for this run. A
     # capped plan given up on goes to ⭕️, since it is held from its builders
-    # and would otherwise wait for a ruling that never comes.
+    # and would otherwise wait for a ruling that never comes. {Retries}
+    # keeps that count.
+    #
+    # A running agent that asks for more time than the engine grants on its
+    # word is the arbitrator's too (E2), through {#overtime}: the same agent
+    # and the same count, on a plan that stays where it is.
     class Arbitration
       # Builders whose signatures may carry an appeal, and who may raise a dispute.
       BUILDERS = Agents::Names::BUILDERS.freeze
@@ -76,9 +81,15 @@ module OpenLanes
         @clock = clock
         @thread = nil
         @asking = []
-        @failures = {}
+        @retries = Retries.new(clock:)
         @labels = {}
       end
+
+      # The side call a running agent's request for more time goes to
+      # (E2): this run's arbitrator, asker and count of unreadable answers.
+      #
+      # @return [OpenLanes::Engine::Arbitration::Overtime]
+      def overtime = @overtime ||= Overtime.new(agents: @agents, ask: @ask, retries: @retries)
 
       # Called by {Verification::Outcome} as a rejection reaches the cap.
       # The ruling itself runs on the next tick, where every trigger is
@@ -127,8 +138,11 @@ module OpenLanes
       #   applied: a run may not end before {#tick} has had it
       def busy? = !@thread.nil?
 
-      # @return [void] waits for the agent under way
-      def join = @thread&.join
+      # @return [void] waits for the agent under way, and for {#overtime}'s
+      def join
+        @thread&.join
+        @overtime&.join
+      end
 
       # @param subject [OpenLanes::Plans::Subject]
       # @return [Hash, nil] `{ trigger:, key:, appellant:, message:, note: }`,
@@ -199,7 +213,7 @@ module OpenLanes
 
         ruling = OpenLanes::Arbitration.ruling(asked.answer)
         result = @effects.apply(plan: subject, ruling:, trigger: found[:trigger], round: asked.round, appellant: found[:appellant])
-        @failures.delete(key(asked.plan, found))
+        @retries.clear(key(asked.plan, found))
         close(asked, agent, "Completed", ruling.headline) do |state|
           state.ack!(found[:message], by: agent.name) if found[:message]
         end
@@ -212,11 +226,11 @@ module OpenLanes
 
       # @return [Outcome]
       def failed(asked, agent, message)
-        failure = @failures[key(asked.plan, asked.found)] = { count: (@failures.dig(key(asked.plan, asked.found), :count) || 0) + 1, at: @clock.call }
-        note = "#{message} (attempt #{failure[:count]} of #{ATTEMPTS})"
+        count = @retries.failed!(key(asked.plan, asked.found))
+        note = "#{message} (attempt #{count} of #{ATTEMPTS})"
         close(asked, agent, "Interrupted", note)
         UI.log("arbitration refused: #{note}", level: :warn, plan: asked.plan)
-        give_up(asked) if failure[:count] >= ATTEMPTS
+        give_up(asked) if count >= ATTEMPTS
         Outcome.new(plan: asked.plan, trigger: asked.found[:trigger], effects: nil, error: message)
       end
 
@@ -252,12 +266,7 @@ module OpenLanes
       end
 
       # @return [Boolean]
-      def backing_off?(subject, found)
-        failure = @failures[key(subject.feature.ordinal.to_s, found)] or return false
-        return true if failure[:count] >= ATTEMPTS
-
-        @clock.call - failure[:at] < BACKOFF * (2**(failure[:count] - 1))
-      end
+      def backing_off?(subject, found) = @retries.backing_off?(key(subject.feature.ordinal.to_s, found))
 
       # @return [Array]
       def key(ordinal, found) = [ordinal, found[:key]]

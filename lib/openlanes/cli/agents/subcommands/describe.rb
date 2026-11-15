@@ -54,6 +54,9 @@ module OpenLanes
           # opening all of them would bury the one that was meant.
           raise Error, "#{name} could be any of #{found.map(&:name).join(", ")} — say which" if name && found.size > 1
 
+          # The file about to open holds the definition's values; what this
+          # machine changed is said first, or the reader would trust the file.
+          found.filter_map { OpenLanes::Agents.roster(agents:).overridden(it) }.each { info(it) }
           paths = found.map(&:path)
           mdfried ? @viewer.mdfried(paths) : @viewer.open(paths)
         rescue OpenLanes::Error => e

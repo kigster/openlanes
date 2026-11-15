@@ -34,20 +34,47 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Poll, :tree do
     expect { poll.drain_mail }.not_to raise_error
   end
 
-  it "asks for more time for an agent near the end of its clock" do
-    allow(handle).to receive(:remaining).and_return(OpenLanes::Engine::Extensions::ASK_AT)
-    allow(desk.extensions).to receive(:watch)
-    desk.running << job
-    poll.ask_for_time
-    expect(desk.extensions).to have_received(:watch).with(job, plan.feature.path)
-  end
+  describe "#ask_for_time" do
+    let(:handle) do
+      OpenLanes::Execution::Executor::Handle.new.tap do |made|
+        made.clock = OpenLanes::Execution::Clock.new(seconds: left, control: File.join(Dir.mktmpdir, "control"), on_expire: -> {})
+      end
+    end
+    let(:left) { OpenLanes::Engine::Extensions::ASK_AT }
+    let(:state) { OpenLanes::Plans::PlanState.for(plan.feature.path) }
 
-  it "asks nothing of an agent with time to spare" do
-    allow(handle).to receive(:remaining).and_return(OpenLanes::Engine::Extensions::ASK_AT + 1)
-    allow(desk.extensions).to receive(:watch)
-    desk.running << job
-    poll.ask_for_time
-    expect(desk.extensions).not_to have_received(:watch)
+    before do
+      allow(OpenLanes::UI).to receive(:log)
+      allow(desk.feed).to receive(:append)
+      desk.running << job
+    end
+
+    it "gives an agent near the end of its clock more time, and journals it" do
+      poll.ask_for_time
+      aggregate_failures do
+        expect(state.extensions).to contain_exactly(include("by" => "auto", "grant" => "live", "seconds" => coder.extension_cap))
+        expect(handle.remaining).to be_within(2).of(left + coder.extension_cap)
+        expect(desk.feed).to have_received(:append).with(:extension, plan: "001.00", agent: "backend-coder", seconds: coder.extension_cap)
+      end
+    end
+
+    context "with time to spare" do
+      let(:left) { OpenLanes::Engine::Extensions::ASK_AT + 60 }
+
+      it "reads nothing and grants nothing" do
+        poll.ask_for_time
+        aggregate_failures do
+          expect(state.extensions).to eq([])
+          expect(desk.feed).not_to have_received(:append)
+        end
+      end
+    end
+
+    it "changes nothing under a dry run" do
+      allow(runner).to receive(:dry_run?).and_return(true)
+      poll.ask_for_time
+      expect([state.extensions, handle.remaining]).to match([[], be_within(2).of(left)])
+    end
   end
 
   it "writes no journal for a job that printed none" do

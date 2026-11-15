@@ -23,6 +23,8 @@ classDiagram
   class OpenLanes__Plans__Dependencies["Dependencies"]
   class OpenLanes__Plans__DevWork["DevWork"]
   <<module>> OpenLanes__Plans__DevWork
+  class OpenLanes__Plans__Estimate["Estimate"]
+  <<module>> OpenLanes__Plans__Estimate
   class OpenLanes__Plans__Execution["Execution"]
   <<module>> OpenLanes__Plans__Execution
   class OpenLanes__Plans__Feature["Feature"]

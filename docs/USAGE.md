@@ -33,12 +33,20 @@ commands:                 # option defaults for any command, by the name you typ
     timeout: 1800
   resync prs:
     adopt: false
+agents:                   # this machine's changes to an agent, by its name
+  backend-coder:
+    rounds: 3             # 1 to 5: rounds on one plan state
+    timeout: 3600         # seconds on a round's clock
+    extension_cap: 1200   # seconds the engine adds on its own, and grants on the agent's estimate
+    extension_ceiling: 5400  # seconds, the most the arbitrator may add
 ```
 
 - Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes/config.yml`, the built-in default.
 - `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
+- `agents.<name>` may set `timeout`, `rounds`, `model`, `effort`, `extension_cap` and `extension_ceiling`. Each replaces the same key of `agents/<name>.md` and nothing else, and an agent left out runs as its definition says. `--timeout` and `--rounds` still only tighten. `model` and `effort` stand where the frontmatter's stood, so `run --model`, a plan's `phases:`, `sizing:` and `depth` still win. `openlanes agents list` shows the values in force and marks the overridden ones `*`. A running engine keeps the values it started with.
+- A round whose clock runs low is given `extension_cap` more seconds by the engine, then asked how much more it needs (`openlanes state estimate`). An estimate within `extension_cap` is granted; a larger one goes to `arbitrator`, which may grant up to `extension_ceiling`; only what none of them settles reaches a person as an `X<n>` question. See `docs/decisions/decisions-on-limit-extensions.md`, E2.
 - `review.adapters` deals `staff-reviewer`, `security-reviewer` and `design-reviewer` to the first, second and third coding agent, wrapping when there are fewer. A coding agent the board's probe found unusable is skipped. A reviewer's own `adapter:` or the plan's `phases.review` still wins.
 - A reviewer that crashes, times out or ends without a verdict runs its round again, once, on the main coding agent (`adapter:`, else claude), and that verdict counts as its own. Its stage in `state.json` records `replaced_by`. A reviewer a person stopped is not replaced.
 

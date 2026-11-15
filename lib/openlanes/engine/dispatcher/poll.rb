@@ -7,8 +7,8 @@ module OpenLanes
       # kept: each one's latest ledger line and spend into the state file
       # ({Sighting}), its session and journal lines into the plan's
       # `state.json` ({Journal}), and the mail addressed to its plan ({Mail}).
-      # It also notices an agent near the end of its clock. Nothing here
-      # starts, stops or renames anything.
+      # It also notices an agent near the end of its clock, and moves that
+      # clock. Nothing here starts, stops or renames anything.
       class Poll < Step
         # @param desk [Desk]
         def initialize(desk)
@@ -29,20 +29,19 @@ module OpenLanes
           running.each { @sighting.call(it) }
         end
 
-        # Each running agent near the end of its clock asks for more, and is
-        # given it once on its own. Read only in the last {Extensions::ASK_AT}
-        # seconds, so the folder is looked up then and not on every tick.
+        # Each running agent near the end of its clock is given more, or
+        # asked how much it needs ({Extensions::Ladder}). The plan is read
+        # only for a job that is due, so its folder is not looked up on
+        # every tick of every round.
         #
         # @return [void]
         def ask_for_time
           return if runner.dry_run?
 
-          running.each do |job|
-            left = job.handle.remaining
-            next unless left && left <= Extensions::ASK_AT
-
+          running.select { ladder.due?(it) }.each do |job|
             subject = fresh(job.task) or next
-            extensions.watch(job, subject.feature.path)
+            granted = ladder.watch(job, subject) or next
+            feed.append(:extension, plan: plan_of(job), agent: job.task.agent.name, seconds: granted["seconds"])
           end
         end
       end
