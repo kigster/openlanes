@@ -4,6 +4,10 @@ RSpec.describe OpenLanes::Supervision::WebRebuild do
   subject(:rebuild) { described_class.new(root:, host:, npm: -> { npm }, timeout: 300) }
 
   let(:root) { Dir.mktmpdir("web-rebuild") }
+  # The project the factory runs in: OpenLanes itself unless an example says otherwise.
+  let(:project) { Dir.mktmpdir("web-rebuild-project") }
+  let(:justfile) { true }
+  let(:config) { "project: openlanes\n" }
   let(:web) { File.join(root, "web") }
   let(:npm) { true }
   let(:spawner) { OpenLanes::Spawner::Fake.new(pids: [501]) }
@@ -20,9 +24,46 @@ RSpec.describe OpenLanes::Supervision::WebRebuild do
     FileUtils.mkdir_p(File.join(web, "dist"))
     File.write(File.join(web, "package.json"), "{}")
     File.write(File.join(web, "dist", "index.html"), "old page")
+    File.write(File.join(project, "justfile"), "web-build:\n    cd web && npm run build\n") if justfile
+    next unless config
+
+    FileUtils.mkdir_p(File.join(project, ".openlanes"))
+    File.write(File.join(project, ".openlanes", "config.yml"), config)
   end
 
-  after { FileUtils.rm_rf(root) }
+  # The supervisor runs in the project root, and that is where the build looks.
+  around { |example| Dir.chdir(project) { example.run } }
+
+  after { [root, project].each { FileUtils.rm_rf(it) } }
+
+  # The build is OpenLanes building its own page, so it runs only where the
+  # project is OpenLanes: a justfile at its root and `project: openlanes`.
+  describe "which project it builds for" do
+    [
+      [true,  "project: openlanes\n", true,  "a justfile and project: openlanes"],
+      [true,  "project: OpenLanes\n", true,  "a justfile and the name in another case"],
+      [false, "project: openlanes\n", false, "project: openlanes but no justfile"],
+      [true,  "project: Demo App\n",  false, "a justfile but another project"],
+      [true,  "jobs: 2\n",            false, "a justfile but no project named"],
+      [true,  nil,                    false, "a justfile but no config file"],
+      [false, "project: Demo App\n",  false, "neither"],
+      [true,  "project: [\n",         false, "a config that cannot be read"]
+    ].each do |with_justfile, yaml, builds, title|
+      context "with #{title}" do
+        let(:justfile) { with_justfile }
+        let(:config) { yaml }
+
+        it(builds ? "builds" : "builds nothing") { expect(rebuild.start.then { spawner.calls.size }).to eq(builds ? 1 : 0) }
+
+        next if builds
+
+        it "settles at once as skipped, and leaves the page as it was" do
+          outcome = rebuild.start.poll
+          expect([outcome.status, outcome.skipped?, File.read(File.join(web, "dist", "index.html"))]).to eq(["skipped", true, "old page"])
+        end
+      end
+    end
+  end
 
   it "runs npm run build in the gem's web/, in a group of its own, and never blocks" do
     rebuild.start

@@ -289,6 +289,32 @@ RSpec.describe OpenLanes::Supervision::Supervisor do
     end
   end
 
+  describe "a restart whose build is skipped: the project is not OpenLanes itself" do
+    let(:skipped) do
+      outcome = OpenLanes::Supervision::WebRebuild::Outcome.new(status: "skipped", message: "the page was not rebuilt")
+      instance_double(OpenLanes::Supervision::WebRebuild, poll: outcome).tap { allow(it).to receive(:start).and_return(it) }
+    end
+    let(:asked) { [] }
+    let(:on_tick) do
+      lambda do |s|
+        web = s.slots.last
+        next unless web.running? && web.held.nil?
+        next s.stop! unless asked.empty?
+
+        asked << web.pid
+        s.restart_web!
+      end
+    end
+
+    before do
+      allow(OpenLanes::Supervision::WebRebuild).to receive(:new).and_return(skipped)
+      supervisor.call(&on_tick)
+    end
+
+    it("starts the web again all the same") { expect(spawned).to eq(%w[engine web web]) }
+    it("leaves no note for the new web to tell") { expect(File.exist?(File.join(dir.path, OpenLanes::Supervision::WebRestart::NOTE))).to be(false) }
+  end
+
   describe "a restart asked for twice before the first is done" do
     subject(:supervisor) do
       described_class.new(programs:, registration:, lifeline:, host: OpenLanes::Supervision::Host.new(spawner:, waiter:, signaller:, clock:))

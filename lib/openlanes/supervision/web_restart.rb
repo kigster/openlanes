@@ -69,7 +69,8 @@ module OpenLanes
         outcome = @rebuild.start.poll or return
         @rebuild = nil
         slot.held = nil
-        note(outcome)
+        # A build nobody called for has no outcome worth a turn in the copilot.
+        note(outcome) unless outcome.skipped?
         Log.logger.info("web rebuilt", outcome: outcome.status)
         slot.due = @host.clock.monotonic
       end

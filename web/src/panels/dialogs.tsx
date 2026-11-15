@@ -85,8 +85,8 @@ export const RESTART_UNSEEN_MS = 30000;
 
 /**
  * Restart Control Room: asks first, then sends `restart_web`, the command the copilot's /restart-web sends, so there
- * is one restart and two ways to ask for it. The supervisor stops this page's server, rebuilds the page and starts
- * the server again; the engine and its agents never stop.
+ * is one restart and two ways to ask for it. The supervisor stops this page's server, rebuilds the page when the project is OpenLanes itself and
+ * starts the server again; the engine and its agents never stop.
  *
  * The engine's reply travels through the server being stopped, so it can be lost. A stream that drops while the
  * command is still unanswered is therefore read as the restart under way, not as a failure: the dialog closes and
@@ -124,7 +124,7 @@ export function RestartWebDialog({ connection, onCommand, ...openable }: Restart
   const busy = phase !== "idle";
   return (
     <Dialog.Root open={open} onOpenChange={(next) => { if (next) command.setOutcome(null); setOpen(next); }}>
-      <Dialog.Trigger className="btn nav-pill" disabled={busy} title="Stops this page's server, rebuilds the page and starts it again. The engine and its agents keep working.">
+      <Dialog.Trigger className="btn nav-pill" disabled={busy} title="Stops this page's server and starts it again, rebuilding the page first when the project is OpenLanes itself. The engine and its agents keep working.">
         {busy ? "Restarting Control Room…" : "Restart Control Room"}
       </Dialog.Trigger>
       <Frame
@@ -133,7 +133,7 @@ export function RestartWebDialog({ connection, onCommand, ...openable }: Restart
       >
         <div className="help-body">
           <Dialog.Description>
-            This stops the page's server, rebuilds the page and starts the server again on the same port. The engine and its agents keep working, and this page reconnects by itself when the server is back.
+            This stops the page's server and starts it again on the same port, rebuilding the page first when the project is OpenLanes itself. The engine and its agents keep working, and this page reconnects by itself when the server is back.
           </Dialog.Description>
           <Feedback outcome={command.outcome?.tone === "refused" ? command.outcome : null} announced={command.announced} />
         </div>
