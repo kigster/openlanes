@@ -197,9 +197,3 @@ Answered:
 Accept the six recorded scenarios as the fixture and mark the plan complete. Timeout kill, reattach and compaction stay covered by the existing executor unit specs; no change under `lib/` for an injectable clock.
 
 ______________________________________________________________________
-
-## Rebase decisions
-
-- `lib/openlanes/execution/executor.rb`: kept the branch's 100-line facade and dropped the monolith that `origin/main` had edited. Main's three changes were ported into the split files instead: `Result#tools`, `#failed_start?`, `#auth_failure?`, `#auth_reason` (`result.rb`, with `Verdict#spent` filling `tools:`); `Handle#say!` and `#hold!` (`handle.rb`); `AUTH_FAILURE` (new `auth_failure.rb`, exposed as `Executor::AUTH_FAILURE`) and `Executor.spent_nothing?(spent)` (new `spending.rb`, used by `Result`, `StartAgain#unspent?` and `Supervision#quiet?`/`lost_session`, so the "spent nothing" test is still written once).
-- `.plans/045.03…/state.json`: took the branch's version. The `HEAD` side was an older snapshot of the same plan state (round 7), and the branch's is the later record of rounds 8 and 9. Dropped the stale `held` marker with it.
-- `.plans/045.03…/plan.md`, `pull-requests.md`: took the branch's version; the `HEAD` side of each conflict was empty or an earlier copy, so nothing from main is lost.

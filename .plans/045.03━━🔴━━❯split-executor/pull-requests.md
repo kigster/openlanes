@@ -1,5 +1,9 @@
 # Pull Requests
 
+| Pull Request Number | Pull Request Name | Status |
+| ------------------: | :---------------- | -----: |
+| 267 | [\[045.03\](A) Split Executor](https://github.com/kigster/openlanes/pull/267) | Open 🟡 |
+
 ## backend-coder, round 1
 
 Baseline before any edit: `bundle exec rubocop` no offenses; `bundle exec rspec spec/openlanes/execution` 565 examples, 0 failures.
@@ -252,3 +256,45 @@ The round was interrupted after `blocked.md` was written; the question was answe
 - `rg "method_missing|public_send|send\(" lib/openlanes/execution`: nothing
 - `rg "lib/openlanes/execution/executor" .rubocop_todo.yml`: nothing
 - `just update-architecture`: no further change to `docs/architecture/`; `before/` untouched
+
+## Findings: staff-reviewer
+
+Round 2 (head `f6248d14`). CI is red, so per the review rules the diff was not reviewed further.
+
+### F1 [critical] .circleci/config.yml:1
+
+`ci/circleci: test` failed on the pull request head: https://app.circleci.com/workflow/a1ac1459-a638-4b2c-9643-db5e36eb760d/job/c14ee1ed-6bbf-46e1-884f-1618c72b95cb (`circleci run get e7f9c414-82fa-4162-b631-329a9e2262cd --failure-report`). `linter`, `web` and `e2e` passed.
+
+- Input: PR #267 at `f6248d14`, `bundle exec rspec` on CircleCI.
+- Expected: 0 failures, as `pull-requests.md` round 8 reports (7097 examples, 0 failures).
+- Actual: the `test` job fails. Locally `bundle exec rspec spec/openlanes/execution spec/openlanes/thread_safety_inventory_spec.rb spec/openlanes/docs/architecture_doc_spec.rb` passes (731 examples, 0 failures), so the failure is elsewhere in the suite or order/timing dependent. Round 8 already saw `spec/openlanes/engine/dispatcher_event_journal_spec.rb:108` fail once in a full run; check it first.
+
+## backend-coder, round 9 (🔴 Changes Requested)
+
+### F1: `ci/circleci: test` red on `f6248d14`
+
+Root cause, from the job's step log (job 3275): `Run tests` passed. The step that failed is `Coverage of changed files`, which runs `bin/coverage-changed --base origin/main` and gates every changed `lib/` file at 95% line coverage. It named one file:
+
+```
+ 85.71%  lib/openlanes/execution/executor/journal_hold.rb
+coverage-changed: below 95%: lib/openlanes/execution/executor/journal_hold.rb
+```
+
+The two uncovered lines were the `rescue` bodies of `JournalHold.forget` and `JournalHold.hold`, which warn through `UI.log` when `state.json` cannot be cleared or written. No spec drove either. The whole-library figure (99.22%) hid it, which is exactly the case the per-file gate exists for.
+
+Fix: `spec/openlanes/execution/executor/journal_hold_spec.rb` gains a context where `Plans::PlanState.for` raises `OpenLanes::Error`, with one example per method asserting the round does not fail and the warning is logged with the plan and agent. Nothing under `lib/` changed. `bin/coverage-changed --files lib/openlanes/execution/executor/journal_hold.rb` now prints 100.00%.
+
+The earlier suspicion in round 8's notes (`dispatcher_event_journal_spec.rb:108`) was not the cause: that example passed in CI.
+
+## Answers, round 9
+
+- staff-reviewer's summary comment on PR #267 (issue comment 6898897333, F1): **fix**. See above. There are no review-thread comments on the pull request to reply to.
+
+### Checks, run after the last edit (round 9)
+
+```
+bundle exec rubocop                      1235 files inspected, no offenses detected
+bundle exec rspec                        7557 examples, 0 failures, 10 pending; Coverage: 99.26%
+git fetch --no-tags origin main && bin/coverage-changed --base origin/main
+                                         41 file(s), all at or above 95% (journal_hold.rb 100.00%)
+```

@@ -41,4 +41,26 @@ RSpec.describe OpenLanes::Execution::Executor::JournalHold, :tree do
     described_class.hold(attempt)
     expect(File.directory?(plan.feature.path)).to be(false)
   end
+
+  # A state.json that cannot be read or written is the next round's problem to
+  # notice, not this one's to die on: the round's result still stands, and
+  # the next one is simply sent the whole journal.
+  context "when state.json cannot be touched" do
+    before do
+      allow(OpenLanes::Plans::PlanState).to receive(:for).and_raise(OpenLanes::Error, "state.json is locked")
+      allow(OpenLanes::UI).to receive(:log)
+    end
+
+    it "warns instead of failing the round when the record cannot be written" do
+      expect { described_class.hold(attempt) }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log)
+        .with(/journal record not written: state.json is locked/, hash_including(level: :warn, plan: "001.00", agent: agent.name))
+    end
+
+    it "warns instead of failing the round when the record cannot be cleared" do
+      expect { described_class.forget(agent, plan) }.not_to raise_error
+      expect(OpenLanes::UI).to have_received(:log)
+        .with(/journal record not cleared: state.json is locked/, hash_including(level: :warn, plan: "001.00", agent: agent.name))
+    end
+  end
 end
