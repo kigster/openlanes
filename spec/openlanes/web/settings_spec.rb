@@ -20,7 +20,7 @@ RSpec.describe OpenLanes::Web::Settings do
       expect(view.values).to eq("jobs" => 3, "merge" => { "by" => "human" })
       expect(view.defaults).to eq(OpenLanes::Config::Schema.defaults)
       expect(view.etag).to eq(Digest::SHA256.hexdigest("jobs: 3\nmerge:\n  by: human\n"))
-      expect(view.to_json_hash.keys).to eq(%i[schema keys values defaults etag branch])
+      expect(view.to_json_hash.keys).to eq(%i[schema keys values defaults etag branch file])
     end
 
     it "carries one schema node per command, for the commands sub-panes" do
@@ -56,8 +56,8 @@ RSpec.describe OpenLanes::Web::Settings do
         File.write(legacy, "jobs: 5\n")
         view = nil
         expect { view = described_class.read(root) }.to output(/config move/).to_stderr
-        expect([described_class.file(root), view.values, view.etag])
-          .to eq([OpenLanes::Project::LEGACY_FILE, { "jobs" => 5 }, Digest::SHA256.hexdigest("jobs: 5\n")])
+        expect([described_class.file(root), view.file, view.values, view.etag])
+          .to eq([OpenLanes::Project::LEGACY_FILE, OpenLanes::Project::LEGACY_FILE, { "jobs" => 5 }, Digest::SHA256.hexdigest("jobs: 5\n")])
       end
 
       it "falls back to the new file when both are present, leaving the refusal to Config" do

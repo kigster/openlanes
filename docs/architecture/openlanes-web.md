@@ -80,8 +80,10 @@ classDiagram
   class OpenLanes__Web__PlanFiles["PlanFiles"]
   class OpenLanes__Web__PlanFiles__FrontmatterChanged["PlanFiles::FrontmatterChanged"]
   class OpenLanes__Web__PlanFiles__NotFound["PlanFiles::NotFound"]
+  class OpenLanes__Web__PlanFiles__NotText["PlanFiles::NotText"]
   class OpenLanes__Web__PlanFiles__ReadOnly["PlanFiles::ReadOnly"]
   class OpenLanes__Web__PlanFiles__Stale["PlanFiles::Stale"]
+  class OpenLanes__Web__PlanFiles__TooLarge["PlanFiles::TooLarge"]
   class OpenLanes__Web__PlanReview["PlanReview"]
   class OpenLanes__Web__PlanReview__NotFound["PlanReview::NotFound"]
   class OpenLanes__Web__RequestLog["RequestLog"]
@@ -127,8 +129,10 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__NotFound : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__NotText : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__ReadOnly : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__Stale : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__TooLarge : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanReview : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanReview__NotFound : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Settings : uses
@@ -182,12 +186,16 @@ classDiagram
   OpenLanes__Web__PlanFiles ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__NotFound : uses
+  OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__NotText : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__ReadOnly : uses
   OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__Stale : uses
+  OpenLanes__Web__PlanFiles ..> OpenLanes__Web__PlanFiles__TooLarge : uses
   OpenLanes__Web__PlanFiles__FrontmatterChanged --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__NotFound --|> OpenLanes__Error : inherits
+  OpenLanes__Web__PlanFiles__NotText --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__ReadOnly --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__Stale --|> OpenLanes__Error : inherits
+  OpenLanes__Web__PlanFiles__TooLarge --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanReview ..> OpenLanes__Error : uses
   OpenLanes__Web__PlanReview ..> OpenLanes__Plans : uses
   OpenLanes__Web__PlanReview ..> OpenLanes__Plans__Findings : uses
@@ -206,6 +214,7 @@ classDiagram
   OpenLanes__Web__SettingsSave ..> OpenLanes__Config : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Error : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Execution__Boundary : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Project : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__Settings : uses
   OpenLanes__Web__SettingsSave ..> OpenLanes__Web__SettingsSave__Refused : uses
 ```

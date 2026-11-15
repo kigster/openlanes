@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import { ApiError } from "../api/client";
 import * as api from "../api/interview";
 import type { InterviewTurn } from "../api/types";
 import { AskCard } from "../panels/AskCard";
@@ -19,10 +20,10 @@ vi.mock("../api/interview", async importOriginal => ({
 
 const at = "2026-11-13T00:00:00Z";
 const ask: InterviewTurn = {
-  id: "t1", from: "unblocker", kind: "question", text: "Should the suite ignore the outage spec?", at,
+  id: "t1", from: "unblocker", kind: "question", text: "Should the suite ignore the outage spec?", at, seq: "1-0",
   options: [{ label: "Yes, skip it", recommended: true }, { label: "No, fix it first", recommended: false }],
 };
-const decision: InterviewTurn = { id: "t3", from: "unblocker", kind: "decision", text: "So we skip it.", at: "2026-11-13T00:00:09Z", answer: "a) Yes, skip it" };
+const decision: InterviewTurn = { id: "t3", from: "unblocker", kind: "decision", text: "So we skip it.", at: "2026-11-13T00:00:09Z", seq: "3-0", answer: "a) Yes, skip it" };
 
 function wrap(children: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -33,7 +34,7 @@ afterEach(() => vi.resetAllMocks());
 
 it("shows the question with its recommended option marked, and sends a button's words", async () => {
   vi.mocked(api.fetchInterview).mockResolvedValue([ask]);
-  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "Yes, skip it", at });
+  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "Yes, skip it", at, seq: "2-0" });
   wrap(<InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />);
   expect(await screen.findByText("Should the suite ignore the outage spec?")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Yes, skip it/ })).toHaveClass("is-recommended");
@@ -44,7 +45,7 @@ it("shows the question with its recommended option marked, and sends a button's 
 
 it("sends a typed reply", async () => {
   vi.mocked(api.fetchInterview).mockResolvedValue([ask]);
-  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "not sure", at });
+  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "not sure", at, seq: "2-0" });
   wrap(<InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />);
   await screen.findByText(ask.text);
   await userEvent.type(screen.getByLabelText("Your reply"), "not sure");
@@ -98,7 +99,7 @@ it("sends nothing for a blank reply and puts the caret back in the box", async (
 
 it("sends on the send key", async () => {
   vi.mocked(api.fetchInterview).mockResolvedValue([ask]);
-  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "fix it", at });
+  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "fix it", at, seq: "2-0" });
   wrap(<InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />);
   await screen.findByText(ask.text);
   await userEvent.type(screen.getByLabelText("Your reply"), "fix it{Enter}"); // a bare Enter is a new line
@@ -148,7 +149,7 @@ it("closes when the panel is minimised", async () => {
 
 it("says the unblocker is thinking until its next turn lands", async () => {
   vi.mocked(api.fetchInterview).mockResolvedValue([ask]);
-  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "Yes, skip it", at: "2026-11-13T00:00:05Z" });
+  vi.mocked(api.sendInterview).mockResolvedValue({ id: "u1", from: "you", kind: "text", text: "Yes, skip it", at: "2026-11-13T00:00:05Z", seq: "2-0" });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(<QueryClientProvider client={client}><AsksProvider><AnnouncerProvider>
     <InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />
@@ -159,6 +160,39 @@ it("says the unblocker is thinking until its next turn lands", async () => {
   act(() => { client.setQueryData<InterviewTurn[]>(api.interviewKey("001.00", 1), old => api.withTurn(old ?? [], decision)); });
   await waitFor(() => expect(screen.queryByText("The unblocker is thinking…")).toBeNull());
   expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
+});
+
+// Issue 252: the reply's two turns carry one second, and the decision's id sorts before the words' id.
+it("draws a reply of words and a decision in the server's order, with Confirm", async () => {
+  const words: InterviewTurn = { id: "uZZZZ", from: "unblocker", kind: "text", text: "Understood.", at, seq: "1794700000000-0" };
+  const settled: InterviewTurn = { ...decision, id: "uAAAA", at, seq: "1794700000000-1" };
+  vi.mocked(api.fetchInterview).mockResolvedValue([settled, words]);
+  wrap(<InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />);
+  expect(await screen.findByRole("button", { name: "Confirm" })).toBeInTheDocument();
+  expect([...document.querySelectorAll("[data-turn]")].map(el => el.getAttribute("data-turn"))).toEqual(["uZZZZ", "uAAAA"]);
+});
+
+it.each([
+  [new ApiError("plan 001.00 has no open question 1 to talk through", 409), "plan 001.00 has no open question 1 to talk through"],
+  [new ApiError("GET /api/plans/001.00/questions/1/interview answered 404", 404), "GET /api/plans/001.00/questions/1/interview answered 404"],
+])("says why the conversation could not be opened, instead of opening for ever", async (failure, said) => {
+  vi.mocked(api.fetchInterview).mockRejectedValue(failure);
+  wrap(<InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />);
+  expect(await screen.findByRole("alert")).toHaveTextContent(`The conversation could not be opened: ${said}`);
+  expect(screen.queryByText("Opening the conversation…")).toBeNull();
+  expect(api.fetchInterview).toHaveBeenCalledTimes(1);
+});
+
+it("keeps the turns it has when a later read fails", async () => {
+  vi.mocked(api.fetchInterview).mockResolvedValueOnce([ask]).mockRejectedValue(new ApiError("gone", 409));
+  const client = new QueryClient();
+  render(<QueryClientProvider client={client}><AsksProvider><AnnouncerProvider>
+    <InterviewPanel plan="001.00" question={question()} onCommand={recorder().onCommand} onClose={() => {}} />
+  </AnnouncerProvider></AsksProvider></QueryClientProvider>);
+  await screen.findByText(ask.text);
+  await act(() => client.refetchQueries({ queryKey: ["interview"] }));
+  expect(screen.getByText(ask.text)).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).toBeNull();
 });
 
 it("offers Talk it through once on a question with nothing to choose", () => {

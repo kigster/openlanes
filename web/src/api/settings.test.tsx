@@ -7,7 +7,7 @@ import { fetchSettings, saveSettings, SettingsRefusalError, SettingsValidationEr
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const session = () => json({ csrf: "tok", node: {}, repo: "r" });
-const doc = { schema: {}, keys: ["jobs"], values: { jobs: 2 }, defaults: {}, etag: "e1", branch: "main" };
+const doc = { schema: {}, keys: ["jobs"], values: { jobs: 2 }, defaults: {}, etag: "e1", branch: "main", file: ".openlanes/config.yml" };
 
 let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {

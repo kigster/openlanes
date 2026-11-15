@@ -39,7 +39,7 @@ it("lists every schema key with each pane open, and the save button with its not
   expect(screen.getByLabelText("project")).toHaveValue("demo");
   expect(screen.getByLabelText("jobs")).toHaveAttribute("placeholder", "4");
   expect(screen.getByRole("button", { name: "Save, commit and push to main" })).toBeInTheDocument();
-  expect(screen.getByText(/commits it alone and pushes main/)).toBeInTheDocument();
+  expect(screen.getByText("Writes .openlanes/config.yml, commits it alone and pushes main.")).toBeInTheDocument();
 });
 
 it("collapses a pane", async () => {
