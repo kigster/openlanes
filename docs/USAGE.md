@@ -41,6 +41,7 @@ agents:                   # this machine's changes to an agent, by its name
     extension_ceiling: 5400  # seconds, the most the arbitrator may add
 ```
 
+- `.openlanes/config.example.yml` in the openlanes repository has every section filled in, with each agent at its shipped defaults; copy from it.
 - Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes/config.yml`, the built-in default.
 - `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
