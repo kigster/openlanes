@@ -1,6 +1,6 @@
-// The run's status in words, beside the tabs: what the project is, where it runs, what the run has cost so far, how
-// the plans stand, and which Redis holds the run. One line on a wide screen; it wraps between its items as the page
-// narrows, and under 1100px it takes a row of its own above the tabs (shell.css).
+// The run's status in words, in a panel above the tabs: what the project is, where it runs, what the run has cost so
+// far, how the plans stand, and which Redis holds the run. The panel is as wide as the board under it and wraps
+// between its items as that narrows (shell.css).
 import type { Snapshot } from "../api/types";
 import { dollars, fmt, redactUrl, secondsBetween, who } from "../board/format";
 import type { PlanCounts } from "./planCounts";

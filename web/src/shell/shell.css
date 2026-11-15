@@ -9,8 +9,13 @@ button, textarea { font: inherit; color: inherit; }
   --logo-plate-w: 158px;
   position: relative;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px 28px;
-  padding: 14px 24px 14px calc(var(--logo-plate-w) + 28px); background: var(--plate); border-bottom: 1px solid var(--hairline);
+  padding: 14px 24px 14px calc(var(--logo-plate-w) + 28px); background: var(--nav-bg); border-bottom: 1px solid var(--hairline);
 }
+/* Three wrappers exist only for the phone (below), which lays the bar out as a row with a strip under it. Everywhere
+   else they have no box, so the bar's items are still its own flex items and the pills are still one row. */
+.topbar-row, .nav-toggles, .nav-actions { display: contents; }
+/* --alarm is tuned for --plate; on the bar's own background it needs the bar's red (tokens.css). */
+.topbar :is(.btn.nav-pill.btn-alarm, .conn.is-offline, .outage-notice.is-stale) { color: var(--nav-alarm); }
 /* The logo sits on its own orange, the same in both themes, as one block with the image. It is pinned to the bar's
    full height rather than stretched: the bar wraps to two rows on narrower screens, and a stretched item would
    only fill the first. The bar's left padding leaves room for it. */
@@ -57,7 +62,8 @@ button, textarea { font: inherit; color: inherit; }
 .nav-check { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px;
              border: 2px solid color-mix(in srgb, var(--ink) 55%, transparent); font-size: 13px; font-weight: 900; line-height: 1; }
 .nav-toggle[aria-pressed="true"] .nav-check { background: var(--focus); border-color: var(--focus); color: var(--plate); }
-.topbar > .btn-icon { border-radius: 999px; }
+.topbar-row > .btn-icon { border-radius: 999px; }
+.nav-restore { display: none; }
 .btn.nav-burger { display: none; }
 /* Too narrow for the row: the pills fold behind Menu and open as a panel under the bar. */
 @media (max-width: 1180px) {
@@ -67,6 +73,54 @@ button, textarea { font: inherit; color: inherit; }
                                position: absolute; top: calc(100% + 6px); left: calc(var(--logo-plate-w) + 16px); z-index: 30; min-width: 240px; padding: 12px;
                                background: var(--plate); border: 1px solid var(--hairline); border-radius: 14px; box-shadow: 0 12px 32px rgb(0 0 0 / 22%); }
   .nav[data-open] .nav-items .btn.nav-pill { justify-content: flex-start; }
+}
+/* A phone: the bar is pinned to the top of the screen at half its height, with the three toggles in a strip under it.
+   600px is PHONE_MAX_WIDTH in usePhone.ts, which the script asks about; the two must change together.
+   Nothing here may wrap: a second row on a pinned bar is a third of a phone's screen gone, so the row is nowrap and
+   what does not fit shrinks (the title, the connection note) or goes (the fixture badge, the Menu label). */
+@media (max-width: 600px) {
+  .topbar { --nav-strip-h: 22px; position: sticky; top: 0; z-index: 30; display: block; padding: 0; border-bottom: 0; }
+  /* The row's height is the logo's and nothing else's. The strip hangs from the row's bottom edge, out of flow
+     because its buttons are inside the nav, so the row's margin keeps the page from starting underneath it. */
+  .topbar-row { position: relative; display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; padding-right: 6px;
+                margin-bottom: var(--nav-strip-h); white-space: nowrap; }
+  .topbar-row[hidden] { display: none; }
+  /* The image carries its own orange and its own margins, so the plate is the image: no padding, edge to edge. */
+  .logo { position: static; flex: none; width: auto; align-self: stretch; }
+  .logo img { height: 34px; }
+  .project-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+  .topbar-row .sample { display: none; }
+  .topbar-row .conn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+  .topbar-row > .btn, .topbar-row .btn.nav-burger { flex: none; min-height: 28px; padding-block: 0; }
+  .topbar-row > .btn-icon, .topbar-row > .help-pill { width: 28px; min-width: 28px; }
+  .topbar-row .btn.nav-burger { padding: 0 8px; }
+  /* Still the button's name, just not drawn: the three bars say Menu on a bar this small. */
+  .nav-burger-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* The toggles' strip: one joined control, centred, on the bar's own background. It is the same three buttons the
+     menu holds on a wider page, so .nav-items gives up its box and each half is placed for itself. */
+  .nav .nav-items, .nav[data-open] .nav-items { display: contents; }
+  .nav-toggles { position: absolute; top: 100%; left: 0; right: 0; height: var(--nav-strip-h); display: flex; justify-content: center;
+                 background: var(--nav-bg); border-block: 1px solid var(--hairline); }
+  .nav-toggles .btn.nav-pill { flex: 0 1 auto; min-width: 0; min-height: 0; gap: 5px; padding: 0 clamp(4px, 2.4vw, 12px); overflow: hidden;
+                               border: 0; border-left: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); border-radius: 0;
+                               background: transparent; font-size: 12px; line-height: 1; }
+  .nav-toggles .btn.nav-pill:last-child { border-right: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+  .nav-toggles .btn.nav-pill[aria-pressed="true"] { background: color-mix(in srgb, var(--focus) 14%, transparent); }
+  /* Inside the button's edge: the strip is as tall as its buttons, and a ring outside them would be cut off. */
+  .nav-toggles .btn.nav-pill:focus-visible { outline-offset: -2px; }
+  .nav-toggles .nav-check { width: 12px; height: 12px; border-width: 1.5px; border-radius: 3px; font-size: 9px; }
+  /* What is left behind Menu: Actions and Stop, opening under the strip. */
+  .nav-actions { display: none; }
+  .nav[data-open] .nav-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+                                 position: absolute; top: calc(100% + var(--nav-strip-h) + 6px); left: 8px; z-index: 30; min-width: 220px; padding: 12px;
+                                 background: var(--plate); border: 1px solid var(--hairline); border-radius: 14px; box-shadow: 0 12px 32px rgb(0 0 0 / 22%); }
+
+  /* The bar hidden: its row is gone and so is its height, and Nav hangs from the top of the screen where it was. */
+  .nav-restore { display: inline-flex; align-items: center; gap: 4px; position: absolute; top: 100%; right: 8px; min-height: 24px; padding: 0 10px;
+                 border-top: 0; border-radius: 0 0 8px 8px; background: var(--nav-bg); font-size: 12px; white-space: nowrap; }
+  /* An outage notice is a row of the pinned bar, under the strip, and closes it with the bar's bottom line. */
+  .topbar .outage-notice { padding: 3px 12px; background: var(--nav-bg); border-bottom: 1px solid var(--hairline); white-space: normal; }
 }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--plate); border-color: var(--ink); }
 .help-pill { min-width: 40px; padding-inline: 0; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 999px; font-weight: 800; }
@@ -83,13 +137,24 @@ button, textarea { font: inherit; color: inherit; }
 .col-divider::after { content: ""; position: absolute; top: 20px; bottom: 20px; left: 9px; width: 2px; border-radius: 1px; background: color-mix(in srgb, var(--ink) 12%, transparent); }
 .col-divider:hover::after { background: color-mix(in srgb, var(--ink) 30%, transparent); }
 .col-divider:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-@media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; } }
+/* One column: Needs you (or the drawer in its place) goes above the tabs and the board, straight under the status
+   line, because on a phone a question under a long board was a question nobody scrolled to. The rail is inside the
+   layout and the tabs are outside it, so the layout gives up its box and everything becomes an item of one column,
+   put in order here. The layout's padding goes with its box, hence the margins. */
+@media (max-width: 960px) {
+  .tabs-root { display: flex; flex-direction: column; }
+  .layout { display: contents; }
+  .tabs-root > .tabs, .tabs-root > .tabs ~ *, .layout > * { order: 2; }
+  .layout > * { margin-inline: 16px; }
+  .layout > [role="tabpanel"] { margin-bottom: 16px; }
+  .layout > :is(.rail, .drawer) { order: 1; margin-top: 12px; }
+}
 .loading { padding: 40px 24px; color: var(--ink-soft); }
 .loading.is-error { color: var(--alarm); }
 
 /* The tab strip sits directly on the panel it switches. A tab is a folder tab: square at the bottom, and the selected
    one is the panel's own colour with no bottom edge, lowered 1px over the panel's top border so the two read as one
-   sheet. The row wraps upward (wrap-reverse), so whatever does not fit beside the tabs goes above them; wrap-reverse
+   sheet. The row wraps upward (wrap-reverse), so the tabs that do not fit beside the first go above them; wrap-reverse
    also swaps the cross axis, which is why flex-start is what stands everything on the bottom edge. */
 .tabs { display: flex; flex-wrap: wrap-reverse; align-items: flex-start; gap: 0 6px; padding: 14px 24px 0; }
 .tabs-list { display: flex; flex-wrap: wrap-reverse; align-items: flex-start; gap: 0 4px; }
@@ -103,23 +168,26 @@ button, textarea { font: inherit; color: inherit; }
 .tabs + .layout, .tabs ~ .layout { padding-top: 0; }
 .layout > [role="tabpanel"] { border-top-left-radius: 0; }
 
-/* The status line, to the right of the tabs: one line when there is room, breaking between its items as the page
-   narrows. Under 1100px it takes the whole row, which wrap-reverse puts above the tabs. */
-.statusline { flex: 1 1 0; min-width: 0; margin: 0; padding: 4px 0 10px 16px; text-align: right;
-              font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
-.status-item { white-space: nowrap; margin-left: 14px; }
+/* The status line: a panel of its own above the tabs, set a step into the page. It is exactly the board panel under
+   it: the same left edge, and the same width, which is the page less the layout's padding, its gap and the right
+   column (--side-width, set on .tabs-root for both). In one column it is the page less the margins, like the board.
+   Its words are --ink-soft pulled most of the way to --ink: --ink-soft alone is 4.5:1 on --plate, not on this. */
+.statusline { margin: 14px 24px 0; padding: 8px 14px; width: calc(100% - 48px - 20px - var(--side-width, clamp(360px, 30vw, 432px)));
+              background: var(--status-bg); border: 1px solid var(--hairline); border-radius: var(--radius-plate);
+              font-size: 13px; line-height: 1.6; color: color-mix(in srgb, var(--ink) 60%, var(--ink-soft)); }
+.status-item { white-space: nowrap; margin-right: 14px; }
+.statusline :is(.topbar-stat, .node) { color: inherit; }
 .status-about { white-space: normal; }
 .status-item strong { color: var(--ink); font-weight: 600; }
 .status-redis code { font: 12px var(--mono); color: var(--ink); }
 /* What never changes goes first as the page narrows: the project's description, then its path (kept in the
    machine's tooltip), so the numbers stay on one line for longer. */
 @media (max-width: 2200px) { .status-about { display: none; } }
-@media (max-width: 1900px) and (min-width: 1101px) { .statusline .project-path { display: none; } }
-@media (max-width: 1100px) {
-  .statusline { flex-basis: 100%; padding: 0 0 10px; text-align: left; }
-  .status-item { margin: 0 14px 0 0; }
+@media (max-width: 1900px) { .statusline .project-path { display: none; } }
+@media (max-width: 960px) {
+  .statusline { width: auto; margin: 12px 16px 0; }
+  .tabs { padding-inline: 16px; }
 }
-@media (max-width: 960px) { .tabs { padding-inline: 16px; } }
 
 .tab-count { margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 12px;
              background: color-mix(in srgb, var(--alarm) 16%, transparent); color: var(--alarm); }
@@ -229,8 +297,15 @@ button, textarea { font: inherit; color: inherit; }
 .swatch > span { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgb(0 0 0 / 18%); }
 
 /* Page nav: fixed to the top of the page, above the control room's own bar. */
-.page-nav { position: sticky; top: 0; z-index: 30; background: var(--plate); border-bottom: 1px solid var(--hairline); }
+.page-nav { position: sticky; top: 0; z-index: 30; background: var(--nav-bg); border-bottom: 1px solid var(--hairline); }
 .page-nav ul { list-style: none; margin: 0; padding: 0 24px; display: flex; gap: 20px; }
 .page-nav a { display: block; padding: 10px 2px; font-weight: 600; color: var(--ink-soft); text-decoration: none; border-bottom: 2px solid transparent; }
 .page-nav a:hover { color: var(--ink); }
 .page-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+/* A phone pins the control room's bar instead (above), and two pinned bars would take a quarter of the screen: the
+   page links scroll away with the page, on one line that scrolls sideways sooner than it wraps. */
+@media (max-width: 600px) {
+  .page-nav { position: static; }
+  .page-nav ul { padding: 0 12px; gap: 14px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .page-nav a { padding: 6px 2px; font-size: 14px; }
+}
