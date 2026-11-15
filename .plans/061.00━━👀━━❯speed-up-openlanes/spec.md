@@ -1,15 +1,11 @@
 ---
 created: 2026-11-10
 starts: planning
-<<<<<<< HEAD:.plans/061.00━━👀━━❯speed-up-openlanes/spec.md
 depends_on: [none]
-||||||| parent of 93b20aa6 (UPDATE THE PLANS):.plans/061.00━━⚪━━❯speed-up-openlanes/spec.md
-=======
 task-completed-when:
   - "A new plan worktree for a project with a JavaScript lockfile starts with its dependencies installed, without a full install per worktree"
   - "One GitHub request per poll returns the state, labels and checks of every open pull request the engine watches"
   - "A review round whose first rejection is known does not spend tokens on verdicts that can no longer change the outcome"
->>>>>>> 93b20aa6 (UPDATE THE PLANS):.plans/061.00━━⚪━━❯speed-up-openlanes/spec.md
 ---
 # Speed Up Openlanes
 

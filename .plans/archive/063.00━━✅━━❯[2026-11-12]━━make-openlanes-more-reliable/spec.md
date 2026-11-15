@@ -1,15 +1,11 @@
 ---
 created: 2026-11-10
 starts: planning
-<<<<<<< HEAD:.plans/archive/063.00━━✅━━❯[2026-11-12]━━make-openlanes-more-reliable/spec.md
 depends_on: [none]
-||||||| parent of 93b20aa6 (UPDATE THE PLANS):.plans/063.00━━⚪━━❯make-openlanes-more-reliable/spec.md
-=======
 task-completed-when:
   - "`web/cypress/e2e/keyboard.cy.ts` passes 20 runs in a row on CI"
   - "A commit that changes `lib/openlanes/version.rb` without the matching `Gemfile.lock` fails the suite"
   - "`lefthook.yml` runs rubocop on staged Ruby files and refuses a commit whose `lib/` change leaves `docs/architecture/` stale"
->>>>>>> 93b20aa6 (UPDATE THE PLANS):.plans/063.00━━⚪━━❯make-openlanes-more-reliable/spec.md
 ---
 # Make Openlanes More Reliable
 

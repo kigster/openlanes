@@ -1,17 +1,13 @@
 ---
 created: 2026-11-10
 starts: planning
-<<<<<<< HEAD:.plans/064.00━━👀━━❯make-openlanes-more-interactive/spec.md
 depends_on: [none]
-||||||| parent of 93b20aa6 (UPDATE THE PLANS):.plans/064.00━━⚪━━❯make-openlanes-more-interactive/spec.md
-=======
 frontend: true
 task-completed-when:
   - "The event stream sends only what changed since the last event, and a page that reconnects gets one full board"
   - "An agent's drawer can ask that agent to hold, to wrap up, and to stop, and shows that it was heard"
   - "A plan's row shows its reviewers' findings and lets a person strike one"
   - "Every plan row and agent drawer shows dollars spent so far"
->>>>>>> 93b20aa6 (UPDATE THE PLANS):.plans/064.00━━⚪━━❯make-openlanes-more-interactive/spec.md
 ---
 # Make Openlanes More Interactive
 

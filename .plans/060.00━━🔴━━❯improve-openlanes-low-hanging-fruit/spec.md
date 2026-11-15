@@ -1,17 +1,13 @@
 ---
 created: 2026-11-10
 starts: planning
-<<<<<<< HEAD:.plans/060.00━━🔴━━❯improve-openlanes-low-hanging-fruit/spec.md
 depends_on: [none]
-||||||| parent of 93b20aa6 (UPDATE THE PLANS):.plans/060.00━━⚪━━❯improve-openlanes-low-hanging-fruit/spec.md
-=======
 task-completed-when:
   - "Every reviewer's prompt carries the pull request's diff and the plan documents, built once per review round by the harness"
   - "A plan whose checks fail after the build goes back to its builder, and no reviewer is started for it"
   - "The planner sizes each work unit small, medium or large, and the builder's model and effort follow the size"
   - "A provider rate limit or overload pauses the agent and retries with backoff, and is not counted as a failed attempt"
   - "`lib/openlanes/engine/dispatcher.rb` is under 400 lines, with assign, poll, settle and rename each in an object of its own, and no behaviour changed"
->>>>>>> 93b20aa6 (UPDATE THE PLANS):.plans/060.00━━⚪━━❯improve-openlanes-low-hanging-fruit/spec.md
 ---
 # Improve Openlanes Low Hanging Fruit
 

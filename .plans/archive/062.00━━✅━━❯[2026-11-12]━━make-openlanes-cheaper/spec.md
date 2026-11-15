@@ -1,15 +1,11 @@
 ---
 created: 2026-11-10
 starts: planning
-<<<<<<< HEAD:.plans/archive/062.00━━✅━━❯[2026-11-12]━━make-openlanes-cheaper/spec.md
 depends_on: [none]
-||||||| parent of 93b20aa6 (UPDATE THE PLANS):.plans/062.00━━⚪━━❯make-openlanes-cheaper/spec.md
-=======
 task-completed-when:
   - "A resumed session's prompt carries only the journal entries written since the round it resumes"
   - "`deploy-assessor` runs on a cheaper model when the plan's diff is under a configured size"
   - "A plan that has spent more than its dollar cap is not given another round, says so on the board, and waits for a person"
->>>>>>> 93b20aa6 (UPDATE THE PLANS):.plans/062.00━━⚪━━❯make-openlanes-cheaper/spec.md
 ---
 # Make Openlanes Cheaper
 
