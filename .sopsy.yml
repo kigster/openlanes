@@ -13,6 +13,14 @@ recipients:
   requested_at: 2026-11-15T10:57:24Z
   break_glass: false
   store: file
+- name: kig-yubikey
+  public_key: age1yubikey1qgwk5ruuw9th8mjaz3glxage2ler7jmufv5yd7tsmldqqlhqfyg2slaj0s2
+  username: kig
+  requested_at: 2026-11-15T19:45:55Z
+  approved_at: 2026-11-15T19:46:23Z
+  approved_by: admin (kig)
+  break_glass: false
+  store: yubikey
 encrypted_globs:
 - '*.encrypted'
 - .env.encrypted
