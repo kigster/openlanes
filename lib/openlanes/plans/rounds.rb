@@ -22,6 +22,10 @@ module OpenLanes
     # (`handed_back`), which is how a round the engine died under is written:
     # the agent lost it to the harness, not to its own budget.
     #
+    # A round is one number. Run twice under it (handed back, then started
+    # again), it is still one round, and its latest stage says how it stands:
+    # counting both stages spent an agent's rounds at double speed.
+    #
     # @!attribute [r] stages
     #   @return [Array<Hash>] `state.json` stages, in dispatch order
     # @!attribute [r] signatures
@@ -37,13 +41,13 @@ module OpenLanes
       # @param agent [#to_s] the agent's name
       # @param state [#to_s] the state key the visit is in
       # @param moves [Integer] the plan's moves count for the visit
-      # @return [Integer] rounds spent in this visit
+      # @return [Integer] rounds spent in this visit, one per round number
       def used(agent, state, moves:) = spent(agent, state, moves).size
 
       # @param agent [#to_s]
       # @param state [#to_s]
       # @param moves [Integer]
-      # @return [Array<Hash>] the stages that spent a round in this visit
+      # @return [Array<Hash>] the latest stage of each round spent in this visit
       def visit(agent, state, moves:) = spent(agent, state, moves)
 
       # Rounds of this visit that `state.json` still calls Started, whoever
@@ -113,8 +117,12 @@ module OpenLanes
         (at = instant(stage["started_at"])) ? at > since : false
       end
 
+      # The latest stage of each round number in the visit, less the rounds
+      # that stage says were not spent. A stage with no number stands alone:
+      # folding those into one would lower a count, which never goes down.
       def spent(agent, state, moves)
         mine(agent).select { visit?(it, state.to_s, moves.to_i) }
+                   .reverse.uniq { it["round"] || it.object_id }.reverse
                    .reject { it["status"] == PlanState::FAILED_START || it["handed_back"] }
       end
 

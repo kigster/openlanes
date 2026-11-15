@@ -132,6 +132,23 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
   end
 
+  context "with one round number run twice" do
+    let(:stages) { [stage(1, status: "Interrupted"), stage(1), stage(2, status: "Interrupted"), stage(2, status: failed)] }
+
+    it "counts each number once" do
+      expect(rounds.used("backend-coder", "building", moves: 1)).to eq(1)
+    end
+
+    it "reads each round as its latest stage has it" do
+      expect(rounds.visit("backend-coder", "building", moves: 1).map { it.values_at("round", "status") }).to eq([[1, "Completed"]])
+    end
+
+    it "keeps stages that carry no number apart, so the count never goes down" do
+      loose = described_class.new(stages: [stage(nil), stage(nil)], signatures:)
+      expect(loose.used("backend-coder", "building", moves: 1)).to eq(2)
+    end
+  end
+
   describe "#started" do
     let(:stages) do
       [stage(1, status: "Started"), stage(1, status: "Started", agent: "frontend-coder"), stage(2),
