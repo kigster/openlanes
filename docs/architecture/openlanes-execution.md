@@ -26,6 +26,8 @@ classDiagram
   class OpenLanes__Execution__Clock["Clock"]
   class OpenLanes__Execution__Control["Control"]
   <<module>> OpenLanes__Execution__Control
+  class OpenLanes__Execution__Deadline["Deadline"]
+  <<module>> OpenLanes__Execution__Deadline
   class OpenLanes__Execution__Executor["Executor"]
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
