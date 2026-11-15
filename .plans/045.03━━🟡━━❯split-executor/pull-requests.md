@@ -185,3 +185,70 @@ bundle exec rspec      7038 examples, 0 failures, 10 pending (coverage 99.21%)
 bundle exec rubocop    1162 files inspected, no offenses detected
 bundle exec rspec      7042 examples, 0 failures, 10 pending (coverage 99.22%)
 ```
+
+## backend-coder, round 8
+
+### Done
+
+- U6:
+  - `Executor::Verdict` holds the verdict, `failure`, `spent` and `killed_note`. The unused clock parameter is gone from `killed_note`; `Executor#killed_note` still accepts it.
+  - `Executor#initialize(**)` collects its keywords into `Options`. `call` and `invocation` take `handle:` plus `**` keywords that become a `Request`, so callers pass exactly the keywords they passed before, and an unknown one still raises `ArgumentError`.
+  - `call` is the dry-run and confinement refusals (`Executor::Refusal`), then one `Attempt` handed to `Executor::FirstStart`.
+  - `reattach` builds the `Attempt` and hands it to `Executor::Retake`.
+  - Both of those take one `Executor::Crew` value holding the launcher, invocations, supervision, verdict, preferences and trace directory, which `Crew.build` wires from `Options`.
+  - The first start's argv is `Invocation#first`.
+- Order kept: the journal record is still cleared after the prompt is built, because the prompt is cut to what the resumed session lacks.
+- `Executor#failure`, `#spent`, `#said` and `#killed_note` stay public as one-line delegators. Nothing outside calls them, but they were public before.
+- Specs: `spec/openlanes/execution/executor/{verdict,refusal}_spec.rb`. All 648 `spec/openlanes/execution` examples pass, the unedited integration fixture included.
+- `docs/architecture/` regenerated, `before/` untouched.
+- `executor.rb` is 259 lines by `wc -l`; most of it is the constants' and `initialize`'s documentation. Over 100 lines remain only `executor.rb` and `handle.rb` (220).
+
+### Not done
+
+- [x] U7: the six `lib/openlanes/execution/executor.rb` entries are gone from `.rubocop_todo.yml`, under Metrics/AbcSize, Metrics/ClassLength, Metrics/MethodLength, Metrics/ParameterLists, Naming/MethodParameterName and Style/StringConcatenation. No Exclude list was left empty. `executor.rb` lints clean at the real limits.
+- [x] `executor.rb` is 100 lines by `wc -l`. The constants' documentation moved to where each constant is now defined, and the old names stay as aliases:
+  - `Grants::DENIED_TOOLS`, `FORBIDDEN_COMMANDS` and `UNGRANTABLE`
+  - `Traces::DIR` (`TRACE_DIR`)
+  - `Credentials::VARS` (`CREDENTIAL_VARS`) and `Credentials.foreign` (`.foreign_credentials`)
+  - `Said::LIMIT` (`REASON_LIMIT`)
+  - `Preferences::DEFAULT_TIMEOUT`
+  - `Supervision::SESSION_MISSING`
+  - `Deadline.of` (`.deadline`)
+- [x] Each keyword `initialize` takes is now documented on `Options`, and the ones `call` takes on `Request`.
+- [x] The public delegators moved into three mixins in `executor/`:
+  - `Choices`: `profile_for`, `timeout_for`, `prefer_model`, `preferred_model`, `diff_lines` and the replacements.
+  - `Permissions`: `denied_for`, `allowed_for`, `denied_commands` and `granted_to`.
+  - `Reporting`: `failure`, `spent`, `said` and `killed_note`.
+- [x] `handle.rb` (220 lines) is split. `Handle` keeps its state, clock and extension. `Handle::Stopping` holds the control file, `request_stop!`, `stopping?` and `kill!`. `Handle::Compacting` holds `compact!`, `take_compaction`, `close!` and `TOO_LATE`. The one `Mutex` is still created in `handle.rb`, where `docs/thread-safety.md` names it.
+- [x] Every file under `lib/openlanes/execution/executor*` is now 100 lines or fewer, and `rg "method_missing|public_send|send\(" lib/openlanes/execution` finds nothing.
+- [x] `docs/architecture/` is regenerated; `before/` is untouched.
+- [x] Specs of their own for `FirstStart`, `Retake`, `Crew`, `Choices`, `Permissions`, `Reporting`, `Deadline` and `Handle::Compacting` (45 examples, added after the interruption below). `Handle::Stopping` was already covered by `handle_stop_spec.rb`.
+  - `first_start_spec.rb` and `retake_spec.rb` run the two entry points over a `Crew` of doubles and assert what each arranges around the launch: the control file, the handle's label and trace, the restart record and its deadline, the journal record cleared only after the prompt is built and held back only when the round is not a rebase, the session dropped on a CLI that cannot resume one, and the three ways a session is started again.
+  - `handle/compacting_spec.rb` covers the request handed out once, the same request while under way, the grace-period kill aimed at the first process only, and the refusal once the invocation is closed.
+- [x] U0: a `unconfinable` scenario is in the fixture: `backend-coder` confined to `spec.md` on `codex`, which cannot confine, with the probe told codex is usable so it is not swapped for a CLI that could. It was recorded on the uncut `executor.rb` in a temporary detached checkout of this branch's `HEAD`, since removed, and the split code matches it.
+- [x] U0: the timeout kill, compaction and reattach scenarios are not in the fixture. Ruled on in `plan.md` (D1, 2026-11-15): the six recorded scenarios are the fixture, and those three stay covered by the existing executor unit specs (`timeout_kill_spec.rb`, `executor_compaction_spec.rb`, `executor_reattach_spec.rb`) plus the new `first_start_spec.rb` and `retake_spec.rb`. Why they could not be recorded, for the record:
+  - A timeout kill fires `Clock::GRACE` (60 seconds) after STOP, and `Launcher#start_clock` builds the clock itself, so a fast scenario needs an injected `now:` on the launcher, which is a change under `lib/` U0 forbids.
+  - A reattach attaches to a recorded process (`AgentProcess.attach`), which a scripted spawn does not produce.
+  - A compaction runs on a thread that terminates the first process after a grace period; with scripted processes the second start and the kill race, so the recording would not be the same twice.
+
+### Checks, run after the last edit
+
+- `bundle exec rubocop`: 1177 files inspected, no offenses detected
+- `bundle exec rspec`: 7052 examples, 0 failures, 10 pending; Coverage: 99.22%
+- `wc -l lib/openlanes/execution/executor.rb lib/openlanes/execution/executor/*.rb lib/openlanes/execution/executor/handle/*.rb | gawk '$1>100'`: only the total line
+- `rg "method_missing|public_send|send\(" lib/openlanes/execution`: nothing
+- `rg "lib/openlanes/execution/executor" .rubocop_todo.yml`: nothing
+
+### Round 8, continued after the interruption
+
+The round was interrupted after `blocked.md` was written; the question was answered (D1 in `plan.md`) and the round resumed from its record. What this continuation added is the unit specs listed above; nothing under `lib/` changed.
+
+### Checks, run after the last edit of the continuation
+
+- `bundle exec rubocop`: 1185 files inspected, no offenses detected
+- `bundle exec rspec`: 7097 examples, 0 failures, 10 pending; Coverage: 99.22%
+  - An earlier full run this round, started before the new spec files existed, had one failure: `spec/openlanes/engine/dispatcher_event_journal_spec.rb:108` (records the session id once the stream names it) saw `s-002.00` twice. It passed in the run above and in three runs of the file alone, and the dispatcher is not touched by this plan; it looks order- or timing-dependent and is worth a look of its own.
+- `wc -l lib/openlanes/execution/executor.rb lib/openlanes/execution/executor/*.rb lib/openlanes/execution/executor/handle/*.rb | gawk '$1>100'`: only the total line
+- `rg "method_missing|public_send|send\(" lib/openlanes/execution`: nothing
+- `rg "lib/openlanes/execution/executor" .rubocop_todo.yml`: nothing
+- `just update-architecture`: no further change to `docs/architecture/`; `before/` untouched

@@ -29,8 +29,51 @@ classDiagram
   class OpenLanes__Execution__Deadline["Deadline"]
   <<module>> OpenLanes__Execution__Deadline
   class OpenLanes__Execution__Executor["Executor"]
+  class OpenLanes__Execution__Executor__Choices["Executor::Choices"]
+  <<module>> OpenLanes__Execution__Executor__Choices
+  class OpenLanes__Execution__Executor__CompactReply["Executor::CompactReply"]
+  <<module>> OpenLanes__Execution__Executor__CompactReply
+  class OpenLanes__Execution__Executor__Compactor["Executor::Compactor"]
+  class OpenLanes__Execution__Executor__Confinement["Executor::Confinement"]
+  <<module>> OpenLanes__Execution__Executor__Confinement
+  class OpenLanes__Execution__Executor__Credentials["Executor::Credentials"]
+  <<module>> OpenLanes__Execution__Executor__Credentials
+  class OpenLanes__Execution__Executor__Deadline["Executor::Deadline"]
+  <<module>> OpenLanes__Execution__Executor__Deadline
+  class OpenLanes__Execution__Executor__Drain["Executor::Drain"]
+  class OpenLanes__Execution__Executor__FirstStart["Executor::FirstStart"]
+  class OpenLanes__Execution__Executor__Grants["Executor::Grants"]
+  <<module>> OpenLanes__Execution__Executor__Grants
   class OpenLanes__Execution__Executor__Handle["Executor::Handle"]
+  class OpenLanes__Execution__Executor__Handle__Compacting["Executor::Handle::Compacting"]
+  <<module>> OpenLanes__Execution__Executor__Handle__Compacting
+  class OpenLanes__Execution__Executor__Handle__Stopping["Executor::Handle::Stopping"]
+  <<module>> OpenLanes__Execution__Executor__Handle__Stopping
+  class OpenLanes__Execution__Executor__Invocation["Executor::Invocation"]
+  class OpenLanes__Execution__Executor__JournalHold["Executor::JournalHold"]
+  <<module>> OpenLanes__Execution__Executor__JournalHold
+  class OpenLanes__Execution__Executor__Launcher["Executor::Launcher"]
+  class OpenLanes__Execution__Executor__Permissions["Executor::Permissions"]
+  <<module>> OpenLanes__Execution__Executor__Permissions
+  class OpenLanes__Execution__Executor__Preferences["Executor::Preferences"]
+  class OpenLanes__Execution__Executor__PromptAssembly["Executor::PromptAssembly"]
+  class OpenLanes__Execution__Executor__Refusal["Executor::Refusal"]
+  <<module>> OpenLanes__Execution__Executor__Refusal
+  class OpenLanes__Execution__Executor__Replacements["Executor::Replacements"]
+  class OpenLanes__Execution__Executor__Reporting["Executor::Reporting"]
+  <<module>> OpenLanes__Execution__Executor__Reporting
+  class OpenLanes__Execution__Executor__Retake["Executor::Retake"]
+  class OpenLanes__Execution__Executor__Said["Executor::Said"]
+  <<module>> OpenLanes__Execution__Executor__Said
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
+  class OpenLanes__Execution__Executor__Spending["Executor::Spending"]
+  <<module>> OpenLanes__Execution__Executor__Spending
+  class OpenLanes__Execution__Executor__StandingOrder["Executor::StandingOrder"]
+  <<module>> OpenLanes__Execution__Executor__StandingOrder
+  class OpenLanes__Execution__Executor__StartAgain["Executor::StartAgain"]
+  class OpenLanes__Execution__Executor__Supervision["Executor::Supervision"]
+  class OpenLanes__Execution__Executor__ThrottleWait["Executor::ThrottleWait"]
+  class OpenLanes__Execution__Executor__Verdict["Executor::Verdict"]
   class OpenLanes__Execution__JournalWindow["JournalWindow"]
   class OpenLanes__Execution__ProcessStart["ProcessStart"]
   <<module>> OpenLanes__Execution__ProcessStart
@@ -82,29 +125,97 @@ classDiagram
   OpenLanes__Execution__Clock ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Control ..> OpenLanes__Execution__ShutdownGrace : uses
   OpenLanes__Execution__Control ..> OpenLanes__UI : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Agents__Dealing : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Agents__Profile : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Error : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__AgentProcess : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Boundary__Snapshot : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Clock : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Choices : includes
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Compactor : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Credentials : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Deadline : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Drain : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__FirstStart : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Grants : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Handle : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Invocation : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Launcher : uses
+  OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Permissions : includes
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Preferences : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__PromptAssembly : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Refusal : uses
+  OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Reporting : includes
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Retake : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__ProcessStart : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Prompt : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Rearm : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Spending : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Supervision : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__ThrottleWait : uses
+  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Verdict : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Throttle__Backoff : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Memory : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Plans__PlanState : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Execution__Executor ..> OpenLanes__UI : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Vcs__DiffSize : uses
-  OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__CompactReply ..> OpenLanes__Execution__Executor__Said : uses
+  OpenLanes__Execution__Executor__Compactor ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Compactor ..> OpenLanes__Execution__Executor__CompactReply : uses
+  OpenLanes__Execution__Executor__Compactor ..> OpenLanes__Execution__Prompt : uses
+  OpenLanes__Execution__Executor__Confinement ..> OpenLanes__Execution__Prompt : uses
+  OpenLanes__Execution__Executor__Drain ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__AgentProcess : uses
+  OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Boundary : uses
+  OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Executor__JournalHold : uses
   OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Handle ..|> OpenLanes__Execution__Executor__Handle__Compacting : includes
+  OpenLanes__Execution__Executor__Handle ..|> OpenLanes__Execution__Executor__Handle__Stopping : includes
+  OpenLanes__Execution__Executor__Handle__Compacting ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Handle__Compacting ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Handle__Stopping ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Adapters__Invocation : uses
+  OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Execution__Executor__Confinement : uses
+  OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Execution__Executor__Grants : uses
+  OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__Error : uses
+  OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Execution__Executor__JournalHold ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__Clock : uses
+  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__ProcessStart : uses
+  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__Execution__Rearm : uses
+  OpenLanes__Execution__Executor__Launcher ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__Permissions ..> OpenLanes__Execution__Executor__Confinement : uses
+  OpenLanes__Execution__Executor__Permissions ..> OpenLanes__Execution__Executor__Grants : uses
+  OpenLanes__Execution__Executor__Preferences ..> OpenLanes__Agents__Dealing : uses
+  OpenLanes__Execution__Executor__Preferences ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Execution__Executor__Preferences ..> OpenLanes__Execution__Executor__Replacements : uses
+  OpenLanes__Execution__Executor__Preferences ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Execution__Executor__Preferences ..> OpenLanes__Vcs__DiffSize : uses
+  OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__Error : uses
+  OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__Execution__Executor__Grants : uses
+  OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__Execution__Prompt : uses
+  OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__Memory : uses
+  OpenLanes__Execution__Executor__PromptAssembly ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__Refusal ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Reporting ..> OpenLanes__Execution__Executor__Said : uses
+  OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__AgentProcess : uses
+  OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Boundary__Snapshot : uses
+  OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__StandingOrder ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Executor__StandingOrder : uses
+  OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Throttle : uses
+  OpenLanes__Execution__Executor__Supervision ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Supervision ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Supervision ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor__StandingOrder : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Executor__StartAgain : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Throttle : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__Execution__Throttle__Backoff : uses
+  OpenLanes__Execution__Executor__ThrottleWait ..> OpenLanes__UI : uses
+  OpenLanes__Execution__Executor__Verdict ..> OpenLanes__Execution__Clock : uses
+  OpenLanes__Execution__Executor__Verdict ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Verdict ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Verdict ..> OpenLanes__Execution__Executor__Said : uses
+  OpenLanes__Execution__Executor__Verdict ..> OpenLanes__UI : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Config : uses
   OpenLanes__Execution__Prompt ..> OpenLanes__Error : uses

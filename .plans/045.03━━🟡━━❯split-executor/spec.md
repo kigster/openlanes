@@ -2,7 +2,7 @@
 created: 2026-11-13
 starts: planning
 frontend: false
-depends_on: ["045.02"]
+depends_on: []
 ---
 
 # Split Executor
