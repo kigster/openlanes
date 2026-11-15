@@ -19,6 +19,7 @@ common: &default_settings
   app_name: 'OpenLanes Kigster'
   
   ai_monitoring.enabled: true
+  record_content.enabled: false
   span_events.max_samples_stored: 10000
   custom_insights_events.max_samples_stored: 100000
 
@@ -35,12 +36,12 @@ common: &default_settings
   application_logging:
     # If `true`, all logging-related features for the agent can be enabled or disabled
     # independently. If `false`, all logging-related features are disabled.
-    enabled: true
+    enabled: 
     forwarding:
       # If `true`, the agent captures log records emitted by this application.
-      enabled: true
+      enabled: <%= ENV["NEW_RELIC_LOG_FORWARDING"] == "true" %>
       # Defines the maximum number of log records to buffer in memory at a time.
-      max_samples_stored: 10000
+      max_samples_stored: 1000
     metrics:
       # If `true`, the agent captures metrics related to logging for this application.
       enabled: true
