@@ -119,6 +119,19 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
   end
 
+  context "with a round the harness handed back" do
+    let(:stages) { [stage(1, status: "Interrupted", handed_back: true)] }
+
+    it "spends nothing, and hands the same number out again" do
+      expect([rounds.used("backend-coder", "building", moves: 1), rounds.next("backend-coder", "building", moves: 1)])
+        .to eq([0, 1])
+    end
+
+    it "does not count as a failed start" do
+      expect(rounds.failed_starts("backend-coder", "building", moves: 1)).to eq(0)
+    end
+  end
+
   context "with stages an older release wrote" do
     let(:stages) do
       [{ "agent" => "backend-coder", "round" => 1, "status" => "Completed", "to" => "building", "moves" => 4 },

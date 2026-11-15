@@ -32,6 +32,15 @@ RSpec.describe OpenLanes::Engine::Recovery::Stranded, :tree do
     end
   end
 
+  it "hands the round back, so the agent's rounds are not one fewer for the harness dying" do
+    stranded.call
+
+    aggregate_failures do
+      expect(plan_state.stages.map { it["handed_back"] }).to eq([true])
+      expect(OpenLanes::Plans::Rounds.from(plan_state).used("backend-coder", :building, moves: plan_state.moves)).to eq(0)
+    end
+  end
+
   context "with the run's own state file" do
     let(:state) do
       instance_double(OpenLanes::Engine::StateFile,

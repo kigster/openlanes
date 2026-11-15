@@ -8,6 +8,11 @@ module OpenLanes
       # the harness died, not the agent. Asking a person to keep or discard
       # the work got the same answer every time, so nobody is asked.
       #
+      # The stage is written `handed_back`, which {Plans::Rounds} does not
+      # count. Written as a plain Interrupted it was a round spent: an agent
+      # with one round was left with none, a request for more was raised for
+      # work it never got to do, and the run sat idle.
+      #
       # Two records can say a stage was stranded: the run's own state file,
       # which holds the pid and host of every stage it started, and the
       # plan's `state.json`, whose stages carry a `run` only when an older
@@ -72,7 +77,7 @@ module OpenLanes
           @records.interrupted(round, DIED)
           tell(round)
           @state&.record(subject.feature.ordinal.to_s, agent: agent.name, round: number, status: "Interrupted", exit: DIED)
-          @records.stage!(round, status: "Interrupted", note: DIED, finished_at: @clock.now.iso8601)
+          @records.stage!(round, status: "Interrupted", note: DIED, finished_at: @clock.now.iso8601, handed_back: true)
           [subject.feature.ordinal.to_s, agent.name, number]
         end
 

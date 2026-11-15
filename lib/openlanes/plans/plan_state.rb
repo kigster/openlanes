@@ -288,7 +288,7 @@ module OpenLanes
       # @param round [Integer]
       # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
-      #   effort, up, down, seconds, note, from, state, to, session, cwd; `run` only in files
+      #   effort, up, down, seconds, note, from, state, to, session, cwd, handed_back; `run` only in files
       #   older releases wrote
       # @return [Hash] the stage as written
       def stage!(agent:, round:, reset: false, **fields)

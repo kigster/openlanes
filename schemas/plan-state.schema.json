@@ -77,6 +77,7 @@
           "status": { "anyOf": [{ "$ref": "#/$defs/status" }, { "const": "Failed start" }] },
           "from": { "description": "The state the plan was picked up in, before any rename on start.", "type": "string" },
           "state": { "description": "The state the round works in, which is the one it is counted for. It differs from `from` when the agent renames the folder on start. Absent on stages written before it existed.", "type": "string" },
+          "handed_back": { "description": "The harness took the round back, as when the engine died under it: it is not counted as spent, and its number is handed out again.", "type": "boolean" },
           "visit": { "description": "The plan's moves when this round was dispatched: the visit to its state the round belongs to.", "type": "integer", "minimum": 0 },
           "to": { "type": "string" },
           "moves": { "description": "The plan's moves when this round settled.", "type": "integer", "minimum": 0 },

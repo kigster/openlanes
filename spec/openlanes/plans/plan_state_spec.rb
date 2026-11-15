@@ -71,6 +71,15 @@ RSpec.describe OpenLanes::Plans::PlanState, :tree do
       expect(state.stages.last.values_at("visit", "moves")).to eq([1, 2])
     end
 
+    it "accepts the state a round works in, and a round handed back, in the schema" do
+      state.stage!(agent: "backend-coder", round: 1, status: "Interrupted", state: "building", handed_back: true)
+
+      aggregate_failures do
+        expect(state.stages.last.values_at("from", "state", "handed_back")).to eq(["building", "building", true])
+        expect(schema.validate(written).map { |e| e["error"] }).to eq([])
+      end
+    end
+
     it "accepts a failed start in the schema" do
       state.stage!(agent: "backend-coder", round: 1, status: described_class::FAILED_START)
       expect(schema.validate(written).map { |e| e["error"] }).to eq([])

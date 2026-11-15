@@ -18,7 +18,9 @@ module OpenLanes
     #
     # A stage whose status is {PlanState::FAILED_START} spent nothing (no
     # tokens, no tool call, not killed) and is not counted: its round is
-    # handed out again.
+    # handed out again. Neither is one the harness handed back
+    # (`handed_back`), which is how a round the engine died under is written:
+    # the agent lost it to the harness, not to its own budget.
     #
     # @!attribute [r] stages
     #   @return [Array<Hash>] `state.json` stages, in dispatch order
@@ -100,7 +102,8 @@ module OpenLanes
       end
 
       def spent(agent, state, moves)
-        mine(agent).select { it["status"] != PlanState::FAILED_START && visit?(it, state.to_s, moves.to_i) }
+        mine(agent).select { visit?(it, state.to_s, moves.to_i) }
+                   .reject { it["status"] == PlanState::FAILED_START || it["handed_back"] }
       end
 
       # A stage this release wrote says its visit. One written before names
