@@ -12,11 +12,11 @@
 
 common: &default_settings
   # Required license key associated with your New Relic account.
-  license_key: '0cfa4d86b6e742c82b2b887fbcfc4e525c96NRAL'
+  license_key: : <%= ENV["NEW_RELIC_LICENSE_KEY"] %> 
 
   # Your application name. Renaming here affects where data displays in New
   # Relic.  For more details, see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/renaming-applications
-  app_name: 'OpenLanes Development'
+  app_name: 'OpenLanes Kigster'
   
   ai_monitoring.enabled: true
   span_events.max_samples_stored: 10000
@@ -55,7 +55,7 @@ common: &default_settings
 # If your application has other named environments, configure them here.
 development:
   <<: *default_settings
-  app_name: 'OpenLanes Development (Development)'
+  app_name: 'OpenLanes Kigster (Development)'
 
 test:
   <<: *default_settings
@@ -64,7 +64,7 @@ test:
 
 staging:
   <<: *default_settings
-  app_name: 'OpenLanes Development (Staging)'
+  app_name: 'OpenLanes Kigster (Staging)'
 
 production:
   <<: *default_settings
