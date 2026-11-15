@@ -11,8 +11,11 @@ module OpenLanes
       # @!attribute [r] except
       #   @return [Regexp, nil] a note that excuses a failed start, such as a
       #     failed login, which the CLI pause owns instead of the cap
-      Count = Data.define(:since, :except) do
-        def initialize(since: nil, except: nil) = super
+      # @!attribute [r] tolerate
+      #   @return [Integer, nil] how many excused failed starts in a row are
+      #     let go; from that many on they all count. nil excuses any number.
+      Count = Data.define(:since, :except, :tolerate) do
+        def initialize(since: nil, except: nil, tolerate: nil) = super
       end
     end
   end

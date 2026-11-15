@@ -81,6 +81,26 @@ RSpec.describe OpenLanes::Plans::Rounds do
     end
   end
 
+  context "with failed logins among the failed starts" do
+    let(:login) { { status: failed, note: "failed start: OAuth session expired" } }
+    let(:stages) { [stage(1, **login), stage(1, **login), stage(1, **login)] }
+
+    it "excuses any number of them when no limit is set" do
+      count = described_class::Count.new(except: /OAuth/)
+      expect(rounds.failed_starts("backend-coder", "building", moves: 1, count:)).to eq(0)
+    end
+
+    it "counts them all once as many as are tolerated ran in a row" do
+      count = described_class::Count.new(except: /OAuth/, tolerate: 3)
+      expect(rounds.failed_starts("backend-coder", "building", moves: 1, count:)).to eq(3)
+    end
+
+    it "still excuses fewer than are tolerated" do
+      count = described_class::Count.new(except: /OAuth/, tolerate: 4)
+      expect(rounds.failed_starts("backend-coder", "building", moves: 1, count:)).to eq(0)
+    end
+  end
+
   # An agent that `starts_as` is picked up in one state and works in the
   # next: `from` names the first, and the round is counted for the second.
   context "with a round whose start renamed the folder" do

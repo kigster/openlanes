@@ -102,11 +102,19 @@ module OpenLanes
       def mine(agent) = stages.select { it["agent"] == agent.to_s }
 
       # The failed starts that end the visit's record, less the excused ones,
-      # which neither count nor break the run of the others.
+      # which neither count nor break the run of the others. Once as many as
+      # {Count#tolerate} were excused, the excuse no longer holds and every
+      # one counts.
       def streak(agent, state, moves, count)
-        mine(agent).select { visit?(it, state.to_s, moves.to_i) && after?(it, count.since) }
+        run = failing(agent, state, moves, count.since)
+        excused = run.select { count.except&.match?(it["note"].to_s) }
+        count.tolerate && excused.size >= count.tolerate ? run : run - excused
+      end
+
+      # The failed starts in a row that end the visit's record, latest first.
+      def failing(agent, state, moves, since)
+        mine(agent).select { visit?(it, state.to_s, moves.to_i) && after?(it, since) }
                    .reverse.take_while { it["status"] == PlanState::FAILED_START }
-                   .reject { count.except&.match?(it["note"].to_s) }
       end
 
       def after?(stage, since)

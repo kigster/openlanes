@@ -171,4 +171,47 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       expect([told, stages.map { it["status"] }]).to eq([[1], ["Failed start"]])
     end
   end
+
+  # The probe (`claude auth status`) says signed in, the run says it is not:
+  # the CLI is released, the agent fails to log in, the CLI is held again.
+  # Left to the pause alone that went round every ten minutes for good.
+  context "when the CLI fails to authenticate although its probe passes" do
+    let(:note) { "OAuth session expired" }
+    let(:spent) { 0 }
+    let(:clock) { OpenLanes::Clock::Fake.new(now: Time.now) }
+    let(:extensions) { OpenLanes::Engine::Extensions.new(stay: false, auto: false, now: -> { clock.now }) }
+    let(:cli_pause) { OpenLanes::Engine::CliPause.new(prober: ->(_) { true }, clock: -> { clock.now }) }
+    let(:requests) { OpenLanes::Plans::PlanState.for(folder).extensions.map { it.values_at("agent", "cause") } }
+
+    # Each run is one cycle: the pause released by a passing probe, and the
+    # start failing again.
+    def cycles(count)
+      count.times do
+        clock.advance(OpenLanes::Engine::CliPause::CEILING + 1)
+        OpenLanes::Engine::Runner.new(tree:, executor:, agents:, isolation: :shared, jobs: 1, sleeper: ->(_) {}, extensions:, cli_pause:).call
+      end
+    end
+
+    before { OpenLanes::Container.stub("clock", clock) }
+
+    it "leaves the first failures to the pause, asking nobody" do
+      cycles(2)
+
+      expect([told, requests]).to eq([[1, 1], []])
+    end
+
+    it "stops trying after three, and asks a person" do
+      cycles(5)
+
+      expect([told, requests]).to eq([[1, 1, 1], [%w[researcher failed_starts]]])
+    end
+
+    it "tries again once a person grants it a round" do
+      cycles(4)
+      extensions.answer!(folder, 1, "a", by: "dana")
+      cycles(1)
+
+      expect(told).to eq([1, 1, 1, 1])
+    end
+  end
 end
