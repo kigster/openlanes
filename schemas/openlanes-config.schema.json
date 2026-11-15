@@ -1838,6 +1838,32 @@
             }
           }
         },
+        "slack test": {
+          "type": "object",
+          "description": "Post a sample poll to the project's Slack channel and wait for an answer",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "The .plans directory",
+              "default": ".plans"
+            },
+            "quiet": {
+              "type": "boolean",
+              "description": "Suppress progress output on STDERR",
+              "default": false
+            },
+            "timeout": {
+              "type": "integer",
+              "description": "Seconds to wait for somebody to answer",
+              "default": 120
+            }
+          }
+        },
         "start": {
           "type": "object",
           "description": "The factory: the engine and its control room, kept up until `openlanes stop`, Stop All Local or Ctrl-C",
@@ -3136,6 +3162,56 @@
             "default": null,
             "minimum": 1
           }
+        }
+      }
+    },
+    "slack": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Where questions for a person are asked as Slack polls; the bot token is read from SLACK_BOT_TOKEN",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The channel's id (C0123ABCD), or a public channel's #name",
+          "default": null,
+          "minLength": 1
+        },
+        "workspace": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The workspace's id, name or subdomain the token must belong to; null takes whichever it does",
+          "default": null,
+          "minLength": 1
+        },
+        "operators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Slack user ids allowed to answer; null lets anyone in the channel",
+          "default": null,
+          "items": {
+            "type": "string",
+            "pattern": "^[UW][A-Z0-9]+$"
+          }
+        },
+        "poll_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds between two calls to Slack; null is 2",
+          "default": null,
+          "minimum": 1
         }
       }
     }

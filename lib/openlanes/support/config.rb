@@ -42,6 +42,9 @@ module OpenLanes
   #       timeout: 1800
   #   questions:
   #     model: anthropic/claude-haiku-5.5  # rewrites prose questions into choices (D9)
+  #   slack:                    # questions asked in Slack as polls; the token is SLACK_BOT_TOKEN
+  #     channel: "#openlanes-questions"
+  #     workspace: acme         # the token must belong to it
   #   events:                   # the durable run log (plan 020.01), off by default
   #     enabled: true
   #     dir: /var/lib/openlanes/events  # default: under $XDG_STATE_HOME
@@ -160,6 +163,10 @@ module OpenLanes
   # @!attribute [r] events_dir
   #   @return [String, nil] `events.dir`: an absolute path; nil takes
   #     {Events::Location}'s default
+  # @!attribute [r] slack
+  #   @return [Hash{Symbol => Object}] `slack:` as typed, keyed `:channel`,
+  #     `:workspace`, `:operators` and `:poll_seconds`; empty when the
+  #     project asks no questions in Slack. Read through {OpenLanes::Slack}
   # @!attribute [r] budget_plan_usd
   #   @return [Float, nil] `budget.plan_usd`: the most a plan may spend, in
   #     estimated dollars, before no new round starts on it; nil is no cap.
@@ -201,10 +208,11 @@ module OpenLanes
     :budget_plan_usd,
     :sizing,
     :agents,
-    :application) do
+    :application,
+    :slack) do
     def initialize(path: nil, project: nil, starts: nil, frontend: nil, jobs: nil, adapter: nil, redis_url: nil,
       redis_outage_hours: nil, ci_pending_hours: nil, redis_backoff: {}, commands: {}, merge_by: nil, app: nil, aging_since: nil, questions_model: nil, merge_max_rejections: nil,
-      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, agents: Agents::Overrides.new, application: nil) # rubocop:disable Naming/MethodParameterName
+      desired_codebase_quality: nil, coverage: nil, ci: nil, stack: nil, architecture_decisions: nil, events_enabled: false, events_dir: nil, review_adapters: [], refactor_threshold: nil, refactor_lock_hours: nil, chime: nil, budget_plan_usd: nil, sizing: Agents::Sizing.new, agents: Agents::Overrides.new, application: nil, slack: {}) # rubocop:disable Naming/MethodParameterName
       super
     end
 
@@ -317,6 +325,7 @@ module OpenLanes
       settings["chime"] = chime unless chime.nil?
       settings["sizing"] = sizing.to_settings unless sizing.to_settings.empty?
       settings["agents"] = agents.to_settings unless agents.table.empty?
+      settings["slack"] = slack.transform_keys(&:to_s) unless slack.empty?
       settings.compact
     end
 
@@ -368,6 +377,9 @@ module OpenLanes
 
     # Every key `plans:` may hold. Checked key by key, like the top level.
     PLAN_KEYS = Schema.keys_for("plans").freeze
+
+    # Every key `slack:` may hold.
+    SLACK_KEYS = Schema.keys_for("slack").freeze
 
     # Every key `questions:` may hold.
     QUESTION_KEYS = Schema.keys_for("questions").freeze
@@ -489,7 +501,8 @@ module OpenLanes
           **budget(settings["budget"], path),
           sizing:    Agents::Sizing.parse(settings["sizing"], path:),
           agents:    Agents::Overrides.parse(settings["agents"], path:),
-          application: Config::Application.parse(settings["application"], path:))
+          application: Config::Application.parse(settings["application"], path:),
+          slack:     slack(settings["slack"], path))
         conflicts!(config, path)
         schema!(config.to_settings.except("commands"), path)
         config
@@ -771,6 +784,22 @@ module OpenLanes
           fail_with(path, "plans.#{key}: unknown key; known: #{PLAN_KEYS.join(", ")}")
         end
         { aging_since: aging_since(settings["aging_since"], path) }
+      end
+
+      # Only the keys are checked by hand, for an error that lists the known
+      # ones; what each may hold is the schema's to say.
+      #
+      # @return [Hash{Symbol => Object}] `slack:`, unset keys dropped
+      def slack(value, path)
+        return {} if value.nil?
+
+        fail_with(path, "slack: must be a mapping of setting to value") unless value.is_a?(Hash)
+
+        settings = value.transform_keys(&:to_s)
+        (settings.keys - SLACK_KEYS).each do |key|
+          fail_with(path, "slack.#{key}: unknown key; known: #{SLACK_KEYS.join(", ")}")
+        end
+        settings.compact.transform_keys(&:to_sym)
       end
 
       # @return [Hash{Symbol => Object}] the `questions:` settings, as keywords for {Config.new}
