@@ -73,6 +73,13 @@ ENV["GIT_CONFIG_VALUE_0"] = "false"
 ENV["XDG_STATE_HOME"] = Dir.mktmpdir("openlanes-state")
 at_exit { FileUtils.rm_rf(ENV.fetch("XDG_STATE_HOME")) }
 
+# The model catalogue caches Anthropic's list under the XDG cache directory.
+# A developer whose factory has run has one, and it adds models the bundled
+# table lacks, so examples comparing against the bundled table failed on that
+# machine alone.
+ENV["XDG_CACHE_HOME"] = Dir.mktmpdir("openlanes-cache")
+at_exit { FileUtils.rm_rf(ENV.fetch("XDG_CACHE_HOME")) }
+
 # PID files too (S3): a command run in an example writes its own, and a
 # checkout's `tmp/pids` is the developer's running factory.
 ENV["OPENLANES_PID_DIR"] = Dir.mktmpdir("openlanes-pids")
