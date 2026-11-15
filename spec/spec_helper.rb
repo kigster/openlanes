@@ -64,6 +64,12 @@ ENV["OPENLANES_MODELS_OFFLINE"] = "1"
 # A developer's shell (direnv) may export the control room's login; the
 # examples that need one set it themselves.
 ENV.delete("OPENLANES_ADMIN_CREDENTIALS")
+# A git hook exports GIT_DIR and GIT_INDEX_FILE, and in a linked worktree they
+# outrank `git -C <tmp>`: the pre-commit hook's rspec then ran an example's
+# `git init`, `config` and `commit` against the developer's repository, set
+# `core.bare` on it and committed its fixture to the branch being committed.
+# Git names every variable that binds it to a repository; none may reach a child.
+`git rev-parse --local-env-vars`.split.each { ENV.delete(it) }
 ENV["GIT_CONFIG_COUNT"] = "1"
 ENV["GIT_CONFIG_KEY_0"] = "commit.gpgsign"
 ENV["GIT_CONFIG_VALUE_0"] = "false"
