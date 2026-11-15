@@ -15,8 +15,9 @@ module OpenLanes
           @start = start
           @rescan = rescan
           @idle_ticks = 0
-          @quota = Quota.new(desk)
-          @idle_reason = IdleReason.new(desk)
+          stalls = Stalls.new(desk)
+          @quota = Quota.new(desk, stalls:)
+          @idle_reason = IdleReason.new(desk, stalls:)
           @candidates = Candidates.new(desk, quota: @quota, upkeep: Upkeep.new(desk), gate: QualityGate.new(desk))
         end
 
@@ -32,6 +33,7 @@ module OpenLanes
 
         # @return [void]
         def dispatch
+          cli_pause.probe
           @quota.ask_for_rounds
           refusals.clear
           started = 0

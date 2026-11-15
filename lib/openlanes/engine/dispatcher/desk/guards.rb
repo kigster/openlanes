@@ -5,9 +5,11 @@ module OpenLanes
     class Dispatcher
       class Desk
         # Agents outside openlanes (W31), this run's own claims, and the
-        # records a stopped round leaves. A dry run claims nothing, asks
-        # nothing and writes no state.json, so it starts no lock's clock.
-        Guards = Data.define(:agent_locks, :locks, :lock_clock, :finishes, :records) do
+        # records a stopped round leaves, and the CLIs no agent is started on
+        # ({CliPause}, the runner's own so the page shares it). A dry run
+        # claims nothing, asks nothing and writes no state.json, so it starts
+        # no lock's clock.
+        Guards = Data.define(:agent_locks, :locks, :lock_clock, :finishes, :records, :cli_pause) do
           # @param runner [OpenLanes::Engine::Runner]
           # @param clock [#now, #sleep]
           # @return [Guards]
@@ -18,7 +20,8 @@ module OpenLanes
               locks: PlanLocks.new(agent_locks: outside),
               lock_clock: dry ? nil : Plans::LockClock.new,
               finishes: Finishes.new(runner:, clock:),
-              records: Recovery::Records.new(dry_run: dry))
+              records: Recovery::Records.new(dry_run: dry),
+              cli_pause: runner.respond_to?(:cli_pause) ? runner.cli_pause : CliPause.new)
           end
         end
       end

@@ -27,10 +27,10 @@ module OpenLanes
 
           # @param from [Symbol] the state the plan was dispatched in, whose
           #   rounds this one is counted among
+          # @param round [Integer] the round to tell the agent ({Desk#next_round})
           # @return [OpenLanes::Engine::Dispatcher::Job]
-          def job(agent, subject, from)
+          def job(agent, subject, from:, round:)
             ordinal = subject.feature.ordinal.to_s
-            round = history[[ordinal, agent.name]].count { |h| h[:state] == from } + 1
             task = prepare(agent, subject, round)
             pending(@jobs.build(task,
               timed_handle(ordinal, agent, round, subject),

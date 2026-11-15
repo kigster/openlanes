@@ -4,7 +4,7 @@ module OpenLanes
   module Engine
     class Dispatcher
       # What the tick's steps share: the jobs running now ({Registers}), what
-      # each agent has already done on each plan ({Rounds}), the plans nothing
+      # each agent has already done on each plan ({Rounds}, {RoundLedger}), the plans nothing
       # may touch ({Fences}, {Budgeting}), and the collaborators every step
       # reads or writes through. One desk per run, built by the {Dispatcher}
       # and handed to each {Step}; its public methods are the steps' contract.
@@ -47,6 +47,9 @@ module OpenLanes
         def_delegators :@fences, :untouchable, :verifying_now, :arbitrating_now, :waiting
         def_delegators :@fences, :locked_elsewhere?, :held_outside?
         def_delegators :@rounds, :resume, :remember, :forget_round
+        def_delegators :@round_ledger, :past_rounds, :next_round
+        def_delegator :@failed_starts, :hold, :failed_start_hold
+        def_delegator :@failed_starts, :streak, :failed_streak
         def_delegators :@round_records, :harness_resume, :last_line, :write_interrupted, :stage!
         def_delegators :@lookups, :in_run?, :read_ledger, :verifier?, :assessor?, :fresh, :fresh_by
         def_delegators :@events, :adapter_for, :event_fields, :adapter_name
@@ -88,9 +91,16 @@ module OpenLanes
           @budgeting = Budgeting.new(runner:, budget: @setup.budget || Engine.budget_for(runner))
           @fences = Fences.new(self)
           @rounds = Rounds.new(@registers)
+          build_ledger
           @round_records = RoundRecords.new(records)
           @lookups = Lookups.new(runner)
           @events = Events.new(self)
+        end
+
+        # The rounds `state.json` has, and the hold failed starts put on an agent.
+        def build_ledger
+          @round_ledger = RoundLedger.new(registers: @registers, runner:)
+          @failed_starts = FailedStarts.new(ledger: @round_ledger, extensions:, clock:)
         end
       end
     end

@@ -448,6 +448,7 @@ module OpenLanes
           reviews:      reviews_for(agents, publisher, worktree),
           on_board:     on_board_for(live),
           claims:       live&.claims,
+          cli_pause:    live&.cli_pause,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
           events:       events,

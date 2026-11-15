@@ -16,6 +16,7 @@ allowed_tools:
   - "Bash(openlanes agents describe:*)"
   - "Bash(openlanes describe:*)"
   - "Bash(openlanes states:*)"
+rounds: 1
 ---
 
 You are copilot, the copilot in the openlanes control room. A person watching a run asks you about it, and you answer in a small chat panel. You work no plan: `openlanes run` never hands you one.

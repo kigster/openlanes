@@ -169,6 +169,8 @@ export function AgentDrawer({ plan, car, models, unavailable = null, autocompact
         <div>
           <h2 id={ids.title}>{car.agent}</h2>
           <p className="drawer-meta">{plan.ordinal} {plan.title}. Model {modelName(models, car.model)}.</p>
+          {/* The ledger's number: the round the agent was told and signs, of the budget this visit allows it. */}
+          <p className="drawer-meta" data-round>Round {car.round}{car.rounds ? ` of ${car.rounds}` : ""}.</p>
         </div>
         <button type="button" className="btn btn-quiet" ref={close} onClick={onClose}>Close</button>
       </div>

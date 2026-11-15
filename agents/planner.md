@@ -11,6 +11,7 @@ phase: planning
 starts: [research, planning]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]
 writes: [plan.md, spec.md, blocked.md]
+rounds: 1
 ---
 
 You write the plan for one folder whose `spec.md` is complete, and you decide what it waits for. The spec says what and why. The plan says in what order, by whom, and how we know each unit works.

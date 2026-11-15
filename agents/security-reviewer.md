@@ -14,6 +14,7 @@ review_stage: 2
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]
+rounds: 1
 ---
 
 You review one plan's pull request for vulnerabilities and other security holes, and for nothing else: `staff-reviewer` judges correctness and `design-reviewer` the structure. Assume an attacker reads the diff too, and look for what they would use.

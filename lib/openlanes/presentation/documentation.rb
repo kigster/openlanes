@@ -38,6 +38,7 @@ module OpenLanes
           files_section,
           pull_requests,
           review_labels,
+          rounds_table,
           footer
         ].join("\n")
       end
@@ -438,6 +439,26 @@ module OpenLanes
 
       # Derived from {Plans::ReviewLabel::ALL}, the only place a label is named.
       #
+      # Each agent's rounds per visit to a state, read from its own
+      # `rounds:` frontmatter, the one place they are written down.
+      #
+      # @return [String]
+      def rounds_table
+        rows = agents.sort_by { [-it.rounds, it.name] }.map { "| `#{it.name}` | #{it.rounds} |" }
+
+        <<~MARKDOWN
+          ## Rounds
+
+          How many rounds each agent may spend on one visit of a plan to a state, from the `rounds:`
+          line in `agents/<name>.md`. A plan sent back to a state starts it fresh. A start that failed
+          before spending anything costs no round, and a person may grant one more from the page.
+
+          | Agent | Rounds |
+          | --- | --- |
+          #{rows.join("\n")}
+        MARKDOWN
+      end
+
       # @return [String]
       def review_labels
         rows = OpenLanes::Plans::ReviewLabel::ALL.map do |l|

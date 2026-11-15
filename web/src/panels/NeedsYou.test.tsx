@@ -153,20 +153,20 @@ describe("NeedsYou", () => {
       id: "001.00/X2", number: 2, kind: "extension", heading: "backend-coder is running out of time",
       body: "Round 1 on Building has under 5 minutes left on its clock.",
       options: [
-        { letter: "a", label: "Extend Rounds by 1", recommended: false, answer: "a) Extend Rounds by 1" },
-        { letter: "b", label: "Extend Time by 10 minutes", recommended: true, answer: "b) Extend Time by 10 minutes" },
-        { letter: "c", label: "Extend Time by 20 minutes", recommended: false, answer: "c) Extend Time by 20 minutes" },
+        { letter: "a", label: "One more round", recommended: false, answer: "a) One more round" },
+        { letter: "b", label: "One more round with 10 extra minutes", recommended: true, answer: "b) One more round with 10 extra minutes" },
+        { letter: "c", label: "One more round with 20 extra minutes", recommended: false, answer: "c) One more round with 20 extra minutes" },
       ],
     })];
     renderPanel(<NeedsYou plans={[plan]} onCommand={onCommand} />);
     const group = screen.getByRole("group", { name: "Choose an answer" });
     expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "a)Extend Rounds by 1", "b)Extend Time by 10 minutesRecommended", "c)Extend Time by 20 minutes",
+      "a)One more round", "b)One more round with 10 extra minutesRecommended", "c)One more round with 20 extra minutes",
     ]);
     expect(screen.getByText("backend-coder is running out of time")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hold blocked" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: /Extend Time by 20 minutes/ }));
-    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "X2", text: "c) Extend Time by 20 minutes" } });
+    await user.click(screen.getByRole("button", { name: /One more round with 20 extra minutes/ }));
+    expect(sent[0]).toEqual({ kind: "answer", plan: "001.00", agent: "backend-coder", payload: { question: "X2", text: "c) One more round with 20 extra minutes" } });
   });
 
   it("stacks a lettered question's options in order, the recommended one tagged, and Type something instead last", async () => {

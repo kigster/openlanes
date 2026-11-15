@@ -7,6 +7,13 @@ module OpenLanes
         # How many rounds an agent has had on a plan's state, whether it may
         # have another, and the request for more once it has used them all.
         class Quota < Step
+          # @param desk [Desk]
+          # @param stalls [Stalls] asks for an agent parked by failed starts
+          def initialize(desk, stalls: Stalls.new(desk))
+            super(desk)
+            @stalls = stalls
+          end
+
           # @param agent [OpenLanes::Agents::Agent]
           # @param subject [OpenLanes::Plans::Subject]
           # @return [Boolean]
@@ -15,9 +22,9 @@ module OpenLanes
             # A capped plan is the arbitrator's; one it is being asked about
             # waits for the ruling, which may move it.
             return false if runner.arbitration&.holds?(subject) || arbitrating_now.include?(ordinal)
-            return false if running_on?(agent, ordinal)
+            return false if running_on?(agent, ordinal) || held?(agent, subject)
 
-            past = past_rounds(agent, subject)
+            past = past_rounds(subject, agent)
             return true if past.empty?
             return false if %w[Completed Blocked].include?(past.last[:status])
 
@@ -44,6 +51,7 @@ module OpenLanes
 
           def ask_on(subject)
             Agents::Routing.offer(runner.agents, subject.status, subject).each do |agent|
+              @stalls.ask(agent, subject)
               last = out_of_rounds(agent, subject) or next
               extensions.exhausted(subject.feature.path, agent.name, subject.status.key, last[:round])
             end
@@ -56,7 +64,7 @@ module OpenLanes
           # @return [Hash, nil] the agent's last round on the plan's state,
           #   when it was its last allowed one
           def out_of_rounds(agent, subject)
-            past = past_rounds(agent, subject)
+            past = past_rounds(subject, agent)
             return nil if past.empty? || %w[Completed Blocked Started].include?(past.last[:status])
             return nil if past.size < allowance(agent, subject)
 
@@ -67,8 +75,10 @@ module OpenLanes
             running.any? { |j| j.task.agent.name == agent.name && j.task.subject.feature.ordinal.to_s == ordinal }
           end
 
-          def past_rounds(agent, subject)
-            history[[subject.feature.ordinal.to_s, agent.name]].select { |h| h[:state] == subject.status.key }
+          # Held by its own failed starts, or with every agent on its CLI
+          # while that CLI cannot log in (plan 065.00).
+          def held?(agent, subject)
+            !failed_start_hold(subject, agent).nil? || cli_pause.paused?(adapter_of(agent, subject).name)
           end
 
           def allowance(agent, subject)

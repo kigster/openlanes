@@ -47,6 +47,11 @@ module OpenLanes
       # Where the schema is published, so an editor can validate the file.
       SCHEMA_ID = "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json"
 
+      # A stage's status for a start that spent nothing: no tokens in, none
+      # out, no tool call, not killed. It is a ledger status, not a
+      # {Plans::Status}, and {Rounds} does not count it.
+      FAILED_START = "Failed start"
+
       # The schema in this checkout.
       SCHEMA_PATH = File.expand_path("../../../schemas/plan-state.schema.json", __dir__)
 
@@ -283,7 +288,7 @@ module OpenLanes
       # @param round [Integer]
       # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
-      #   effort, up, down, seconds, note, to, session, cwd; `run` only in files older releases wrote
+      #   effort, up, down, seconds, note, from, to, session, cwd; `run` only in files older releases wrote
       # @return [Hash] the stage as written
       def stage!(agent:, round:, reset: false, **fields)
         stage = nil
@@ -297,6 +302,9 @@ module OpenLanes
           # A settling round notes how often the plan had moved by then, in
           # the same write, so {#resumption} sees a move no stage recorded.
           stage["moves"] = data["moves"].to_i if fields.key?(:to)
+          # A dispatch names the visit it belongs to, so {Rounds} counts it
+          # in the right one however the plan moves afterwards.
+          stage["visit"] ||= data["moves"].to_i if fields.key?(:from)
         end
         stage
       end
@@ -567,7 +575,7 @@ module OpenLanes
         update do |data|
           all = (data["extensions"] ||= [])
           record = { "number" => (all.map { it["number"] }.max || 0) + 1, "agent" => agent, "state" => state.to_s,
-                     "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601 }
+                     "round" => Integer(round), "limit" => limit, "asked_at" => at.iso8601, "moves" => data["moves"].to_i }
           all << record
         end
         record
@@ -576,6 +584,10 @@ module OpenLanes
       # Answer a request, or close it unanswered. Once settled it stays
       # settled: a second answer, from another page or a replayed command,
       # changes nothing.
+      #
+      # A request asked before requests named their visit is stamped with the
+      # visit it is answered in, so its grant expires when the plan moves like
+      # any other, instead of counting on every return to the state.
       #
       # @param number [Integer]
       # @param fields [Hash{String => Object}] `answer`, `by`, `grant`, `seconds`, `closed`
@@ -588,6 +600,7 @@ module OpenLanes
           found = (data["extensions"] || []).find { it["number"] == Integer(number) } or next
           next if found.key?("settled_at")
 
+          found["moves"] = data["moves"].to_i unless found.key?("moves")
           settled = found.merge!(fields.transform_keys(&:to_s).compact, "settled_at" => at.iso8601)
         end
         settled

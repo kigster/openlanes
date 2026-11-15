@@ -32,6 +32,7 @@ import {
   AgentDrawer,
   BombNotice,
   GlobalLockBanner,
+  PausedCliBanner,
   AnnouncerProvider,
   HelpDialog,
   ModelSelect,
@@ -259,6 +260,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
         <GlobalLockBanner lock={me.global_lock ?? null} />
+        <PausedCliBanner paused={me.paused_clis ?? []} />
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}

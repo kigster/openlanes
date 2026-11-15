@@ -645,6 +645,9 @@
       ]
     },
     "bombs": [],
+    "paused_clis": [
+      { "adapter": "claude", "reason": "OAuth session expired", "since": "2026-10-13T09:30:00Z" }
+    ],
     "autocompact": 0.4,
     "log": [
       {

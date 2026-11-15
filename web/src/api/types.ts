@@ -272,6 +272,14 @@ export interface Snapshot {
   log: LogLine[]; // the most recent lines, newest last
   bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
   global_lock?: GlobalLock | null; // optional: an engine older than R6 never sends it; null when no refactor runs alone
+  paused_clis?: PausedCli[]; // optional: an engine older than plan 065 never sends it, which reads as nothing paused
+}
+
+/** A coding CLI the engine stopped starting agents on after an authentication failure, until its probe passes (plan 065). */
+export interface PausedCli {
+  adapter: string; // claude, codex, pi, grok or gemini
+  reason: string; // the CLI's own words, "OAuth session expired"
+  since: Iso;
 }
 
 /** The refactor running alone (R6): nothing new starts until it merges or its lock lapses. */

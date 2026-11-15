@@ -34,9 +34,12 @@ module OpenLanes
       # @param budget [OpenLanes::Engine::Budget] what each plan has spent
       # @param availability [#call] each adapter's latest probe, read once per
       #   snapshot ({Adapters::Probes#current})
+      # @param paused_clis [#call] the CLIs the engine holds, {Engine::CliPause#entries}
       def initialize(store:, keys:, node:, tree:, agents:, project:, claims: nil, run_state: RunState.new,
-        description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine.budget)
+        description: nil, clock: -> { Time.now }, availability: -> { [] }, budget: Engine.budget,
+        paused_clis: -> { [] })
         @budget = budget
+        @paused_clis = paused_clis
         @store = store
         @keys = keys
         @node = node
@@ -172,6 +175,7 @@ module OpenLanes
           outage:      @outage,
           availability: @availability,
           budget:      @budget,
+          paused_clis: @paused_clis,
           log:).to_h
       end
 

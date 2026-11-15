@@ -391,6 +391,31 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
     end
   end
 
+  describe "paused_clis (plan 065.00)" do
+    def paused(entries)
+      described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        at:,
+        paused_clis: -> { entries }).to_h[:paused_clis]
+    end
+
+    it "is an empty array when nothing is paused" do
+      expect(paused([])).to eq([])
+    end
+
+    it "names each paused CLI, why, and since when" do
+      cli = OpenLanes::Engine::CliPause.new(prober: ->(_) { false }, clock: -> { at })
+      cli.pause("claude", "OAuth session expired")
+
+      expect(paused(cli.entries)).to eq([{ adapter: "claude", reason: "OAuth session expired", since: "2026-10-13T09:00:00Z" }])
+    end
+  end
+
   describe "a question that offers lettered options (D3)" do
     subject(:question) do
       described_class.new(board:, tree:, agents:, node:, repo: keys.repo, project: "openlanes", seq: 1, at:, claims:, judge:)

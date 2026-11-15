@@ -13,6 +13,7 @@ module OpenLanes
           # @param signing [Signing]
           def initialize(desk, rename:, stops:, signing:)
             super(desk)
+            @failed_start = FailedStart.new(desk)
             @rename = rename
             @stops = stops
             @signing = signing
@@ -22,6 +23,7 @@ module OpenLanes
           #   lines noted and `to:` the state the folder is in now
           def call(job, base)
             reading = read_ledger(job.task)
+            @failed_start.note(job)
             attempt = noted(decide(job, base, entry_for(job.task, reading), reading), reading)
             attempt.with(to: fresh(job.task)&.status&.key || attempt.to)
           end
@@ -59,7 +61,10 @@ module OpenLanes
             @rename.assessed(job, base, nil)
           end
 
-          def failed(job, base)
+          # A start that spent nothing is a failed start, not a round lost.
+          def failed(job, base) = @failed_start.call(job, base) || interrupted(job, base)
+
+          def interrupted(job, base)
             task = job.task
             fresh(task)&.then { harness_resume(it, task.agent, task.round, job.result.note, phrase: job.message) }
             remember(plan_of(job), task.agent.name, job.state, "Interrupted", task.round)

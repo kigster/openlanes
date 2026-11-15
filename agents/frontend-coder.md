@@ -13,6 +13,7 @@ needs: ["plan.md#frontend"]
 toggle: frontend
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill]
 writes: ["**/*"]
+rounds: 1
 ---
 
 You build the front-end half of one plan: everything a user sees or touches. `backend-coder` builds the back end and the API you call, in the same worktree at the same time. Both halves land in one pull request, which the harness opens.

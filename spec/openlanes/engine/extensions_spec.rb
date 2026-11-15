@@ -138,10 +138,32 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       end
     end
 
-    it "counts no round granted before this run started, since a restart counts used rounds afresh" do
+    it "still counts a grant made by an earlier engine process on the same visit" do
       extensions.answer!(path, 1, "a", by: "dana")
-      later = described_class.new(stay:, now: -> { now + 60 })
-      expect(later.rounds(path, "backend-coder", :building)).to eq(0)
+      later = described_class.new(stay:, now: -> { now + 3600 })
+      expect(later.rounds(path, "backend-coder", :building)).to eq(1)
+    end
+
+    it "stops counting a grant once the plan moves, even back to the same state" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      plan.state!(:built)
+      plan.state!(:building)
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
+    end
+
+    it "counts a grant asked before grants named their visit, for the visit it is answered in" do
+      plan.update { |data| data["extensions"].first.delete("moves") }
+      extensions.answer!(path, 1, "a", by: "dana")
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(1)
+      plan.state!(:built)
+      plan.state!(:building)
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
+    end
+
+    it "does not count a grant settled before grants named their visit" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      plan.update { |data| data["extensions"].first.delete("moves") }
+      expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
     end
 
     it "answers once: a second answer changes nothing" do
@@ -194,9 +216,15 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
       aggregate_failures do
         expect(question).to include(id: "001.00/X1", kind: "extension", heading: "backend-coder is out of rounds", owner: "technical")
         expect(question[:options].map { it[:answer] })
-          .to eq(["a) Extend Rounds by 1", "b) Extend Time by 10 minutes", "c) Extend Time by 20 minutes"])
+          .to eq(["a) One more round", "b) One more round with 10 extra minutes", "c) One more round with 20 extra minutes"])
         expect(question[:options].map { it[:recommended] }).to eq([true, false, false])
       end
+    end
+
+    it "labels a time request's choices with what each grants" do
+      plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now)
+      expect(described_class.questions(subject_of, plan).first[:options].map { it[:label] })
+        .to eq(["One more round, starting again from its resume note", "10 more minutes on this round", "20 more minutes on this round"])
     end
 
     it "shows nothing settled, and nothing asked on another state" do

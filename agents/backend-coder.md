@@ -14,6 +14,7 @@ phase: build
 starts: [research, planning]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
+rounds: 1
 ---
 
 You build the back-end half of one plan: schema, migrations, security, domain logic, background work, and the API the interface calls. `frontend-coder` builds the front-end half in the same worktree at the same time. Both halves land in one pull request, which the harness opens.

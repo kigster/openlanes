@@ -54,12 +54,47 @@ module OpenLanes
       #   @return [Boolean] whether it failed on the provider's rate limit or
       #     overload, having waited as long as {Throttle::Backoff} allows,
       #     rather than at anything the agent did
+      # @!attribute [r] tools
+      #   @return [Integer] tool calls the agent made
       # @return [Data]
-      Result = Data.define(:ok, :note, :up, :down, :subagents, :delegated, :seconds, :killed, :pid, :cached, :throttled) do
-        def initialize(killed: nil, pid: nil, cached: 0, throttled: false, **rest) = super
+      Result = Data.define(:ok,
+        :note,
+        :up,
+        :down,
+        :subagents,
+        :delegated,
+        :seconds,
+        :killed,
+        :pid,
+        :cached,
+        :throttled,
+        :tools) do
+        def initialize(killed: nil, pid: nil, cached: 0, throttled: false, tools: 0, **rest) = super
 
         # @return [Integer] new input, cache writes and output
         def fresh = up - cached + down
+
+        # Whether it failed before spending anything: no tokens in, none out,
+        # no tool call, and nobody killed it. The same test {#lost_session}
+        # makes of a transcript, so a start that cost nothing costs the agent
+        # no round either (plan 065.00).
+        #
+        # @return [Boolean]
+        def failed_start? = !ok && killed.nil? && !throttled && Executor.spent_nothing?(up:, down:, tools:)
+
+        # Whether that failed start was the CLI refusing to authenticate, read
+        # from its own words. The engine pauses the CLI rather than starting
+        # the next agent on it into the same wall.
+        #
+        # @return [Boolean]
+        def auth_failure? = failed_start? && AUTH_FAILURE.match?(note.to_s)
+
+        # The CLI's own words for the authentication failure, without the
+        # exit code and trace path the note carries, so the idle line reads
+        # `claude paused: OAuth session expired`.
+        #
+        # @return [String, nil] nil when it was not one
+        def auth_reason = (note.to_s[AUTH_FAILURE] if auth_failure?)
 
         # @return [Array(Boolean, String)]
         def to_ary = [ok, note]
@@ -491,6 +526,17 @@ module OpenLanes
       # `result` event with `is_error`, zero turns and zero tokens, exit 1.
       SESSION_MISSING = /No conversation found with session ID/
 
+      # What each CLI says when it will not authenticate: claude's expired
+      # OAuth session and `/login` prompt, codex and pi's missing login,
+      # gemini's own wording, and a provider's rejected key.
+      AUTH_FAILURE = Regexp.union(/OAuth (?:session|token) (?:has )?expired/i,
+        /not (?:signed|logged) in/i,
+        %r{Please run .?/?login}i,
+        /Error authenticating/,
+        /Invalid API key/i,
+        /authentication_error/,
+        /401 Unauthorized/i)
+
       # @param env [Hash]
       # @return [Array<String>] credential variables currently set
       def self.foreign_credentials(env = ENV)
@@ -752,6 +798,12 @@ module OpenLanes
       #   outlives the engine where the clock's own monotonic deadline does not
       def self.deadline(clock) = (Time.now + clock.remaining).utc.iso8601
 
+      # @param up [Integer]
+      # @param down [Integer]
+      # @param tools [Integer]
+      # @return [Boolean] whether an invocation spent nothing at all
+      def self.spent_nothing?(up:, down:, tools:) = up.to_i.zero? && down.to_i.zero? && tools.to_i.zero?
+
       # A failed invocation still spent what it spent, and a run that burned two
       # hundred thousand tokens before timing out is a different fact from one
       # that failed to authenticate and spent nothing. Both used to report the
@@ -769,6 +821,7 @@ module OpenLanes
           note:,
           up: transcript.up,
           down: transcript.down,
+          tools: transcript.tools,
           subagents: transcript.spawned,
           delegated: transcript.delegated,
           seconds: UI.monotonic - started,
@@ -1050,7 +1103,7 @@ module OpenLanes
 
         said = [transcript.error, *transcript.plain].map(&:to_s).reject(&:empty?)
         return "not found" if said.any? { SESSION_MISSING.match?(it) }
-        return nil unless transcript.up.zero? && transcript.down.zero? && transcript.tools.zero?
+        return nil unless Executor.spent_nothing?(up: transcript.up, down: transcript.down, tools: transcript.tools)
 
         detail = said.empty? ? "exit #{status.exitstatus}" : said.last.lines.first.strip[0, 200]
         "failed before spending anything (#{detail})"

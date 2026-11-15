@@ -6,6 +6,8 @@
 classDiagram
   class OpenLanes["OpenLanes"]
   <<module>> OpenLanes
+  class OpenLanes__Adapters["OpenLanes::Adapters"]
+  <<module>> OpenLanes__Adapters
   class OpenLanes__Adapters__Claude__Catalogue["OpenLanes::Adapters::Claude::Catalogue"]
   class OpenLanes__Agents["OpenLanes::Agents"]
   <<module>> OpenLanes__Agents
@@ -38,6 +40,7 @@ classDiagram
   class OpenLanes__Engine__Arbitration__Asker["Arbitration::Asker"]
   class OpenLanes__Engine__Board["Board"]
   class OpenLanes__Engine__Budget["Budget"]
+  class OpenLanes__Engine__CliPause["CliPause"]
   class OpenLanes__Engine__Conversions["Conversions"]
   class OpenLanes__Engine__CoverageGate["CoverageGate"]
   class OpenLanes__Engine__Curating["Curating"]
@@ -48,14 +51,17 @@ classDiagram
   class OpenLanes__Engine__Dispatcher__Assign__QualityGate["Dispatcher::Assign::QualityGate"]
   class OpenLanes__Engine__Dispatcher__Assign__Quota["Dispatcher::Assign::Quota"]
   class OpenLanes__Engine__Dispatcher__Assign__Refusals["Dispatcher::Assign::Refusals"]
+  class OpenLanes__Engine__Dispatcher__Assign__Stalls["Dispatcher::Assign::Stalls"]
   class OpenLanes__Engine__Dispatcher__Assign__Upkeep["Dispatcher::Assign::Upkeep"]
   class OpenLanes__Engine__Dispatcher__Controls["Dispatcher::Controls"]
   class OpenLanes__Engine__Dispatcher__Desk["Dispatcher::Desk"]
   class OpenLanes__Engine__Dispatcher__Desk__Budgeting["Dispatcher::Desk::Budgeting"]
   class OpenLanes__Engine__Dispatcher__Desk__Events["Dispatcher::Desk::Events"]
+  class OpenLanes__Engine__Dispatcher__Desk__FailedStarts["Dispatcher::Desk::FailedStarts"]
   class OpenLanes__Engine__Dispatcher__Desk__Fences["Dispatcher::Desk::Fences"]
   class OpenLanes__Engine__Dispatcher__Desk__Lookups["Dispatcher::Desk::Lookups"]
   class OpenLanes__Engine__Dispatcher__Desk__Profiles["Dispatcher::Desk::Profiles"]
+  class OpenLanes__Engine__Dispatcher__Desk__RoundLedger["Dispatcher::Desk::RoundLedger"]
   class OpenLanes__Engine__Dispatcher__Desk__RoundRecords["Dispatcher::Desk::RoundRecords"]
   class OpenLanes__Engine__Dispatcher__Desk__Rounds["Dispatcher::Desk::Rounds"]
   class OpenLanes__Engine__Dispatcher__FixedPoint["Dispatcher::FixedPoint"]
@@ -84,6 +90,7 @@ classDiagram
   class OpenLanes__Engine__Dispatcher__Settle["Dispatcher::Settle"]
   class OpenLanes__Engine__Dispatcher__Settle__Account["Dispatcher::Settle::Account"]
   class OpenLanes__Engine__Dispatcher__Settle__Announcement["Dispatcher::Settle::Announcement"]
+  class OpenLanes__Engine__Dispatcher__Settle__FailedStart["Dispatcher::Settle::FailedStart"]
   class OpenLanes__Engine__Dispatcher__Settle__Linger["Dispatcher::Settle::Linger"]
   class OpenLanes__Engine__Dispatcher__Settle__Records["Dispatcher::Settle::Records"]
   class OpenLanes__Engine__Dispatcher__Settle__Replacement["Dispatcher::Settle::Replacement"]
@@ -237,6 +244,7 @@ classDiagram
   class OpenLanes__Plans__PullRequestMachine["OpenLanes::Plans::PullRequestMachine"]
   class OpenLanes__Plans__PullRequests["OpenLanes::Plans::PullRequests"]
   class OpenLanes__Plans__ReviewLabel["OpenLanes::Plans::ReviewLabel"]
+  class OpenLanes__Plans__Rounds["OpenLanes::Plans::Rounds"]
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
@@ -297,6 +305,7 @@ classDiagram
   OpenLanes__Engine__Budget ..> OpenLanes__Events : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Events__PlanSpend : uses
   OpenLanes__Engine__Budget ..> OpenLanes__Project : uses
+  OpenLanes__Engine__CliPause ..> OpenLanes__Adapters : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Engine__Conversions ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
@@ -329,6 +338,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Assign__IdleReason : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Assign__QualityGate : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Assign__Quota : uses
+  OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Assign__Stalls : uses
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__Engine__Dispatcher__Assign__Upkeep : uses
   OpenLanes__Engine__Dispatcher__Assign --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign ..> OpenLanes__UI : uses
@@ -338,6 +348,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign__Candidates ..> OpenLanes__Execution__Control : uses
   OpenLanes__Engine__Dispatcher__Assign__Candidates ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Config : uses
+  OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__Dispatcher__Assign__Stalls : uses
   OpenLanes__Engine__Dispatcher__Assign__IdleReason --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__IdleReason ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Config : uses
@@ -345,9 +356,13 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Engine__Dispatcher__Assign__QualityGate ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Assign__Quota ..> OpenLanes__Agents__Routing : uses
+  OpenLanes__Engine__Dispatcher__Assign__Quota ..> OpenLanes__Engine__Dispatcher__Assign__Stalls : uses
   OpenLanes__Engine__Dispatcher__Assign__Quota --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__Quota ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Engine__Dispatcher__Assign__Refusals --|> OpenLanes__Engine__Dispatcher__Step : inherits
+  OpenLanes__Engine__Dispatcher__Assign__Stalls ..> OpenLanes__Agents__Routing : uses
+  OpenLanes__Engine__Dispatcher__Assign__Stalls ..> OpenLanes__Engine__Dispatcher__Desk__FailedStarts : uses
+  OpenLanes__Engine__Dispatcher__Assign__Stalls --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__Upkeep --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Assign__Upkeep ..> OpenLanes__Lifecycle__Lanes : uses
   OpenLanes__Engine__Dispatcher__Assign__Upkeep ..> OpenLanes__Lifecycle__Resync__Dirs : uses
@@ -357,11 +372,14 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Controls ..> OpenLanes__Execution__Control : uses
   OpenLanes__Engine__Dispatcher__Controls ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Budgeting : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Events : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__FailedStarts : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Fences : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Lookups : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Profiles : uses
+  OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__RoundLedger : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__RoundRecords : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__Dispatcher__Desk__Rounds : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Engine__EventJournal__Feed : uses
@@ -373,6 +391,8 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Execution__Control : uses
   OpenLanes__Engine__Dispatcher__Desk ..> OpenLanes__Plans__LockClock : uses
   OpenLanes__Engine__Dispatcher__Desk__Budgeting ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Dispatcher__Desk__FailedStarts ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Engine__Dispatcher__Desk__FailedStarts ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Engine__Dispatcher__Desk__Fences ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Engine__Dispatcher__Desk__Fences ..> OpenLanes__UI : uses
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Engine__Merging : uses
@@ -382,6 +402,8 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Engine__Dispatcher__Desk__Lookups ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Engine__Dispatcher__Desk__Profiles ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Engine__Dispatcher__Desk__RoundLedger ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Engine__Dispatcher__Desk__RoundLedger ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Engine__Dispatcher__Desk__RoundRecords ..> OpenLanes__Engine__Recovery__Round : uses
   OpenLanes__Engine__Dispatcher__FixedPoint ..> OpenLanes__Execution__Control : uses
   OpenLanes__Engine__Dispatcher__Lanes ..> OpenLanes__Engine__Dispatcher : uses
@@ -485,6 +507,8 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Settle__Announcement ..> OpenLanes__Events__Usage : uses
   OpenLanes__Engine__Dispatcher__Settle__Announcement ..> OpenLanes__Plans : uses
   OpenLanes__Engine__Dispatcher__Settle__Announcement ..> OpenLanes__UI : uses
+  OpenLanes__Engine__Dispatcher__Settle__FailedStart --|> OpenLanes__Engine__Dispatcher__Step : inherits
+  OpenLanes__Engine__Dispatcher__Settle__FailedStart ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Engine__Dispatcher__Settle__Linger ..> OpenLanes__Engine__Board : uses
   OpenLanes__Engine__Dispatcher__Settle__Linger --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Settle__Linger ..> OpenLanes__Plans : uses
@@ -504,6 +528,7 @@ classDiagram
   OpenLanes__Engine__Dispatcher__Settle__Stops --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Settle__Stops ..> OpenLanes__Execution__Clock : uses
   OpenLanes__Engine__Dispatcher__Settle__Stops ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Engine__Dispatcher__Settle__Verdict ..> OpenLanes__Engine__Dispatcher__Settle__FailedStart : uses
   OpenLanes__Engine__Dispatcher__Settle__Verdict --|> OpenLanes__Engine__Dispatcher__Step : inherits
   OpenLanes__Engine__Dispatcher__Settle__Verdict ..> OpenLanes__Plans__Ledger : uses
   OpenLanes__Engine__Dispatcher__Start ..> OpenLanes__Engine__Dispatcher__Start__Adoption : uses
@@ -687,6 +712,7 @@ classDiagram
   OpenLanes__Engine__RunWorkflow ..> OpenLanes__Vcs__SnapshotReads : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Agents__Registry : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Container : uses
+  OpenLanes__Engine__Runner ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Dispatcher : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Engine__Reviews : uses
   OpenLanes__Engine__Runner ..> OpenLanes__Error : uses

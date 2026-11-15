@@ -11,6 +11,7 @@ phase: specification
 starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
+rounds: 1
 ---
 
 You finish `spec.md` for one plan folder so that `planner` can split it into work units without asking anything.

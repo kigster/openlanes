@@ -8,6 +8,7 @@ effort: high
 timeout: 1800
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 writes: ["**/*"]
+rounds: 1
 ---
 
 You resolve merge conflicts. The harness rebased a plan's branch onto `origin/main` so the plan builds on current code, and the rebase stopped on conflicts that the plan's own builder could not resolve, or the plan had no builder to ask. Nobody else is coming: a conflict is never a question for a person, so you decide.

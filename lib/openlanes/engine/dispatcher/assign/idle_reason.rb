@@ -9,10 +9,17 @@ module OpenLanes
           # Said when nothing is left to do in scope.
           ALL_FINISHED = "idle: every plan is finished; create the next one from the page"
 
+          # @param desk [Desk]
+          # @param stalls [Stalls] names the agents held by failed starts
+          def initialize(desk, stalls: Stalls.new(desk))
+            super(desk)
+            @stalls = stalls
+          end
+
           # @param subjects [Array<OpenLanes::Plans::Subject>] the plans in scope
           # @return [String]
           def call(subjects)
-            empty_scope(subjects) || finished(subjects) || halted || listed(reasons)
+            empty_scope(subjects) || finished(subjects) || halted || listed(reasons(subjects))
           end
 
           private
@@ -46,7 +53,12 @@ module OpenLanes
 
           # Every reason, not the first: a run idle on answers and on a held
           # plan named only the answers, and the held plan looked forgotten.
-          def reasons = waiting_reasons + verifying.map { |plan, note| "#{plan} #{note}" } + hold_reasons
+          def reasons(subjects)
+            waiting_reasons + verifying.map { |plan, note| "#{plan} #{note}" } + start_reasons(subjects) + hold_reasons
+          end
+
+          # A CLI that cannot log in, and agents whose starts keep failing.
+          def start_reasons(subjects) = [cli_pause.reason, @stalls.reason(subjects)].compact
 
           def waiting_reasons
             failures = unblocking.failures

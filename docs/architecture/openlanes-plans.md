@@ -59,6 +59,7 @@ classDiagram
   class OpenLanes__Plans__RemovedReadme["RemovedReadme"]
   <<module>> OpenLanes__Plans__RemovedReadme
   class OpenLanes__Plans__ReviewLabel["ReviewLabel"]
+  class OpenLanes__Plans__Rounds["Rounds"]
   class OpenLanes__Plans__Spec["Spec"]
   class OpenLanes__Plans__StateMachine["StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["StateMachine::Refused"]
@@ -81,7 +82,9 @@ classDiagram
   OpenLanes__Plans ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Status : uses
