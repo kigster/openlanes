@@ -29,6 +29,11 @@ RSpec.describe OpenLanes::Web::BranchDiff do
     expect([result[:stat], result[:patch], result[:truncated]]).to match([/a\.rb \| 50 \+/, /\+two/, false])
   end
 
+  it "answers a unified patch whatever diff.external the user's git names" do
+    git("config", "diff.external", "echo external-tool")
+    expect(described_class.new(root: root, base: "main").call(feature)[:patch]).to match(/^\+two$/)
+  end
+
   it "cuts a patch over the cap and says so" do
     result = described_class.new(root: root, base: "main", max: 40).call(feature)
     expect([result[:patch].bytesize, result[:truncated]]).to eq([40, true])
