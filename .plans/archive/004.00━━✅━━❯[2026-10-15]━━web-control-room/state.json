@@ -6,7 +6,7 @@
     "slug": "web-control-room"
   },
   "state": "rejected",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-15T09:45:36-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,12 @@
       "down": 7366,
       "seconds": 118.3,
       "note": "completed - 11 tool calls (Completed, round 1 (rejected 1/2))"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [

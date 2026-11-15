@@ -1,0 +1,55 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "064.00",
+    "slug": "make-openlanes-more-interactive"
+  },
+  "state": null,
+  "updated_at": "2026-11-15T09:44:24-08:00",
+  "stages": [
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "started_at": "2026-11-15T09:42:32-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/064.00-make-openlanes-more-interactive",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "session": "199d3ec5-4e91-4d3f-90fb-125f595696e9",
+      "to": "new",
+      "finished_at": "2026-11-15T09:44:23-08:00",
+      "up": 52991,
+      "down": 819,
+      "seconds": 0.0,
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094232-064.00-researcher-55669-cbd9.ndjson",
+      "moves": 0
+    }
+  ],
+  "signatures": [],
+  "messages": [],
+  "last-known-state": {
+    "researcher": {
+      "source": "harness",
+      "at": "2026-11-15T09:44:23-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094232-064.00-researcher-55669-cbd9.ndjson; last seen: Sign researcher Started on plan 064.00"
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-15T09:44:24-08:00",
+      "moves": 0
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "061.00",
+    "slug": "speed-up-openlanes"
+  },
+  "state": null,
+  "updated_at": "2026-11-15T09:45:14-08:00",
+  "stages": [
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "started_at": "2026-11-15T09:42:05-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "session": "2a7836dd-c281-419d-9dc6-424a2120b3bf",
+      "note": "harness died",
+      "finished_at": "2026-11-15T09:44:14-08:00",
+      "handed_back": true
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:44:21-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "session": "0e36ebd5-987c-4b95-9011-c43acce62199",
+      "to": "new",
+      "finished_at": "2026-11-15T09:44:25-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 2.1,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094421-061.00-researcher-58349-166b.ndjson",
+      "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:45:08-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/061.00-speed-up-openlanes",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T09:45:14-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.6,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094508-061.00-researcher-58349-8c51.ndjson",
+      "session": "fa3b54b3-9dbe-43fc-ae4f-ee298166ce70",
+      "moves": 0
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-15T09:42:11-08:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 1
+    },
+    {
+      "at": "2026-11-15T09:42:33-08:00",
+      "agent": "researcher",
+      "status": "Blocked",
+      "round": 1,
+      "note": "technical"
+    },
+    {
+      "at": "2026-11-15T09:44:14-08:00",
+      "agent": "researcher",
+      "status": "Interrupted",
+      "round": 1,
+      "note": "harness died"
+    }
+  ],
+  "messages": [
+    {
+      "id": "299ccbe5-3abc-46c6-b62c-298ecc893306",
+      "number": 1,
+      "at": "2026-11-15T09:44:14-08:00",
+      "from": "openlanes",
+      "to": "researcher",
+      "body": "RESUME: the harness died during your round 1; carry on from your last resume note",
+      "read": "no"
+    }
+  ],
+  "last-known-state": {
+    "researcher": {
+      "source": "harness",
+      "at": "2026-11-15T09:44:14-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "harness died; last ledger line: Blocked, round 1: technical"
+    }
+  },
+  "memory": {
+    "researcher": {
+      "rounds": {},
+      "held": {
+        "session": "fa3b54b3-9dbe-43fc-ae4f-ee298166ce70",
+        "through": 0
+      }
+    }
+  }
+}

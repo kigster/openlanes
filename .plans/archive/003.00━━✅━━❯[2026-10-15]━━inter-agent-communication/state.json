@@ -6,7 +6,7 @@
     "slug": "inter-agent-communication"
   },
   "state": "approved",
-  "updated_at": "2026-10-18T04:44:22-07:00",
+  "updated_at": "2026-11-15T09:45:36-08:00",
   "stages": [
     {
       "agent": "researcher",
@@ -127,6 +127,12 @@
       "down": 4918,
       "seconds": 127.4,
       "note": "completed - 12 tool calls; approved, awaiting merge"
+    },
+    {
+      "agent": "curator",
+      "round": 0,
+      "status": "pending",
+      "note": "approved"
     }
   ],
   "signatures": [
@@ -374,6 +380,15 @@
         "lib/openlanes/plans/mailbox.rb",
         "lib/openlanes/cli/mail/subcommands/send.rb"
       ]
+    }
+  },
+  "memory": {
+    "curator": {
+      "rounds": {},
+      "held": {
+        "session": "c180bff1-6658-42c8-a1b7-bf4344e829fd",
+        "through": 0
+      }
     }
   }
 }

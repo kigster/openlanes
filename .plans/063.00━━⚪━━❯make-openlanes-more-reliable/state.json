@@ -1,0 +1,97 @@
+{
+  "$schema": "https://github.com/kigster/openlanes/blob/main/schemas/plan-state.schema.json",
+  "version": 1,
+  "plan": {
+    "ordinal": "063.00",
+    "slug": "make-openlanes-more-reliable"
+  },
+  "state": null,
+  "updated_at": "2026-11-15T09:44:47-08:00",
+  "stages": [
+    {
+      "agent": "researcher",
+      "round": 1,
+      "status": "Interrupted",
+      "started_at": "2026-11-15T09:42:23-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "session": "f5e5cab0-16fa-4263-8566-7ea435e39dc9",
+      "to": "new",
+      "finished_at": "2026-11-15T09:44:14-08:00",
+      "up": 107030,
+      "down": 1215,
+      "seconds": 0.0,
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094223-063.00-researcher-55669-3436.ndjson",
+      "moves": 0
+    },
+    {
+      "agent": "researcher",
+      "round": 2,
+      "status": "Failed start",
+      "started_at": "2026-11-15T09:44:43-08:00",
+      "cwd": "/Users/kig/github/kigster/agentic-workflow/openlanes.worktrees/063.00-make-openlanes-more-reliable",
+      "from": "new",
+      "state": "new",
+      "adapter": "claude",
+      "model": "haiku",
+      "effort": "medium",
+      "visit": 0,
+      "to": "new",
+      "finished_at": "2026-11-15T09:44:47-08:00",
+      "up": 0,
+      "down": 0,
+      "seconds": 3.5,
+      "note": "failed start: claude exited 1: Credit balance is too low - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094443-063.00-researcher-58349-d882.ndjson",
+      "session": "f93781a0-4170-4c88-8484-99267472a052",
+      "moves": 0
+    }
+  ],
+  "signatures": [
+    {
+      "at": "2026-11-15T09:42:29-08:00",
+      "agent": "researcher",
+      "status": "Started",
+      "round": 1
+    }
+  ],
+  "messages": [],
+  "last-known-state": {
+    "researcher": {
+      "source": "harness",
+      "at": "2026-11-15T09:44:14-08:00",
+      "round": 1,
+      "status": "Interrupted",
+      "note": "claude exited 143: said nothing - trace: /var/folders/jq/853fg3814rs6xx_zxk9sgsv40000gn/T/openlanes-traces/20261115-094223-063.00-researcher-55669-3436.ndjson; last ledger line: Started, round 1; last seen: Inspect plan folder state and contents"
+    }
+  },
+  "extensions": [
+    {
+      "number": 1,
+      "agent": "researcher",
+      "state": "new",
+      "round": 1,
+      "limit": "rounds",
+      "asked_at": "2026-11-15T09:44:17-08:00",
+      "moves": 0,
+      "answer": "a",
+      "by": "kig",
+      "grant": "round",
+      "seconds": 0,
+      "settled_at": "2026-11-15T09:44:37-08:00"
+    }
+  ],
+  "memory": {
+    "researcher": {
+      "rounds": {},
+      "held": {
+        "session": "f93781a0-4170-4c88-8484-99267472a052",
+        "through": 0
+      }
+    }
+  }
+}
