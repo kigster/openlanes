@@ -63,3 +63,8 @@
   --inv-plate: #06241B; --inv-enamel: #03170F; --inv-ink: #C9F3E6; --inv-ink-soft: #8AD3BC;
   --inv-hairline: #145A45; --inv-focus: #FFD400;
 }
+
+/* High Contrast, where a bright token lands under text. --hairline is light here, so the chip that sits on it takes a
+   dark fill; the status bar's solid pills mix their colour further toward black, since the colours are brighter. */
+:root[data-palette="contrast"] .run-chip { background: #2A2A2A; color: #FFFFFF; }
+:root[data-palette="contrast"] .statusbar.statusbar { --solid: 38%; }
