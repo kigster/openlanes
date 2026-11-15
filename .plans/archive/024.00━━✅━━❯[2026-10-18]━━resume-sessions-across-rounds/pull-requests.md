@@ -14,3 +14,4 @@ $ bundle exec rspec
 $ bundle exec rubocop
 485 files inspected, no offenses detected
 ```
+
