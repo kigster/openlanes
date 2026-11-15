@@ -45,10 +45,12 @@ module OpenLanes
         # @return [Hash] what names this round in a request
         def naming = { agent: agent.name, state: job.state.to_s, round: job.task.round }
 
-        # @return [Hash, nil] the agent's unsettled request on this state
-        def pending
-          all.find { it["agent"] == agent.name && it["state"] == job.state.to_s && !it.key?("settled_at") }
-        end
+        # A request an earlier visit left open is not this round's: read
+        # as pending, it stood in for every step of the ladder and the round
+        # was never given time.
+        #
+        # @return [Hash, nil] the agent's unsettled request on this visit to the state
+        def pending = Visit.of(plan, agent.name, job.state).pending(all)
 
         # Every `auto` grant counts, the ones that became a round because
         # the clock had stopped included: counting only what reached a clock

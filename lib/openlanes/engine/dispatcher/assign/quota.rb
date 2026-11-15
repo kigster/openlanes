@@ -65,7 +65,11 @@ module OpenLanes
           #   when it was its last allowed one
           def out_of_rounds(agent, subject)
             past = past_rounds(subject, agent)
-            return nil if past.empty? || %w[Completed Blocked Started].include?(past.last[:status])
+            return nil if past.empty? || %w[Completed Blocked].include?(past.last[:status])
+            # A Started round is only still under way while its job runs. One
+            # with no job was once skipped here like any other, and its agent
+            # sat at its budget with nobody asked.
+            return nil if past.last[:status] == "Started" && running_on?(agent, subject.feature.ordinal.to_s)
             return nil if past.size < allowance(agent, subject)
 
             past.last

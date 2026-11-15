@@ -69,6 +69,17 @@ RSpec.describe OpenLanes::Engine::Extensions::Ladder, :tree do
     watch
   end
 
+  # Issue 255: a request is about one visit of the plan to a state. One an
+  # earlier visit left open, read as this round's pending request, stood in
+  # for every step and the round was given no time.
+  it "gives a round its time although an earlier visit left a request open" do
+    plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "rounds", at: now)
+    plan.state!(:built)
+    plan.state!(:building)
+
+    expect(watch).to include("by" => "auto", "grant" => "live", "moves" => 2)
+  end
+
   it "is due only when the clock is low or a decision is out" do
     aggregate_failures do
       expect(ladder.due?(job)).to be(true)

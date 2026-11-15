@@ -18,7 +18,13 @@ module OpenLanes
     #
     # A stage whose status is {PlanState::FAILED_START} spent nothing (no
     # tokens, no tool call, not killed) and is not counted: its round is
-    # handed out again.
+    # handed out again. Neither is one the harness handed back
+    # (`handed_back`), which is how a round the engine died under is written:
+    # the agent lost it to the harness, not to its own budget.
+    #
+    # A round is one number. Run twice under it (handed back, then started
+    # again), it is still one round, and its latest stage says how it stands:
+    # counting both stages spent an agent's rounds at double speed.
     #
     # @!attribute [r] stages
     #   @return [Array<Hash>] `state.json` stages, in dispatch order
@@ -35,14 +41,26 @@ module OpenLanes
       # @param agent [#to_s] the agent's name
       # @param state [#to_s] the state key the visit is in
       # @param moves [Integer] the plan's moves count for the visit
-      # @return [Integer] rounds spent in this visit
+      # @return [Integer] rounds spent in this visit, one per round number
       def used(agent, state, moves:) = spent(agent, state, moves).size
 
       # @param agent [#to_s]
       # @param state [#to_s]
       # @param moves [Integer]
-      # @return [Array<Hash>] the stages that spent a round in this visit
+      # @return [Array<Hash>] the latest stage of each round spent in this visit
       def visit(agent, state, moves:) = spent(agent, state, moves)
+
+      # Rounds of this visit that `state.json` still calls Started, whoever
+      # runs them. One that no running job owns was cut off with nothing
+      # written, and counted as it stands it would hold its agent at its
+      # budget with nobody working ({Engine::Recovery::Orphans}).
+      #
+      # @param state [#to_s]
+      # @param moves [Integer]
+      # @return [Array<Hash>]
+      def started(state, moves:)
+        stages.select { it["status"] == "Started" && !it["handed_back"] && visit?(it, state.to_s, moves.to_i) }
+      end
 
       # The round to hand out next. Never lower than a round already
       # dispatched or signed in this visit, so an agent restarted after a
@@ -84,11 +102,19 @@ module OpenLanes
       def mine(agent) = stages.select { it["agent"] == agent.to_s }
 
       # The failed starts that end the visit's record, less the excused ones,
-      # which neither count nor break the run of the others.
+      # which neither count nor break the run of the others. Once as many as
+      # {Count#tolerate} were excused, the excuse no longer holds and every
+      # one counts.
       def streak(agent, state, moves, count)
-        mine(agent).select { visit?(it, state.to_s, moves.to_i) && after?(it, count.since) }
+        run = failing(agent, state, moves, count.since)
+        excused = run.select { count.except&.match?(it["note"].to_s) }
+        count.tolerate && excused.size >= count.tolerate ? run : run - excused
+      end
+
+      # The failed starts in a row that end the visit's record, latest first.
+      def failing(agent, state, moves, since)
+        mine(agent).select { visit?(it, state.to_s, moves.to_i) && after?(it, since) }
                    .reverse.take_while { it["status"] == PlanState::FAILED_START }
-                   .reject { count.except&.match?(it["note"].to_s) }
       end
 
       def after?(stage, since)
@@ -99,8 +125,13 @@ module OpenLanes
         (at = instant(stage["started_at"])) ? at > since : false
       end
 
+      # The latest stage of each round number in the visit, less the rounds
+      # that stage says were not spent. A stage with no number stands alone:
+      # folding those into one would lower a count, which never goes down.
       def spent(agent, state, moves)
-        mine(agent).select { it["status"] != PlanState::FAILED_START && visit?(it, state.to_s, moves.to_i) }
+        mine(agent).select { visit?(it, state.to_s, moves.to_i) }
+                   .reverse.uniq { it["round"] || it.object_id }.reverse
+                   .reject { it["status"] == PlanState::FAILED_START || it["handed_back"] }
       end
 
       # A stage this release wrote says its visit. One written before names
@@ -108,13 +139,26 @@ module OpenLanes
       # read as the visit those imply, so an old plan's round never goes down.
       # A round that moved the plan settled one move later than it arrived.
       def visit?(stage, state, moves)
-        return stage["visit"] == moves && stage["from"] == state if stage.key?("visit")
+        return stage["visit"] == moves && worked_in(stage) == state if stage.key?("visit")
 
         from = stage["from"] || stage["to"]
         return false unless from == state
 
         settled = stage["moves"]
         settled.nil? || settled == moves || (stage["to"] && stage["to"] != from && settled == moves + 1)
+      end
+
+      # The state a round worked in, which is the one it is counted for. A
+      # stage says so in `state`. One written before that field names only
+      # `from`, the state the plan was picked up in, and an agent that
+      # `starts_as` renames the folder first: matched on `from`, its first
+      # round was counted for no state at all, and a restart handed the round
+      # out again. Such a stage that settled without the plan moving worked
+      # in the state it left the plan in.
+      def worked_in(stage)
+        return stage["state"] if stage.key?("state")
+
+        stage["to"] && stage["moves"] == stage["visit"] ? stage["to"] : stage["from"]
       end
 
       # The highest round the agent signed since this visit's first stage

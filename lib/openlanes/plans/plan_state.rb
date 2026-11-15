@@ -288,7 +288,8 @@ module OpenLanes
       # @param round [Integer]
       # @param reset [Boolean] start a new record rather than update one
       # @param fields [Hash] status, started_at, finished_at, adapter, model,
-      #   effort, up, down, seconds, note, from, to, session, cwd; `run` only in files older releases wrote
+      #   effort, up, down, seconds, note, from, state, to, session, cwd, handed_back; `run` only in files
+      #   older releases wrote
       # @return [Hash] the stage as written
       def stage!(agent:, round:, reset: false, **fields)
         stage = nil
@@ -570,8 +571,10 @@ module OpenLanes
       # @param limit [String] "time" or "rounds", whichever ran out
       # @param at [Time]
       # @param fields [Hash] what else the request opens with: `stage`, for
-      #   one the engine works out before any person sees it (E2), or the
-      #   `by`, `grant`, `seconds` and `settled_at` of a grant made outright
+      #   one the engine works out before any person sees it (E2); the
+      #   `by`, `grant`, `seconds` and `settled_at` of a grant made outright;
+      #   or `cause`, why it is asked when nothing ran out, so the card does
+      #   not say "out of rounds" of an agent that never ran
       # @return [Hash] the request as written, with its `number`
       def ask_extension!(agent:, state:, round:, limit:, at: Time.now, **fields)
         record = nil

@@ -25,8 +25,10 @@ module OpenLanes
             finishes.unfinish(subject)
           end
 
-          # @param from [Symbol] the state the plan was dispatched in, whose
-          #   rounds this one is counted among
+          # @param subject [OpenLanes::Plans::Subject] the plan as it is named
+          #   now, after any rename on start: its state is the one the round
+          #   works in and is counted among
+          # @param from [Symbol] the state the plan was dispatched in
           # @param round [Integer] the round to tell the agent ({Desk#next_round})
           # @return [OpenLanes::Engine::Dispatcher::Job]
           def job(agent, subject, from:, round:)
