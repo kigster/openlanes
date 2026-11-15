@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openlanes.dev/schemas/openlanes-config.schema.json",
-  "title": ".openlanes.yml",
+  "title": ".openlanes/config.yml",
   "description": "A project's openlanes settings. Precedence, loudest first: a flag typed on the command line, the plan's spec.md frontmatter, this file, the built-in default.",
   "type": "object",
   "additionalProperties": false,

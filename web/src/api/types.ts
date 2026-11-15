@@ -552,6 +552,12 @@ export interface InterviewTurn {
   kind: "text" | "question" | "decision";
   text: string;
   at: string;
+  /**
+   * The turn's place in the conversation: the id of its entry in the server's stream, `<milliseconds>-<n>`, which
+   * only ever grows. The page draws by it and by nothing else: `at` is whole seconds and `id` is random, so two turns
+   * of one reply cannot be told apart by those (issue 252).
+   */
+  seq: string;
   /** `question` turns only: 2 to 5, exactly one recommended. */
   options?: InterviewOption[];
   /** `decision` turns only: what Confirm writes to blocked.md as the answer. */
@@ -586,6 +592,8 @@ export interface SettingsDocument {
   etag: string;
   /** The main checkout's branch; null when its HEAD is detached. */
   branch: string | null;
+  /** The file a save writes, relative to the project root: `.openlanes/config.yml`, or the legacy `.openlanes.yml` on a project that still has it. */
+  file: string;
 }
 
 export interface SettingsFieldError {
@@ -593,7 +601,7 @@ export interface SettingsFieldError {
   message: string;
 }
 
-export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed" | "commit_failed";
+export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed" | "commit_failed" | "both_files";
 
 /** PUT /api/settings, 200. */
 export type SettingsSaveResult = { changed: false } | { changed: true; commit: string; etag: string };

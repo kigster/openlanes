@@ -59,12 +59,32 @@ RSpec.describe OpenLanes::CLI::ConfigFile::Move do
     expect([status, err.gsub(/[│\s]+/, "")]).to match([65, include("both")])
   end
 
-  # The command's own refusal: loading the config already refuses two files,
-  # so only a destination that is not a file reaches the mover's check.
-  it "refuses when something other than a file sits at the destination" do
+  # The command's own refusals: loading the config already refuses two
+  # files, so only what is not a file at either path reaches the mover.
+  it "refuses when a directory sits at the destination, under --dry-run too" do
     File.write(legacy, "jobs: 2\n")
     FileUtils.mkdir_p(target)
-    _out, err, status = run
-    expect([status, err.gsub(/[│\s]+/, ""), File.read(legacy)]).to match([65, include("both"), "jobs: 2\n"])
+    [false, true].each do |dry_run|
+      out, err, status = run(dry_run:)
+      expect([out, status, err.gsub(/[│\s]+/, ""), File.read(legacy)]).to match(["", 65, include("isadirectory"), "jobs: 2\n"])
+    end
+  end
+
+  it "refuses with the same exit when .openlanes is a regular file, under --dry-run too" do
+    File.write(legacy, "jobs: 2\n")
+    File.write(File.join(root, OpenLanes::Project::DIR), "x")
+    [false, true].each do |dry_run|
+      out, err, status = run(dry_run:)
+      expect([out, status, err.gsub(/[│\s]+/, "")]).to match(["", 65, include("isafile,notafolder")])
+    end
+  end
+
+  it "refuses a symlinked legacy file and leaves the link alone" do
+    File.write(File.join(root, "real.yml"), "jobs: 2\n")
+    File.symlink("real.yml", legacy)
+    [false, true].each do |dry_run|
+      out, err, status = run(dry_run:)
+      expect([out, status, err.gsub(/[│\s]+/, ""), File.symlink?(legacy)]).to match(["", 65, include("isasymboliclink"), true])
+    end
   end
 end

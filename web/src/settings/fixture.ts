@@ -33,4 +33,5 @@ export const doc: SettingsDocument = {
   defaults: { frontend: false, jobs: 4, merge: { by: null } },
   etag: "e1",
   branch: "main",
+  file: ".openlanes/config.yml",
 };

@@ -31,7 +31,7 @@ function Turn({ turn }: { turn: InterviewTurn }) {
 }
 
 export function InterviewPanel({ plan, question, onCommand, onClose }: InterviewPanelProps) {
-  const { turns, send, waiting, ready } = useInterview(plan, question.number);
+  const { turns, send, waiting, ready, error: unread } = useInterview(plan, question.number);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -109,7 +109,9 @@ export function InterviewPanel({ plan, question, onCommand, onClose }: Interview
         </form>
       }
     >
-      {!ready && <p className="iv-note">Opening the conversation…</p>}
+      {unread
+        ? <p className="iv-note is-refused" role="alert">The conversation could not be opened: {unread}. The answer buttons on the card still work.</p>
+        : !ready && <p className="iv-note">Opening the conversation…</p>}
       {turns.map(turn => <Turn key={turn.id} turn={turn} />)}
       {ask && (
         <div className="iv-options" role="group" aria-label="Choose an answer">

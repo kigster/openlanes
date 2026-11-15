@@ -1,8 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { Header, type HeaderProps } from "./Header";
 import { applyPalette, PALETTE_KEY, PALETTES, restorePalette } from "./usePalette";
+import { NAV_HIDDEN_KEY } from "./useNavHidden";
+import { PHONE_QUERY } from "./usePhone";
+import { stubMedia } from "../test/media";
 import { sampleBoard } from "../board/sample";
 import type { Snapshot } from "../api/types";
 import freshJson from "../api/fixtures/snapshot.json";
@@ -162,6 +165,74 @@ it("offers Hide Inactive as a pressed-or-not toggle, and leaves it out when nobo
 it("has no lanes toggle when nobody handles it", () => {
   render(<Header {...props()} />);
   expect(screen.queryByRole("button", { name: "Narrow Lanes" })).toBeNull();
+});
+
+// The phone's strip is the same three toggles, moved by CSS: one of each in the page, grouped apart from what stays
+// behind Menu, so the stylesheet can place the two halves and a screen reader meets every control once.
+it("keeps one set of toggles, apart from the menu's actions, for the phone's strip to move", () => {
+  const { container } = render(
+    <Header {...props({ onToggleNarrow: vi.fn(), onToggleHideInactive: vi.fn() })}
+      actionMenu={<button type="button">Actions</button>} stopAll={<button type="button">Stop Local Workers</button>} />,
+  );
+  const names = (selector: string) => within(container.querySelector<HTMLElement>(selector)!).getAllByRole("button").map(b => b.textContent);
+  expect([names(".nav-toggles"), names(".nav-actions")]).toEqual([["All Machines", "Narrow Lanes", "Hide Inactive"], ["Actions", "Stop Local Workers"]]);
+  expect(["All Machines", "Narrow Lanes", "Hide Inactive"].map(name => screen.getAllByRole("button", { name }).length)).toEqual([1, 1, 1]);
+  expect(container.querySelector(".nav-toggles")!.closest("#nav-items")).toBe(container.querySelector(".nav-actions")!.closest("#nav-items"));
+  expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-controls", "nav-items");
+});
+
+describe("hiding the bar on a phone", () => {
+  const phone = () => stubMedia(query => query === PHONE_QUERY);
+  const row = () => document.getElementById("topbar-row")!;
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("is not offered on a wide page, where a stored choice hides nothing", () => {
+    localStorage.setItem(NAV_HIDDEN_KEY, "on");
+    render(<Header {...props()} />);
+    expect(screen.queryByRole("button", { name: "Hide navigation" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Nav" })).toBeNull();
+    expect(row()).not.toHaveAttribute("hidden");
+  });
+
+  it("hides the bar behind a Nav button and brings it back, moving focus with it, accessibly", async () => {
+    phone();
+    const { container } = render(<Header {...props()} />);
+    const hide = screen.getByRole("button", { name: "Hide navigation" });
+    expect([hide.getAttribute("aria-expanded"), hide.getAttribute("aria-controls")]).toEqual(["true", "topbar-row"]);
+    expect(hide).not.toHaveFocus(); // only a press moves focus
+    await userEvent.click(hide);
+    const nav = screen.getByRole("button", { name: "Nav" });
+    expect([nav.getAttribute("aria-expanded"), nav.getAttribute("aria-controls"), row().hidden, localStorage.getItem(NAV_HIDDEN_KEY)])
+      .toEqual(["false", "topbar-row", true, "on"]);
+    expect(nav).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "All Machines" })).toBeNull();
+    expect(await axe(container)).toHaveNoViolations();
+    await userEvent.click(nav);
+    expect([row().hidden, localStorage.getItem(NAV_HIDDEN_KEY)]).toEqual([false, "off"]);
+    expect(screen.queryByRole("button", { name: "Nav" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Hide navigation" })).toHaveFocus();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("starts hidden when that was the choice, and gives the bar back when the page grows past a phone", () => {
+    localStorage.setItem(NAV_HIDDEN_KEY, "on");
+    let narrow = true;
+    const media = stubMedia(query => narrow && query === PHONE_QUERY);
+    render(<Header {...props()} />);
+    const hidden = [row().hidden, screen.getByRole("button", { name: "Nav" }).getAttribute("aria-expanded")];
+    narrow = false;
+    act(() => media.change());
+    expect([hidden, row().hidden, screen.queryByRole("button", { name: "Nav" })]).toEqual([[true, "false"], false, null]);
+  });
+
+  // The notices are not in the row that hides: an engine that stopped publishing is said with the bar away too.
+  it("still raises the outage alarm while the bar is hidden", () => {
+    localStorage.setItem(NAV_HIDDEN_KEY, "on");
+    phone();
+    render(<Header {...props({ snapshot: fresh, now: Date.parse(fresh.at) + 42000 })} />);
+    expect(row().hidden).toBe(true);
+    expect(screen.getByRole("alert")).toHaveTextContent("Engine not publishing for 42 s");
+  });
 });
 
 describe("Redis outage notice", () => {

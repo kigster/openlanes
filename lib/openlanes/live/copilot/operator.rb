@@ -171,31 +171,12 @@ module OpenLanes
             @stopped
           end
           child.terminate(grace: 1, drain: 1) if stopping
-          status = watched(child) { child.each_chunk { transcript.push(it) } }
+          status, @timed_out = Execution::Deadline.wait(child, timeout) { child.each_chunk { transcript.push(it) } }
           transcript.finish
           Run.new(ok: status.success? && !transcript.failed? && !@timed_out, transcript:, note: note(status, transcript, trace))
         ensure
           transcript&.finish
           @mutex.synchronize { @child = nil }
-        end
-
-        # Wait for the child, ending it once {#timeout} has passed. The
-        # answer is advisory; a copilot that hangs must not hold the next
-        # message for ever.
-        #
-        # @param child [OpenLanes::Execution::Child]
-        # @return [Process::Status]
-        def watched(child)
-          @timed_out = false
-          watchdog = Thread.new do
-            sleep(timeout)
-            @timed_out = true
-            child.terminate
-          end
-          yield
-          child.wait
-        ensure
-          watchdog&.kill
         end
 
         # @return [Boolean] whether `claude` said it has no such session, on one

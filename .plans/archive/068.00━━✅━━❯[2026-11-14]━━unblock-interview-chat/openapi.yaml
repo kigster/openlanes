@@ -1,0 +1,60 @@
+openapi: 3.1.0
+info:
+  title: openlanes unblock interview (plan 068.00)
+  version: "1"
+paths:
+  /api/plans/{plan}/questions/{number}/interview:
+    parameters:
+      - { name: plan, in: path, required: true, schema: { type: string, pattern: '^\d{3}\.\d{2}$' } }
+      - { name: number, in: path, required: true, schema: { type: string, pattern: '^\d{1,3}$' } }
+    get:
+      summary: The interview on one open question, oldest turn first. An empty one is started; its opening question arrives as `event: interview`.
+      responses:
+        "200": { description: The conversation, content: { application/json: { schema: { $ref: "#/components/schemas/InterviewLog" } } } }
+        "404": { description: The path names no plan or question number, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+    post:
+      summary: The person's reply. The unblocker's next turn arrives as `event: interview`. Writes no plan file.
+      parameters:
+        - { name: X-CSRF-Token, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, text]
+              properties:
+                id: { type: string, pattern: '^[0-9A-Za-z_-]{1,64}$' }
+                text: { type: string, minLength: 1, maxLength: 4000 }
+      responses:
+        "202": { description: Stored, content: { application/json: { schema: { type: object, properties: { turn: { $ref: "#/components/schemas/InterviewTurn" } } } } } }
+        "403": { description: X-CSRF-Token does not match, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "404": { description: The path names no plan or question number, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "422": { description: Not a message (bad id, empty or too long text, not JSON), content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "503": { description: Nothing answers interviews in this server, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  schemas:
+    Error: { type: object, required: [error], properties: { error: { type: string } } }
+    InterviewLog: { type: object, required: [turns], properties: { turns: { type: array, items: { $ref: "#/components/schemas/InterviewTurn" } } } }
+    InterviewEvent:
+      description: "SSE `event: interview` data"
+      type: object
+      required: [plan, number, turn]
+      properties:
+        plan: { type: string }
+        number: { type: integer }
+        turn: { $ref: "#/components/schemas/InterviewTurn" }
+    InterviewTurn:
+      type: object
+      required: [id, from, kind, text, at]
+      properties:
+        id: { type: string, description: "the person's own id; the unblocker's are u plus 12 random letters and digits" }
+        from: { enum: [you, unblocker] }
+        kind: { enum: [text, question, decision] }
+        text: { type: string }
+        at: { type: string, format: date-time }
+        options:
+          description: question only; 2 to 5, exactly one recommended
+          type: array
+          items: { type: object, required: [label, recommended], properties: { label: { type: string }, recommended: { type: boolean } } }
+        answer: { type: string, description: decision only; what confirm writes as the answer }

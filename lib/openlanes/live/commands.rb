@@ -336,6 +336,10 @@ module OpenLanes
                      "Answered by #{@node.user} on #{@clock.call.strftime("%Y-%m-%d")}\n#{marker(command)}\n")
         end
         @run_state.hold_question(question_id(subject, question), held: false)
+        # The question has its answer, so a conversation about it is over,
+        # whichever way the answer came: left open, its decision stayed
+        # confirmable after the plan blocked again with a new B1 (issue 252).
+        Interview.new(store: @store, keys: @keys, plan: command.plan, number: question.number).close
         dispatcher.wake!
         nil
       end
@@ -344,7 +348,8 @@ module OpenLanes
       # interview (plan 068), written as the answer to that question in
       # exactly the form {#answer} writes, so the drain folds it unchanged.
       # The interview is closed after: the question is answered, and a
-      # second confirm, or one after a button answer, is refused.
+      # second confirm, or one after a button answer, is refused. So is one
+      # about a question that has since been drained and asked anew.
       #
       # @return [String, nil]
       def confirm_interview(command, dispatcher)
@@ -353,10 +358,10 @@ module OpenLanes
         raise Refusal, "this question already has an answer waiting" if question.answered
 
         interview = Interview.new(store: @store, keys: @keys, plan: command.plan, number: question.number)
+        interview.about(Interview.topic(subject, question.number))
         decision = interview.decision(command["turn"]) or
           raise Refusal, "the interview has no decision #{command["turn"]} to confirm"
         write_answer(subject, question, command.with(payload: command.payload.merge("text" => decision.answer)), dispatcher)
-        interview.close
         "answered: #{decision.answer}"
       end
 

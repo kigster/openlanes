@@ -15,12 +15,17 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const mount = (lanes?: "wide" | "narrow") =>
-  render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <LaneDocuments ordinal="070.00" lanes={lanes} />
-    </QueryClientProvider>,
-  );
+// One client per test, so a rerender keeps its cache as the page's does.
+let client: QueryClient;
+beforeEach(() => { client = new QueryClient({ defaultOptions: { queries: { retry: false } } }); });
+const tree = (lanes?: "wide" | "narrow") => (
+  <QueryClientProvider client={client}>
+    <LaneDocuments ordinal="070.00" lanes={lanes} />
+  </QueryClientProvider>
+);
+const mount = (lanes?: "wide" | "narrow") => render(tree(lanes));
+const list = (...files: string[]) => new Response(JSON.stringify({ files }), { status: 200 });
+const items = () => screen.queryAllByRole("menuitem").map((i) => i.textContent);
 
 describe("LaneDocuments", () => {
   it("lists the labels in order, and opening Specification mounts the modal until it is closed", async () => {
@@ -36,19 +41,79 @@ describe("LaneDocuments", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("disables the trigger when the plan has no documents", async () => {
-    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ files: [] }), { status: 200 }));
-    mount();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Documents of 070.00" })).toBeDisabled());
-    expect(screen.getByRole("button", { name: "Documents of 070.00" })).toHaveAttribute("title", "This plan has no documents yet");
-  });
-
-  it("says the list failed, rather than that the plan has no documents", async () => {
-    fetchMock.mockImplementation(async () => new Response("boom", { status: 500 }));
+  it("shows a document written after the lane mounted, the next time the menu opens", async () => {
+    fetchMock.mockImplementation(async () => list("spec.md"));
     mount();
     const trigger = screen.getByRole("button", { name: "Documents of 070.00" });
-    await waitFor(() => expect(trigger.getAttribute("title")).toMatch(/^Could not list the documents/));
-    expect(trigger).toBeDisabled();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    fetchMock.mockImplementation(async () => list("spec.md", "plan.md", "pull-requests.md"));
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Specification", "Plan", "Pull requests"]));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("drops a document that was removed, the next time the menu opens", async () => {
+    fetchMock.mockImplementation(async () => list("spec.md", "blocked.md"));
+    mount();
+    const trigger = screen.getByRole("button", { name: "Documents of 070.00" });
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Specification", "Blocked"]));
+    await userEvent.keyboard("{Escape}");
+    fetchMock.mockImplementation(async () => list("spec.md"));
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Specification"]));
+  });
+
+  it("keeps the trigger usable for a plan with no documents, says so in the menu, and reads again on the next open", async () => {
+    fetchMock.mockImplementation(async () => list());
+    mount();
+    const trigger = screen.getByRole("button", { name: "Documents of 070.00" });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(trigger).toBeEnabled();
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["This plan has no documents yet"]));
+    expect(screen.getByRole("menuitem")).toHaveAttribute("aria-disabled", "true");
+    await userEvent.keyboard("{Escape}");
+    fetchMock.mockImplementation(async () => list("spec.md"));
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Specification"]));
+  });
+
+  it("keeps the trigger usable after a failed list, says why in the menu, and retries on the next open", async () => {
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ error: "the server is restarting" }), { status: 503 }));
+    mount();
+    const trigger = screen.getByRole("button", { name: "Documents of 070.00" });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(trigger).toBeEnabled();
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Could not list the documents: the server is restarting"]));
+    await userEvent.keyboard("{Escape}");
+    fetchMock.mockImplementation(async () => list("spec.md", "plan.md"));
+    await userEvent.click(trigger);
+    await waitFor(() => expect(items()).toEqual(["Specification", "Plan"]));
+  });
+
+  it("shows a loading item, not an empty menu, while the list is on its way", async () => {
+    let answer: (r: Response) => void = () => {};
+    fetchMock.mockImplementation(() => new Promise<Response>((r) => { answer = r; }));
+    mount();
+    await userEvent.click(screen.getByRole("button", { name: "Documents of 070.00" }));
+    expect(items()).toEqual(["Loading\u2026"]);
+    expect(screen.getByRole("menuitem")).toHaveAttribute("aria-busy", "true");
+    answer(list("spec.md"));
+    await waitFor(() => expect(items()).toEqual(["Specification"]));
+  });
+
+  it("keeps an open document open when the lane goes narrow, and shows no menu", async () => {
+    const view = mount();
+    await userEvent.click(screen.getByRole("button", { name: "Documents of 070.00" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Specification" }));
+    const dialog = await screen.findByRole("dialog");
+    view.rerender(tree("narrow"));
+    expect(screen.getByRole("dialog")).toBe(dialog);
+    expect(screen.queryByRole("button", { name: "Documents of 070.00", hidden: true })).toBeNull();
+    await userEvent.click(within(dialog).getByText("Close"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
   it("shows nothing and fetches nothing on a narrow lane", () => {

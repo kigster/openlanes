@@ -96,11 +96,18 @@ describe("the controls", () => {
     cy.contains("button", "All Machines").should("have.attr", "aria-pressed", "true");
   });
 
-  // The pills fold behind Menu on a narrow page, and the status line moves above the tabs.
+  // The pills fold behind Menu on a narrow page. The status line is a panel above the tabs at every width, and is
+  // the board panel's own width and left edge.
+  const overBoard = () =>
+    cy.get(".statusline").then(($line) => {
+      const line = $line[0].getBoundingClientRect();
+      const board = Cypress.$(".board:visible")[0].getBoundingClientRect();
+      expect(line.bottom).to.be.at.most(Cypress.$(".tab")[0].getBoundingClientRect().top + 1);
+      expect([Math.round(line.left), Math.round(line.width)]).to.deep.eq([Math.round(board.left), Math.round(board.width)]);
+    });
   it("folds the pills behind Menu when the page is narrow", () => {
     cy.contains("button", "Menu").should("not.be.visible");
-    // Wide, the status line is beside the tabs: it reaches below their top edge.
-    cy.get(".statusline").then(($line) => expect($line[0].getBoundingClientRect().bottom).to.be.greaterThan(Cypress.$(".tab")[0].getBoundingClientRect().top + 10));
+    overBoard();
     cy.viewport(900, 900);
     cy.contains("button", "All Machines").should("not.be.visible");
     cy.contains("button", "Menu").click().should("have.attr", "aria-expanded", "true");
@@ -108,6 +115,6 @@ describe("the controls", () => {
     cy.contains("button", "Stop Local Workers").should("be.visible");
     cy.get("body").type("{esc}");
     cy.contains("button", "All Machines").should("not.be.visible");
-    cy.get(".statusline").then(($line) => expect($line[0].getBoundingClientRect().bottom).to.be.at.most(Cypress.$(".tab")[0].getBoundingClientRect().top + 1));
+    overBoard();
   });
 });
