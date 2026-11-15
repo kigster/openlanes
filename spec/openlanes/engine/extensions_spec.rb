@@ -177,6 +177,104 @@ RSpec.describe OpenLanes::Engine::Extensions, :tree do
     end
   end
 
+  # A visit is one stay of the plan in a state. Round numbers start again at
+  # 1 on each, so a request is about its own visit and no other.
+  describe "a plan that comes back to a state" do
+    def revisit
+      plan.state!(:built)
+      plan.state!(:building)
+    end
+
+    before { extensions.exhausted(path, "backend-coder", :building, 1) }
+
+    it "raises a request of its own for the same round number" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      revisit
+      extensions.exhausted(path, "backend-coder", :building, 1)
+
+      expect(plan.extensions.map { it.values_at("number", "round", "moves") }).to eq([[1, 1, 0], [2, 1, 2]])
+    end
+
+    it "does not take the earlier visit's open request for its own" do
+      revisit
+
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 2)
+    end
+
+    it "closes a request for a round answered after the plan left its visit, and grants nothing" do
+      revisit
+
+      aggregate_failures do
+        expect(extensions.answer!(path, 1, "a", by: "dana")).to be_nil
+        expect(plan.extensions.first).to include("closed" => described_class::MOVED)
+        expect(extensions.rounds(path, "backend-coder", :building)).to eq(0)
+      end
+    end
+
+    context "when nobody can answer" do
+      let(:stay) { false }
+
+      it "gives each visit its one round without an answer" do
+        revisit
+        extensions.exhausted(path, "backend-coder", :building, 1)
+
+        expect(plan.extensions.map { it.values_at("by", "moves") }).to eq([["auto", 0], ["auto", 2]])
+      end
+    end
+
+    it "leaves an earlier visit's extra seconds with that visit" do
+      extensions.answer!(path, 1, "c", by: "dana")
+      revisit
+
+      expect(extensions.take_seconds(path, "backend-coder", :building)).to eq(0)
+    end
+
+    it "does not close an earlier visit's request when this visit's round ends" do
+      revisit
+      extensions.close!(path, "backend-coder", :building)
+
+      expect(plan.extensions.first).not_to have_key("settled_at")
+    end
+
+    context "with five minutes left on the clock of the same round number" do
+      let(:left) { 300 }
+
+      it "asks about that clock again" do
+        plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now)
+        plan.settle_extension!(2, closed: "finished", at: now)
+        revisit
+        extensions.watch(job, path)
+
+        expect(plan.extensions.map { it.values_at("limit", "moves") }).to eq([["rounds", 0], ["time", 0], ["time", 2]])
+      end
+    end
+  end
+
+  # A request written before requests named their visit carries no `moves`.
+  describe "a request asked before requests named their visit" do
+    before do
+      extensions.exhausted(path, "backend-coder", :building, 1)
+      plan.update { |data| data["extensions"].first.delete("moves") }
+    end
+
+    it "is still the agent's open request, and is not asked a second time" do
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 1)
+    end
+
+    it "is still shown" do
+      subject_of = tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00"))
+
+      expect(described_class.questions(subject_of, plan).map { it[:number] }).to eq([1])
+    end
+
+    it "does not stand in for a new request once it is settled" do
+      extensions.answer!(path, 1, "a", by: "dana")
+      plan.update { |data| data["extensions"].first.delete("moves") }
+
+      expect(extensions.exhausted(path, "backend-coder", :building, 1)).to include("number" => 2)
+    end
+  end
+
   describe "#answer! on a time request" do
     before { plan.ask_extension!(agent: "backend-coder", state: :building, round: 1, limit: "time", at: now) }
 
