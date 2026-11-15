@@ -14,13 +14,18 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
   let(:interview) { OpenLanes::Live::Interview.new(store:, keys:, plan: "002.00", number: 1) }
   let(:turn) { OpenLanes::Live::Interview::Turn }
   let(:blocked_md) { File.read(File.join(path_of("002.00"), "blocked.md")) }
+  let(:asked) { "# Blocked\n\n## B1 Rebase\n\nShould I rebase?\n\na) yes (Recommended)\nb) no\n" }
 
   def send_command(kind, id:, **payload) = OpenLanes::Live.enqueue(store:, keys:, input: { id:, kind:, plan: "002.00", agent: nil, payload: })
 
   def apply = commands.call(dispatcher)
 
+  # As the page's first read does: the conversation is about the question as asked now.
+  def open_interview = interview.about(OpenLanes::Live::Interview.topic(tree.reload.find("002.00"), 1))
+
   before do
-    blocked("002.00", "rebase", "# Blocked\n\n## B1 Rebase\n\nShould I rebase?\n\na) yes (Recommended)\nb) no\n")
+    blocked("002.00", "rebase", asked)
+    open_interview
     interview.say(turn.new(id: "q1",
       from: "unblocker",
       kind: "question",
@@ -33,7 +38,7 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
     send_command("confirm_interview", id: "C1", question: "1", turn: "d1")
     apply
     confirmed = blocked_md
-    File.write(File.join(path_of("002.00"), "blocked.md"), "# Blocked\n\n## B1 Rebase\n\nShould I rebase?\n\na) yes (Recommended)\nb) no\n")
+    File.write(File.join(path_of("002.00"), "blocked.md"), asked)
     send_command("answer", id: "C1", question: "B1", text: "a) yes")
     store.hdel(keys.done, "C1")
     apply
@@ -62,6 +67,29 @@ RSpec.describe OpenLanes::Live::Commands, :tree do
       expect(apply.map(&:status)).to eq(%w[done refused])
       expect(blocked_md.scan("## A1").size).to eq(1)
     end
+  end
+
+  # Issue 252: the conversation outlived its question.
+  it "forgets the interview when the question is answered on the card" do
+    send_command("answer", id: "C1", question: "B1", text: "b) no")
+    apply
+    expect(interview.history).to be_empty
+  end
+
+  it "refuses a decision reached on a question that was drained and asked anew" do
+    File.write(File.join(path_of("002.00"), "blocked.md"), "# Blocked\n\n## B1 Database\n\nPostgres or SQLite?\n")
+    send_command("confirm_interview", id: "C1", question: "1", turn: "d1")
+    aggregate_failures do
+      expect(apply.map { [it.status, it.reason] }).to eq([["refused", "the interview has no decision d1 to confirm"]])
+      expect(blocked_md).not_to include("## A1")
+      expect(interview.history).to be_empty
+    end
+  end
+
+  it "refuses a decision the person has spoken after" do
+    interview.say(turn.new(id: "r9", from: "you", kind: "text", text: "wait, do not rebase"))
+    send_command("confirm_interview", id: "C1", question: "1", turn: "d1")
+    expect(apply.map(&:status)).to eq(%w[refused])
   end
 
   it "refuses a turn that is not a decision" do
