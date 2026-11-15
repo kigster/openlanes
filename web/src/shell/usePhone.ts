@@ -19,5 +19,5 @@ const isPhone = (): boolean => list()?.matches ?? false;
 
 /** True while the viewport is at phone size, following a rotation or a resize across the line. */
 export function usePhone(): boolean {
-  return useSyncExternalStore(subscribe, isPhone, () => false);
+  return useSyncExternalStore(subscribe, isPhone);
 }
