@@ -121,10 +121,22 @@ module OpenLanes
         Outcome.new(slug:, status: added, reason: nil)
       end
 
+      # Words a lesson has no business saying: an order to the agents that
+      # will read it, rather than a fact about the project. Every lesson
+      # reaches a prompt, so a candidate that reads as one is dropped here,
+      # deterministically, before a person ever has to spot it.
+      INSTRUCTIONS = [
+        /\b(ignore|disregard|forget|override)\b.{0,40}\b(previous|prior|above|earlier|other|your|all)\b.{0,40}\b(instructions?|prompts?|rules?|checks?|findings?)\b/i,
+        /\b(approve|merge)\b.{0,30}\b(every|all|any)\b.{0,30}\b(pull requests?|PRs?|plans?|changes?)\b/i,
+        /\byou are now\b|\bsystem prompt\b|\bnew instructions\b/i
+      ].freeze
+      private_constant :INSTRUCTIONS
+
       # @return [String, nil] why +text+ may not be written
       def problem_with(text, path)
         found = Secrets.scan(text)
         return "looks like it holds #{found.map(&:kind).uniq.join(", ")}" unless found.empty?
+        return "reads as an instruction to other agents, not a lesson" if INSTRUCTIONS.any? { text.match?(it) }
 
         Lesson.parse(Entry.new(path:, text:, cite: path), scope: :project)
         nil

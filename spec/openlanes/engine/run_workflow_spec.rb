@@ -7,7 +7,11 @@
 RSpec.describe OpenLanes::Engine::RunWorkflow, :tree do
   let(:tree) { OpenLanes::Plans.tree(plans_root) }
 
+  # Run in the temp project, not the checkout: its `.openlanes.yml` says
+  # `desired_codebase_quality: high`, which settles what these examples ask.
+  # spec_helper puts the working directory back afterwards.
   before do
+    Dir.chdir(File.dirname(plans_root))
     allow(OpenLanes::Engine::Runner).to receive(:new).and_wrap_original do |original, **keywords|
       # The temp project has no desired_codebase_quality:, whose gate
       # (plan 035, dispatcher_quality_gate_spec) would hold every plan.

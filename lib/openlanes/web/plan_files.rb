@@ -13,8 +13,8 @@ module OpenLanes
     # This knows nothing of HTTP or of cars: {App} maps each refusal to a
     # status and checks the board before it calls {#write}.
     class PlanFiles
-      # What the drawer lists and the preview reads, in the order listed.
-      READABLE = %w[spec.md plan.md contract.md blocked.md research.md design.md].freeze
+      # What the drawer lists, the lane dropdown lists and the preview reads, in the order listed.
+      READABLE = %w[spec.md plan.md contract.md research.md design.md blocked.md pull-requests.md].freeze
 
       # What the popup may save. `blocked.md` is appended by the `answer`
       # command, and the build documents belong to the agents that own them.

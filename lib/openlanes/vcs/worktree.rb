@@ -108,11 +108,15 @@ module OpenLanes
       # @param seeder [String, nil] the seeder to run; nil runs none
       # @param prewarm [#call, nil] given a checkout's path, installs what a
       #   worktree would otherwise install for itself; nil installs nothing
-      def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder, prewarm: Prewarm.new(root:))
+      # @param warmup [#call, nil] gives a checkout its dependencies; nil, the
+      #   default, warms none, so only the {Vcs.worktree} facade installs for real
+      def initialize(root:, dir: nil, user: ENV["USER"] || "agent", seeder: self.class.seeder, prewarm: Prewarm.new(root:),
+        warmup: nil)
         @root = File.expand_path(root)
         @user = user
         @seeder = seeder
         @prewarm = prewarm
+        @warmup = warmup
         @dir = File.expand_path(dir || default_dir)
       end
 
@@ -206,6 +210,22 @@ module OpenLanes
 
         UI.log("worktree: could not seed #{path}; its suite may fail on a missing key", level: :warn)
         false
+      end
+
+      # Give the checkout its dependencies from the shared cache ({Warmup}).
+      # Never fatal, and logged rather than printed, for the reasons {#seed}
+      # gives.
+      #
+      # @param path [String] the worktree to warm
+      # @return [Warmup::Result, nil] nil when no warm-up is configured
+      def warm(path)
+        return nil unless @warmup
+
+        @warmup.call(path, base: "#{Refresh::REMOTE}/#{Refresh.default_branch(root)}").tap do |result|
+          result.failures.each do |kind, why|
+            UI.log("worktree: could not warm #{kind} dependencies: #{why}; its agent installs them itself", level: :warn)
+          end
+        end
       end
 
       # @param feature [OpenLanes::Plans::Feature]
@@ -381,6 +401,7 @@ module OpenLanes
       def furnish(path)
         seed(path)
         @prewarm&.call(path)
+        warm(path)
       end
 
       # Sibling of the repository, not inside it: a worktree under the repo shows

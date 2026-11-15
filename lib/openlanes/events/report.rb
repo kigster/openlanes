@@ -50,6 +50,9 @@ module OpenLanes
       #   @return [Array<Usage>]
       # @!attribute [r] skipped_lines
       #   @return [Integer]
+      # @!attribute [r] memory
+      #   @return [Hash{Symbol => Hash}] `on` and `off`, each `runs`, `approved`,
+      #     `rounds_mean`, `rounds_median`: whether lessons shorten the road to approval
       Result = Data.define(:runs,
         :completion_rate,
         :blocks,
@@ -59,7 +62,8 @@ module OpenLanes
         :pr_outcomes,
         :usage_by_run,
         :usage_by_model,
-        :skipped_lines) do
+        :skipped_lines,
+        :memory) do
         # @return [Hash] JSON-ready, what `--format json` prints
         def to_h = super.merge(usage_by_run: usage_by_run.map(&:to_h), usage_by_model: usage_by_model.map(&:to_h))
       end
@@ -93,7 +97,8 @@ module OpenLanes
           pr_outcomes: pr_outcomes,
           usage_by_run: usage(finished.values, &:run),
           usage_by_model: usage(finished.values) { nil },
-          skipped_lines: @skipped_lines)
+          skipped_lines: @skipped_lines,
+          memory: Compounding.new(@events).call)
       end
 
       private

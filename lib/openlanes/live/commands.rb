@@ -31,29 +31,37 @@ module OpenLanes
 
       # Command kind to the method that applies it.
       HANDLERS = {
-        "answer"          => :answer,
-        "hold_blocked"    => :hold_blocked,
-        "release_hold"    => :release_hold,
-        "resume"          => :resume,
-        "discard"         => :discard,
-        "message"         => :message,
-        "hold"            => :signal,
-        "wrap_up"         => :signal,
-        "compact"         => :compact,
-        "stop"            => :signal,
-        "stop_all"        => :stop_all,
-        "set_model"       => :set_model,
-        "switch_model"    => :switch_model,
-        "add_plan"        => :add_plan,
-        "create_plans"    => :create_plans,
-        "respond"         => :respond,
-        "pause_discuss"   => :pause_discuss,
-        "resume_anyway"   => :resume_anyway,
-        "stop_plan"       => :stop_plan,
-        "restart_plan"    => :restart_plan,
-        "set_concurrency" => :set_concurrency,
-        "set_chime"       => :set_chime
+        "answer"            => :answer,
+        "hold_blocked"      => :hold_blocked,
+        "release_hold"      => :release_hold,
+        "resume"            => :resume,
+        "discard"           => :discard,
+        "message"           => :message,
+        "hold"              => :signal,
+        "wrap_up"           => :signal,
+        "compact"           => :compact,
+        "stop"              => :signal,
+        "stop_all"          => :stop_all,
+        "set_model"         => :set_model,
+        "switch_model"      => :switch_model,
+        "add_plan"          => :add_plan,
+        "create_plans"      => :create_plans,
+        "respond"           => :respond,
+        "pause_discuss"     => :pause_discuss,
+        "confirm_interview" => :confirm_interview,
+        "resume_anyway"     => :resume_anyway,
+        "stop_plan"         => :stop_plan,
+        "restart_plan"      => :restart_plan,
+        "set_concurrency"   => :set_concurrency,
+        "set_chime"         => :set_chime,
+        "extend_time"       => :extend_time,
+        "rule_finding"      => :rule_finding,
+        "restart_web"       => :restart_web
       }.freeze
+
+      # The most seconds one `extend_time` adds: the largest grant
+      # {Engine::Extensions} offers when an agent asks for more time.
+      MAX_EXTENSION = Engine::Extensions::CHOICES.values.flatten.map(&:seconds).max
 
       # How long "Resume anyway" lifts a 💣's halt.
       RESUME_FOR = 24 * 3600
@@ -75,6 +83,44 @@ module OpenLanes
           at: reply.at)
       end
 
+      # @param value [Object] the payload's `seconds`
+      # @return [Integer] within 1 and {MAX_EXTENSION}
+      # @raise [Refusal]
+      def self.seconds!(value)
+        return value if value.is_a?(Integer) && value.between?(1, MAX_EXTENSION)
+
+        raise Refusal, "seconds must be a whole number from 1 to #{MAX_EXTENSION}, not #{value.inspect}"
+      end
+
+      # The finding a `rule_finding` names, once its verdict is one a person
+      # may give. {Web::DemoBoard} asks the same question of its own list.
+      #
+      # @param findings [Array<OpenLanes::Plans::Findings::Finding>]
+      # @param command [OpenLanes::Live::Command] a `rule_finding`
+      # @return [OpenLanes::Plans::Findings::Finding] the one it names
+      # @raise [Refusal] for an unknown verdict or finding
+      def self.finding!(findings, command)
+        Plans::Findings.verdict!(command["verdict"])
+        Plans::Findings.find!(findings, command["finding"], plan: command.plan)
+      rescue Plans::Findings::UnknownVerdict, Plans::Findings::NotFound => e
+        raise Refusal, e.message
+      end
+
+      # The reply to more time on a clock, true to the seconds granted: a
+      # grant under a minute says seconds, one that is not whole minutes says
+      # so, rather than rounding 90 seconds down to "1 more minutes".
+      #
+      # @param agent [String]
+      # @param seconds [Integer]
+      # @return [String] e.g. "backend-coder has 10 more minutes"
+      def self.more_time(agent, seconds)
+        amount = if seconds < 60 then "#{seconds} more second#{"s" unless seconds == 1}"
+                 elsif (seconds % 60).zero? then "#{seconds / 60} more minute#{"s" unless seconds == 60}"
+                 else "#{format("%g", (seconds / 60.0).round(1))} more minutes"
+                 end
+        "#{agent} has #{amount}"
+      end
+
       # @param store [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       # @param keys [OpenLanes::Live::Keys]
       # @param node [OpenLanes::Live::Node]
@@ -83,7 +129,10 @@ module OpenLanes
       #   in the same `MULTI` as each reply
       # @param claims [OpenLanes::Live::Claims, nil]
       # @param clock [Proc] wall time
-      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now })
+      # @param restart_web [#call, nil] root in; the supervisor's pid once
+      #   asked to restart the control room, nil when none runs
+      def initialize(store:, keys:, node:, run_state: RunState.new, record: nil, claims: nil, clock: -> { Time.now },
+        restart_web: nil)
         @store = store
         @keys = keys
         @node = node
@@ -91,6 +140,7 @@ module OpenLanes
         @record = record
         @claims = claims
         @clock = clock
+        @restart_web = restart_web || Supervision.method(:restart_web)
         @ready = false
         @swept_at = nil
         @pending = {}
@@ -290,6 +340,26 @@ module OpenLanes
         nil
       end
 
+      # The decision a person confirmed at the end of the unblocker's
+      # interview (plan 068), written as the answer to that question in
+      # exactly the form {#answer} writes, so the drain folds it unchanged.
+      # The interview is closed after: the question is answered, and a
+      # second confirm, or one after a button answer, is refused.
+      #
+      # @return [String, nil]
+      def confirm_interview(command, dispatcher)
+        subject, question = question!(command, dispatcher)
+        return nil if File.read(File.join(subject.feature.path, "blocked.md")).include?(marker(command))
+        raise Refusal, "this question already has an answer waiting" if question.answered
+
+        interview = Interview.new(store: @store, keys: @keys, plan: command.plan, number: question.number)
+        decision = interview.decision(command["turn"]) or
+          raise Refusal, "the interview has no decision #{command["turn"]} to confirm"
+        write_answer(subject, question, command.with(payload: command.payload.merge("text" => decision.answer)), dispatcher)
+        interview.close
+        "answered: #{decision.answer}"
+      end
+
       # An answer to the harness's request for more time or rounds (E1).
       # The page sends the chosen option, "b) Extend Time by 10 minutes";
       # only its letter counts, so there is nothing to parse but that.
@@ -302,10 +372,10 @@ module OpenLanes
           raise Refusal, "X#{number} takes a), b) or c), not #{command["text"].to_s.strip[0, 40].inspect}"
         settled = dispatcher.answer_extension(subject, number, letter.downcase, by: @node.user) or
           raise Refusal, "#{command.plan} has no open request X#{number}"
-        settled["grant"] == "live" ? "#{settled["agent"]} has #{settled["seconds"] / 60} more minutes" : "#{settled["agent"]} gets one more round"
+        settled["grant"] == "live" ? Commands.more_time(settled["agent"], settled["seconds"]) : "#{settled["agent"]} gets one more round"
       end
 
-      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes.yml` (U3).
+      # R4's answer: a) high, b) standard or c) mvp, written into `.openlanes/config.yml` (U3).
       # Only the letter counts, as for {#extension}.
       #
       # @return [String]
@@ -451,6 +521,30 @@ module OpenLanes
           raise Refusal, "#{command.car} is not running"
         @run_state.hold_car(command.car, held: command.kind == "hold")
         nil
+      end
+
+      # More time on one running agent's clock, from its drawer. Capped at
+      # the largest grant {Engine::Extensions} offers, so the page cannot
+      # hand out more in one press than the harness would on request.
+      #
+      # @return [String]
+      def extend_time(command, dispatcher)
+        seconds = Commands.seconds!(command.payload["seconds"])
+        dispatcher.extend(command.car, seconds) or raise Refusal, "#{command.car} is not running"
+        Commands.more_time(command.agent, seconds)
+      end
+
+      # A person's accept or strike on one reviewer finding, from its plan
+      # row: written as a ruling where the arbitrator's go, so a struck one
+      # is never raised again and settles an appeal against it.
+      #
+      # @return [String]
+      def rule_finding(command, dispatcher)
+        subject = subject!(command, dispatcher)
+        finding = Commands.finding!(Plans::Findings.for(subject.feature.path), command)
+        Plans::Findings.rule!(subject.feature.path, finding, command["verdict"], by: @node.user)
+        dispatcher.wake!
+        "#{finding.id} #{command["verdict"]}"
       end
 
       # Stop All Local: every agent on this machine is told to stop, and once
@@ -683,8 +777,22 @@ module OpenLanes
         "#{ordinal} restarts at the next tick"
       end
 
+      # `/restart-web` (plan 069.00): the supervisor that `openlanes start`
+      # runs stops the control room, rebuilds its page and starts it again.
+      # The engine only asks; the page's server goes away and comes back,
+      # and the new one reports how the build went.
+      #
+      # @return [String]
+      def restart_web(_command, dispatcher)
+        pid = @restart_web.call(File.dirname(dispatcher.runner.tree.dir))
+        raise Refusal, Supervision::RESTART_WEB_REFUSAL unless pid
+
+        "restarting the control room: supervisor #{pid} stops it, rebuilds the page and starts it again; " \
+          "the page reconnects when it is back"
+      end
+
       # The rail's "Ding when a question needs you" box, kept in
-      # `.openlanes.yml` so it holds across reloads, browsers and restarts.
+      # `.openlanes/config.yml` so it holds across reloads, browsers and restarts.
       # `on` is checked here and not in {Command::PAYLOAD}, whose test for a
       # missing field would take `false` for one.
       #

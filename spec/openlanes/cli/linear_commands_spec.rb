@@ -65,6 +65,17 @@ RSpec.describe "openlanes linear", :tree do
       expect(unwrapped(err)).to include("not a Linear team key")
       expect(status).to eq(69)
     end
+
+    # The command asks the container for its API, so stubbing the `linear`
+    # key is enough: no constructor or token lookup needs replacing.
+    it "uses whatever API the container's linear key holds" do
+      allow(api).to receive(:team).with("TAX").and_return({ id: "team-1" })
+      allow(api).to receive(:projects).with("team-1").and_return([project("Tax Rule DSL")])
+      OpenLanes::Container.stub("linear", api)
+      out, = run(command, team: "TAX")
+
+      expect(out).to include("Tax Rule DSL\tPlanned")
+    end
   end
 
   describe OpenLanes::CLI::Linear::Import do

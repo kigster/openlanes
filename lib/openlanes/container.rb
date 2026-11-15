@@ -67,5 +67,21 @@ module OpenLanes
         dir.auto_register = REGISTERABLE
       end
     end
+
+    # The providers {.start_eager} starts at boot, on one thread: the ones
+    # that reach nothing outside the process. dry-system starts a provider on
+    # its first resolve without a lock, and two threads asking for `process`
+    # together (one `Child.spawn` per job) left one of them with
+    # `key not found: "process"` 60 times across 30 racing runs. Redis, GitHub
+    # and Linear stay lazy: each connects or needs a token, and a run that
+    # never asks must never pay for it. A new provider that threads resolve
+    # together belongs on this list, beside the others, not in the load file.
+    EAGER = %w[clock process logger].freeze
+
+    # Starts every provider in {EAGER}. Called once, from `lib/openlanes.rb`,
+    # after the loader is set up.
+    #
+    # @return [void]
+    def self.start_eager = EAGER.each { start(it.to_sym) }
   end
 end

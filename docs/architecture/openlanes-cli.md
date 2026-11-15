@@ -31,6 +31,7 @@ classDiagram
   <<module>> OpenLanes__CLI__Base__EnterProject
   class OpenLanes__CLI__Base__RefuseStrayArguments["Base::RefuseStrayArguments"]
   <<module>> OpenLanes__CLI__Base__RefuseStrayArguments
+  class OpenLanes__CLI__ConfigFile__Move["ConfigFile::Move"]
   class OpenLanes__CLI__Coverage["Coverage"]
   class OpenLanes__CLI__Create["Create"]
   class OpenLanes__CLI__Discard["Discard"]
@@ -88,6 +89,7 @@ classDiagram
   class OpenLanes__CLI__Worktree["Worktree"]
   class OpenLanes__CLI__WorktreePrune["WorktreePrune"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Coverage["OpenLanes::Coverage"]
   <<module>> OpenLanes__Coverage
   class OpenLanes__Coverage__Config["OpenLanes::Coverage::Config"]
@@ -120,6 +122,8 @@ classDiagram
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
   class OpenLanes__Live__Copilot__Operator["OpenLanes::Live::Copilot::Operator"]
+  class OpenLanes__Live__Copilot__RestartNote["OpenLanes::Live::Copilot::RestartNote"]
+  class OpenLanes__Live__Interview__Operator["OpenLanes::Live::Interview::Operator"]
   class OpenLanes__Live__Mail["OpenLanes::Live::Mail"]
   class OpenLanes__Live__Node["OpenLanes::Live::Node"]
   class OpenLanes__Live__Node__Invalid["OpenLanes::Live::Node::Invalid"]
@@ -153,6 +157,7 @@ classDiagram
   <<module>> OpenLanes__Setup
   class OpenLanes__Setup__Architecture["OpenLanes::Setup::Architecture"]
   class OpenLanes__Setup__CiScaffold["OpenLanes::Setup::CiScaffold"]
+  class OpenLanes__Setup__ConfigMove["OpenLanes::Setup::ConfigMove"]
   class OpenLanes__Setup__ProjectForm["OpenLanes::Setup::ProjectForm"]
   <<module>> OpenLanes__Setup__ProjectForm
   class OpenLanes__Setup__ProjectForm__Terminal["OpenLanes::Setup::ProjectForm::Terminal"]
@@ -176,6 +181,8 @@ classDiagram
   class OpenLanes__Web__AdminAuth["OpenLanes::Web::AdminAuth"]
   class OpenLanes__Web__AdminAuth__Invalid["OpenLanes::Web::AdminAuth::Invalid"]
   class OpenLanes__Web__Demo["OpenLanes::Web::Demo"]
+  class OpenLanes__Web__Demo__Interview["OpenLanes::Web::Demo::Interview"]
+  <<module>> OpenLanes__Web__Demo__Interview
   class OpenLanes__Web__Launcher["OpenLanes::Web::Launcher"]
   class OpenLanes__Web__Listen["OpenLanes::Web::Listen"]
   class OpenLanes__Web__Listen__Invalid["OpenLanes::Web::Listen::Invalid"]
@@ -209,6 +216,11 @@ classDiagram
   OpenLanes__CLI__Base ..> OpenLanes__Web__AdminAuth__Invalid : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__Listen : uses
   OpenLanes__CLI__Base ..> OpenLanes__Web__Listen__Invalid : uses
+  OpenLanes__CLI__ConfigFile__Move --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__ConfigFile__Move ..> OpenLanes__Error : uses
+  OpenLanes__CLI__ConfigFile__Move ..> OpenLanes__Project : uses
+  OpenLanes__CLI__ConfigFile__Move ..> OpenLanes__Setup__ConfigMove : uses
+  OpenLanes__CLI__ConfigFile__Move ..> OpenLanes__UI : uses
   OpenLanes__CLI__Coverage --|> OpenLanes__CLI__Base : inherits
   OpenLanes__CLI__Coverage ..> OpenLanes__Config : uses
   OpenLanes__CLI__Coverage ..> OpenLanes__Coverage : uses
@@ -268,8 +280,8 @@ classDiagram
   OpenLanes__CLI__Linear__Projects --|> OpenLanes__CLI__Linear__Team : inherits
   OpenLanes__CLI__Linear__Projects ..> OpenLanes__Error : uses
   OpenLanes__CLI__Linear__Team --|> OpenLanes__CLI__Base : inherits
+  OpenLanes__CLI__Linear__Team ..> OpenLanes__Container : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear : uses
-  OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__API : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__Linear__Survey : uses
   OpenLanes__CLI__Linear__Team ..> OpenLanes__UI : uses
   OpenLanes__CLI__ListPlans --|> OpenLanes__CLI__Base : inherits
@@ -378,6 +390,7 @@ classDiagram
   OpenLanes__CLI__Start ..> OpenLanes__Log : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Invalid : uses
   OpenLanes__CLI__Start ..> OpenLanes__Log__Settings : uses
+  OpenLanes__CLI__Start ..> OpenLanes__Project : uses
   OpenLanes__CLI__Start ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Start ..> OpenLanes__UI : uses
   OpenLanes__CLI__Start ..> OpenLanes__Web : uses
@@ -429,6 +442,8 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Config : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__Operator : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live__Copilot__RestartNote : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Live__Interview__Operator : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Node__Invalid : uses
   OpenLanes__CLI__Web ..> OpenLanes__Live__Unavailable : uses
@@ -438,6 +453,7 @@ classDiagram
   OpenLanes__CLI__Web ..> OpenLanes__Supervision : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Demo : uses
+  OpenLanes__CLI__Web ..> OpenLanes__Web__Demo__Interview : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Launcher : uses
   OpenLanes__CLI__Web ..> OpenLanes__Web__Stores : uses
   OpenLanes__CLI__Worktree --|> OpenLanes__CLI__Base : inherits

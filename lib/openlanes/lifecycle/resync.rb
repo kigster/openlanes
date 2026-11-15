@@ -448,7 +448,7 @@ module OpenLanes
         # @param adopt [Boolean] give a plan folder to every pull request that
         #   resolves to none, rather than flagging it and moving on
         # @param root [String, nil] repository root, for reading branches
-        def initialize(tree:, github: Vcs::GitHub.new, adopt: true, root: nil)
+        def initialize(tree:, github: Container["github"], adopt: true, root: nil)
           @tree = tree
           @github = github
           @adopt = adopt

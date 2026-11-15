@@ -189,6 +189,41 @@ RSpec.describe OpenLanes::CLI::Start, :tree do
     it("hands nothing it starts the variable") { expect(ENV).not_to have_key("OPENLANES_DETACHED") }
   end
 
+  # S0: a real repository and a real `git worktree add`, nothing stubbed
+  # about git. Where the supervisor is handed control is where it booted.
+  describe "the checkout it boots in" do
+    include GitRepo
+
+    let(:booted_in) { [] }
+    let(:linked) { File.join(Dir.mktmpdir("linked"), "wt") }
+    let(:main) { File.realpath(repo_root) }
+
+    before do
+      allow(supervisor).to receive(:call) do
+        booted_in << File.realpath(Dir.pwd)
+        0
+      end
+      repo_git("init", "-q", "-b", "main")
+      File.write(File.join(repo_root, "README.md"), "seed\n")
+      commit_all("seed")
+      repo_git("worktree", "add", "-q", "-b", "elsewhere", linked)
+    end
+
+    context "when started in a linked worktree" do
+      let!(:result) { Dir.chdir(linked) { start } }
+
+      it("boots in the main checkout") { expect(booted_in).to eq([main]) }
+      it("says so on STDERR") { expect(result[1]).to include("the factory runs from the main checkout, #{main}") }
+    end
+
+    context "when started in the main checkout" do
+      let!(:result) { Dir.chdir(repo_root) { start } }
+
+      it("stays there") { expect(booted_in).to eq([main]) }
+      it("says nothing about moving") { expect(result[1]).not_to include("main checkout") }
+    end
+  end
+
   it "is registered as start" do
     expect(OpenLanes::CLI.get(["start"]).command).to eq(described_class)
   end

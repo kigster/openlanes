@@ -6,12 +6,13 @@ advances_to: researched
 model: haiku
 effort: medium
 network: true
-timeout: 900
+timeout: 1500
 ledger: [spec.md]
 phase: research
 starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch]
 writes: [spec.md, blocked.md]
+rounds: 1
 ---
 
 You add one chapter to `spec.md`: `## Research`. You find what already exists; you decide nothing. `spec-writer` writes the specification next, from your chapter, and settles the questions you raise.

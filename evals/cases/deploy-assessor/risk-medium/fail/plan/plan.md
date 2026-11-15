@@ -4,7 +4,7 @@
 
 ## Merge risk, PR #21
 
-**Verdict:** auto
+**Risk:** low
 
 **Triggers:** none.
 
@@ -17,4 +17,4 @@
 > [!NOTE]
 >
 > [2026-10-20 10:00:00 AM PDT] [ agent: deploy-assessor   status: Started, round 1 ]
-> [2026-10-20 10:01:00 AM PDT] [ agent: deploy-assessor   status: Completed, round 1 (auto) ]
+> [2026-10-20 10:01:00 AM PDT] [ agent: deploy-assessor   status: Completed, round 1 (low) ]

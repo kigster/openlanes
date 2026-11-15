@@ -1,0 +1,112 @@
+{
+  "data": {
+    "repository": {
+      "pullRequests": {
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "Y3Vyc29yOjE="
+        },
+        "nodes": [
+          {
+            "number": 201,
+            "title": "[061.00] Speed up openlanes",
+            "url": "https://github.com/example/repo/pull/201",
+            "headRefName": "tester/061.00-speed-up",
+            "state": "OPEN",
+            "isDraft": false,
+            "mergedAt": null,
+            "labels": {
+              "nodes": [
+                {
+                  "name": "openlanes:review"
+                }
+              ]
+            },
+            "files": {
+              "nodes": [
+                {
+                  "path": "lib/openlanes/vcs/warmup.rb"
+                }
+              ]
+            },
+            "commits": {
+              "nodes": [
+                {
+                  "commit": {
+                    "statusCheckRollup": {
+                      "contexts": {
+                        "nodes": [
+                          {
+                            "__typename": "CheckRun",
+                            "name": "rspec",
+                            "status": "COMPLETED",
+                            "conclusion": "SUCCESS"
+                          },
+                          {
+                            "__typename": "CheckRun",
+                            "name": "lint",
+                            "status": "COMPLETED",
+                            "conclusion": "SKIPPED"
+                          },
+                          {
+                            "__typename": "StatusContext",
+                            "context": "ci/circleci: test",
+                            "state": "PENDING"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "headRefOid": "abc123",
+            "baseRefName": "main",
+            "mergeStateStatus": "CLEAN",
+            "body": "Speeds things up",
+            "mergeCommit": null
+          },
+          {
+            "number": 202,
+            "title": "[062.00] Draft thing",
+            "url": "https://github.com/example/repo/pull/202",
+            "headRefName": "tester/062.00-draft",
+            "state": "OPEN",
+            "isDraft": true,
+            "mergedAt": null,
+            "labels": {
+              "nodes": []
+            },
+            "files": {
+              "nodes": [
+                {
+                  "path": "README.md"
+                }
+              ]
+            },
+            "commits": {
+              "nodes": [
+                {
+                  "commit": {
+                    "statusCheckRollup": {
+                      "contexts": {
+                        "nodes": [
+                          {
+                            "__typename": "CheckRun",
+                            "name": "rspec",
+                            "status": "IN_PROGRESS",
+                            "conclusion": null
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

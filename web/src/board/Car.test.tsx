@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Car, SpendBadge } from "./Car";
 import { sampleCar, samplePlan } from "./sample";
@@ -86,5 +86,17 @@ describe("SpendBadge", () => {
 
   it("draws nothing without spend", () => {
     expect(show(undefined).textContent).toBe("");
+  });
+});
+
+describe("car cost", () => {
+  it("shows what the agent has cost so far, and nothing when the engine sends no cost", () => {
+    const plan = samplePlan();
+    const { rerender } = render(<Car plan={plan} car={sampleCar({ cost: 1.234 })} models={[]} />);
+    expect(screen.getByTitle("Cost so far")).toHaveTextContent("$1.23");
+    rerender(<Car plan={plan} car={sampleCar({ cost: 0.001 })} models={[]} />);
+    expect(screen.getByTitle("Cost so far")).toHaveTextContent("<$0.01");
+    rerender(<Car plan={plan} car={sampleCar({ cost: undefined })} models={[]} />);
+    expect(screen.queryByTitle("Cost so far")).toBeNull();
   });
 });

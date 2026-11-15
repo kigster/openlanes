@@ -38,6 +38,7 @@ module OpenLanes
           files_section,
           pull_requests,
           review_labels,
+          rounds_table,
           footer
         ].join("\n")
       end
@@ -81,6 +82,7 @@ module OpenLanes
 
           #{starts_section}
 
+          #{frontmatter_section}
         MARKDOWN
       end
 
@@ -415,7 +417,10 @@ module OpenLanes
 
           The units themselves live in `plan.md`, under `## Backend` and
           `## Frontend`. `#{Agents::Names::FRONTEND_CODER}` is started only when `## Frontend` holds a
-          unit heading.
+          unit heading. Each unit carries a `**Size:**` of #{Plans::UnitSizes::SIZES.map { "`#{it}`" }.join(", ")}:
+          the plan's largest picks the builders' model and effort through
+          `.openlanes/config.yml` `sizing:` (#{Agents::Sizing::DEFAULTS.map { |size, p| "#{size} #{p[:model]}/#{p[:effort]}" }.join(", ")}
+          unless it says otherwise).
 
           Nothing else belongs there. A folder holding notes, diagrams or scratch files
           is a folder nobody can audit at a glance.
@@ -434,24 +439,55 @@ module OpenLanes
 
       # Derived from {Plans::ReviewLabel::ALL}, the only place a label is named.
       #
+      # Each agent's rounds per visit to a state, read from its own
+      # `rounds:` frontmatter, the one place they are written down.
+      #
+      # @return [String]
+      def rounds_table
+        rows = agents.sort_by { [-it.rounds, it.name] }.map { "| `#{it.name}` | #{it.rounds} |" }
+
+        <<~MARKDOWN
+          ## Rounds
+
+          How many rounds each agent may spend on one visit of a plan to a state, from the `rounds:`
+          line in `agents/<name>.md`. A plan sent back to a state starts it fresh. A start that failed
+          before spending anything costs no round, and a person may grant one more from the page.
+
+          | Agent | Rounds |
+          | --- | --- |
+          #{rows.join("\n")}
+        MARKDOWN
+      end
+
       # @return [String]
       def review_labels
         rows = OpenLanes::Plans::ReviewLabel::ALL.map do |l|
           "| `#{l.name}` | `#{l.colour}` | #{l.passing? ? "yes" : "no"} | #{l.meaning} |"
         end
 
+        beside = OpenLanes::Plans::ReviewLabel::FAMILIES.flatten.map { |l| "| `#{l.name}` | `#{l.colour}` | #{l.meaning} |" }
+
         <<~MARKDOWN
           ## Review labels
 
           A pull request carries one of these at a time, set by the engine once every reviewer has
           reported, or by a person through `openlanes review <pr> <label>`.
-          A new label replaces the previous one, except that `#{OpenLanes::Plans::ReviewLabel::VULNERABILITY}`
-          sits beside `#{OpenLanes::Plans::ReviewLabel::REJECTED}`. No passing verdict is given while CI is red.
+          A new label replaces the previous one, except that the reviewers' passing verdict stays beside the
+          labels that follow it. No passing verdict is given while CI is red.
           The engine creates or recolours every one of them on the repository when a run starts.
 
           | Label | Colour | Passing | Meaning |
           | --- | --- | --- | --- |
           #{rows.join("\n")}
+
+          Two assessments sit beside the verdict, one label each. The engine takes `review-in-progress` off
+          once a group of reviewers has given its verdict, and merges a pull request itself only when CI is
+          green and it carries #{OpenLanes::Plans::ReviewLabel::MERGEABLE.map { "`#{it}`" }.join(", ")}, under `merge.by: auto`.
+          Any other combination waits for a person.
+
+          | Label | Colour | Meaning |
+          | --- | --- | --- |
+          #{beside.join("\n")}
         MARKDOWN
       end
 
@@ -542,6 +578,22 @@ module OpenLanes
         MARKDOWN
       end
 
+      # The keys a spec.md frontmatter may set, read from {Plans::Spec::KEYS}
+      # so a key cannot ship without being listed here.
+      #
+      # @return [String]
+      def frontmatter_section
+        rows = Plans::Spec::KEYS.map { |key, what| "| `#{key}:` | #{what} |" }
+
+        <<~MARKDOWN
+          Every key a `spec.md` frontmatter may set:
+
+          | Key | What it is for |
+          | :-- | :------------- |
+          #{rows.join("\n")}
+        MARKDOWN
+      end
+
       # The three paths a feature walks, one per `starts:`.
       #
       # Written out by hand, this table is the one that went stale: it named
@@ -559,7 +611,7 @@ module OpenLanes
 
         <<~MARKDOWN
           A feature takes one of three paths, chosen by `starts:` in its `spec.md`
-          (`#{Plans::Spec::STARTS.join("`, `")}`; the default is the project's `.openlanes.yml`).
+          (`#{Plans::Spec::STARTS.join("`, `")}`; the default is the project's `.openlanes/config.yml`).
 
           | Starts | Path | The harness writes |
           | :--- | :--- | :----------------- |

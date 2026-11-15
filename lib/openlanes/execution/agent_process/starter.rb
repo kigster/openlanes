@@ -11,7 +11,7 @@ module OpenLanes
         # @param dir [String]
         # @param root [String]
         # @param spawner [#spawn]
-        def initialize(dir:, root:, spawner: Spawner::System) = super
+        def initialize(dir:, root:, spawner: Container["process"]) = super
 
         # @param argv [Array<String>] the agent CLI
         # @param chdir [String] where the CLI runs: the plan's checkout

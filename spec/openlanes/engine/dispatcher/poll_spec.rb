@@ -34,6 +34,22 @@ RSpec.describe OpenLanes::Engine::Dispatcher::Poll, :tree do
     expect { poll.drain_mail }.not_to raise_error
   end
 
+  it "asks for more time for an agent near the end of its clock" do
+    allow(handle).to receive(:remaining).and_return(OpenLanes::Engine::Extensions::ASK_AT)
+    allow(desk.extensions).to receive(:watch)
+    desk.running << job
+    poll.ask_for_time
+    expect(desk.extensions).to have_received(:watch).with(job, plan.feature.path)
+  end
+
+  it "asks nothing of an agent with time to spare" do
+    allow(handle).to receive(:remaining).and_return(OpenLanes::Engine::Extensions::ASK_AT + 1)
+    allow(desk.extensions).to receive(:watch)
+    desk.running << job
+    poll.ask_for_time
+    expect(desk.extensions).not_to have_received(:watch)
+  end
+
   it "writes no journal for a job that printed none" do
     expect(poll.record_journal(job)).to be_nil
   end

@@ -272,6 +272,14 @@ export interface Snapshot {
   log: LogLine[]; // the most recent lines, newest last
   bombs: Bomb[]; // plans halted on a 💣 question on this node, [] when none (plan 009)
   global_lock?: GlobalLock | null; // optional: an engine older than R6 never sends it; null when no refactor runs alone
+  paused_clis?: PausedCli[]; // optional: an engine older than plan 065 never sends it, which reads as nothing paused
+}
+
+/** A coding CLI the engine stopped starting agents on after an authentication failure, until its probe passes (plan 065). */
+export interface PausedCli {
+  adapter: string; // claude, codex, pi, grok or gemini
+  reason: string; // the CLI's own words, "OAuth session expired"
+  since: Iso;
 }
 
 /** The refactor running alone (R6): nothing new starts until it merges or its lock lapses. */
@@ -308,6 +316,38 @@ export interface Board {
 export interface WireBoard {
   me: Snapshot | null;
   others: Snapshot[];
+  /** Per stream, from 1: only a `board` frame carries it, and a `board_delta` names it as its `base`. */
+  version?: number;
+}
+
+/** One flattened part of the board: `node/<id>/<checkout>` (a snapshot without `plans`, plus `plan_order`) or `plan/<id>/<checkout>/<ordinal>`. */
+export interface BoardEntry {
+  key: string;
+  value: Record<string, unknown>;
+}
+
+/** What changed since the board at `base`; applying it yields `version` (= base + 1). */
+export interface BoardDelta {
+  base: number;
+  version: number;
+  upsert: BoardEntry[];
+  remove: string[];
+}
+
+/** `GET /api/plans/:ordinal/review` */
+export interface ReviewFinding {
+  id: string; // "F1"
+  reviewer: string;
+  severity: string | null;
+  file: string | null;
+  line: number | null;
+  text: string;
+  ruling: "accept" | "strike" | null;
+}
+
+export interface PlanReview {
+  diff: { stat: string; patch: string; truncated: boolean };
+  findings: ReviewFinding[];
 }
 
 export type CommandKind =
@@ -318,7 +358,9 @@ export type CommandKind =
   | "discard" // plan-wide (W9)
   | "message" // payload: { text }
   | "hold"
-  | "wrap_up"
+  | "wrap_up" // also "stop after this step": the agent finishes its step, writes to disk, signs, and exits
+  | "extend_time" // payload: { seconds } from 1 to 1200; plan and agent required
+  | "rule_finding" // payload: { finding: "F1", verdict: "accept" | "strike" }
   | "compact" // now: stopped, its session compacted with claude --resume "/compact", then carried on in it; a fresh restart when it has no session id
   | "stop"
   | "stop_all" // every agent on this node
@@ -326,6 +368,7 @@ export type CommandKind =
   | "switch_model" // now: as compact, carried on in the new model; a fresh restart on it when the session cannot be resumed; payload: { model }
   | "add_plan" // payload: { ordinal }
   | "create_plans" // payload: { idea }
+  | "confirm_interview" // payload: { question: "1", turn }: writes the interview's decision as the answer
   | "respond" // a 💣 plan: answers its first open question in blocked.md; payload: { text }
   | "pause_discuss" // a 💣 plan: holds its running agents while the person talks it over with the copilot
   | "resume_anyway" // a 💣 plan: lifts the halt for 24 h
@@ -466,3 +509,90 @@ export interface AppCommand {
   action: "restart" | "stop";
   target?: string | null; // "backend" (every process but the previewed one), a process name, or every process
 }
+
+// GET /api/dependencies (plan 056): every plan, archive included, and one edge per depends_on: entry.
+export interface DependencyState {
+  key: string; // a Plans::STATUSES key, in STATUSES order
+  emoji: string;
+  name: string;
+  archived: boolean; // its plans live in an inactive subfolder (Tree::INACTIVE_DIRS); the graph starts with these off
+}
+
+export interface DependencyPlan {
+  ordinal: string;
+  title: string;
+  state: string; // a DependencyState key
+  summary: string | null;
+  archived: boolean;
+}
+
+/** `from` is the dependency, `to` the dependent, so arrows run left to right. */
+export interface DependencyEdge {
+  from: string;
+  to: string;
+}
+
+export interface DependencyGraph {
+  states: DependencyState[];
+  plans: DependencyPlan[];
+  edges: DependencyEdge[];
+}
+
+/** One option of an interview question: lettered by its place, one of them the unblocker's recommendation. */
+export interface InterviewOption {
+  label: string;
+  recommended: boolean;
+}
+
+/** One turn of the unblocker's interview about a question (contract.md, "InterviewTurn"). */
+export interface InterviewTurn {
+  id: string;
+  from: "you" | "unblocker";
+  kind: "text" | "question" | "decision";
+  text: string;
+  at: string;
+  /** `question` turns only: 2 to 5, exactly one recommended. */
+  options?: InterviewOption[];
+  /** `decision` turns only: what Confirm writes to blocked.md as the answer. */
+  answer?: string;
+}
+
+/** What `event: interview` carries: the turn, and which question's conversation it belongs to. */
+export interface InterviewEvent {
+  plan: string;
+  number: number;
+  turn: InterviewTurn;
+}
+
+/** One node of the JSON Schema GET /api/settings serves; only the keywords the form reads are typed. */
+export interface SettingsSchemaNode {
+  type?: string | string[];
+  description?: string;
+  default?: unknown;
+  enum?: Array<string | number | boolean | null>;
+  minimum?: number;
+  properties?: Record<string, SettingsSchemaNode>;
+}
+
+export type SettingsValues = Record<string, unknown>;
+
+/** GET /api/settings (plan 058, contract.md). */
+export interface SettingsDocument {
+  schema: SettingsSchemaNode;
+  keys: string[];
+  values: SettingsValues;
+  defaults: SettingsValues;
+  etag: string;
+  /** The main checkout's branch; null when its HEAD is detached. */
+  branch: string | null;
+}
+
+export interface SettingsFieldError {
+  path: string[];
+  message: string;
+}
+
+export type SettingsRefusalKind = "not_on_main" | "dirty_config" | "cannot_fast_forward" | "stale_etag" | "push_failed" | "commit_failed";
+
+/** PUT /api/settings, 200. */
+export type SettingsSaveResult = { changed: false } | { changed: true; commit: string; etag: string };

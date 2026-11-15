@@ -14,12 +14,16 @@ module OpenLanes
     # staff-reviewer numbers its findings afresh in every review, so an id alone
     # names a different finding a round later.
     class Ruling < Data.define(:kind, :pr, :outcome, :struck, :critical, :winner, :reason, :headings)
-      # The outcomes each kind may give.
+      # The outcomes each kind may give. `finding` is a person's accept or
+      # strike from the page, written by {Plans::Findings.rule!} rather than
+      # parsed from an answer; it is listed here so one table names every
+      # kind `state.json` holds.
       OUTCOMES = {
-        "cap"          => %w[go no_go],
-        "appeal"       => %w[upheld struck],
-        "dispute"      => Agents::Names::BUILDERS,
-        "passed_check" => %w[fair too_harsh too_lenient]
+        "cap"                 => %w[go no_go],
+        "appeal"              => %w[upheld struck],
+        "dispute"             => Agents::Names::BUILDERS,
+        "passed_check"        => %w[fair too_harsh too_lenient],
+        Plans::Findings::KIND => Plans::Findings::OUTCOMES
       }.freeze
 
       # One entry of `findings.struck` or `findings.critical`: an id, then

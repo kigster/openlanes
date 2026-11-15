@@ -451,3 +451,26 @@ describe("live", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load the board: GET /api/board answered 500.");
   });
 });
+
+describe("pages", () => {
+  const graph = { states: [{ key: "building", emoji: "🟡", name: "Building" }], plans: [], edges: [] };
+  beforeEach(() => vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => graph })));
+
+  it("switches to Plan dependencies without a reload, and the URL follows", async () => {
+    window.history.replaceState(null, "", "/?fixture");
+    renderApp();
+    await userEvent.click(await screen.findByRole("link", { name: "Plan dependencies" }));
+    expect(window.location.pathname).toBe("/dependencies");
+    expect(await screen.findByRole("heading", { name: "Plan dependencies" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: "Board" }));
+    expect(window.location.pathname).toBe("/");
+    expect(screen.queryByRole("heading", { name: "Plan dependencies" })).toBeNull();
+  });
+
+  it("mounted at /dependencies opens that page", async () => {
+    window.history.replaceState(null, "", "/dependencies?fixture");
+    renderApp();
+    expect(await screen.findByRole("heading", { name: "Plan dependencies" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Plan dependencies" })).toHaveAttribute("aria-current", "page");
+  });
+});

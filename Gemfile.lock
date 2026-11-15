@@ -17,6 +17,7 @@ PATH
       fuzzy-string-match
       inquirex-llm (~> 0.12)
       inquirex-tty (~> 0.12)
+      json_schemer
       launchy (~> 3.1)
       parallel
       pastel
@@ -300,7 +301,6 @@ PLATFORMS
 DEPENDENCIES
   coverage-badge
   debug_inspector (~> 1.2)
-  json_schemer
   openlanes!
   rack-test
   rake

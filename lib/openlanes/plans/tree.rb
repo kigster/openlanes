@@ -104,6 +104,14 @@ module OpenLanes
                   .transform_values { |group| group.map(&:dirname) }
       end
 
+      # Whether a plan sits in one of the inactive subfolders. The one place
+      # that reads the folder's parent, so a reader elsewhere never repeats
+      # the basename test {#group} already makes to order the tree.
+      #
+      # @param feature [OpenLanes::Plans::Feature] a plan this tree read
+      # @return [Boolean]
+      def inactive?(feature) = group(feature).positive?
+
       # @param ordinal [OpenLanes::Plans::Ordinal, String]
       # @return [OpenLanes::Plans::Subject, nil]
       def find(ordinal)

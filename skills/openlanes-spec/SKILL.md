@@ -17,7 +17,7 @@ The spec is the only thing a human is sure to write. Every agent downstream read
 
 ## 2. Propose the lane and depth
 
-Read `.openlanes.yml` for the project's default `lane`. Then judge this task:
+Read `.openlanes/config.yml` for the project's default `lane`. Then judge this task:
 
 | Lane    | Fits when                                                                                                   |
 | ------- | ----------------------------------------------------------------------------------------------------------- |
@@ -53,7 +53,7 @@ Add what the user told you, and ask for the two keys that decide whether the wor
 ---
 starts: research
 depth: medium
-frontend: false                 # omit to inherit .openlanes.yml; true forces the front-end agent, false forbids it
+frontend: false                 # omit to inherit .openlanes/config.yml; true forces the front-end agent, false forbids it
 implementation_suggestions:     # offered to agents, who may take a better route and say why
   - Ruby, with dry-cli for the command line
 implementation_requirements:    # met exactly as written, or the agent blocks and asks

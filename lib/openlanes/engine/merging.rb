@@ -5,11 +5,13 @@ module OpenLanes
     # What the engine does with a 🏁 Completed plan once deploy-assessor has ruled
     # (decisions P1 to P5).
     #
-    # deploy-assessor only writes `plan.md` and signs. Everything that leaves the
-    # machine happens here: labelling each `ready-to-merge` pull request
-    # `auto-merged` or `merge-manually`, merging the `auto` ones one at a
-    # time under `merge.by: auto`, and rebasing the siblings left open onto
-    # `main` after each merge. A rebase that raises leaves that sibling for a
+    # deploy-assessor only writes `plan.md` and signs a risk. Everything that
+    # leaves the machine happens here: labelling each `ready-to-merge` pull
+    # request with its risk, then `auto-merged` or `merge-manually`. Under
+    # `merge.by: auto` the engine merges the ones that are green and carry
+    # all of {Plans::ReviewLabel::MERGEABLE}, one at a time, and rebases the
+    # siblings left open onto `main` after each merge. Any other combination
+    # of labels waits for a person. A rebase that raises leaves that sibling for a
     # person, and every other open sibling is still rebased or left in the
     # same pass, rather than retrying the merge on old green CI. A branch
     # GitHub still reports as `BEHIND` is never merged. Every step is asked of
@@ -25,17 +27,29 @@ module OpenLanes
       # Completed note carries the verdicts.
       PHASE = "completion"
 
-      # The two verdicts deploy-assessor may give.
-      VERDICTS = %w[auto manual].freeze
+      # The risks deploy-assessor may sign: how likely deploying the pull
+      # request is to break production.
+      RISKS = %w[low medium high].freeze
 
-      # One verdict, with or without the pull request it is for.
-      VERDICT = /(auto|manual)(?:\s+#?(\d+))?/i
+      # What a note that names no risk for a pull request comes to. No label
+      # says it, so the pull request waits for a person.
+      UNASSESSED = "unassessed"
 
-      # The only notes read at all: `auto`, `manual #13`, `auto #12, manual #13`,
-      # with at most one bare verdict, first. Matched against the whole note,
-      # because a scan found the `auto` in "do not auto-merge" and would have
-      # merged the plan.
-      NOTE = /\A\s*#{VERDICT}(?:\s*,\s*(?:auto|manual)\s+#?\d+)*\s*\z/i
+      # The words deploy-assessor signed before it named a risk. Plans
+      # assessed then still carry them in `state.json`.
+      LEGACY = { "auto" => "low", "manual" => "medium" }.freeze
+
+      # One risk, as the note may spell it: `low`, `risk-low`, `risk low`.
+      WORD = /(?:risk[- ])?(?:#{(RISKS + LEGACY.keys).join("|")})/i
+
+      # One risk, with or without the pull request it is for.
+      VERDICT = /(?:risk[- ])?(#{(RISKS + LEGACY.keys).join("|")})(?:\s+#?(\d+))?/i
+
+      # The only notes read at all: `low`, `high #13`, `low #12, medium #13`,
+      # with at most one bare risk, first. Matched against the whole note,
+      # because a scan found the `low` in "not low enough to merge" and would
+      # have merged the plan.
+      NOTE = /\A\s*#{VERDICT}(?:\s*,\s*#{WORD}\s+#?\d+)*\s*\z/i
 
       # How long a rebased sibling's zero checks still mean "CI has not
       # registered on the new head yet", as {Verification::Outcome::NO_CHECKS_GRACE}
@@ -58,22 +72,30 @@ module OpenLanes
       end
 
       class << self
-        # The verdict for each pull request, read off deploy-assessor's note. A
-        # bare verdict covers every pull request it does not name; a pull
+        # The risk of each pull request, read off deploy-assessor's note. A
+        # bare risk covers every pull request it does not name; a pull
         # request the note says nothing about, or a note that is missing or
-        # not in the {NOTE} shape, is `manual` (P4): a wrong `manual` costs a
-        # person ten minutes, a wrong `auto` can ship an outage.
+        # not in the {NOTE} shape, is {UNASSESSED} (P4): a pull request left
+        # for a person costs ten minutes, a wrong `low` can ship an outage.
         #
         # @param note [String, nil]
         # @param numbers [Array<Integer>] the `ready-to-merge` pull requests
         # @return [Hash{Integer => String}]
         def verdicts(note, numbers)
-          return numbers.to_h { [it, "manual"] } unless readable?(note)
+          return numbers.to_h { [it, UNASSESSED] } unless readable?(note)
 
-          found = note.to_s.scan(VERDICT).map { |word, number| [word.downcase, number&.to_i] }
+          found = note.to_s.scan(VERDICT).map { |word, number| [risk(word), number&.to_i] }
           named = found.select(&:last).to_h { |word, number| [number, word] }
-          bare = found.find { |_, number| number.nil? }&.first || "manual"
+          bare = found.find { |_, number| number.nil? }&.first || UNASSESSED
           numbers.to_h { |n| [n, named.fetch(n, bare)] }
+        end
+
+        # @param word [String, nil] a risk as signed or as stored, {LEGACY} included
+        # @return [String] one of {RISKS}, or {UNASSESSED}
+        def risk(word)
+          word = word.to_s.downcase
+          word = LEGACY.fetch(word, word)
+          RISKS.include?(word) ? word : UNASSESSED
         end
 
         # @param note [String, nil]
@@ -89,7 +111,7 @@ module OpenLanes
       # @param clock [#call]
       # @param held [#call, nil] path -> who holds an alock lock in it, or nil;
       #   a merged plan's checkout somebody holds is not retired
-      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Clock::System.now }, held: nil)
+      def initialize(github:, outcomes:, merge_by:, worktree: nil, publisher: nil, clock: -> { Container["clock"].now }, held: nil)
         @github = github
         @outcomes = outcomes
         @merge_by = merge_by
@@ -103,12 +125,12 @@ module OpenLanes
       # verdicts for this visit to 🏁, then act on them.
       #
       # @param subject [Plans::Subject] at 🏁
-      # @param note [String, nil] deploy-assessor's Completed note; nil reads as `manual` throughout
+      # @param note [String, nil] deploy-assessor's Completed note; nil leaves every pull request unassessed
       # @return [Result]
       def assess(subject, note)
         numbers = subject.pull_requests.select(&:open?).map { number_of(it) }
         unless note.nil? || self.class.readable?(note)
-          UI.log("#{Agents::Names::DEPLOY_ASSESSOR}'s note is not a verdict list, so every pull request is manual: #{note.inspect}",
+          UI.log("#{Agents::Names::DEPLOY_ASSESSOR}'s note names no risk, so every pull request waits for a person: #{note.inspect}",
             level: :warn,
             plan:  subject.feature.ordinal.to_s)
         end
@@ -200,11 +222,24 @@ module OpenLanes
         machine = Plans::PullRequestMachine.new(pull, live[:labels])
         return nil unless machine.key == :ready_to_merge
 
-        verdict = record.dig("verdicts", number.to_s) || "manual"
-        return leave(machine, number, repo, "#{Agents::Names::DEPLOY_ASSESSOR} said manual") if verdict == "manual"
+        labels = assessed(number, repo, self.class.risk(record.dig("verdicts", number.to_s)), live[:labels])
+        missing = Plans::ReviewLabel.unmergeable(labels)
+        return leave(machine, number, repo, "it lacks #{missing.join(", ")}") unless missing.empty?
         return leave(machine, number, repo, "merge.by is #{merge_by}") unless merge_by == :auto
 
         merge(subject, machine, number, repo, record, live[:head], merge_state: live[:merge_state])
+      end
+
+      # Says deploy-assessor's risk on the pull request, beside its verdict.
+      #
+      # @param risk [String] one of {RISKS}, or {UNASSESSED}, which no label says
+      # @param labels [Array<String>] what the pull request carries now
+      # @return [Array<String>] what it carries afterwards
+      def assessed(number, repo, risk, labels)
+        label = Plans::ReviewLabel.beside("risk-#{risk}")
+        return labels if label.nil? || labels.include?(label.name)
+
+        @github.swap_label(number:, repo:, add: label, remove: Plans::ReviewLabel.displaced_by(label))
       end
 
       # Merged or closed on GitHub, by the engine a moment ago or by a person

@@ -12,7 +12,7 @@ module OpenLanes
       desc "Install the tools openlanes needs (brew bundle) and check claude, gh auth and Redis"
 
       dry_run_option "Install nothing; list what would be installed and run the checks"
-      option :redis_url, desc: "Redis to check (default: .openlanes.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
+      option :redis_url, desc: "Redis to check (default: .openlanes/config.yml redis_url, else $REDIS_URL, else #{Live::DEFAULT_URL})"
 
       example [
         "      # install what is missing, then check",

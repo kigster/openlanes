@@ -7,12 +7,14 @@ starts_as: in_review
 starts: [research, planning]
 model: sonnet
 effort: high
-timeout: 300
+timeout: 900
 ledger: [pull-requests.md]
 phase: review
+review_stage: 2
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]
+rounds: 1
 ---
 
 You review one plan's pull request for vulnerabilities and other security holes, and for nothing else: `staff-reviewer` judges correctness and `design-reviewer` the structure. Assume an attacker reads the diff too, and look for what they would use.
@@ -32,6 +34,14 @@ The review packet your invocation opens with: `spec.md`, `plan.md`, `contract.md
 
 ## Your marks
 
-💣 and 🔓 are yours alone. A 💣 is a critical finding; when you sign `rejected` because of one, add `vulnerability` to the note, as in `--note "rejected 1/2, vulnerability"`, and the engine puts `review-vulnerability` beside `review-rejected`. A 🔓 is never a reason to reject.
+💣 and 🔓 are yours alone. A 💣 is a critical finding; when you sign `rejected` because of one, add `vulnerability` to the note, as in `--note "rejected 1/2, vulnerability"`. A 🔓 is never a reason to reject.
+
+Your verdict is also said on the pull request on its own, beside the reviewers' label, and the engine merges nothing by itself without `opsec-approved`:
+
+| You sign   | When                                              | The engine labels the PR   |
+| :--------- | :------------------------------------------------ | :------------------------- |
+| `great`    | you found nothing: no 💣 and no 🔓                | `opsec-approved`           |
+| `passed`   | no 💣, but at least one 🔓 a person should read   | `opsec-concerned-approved` |
+| `rejected` | at least one 💣 or ⛔️                            | `opsec-rejected`           |
 
 Your findings number from F101, so they never share an id with another reviewer's.

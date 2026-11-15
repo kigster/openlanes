@@ -24,7 +24,7 @@ module OpenLanes
 
     module_function
 
-    # W16's order: `--redis-url`, then `.openlanes.yml`'s `redis_url:`, then
+    # W16's order: `--redis-url`, then `.openlanes/config.yml`'s `redis_url:`, then
     # `$REDIS_URL`, then {DEFAULT_URL}.
     #
     # @param option [String, nil] what `--redis-url` typed

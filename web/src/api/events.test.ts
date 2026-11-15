@@ -118,3 +118,12 @@ it("starts every stream with no apps, since the server says nothing when there a
   openStream(handlers());
   await expect(calls[1].onopen?.(ok())).resolves.toBeUndefined();
 });
+
+it("routes board_delta frames to their handler, and passes them over when there is none", () => {
+  const h = { ...handlers(), onBoardDelta: vi.fn() };
+  openStream(h);
+  calls[0].onmessage?.({ id: "", event: "board_delta", data: '{"base":1,"version":2,"upsert":[],"remove":[]}', retry: undefined });
+  expect(h.onBoardDelta).toHaveBeenCalledWith({ base: 1, version: 2, upsert: [], remove: [] });
+  openStream(handlers());
+  expect(() => calls[1].onmessage?.({ id: "", event: "board_delta", data: "{}", retry: undefined })).not.toThrow();
+});

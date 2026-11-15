@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Config["OpenLanes::Config"]
   class OpenLanes__Events["OpenLanes::Events"]
   <<module>> OpenLanes__Events
+  class OpenLanes__Events__Compounding["Compounding"]
   class OpenLanes__Events__Event["Event"]
   class OpenLanes__Events__Identity["Identity"]
   <<module>> OpenLanes__Events__Identity
@@ -30,6 +31,7 @@ classDiagram
   OpenLanes__Events ..> OpenLanes__Events__Sink : uses
   OpenLanes__Events ..> OpenLanes__Live__Node : uses
   OpenLanes__Events__Log ..> OpenLanes__Events__Event : uses
+  OpenLanes__Events__Report ..> OpenLanes__Events__Compounding : uses
   OpenLanes__Events__Sink ..> OpenLanes__Events__Event : uses
   OpenLanes__Events__Sink ..> OpenLanes__Events__Identity : uses
   OpenLanes__Events__Usage ..> OpenLanes__Adapters : uses

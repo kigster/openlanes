@@ -26,6 +26,11 @@ classDiagram
   class OpenLanes__Plans__Execution["Execution"]
   <<module>> OpenLanes__Plans__Execution
   class OpenLanes__Plans__Feature["Feature"]
+  class OpenLanes__Plans__Findings["Findings"]
+  <<module>> OpenLanes__Plans__Findings
+  class OpenLanes__Plans__Findings__Finding["Findings::Finding"]
+  class OpenLanes__Plans__Findings__NotFound["Findings::NotFound"]
+  class OpenLanes__Plans__Findings__UnknownVerdict["Findings::UnknownVerdict"]
   class OpenLanes__Plans__GlobalLock["GlobalLock"]
   class OpenLanes__Plans__Index["Index"]
   class OpenLanes__Plans__Journal["Journal"]
@@ -54,12 +59,15 @@ classDiagram
   class OpenLanes__Plans__RemovedReadme["RemovedReadme"]
   <<module>> OpenLanes__Plans__RemovedReadme
   class OpenLanes__Plans__ReviewLabel["ReviewLabel"]
+  class OpenLanes__Plans__Rounds["Rounds"]
   class OpenLanes__Plans__Spec["Spec"]
   class OpenLanes__Plans__StateMachine["StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["StateMachine::Refused"]
   class OpenLanes__Plans__Status["Status"]
   class OpenLanes__Plans__Subject["Subject"]
   class OpenLanes__Plans__Tree["Tree"]
+  class OpenLanes__Plans__UnitSizes["UnitSizes"]
+  <<module>> OpenLanes__Plans__UnitSizes
   class OpenLanes__Plans__Verdict["Verdict"]
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
@@ -74,6 +82,9 @@ classDiagram
   OpenLanes__Plans ..> OpenLanes__Plans__Lock : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__ReviewLabel : uses
+  OpenLanes__Plans ..> OpenLanes__Plans__Rounds : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans ..> OpenLanes__Plans__Status : uses
@@ -87,6 +98,14 @@ classDiagram
   OpenLanes__Plans__Dependencies ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Execution ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Execution ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Error : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__Findings__Finding : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__Findings__NotFound : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__Findings__UnknownVerdict : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__PlanState : uses
+  OpenLanes__Plans__Findings ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Plans__Findings__NotFound --|> OpenLanes__Error : inherits
+  OpenLanes__Plans__Findings__UnknownVerdict --|> OpenLanes__Error : inherits
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__Execution : uses
   OpenLanes__Plans__GlobalLock ..> OpenLanes__Plans__PlanState : uses
@@ -129,6 +148,7 @@ classDiagram
   OpenLanes__Plans__Spec ..> OpenLanes__Adapters : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Frontmatter : uses
   OpenLanes__Plans__Spec ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Plans__Spec ..> OpenLanes__Plans__UnitSizes : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Error : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans : uses
   OpenLanes__Plans__StateMachine ..> OpenLanes__Plans__StateMachine__Refused : uses
@@ -139,6 +159,7 @@ classDiagram
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__Feature : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__PullRequests : uses
+  OpenLanes__Plans__Subject ..> OpenLanes__Plans__Spec : uses
   OpenLanes__Plans__Subject ..> OpenLanes__Plans__StateMachine : uses
   OpenLanes__Plans__Subject ..> OpenLanes__UI : uses
   OpenLanes__Plans__Tree ..> OpenLanes : uses

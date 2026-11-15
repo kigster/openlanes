@@ -69,5 +69,44 @@ RSpec.describe OpenLanes::Memory::Library do
 
       expect(library.for(coder).map(&:id)).to eq(%w[L-3 L-2 L-0 L-4 L-1])
     end
+
+    it "counts each plan in `source:` once as a confirmation" do
+      sources = [{ "plan" => "001.00" }, { "plan" => "001.00", "finding" => "F2" }, { "plan" => "002.00" }, "not a map"]
+      write_lesson(project, "a", lesson_meta("L-1", source: sources))
+
+      expect(library.lessons.first.confirmations).to eq(2)
+    end
+
+    it "ranks the lesson more plans confirmed above a more severe one-off" do
+      write_lesson(project, "a", lesson_meta("L-1", severity: "high", source: [{ "plan" => "001.00" }]))
+      write_lesson(project, "b", lesson_meta("L-2", severity: "low", source: %w[001.00 002.00 003.00].map { { "plan" => it } }))
+
+      expect(library.for(coder).map(&:id)).to eq(%w[L-2 L-1])
+    end
+
+    # An agent on its tenth plan: ten lessons from nine plans, one confirmed
+    # by five of them. A budget that fits six keeps the five-plan lesson and
+    # cuts the one-offs first; a retired lesson is never shown at all.
+    it "shows a tenth-plan agent its own, its phase's and everyone's lessons, trimming one-offs first" do
+      plans = (1..9).map { format("%03d.00", it) }
+      write_lesson(project, "five", lesson_meta("L-0010", applies_to: ["backend-coder"], source: plans.first(5).map { { "plan" => it } }))
+      write_lesson(project, "two", lesson_meta("L-0009", applies_to: ["all"], source: plans.last(2).map { { "plan" => it } }))
+      (1..8).each do |n|
+        audience = [%w[backend-coder], %w[build], %w[all]][n % 3]
+        write_lesson(project, "one-#{n}", lesson_meta(format("L-%04d", n), applies_to: audience, source: [{ "plan" => plans[n] }]))
+      end
+      everyone = plans.map { { "plan" => it } }
+      write_lesson(project, "retired", lesson_meta("L-0011", applies_to: ["all"], status: "retired", source: everyone))
+      write_lesson(project, "elsewhere", lesson_meta("L-0012", applies_to: ["review"], source: everyone))
+
+      ranked = library.for(coder)
+      line = ->(lesson) { "- #{lesson.id} (#{lesson.severity}) #{lesson.title} — #{lesson.cite}".size + 1 }
+      six = ranked.first(6).sum(&line)
+      text = OpenLanes::Memory::Section.new(ranked, agent: coder, budget: six).to_s
+
+      expect(ranked.map(&:id)).to eq(%w[L-0010 L-0009 L-0001 L-0002 L-0003 L-0004 L-0005 L-0006 L-0007 L-0008])
+      expect(text).to include("L-0010", "L-0009", "(4 more not shown")
+      expect(text).not_to include("L-0011", "L-0012", "L-0008")
+    end
   end
 end

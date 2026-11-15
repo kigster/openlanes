@@ -6,6 +6,7 @@
 classDiagram
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
   class OpenLanes__Execution__Executor__Handle["OpenLanes::Execution::Executor::Handle"]
@@ -23,12 +24,14 @@ classDiagram
   class OpenLanes__Memory__Library["Library"]
   class OpenLanes__Memory__Promotion["Promotion"]
   class OpenLanes__Memory__Proposal["Proposal"]
+  class OpenLanes__Memory__Publication["Publication"]
   class OpenLanes__Memory__Secrets["Secrets"]
   <<module>> OpenLanes__Memory__Secrets
   class OpenLanes__Memory__Secrets__Finding["Secrets::Finding"]
   class OpenLanes__Memory__Section["Section"]
   class OpenLanes__Vcs["OpenLanes::Vcs"]
   <<module>> OpenLanes__Vcs
+  class OpenLanes__Vcs__Worktree["OpenLanes::Vcs::Worktree"]
   OpenLanes__Memory ..> OpenLanes__Execution : uses
   OpenLanes__Memory ..> OpenLanes__Frontmatter : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Committed : uses
@@ -40,6 +43,7 @@ classDiagram
   OpenLanes__Memory ..> OpenLanes__Memory__Library : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Promotion : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Proposal : uses
+  OpenLanes__Memory ..> OpenLanes__Memory__Publication : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory ..> OpenLanes__Memory__Section : uses
   OpenLanes__Memory ..> OpenLanes__Vcs : uses
@@ -55,5 +59,10 @@ classDiagram
   OpenLanes__Memory__Inbox ..> OpenLanes__Memory__Secrets : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Inbox : uses
   OpenLanes__Memory__Promotion ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Error : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Promotion : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Memory__Secrets : uses
+  OpenLanes__Memory__Publication ..> OpenLanes__Vcs__Worktree : uses
   OpenLanes__Memory__Secrets ..> OpenLanes__Memory__Secrets__Finding : uses
 ```

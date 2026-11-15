@@ -179,6 +179,30 @@ RSpec.describe OpenLanes::Vcs::Worktree do
     end
   end
 
+  describe "warming dependencies" do
+    subject(:worktrees) { described_class.new(root: repo, dir: worktree_dir, user: "tester", seeder: nil, warmup:) }
+
+    let(:warmed) { [] }
+    let(:warmup) do
+      calls = warmed
+      ->(path, base:) { calls << [path, base]; OpenLanes::Vcs::Warmup::Result.new }
+    end
+
+    it "warms a new checkout and a reused one" do
+      first = worktrees.checkout_for(feature)
+      again = worktrees.checkout_for(feature)
+      expect([first.created?, again.created?, warmed]).to eq([true, false, [[first.path, "origin/main"]] * 2])
+    end
+
+    it "logs a failed warm-up and still hands the checkout back" do
+      failing = ->(_, **) { OpenLanes::Vcs::Warmup::Result.new(failures: { npm: "npm ci failed" }) }
+      allow(OpenLanes::UI).to receive(:log)
+      checkout = described_class.new(root: repo, dir: worktree_dir, user: "tester", seeder: nil, warmup: failing).checkout_for(feature)
+      expect(File.directory?(checkout.path)).to be(true)
+      expect(OpenLanes::UI).to have_received(:log).with(/could not warm npm dependencies: npm ci failed/, level: :warn)
+    end
+  end
+
   describe ".seeder" do
     let(:bin) { File.join(File.dirname(repo), "bin") }
     let(:script) { File.join(bin, "setup-worktree") }

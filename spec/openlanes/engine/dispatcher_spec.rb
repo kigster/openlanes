@@ -39,6 +39,8 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       state:,
       sleeper: ->(_) {},
       extensions: limits,
+      # One round each unless an example asks for more: these count calls.
+      rounds: 1,
 **)
   end
 
@@ -502,6 +504,9 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
   end
 
   describe "routing" do
+    # Away from the checkout, whose `.openlanes.yml` says `frontend: true`.
+    before { Dir.chdir(File.dirname(plans_root)) }
+
     let(:seen) { [] }
     let(:executor) do
       lambda { |agent, subject, **|
@@ -1245,6 +1250,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         state:,
         # No round granted on its own (E1), so each example counts only the rounds it asks for.
         extensions: limits,
+        rounds: 1,
         sleeper: ->(_) {}).call
     end
     let(:executor) do
@@ -1529,6 +1535,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
       let(:three) { OpenLanes::Agents::Registry.new(dir: reviewers_dir) }
       let(:notes) { { "staff-reviewer" => "great", "security-reviewer" => "passed", "design-reviewer" => "great" } }
       let(:attempts) { runner_with(reviewers, agents: three).call }
+      let(:stage) { "" }
 
       def reviewers
         lambda { |agent, subject, round: 1, **|
@@ -1552,7 +1559,42 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
           "design-reviewer" => "starts: [research, planning]\n" }.each do |name, starts|
           File.write(File.join(reviewers_dir, "#{name}.md"),
             "---\nname: #{name}\nhandles: [ready_for_review, in_review]\nadvances_to: approved\nstarts_as: in_review\n" \
-            "phase: review\nledger: [pull-requests.md]\n#{starts}---\nbody")
+            "phase: review\nledger: [pull-requests.md]\n#{starts}#{stage unless name == "staff-reviewer"}---\nbody")
+        end
+      end
+
+      context "when security and design are stage 2 (plan 061, B5)" do
+        let(:stage) { "review_stage: 2\n" }
+
+        it "starts staff-reviewer alone, then the other two after its approval" do
+          aggregate_failures do
+            expect(attempts.first.agent).to eq("staff-reviewer")
+            expect(attempts.drop(1).map(&:agent)).to contain_exactly("security-reviewer", "design-reviewer")
+            expect(attempts.last.note).to include("review review-approved")
+          end
+        end
+
+        # `review-in-progress` comes off after each group's verdict, so
+        # each group puts it on as it starts.
+        it "marks the pull request in progress as each group starts, and pauses it between them" do
+          runner = runner_with(reviewers, agents: three)
+          reviews = runner.reviews
+          allow(reviews).to receive(:started).and_call_original
+          allow(reviews).to receive(:paused).and_call_original
+          runner.call
+
+          aggregate_failures do
+            expect(reviews).to have_received(:started).at_least(:twice)
+            expect(reviews).to have_received(:paused).at_least(:once)
+          end
+        end
+
+        it "moves a staff rejection to 🔴 without starting stage 2" do
+          notes["staff-reviewer"] = "rejected 1/2"
+          aggregate_failures do
+            expect(attempts.map(&:agent)).to eq(%w[staff-reviewer])
+            expect(tree.reload.find(OpenLanes::Plans::Ordinal.parse("001.00")).status.key).to eq(:rejected)
+          end
         end
       end
 
@@ -1731,7 +1773,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
         dead.save
 
         executor = executor_with { |_, _, _| nil }
-        runner_with(executor, agents: two, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
+        runner_with(executor, agents: two, rounds: nil, state: OpenLanes::Engine::StateFile.new(path: dead.path)).call
         aggregate_failures do
           expect(signed("001.00")).to include(["Interrupted", 1, "harness died"])
           expect(calls.map(&:last)).to eq([1, 2])

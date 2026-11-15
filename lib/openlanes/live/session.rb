@@ -34,6 +34,7 @@ module OpenLanes
         @record = RunRecord.new(store:, keys: @keys, run_state: @run_state)
         @outage = outage
         @claims = Claims.new(store:, keys: @keys)
+        @cli_pause = Engine::CliPause.new
         @publisher = Publisher.new(store:,
           keys: @keys,
           node:,
@@ -43,7 +44,8 @@ module OpenLanes
           run_state: @run_state,
           project: project || File.basename(root),
           clock:,
-          availability: @probes.method(:current))
+          availability: @probes.method(:current),
+          paused_clis: @cli_pause.method(:entries))
         @commands = Commands.new(store:,
           keys: @keys,
           node:,
@@ -52,6 +54,10 @@ module OpenLanes
           claims: @claims,
           clock:)
       end
+
+      # @return [OpenLanes::Engine::CliPause] the CLIs the engine holds, shared
+      #   with the runner so the page shows what the dispatcher paused
+      attr_reader :cli_pause
 
       # @return [OpenLanes::Live::Store, OpenLanes::Live::MemoryStore]
       attr_reader :store

@@ -66,10 +66,12 @@ interface BoardProps extends CarHandlers {
   theirs?: TheirLifecycle;
   /** Hide Inactive is on: only lanes with an agent running are drawn, here and under other machines. */
   hideInactive?: boolean;
+  /** The lanes toggle, passed to each of our rows. */
+  lanes?: "wide" | "narrow";
 }
 
 /** The transit board: our plans, and with All machines on, everyone else's under ours. */
-export function Board({ board, merged, retiring, gone, theirs = NOTHING, hideInactive = false, ...cars }: BoardProps) {
+export function Board({ board, merged, retiring, gone, theirs = NOTHING, hideInactive = false, lanes, ...cars }: BoardProps) {
   const { me, others } = board;
   const all = me.plans.filter(p => !gone.has(p.ordinal));
   const ours = hideInactive ? all.filter(active) : all;
@@ -81,7 +83,7 @@ export function Board({ board, merged, retiring, gone, theirs = NOTHING, hideIna
       {ours.map((plan, i) => (
         <PlanRow
           key={plan.ordinal} plan={plan} stations={me.stations} adapters={me.adapters} retiring={retiring.has(plan.ordinal)}
-          dagBreak={dagBreak(ours, i)} {...cars}
+          dagBreak={dagBreak(ours, i)} lanes={lanes} {...cars}
         />
       ))}
       {/* Said in words, so an empty or short board is never mistaken for an idle factory. */}

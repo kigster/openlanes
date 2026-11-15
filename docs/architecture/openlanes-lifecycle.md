@@ -12,6 +12,7 @@ classDiagram
   <<module>> OpenLanes__Agents
   class OpenLanes__Agents__Names["OpenLanes::Agents::Names"]
   <<module>> OpenLanes__Agents__Names
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Events__NullSink["OpenLanes::Events::NullSink"]
   class OpenLanes__Execution["OpenLanes::Execution"]
@@ -63,6 +64,8 @@ classDiagram
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__StateMachine__Refused["OpenLanes::Plans::StateMachine::Refused"]
   class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__Refusal["OpenLanes::Refusal"]
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
@@ -87,6 +90,7 @@ classDiagram
   OpenLanes__Lifecycle ..> OpenLanes__Lifecycle__Unblocker : uses
   OpenLanes__Lifecycle ..> OpenLanes__Refusal : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes : uses
+  OpenLanes__Lifecycle__Adoption ..> OpenLanes__Container : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Lifecycle__Allocator : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Lifecycle__Creator : uses
@@ -95,7 +99,6 @@ classDiagram
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans__PullRequests : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Adoption ..> OpenLanes__UI : uses
-  OpenLanes__Lifecycle__Adoption ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Lifecycle__AgingNote : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Plans__Dependencies : uses
   OpenLanes__Lifecycle__Aging ..> OpenLanes__Plans__PlanState : uses
@@ -105,6 +108,7 @@ classDiagram
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Error : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Lifecycle__Allocator__Refused : uses
   OpenLanes__Lifecycle__Allocator ..> OpenLanes__Plans__Tree : uses
+  OpenLanes__Lifecycle__Allocator ..> OpenLanes__Project : uses
   OpenLanes__Lifecycle__Allocator__Refused --|> OpenLanes__Error : inherits
   OpenLanes__Lifecycle__Brief ..> OpenLanes : uses
   OpenLanes__Lifecycle__Brief ..> OpenLanes__Adapters : uses
@@ -155,11 +159,11 @@ classDiagram
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__UI : uses
   OpenLanes__Lifecycle__Resync__Dirs ..> OpenLanes__Vcs__RenameDate : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes : uses
+  OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Container : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Lifecycle__Adoption : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__UI : uses
-  OpenLanes__Lifecycle__Resync__Prs ..> OpenLanes__Vcs__GitHub : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Frontmatter : uses
   OpenLanes__Lifecycle__Rewiring ..> OpenLanes__Plans__Dependencies : uses

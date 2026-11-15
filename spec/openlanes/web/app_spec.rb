@@ -88,6 +88,28 @@ RSpec.describe OpenLanes::Web::App, :tree do
     end
   end
 
+  describe "GET /api/dependencies" do
+    before do
+      plans do |t|
+        t.plan "001.00", :approved, "shipped", under: "archive", files: { "spec.md" => "---\ndepends_on: [none]\n---\n" }
+        t.plan "002.00", :new, "next", files: { "spec.md" => "---\nsummary: Next up.\ndepends_on: [\"001.00\"]\n---\n" }
+      end
+      get "/api/dependencies"
+    end
+
+    it "answers every plan, archive included, and the edges between them" do
+      expect([last_response.status, body]).to eq([200, JSON.parse(JSON.generate(
+        OpenLanes::Web::DependencyGraph.new(OpenLanes::Plans.tree(plans_root)).to_h
+      ))])
+    end
+
+    it "carries the archived plan, its edge and the summary" do
+      expect([body["plans"].map { it.values_at("ordinal", "archived", "summary") }, body["edges"]]).to eq(
+        [[["002.00", false, "Next up."], ["001.00", true, ""]], [{ "from" => "001.00", "to" => "002.00" }]]
+      )
+    end
+  end
+
   describe "GET /api/board" do
     before do
       store.set(keys.snapshot, JSON.generate(snapshot))
@@ -533,6 +555,41 @@ RSpec.describe OpenLanes::Web::App, :tree do
     it "sends the SHA-256 of the bytes as a strong ETag" do
       get "/api/plans/004.00/files/spec.md"
       expect(last_response.headers["ETag"]).to eq(%("#{Digest::SHA256.hexdigest("# The spec\n")}"))
+    end
+  end
+
+  describe "GET /api/plans/:ordinal/review" do
+    before do
+      plans do |t|
+        t.plan("004.00",
+          :ready_for_review,
+          "web-control-room",
+          files: { "pull-requests.md" => "## Findings: staff-reviewer\n\n### F1 [minor] lib/a.rb:4\n\nSlow.\n" })
+      end
+    end
+
+    it "answers the diff and the findings, with no branch to diff" do
+      get "/api/plans/004/review"
+      expect([last_response.status, body["diff"], body["findings"].map { it.values_at("id", "severity", "ruling") }])
+        .to eq([200, { "stat" => "", "patch" => "", "truncated" => false }, [["F1", "minor", nil]]])
+    end
+
+    it "answers 404 for a plan that is not there" do
+      get "/api/plans/009/review"
+      expect([last_response.status, body["error"]]).to eq([404, "there is no plan 009.00"])
+    end
+
+    it "runs git in the root the context names, not the parent of a .plans that lives elsewhere" do
+      diffs = []
+      stub_const("OpenLanes::Web::BranchDiff",
+        Class.new do
+          define_method(:initialize) { |root:, **| diffs << root }
+          define_method(:call) { |_feature| { stat: "", patch: "", truncated: false } }
+        end)
+      elsewhere = Dir.mktmpdir
+      app_context = OpenLanes::Web.context(stores: OpenLanes::Web::Stores.shared(store), keys:, plans_dir: plans_root, root: elsewhere, url: "memory://")
+      response = Rack::MockRequest.new(OpenLanes::Web.app(app_context)).get("/api/plans/004/review", "HTTP_HOST" => "127.0.0.1:11000")
+      expect([response.status, diffs]).to eq([200, [elsewhere]])
     end
   end
 

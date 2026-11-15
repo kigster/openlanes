@@ -16,7 +16,7 @@ module OpenLanes
     # @param node [OpenLanes::Live::Node, nil] nil reads this machine's
     # @param env [Hash]
     # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink] the null
-    #   sink unless `.openlanes.yml` says `events: { enabled: true }`
+    #   sink unless `.openlanes/config.yml` says `events: { enabled: true }`
     def emitter(root:, config: Config.current, node: nil, env: ENV)
       return NullSink.new unless config.events_enabled
 

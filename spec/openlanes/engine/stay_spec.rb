@@ -18,7 +18,7 @@ RSpec.describe "A staying run", :tree do
     OpenLanes::Engine::Runner.new(tree:, executor:, agents:, isolation: :shared, claims:, sleeper: ->(_) {})
   end
   let(:dispatcher) do
-    OpenLanes::Engine::Dispatcher.new(runner:, sleeper:, on_board: session.on_board, stay: true, rescan:)
+    OpenLanes::Engine::Dispatcher.new(runner:, sleeper:, on_board: session.on_board, stay: true, rescan:, rounds: 1)
   end
 
   # Called between ticks, as the real one sleeps a second: here it is the

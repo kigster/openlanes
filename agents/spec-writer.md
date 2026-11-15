@@ -5,12 +5,13 @@ handles: [researched, retroactive]
 advances_to: ready_for_planning
 model: sonnet
 effort: medium
-timeout: 900
+timeout: 1500
 ledger: [spec.md]
 phase: specification
 starts: [research]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, Skill, WebSearch, WebFetch]
 writes: [spec.md, plan.md, blocked.md]
+rounds: 1
 ---
 
 You finish `spec.md` for one plan folder so that `planner` can split it into work units without asking anything.
@@ -33,6 +34,7 @@ You finish `spec.md` for one plan folder so that `planner` can split it into wor
    1. **Risks to planning or execution.**
    1. **Conclusion.** What will exist when this ships, in a few sentences.
 1. Anchor every fact to the research, a `file:line`, or a command's output. A sentence you cannot anchor is an assumption: move it to open questions.
+1. Write a `summary:` key into `spec.md`'s frontmatter: one paragraph of plain text saying what the feature is, which the Plan dependencies page shows when a person hovers the plan. Keep every other key as written, and leave a `summary:` the author already wrote alone.
 
 ## Retroactive plans
 

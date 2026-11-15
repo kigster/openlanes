@@ -29,6 +29,22 @@ describe("the board", () => {
     });
   });
 
+  // A lane stretches to hold its cars, sub-agents and pull request: its wash runs under all of them, and every lane
+  // ends on the same edge. Checked on a narrow board, where the cars reach past the last station.
+  it("keeps everything in a lane inside the lane", () => {
+    cy.viewport(1000, 800);
+    cy.get(".board .car").should("exist");
+    cy.wait(900); // the cars slide to their station
+    cy.get(".board .plan").then(($plans) => {
+      const edges = [...$plans].map((plan) => Math.round(plan.getBoundingClientRect().right));
+      expect(new Set(edges).size, "one right edge for every lane").to.eq(1);
+      [...$plans].forEach((plan) => {
+        const reach = Math.max(...Array.from(plan.querySelectorAll(".cars, .car, .car-group, .terminus")).map((el) => el.getBoundingClientRect().right), 0);
+        expect(reach, `plan ${plan.dataset.plan}`).to.be.at.most(plan.getBoundingClientRect().right);
+      });
+    });
+  });
+
   // The whole page, in both themes: tinted chips and tabs are where soft text loses contrast first.
   for (const theme of ["light", "dark"]) {
     it(`has no serious accessibility violations in the ${theme} theme`, () => {

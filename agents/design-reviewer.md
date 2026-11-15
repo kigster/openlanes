@@ -7,12 +7,15 @@ starts_as: in_review
 starts: [research, planning]
 model: sonnet
 effort: high
-timeout: 300
+timeout: 900
 ledger: [pull-requests.md]
 phase: review
+review_stage: 2
+watches: ["lib/**", "app/**", "web/src/**"]
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit]
 may: [gh pr comment]
 writes: [rewrite.md, pull-requests.md]
+rounds: 1
 ---
 
 You review one plan's pull request for code organisation and systems design, and for nothing else: `staff-reviewer` judges correctness and `security-reviewer` the holes. Ask of every new class and file whether the next person to change it will find one reason to, in one place.

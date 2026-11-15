@@ -14,6 +14,7 @@ import { useLifecycle } from "./board/useLifecycle";
 import { useSideWidth } from "./floating/useSideWidth";
 import { ColumnDivider } from "./shell/ColumnDivider";
 import { Header } from "./shell/Header";
+import { Pages } from "./shell/Pages";
 import { Logs } from "./shell/Logs";
 import { StatusLine } from "./shell/StatusLine";
 import { planCounts } from "./shell/planCounts";
@@ -31,6 +32,7 @@ import {
   AgentDrawer,
   BombNotice,
   GlobalLockBanner,
+  PausedCliBanner,
   AnnouncerProvider,
   HelpDialog,
   ModelSelect,
@@ -258,6 +260,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
       />
       <Tabs.Root className="tabs-root" value={current} onValueChange={setTab} activationMode="manual">
         <GlobalLockBanner lock={me.global_lock ?? null} />
+        <PausedCliBanner paused={me.paused_clis ?? []} />
         <BombNotice bombs={me.bombs} onCommand={onCommand} />
         {/* A tablist may hold tabs only, so each machine's tab sits in a tablist of its own with its ▾ beside it (D3);
             the arrow keys still walk every tab as one row. */}
@@ -328,6 +331,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               board={board}
               merged={merged}
               hideInactive={inactive.hidden}
+              lanes={lanes.lanes}
               retiring={life.retiring}
               gone={life.gone}
               theirs={theirLife}
@@ -335,6 +339,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
               onOpenCar={onOpenCar}
               onUnblock={onUnblock}
               renderModel={renderModel}
+              onCommand={onCommand}
             />
           </Tabs.Content>
           {others.map(o => (
@@ -390,30 +395,32 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <AnnouncerProvider>
-        {board ? (
-          <ControlRoom board={board} connection={connection} fixture={fixture} />
-        ) : error ? (
-          <main className="loading is-error" role="alert">
-            Could not load the board: {error.message}. Is openlanes start (or openlanes run) running?
-          </main>
-        ) : (
-          // The server answered with no engine on the board yet (`openlanes web` on its own): the stream brings the first
-          // snapshot, and the page draws itself then. Until it does, a bare "waiting" read as a broken page, so it says
-          // what would start one.
-          <main className="loading" aria-busy="true">
-            {waiting ? (
-              <>
-                <p>No engine is running for this checkout, so there is no board to show yet.</p>
-                <p>
-                  Please use <code>openlanes start</code>, or start an engine in another terminal by running{" "}
-                  &quot;<code>openlanes run</code>&quot;.
-                </p>
-              </>
-            ) : (
-              "Connecting to the engine…"
-            )}
-          </main>
-        )}
+        <Pages>
+          {board ? (
+            <ControlRoom board={board} connection={connection} fixture={fixture} />
+          ) : error ? (
+            <main className="loading is-error" role="alert">
+              Could not load the board: {error.message}. Is openlanes start (or openlanes run) running?
+            </main>
+          ) : (
+            // The server answered with no engine on the board yet (`openlanes web` on its own): the stream brings the first
+            // snapshot, and the page draws itself then. Until it does, a bare "waiting" read as a broken page, so it says
+            // what would start one.
+            <main className="loading" aria-busy="true">
+              {waiting ? (
+                <>
+                  <p>No engine is running for this checkout, so there is no board to show yet.</p>
+                  <p>
+                    Please use <code>openlanes start</code>, or start an engine in another terminal by running{" "}
+                    &quot;<code>openlanes run</code>&quot;.
+                  </p>
+                </>
+              ) : (
+                "Connecting to the engine…"
+              )}
+            </main>
+          )}
+        </Pages>
       </AnnouncerProvider>
     </MotionConfig>
   );

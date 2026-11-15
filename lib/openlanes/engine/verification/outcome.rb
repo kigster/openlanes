@@ -91,16 +91,16 @@ module OpenLanes
         # Lines of a withheld coverage run quoted in the comment.
         TAIL = CoverageGate::TAIL
 
-        # What the builders are told when the branch's `.openlanes.yml` has
+        # What the builders are told when the branch's `.openlanes/config.yml` has
         # no `coverage:` section. A plain rejection would only say the gate
         # withheld, and the builder would go looking for a defect; this names
         # the one thing to write, in both shapes, so the next round writes it.
         # It is signed "sent back", not "rejected" ({REJECTION}), because
         # this one does not count.
         SETUP = <<~MARKDOWN
-          Coverage is not declared yet: this branch's `.openlanes.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
+          Coverage is not declared yet: this branch's `.openlanes/config.yml` has no `coverage:` section, so the coverage gate had nothing to measure and `ready-to-merge` waits on it.
 
-          Add a `coverage:` section to `.openlanes.yml` for this stack, in one of two shapes. `command` (runs the whole suite) and `minimum` (the lowest line percentage that merges) are required in both.
+          Add a `coverage:` section to `.openlanes/config.yml` for this stack, in one of two shapes. `command` (runs the whole suite) and `minimum` (the lowest line percentage that merges) are required in both.
 
           A command that prints the line percentage:
 
@@ -141,7 +141,7 @@ module OpenLanes
         #   a callable is asked at each look, so an edit counts mid-run
         def initialize(root:, publisher:, github:, outcomes:, agents:, review: Vcs::Review.new(github:),
           coverage_gate: CoverageGate.new, max_rejections: Config::DEFAULT_MAX_REJECTIONS,
-          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Clock::System.now },
+          arbitration: Arbitration, screenshots: ->(dir) { Screenshots.new(dir:) }, clock: -> { Container["clock"].now },
           ci_pending_limit: Config::DEFAULT_CI_PENDING_HOURS * 3600.0)
           @root = root
           @publisher = publisher

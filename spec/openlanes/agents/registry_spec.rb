@@ -142,13 +142,26 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
-    it "defaults rounds to one and caps them at five" do
+    it "reads a reviewer's pass, the first unless it says otherwise" do
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "a.md"), "---\nname: a\nhandles: [in_review]\nphase: review\nreview_stage: 2\n---\nbody")
+        File.write(File.join(dir, "b.md"), "---\nname: b\nhandles: [in_review]\nphase: review\n---\nbody")
+        expect(described_class.new(dir:).all.to_h { [it.name, it.review_stage] }).to eq("a" => 2, "b" => 1)
+      end
+    end
+
+    it "sends staff-reviewer first and the security and design reviewers after it" do
+      expect(agents.all.select { it.phase == "review" }.to_h { [it.name, it.review_stage] })
+        .to eq("staff-reviewer" => 1, "security-reviewer" => 2, "design-reviewer" => 2)
+    end
+
+    it "defaults rounds to four and caps them at five" do
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "a.md"), "---\nname: a\nhandles: [new]\nrounds: 9\n---\nbody")
         File.write(File.join(dir, "b.md"), "---\nname: b\nhandles: [new]\n---\nbody")
         roster = described_class.new(dir:)
         expect(roster.find("a").rounds).to eq(OpenLanes::Agents::Agent::MAX_ROUNDS)
-        expect(roster.find("b").rounds).to eq(1)
+        expect([roster.find("b").rounds, OpenLanes::Agents::Agent::DEFAULT_ROUNDS]).to eq([4, 4])
       end
     end
 
@@ -229,14 +242,48 @@ RSpec.describe OpenLanes::Agents::Registry do
       end
     end
 
+    describe "review_stage and watches" do
+      it "refuses watches on an agent whose phase is not review" do
+        Dir.mktmpdir do |dir|
+          File.write(File.join(dir, "x.md"), "---\nname: x\nphase: build\nwatches: [lib/**]\n---\nbody\n")
+          expect { described_class.new(dir:).all }.to raise_error(OpenLanes::Error, /watches is only for an agent whose phase is review/)
+        end
+      end
+
+      it "accepts watches on a reviewer" do
+        Dir.mktmpdir do |dir|
+          File.write(File.join(dir, "x.md"), "---\nname: x\nphase: review\nreview_stage: 2\nwatches: [lib/**]\n---\nbody\n")
+          found = described_class.new(dir:).find("x")
+          expect([found.review_stage, found.watches]).to eq([2, ["lib/**"]])
+        end
+      end
+
+      it "refuses a review_stage other than 1 or 2" do
+        Dir.mktmpdir do |dir|
+          File.write(File.join(dir, "x.md"), "---\nname: x\nreview_stage: 3\n---\nbody\n")
+          expect { described_class.new(dir:).all }.to raise_error(OpenLanes::Error, /review_stage 3/)
+        end
+      end
+
+      it "ships staff-reviewer in stage 1 and the other reviewers in stage 2" do
+        expect(agents.all.select { |a| a.phase == "review" }.to_h { |a| [a.name, [a.review_stage, a.watches]] }).to include(
+          "staff-reviewer"    => [1, []],
+          "security-reviewer" => [2, []],
+          "design-reviewer"   => [2, ["lib/**", "app/**", "web/src/**"]]
+        )
+      end
+    end
+
     it "reads the timeouts as settled" do
       expect(agents.all.to_h { |a| [a.name, a.timeout] }).to include(
-        "spec-writer"    => 900,
-        "planner"        => 600,
-        "backend-coder"  => 1200,
-        "frontend-coder" => 1200,
-        "staff-reviewer" => 300,
-        "researcher"     => 900
+        "spec-writer"    => 1500,
+        "planner"        => 1200,
+        "backend-coder"  => 1800,
+        "frontend-coder" => 1800,
+        "staff-reviewer" => 900,
+        "researcher"     => 1500,
+        # Answers in a chat, not in rounds: its clock stayed as it was.
+        "copilot"        => 180
       )
     end
 

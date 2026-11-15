@@ -24,7 +24,7 @@ module OpenLanes
       # @param origin [String] the directory the command was typed in, which
       #   a path typed into `--prompt` is relative to
       # @param options [Hash] the `run` flags as dry-cli parsed them, over
-      #   `.openlanes.yml`
+      #   `.openlanes/config.yml`
       def initialize(tree:, origin: Dir.pwd, **options)
         @tree = tree
         @origin = origin
@@ -36,7 +36,7 @@ module OpenLanes
       end
 
       # Option precedence, quietest to loudest: the built-in default, then
-      # `.openlanes.yml` (`jobs`, and the `commands.run` section), then the
+      # `.openlanes/config.yml` (`jobs`, and the `commands.run` section), then the
       # flag actually typed. {CLI::Base.default_params} folded the file in.
       #
       # @return [Dry::Monads::Result] Success(Integer) the exit status, or
@@ -59,7 +59,9 @@ module OpenLanes
         startup_box
 
         started  = UI.monotonic
+        ended    = Curating.snapshot(Plans::Tree.new(dir: @tree.dir, all: true).subjects)
         attempts = run(runner, live, web)
+        curate(ended)
         Success(finish(runner, attempts, seconds: UI.monotonic - started))
       end
 
@@ -253,7 +255,7 @@ module OpenLanes
       end
 
       # R4's question on the terminal, before any agent starts (plan 035),
-      # when `.openlanes.yml` has no `desired_codebase_quality:` and a person
+      # when `.openlanes/config.yml` has no `desired_codebase_quality:` and a person
       # is there to answer. Without a terminal the dispatcher holds every
       # plan and the page asks instead ({Dispatcher#quality_awaited?}).
       #
@@ -443,9 +445,10 @@ module OpenLanes
           merging:      merging_for(publisher, worktree),
           arbitration:  arbitration_for(publisher, worktree),
           upkeep:       upkeep_for(publisher, worktree),
-          reviews:      reviews_for(agents, publisher),
+          reviews:      reviews_for(agents, publisher, worktree),
           on_board:     on_board_for(live),
           claims:       live&.claims,
+          cli_pause:    live&.cli_pause,
           ignore_bombs: @options.fetch(:ignore_bombs, false),
           aging_since:  Config.current.aging_since,
           events:       events,
@@ -453,6 +456,7 @@ module OpenLanes
           quality_gate: (-> { Config.current.quality_unset? } unless @dry_run),
           lock_ttl:     -> { Config.current.refactor_lock_seconds },
           stop_at:,
+          memory:       @options.fetch(:memory, true),
           **staying(web, live)
         )
       end
@@ -549,11 +553,11 @@ module OpenLanes
           return nil
         end
 
-        Vcs.publisher(root:, dry_run: @dry_run, events:)
+        Vcs.publisher(root:, dry_run: @dry_run, events:, on_push: -> { pull_snapshot.refresh! })
       end
 
       # The durable run log (plan 020.01), one per run: the null sink on a
-      # dry run or when `.openlanes.yml` leaves `events:` off.
+      # dry run or when `.openlanes/config.yml` leaves `events:` off.
       #
       # @return [OpenLanes::Events::Sink, OpenLanes::Events::NullSink]
       def events
@@ -566,9 +570,15 @@ module OpenLanes
       #
       # @param agents [OpenLanes::Agents::Registry]
       # @param publisher [OpenLanes::Vcs::Publisher, nil]
+      # @param worktree [OpenLanes::Vcs::Worktree, nil] where the diff a
+      #   stage-2 reviewer watches is read; nil, a shared tree, watches all
       # @return [OpenLanes::Engine::Reviews]
-      def reviews_for(agents, publisher)
-        Reviews.new(agents:, review: (Vcs::Review.new(github: Vcs.github) unless publisher.nil? || @dry_run))
+      def reviews_for(agents, publisher, worktree = nil)
+        published = !(publisher.nil? || @dry_run)
+        Reviews.new(agents:,
+          review:  (Vcs::Review.new(github: Vcs.github) if published),
+          builds:  (Vcs::CiWatch.new(github: Vcs.github) if published),
+          changes: worktree ? Vcs::Changes.new(worktree:) : ->(_) {})
       end
 
       # Verification (plan 014) commits, comments and labels, so it runs
@@ -581,7 +591,7 @@ module OpenLanes
       def verification_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        github = Vcs.github
+        github = snapshot_github
         config = Config.current
         outcome = Verification.outcome(root: @root,
           publisher:,
@@ -621,7 +631,7 @@ module OpenLanes
       def merging_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Merging.new(github: Vcs.github,
+        Merging.new(github: snapshot_github,
           outcomes: PrOutcomes.new(tree_dir: @tree.dir, agents: Agents::Registry.new),
           # Read live, as the quality is: a person may switch `merge.by`
           # while a plan waits at 🏁.
@@ -640,7 +650,7 @@ module OpenLanes
       def upkeep_for(publisher, worktree)
         return nil if publisher.nil? || worktree.nil? || @dry_run
 
-        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") })
+        Upkeep.keeper(push: ->(checkout) { publisher.pushed!(checkout, "HEAD") }, github: snapshot_github)
       end
 
       # What the runner is told about idling past its fixed points: nothing,
@@ -669,9 +679,18 @@ module OpenLanes
       # who merges, not whose review counts. Kept apart from {#staying} so
       # {StartWorkflow}, which overrides that, cannot leave it behind.
       #
+      # One snapshot of the open pull requests per {Steps::POLL}, shared by
+      # every reader in the run (plan 061, B3).
+      #
+      # @return [Steps::Snapshot]
+      def pull_snapshot = @pull_snapshot ||= Steps::Snapshot.new(github: Vcs.github)
+
+      # @return [Vcs::SnapshotReads] GitHub, with labels and checks read from {#pull_snapshot}
+      def snapshot_github = Vcs::SnapshotReads.new(Vcs.github, snapshot: pull_snapshot)
+
       # @return [OpenLanes::Engine::PrWatch, nil]
       def watch
-        PrWatch.new(github: Vcs.github) unless @dry_run
+        PrWatch.new(github: Vcs.github, snapshot: pull_snapshot) unless @dry_run
       end
 
       # The open pull requests a run that does not stay leaves for a person,
@@ -745,6 +764,23 @@ module OpenLanes
       # The closing report. A halted run that exited 0 would read to a
       # script as a tree with nothing left to do, so a 💣 makes it 1 (N9).
       #
+      # The curator, over every plan this run ended: rejected, rewritten,
+      # merged or discarded. Nothing under `--no-memory` or `-n`, and a
+      # curator that fails costs its lessons, never the run's exit status.
+      #
+      # @param ended [Set<Array(String, Symbol)>] what {Curating.snapshot} saw before the run
+      # @return [void]
+      def curate(ended)
+        return if @dry_run || !@options.fetch(:memory, true)
+
+        curation = Memory.curation(root: @root, agent: Agents.find(Agents::Names::CURATOR))
+        Curating.new(curation:, before: ended).call(Plans::Tree.new(dir: @tree.dir, all: true).subjects).each do |report|
+          UI.log("curated #{report.ordinal}: #{report.outcomes.count { it.status != :dropped }} lesson candidate(s)")
+        end
+      rescue OpenLanes::Error => e
+        UI.log("plans not curated this time: #{e.message.lines.first.to_s.strip}", level: :warn)
+      end
+
       # @param runner [OpenLanes::Engine::Runner]
       # @param attempts [Array<OpenLanes::Engine::Runner::Attempt>]
       # @param seconds [Float] wall clock for the whole loop
@@ -756,12 +792,9 @@ module OpenLanes
         bombs = runner.halted_by
         bomb_report(bombs)
         status = failures(attempts).empty? && bombs.empty? ? 0 : 1
-        Log.logger.public_send(status.zero? ? :info : :warn,
-          "run finished",
-          attempts: attempts.size,
-          failed:   failures(attempts).size,
-          seconds:  seconds.round(1),
-          exit:     status)
+        finished = { attempts: attempts.size, failed: failures(attempts).size, seconds: seconds.round(1), exit: status }
+        # Literal calls rather than a computed level: a failed run warns.
+        status.zero? ? Log.logger.info("run finished", **finished) : Log.logger.warn("run finished", **finished)
         status
       end
 

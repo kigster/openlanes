@@ -24,6 +24,9 @@ module OpenLanes
         <p>Run <code>just web-build</code> first, then reload.</p></body></html>
       HTML
 
+      # A plan and a question number, as an interview's path names them.
+      INTERVIEW = %r{\A\d{3}\.\d{2}/\d{1,3}\z}
+
       configure do
         set :environment, :production
         set :show_exceptions, false
@@ -77,8 +80,32 @@ module OpenLanes
           end
         end
 
+        # @return [OpenLanes::Live::Interview] the interview on the route's question
+        def interview
+          plan, number = params.values_at(:plan, :number).map(&:to_s)
+          halt 404, json(error: "no question #{number} on plan #{plan}") unless "#{plan}/#{number}".match?(INTERVIEW)
+
+          Live::Interview.new(store:, keys: context.keys, plan:, number:)
+        end
+
+        # The unblocker's next turn, apart from this request, as {#answer_later}.
+        #
+        # @param plan [String]
+        # @param number [Integer]
+        # @return [void]
+        def interview_later(plan, number)
+          context.background.call do
+            Live::Interview.new(store: context.stores.current, keys: context.keys, plan:, number:).reply(context.interview)
+          ensure
+            context.stores.release
+          end
+        end
+
         # @return [OpenLanes::Web::PlanFiles]
         def plan_files = PlanFiles.new(plans_dir: context.plans_dir)
+
+        # @return [OpenLanes::Web::PlanReview]
+        def plan_review = PlanReview.new(plans_dir: context.plans_dir, diff: BranchDiff.new(root: context.root))
 
         # The rule the page draws cars by: this machine's board lists the
         # plan with at least one car. No snapshot means no engine, so no car.
@@ -153,6 +180,11 @@ module OpenLanes
         json(error: env["sinatra.error"].message)
       end
 
+      error PlanReview::NotFound do
+        status 404
+        json(error: env["sinatra.error"].message)
+      end
+
       error PlanFiles::ReadOnly do
         status 403
         json(error: env["sinatra.error"].message)
@@ -185,6 +217,12 @@ module OpenLanes
 
       get "/api/board" do
         json(Live.board(store:, keys: context.keys))
+      end
+
+      # Every plan and edge for the Plan dependencies page (plan 056), read
+      # from the folders on each request: the archive is not in the board.
+      get "/api/dependencies" do
+        json(DependencyGraph.new(Plans.tree(context.plans_dir)).to_h)
       end
 
       get "/api/events" do
@@ -271,6 +309,35 @@ module OpenLanes
         json(error: e.message)
       end
 
+      # The unblocker's interview on one open question (plan 068), oldest
+      # turn first. The first read of an empty one starts it: the opening
+      # question arrives as `event: interview`.
+      get "/api/plans/:plan/questions/:number/interview" do
+        talk = interview
+        interview_later(talk.plan, talk.number) if context.interview && talk.history.empty?
+        json(talk.wire)
+      end
+
+      # The person's reply. Stored and accepted at once; the unblocker's next
+      # turn comes as `event: interview`. Nothing touches the plan's files:
+      # only `confirm_interview` writes, once the person confirms.
+      post "/api/plans/:plan/questions/:number/interview" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+        halt 503, json(error: "the unblocker's interview is not running in this server") unless context.interview
+
+        talk = interview
+        data = JSON.parse(request.body.read)
+        halt 422, json(error: "id must be 1 to 64 letters, digits, - or _") unless data.is_a?(Hash) && data["id"].to_s.match?(Live::Command::ID)
+
+        turn = talk.say(Live::Interview::Turn.new(id: data["id"].to_s, from: "you", kind: "text", text: data["text"].to_s.strip))
+        interview_later(talk.plan, talk.number)
+        status 202
+        json(turn: turn.wire)
+      rescue JSON::ParserError, Live::Interview::Invalid => e
+        status 422
+        json(error: e.message.lines.first.to_s.strip)
+      end
+
       # The chat between machines (plan 006): this page's chat, the invites
       # open to this machine, and the ones this page waits on.
       get "/api/chat" do
@@ -351,6 +418,33 @@ module OpenLanes
         tag = plan_files.write(ordinal, name, body: request.body.read, if_match:)
         headers "ETag" => tag
         json(etag: tag)
+      end
+
+      # The plan branch's diff and its reviewers' findings (plan 064, B3).
+      get "/api/plans/:ordinal/review" do
+        json(context.demo ? context.demo.board.review(params[:ordinal]) : plan_review.call(params[:ordinal]))
+      end
+
+      # `.openlanes/config.yml` as the settings page draws it (plan 058, B3).
+      get "/api/settings" do
+        json(Settings.read(context.root).to_json_hash)
+      end
+
+      # A save is synchronous rather than a `POST /api/commands` entry: those
+      # run only inside a live dispatcher, and a refused field has to come
+      # back on the same request.
+      put "/api/settings" do
+        halt 403, json(error: "X-CSRF-Token does not match; fetch /api/session again") unless csrf?
+
+        if_match = request.env["HTTP_IF_MATCH"].to_s.strip
+        halt 428, json(error: "If-Match is required; send the etag from GET") if if_match.empty?
+
+        values = body_json["values"]
+        halt 422, json(errors: [{ path: [], message: "values is a JSON object" }]) unless values.is_a?(Hash)
+
+        outcome = SettingsSave.new(root: context.root).call(values:, if_match:)
+        status outcome.status
+        json(outcome.body)
       end
 
       get "/api/*" do

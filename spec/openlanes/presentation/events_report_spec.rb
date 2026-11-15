@@ -25,7 +25,17 @@ RSpec.describe OpenLanes::Presentation::EventsReport do
       usage_by_run: [],
       usage_by_model: by_model,
       skipped_lines: 0,
+      memory: { on:  { runs: 2, approved: 1, rounds_mean: 1.5, rounds_median: 1.5 },
+                off: { runs: 0, approved: 0, rounds_mean: nil, rounds_median: nil } },
 **over)
+  end
+
+  it "compares reviews to approval with memory on and off" do
+    text = described_class.new(result(by_model: [])).render
+
+    expect(text).to include("Memory: reviews to approval",
+      "  on   2 run(s), 1 approved, rounds mean 1.5, median 1.5",
+      "  off  0 run(s), 0 approved, rounds mean n/a, median n/a")
   end
 
   it "labels a computed cost as an estimate" do

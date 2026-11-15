@@ -24,7 +24,7 @@ RSpec.describe OpenLanes::Engine::Dispatcher, :tree do
                            '{"openlanes_memory": {"kind": "wish", "text": "x"}}')
       progress.call(OpenLanes::Execution::Transcript::Progress.new(activity: nil, up: 0, down: 0, subagents: 0, journal: lines.first(1)))
       progress.call(OpenLanes::Execution::Transcript::Progress.new(activity: nil, up: 0, down: 0, subagents: 0, journal: lines))
-      OpenLanes::Execution::Executor::Result.new(ok: false, note: "killed", up: 0, down: 0, subagents: 0, delegated: 0, seconds: 0.0)
+      OpenLanes::Execution::Executor::Result.new(ok: false, note: "killed", up: 0, down: 1, subagents: 0, delegated: 0, seconds: 0.0)
     }
   end
   let!(:tap) { OpenLanes::UI.tap_log(->(message, _) { heard << message }) }

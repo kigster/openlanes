@@ -287,6 +287,16 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       end
     end
 
+    it "prices each car at its model's rates, and a plan at no less than its cars" do
+      cars = by_ordinal.values.flat_map { it[:cars] }
+      aggregate_failures do
+        expect(cars).to all(include(:cost))
+        expect(cars.map { it[:cost] }).to all(be_a(Float))
+        expect(by_ordinal["005.00"][:cost]).to eq(by_ordinal["005.00"][:cars].sum { it[:cost] }.round(4))
+        expect(by_ordinal.values).to all(satisfy { |plan| plan[:cost] >= plan[:cars].sum { it[:cost] }.round(4) })
+      end
+    end
+
     it "carries an open pull request as open" do
       expect(snapshot[:plans].find { it[:ordinal] == "005.00" }[:pr])
         .to eq(number: 44, url: "https://github.com/example/repo/pull/44", state: "open", ci: nil, merged_at: nil)
@@ -378,6 +388,31 @@ RSpec.describe OpenLanes::Live::Snapshot, :tree do
       it "says so" do
         expect([blocked_plan[:questions].map { it[:held] }, blocked_plan[:cars].map { it[:held] }]).to eq([[true, false], [false, true]])
       end
+    end
+  end
+
+  describe "paused_clis (plan 065.00)" do
+    def paused(entries)
+      described_class.new(board:,
+        tree:,
+        agents:,
+        node:,
+        repo: keys.repo,
+        project: "openlanes",
+        seq: 1,
+        at:,
+        paused_clis: -> { entries }).to_h[:paused_clis]
+    end
+
+    it "is an empty array when nothing is paused" do
+      expect(paused([])).to eq([])
+    end
+
+    it "names each paused CLI, why, and since when" do
+      cli = OpenLanes::Engine::CliPause.new(prober: ->(_) { false }, clock: -> { at })
+      cli.pause("claude", "OAuth session expired")
+
+      expect(paused(cli.entries)).to eq([{ adapter: "claude", reason: "OAuth session expired", since: "2026-10-13T09:00:00Z" }])
     end
   end
 

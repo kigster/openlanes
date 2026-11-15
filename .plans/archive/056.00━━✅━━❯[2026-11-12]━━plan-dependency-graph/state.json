@@ -5,8 +5,13 @@
     "ordinal": "056.00",
     "slug": "plan-dependency-graph"
   },
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
   "state": "approved",
   "updated_at": "2026-11-13T09:39:31-08:00",
+========
+  "state": "rejected",
+  "updated_at": "2026-11-13T00:47:57-08:00",
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
   "stages": [
     {
       "agent": "planner",
@@ -215,13 +220,18 @@
     {
       "agent": "backend-coder",
       "round": 1,
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
       "status": "Completed",
+========
+      "status": "Started",
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
       "from": "rejected",
       "started_at": "2026-11-13T00:31:13-08:00",
       "cwd": "/Users/hermes/github/kigster/agentic-workflow/openlanes.worktrees/056.00-plan-dependency-graph",
       "adapter": "claude",
       "model": "claude-fable-5-1",
       "effort": "high",
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
       "session": "03903109-38b7-4ec4-b07b-2fc82db743cc",
       "to": "ready_for_review",
       "finished_at": "2026-11-13T00:48:06-08:00",
@@ -230,6 +240,9 @@
       "seconds": 998.2,
       "note": "completed - 44 tool calls; pushed to https://github.com/kigster/openlanes/pull/234",
       "moves": 15
+========
+      "session": "03903109-38b7-4ec4-b07b-2fc82db743cc"
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
     },
     {
       "agent": "frontend-coder",
@@ -249,6 +262,7 @@
       "seconds": 535.5,
       "note": "Almost completed; no rounds left",
       "moves": 14
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
     },
     {
       "agent": "design-reviewer",
@@ -320,6 +334,8 @@
       "started_at": "2026-11-13T00:52:06-08:00",
       "note": "⚖️ Ruling (cap): no_go",
       "finished_at": "2026-11-13T00:53:17-08:00"
+========
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
     }
   ],
   "signatures": [
@@ -496,6 +512,7 @@
       "status": "Completed",
       "round": 1,
       "next": "design-reviewer"
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
     },
     {
       "at": "2026-11-13T00:48:40-08:00",
@@ -547,6 +564,8 @@
       "agent": "unblocker",
       "status": "Completed",
       "round": 1
+========
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
     }
   ],
   "messages": [
@@ -650,7 +669,11 @@
       "read": "no"
     }
   ],
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
   "moves": 19,
+========
+  "moves": 14,
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
   "last-known-state": {
     "planner": {
       "source": "harness",
@@ -792,6 +815,7 @@
       "state": "rejected",
       "round": 1,
       "limit": "time",
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
       "asked_at": "2026-11-13T00:46:13-08:00",
       "closed": "finished",
       "settled_at": "2026-11-13T00:48:06-08:00"
@@ -833,6 +857,9 @@
       "round": 1,
       "limit": "rounds",
       "asked_at": "2026-11-13T00:52:05-08:00"
+========
+      "asked_at": "2026-11-13T00:46:13-08:00"
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
     }
   ],
   "memory": {
@@ -1048,12 +1075,15 @@
             {
               "kind": "note",
               "text": "spec_helper still does not clear OPENLANES_ADMIN_CREDENTIALS; 4 cli specs fail on a shell that sets it. Run the suite with env -u, or fix in a plan of its own."
+<<<<<<<< HEAD:.plans/archive/056.00━━✅━━❯[2026-11-12]━━plan-dependency-graph/state.json
             },
             {
               "kind": "question",
               "text": "B1 The arbitrator ruled no_go at the rejection cap ⚖️ Ruling (cap): no_go > F1 holds. The Cypress hover case still fails on `.dep-tip`, as the round-4 integration proof itself records, and no commit has landed since the staff review. So the spec's checks that hover shows the summary and that Cypress hovers a box are unproven. F2–F5 are minor. a) Send it back to the builders for one more round. (Recommended) b) Close the pull request and replan.",
               "ref": "B1",
               "answer": "a) Send it back to the builders for one more round. Answered by hermes on 2026-11-13"
+========
+>>>>>>>> refs/rewritten/onto:.plans/056.00━━🔴━━❯plan-dependency-graph/state.json
             }
           ]
         }
@@ -1184,6 +1214,24 @@
       "rounds": {},
       "held": {
         "session": "a2108aae-b5d9-43cf-969b-0673257497fd",
+        "through": 0
+      }
+    },
+    "design-reviewer": {
+      "rounds": {
+        "1": {
+          "round": 1,
+          "state": "in_review",
+          "entries": [
+            {
+              "kind": "done",
+              "text": "Reviewed PR 234 for design: F201 critical (React Flow dropped, no drag/zoom/pan), F202-F206 minor. Signed Completed rejected 1/2."
+            }
+          ]
+        }
+      },
+      "held": {
+        "session": "ba38d4ef-0f53-4ca5-893c-c96b560efd54",
         "through": 0
       }
     }

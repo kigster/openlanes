@@ -20,7 +20,7 @@ module OpenLanes
       # @param waiter [#call]
       # @param signaller [#call]
       # @param clock [#monotonic, #sleep]
-      def initialize(spawner: Spawner::System, waiter: Host::WAITER, signaller: Host::SIGNALLER, clock: OpenLanes::Clock::System)
+      def initialize(spawner: Container["process"], waiter: Host::WAITER, signaller: Host::SIGNALLER, clock: Container["clock"])
         super
       end
     end

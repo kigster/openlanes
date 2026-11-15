@@ -27,6 +27,7 @@ classDiagram
   class OpenLanes__Adapters__Probes["Probes"]
   class OpenLanes__Adapters__Report["Report"]
   class OpenLanes__Adapters__Stream["Stream"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution__Transcript["OpenLanes::Execution::Transcript"]
   class OpenLanes__Live__Unavailable["OpenLanes::Live::Unavailable"]
@@ -37,13 +38,9 @@ classDiagram
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Adapters ..> OpenLanes__Adapters__Base : uses
-  OpenLanes__Adapters ..> OpenLanes__Adapters__Claude : uses
-  OpenLanes__Adapters ..> OpenLanes__Adapters__Codex : uses
-  OpenLanes__Adapters ..> OpenLanes__Adapters__Gemini : uses
-  OpenLanes__Adapters ..> OpenLanes__Adapters__Grok : uses
   OpenLanes__Adapters ..> OpenLanes__Adapters__Model : uses
-  OpenLanes__Adapters ..> OpenLanes__Adapters__Pi : uses
   OpenLanes__Adapters ..> OpenLanes__Adapters__ProbeRunner : uses
+  OpenLanes__Adapters ..> OpenLanes__Container : uses
   OpenLanes__Adapters ..> OpenLanes__Error : uses
   OpenLanes__Adapters__Base ..> OpenLanes__Adapters : uses
   OpenLanes__Adapters__Base ..> OpenLanes__Adapters__Availability : uses

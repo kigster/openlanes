@@ -44,10 +44,10 @@ module OpenLanes
       # @param options [Hash]
       # @return [void]
       def call(**options)
+        root = Project.enter_main_checkout # S0: once per project, from its main checkout
         prepare(options)
         page = page_for(options)
         tree = tree_for(options)
-        root = Dir.pwd
         supervisor_logging(options, root)
         running(Supervision.registration(Supervision::SUPERVISOR, root:).holder)
         web = launcher_for(options, root, tree, page)
@@ -125,7 +125,7 @@ module OpenLanes
         unwrap(registration.claim)
         programs = Programs.new(options:, defaults: self.class.default_params, root:).call(web)
         supervisor = Supervision.supervisor(programs:, registration:)
-        %w[INT TERM].each { |name| Signal.trap(name) { supervisor.stop! } }
+        { "INT" => :stop!, "TERM" => :stop!, Supervision::RESTART_WEB_SIGNAL => :restart_web! }.each { |name, act| Signal.trap(name) { supervisor.public_send(act) } }
         announce(options, web)
         on_tick = opener(web) if web && options[:open]
         registration.hold { supervisor.call(&on_tick) }

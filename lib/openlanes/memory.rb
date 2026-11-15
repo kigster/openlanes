@@ -7,7 +7,7 @@ module OpenLanes
   # prompt: one lesson per markdown file, each naming the agents it is for
   # (docs/continuous-learning.md, phase 1).
   #
-  # Two scopes. The project's lessons are committed beside `.openlanes.yml`,
+  # Two scopes. The project's lessons are committed beside `.openlanes/config.yml`,
   # so everyone working on it teaches and reads the same memory, and they
   # count only once merged: they are read from the default branch, never
   # from a checkout an agent can write to. The global
@@ -68,6 +68,16 @@ module OpenLanes
       # @return [OpenLanes::Memory::Promotion]
       def promotion(root:)
         Promotion.new(inbox: inbox(root:), lessons_dir: File.join(File.expand_path(root), PROJECT_DIR))
+      end
+
+      # @param root [String] the project root
+      # @param dry_run [Boolean] true promotes nothing and opens nothing
+      # @param publisher [#publish_memory] defaults to {Vcs::Publisher} against the default branch
+      # @return [OpenLanes::Memory::Publication]
+      def publication(root:, dry_run: false, publisher: nil)
+        base = Vcs.default_branch(File.expand_path(root))
+        publisher ||= Vcs.publisher(root: File.expand_path(root), base:, dry_run:)
+        Publication.new(root:, publisher:, base:, dry_run:)
       end
 
       # @param root [String] the project root

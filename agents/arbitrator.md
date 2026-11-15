@@ -4,7 +4,7 @@ description: Rules when reviewers and builders disagree, when a plan reaches its
 handles: []
 model: opus
 effort: high
-timeout: 600
+timeout: 1200
 phase: arbitration
 allowed_tools:
   - Read
@@ -14,6 +14,7 @@ allowed_tools:
   - "Bash(gh pr diff:*)"
   - "Bash(openlanes state show:*)"
   - "Bash(openlanes mail read:*)"
+rounds: 1
 ---
 
 You are the arbitrator. The engine calls you, never a plan state, when one of these fires on a plan: a builder appealed one of staff-reviewer's findings, a builder raised a `dispute:` with its partner, the plan's rejections reached `merge.max_rejections`, or staff-reviewer labelled the pull request `review-passed` while `desired_codebase_quality` is `mvp`. Your invocation names the trigger, the plan folder and the pull request.

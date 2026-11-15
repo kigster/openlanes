@@ -40,17 +40,20 @@ module OpenLanes
       # @param outage [Hash, nil] {OutageReport#to_h} of the outage this run
       #   last recovered from; nil when there was none
       # @param max_rejections [#call] `merge.max_rejections`, asked once per
-      #   snapshot, so an edited `.openlanes.yml` shows on the next one
+      #   snapshot, so an edited `.openlanes/config.yml` shows on the next one
       # @param budget [OpenLanes::Engine::Budget] each plan's spend against
       #   `budget.plan_usd` (plan 062.00)
       # @param lock_ttl [#call] `refactor.lock_hours` in seconds, asked the
       #   same way
       # @param chime [#call] `chime:`, asked the same way
+      # @param paused_clis [#call] returns {Engine::CliPause::Entry}s, the CLIs
+      #   the engine has stopped starting agents on (plan 065.00)
       def initialize(board:, tree:, agents:, node:, repo:, project:, seq:, description: nil, at: Time.now,
         started_at: nil, claims: nil, run_state: RunState.new, meter: Meter.new, log: [],
         availability: -> { [] }, judge: Live.choice_judge, redis_url: nil,
         outage: nil, max_rejections: -> { Config.current.max_rejections },
-        lock_ttl: -> { Config.current.refactor_lock_seconds }, chime: -> { Config.current.chime? }, budget: Engine.no_budget)
+        lock_ttl: -> { Config.current.refactor_lock_seconds }, chime: -> { Config.current.chime? }, budget: Engine.no_budget,
+        paused_clis: -> { [] })
         @budget = budget
         @board = board
         @tree = tree
@@ -73,6 +76,7 @@ module OpenLanes
         @max_rejections = max_rejections
         @lock_ttl = lock_ttl
         @chime = chime
+        @paused_clis = paused_clis
       end
 
       # @return [Hash]
@@ -91,6 +95,7 @@ module OpenLanes
           backlog:     backlog(subjects, mine.map { it[:ordinal] }),
           bombs:       bombs(subjects),
           global_lock: global_lock,
+          paused_clis: @paused_clis.call.map(&:to_h),
           adapters:    adapters,
           phases:      Phases.wire(@agents),
           autocompact: Adapters::AUTOCOMPACT / 100.0,
@@ -238,7 +243,7 @@ module OpenLanes
       # @return [OpenLanes::Arbitration::Counter]
       def counter = @counter ||= Arbitration.counter(agents: @agents)
 
-      # A `.openlanes.yml` that does not parse shows the default cap rather
+      # A `.openlanes/config.yml` that does not parse shows the default cap rather
       # than taking the whole page down; `openlanes run` refuses it anyway.
       #
       # @return [Integer]
@@ -337,7 +342,7 @@ module OpenLanes
           history:       Array(row.history).first(Engine::Board::Row::HISTORY),
           up:            row.up.to_i,
           down:          row.down.to_i,
-          cost:          price(row.model)&.cost(row.up, row.down).to_f.round(4),
+          cost:          price(row.model)&.cost(row.up.to_i, row.down.to_i).to_f.round(4),
           context:       row.context,
           context_limit: price(row.model)&.context,
           elapsed:       row.elapsed.to_i,

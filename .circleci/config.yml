@@ -65,6 +65,12 @@ jobs:
       - run:
           name: Generated files are current
           command: bundle exec rspec spec/openlanes/docs
+      # `.openlanes/` is committed with the project: a secret typed into it by
+      # hand, or a file under it that git ignores, fails the build here. It
+      # exits 1 on a match and never prints the matched value.
+      - run:
+          name: Nothing secret or ignored under .openlanes
+          command: bundle exec exe/openlanes memory scan
 
   test:
     # ubuntu-latest is 4 vCPU / 16 GB; CircleCI's `medium` is 2 vCPU. `large`

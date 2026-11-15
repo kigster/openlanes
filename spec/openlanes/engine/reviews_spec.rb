@@ -14,6 +14,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
   let(:staff) { agents.find("staff-reviewer") }
   let(:security) { agents.find("security-reviewer") }
   let(:design) { agents.find("design-reviewer") }
+  let(:stages) { { "security-reviewer" => "", "design-reviewer" => "" } }
 
   def plan = OpenLanes::Plans::Tree.new(dir: plans_root).find("031.00")
   def state = OpenLanes::Plans::PlanState.for(plan.feature.path)
@@ -24,6 +25,7 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
     FileUtils.mkdir_p(agents_dir)
     { "staff-reviewer" => "", "security-reviewer" => "starts: [research, planning]\n",
       "design-reviewer" => "starts: [research, planning]\n" }.each do |name, extra|
+      extra += stages.fetch(name, "")
       File.write(File.join(agents_dir, "#{name}.md"),
         "---\nname: #{name}\nhandles: [ready_for_review, in_review]\nphase: review\nadvances_to: approved\nstarts_as: in_review\n#{extra}---\nbody")
     end
@@ -57,6 +59,67 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
   end
 
   # D10a: the counter folds a round's rejections into one by this stage.
+  # Staff first; security and design only once staff has passed it and CI is
+  # green. Started together, all three read a diff staff was about to send back.
+  describe "#due?" do
+    subject(:reviews) { described_class.new(agents:, review:, builds: ->(_) { build }) }
+
+    let(:build) { :green }
+
+    before do
+      %w[security-reviewer design-reviewer].each do |name|
+        path = File.join(agents_dir, "#{name}.md")
+        File.write(path, File.read(path).sub("phase: review\n", "phase: review\nreview_stage: 2\n"))
+      end
+    end
+
+    it "starts the first pass at once, and holds the second until the first has reported" do
+      expect([staff, security, design].map { reviews.due?(plan, it) }).to eq([true, false, false])
+    end
+
+    it "starts the second pass once the first has passed and CI is green" do
+      voted("staff-reviewer", "passed")
+      expect([security, design].map { reviews.due?(plan, it) }).to eq([true, true])
+    end
+
+    it "never starts the second pass on a pull request the first rejected" do
+      voted("staff-reviewer", "rejected 1/2")
+      expect(reviews.due?(plan, security)).to be(false)
+    end
+
+    it "is not held by anything for an agent that is not a reviewer" do
+      expect(reviews.due?(plan, agents.find("backend-coder"))).to be(true)
+    end
+
+    it "ends the round on the first pass's rejection, since the second never starts" do
+      expect(reviews.decide(plan, staff, "rejected 1/2")).to have_attributes(pending?: false, target: :rejected)
+    end
+
+    %i[pending red none].each do |state|
+      context "when CI is #{state}" do
+        let(:build) { state }
+
+        before { voted("staff-reviewer", "passed") }
+
+        it "holds the second pass, and says so once" do
+          allow(OpenLanes::UI).to receive(:log)
+          2.times { expect(reviews.due?(plan, security)).to be(false) }
+          expect(OpenLanes::UI).to have_received(:log)
+            .with("review: the next reviewers wait for green CI, which is #{state}", plan: "031.00", level: state == :red ? :warn : :info).once
+        end
+      end
+    end
+
+    context "with no CI to ask, as in a run that publishes nothing" do
+      subject(:reviews) { described_class.new(agents:, review:) }
+
+      it "starts the second pass on the first one's word alone" do
+        voted("staff-reviewer", "great")
+        expect(reviews.due?(plan, design)).to be(true)
+      end
+    end
+  end
+
   describe "#vote!" do
     before do
       state.update { it["moves"] = 5 }
@@ -65,6 +128,46 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
 
     it "records the verdict against the review round, the plan's moves when it was given" do
       expect(state.stages.last).to include("agent" => "security-reviewer", "round" => 3, "verdict" => "rejected 1/2, vulnerability", "review" => 5)
+    end
+  end
+
+  describe "staged review (plan 061, B5)" do
+    subject(:reviews) { described_class.new(agents:, review:, changes: ->(_) { changed }) }
+
+    let(:stages) { { "security-reviewer" => "review_stage: 2\n", "design-reviewer" => "review_stage: 2\nwatches: [\"lib/**\"]\n" } }
+    let(:changed) { ["lib/openlanes/engine/reviews.rb"] }
+
+    it "starts only staff-reviewer until it has passed" do
+      expect([staff, security, design].map { reviews.due?(plan, it) }).to eq([true, false, false])
+    end
+
+    it "decides at once on a staff rejection, with no stage 2" do
+      decision = reviews.decide(plan, staff, "rejected 1/2")
+      expect([decision.pending?, decision.target]).to eq([false, :rejected])
+    end
+
+    it "leaves security and design pending after a staff approval" do
+      expect(reviews.decide(plan, staff, "great").pending).to contain_exactly("security-reviewer", "design-reviewer")
+    end
+
+    it "starts stage 2 once staff's approval is on its stage" do
+      voted("staff-reviewer", "great")
+      expect([security, design].map { reviews.due?(plan, it) }).to eq([true, true])
+    end
+
+    context "when the diff touches nothing design-reviewer watches" do
+      let(:changed) { ["README.md"] }
+
+      it "skips design-reviewer" do
+        voted("staff-reviewer", "great")
+        expect([reviews.due?(plan, design), reviews.decide(plan, security, "passed").target]).to eq([false, :approved])
+      end
+    end
+
+    it "still counts a stage-1 verdict from before a restart" do
+      voted("staff-reviewer", "great")
+      fresh = described_class.new(agents: OpenLanes::Agents::Registry.new(dir: agents_dir), review:, changes: ->(_) { changed })
+      expect(fresh.decide(plan, security, "passed").pending).to eq(%w[design-reviewer])
     end
   end
 
@@ -155,7 +258,8 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
         voted("design-reviewer", "great")
       end
 
-      it { expect(decision.verdict.names).to eq(%w[review-rejected review-vulnerability]) }
+      it { expect(decision.verdict.names).to eq(%w[review-rejected]) }
+      it { expect(decision.verdict.opsec.name).to eq("opsec-rejected") }
     end
 
     context "when an earlier round's verdicts are on file" do
@@ -241,6 +345,103 @@ RSpec.describe OpenLanes::Engine::Reviews, :fake_gh, :tree do
       it "logs it" do
         concluded
         expect(OpenLanes::UI).to have_received(:log).with("could not label 031.00: gh is down", level: :warn, plan: "031.00")
+      end
+    end
+
+    context "without a pull request to label" do
+      let(:review) { nil }
+
+      it { is_expected.to eq(decision) }
+    end
+  end
+
+  # The security reviewer's verdict is said on its own, beside the round's.
+  describe "#conclude, with the security reviewer's verdict" do
+    def concluded_with(note)
+      voted("staff-reviewer", "great")
+      voted("design-reviewer", "great")
+      voted("security-reviewer", note)
+      reviews.conclude(plan, reviews.decide(plan, security, note))
+      labels
+    end
+
+    it "labels a pull request it found nothing in opsec-approved" do
+      expect(concluded_with("great")).to eq(%w[review-approved opsec-approved])
+    end
+
+    it "labels one it let through with concerns opsec-concerned-approved" do
+      expect(concluded_with("passed")).to eq(%w[review-approved opsec-concerned-approved])
+    end
+
+    it "labels one it rejected opsec-rejected, beside review-rejected" do
+      expect(concluded_with("rejected 1/2, vulnerability")).to eq(%w[review-rejected opsec-rejected])
+    end
+
+    it "says the security verdict on a round CI turned into a rejection too" do
+      edit_gh { it["prs"]["1"]["checks"] = [{ "name" => "ci", "state" => "FAILURE", "bucket" => "fail" }] }
+
+      expect(concluded_with("great")).to eq(%w[review-rejected opsec-approved])
+    end
+  end
+
+  # `review-in-progress` comes off after each group of reviewers, not only
+  # at the end of the round.
+  describe "#paused" do
+    subject(:paused) { reviews.paused(plan, decision) }
+
+    let(:decision) { reviews.decide(plan, staff, "great") }
+    let(:stages) { { "security-reviewer" => "review_stage: 2\n", "design-reviewer" => "review_stage: 2\n" } }
+
+    before do
+      decision
+      voted("staff-reviewer", "great")
+    end
+
+    it "labels the pull request with the first group's verdict, in place of review-in-progress" do
+      aggregate_failures do
+        expect(decision).to be_pending
+        expect(paused).to eq(decision)
+        expect(labels).to eq(%w[review-approved])
+      end
+    end
+
+    it "puts review-in-progress back beside that verdict when the next group starts" do
+      paused
+      reviews.started(plan)
+
+      expect(labels).to eq(%w[review-approved review-in-progress])
+    end
+
+    context "when CI is not green yet" do
+      let(:checks) { [{ "name" => "ci", "state" => "PENDING", "bucket" => "pending" }] }
+
+      it "still takes review-in-progress off, and gives no passing verdict" do
+        paused
+        expect(labels).to be_empty
+      end
+    end
+
+    context "when a later reviewer has reported and another has not" do
+      before { voted("security-reviewer", "great") }
+
+      it "leaves the pull request in progress" do
+        paused
+        expect(labels).to eq(%w[review-in-progress])
+      end
+    end
+
+    context "when gh fails" do
+      before do
+        allow(review).to receive(:call).and_return(OpenLanes::Vcs::Review::Result.new(pr: 1, from: [], to: "review-approved", ci: :red, refused: true, reason: "CI is red", dry_run: false))
+        allow(review).to receive(:finish).and_raise(OpenLanes::Error, "gh is down")
+        allow(OpenLanes::UI).to receive(:log)
+      end
+
+      it "logs it, and the round goes on" do
+        aggregate_failures do
+          expect(paused).to eq(decision)
+          expect(OpenLanes::UI).to have_received(:log).with("could not take review-in-progress off 031.00: gh is down", level: :warn, plan: "031.00")
+        end
       end
     end
 

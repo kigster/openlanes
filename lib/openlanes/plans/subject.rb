@@ -54,6 +54,13 @@ module OpenLanes
         paragraphs(section) || paragraphs(body.sub(/\A\s*\#{"#"}[^\n]*\n/, "")) || []
       end
 
+      # One paragraph describing the plan, for a tooltip or a card: the spec's
+      # `summary:` key when set, else its goal paragraph, else its opening
+      # prose. Read here so a page never has to know how a spec is laid out.
+      #
+      # @return [String] "" when there is no spec.md or it holds no prose
+      def summary = Spec.summary(read(Spec::FILENAME).to_s)
+
       # Specifications written before the template existed have no Goal section,
       # and they are exactly the ones an index most needs to describe. So the
       # opening prose stands in — skipping headings, quotes, lists and tables,

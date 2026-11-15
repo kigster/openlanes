@@ -364,6 +364,19 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
         end
       end
 
+      # The run's pull-request snapshot still holds the head this push
+      # replaced; merging against it inside the poll interval is refused.
+      it "tells on_push after the push, so the run can drop its snapshot" do
+        heads = []
+        pushing = described_class.new(root: repo_root,
+          command: TTY::Command.new(printer: :null),
+          dry_run:,
+          github:,
+          on_push: -> { heads << `git --git-dir #{origin} rev-parse main`.strip })
+        pushing.catch_up(checkout:, subject: plan)
+        expect(heads).to eq([tip("HEAD")])
+      end
+
       it "refuses when the pull request is built from another branch" do
         allow(github).to receive(:pull_request).with("7").and_return(branch: "kig/elsewhere")
         expect { publisher.catch_up(checkout:, subject: plan) }
@@ -499,6 +512,36 @@ RSpec.describe OpenLanes::Vcs::Publisher, :tree do
       dry = described_class.new(root: repo_root, command: TTY::Command.new(printer: :null), dry_run: true, github:)
 
       expect(dry.commit_plan(checkout:, plan:, message: "Verify")).to be_nil
+    end
+  end
+
+  describe "#publish_memory" do
+    let(:body) { "- L-0001 Run the Redis specs alone, from 001.00 and 002.00\n" }
+    let(:argvs) { [] }
+
+    before do
+      allow(OpenLanes::Execution::Boundary).to receive(:sanction)
+      allow(command).to receive(:run) do |*argv, **|
+        argvs << argv
+        result
+      end
+    end
+
+    it "commits only .openlanes/memory, pushes it sanctioned, and opens one pull request it never merges" do
+      publication = publisher.publish_memory(checkout:, title: "Memory: 1 lesson", body:)
+
+      expect(argvs.first(2)).to eq([%w[git add -- .openlanes/memory], ["git", "commit", "-m", "Memory: 1 lesson", "--", ".openlanes/memory"]])
+      expect(OpenLanes::Execution::Boundary).to have_received(:sanction).with(checkout.path, "origin", checkout.branch)
+      expect(argvs.count { it.first(3) == %w[gh pr create] }).to eq(1)
+      expect(argvs.flatten).not_to include("merge")
+      expect(publication).to have_attributes(url: "https://github.com/example/repo/pull/7", branch: checkout.branch)
+    end
+
+    it "touches nothing on a dry run" do
+      dry = described_class.new(root: File.dirname(plans_root), command:, dry_run: true, github:)
+
+      expect(dry.publish_memory(checkout:, title: "Memory", body:).url).to be_nil
+      expect(argvs).to eq([])
     end
   end
 end

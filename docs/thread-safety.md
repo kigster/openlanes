@@ -35,7 +35,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/apps/runner.rb` | `@stopping` | `Apps::Runner` | runner loop, signal trap | `Concurrent::AtomicBoolean` | guarded |
 | `lib/openlanes/apps/supervisor.rb` | `@statuses`, `@tails` | `Apps::Supervisor` | reader, waiter, caller | `@mutex` on every read and write | guarded |
 | `lib/openlanes/engine/agent_locks.rb` | the held-locks snapshot | `Engine::AgentLocks` | tick, agent jobs | `@mutex` | guarded |
-| `lib/openlanes/engine/dispatcher/desk.rb` | `@running`, `@history` | `Engine::Dispatcher::Desk` | tick, agent jobs, PR watch, unblock | `@mutex` around every cross-thread read and write | guarded |
+| `lib/openlanes/engine/dispatcher/desk/registers.rb` | `running`, `history` | `Engine::Dispatcher::Desk::Registers`, read through `Desk` and `Desk::Rounds` | tick, agent jobs, PR watch, unblock | `mutex` around every cross-thread read and write | guarded |
 | `lib/openlanes/engine/dispatcher.rb` | the tick itself | `Engine::Dispatcher` | any caller of `#tick` | `@tick_lock` (`Monitor`): two overlapping ticks each started the same plan; `dispatcher_stress_spec.rb` found it (fixed in 038.00) | guarded |
 | `lib/openlanes/engine/dispatcher/desk.rb` | `@clock` | `Engine::Dispatcher::Desk` | tick, agent jobs | `Clock::System` is stateless; `Clock::Fake` holds its own mutex | guarded |
 | `lib/openlanes/engine/event_journal.rb` | `@seq` and the journal file | `Engine::EventJournal` | tick, agent jobs | `@lock` around number, write, flush and fsync, so lines never interleave or repeat a `seq` | guarded |
@@ -44,6 +44,7 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/engine/plan_locks.rb` | the held plan set | `Engine::PlanLocks` | tick, agent jobs | `@mutex` | guarded |
 | `lib/openlanes/engine/rebase.rb` | `@tallies` | `Engine::Rebase` | agent jobs | `@mutex` | guarded |
 | `lib/openlanes/engine/state_file.rb` | `@data` (the restart file) | `Engine::StateFile` | tick, agent jobs | `@mutex` around every write and the heartbeat | guarded |
+| `lib/openlanes/engine/steps/snapshot.rb` | `@current`, `@taken` (the shared pull snapshot) | `Engine::Steps::Snapshot` | tick, PR watch thread, verification | `@lock` around every read and refresh | guarded |
 | `lib/openlanes/execution/agent_process/registry.rb` | `AgentProcess.@live`, the agent supervisors started or attached; `@reattachable`; the one `at_exit` hook | `Execution::AgentProcess` | agent jobs, the dispatcher, `at_exit` | class-level `@mutex` | guarded |
 | `lib/openlanes/execution/agent_process.rb` | one agent's `@terminating`; `@abandoned` and `@reaped` only ever turn true | the `AgentProcess` | agent job (reader), timeout timer, kill thread | `@guard` per agent | guarded |
 | `lib/openlanes/execution/boundary.rb` | `@sanctioned` pushes | `Execution::Boundary` | agent jobs, publisher | `@lock` | guarded |
@@ -56,7 +57,9 @@ The default is a frozen value: `Data.define`, or a frozen constant. A `Mutex` or
 | `lib/openlanes/adapters/capabilities.rb` | each adapter's `CAPABILITIES` | the adapter class | any | frozen `Data` | frozen |
 | `lib/openlanes/adapters/probes.rb` | `@memory` (the last probe, kept while Redis is gone) | `Adapters::Probes` | probe thread, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/adapters/probes.rb` | `@thread` | `Adapters::Probes` | its starter and stopper | started and stopped by the one owner (`Live::Session`, `cli/web`); `@wake` is a `Thread::Queue` | guarded |
+| `lib/openlanes/engine/cli_pause.rb` | `@entries` (the CLIs held after an authentication failure) | `Engine::CliPause` | dispatcher loop, settle threads, snapshot builder | `@mutex` | guarded |
 | `lib/openlanes/live/event_bus/base.rb` | a bus | its caller | any | frozen; all state lives in the store behind it | frozen |
+| `lib/openlanes/live/store.rb` | the one Redis connection | `Live::Store` | engine tick, outage watcher, publisher, web requests | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/chat.rb` | `@pages`, `@unavailable`, the subscriber | `Live::Chat` | web requests, chat thread | `@lock` (`Monitor`, re-entrant) | guarded |
 | `lib/openlanes/live/choice_converter.rb` | the conversion cache | `Live::ChoiceConverter` | unblock, conversions | `@mutex` | guarded |
 | `lib/openlanes/live/choice_judge.rb` | `@answers` | `Live::ChoiceJudge` | caller, judge thread | `@mutex` | guarded |

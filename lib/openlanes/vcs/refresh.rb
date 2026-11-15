@@ -148,7 +148,7 @@ module OpenLanes
         # credential helper it started) once it has run past {FETCH_TIMEOUT}.
         #
         # @return [Boolean] whether it finished, and succeeded, in time
-        def fetch_within(*argv, timeout: FETCH_TIMEOUT, spawner: Spawner::System)
+        def fetch_within(*argv, timeout: FETCH_TIMEOUT, spawner: Container["process"])
           pid = spawner.spawn(fetch_env, *argv, pgroup: true, in: File::NULL, out: File::NULL, err: File::NULL)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
           loop do

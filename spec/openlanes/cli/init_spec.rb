@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 RSpec.describe OpenLanes::CLI::Init do
+  include SettingsIn
+
   subject(:command) { described_class.new }
 
   let(:top) { File.realpath(Dir.mktmpdir("openlanes-init")) }
   let(:repo) { File.join(top, "acme-app") }
-  let(:file) { File.join(repo, ".openlanes.yml") }
+  let(:file) { File.join(repo, OpenLanes::Config::FILE).tap { FileUtils.mkdir_p(File.dirname(it)) } }
   let(:tty) { false }
   let(:prompt) { instance_double(TTY::Prompt) }
   let(:ready) { true }
@@ -43,7 +45,7 @@ RSpec.describe OpenLanes::CLI::Init do
     [strip_ansi(out.string), strip_ansi(err.string), status]
   end
 
-  def written = YAML.safe_load_file(file)
+  def written = settings_in(File.read(file))
 
   context "with a ready machine" do
     it "does not run setup" do
@@ -158,8 +160,20 @@ RSpec.describe OpenLanes::CLI::Init do
     end
   end
 
-  context "when .openlanes.yml already exists" do
-    before { File.write(file, "project: Kept\n") }
+  context "when the legacy config file is still there" do
+    before { File.write(File.join(repo, OpenLanes::Project::LEGACY_FILE), "project: Old\n") }
+
+    it "refuses, names the move command, and writes no new file" do
+      _out, err, status = run(project: "New")
+      expect([status, unwrapped(err), File.exist?(file)]).to match([65, include("openlanes config move"), false])
+    end
+  end
+
+  context "when .openlanes/config.yml already exists" do
+    before do
+      FileUtils.mkdir_p(File.dirname(file))
+      File.write(file, "project: Kept\n")
+    end
 
     it "keeps it" do
       _out, err, = run(project: "New")
@@ -178,7 +192,7 @@ RSpec.describe OpenLanes::CLI::Init do
     it "prints the file and writes nothing" do
       out, err, = result
       expect([out, unwrapped(err), File.exist?(file), Dir.exist?(File.join(repo, ".plans"))])
-        .to match([start_with("project: Acme\nstarts: research\nmerge:\n  by: human\n"),
+        .to match([satisfy { settings_in(it).slice("project", "starts", "merge") == { "project" => "Acme", "starts" => "research", "merge" => { "by" => "human" } } },
                    include("nothing was written", "Would write"), false, false])
     end
   end

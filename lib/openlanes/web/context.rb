@@ -14,6 +14,10 @@ module OpenLanes
     #   @return [OpenLanes::Live::Keys] this node's
     # @!attribute [r] plans_dir
     #   @return [String] the `.plans` directory plan files are read from
+    # @!attribute [r] root
+    #   @return [String] the repository the plans belong to, where the review
+    #     route runs git. Passed in from {Project.root} rather than taken as
+    #     the parent of +plans_dir+, since `$PLANS_DIR` may point anywhere
     # @!attribute [r] url
     #   @return [String] the Redis address
     # @!attribute [r] csrf
@@ -36,6 +40,10 @@ module OpenLanes
     #   @return [#call, nil] who answers the copilot's messages (W17):
     #     {Live::Copilot::Operator} beside a real run, {Demo::COPILOT} under
     #     `--demo`, nil where nothing does, and `POST /api/copilot` says so
+    # @!attribute [r] interview
+    #   @return [#call, nil] who answers in the unblocker's interview (plan 068):
+    #     {Live::Interview::Operator} beside a real run, {Demo::Interview} under
+    #     `--demo`, nil where nothing does
     # @!attribute [r] background
     #   @return [#call] runs the block it is given apart from the request, a
     #     thread by default; the suite passes one that runs it when told
@@ -54,6 +62,7 @@ module OpenLanes
     Context = Data.define(:stores,
       :keys,
       :plans_dir,
+      :root,
       :url,
       :csrf,
       :dist,
@@ -62,13 +71,17 @@ module OpenLanes
       :lifetime,
       :demo,
       :copilot,
+      :interview,
       :background,
       :chat,
       :listen,
       :credentials,
       :stopping) do
-      def initialize(dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil, copilot: nil, chat: nil,
-        background: Context::THREAD, listen: Listen.parse(nil), credentials: nil, stopping: Concurrent::AtomicBoolean.new, **rest)
+      # +root+ falls back to the parent of +plans_dir+ only where none is
+      # given, which is the default layout and what the suite's trees use.
+      def initialize(plans_dir:, root: File.dirname(plans_dir), dist: DIST, node: nil, ping_every: 15.0, lifetime: nil, demo: nil,
+        copilot: nil, interview: nil, chat: nil, background: Context::THREAD, listen: Listen.parse(nil), credentials: nil,
+        stopping: Concurrent::AtomicBoolean.new, **rest)
         super
       end
 

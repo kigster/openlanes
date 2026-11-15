@@ -16,6 +16,7 @@ module OpenLanes
     # @param root [String] the checkout `gh` is asked from
     # @param github [OpenLanes::Vcs::GitHub]
     # @return [OpenLanes::Execution::ReviewPacket]
+    # Built by hand: the client is rooted at +root+, which no provider knows.
     def review_packets(root:, github: Vcs::GitHub.new(chdir: root)) = ReviewPacket.new(github:)
 
     # @param trace [String, nil] a trace path, as an executor handle names it

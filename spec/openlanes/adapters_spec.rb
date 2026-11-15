@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 RSpec.describe OpenLanes::Adapters do
   describe ".for" do
     it "defaults to claude" do
@@ -12,6 +14,58 @@ RSpec.describe OpenLanes::Adapters do
 
     it "refuses a name nothing answers to" do
       expect { described_class.for("gpt") }.to raise_error(OpenLanes::Error, /unknown adapter "gpt"/)
+    end
+
+    it "keeps the unknown-name message byte-identical" do
+      expect { described_class.for("gpt") }
+        .to raise_error(OpenLanes::Error, 'unknown adapter "gpt"; known: claude, codex, pi, grok, gemini')
+    end
+
+    {
+      "claude" => OpenLanes::Adapters::Claude,
+      "codex"  => OpenLanes::Adapters::Codex,
+      "pi"     => OpenLanes::Adapters::Pi,
+      "grok"   => OpenLanes::Adapters::Grok,
+      "gemini" => OpenLanes::Adapters::Gemini
+    }.each do |name, klass|
+      it "resolves #{name} from the container as adapters.#{name}" do
+        aggregate_failures do
+          expect(OpenLanes::Container["adapters.#{name}"]).to be_a(klass)
+          expect(described_class.for(name)).to be_a(klass)
+        end
+      end
+
+      it "hands out whatever adapters.#{name} the container holds" do
+        fake = Object.new
+        OpenLanes::Container.stub("adapters.#{name}", fake)
+
+        expect(described_class.for(name)).to be(fake)
+      end
+    end
+  end
+
+  # {OpenLanes::Adapters.availability} probes the five adapters side by side,
+  # each thread resolving its own `adapters.<name>` lazily. Component
+  # resolution has no first-start step to race, unlike a provider, and this
+  # pins that in a fresh process, where nothing has resolved them yet: the
+  # suite's own container has, so a race there would prove nothing.
+  describe "resolving every adapter from five threads at once" do
+    it "hands each thread its adapter, with no key left unregistered" do
+      script = <<~RUBY
+        require "openlanes"
+        names = OpenLanes::Adapters.names
+        got = names.map { |n| Thread.new { OpenLanes::Adapters.for(n).name } }.map(&:value)
+        puts got.sort.join(" ")
+      RUBY
+      output, status = Open3.capture2e(RbConfig.ruby, "-Ilib", "-e", script)
+
+      expect([status.success?, output]).to eq([true, "claude codex gemini grok pi\n"])
+    end
+  end
+
+  describe ".known?" do
+    it "answers from the list of names, defaulting to claude" do
+      expect([nil, "claude", :gemini, "gpt"].map { |n| described_class.known?(n) }).to eq([true, true, true, false])
     end
   end
 

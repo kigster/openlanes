@@ -12,24 +12,35 @@ classDiagram
   class OpenLanes__Apps__Listing["OpenLanes::Apps::Listing"]
   <<module>> OpenLanes__Apps__Listing
   class OpenLanes__Apps__Runner["OpenLanes::Apps::Runner"]
+  class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Config__Schema["OpenLanes::Config::Schema"]
+  <<module>> OpenLanes__Config__Schema
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Engine__ProgressLog["OpenLanes::Engine::ProgressLog"]
   <<module>> OpenLanes__Engine__ProgressLog
   class OpenLanes__Error["OpenLanes::Error"]
+  class OpenLanes__Execution__Boundary["OpenLanes::Execution::Boundary"]
+  <<module>> OpenLanes__Execution__Boundary
   class OpenLanes__Frontmatter["OpenLanes::Frontmatter"]
   <<module>> OpenLanes__Frontmatter
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
+  class OpenLanes__Live__BoardDelta__Stream["OpenLanes::Live::BoardDelta::Stream"]
   class OpenLanes__Live__Chat["OpenLanes::Live::Chat"]
   class OpenLanes__Live__Chat__Invalid["OpenLanes::Live::Chat::Invalid"]
   class OpenLanes__Live__Chat__Settled["OpenLanes::Live::Chat::Settled"]
   class OpenLanes__Live__Command["OpenLanes::Live::Command"]
   class OpenLanes__Live__Command__Invalid["OpenLanes::Live::Command::Invalid"]
   class OpenLanes__Live__Commands["OpenLanes::Live::Commands"]
+  class OpenLanes__Live__Commands__Refusal["OpenLanes::Live::Commands::Refusal"]
   class OpenLanes__Live__Copilot["OpenLanes::Live::Copilot"]
   class OpenLanes__Live__Copilot__Invalid["OpenLanes::Live::Copilot::Invalid"]
   class OpenLanes__Live__Copilot__Unanswered["OpenLanes::Live::Copilot::Unanswered"]
   class OpenLanes__Live__EventBus["OpenLanes::Live::EventBus"]
   <<module>> OpenLanes__Live__EventBus
+  class OpenLanes__Live__Interview["OpenLanes::Live::Interview"]
+  class OpenLanes__Live__Interview__Feed["OpenLanes::Live::Interview::Feed"]
+  class OpenLanes__Live__Interview__Invalid["OpenLanes::Live::Interview::Invalid"]
   class OpenLanes__Live__Keys["OpenLanes::Live::Keys"]
   class OpenLanes__Live__News["OpenLanes::Live::News"]
   <<module>> OpenLanes__Live__News
@@ -40,20 +51,28 @@ classDiagram
   <<module>> OpenLanes__Log
   class OpenLanes__Plans["OpenLanes::Plans"]
   <<module>> OpenLanes__Plans
+  class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
+  <<module>> OpenLanes__Plans__Findings
   class OpenLanes__Plans__Ordinal["OpenLanes::Plans::Ordinal"]
-  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
-  <<module>> OpenLanes__Spawner__System
+  class OpenLanes__Plans__Tree["OpenLanes::Plans::Tree"]
+  class OpenLanes__Project["OpenLanes::Project"]
+  <<module>> OpenLanes__Project
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
+  class OpenLanes__Vcs__Refresh["OpenLanes::Vcs::Refresh"]
   class OpenLanes__Web["OpenLanes::Web"]
   <<module>> OpenLanes__Web
   class OpenLanes__Web__AdminAuth["AdminAuth"]
   class OpenLanes__Web__AdminAuth__Invalid["AdminAuth::Invalid"]
   class OpenLanes__Web__App["App"]
+  class OpenLanes__Web__BranchDiff["BranchDiff"]
   class OpenLanes__Web__Context["Context"]
   class OpenLanes__Web__Demo["Demo"]
+  class OpenLanes__Web__Demo__Interview["Demo::Interview"]
+  <<module>> OpenLanes__Web__Demo__Interview
   class OpenLanes__Web__DemoBoard["DemoBoard"]
   class OpenLanes__Web__DemoBoard__Refusal["DemoBoard::Refusal"]
+  class OpenLanes__Web__DependencyGraph["DependencyGraph"]
   class OpenLanes__Web__Events["Events"]
   class OpenLanes__Web__Launcher["Launcher"]
   class OpenLanes__Web__Listen["Listen"]
@@ -63,8 +82,16 @@ classDiagram
   class OpenLanes__Web__PlanFiles__NotFound["PlanFiles::NotFound"]
   class OpenLanes__Web__PlanFiles__ReadOnly["PlanFiles::ReadOnly"]
   class OpenLanes__Web__PlanFiles__Stale["PlanFiles::Stale"]
+  class OpenLanes__Web__PlanReview["PlanReview"]
+  class OpenLanes__Web__PlanReview__NotFound["PlanReview::NotFound"]
   class OpenLanes__Web__RequestLog["RequestLog"]
   class OpenLanes__Web__Server["Server"]
+  class OpenLanes__Web__Settings["Settings"]
+  <<module>> OpenLanes__Web__Settings
+  class OpenLanes__Web__Settings__Problem["Settings::Problem"]
+  class OpenLanes__Web__Settings__View["Settings::View"]
+  class OpenLanes__Web__SettingsSave["SettingsSave"]
+  class OpenLanes__Web__SettingsSave__Refused["SettingsSave::Refused"]
   class OpenLanes__Web__Stores["Stores"]
   OpenLanes__Web ..> OpenLanes__Live__Chat : uses
   OpenLanes__Web ..> OpenLanes__Web__App : uses
@@ -87,16 +114,26 @@ classDiagram
   OpenLanes__Web__App ..> OpenLanes__Live__Copilot__Invalid : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Copilot__Unanswered : uses
   OpenLanes__Web__App ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Web__App ..> OpenLanes__Live__Interview : uses
+  OpenLanes__Web__App ..> OpenLanes__Live__Interview__Invalid : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Reply : uses
   OpenLanes__Web__App ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Web__App ..> OpenLanes__Plans : uses
   OpenLanes__Web__App ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Web__App ..> OpenLanes__Web__AdminAuth : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__BranchDiff : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__DependencyGraph : uses
   OpenLanes__Web__App ..> OpenLanes__Web__Events : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__FrontmatterChanged : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__NotFound : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__ReadOnly : uses
   OpenLanes__Web__App ..> OpenLanes__Web__PlanFiles__Stale : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanReview : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__PlanReview__NotFound : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__Settings : uses
+  OpenLanes__Web__App ..> OpenLanes__Web__SettingsSave : uses
+  OpenLanes__Web__BranchDiff ..> OpenLanes__Vcs__Refresh : uses
   OpenLanes__Web__Demo ..> OpenLanes__Agents__Names : uses
   OpenLanes__Web__Demo ..> OpenLanes__Live : uses
   OpenLanes__Web__Demo ..> OpenLanes__Live__Command : uses
@@ -112,20 +149,28 @@ classDiagram
   OpenLanes__Web__Demo ..> OpenLanes__UI : uses
   OpenLanes__Web__Demo ..> OpenLanes__Web__DemoBoard : uses
   OpenLanes__Web__Demo ..> OpenLanes__Web__DemoBoard__Refusal : uses
+  OpenLanes__Web__Demo__Interview ..> OpenLanes__Live__Interview : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Adapters : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Agents__Names : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Live__Commands : uses
+  OpenLanes__Web__DemoBoard ..> OpenLanes__Live__Commands__Refusal : uses
+  OpenLanes__Web__DemoBoard ..> OpenLanes__Plans__Findings : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Web__DemoBoard ..> OpenLanes__Web__DemoBoard__Refusal : uses
+  OpenLanes__Web__DemoBoard ..> OpenLanes__Web__PlanReview__NotFound : uses
+  OpenLanes__Web__DependencyGraph ..> OpenLanes__Plans : uses
+  OpenLanes__Web__DependencyGraph ..> OpenLanes__Plans__Tree : uses
   OpenLanes__Web__Events ..> OpenLanes__Apps__Listing : uses
   OpenLanes__Web__Events ..> OpenLanes__Live : uses
+  OpenLanes__Web__Events ..> OpenLanes__Live__BoardDelta__Stream : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Chat : uses
+  OpenLanes__Web__Events ..> OpenLanes__Live__Interview__Feed : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Events ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Web__Events ..> OpenLanes__UI : uses
+  OpenLanes__Web__Launcher ..> OpenLanes__Container : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Engine__ProgressLog : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Log : uses
-  OpenLanes__Web__Launcher ..> OpenLanes__Spawner__System : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__AdminAuth : uses
   OpenLanes__Web__Launcher ..> OpenLanes__Web__Listen : uses
   OpenLanes__Web__Listen ..> OpenLanes__Error : uses
@@ -143,7 +188,24 @@ classDiagram
   OpenLanes__Web__PlanFiles__NotFound --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__ReadOnly --|> OpenLanes__Error : inherits
   OpenLanes__Web__PlanFiles__Stale --|> OpenLanes__Error : inherits
-  OpenLanes__Web__RequestLog ..> OpenLanes__Log : uses
+  OpenLanes__Web__PlanReview ..> OpenLanes__Error : uses
+  OpenLanes__Web__PlanReview ..> OpenLanes__Plans : uses
+  OpenLanes__Web__PlanReview ..> OpenLanes__Plans__Findings : uses
+  OpenLanes__Web__PlanReview ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Web__PlanReview ..> OpenLanes__Web__PlanReview__NotFound : uses
+  OpenLanes__Web__PlanReview__NotFound --|> OpenLanes__Error : inherits
+  OpenLanes__Web__RequestLog ..> OpenLanes__Container : uses
   OpenLanes__Web__Server ..> OpenLanes__Live__News : uses
   OpenLanes__Web__Server ..> OpenLanes__Web__Listen : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Config : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Config__Schema : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Error : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Project : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__Problem : uses
+  OpenLanes__Web__Settings ..> OpenLanes__Web__Settings__View : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Config : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Error : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Execution__Boundary : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Web__Settings : uses
+  OpenLanes__Web__SettingsSave ..> OpenLanes__Web__SettingsSave__Refused : uses
 ```

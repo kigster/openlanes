@@ -47,9 +47,54 @@ module OpenLanes
       # @param agents [Agents::Registry]
       # @param review [Vcs::Review, nil] labels the pull request; nil in a run
       #   that publishes nothing, which has no pull request to label
-      def initialize(agents:, review: nil)
+      # @param builds [#call, nil] receives a subject and answers
+      #   {Vcs::CiGate.verdict} for its open pull requests; nil in a run
+      #   that publishes nothing, where there is no CI to wait for
+      # @param changes [#call] `(subject) -> Array<String>, nil`, the files the
+      #   plan's diff touches; nil means unknown, which every reviewer watches
+      def initialize(agents:, review: nil, builds: nil, changes: ->(_) {})
         @agents = agents
-        @review = review
+        @labels = Labels.new(review)
+        @build = Build.new(builds)
+        @changes = changes
+      end
+
+      # Whether +agent+ may start on +subject+ now. A review round runs in
+      # passes: staff-reviewer reads the pull request first, and the
+      # reviewers of a later `review_stage:` start only once every earlier
+      # one has passed it and CI is green. Started together, three reviewers
+      # read a diff the first of them was about to send back, and a red
+      # build was reviewed three times before anybody fixed it. A later
+      # reviewer is also skipped when the diff touches nothing it `watches:`
+      # (plan 061, B5).
+      #
+      # @param subject [Plans::Subject]
+      # @param agent [Agents::Agent]
+      # @return [Boolean]
+      def due?(subject, agent)
+        return true unless reviewer?(agent)
+
+        earlier = reviewers(subject).select { it.review_stage < agent.review_stage }
+        return true if earlier.empty?
+
+        notes = round(subject)
+        return false unless earlier.all? { passed?(it.name, notes[it.name]) } && stage_two(subject, notes).include?(agent)
+
+        @build.green?(subject)
+      end
+
+      # The stage-2 reviewers this round still needs: none until stage 1 has
+      # passed, then those watching the diff.
+      #
+      # @param subject [Plans::Subject]
+      # @param notes [Hash{String => String}] verdicts so far, by name
+      # @return [Array<Agents::Agent>]
+      def stage_two(subject, notes)
+        first = stage(subject, 1)
+        return [] unless first.all? { notes.key?(it.name) } && votes(notes.slice(*first.map(&:name))).passing?
+
+        files = @changes.call(subject)
+        reviewers(subject).select { it.review_stage > 1 && (files.nil? || it.watching?(files)) }
       end
 
       # @param agent [Agents::Agent]
@@ -76,7 +121,9 @@ module OpenLanes
         vote = Plans::Verdict.vote(agent: agent.name, note:) or return
 
         notes = round(subject).merge(agent.name => note)
-        pending = reviewers(subject).map(&:name) - notes.keys
+        early = refused_early(subject, notes) and return early
+
+        pending = (stage(subject, 1) + stage_two(subject, notes)).map(&:name) - notes.keys
         return decided(notes) if pending.empty? || settled?(notes, pending, running)
 
         Decision.new(verdict: nil, pending:, target: nil, note: "#{vote.word}; waiting for #{pending.join(", ")}")
@@ -96,24 +143,10 @@ module OpenLanes
         nil
       end
 
-      # Puts +labels+ on every open pull request of +subject+, stopping at
-      # the first refusal. A `gh` failure is logged, never raised: the round
-      # is decided either way, and the label is the decision's echo.
-      #
       # @param subject [Plans::Subject]
       # @param labels [Array<Plans::ReviewLabel>]
       # @return [String, nil] why a passing label was refused
-      def label(subject, labels)
-        return if @review.nil?
-
-        subject.pull_requests.select(&:open?).each do |pull|
-          refused = refusal(pull, labels) and return refused
-        end
-        nil
-      rescue Error => e
-        UI.log("could not label #{subject.feature.ordinal}: #{e.message}", level: :warn, plan: subject.feature.ordinal.to_s)
-        nil
-      end
+      def label(subject, labels) = @labels.put(subject, labels)
 
       # Labels the pull request for a decided round. A passing label refused
       # while CI is red or pending turns the round into a rejection: the
@@ -123,10 +156,33 @@ module OpenLanes
       # @param decision [Decision] decided, not pending
       # @return [Decision] the one the pull request now carries
       def conclude(subject, decision)
-        refused = label(subject, decision.verdict.labels) or return decision
+        refused = label(subject, decision.verdict.labels)
+        label(subject, [Plans::ReviewLabel::REJECTED]) if refused
+        # security-reviewer's own verdict, beside whatever the round came to.
+        label(subject, [decision.verdict.opsec].compact)
+        return decision unless refused
 
-        label(subject, [Plans::ReviewLabel::REJECTED])
         decision.with(target: :rejected, note: "#{decision.note}; rejected: #{refused}")
+      end
+
+      # The first group of reviewers has passed the pull request and a later
+      # group is still to read it: the pull request says what the first
+      # group said, and `review-in-progress` comes off until the next group
+      # starts ({#started} puts it back beside that verdict). Left on, it
+      # sat there through every wait for CI, and on a pull request merged
+      # by hand in the meantime it sat there for good. A verdict refused
+      # while CI is red or pending still takes the label off.
+      #
+      # @param subject [Plans::Subject]
+      # @param decision [Decision] pending
+      # @return [Decision] the same one
+      def paused(subject, decision)
+        notes = round(subject)
+        first = stage(subject, 1).map(&:name)
+        return decision unless notes.keys.sort == first.sort && votes(notes).passing?
+
+        @labels.finish(subject) if label(subject, votes(notes).labels)
+        decision
       end
 
       # @param subject [Plans::Subject]
@@ -137,6 +193,14 @@ module OpenLanes
       end
 
       private
+
+      # @param name [String]
+      # @param note [String, nil] the reviewer's verdict in this round
+      # @return [Boolean] whether it reported, and did not reject
+      def passed?(name, note)
+        vote = note && Plans::Verdict.vote(agent: name, note:)
+        !vote.nil? && !vote.rejected?
+      end
 
       # A rejection decides the round whatever the others would say, so it
       # waits only for a reviewer that is reading the pull request right now.
@@ -162,22 +226,29 @@ module OpenLanes
                       .to_h { [it["agent"], it["verdict"]] }
       end
 
+      # A stage-1 rejection or slop decides the round at once: no stage-2
+      # reviewer is started on code that is going back anyway.
+      #
+      # @return [Decision, nil]
+      def refused_early(subject, notes)
+        first = notes.slice(*stage(subject, 1).map(&:name))
+        decided(first) if first.size == stage(subject, 1).size && !votes(first).passing?
+      end
+
+      # @param subject [Plans::Subject]
+      # @param number [Integer]
+      # @return [Array<Agents::Agent>] this plan's reviewers in that stage
+      def stage(subject, number) = reviewers(subject).select { it.review_stage == number }
+
+      # @param notes [Hash{String => String}]
+      # @return [Plans::Verdict]
+      def votes(notes) = Plans.verdict(notes.map { |name, said| Plans::Verdict.vote(agent: name, note: said) })
+
       # @param notes [Hash{String => String}] every reviewer's note, by name
       # @return [Decision]
       def decided(notes)
-        verdict = Plans.verdict(notes.map { |name, said| Plans::Verdict.vote(agent: name, note: said) })
+        verdict = votes(notes)
         Decision.new(verdict:, pending: [], target: target(verdict, notes.values), note: "review #{verdict.names.join(" + ")}")
-      end
-
-      # @param pull [Plans::PullRequest]
-      # @param labels [Array<Plans::ReviewLabel>]
-      # @return [String, nil] why the first refused label was refused
-      def refusal(pull, labels)
-        labels.each do |label|
-          result = @review.call(pr: pull.url || pull.number, label: label.name)
-          return "##{result.pr} #{result.reason}" if result.refused?
-        end
-        nil
       end
 
       # @param verdict [Plans::Verdict]

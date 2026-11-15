@@ -68,10 +68,9 @@ module OpenLanes
         def numbered(numbers) = numbers.map { "##{it}" }.join(", ")
       end
 
-      # @param github [GitHub]
-      def initialize(github: GitHub.new)
-        @github = github
-      end
+      # `github:` defaults to the container's client, so a caller may pass
+      # its own and a spec may stub the key instead.
+      include Deps["github"]
 
       # @param repo [String, nil] "owner/repo"; nil means the current checkout's
       # @param dry_run [Boolean] read the pull requests, relabel none, mark nothing

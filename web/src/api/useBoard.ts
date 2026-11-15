@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AppStatus, Board, CopilotLog, Snapshot, WireBoard } from "./types";
+import type { AppStatus, Board, CopilotLog, InterviewTurn, Snapshot, WireBoard } from "./types";
 import { fetchBoard, isFixtureMode, loadFixtureBoard } from "./client";
+import { appliesTo, applyDelta } from "./boardDelta";
 import { openStream, type ConnectionState } from "./events";
-import { APPS_KEY, BOARD_KEY, COPILOT_KEY } from "./queryClient";
+import { APPS_KEY, BOARD_KEY, COPILOT_KEY, DEPENDENCIES_KEY } from "./queryClient";
 import { EMPTY_LOG, withTurn } from "./copilot";
+import { interviewKey, withTurn as withInterviewTurn } from "./interview";
 import { replies } from "./replies";
 import { chatBus } from "../chat/bus";
 import { withApp } from "../preview/model";
@@ -54,6 +56,10 @@ export function useBoard(): BoardState {
   // Counts stream events applied. A GET that sees it move while in flight left before the stream's news, and seq
   // cannot catch every such answer: `{me: null}` (the run finished) has no seq to lose to the snapshot it replaced.
   const streamed = useRef(0);
+  // The version of the board the stream last delivered; null before one arrives. A delta applies only onto it.
+  const version = useRef<number | null>(null);
+  // Bumped when a delta does not follow the board held: the effect below reopens the stream, which starts with a full board.
+  const [epoch, setEpoch] = useState(0);
   const query = useQuery<WireBoard>({
     queryKey: BOARD_KEY,
     queryFn: fixture
@@ -75,12 +81,28 @@ export function useBoard(): BoardState {
         // Cancelling reverts synchronously to the state before that GET, which the event then replaces.
         void client.cancelQueries({ queryKey: BOARD_KEY });
         streamed.current += 1;
+        version.current = board.version ?? null;
         client.setQueryData<WireBoard>(BOARD_KEY, old => reconcile(old, board));
+        // The dependency graph reads the archive too, which no snapshot carries: a plan that moved refetches it.
+        void client.invalidateQueries({ queryKey: DEPENDENCIES_KEY });
+      },
+      onBoardDelta: delta => {
+        if (!appliesTo(version.current, delta)) {
+          version.current = null;
+          setEpoch(n => n + 1);
+          return;
+        }
+        // No cancelQueries here, unlike onBoard: `streamed` already makes a GET in flight answer with this cache.
+        streamed.current += 1;
+        version.current = delta.version;
+        client.setQueryData<WireBoard>(BOARD_KEY, old => (old ? applyDelta(old, delta) : old));
       },
       onReply: reply => replies.deliver(reply),
       // A turn that arrives before the conversation's GET has answered starts the log: that GET may have read the
       // stream already, and then this event is the turn's only copy. The GET's answer is merged in when it lands.
       onCopilot: turn => client.setQueryData<CopilotLog>(COPILOT_KEY, old => withTurn(old ?? EMPTY_LOG, turn)),
+      onInterview: ({ plan, number, turn }) =>
+        client.setQueryData<InterviewTurn[]>(interviewKey(plan, number), old => withInterviewTurn(old ?? [], turn)),
       onChat: event => chatBus.deliver(event),
       onApps: apps => client.setQueryData<AppStatus[]>(APPS_KEY, apps),
       onApp: app => client.setQueryData<AppStatus[]>(APPS_KEY, old => withApp(old ?? [], app)),
@@ -94,9 +116,12 @@ export function useBoard(): BoardState {
         void client.cancelQueries({ queryKey: COPILOT_KEY });
         void client.refetchQueries({ queryKey: COPILOT_KEY });
       },
-      onReconnect: () => void client.refetchQueries({ queryKey: BOARD_KEY }),
+      onReconnect: () => {
+        void client.refetchQueries({ queryKey: BOARD_KEY });
+        void client.refetchQueries({ queryKey: ["interview"] }); // a turn sent while the stream was down
+      },
     }, eventsUrl());
-  }, [client, fixture]);
+  }, [client, fixture, epoch]);
 
   const data = query.data;
   // The page below works on a Board whose `me` is there; until it is, there is no board to show.

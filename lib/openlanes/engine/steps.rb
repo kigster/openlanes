@@ -13,9 +13,10 @@ module OpenLanes
     # None of them knows the dispatcher: what they need of it arrives as a
     # {Context} of callables.
     module Steps
-      # Seconds between passes over the pull requests: GitHub is asked up to
-      # three times per pull request on each.
-      POLL = 30
+      # Seconds between passes over the pull requests. One {Snapshot} per
+      # pass answers every reader, so a pass is one GraphQL call per hundred
+      # pull requests rather than three `gh` calls per pull request.
+      POLL = 10
 
       # What a step is handed by the dispatcher.
       #
@@ -27,7 +28,11 @@ module OpenLanes
       #   @return [#call] asks for a rescan on the next tick
       # @!attribute [r] reopen
       #   @return [#call] takes an ordinal off the plans finished in this run
-      Context = Data.define(:runner, :busy, :wake, :reopen)
+      # @!attribute [r] snapshot
+      #   @return [Snapshot, nil] the open pull requests, shared in a tick
+      Context = Data.define(:runner, :busy, :wake, :reopen, :snapshot) do
+        def initialize(snapshot: nil, **) = super
+      end
 
       module_function
 

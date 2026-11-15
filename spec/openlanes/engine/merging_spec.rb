@@ -15,9 +15,15 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
   let(:now) { Time.now }
   let(:green) { [{ "name" => "ci", "state" => "SUCCESS", "bucket" => "pass" }] }
   let(:numbers) { [1] }
+  # What a pull request carries when deploy-assessor is asked: the
+  # reviewers' verdict, security-reviewer's, and verifier's.
+  let(:carried) { %w[review-approved opsec-approved ready-to-merge] }
 
   def plan = OpenLanes::Plans::Tree.new(dir: plans_root).find("033.00")
   def labels(number = 1) = gh.dig("prs", number.to_s, "labels")
+
+  # Where the pull request stands, without the labels that sit beside that.
+  def stage(number = 1) = labels(number) - carried.first(2) - OpenLanes::Plans::ReviewLabel::RISK.map(&:name)
   def merges = gh_calls.select { it.take(2) == %w[pr merge] }.map { it[2].to_i }
   def rebases = gh_calls.select { it.take(2) == %w[pr update-branch] }.map { it[2].to_i }
   def risk = OpenLanes::Plans::PlanState.for(plan.feature.path).merge_risk
@@ -31,31 +37,43 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         prs:   numbers.map { t.open(it, "Part #{it}") }
     end
     edit_gh do |state|
-      state["labels"] = %w[ready-to-merge]
+      state["labels"] = carried
       state["prs"] = numbers.to_h do |n|
-        [n.to_s, gh_pr(title: "Part #{n}", url: "https://github.com/example/repo/pull/#{n}", labels: %w[ready-to-merge], checks: green)]
+        [n.to_s, gh_pr(title: "Part #{n}", url: "https://github.com/example/repo/pull/#{n}", labels: carried, checks: green)]
       end
     end
   end
 
   describe ".verdicts" do
-    it "reads one verdict per pull request, a bare one for the rest, and manual for anything unsaid" do
+    it "reads one risk per pull request, a bare one for the rest, and unassessed for anything unsaid" do
       aggregate_failures do
-        expect(described_class.verdicts("auto #12, manual #13", [12, 13, 14])).to eq(12 => "auto", 13 => "manual", 14 => "manual")
-        expect(described_class.verdicts("Auto", [1, 2])).to eq(1 => "auto", 2 => "auto")
-        expect(described_class.verdicts("auto, manual #2", [1, 2])).to eq(1 => "auto", 2 => "manual")
-        expect(described_class.verdicts(nil, [1])).to eq(1 => "manual")
-        expect(described_class.verdicts("looks fine to me", [1])).to eq(1 => "manual")
+        expect(described_class.verdicts("low #12, high #13", [12, 13, 14])).to eq(12 => "low", 13 => "high", 14 => "unassessed")
+        expect(described_class.verdicts("Low", [1, 2])).to eq(1 => "low", 2 => "low")
+        expect(described_class.verdicts("low, medium #2", [1, 2])).to eq(1 => "low", 2 => "medium")
+        expect(described_class.verdicts("risk-low #1, risk high #2", [1, 2])).to eq(1 => "low", 2 => "high")
+        expect(described_class.verdicts(nil, [1])).to eq(1 => "unassessed")
+        expect(described_class.verdicts("looks fine to me", [1])).to eq(1 => "unassessed")
       end
     end
 
-    it "reads anything but a bare verdict list as manual for every pull request" do
+    it "reads the words deploy-assessor signed before it named a risk" do
+      expect(described_class.verdicts("auto #12, manual #13", [12, 13])).to eq(12 => "low", 13 => "medium")
+    end
+
+    it "reads anything but a bare list of risks as unassessed for every pull request" do
       aggregate_failures do
-        expect(described_class.verdicts("Do not auto-merge; drops a column.", [1, 2])).to eq(1 => "manual", 2 => "manual")
-        expect(described_class.verdicts("Risky: do not auto-merge #13. manual", [13])).to eq(13 => "manual")
-        expect(described_class.verdicts("manual #2; auto", [1, 2])).to eq(1 => "manual", 2 => "manual")
-        expect(described_class.verdicts("auto #1, manual", [1, 2])).to eq(1 => "manual", 2 => "manual")
+        expect(described_class.verdicts("Not low enough to merge; drops a column.", [1, 2])).to eq(1 => "unassessed", 2 => "unassessed")
+        expect(described_class.verdicts("Risky: do not auto-merge #13. manual", [13])).to eq(13 => "unassessed")
+        expect(described_class.verdicts("high #2; low", [1, 2])).to eq(1 => "unassessed", 2 => "unassessed")
+        expect(described_class.verdicts("low #1, high", [1, 2])).to eq(1 => "unassessed", 2 => "unassessed")
       end
+    end
+  end
+
+  describe ".risk" do
+    it "reads a stored verdict of either vocabulary, and anything else as unassessed" do
+      expect(%w[low HIGH auto manual maybe].map { described_class.risk(it) } + [described_class.risk(nil)])
+        .to eq(%w[low high low medium unassessed unassessed])
     end
   end
 
@@ -85,11 +103,28 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       result = merging.assess(plan, "manual")
 
       aggregate_failures do
-        expect(result.note).to eq("PR #1 merge-manually: deploy-assessor said manual")
-        expect(labels).to eq(%w[merge-manually])
+        expect(result.note).to eq("PR #1 merge-manually: it lacks risk-low")
+        expect(stage).to eq(%w[merge-manually])
         expect(merges).to be_empty
         expect(plan.status.key).to eq(:completed)
-        expect(risk["verdicts"]).to eq("1" => "manual")
+        expect(risk["verdicts"]).to eq("1" => "medium")
+        expect(labels).to include("risk-medium", "review-approved", "opsec-approved")
+      end
+    end
+
+    it "reads the pull request from the tick's snapshot, with no gh pr view" do
+      row = { number: 1, url: "https://github.com/example/repo/pull/1", open: true, state: "OPEN", labels: %w[ready-to-merge], files: [], checks: [], head: "abc", merge_state: "CLEAN" }
+      snapshot = OpenLanes::Vcs::PullSnapshot.new(pulls: [row], taken_at: now)
+      reads = OpenLanes::Vcs::SnapshotReads.new(OpenLanes::Vcs::GitHub.new, snapshot: double(call: snapshot, refresh!: nil))
+      snapshotted = described_class.new(github: reads,
+        outcomes: OpenLanes::Engine::PrOutcomes.new(tree_dir: plans_root, agents: OpenLanes::Agents::Registry.new),
+        merge_by: :auto)
+
+      aggregate_failures do
+        expect(snapshotted.assess(plan, "manual").note).to eq("PR #1 merge-manually: it lacks risk-low")
+        # swap_label reads the labels it replaces, a write's own read; the
+        # step's read of the pull request asks for headRefOid.
+        expect(gh_calls.select { it.take(2) == %w[pr view] && it.join(" ").include?("headRefOid") }).to be_empty
       end
     end
 
@@ -113,6 +148,59 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
     end
   end
 
+  context "when the risk is low but the pull request lacks a label the merge needs" do
+    {
+      %w[review-passed opsec-approved ready-to-merge]             => "review-approved",
+      %w[review-approved opsec-concerned-approved ready-to-merge] => "opsec-approved",
+      %w[review-approved ready-to-merge]                          => "opsec-approved",
+      %w[ready-to-merge]                                          => "review-approved, opsec-approved"
+    }.each do |carrying, lacking|
+      context "with #{carrying.join(", ")} on it" do
+        let(:carried) { carrying }
+
+        it "labels it risk-low, merges nothing, and leaves it for a person" do
+          result = merging.assess(plan, "low")
+
+          aggregate_failures do
+            expect(result.note).to eq("PR #1 merge-manually: it lacks #{lacking}")
+            expect(labels).to eq(carrying - %w[ready-to-merge] + %w[risk-low merge-manually])
+            expect(merges).to be_empty
+          end
+        end
+      end
+    end
+  end
+
+  context "when the risk is high" do
+    it "says so on the pull request and leaves it for a person" do
+      result = merging.assess(plan, "high")
+
+      aggregate_failures do
+        expect(result.note).to eq("PR #1 merge-manually: it lacks risk-low")
+        expect(labels).to eq(%w[review-approved opsec-approved risk-high merge-manually])
+        expect(merges).to be_empty
+      end
+    end
+  end
+
+  context "when green and carrying review-approved, risk-low and opsec-approved" do
+    it "merges it, and the three labels stay beside auto-merged" do
+      merging.assess(plan, "low")
+
+      aggregate_failures do
+        expect(merges).to eq([1])
+        expect(labels).to eq(%w[review-approved opsec-approved risk-low auto-merged])
+      end
+    end
+
+    it "replaces a risk left from an earlier assessment" do
+      edit_gh { it["prs"]["1"]["labels"] << "risk-high" }
+      merging.assess(plan, "low")
+
+      expect(labels).to eq(%w[review-approved opsec-approved risk-low auto-merged])
+    end
+  end
+
   context "when deploy-assessor says auto but merge.by is human" do
     let(:merge_by) { :human }
 
@@ -121,7 +209,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
 
       aggregate_failures do
         expect(result.note).to eq("PR #1 merge-manually: merge.by is human")
-        expect(labels).to eq(%w[merge-manually])
+        expect(stage).to eq(%w[merge-manually])
         expect(merges).to be_empty
       end
     end
@@ -135,7 +223,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(result).to have_attributes(to: :approved, merged: true)
         expect(merges).to eq([1])
-        expect(labels).to eq(%w[auto-merged])
+        expect(stage).to eq(%w[auto-merged])
         expect(settled.status.key).to eq(:approved)
         expect(settled.pull_requests.first).to be_merged
       end
@@ -147,7 +235,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(merging.assess(plan, "auto").note).to eq("PR #1 waits on CI before it merges")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(stage).to eq(%w[ready-to-merge])
       end
     end
 
@@ -158,7 +246,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(result.note).to eq("PR #1 merge-manually: no CI checks ran")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[merge-manually])
+        expect(stage).to eq(%w[merge-manually])
       end
     end
 
@@ -174,7 +262,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(gh_calls.find { it.take(2) == %w[pr merge] }).to include("--match-head-commit", "c0ffee1")
         expect(result.note).to start_with("PR #1 merge-manually: could not merge #1: Head branch was modified")
-        expect(labels).to eq(%w[merge-manually])
+        expect(stage).to eq(%w[merge-manually])
       end
     end
 
@@ -183,9 +271,9 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       merging.assess(plan, "Do not auto-merge; drops a column.")
 
       aggregate_failures do
-        expect(OpenLanes::UI).to have_received(:log).with(/not a verdict list.*Do not auto-merge/, hash_including(level: :warn))
+        expect(OpenLanes::UI).to have_received(:log).with(/names no risk.*Do not auto-merge/, hash_including(level: :warn))
         expect(merges).to be_empty
-        expect(labels).to eq(%w[merge-manually])
+        expect(stage).to eq(%w[merge-manually])
       end
     end
 
@@ -195,7 +283,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
 
       aggregate_failures do
         expect(result.note).to start_with("PR #1 merge-manually: could not merge #1")
-        expect(labels).to eq(%w[merge-manually])
+        expect(stage).to eq(%w[merge-manually])
         expect(plan.status.key).to eq(:completed)
       end
     end
@@ -208,7 +296,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(result.note).to eq("PR #1 waits on its conflicts with main being resolved")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(stage).to eq(%w[ready-to-merge])
       end
     end
 
@@ -218,7 +306,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(merging.assess(plan, "auto").note).to include("waits on GitHub")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(stage).to eq(%w[ready-to-merge])
       end
     end
 
@@ -235,7 +323,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         expect(notes).to eq(["PR #1 waits on CI on main, which is red", "PR #1 waits on CI on main, which is pending",
                              "PR #1 waits on CI on main, which is none"])
         expect(merges).to be_empty
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(stage).to eq(%w[ready-to-merge])
       end
     end
 
@@ -265,7 +353,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
       aggregate_failures do
         expect(result.note).to eq("PR #1 waits on its branch being rebased onto main")
         expect(merges).to be_empty
-        expect(labels).to eq(%w[ready-to-merge])
+        expect(stage).to eq(%w[ready-to-merge])
       end
     end
 
@@ -286,7 +374,7 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
           expect(waiting.note).to eq("PR #2 waits on CI before it merges")
           expect(last).to have_attributes(merged: true, to: :approved)
           expect(merges).to eq([1, 2])
-          expect([labels(1), labels(2)]).to eq([%w[auto-merged], %w[auto-merged]])
+          expect([stage(1), stage(2)]).to eq([%w[auto-merged], %w[auto-merged]])
         end
       end
 
@@ -299,8 +387,8 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         aggregate_failures do
           expect(result.to).to eq(:rejected)
           expect(result.note).to include("PR #2 back to the builders", "no longer rebases onto main")
-          expect(labels(1)).to eq(%w[auto-merged])
-          expect(labels(2)).to eq(%w[review-rejected])
+          expect(stage(1)).to eq(%w[auto-merged])
+          expect(stage(2)).to eq(%w[review-rejected])
           expect(gh.dig("prs", "2", "comments").map { it["body"] }.join).to include("Cannot update PR branch due to conflicts")
           expect(rejected.status.key).to eq(:rejected)
           expect(mail.map(&:to)).to include("backend-coder", "frontend-coder")
@@ -312,9 +400,9 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
 
         aggregate_failures do
           expect(merges).to eq([1])
-          expect(labels(2)).to eq(%w[ready-to-merge])
+          expect(stage(2)).to eq(%w[ready-to-merge])
           merging.advance(OpenLanes::Plans::Tree.new(dir: plans_root).find("033.00"))
-          expect(labels(2)).to eq(%w[merge-manually])
+          expect(stage(2)).to eq(%w[merge-manually])
         end
       end
     end
@@ -388,12 +476,12 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         expect(first).to have_attributes(merged: true)
         expect(first.note).to include("PR #2 merge-manually: rebase onto main failed: lease refused")
         expect(OpenLanes::UI).to have_received(:log).with(/rebase after merging #1 not finished: lease refused/, hash_including(level: :warn))
-        expect(labels(2)).to eq(%w[merge-manually])
+        expect(stage(2)).to eq(%w[merge-manually])
         expect(gh.dig("prs", "2", "comments").map { it["body"] }).to include("rebase onto main failed: lease refused")
         expect(merges).to eq([1])
         expect(later.note).not_to include("auto-merged")
         expect(merges).to eq([1])
-        expect(labels(2)).to eq(%w[merge-manually])
+        expect(stage(2)).to eq(%w[merge-manually])
       end
     end
 
@@ -407,8 +495,8 @@ RSpec.describe OpenLanes::Engine::Merging, :fake_gh, :tree do
         merging.advance(plan)
 
         aggregate_failures do
-          expect(labels(2)).to eq(%w[merge-manually])
-          expect(labels(3)).to eq(%w[merge-manually])
+          expect(stage(2)).to eq(%w[merge-manually])
+          expect(stage(3)).to eq(%w[merge-manually])
           expect(merges).to eq([1])
         end
       end

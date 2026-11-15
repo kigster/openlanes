@@ -98,7 +98,7 @@ module OpenLanes
         payload = { method: env["REQUEST_METHOD"], path: env["PATH_INFO"], status: status.to_i, page: page(env) }.compact
         entry = { message:, payload:, exception: }.compact
         entry[:duration] = ((@clock.call - started) * 1000).round(1) if started
-        (@logger || Log.logger).public_send(level, **entry)
+        (@logger || Container["logger"]).public_send(level, **entry)
       rescue StandardError
         # A log that cannot be written is no reason to fail the request.
         nil

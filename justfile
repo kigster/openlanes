@@ -119,6 +119,10 @@ update-workflow:
 update-architecture:
     bundle exec openlanes uml self --directory docs/architecture
 
+# Rewrite schemas/openlanes-config.schema.json, commands included, from lib/
+update-config-schema:
+    bundle exec ruby -Ilib -e 'require "openlanes"; OpenLanes::Config::Schema.write'
+
 # Run all the tests
 test *args: web-build
     export ENVIRONMENT=test; {{ rbenv }} rspec {{ args }}

@@ -8,6 +8,8 @@ module OpenLanes
     #
     # - {Addressing}: a `review-rejected` pull request whose fixes were
     #   pushed after the rejection becomes `review-addressed` (U1).
+    # - {Finishing}: `review-in-progress` comes off a pull request nobody is
+    #   reviewing any more.
     # - {Sweep}: whenever `main` moves, the pull requests waiting to merge
     #   are asked whether they still merge clean (U2, U4). {Verdict} reads
     #   GitHub's answer, {Actions} acts on it there, and {Owed} remembers who
@@ -55,6 +57,7 @@ module OpenLanes
       def keeper(push:, github: Container["github"], clock: Container["clock"].method(:now))
         owed = Owed.new
         Keeper.new(addressing: Addressing.new(github:),
+          finishing: Finishing.new(github:),
           sweep: Sweep.new(github:, owed:, actions: Actions.new(github:, clock:)),
           resolution: Resolution.new(owed:, push:),
           owed:)

@@ -20,6 +20,7 @@ classDiagram
   class OpenLanes__Engine["OpenLanes::Engine"]
   <<module>> OpenLanes__Engine
   class OpenLanes__Engine__Board["OpenLanes::Engine::Board"]
+  class OpenLanes__Engine__CliPause["OpenLanes::Engine::CliPause"]
   class OpenLanes__Engine__Extensions["OpenLanes::Engine::Extensions"]
   class OpenLanes__Engine__QualityQuestion["OpenLanes::Engine::QualityQuestion"]
   <<module>> OpenLanes__Engine__QualityQuestion
@@ -38,6 +39,9 @@ classDiagram
   class OpenLanes__Lifecycle__Unblocker["OpenLanes::Lifecycle::Unblocker"]
   class OpenLanes__Live["OpenLanes::Live"]
   <<module>> OpenLanes__Live
+  class OpenLanes__Live__BoardDelta["BoardDelta"]
+  <<module>> OpenLanes__Live__BoardDelta
+  class OpenLanes__Live__BoardDelta__Stream["BoardDelta::Stream"]
   class OpenLanes__Live__Chat["Chat"]
   class OpenLanes__Live__Chat__Invalid["Chat::Invalid"]
   class OpenLanes__Live__Chat__Settled["Chat::Settled"]
@@ -55,9 +59,13 @@ classDiagram
   <<module>> OpenLanes__Live__Copilot__Cards
   class OpenLanes__Live__Copilot__Invalid["Copilot::Invalid"]
   class OpenLanes__Live__Copilot__Operator["Copilot::Operator"]
+  class OpenLanes__Live__Copilot__Report["Copilot::Report"]
+  class OpenLanes__Live__Copilot__RestartNote["Copilot::RestartNote"]
   class OpenLanes__Live__Copilot__Slash["Copilot::Slash"]
   <<module>> OpenLanes__Live__Copilot__Slash
+  class OpenLanes__Live__Copilot__Slash__Entry["Copilot::Slash::Entry"]
   class OpenLanes__Live__Copilot__Slash__Help["Copilot::Slash::Help"]
+  class OpenLanes__Live__Copilot__Slash__Query["Copilot::Slash::Query"]
   class OpenLanes__Live__Copilot__Turn["Copilot::Turn"]
   class OpenLanes__Live__Copilot__Unanswered["Copilot::Unanswered"]
   class OpenLanes__Live__EventBus["EventBus"]
@@ -68,6 +76,12 @@ classDiagram
   class OpenLanes__Live__EventBus__Transaction["EventBus::Transaction"]
   class OpenLanes__Live__GroupMissing["GroupMissing"]
   class OpenLanes__Live__Holder["Holder"]
+  class OpenLanes__Live__Interview["Interview"]
+  class OpenLanes__Live__Interview__Brief["Interview::Brief"]
+  class OpenLanes__Live__Interview__Feed["Interview::Feed"]
+  class OpenLanes__Live__Interview__Invalid["Interview::Invalid"]
+  class OpenLanes__Live__Interview__Operator["Interview::Operator"]
+  class OpenLanes__Live__Interview__Turn["Interview::Turn"]
   class OpenLanes__Live__Interviewer["Interviewer"]
   class OpenLanes__Live__Keys["Keys"]
   class OpenLanes__Live__Mail["Mail"]
@@ -103,6 +117,10 @@ classDiagram
   <<module>> OpenLanes__Plans__BlockedFile
   class OpenLanes__Plans__Choices["OpenLanes::Plans::Choices"]
   class OpenLanes__Plans__Feature["OpenLanes::Plans::Feature"]
+  class OpenLanes__Plans__Findings["OpenLanes::Plans::Findings"]
+  <<module>> OpenLanes__Plans__Findings
+  class OpenLanes__Plans__Findings__NotFound["OpenLanes::Plans::Findings::NotFound"]
+  class OpenLanes__Plans__Findings__UnknownVerdict["OpenLanes::Plans::Findings::UnknownVerdict"]
   class OpenLanes__Plans__GlobalLock["OpenLanes::Plans::GlobalLock"]
   class OpenLanes__Plans__Lock["OpenLanes::Plans::Lock"]
   class OpenLanes__Plans__Mailbox["OpenLanes::Plans::Mailbox"]
@@ -111,6 +129,8 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Plans__StateMachine["OpenLanes::Plans::StateMachine"]
   class OpenLanes__Plans__Verdict["OpenLanes::Plans::Verdict"]
+  class OpenLanes__Supervision["OpenLanes::Supervision"]
+  <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
   <<module>> OpenLanes__UI
   OpenLanes__Live ..> OpenLanes__Config : uses
@@ -129,6 +149,7 @@ classDiagram
   OpenLanes__Live ..> OpenLanes__Live__Session : uses
   OpenLanes__Live ..> OpenLanes__Live__Store : uses
   OpenLanes__Live ..> OpenLanes__Live__Unavailable : uses
+  OpenLanes__Live__BoardDelta__Stream ..> OpenLanes__Live__BoardDelta : uses
   OpenLanes__Live__Chat ..> OpenLanes__Error : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Invalid : uses
   OpenLanes__Live__Chat ..> OpenLanes__Live__Chat__Settled : uses
@@ -153,6 +174,7 @@ classDiagram
   OpenLanes__Live__Command ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Command__Invalid --|> OpenLanes__Error : inherits
   OpenLanes__Live__Commands ..> OpenLanes__Config : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Engine__Extensions : uses
   OpenLanes__Live__Commands ..> OpenLanes__Engine__QualityQuestion : uses
   OpenLanes__Live__Commands ..> OpenLanes__Error : uses
   OpenLanes__Live__Commands ..> OpenLanes__Execution__Control : uses
@@ -165,6 +187,7 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Live__Copilot : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__GroupMissing : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Live__Interview : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Keys : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__News : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Reply : uses
@@ -172,17 +195,23 @@ classDiagram
   OpenLanes__Live__Commands ..> OpenLanes__Live__Snapshot : uses
   OpenLanes__Live__Commands ..> OpenLanes__Live__Unavailable : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Feature : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__NotFound : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Plans__Findings__UnknownVerdict : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Mailbox : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__PlanState : uses
   OpenLanes__Live__Commands ..> OpenLanes__Plans__Spec : uses
+  OpenLanes__Live__Commands ..> OpenLanes__Supervision : uses
   OpenLanes__Live__Commands ..> OpenLanes__UI : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Agents__Names : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Error : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Command : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Invalid : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Report : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Slash : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Slash__Help : uses
+  OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Slash__Query : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Copilot__Unanswered : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__EventBus : uses
   OpenLanes__Live__Copilot ..> OpenLanes__Live__Keys : uses
@@ -205,8 +234,11 @@ classDiagram
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot__Brief : uses
   OpenLanes__Live__Copilot__Operator ..> OpenLanes__Live__Copilot__Cards : uses
+  OpenLanes__Live__Copilot__RestartNote ..> OpenLanes__Live__Copilot : uses
   OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Command : uses
+  OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Copilot__Slash__Entry : uses
   OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Copilot__Slash__Help : uses
+  OpenLanes__Live__Copilot__Slash ..> OpenLanes__Live__Copilot__Slash__Query : uses
   OpenLanes__Live__Copilot__Slash ..> OpenLanes__Plans__Ordinal : uses
   OpenLanes__Live__Copilot__Turn ..> OpenLanes__Live__Command : uses
   OpenLanes__Live__Copilot__Turn ..> OpenLanes__Live__Command__Invalid : uses
@@ -222,6 +254,24 @@ classDiagram
   OpenLanes__Live__EventBus__RedisBus --|> OpenLanes__Live__EventBus__Base : inherits
   OpenLanes__Live__EventBus__Transaction ..> OpenLanes__Live__Store : uses
   OpenLanes__Live__GroupMissing --|> OpenLanes__Error : inherits
+  OpenLanes__Live__Interview ..> OpenLanes__Error : uses
+  OpenLanes__Live__Interview ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Live__Interview ..> OpenLanes__Live__Interview__Feed : uses
+  OpenLanes__Live__Interview ..> OpenLanes__Live__News : uses
+  OpenLanes__Live__Interview__Feed ..> OpenLanes__Live__EventBus : uses
+  OpenLanes__Live__Interview__Invalid --|> OpenLanes__Error : inherits
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Adapters__Invocation : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Agents : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Agents__Profile : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Error : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Execution__Child : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Copilot__Operator : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview__Brief : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Live__Interview__Invalid : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Plans : uses
+  OpenLanes__Live__Interview__Operator ..> OpenLanes__Plans__Ordinal : uses
+  OpenLanes__Live__Interview__Turn ..> OpenLanes__Live__Interview__Invalid : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Config : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Live__ChoiceConverter : uses
   OpenLanes__Live__Interviewer ..> OpenLanes__Live__ChoiceConverter__Invalid : uses
@@ -257,6 +307,7 @@ classDiagram
   OpenLanes__Live__Session ..> OpenLanes__Adapters : uses
   OpenLanes__Live__Session ..> OpenLanes__Adapters__Probes : uses
   OpenLanes__Live__Session ..> OpenLanes__Config : uses
+  OpenLanes__Live__Session ..> OpenLanes__Engine__CliPause : uses
   OpenLanes__Live__Session ..> OpenLanes__Live : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Claims : uses
   OpenLanes__Live__Session ..> OpenLanes__Live__Commands : uses

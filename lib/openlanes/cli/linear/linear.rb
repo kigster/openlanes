@@ -26,7 +26,7 @@ module OpenLanes
         # @return [OpenLanes::Linear::Survey]
         def survey_for(team, tree)
           key = OpenLanes::Linear.key!(team)
-          api = OpenLanes::Linear::API.new(token: OpenLanes::Linear::API.token_from_env)
+          api = OpenLanes::Container["linear"]
           projects = UI.spinning("Listing #{key} projects") { api.projects(api.team(key)[:id]) }
           [api, OpenLanes::Linear::Survey.new(tree:, projects:)]
         end

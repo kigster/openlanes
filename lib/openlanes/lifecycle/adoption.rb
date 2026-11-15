@@ -60,7 +60,7 @@ module OpenLanes
       # @param github [OpenLanes::Vcs::GitHub]
       # @param root [String] repository root, for reading branches
       # @param jobs [Integer] workers for the two parallel phases
-      def initialize(tree:, github: Vcs::GitHub.new, root: nil, jobs: UI.default_jobs)
+      def initialize(tree:, github: Container["github"], root: nil, jobs: UI.default_jobs)
         @tree = tree
         @github = github
         @root = root || File.dirname(tree.dir)

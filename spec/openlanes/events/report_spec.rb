@@ -76,4 +76,46 @@ RSpec.describe OpenLanes::Events::Report do
       time_to_answer: { count: 0, median_s: nil, max_s: nil })
     expect(empty.to_h.keys).to eq(OpenLanes::Events::Report::Result.members)
   end
+
+  describe "memory on against --no-memory" do
+    let(:unnamed) { { project: "p", agent: nil, adapter: nil, model: nil } }
+    # Two memory-on runs, one --no-memory run, and one recorded before runs
+    # said which: plan 1 approved first time, plan 2 on the third review,
+    # plan 3 (no memory) on the second, plan 4 in the unknown run.
+    let(:log) do
+      [started("s1", "on1", true), started("s2", "on2", true), started("s3", "off1", false), started("s4", "old", nil),
+       review("r1", "on1", "001.00", "approved"),
+       review("r2", "on1", "002.00", "rejected"), review("r3", "on1", "002.00", "rejected"),
+       review("r4", "on2", "002.00", "approved"),
+       review("r5", "off1", "003.00", "rejected"), review("r6", "off1", "003.00", "approved"),
+       review("r7", "old", "004.00", "approved")]
+    end
+
+    # @param fields [Hash] plan:, at: (a date), and the payload
+    def logged(id, kind, run, **fields)
+      plan = fields.delete(:plan)
+      at = "#{fields.delete(:at) || "2026-11-01"}T12:00:00Z"
+      OpenLanes::Events::Event.new(event_id: id, kind:, at:, plan:, run:, **unnamed, payload: fields.transform_keys(&:to_s))
+    end
+
+    def review(id, run, plan, verdict) = logged(id, "pr_reviewed", run, plan:, at: "2026-11-0#{id[1..]}", number: plan.to_i, verdict:)
+
+    def started(id, run, memory) = logged(id, "run_started", run, jobs: 1, isolation: "worktree", **({ memory: } unless memory.nil?).to_h)
+
+    it "gives rounds to first approval per side, and leaves unknown runs out of both" do
+      expect(JSON.parse(JSON.generate(OpenLanes::Events.report(log).to_h))["memory"]).to eq(
+        "on"  => { "runs" => 2, "approved" => 2, "rounds_mean" => 2.0, "rounds_median" => 2.0 },
+        "off" => { "runs" => 1, "approved" => 1, "rounds_mean" => 2.0, "rounds_median" => 2.0 }
+      )
+    end
+
+    it "leaves out a plan rejected without memory and approved with it, rather than charging either side" do
+      mixed = log + [review("r8", "off1", "005.00", "rejected"), review("r9", "on1", "005.00", "approved")]
+
+      expect(JSON.parse(JSON.generate(OpenLanes::Events.report(mixed).to_h))["memory"]).to include(
+        "on"  => include("approved" => 2, "rounds_mean" => 2.0),
+        "off" => include("approved" => 1, "rounds_mean" => 2.0)
+      )
+    end
+  end
 end

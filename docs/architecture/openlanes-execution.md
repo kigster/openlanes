@@ -9,6 +9,7 @@ classDiagram
   class OpenLanes__Agents__Profile["OpenLanes::Agents::Profile"]
   class OpenLanes__Agents__Registry["OpenLanes::Agents::Registry"]
   class OpenLanes__Config["OpenLanes::Config"]
+  class OpenLanes__Container["OpenLanes::Container"]
   class OpenLanes__Error["OpenLanes::Error"]
   class OpenLanes__Execution["OpenLanes::Execution"]
   <<module>> OpenLanes__Execution
@@ -55,8 +56,6 @@ classDiagram
   class OpenLanes__Plans__Spec["OpenLanes::Plans::Spec"]
   class OpenLanes__Runtime["OpenLanes::Runtime"]
   <<module>> OpenLanes__Runtime
-  class OpenLanes__Spawner__System["OpenLanes::Spawner::System"]
-  <<module>> OpenLanes__Spawner__System
   class OpenLanes__Supervision["OpenLanes::Supervision"]
   <<module>> OpenLanes__Supervision
   class OpenLanes__UI["OpenLanes::UI"]
@@ -69,14 +68,14 @@ classDiagram
   OpenLanes__Execution ..> OpenLanes__Execution__ReviewPacket : uses
   OpenLanes__Execution ..> OpenLanes__Execution__Trace : uses
   OpenLanes__Execution ..> OpenLanes__Vcs__GitHub : uses
+  OpenLanes__Execution__AgentProcess ..> OpenLanes__Container : uses
   OpenLanes__Execution__AgentProcess ..|> OpenLanes__Execution__AgentProcess__Registry : includes
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__AgentSupervisor : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Execution__Child : uses
-  OpenLanes__Execution__AgentProcess ..> OpenLanes__Spawner__System : uses
   OpenLanes__Execution__AgentProcess ..> OpenLanes__Supervision : uses
   OpenLanes__Execution__AgentProcess__Registry ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Boundary ..> OpenLanes__Execution__Boundary__Snapshot : uses
-  OpenLanes__Execution__Child ..> OpenLanes__Spawner__System : uses
+  OpenLanes__Execution__Child ..> OpenLanes__Container : uses
   OpenLanes__Execution__Child ..> OpenLanes__UI : uses
   OpenLanes__Execution__Clock ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Control ..> OpenLanes__Execution__ShutdownGrace : uses

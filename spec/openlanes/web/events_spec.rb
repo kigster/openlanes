@@ -232,6 +232,29 @@ RSpec.describe OpenLanes::Web::Events do
       end
     end
 
+    context "when one plan of many changes" do
+      def busy(seq, tokens)
+        plans = (1..6).map { |n| { ordinal: format("%03d.00", n), title: "plan #{n} " * 20, up: n == 1 ? tokens : n } }
+        store.set(keys.snapshot(keys.node), JSON.generate(seq:, node: { id: keys.node, checkout: "~/w", host: keys.node }, plans:))
+      end
+
+      let(:data) { frames.grep(/\Aevent: board/).map { [it[/event: (\w+)/, 1], JSON.parse(it[/^data: (.*)$/, 1])] } }
+
+      before do
+        busy(1, 100)
+        run_ticks { |tick| busy(2, 200) if tick == 1 }
+      end
+
+      it "sends the board whole once, then a delta on its version" do
+        aggregate_failures do
+          expect(data.map(&:first)).to eq(%w[board board_delta])
+          expect(data.first.last["version"]).to eq(1)
+          expect(data.last.last.slice("base", "version")).to eq("base" => 1, "version" => 2)
+          expect(data.last.last["upsert"].map { it["key"] }).to eq(["node/#{keys.node}/~/w", "plan/#{keys.node}/~/w/001.00"])
+        end
+      end
+    end
+
     context "when another node appears" do
       before do
         run_ticks { |tick| publish(1, node: "cccc:dddd") if tick == 1 }

@@ -1,0 +1,9 @@
+.interview .iv-turn { margin: 0 0 12px; }
+.interview .iv-turn.is-you { text-align: right; }
+.interview .iv-who { font-size: 0.75rem; opacity: 0.7; margin: 0 0 2px; }
+.interview .iv-said { white-space: pre-wrap; }
+.interview .iv-options { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.interview .iv-decision { border: 1px solid currentColor; border-radius: 6px; padding: 8px; margin-top: 8px; }
+.interview .iv-note { font-size: 0.85rem; opacity: 0.8; }
+.interview .iv-composer { display: flex; flex-direction: column; gap: 6px; }
+.interview .iv-composer textarea { width: 100%; min-height: 56px; }

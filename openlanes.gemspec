@@ -86,6 +86,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "aasm"
   spec.add_dependency "concurrent-ruby"
   spec.add_dependency "dry-cli"
+  spec.add_dependency "json_schemer" # Config.parse validates .openlanes.yml at runtime (S4)
   spec.add_dependency "dry-cli-autocomplete", "~> 0.5"
   # 0.5.1 was the first release whose help screen survives `example [""]`,
   # which four commands here declare.
