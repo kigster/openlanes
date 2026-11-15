@@ -615,6 +615,46 @@ RSpec.describe OpenLanes::Web::App, :tree do
       get "/api/plans/009.00/files"
       expect([last_response.status, body]).to eq([404, { "error" => "there is no plan 009.00" }])
     end
+
+    context "with a symlink out of the folder, a file over the cap and one that is not text" do
+      before do
+        folder = Dir[File.join(plans_root, "005.00*")].first
+        outside = File.join(plans_root, "..", "outside-secret.txt")
+        File.write(outside, "outside .plans\n")
+        File.symlink(outside, File.join(folder, "spec.md"))
+        File.write(File.join(folder, "research.md"), "x" * (OpenLanes::Web::PlanFiles::MAX_BYTES + 1))
+        File.binwrite(File.join(folder, "plan.md"), "\xFF\xFE\x00binary".b)
+      end
+
+      it "does not list the symlink" do
+        get "/api/plans/005.00/files"
+        expect(body).to eq("files" => %w[plan.md research.md])
+      end
+
+      it "answers 404 for the symlink" do
+        get "/api/plans/005.00/files/spec.md"
+        expect([last_response.status, body]).to eq([404, { "error" => "005.00 has no spec.md" }])
+      end
+
+      it "answers 413 for the file over the cap" do
+        get "/api/plans/005.00/files/research.md"
+        expect([last_response.status, body]).to eq([413, { "error" => "research.md is 1025 KB; files over 1024 KB are not shown here" }])
+      end
+
+      it "answers 415 for the file that is not text" do
+        get "/api/plans/005.00/files/plan.md"
+        expect([last_response.status, body]).to eq([415, { "error" => "plan.md is not UTF-8 text, so it cannot be shown" }])
+      end
+    end
+
+    it "answers 404, not an empty list or a 500, when the folder is renamed mid-request" do
+      folder = Dir[File.join(plans_root, "005.00*")].first
+      feature = instance_double(OpenLanes::Plans::Feature, path: "#{folder}-gone")
+      stale = instance_double(OpenLanes::Plans::Tree, find: instance_double(OpenLanes::Plans::Subject, feature:))
+      allow(OpenLanes::Plans).to receive(:tree).and_return(stale)
+      get "/api/plans/005.00/files"
+      expect([last_response.status, body]).to eq([404, { "error" => "plan 005.00 moved while it was read; try again" }])
+    end
   end
 
   describe "PUT /api/plans/:ordinal/files/:name" do

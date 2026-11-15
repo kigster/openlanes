@@ -200,6 +200,16 @@ module OpenLanes
         json(error: env["sinatra.error"].message)
       end
 
+      error PlanFiles::TooLarge do
+        status 413
+        json(error: env["sinatra.error"].message)
+      end
+
+      error PlanFiles::NotText do
+        status 415
+        json(error: env["sinatra.error"].message)
+      end
+
       error Live::Unavailable do
         status 503
         json(error: env["sinatra.error"].message)
