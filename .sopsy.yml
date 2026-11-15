@@ -6,6 +6,13 @@ recipients:
 - name: break-glass
   public_key: age16njzjmtuae0f8p82tu7uuyd25m28qr2jnfdm08cmt9em77xrhchslufj8n
   break_glass: true
+- name: Hermes
+  public_key: age1cmawpguvc4wcjdeu0unus5ak42a3a3v8zuhmd3zrzhyyp235t9wq6vchaf
+  username: hermes
+  state: pending
+  requested_at: 2026-11-15T10:57:24Z
+  break_glass: false
+  store: file
 encrypted_globs:
 - '*.encrypted'
 - .env.encrypted
