@@ -47,7 +47,7 @@ RSpec.describe "/api/settings", :origin do
     get "/api/settings"
 
     expect(last_response.status).to eq(200)
-    expect(body.keys).to eq(%w[schema keys values defaults etag branch])
+    expect(body.keys).to eq(%w[schema keys values defaults etag branch file])
     expect(body).to include("keys" => OpenLanes::Config::KEYS, "values" => { "jobs" => 2 }, "etag" => etag, "branch" => "main")
     expect(body.dig("schema", "properties", "commands", "properties")).to include("run")
   end
