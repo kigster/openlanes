@@ -1,0 +1,229 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kigster/openlanes/main/schemas/openlanes-config.schema.json
+#
+# An example of .openlanes/config.yml with every section filled in. Copy what
+# you need into .openlanes/config.yml; openlanes never reads this file.
+#
+# Every key is optional, and a key left out takes the built-in default named
+# in its comment. An unknown key or a bad value is an error naming the file
+# (exit 65), so delete a section rather than leaving it half filled in.
+#
+# Precedence, loudest first: a flag typed on the command line, the plan's
+# spec.md frontmatter, this file, the built-in default.
+
+project: Demo App                  # heading for INDEX.md; default: the root's directory name
+starts: research                   # where `openlanes create` starts a plan: research | planning | building
+frontend: false                    # a spec's `frontend:` when spec.md omits it; omit to let each plan decide
+jobs: 4                            # how many plans `openlanes run` works on at once
+adapter: claude                    # the coding agent for every agent that names none: claude | codex | pi | grok | gemini
+chime: true                        # whether the control room dings when a question arrives; default: on
+
+desired_codebase_quality: standard # high | standard | mvp: what a review that is ok but not perfect does
+
+# The Redis the live run shares, and what happens when it goes away.
+redis_url: redis://localhost:6379/0  # a redis://, rediss:// or unix:// URL
+redis_outage_hours: 1              # how long agents stay paused for a lost Redis before the run shuts down
+redis_backoff:
+  initial: 1                       # seconds; the Fibonacci gaps are its multiples
+  cap: 30                          # seconds, the longest gap between two asks
+  jitter: true                     # full jitter: each gap drawn from [0, gap)
+
+ci_pending_hours: 4                # how long CI may stay pending after verification before a person is told
+
+merge:
+  by: human                        # human | auto: who merges a reviewed pull request
+  max_rejections: 2                # rejections before the plan stops going back to its builders
+
+review:
+  adapters: [claude, codex, gemini]  # the reviewers are dealt across these, main one first; default: `adapter:`
+
+refactor:
+  threshold: 50                    # percent of the codebase above which a refactor runs alone
+  lock_hours: 24                   # how long a refactor's global lock holds
+
+budget:
+  plan_usd: 25                     # the most a plan may spend, in estimated dollars; unset is no cap
+
+plans:
+  aging_since: 2026-01-01          # no blocked plan ages from before this date
+
+questions:
+  model: anthropic/claude-haiku-5.5  # the OpenRouter model that rewrites prose questions into choices
+
+events:
+  enabled: false                   # whether runs append to the durable event log
+  dir: /var/lib/openlanes/events   # an absolute path; default: under $XDG_STATE_HOME
+
+ci:
+  provider: github_actions         # github_actions | circleci | jenkins | external | none
+  config: .github/workflows/ci.yml
+
+# The project's stack, also written to docs/decisions/stack.md.
+stack:
+  language: ruby
+  frameworks: [rails]
+  front_end: react
+  persistence: postgresql
+  caching: redis
+  logins: devise
+  deployment: kamal
+  domain: demo.example.com
+
+# The builders' model and effort by the plan's largest unit. These are the
+# defaults; a size or a key left out keeps its default.
+sizing:
+  small: { model: sonnet, effort: medium }
+  medium: { model: opus, effort: medium }
+  large: { model: opus, effort: high }
+
+# What the coverage gate measures. `command` and `minimum` are required, plus
+# one of two ways to read the figure, never both: `report_command`, or
+# `report` with `format` (lcov | cobertura | istanbul | simplecov).
+coverage:
+  command: bundle exec rspec
+  report_command: jq '.total.lines.percent' coverage/coverage.json
+  minimum: 95
+
+# The application openlanes is working on. `openlanes init` writes this
+# section with the name filled in and the rest empty.
+application:
+  name: Demo App
+  description: Books appointments for small clinics
+  current_phase: beta              # mvp | alpha | beta | in-production
+  commands:                        # shell commands, run from the project root
+    setup: bin/setup               # installs what the application needs, once per checkout
+    before_start: bin/rails db:prepare
+    start:                         # a list, because several things may start together
+      - bin/rails server
+      - bin/vite dev
+    stop:                          # a list, one command for each thing to stop
+      - pkill -f "rails server"
+      - pkill -f "vite dev"
+    after_stop: bin/rails tmp:clear
+    backend_tests: bundle exec rspec
+    frontend_tests: npm test
+    other_tests: npx cypress run
+    ci_tests: just ci              # the nearest local equivalent of everything CI runs
+
+# How to run the app a plan builds, for the control room's Preview tab.
+# Each process gets a port in $PORT_<NAME>.
+app:
+  kind: web
+  processes:
+    - name: api
+      start: bundle exec rails server --port $PORT_API
+      ready: /up
+      restart_on: [config, lib]
+    - name: web
+      start: npx vite --port $PORT_WEB --strictPort
+      ready: /
+      preview: true
+
+# Option defaults for any command, by the name you type it as. `jobs`,
+# `starts` and `project` above are the same settings as commands.run.jobs,
+# commands.create.starts and commands.index.project: set either spelling,
+# not both. `dry_run` cannot be a default.
+commands:
+  run:
+    isolation: worktree            # worktree: a checkout and branch per plan. shared: one tree, serial
+    timeout: 1800                  # seconds on every agent's clock, where it is tighter than the agent's own
+    log_level: info                # debug | info | warn | error | fatal
+    log_format: standard           # color | standard | json
+    memory: true                   # tell each agent the lessons meant for it
+  resync prs:
+    adopt: false
+
+# This machine's changes to an agent, by its name. Each key replaces the same
+# key of agents/<name>.md and nothing else, and an agent left out runs as its
+# definition says. The values below are the shipped defaults, so this section
+# changes nothing until you edit it.
+#
+#   timeout            seconds on a round's clock; `--timeout` still only tightens it
+#   rounds             rounds the agent gets on one plan state, 1 to 5
+#   model              the model it runs on; spec.md `phases:` and `sizing:` still outrank it
+#   effort             low | medium | high | xhigh | max
+#   extension_cap      seconds the engine adds to a round's clock on its own; default 900
+#   extension_ceiling  seconds, the most the arbitrator may add to a round; default 3600
+agents:
+  researcher:
+    model: haiku
+    effort: medium
+    timeout: 1500
+    rounds: 1
+  spec-writer:
+    model: sonnet
+    effort: medium
+    timeout: 1500
+    rounds: 1
+  planner:
+    model: opus
+    effort: high
+    timeout: 1200
+    rounds: 1
+  backend-coder:
+    model: opus
+    effort: high
+    timeout: 1800
+    rounds: 1
+    extension_cap: 900
+    extension_ceiling: 3600
+  frontend-coder:
+    model: sonnet
+    effort: medium
+    timeout: 1800
+    rounds: 1
+    extension_cap: 900
+    extension_ceiling: 3600
+  chores-coder:
+    model: haiku
+    effort: medium
+    timeout: 1200
+    rounds: 1
+  staff-reviewer:
+    model: opus
+    effort: high
+    timeout: 900
+    rounds: 1
+  security-reviewer:
+    model: sonnet
+    effort: high
+    timeout: 900
+    rounds: 1
+  design-reviewer:
+    model: sonnet
+    effort: high
+    timeout: 900
+    rounds: 1
+  verifier:
+    model: sonnet
+    effort: medium
+    timeout: 1500
+    rounds: 1
+  deploy-assessor:
+    model: opus
+    effort: high
+    timeout: 1200
+    rounds: 1
+  rebaser:
+    model: sonnet
+    effort: high
+    timeout: 1800
+    rounds: 1
+  unblocker:
+    model: opus
+    effort: low
+    rounds: 1
+  arbitrator:
+    model: opus
+    effort: high
+    timeout: 1200
+    rounds: 1
+  curator:
+    model: sonnet
+    effort: medium
+    timeout: 1200
+    rounds: 1
+  copilot:
+    model: sonnet
+    effort: low
+    timeout: 180
+    rounds: 1

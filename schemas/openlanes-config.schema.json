@@ -2594,6 +2594,150 @@
         }
       }
     },
+    "application": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The application openlanes is working on: what it is, how far along, and the commands that set it up, run it and test it",
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The application's name; `openlanes init` writes the project's",
+          "default": null,
+          "minLength": 1
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What the application is, in a sentence or two",
+          "default": null,
+          "minLength": 1
+        },
+        "current_phase": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "How far along the application is",
+          "default": null,
+          "enum": [
+            "mvp",
+            "alpha",
+            "beta",
+            "in-production",
+            null
+          ]
+        },
+        "commands": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Shell commands, run from the project root",
+          "default": null,
+          "additionalProperties": false,
+          "properties": {
+            "setup": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Installs what the application needs, once per checkout",
+              "default": null,
+              "minLength": 1
+            },
+            "before_start": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Runs before the start commands",
+              "default": null,
+              "minLength": 1
+            },
+            "start": {
+              "type": [
+                "array",
+                "string",
+                "null"
+              ],
+              "description": "Starts the application; a list, because several things may start together",
+              "default": [],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "stop": {
+              "type": [
+                "array",
+                "string",
+                "null"
+              ],
+              "description": "Stops the application; a list, one command for each thing to stop",
+              "default": [],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "after_stop": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Runs after the stop commands",
+              "default": null,
+              "minLength": 1
+            },
+            "backend_tests": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Runs every backend test",
+              "default": null,
+              "minLength": 1
+            },
+            "frontend_tests": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Runs every frontend test",
+              "default": null,
+              "minLength": 1
+            },
+            "other_tests": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Runs the tests that are neither backend nor frontend",
+              "default": null,
+              "minLength": 1
+            },
+            "ci_tests": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The nearest local equivalent of everything CI runs",
+              "default": null,
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
     "app": {
       "type": [
         "object",

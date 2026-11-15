@@ -34,6 +34,20 @@ commands:                 # option defaults for any command, by the name you typ
     timeout: 1800
   resync prs:
     adopt: false
+application:              # the application openlanes is working on
+  name: Demo App
+  description: Books appointments for small clinics
+  current_phase: beta     # mvp | alpha | beta | in-production
+  commands:               # shell commands, run from the project root
+    setup: bin/setup
+    before_start: bin/rails db:prepare
+    start: [bin/rails server, bin/vite dev]   # a list: several things may start together
+    stop: [pkill -f "rails server"]           # a list, one command for each thing to stop
+    after_stop: bin/rails tmp:clear
+    backend_tests: bundle exec rspec
+    frontend_tests: npm test
+    other_tests: npx cypress run
+    ci_tests: just ci     # the nearest local equivalent of everything CI runs
 agents:                   # this machine's changes to an agent, by its name
   backend-coder:
     rounds: 3             # 1 to 5: rounds on one plan state
@@ -42,10 +56,12 @@ agents:                   # this machine's changes to an agent, by its name
     extension_ceiling: 5400  # seconds, the most the arbitrator may add
 ```
 
+- `.openlanes/config.example.yml` in the openlanes repository has every section filled in, with each agent at its shipped defaults; copy from it.
 - Precedence, highest first: a typed flag, the plan's `spec.md` frontmatter, `.openlanes/config.yml`, the built-in default.
 - `jobs`, `starts` and `project` are the same settings as `commands.run.jobs`, `commands.create.starts` and `commands.index.project`. Set either spelling, not both.
 - An unknown key, a bad value, or an option the command does not take is an error naming the file (exit 65). A setting silently ignored is a timeout that stops applying with no signal.
 - `dry_run` cannot be a default.
+- `application` describes the application being worked on; it is separate from `project` (a heading) and `app` (the processes the Preview tab runs). `openlanes init` writes it with `name` set to the project's and every other key empty, and an empty key reads as unset. `start` and `stop` take one command or a list. Nothing runs these commands yet: they are recorded for agents and people to read.
 - `agents.<name>` may set `timeout`, `rounds`, `model`, `effort`, `extension_cap` and `extension_ceiling`. Each replaces the same key of `agents/<name>.md` and nothing else, and an agent left out runs as its definition says. `--timeout` and `--rounds` still only tighten. `model` and `effort` stand where the frontmatter's stood, so `run --model`, a plan's `phases:`, `sizing:` and `depth` still win. `openlanes agents list` shows the values in force and marks the overridden ones `*`. A running engine keeps the values it started with.
 - A round whose clock runs low is given `extension_cap` more seconds by the engine, then asked how much more it needs (`openlanes state estimate`). An estimate within `extension_cap` is granted; a larger one goes to `arbitrator`, which may grant up to `extension_ceiling`; only what none of them settles reaches a person as an `X<n>` question. See `docs/decisions/decisions-on-limit-extensions.md`, E2.
 - `review.adapters` deals `staff-reviewer`, `security-reviewer` and `design-reviewer` to the first, second and third coding agent, wrapping when there are fewer. A coding agent the board's probe found unusable is skipped. A reviewer's own `adapter:` or the plan's `phases.review` still wins.

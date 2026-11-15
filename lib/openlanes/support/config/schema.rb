@@ -49,13 +49,16 @@ module OpenLanes
       end
 
       # @return [Hash{String => Object}] every key with its default, nested
-      #   sections as Hashes of their own keys' defaults
+      #   sections as Hashes of their own keys' defaults, however deep
       def defaults
         document.fetch("properties").to_h do |key, schema|
-          nested = schema["properties"]
-          [key, key == "commands" || nested.nil? ? schema["default"] : nested.transform_values { it["default"] }]
+          [key, key == "commands" ? schema["default"] : default_of(schema)]
         end
       end
+
+      # @param schema [Hash] one key's schema
+      # @return [Object] its default, or its own keys' defaults when it has keys
+      def default_of(schema) = schema["properties"]&.transform_values { default_of(it) } || schema["default"]
 
       # @param settings [Hash] the parsed file, string keys
       # @return [Array<Hash>] json_schemer's errors, empty when the file is valid
