@@ -197,3 +197,20 @@ Answered:
 Accept the six recorded scenarios as the fixture and mark the plan complete. Timeout kill, reattach and compaction stay covered by the existing executor unit specs; no change under `lib/` for an injectable clock.
 
 ______________________________________________________________________
+
+---
+
+### B1 (answered) — Arbitrator ruled no_go at the rejection cap over the line-count check
+
+At f4d52abe, `wc -l` gives `executor.rb` 103 lines and `executor/handle.rb` 114, failing the `wc -l` check required by spec.md In-scope item 1 and plan U7, although round 8 reported it passed (F1). F2 (`spent_nothing?` from 065.00) stays minor. Options: a) one more builder round to trim both files, b) close the pull request and replan.
+
+### D1 (decision) — Close the pull request and replan
+
+Answered:
+
+- 2026-11-15
+- By root
+
+Close the current pull request and replan the split-executor work, rather than sending it back to the builders for another trimming round.
+
+_Folded from blocked.md by the unblocker on 2026-11-15._

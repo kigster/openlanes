@@ -16,6 +16,7 @@ module OpenLanes
       include Choices
       include Permissions
       include Reporting
+      extend Shortcuts
 
       # The names callers and agent documentation use, each documented at its source.
       DENIED_TOOLS = Grants::DENIED_TOOLS
@@ -26,13 +27,6 @@ module OpenLanes
       REASON_LIMIT = Said::LIMIT
       DEFAULT_TIMEOUT = Preferences::DEFAULT_TIMEOUT
       AUTH_FAILURE = AuthFailure::PATTERN
-
-      # @see Credentials.foreign
-      def self.foreign_credentials(env = ENV) = Credentials.foreign(env)
-      # @see Deadline.of
-      def self.deadline(clock) = Deadline.of(clock)
-      # @see Spending.nothing?
-      def self.spent_nothing?(spent) = Spending.nothing?(spent)
 
       # @param options [Hash] the keywords {Options} takes, each documented there
       def initialize(**)

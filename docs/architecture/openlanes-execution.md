@@ -49,6 +49,8 @@ classDiagram
   <<module>> OpenLanes__Execution__Executor__Handle__Compacting
   class OpenLanes__Execution__Executor__Handle__Stopping["Executor::Handle::Stopping"]
   <<module>> OpenLanes__Execution__Executor__Handle__Stopping
+  class OpenLanes__Execution__Executor__Handle__Timekeeping["Executor::Handle::Timekeeping"]
+  <<module>> OpenLanes__Execution__Executor__Handle__Timekeeping
   class OpenLanes__Execution__Executor__Invocation["Executor::Invocation"]
   class OpenLanes__Execution__Executor__JournalHold["Executor::JournalHold"]
   <<module>> OpenLanes__Execution__Executor__JournalHold
@@ -66,8 +68,11 @@ classDiagram
   class OpenLanes__Execution__Executor__Said["Executor::Said"]
   <<module>> OpenLanes__Execution__Executor__Said
   class OpenLanes__Execution__Executor__Sessions["Executor::Sessions"]
+  class OpenLanes__Execution__Executor__Shortcuts["Executor::Shortcuts"]
+  <<module>> OpenLanes__Execution__Executor__Shortcuts
   class OpenLanes__Execution__Executor__Spending["Executor::Spending"]
   <<module>> OpenLanes__Execution__Executor__Spending
+  class OpenLanes__Execution__Executor__Spending__Counts["Executor::Spending::Counts"]
   class OpenLanes__Execution__Executor__StandingOrder["Executor::StandingOrder"]
   <<module>> OpenLanes__Execution__Executor__StandingOrder
   class OpenLanes__Execution__Executor__StartAgain["Executor::StartAgain"]
@@ -130,7 +135,6 @@ classDiagram
   OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Choices : includes
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Compactor : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Credentials : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Deadline : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Drain : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__FirstStart : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Grants : uses
@@ -145,7 +149,7 @@ classDiagram
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Retake : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Said : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Sessions : uses
-  OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Spending : uses
+  OpenLanes__Execution__Executor ..|> OpenLanes__Execution__Executor__Shortcuts : includes
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Supervision : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__ThrottleWait : uses
   OpenLanes__Execution__Executor ..> OpenLanes__Execution__Executor__Verdict : uses
@@ -162,12 +166,13 @@ classDiagram
   OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Executor__FirstStart ..> OpenLanes__Execution__Executor__JournalHold : uses
-  OpenLanes__Execution__Executor__Handle ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Executor__Handle ..|> OpenLanes__Execution__Executor__Handle__Compacting : includes
   OpenLanes__Execution__Executor__Handle ..|> OpenLanes__Execution__Executor__Handle__Stopping : includes
+  OpenLanes__Execution__Executor__Handle ..|> OpenLanes__Execution__Executor__Handle__Timekeeping : includes
   OpenLanes__Execution__Executor__Handle__Compacting ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__Handle__Compacting ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Executor__Handle__Stopping ..> OpenLanes__Execution__Control : uses
+  OpenLanes__Execution__Executor__Handle__Timekeeping ..> OpenLanes__Execution__Executor : uses
   OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Adapters__Invocation : uses
   OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Execution__Executor__Confinement : uses
   OpenLanes__Execution__Executor__Invocation ..> OpenLanes__Execution__Executor__Grants : uses
@@ -196,6 +201,10 @@ classDiagram
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Boundary__Snapshot : uses
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__Retake ..> OpenLanes__Execution__Executor : uses
+  OpenLanes__Execution__Executor__Shortcuts ..> OpenLanes__Execution__Executor__Credentials : uses
+  OpenLanes__Execution__Executor__Shortcuts ..> OpenLanes__Execution__Executor__Deadline : uses
+  OpenLanes__Execution__Executor__Shortcuts ..> OpenLanes__Execution__Executor__Spending : uses
+  OpenLanes__Execution__Executor__Spending ..> OpenLanes__Execution__Executor__Spending__Counts : uses
   OpenLanes__Execution__Executor__StandingOrder ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Control : uses
   OpenLanes__Execution__Executor__StartAgain ..> OpenLanes__Execution__Executor : uses

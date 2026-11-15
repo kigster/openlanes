@@ -9,9 +9,18 @@ module OpenLanes
       module Spending
         module_function
 
-        # @param spent [#up, #down, #tools] a {Result}, a transcript or the sessions of one invocation
+        # The three counts on their own, for the keyword form `main`'s
+        # `Executor.spent_nothing?(up:, down:, tools:)` took before the cut.
+        Counts = Data.define(:up, :down, :tools)
+
+        # @param spent [#up, #down, #tools, nil] a {Result}, a transcript or the
+        #   sessions of one invocation; nil when the counts come as keywords
+        # @param counts [Hash{Symbol => Integer}] `up:`, `down:` and `tools:`, all three
         # @return [Boolean] whether it spent nothing at all
-        def nothing?(spent) = spent.up.to_i.zero? && spent.down.to_i.zero? && spent.tools.to_i.zero?
+        def nothing?(spent = nil, **counts)
+          spent ||= Counts.new(**counts)
+          spent.up.to_i.zero? && spent.down.to_i.zero? && spent.tools.to_i.zero?
+        end
       end
     end
   end
