@@ -375,7 +375,8 @@ export type CommandKind =
   | "stop_plan" // /stop: signals the plan's agents and takes it off the board; payload: {}
   | "restart_plan" // /restart: puts an idle plan back on the board; refused while it has an agent
   | "set_concurrency" // /concurrency: payload: { limit }, never kills a running agent
-  | "set_chime"; // the rail's ding box: payload: { on }, written to .openlanes.yml
+  | "set_chime" // the rail's ding box: payload: { on }, written to .openlanes.yml
+  | "restart_web"; // Restart Control Room and /restart-web: the supervisor stops this page's server, rebuilds the page and starts it again
 
 export interface Command {
   id: string; // ULID, minted by the page; also its idempotency key

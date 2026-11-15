@@ -38,6 +38,7 @@ import {
   ModelSelect,
   NeedsYou,
   PlanDrawer,
+  RestartWebDialog,
   StopAllDialog,
   UnblockWidget,
   type SendCommand,
@@ -255,6 +256,7 @@ function ControlRoom({ board, connection, fixture }: { board: BoardData; connect
         hideInactive={inactive.hidden}
         onToggleHideInactive={inactive.toggle}
         actionMenu={<ActionMenu backlog={me.backlog} onCommand={onCommand} note={backlogNote(board)} ideaOpen={ideaOpen} onIdeaOpenChange={setIdeaOpen} catalog={me} />}
+        restartWeb={<RestartWebDialog connection={connection} onCommand={onCommand} />}
         stopAll={<StopAllDialog agents={busy.reduce((sum, n) => sum + n, 0)} plans={busy.length} onCommand={onCommand} />}
         help={<HelpDialog />}
       />

@@ -20,6 +20,8 @@ export interface HeaderProps {
   onToggleHideInactive?: () => void;
   /** The Actions ▾ menu: ActionMenu from src/panels. */
   actionMenu?: ReactNode;
+  /** Restart Control Room and its confirmation: RestartWebDialog from src/panels, shown just before Stop Local Workers. */
+  restartWeb?: ReactNode;
   /** Stop Local Workers and its confirmation: StopAllDialog from src/panels, which brings its own button. */
   stopAll?: ReactNode;
   /** The round ? pill and its dialog: HelpDialog from src/panels. */
@@ -93,7 +95,7 @@ function Nav({ children }: { children: ReactNode }) {
 }
 
 /** The top bar: the logo, the run-wide controls as pills, and the theme and help buttons. The run's numbers are in StatusLine. */
-export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, stopAll, help, now }: HeaderProps) {
+export function Header({ snapshot, connection, fixture = false, merged, onToggleMerged, narrow = false, onToggleNarrow, hideInactive = false, onToggleHideInactive, actionMenu, restartWeb, stopAll, help, now }: HeaderProps) {
   const { run } = snapshot;
   const clock = useNow(now);
   // The engine cannot publish while Redis is gone, so a silent snapshot is the only live signal (plan 022).
@@ -123,6 +125,7 @@ export function Header({ snapshot, connection, fixture = false, merged, onToggle
           </Toggle>
         )}
         {actionMenu}
+        {restartWeb}
         {stopAll}
       </Nav>
       <span className="topbar-spacer" />
