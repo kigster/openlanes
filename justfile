@@ -42,8 +42,13 @@ build: install web-build
 web-install:
     cd web && npm ci
 
+# Install the page's dependencies only when node_modules is missing or older than package-lock.json
+[private]
+web-deps:
+    @cd web && { [[ node_modules/.package-lock.json -nt package-lock.json ]] || npm ci; }
+
 # Build the page into web/dist, which the gem ships and the API server serves
-web-build:
+web-build: web-deps
     cd web && npm run build
 
 # The page's dev server on 5173 beside this checkout's API server on 11000, which Vite proxies /api to
